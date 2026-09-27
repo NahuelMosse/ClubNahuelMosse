@@ -1,0 +1,31 @@
+# Ambigüedades — CU-10 · Cancelar reserva
+
+Doble lectura (épica de reservas): dos lecturas independientes que no se vieron entre sí, más la
+propia. Coincidieron en los cinco flujos, en el choque DELETE contra cambio de estado y en que el CU
+no valida que la reserva sea del usuario. Divergencias:
+- Una marcó Caso vacío como pregunta abierta; la otra lo dio por no aplica por la precondición.
+- Una marcó el doble toque como duplicado; la otra, como concurrencia.
+La lectura propia agregó el estado de cancelada que el prototipo no tiene.
+
+## Las diez preguntas
+| Caso vacío    | no aplica: la precondición exige al menos una reserva activa; la lista vacía es de CU-08 FA1
+| Duplicados    | la card no dice qué pasa si la cancelación llega dos veces (doble toque o reintento después de un timeout) → CU-10-AMB-01
+| Validación    | la card dice: el backend rechaza turnos «pasados o en curso» (FA4); no dice si hay anticipación mínima → CU-10-AMB-02
+| Error         | la card dice: FA2 error de conexión con reintento y reserva intacta; FA3 error de servidor con datos consistentes
+| Estado        | la card dice: «El estado de la reserva cambia a cancelada»; no dice si se distingue de la anulada por el administrador → CU-10-AMB-03
+| Permisos      | la card no dice que el backend verifique que la reserva sea del usuario que la cancela → CU-10-AMB-04
+| Límites       | la card no dice hasta qué momento antes del inicio se puede cancelar → CU-10-AMB-02
+| Orden         | no aplica: se cancela una reserva por vez
+| Concurrencia  | la card dice en FA4 que el horario puede empezar «mientras el usuario estaba en la pantalla»; no dice qué pasa si un administrador la anuló (CU-15) mientras tanto → CU-10-AMB-05
+| Rastro        | la card no dice que se estampe cuándo y quién canceló → CU-10-AMB-06
+
+## Eventos
+CU-10-AMB-01 · 2026-09-27 · abierta · si la cancelación ya se aplicó y llega de nuevo, ¿el backend responde éxito sin hacer nada?
+CU-10-AMB-02 · 2026-09-27 · abierta · ¿se puede cancelar hasta el minuto anterior al inicio, o hay anticipación mínima?
+CU-10-AMB-03 · 2026-09-27 · abierta · ¿«cancelada por el usuario» y «anulada por el administrador» son dos estados distintos en el historial?
+CU-10-AMB-04 · 2026-09-27 · abierta · si alguien intenta cancelar una reserva ajena por la API, ¿qué responde (403 o 404)?
+CU-10-AMB-05 · 2026-09-27 · abierta · si la reserva ya fue anulada por el administrador, ¿se muestra «Esto cambió mientras tanto»?
+CU-10-AMB-06 · 2026-09-27 · abierta · ¿se guarda fecha y hora de la cancelación y quién la hizo?
+CU-10-AMB-07 · 2026-09-27 · abierta · ¿la cancelación dispara la push de confirmación de cancelación (CU-24.3)?
+CU-10-AMB-08 · 2026-09-27 · abierta · ¿el monto se devuelve o hay alguna política de reintegro? Ni el CU ni el enunciado hablan de pagos
+CU-10-AMB-00 · 2026-09-27 · snapshot · congelado en f5fb98e
