@@ -22,3 +22,6 @@ CU-05-AMB-04 · 2026-09-27 · abierta · ¿los errores cierran con «Aceptar» (
 CU-05-AMB-00 · 2026-09-27 · snapshot · congelado en a2d901f
 CU-05-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-05-AMB-04 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-05-AMB-01 · 2026-09-27 · vencida → CU-05-SUP-01 · el registro pide todos los datos, así que no hay campos vacíos; si alguno llegara vacío se muestra «—»
+CU-05-AMB-02 · 2026-09-27 · vencida → CU-05-SUP-02 · el único estado visible es «MIEMBRO ACTIVO»: una cuenta dada de baja no inicia sesión
+CU-05-AMB-03 · 2026-09-27 · vencida → CU-05-SUP-03 · el tema se guarda en el dispositivo, sobrevive a cerrar sesión y arranca en oscuro
