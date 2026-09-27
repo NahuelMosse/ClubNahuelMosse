@@ -49,14 +49,17 @@ emulador de Android contra la API y el emulador de Firebase
 | `apps/api/app/infraestructura/db.py` | motor y dependencia de conexión transaccional | un motor por proceso |
 | `apps/api/app/infraestructura/identidad.py` | `ProveedorIdentidad` sobre firebase-admin: crear y borrar cuentas | el correo ya usado en Firebase se traduce a `Duplicado(["correo"])` |
 | `apps/api/app/infraestructura/usuarios.py` | consultas de `usuario`: duplicados activos e inserción | SQL con `text()` |
-| `apps/api/app/interfaz/registro.py` | `POST /registro` | 201 `{id}` · 422 `{errores: {campo: mensaje}}` · 409 `{campos: [...], mensaje}` |
+| `apps/api/app/interfaz/registro.py` | `POST /registro` | 201 `{id}` · 422 `{errores: {campo: mensaje}}` · 409 `{campos: [...], mensaje, errores}` |
+| `apps/api/app/interfaz/protecciones.py` | límite de 64 KB por cuerpo (declarado o por partes) y cabeceras `no-store` y `nosniff` | middleware ASGI, antes que las rutas |
 | `apps/api/tests/conftest.py` | fixtures `api`, `iniciar_sesion`, `unico` | la API bajo test usa la base de pruebas y el emulador |
 | `apps/api/tests/escenarios/test_registro.py` | `CU-03-H01-02` | congelado |
 | `apps/api/tests/unit/test_usuarios.py` | reglas de `validar_registro` con valores escritos a mano | del implementador |
-| `apps/api/tests/integracion/test_registro_api.py` | 422, 409 por correo y por DNI, carrera y normalización contra la API real | del implementador |
+| `apps/api/tests/integracion/test_registro_api.py` | 422, 409 por correo y por DNI, carrera, normalización y cuenta de Firebase huérfana contra la API real | del implementador |
+| `apps/api/tests/integracion/test_seguridad_api.py` | cuerpo enorme, `Content-Length` mentido, JSON roto, campo desconocido, cabeceras, fuga de detalles | del implementador |
+| `apps/api/tests/unit/test_registro_caso_de_uso.py` | compensación de la cuenta y reemplazo de la huérfana con dobles | del implementador |
 | `apps/mobile/pubspec.yaml`, `pubspec.lock`, `analysis_options.yaml` | dependencias, fuentes del prototipo empaquetadas, análisis estricto | sin descarga de fuentes en tiempo de ejecución |
 | `apps/mobile/assets/fuentes/*.ttf` | Inter, Archivo, Archivo Black, JetBrains Mono | licencia OFL |
-| `apps/mobile/android/app/build.gradle.kts`, `src/debug/AndroidManifest.xml` | `minSdk 23` que pide firebase_auth; HTTP plano sólo en debug | — |
+| `apps/mobile/android/app/build.gradle.kts`, `src/debug/AndroidManifest.xml`, `android/gradle.properties` | `minSdk 23`; HTTP plano sólo en debug; heap de Gradle de 3 GB | con 8 GB la JVM se queda sin memoria en esta máquina |
 | `apps/mobile/lib/main.dart` | arranque: configuración, Firebase y `App` | idempotente, porque los tests lo llaman una vez por escenario |
 | `apps/mobile/lib/configuracion.dart` | `API_URL` y `AUTH_EMULADOR` desde `--dart-define` | sin valores por defecto que apunten a producción |
 | `apps/mobile/lib/app.dart` | `MaterialApp.router`, tema claro y oscuro, rutas | rutas `/` (inicio de sesión) y `/registro` |
@@ -65,6 +68,8 @@ emulador de Android contra la API y el emulador de Firebase
 | `apps/mobile/lib/comun/campo_texto.dart` | campo con etiqueta, error e ícono, como el componente `Input` del prototipo | `Semantics(label:)` en lenguaje natural; la etiqueta visual queda fuera de la semántica |
 | `apps/mobile/lib/comun/boton.dart` | botón primario y de texto del componente `Btn` | 52 de alto, pill |
 | `apps/mobile/lib/comun/barra_superior.dart` | `AppBar` del prototipo con volver | — |
+| `apps/mobile/lib/comun/dialogo_error.dart` | overlays compartidos de conexión y de servidor | devuelve si la persona eligió reintentar; reintenta quien llama |
+| `apps/mobile/lib/comun/formato_fecha.dart` | máscara `DD / MM / AAAA` y filtro del DNI | — |
 | `apps/mobile/lib/api/cliente_api.dart` | POST a la API con errores tipados | sin conexión y error del servidor como excepciones distintas |
 | `apps/mobile/lib/usuarios/reglas_registro.dart` | las mismas reglas que la API, para validar en vivo | los mensajes son los mismos que devuelve la API |
 | `apps/mobile/lib/usuarios/pantalla_registro.dart` | formulario, validación al salir de cada campo, envío, errores de duplicado | el botón se habilita sólo con todo válido |
@@ -72,7 +77,11 @@ emulador de Android contra la API y el emulador de Firebase
 | `apps/mobile/lib/sesion/pantalla_inicio_sesion.dart` | inicio de sesión con el acceso «COMENZAR» al registro | los campos y el ingreso los completa CU-01 |
 | `apps/mobile/integration_test/soporte/acciones.dart` | abrir la app, escribir, tocar y esperar por texto | no está tagueado |
 | `apps/mobile/integration_test/registro/registro_test.dart` | `CU-03-H01-01`, `H02-01`, `H03-01`, `H03-02` | congelado |
-| `apps/mobile/test/reglas_registro_test.dart` | unitarios de las reglas | del implementador |
+| `apps/mobile/test/reglas_registro_test.dart` | unitarios de las reglas y de la máscara de fecha | del implementador |
+| `apps/mobile/test/campo_texto_test.dart`, `pantalla_registro_test.dart` | nombre accesible del campo, reintento sin pedidos en paralelo, aviso que se limpia, respuesta inesperada | del implementador |
+| `apps/mobile/test/accesibilidad_registro_test.dart` | guías de Flutter en los dos modos, nombres accesibles, texto al 200 %, contraste de los pares del tema | del implementador |
+| `apps/mobile/test/soporte/montar.dart` | monta una pantalla con tema, idioma y API falsa; carga las fuentes | — |
+| `apps/mobile/test/capturas/registro_capturas.dart`, `test/capturas/registro/*.png` | la tira del paso 9: registro vacío, con errores, éxito e inicio de sesión, a 360 y 430, en los dos modos | no termina en `_test.dart`: queda fuera de la corrida por defecto |
 | `specs/CU-03-registrar-usuario/*` | plan y tareas | — |
 
 ## Supuestos
@@ -94,8 +103,11 @@ Ninguno.
   `demo-clubnahuelmosse`; producción necesita credenciales de servicio, que se configuran en el
   despliegue (RNF-01), no acá.
 - **Mocks**: ninguno en los escenarios. Los unitarios de la regla no tocan red.
-- **Afuera**: iniciar sesión (CU-01), sin conexión y servidor caído con los overlays compartidos
-  (TP-07), recuperar contraseña (CU-04b).
+- **Afuera**: iniciar sesión (CU-01), recuperar contraseña (CU-04b), y los escenarios de sin
+  conexión y servidor caído (TP-07); los overlays ya existen y los usa el registro.
+- **No probado acá**: los tiempos de espera del socket (cabeceras de a un byte) dependen del
+  servidor de despliegue (RNF-01). «Hoy» para la fecha de nacimiento es el del dispositivo en la
+  app y el de Buenos Aires en la API: un dispositivo con otra zona puede ver el 422 de la API.
 
 ## Brief visual
 
