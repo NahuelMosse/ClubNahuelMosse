@@ -2,8 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'app.dart';
 import 'configuracion.dart';
+import 'sesion/firebase.dart';
 
-Future<void> main() async {
+Future<void> main() => arrancar(Configuracion.desdeEntorno());
+
+Future<void> arrancar(Configuracion configuracion) async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(App(configuracion: Configuracion.desdeEntorno()));
+  await iniciarFirebase(configuracion);
+  runApp(App(configuracion: configuracion));
 }
