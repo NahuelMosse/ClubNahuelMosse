@@ -4,11 +4,11 @@ import 'package:flutter/services.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
-/// El componente `Input` del prototipo: etiqueta arriba, campo pill y error abajo.
+/// El componente `Input` del prototipo: etiqueta arriba si la hay, campo pill y error abajo.
 class CampoTexto extends StatelessWidget {
   const CampoTexto({
     super.key,
-    required this.etiqueta,
+    this.etiqueta,
     required this.etiquetaAccesible,
     required this.controlador,
     this.foco,
@@ -24,7 +24,7 @@ class CampoTexto extends StatelessWidget {
     this.habilitado = true,
   });
 
-  final String etiqueta;
+  final String? etiqueta;
   final String etiquetaAccesible;
   final TextEditingController controlador;
   final FocusNode? foco;
@@ -44,6 +44,7 @@ class CampoTexto extends StatelessWidget {
     final p = context.paleta;
     final mensaje = error;
     final ayuda = placeholder;
+    final titulo = etiqueta;
     final conError = mensaje != null;
     OutlineInputBorder borde(Color color, double ancho) => OutlineInputBorder(
       borderRadius: BorderRadius.circular(Medidas.radioPill),
@@ -53,13 +54,15 @@ class CampoTexto extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ExcludeSemantics(
-          child: Text(
-            etiqueta,
-            style: Textos.sobretitulo.copyWith(color: p.textSecondary),
+        if (titulo != null) ...[
+          ExcludeSemantics(
+            child: Text(
+              titulo,
+              style: Textos.sobretitulo.copyWith(color: p.textSecondary),
+            ),
           ),
-        ),
-        const SizedBox(height: Medidas.s8),
+          const SizedBox(height: Medidas.s8),
+        ],
         Semantics(
           container: true,
           label: etiquetaAccesible,
@@ -135,6 +138,30 @@ class CampoTexto extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// El ojo que muestra u oculta la contraseña, al final del campo.
+class VerContrasena extends StatelessWidget {
+  const VerContrasena({
+    super.key,
+    required this.visible,
+    required this.alCambiar,
+  });
+
+  final bool visible;
+  final VoidCallback alCambiar;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: visible ? 'Ocultar contraseña' : 'Mostrar contraseña',
+      onPressed: alCambiar,
+      icon: Icon(
+        visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        color: context.paleta.textSecondary,
+      ),
     );
   }
 }

@@ -1,0 +1,41 @@
+import 'package:flutter/material.dart';
+
+import '../tema/tema.dart';
+import '../tema/tokens.dart';
+
+/// El panel de administración, adonde entra quien inicia sesión como administrador.
+class PantallaPanelAdmin extends StatelessWidget {
+  const PantallaPanelAdmin({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Scaffold(
+      backgroundColor: p.bgBase,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            Medidas.s24,
+            Medidas.s24,
+            Medidas.s24,
+            Medidas.s40,
+          ),
+          children: [
+            Text(
+              'PANEL ADMIN',
+              style: Textos.sobretitulo.copyWith(color: p.accentInk),
+            ),
+            const SizedBox(height: Medidas.s4),
+            Semantics(
+              header: true,
+              child: Text(
+                'Reservas',
+                style: Textos.h1.copyWith(color: p.textPrimary),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

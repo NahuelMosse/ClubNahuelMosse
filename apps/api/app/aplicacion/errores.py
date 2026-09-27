@@ -10,3 +10,11 @@ class Duplicado(Exception):
     def __init__(self, campos: list[str]) -> None:
         super().__init__(f"duplicado: {', '.join(campos)}")
         self.campos = campos
+
+
+class NoAutenticado(Exception):
+    """El pedido no trae un token válido de una cuenta con perfil activo."""
+
+
+class CuentaExistente(Exception):
+    """Ya hay una cuenta activa con ese correo y no se pidió ascenderla."""

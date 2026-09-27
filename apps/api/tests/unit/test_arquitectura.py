@@ -33,3 +33,13 @@ def test_el_dominio_no_importa_nada_de_afuera() -> None:
             assert raiz in PERMITIDOS_EN_DOMINIO or nombre.startswith("app.dominio"), (
                 f"{archivo.name} importa {nombre}"
             )
+
+
+def test_la_aplicacion_no_importa_infraestructura_ni_interfaz() -> None:
+    archivos = list((APP / "aplicacion").rglob("*.py"))
+    assert archivos, "no hay casos de uso que revisar"
+    for archivo in archivos:
+        for nombre in _imports(archivo):
+            assert not nombre.startswith(("app.infraestructura", "app.interfaz")), (
+                f"{archivo.name} importa {nombre}"
+            )

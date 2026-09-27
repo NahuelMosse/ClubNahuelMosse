@@ -294,18 +294,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 placeholder: '8+ caracteres, mayúscula y número',
                 oculto: !_contrasenaVisible,
                 autocompletar: const [AutofillHints.newPassword],
-                accionFinal: IconButton(
-                  tooltip: _contrasenaVisible
-                      ? 'Ocultar contraseña'
-                      : 'Mostrar contraseña',
-                  onPressed: () =>
+                accionFinal: VerContrasena(
+                  visible: _contrasenaVisible,
+                  alCambiar: () =>
                       setState(() => _contrasenaVisible = !_contrasenaVisible),
-                  icon: Icon(
-                    _contrasenaVisible
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: p.textSecondary,
-                  ),
                 ),
               ),
               const SizedBox(height: Medidas.s16),

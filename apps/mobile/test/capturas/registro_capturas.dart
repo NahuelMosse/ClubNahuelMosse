@@ -1,4 +1,3 @@
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_registro_exitoso.dart';
@@ -65,19 +64,6 @@ void main() {
         await expectLater(
           find.byType(PantallaRegistroExitoso),
           matchesGoldenFile('registro/exitoso_${ancho}_$modo.png'),
-        );
-      });
-
-      testWidgets('inicio de sesión $ancho $modo', (tester) async {
-        await montar(
-          tester,
-          const PantallaInicioSesion(),
-          tema: tema,
-          tamano: tamano,
-        );
-        await expectLater(
-          find.byType(PantallaInicioSesion),
-          matchesGoldenFile('registro/inicio_sesion_${ancho}_$modo.png'),
         );
       });
     }

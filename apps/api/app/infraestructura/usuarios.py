@@ -2,7 +2,7 @@ from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
 from app.aplicacion.errores import Duplicado
-from app.dominio.usuarios import Registro
+from app.dominio.usuarios import Perfil, Registro
 
 _INDICE_A_CAMPO = {"usuario_correo_unico": "correo", "usuario_dni_unico": "dni"}
 
@@ -28,6 +28,36 @@ class UsuariosSql:
         ).first()
         self._conn.rollback()
         return activo is not None
+
+    def perfil_activo(self, uid: str) -> Perfil | None:
+        fila = self._conn.execute(
+            text(
+                "SELECT id, nombre, apellido, correo, rol FROM usuario"
+                " WHERE firebase_uid = :uid AND activo"
+            ),
+            {"uid": uid},
+        ).first()
+        self._conn.rollback()
+        if fila is None:
+            return None
+        return Perfil(
+            id=fila.id, nombre=fila.nombre, apellido=fila.apellido, correo=fila.correo, rol=fila.rol
+        )
+
+    def id_activo_por_correo(self, correo: str) -> int | None:
+        id_usuario = self._conn.execute(
+            text("SELECT id FROM usuario WHERE lower(correo) = :correo AND activo"),
+            {"correo": correo},
+        ).scalar()
+        self._conn.rollback()
+        return None if id_usuario is None else int(id_usuario)
+
+    def hacer_admin(self, id_usuario: int) -> None:
+        self._conn.execute(
+            text("UPDATE usuario SET rol = 'admin' WHERE id = :id AND rol <> 'admin'"),
+            {"id": id_usuario},
+        )
+        self._conn.commit()
 
     def insertar(self, uid: str, registro: Registro) -> int:
         """Inserta el perfil y lo confirma: si el commit falla, el caso de uso compensa."""

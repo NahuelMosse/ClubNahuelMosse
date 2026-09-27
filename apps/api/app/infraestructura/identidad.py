@@ -29,3 +29,12 @@ class ProveedorFirebase:
 
     def borrar_cuenta(self, uid: str) -> None:
         auth.delete_user(uid, app=_app_firebase())
+
+    def uid_del_token(self, token: str) -> str | None:
+        try:
+            # check_revoked además rechaza cuentas deshabilitadas o borradas en Firebase.
+            datos = auth.verify_id_token(token, app=_app_firebase(), check_revoked=True)
+        except (auth.InvalidIdTokenError, auth.UserDisabledError, auth.UserNotFoundError):
+            return None
+        uid = datos.get("uid")
+        return str(uid) if uid else None

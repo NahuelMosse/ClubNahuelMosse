@@ -8,6 +8,7 @@
 #   E2E_DATABASE_URL  base de la corrida; se borra y se migra desde cero (default: club_e2e_test)
 #   AUTH_PORT         puerto del emulador de Firebase Auth (default 9099)
 #   API_PORT          puerto de la API (default 8000)
+#   ADMIN_CORREO, ADMIN_CONTRASENA  la cuenta de administrador que se siembra para la corrida
 #   DISPOSITIVO       serie del dispositivo (obligatorio si hay más de uno conectado)
 #   AVD               AVD a usar si no hay un dispositivo conectado; corre en -read-only
 #   FLUTTER, ADB, EMULATOR  ejecutables
@@ -19,6 +20,9 @@ EMULATOR=${EMULATOR:-emulator}
 AUTH_PORT=${AUTH_PORT:-9099}
 API_PORT=${API_PORT:-8000}
 E2E_DATABASE_URL=${E2E_DATABASE_URL:-postgresql+psycopg://club:club@127.0.0.1:5432/club_e2e_test}
+# Vive sólo en el emulador de la corrida, que no tiene datos reales: no es un secreto.
+ADMIN_CORREO=${ADMIN_CORREO:-admin.e2e@clubnahuelmosse.test}
+ADMIN_CONTRASENA=${ADMIN_CONTRASENA:-AdminE2e1}
 tmp=$(mktemp -d)
 pids=""
 
@@ -77,8 +81,14 @@ EOF
   esperar_puerto "$AUTH_PORT"
 fi
 
-echo "e2e: API en $API_PORT"
+echo "e2e: administrador $ADMIN_CORREO"
 cd "$raiz/apps/api"
+DATABASE_URL="$E2E_DATABASE_URL" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:$AUTH_PORT" \
+  FIREBASE_PROJECT_ID=demo-clubnahuelmosse ADMIN_CONTRASENA="$ADMIN_CONTRASENA" \
+  uv run python -m app.interfaz.sembrar_admin --correo "$ADMIN_CORREO" \
+  --nombre Administración --apellido Club --dni 20000001 --nacimiento 1980-01-01 >/dev/null
+
+echo "e2e: API en $API_PORT"
 DATABASE_URL="$E2E_DATABASE_URL" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:$AUTH_PORT" \
   FIREBASE_PROJECT_ID=demo-clubnahuelmosse \
   uv run uvicorn app.main:app --host 0.0.0.0 --port "$API_PORT" > "$tmp/api.log" 2>&1 &
@@ -116,7 +126,9 @@ cd "$raiz/apps/mobile"
 set +e
 "$FLUTTER" test "$@" -d "$dispositivo" \
   --dart-define=API_URL="http://10.0.2.2:$API_PORT" \
-  --dart-define=AUTH_EMULADOR="10.0.2.2:$AUTH_PORT"
+  --dart-define=AUTH_EMULADOR="10.0.2.2:$AUTH_PORT" \
+  --dart-define=ADMIN_CORREO="$ADMIN_CORREO" \
+  --dart-define=ADMIN_CONTRASENA="$ADMIN_CONTRASENA"
 resultado=$?
 set -e
 if [ "$resultado" -ne 0 ]; then

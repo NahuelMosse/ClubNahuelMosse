@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -73,3 +74,37 @@ Future<void> cargarFuentes() async {
     await cargador.load();
   }
 }
+
+/// Firebase sin red: [alIngresar] decide qué pasa con cada intento.
+class CredencialesFalsas implements Credenciales {
+  CredencialesFalsas({this.alIngresar, this.conCuenta = false});
+
+  final Future<void> Function(String correo, String contrasena)? alIngresar;
+  bool conCuenta;
+  final intentos = <(String, String)>[];
+  int salidas = 0;
+
+  @override
+  bool get hayCuenta => conCuenta;
+
+  @override
+  Future<void> ingresar(String correo, String contrasena) async {
+    intentos.add((correo, contrasena));
+    await alIngresar?.call(correo, contrasena);
+    conCuenta = true;
+  }
+
+  @override
+  Future<String?> token() async => conCuenta ? 'token-falso' : null;
+
+  @override
+  Future<void> salir() async {
+    salidas++;
+    conCuenta = false;
+  }
+}
+
+/// El perfil que devuelve `GET /yo` en los tests.
+String perfilJson({String rol = 'usuario'}) =>
+    '{"nombre": "Nahuel", "apellido": "Mosse", '
+    '"correo": "nahuel@correo.com", "rol": "$rol"}';

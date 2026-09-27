@@ -71,8 +71,8 @@ class BotonTexto extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final color = sobreFoto ? Paleta.oscura.accentBase : p.accentInk;
-    return SizedBox(
-      height: Medidas.altoControl,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: Medidas.altoControl),
       child: TextButton(
         onPressed: alTocar,
         style: TextButton.styleFrom(
@@ -84,7 +84,7 @@ class BotonTexto extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(texto),
+            Flexible(child: Text(texto, textAlign: TextAlign.center)),
             if (icono != null) ...[
               const SizedBox(width: Medidas.s8),
               Icon(icono, size: 18),
