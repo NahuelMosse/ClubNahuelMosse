@@ -1,6 +1,6 @@
 ---
 card: CU-01
-extraido: 2026-09-27T10:55:32-03:00
+extraido: 2026-09-27T14:20:00-03:00
 fuentes:
   - CU/CU - 01 Login - Acosta Noemi.pdf
   - "enunciado: Trabajo Práctico_2026.docx.pdf § RF 1 Registración, inicio de sesión y recuperación de contraseña · § RF 7 Manejo de errores · § RNF 5 Cloud"
@@ -82,6 +82,7 @@ estado: propuesta
 ## Escenarios
 
 - [ ] CU-01-H01-01 — inicia sesión con correo y contraseña correctos y llega al Home
+- [ ] CU-01-H01-02 — inicia sesión con una cuenta de administrador y llega al panel de administración
 - [ ] CU-01-H02-01 — intenta ingresar con el correo vacío y no se envía nada al backend
 - [ ] CU-01-H02-02 — intenta ingresar con la contraseña vacía y no se envía nada al backend
 - [ ] CU-01-H03-01 — ingresa un correo que no está registrado y ve el mensaje genérico
