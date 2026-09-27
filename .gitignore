@@ -16,3 +16,8 @@ __pycache__/
 build/
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Entornos de Python
+.venv/
+.mypy_cache/
+.ruff_cache/
