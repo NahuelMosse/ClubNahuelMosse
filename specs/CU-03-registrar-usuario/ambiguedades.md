@@ -39,3 +39,5 @@ CU-03-AMB-01 · 2026-09-27 · vencida · → CU-03-SUP-01: el correo se compara 
 CU-03-AMB-04 · 2026-09-27 · vencida · → CU-03-SUP-02: la cuenta queda activa al crearse, sin verificación del correo
 CU-03-AMB-06 · 2026-09-27 · vencida · → CU-03-SUP-03: sin edad mínima; nombre y apellido de hasta 60 caracteres
 CU-03-AMB-07 · 2026-09-27 · vencida · → CU-03-SUP-04: con dos registros simultáneos del mismo correo o DNI, el segundo cae en FA2
+CU-03-TESTS · 2026-09-27 · congelados en c433121
+CU-03-TESTS · 2026-09-27 · recongelados en ab90ace · se saca un import sin uso que dejaba flutter analyze en falla; ninguna aserción cambia

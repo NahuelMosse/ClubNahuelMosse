@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'app.dart';
+import 'configuracion.dart';
+
 Future<void> main() async {
-  runApp(const MaterialApp(home: Scaffold()));
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(App(configuracion: Configuracion.desdeEntorno()));
 }

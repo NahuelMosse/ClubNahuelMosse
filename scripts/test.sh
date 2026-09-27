@@ -11,6 +11,7 @@ uv run pytest
 if [ -d "$raiz/apps/mobile" ]; then
   cd "$raiz/apps/mobile"
   flutter analyze
-  dart format --set-exit-if-changed lib test integration_test
+  # Los escenarios quedan congelados al commitearse en rojo: su formato no se revisa.
+  dart format --output=none --set-exit-if-changed lib test
   flutter test
 fi

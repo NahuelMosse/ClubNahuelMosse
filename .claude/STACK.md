@@ -47,7 +47,7 @@ Los IDs de card pueden llevar letra o punto (`CU-04b`, `CU-24.1`), así que el p
 |---|---|
 | Todo lo que cuenta, el comando por defecto | `sh scripts/test.sh` en la raíz: corre los cuatro de abajo en orden y sale distinto de cero si falla cualquiera. Lo crea la primera card |
 | Unitarios de la app | `cd apps/mobile && flutter test` |
-| Tipos y lint de la app | `cd apps/mobile && flutter analyze && dart format --set-exit-if-changed lib test integration_test` |
+| Tipos y lint de la app | `cd apps/mobile && flutter analyze && dart format --output=none --set-exit-if-changed lib test` (los escenarios congelados no se reformatean) |
 | Unitarios y escenarios de la API | `cd apps/api && pytest` |
 | Tipos y lint de la API | `cd apps/api && ruff check . && mypy --strict app` |
 | Escenarios de una card, app | `cd apps/mobile && flutter test integration_test --name "@<ID>-"` |
