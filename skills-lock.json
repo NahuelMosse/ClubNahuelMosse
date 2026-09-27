@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "clean-architecture": {
+      "source": "tokenaissance/clean-architecture",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "31cac69d89caff87d7ef276a24478b2d2ec9425eda2f7f07752f509f65a23104"
+    },
+    "interface-design": {
+      "source": "dammyjay93/interface-design",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/interface-design/SKILL.md",
+      "computedHash": "340cc79a1558f09371aa3eb689952a8b777c1d7362c24226e99693606a80828e"
+    }
+  }
+}

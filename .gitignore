@@ -1,0 +1,18 @@
+﻿# Cache de Python que generan los scripts de las skills al ejecutarse
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
+# Credenciales. .env.example SI se versiona; .env NO
+.env
+.env.local
+
+# Config personal de Claude Code (no se comparte con el equipo)
+.claude/settings.local.json
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
