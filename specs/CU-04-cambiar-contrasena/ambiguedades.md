@@ -29,3 +29,4 @@ CU-04-AMB-02 · 2026-09-27 · vencida → CU-04-SUP-02 · el administrador no ti
 CU-04-AMB-03 · 2026-09-27 · vencida → CU-04-SUP-03 · el largo máximo es el del registro; sin tope propio de intentos: si Firebase frena por demasiados intentos se ve el error del servidor
 CU-04-AMB-04 · 2026-09-27 · vencida → CU-04-SUP-04 · la otra sesión ve «Sesión expirada» en su próximo pedido a la API y vuelve al login
 CU-04-AMB-06 · 2026-09-27 · resuelta · los tres campos empiezan habilitados, como el prototipo (decisión 12)
+CU-04-TESTS · 2026-09-27 · congelados en 417c898 · 8 escenarios de pantalla en rojo: Mi perfil no tiene «Cambiar contraseña»
