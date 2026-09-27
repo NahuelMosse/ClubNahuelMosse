@@ -28,3 +28,6 @@ CU-02-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-02-AMB-04 · 2026-09-27 · resuelta · la sesión sigue abierta al reabrir la app y se permiten varias a la vez; al cerrar sesión el dispositivo deja de recibir push (decisión 14)
 CU-02-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-02-AMB-06 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)
+CU-02-AMB-01 · 2026-09-27 · vencida → CU-02-SUP-01 · cerrar sesión no necesita red: la sesión se cierra en el dispositivo aunque no haya conexión o el servidor esté caído
+CU-02-AMB-03 · 2026-09-27 · vencida → CU-02-SUP-02 · el administrador cierra sesión desde un avatar en la cabecera del panel, con la misma tarjeta y sólo la opción «Cerrar sesión» (el prototipo no le da perfil ni reservas propias)
+CU-02-AMB-05 · 2026-09-27 · vencida → CU-02-SUP-03 · no se registra fecha ni hora del cierre de sesión
