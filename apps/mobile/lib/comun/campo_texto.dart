@@ -80,6 +80,8 @@ class CampoTexto extends StatelessWidget {
                     : ExcludeSemantics(
                         child: Text(
                           ayuda,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Textos.cuerpo.copyWith(color: p.textMuted),
                         ),
                       ),

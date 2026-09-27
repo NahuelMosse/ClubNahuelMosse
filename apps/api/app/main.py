@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.interfaz import registro
+from app.interfaz.protecciones import Protecciones
 
 
 def crear_app() -> FastAPI:
@@ -10,6 +11,7 @@ def crear_app() -> FastAPI:
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
     )
     app.include_router(registro.router)
+    app.add_middleware(Protecciones)
     return app
 
 
