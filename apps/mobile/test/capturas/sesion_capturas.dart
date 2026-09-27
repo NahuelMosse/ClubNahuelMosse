@@ -4,6 +4,7 @@ import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -73,17 +74,41 @@ void main() {
       testWidgets('home $ancho $modo', (tester) async {
         await montar(
           tester,
-          const PantallaInicio(nombre: 'Nahuel'),
+          PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
           tema: tema,
           tamano: tamano,
         );
         await capturar(tester, 'sesion/home_${ancho}_$modo.png');
       });
 
+      testWidgets('tarjeta de la cuenta $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montar(
+          tester,
+          PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+          tema: tema,
+          tamano: tamano,
+        );
+        await tester.tap(find.bySemanticsLabel('Tu cuenta'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sesion/tarjeta_cuenta_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      testWidgets('mi perfil $ancho $modo', (tester) async {
+        await montar(
+          tester,
+          PantallaMiPerfil(sesion: SesionFalsa(perfilUsuario)),
+          tema: tema,
+          tamano: tamano,
+        );
+        await capturar(tester, 'sesion/mi_perfil_${ancho}_$modo.png');
+      });
+
       testWidgets('panel admin $ancho $modo', (tester) async {
         await montar(
           tester,
-          const PantallaPanelAdmin(),
+          PantallaPanelAdmin(sesion: SesionFalsa(perfilAdmin)),
           tema: tema,
           tamano: tamano,
         );

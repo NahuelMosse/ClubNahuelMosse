@@ -95,3 +95,33 @@ class BotonTexto extends StatelessWidget {
     );
   }
 }
+
+/// `Btn/Type=Secondary`: pill de 52 con borde, para acciones que no son la principal.
+class BotonContorno extends StatelessWidget {
+  const BotonContorno({super.key, required this.texto, required this.alTocar});
+
+  final String texto;
+  final VoidCallback? alTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: Medidas.altoControl,
+        minWidth: double.infinity,
+      ),
+      child: OutlinedButton(
+        onPressed: alTocar,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: p.textPrimary,
+          side: BorderSide(color: p.borderControl, width: 1.5),
+          shape: const StadiumBorder(),
+          textStyle: Textos.boton,
+          padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+        ),
+        child: Text(texto, textAlign: TextAlign.center),
+      ),
+    );
+  }
+}

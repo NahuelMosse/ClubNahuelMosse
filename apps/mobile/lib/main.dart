@@ -15,5 +15,13 @@ Future<void> arrancar(Configuracion configuracion) async {
   final sesion = Sesion(credenciales: CredencialesFirebase(auth), api: api);
   // La sesión queda abierta en el dispositivo: si todavía vale, se entra directo.
   final perfil = await sesion.retomar();
-  runApp(App(api: api, sesion: sesion, inicio: perfil?.inicio ?? '/'));
+  // Una key nueva por arranque: la app se arma de cero aunque runApp se llame otra vez.
+  runApp(
+    App(
+      key: UniqueKey(),
+      api: api,
+      sesion: sesion,
+      inicio: perfil?.inicio ?? '/',
+    ),
+  );
 }

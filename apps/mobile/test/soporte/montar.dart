@@ -108,3 +108,36 @@ class CredencialesFalsas implements Credenciales {
 String perfilJson({String rol = 'usuario'}) =>
     '{"nombre": "Nahuel", "apellido": "Mosse", '
     '"correo": "nahuel@correo.com", "rol": "$rol"}';
+
+const perfilUsuario = Perfil(
+  nombre: 'Nahuel',
+  apellido: 'Mosse',
+  correo: 'nmosse@unimoron.edu.ar',
+  rol: Rol.usuario,
+);
+
+const perfilAdmin = Perfil(
+  nombre: 'Ana',
+  apellido: 'Díaz',
+  correo: 'admin@clubnahuelmosse.com',
+  rol: Rol.admin,
+);
+
+/// Una sesión ya iniciada con [perfil], sin Firebase ni API.
+class SesionFalsa extends Sesion {
+  SesionFalsa(this._perfilFalso)
+    : super(credenciales: CredencialesFalsas(conCuenta: true), api: apiFalsa());
+
+  Perfil? _perfilFalso;
+  int cierres = 0;
+
+  @override
+  Perfil? get perfil => _perfilFalso;
+
+  @override
+  Future<void> cerrar() async {
+    cierres++;
+    _perfilFalso = null;
+    notifyListeners();
+  }
+}

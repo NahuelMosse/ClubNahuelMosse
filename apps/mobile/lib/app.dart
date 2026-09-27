@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'admin/pantalla_panel_admin.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
+import 'reservas/pantalla_mis_reservas.dart';
 import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
 import 'sesion/sesion.dart';
 import 'tema/tema.dart';
+import 'usuarios/pantalla_mi_perfil.dart';
 import 'usuarios/pantalla_registro.dart';
 import 'usuarios/pantalla_registro_exitoso.dart';
 
@@ -31,14 +33,24 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
+  /// Las pantallas de adentro y el rol que las usa.
+  static const _rolDe = {
+    '/inicio': Rol.usuario,
+    '/perfil': Rol.usuario,
+    '/reservas': Rol.usuario,
+    '/admin': Rol.admin,
+  };
+
   late final GoRouter _rutas = GoRouter(
     initialLocation: widget.inicio,
+    // Al iniciar o cerrar la sesión, las rutas se vuelven a evaluar.
+    refreshListenable: widget.sesion,
     redirect: (context, estado) {
-      // Sin sesión, las pantallas de adentro vuelven al login.
-      final adentro =
-          estado.matchedLocation == '/inicio' ||
-          estado.matchedLocation == '/admin';
-      return adentro && widget.sesion.perfil == null ? '/' : null;
+      final rol = _rolDe[estado.matchedLocation];
+      final perfil = widget.sesion.perfil;
+      if (rol == null) return null;
+      if (perfil == null) return '/';
+      return perfil.rol == rol ? null : perfil.inicio;
     },
     routes: [
       GoRoute(
@@ -61,12 +73,19 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/inicio',
-        builder: (context, _) =>
-            PantallaInicio(nombre: widget.sesion.perfil?.nombre ?? ''),
+        builder: (context, _) => PantallaInicio(sesion: widget.sesion),
+      ),
+      GoRoute(
+        path: '/perfil',
+        builder: (context, _) => PantallaMiPerfil(sesion: widget.sesion),
+      ),
+      GoRoute(
+        path: '/reservas',
+        builder: (context, _) => const PantallaMisReservas(),
       ),
       GoRoute(
         path: '/admin',
-        builder: (context, _) => const PantallaPanelAdmin(),
+        builder: (context, _) => PantallaPanelAdmin(sesion: widget.sesion),
       ),
     ],
   );

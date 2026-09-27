@@ -151,9 +151,10 @@ class Sesion extends ChangeNotifier {
     }
   }
 
+  /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
   Future<void> cerrar() async {
-    _actual = null;
     await _credenciales.salir();
+    _actual = null;
   }
 
   Future<Perfil> _perfilPropio() async {

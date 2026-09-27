@@ -98,6 +98,16 @@ void main() {
     expect(credenciales.hayCuenta, isFalse);
   });
 
+  test('si Firebase no puede cerrar la sesión, el perfil sigue', () async {
+    final sesion = Sesion(
+      credenciales: _SalirFalla(),
+      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+    );
+    await sesion.iniciar('a@b.com', 'Clave1234');
+    await expectLater(sesion.cerrar(), throwsA(isA<StateError>()));
+    expect(sesion.perfil, isNotNull);
+  });
+
   test('cerrar la sesión olvida el perfil', () async {
     final credenciales = CredencialesFalsas();
     final sesion = Sesion(
@@ -109,4 +119,9 @@ void main() {
     expect(sesion.perfil, isNull);
     expect(credenciales.hayCuenta, isFalse);
   });
+}
+
+class _SalirFalla extends CredencialesFalsas {
+  @override
+  Future<void> salir() async => throw StateError('signOut falló');
 }

@@ -4,6 +4,7 @@ import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,9 +33,11 @@ void main() {
   final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
   final pantallas = <String, Widget Function()>{
     'el login': login,
-    'el Home': () => const PantallaInicio(nombre: 'Nahuel'),
-    'el panel de administración': () => const PantallaPanelAdmin(),
+    'el Home': () => PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+    'el panel de administración': () =>
+        PantallaPanelAdmin(sesion: SesionFalsa(perfilAdmin)),
     'recuperar contraseña': () => const PantallaRecuperarContrasena(),
+    'Mi perfil': () => PantallaMiPerfil(sesion: SesionFalsa(perfilUsuario)),
   };
 
   for (final MapEntry(key: modo, value: tema) in temas.entries) {
