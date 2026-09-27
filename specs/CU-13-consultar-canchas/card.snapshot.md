@@ -1,6 +1,6 @@
 ---
 card: CU-13
-extraido: 2026-09-27T11:40:00-03:00
+extraido: 2026-09-27T15:00:00-03:00
 fuentes:
   - CU/CU-13 - Consultar Canchas.pdf
   - "enunciado: Trabajo Práctico_2026.docx.pdf § RF 3 Gestión de reservas (horarios dentro del funcionamiento de la sede, horas completas, mínimo una hora, horarios futuros, no superposición) · § RF 5"
@@ -80,8 +80,8 @@ estado: propuesta
 - Filtros: SEDE, DEPORTE, TIPO DE CANCHA («Todos los tipos»), FECHA, DESDE, HASTA; «Elegí sede,
   deporte y rango horario. Solo horas completas, de 1 a 4 horas.»; botones LIMPIAR y CONSULTAR.
 - Inválido: «La fecha tiene que ser futura», «La duración mínima es de una hora».
-- Resultados: «2 CANCHAS DISPONIBLES · FÚTBOL 5 · 18:00 – 19:00», chips «Todas (2) · Polvo (1) ·
-  Cemento (1)», tarjetas con «VER HORARIOS / RESERVAR».
+- Resultados: «2 CANCHAS DISPONIBLES · FÚTBOL 5 · 18:00 – 19:00», chips «Todas (2) · Al aire libre (1) ·
+  Techada (1)», tarjetas con «VER HORARIOS / RESERVAR».
 - Sin resultados: «No hay canchas disponibles» · «Ninguna cancha coincide con ese horario. Probá
   con otro rango o otra sede.» · LIMPIAR FILTROS.
 - Error: «No se pudo consultar la disponibilidad» · «Revisá tu conexión e intentá nuevamente. Los
@@ -107,8 +107,6 @@ estado: propuesta
   CU-13 paso 5, Figma 52:824.
 - El prototipo limita el rango a «de 1 a 4 horas»; el CU y el enunciado sólo fijan el mínimo de una
   hora y el cierre de la sede · Figma 52:734, CU-13 FA2, enunciado RF 3.
-- En los resultados de Fútbol 5, los chips del prototipo son «Polvo» y «Cemento», superficies de
-  tenis · Figma 52:824.
 - El CU nombra Pádel y Básquet como tipos; el prototipo tiene Fútbol, Tenis, Hockey, Vóley y Golf ·
   CU-13 diseño, Figma 52:734.
 - El CU pide el horario «futuro»; no dice si un rango que empieza en la hora en curso cuenta como
