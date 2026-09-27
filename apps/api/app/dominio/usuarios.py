@@ -118,6 +118,7 @@ Rol = Literal["usuario", "admin"]
 @dataclass(frozen=True)
 class Perfil:
     id: int
+    uid: str
     nombre: str
     apellido: str
     correo: str

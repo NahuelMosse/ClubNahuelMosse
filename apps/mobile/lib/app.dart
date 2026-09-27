@@ -10,6 +10,7 @@ import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
 import 'sesion/sesion.dart';
 import 'tema/tema.dart';
+import 'usuarios/pantalla_cambiar_contrasena.dart';
 import 'usuarios/pantalla_mi_perfil.dart';
 import 'usuarios/pantalla_registro.dart';
 import 'usuarios/pantalla_registro_exitoso.dart';
@@ -37,6 +38,7 @@ class _AppState extends State<App> {
   static const _rolDe = {
     '/inicio': Rol.usuario,
     '/perfil': Rol.usuario,
+    '/perfil/contrasena': Rol.usuario,
     '/reservas': Rol.usuario,
     '/admin': Rol.admin,
   };
@@ -78,6 +80,13 @@ class _AppState extends State<App> {
       GoRoute(
         path: '/perfil',
         builder: (context, _) => PantallaMiPerfil(sesion: widget.sesion),
+        routes: [
+          GoRoute(
+            path: 'contrasena',
+            builder: (context, _) =>
+                PantallaCambiarContrasena(sesion: widget.sesion),
+          ),
+        ],
       ),
       GoRoute(
         path: '/reservas',

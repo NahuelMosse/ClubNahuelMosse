@@ -38,6 +38,21 @@ class ClienteApi {
     ),
   );
 
+  Future<Respuesta> put(
+    String ruta,
+    Map<String, Object?> cuerpo, {
+    required String token,
+  }) => _enviar(
+    () => _cliente.put(
+      _base.resolve(ruta),
+      headers: {
+        'content-type': 'application/json',
+        'authorization': 'Bearer $token',
+      },
+      body: jsonEncode(cuerpo),
+    ),
+  );
+
   /// [token] es el ID token de Firebase de quien inició sesión.
   Future<Respuesta> get(String ruta, {String? token}) => _enviar(
     () => _cliente.get(

@@ -32,7 +32,7 @@ class UsuariosSql:
     def perfil_activo(self, uid: str) -> Perfil | None:
         fila = self._conn.execute(
             text(
-                "SELECT id, nombre, apellido, correo, rol FROM usuario"
+                "SELECT id, firebase_uid, nombre, apellido, correo, rol FROM usuario"
                 " WHERE firebase_uid = :uid AND activo"
             ),
             {"uid": uid},
@@ -41,7 +41,12 @@ class UsuariosSql:
         if fila is None:
             return None
         return Perfil(
-            id=fila.id, nombre=fila.nombre, apellido=fila.apellido, correo=fila.correo, rol=fila.rol
+            id=fila.id,
+            uid=fila.firebase_uid,
+            nombre=fila.nombre,
+            apellido=fila.apellido,
+            correo=fila.correo,
+            rol=fila.rol,
         )
 
     def id_activo_por_correo(self, correo: str) -> int | None:
@@ -55,6 +60,13 @@ class UsuariosSql:
     def hacer_admin(self, id_usuario: int) -> None:
         self._conn.execute(
             text("UPDATE usuario SET rol = 'admin' WHERE id = :id AND rol <> 'admin'"),
+            {"id": id_usuario},
+        )
+        self._conn.commit()
+
+    def marcar_cambio_de_contrasena(self, id_usuario: int) -> None:
+        self._conn.execute(
+            text("UPDATE usuario SET contrasena_cambiada_en = clock_timestamp() WHERE id = :id"),
             {"id": id_usuario},
         )
         self._conn.commit()

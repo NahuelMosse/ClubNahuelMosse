@@ -105,6 +105,9 @@ Future<void> cambiarDesdeOtroDispositivo(
   String actual,
   String nueva,
 ) async {
+  // Firebase cuenta la revocación por segundos: el token de la app tiene que ser de un
+  // segundo anterior al cambio para que quede vencido.
+  await Future<void>.delayed(const Duration(milliseconds: 1100));
   final token = await _token(correo, actual);
   if (token == null) throw StateError('la contraseña actual no sirve');
   final r = await http.post(
@@ -119,6 +122,4 @@ Future<void> cambiarDesdeOtroDispositivo(
   if (r.statusCode != 200) {
     throw StateError('no se pudo cambiar la contraseña: ${r.statusCode}');
   }
-  // Firebase cuenta la revocación por segundos: el próximo token de la app ya es viejo.
-  await Future<void>.delayed(const Duration(seconds: 1));
 }

@@ -16,5 +16,9 @@ class NoAutenticado(Exception):
     """El pedido no trae un token válido de una cuenta con perfil activo."""
 
 
+class Demorado(Exception):
+    """El proveedor de identidad frena por demasiados intentos seguidos."""
+
+
 class CuentaExistente(Exception):
     """Ya hay una cuenta activa con ese correo y no se pidió ascenderla."""

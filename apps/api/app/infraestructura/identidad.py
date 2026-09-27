@@ -1,16 +1,47 @@
+import json
+import logging
+import os
+import urllib.error
+import urllib.request
 from functools import cache
 
 import firebase_admin
 from firebase_admin import auth
 
-from app.aplicacion.errores import Duplicado
+from app.aplicacion.errores import Demorado, Duplicado
 from app.config import config
+
+identidad_log = logging.getLogger("clubnahuelmosse.identidad")
 
 
 @cache
 def _app_firebase() -> firebase_admin.App:
     # Con FIREBASE_AUTH_EMULATOR_HOST definido, firebase-admin habla con el emulador.
-    return firebase_admin.initialize_app(options={"projectId": config.firebase_project_id})
+    return firebase_admin.initialize_app(
+        options={"projectId": config.firebase_project_id, "httpTimeout": _ESPERA_S}
+    )
+
+
+# Firebase no deja comprobar una contraseña desde el SDK de administración: se pregunta
+# por la API REST de Identity Toolkit, igual que al iniciar sesión.
+_RECHAZOS = {
+    "INVALID_LOGIN_CREDENTIALS",
+    "INVALID_PASSWORD",
+    "MISSING_PASSWORD",
+    "EMAIL_NOT_FOUND",
+    "USER_DISABLED",
+}
+# Menos que los 15 s que espera la app: el servidor contesta antes de que ella se rinda.
+_ESPERA_S = 4
+
+
+def _url_de_ingreso() -> str:
+    ruta = "identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
+    if emulador := os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
+        return f"http://{emulador}/{ruta}?key=clave-del-emulador"
+    if not config.firebase_api_key:
+        raise RuntimeError("falta FIREBASE_API_KEY para comprobar contraseñas")
+    return f"https://{ruta}?key={config.firebase_api_key}"
 
 
 class ProveedorFirebase:
@@ -38,3 +69,32 @@ class ProveedorFirebase:
             return None
         uid = datos.get("uid")
         return str(uid) if uid else None
+
+    def contrasena_correcta(self, correo: str, contrasena: str) -> bool:
+        pedido = urllib.request.Request(
+            _url_de_ingreso(),
+            data=json.dumps({"email": correo, "password": contrasena}).encode(),
+            headers={"content-type": "application/json"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(pedido, timeout=_ESPERA_S):
+                return True
+        except urllib.error.HTTPError as e:
+            if e.code != 400:
+                raise
+            mensaje = str(json.loads(e.read()).get("error", {}).get("message", ""))
+            if mensaje.startswith("TOO_MANY_ATTEMPTS"):
+                raise Demorado from e
+            if mensaje.split(" ")[0] in _RECHAZOS:
+                return False
+            raise
+
+    def cambiar_contrasena(self, uid: str, nueva: str) -> None:
+        auth.update_user(uid, password=nueva, app=_app_firebase())
+        # Firebase ya invalida las sesiones al cambiar la contraseña; revocar explícitamente
+        # lo asegura, pero si falla el cambio ya está hecho y no se informa como error.
+        try:
+            auth.revoke_refresh_tokens(uid, app=_app_firebase())
+        except Exception:
+            identidad_log.exception("no se pudieron revocar las sesiones de %s", uid)

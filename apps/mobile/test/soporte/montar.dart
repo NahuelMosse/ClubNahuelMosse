@@ -22,6 +22,25 @@ ClienteApi apiFalsa({int codigo = 201, String cuerpo = '{"id": 1}'}) =>
       ),
     );
 
+/// Un cliente de la API que responde según `MÉTODO /ruta`; lo que no está es un 404.
+/// Guarda cada pedido en [pedidos] para afirmar qué se mandó.
+ClienteApi apiRutas(
+  Map<String, (int, String)> respuestas, {
+  List<http.Request>? pedidos,
+}) => ClienteApi(
+  'http://api.falsa',
+  cliente: MockClient((pedido) async {
+    pedidos?.add(pedido);
+    final (codigo, cuerpo) =
+        respuestas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+    return http.Response.bytes(
+      utf8.encode(cuerpo),
+      codigo,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    );
+  }),
+);
+
 /// Monta [pantalla] con el tema y el idioma de la app, en un teléfono de [tamano].
 Future<void> montar(
   WidgetTester tester,
@@ -94,8 +113,14 @@ class CredencialesFalsas implements Credenciales {
     conCuenta = true;
   }
 
+  /// Como cuando Firebase ya no puede refrescar la sesión.
+  bool tokenFalla = false;
+
   @override
-  Future<String?> token() async => conCuenta ? 'token-falso' : null;
+  Future<String?> token() async {
+    if (tokenFalla) throw const CredencialesInvalidas();
+    return conCuenta ? 'token-falso' : null;
+  }
 
   @override
   Future<void> salir() async {

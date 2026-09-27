@@ -27,6 +27,17 @@ class CredencialesInvalidas implements Exception {
   const CredencialesInvalidas();
 }
 
+/// La API ya no reconoce la sesión: venció o se cerró desde otro dispositivo.
+class SesionVencida implements Exception {
+  const SesionVencida();
+}
+
+/// La API rechazó el cambio: cada campo con su mensaje.
+class ContrasenaRechazada implements Exception {
+  const ContrasenaRechazada(this.errores);
+  final Map<String, String> errores;
+}
+
 /// Quién comprueba el correo y la contraseña, y guarda la sesión en el dispositivo.
 abstract interface class Credenciales {
   bool get hayCuenta;
@@ -148,6 +159,50 @@ class Sesion extends ChangeNotifier {
       return null;
     } on Exception {
       return null;
+    }
+  }
+
+  /// Cambia la contraseña de quien tiene la sesión y vuelve a entrar con la nueva, porque
+  /// la API invalida todas las sesiones abiertas de la cuenta, esta incluida.
+  ///
+  /// Lanza [ContrasenaRechazada], [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<void> cambiarContrasena(String actual, String nueva) async {
+    final perfil = _perfil;
+    final String? token;
+    try {
+      token = await _credenciales.token();
+    } on CredencialesInvalidas {
+      // Firebase ya no refresca la sesión: la cuenta cambió en otro lado.
+      throw const SesionVencida();
+    }
+    if (perfil == null || token == null) throw const SesionVencida();
+    final r = await _api.put('/yo/contrasena', {
+      'actual': actual,
+      'nueva': nueva,
+    }, token: token);
+    switch (r.codigo) {
+      case 204:
+        try {
+          await _credenciales.ingresar(perfil.correo, nueva);
+        } on Exception {
+          // La contraseña ya cambió. Si no se pudo volver a entrar, el próximo pedido a la
+          // API avisa que la sesión venció.
+        }
+      case 401:
+        throw const SesionVencida();
+      case 422:
+        final errores = switch (r.cuerpo['errores']) {
+          final Map<String, Object?> mapa => {
+            for (final MapEntry(:key, :value) in mapa.entries)
+              if (value is String) key: value,
+          },
+          _ => const <String, String>{},
+        };
+        if (errores.isEmpty) throw ErrorDelServidor(r.codigo);
+        throw ContrasenaRechazada(errores);
+      default:
+        // 429: Firebase frena por demasiados intentos con la contraseña actual.
+        throw ErrorDelServidor(r.codigo);
     }
   }
 
