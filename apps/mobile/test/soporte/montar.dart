@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,9 +9,16 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
-ClienteApi apiFalsa({int codigo = 201, String cuerpo = '{"id": 1}'}) => ClienteApi(
+ClienteApi apiFalsa({int codigo = 201, String cuerpo = '{"id": 1}'}) =>
+    ClienteApi(
       'http://api.falsa',
-      cliente: MockClient((_) async => http.Response(cuerpo, codigo)),
+      cliente: MockClient(
+        (_) async => http.Response.bytes(
+          utf8.encode(cuerpo),
+          codigo,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      ),
     );
 
 /// Monta [pantalla] con el tema y el idioma de la app, en un teléfono de [tamano].
@@ -31,7 +40,9 @@ Future<void> montar(
       supportedLocales: const [Locale('es', 'AR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
       builder: (context, hijo) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(escalaTexto)),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(escalaTexto)),
         child: hijo ?? const SizedBox.shrink(),
       ),
       home: pantalla,

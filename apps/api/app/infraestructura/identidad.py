@@ -21,5 +21,11 @@ class ProveedorFirebase:
             raise Duplicado(["correo"]) from e
         return str(usuario.uid)
 
+    def uid_de(self, correo: str) -> str | None:
+        try:
+            return str(auth.get_user_by_email(correo, app=_app_firebase()).uid)
+        except auth.UserNotFoundError:
+            return None
+
     def borrar_cuenta(self, uid: str) -> None:
         auth.delete_user(uid, app=_app_firebase())

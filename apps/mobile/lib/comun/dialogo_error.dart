@@ -5,13 +5,12 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
 /// Los overlays compartidos de error de conexión y de error del servidor.
-Future<void> mostrarErrorDeRed(
-  BuildContext context,
-  Object error, {
-  VoidCallback? reintentar,
-}) {
+///
+/// Devuelve `true` si la persona eligió reintentar; quien llama reintenta cuando el
+/// intento anterior ya terminó.
+Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async {
   final sinConexion = error is SinConexion;
-  return showDialog<void>(
+  final reintentar = await showDialog<bool>(
     context: context,
     barrierColor: context.paleta.bgScrim,
     builder: (context) {
@@ -39,12 +38,9 @@ Future<void> mostrarErrorDeRed(
                 style: Textos.cuerpo.copyWith(color: p.textSecondary),
               ),
               const SizedBox(height: Medidas.s24),
-              if (sinConexion && reintentar != null)
+              if (sinConexion)
                 FilledButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    reintentar();
-                  },
+                  onPressed: () => Navigator.of(context).pop(true),
                   style: FilledButton.styleFrom(
                     backgroundColor: p.accentBase,
                     foregroundColor: p.accentOn,
@@ -55,7 +51,7 @@ Future<void> mostrarErrorDeRed(
                   child: const Text('REINTENTAR'),
                 ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(context).pop(false),
                 style: TextButton.styleFrom(
                   foregroundColor: p.accentInk,
                   minimumSize: const Size.fromHeight(Medidas.altoControl),
@@ -69,4 +65,5 @@ Future<void> mostrarErrorDeRed(
       );
     },
   );
+  return reintentar ?? false;
 }

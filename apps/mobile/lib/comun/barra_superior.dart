@@ -11,7 +11,7 @@ class BarraSuperior extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? alVolver;
 
   @override
-  Size get preferredSize => const Size.fromHeight(56);
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class BarraSuperior extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: p.bgBase,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      toolbarHeight: 56,
+      toolbarHeight: kToolbarHeight,
       titleSpacing: 0,
       leadingWidth: 60,
       leading: Padding(

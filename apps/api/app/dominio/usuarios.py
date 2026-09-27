@@ -65,9 +65,10 @@ def validar_registro(datos: DatosRegistro, hoy: date) -> tuple[Registro | None, 
         ("nombre", datos.nombre, "El nombre es obligatorio"),
         ("apellido", datos.apellido, "El apellido es obligatorio"),
     ):
-        if not valor.strip():
+        limpio = valor.strip()
+        if not limpio:
             errores[campo] = obligatorio
-        elif len(valor.strip()) > LARGO_MAXIMO_NOMBRE:
+        elif len(limpio) > LARGO_MAXIMO_NOMBRE:
             errores[campo] = f"Máximo {LARGO_MAXIMO_NOMBRE} caracteres"
 
     dni = normalizar_dni(datos.dni)

@@ -1,6 +1,6 @@
 """El repaso de seguridad del borde de la API, probado contra la app real."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -75,3 +75,14 @@ def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:
     texto = r.text.lower()
     for fuga in ("traceback", "sqlalchemy", "psycopg", "firebase", 'file "'):
         assert fuga not in texto
+
+
+def test_un_cuerpo_por_partes_de_mas_de_64_kb_devuelve_413(api: TestClient) -> None:
+    def partes() -> Iterator[bytes]:
+        yield b'{"nombre": "'
+        for _ in range(3):
+            yield b"a" * 40_000
+        yield b'"}'
+
+    r = api.post("/registro", content=partes(), headers={"content-type": "application/json"})
+    assert r.status_code == 413

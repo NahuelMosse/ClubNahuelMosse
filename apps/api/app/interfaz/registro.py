@@ -54,7 +54,7 @@ class UsuarioRepetido(BaseModel):
     summary="Registrar un usuario nuevo",
 )
 def registrar_usuario(
-    pedido: PedidoRegistro, conn: Annotated[Connection, Depends(conexion)]
+    pedido: PedidoRegistro, conn: Annotated[Connection, Depends(conexion, scope="function")]
 ) -> RegistroCreado | JSONResponse:
     try:
         nuevo = registrar(
@@ -64,10 +64,12 @@ def registrar_usuario(
             usuarios=UsuariosSql(conn),
         )
     except DatosInvalidos as e:
-        return JSONResponse(status_code=422, content={"errores": e.errores})
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
     except Duplicado as e:
         return JSONResponse(
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             content={
                 "mensaje": MENSAJE_DUPLICADO,
                 "campos": e.campos,

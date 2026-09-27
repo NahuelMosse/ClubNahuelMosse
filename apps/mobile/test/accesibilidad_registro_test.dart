@@ -11,7 +11,9 @@ void main() {
   final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
 
   for (final MapEntry(key: modo, value: tema) in temas.entries) {
-    testWidgets('el registro cumple las guías de accesibilidad en modo $modo', (tester) async {
+    testWidgets('el registro cumple las guías de accesibilidad en modo $modo', (
+      tester,
+    ) async {
       final semantica = tester.ensureSemantics();
       await montar(tester, PantallaRegistro(api: apiFalsa()), tema: tema);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -20,7 +22,9 @@ void main() {
       semantica.dispose();
     });
 
-    testWidgets('el éxito cumple las guías de accesibilidad en modo $modo', (tester) async {
+    testWidgets('el éxito cumple las guías de accesibilidad en modo $modo', (
+      tester,
+    ) async {
       final semantica = tester.ensureSemantics();
       await montar(tester, const PantallaRegistroExitoso(), tema: tema);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
@@ -30,28 +34,40 @@ void main() {
     });
   }
 
-  testWidgets('cada campo anuncia su nombre y el formulario avisa que todo es obligatorio',
-      (tester) async {
-    final semantica = tester.ensureSemantics();
-    await montar(tester, PantallaRegistro(api: apiFalsa()), tema: temaOscuro);
-    for (final campo in [
-      'Nombre',
-      'Apellido',
-      'DNI',
-      'Fecha de nacimiento',
-      'Correo electrónico',
-      'Contraseña',
-    ]) {
-      expect(find.bySemanticsLabel(campo), findsOneWidget, reason: campo);
-    }
-    expect(find.text('Todos los campos son obligatorios.'), findsOneWidget);
-    semantica.dispose();
-  });
+  testWidgets(
+    'cada campo anuncia su nombre y el formulario avisa que todo es obligatorio',
+    (tester) async {
+      final semantica = tester.ensureSemantics();
+      await montar(tester, PantallaRegistro(api: apiFalsa()), tema: temaOscuro);
+      for (final campo in [
+        'Nombre',
+        'Apellido',
+        'DNI',
+        'Fecha de nacimiento',
+        'Correo electrónico',
+        'Contraseña',
+      ]) {
+        expect(find.bySemanticsLabel(campo), findsOneWidget, reason: campo);
+      }
+      expect(find.text('Todos los campos son obligatorios.'), findsOneWidget);
+      semantica.dispose();
+    },
+  );
 
   testWidgets('con el texto al 200 % nada se desborda', (tester) async {
-    await montar(tester, PantallaRegistro(api: apiFalsa()), tema: temaOscuro, escalaTexto: 2);
+    await montar(
+      tester,
+      PantallaRegistro(api: apiFalsa()),
+      tema: temaOscuro,
+      escalaTexto: 2,
+    );
     expect(tester.takeException(), isNull);
-    await montar(tester, const PantallaRegistroExitoso(), tema: temaOscuro, escalaTexto: 2);
+    await montar(
+      tester,
+      const PantallaRegistroExitoso(),
+      tema: temaOscuro,
+      escalaTexto: 2,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -70,14 +86,22 @@ void main() {
         final pares = {
           'texto principal sobre el fondo': (p.textPrimary, p.bgBase),
           'texto secundario sobre el fondo': (p.textSecondary, p.bgBase),
-          'texto secundario sobre la superficie': (p.textSecondary, p.bgSurface),
+          'texto secundario sobre la superficie': (
+            p.textSecondary,
+            p.bgSurface,
+          ),
           'texto apagado sobre la superficie': (p.textMuted, p.bgSurface),
           'texto del botón sobre el lima': (p.accentOn, p.accentBase),
           'tinta del acento sobre el fondo': (p.accentInk, p.bgBase),
           'error sobre el fondo': (p.stateDangerInk, p.bgBase),
         };
-        for (final MapEntry(key: par, value: (tinta, lienzo)) in pares.entries) {
-          expect(contraste(tinta, lienzo), greaterThanOrEqualTo(4.5), reason: par);
+        for (final MapEntry(key: par, value: (tinta, lienzo))
+            in pares.entries) {
+          expect(
+            contraste(tinta, lienzo),
+            greaterThanOrEqualTo(4.5),
+            reason: par,
+          );
         }
       });
     }

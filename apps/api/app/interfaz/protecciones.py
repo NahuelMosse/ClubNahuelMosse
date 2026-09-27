@@ -1,6 +1,8 @@
+from starlette.exceptions import HTTPException
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 LIMITE_CUERPO = 64 * 1024
+_SEGURIDAD = [(b"cache-control", b"no-store"), (b"x-content-type-options", b"nosniff")]
 
 
 class Protecciones:
@@ -19,9 +21,13 @@ class Protecciones:
             return
 
         declarado = dict(scope["headers"]).get(b"content-length")
-        if declarado is not None and (not declarado.isdigit() or int(declarado) > LIMITE_CUERPO):
-            await _demasiado_grande(send)
-            return
+        if declarado is not None:
+            if not declarado.isdigit():
+                await _responder(send, 400, b'{"detail":"Content-Length invalido"}')
+                return
+            if int(declarado) > LIMITE_CUERPO:
+                await _responder(send, 413, b'{"detail":"El pedido es demasiado grande"}')
+                return
 
         leidos = 0
 
@@ -31,39 +37,31 @@ class Protecciones:
             if mensaje["type"] == "http.request":
                 leidos += len(mensaje.get("body", b""))
                 if leidos > LIMITE_CUERPO:
-                    raise _CuerpoExcedido
+                    # FastAPI re-lanza HTTPException al leer el cuerpo; otra excepción la
+                    # convertiría en un 400 genérico.
+                    raise HTTPException(413, "El pedido es demasiado grande")
             return mensaje
 
         async def enviar(mensaje: Message) -> None:
             if mensaje["type"] == "http.response.start":
-                cabeceras = [
-                    (k, v) for k, v in mensaje.get("headers", []) if k.lower() != b"cache-control"
-                ]
-                cabeceras.append((b"cache-control", b"no-store"))
-                cabeceras.append((b"x-content-type-options", b"nosniff"))
-                mensaje["headers"] = cabeceras
+                propias = {k for k, _ in _SEGURIDAD}
+                mensaje["headers"] = [
+                    (k, v) for k, v in mensaje.get("headers", []) if k.lower() not in propias
+                ] + _SEGURIDAD
             await send(mensaje)
 
-        try:
-            await self.app(scope, recibir, enviar)
-        except _CuerpoExcedido:
-            await _demasiado_grande(send)
+        await self.app(scope, recibir, enviar)
 
 
-class _CuerpoExcedido(Exception):
-    pass
-
-
-async def _demasiado_grande(send: Send) -> None:
-    cuerpo = b'{"detail":"El pedido es demasiado grande"}'
+async def _responder(send: Send, codigo: int, cuerpo: bytes) -> None:
     await send(
         {
             "type": "http.response.start",
-            "status": 413,
+            "status": codigo,
             "headers": [
                 (b"content-type", b"application/json"),
                 (b"content-length", str(len(cuerpo)).encode()),
-                (b"cache-control", b"no-store"),
+                *_SEGURIDAD,
             ],
         }
     )

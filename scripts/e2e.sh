@@ -8,6 +8,7 @@
 #   E2E_DATABASE_URL  base de la corrida; se borra y se migra desde cero (default: club_e2e_test)
 #   AUTH_PORT         puerto del emulador de Firebase Auth (default 9099)
 #   API_PORT          puerto de la API (default 8000)
+#   DISPOSITIVO       serie del dispositivo (obligatorio si hay más de uno conectado)
 #   AVD               AVD a usar si no hay un dispositivo conectado; corre en -read-only
 #   FLUTTER, ADB, EMULATOR  ejecutables
 set -eu
@@ -23,7 +24,13 @@ pids=""
 
 bajar() {
   for pid in $pids; do
-    taskkill //PID "$pid" //T //F >/dev/null 2>&1 || kill "$pid" 2>/dev/null || true
+    # En Git Bash, $! es el PID de MSYS: el árbol de Windows se baja por su propio PID.
+    winpid=$(cat "/proc/$pid/winpid" 2>/dev/null || true)
+    if [ -n "$winpid" ]; then
+      taskkill //PID "$winpid" //T //F >/dev/null 2>&1 || true
+    else
+      kill "$pid" 2>/dev/null || true
+    fi
   done
   rm -rf "$tmp"
 }
@@ -75,10 +82,25 @@ cd "$raiz/apps/api"
 DATABASE_URL="$E2E_DATABASE_URL" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:$AUTH_PORT" \
   FIREBASE_PROJECT_ID=demo-clubnahuelmosse \
   uv run uvicorn app.main:app --host 0.0.0.0 --port "$API_PORT" > "$tmp/api.log" 2>&1 &
-pids="$pids $!"
+api_pid=$!
+pids="$pids $api_pid"
 esperar_puerto "$API_PORT"
+if ! kill -0 "$api_pid" 2>/dev/null; then
+  echo "e2e: el puerto $API_PORT lo ocupa otro proceso; la API de la corrida no arrancó" >&2
+  tail -n 20 "$tmp/api.log" >&2
+  exit 1
+fi
 
-dispositivo=$("$ADB" devices | awk 'NR > 1 && $2 == "device" { print $1; exit }')
+dispositivo=${DISPOSITIVO:-}
+if [ -z "$dispositivo" ]; then
+  conectados=$("$ADB" devices | awk 'NR > 1 && $2 == "device" { print $1 }')
+  if [ "$(echo "$conectados" | grep -c .)" -gt 1 ]; then
+    echo "e2e: hay más de un dispositivo; elegí uno con DISPOSITIVO=<serie>:" >&2
+    echo "$conectados" >&2
+    exit 1
+  fi
+  dispositivo=$conectados
+fi
 if [ -z "$dispositivo" ]; then
   echo "e2e: arrancando el emulador ${AVD:?definí AVD o conectá un dispositivo} en solo lectura"
   "$EMULATOR" -avd "$AVD" -read-only -no-snapshot-save -no-boot-anim -no-audio > "$tmp/avd.log" 2>&1 &

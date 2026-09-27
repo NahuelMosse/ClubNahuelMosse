@@ -77,4 +77,15 @@ void main() {
     expect(escribir('1403200099').text, '14 / 03 / 2000');
     expect(escribir('14/03/2000').text, '14 / 03 / 2000');
   });
+
+  test('cuenta caracteres, no unidades UTF-16, igual que la API', () {
+    expect(problemasContrasena('Aa1😀😀😀'), ['Al menos 8 caracteres']);
+    expect(validarNombre('😀' * 31, obligatorio: 'x'), isNull);
+    expect(validarNombre('😀' * 61, obligatorio: 'x'), 'Máximo 60 caracteres');
+  });
+
+  test('el año cero no es una fecha', () {
+    expect(leerFecha('14 / 03 / 0000'), isNull);
+    expect(formatearFecha(DateTime(2000, 3, 4)), '04 / 03 / 2000');
+  });
 }

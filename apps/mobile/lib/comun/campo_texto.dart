@@ -21,6 +21,7 @@ class CampoTexto extends StatelessWidget {
     this.alEnviar,
     this.accion,
     this.autocompletar,
+    this.habilitado = true,
   });
 
   final String etiqueta;
@@ -36,6 +37,7 @@ class CampoTexto extends StatelessWidget {
   final ValueChanged<String>? alEnviar;
   final TextInputAction? accion;
   final Iterable<String>? autocompletar;
+  final bool habilitado;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +67,7 @@ class CampoTexto extends StatelessWidget {
             height: Medidas.altoControl,
             child: TextField(
               controller: controlador,
+              enabled: habilitado,
               focusNode: foco,
               obscureText: oculto,
               keyboardType: teclado,
@@ -102,6 +105,7 @@ class CampoTexto extends StatelessWidget {
                 focusedBorder: conError
                     ? borde(p.borderError, 1.5)
                     : borde(p.borderFocus, 1.5),
+                disabledBorder: borde(p.borderControl, 1),
                 border: borde(p.borderControl, 1),
               ),
             ),

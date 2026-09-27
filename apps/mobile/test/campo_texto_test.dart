@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Future<TextEditingController> montar(WidgetTester tester, {String? error}) async {
+  Future<TextEditingController> montar(
+    WidgetTester tester, {
+    String? error,
+  }) async {
     final controlador = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
@@ -23,7 +26,9 @@ void main() {
     return controlador;
   }
 
-  testWidgets('el campo se encuentra y se completa por su nombre accesible', (tester) async {
+  testWidgets('el campo se encuentra y se completa por su nombre accesible', (
+    tester,
+  ) async {
     final semantica = tester.ensureSemantics();
     final controlador = await montar(tester);
 

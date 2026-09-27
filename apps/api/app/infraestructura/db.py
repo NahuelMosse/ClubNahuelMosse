@@ -12,6 +12,7 @@ def motor() -> Engine:
 
 
 def conexion() -> Iterator[Connection]:
-    """Una transacción por pedido: se confirma si el pedido termina bien."""
-    with motor().begin() as conn:
+    """Una conexión por pedido. Confirma el caso de uso, antes de responder; lo que no
+    se confirmó se descarta al cerrar."""
+    with motor().connect() as conn:
         yield conn

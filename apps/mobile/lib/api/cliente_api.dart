@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
 
@@ -9,7 +8,7 @@ class SinConexion implements Exception {
   const SinConexion();
 }
 
-/// La API respondió con un error propio (5xx).
+/// La API respondió con un error propio (5xx) o con algo que no es la API.
 class ErrorDelServidor implements Exception {
   const ErrorDelServidor(this.codigo);
   final int codigo;
@@ -41,16 +40,19 @@ class ClienteApi {
             body: jsonEncode(cuerpo),
           )
           .timeout(_limite);
-    } on SocketException {
-      throw const SinConexion();
-    } on http.ClientException {
-      throw const SinConexion();
-    } on TimeoutException {
+    } on Exception {
+      // Sin red, DNS, TLS, la conexión cortada o la API que no contesta a tiempo.
       throw const SinConexion();
     }
     if (r.statusCode >= 500) throw ErrorDelServidor(r.statusCode);
-    final texto = utf8.decode(r.bodyBytes);
-    final datos = texto.isEmpty ? null : jsonDecode(texto);
+    final Object? datos;
+    try {
+      final texto = utf8.decode(r.bodyBytes);
+      datos = texto.isEmpty ? null : jsonDecode(texto);
+    } on FormatException {
+      // Respondió algo que no es la API (un proxy, un portal cautivo).
+      throw ErrorDelServidor(r.statusCode);
+    }
     return Respuesta(
       r.statusCode,
       datos is Map<String, Object?> ? datos : const {},

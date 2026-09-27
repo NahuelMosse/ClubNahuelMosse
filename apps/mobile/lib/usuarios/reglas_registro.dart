@@ -7,7 +7,7 @@ const largoMaximoNombre = 60;
 String? validarNombre(String valor, {required String obligatorio}) {
   final limpio = valor.trim();
   if (limpio.isEmpty) return obligatorio;
-  if (limpio.length > largoMaximoNombre) {
+  if (limpio.runes.length > largoMaximoNombre) {
     return 'Máximo $largoMaximoNombre caracteres';
   }
   return null;
@@ -36,7 +36,7 @@ DateTime? leerFecha(String valor) {
   final dia = int.tryParse(partes[0]);
   final mes = int.tryParse(partes[1]);
   final anio = int.tryParse(partes[2]);
-  if (dia == null || mes == null || anio == null) return null;
+  if (dia == null || mes == null || anio == null || anio < 1) return null;
   final fecha = DateTime(anio, mes, dia);
   if (fecha.year != anio || fecha.month != mes || fecha.day != dia) return null;
   return fecha;
@@ -63,7 +63,7 @@ String? validarCorreo(String valor) {
 
 /// Las reglas que no cumple, en el orden en que las muestra la app.
 List<String> problemasContrasena(String contrasena) => [
-  if (contrasena.length < 8) 'Al menos 8 caracteres',
+  if (contrasena.runes.length < 8) 'Al menos 8 caracteres',
   if (!RegExp(r'[A-ZÁÉÍÓÚÑ]').hasMatch(contrasena)) 'Una letra mayúscula',
   if (!RegExp(r'[0-9]').hasMatch(contrasena)) 'Al menos un número',
 ];
@@ -74,7 +74,12 @@ String? validarContrasena(String valor) {
   return faltan.isEmpty ? null : faltan.first;
 }
 
+String _dos(int n) => n.toString().padLeft(2, '0');
+
 /// La fecha en el formato que espera la API (`AAAA-MM-DD`).
 String fechaIso(DateTime fecha) =>
-    '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}'
-    '-${fecha.day.toString().padLeft(2, '0')}';
+    '${fecha.year.toString().padLeft(4, '0')}-${_dos(fecha.month)}-${_dos(fecha.day)}';
+
+/// La fecha como se escribe en el campo (`DD / MM / AAAA`), la inversa de [leerFecha].
+String formatearFecha(DateTime fecha) =>
+    '${_dos(fecha.day)} / ${_dos(fecha.month)} / ${fecha.year}';

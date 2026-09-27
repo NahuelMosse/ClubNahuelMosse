@@ -79,3 +79,22 @@ def test_la_documentacion_openapi_describe_el_registro(api: TestClient) -> None:
     esquema = api.get("/openapi.json").json()
     assert "/registro" in esquema["paths"]
     assert {"201", "409", "422"} <= set(esquema["paths"]["/registro"]["post"]["responses"])
+
+
+def test_una_cuenta_de_firebase_sin_perfil_no_bloquea_el_registro(
+    api: TestClient,
+    iniciar_sesion: Callable[[str, str], str | None],
+    unico: Callable[[], str],
+) -> None:
+    from firebase_admin import auth
+
+    from app.infraestructura.identidad import _app_firebase
+
+    s = unico()
+    correo = f"huerfana.{s}@correo.com"
+    auth.create_user(email=correo, password="OtraClave9", app=_app_firebase())
+
+    r = api.post("/registro", json=_pedido(s, correo=correo))
+    assert r.status_code == 201, r.text
+    assert iniciar_sesion(correo, "ClubNahuel1") is not None
+    assert iniciar_sesion(correo, "OtraClave9") is None

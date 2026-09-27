@@ -11,16 +11,21 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'reglas_registro.dart';
 
-enum _Campo { nombre, apellido, dni, fechaNacimiento, correo, contrasena }
+/// Los campos del formulario, con el nombre que usa la API.
+enum _Campo {
+  nombre('nombre'),
+  apellido('apellido'),
+  dni('dni'),
+  fechaNacimiento('fecha_nacimiento'),
+  correo('correo'),
+  contrasena('contrasena');
 
-const _campoDeLaApi = {
-  'nombre': _Campo.nombre,
-  'apellido': _Campo.apellido,
-  'dni': _Campo.dni,
-  'fecha_nacimiento': _Campo.fechaNacimiento,
-  'correo': _Campo.correo,
-  'contrasena': _Campo.contrasena,
-};
+  const _Campo(this.clave);
+  final String clave;
+
+  static _Campo? deLaApi(String clave) =>
+      values.where((c) => c.clave == clave).firstOrNull;
+}
 
 class PantallaRegistro extends StatefulWidget {
   const PantallaRegistro({super.key, required this.api, this.hoy});
@@ -39,11 +44,14 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     for (final _ in _Campo.values) TextEditingController(),
   ];
   final _focos = [for (final _ in _Campo.values) FocusNode()];
+  final _textos = [for (final _ in _Campo.values) ''];
   final _tocados = <_Campo>{};
   final _erroresDelServidor = <_Campo, String>{};
   String? _aviso;
   bool _enviando = false;
   bool _contrasenaVisible = false;
+
+  DateTime get _hoy => (widget.hoy ?? DateTime.now)();
 
   @override
   void initState() {
@@ -52,11 +60,19 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       _focos[campo.index].addListener(() {
         if (!_focos[campo.index].hasFocus) setState(() => _tocados.add(campo));
       });
-      _controladores[campo.index].addListener(() {
-        _erroresDelServidor.remove(campo);
-        setState(() {});
-      });
+      _controladores[campo.index].addListener(() => _alCambiar(campo));
     }
+  }
+
+  /// Sólo un cambio de texto invalida lo que dijo la API; mover el cursor, no.
+  void _alCambiar(_Campo campo) {
+    final texto = _controladores[campo.index].text;
+    if (texto == _textos[campo.index]) return;
+    setState(() {
+      _textos[campo.index] = texto;
+      _erroresDelServidor.remove(campo);
+      if (campo == _Campo.correo || campo == _Campo.dni) _aviso = null;
+    });
   }
 
   @override
@@ -72,23 +88,20 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
 
   String _valor(_Campo c) => _controladores[c.index].text;
 
-  String? _errorDeRegla(_Campo campo) {
-    final hoy = (widget.hoy ?? DateTime.now)();
-    return switch (campo) {
-      _Campo.nombre => validarNombre(
-        _valor(campo),
-        obligatorio: 'El nombre es obligatorio',
-      ),
-      _Campo.apellido => validarNombre(
-        _valor(campo),
-        obligatorio: 'El apellido es obligatorio',
-      ),
-      _Campo.dni => validarDni(_valor(campo)),
-      _Campo.fechaNacimiento => validarFechaNacimiento(_valor(campo), hoy),
-      _Campo.correo => validarCorreo(_valor(campo)),
-      _Campo.contrasena => validarContrasena(_valor(campo)),
-    };
-  }
+  String? _errorDeRegla(_Campo campo) => switch (campo) {
+    _Campo.nombre => validarNombre(
+      _valor(campo),
+      obligatorio: 'El nombre es obligatorio',
+    ),
+    _Campo.apellido => validarNombre(
+      _valor(campo),
+      obligatorio: 'El apellido es obligatorio',
+    ),
+    _Campo.dni => validarDni(_valor(campo)),
+    _Campo.fechaNacimiento => validarFechaNacimiento(_valor(campo), _hoy),
+    _Campo.correo => validarCorreo(_valor(campo)),
+    _Campo.contrasena => validarContrasena(_valor(campo)),
+  };
 
   String? _errorVisible(_Campo campo) =>
       _erroresDelServidor[campo] ??
@@ -98,19 +111,16 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
 
   Future<void> _crearCuenta() async {
     final fecha = leerFecha(_valor(_Campo.fechaNacimiento));
-    if (!_completo || fecha == null) return;
+    if (_enviando || !_completo || fecha == null) return;
     setState(() {
       _enviando = true;
       _aviso = null;
     });
+    Object? fallo;
     try {
       final r = await widget.api.post('/registro', {
-        'nombre': _valor(_Campo.nombre),
-        'apellido': _valor(_Campo.apellido),
-        'dni': _valor(_Campo.dni),
-        'fecha_nacimiento': fechaIso(fecha),
-        'correo': _valor(_Campo.correo),
-        'contrasena': _valor(_Campo.contrasena),
+        for (final c in _Campo.values)
+          c.clave: c == _Campo.fechaNacimiento ? fechaIso(fecha) : _valor(c),
       });
       if (!mounted) return;
       if (r.codigo == 201) {
@@ -118,43 +128,43 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         return;
       }
       final errores = r.cuerpo['errores'];
-      setState(() {
-        if (errores is Map<String, Object?>) {
+      final mensaje = r.cuerpo['mensaje'];
+      if (errores is! Map<String, Object?> || errores.isEmpty) {
+        fallo = ErrorDelServidor(r.codigo);
+      } else {
+        setState(() {
           for (final MapEntry(:key, :value) in errores.entries) {
-            final campo = _campoDeLaApi[key];
+            final campo = _Campo.deLaApi(key);
             if (campo != null && value is String) {
               _erroresDelServidor[campo] = value;
             }
           }
-        }
-        final mensaje = r.cuerpo['mensaje'];
-        _aviso = r.codigo == 409 && mensaje is String ? mensaje : null;
-      });
-    } on SinConexion catch (e) {
-      if (mounted) {
-        await mostrarErrorDeRed(context, e, reintentar: _crearCuenta);
+          _aviso = r.codigo == 409 && mensaje is String ? mensaje : null;
+        });
       }
+    } on SinConexion catch (e) {
+      fallo = e;
     } on ErrorDelServidor catch (e) {
-      if (mounted) await mostrarErrorDeRed(context, e);
+      fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);
+    }
+    if (fallo != null && mounted) {
+      final reintentar = await mostrarErrorDeRed(context, fallo);
+      if (reintentar && mounted) await _crearCuenta();
     }
   }
 
   Future<void> _elegirFecha() async {
-    final hoy = (widget.hoy ?? DateTime.now)();
     final elegida = await showDatePicker(
       context: context,
       initialDate:
-          leerFecha(_valor(_Campo.fechaNacimiento)) ?? DateTime(hoy.year - 20),
+          leerFecha(_valor(_Campo.fechaNacimiento)) ?? DateTime(_hoy.year - 20),
       firstDate: DateTime(1900),
-      lastDate: hoy.subtract(const Duration(days: 1)),
+      lastDate: _hoy.subtract(const Duration(days: 1)),
     );
-    if (elegida == null) return;
-    final dd = elegida.day.toString().padLeft(2, '0');
-    final mm = elegida.month.toString().padLeft(2, '0');
-    _controladores[_Campo.fechaNacimiento.index].text =
-        '$dd / $mm / ${elegida.year}';
+    if (elegida == null || !mounted) return;
+    _controladores[_Campo.fechaNacimiento.index].text = formatearFecha(elegida);
     setState(() => _tocados.add(_Campo.fechaNacimiento));
   }
 
@@ -177,6 +187,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       error: _errorVisible(campo),
       teclado: teclado,
       oculto: oculto,
+      habilitado: !_enviando,
       accionFinal: accionFinal,
       autocompletar: autocompletar,
       accion: campo == _Campo.contrasena
@@ -259,7 +270,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 teclado: TextInputType.number,
                 accionFinal: IconButton(
                   tooltip: 'Elegir fecha',
-                  onPressed: _elegirFecha,
+                  onPressed: _enviando ? null : _elegirFecha,
                   icon: Icon(
                     Icons.calendar_today_outlined,
                     color: p.textSecondary,
