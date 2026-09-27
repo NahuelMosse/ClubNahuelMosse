@@ -8,10 +8,13 @@ url = context.config.get_main_option("sqlalchemy.url") or config_app.database_ur
 
 def correr() -> None:
     motor = create_engine(url)
-    with motor.connect() as conn:
-        context.configure(connection=conn)
-        with context.begin_transaction():
-            context.run_migrations()
+    try:
+        with motor.connect() as conn:
+            context.configure(connection=conn)
+            with context.begin_transaction():
+                context.run_migrations()
+    finally:
+        motor.dispose()
 
 
 correr()
