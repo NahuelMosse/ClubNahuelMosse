@@ -42,3 +42,4 @@ CU-01-AMB-05 · 2026-09-27 · vencida → CU-01-SUP-03 · el correo se envía si
 CU-01-AMB-07 · 2026-09-27 · vencida → CU-01-SUP-04 · la base no guarda el último ingreso ni los intentos fallidos
 CU-01-AMB-10 · 2026-09-27 · abierta · ¿qué pasa si la cuenta existe en Firebase pero no tiene un perfil activo en la base (por ejemplo, dada de baja)?
 CU-01-AMB-10 · 2026-09-27 · vencida → CU-01-SUP-05 · no inicia sesión: se cierra la sesión de Firebase y se muestra el mensaje genérico de FA2
+CU-01-TESTS · 2026-09-27 · congelados en 57bcfaa · 9 escenarios de pantalla en rojo: el login no tiene campos ni enlace
