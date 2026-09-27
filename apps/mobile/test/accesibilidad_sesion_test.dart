@@ -1,7 +1,9 @@
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
+import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
+import 'package:clubnahuelmosse/sesion/recuperacion.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_cambiar_contrasena.dart';
@@ -37,8 +39,20 @@ void main() {
     'el Home': () => PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
     'el panel de administración': () =>
         PantallaPanelAdmin(sesion: SesionFalsa(perfilAdmin)),
-    'recuperar contraseña': () => const PantallaRecuperarContrasena(),
+    'recuperar contraseña': () => PantallaRecuperarContrasena(
+      recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+    ),
     'Mi perfil': () => PantallaMiPerfil(sesion: SesionFalsa(perfilUsuario)),
+    'la contraseña nueva': () => PantallaNuevaContrasena(
+      recuperacion: Recuperacion(apiFalsa(codigo: 204, cuerpo: '')),
+      sesion: SesionFalsa(null),
+      codigo: 'abc',
+    ),
+    'el enlace inválido': () => PantallaNuevaContrasena(
+      recuperacion: Recuperacion(apiFalsa(codigo: 410, cuerpo: '')),
+      sesion: SesionFalsa(null),
+      codigo: 'abc',
+    ),
     'cambiar contraseña': () =>
         PantallaCambiarContrasena(sesion: SesionFalsa(perfilUsuario)),
   };

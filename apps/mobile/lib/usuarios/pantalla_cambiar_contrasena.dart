@@ -9,6 +9,8 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import '../comun/resultado.dart';
+import 'reglas_contrasena.dart';
 import 'reglas_registro.dart';
 
 enum _Campo { actual, nueva, repetida }
@@ -164,7 +166,18 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
 
   @override
   Widget build(BuildContext context) {
-    if (_listo) return const _Actualizada();
+    if (_listo) {
+      return PantallaResultado(
+        icono: Icons.check_circle_outline_rounded,
+        tono: TonoResultado.exito,
+        titulo: 'Contraseña actualizada',
+        texto:
+            'Tu contraseña se cambió correctamente. Usala la próxima vez que '
+            'inicies sesión.',
+        principal: 'VOLVER AL PERFIL',
+        alTocarPrincipal: () => Navigator.of(context).maybePop(),
+      );
+    }
     final p = context.paleta;
     final nueva = _valor(_Campo.nueva);
     return Scaffold(
@@ -206,10 +219,7 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
               accesible: 'Contraseña nueva',
               placeholder: 'Mínimo 8 caracteres',
             ),
-            if (nueva.isNotEmpty && _faltan.isNotEmpty) ...[
-              const SizedBox(height: Medidas.s16),
-              _Reglas(faltan: _faltan),
-            ],
+            ReglasContrasena(contrasena: nueva),
             const SizedBox(height: Medidas.s16),
             _campo(
               _Campo.repetida,
@@ -222,163 +232,11 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
           ],
         ),
       ),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          border: Border(top: BorderSide(color: p.borderDefault)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s16,
-              Medidas.s24,
-              Medidas.s24,
-            ),
-            child: BotonPrimario(
-              texto: 'GUARDAR CONTRASEÑA',
-              cargando: _enviando,
-              alTocar: _completo ? _guardar : null,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Las tres reglas de la contraseña, cada una en verde si se cumple y en rojo si falta.
-class _Reglas extends StatelessWidget {
-  const _Reglas({required this.faltan});
-
-  final List<String> faltan;
-
-  static const _todas = [
-    'Al menos 8 caracteres',
-    'Una letra mayúscula',
-    'Al menos un número',
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      liveRegion: true,
-      container: true,
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.bgSurface,
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (final (i, regla) in _todas.indexed) ...[
-              if (i > 0) const SizedBox(height: Medidas.s8),
-              _Regla(texto: regla, cumplida: !faltan.contains(regla)),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Regla extends StatelessWidget {
-  const _Regla({required this.texto, required this.cumplida});
-
-  final String texto;
-  final bool cumplida;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      label: '$texto: ${cumplida ? 'cumplida' : 'falta'}',
-      excludeSemantics: true,
-      child: Row(
-        children: [
-          Icon(
-            cumplida
-                ? Icons.check_circle_outline_rounded
-                : Icons.error_outline_rounded,
-            size: 17,
-            color: cumplida ? p.stateSuccessInk : p.stateDangerInk,
-          ),
-          const SizedBox(width: Medidas.s8),
-          Expanded(
-            child: Text(
-              texto,
-              style: Textos.leyenda.copyWith(
-                color: cumplida ? p.textSecondary : p.stateDangerInk,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Actualizada extends StatelessWidget {
-  const _Actualizada();
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(Medidas.s24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      color: p.stateSuccessMuted,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.check_circle_outline_rounded,
-                      size: 40,
-                      color: p.stateSuccessInk,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: Medidas.s24),
-                Semantics(
-                  header: true,
-                  liveRegion: true,
-                  child: Text(
-                    'Contraseña actualizada',
-                    textAlign: TextAlign.center,
-                    style: Textos.h1.copyWith(color: p.textPrimary),
-                  ),
-                ),
-                const SizedBox(height: Medidas.s12),
-                Text(
-                  'Tu contraseña se cambió correctamente. Usala la próxima vez '
-                  'que inicies sesión.',
-                  textAlign: TextAlign.center,
-                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                ),
-                const SizedBox(height: Medidas.s32),
-                BotonPrimario(
-                  texto: 'VOLVER AL PERFIL',
-                  alTocar: () => Navigator.of(context).maybePop(),
-                ),
-              ],
-            ),
-          ),
+      bottomNavigationBar: BarraDeAccion(
+        child: BotonPrimario(
+          texto: 'GUARDAR CONTRASEÑA',
+          cargando: _enviando,
+          alTocar: _completo ? _guardar : null,
         ),
       ),
     );

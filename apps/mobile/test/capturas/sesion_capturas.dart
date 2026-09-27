@@ -1,7 +1,9 @@
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
+import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
+import 'package:clubnahuelmosse/sesion/recuperacion.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
@@ -105,6 +107,69 @@ void main() {
         await capturar(tester, 'sesion/mi_perfil_${ancho}_$modo.png');
       });
 
+      testWidgets('recuperar correo inválido $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montar(
+          tester,
+          PantallaRecuperarContrasena(
+            recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+          ),
+          tema: tema,
+          tamano: tamano,
+        );
+        await tester.enterText(
+          find.bySemanticsLabel('Correo electrónico'),
+          'nmosse@unimoron',
+        );
+        FocusManager.instance.primaryFocus?.unfocus();
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sesion/recuperar_invalido_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      testWidgets('recuperar enviado $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montar(
+          tester,
+          PantallaRecuperarContrasena(
+            recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+          ),
+          tema: tema,
+          tamano: tamano,
+        );
+        await tester.enterText(
+          find.bySemanticsLabel('Correo electrónico'),
+          'nmosse@unimoron.edu.ar',
+        );
+        await tester.pump();
+        await tester.tap(find.text('ENVIAR ENLACE'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sesion/recuperar_enviado_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      for (final (nombre, codigo) in [
+        ('nueva', 204),
+        ('enlace_invalido', 410),
+      ]) {
+        testWidgets('recuperar $nombre $ancho $modo', (tester) async {
+          await montar(
+            tester,
+            PantallaNuevaContrasena(
+              recuperacion: Recuperacion(apiFalsa(codigo: codigo, cuerpo: '')),
+              sesion: SesionFalsa(null),
+              codigo: 'abc',
+            ),
+            tema: tema,
+            tamano: tamano,
+          );
+          await capturar(
+            tester,
+            'sesion/recuperar_${nombre}_${ancho}_$modo.png',
+          );
+        });
+      }
+
       testWidgets('panel admin $ancho $modo', (tester) async {
         await montar(
           tester,
@@ -118,7 +183,9 @@ void main() {
       testWidgets('recuperar contraseña $ancho $modo', (tester) async {
         await montar(
           tester,
-          const PantallaRecuperarContrasena(),
+          PantallaRecuperarContrasena(
+            recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+          ),
           tema: tema,
           tamano: tamano,
         );

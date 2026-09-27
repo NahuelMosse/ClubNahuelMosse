@@ -90,7 +90,7 @@ DATABASE_URL="$E2E_DATABASE_URL" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:$AUTH_PO
 
 echo "e2e: API en $API_PORT"
 DATABASE_URL="$E2E_DATABASE_URL" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:$AUTH_PORT" \
-  FIREBASE_PROJECT_ID=demo-clubnahuelmosse \
+  FIREBASE_PROJECT_ID=demo-clubnahuelmosse PRUEBAS=1 CORREO_MODO=buzon \
   uv run uvicorn app.main:app --host 0.0.0.0 --port "$API_PORT" > "$tmp/api.log" 2>&1 &
 api_pid=$!
 pids="$pids $api_pid"

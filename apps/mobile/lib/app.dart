@@ -7,7 +7,9 @@ import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
 import 'reservas/pantalla_mis_reservas.dart';
 import 'sesion/pantalla_inicio_sesion.dart';
+import 'sesion/pantalla_nueva_contrasena.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
+import 'sesion/recuperacion.dart';
 import 'sesion/sesion.dart';
 import 'tema/tema.dart';
 import 'usuarios/pantalla_cambiar_contrasena.dart';
@@ -43,6 +45,8 @@ class _AppState extends State<App> {
     '/admin': Rol.admin,
   };
 
+  late final _recuperacion = Recuperacion(widget.api);
+
   late final GoRouter _rutas = GoRouter(
     initialLocation: widget.inicio,
     // Al iniciar o cerrar la sesión, las rutas se vuelven a evaluar.
@@ -69,9 +73,24 @@ class _AppState extends State<App> {
           ),
           GoRoute(
             path: 'recuperar-contrasena',
-            builder: (context, _) => const PantallaRecuperarContrasena(),
+            builder: (context, _) =>
+                PantallaRecuperarContrasena(recuperacion: _recuperacion),
           ),
         ],
+      ),
+      // Adonde abre el enlace del correo: clubnahuelmosse://app/recuperar?codigo=…
+      GoRoute(
+        path: '/recuperar',
+        builder: (context, estado) {
+          final codigo = estado.uri.queryParameters['codigo'] ?? '';
+          // Un enlace nuevo con la pantalla ya abierta es otra pantalla, no la misma.
+          return PantallaNuevaContrasena(
+            key: ValueKey(codigo),
+            recuperacion: _recuperacion,
+            sesion: widget.sesion,
+            codigo: codigo,
+          );
+        },
       ),
       GoRoute(
         path: '/inicio',

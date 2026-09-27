@@ -16,6 +16,7 @@ URL_PRUEBAS = os.environ.get(
 # La API bajo test usa la misma base de pruebas y el emulador de Firebase Auth.
 os.environ["DATABASE_URL"] = URL_PRUEBAS
 os.environ.setdefault("FIREBASE_PROJECT_ID", "demo-clubnahuelmosse")
+os.environ.setdefault("CORREO_MODO", "buzon")
 RAIZ_API = Path(__file__).resolve().parents[1]
 
 

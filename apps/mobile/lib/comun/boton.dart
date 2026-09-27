@@ -125,3 +125,33 @@ class BotonContorno extends StatelessWidget {
     );
   }
 }
+
+/// La barra fija de abajo con la acción principal de un formulario largo.
+class BarraDeAccion extends StatelessWidget {
+  const BarraDeAccion({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: p.bgSurfaceRaised,
+        border: Border(top: BorderSide(color: p.borderDefault)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Medidas.s24,
+            Medidas.s16,
+            Medidas.s24,
+            Medidas.s24,
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}

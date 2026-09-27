@@ -41,13 +41,13 @@ class ClienteApi {
   Future<Respuesta> put(
     String ruta,
     Map<String, Object?> cuerpo, {
-    required String token,
+    String? token,
   }) => _enviar(
     () => _cliente.put(
       _base.resolve(ruta),
       headers: {
         'content-type': 'application/json',
-        'authorization': 'Bearer $token',
+        if (token != null) 'authorization': 'Bearer $token',
       },
       body: jsonEncode(cuerpo),
     ),

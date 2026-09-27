@@ -35,6 +35,10 @@ def normalizar_correo(correo: str) -> str:
     return correo.strip().lower()
 
 
+def correo_valido(correo: str) -> bool:
+    return _CORREO.fullmatch(correo) is not None
+
+
 def normalizar_dni(dni: str) -> str:
     return re.sub(r"[.\s]", "", dni.strip())
 

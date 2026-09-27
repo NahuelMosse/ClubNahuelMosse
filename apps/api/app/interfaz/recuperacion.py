@@ -1,0 +1,134 @@
+from typing import Annotated
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel
+from sqlalchemy import Connection
+
+from app.aplicacion.errores import DatosInvalidos
+from app.aplicacion.recuperacion import EnlaceInvalido, enlace_vigente, pedir_enlace, usar_enlace
+from app.config import config
+from app.infraestructura.correo import enviar
+from app.infraestructura.db import conexion
+from app.infraestructura.enlaces import EnlacesSql
+from app.infraestructura.identidad import ProveedorFirebase
+from app.infraestructura.usuarios import UsuariosSql
+
+router = APIRouter(tags=["recuperación de contraseña"])
+Conexion = Annotated[Connection, Depends(conexion, scope="function")]
+
+# El paquete de la app en Android: el enlace del correo la abre con este intent.
+PAQUETE_ANDROID = "ar.edu.unimoron.clubnahuelmosse"
+
+
+class PedidoDeEnlace(BaseModel):
+    correo: str = ""
+
+
+class ConsultaDeEnlace(BaseModel):
+    codigo: str = ""
+
+
+class ContrasenaNueva(BaseModel):
+    codigo: str = ""
+    nueva: str = ""
+
+
+class ErroresDeCampo(BaseModel):
+    errores: dict[str, str]
+
+
+def _invalidos(e: DatosInvalidos) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+    )
+
+
+@router.post(
+    "/recuperacion",
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={422: {"model": ErroresDeCampo}},
+    summary="Pedir un enlace para crear una contraseña nueva",
+    description="Responde lo mismo exista o no una cuenta con ese correo.",
+)
+def pedir(pedido: PedidoDeEnlace, tareas: BackgroundTasks, conn: Conexion) -> Response:
+    try:
+        mensaje = pedir_enlace(pedido.correo, config.url_publica, EnlacesSql(conn))
+    except DatosInvalidos as e:
+        return _invalidos(e)
+    if mensaje is not None:
+        if config.correo_modo == "buzon":
+            # En desarrollo y escenarios el buzón se llena antes de responder, así el
+            # correo ya está cuando la app muestra «Revisá tu correo».
+            enviar(mensaje)
+        else:
+            # Por SMTP, después de responder: la demora no delata que la cuenta existe.
+            tareas.add_task(enviar, mensaje)
+    return Response(status_code=status.HTTP_202_ACCEPTED)
+
+
+# Los códigos viajan en el cuerpo, no en la ruta: la ruta queda en los registros de pedidos.
+@router.post(
+    "/recuperacion/consulta",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={410: {"description": "El enlace venció, ya se usó o fue reemplazado"}},
+    summary="Saber si un enlace de recuperación sigue sirviendo",
+)
+def consultar(consulta: ConsultaDeEnlace, conn: Conexion) -> Response:
+    vigente = bool(consulta.codigo) and enlace_vigente(consulta.codigo, EnlacesSql(conn))
+    return Response(status_code=status.HTTP_204_NO_CONTENT if vigente else status.HTTP_410_GONE)
+
+
+@router.put(
+    "/recuperacion",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        410: {"description": "El enlace venció, ya se usó o fue reemplazado"},
+        422: {"model": ErroresDeCampo},
+    },
+    summary="Crear la contraseña nueva con el enlace",
+    description="El enlace deja de servir y se invalidan todas las sesiones de la cuenta.",
+)
+def usar(pedido: ContrasenaNueva, conn: Conexion) -> Response:
+    try:
+        usar_enlace(
+            pedido.codigo,
+            pedido.nueva,
+            EnlacesSql(conn),
+            identidad=ProveedorFirebase(),
+            usuarios=UsuariosSql(conn),
+        )
+    except DatosInvalidos as e:
+        return _invalidos(e)
+    except EnlaceInvalido:
+        return Response(status_code=status.HTTP_410_GONE)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+_PAGINA_DEL_ENLACE = f"""<!doctype html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClubNahuelMosse</title>
+<p>Abriendo la app de ClubNahuelMosse…</p>
+<p>Si no se abre, abrí este correo desde el teléfono que tiene la app instalada.</p>
+<script>
+  var codigo = new URLSearchParams(location.hash.slice(1)).get("codigo") || "";
+  location.replace("intent://app/recuperar?codigo=" + encodeURIComponent(codigo) +
+    "#Intent;scheme=clubnahuelmosse;package={PAQUETE_ANDROID};end");
+</script>
+</html>
+"""
+
+
+@router.get(
+    "/enlace/recuperar",
+    response_class=HTMLResponse,
+    summary="Página del enlace del correo: abre la app en la contraseña nueva",
+    description=(
+        "Los clientes de correo no vuelven tocables los enlaces con esquema propio; este "
+        "enlace https lleva a la app con un intent de Android."
+    ),
+)
+def pagina_del_enlace() -> HTMLResponse:
+    return HTMLResponse(_PAGINA_DEL_ENLACE, headers={"Referrer-Policy": "no-referrer"})
