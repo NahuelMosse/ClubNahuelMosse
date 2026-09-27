@@ -30,3 +30,4 @@ CU-04b-AMB-02 · 2026-09-27 · vencida → CU-04b-SUP-02 · como mucho tres enla
 CU-04b-AMB-03 · 2026-09-27 · vencida → CU-04b-SUP-03 · un cambio de contraseña por otra vía (CU-04 u otro enlace) invalida los enlaces emitidos antes
 CU-04b-AMB-06 · 2026-09-27 · abierta · ¿qué pantalla confirma que la contraseña se recuperó? El CU pide una confirmación con «Volver al login» y el prototipo no la dibuja
 CU-04b-AMB-06 · 2026-09-27 · vencida → CU-04b-SUP-04 · la misma pantalla «Contraseña actualizada» de CU-04, con «VOLVER AL INICIO DE SESIÓN»
+CU-04b-TESTS · 2026-09-27 · congelados en 0bcac0b · 9 escenarios de pantalla en rojo: Recuperar contraseña no tiene formulario
