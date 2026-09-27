@@ -41,6 +41,27 @@ Future<void> abrirApp(
   await tester.pumpAndSettle();
 }
 
+/// Vuelve a arrancar la app como al reabrirla: con la sesión que haya quedado guardada.
+Future<void> reabrirApp(WidgetTester tester) async {
+  await app.arrancar(Configuracion.desdeEntorno());
+  await tester.pumpAndSettle();
+}
+
+/// Crea una cuenta, abre la app e inicia sesión con ella hasta llegar al Home.
+Future<void> entrarComoUsuario(
+  WidgetTester tester, {
+  required String correo,
+  String contrasena = 'ClubNahuel1',
+  String nombre = 'Nahuel',
+}) async {
+  await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
+  await abrirApp(tester);
+  await escribir(tester, 'Correo', correo);
+  await escribir(tester, 'Contraseña', contrasena);
+  await tocar(tester, 'INICIAR SESIÓN');
+  await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+}
+
 /// Registra una cuenta por la API, como si la persona ya se hubiera registrado.
 Future<void> crearCuenta({
   required String correo,
