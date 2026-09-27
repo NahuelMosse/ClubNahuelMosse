@@ -31,3 +31,5 @@ CU-02-AMB-06 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto
 CU-02-AMB-01 · 2026-09-27 · vencida → CU-02-SUP-01 · cerrar sesión no necesita red: la sesión se cierra en el dispositivo aunque no haya conexión o el servidor esté caído
 CU-02-AMB-03 · 2026-09-27 · vencida → CU-02-SUP-02 · el administrador cierra sesión desde un avatar en la cabecera del panel, con la misma tarjeta y sólo la opción «Cerrar sesión» (el prototipo no le da perfil ni reservas propias)
 CU-02-AMB-05 · 2026-09-27 · vencida → CU-02-SUP-03 · no se registra fecha ni hora del cierre de sesión
+CU-02-TESTS · 2026-09-27 · congelados en 9612656 · 4 escenarios de pantalla en rojo: el Home no tiene avatar
+CU-02-TESTS · 2026-09-27 · recongelados en e988db5 · sin un import sobrante; los escenarios no cambian
