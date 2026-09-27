@@ -31,3 +31,4 @@ MOD-01-AMB-03 · 2026-09-27 · resuelta · todas las entidades guardan fecha de 
 MOD-01-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 MOD-01-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 MOD-01-AMB-05 · 2026-09-27 · vencida · → MOD-01-SUP-01: las notificaciones y los tokens de dispositivo no se modelan en esta card; los crea la primera card de notificaciones (CU-24.1)
+MOD-01-TESTS · 2026-09-27 · congelados en 658a103
