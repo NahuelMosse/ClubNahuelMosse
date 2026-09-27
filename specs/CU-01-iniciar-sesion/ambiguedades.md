@@ -36,3 +36,9 @@ CU-01-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-01-AMB-08 · 2026-09-27 · resuelta · Firebase Auth; la API valida el token de Firebase en cada pedido (decisión 1)
 CU-01-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-01-AMB-09 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)
+CU-01-AMB-01 · 2026-09-27 · vencida → CU-01-SUP-01 · la app no valida el formato del correo antes de enviar: el correo que Firebase rechaza por mal formado cae en el mensaje genérico de FA2
+CU-01-AMB-04 · 2026-09-27 · vencida → CU-01-SUP-02 · sin bloqueo propio por intentos fallidos; cuando Firebase frena por demasiados intentos se muestra el mismo mensaje genérico de FA2
+CU-01-AMB-05 · 2026-09-27 · vencida → CU-01-SUP-03 · el correo se envía sin espacios alrededor y en minúsculas, igual que lo guarda el registro
+CU-01-AMB-07 · 2026-09-27 · vencida → CU-01-SUP-04 · la base no guarda el último ingreso ni los intentos fallidos
+CU-01-AMB-10 · 2026-09-27 · abierta · ¿qué pasa si la cuenta existe en Firebase pero no tiene un perfil activo en la base (por ejemplo, dada de baja)?
+CU-01-AMB-10 · 2026-09-27 · vencida → CU-01-SUP-05 · no inicia sesión: se cierra la sesión de Firebase y se muestra el mensaje genérico de FA2
