@@ -26,3 +26,4 @@ CU-05-AMB-01 · 2026-09-27 · vencida → CU-05-SUP-01 · el registro pide todos
 CU-05-AMB-02 · 2026-09-27 · vencida → CU-05-SUP-02 · el único estado visible es «MIEMBRO ACTIVO»: una cuenta dada de baja no inicia sesión
 CU-05-AMB-03 · 2026-09-27 · vencida → CU-05-SUP-03 · el tema se guarda en el dispositivo, sobrevive a cerrar sesión y arranca en oscuro
 CU-05-TESTS · 2026-09-27 · congelados en fe8c903 · 7 escenarios de pantalla en rojo: no hay barra inferior ni datos personales en el perfil
+CU-05-TESTS · 2026-09-27 · recongelados en b868dbb · H01-02 hace scroll hasta «Modo oscuro», que en el teléfono de la corrida queda debajo de la barra inferior; lo que verifica no cambia
