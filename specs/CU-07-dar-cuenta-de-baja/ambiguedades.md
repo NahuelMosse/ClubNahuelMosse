@@ -23,3 +23,4 @@ CU-07-AMB-05 · 2026-09-27 · abierta · ¿una reserva que está en curso al mom
 CU-07-AMB-06 · 2026-09-27 · abierta · ¿las reservas pasadas del usuario borrado siguen en el historial del administrador? ¿las futuras quedan como «anuladas» con motivo «baja de cuenta» o se borran?
 CU-07-AMB-07 · 2026-09-27 · abierta · ¿al anular las reservas futuras por la baja se envía alguna notificación (CU-24.2 o CU-24.3)?
 CU-07-AMB-00 · 2026-09-27 · snapshot · congelado en bb991e1
+CU-07-AMB-00 · 2026-09-27 · snapshot · congelado en 3cc2677

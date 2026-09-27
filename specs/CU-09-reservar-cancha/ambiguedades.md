@@ -37,3 +37,4 @@ CU-09-AMB-10 · 2026-09-27 · abierta · ¿se muestra y guarda precio? El enunci
 CU-09-AMB-11 · 2026-09-27 · abierta · en FA3, ¿«guardar la intención» significa volver a la confirmación con los mismos datos después del login?
 CU-09-AMB-12 · 2026-09-27 · abierta · ¿qué texto manda en FA1: el del CU o el del prototipo?
 CU-09-AMB-00 · 2026-09-27 · snapshot · congelado en d198954
+CU-09-AMB-00 · 2026-09-27 · snapshot · congelado en e51011e

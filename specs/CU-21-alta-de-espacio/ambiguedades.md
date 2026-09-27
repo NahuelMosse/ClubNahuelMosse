@@ -24,3 +24,4 @@ CU-21-AMB-06 · 2026-09-27 · abierta · ¿qué formato de nombre manda: con alt
 CU-21-AMB-07 · 2026-09-27 · abierta · ¿el alta pide también techada o al aire libre, iluminación y descripción, que CU-16 y el prototipo muestran por cancha?
 CU-21-AMB-08 · 2026-09-27 · abierta · ¿cuál es el catálogo cerrado de deportes y tipos, y quién lo mantiene? (ver CU-13-AMB-09 y CU-20-AMB-04)
 CU-21-AMB-00 · 2026-09-27 · snapshot · congelado en ac68af4
+CU-21-AMB-00 · 2026-09-27 · snapshot · congelado en b163883

@@ -25,3 +25,4 @@ CU-17-AMB-07 · 2026-09-27 · abierta · ¿se guarda fecha de alta y qué admini
 CU-17-AMB-08 · 2026-09-27 · abierta · ¿el horario es uno solo para todos los días o varía por día de la semana? (ver CU-12-AMB-06)
 CU-17-AMB-09 · 2026-09-27 · abierta · ¿cómo se escribe la dirección para que después sirva al nombre de los espacios (calle y altura separados)?
 CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 29fa056
+CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 7d94a0f

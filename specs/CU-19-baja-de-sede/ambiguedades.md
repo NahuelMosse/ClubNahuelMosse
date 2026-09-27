@@ -23,3 +23,4 @@ CU-19-AMB-05 · 2026-09-27 · abierta · con reservas futuras, ¿se impide la ba
 CU-19-AMB-06 · 2026-09-27 · abierta · ¿la baja se inicia desde la edición (CU) o también desde el listado (prototipo)? ¿hay mensaje de éxito?
 CU-19-AMB-07 · 2026-09-27 · abierta · ¿una sede dada de baja puede volver a darse de alta, y su nombre queda libre?
 CU-19-AMB-00 · 2026-09-27 · snapshot · congelado en 2e15ff6
+CU-19-AMB-00 · 2026-09-27 · snapshot · congelado en 4f88881

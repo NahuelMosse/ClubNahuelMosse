@@ -24,3 +24,4 @@ CU-24.1-AMB-06 · 2026-09-27 · abierta · ¿se guarda la hora de envío y la de
 CU-24.1-AMB-07 · 2026-09-27 · abierta · sin permiso, ¿el recordatorio aparece igual en el centro de la app (como en CU-24.2 FA3) o no se registra?
 CU-24.1-AMB-08 · 2026-09-27 · abierta · si el usuario cerró sesión o tiene varios dispositivos, ¿a qué dispositivos llega?
 CU-24.1-AMB-00 · 2026-09-27 · snapshot · congelado en c8f04f1
+CU-24.1-AMB-00 · 2026-09-27 · snapshot · congelado en 06b71f1

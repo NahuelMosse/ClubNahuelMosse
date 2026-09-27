@@ -24,3 +24,4 @@ CU-12-AMB-06 · 2026-09-27 · abierta · ¿las sedes tienen días de funcionamie
 CU-12-AMB-07 · 2026-09-27 · abierta · para el día de hoy, ¿la franja de la hora en curso se ofrece o se considera pasada?
 CU-12-AMB-08 · 2026-09-27 · abierta · ¿el precio es por espacio y fijo, o puede variar por horario o día?
 CU-12-AMB-00 · 2026-09-27 · snapshot · congelado en 292a301
+CU-12-AMB-00 · 2026-09-27 · snapshot · congelado en 3aa4a53

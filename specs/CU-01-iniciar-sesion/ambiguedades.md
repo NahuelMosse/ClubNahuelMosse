@@ -25,3 +25,4 @@ CU-01-AMB-07 · 2026-09-27 · abierta · ¿se registra fecha y hora del último 
 CU-01-AMB-08 · 2026-09-27 · abierta · ¿la autenticación la resuelve Firebase Auth (enunciado RNF 5) o el backend propio contra la base (CU-01 paso 3–4)?
 CU-01-AMB-09 · 2026-09-27 · abierta · ¿qué texto manda en credenciales inválidas: el del CU o el del prototipo? ¿un mensaje único o uno por campo en FA1?
 CU-01-AMB-00 · 2026-09-27 · snapshot · congelado en e8013cb
+CU-01-AMB-00 · 2026-09-27 · snapshot · congelado en a1f7f83
