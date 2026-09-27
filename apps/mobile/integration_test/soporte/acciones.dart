@@ -53,9 +53,10 @@ Future<void> entrarComoUsuario(
   required String correo,
   String contrasena = 'ClubNahuel1',
   String nombre = 'Nahuel',
+  String? apiUrl,
 }) async {
   await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
-  await abrirApp(tester);
+  await abrirApp(tester, apiUrl: apiUrl);
   await escribir(tester, 'Correo', correo);
   await escribir(tester, 'Contraseña', contrasena);
   await tocar(tester, 'INICIAR SESIÓN');
