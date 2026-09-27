@@ -35,3 +35,7 @@ CU-03-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-03-AMB-08 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-03-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-03-AMB-09 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)
+CU-03-AMB-01 · 2026-09-27 · vencida · → CU-03-SUP-01: el correo se compara sin distinguir mayúsculas y sin espacios alrededor; el DNI se guarda y compara sólo con dígitos (se aceptan puntos al escribirlo)
+CU-03-AMB-04 · 2026-09-27 · vencida · → CU-03-SUP-02: la cuenta queda activa al crearse, sin verificación del correo
+CU-03-AMB-06 · 2026-09-27 · vencida · → CU-03-SUP-03: sin edad mínima; nombre y apellido de hasta 60 caracteres
+CU-03-AMB-07 · 2026-09-27 · vencida · → CU-03-SUP-04: con dos registros simultáneos del mismo correo o DNI, el segundo cae en FA2

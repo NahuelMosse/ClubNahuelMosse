@@ -1,0 +1,11 @@
+{
+  "name": "clubnahuelmosse",
+  "private": true,
+  "description": "Herramientas de desarrollo del repo: emulador de Firebase para los tests",
+  "scripts": {
+    "emuladores": "firebase emulators:start --only auth --project demo-clubnahuelmosse"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.31.0"
+  }
+}

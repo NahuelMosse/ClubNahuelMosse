@@ -21,3 +21,7 @@ build/
 .venv/
 .mypy_cache/
 .ruff_cache/
+
+# Node
+node_modules/
+firebase-debug.log

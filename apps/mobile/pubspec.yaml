@@ -1,0 +1,49 @@
+name: clubnahuelmosse
+description: "ClubNahuelMosse: reservas de espacios deportivos."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  http: ^1.2.2
+  go_router: ^14.3.0
+  intl: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fuentes/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fuentes/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fuentes/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fuentes/Inter-Bold.ttf
+          weight: 700
+    - family: Archivo
+      fonts:
+        - asset: assets/fuentes/Archivo-ExtraBold.ttf
+          weight: 800
+    - family: Archivo Black
+      fonts:
+        - asset: assets/fuentes/ArchivoBlack-Regular.ttf
+    - family: JetBrains Mono
+      fonts:
+        - asset: assets/fuentes/JetBrainsMono-Regular.ttf

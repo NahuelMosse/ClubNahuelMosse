@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- El build de desarrollo habla por HTTP plano con la API y el emulador de Firebase
+         que corren en la máquina (10.0.2.2 desde el emulador de Android). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <application android:usesCleartextTraffic="true"/>
+</manifest>

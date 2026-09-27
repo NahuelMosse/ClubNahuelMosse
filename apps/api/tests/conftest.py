@@ -1,15 +1,21 @@
 import os
-from collections.abc import Iterator
+import uuid
+from collections.abc import Callable, Iterator
 from pathlib import Path
 
+import httpx2
 import pytest
 from alembic import command
 from alembic.config import Config as AlembicConfig
+from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, create_engine, text
 
 URL_PRUEBAS = os.environ.get(
     "TEST_DATABASE_URL", "postgresql+psycopg://club:club@127.0.0.1:8703/club_test"
 )
+# La API bajo test usa la misma base de pruebas y el emulador de Firebase Auth.
+os.environ["DATABASE_URL"] = URL_PRUEBAS
+os.environ.setdefault("FIREBASE_PROJECT_ID", "demo-clubnahuelmosse")
 RAIZ_API = Path(__file__).resolve().parents[1]
 
 
@@ -58,3 +64,45 @@ def db(motor: Engine) -> Iterator[Connection]:
         tx = conn.begin()
         yield conn
         tx.rollback()
+
+
+def _host_emulador() -> str:
+    host = os.environ.get("FIREBASE_AUTH_EMULATOR_HOST")
+    if not host:
+        pytest.skip("hace falta el emulador de Firebase Auth (FIREBASE_AUTH_EMULATOR_HOST)")
+    return host
+
+
+@pytest.fixture
+def api(motor: Engine) -> Iterator[TestClient]:
+    """La API real contra la base de pruebas y el emulador de Firebase Auth.
+
+    No hay transacción envolvente: cada test usa datos propios y únicos.
+    """
+    _host_emulador()
+    from app.main import crear_app
+
+    with TestClient(crear_app()) as cliente:
+        yield cliente
+
+
+@pytest.fixture
+def iniciar_sesion() -> Callable[[str, str], str | None]:
+    """Inicia sesión contra el emulador como lo haría la app: devuelve el token o None."""
+    host = _host_emulador()
+
+    def _iniciar(correo: str, contrasena: str) -> str | None:
+        r = httpx2.post(
+            f"http://{host}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword",
+            params={"key": "clave-del-emulador"},
+            json={"email": correo, "password": contrasena, "returnSecureToken": True},
+        )
+        token = r.json().get("idToken") if r.status_code == 200 else None
+        return str(token) if token else None
+
+    return _iniciar
+
+
+@pytest.fixture
+def unico() -> Callable[[], str]:
+    return lambda: uuid.uuid4().hex[:8]
