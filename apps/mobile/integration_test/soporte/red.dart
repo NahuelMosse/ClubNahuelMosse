@@ -123,3 +123,37 @@ Future<void> cambiarDesdeOtroDispositivo(
     throw StateError('no se pudo cambiar la contraseña: ${r.statusCode}');
   }
 }
+
+Uri _pruebas(String ruta) =>
+    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/_pruebas/$ruta');
+
+/// Los correos que la API de la corrida dejó en su buzón para [para], del más viejo al
+/// más nuevo. En la corrida los correos no salen: quedan en el buzón.
+Future<List<String>> correosPara(String para) async {
+  final r = await http.get(
+    _pruebas('correos?para=${Uri.encodeQueryComponent(para)}'),
+  );
+  if (r.statusCode != 200) throw StateError('buzón: ${r.statusCode}');
+  final datos = jsonDecode(utf8.decode(r.bodyBytes));
+  return [
+    if (datos case {'correos': final List<Object?> correos})
+      for (final correo in correos)
+        if (correo case {'cuerpo': final String cuerpo}) cuerpo,
+  ];
+}
+
+/// El código del enlace de recuperación del último correo que recibió [correo].
+Future<String> ultimoCodigo(String correo) async {
+  final correos = await correosPara(correo);
+  if (correos.isEmpty) throw StateError('no llegó ningún correo a $correo');
+  final enlace = RegExp(r'codigo=([A-Za-z0-9_-]+)').firstMatch(correos.last);
+  final codigo = enlace?.group(1);
+  if (codigo == null) throw StateError('el correo no trae un enlace');
+  return codigo;
+}
+
+/// Hace vencer el enlace ya, sin esperar los 30 minutos.
+Future<void> vencerEnlace(String codigo) async {
+  final r = await http.post(_pruebas('recuperacion/$codigo/vencer'));
+  if (r.statusCode != 204) throw StateError('vencer: ${r.statusCode}');
+}

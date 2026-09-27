@@ -134,3 +134,12 @@ Future<void> entrarYSalir(WidgetTester tester, String campo) async {
   FocusManager.instance.primaryFocus?.unfocus();
   await tester.pumpAndSettle();
 }
+
+/// Abre la app desde el enlace del correo de recuperación, como lo haría Android.
+Future<void> abrirEnlaceDeRecuperacion(
+  WidgetTester tester,
+  String codigo,
+) async {
+  await tester.binding.handlePushRoute('/recuperar?codigo=$codigo');
+  await tester.pumpAndSettle();
+}
