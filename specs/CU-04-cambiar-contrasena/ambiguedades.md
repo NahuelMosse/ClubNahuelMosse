@@ -24,3 +24,8 @@ CU-04-AMB-06 · 2026-09-27 · abierta · ¿el campo de contraseña nueva empieza
 CU-04-AMB-00 · 2026-09-27 · snapshot · congelado en 31c4de7
 CU-04-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-04-AMB-05 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-04-AMB-01 · 2026-09-27 · vencida → CU-04-SUP-01 · se acepta una contraseña nueva igual a la actual: el prototipo no tiene mensaje para rechazarla
+CU-04-AMB-02 · 2026-09-27 · vencida → CU-04-SUP-02 · el administrador no tiene perfil en la app (CU-02-SUP-02): cambia su contraseña por Recuperar contraseña (CU-04b)
+CU-04-AMB-03 · 2026-09-27 · vencida → CU-04-SUP-03 · el largo máximo es el del registro; sin tope propio de intentos: si Firebase frena por demasiados intentos se ve el error del servidor
+CU-04-AMB-04 · 2026-09-27 · vencida → CU-04-SUP-04 · la otra sesión ve «Sesión expirada» en su próximo pedido a la API y vuelve al login
+CU-04-AMB-06 · 2026-09-27 · resuelta · los tres campos empiezan habilitados, como el prototipo (decisión 12)
