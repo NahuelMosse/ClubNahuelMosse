@@ -25,3 +25,8 @@ CU-04b-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decision
 CU-04b-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-04b-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-04b-AMB-05 · 2026-09-27 · resuelta · Firebase Auth; la API valida el token de Firebase en cada pedido (decisión 1)
+CU-04b-AMB-01 · 2026-09-27 · vencida → CU-04b-SUP-01 · una cuenta dada de baja recibe el mismo mensaje y no se le envía mail: sólo las cuentas activas reciben enlace
+CU-04b-AMB-02 · 2026-09-27 · vencida → CU-04b-SUP-02 · como mucho tres enlaces por correo por hora; los pedidos siguientes responden lo mismo y no envían mail
+CU-04b-AMB-03 · 2026-09-27 · vencida → CU-04b-SUP-03 · un cambio de contraseña por otra vía (CU-04 u otro enlace) invalida los enlaces emitidos antes
+CU-04b-AMB-06 · 2026-09-27 · abierta · ¿qué pantalla confirma que la contraseña se recuperó? El CU pide una confirmación con «Volver al login» y el prototipo no la dibuja
+CU-04b-AMB-06 · 2026-09-27 · vencida → CU-04b-SUP-04 · la misma pantalla «Contraseña actualizada» de CU-04, con «VOLVER AL INICIO DE SESIÓN»
