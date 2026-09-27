@@ -49,6 +49,8 @@ void main() {
       await esperarA(tester, find.text('DATOS PERSONALES'));
       expect(brillo(tester, 'DATOS PERSONALES'), Brightness.dark);
 
+      await tester.ensureVisible(find.bySemanticsLabel('Modo oscuro'));
+      await tester.pumpAndSettle();
       await tester.tap(find.bySemanticsLabel('Modo oscuro'));
       await tester.pumpAndSettle();
 
