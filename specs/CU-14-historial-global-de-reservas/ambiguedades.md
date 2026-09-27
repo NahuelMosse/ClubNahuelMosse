@@ -25,3 +25,4 @@ CU-14-AMB-07 · 2026-09-27 · abierta · ¿las reservas de un espacio o sede dad
 CU-14-AMB-08 · 2026-09-27 · abierta · el precio que muestra el historial, ¿es el que se pagó al reservar o el precio actual del espacio?
 CU-14-AMB-00 · 2026-09-27 · snapshot · congelado en f96fe08
 CU-14-AMB-00 · 2026-09-27 · snapshot · congelado en 9eb7bed
+CU-14-AMB-00 · 2026-09-27 · snapshot · congelado en c9a3c55

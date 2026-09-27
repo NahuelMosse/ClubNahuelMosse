@@ -22,3 +22,6 @@ TP-05-AMB-04 · 2026-09-27 · abierta · ¿hay paginación?
 TP-05-AMB-05 · 2026-09-27 · abierta · ¿en qué orden se listan los espacios?
 TP-05-AMB-06 · 2026-09-27 · abierta · ¿el «tipo» del filtro es el deporte (Fútbol) o la variante (Fútbol 5)?
 TP-05-AMB-00 · 2026-09-27 · snapshot · congelado en b43ce50
+TP-05-AMB-03 · 2026-09-27 · preguntada · al usuario, en la sesión
+TP-05-AMB-03 · 2026-09-27 · resuelta · no hay pantalla de usuario con todas las sedes: el producto se pensó desde el principio por sede; cada sede muestra sus espacios con la sede, y el panel del administrador lista los de todas
+TP-05-AMB-00 · 2026-09-27 · snapshot · congelado en 98e4e30

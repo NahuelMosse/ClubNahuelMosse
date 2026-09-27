@@ -31,9 +31,9 @@ Fuente: `../Trabajo Práctico_2026.docx.pdf`.
 | RF 4 · Sede con nombre, dirección y horarios | CU-17-H01-01, MOD-01-H01-02 |
 | RF 4 · Listado de sedes con sus horarios | CU-16-H01-01 |
 | RF 4 · Elegir una sede y ver sus espacios y horarios disponibles | CU-16-H01-02, CU-16-H01-04 |
-| RF 5 · Listado de espacios indicando la sede de cada uno | TP-05-H01-01 |
+| RF 5 · Listado de espacios indicando la sede de cada uno | TP-05-H01-01, TP-05-H01-03 |
 | RF 5 · Espacio asociado a una sede, con tipo y nombre compuesto | CU-21-H01-02, TP-05-H01-02, MOD-01-H01-03 |
-| RF 5 · Filtrar espacios por tipo | TP-05-H02-01, CU-20-H01-01 |
+| RF 5 · Filtrar espacios por tipo | TP-05-H02-01, CU-20-H01-01, CU-20-H01-02 |
 | RF 6 · Historial con las reservas ya finalizadas | CU-08-H01-03, MOD-01-H01-06 |
 | RF 7 · Sin conexión a internet | TP-07-H01-01 |
 | RF 7 · Servidor caído | TP-07-H02-01 |
@@ -180,7 +180,7 @@ Fuente: página `03 · App · Prototipo` de `VUiZR6V4USuiyxRgtshhEn`, 112 pantal
 | 64:2050 | CU-17 · Alta de sede · Éxito | CU-17-H01-01, CU-17-H01-04 |
 | 62:1968 | CU-18 · Editar sede | CU-18-H01-01, CU-18-H07-01 |
 | 62:2035 | CU-18 · Editar sede · Campo vacío | CU-18-H03-01 |
-| 63:1895 | CU-21 · Gestionar espacios | CU-21-H01-01, CU-23-H01-01, TP-05-H01-02 |
+| 63:1895 | CU-21 · Gestionar espacios | CU-21-H01-01, CU-23-H01-01, TP-05-H01-03 |
 | 63:2030 | CU-21 · Alta espacio · Formulario vacío | CU-21-H03-01 |
 | 63:2101 | CU-21 · Alta espacio · Formulario completo | CU-21-H01-01, CU-21-H01-02 |
 | 63:2162 | CU-21 · Alta espacio · Campo obligatorio | CU-21-H03-01 |

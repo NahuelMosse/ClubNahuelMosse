@@ -26,3 +26,4 @@ CU-17-AMB-08 · 2026-09-27 · abierta · ¿el horario es uno solo para todos los
 CU-17-AMB-09 · 2026-09-27 · abierta · ¿cómo se escribe la dirección para que después sirva al nombre de los espacios (calle y altura separados)?
 CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 29fa056
 CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 7d94a0f
+CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 452aaa4

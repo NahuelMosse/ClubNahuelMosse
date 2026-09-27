@@ -25,3 +25,4 @@ CU-13-AMB-07 · 2026-09-27 · abierta · ¿el filtro por tipo es opcional («Tod
 CU-13-AMB-08 · 2026-09-27 · abierta · ¿un rango que empieza en la hora en curso (por ejemplo 18:00 consultado a las 18:20) es válido?
 CU-13-AMB-09 · 2026-09-27 · abierta · ¿cuáles son los deportes y tipos del club: los del prototipo (fútbol, tenis, hockey, vóley, golf) o también pádel y básquet?
 CU-13-AMB-00 · 2026-09-27 · snapshot · congelado en 3a14f30
+CU-13-AMB-00 · 2026-09-27 · snapshot · congelado en 4b2b10f
