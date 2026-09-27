@@ -80,6 +80,8 @@ scripts/test.sh
 | Ruta | Responsabilidad | Decisiones ya tomadas |
 |---|---|---|
 | `apps/api/pyproject.toml` | dependencias y configuración de pytest, ruff y mypy | `uv` maneja el entorno dentro de `apps/api/.venv` |
+| `apps/api/uv.lock` | versiones exactas de las dependencias | lo genera `uv`; se versiona |
+| `apps/api/app/__init__.py` | paquete de la aplicación | vacío |
 | `apps/api/app/config.py` | lee `DATABASE_URL` del entorno o de `.env` | un solo objeto `config`; nada más lee variables de entorno |
 | `apps/api/app/dominio/__init__.py` | paquete del dominio | el dominio no importa SQLAlchemy ni nada de afuera |
 | `apps/api/app/dominio/espacios.py` | `nombre_compuesto(sede, calle, altura, deporte, tipo, numero)` | función pura. Saca el prefijo «Sede» y los de calle («Av.», «Avenida», «Calle»), quita tildes y espacios, une con `_`. El número lo asigna CU-21 |
@@ -88,14 +90,19 @@ scripts/test.sh
 | `apps/api/tests/conftest.py` | motor contra la base de pruebas, migra una vez por sesión, transacción por test, filtro `--card` | la base de pruebas se recrea entera al arrancar la sesión |
 | `apps/api/tests/escenarios/test_modelo.py` | los seis escenarios de la card | congelado en el paso 4 |
 | `apps/api/tests/unit/test_nombre_compuesto.py` | casos borde de `nombre_compuesto` | del implementador |
+| `apps/api/tests/unit/test_arquitectura.py` | el dominio no importa nada de afuera | lee los `import` con `ast` |
+| `apps/api/tests/integracion/test_restricciones.py` | restricciones del esquema sin escenario: zona horaria, total, duración, motivo, medianoche, días, borrado, identidad del espacio, `creado_en`, baja que libera correo y DNI | del implementador |
 | `scripts/test.sh` | corre todo lo que cuenta | ruff, mypy, pytest y, cuando exista, la app |
 | `.gitignore` | ignora `.venv` y cachés | — |
+| `specs/MOD-01-modelo-de-datos/*` | snapshot, ambigüedades, plan, research, data-model, quickstart y tasks | — |
+| `specs/CU-07-dar-cuenta-de-baja/ambiguedades.md` | registra `CU-07-SUP-01`, que el esquema toma | append |
 
 ## Supuestos
 
 | ID | Supuesto | Dónde vive |
 |---|---|---|
 | MOD-01-SUP-01 | Notificaciones y tokens de dispositivo no se modelan acá; los crea CU-24.1 | sin cobertura |
+| CU-07-SUP-01 | Una cuenta dada de baja libera su correo y su DNI: se puede volver a registrar | `tests/integracion/test_restricciones.py::test_la_baja_libera_el_correo_y_el_dni` |
 
 ## Supuestos sin cobertura
 
@@ -110,6 +117,14 @@ scripts/test.sh
 - **Afuera**: endpoints HTTP, reglas que dependen de la hora actual o de la sede (horario futuro,
   cierre, duración contra el catálogo de la sede) — son de CU-09; la asignación del número del
   espacio — CU-21; roles y permisos — CU-01.
+
+## Hallazgos de la revisión que no se corrigen acá
+
+| Hallazgo | Motivo |
+|---|---|
+| Coherencia entre `estado` y `cancelada_en` | El escenario congelado `MOD-01-H01-05` cancela una reserva sin fecha de cancelación; la regla la hace cumplir CU-10 al cancelar |
+| `join_transaction_mode="create_savepoint"` en la fixture | Todavía no hay `Session` bajo test; lo agrega la primera card que la use |
+| Días repetidos en `sede.dias` (`{1,1}`) | Un `CHECK` no puede verificarlo sin una función auxiliar; la API normaliza la lista en CU-17 |
 
 ## Brief visual
 

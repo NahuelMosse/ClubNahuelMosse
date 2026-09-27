@@ -28,3 +28,4 @@ CU-07-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-07-AMB-03 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-07-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-07-AMB-06 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo); todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 3, 4)
+CU-07-AMB-01 · 2026-09-27 · vencida · → CU-07-SUP-01: una cuenta dada de baja libera su correo y su DNI; se puede crear otra con los mismos (índices únicos sólo entre cuentas activas, MOD-01)

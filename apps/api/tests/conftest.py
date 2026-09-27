@@ -24,7 +24,10 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     elegidos, descartados = [], []
     for item in items:
         doc = getattr(getattr(item, "function", None), "__doc__", "") or ""
-        (elegidos if f"@{card}-H" in doc else descartados).append(item)
+        if f"@{card}-H" in doc:
+            elegidos.append(item)
+        else:
+            descartados.append(item)
     items[:] = elegidos
     config.hook.pytest_deselected(items=descartados)
 
@@ -32,13 +35,19 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
 @pytest.fixture(scope="session")
 def motor() -> Iterator[Engine]:
     motor = create_engine(URL_PRUEBAS)
+    if not (motor.url.database or "").endswith("_test"):
+        pytest.exit(f"la base de pruebas tiene que terminar en _test: {motor.url.database}", 2)
+    # Dos corridas a la vez sobre la misma base se esperan: la sesión borra el esquema entero.
+    candado = motor.connect()
+    candado.execute(text("SELECT pg_advisory_lock(hashtext('club_test'))"))
+    candado.commit()
     with motor.begin() as conn:
         conn.execute(text("DROP SCHEMA public CASCADE; CREATE SCHEMA public"))
     alembic = AlembicConfig(str(RAIZ_API / "alembic.ini"))
-    alembic.set_main_option("script_location", str(RAIZ_API / "migraciones"))
-    alembic.set_main_option("sqlalchemy.url", URL_PRUEBAS)
+    alembic.set_main_option("sqlalchemy.url", URL_PRUEBAS.replace("%", "%%"))
     command.upgrade(alembic, "head")
     yield motor
+    candado.close()
     motor.dispose()
 
 

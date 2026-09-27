@@ -1,6 +1,6 @@
 # Data Model: MOD-01
 
-Todas las tablas llevan `creado_en timestamptz NOT NULL DEFAULT now()` y `modificado_en
+Ninguna fila se borra: las bajas son lógicas y un disparador rechaza el `DELETE`. Todas las tablas llevan `creado_en timestamptz NOT NULL DEFAULT now()` y `modificado_en
 timestamptz NOT NULL DEFAULT now()`, que un disparador actualiza en cada `UPDATE`.
 
 ## usuario
@@ -9,9 +9,9 @@ timestamptz NOT NULL DEFAULT now()`, que un disparador actualiza en cada `UPDATE
 |---|---|---|
 | id | bigint identity | PK |
 | firebase_uid | text | único, no nulo |
-| correo | text | único sin distinguir mayúsculas (`lower(correo)`), no nulo, **no se puede cambiar** |
+| correo | text | único sin distinguir mayúsculas entre las cuentas activas, no nulo, **no se puede cambiar** |
 | nombre, apellido | text | no nulos |
-| dni | text | 7 u 8 dígitos, único |
+| dni | text | 7 u 8 dígitos, único entre las cuentas activas |
 | fecha_nacimiento | date | no nula; que sea pasada lo valida la API, porque depende del día |
 | rol | text | `usuario` o `admin`, por defecto `usuario` |
 | activo | boolean | por defecto `true` |
@@ -25,7 +25,7 @@ timestamptz NOT NULL DEFAULT now()`, que un disparador actualiza en cada `UPDATE
 | nombre | text | no nulo |
 | calle | text | no nulo |
 | altura | integer | positiva |
-| apertura, cierre | time | en hora completa, apertura antes que cierre |
+| apertura, cierre | time | en hora completa, apertura antes que cierre; cierre `00:00` es medianoche |
 | dias | smallint[] | días de la semana que abre, 1 = lunes … 7 = domingo, al menos uno |
 | activa | boolean | por defecto `true` |
 | creado_por, modificado_por, dado_de_baja_por | bigint → usuario | autor de las acciones del admin |
@@ -40,7 +40,7 @@ timestamptz NOT NULL DEFAULT now()`, que un disparador actualiza en cada `UPDATE
 | deporte | text | no nulo |
 | tipo | text | no nulo |
 | numero | integer | positivo; único con (sede_id, deporte, tipo) |
-| nombre | text | único; se guarda al crear y no cambia |
+| nombre | text | único; se guarda al crear y no cambia, igual que sede, deporte, tipo y número |
 | techada, iluminada | boolean | no nulos |
 | precio_por_hora | integer | pesos, mayor a cero |
 | activo | boolean | por defecto `true` |
@@ -55,7 +55,7 @@ timestamptz NOT NULL DEFAULT now()`, que un disparador actualiza en cada `UPDATE
 | usuario_id | bigint → usuario | no nulo |
 | espacio_id | bigint → espacio | no nulo |
 | inicio, fin | timestamptz | fin posterior a inicio; minuto y segundo en cero; entre 1 y 4 horas |
-| precio_por_hora, total | integer | precio del momento en que se reservó |
+| precio_por_hora, total | integer | precio del momento en que se reservó; total = precio × horas |
 | estado | text | `activa`, `cancelada` o `anulada`, por defecto `activa` |
 | cancelada_en | timestamptz | — |
 | cancelada_por | bigint → usuario | el usuario que canceló o el admin que anuló |

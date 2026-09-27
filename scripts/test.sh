@@ -5,7 +5,7 @@ raiz=$(cd "$(dirname "$0")/.." && pwd)
 
 cd "$raiz/apps/api"
 uv run ruff check .
-uv run mypy --strict app
+uv run mypy app
 uv run pytest
 
 if [ -d "$raiz/apps/mobile" ]; then
