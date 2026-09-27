@@ -5,6 +5,9 @@ argument-hint: <CARD-ID>
 
 Card: `$1`. Esto es el paso 8 entero. Cuando esté todo verde, el cierre lo redacta `/cerrar $1`.
 
+**En este repo el stack es Flutter y FastAPI.** Los comandos de abajo ya están traducidos; las
+equivalencias de lo que se nombra en web (`axe`, selectores, anchos) están en `.claude/STACK.md`.
+
 **Tres estados, no dos: pasó · falló · no se pudo correr.** Un comando que no existe no pasó.
 
 ## Primero: esto no lo corrés vos
@@ -26,13 +29,16 @@ hace lo resolvés vos: él ejecuta y reporta, no interpreta.
 ## 1 · La suite, y que corra todo lo que cuenta
 
 ```
-npm test
-npx tsc --noEmit
-npx playwright test --grep "@$1"     # los escenarios de esta card
-npx playwright test --project=gate   # la suite entera: acá aparecen las regresiones
+sh scripts/test.sh                                                  # todo lo que cuenta
+cd apps/mobile && flutter analyze && dart format --set-exit-if-changed lib test integration_test
+cd apps/api && ruff check . && mypy --strict app
+cd apps/mobile && flutter test integration_test --name "@$1-"       # los escenarios de esta card
+cd apps/api && pytest tests/escenarios --card $1
+cd apps/mobile && flutter test integration_test                     # la suite entera: acá aparecen las regresiones
+cd apps/api && pytest tests/escenarios
 ```
 
-**`npm test` tiene que correr todo lo que cuenta.** Medido: una corrida dejó `npm test` corriendo
+**`sh scripts/test.sh` tiene que correr todo lo que cuenta.** Medido: una corrida dejó `npm test` corriendo
 sólo los unitarios y los e2e —**el grueso de la cobertura**— detrás de otro comando. Quien clone
 el repo y corra lo obvio ve verde sin haber ejercitado nada de la pantalla. *El comando por
 defecto es el que va a correr el que no leyó nada: si no corre lo que importa, la suite no existe
@@ -45,7 +51,8 @@ card rompió el escenario de una card vieja, el filtro lo **excluye**.
 tests tardan 37 minutos, y a 800 serían casi dos horas — con `retries: 0` y la máquina
 compartida, eso no es una corrida lenta, son **corridas enteras que se pierden**. La salida no es
 bajar la vara ni permitir reintentos: es partir la suite por costo, un camino feliz por área como
-gate de cada card (`npm run e2e`) y el barrido completo antes de mergear (`npm run e2e:todo`).
+gate de cada card (un archivo por área bajo `integration_test/gate/`) y el barrido completo antes
+de mergear (`flutter test integration_test`).
 *Lo que no se puede es correr la mitad y reportar como si se hubiera corrido todo.*
 
 ### Un test que falla después de implementar: por qué falla decide de quién es
@@ -55,11 +62,11 @@ escrito, la forma de la falla dice qué pasó, y son cosas distintas:
 
 | Falla con | Qué significa |
 |---|---|
-| `expect(...)` — recibido contra esperado | el producto no hace lo que el escenario pide. **Es tuyo: arreglá el código** |
-| `TimeoutError`, `resolved to 0 elements`, `strict mode violation` | el selector no encuentra nada. **Es del test, o al producto le falta semántica** |
+| `Expected: … Actual: …` — recibido contra esperado | el producto no hace lo que el escenario pide. **Es tuyo: arreglá el código** |
+| `could not find any matching widgets`, `Too many elements` | el selector no encuentra nada o encuentra de más. **Es del test, o al producto le falta semántica** |
 
 ```
-npx playwright test --grep "@$1" 2>&1 | grep -cE "TimeoutError|resolved to 0 elements|strict mode violation"
+cd apps/mobile && flutter test integration_test --name "@$1-" 2>&1 | grep -cE "could not find any matching widgets|Too many elements"
 ```
 
 Tiene que dar **0**. Si no da cero, decidí cuál de las dos es —*¿el elemento existe y el selector
@@ -69,9 +76,9 @@ segundo, **el arreglo va en el producto**, que es donde faltaba la semántica.
 Si el selector está mal, **vos no lo tocás**: el test está congelado. Reportalo con el archivo, la
 línea y la corrección mínima, y seguí el protocolo de recongelamiento del paso 6.
 
-*Medido: una corrida dejó seis escenarios en rojo con `getByRole('definition', { name })`. El rol
-`definition` **nunca lleva nombre accesible** según ARIA, así que ese selector no encuentra nada
-haga lo que haga la app. El test estaba mal desde el paso 4 y pasó el «tiene que fallar» de ese
+*Medido: una corrida dejó seis escenarios en rojo con un selector por rol ARIA que **nunca lleva
+nombre accesible**, así que no encontraba nada haga lo que haga la app. El equivalente acá es
+buscar por etiqueta semántica un widget que no la expone. El test estaba mal desde el paso 4 y pasó el «tiene que fallar» de ese
 paso porque en ese momento fallar era lo correcto.* **Un selector imposible se ve igual que una
 funcionalidad que falta, hasta que la funcionalidad está.**
 
@@ -88,8 +95,10 @@ que existe justamente porque lo que rompe una pantalla no está en el código.
 ## 3 · Las salidas de emergencia del diff
 
 ```
-grep -rnE "\)!|\]!|\bas any\b|as unknown as|@ts-(ignore|expect-error)|eslint-disable|catch *\([^)]*\) *\{ *\}" \
-  --include=*.ts --include=*.tsx --include=*.js $(git diff --name-only main...HEAD)
+grep -nE "[)\]]!|\bas dynamic\b|// *ignore(_for_file)?:|catch *\([^)]*\) *\{ *\}" \
+  $(git diff --name-only main...HEAD -- '*.dart')
+grep -nE "# *type: *ignore|# *noqa|except[^:]*: *pass|\bcast\(" \
+  $(git diff --name-only main...HEAD -- '*.py')
 ```
 
 Cada una se saca o lleva una línea diciendo por qué. Son lugares donde alguien le dijo al
@@ -108,9 +117,11 @@ imposible leerlo.*
 
 **Una herramienta instalada que nadie corre es peor que no tenerla**, porque el repo aparenta un
 control que no existe. Medido: `typescript` estaba en `devDependencies`, con su `tsconfig` y con
-JSDoc escrito en todo el código — y `npm test` nunca lo ejecutaba.
+JSDoc escrito en todo el código — y `npm test` nunca lo ejecutaba. Acá, cada herramienta de
+desarrollo de la app y de la API tiene que aparecer en `scripts/test.sh` o en
+`analysis_options.yaml`:
 ```
-node -e "const p=require('./package.json');const s=Object.values(p.scripts||{}).join(' ');for(const d of Object.keys(p.devDependencies||{}))if(!s.includes(d.split('/').pop().replace('@','')))console.log('nadie corre:',d)"
+for d in ruff mypy pytest flutter_lints; do grep -q "$d" scripts/test.sh apps/mobile/analysis_options.yaml 2>/dev/null || echo "nadie corre: $d"; done
 ```
 
 **Y un default no puede tapar una clave que falta.** `TABLA[clave] ?? [0, 0]` convierte «me olvidé
@@ -121,8 +132,8 @@ cerrada, la búsqueda **tira**; el `??` se reserva para lo que de verdad puede n
 nadie lo use, y es el residuo típico de un refactor: se movió la regla a otro lado y la vieja
 quedó.
 ```
-for f in $(git ls-files '*.ts' '*.js' '*.mjs' | grep -vE 'test|spec|e2e'); do
-  grep -ohE 'export (async )?(function|const|let|class) [A-Za-z_$][A-Za-z0-9_$]*' "$f" | awk '{print $NF}' |
+for f in $(git ls-files 'apps/*.py' 'apps/*.dart' | grep -vE '(^|/)tests?/|_test\.dart$|integration_test/'); do
+  grep -ohE '^(async )?def [A-Za-z_][A-Za-z0-9_]*|^class [A-Za-z_][A-Za-z0-9_]*' "$f" | awk '{print $NF}' |
   while read n; do [ "$(git grep -wl "$n" | wc -l)" -le 1 ] && echo "nadie usa: $n ($f)"; done
 done
 ```
@@ -141,11 +152,11 @@ que nada falle. Tres tests, uno por clase de problema:
 
 | | |
 |---|---|
-| `axe` por vista | falla con violaciones serias o críticas. Va como **dependencia de desarrollo**, nunca de producción. Si filtrás por severidad, **las `moderate` que quedan afuera se listan con su motivo** — un filtro sin lista es una suite que pasa por lo que no mira |
-| Recorrido por teclado | `Tab` desde el inicio llega al contenido y al primer control, y el salto de navegación funciona |
-| Obligatoriedad anunciada | cada campo requerido lo dice con `required` o `aria-required`, **y hay un test propio que lo afirma**: `axe` no lo marca si el campo tiene label, así que ésta se escapa entera de la pasada automática |
-| Contraste calculado | lee los pares tinta/lienzo del `:root` y afirma ≥ 4,5:1. **Se escribe a mano, sin dependencia** — son quince líneas y evita sumar un árbol de paquetes |
-| Alto contraste del sistema | con `forced-colors: active` el navegador reemplaza los colores: **lo que separaba por fondo o por sombra desaparece**. Si una distinción no sobrevive, va también un borde |
+| Guías de Flutter por pantalla | `meetsGuideline(androidTapTargetGuideline)`, `labeledTapTargetGuideline` y `textContrastGuideline` en cada pantalla. Si alguna se deja afuera, **se lista con su motivo** — un filtro sin lista es una suite que pasa por lo que no mira |
+| Recorrido con lector de pantalla | el orden semántico llega al contenido y al primer control en el orden en que se lee la pantalla |
+| Obligatoriedad anunciada | cada campo requerido lo dice en su etiqueta y en su `Semantics`, **y hay un test propio que lo afirma**: las guías no lo marcan, así que ésta se escapa entera de la pasada automática |
+| Contraste calculado | lee los pares tinta/lienzo del tema, en modo claro **y** oscuro, y afirma ≥ 4,5:1. **Se escribe a mano, sin dependencia** — son quince líneas |
+| Texto agrandado del sistema | con `textScaler` en 2.0 ningún texto se corta ni se superpone y todo sigue alcanzable |
 
 Medido: una corrida tenía skip link, `:focus-visible`, `aria-invalid` cableado a
 `aria-describedby`, targets de 44 px y `prefers-reduced-motion` —todo bien decidido— y **una sola

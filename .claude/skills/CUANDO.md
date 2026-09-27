@@ -10,7 +10,8 @@ cuatro informes que dicen lo mismo y nadie lee ninguno.
 |---|---|---|---|
 | `clean-architecture` | **Antes de codear**, en el paso 5, si hay decisión de diseño | una propuesta en lenguaje natural, no código | bajo |
 | `interface-design` | **Antes de la pantalla**, en el paso 5, al escribir el `## Brief visual` | dominio del producto, foco, firma visual, tokens, estados | bajo |
-| `.claude/rules/arquitectura.md` | **Antes de mergear**, en el paso 7 — no se invoca, se carga sola | las cuatro reglas del stack, con sus `grep` | gratis hasta tocar `apps/**` |
+| `beautify-flutter` · `mobile-design` | **Paso 5 y paso 6, al escribir una pantalla Flutter** | tema de Material 3, tokens, modo oscuro, escalado de texto, gestos, estados de carga, vacío y error, convenciones de Android e iOS | bajo |
+| `.claude/rules/arquitectura.md` | **Antes de mergear**, en el paso 7 — no se invoca, se carga sola | las cinco reglas del stack | gratis hasta tocar `apps/mobile/lib/**` o `apps/api/app/**` |
 | `/design-review` | **Paso 8, si el diff toca UI** | el código del componente: tokens, consistencia, patrones genéricos, breakpoints declarados | bajo |
 | `/accessibility-audit` | **Paso 8, si el diff toca UI** | el código: semántica, foco, teclado, ARIA, contraste declarado | bajo |
 | `/architecture-review` | **Fuera del ciclo de una card** | el repo entero, 5 fases, SOLID una por una + escalabilidad a 10× | **alto** |

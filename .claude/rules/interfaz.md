@@ -1,5 +1,5 @@
 ---
-paths: ["**/*.css", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.svelte", "**/*.html"]
+paths: ["apps/mobile/lib/**/*.dart", "apps/mobile/test/capturas/**"]
 ---
 
 # Interfaz: lo que se decide antes, y lo que se mira después
@@ -53,9 +53,9 @@ filtros. **Apartarse de eso es una decisión que se declara y se justifica**, no
 
 **Dos cosas más que el brief tiene que decir, o el paso 9 no las puede verificar:**
 
-**Qué hace cada vista con el ancho de escritorio.** Una línea por vista. Se construye
-mobile-first porque cubrir los dos sale más barato, pero el escritorio es donde se trabaja la
-jornada entera: tiene que mostrar algo que en el teléfono no entra, no ser el teléfono estirado.
+**Qué hace cada vista en un teléfono chico y en uno grande.** Una línea por vista. La app es
+sólo móvil, pero entre 360 y 430 de ancho cambia qué entra sin scroll: el brief dice qué tiene que
+quedar a la vista en el chico —el CTA principal, el dato que se vino a leer— y qué gana el grande.
 
 **Qué dato codifica cada variable visual.** El color, el peso, la densidad: cada uno nombra la
 dimensión del dato que transporta —*el color dice la etapa*, *el peso dice la prioridad*— o no
@@ -139,62 +139,53 @@ el mismo bloque de monto+etapa+fecha en dos vistas.
 **9 · Si la card tocó una pantalla, miralá. El paso 8 no la mira.**
 Sólo si el diff toca UI. Si la card es de backend, saltalo y decilo.
 
-Un test tagueado afirma sobre el DOM y el usuario lee píxeles. Medido sobre una pantalla con
+Un test tagueado afirma sobre el árbol de widgets y el usuario lee píxeles. Medido sobre una pantalla con
 cinco defectos reales de teléfono adentro: el chequeo de ancho atrapó **0**, axe atrapó **0**, un
 escenario tagueado habría atrapado **0**, y mirar las capturas atrapó **5**. El caso que lo
-resume: la etiqueta está entera en el DOM y truncada por CSS, así que `toHaveText("FRÁVEGA")` da
-verde mientras la pantalla dice `01 FR…`. No es un test flojo: mide otra cosa que la que importa.
+resume: la etiqueta está entera en el árbol y truncada por `TextOverflow.ellipsis`, así que
+`find.text('FRÁVEGA')` da verde mientras la pantalla dice `01 FR…`. No es un test flojo: mide otra cosa que la que importa.
 
 → **Producí el artefacto** — esto sí es mecánico y binario:
 ```
-npx playwright test --project=capturas
+cd apps/mobile && flutter test test/capturas --tags capturas --update-goldens
 ```
-Es un archivo propio del repo: un `test('@captura <vista>')` por vista, que navega y hace
-`page.screenshot()`. No afirma nada — si afirmara, volveríamos al problema de arriba. Ese archivo
-**sí** lo toca el que implementa, porque no está tagueado por card.
+Es un archivo propio del repo: un `testWidgets` por vista con el tag `capturas`, que arma la
+pantalla y la guarda con `matchesGoldenFile`. No afirma nada — si afirmara, volveríamos al
+problema de arriba. Ese archivo **sí** lo toca el que implementa, porque no está tagueado por card.
 
-**Y no se llama `.spec.ts`.** Va como `capturas.captura.ts`, en su propio *project* de Playwright,
-fuera del que corre el gate. *Lo que no es un test no lleva nombre de test: si entra a la suite,
-suma casos verdes que no afirman nada y el conteo del cierre miente.* En el repo del que sale esta
-regla pasó exactamente eso: una captura archivada como `.spec.ts` contaminó el gate.
+**Y queda fuera de la corrida por defecto.** El tag `capturas` se excluye en `dart_test.yaml`.
+*Lo que no es un test no cuenta como test: si entra a la suite, suma casos verdes que no afirman
+nada y el conteo del cierre miente.* En el repo del que sale esta regla pasó exactamente eso: una
+captura archivada como test contaminó el gate.
 
-→ **Dos anchos, siempre los dos:**
+→ **Dos teléfonos y dos modos, siempre los cuatro:**
 ```
-{ width: 1280, height: 900 }   // escritorio — es donde se trabaja
-{ width:  390, height: 844 }   // teléfono   — es donde se rompe
+Size(360, 800)   // teléfono chico — es donde se rompe
+Size(430, 932)   // teléfono grande
+× modo oscuro y modo claro
 ```
-**Medido, y por eso está acá:** una card que capturó sólo a 390 px salió con el teléfono impecable
-y la cuarta columna del tablero **cortada por el borde en escritorio**, con 1280 px de ancho
-disponible. El agente miró sus capturas, encontró defectos reales y los arregló — todos los del
-único ancho que el método le hacía mirar. **Se optimiza lo que se mira y se rompe lo que no.**
+**Medido, y por eso está acá:** una card que capturó un solo ancho salió impecable en ese ancho y
+**cortada por el borde en el otro**. El agente miró sus capturas, encontró defectos reales y los
+arregló — todos los del único ancho que el método le hacía mirar. **Se optimiza lo que se mira y
+se rompe lo que no.** El modo claro es la otra mitad: en el prototipo de este producto el lima sobre
+blanco daba 1,16:1 y sólo se vio al mirar el modo claro.
 
 **Lo crea la primera card que toca una pantalla**, y cada card que agrega una vista agrega su
 `@captura`. No existe de antes: si el paso 9 se queda esperando un spec que nadie tiene
 asignado escribir, nunca se ejecuta y el paso entero es decorativo.
 
-**Contra un build de producción, nunca contra el dev server.** Medido: el indicador de dev-tools
-aparece en las doce capturas tapando contenido distinto, y se llevó cinco de los seis hallazgos
-del revisor. No es que se equivocara —el elemento tapa de verdad— es que no se despacha. Revisar
-contra el dev server quema la atención del revisor en algo que el usuario nunca ve.
+**Sin el banner de debug.** `debugShowCheckedModeBanner: false` en las capturas: el banner tapa
+contenido y se lleva la atención del revisor en algo que el usuario nunca ve.
 
-→ **Escritorio no es el teléfono estirado.** Se construye mobile-first porque sale más barato
-cubrir los dos, pero **el escritorio es el destino principal**: es donde se trabaja la jornada
-entera. Con las dos tiras al lado, la pregunta es qué hace el escritorio con el espacio de más.
+→ **El diseño a seguir es el prototipo de Figma** (`VUiZR6V4USuiyxRgtshhEn`). Con la tira al lado
+de la pantalla del prototipo que corresponde —la matriz de `05 · Trazabilidad` dice cuál es—, la
+pregunta es si la app dice y muestra lo mismo: textos, estados, jerarquía, tokens. Lo que se
+aparte es un defecto o una decisión escrita en el plan, nunca un detalle.
 
-| | No pasa |
-|---|---|
-| Misma disposición en los dos anchos, sólo más grande | una columna que se estira, tarjetas que crecen y nada más |
-| El espacio de más va todo a márgenes | el contenido ocupa lo mismo y sobra aire a los costados |
-| Un patrón de teléfono servido en escritorio | un carrusel horizontal donde entraban todas las columnas |
+**El `## Brief visual` lo dice antes:** qué tiene que quedar a la vista en el teléfono chico. Si
+no está escrito, se decide mirando el diff y el paso se confirma a sí mismo.
 
-El escritorio tiene que **mostrar algo que en el teléfono no entra**: más columnas a la vez, una
-tabla en vez de tarjetas apiladas, el detalle al lado del listado en vez de en otra pantalla.
-Si las dos capturas se distinguen sólo por la escala, el escritorio no está diseñado.
-
-**El `## Brief visual` lo dice antes:** una línea de qué hace cada vista con el ancho de más. Si
-no está escrita, se decide mirando el diff y el paso se confirma a sí mismo.
-
-Existe la tira o no existe. Si el server no levanta, es **no se pudo correr** y no cierra.
+Existe la tira o no existe. Si las capturas no se generan, es **no se pudo correr** y no cierra.
 
 → **El veredicto lo da alguien mirando, con el `## Brief visual` del plan al lado.** Primero un
 modelo barato: con el brief saca 3 de 5 sin ensuciar la salida. Después una persona sobre lo que
@@ -223,7 +214,7 @@ intención es peor que la slop»*. **No elige dirección ni la repara.** Si la p
 porque la dirección estaba mal, esta skill no lo va a decir — y pedirle que lo arregle es pedirle
 lo que su propio archivo declara fuera de alcance.
 
-→ **Y la slop más visible no está en el CSS: está en los datos.** `design-deslop` mira
+→ **Y la slop más visible no está en los estilos: está en los datos.** `design-deslop` mira
 composición. Lo primero que delata a un ojo humano es el contenido sintético, y eso no lo mira
 nadie. Medido: una pantalla con el diseño corregido y las once validaciones en verde se leyó de
 inmediato como *«excesivamente hecha con IA»* — y la causa eran diez títulos ciclados con

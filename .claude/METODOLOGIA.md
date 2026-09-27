@@ -19,9 +19,11 @@ un estado paralelo se desincroniza y después hay que decidir cuál de los dos t
 
 **Carpeta de tests E2E.** Se fija una sola vez, acá:
 ```
-E2E=apps/e2e        # ajustá a la ruta real de este repo
+E2E="apps/mobile/integration_test apps/api/tests/escenarios"
 ```
-Las validaciones que siguen usan `$E2E` en vez de `e2e/` a mano.
+Las validaciones que siguen usan `$E2E` en vez de las carpetas a mano. **Los comandos que este
+archivo escribe en su forma web (`npm test`, `npx playwright`, `.spec.ts`) se corren con su
+equivalente de `.claude/STACK.md`**, que es el que manda en este repo.
 
 **Si no existe, se crea — no se frena.** En un proyecto que arranca de cero no existe ninguna de
 las cosas que el método valida: ni carpeta de tests, ni suite, ni `npm test`, ni `specs/`. **La
@@ -153,9 +155,9 @@ carga al invocarlo: no hay nada que recordar acá.
 
 → **Validá, en las dos direcciones, siempre junto con el denominador:**
 - Por cada ID del snapshot: `grep -rl "@<ID>-H01-01" $E2E` devuelve al menos un archivo.
-- Al revés: `grep -rhoE "@[A-Z]+-[0-9]+-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga
+- Al revés: `grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga
   tiene que existir en `## Escenarios` del snapshot.
-- `find "$E2E" -name '*.spec.ts' | wc -l` — un grep en cero **no es verde si el denominador
+- `find $E2E -name '*_test.dart' -o -name 'test_*.py' | wc -l` — un grep en cero **no es verde si el denominador
   también es cero**: es «no se pudo verificar».
 
 **Un escenario no es un caso, y el cierre reporta escenarios.** Un mismo escenario puede tener
@@ -164,7 +166,7 @@ es la regla contestada igual en todas las pantallas. Lo que no está bien es con
 Medido: una corrida cerró diciendo *«los 11 escenarios de la card»* cuando eran **11 casos
 tagueados sobre 9 escenarios distintos**. El número que va al cierre es el de tags únicos:
 ```
-grep -rhoE "@[A-Z]+-[0-9]+-H[0-9]+-[0-9]+" $E2E | sort -u | wc -l
+grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u | wc -l
 ```
 *Igual que contar capturas como tests, inflar escenarios con casos hace que el cierre mienta
 hacia arriba — y el cierre es lo que se defiende en la entrega.*
@@ -283,7 +285,7 @@ por qué. **No hay nada que recordar acá.**
 
 Dos cosas sí, porque deciden si el paso existe:
 
-- **`npm test` tiene que correr todo lo que cuenta.** El comando por defecto es el que va a
+- **`sh scripts/test.sh` tiene que correr todo lo que cuenta.** El comando por defecto es el que va a
   correr el que no leyó nada: si no corre lo que importa, la suite no existe para él.
 - **Lo que falte para que esto esté impecable tiene dos destinos, y ninguno es una lista de
   pendientes:** se arregla en esta card, o se pregunta en la card como `<ID>-AMB-NN`. **Un techo
@@ -303,16 +305,18 @@ las capturas **5**.
 
 → **Producí el artefacto** — mecánico y binario:
 ```
-npx playwright test --project=capturas   # 1280×900 y 390×844, contra build de producción
+cd apps/mobile && flutter test test/capturas --tags capturas --update-goldens   # 360 y 430 de ancho, claro y oscuro
 ```
-**Y el project de capturas queda fuera de la corrida por defecto.** No alcanza con ponerlo en un
-project aparte: `npx playwright test` sin argumentos corre **todos** los projects. Medido: una
+**Y las capturas quedan fuera de la corrida por defecto.** No alcanza con ponerlas en otra
+carpeta: `flutter test` sin argumentos corre todo `test/`. Se excluyen con el tag `capturas` en
+`dart_test.yaml`. Medido: una
 corrida reportó «41 de 41» y eran 29 tests más 12 capturas que no afirman nada. *El conteo del
 cierre tiene que ser de casos que verifican algo — si no, el número miente hacia arriba.*
 ```
-npx playwright test --project=gate       # lo que cuenta para el cierre
+cd apps/mobile && flutter test integration_test   # lo que cuenta para el cierre
 ```
-Existe la tira o no existe. Si el server no levanta, es **no se pudo correr** y no cierra.
+Existe la tira o no existe. Si el emulador o la API no levantan, es **no se pudo correr** y no
+cierra.
 
 → **El veredicto lo da alguien mirando, y no se mecaniza.** Qué se mira, contra qué, y las tres
 preguntas que hay que contestar —¿está obstruido? ¿se nota que lo generó un modelo? ¿quedó mejor

@@ -1,5 +1,5 @@
 ---
-paths: ["apps/**", "src/**", "packages/**", "lib/**"]
+paths: ["apps/mobile/lib/**", "apps/api/app/**"]
 ---
 
 # Arquitectura
@@ -23,9 +23,10 @@ puerta se pierde cuando esa puerta no se abre.**
 
 Son las que más caro salen y las que ningún linter genérico atrapa.
 
-1. **Un controller no habla con el ORM.** Nada bajo `apps/api/**/*.controller.ts` importa
-   `sequelize`, `@nestjs/sequelize` ni un `*.model.ts`. El controller recibe, delega a un caso
-   de uso y responde.
+1. **Un router no habla con el ORM.** Nada bajo `apps/api/app/**/routers/` importa `sqlalchemy`
+   ni un modelo de la base. El router recibe, delega a un caso de uso y responde. Del lado de la
+   app, **un widget no llama a la API**: la pantalla habla con su estado, y el estado con un
+   repositorio.
 2. **El dominio no lleva apariencia — pero sí lleva el nombre.** Un color, un ícono, un ancho de
    columna o un formato de fecha dentro de la capa de reglas significa que **una pantalla nueva
    con otra paleta ya no puede usar ese dominio**. Medido: la tabla de etapas traía
@@ -52,8 +53,8 @@ Son las que más caro salen y las que ningún linter genérico atrapa.
 ## Dirección de dependencias
 
 ```
-interfaz (controllers, páginas) → aplicación (casos de uso) → dominio (entidades, reglas)
-infraestructura (Sequelize, HTTP, colas) → dominio
+interfaz (routers, pantallas) → aplicación (casos de uso) → dominio (entidades, reglas)
+infraestructura (SQLAlchemy, Firebase, HTTP) → dominio
 ```
 
 Las flechas apuntan hacia adentro y **nunca al revés**. El dominio no conoce a nadie.
@@ -61,7 +62,7 @@ Las flechas apuntan hacia adentro y **nunca al revés**. El dominio no conoce a 
 ## Fronteras de módulo
 
 Se importa el índice público de otro módulo, nunca su interior:
-`import { X } from '../clientes'` sí; `import { X } from '../clientes/infraestructura/cliente.model'` no.
+`from app.reservas import crear_reserva` sí; `from app.reservas.infraestructura.modelos import Reserva` no.
 
 ## Lo que no hay que hacer en nombre de la arquitectura
 
@@ -71,7 +72,7 @@ que el de subdiseñar.
 - **No crees una interfaz para satisfacer DIP.** Una interfaz con una sola implementación y sin
   un segundo consumidor a la vista es indirección, no desacoplamiento.
 - **No hagas un repositorio genérico** si un repositorio del dominio expresa mejor la intención.
-  `buscarPorCuit()` dice algo; `findOne(criteria)` no.
+  `reservas_superpuestas(espacio, inicio, fin)` dice algo; `find_one(criteria)` no.
 - **No introduzcas una abstracción hasta tener un motivo concreto.** Dos usos no son un patrón.
 - **No conviertas un CRUD en hexagonal.** Si la card es un ABM, entregá un ABM.
 
@@ -97,15 +98,16 @@ dos cosas pasaron todos los tests y las encontró un revisor externo leyendo. *U
 sólo se sostiene porque alguien la recuerda ya es una propiedad perdida; la única diferencia es
 cuándo te enterás.*
 
-En un repo grande la herramienta es `dependency-cruiser` con un `.dependency-cruiser.js` que
-codifique estas mismas flechas, corriendo en `npm test`. En uno chico, el test a mano alcanza.
+En la API la herramienta es `import-linter` con un contrato de capas que codifique estas mismas
+flechas, corriendo en `scripts/test.sh`; en la app, un test que lee los `import` de `lib/`.
 Lo que no alcanza es la revisión.
 
 ## El compilador en su máxima exigencia
 
-`tsconfig.json` con `strict` **y `noUncheckedIndexedAccess`**. El segundo casi nunca está puesto y
-es el que atrapa el error que más aparece: `lista[i]` y `mapa.get(k)` devuelven el tipo como si
-siempre estuvieran, y la respuesta a esa mentira suele ser un `!` que la tapa en vez de manejarla.
+`analysis_options.yaml` con `strict-casts`, `strict-inference` y `strict-raw-types`, y la API con
+`mypy --strict`. Son los que atrapan el error que más aparece: un `mapa[k]` que puede ser nulo y un
+`dynamic` que viaja sin tipo, y la respuesta a esa mentira suele ser un `!` que la tapa en vez de
+manejarla.
 
-Lo mismo del otro lado: **un `!`, un `as any` o un `@ts-ignore` es el compilador avisando y
-alguien tapándole la boca.** Se sacan; el que sobreviva lleva una línea diciendo por qué.
+**Un `!`, un `as dynamic`, un `// ignore:` o un `# type: ignore` es el analizador avisando y alguien
+tapándole la boca.** Se sacan; el que sobreviva lleva una línea diciendo por qué.

@@ -33,7 +33,8 @@ antes.
 | Vas a escribir el snapshot | `.claude/plantillas/card.snapshot.md` |
 | Tenés que elegir entre dos skills de revisión, o justificar por qué no corriste una | `.claude/skills/CUANDO.md` |
 | Vas a vendorizar una skill o querés saber de dónde salió una | `.claude/skills/PROCEDENCIA.md` |
-| Tocaste `apps/**` o `packages/**` | `.claude/rules/arquitectura.md` — **se carga sola**, no la busques |
+| Vas a escribir o correr tests, o un comando del método está en su forma web | `.claude/STACK.md` — rutas, comandos y equivalencias de Flutter y pytest |
+| Tocaste `apps/mobile/lib/**` o `apps/api/app/**` | `.claude/rules/arquitectura.md`, y en la app también `interfaz.md` — **se cargan solas**, no las busques |
 
 Nada más se carga solo. Este archivo, las descripciones de skills y agentes, y nada más.
 

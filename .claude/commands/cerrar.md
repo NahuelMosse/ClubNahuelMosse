@@ -21,23 +21,23 @@ La salida de `/validar` es parte del cierre: va en el comentario junto con lo de
 ```
 git diff --name-only <commit-del-snapshot>..HEAD -- specs/<feature>/card.snapshot.md  # 1. snapshot intacto
 grep -rl "@$1-H<NN>-<NN>" $E2E                         # 2. por cada escenario del snapshot: >= 1 archivo
-grep -rhoE "@[A-Z]+-[0-9]+-H[0-9]+-[0-9]+" $E2E|sort -u # 3. ningún tag fuera del snapshot
+grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E|sort -u # 3. ningún tag fuera del snapshot
 grep -r "@supuesto:$1-SUP-" $E2E                       # 4. cada SUP: tagueado...
 grep -A99 "## Supuestos sin cobertura" specs/*/plan.md # 4b. ...o declarado sin cobertura
 git diff --name-only <commit-de-tests>..HEAD -- $E2E   # 5. vacío: nadie tocó los tests
 git diff --name-only main...HEAD                       # 6. vs. `## Mapa de archivos` del plan
-npm test                                               # 7.
-npx tsc --noEmit                                       # 8.
-npx playwright test --grep "@$1"                       # 9.  los escenarios de esta card
-npx playwright test --project=gate                     # 10. suite entera: las regresiones
-npx playwright test --project=capturas                 # 11. sólo si el diff toca UI
+sh scripts/test.sh                                     # 7.
+flutter analyze && ruff check . && mypy --strict app   # 8.  en apps/mobile y apps/api
+flutter test integration_test --name "@$1-" && pytest tests/escenarios --card $1   # 9.  los escenarios de esta card
+flutter test integration_test && pytest tests/escenarios                          # 10. suite entera: las regresiones
+flutter test test/capturas --tags capturas --update-goldens                       # 11. sólo si el diff toca UI
 ```
 
 La 10 no es la 9 otra vez: filtrando por `@$1` se corre únicamente lo que esta card agregó, así
 que un escenario viejo que esta card rompió queda **excluido** del cierre.
 
-La 11 produce la tira de capturas **a 1280 y a 390**, contra un build de producción, no contra el dev
-server**. Que exista es mecánico; que esté bien no. El veredicto lo da alguien mirándolas con el
+La 11 produce la tira de capturas **a 360 y a 430 de ancho**, en modo claro y oscuro (ver
+`.claude/STACK.md`). Que exista es mecánico; que esté bien no. El veredicto lo da alguien mirándolas con el
 `## Brief visual` del plan al lado —un modelo barato primero, una persona sobre lo que quede— y
 va al comentario con el nombre de quién miró. Si el diff no toca UI, se saltea y se dice.
 

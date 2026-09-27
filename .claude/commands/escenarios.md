@@ -5,12 +5,16 @@ argument-hint: <CARD-ID>
 
 Card: `$1`. Ubicá la carpeta de la feature bajo `specs/` —la que creó spec-kit para este trabajo—
 y leé ahí `card.snapshot.md` — la sección `## Escenarios` es la lista de trabajo.
+
+**En este repo los tests son Flutter (`integration_test`) y pytest.** Rutas, comandos y
+equivalencias de selectores están en `.claude/STACK.md`; los ejemplos de abajo ya están en Dart.
+
 ## Cómo se escribe un test de esta suite
 
  
 `/escenarios <ID>` escribe un test por escenario, tagueado `@<ID>-H<NN>-<NN>`.
 
-→ **El archivo va por pantalla, no por card.** `specs/<área>/<pantalla>.spec.ts`. Un test nuevo va
+→ **El archivo va por pantalla, no por card.** `apps/mobile/integration_test/<área>/<pantalla>_test.dart`. Un test nuevo va
 donde está la pantalla que ejercita, al lado de los que ya la prueban, **aunque su card sea otra**.
 
 *Medido en un repo real que hizo lo contrario durante meses: 58 archivos tocaban la misma entidad,
@@ -42,10 +46,10 @@ control no se renderice, no sólo que la API devuelva 403.
 
 → **Validá, en las dos direcciones, siempre junto con el denominador:**
 - Por cada ID del snapshot: `grep -rl "@<ID>-H01-01" $E2E` devuelve al menos un archivo.
-- Al revés: `grep -rhoE "@[A-Z]+-[0-9]+-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga tiene
+- Al revés: `grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga tiene
   que existir en `## Escenarios` del snapshot. Un tag de un escenario que no existe es un test
   huérfano o un ID mal escrito.
-- `find "$E2E" -name '*.spec.ts' | wc -l` — archivos escaneados. Un grep en cero **no es verde si
+- `find $E2E -name '*_test.dart' -o -name 'test_*.py' | wc -l` — archivos escaneados. Un grep en cero **no es verde si
   el denominador también es cero**: es "no se pudo verificar" (ver los tres estados, paso 8). Cero
   sobre una carpeta con archivos sí es verde.
 
@@ -54,12 +58,12 @@ Leé cada test tagueado y confirmá que el valor sobre el que afirma es un valor
 test creó**, no un fixture compartido ni un dato que ya estaba en la base. Así un test no puede
 pasar por accidente. El valor único se genera inline, sin archivo de fixtures:
 
-```ts
-const cuit = `30-${Date.now().toString().slice(-8)}-9`;
-await crearCliente({ razonSocial: `Metalúrgica ${cuit}`, cuit });
+```dart
+final sede = 'Sede Prueba ${DateTime.now().millisecondsSinceEpoch}';
+await altaDeSede(tester, nombre: sede, direccion: 'Av. Siempreviva 742');
 ```
 
-y se afirma sobre `cuit`, no sobre "el primer cliente de la lista". Si el escenario no admite dato
+y se afirma sobre `sede`, no sobre "el primer cliente de la lista". Si el escenario no admite dato
 propio (estado vacío, error, permiso denegado), taguealo `@sin-centinela:<motivo>`. Nunca inventes
 un dato falso para que el chequeo pase.
 
@@ -72,18 +76,18 @@ producto afirma que el texto es igual a sí mismo: **no puede detectar un copy e
 literal en el spec es el punto donde se verifica lo que la persona lee. No centralizarlo es una
 decisión, no una deuda.
 
-→ **Los selectores van por rol y nombre accesible.** `getByRole("button", { name: "Confirmar" })`
-primero; texto visible cuando no hay rol; `data-*` sólo cuando el DOM no da otra cosa, con un
-comentario.
+→ **Los selectores van por semántica y texto visible.** `find.bySemanticsLabel('Confirmar
+reserva')` o `find.widgetWithText(FilledButton, 'CONFIRMAR RESERVA')` primero; `find.byKey` sólo
+cuando la pantalla no da otra cosa, con un comentario.
 
-**Si el DOM no ofrece un selector estable, la primera pregunta es si al producto le falta
-semántica** —un `<label>` sin `htmlFor`, un combo sin nombre accesible, un diálogo sin `role`— y se
-arregla ahí, no en el test. *Un `xpath=following-sibling::` es la señal de que ese arreglo no se
-hizo.* Nunca clases de layout ni de librerías de íconos: no sobreviven al build de producción, así
-que el test pasa en dev y falla en el gate.
+**Si la pantalla no ofrece un selector estable, la primera pregunta es si al producto le falta
+semántica** —un campo sin etiqueta, un ícono tocable sin `Semantics(label:)`, un diálogo sin
+título— y se arregla ahí, no en el test. *Buscar por posición en el árbol (`find.byType(...).at(3)`)
+es la señal de que ese arreglo no se hizo.* Nunca por tipo de widget de layout: cambia con cualquier
+refactor visual y el test se rompe sin que el comportamiento cambie.
 
-→ **`retries: 0`, y es doctrina.** *Un test que sólo pasa a veces es un test que no dice nada.* Y
-`waitForTimeout` está prohibido como sincronización: un `sleep` que hoy alcanza es un test que el
+→ **Sin reintentos, y es doctrina.** *Un test que sólo pasa a veces es un test que no dice nada.* Y
+`tester.pump(Duration(...))` está prohibido como sincronización: un `sleep` que hoy alcanza es un test que el
 año que viene falla de a uno. Se espera con aserciones que reintentan, no con tiempo.
 
 → **El aislamiento es por test, no por archivo.** Cada test parte de un estado que es sólo suyo.
@@ -127,8 +131,8 @@ barato —cálculos, snapshots, códigos de error— vive ahí, no acá.
 - **Un test por escenario, como mínimo**, tagueado con el ID exacto: `@$1-H01-01`.
   El tag va en el título, porque `--grep` matchea ahí — pero **al final, nunca adelante**:
 
-  ```ts
-  test("la composición accionaria no avanza si no suma 100% @$1-H01-01", …)
+  ```dart
+  testWidgets('la reserva superpuesta no se confirma @$1-H01-01', (tester) async { … });
   ```
 
   El título empieza por el comportamiento, en minúscula y en lenguaje de dominio, para que la
@@ -136,7 +140,7 @@ barato —cálculos, snapshots, códigos de error— vive ahí, no acá.
   un artefacto envejece con el artefacto: en un repo real el 72 % de los títulos empezaba con la
   referencia de un documento que ya nadie mantenía.*
 
-- **El archivo va por pantalla, no por card**: `<área>/<pantalla>.spec.ts`. Un test nuevo va donde
+- **El archivo va por pantalla, no por card**: `<área>/<pantalla>_test.dart`; en la API, `test_<recurso>.py`. Un test nuevo va donde
   está la pantalla que ejercita, al lado de los que ya la prueban, aunque su card sea otra.
   *Archivar por card esconde la cobertura de quien va a agregarle algo.*
 - **En rojo.** Se escriben antes del código y se commitean fallando, en un commit propio que no
@@ -153,10 +157,10 @@ barato —cálculos, snapshots, códigos de error— vive ahí, no acá.
 - **Cada test crea su propio dato y afirma sobre ese dato.** Nada de fixtures compartidos ni de
   datos que ya estaban en la base:
 
-  ```ts
-  const cuit = `30-${Date.now().toString().slice(-8)}-9`;
-  await crearCliente({ razonSocial: `Metalúrgica ${cuit}`, cuit });
-  // ...y la aserción es sobre `cuit`, no sobre "el primer resultado"
+  ```dart
+  final sede = 'Sede Prueba ${DateTime.now().millisecondsSinceEpoch}';
+  await altaDeSede(tester, nombre: sede, direccion: 'Av. Siempreviva 742');
+  // ...y la aserción es sobre `sede`, no sobre "el primer resultado"
   ```
 
   Si el escenario no lo admite —estado vacío, error, permiso denegado— taguealo
@@ -168,8 +172,9 @@ barato —cálculos, snapshots, códigos de error— vive ahí, no acá.
 
 ```
 grep -rl "@$1-H01-01" $E2E                          # por cada ID del snapshot: >= 1 archivo
-grep -rhoE "@[A-Z]+-[0-9]+-H[0-9]+-[0-9]+" $E2E | sort -u   # todo tag existe en el snapshot
-npx playwright test --grep "@$1"                    # tienen que fallar, no romper
+grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u   # todo tag existe en el snapshot
+cd apps/mobile && flutter test integration_test --name "@$1-"   # tienen que fallar, no romper
+cd apps/api && pytest tests/escenarios --card $1
 ```
 
 Fallan por la aserción, no por un import roto ni por un selector inexistente: un test que
@@ -178,21 +183,20 @@ explota no es un test en rojo.
 **Pero acá eso no se puede distinguir, y hay que saberlo.** Antes de implementar, un selector que
 no encuentra nada y una funcionalidad que todavía no existe **producen exactamente el mismo
 error**. Por eso el rol y el nombre que elegís tienen que ser posibles *por la especificación*,
-no por lo que se vea: `getByRole('definition', { name })` no encuentra nunca nada, porque
-**`definition` no lleva nombre accesible** en ARIA. Antes de usar un rol con `name`, verificá que
-ese rol lo admita.
+no por lo que se vea: `find.bySemanticsLabel` sobre un widget que no expone etiqueta —un `Icon`
+suelto, un `Container` tocable— no encuentra nunca nada. Antes de buscar por etiqueta, verificá
+que ese widget la exponga.
 
 *El paso 8 lo vuelve a chequear cuando el código ya está, que es el único momento en que la
 diferencia se ve. Pero para entonces el test está congelado y arreglarlo cuesta un
 recongelamiento: acá es gratis.*
 
-**Y un selector que nombra un valor del negocio se acota a su contenedor.** `getByRole('heading',
-{ name: 'Propuesta' })` parece preciso hasta que la semilla —o el propio test— crea una
-oportunidad titulada *«Ubicación Propuesta para el anexo»*: ahí el selector matchea dos cosas y
-la suite se cae por *strict mode violation*. Medido, y es la segunda causa de rojo de este
+**Y un selector que nombra un valor del negocio se acota a su contenedor.** `find.text('Fútbol')`
+parece preciso hasta que la pantalla muestra el chip de deporte y una tarjeta cuyo título también
+dice *«Fútbol 5»*: ahí el selector matchea dos cosas y la suite se cae por *Too many elements*. Medido, y es la segunda causa de rojo de este
 método. El nombre de una etapa, de un estado o de una categoría **va a aparecer dentro de los
 datos**, porque los datos hablan del mismo negocio. Acotá al `<section>`, a la columna o a la
-fila, y recién ahí buscá por rol.
+fila (`find.descendant(of: ..., matching: ...)`), y recién ahí buscá por texto.
 
 ## Reportar
 

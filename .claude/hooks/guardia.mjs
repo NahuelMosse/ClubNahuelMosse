@@ -37,9 +37,9 @@ if (/\/ambiguedades\.md$/.test(ruta) && herramienta === 'Edit') {
 // Regla 7 — el que implementa no baja la vara que él mismo tiene que superar.
 // El congelamiento no es una fase declarada: es el commit en rojo del paso 4. Un test
 // tagueado ya commiteado está congelado; uno que todavía no entró a git se está escribiendo.
-const TAG = /@[A-Z]+-\d+-H\d+-\d+/;
+const TAG = /@[A-Z]+-\d+[a-z]?(?:\.\d+)?-H\d+-\d+/;
 
-if (/\.(spec|test)\.[tj]sx?$/.test(ruta)) {
+if (/(_test\.dart|\/test_[^/]*\.py|_test\.py)$/.test(ruta)) {
   let tagueado = false;
   try {
     tagueado = existsSync(ruta) && TAG.test(readFileSync(ruta, 'utf8'));
