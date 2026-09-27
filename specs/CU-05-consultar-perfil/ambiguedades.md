@@ -20,3 +20,5 @@ CU-05-AMB-02 · 2026-09-27 · abierta · ¿qué estados de membresía existen ad
 CU-05-AMB-03 · 2026-09-27 · abierta · ¿la preferencia de tema se guarda en el dispositivo o en el perfil del backend? ¿sobrevive a cerrar sesión?
 CU-05-AMB-04 · 2026-09-27 · abierta · ¿los errores cierran con «Aceptar» (CU) o con «Reintentar / Volver» (overlay compartido del prototipo)?
 CU-05-AMB-00 · 2026-09-27 · snapshot · congelado en a2d901f
+CU-05-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-05-AMB-04 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)

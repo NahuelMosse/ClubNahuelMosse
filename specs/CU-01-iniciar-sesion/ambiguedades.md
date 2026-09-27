@@ -26,3 +26,13 @@ CU-01-AMB-08 · 2026-09-27 · abierta · ¿la autenticación la resuelve Firebas
 CU-01-AMB-09 · 2026-09-27 · abierta · ¿qué texto manda en credenciales inválidas: el del CU o el del prototipo? ¿un mensaje único o uno por campo en FA1?
 CU-01-AMB-00 · 2026-09-27 · snapshot · congelado en e8013cb
 CU-01-AMB-00 · 2026-09-27 · snapshot · congelado en a1f7f83
+CU-01-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-01-AMB-02 · 2026-09-27 · resuelta · la sesión sigue abierta al reabrir la app y se permiten varias a la vez; al cerrar sesión el dispositivo deja de recibir push (decisión 14)
+CU-01-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-01-AMB-03 · 2026-09-27 · resuelta · el rol lo trae la cuenta y se guarda en la base; el login no tiene selector de rol; la primera cuenta de administrador se crea al inicializar la base (decisión 2)
+CU-01-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-01-AMB-06 · 2026-09-27 · resuelta · la sesión sigue abierta al reabrir la app y se permiten varias a la vez; al cerrar sesión el dispositivo deja de recibir push (decisión 14)
+CU-01-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-01-AMB-08 · 2026-09-27 · resuelta · Firebase Auth; la API valida el token de Firebase en cada pedido (decisión 1)
+CU-01-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-01-AMB-09 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)

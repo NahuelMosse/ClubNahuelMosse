@@ -25,3 +25,9 @@ CU-16-AMB-07 · 2026-09-27 · abierta · ¿el horario de funcionamiento es de la
 CU-16-AMB-08 · 2026-09-27 · abierta · ¿el puntaje por sede del prototipo existe? Ningún CU dice de dónde sale; ¿se quita?
 CU-16-AMB-09 · 2026-09-27 · abierta · ¿la foto de la sede es un dato que carga el administrador (CU-17 no la pide) o una imagen fija de la app?
 CU-16-AMB-00 · 2026-09-27 · snapshot · congelado en ae38a80
+CU-16-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-16-AMB-02 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-16-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-16-AMB-07 · 2026-09-27 · resuelta · la sede tiene apertura, cierre y los días de la semana en que abre; el horario es el mismo todos esos días (decisión 7)
+CU-16-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-16-AMB-08 · 2026-09-27 · resuelta · el puntaje por sede se quita (decisión 15)

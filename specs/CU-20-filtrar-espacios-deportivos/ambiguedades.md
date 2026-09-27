@@ -29,3 +29,5 @@ CU-20-AMB-06 · 2026-09-27 · abierta · al abrir la sede, ¿viene elegido el pr
 CU-20-AMB-07 · 2026-09-27 · abierta · ¿hace falta además un listado de espacios de todas las sedes, filtrable por tipo, como pide el enunciado RF 5, o alcanza con filtrar dentro de cada sede?
 CU-20-AMB-08 · 2026-09-27 · abierta · ¿filtrar consulta al servidor en cada toque (FA4, FA5) o filtra en el dispositivo lo que ya se cargó?
 CU-20-AMB-00 · 2026-09-27 · snapshot · congelado en 50b3637
+CU-20-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-20-AMB-04 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)

@@ -25,3 +25,9 @@ CU-24.1-AMB-07 · 2026-09-27 · abierta · sin permiso, ¿el recordatorio aparec
 CU-24.1-AMB-08 · 2026-09-27 · abierta · si el usuario cerró sesión o tiene varios dispositivos, ¿a qué dispositivos llega?
 CU-24.1-AMB-00 · 2026-09-27 · snapshot · congelado en c8f04f1
 CU-24.1-AMB-00 · 2026-09-27 · snapshot · congelado en 06b71f1
+CU-24.1-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-24.1-AMB-04 · 2026-09-27 · resuelta · las tres notificaciones van por push y quedan en el centro de notificaciones; una reserva hecha con menos de una hora de anticipación no recibe recordatorio (decisión 10)
+CU-24.1-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-24.1-AMB-07 · 2026-09-27 · resuelta · las tres notificaciones van por push y quedan en el centro de notificaciones; una reserva hecha con menos de una hora de anticipación no recibe recordatorio (decisión 10)
+CU-24.1-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-24.1-AMB-08 · 2026-09-27 · resuelta · la sesión sigue abierta al reabrir la app y se permiten varias a la vez; al cerrar sesión el dispositivo deja de recibir push (decisión 14)

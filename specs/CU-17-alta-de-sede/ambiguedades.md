@@ -27,3 +27,7 @@ CU-17-AMB-09 · 2026-09-27 · abierta · ¿cómo se escribe la dirección para q
 CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 29fa056
 CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 7d94a0f
 CU-17-AMB-00 · 2026-09-27 · snapshot · congelado en 452aaa4
+CU-17-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-17-AMB-07 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-17-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-17-AMB-08 · 2026-09-27 · resuelta · la sede tiene apertura, cierre y los días de la semana en que abre; el horario es el mismo todos esos días (decisión 7)

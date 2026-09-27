@@ -26,3 +26,9 @@ CU-14-AMB-08 · 2026-09-27 · abierta · el precio que muestra el historial, ¿e
 CU-14-AMB-00 · 2026-09-27 · snapshot · congelado en f96fe08
 CU-14-AMB-00 · 2026-09-27 · snapshot · congelado en 9eb7bed
 CU-14-AMB-00 · 2026-09-27 · snapshot · congelado en c9a3c55
+CU-14-AMB-01 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-14-AMB-01 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo) (decisión 3)
+CU-14-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-14-AMB-07 · 2026-09-27 · resuelta · la baja de una sede o de un espacio con reservas futuras no se permite; la cancelación forzosa sale sólo de CU-15 (decisión 5)
+CU-14-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-14-AMB-08 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)

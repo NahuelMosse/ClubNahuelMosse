@@ -22,3 +22,11 @@ MOD-01-AMB-03 · 2026-09-27 · abierta · ¿las bajas de usuario, sede y espacio
 MOD-01-AMB-04 · 2026-09-27 · abierta · ¿la reserva guarda una copia del nombre del espacio y del precio al momento de reservar? (CU-14 FA8, CU-09-AMB-07)
 MOD-01-AMB-05 · 2026-09-27 · abierta · ¿las notificaciones y los tokens de dispositivo son entidades del modelo o viven sólo en Firebase?
 MOD-01-AMB-00 · 2026-09-27 · snapshot · congelado en b5dac58
+MOD-01-AMB-01 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+MOD-01-AMB-01 · 2026-09-27 · resuelta · el rol lo trae la cuenta y se guarda en la base; el login no tiene selector de rol; la primera cuenta de administrador se crea al inicializar la base (decisión 2)
+MOD-01-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+MOD-01-AMB-02 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+MOD-01-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+MOD-01-AMB-03 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+MOD-01-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+MOD-01-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)

@@ -38,3 +38,17 @@ CU-09-AMB-11 · 2026-09-27 · abierta · en FA3, ¿«guardar la intención» sig
 CU-09-AMB-12 · 2026-09-27 · abierta · ¿qué texto manda en FA1: el del CU o el del prototipo?
 CU-09-AMB-00 · 2026-09-27 · snapshot · congelado en d198954
 CU-09-AMB-00 · 2026-09-27 · snapshot · congelado en e51011e
+CU-09-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-02 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-09-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-03 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo) (decisión 3)
+CU-09-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-05 · 2026-09-27 · resuelta · duración de 1 a 4 horas y hasta 7 días de anticipación (decisión 6)
+CU-09-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-07 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-09-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-08 · 2026-09-27 · resuelta · las tres notificaciones van por push y quedan en el centro de notificaciones; una reserva hecha con menos de una hora de anticipación no recibe recordatorio (decisión 10)
+CU-09-AMB-10 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-10 · 2026-09-27 · resuelta · se cancela hasta el inicio, sin anticipación mínima; se muestra el precio pero no hay pagos ni reintegros (decisión 13)
+CU-09-AMB-12 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-09-AMB-12 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)

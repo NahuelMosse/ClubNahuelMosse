@@ -21,3 +21,7 @@ CU-04b-AMB-03 · 2026-09-27 · abierta · si la contraseña cambió por otra ví
 CU-04b-AMB-04 · 2026-09-27 · abierta · ¿se guarda fecha de emisión y de uso de cada enlace?
 CU-04b-AMB-05 · 2026-09-27 · abierta · ¿cómo abre la app el enlace del correo: deep link a la app, página web intermedia, o el flujo de restablecimiento de Firebase Auth?
 CU-04b-AMB-00 · 2026-09-27 · snapshot · congelado en 25bd071
+CU-04b-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-04b-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-04b-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-04b-AMB-05 · 2026-09-27 · resuelta · Firebase Auth; la API valida el token de Firebase en cada pedido (decisión 1)

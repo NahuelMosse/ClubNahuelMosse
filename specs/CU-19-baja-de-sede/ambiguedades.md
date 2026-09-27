@@ -24,3 +24,9 @@ CU-19-AMB-06 · 2026-09-27 · abierta · ¿la baja se inicia desde la edición (
 CU-19-AMB-07 · 2026-09-27 · abierta · ¿una sede dada de baja puede volver a darse de alta, y su nombre queda libre?
 CU-19-AMB-00 · 2026-09-27 · snapshot · congelado en 2e15ff6
 CU-19-AMB-00 · 2026-09-27 · snapshot · congelado en 4f88881
+CU-19-AMB-01 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-19-AMB-01 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-19-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-19-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-19-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-19-AMB-05 · 2026-09-27 · resuelta · la baja de una sede o de un espacio con reservas futuras no se permite; la cancelación forzosa sale sólo de CU-15 (decisión 5)

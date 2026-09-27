@@ -20,3 +20,5 @@ CU-24.3-AMB-02 · 2026-09-27 · abierta · varias cancelaciones seguidas, ¿una 
 CU-24.3-AMB-03 · 2026-09-27 · abierta · el enunciado sólo pide push de reservas próximas; ¿esta confirmación va por push o sólo en el centro de la app?
 CU-24.3-AMB-04 · 2026-09-27 · abierta · la regla de FA1 («si sigue en Mis reservas») ¿cómo se decide: la app suprime la tarjeta si está en esa pantalla?
 CU-24.3-AMB-00 · 2026-09-27 · snapshot · congelado en 9678210
+CU-24.3-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-24.3-AMB-03 · 2026-09-27 · resuelta · las tres notificaciones van por push y quedan en el centro de notificaciones; una reserva hecha con menos de una hora de anticipación no recibe recordatorio (decisión 10)

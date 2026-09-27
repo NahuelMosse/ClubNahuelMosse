@@ -22,3 +22,5 @@ CU-04-AMB-04 · 2026-09-27 · abierta · la sesión invalidada en otro dispositi
 CU-04-AMB-05 · 2026-09-27 · abierta · ¿se guarda fecha y hora del último cambio de contraseña?
 CU-04-AMB-06 · 2026-09-27 · abierta · ¿el campo de contraseña nueva empieza deshabilitado hasta escribir la actual (CU) o habilitado (prototipo)?
 CU-04-AMB-00 · 2026-09-27 · snapshot · congelado en 31c4de7
+CU-04-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-04-AMB-05 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)

@@ -25,3 +25,9 @@ CU-12-AMB-07 · 2026-09-27 · abierta · para el día de hoy, ¿la franja de la 
 CU-12-AMB-08 · 2026-09-27 · abierta · ¿el precio es por espacio y fijo, o puede variar por horario o día?
 CU-12-AMB-00 · 2026-09-27 · snapshot · congelado en 292a301
 CU-12-AMB-00 · 2026-09-27 · snapshot · congelado en 3aa4a53
+CU-12-AMB-01 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-12-AMB-01 · 2026-09-27 · resuelta · duración de 1 a 4 horas y hasta 7 días de anticipación (decisión 6)
+CU-12-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-12-AMB-02 · 2026-09-27 · resuelta · duración de 1 a 4 horas y hasta 7 días de anticipación (decisión 6)
+CU-12-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-12-AMB-06 · 2026-09-27 · resuelta · la sede tiene apertura, cierre y los días de la semana en que abre; el horario es el mismo todos esos días (decisión 7)

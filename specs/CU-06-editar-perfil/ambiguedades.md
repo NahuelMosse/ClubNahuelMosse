@@ -26,3 +26,13 @@ CU-06-AMB-08 · 2026-09-27 · abierta · si otro dispositivo editó el perfil mi
 CU-06-AMB-09 · 2026-09-27 · abierta · ¿se guarda fecha y hora de la última modificación del perfil?
 CU-06-AMB-10 · 2026-09-27 · abierta · ¿se marcan en verde los campos válidos (CU) o sólo en rojo los inválidos (prototipo)?
 CU-06-AMB-00 · 2026-09-27 · snapshot · congelado en 8406dcb
+CU-06-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-06-AMB-03 · 2026-09-27 · resuelta · la contraseña del registro sigue las reglas de CU-04; DNI de 7 u 8 dígitos, editable y único; fecha de nacimiento pasada, sin edad mínima (decisión 9)
+CU-06-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-06-AMB-04 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-06-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-06-AMB-06 · 2026-09-27 · resuelta · la contraseña del registro sigue las reglas de CU-04; DNI de 7 u 8 dígitos, editable y único; fecha de nacimiento pasada, sin edad mínima (decisión 9)
+CU-06-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-06-AMB-09 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-06-AMB-10 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-06-AMB-10 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)

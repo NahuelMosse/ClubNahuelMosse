@@ -29,3 +29,13 @@ CU-10-AMB-06 · 2026-09-27 · abierta · ¿se guarda fecha y hora de la cancelac
 CU-10-AMB-07 · 2026-09-27 · abierta · ¿la cancelación dispara la push de confirmación de cancelación (CU-24.3)?
 CU-10-AMB-08 · 2026-09-27 · abierta · ¿el monto se devuelve o hay alguna política de reintegro? Ni el CU ni el enunciado hablan de pagos
 CU-10-AMB-00 · 2026-09-27 · snapshot · congelado en f5fb98e
+CU-10-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-10-AMB-02 · 2026-09-27 · resuelta · se cancela hasta el inicio, sin anticipación mínima; se muestra el precio pero no hay pagos ni reintegros (decisión 13)
+CU-10-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-10-AMB-03 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo) (decisión 3)
+CU-10-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-10-AMB-06 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-10-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-10-AMB-07 · 2026-09-27 · resuelta · las tres notificaciones van por push y quedan en el centro de notificaciones; una reserva hecha con menos de una hora de anticipación no recibe recordatorio (decisión 10)
+CU-10-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-10-AMB-08 · 2026-09-27 · resuelta · se cancela hasta el inicio, sin anticipación mínima; se muestra el precio pero no hay pagos ni reintegros (decisión 13)

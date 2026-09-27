@@ -21,3 +21,5 @@ CU-24.2-AMB-03 · 2026-09-27 · abierta · ¿la baja de sede o espacio cancela r
 CU-24.2-AMB-04 · 2026-09-27 · abierta · ¿el historial del usuario tiene filtro por estado para abrir «filtrado por anuladas»?
 CU-24.2-AMB-05 · 2026-09-27 · abierta · ¿achicar el horario de una sede (CU-18 FA3) anula reservas y dispara este aviso, o no?
 CU-24.2-AMB-00 · 2026-09-27 · snapshot · congelado en f1e3ea7
+CU-24.2-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-24.2-AMB-03 · 2026-09-27 · resuelta · la baja de una sede o de un espacio con reservas futuras no se permite; la cancelación forzosa sale sólo de CU-15 (decisión 5)

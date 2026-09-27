@@ -21,3 +21,5 @@ CU-22-AMB-03 · 2026-09-27 · abierta · con dos administradores editando el mis
 CU-22-AMB-04 · 2026-09-27 · abierta · ¿se guarda quién cambió el precio, cuándo y el valor anterior?
 CU-22-AMB-05 · 2026-09-27 · abierta · ¿la baja se inicia desde la edición (CU) o sólo desde el listado (prototipo)?
 CU-22-AMB-00 · 2026-09-27 · snapshot · congelado en c75c540
+CU-22-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-22-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)

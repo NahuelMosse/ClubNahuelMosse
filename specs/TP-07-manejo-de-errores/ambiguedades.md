@@ -23,3 +23,5 @@ TP-07-AMB-05 · 2026-09-27 · abierta · ¿qué operaciones detectan el cambio c
 TP-07-AMB-06 · 2026-09-27 · abierta · ¿el backend registra los errores con fecha, usuario y operación?
 TP-07-AMB-07 · 2026-09-27 · abierta · ¿un único overlay de conexión y uno de servidor para toda la app (prototipo) o mensajes propios por CU?
 TP-07-AMB-00 · 2026-09-27 · snapshot · congelado en b1d835f
+TP-07-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+TP-07-AMB-07 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)

@@ -25,3 +25,13 @@ CU-21-AMB-07 · 2026-09-27 · abierta · ¿el alta pide también techada o al ai
 CU-21-AMB-08 · 2026-09-27 · abierta · ¿cuál es el catálogo cerrado de deportes y tipos, y quién lo mantiene? (ver CU-13-AMB-09 y CU-20-AMB-04)
 CU-21-AMB-00 · 2026-09-27 · snapshot · congelado en ac68af4
 CU-21-AMB-00 · 2026-09-27 · snapshot · congelado en b163883
+CU-21-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-21-AMB-03 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)
+CU-21-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-21-AMB-05 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-21-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-21-AMB-06 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)
+CU-21-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-21-AMB-07 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)
+CU-21-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-21-AMB-08 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)

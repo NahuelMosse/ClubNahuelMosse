@@ -23,3 +23,5 @@ TP-01-AMB-05 · 2026-09-27 · abierta · ¿«tu próxima reserva» es la activa 
 TP-01-AMB-06 · 2026-09-27 · abierta · ¿a dónde lleva cada chip de deporte: al listado de sedes filtrado por ese deporte?
 TP-01-AMB-07 · 2026-09-27 · abierta · ¿el saludo cambia según la hora (buenos días, buenas tardes, buenas noches)?
 TP-01-AMB-00 · 2026-09-27 · snapshot · congelado en 1bc904c
+TP-01-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+TP-01-AMB-04 · 2026-09-27 · resuelta · el rol lo trae la cuenta y se guarda en la base; el login no tiene selector de rol; la primera cuenta de administrador se crea al inicializar la base (decisión 2)

@@ -25,3 +25,13 @@ CU-03-AMB-07 · 2026-09-27 · abierta · con dos registros simultáneos del mism
 CU-03-AMB-08 · 2026-09-27 · abierta · ¿se guarda la fecha y hora de creación de la cuenta?
 CU-03-AMB-09 · 2026-09-27 · abierta · al terminar, ¿el usuario vuelve al login (poscondición y prototipo) o queda autenticado (paso 3)?
 CU-03-AMB-00 · 2026-09-27 · snapshot · congelado en 9ae9dd3
+CU-03-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-03-AMB-02 · 2026-09-27 · resuelta · la contraseña del registro sigue las reglas de CU-04; DNI de 7 u 8 dígitos, editable y único; fecha de nacimiento pasada, sin edad mínima (decisión 9)
+CU-03-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-03-AMB-03 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-03-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-03-AMB-05 · 2026-09-27 · resuelta · el rol lo trae la cuenta y se guarda en la base; el login no tiene selector de rol; la primera cuenta de administrador se crea al inicializar la base (decisión 2)
+CU-03-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-03-AMB-08 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-03-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-03-AMB-09 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)

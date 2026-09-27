@@ -22,3 +22,9 @@ CU-02-AMB-04 · 2026-09-27 · abierta · ¿cerrar sesión afecta a las otras ses
 CU-02-AMB-05 · 2026-09-27 · abierta · ¿se registra fecha y hora del cierre de sesión?
 CU-02-AMB-06 · 2026-09-27 · abierta · ¿qué datos lleva la tarjeta del avatar (los seis del CU o los tres del prototipo) y se muestra «Sesión cerrada exitosamente» al volver al login?
 CU-02-AMB-00 · 2026-09-27 · snapshot · congelado en 53bb895
+CU-02-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-02-AMB-02 · 2026-09-27 · resuelta · la sesión sigue abierta al reabrir la app y se permiten varias a la vez; al cerrar sesión el dispositivo deja de recibir push (decisión 14)
+CU-02-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-02-AMB-04 · 2026-09-27 · resuelta · la sesión sigue abierta al reabrir la app y se permiten varias a la vez; al cerrar sesión el dispositivo deja de recibir push (decisión 14)
+CU-02-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-02-AMB-06 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)

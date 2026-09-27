@@ -26,3 +26,9 @@ CU-13-AMB-08 · 2026-09-27 · abierta · ¿un rango que empieza en la hora en cu
 CU-13-AMB-09 · 2026-09-27 · abierta · ¿cuáles son los deportes y tipos del club: los del prototipo (fútbol, tenis, hockey, vóley, golf) o también pádel y básquet?
 CU-13-AMB-00 · 2026-09-27 · snapshot · congelado en 3a14f30
 CU-13-AMB-00 · 2026-09-27 · snapshot · congelado en 4b2b10f
+CU-13-AMB-01 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-13-AMB-01 · 2026-09-27 · resuelta · duración de 1 a 4 horas y hasta 7 días de anticipación (decisión 6)
+CU-13-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-13-AMB-03 · 2026-09-27 · resuelta · duración de 1 a 4 horas y hasta 7 días de anticipación (decisión 6)
+CU-13-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-13-AMB-09 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)

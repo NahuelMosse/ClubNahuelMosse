@@ -23,3 +23,11 @@ CU-23-AMB-05 · 2026-09-27 · abierta · ¿sólo el administrador puede dar de b
 CU-23-AMB-06 · 2026-09-27 · abierta · ¿se puede dar de baja el último espacio de una sede?
 CU-23-AMB-07 · 2026-09-27 · abierta · ¿se guarda fecha de baja y qué administrador la hizo?
 CU-23-AMB-00 · 2026-09-27 · snapshot · congelado en e52f6f4
+CU-23-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-23-AMB-02 · 2026-09-27 · resuelta · la baja de una sede o de un espacio con reservas futuras no se permite; la cancelación forzosa sale sólo de CU-15 (decisión 5)
+CU-23-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-23-AMB-03 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-23-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-23-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-23-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-23-AMB-07 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)

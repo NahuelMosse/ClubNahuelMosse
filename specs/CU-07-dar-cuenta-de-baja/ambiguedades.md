@@ -24,3 +24,7 @@ CU-07-AMB-06 · 2026-09-27 · abierta · ¿las reservas pasadas del usuario borr
 CU-07-AMB-07 · 2026-09-27 · abierta · ¿al anular las reservas futuras por la baja se envía alguna notificación (CU-24.2 o CU-24.3)?
 CU-07-AMB-00 · 2026-09-27 · snapshot · congelado en bb991e1
 CU-07-AMB-00 · 2026-09-27 · snapshot · congelado en 3cc2677
+CU-07-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-07-AMB-03 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-07-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-07-AMB-06 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo); todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 3, 4)

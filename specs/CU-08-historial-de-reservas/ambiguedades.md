@@ -29,3 +29,7 @@ CU-08-AMB-05 · 2026-09-27 · abierta · ¿Próximas va de la más cercana a la 
 CU-08-AMB-06 · 2026-09-27 · abierta · una reserva en curso (empezó y no terminó), ¿va en Próximas o en Historial?
 CU-08-AMB-07 · 2026-09-27 · abierta · ¿una cancelada con fecha futura va al historial (CU-10) o queda en Próximas marcada?
 CU-08-AMB-00 · 2026-09-27 · snapshot · congelado en 6f7c5d8
+CU-08-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-08-AMB-02 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-08-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-08-AMB-03 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo) (decisión 3)

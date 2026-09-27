@@ -31,3 +31,7 @@ CU-11-AMB-06 · 2026-09-27 · abierta · si cambia a un espacio con otro precio,
 CU-11-AMB-07 · 2026-09-27 · abierta · ¿el recordatorio de CU-24.1 se reprograma para el horario nuevo?
 CU-11-AMB-08 · 2026-09-27 · abierta · en FA2, ¿mensaje propio y vuelta a la grilla (CU) u overlay compartido (prototipo)?
 CU-11-AMB-00 · 2026-09-27 · snapshot · congelado en 8422895
+CU-11-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-11-AMB-05 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-11-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
+CU-11-AMB-08 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
