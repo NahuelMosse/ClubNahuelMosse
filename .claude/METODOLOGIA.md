@@ -136,7 +136,7 @@ Cada `SUP-NN` va entonces a una de dos columnas, y las dos son declaración:
 | **Cubierto** | `@supuesto:<ID>-SUP-NN` en el test que lo ejercita | se supuso y se verificó que el sistema hace eso |
 | **Sin cubrir** | fila en `## Supuestos sin cobertura` del plan, con el motivo | se supuso y **nadie lo probó** |
 
-→ **Validá:** por cada `SUP-NN` del plan, o bien `grep -r "@supuesto:<ID>-SUP-NN" $E2E` devuelve
+→ **Validá:** por cada `SUP-NN` del plan, o bien `grep -r --include='*_test.dart' --include='test_*.py' "@supuesto:<ID>-SUP-NN" $E2E` devuelve
 al menos una línea, o bien aparece en `## Supuestos sin cobertura`. **Un supuesto que no está en
 ninguna de las dos está escondido**, y eso no cierra.
 Si el plan no tiene `## Supuestos`, esta validación corre cero veces: **eso no es verde**, es que
@@ -154,8 +154,8 @@ selectores por nombre accesible, la grilla de diez categorías— está en el pr
 carga al invocarlo: no hay nada que recordar acá.
 
 → **Validá, en las dos direcciones, siempre junto con el denominador:**
-- Por cada ID del snapshot: `grep -rl "@<ID>-H01-01" $E2E` devuelve al menos un archivo.
-- Al revés: `grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga
+- Por cada ID del snapshot: `grep -rl --include='*_test.dart' --include='test_*.py' "@<ID>-H01-01" $E2E` devuelve al menos un archivo.
+- Al revés: `grep -rhoE --include='*_test.dart' --include='test_*.py' "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga
   tiene que existir en `## Escenarios` del snapshot.
 - `find $E2E -name '*_test.dart' -o -name 'test_*.py' | wc -l` — un grep en cero **no es verde si el denominador
   también es cero**: es «no se pudo verificar».
@@ -166,7 +166,7 @@ es la regla contestada igual en todas las pantallas. Lo que no está bien es con
 Medido: una corrida cerró diciendo *«los 11 escenarios de la card»* cuando eran **11 casos
 tagueados sobre 9 escenarios distintos**. El número que va al cierre es el de tags únicos:
 ```
-grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u | wc -l
+grep -rhoE --include='*_test.dart' --include='test_*.py' "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u | wc -l
 ```
 *Igual que contar capturas como tests, inflar escenarios con casos hace que el cierre mienta
 hacia arriba — y el cierre es lo que se defiende en la entrega.*

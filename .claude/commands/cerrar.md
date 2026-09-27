@@ -20,9 +20,9 @@ La salida de `/validar` es parte del cierre: va en el comentario junto con lo de
 
 ```
 git diff --name-only <commit-del-snapshot>..HEAD -- specs/<feature>/card.snapshot.md  # 1. snapshot intacto
-grep -rl "@$1-H<NN>-<NN>" $E2E                         # 2. por cada escenario del snapshot: >= 1 archivo
-grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E|sort -u # 3. ningún tag fuera del snapshot
-grep -r "@supuesto:$1-SUP-" $E2E                       # 4. cada SUP: tagueado...
+grep -rl --include='*_test.dart' --include='test_*.py' "@$1-H<NN>-<NN>" $E2E                         # 2. por cada escenario del snapshot: >= 1 archivo
+grep -rhoE --include='*_test.dart' --include='test_*.py' "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E|sort -u # 3. ningún tag fuera del snapshot
+grep -r --include='*_test.dart' --include='test_*.py' "@supuesto:$1-SUP-" $E2E                       # 4. cada SUP: tagueado...
 grep -A99 "## Supuestos sin cobertura" specs/*/plan.md # 4b. ...o declarado sin cobertura
 git diff --name-only <commit-de-tests>..HEAD -- $E2E   # 5. vacío: nadie tocó los tests
 git diff --name-only main...HEAD                       # 6. vs. `## Mapa de archivos` del plan

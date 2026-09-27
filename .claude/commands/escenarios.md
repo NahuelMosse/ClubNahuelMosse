@@ -45,8 +45,8 @@ suele ser justo lo que hay que verificar.* Y se prueba también lo que un rol **
 control no se renderice, no sólo que la API devuelva 403.
 
 → **Validá, en las dos direcciones, siempre junto con el denominador:**
-- Por cada ID del snapshot: `grep -rl "@<ID>-H01-01" $E2E` devuelve al menos un archivo.
-- Al revés: `grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga tiene
+- Por cada ID del snapshot: `grep -rl --include='*_test.dart' --include='test_*.py' "@<ID>-H01-01" $E2E` devuelve al menos un archivo.
+- Al revés: `grep -rhoE --include='*_test.dart' --include='test_*.py' "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u` — todo tag que salga tiene
   que existir en `## Escenarios` del snapshot. Un tag de un escenario que no existe es un test
   huérfano o un ID mal escrito.
 - `find $E2E -name '*_test.dart' -o -name 'test_*.py' | wc -l` — archivos escaneados. Un grep en cero **no es verde si
@@ -171,8 +171,8 @@ barato —cálculos, snapshots, códigos de error— vive ahí, no acá.
 ## Validar antes de commitear
 
 ```
-grep -rl "@$1-H01-01" $E2E                          # por cada ID del snapshot: >= 1 archivo
-grep -rhoE "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u   # todo tag existe en el snapshot
+grep -rl --include='*_test.dart' --include='test_*.py' "@$1-H01-01" $E2E                          # por cada ID del snapshot: >= 1 archivo
+grep -rhoE --include='*_test.dart' --include='test_*.py' "@[A-Z]+-[0-9]+[a-z]?(\.[0-9]+)?-H[0-9]+-[0-9]+" $E2E | sort -u   # todo tag existe en el snapshot
 cd apps/mobile && flutter test integration_test --name "@$1-"   # tienen que fallar, no romper
 cd apps/api && pytest tests/escenarios --card $1
 ```
