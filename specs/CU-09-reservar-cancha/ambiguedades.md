@@ -61,3 +61,4 @@ CU-09-AMB-09 · 2026-09-28 · vencida → CU-09-SUP-04 · el comprobante espera,
 CU-09-AMB-11 · 2026-09-28 · vencida → CU-09-SUP-05 · al volver a iniciar sesión con la misma cuenta, la app vuelve a la confirmación con la misma elección, mientras siga abierta; si se cerró, arranca en el inicio
 CU-09-AMB-13 · 2026-09-28 · vencida → CU-09-SUP-06 · la misma persona, el mismo espacio y el mismo horario dentro de los cinco minutos es el mismo pedido repetido: la API devuelve la reserva que ya creó, como el alta de espacio
 CU-09-AMB-14 · 2026-09-28 · vencida → CU-09-SUP-07 · el campo que falta se dice en los horarios: el resumen muestra «Sin horario elegido» y CONTINUAR queda deshabilitado (CU-12-SUP-08); la confirmación siempre llega completa
+CU-09-TESTS · 2026-09-28 · congelados en 185537f · 13 escenarios en rojo porque no existe POST /reservas y la confirmación no tiene CONFIRMAR RESERVA; H01-07 (Cancelar) y H03-01 (sin horario elegido) nacen en verde: los hizo CU-12
