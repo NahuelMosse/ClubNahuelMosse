@@ -41,3 +41,4 @@ CU-16-AMB-06 · 2026-09-28 · vencida → CU-16-SUP-05 · las canchas se vuelven
 CU-16-AMB-09 · 2026-09-28 · vencida → CU-16-SUP-06 · la foto es una imagen fija de la app: cada sede toma una de las cuatro portadas del prototipo y cada cancha la de su deporte; el administrador no carga fotos
 CU-16-AMB-10 · 2026-09-28 · vencida → CU-16-SUP-07 · la descripción de la cancha se arma con lo que tiene cargado: tipo, condición e iluminación («Fútbol 5 · Al aire libre · con iluminación»)
 CU-16-AMB-11 · 2026-09-28 · vencida → CU-16-SUP-08 · todas las canchas activas se muestran disponibles; una cancha dada de baja no aparece (decisión 4). El Badge-Estado queda para cuando exista un «fuera de servicio» (CU-22-AMB-01)
+CU-16-TESTS · 2026-09-28 · congelados en 1cb1155 · 8 escenarios de pantalla en rojo porque la pestaña SEDES no lista sedes ni pide nada a la API (no aparecen las tarjetas ni el error del servidor)
