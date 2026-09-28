@@ -10,6 +10,7 @@ import '../comun/etiqueta.dart';
 import '../comun/formato_precio.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
+import '../espacios/iconos.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -42,6 +43,18 @@ class _PantallaSedeState extends State<PantallaSede> {
   (Sede, List<Espacio>, Catalogo)? _datos;
   bool _cargando = true;
 
+  /// El filtro de CU-20: el deporte y el tipo elegidos, las canchas que quedan y los tipos
+  /// que ofrece ese deporte en la sede.
+  String? _deporte;
+  String? _tipo;
+  List<Espacio>? _filtradas;
+  List<String> _tiposDelDeporte = const [];
+  bool _filtrando = false;
+
+  /// Cada lectura o filtro toma un número; la respuesta de uno que ya no es el último se
+  /// descarta, así una recarga vieja no pisa un filtro nuevo.
+  int _pedido = 0;
+
   @override
   void initState() {
     super.initState();
@@ -57,6 +70,10 @@ class _PantallaSedeState extends State<PantallaSede> {
   }
 
   Future<void> _cargar() async {
+    final pedido = ++_pedido;
+    // El filtro que se vuelve a pedir es el que había al empezar.
+    final deporteAntes = _deporte;
+    final tipoAntes = _tipo;
     setState(() => _cargando = true);
     Object? fallo;
     var vencida = false;
@@ -74,9 +91,31 @@ class _PantallaSedeState extends State<PantallaSede> {
         return;
       }
       final canchas = await widget.espacios.activos(sedeId: sede.id);
-      if (!mounted) return;
+      // El filtro elegido sigue, salvo que su deporte o su tipo ya no tengan canchas.
+      final deporte = canchas.any((c) => c.deporte == deporteAntes)
+          ? deporteAntes
+          : null;
+      final porDeporte = deporte == null
+          ? null
+          : await widget.espacios.activos(sedeId: sede.id, deporte: deporte);
+      final tipos = porDeporte == null
+          ? const <String>[]
+          : _tiposEnOrden(porDeporte, catalogo, deporte);
+      final tipo = tipos.contains(tipoAntes) ? tipoAntes : null;
+      final porTipo = deporte == null || tipo == null
+          ? porDeporte
+          : await widget.espacios.activos(
+              sedeId: sede.id,
+              deporte: deporte,
+              tipo: tipo,
+            );
+      if (!mounted || pedido != _pedido) return;
       setState(() {
         _datos = (sede, canchas, catalogo);
+        _deporte = deporte;
+        _tipo = tipo;
+        _filtradas = porTipo;
+        _tiposDelDeporte = tipos;
         _cargando = false;
       });
       return;
@@ -87,7 +126,7 @@ class _PantallaSedeState extends State<PantallaSede> {
     } on ErrorDelServidor catch (e) {
       fallo = e;
     }
-    if (!mounted) return;
+    if (!mounted || pedido != _pedido) return;
     // Sin datos frescos no se muestra nada: ni parciales ni viejos.
     setState(() {
       _datos = null;
@@ -108,6 +147,74 @@ class _PantallaSedeState extends State<PantallaSede> {
     }
   }
 
+  /// Los tipos de [deporte] que tienen canchas, en el orden del catálogo.
+  static List<String> _tiposEnOrden(
+    List<Espacio> canchas,
+    Catalogo catalogo,
+    String? deporte,
+  ) {
+    final presentes = {for (final c in canchas) c.tipo};
+    return [
+      for (final t
+          in catalogo.deporte(deporte ?? '')?.tipos ?? const <TipoDeCancha>[])
+        if (presentes.contains(t.clave)) t.clave,
+    ];
+  }
+
+  /// Pide a la API las canchas con ese [deporte] y [tipo]; si falla, avisa y todo queda
+  /// como estaba.
+  Future<void> _filtrar({
+    required String? deporte,
+    required String? tipo,
+  }) async {
+    final datos = _datos;
+    if (datos == null || _filtrando || _cargando) return;
+    final pedido = ++_pedido;
+    setState(() => _filtrando = true);
+    Object? fallo;
+    var vencida = false;
+    try {
+      // Sin deporte también se pregunta: la sede pudo sumar canchas o deportes.
+      final canchas = await widget.espacios.activos(
+        sedeId: datos.$1.id,
+        deporte: deporte,
+        tipo: tipo,
+      );
+      if (!mounted || pedido != _pedido) return;
+      setState(() {
+        _deporte = deporte;
+        _tipo = tipo;
+        if (deporte == null) {
+          _datos = (datos.$1, canchas, datos.$3);
+          _filtradas = null;
+          _tiposDelDeporte = const [];
+        } else {
+          _filtradas = canchas;
+          // Sin tipo elegido la respuesta trae todos los del deporte, nuevos incluidos.
+          if (tipo == null) {
+            _tiposDelDeporte = _tiposEnOrden(canchas, datos.$3, deporte);
+          }
+        }
+      });
+    } on SesionVencida {
+      vencida = true;
+    } on SinConexion catch (e) {
+      fallo = e;
+    } on ErrorDelServidor catch (e) {
+      fallo = e;
+    } finally {
+      if (mounted) setState(() => _filtrando = false);
+    }
+    if (!mounted || pedido != _pedido) return;
+    if (vencida) {
+      await mostrarSesionVencida(context);
+      if (mounted) await cerrarSesion(context, widget.sesion);
+    } else if (fallo != null) {
+      final reintentar = await mostrarErrorDeRed(context, fallo);
+      if (reintentar && mounted) await _filtrar(deporte: deporte, tipo: tipo);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
@@ -124,7 +231,20 @@ class _PantallaSedeState extends State<PantallaSede> {
                   ? const CircularProgressIndicator()
                   : const SizedBox.shrink(),
             )
-          : _Contenido(sede: datos.$1, canchas: datos.$2, catalogo: datos.$3),
+          : _Contenido(
+              sede: datos.$1,
+              canchas: _filtradas ?? datos.$2,
+              todas: datos.$2,
+              catalogo: datos.$3,
+              deporte: _deporte,
+              tipo: _tipo,
+              tiposDelDeporte: _tiposDelDeporte,
+              habilitado: !_filtrando && !_cargando,
+              // Tocar el deporte elegido lo quita; «Todos» quita el tipo.
+              alElegirDeporte: (d) =>
+                  _filtrar(deporte: d == _deporte ? null : d, tipo: null),
+              alElegirTipo: (t) => _filtrar(deporte: _deporte, tipo: t),
+            ),
     );
   }
 }
@@ -133,12 +253,87 @@ class _Contenido extends StatelessWidget {
   const _Contenido({
     required this.sede,
     required this.canchas,
+    required this.todas,
     required this.catalogo,
+    required this.deporte,
+    required this.tipo,
+    required this.tiposDelDeporte,
+    required this.habilitado,
+    required this.alElegirDeporte,
+    required this.alElegirTipo,
   });
 
   final Sede sede;
+
+  /// Las que pasan el filtro; [todas] son las de la sede, de donde salen los deportes.
   final List<Espacio> canchas;
+  final List<Espacio> todas;
   final Catalogo catalogo;
+  final String? deporte;
+  final String? tipo;
+  final List<String> tiposDelDeporte;
+  final bool habilitado;
+  final ValueChanged<String> alElegirDeporte;
+  final ValueChanged<String?> alElegirTipo;
+
+  String _nombreDelTipo(String clave) =>
+      catalogo
+          .deporte(deporte ?? '')
+          ?.tipos
+          .where((x) => x.clave == clave)
+          .firstOrNull
+          ?.nombre ??
+      clave;
+
+  /// «4 CANCHAS · FÚTBOL · TODOS LOS TIPOS», como el prototipo.
+  String _contador() {
+    final cantidad = cantidadDeCanchas(canchas.length);
+    final d = deporte;
+    final t = tipo;
+    if (todas.isEmpty) return cantidad.toUpperCase();
+    if (d == null) return '$cantidad · todos los deportes'.toUpperCase();
+    if (t != null) return '$cantidad · ${_nombreDelTipo(t)}'.toUpperCase();
+    final nombreDeporte = catalogo.deporte(d)?.nombre ?? d;
+    if (tiposDelDeporte.length > 1) {
+      return '$cantidad · $nombreDeporte · todos los tipos'.toUpperCase();
+    }
+    return '$cantidad · $nombreDeporte'.toUpperCase();
+  }
+
+  Widget _filtros() => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _Filtro(
+        titulo: 'DEPORTE',
+        opciones: [
+          for (final d in catalogo.deportes)
+            if (todas.any((c) => c.deporte == d.clave))
+              (d.clave, d.nombre, iconoDeDeporte(d.clave)),
+        ],
+        elegida: deporte,
+        habilitado: habilitado,
+        prefijo: 'Deporte',
+        alElegir: (clave) {
+          if (clave != null) alElegirDeporte(clave);
+        },
+      ),
+      if (deporte != null && tiposDelDeporte.length > 1) ...[
+        const SizedBox(height: Medidas.s16),
+        _Filtro(
+          titulo: 'TIPO DE CANCHA',
+          opciones: [
+            (null, 'Todos', null),
+            for (final t in tiposDelDeporte) (t, _nombreDelTipo(t), null),
+          ],
+          elegida: tipo,
+          habilitado: habilitado,
+          prefijo: 'Tipo',
+          alElegir: alElegirTipo,
+        ),
+      ],
+      const SizedBox(height: Medidas.s24),
+    ],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -225,16 +420,25 @@ class _Contenido extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  cantidadDeCanchas(canchas.length).toUpperCase(),
-                  style: Textos.sobretitulo.copyWith(color: p.accentInk),
+                if (todas.isNotEmpty) _filtros(),
+                Semantics(
+                  liveRegion: true,
+                  child: Text(
+                    _contador(),
+                    style: Textos.sobretitulo.copyWith(color: p.accentInk),
+                  ),
                 ),
                 const SizedBox(height: Medidas.s12),
-                if (canchas.isEmpty)
+                if (todas.isEmpty)
                   const EstadoVacio(
                     titulo: 'Todavía no hay canchas',
                     texto:
                         'Esta sede no tiene canchas disponibles por el momento.',
+                  )
+                else if (canchas.isEmpty)
+                  const EstadoVacio(
+                    titulo: 'No hay canchas con este filtro',
+                    texto: 'Probá con otro deporte o con otro tipo.',
                   ),
                 for (final cancha in canchas) ...[
                   TarjetaCancha(
@@ -249,6 +453,119 @@ class _Contenido extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Una fila de chips para elegir una opción: la elegida en lima. [prefijo] va en la
+/// etiqueta accesible de cada chip («Deporte Fútbol»), porque el mismo nombre aparece en
+/// la portada y en las tarjetas.
+class _Filtro extends StatelessWidget {
+  const _Filtro({
+    required this.titulo,
+    required this.opciones,
+    required this.elegida,
+    required this.habilitado,
+    required this.prefijo,
+    required this.alElegir,
+  });
+
+  final String titulo;
+  final List<(String?, String, IconData?)> opciones;
+  final String? elegida;
+  final bool habilitado;
+  final String prefijo;
+  final ValueChanged<String?> alElegir;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ExcludeSemantics(
+          child: Text(
+            titulo,
+            style: Textos.sobretitulo.copyWith(color: p.textMuted),
+          ),
+        ),
+        const SizedBox(height: Medidas.s8),
+        Wrap(
+          spacing: Medidas.s8,
+          runSpacing: Medidas.s8,
+          children: [
+            for (final (clave, texto, icono) in opciones)
+              _Chip(
+                texto: texto,
+                icono: icono,
+                etiqueta: '$prefijo $texto',
+                elegido: clave == elegida,
+                alTocar: habilitado ? () => alElegir(clave) : null,
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.texto,
+    required this.icono,
+    required this.etiqueta,
+    required this.elegido,
+    required this.alTocar,
+  });
+
+  final String texto;
+  final IconData? icono;
+  final String etiqueta;
+  final bool elegido;
+  final VoidCallback? alTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    final tinta = elegido ? p.accentOn : p.textPrimary;
+    final simbolo = icono;
+    return Semantics(
+      container: true,
+      button: true,
+      selected: elegido,
+      enabled: alTocar != null,
+      label: etiqueta,
+      excludeSemantics: true,
+      onTap: alTocar,
+      child: Material(
+        color: elegido ? p.accentBase : p.bgSurfaceRaised,
+        shape: StadiumBorder(
+          side: BorderSide(color: elegido ? p.accentEdge : p.borderControl),
+        ),
+        child: InkWell(
+          onTap: alTocar,
+          customBorder: const StadiumBorder(),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: Medidas.tactil + 4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: Medidas.s16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (simbolo != null) ...[
+                    Icon(simbolo, size: 18, color: tinta),
+                    const SizedBox(width: Medidas.s8),
+                  ],
+                  Text(
+                    texto,
+                    style: Textos.cuerpoFuerte.copyWith(color: tinta),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

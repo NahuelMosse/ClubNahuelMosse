@@ -106,8 +106,10 @@ def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     sede_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
+    deporte: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
+    tipo: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
 ) -> ListaDeEspacios:
-    espacios = espacios_activos(EspaciosSql(conn), sede_id)
+    espacios = espacios_activos(EspaciosSql(conn), sede_id, deporte, tipo)
     return ListaDeEspacios(espacios=[_vista(e) for e in espacios])
 
 

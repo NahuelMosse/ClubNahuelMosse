@@ -354,3 +354,23 @@ def test_se_filtran_los_espacios_de_una_sede_y_la_sede_dice_sus_deportes(
     sedes = {s["id"]: s for s in api.get("/sedes", headers=_con(token_usuario)).json()["sedes"]}
     assert (sedes[sede_id]["canchas"], sedes[sede_id]["deportes"]) == (3, ["Futbol", "Tenis"])
     assert sedes[otra]["deportes"] == ["Futbol"]
+
+
+def test_se_filtran_los_espacios_por_deporte_y_tipo(
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, prefijo = sede
+    for cambios in ({}, {"tipo": "F7"}, {"deporte": "Hockey", "tipo": "H7"}):
+        api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, **cambios))
+
+    def nombres(**filtro: object) -> list[str]:
+        r = api.get("/espacios", headers=_con(token_usuario), params={"sede_id": sede_id} | filtro)
+        return [e["nombre"] for e in r.json()["espacios"]]
+
+    assert nombres(deporte="Futbol") == [f"{prefijo}_Futbol_F5_1", f"{prefijo}_Futbol_F7_1"]
+    assert nombres(deporte="Futbol", tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
+    assert nombres(deporte="Golf") == []
+    assert nombres(tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
+    for malo in ({"deporte": ""}, {"tipo": ""}, {"deporte": "x" * 41}):
+        r = api.get("/espacios", headers=_con(token_usuario), params={"sede_id": sede_id} | malo)
+        assert r.status_code == 422

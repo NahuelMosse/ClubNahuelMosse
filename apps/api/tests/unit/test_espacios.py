@@ -86,7 +86,12 @@ class _EspaciosEnMemoria:
         self.sede = sede
         self.guardados: list[tuple[EspacioNuevo, int | None, str, int]] = []
 
-    def activos(self, sede_id: int | None = None) -> list[Espacio]:
+    def activos(
+        self,
+        sede_id: int | None = None,
+        deporte: str | None = None,
+        tipo: str | None = None,
+    ) -> list[Espacio]:
         return []
 
     def siguiente(

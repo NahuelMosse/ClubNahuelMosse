@@ -66,6 +66,15 @@ void main() {
         await capturar(tester, 'sedes/sede_${ancho}_$modo.png');
       });
 
+      testWidgets('sede filtrada por deporte $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await abrir(tester, '/sedes/1');
+        await tester.tap(find.bySemanticsLabel('Deporte Fútbol'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sedes/sede_filtrada_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
       testWidgets('sede sin canchas $ancho $modo', (tester) async {
         await abrir(tester, '/sedes/5', espacios: '[]');
         await capturar(tester, 'sedes/sede_vacia_${ancho}_$modo.png');

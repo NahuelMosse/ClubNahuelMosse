@@ -7,6 +7,7 @@ import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
+import '../espacios/iconos.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -173,15 +174,6 @@ class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
     ];
   }
 }
-
-IconData iconoDeDeporte(String deporte) => switch (deporte) {
-  'Futbol' => Icons.sports_soccer_rounded,
-  'Tenis' || 'Padel' => Icons.sports_tennis_rounded,
-  'Voley' => Icons.sports_volleyball_rounded,
-  'Hockey' => Icons.sports_hockey_rounded,
-  'Golf' => Icons.golf_course_rounded,
-  _ => Icons.sports_rounded,
-};
 
 /// `Card-Espacio`: deporte, tipo, condición y precio, con el nombre compuesto debajo.
 class TarjetaEspacioAdmin extends StatelessWidget {

@@ -47,14 +47,25 @@ class Espacios extends ChangeNotifier {
     return _catalogo = leido;
   }
 
-  /// Los espacios activos por sede, deporte, tipo y número; sólo los de [sedeId] si se
-  /// pide.
+  /// Los espacios activos por sede, deporte, tipo y número; sólo los de [sedeId],
+  /// [deporte] y [tipo] si se piden.
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<List<Espacio>> activos({int? sedeId}) async {
-    final r = await _get(
-      sedeId == null ? '/espacios' : '/espacios?sede_id=$sedeId',
+  Future<List<Espacio>> activos({
+    int? sedeId,
+    String? deporte,
+    String? tipo,
+  }) async {
+    final filtros = {
+      'sede_id': ?sedeId?.toString(),
+      'deporte': ?deporte,
+      'tipo': ?tipo,
+    };
+    final consulta = Uri(
+      path: '/espacios',
+      queryParameters: filtros.isEmpty ? null : filtros,
     );
+    final r = await _get(consulta.toString());
     if (r.codigo == 200) {
       if (r.cuerpo case {'espacios': final List<Object?> lista}) {
         final leidos = [for (final e in lista) Espacio.desdeJson(e)];

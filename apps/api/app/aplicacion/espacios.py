@@ -18,7 +18,12 @@ from app.dominio.usuarios import Perfil
 
 
 class Espacios(Protocol):
-    def activos(self, sede_id: int | None = None) -> list[Espacio]: ...
+    def activos(
+        self,
+        sede_id: int | None = None,
+        deporte: str | None = None,
+        tipo: str | None = None,
+    ) -> list[Espacio]: ...
 
     def siguiente(
         self,
@@ -91,7 +96,12 @@ def dar_de_alta_espacio(
     return espacios.insertar(nuevo, numero, _nombre(nuevo.deporte, nuevo.tipo), perfil.id)
 
 
-def espacios_activos(espacios: Espacios, sede_id: int | None = None) -> list[Espacio]:
+def espacios_activos(
+    espacios: Espacios,
+    sede_id: int | None = None,
+    deporte: str | None = None,
+    tipo: str | None = None,
+) -> list[Espacio]:
     """Los espacios que se pueden reservar, por sede, deporte, tipo y número; sólo los de
-    [sede_id] si se pide."""
-    return espacios.activos(sede_id)
+    [sede_id], [deporte] y [tipo] si se piden."""
+    return espacios.activos(sede_id, deporte, tipo)
