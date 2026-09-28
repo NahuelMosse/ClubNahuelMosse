@@ -30,3 +30,4 @@ TP-05-AMB-02 · 2026-09-28 · vencida → TP-05-SUP-02 · sólo se listan los es
 TP-05-AMB-04 · 2026-09-28 · vencida → TP-05-SUP-03 · sin paginación: una sede tiene pocas canchas y el panel lista todas en una sola lectura
 TP-05-AMB-05 · 2026-09-28 · vencida → TP-05-SUP-04 · en la sede, por deporte, tipo y número (CU-16-SUP-04); en el panel, por nombre de sede y después por deporte, tipo y número
 TP-05-AMB-06 · 2026-09-28 · vencida → TP-05-SUP-05 · el «tipo» del enunciado es el deporte, y dentro del deporte se puede elegir además la variante (CU-20, decisión 8)
+TP-05-TESTS · 2026-09-28 · congelados en 6deb03d · los seis escenarios nacen en verde: el listado por sede, el nombre compuesto, el panel del administrador y el filtro ya los hicieron CU-16, CU-21 y CU-20
