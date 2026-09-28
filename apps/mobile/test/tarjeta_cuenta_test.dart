@@ -71,8 +71,8 @@ void main() {
       await abrirTarjeta(tester);
       await tester.tap(find.text('Mis reservas'));
       await tester.pumpAndSettle();
-      expect(find.byTooltip('Volver'), findsOneWidget);
       expect(find.text('Mis reservas'), findsOneWidget);
+      expect(find.text('Próximas'), findsOneWidget);
       semantica.dispose();
     },
   );

@@ -17,6 +17,7 @@ import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
 import 'reservas/pantalla_mis_reservas.dart';
+import 'reservas/reservas.dart';
 import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_nueva_contrasena.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
@@ -69,6 +70,7 @@ class _AppState extends State<App> {
   late final _sedes = Sedes(api: widget.api, sesion: widget.sesion);
   late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
   late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
+  late final _reservas = Reservas(api: widget.api, sesion: widget.sesion);
 
   /// `AAAA-MM-DD` de un enlace como día del club; `null` si no viene o no es una fecha.
   static DateTime? _dia(String? iso) => switch (DateTime.tryParse(iso ?? '')) {
@@ -216,7 +218,11 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/reservas',
-        builder: (context, _) => const PantallaMisReservas(),
+        builder: (context, _) => PantallaMisReservas(
+          reservas: _reservas,
+          espacios: _espacios,
+          sesion: widget.sesion,
+        ),
       ),
       GoRoute(
         path: '/admin',

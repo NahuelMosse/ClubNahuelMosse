@@ -50,15 +50,18 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
         text(
             "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total,"
             " estado, motivo, cancelada_en)"
-            " SELECT coalesce((SELECT id FROM usuario"
-            "                  WHERE lower(correo) = lower(CAST(:correo AS text))),"
-            "                 (SELECT min(id) FROM usuario)), e.id, x.inicio,"
+            " SELECT u.id, e.id, x.inicio,"
             "        x.inicio + make_interval(hours => :horas),"
             "        e.precio_por_hora, e.precio_por_hora * :horas, :estado, :motivo,"
             "        CASE WHEN CAST(:estado AS text) <> 'activa' THEN now() END"
             " FROM espacio e,"
             "      LATERAL (SELECT (CAST(:fecha AS date) + make_interval(hours => :hora))"
-            "               AT TIME ZONE 'America/Argentina/Buenos_Aires' AS inicio) x"
+            "               AT TIME ZONE 'America/Argentina/Buenos_Aires' AS inicio) x,"
+            "      (SELECT id FROM usuario WHERE CAST(:correo AS text) IS NULL"
+            "         AND id = (SELECT min(id) FROM usuario)"
+            "       UNION ALL"
+            "       SELECT id FROM usuario WHERE activo"
+            "         AND lower(correo) = lower(CAST(:correo AS text))) u"
             " WHERE e.nombre = :espacio"
         ),
         ocupacion.model_dump(),

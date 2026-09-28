@@ -3,7 +3,16 @@ import os
 from fastapi import FastAPI
 
 from app.config import config
-from app.interfaz import espacios, horarios, pruebas, recuperacion, registro, sedes, sesion
+from app.interfaz import (
+    espacios,
+    horarios,
+    pruebas,
+    recuperacion,
+    registro,
+    reservas,
+    sedes,
+    sesion,
+)
 from app.interfaz.protecciones import Protecciones
 
 
@@ -19,6 +28,7 @@ def crear_app() -> FastAPI:
     app.include_router(sedes.router)
     app.include_router(espacios.router)
     app.include_router(horarios.router)
+    app.include_router(reservas.router)
     # Un segundo candado: el buzón sólo se abre contra el emulador, nunca en producción.
     if config.pruebas and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
         app.include_router(pruebas.router)
