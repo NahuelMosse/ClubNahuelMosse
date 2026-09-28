@@ -46,3 +46,4 @@ CU-12-AMB-10 · 2026-09-28 · vencida → CU-12-SUP-07 · la nota cuenta las fra
 CU-12-AMB-11 · 2026-09-28 · vencida → CU-12-SUP-08 · CONTINUAR abre «Confirmá tu reserva» (48:123) con la sede, la cancha, la fecha, el horario y el total; confirmar la reserva es de CU-09
 CU-12-AMB-12 · 2026-09-28 · vencida → CU-12-SUP-09 · se conserva la hora de inicio elegida si sigue disponible con la nueva cancha, fecha o duración; si no, se quita y el resumen vuelve a «Sin horario elegido»
 CU-12-AMB-13 · 2026-09-28 · vencida → CU-12-SUP-10 · los overlays compartidos (decisión 12, TP-07): conexión con REINTENTAR y Volver, servidor con ACEPTAR; al cerrarlos la grilla queda sin horarios y con REINTENTAR
+CU-12-TESTS · 2026-09-28 · congelados en 77ba1d1 · 14 escenarios en rojo porque la pantalla de horarios no tiene fecha, duración, grilla ni resumen; en H06 y H07 queda esperando sin fin después del aviso
