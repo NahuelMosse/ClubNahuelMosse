@@ -42,7 +42,7 @@ class Ocupacion(BaseModel):
 @router.post("/reservas", status_code=status.HTTP_204_NO_CONTENT)
 def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
     """Una reserva de otra persona: la primera cuenta de la base."""
-    conn.execute(
+    insertadas = conn.execute(
         text(
             "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
             " SELECT (SELECT min(id) FROM usuario), e.id, x.inicio,"
@@ -54,8 +54,10 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
             " WHERE e.nombre = :espacio"
         ),
         ocupacion.model_dump(),
-    )
+    ).rowcount
     conn.commit()
+    if insertadas != 1:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

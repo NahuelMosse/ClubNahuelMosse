@@ -2,6 +2,7 @@
 
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -374,3 +375,52 @@ def test_se_filtran_los_espacios_por_deporte_y_tipo(
     for malo in ({"deporte": ""}, {"tipo": ""}, {"deporte": "x" * 41}):
         r = api.get("/espacios", headers=_con(token_usuario), params={"sede_id": sede_id} | malo)
         assert r.status_code == 422
+
+
+def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    hoy = api.get(f"/espacios/{espacio['id']}/horarios", headers=_con(token_usuario)).json()
+    manana = date.fromisoformat(hoy["hoy"]) + timedelta(days=1)
+    with motor.begin() as conn:
+        for hora, estado in ((10, "activa"), (12, "cancelada")):
+            conn.execute(
+                text(
+                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
+                    " total, estado, cancelada_en)"
+                    " SELECT min(id), :e, x.i, x.i + interval '1 hour', 38000, 38000, :estado,"
+                    " CASE WHEN :estado = 'cancelada' THEN now() END FROM usuario,"
+                    " (SELECT (CAST(:dia AS date) + make_interval(hours => :hora))"
+                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x GROUP BY x.i"
+                ),
+                {"e": espacio["id"], "dia": manana, "hora": hora, "estado": estado},
+            )
+
+    r = api.get(
+        f"/espacios/{espacio['id']}/horarios",
+        headers=_con(token_usuario),
+        params={"fecha": manana.isoformat()},
+    )
+
+    assert r.status_code == 200
+    franjas = {f["inicio"]: f["disponible"] for f in r.json()["franjas"]}
+    assert (franjas["10:00"], franjas["11:00"], franjas["12:00"]) == (False, True, True)
+    assert (r.json()["abre"], r.json()["no_disponibles"]) == (True, 1)
+    assert r.json()["franjas"][-1] == {"inicio": "22:00", "fin": "23:00", "disponible": True}
+
+
+def test_los_horarios_se_piden_con_sesion_y_dentro_de_la_semana(
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    ruta = f"/espacios/{espacio['id']}/horarios"
+    hoy = date.fromisoformat(api.get(ruta, headers=_con(token_usuario)).json()["hoy"])
+
+    assert api.get(ruta).status_code == 401
+    lejos = {"fecha": (hoy + timedelta(days=7)).isoformat()}
+    assert api.get(ruta, headers=_con(token_usuario), params=lejos).status_code == 422
+    assert api.get(ruta, headers=_con(token_usuario), params={"horas": 5}).status_code == 422
+    assert api.get("/espacios/999999999/horarios", headers=_con(token_usuario)).status_code == 404

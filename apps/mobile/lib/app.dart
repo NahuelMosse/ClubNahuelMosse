@@ -21,6 +21,9 @@ import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_nueva_contrasena.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
 import 'sesion/recuperacion.dart';
+import 'reservas/eleccion.dart';
+import 'reservas/horarios.dart';
+import 'reservas/pantalla_confirmar_reserva.dart';
 import 'reservas/pantalla_horarios.dart';
 import 'sedes/pantalla_sede.dart';
 import 'sedes/pantalla_sedes.dart';
@@ -64,6 +67,7 @@ class _AppState extends State<App> {
   late final _recuperacion = Recuperacion(widget.api);
   late final _sedes = Sedes(api: widget.api, sesion: widget.sesion);
   late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
+  late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
 
   late final GoRouter _rutas = GoRouter(
     initialLocation: widget.inicio,
@@ -164,8 +168,24 @@ class _AppState extends State<App> {
                       int.tryParse(estado.pathParameters['cancha'] ?? '') ?? 0,
                   sedes: _sedes,
                   espacios: _espacios,
+                  horarios: _horarios,
                   sesion: widget.sesion,
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'reservar',
+                    redirect: (context, estado) => estado.extra is Eleccion
+                        ? null
+                        : '/sedes/${estado.pathParameters['sede']}'
+                              '/canchas/${estado.pathParameters['cancha']}',
+                    builder: (context, estado) => switch (estado.extra) {
+                      final Eleccion eleccion => PantallaConfirmarReserva(
+                        eleccion: eleccion,
+                      ),
+                      _ => const SizedBox.shrink(),
+                    },
+                  ),
+                ],
               ),
             ],
           ),

@@ -12,11 +12,22 @@ void main() {
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
     await expectLater(tester, meetsGuideline(textContrastGuideline));
     // Las tarjetas tienen una etiqueta propia y la guía de contraste no ve sus textos: se
-    // miden los que están enteros a la vista, arriba de la barra inferior.
+    // miden los que están enteros a la vista, arriba de la barra inferior. El texto de un
+    // control deshabilitado —una franja ocupada— no tiene piso de contraste (WCAG 1.4.3).
     final pantalla = tester.view.physicalSize / tester.view.devicePixelRatio;
     final aLaVista = Rect.fromLTWH(0, 0, pantalla.width, pantalla.height - 90);
+    bool deshabilitado(Element elemento) {
+      var si = false;
+      elemento.visitAncestorElements((ancestro) {
+        final w = ancestro.widget;
+        if (w is Semantics && w.properties.enabled == false) si = true;
+        return !si;
+      });
+      return si;
+    }
+
     final visibles = find.byElementPredicate((elemento) {
-      if (elemento.widget is! Text) return false;
+      if (elemento.widget is! Text || deshabilitado(elemento)) return false;
       final caja = elemento.renderObject;
       if (caja is! RenderBox || !caja.hasSize) return false;
       final lugar = caja.localToGlobal(Offset.zero) & caja.size;

@@ -338,12 +338,12 @@ void main() {
       await tester.tap(find.text('VER HORARIOS / RESERVAR').first);
       await tester.pumpAndSettle();
       expect(find.text('SELECCIONÁ CANCHA'), findsOneWidget);
-      expect(find.text('Fútbol 5'), findsOneWidget);
       expect(
-        find.bySemanticsLabel(
-          'Moron_Rivadavia_19850_Futbol_F5_1, Cancha 1, Al aire libre, elegida',
-        ),
-        findsOneWidget,
+        tester
+            .getSemantics(find.bySemanticsLabel('Cancha 1, Al aire libre'))
+            .flagsCollection
+            .isSelected,
+        isTrue,
       );
       // La de tenis no es de ese tipo.
       expect(find.textContaining('Tenis_PDL'), findsNothing);

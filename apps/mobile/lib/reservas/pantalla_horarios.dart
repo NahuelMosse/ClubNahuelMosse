@@ -2,19 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
-import '../comun/barra_inferior.dart';
+import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/estado_vacio.dart';
+import '../comun/formato_precio.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
+import '../sedes/fotos.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'eleccion.dart';
+import 'fechas.dart';
+import 'horarios.dart';
 
-/// «Horarios disponibles» de un tipo de cancha en una sede, con la cancha elegida desde la
-/// sede. Muestra las canchas de ese tipo para cambiar de una a otra.
+const _minHoras = 1;
+const _maxHoras = 4;
+const _diasALaVista = 7;
+
+/// «Horarios disponibles» de una cancha: elige cancha de ese tipo, fecha y duración, y la
+/// franja que después se confirma. Consultar no reserva nada.
 class PantallaHorarios extends StatefulWidget {
   const PantallaHorarios({
     super.key,
@@ -22,6 +32,7 @@ class PantallaHorarios extends StatefulWidget {
     required this.espacioId,
     required this.sedes,
     required this.espacios,
+    required this.horarios,
     required this.sesion,
   });
 
@@ -29,6 +40,7 @@ class PantallaHorarios extends StatefulWidget {
   final int espacioId;
   final Sedes sedes;
   final Espacios espacios;
+  final Horarios horarios;
   final Sesion sesion;
 
   @override
@@ -38,6 +50,23 @@ class PantallaHorarios extends StatefulWidget {
 class _PantallaHorariosState extends State<PantallaHorarios> {
   (Sede, List<Espacio>, Catalogo)? _datos;
   late int _elegida = widget.espacioId;
+  DateTime? _fecha;
+  int _horas = _minHoras;
+  Grilla? _grilla;
+
+  /// La cancha y la duración con que se pidió la grilla que está en pantalla: mientras
+  /// llega otra, el resumen y la nota siguen hablando de esa.
+  (int, int)? _deLaGrilla;
+
+  /// El día de hoy en el club, según la última grilla: FECHA sigue a la vista aunque la
+  /// consulta siguiente falle.
+  DateTime? _hoy;
+  String? _inicio;
+  bool _consultando = false;
+  bool _fallo = false;
+
+  /// Sube con cada consulta: la respuesta de una que ya no es la última se descarta.
+  int _pedido = 0;
 
   @override
   void initState() {
@@ -45,7 +74,10 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     _cargar();
   }
 
+  Espacio? get _cancha => _datos?.$2.where((c) => c.id == _elegida).firstOrNull;
+
   Future<void> _cargar() async {
+    setState(() => _fallo = false);
     Object? fallo;
     var vencida = false;
     try {
@@ -58,15 +90,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
           .firstOrNull;
       if (!mounted) return;
       if (sede == null || elegida == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Esta cancha ya no está disponible')),
-        );
-        if (sede == null) {
-          widget.sedes.avisarCambio();
-        } else {
-          widget.espacios.avisarCambio();
-        }
-        context.go(sede == null ? '/sedes' : '/sedes/${sede.id}');
+        _yaNoEsta(sede == null);
         return;
       }
       setState(() {
@@ -79,6 +103,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
           catalogo,
         );
       });
+      await _consultar();
       return;
     } on SesionVencida {
       vencida = true;
@@ -87,110 +112,531 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     } on ErrorDelServidor catch (e) {
       fallo = e;
     }
+    await _avisar(vencida: vencida, fallo: fallo, reintentar: _cargar);
+  }
+
+  /// Pide la grilla de la cancha, la fecha y la duración elegidas. La hora de inicio
+  /// elegida queda si sigue disponible.
+  Future<void> _consultar() async {
+    final pedido = ++_pedido;
+    setState(() {
+      _consultando = true;
+      _fallo = false;
+    });
+    Object? fallo;
+    var vencida = false;
+    final consulta = (_elegida, _horas);
+    try {
+      final grilla = await widget.horarios.de(
+        _elegida,
+        fecha: _fecha,
+        horas: _horas,
+      );
+      if (!mounted || pedido != _pedido) return;
+      setState(() {
+        _consultando = false;
+        _grilla = grilla;
+        _deLaGrilla = consulta;
+        _hoy = grilla.hoy;
+        _fecha = grilla.fecha;
+        final sigue = grilla.franjas.any(
+          (f) => f.inicio == _inicio && f.disponible,
+        );
+        if (!sigue) _inicio = null;
+      });
+      return;
+    } on CanchaNoDisponible {
+      if (mounted && pedido == _pedido) _yaNoEsta(false);
+      return;
+    } on FechaVencida {
+      // El día elegido ya pasó (la pantalla quedó abierta de un día para otro): vuelve a hoy.
+      if (!mounted || pedido != _pedido || _fecha == null) return;
+      _fecha = null;
+      await _consultar();
+      return;
+    } on SesionVencida {
+      vencida = true;
+    } on SinConexion catch (e) {
+      fallo = e;
+    } on ErrorDelServidor catch (e) {
+      fallo = e;
+    }
+    if (!mounted || pedido != _pedido) return;
+    setState(() {
+      _consultando = false;
+      _grilla = null;
+      _deLaGrilla = null;
+      _inicio = null;
+    });
+    await _avisar(vencida: vencida, fallo: fallo, reintentar: _consultar);
+  }
+
+  /// Un error de la API: sin horarios en pantalla y REINTENTAR, salvo que la persona
+  /// reintente desde el aviso.
+  Future<void> _avisar({
+    required bool vencida,
+    required Object? fallo,
+    required Future<void> Function() reintentar,
+  }) async {
     if (!mounted) return;
+    setState(() => _fallo = true);
+    if (ModalRoute.of(context)?.isCurrent == false) return;
     if (vencida) {
       await mostrarSesionVencida(context);
       if (mounted) await cerrarSesion(context, widget.sesion);
     } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (!mounted) return;
-      if (reintentar) {
-        await _cargar();
-      } else {
-        context.go('/sedes/${widget.sedeId}');
-      }
+      final otraVez = await mostrarErrorDeRed(context, fallo);
+      if (otraVez && mounted) await reintentar();
     }
+  }
+
+  void _yaNoEsta(bool laSede) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Esta cancha ya no está disponible')),
+    );
+    if (laSede) {
+      widget.sedes.avisarCambio();
+    } else {
+      widget.espacios.avisarCambio();
+    }
+    context.go(laSede ? '/sedes' : '/sedes/${widget.sedeId}');
+  }
+
+  void _elegirCancha(int id) {
+    if (id == _elegida) return;
+    setState(() => _elegida = id);
+    _consultar();
+  }
+
+  void _elegirFecha(DateTime dia) {
+    if (dia == _fecha) return;
+    setState(() => _fecha = dia);
+    _consultar();
+  }
+
+  void _cambiarHoras(int horas) {
+    setState(() => _horas = horas);
+    _consultar();
+  }
+
+  void _continuar() {
+    final datos = _datos;
+    final cancha = _cancha;
+    final fecha = _fecha;
+    final franja = _grilla?.franjas
+        .where((f) => f.inicio == _inicio)
+        .firstOrNull;
+    if (datos == null || cancha == null || fecha == null || franja == null) {
+      return;
+    }
+    context.go(
+      '/sedes/${widget.sedeId}/canchas/${widget.espacioId}/reservar',
+      extra: Eleccion(
+        sede: datos.$1,
+        cancha: cancha,
+        tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
+        fecha: fecha,
+        inicio: franja.inicio,
+        fin: franja.fin,
+        horas: _horas,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final datos = _datos;
+    final cancha = _cancha;
     return Scaffold(
       backgroundColor: p.bgBase,
-      bottomNavigationBar: const BarraInferior(
-        actual: Seccion.sedes,
-        enRaiz: false,
-      ),
-      body: SafeArea(
-        child: datos == null
-            ? const Center(child: CircularProgressIndicator())
-            : ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s12,
-                  Medidas.s8,
-                  Medidas.s24,
-                  Medidas.s40,
-                ),
+      bottomNavigationBar: datos == null
+          ? null
+          : _BarraAccion(
+              alContinuar: _inicio != null && !_consultando ? _continuar : null,
+            ),
+      body: datos == null || cancha == null
+          ? SafeArea(
+              child: Center(
+                child: _fallo
+                    ? BotonTexto(texto: 'REINTENTAR', alTocar: _cargar)
+                    : const CircularProgressIndicator(),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton.icon(
-                      onPressed: () => context.go('/sedes/${widget.sedeId}'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: p.textPrimary,
-                        minimumSize: const Size(0, Medidas.tactil),
-                        textStyle: Textos.leyenda,
-                      ),
-                      icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                      label: const Text('Sedes'),
-                    ),
+                  _Portada(
+                    sede: datos.$1,
+                    tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
+                    deporte: cancha.deporte,
+                    alVolver: () => context.go('/sedes/${widget.sedeId}'),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: Medidas.s12),
+                    padding: const EdgeInsets.fromLTRB(
+                      Medidas.s24,
+                      Medidas.s20,
+                      Medidas.s24,
+                      Medidas.s32,
+                    ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: Medidas.s8),
-                        Semantics(
-                          header: true,
-                          child: Text(
-                            datos.$3.tipoCorto(
-                              datos.$2.first.deporte,
-                              datos.$2.first.tipo,
+                        _Seccion(
+                          titulo: 'SELECCIONÁ CANCHA',
+                          child: _DeAPares(
+                            hijos: [
+                              for (final c in datos.$2)
+                                _TarjetaCancha(
+                                  cancha: c,
+                                  elegida: c.id == _elegida,
+                                  alTocar: () => _elegirCancha(c.id),
+                                ),
+                            ],
+                          ),
+                        ),
+                        if (_hoy case final hoy?) ...[
+                          _Seccion(
+                            titulo: 'FECHA',
+                            child: _Fechas(
+                              hoy: hoy,
+                              elegida: _fecha,
+                              alElegir: _elegirFecha,
                             ),
-                            style: Textos.h1.copyWith(color: p.textPrimary),
                           ),
-                        ),
-                        const SizedBox(height: Medidas.s4),
-                        Text(
-                          datos.$1.nombre.toUpperCase(),
-                          style: Textos.sobretitulo.copyWith(
-                            color: p.accentInk,
+                          _Seccion(
+                            titulo: 'DURACIÓN',
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                _Duracion(
+                                  horas: _horas,
+                                  alCambiar: _cambiarHoras,
+                                ),
+                                const SizedBox(height: Medidas.s8),
+                                Text(
+                                  'Horas completas, de $_minHoras a $_maxHoras h. '
+                                  'La sede cierra a las ${datos.$1.cierre}.',
+                                  style: Textos.leyenda.copyWith(
+                                    color: p.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: Medidas.s24),
-                        Text(
-                          'SELECCIONÁ CANCHA',
-                          style: Textos.sobretitulo.copyWith(
-                            color: p.textMuted,
+                        ],
+                        _grillaOAviso(p),
+                        if ((_grilla, _deLaGrilla) case (
+                          final grilla?,
+                          (final id, final horas)?,
+                        )) ...[
+                          const SizedBox(height: Medidas.s8),
+                          _Resumen(
+                            tipo: datos.$3.tipoCorto(
+                              cancha.deporte,
+                              cancha.tipo,
+                            ),
+                            precio:
+                                (datos.$2
+                                            .where((c) => c.id == id)
+                                            .firstOrNull ??
+                                        cancha)
+                                    .precioPorHora,
+                            horas: horas,
+                            franja: grilla.franjas
+                                .where((f) => f.inicio == _inicio)
+                                .firstOrNull,
+                            fecha: grilla.fecha,
                           ),
-                        ),
-                        const SizedBox(height: Medidas.s12),
-                        Wrap(
-                          spacing: Medidas.s8,
-                          runSpacing: Medidas.s8,
-                          children: [
-                            for (final c in datos.$2)
-                              _ChipCancha(
-                                cancha: c,
-                                elegida: c.id == _elegida,
-                                alTocar: () => setState(() => _elegida = c.id),
-                              ),
-                          ],
-                        ),
+                        ],
                       ],
                     ),
                   ),
                 ],
               ),
+            ),
+    );
+  }
+
+  Widget _grillaOAviso(Paleta p) {
+    final grilla = _grilla;
+    final horas = _deLaGrilla?.$2 ?? _horas;
+    if (grilla == null) {
+      return Padding(
+        padding: const EdgeInsets.all(Medidas.s24),
+        child: Center(
+          child: _consultando || !_fallo
+              ? const CircularProgressIndicator()
+              : BotonTexto(texto: 'REINTENTAR', alTocar: _consultar),
+        ),
+      );
+    }
+    return _Seccion(
+      titulo: 'HORARIO DISPONIBLE',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: 2,
+            child: _consultando ? const LinearProgressIndicator() : null,
+          ),
+          const SizedBox(height: Medidas.s8),
+          _contenidoDeLaGrilla(grilla, horas),
+        ],
+      ),
+    );
+  }
+
+  /// Mientras llega otra grilla, la anterior queda atenuada y no se puede tocar.
+  Widget _contenidoDeLaGrilla(Grilla grilla, int horas) {
+    return IgnorePointer(
+      ignoring: _consultando,
+      child: AnimatedOpacity(
+        opacity: _consultando ? 0.5 : 1,
+        duration: const Duration(milliseconds: 150),
+        child: !grilla.hayLibres
+            ? EstadoVacio(
+                titulo: 'No hay horarios disponibles',
+                texto: _porQueNoHay(grilla, horas),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _DeAPares(
+                    alto: Medidas.altoControl,
+                    hijos: [
+                      for (final f in grilla.franjas)
+                        _TarjetaFranja(
+                          franja: f,
+                          elegida: f.inicio == _inicio,
+                          alTocar: f.disponible
+                              ? () => setState(() => _inicio = f.inicio)
+                              : null,
+                        ),
+                    ],
+                  ),
+                  if (grilla.noDisponibles > 0) ...[
+                    const SizedBox(height: Medidas.s12),
+                    _Nota(
+                      texto: horas == 1
+                          ? 'Algunos horarios ya están ocupados · '
+                                '${grilla.noDisponibles} no disponibles'
+                          : 'Con ${duracion(horas)} hay menos inicios posibles · '
+                                '${grilla.noDisponibles} no disponibles',
+                    ),
+                  ],
+                ],
+              ),
+      ),
+    );
+  }
+
+  String _porQueNoHay(Grilla grilla, int horas) {
+    if (!grilla.abre) return 'La sede no abre ese día. Probá con otra fecha.';
+    if (horas > 1) {
+      return 'Con ${duracion(horas)} seguidas no entra ningún turno antes del '
+          'cierre. Probá con una duración menor, otra fecha u otra cancha.';
+    }
+    return 'Ya no quedan turnos libres ese día. Probá con otra fecha u otra cancha.';
+  }
+}
+
+/// La foto del deporte con el camino de vuelta, el tipo y la sede.
+class _Portada extends StatelessWidget {
+  const _Portada({
+    required this.sede,
+    required this.tipo,
+    required this.deporte,
+    required this.alVolver,
+  });
+
+  final Sede sede;
+  final String tipo;
+  final String deporte;
+  final VoidCallback alVolver;
+
+  @override
+  Widget build(BuildContext context) {
+    const foto = Paleta.oscura;
+    return FotoConVelo(
+      imagen: fotoDeDeporte(deporte),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Medidas.s12,
+            Medidas.s8,
+            Medidas.s24,
+            Medidas.s24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextButton.icon(
+                onPressed: alVolver,
+                style: TextButton.styleFrom(
+                  foregroundColor: foto.textPrimary,
+                  minimumSize: const Size(0, Medidas.tactil),
+                  textStyle: Textos.leyenda,
+                ),
+                icon: const Icon(Icons.chevron_left_rounded, size: 20),
+                label: const Text('Sedes'),
+              ),
+              const SizedBox(height: Medidas.s32),
+              Padding(
+                padding: const EdgeInsets.only(left: Medidas.s12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tipo,
+                      style: Textos.sobretitulo.copyWith(
+                        color: foto.accentBase,
+                      ),
+                    ),
+                    const SizedBox(height: Medidas.s4),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        sede.nombre.toUpperCase(),
+                        style: Textos.display.copyWith(color: foto.textPrimary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _ChipCancha extends StatelessWidget {
-  const _ChipCancha({
+class _Seccion extends StatelessWidget {
+  const _Seccion({required this.titulo, required this.child});
+
+  final String titulo;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: Medidas.s24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            header: true,
+            child: Text(
+              titulo,
+              style: Textos.sobretitulo.copyWith(color: p.textMuted),
+            ),
+          ),
+          const SizedBox(height: Medidas.s8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+/// Dos columnas iguales, como las grillas del prototipo.
+class _DeAPares extends StatelessWidget {
+  const _DeAPares({required this.hijos, this.alto});
+
+  final List<Widget> hijos;
+  final double? alto;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < hijos.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: Medidas.s8),
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _alto(hijos[i])),
+                const SizedBox(width: Medidas.s8),
+                Expanded(
+                  child: i + 1 < hijos.length
+                      ? _alto(hijos[i + 1])
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _alto(Widget hijo) {
+    final a = alto;
+    return a == null
+        ? hijo
+        : ConstrainedBox(
+            constraints: BoxConstraints(minHeight: a),
+            child: hijo,
+          );
+  }
+}
+
+/// Un control que se elige, con el estilo de los del prototipo: lima el elegido.
+class _Elegible extends StatelessWidget {
+  const _Elegible({
+    required this.etiqueta,
+    required this.elegido,
+    required this.alTocar,
+    required this.child,
+    this.atenuado = false,
+  });
+
+  final String etiqueta;
+  final bool elegido;
+  final VoidCallback? alTocar;
+  final Widget child;
+  final bool atenuado;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    final forma = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(Medidas.radioMd),
+      side: BorderSide(
+        color: elegido
+            ? p.accentEdge
+            : atenuado
+            ? p.borderDefault
+            : p.borderControl,
+      ),
+    );
+    return Semantics(
+      container: true,
+      button: true,
+      selected: elegido,
+      enabled: alTocar != null,
+      label: etiqueta,
+      excludeSemantics: true,
+      onTap: alTocar,
+      child: Opacity(
+        opacity: atenuado ? 0.45 : 1,
+        child: Material(
+          color: elegido ? p.accentBase : p.bgSurfaceRaised,
+          shape: forma,
+          child: InkWell(onTap: alTocar, customBorder: forma, child: child),
+        ),
+      ),
+    );
+  }
+}
+
+class _TarjetaCancha extends StatelessWidget {
+  const _TarjetaCancha({
     required this.cancha,
     required this.elegida,
     required this.alTocar,
@@ -203,44 +649,379 @@ class _ChipCancha extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    final tinta = elegida ? p.accentOn : p.textPrimary;
+    return _Elegible(
+      etiqueta: 'Cancha ${cancha.numero}, ${cancha.condicion}',
+      elegido: elegida,
+      alTocar: alTocar,
+      child: Padding(
+        padding: const EdgeInsets.all(Medidas.s16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Cancha ${cancha.numero}',
+              style: Textos.cuerpoFuerte.copyWith(
+                color: elegida ? p.accentOn : p.textPrimary,
+              ),
+            ),
+            const SizedBox(height: Medidas.s4),
+            Text(
+              cancha.condicion,
+              style: Textos.leyenda.copyWith(
+                color: elegida ? p.accentOn : p.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Los próximos siete días desde hoy, en una fila que se desliza.
+class _Fechas extends StatelessWidget {
+  const _Fechas({
+    required this.hoy,
+    required this.elegida,
+    required this.alElegir,
+  });
+
+  final DateTime hoy;
+  final DateTime? elegida;
+  final ValueChanged<DateTime> alElegir;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      child: Row(
+        children: [
+          for (var i = 0; i < _diasALaVista; i++) ...[
+            if (i > 0) const SizedBox(width: Medidas.s8),
+            Builder(
+              builder: (context) {
+                final dia = DateTime.utc(hoy.year, hoy.month, hoy.day + i);
+                final esta = dia == elegida;
+                final tinta = esta ? p.accentOn : p.textPrimary;
+                return ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minWidth: 56,
+                    minHeight: 64,
+                  ),
+                  child: _Elegible(
+                    etiqueta: '${diaDeLaSemana(dia)} ${dia.day}',
+                    elegido: esta,
+                    alTocar: () => alElegir(dia),
+                    child: Padding(
+                      padding: const EdgeInsets.all(Medidas.s8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            diaAbreviado(dia),
+                            style: Textos.sobretitulo.copyWith(
+                              color: esta ? p.accentOn : p.textMuted,
+                            ),
+                          ),
+                          Text(
+                            '${dia.day}',
+                            style: Textos.h2.copyWith(color: tinta),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// `Stepper-Duracion`: una hora menos, la duración y una hora más.
+class _Duracion extends StatelessWidget {
+  const _Duracion({required this.horas, required this.alCambiar});
+
+  final int horas;
+  final ValueChanged<int> alCambiar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Container(
+      height: Medidas.altoControl,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: p.bgSurfaceRaised,
+        borderRadius: BorderRadius.circular(Medidas.radioPill),
+      ),
+      child: Row(
+        children: [
+          _BotonRedondo(
+            icono: Icons.remove_rounded,
+            etiqueta: 'Una hora menos',
+            alTocar: horas > _minHoras ? () => alCambiar(horas - 1) : null,
+          ),
+          Expanded(
+            child: Semantics(
+              liveRegion: true,
+              child: Text(
+                duracion(horas),
+                textAlign: TextAlign.center,
+                style: Textos.cuerpoFuerte.copyWith(color: p.textPrimary),
+              ),
+            ),
+          ),
+          _BotonRedondo(
+            icono: Icons.add_rounded,
+            etiqueta: 'Una hora más',
+            alTocar: horas < _maxHoras ? () => alCambiar(horas + 1) : null,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BotonRedondo extends StatelessWidget {
+  const _BotonRedondo({
+    required this.icono,
+    required this.etiqueta,
+    required this.alTocar,
+  });
+
+  final IconData icono;
+  final String etiqueta;
+  final VoidCallback? alTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    final activo = alTocar != null;
     return Semantics(
       container: true,
       button: true,
-      selected: elegida,
+      enabled: activo,
+      label: etiqueta,
       excludeSemantics: true,
-      label:
-          '${cancha.nombre}, Cancha ${cancha.numero}, ${cancha.condicion}'
-          '${elegida ? ', elegida' : ''}',
       onTap: alTocar,
-      child: Material(
-        color: elegida ? p.accentBase : p.bgSurface,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-          side: BorderSide(color: elegida ? p.accentEdge : p.borderControl),
-        ),
-        child: InkWell(
-          onTap: alTocar,
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Medidas.s16,
-              vertical: Medidas.s8,
+      child: SizedBox(
+        width: Medidas.s48,
+        height: Medidas.s48,
+        child: Material(
+          color: activo ? p.bgSurface : Colors.transparent,
+          shape: CircleBorder(
+            side: BorderSide(
+              color: activo ? p.borderControl : Colors.transparent,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+          child: InkWell(
+            onTap: alTocar,
+            customBorder: const CircleBorder(),
+            child: Icon(
+              icono,
+              size: 22,
+              color: activo ? p.textPrimary : p.stateDisabled,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TarjetaFranja extends StatelessWidget {
+  const _TarjetaFranja({
+    required this.franja,
+    required this.elegida,
+    required this.alTocar,
+  });
+
+  final Franja franja;
+  final bool elegida;
+  final VoidCallback? alTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return _Elegible(
+      etiqueta: franja.texto,
+      elegido: elegida,
+      alTocar: alTocar,
+      atenuado: !franja.disponible,
+      child: Center(
+        child: Text(
+          franja.texto,
+          style: Textos.cuerpoFuerte.copyWith(
+            color: elegida ? p.accentOn : p.textPrimary,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// `Nota-Ocupados`: cuántos inicios de la grilla no se pueden elegir.
+class _Nota extends StatelessWidget {
+  const _Nota({required this.texto});
+
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Container(
+      padding: const EdgeInsets.all(Medidas.s12),
+      decoration: BoxDecoration(
+        color: p.bgSurface,
+        borderRadius: BorderRadius.circular(Medidas.radioMd),
+        border: Border.all(color: p.borderDefault),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, size: 18, color: p.textSecondary),
+          const SizedBox(width: Medidas.s8),
+          Expanded(
+            child: Text(
+              texto,
+              style: Textos.leyenda.copyWith(color: p.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// La tarjeta de resumen: el precio, y el total con el horario y la fecha elegidos.
+class _Resumen extends StatelessWidget {
+  const _Resumen({
+    required this.tipo,
+    required this.precio,
+    required this.horas,
+    required this.franja,
+    required this.fecha,
+  });
+
+  final String tipo;
+  final int precio;
+  final int horas;
+  final Franja? franja;
+  final DateTime? fecha;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    final elegida = franja;
+    final dia = fecha;
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        padding: const EdgeInsets.all(Medidas.s16),
+        decoration: BoxDecoration(
+          color: p.bgSurfaceRaised,
+          borderRadius: BorderRadius.circular(Medidas.radioLg),
+          border: Border.all(color: p.borderDefault),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Con el texto grande, cada dato baja a su propia línea en vez de cortarse.
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: Medidas.s8,
+              runSpacing: Medidas.s4,
               children: [
                 Text(
-                  'Cancha ${cancha.numero}',
-                  style: Textos.cuerpoFuerte.copyWith(color: tinta),
+                  tipo,
+                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
                 ),
                 Text(
-                  cancha.condicion,
-                  style: Textos.leyenda.copyWith(color: tinta),
+                  elegida == null
+                      ? '${pesos(precio)} por hora'
+                      : '${pesos(precio)} × $horas',
+                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
                 ),
               ],
             ),
+            const SizedBox(height: Medidas.s12),
+            Divider(height: 1, color: p.borderDefault),
+            const SizedBox(height: Medidas.s12),
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              spacing: Medidas.s8,
+              runSpacing: Medidas.s8,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'TOTAL',
+                      style: Textos.sobretitulo.copyWith(color: p.textMuted),
+                    ),
+                    const SizedBox(height: Medidas.s4),
+                    Text(
+                      elegida == null ? '—' : pesos(precio * horas),
+                      style: Textos.h1.copyWith(color: p.accentInk),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      elegida?.texto ?? 'Sin horario elegido',
+                      style: Textos.cuerpoFuerte.copyWith(
+                        color: elegida == null
+                            ? p.textSecondary
+                            : p.textPrimary,
+                      ),
+                    ),
+                    if (dia != null)
+                      Text(
+                        fechaLarga(dia),
+                        style: Textos.leyenda.copyWith(color: p.textMuted),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BarraAccion extends StatelessWidget {
+  const _BarraAccion({required this.alContinuar});
+
+  final VoidCallback? alContinuar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: p.bgSurface,
+        border: Border(top: BorderSide(color: p.borderDefault)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            Medidas.s24,
+            Medidas.s16,
+            Medidas.s24,
+            Medidas.s16,
           ),
+          child: BotonPrimario(texto: 'CONTINUAR', alTocar: alContinuar),
         ),
       ),
     );

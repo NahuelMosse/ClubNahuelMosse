@@ -84,6 +84,35 @@ void main() {
         await abrir(tester, '/sedes/1/canchas/9');
         await capturar(tester, 'sedes/horarios_${ancho}_$modo.png');
       });
+
+      testWidgets('horarios con franja elegida $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await abrir(tester, '/sedes/1/canchas/9');
+        final franja = find.bySemanticsLabel('18:00 – 19:00');
+        await tester.ensureVisible(franja);
+        await tester.pumpAndSettle();
+        await tester.tap(franja);
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sedes/horarios_elegido_${ancho}_$modo.png');
+        await tester.tap(find.text('CONTINUAR'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sedes/confirmar_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      testWidgets('horarios sin turnos $ancho $modo', (tester) async {
+        await montarUsuario(
+          tester,
+          oscuro: oscuro,
+          tamano: tamano,
+          inicio: '/sedes/1/canchas/9',
+          api: apiRutas({
+            ...rutasDeSedes(sedes: sedes, grilla: grillaJson(abre: false)),
+            'GET /espacios/catalogo': (200, catalogoCompleto),
+          }),
+        );
+        await capturar(tester, 'sedes/horarios_vacio_${ancho}_$modo.png');
+      });
     }
   }
 }

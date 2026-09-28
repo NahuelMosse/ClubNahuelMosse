@@ -16,14 +16,34 @@ const sedeHaedoSinCanchas =
     '"apertura": "08:00", "cierre": "22:00", "dias": [1,2,3,4,5,6,7], '
     '"canchas": 0, "deportes": []}';
 
+/// La grilla del prototipo: jueves 12 de noviembre, 1 hora, seis horarios ocupados.
+String grillaJson({
+  String fecha = '2026-11-12',
+  Set<int> ocupadas = const {9, 12, 16, 17, 21, 22},
+  bool abre = true,
+}) {
+  String hora(int h) => '${h.toString().padLeft(2, '0')}:00';
+  final franjas = [
+    if (abre)
+      for (var h = 8; h < 23; h++)
+        '{"inicio": "${hora(h)}", "fin": "${hora(h + 1)}", '
+            '"disponible": ${!ocupadas.contains(h)}}',
+  ];
+  return '{"fecha": "$fecha", "hoy": "2026-11-12", "abre": $abre, '
+      '"franjas": [${franjas.join(', ')}], '
+      '"no_disponibles": ${abre ? ocupadas.length : 0}}';
+}
+
 /// Las respuestas de la API para recorrer las sedes como usuario.
 Map<String, (int, String)> rutasDeSedes({
   String sedes = '[$sedeMoronConDeportes, $sedeHaedoSinCanchas]',
   String espacios = '[$espacioF5Json, $espacioTenisJson]',
+  String? grilla,
 }) => {
   'GET /espacios/catalogo': (200, catalogoJson),
   'GET /sedes': (200, '{"sedes": $sedes}'),
   'GET /espacios': (200, '{"espacios": $espacios}'),
+  'GET /espacios/9/horarios': (200, grilla ?? grillaJson()),
 };
 
 /// La app entera con la sesión de un usuario, abierta en [inicio].
