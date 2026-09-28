@@ -115,7 +115,9 @@ void main() {
     'elige una cancha del resultado y pasa a reservarla con el horario consultado @CU-13-H01-03',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      final (sede, f5a, _, _) = await sedeConCanchas();
+      final (sede, f5a, f5b, _) = await sedeConCanchas();
+      // Con la Cancha 2 ocupada, el resultado trae una sola cancha para elegir.
+      await ocupar(f5b, manana, 11);
       await abrirBusqueda(tester);
       await completar(tester, sede);
       await tocar(tester, 'CONSULTAR');
