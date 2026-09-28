@@ -33,3 +33,14 @@ CU-08-AMB-02 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-08-AMB-02 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
 CU-08-AMB-03 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-08-AMB-03 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo) (decisión 3)
+CU-08-AMB-08 · 2026-09-28 · abierta · el prototipo pone MODIFICAR y CANCELAR en cada próxima: ¿van en esta card?
+CU-08-AMB-09 · 2026-09-28 · abierta · ¿qué dice una cancelada o una anulada debajo de la fecha?
+CU-08-AMB-10 · 2026-09-28 · abierta · ¿el precio de la tarjeta es el total de la reserva, el del momento en que se hizo, o el precio actual del espacio?
+CU-08-AMB-01 · 2026-09-28 · vencida → CU-08-SUP-01 · con la sesión vencida, el overlay «Tu sesión expiró» y al inicio de sesión, como en el resto de la app
+CU-08-AMB-04 · 2026-09-28 · vencida → CU-08-SUP-02 · sin paginación ni límite de antigüedad: el historial de una persona es corto y se lee entero
+CU-08-AMB-05 · 2026-09-28 · vencida → CU-08-SUP-03 · Próximas de la más cercana a la más lejana; Historial de la más reciente a la más vieja
+CU-08-AMB-06 · 2026-09-28 · vencida → CU-08-SUP-04 · una reserva en curso sigue en Próximas como ACTIVA hasta que termina; ahí pasa a COMPLETADA en el Historial
+CU-08-AMB-07 · 2026-09-28 · vencida → CU-08-SUP-05 · una cancelada o anulada va al Historial aunque su horario sea futuro: ya no es una próxima reserva
+CU-08-AMB-08 · 2026-09-28 · vencida → CU-08-SUP-06 · MODIFICAR y CANCELAR llegan con CU-11 y CU-10; esta card muestra las tarjetas sin acciones
+CU-08-AMB-09 · 2026-09-28 · vencida → CU-08-SUP-07 · como el prototipo (decisión 12): «Cancelada por vos · el horario quedó liberado» y «Anulada por el administrador · <motivo>»
+CU-08-AMB-10 · 2026-09-28 · vencida → CU-08-SUP-08 · el total que se guardó al reservar (decisión 4), aunque después cambie el precio del espacio
