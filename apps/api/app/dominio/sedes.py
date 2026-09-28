@@ -2,6 +2,8 @@ import re
 from dataclasses import dataclass
 from datetime import time
 
+from app.dominio.espacios import parte_de_calle, parte_de_sede
+
 LARGO_NOMBRE = 60
 LARGO_DIRECCION = 80
 MEDIANOCHE = time(0, 0)
@@ -75,6 +77,9 @@ def validar_sede(datos: DatosSede) -> tuple[SedeNueva | None, dict[str, str]]:
         errores["nombre"] = "El nombre es obligatorio"
     elif len(nombre) > LARGO_NOMBRE:
         errores["nombre"] = f"Usá hasta {LARGO_NOMBRE} caracteres"
+    elif not parte_de_sede(nombre):
+        # Sin eso los espacios de la sede no tendrían nombre compuesto (RF 5).
+        errores["nombre"] = "Escribí el nombre de la sede"
 
     direccion = " ".join(datos.direccion.split())
     partes = _CALLE_Y_ALTURA.match(direccion)
@@ -82,7 +87,7 @@ def validar_sede(datos: DatosSede) -> tuple[SedeNueva | None, dict[str, str]]:
         errores["direccion"] = "La dirección es obligatoria"
     elif len(direccion) > LARGO_DIRECCION:
         errores["direccion"] = f"Usá hasta {LARGO_DIRECCION} caracteres"
-    elif partes is None or int(partes["altura"]) == 0:
+    elif partes is None or int(partes["altura"]) == 0 or not parte_de_calle(partes["calle"]):
         errores["direccion"] = "Escribí la calle y la altura"
 
     errores |= _errores_de_horario(datos.apertura, datos.cierre)

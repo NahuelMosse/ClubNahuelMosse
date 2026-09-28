@@ -134,3 +134,8 @@ def test_con_datos_invalidos_no_se_guarda_nada() -> None:
 
 def test_la_altura_es_de_digitos_comunes() -> None:
     assert _errores(direccion="Calle ١٢٣") == {"direccion": "Escribí la calle y la altura"}
+
+
+def test_nombre_y_calle_tienen_que_aportar_al_nombre_de_los_espacios() -> None:
+    assert _errores(nombre="Sede") == {"nombre": "Escribí el nombre de la sede"}
+    assert _errores(direccion="Av. 100") == {"direccion": "Escribí la calle y la altura"}

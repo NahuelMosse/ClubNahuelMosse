@@ -26,3 +26,16 @@ class CuentaExistente(Exception):
 
 class Prohibido(Exception):
     """Quien pide la operación no puede hacerla."""
+
+
+class NoDisponible(Exception):
+    """Lo que se pidió ya no existe o está dado de baja."""
+
+
+class NumeroOcupado(Exception):
+    """Otro alta ya tomó el número de espacio que se estaba mostrando."""
+
+    def __init__(self, siguiente: int, nombre: str) -> None:
+        super().__init__(f"número ocupado; el siguiente es {siguiente} ({nombre})")
+        self.siguiente = siguiente
+        self.nombre = nombre

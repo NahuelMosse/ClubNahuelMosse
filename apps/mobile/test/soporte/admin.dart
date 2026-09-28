@@ -54,3 +54,38 @@ Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
   await tester.tap(boton);
   await tester.pumpAndSettle();
 }
+
+const catalogoJson =
+    '{"deportes": ['
+    '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
+    '{"clave": "F5", "nombre": "Fútbol 5"}, {"clave": "F7", "nombre": "Fútbol 7"}]},'
+    '{"clave": "Tenis", "nombre": "Tenis", "tipos": ['
+    '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}]}';
+
+const espacioF5Json =
+    '{"id": 9, "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": 1, '
+    '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "techada": false, '
+    '"iluminada": true, "precio_por_hora": 38000}';
+const espacioTenisJson =
+    '{"id": 10, "nombre": "Moron_Rivadavia_19850_Tenis_PDL_1", "sede_id": 1, '
+    '"sede": "Sede Morón", "deporte": "Tenis", "tipo": "PDL", "techada": false, '
+    '"iluminada": false, "precio_por_hora": 32000}';
+const espacioCastelarJson =
+    '{"id": 11, "nombre": "Castelar_Rivadavia_23500_Futbol_F7_1", "sede_id": 2, '
+    '"sede": "Sede Castelar", "deporte": "Futbol", "tipo": "F7", "techada": true, '
+    '"iluminada": true, "precio_por_hora": 55000}';
+
+/// Las respuestas de la API que usa el alta de espacio, con [alta] para el POST.
+Map<String, (int, String)> rutasDeEspacios({
+  (int, String) alta = (201, espacioF5Json),
+  String sedes = '[$sedeMoronJson, $sedeCastelarJson]',
+}) => {
+  'GET /espacios/catalogo': (200, catalogoJson),
+  'GET /espacios': (200, '{"espacios": [$espacioF5Json]}'),
+  'GET /espacios/nombre': (
+    200,
+    '{"nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "numero": 1}',
+  ),
+  'GET /sedes': (200, '{"sedes": $sedes}'),
+  'POST /espacios': alta,
+};

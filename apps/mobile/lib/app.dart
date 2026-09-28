@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'admin/pantalla_alta_espacio.dart';
 import 'admin/pantalla_alta_sede.dart';
+import 'admin/pantalla_espacio_creado.dart';
 import 'admin/pantalla_espacios_admin.dart';
 import 'admin/pantalla_panel_admin.dart';
 import 'admin/pantalla_sede_creada.dart';
 import 'admin/pantalla_sedes_admin.dart';
+import 'espacios/espacio.dart';
+import 'espacios/espacios.dart';
 import 'sedes/sede.dart';
 import 'sedes/sedes.dart';
 import 'comun/apariencia.dart';
@@ -57,6 +61,7 @@ class _AppState extends State<App> {
 
   late final _recuperacion = Recuperacion(widget.api);
   late final _sedes = Sedes(api: widget.api, sesion: widget.sesion);
+  late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
 
   late final GoRouter _rutas = GoRouter(
     initialLocation: widget.inicio,
@@ -160,7 +165,28 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/admin/espacios',
-        builder: (context, _) => PantallaEspaciosAdmin(sesion: widget.sesion),
+        builder: (context, _) =>
+            PantallaEspaciosAdmin(espacios: _espacios, sesion: widget.sesion),
+        routes: [
+          GoRoute(
+            path: 'nuevo',
+            builder: (context, _) => PantallaAltaEspacio(
+              espacios: _espacios,
+              sedes: _sedes,
+              sesion: widget.sesion,
+            ),
+          ),
+          GoRoute(
+            path: 'creado',
+            // Sin el espacio recién guardado no hay éxito que mostrar: va al listado.
+            redirect: (context, estado) =>
+                estado.extra is Espacio ? null : '/admin/espacios',
+            builder: (context, estado) => switch (estado.extra) {
+              final Espacio espacio => PantallaEspacioCreado(espacio: espacio),
+              _ => const SizedBox.shrink(),
+            },
+          ),
+        ],
       ),
     ],
   );
@@ -169,6 +195,7 @@ class _AppState extends State<App> {
   void dispose() {
     widget.api.cerrar();
     _sedes.dispose();
+    _espacios.dispose();
     _rutas.dispose();
     super.dispose();
   }

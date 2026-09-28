@@ -5,6 +5,7 @@ import 'package:clubnahuelmosse/configuracion.dart';
 import 'package:clubnahuelmosse/main.dart' as app;
 import 'package:clubnahuelmosse/sesion/firebase.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -171,6 +172,14 @@ Future<void> escribir(WidgetTester tester, String campo, String valor) async {
         ),
         SelectionChangedCause.keyboard,
       );
+  await tester.pumpAndSettle();
+  // El teclado del dispositivo se abre y cambia el tamaño de la pantalla por su cuenta,
+  // sin que `pumpAndSettle` lo espere: un toque siguiente caería donde el botón ya no está.
+  await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+  final fin = DateTime.now().add(const Duration(seconds: 3));
+  while (tester.view.viewInsets.bottom > 0 && DateTime.now().isBefore(fin)) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
   await tester.pumpAndSettle();
 }
 

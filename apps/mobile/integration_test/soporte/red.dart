@@ -275,9 +275,11 @@ Future<String> crearEspacio(
     'sede_id': id,
     'deporte': deporte,
     'tipo': tipo,
-    'techada': false,
+    // Otra cancha que la que carga el escenario en la pantalla: con los mismos datos y la
+    // misma cuenta, la API la tomaría por el mismo pedido repetido después de un corte.
+    'techada': true,
     'iluminada': true,
-    'precio_por_hora': 38000,
+    'precio_por_hora': 43000,
   });
   final nombre = espacio['nombre'];
   if (nombre is! String) throw StateError('el alta no devolvió el nombre');
