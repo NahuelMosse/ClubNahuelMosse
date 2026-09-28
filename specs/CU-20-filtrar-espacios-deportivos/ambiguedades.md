@@ -42,3 +42,4 @@ CU-20-AMB-07 · 2026-09-28 · vencida → CU-20-SUP-06 · esta card filtra dentr
 CU-20-AMB-08 · 2026-09-28 · vencida → CU-20-SUP-07 · cada filtro pide a la API las canchas de la sede con ese deporte y tipo, como piden FA4 y FA5; si falla, el aviso de conexión o de servidor y el listado y los chips quedan como estaban
 CU-20-AMB-09 · 2026-09-28 · vencida → CU-20-SUP-08 · tocar el deporte elegido lo quita y vuelve a todos los deportes; «Todos» quita el tipo sin cambiar el deporte (FA2)
 CU-20-AMB-10 · 2026-09-28 · vencida → CU-20-SUP-09 · el contador dice siempre «canchas» (o «cancha»), para cualquier deporte
+CU-20-TESTS · 2026-09-28 · congelados en 6f7f4d3 · 8 escenarios de pantalla en rojo porque la sede no tiene filtros ni el contador «N CANCHAS · TODOS LOS DEPORTES»; H04-01 nace en verde: la sede sin canchas ya no mostraba filtros desde CU-16
