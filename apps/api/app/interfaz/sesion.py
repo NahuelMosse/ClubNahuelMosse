@@ -1,5 +1,6 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
@@ -8,9 +9,10 @@ from pydantic import BaseModel
 from sqlalchemy import Connection
 
 from app.aplicacion.contrasena import cambiar_contrasena
-from app.aplicacion.errores import DatosInvalidos, Demorado, NoAutenticado
+from app.aplicacion.errores import DatosInvalidos, Demorado, Duplicado, NoAutenticado
+from app.aplicacion.perfil import editar_perfil
 from app.aplicacion.sesion import perfil_autenticado
-from app.dominio.usuarios import Perfil, Rol
+from app.dominio.usuarios import DatosPersonales, Perfil, Rol
 from app.infraestructura.db import conexion
 from app.infraestructura.identidad import ProveedorFirebase
 from app.infraestructura.usuarios import UsuariosSql
@@ -108,3 +110,56 @@ def cambiar_contrasena_propia(
     except Demorado:
         return Response(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
+
+
+class PedidoDeEdicion(BaseModel):
+    nombre: str = ""
+    apellido: str = ""
+    dni: str = ""
+    fecha_nacimiento: str = ""
+
+
+@router.put(
+    "/yo",
+    response_model=PerfilPropio,
+    responses={
+        401: {"model": SinSesion},
+        409: {"model": ErroresDeContrasena, "description": "Otra cuenta ya tiene ese DNI"},
+        422: {"model": ErroresDeContrasena},
+    },
+    summary="Editar los datos personales de quien inició sesión",
+    description="Todo menos el correo, que no se puede cambiar.",
+)
+def editar_perfil_propio(
+    pedido: PedidoDeEdicion,
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+) -> PerfilPropio | JSONResponse:
+    usuarios = UsuariosSql(conn)
+    try:
+        editar_perfil(
+            perfil,
+            DatosPersonales(**pedido.model_dump()),
+            hoy=datetime.now(ZONA).date(),
+            usuarios=usuarios,
+        )
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    except Duplicado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"errores": {"dni": "Este DNI ya está registrado"}},
+        )
+    actualizado = usuarios.perfil_activo(perfil.uid)
+    if actualizado is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Sesión inválida o vencida",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return perfil_propio(actualizado)

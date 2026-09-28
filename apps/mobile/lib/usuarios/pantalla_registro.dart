@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
+import '../comun/calendario.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
@@ -156,12 +157,9 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   }
 
   Future<void> _elegirFecha() async {
-    final elegida = await showDatePicker(
-      context: context,
-      initialDate:
-          leerFecha(_valor(_Campo.fechaNacimiento)) ?? DateTime(_hoy.year - 20),
-      firstDate: DateTime(1900),
-      lastDate: _hoy.subtract(const Duration(days: 1)),
+    final elegida = await elegirFechaDeNacimiento(
+      context,
+      leerFecha(_valor(_Campo.fechaNacimiento)) ?? DateTime(_hoy.year - 20),
     );
     if (elegida == null || !mounted) return;
     _controladores[_Campo.fechaNacimiento.index].text = formatearFecha(elegida);

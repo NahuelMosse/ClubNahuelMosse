@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -106,6 +108,60 @@ void main() {
     await sesion.iniciar('a@b.com', 'Clave1234');
     await expectLater(sesion.cerrar(), throwsA(isA<StateError>()));
     expect(sesion.perfil, isNotNull);
+  });
+
+  test(
+    'una edición que vuelve después de cerrar la sesión no la revive',
+    () async {
+      final respuesta = Completer<http.Response>();
+      var pedidos = 0;
+      final sesion = Sesion(
+        credenciales: CredencialesFalsas(),
+        api: ClienteApi(
+          'http://api.falsa',
+          cliente: MockClient((pedido) async {
+            pedidos++;
+            if (pedido.method == 'PUT') return respuesta.future;
+            return http.Response(perfilJson(), 200);
+          }),
+        ),
+      );
+      await sesion.iniciar('a@b.com', 'Clave1234');
+      final edicion = sesion.editarPerfil(
+        nombre: 'Agustín',
+        apellido: 'Mosse',
+        dni: '42118507',
+        fechaNacimiento: '2000-03-14',
+      );
+      await sesion.cerrar();
+      respuesta.complete(http.Response(perfilJson(), 200));
+
+      await expectLater(edicion, throwsA(isA<SesionVencida>()));
+      expect(sesion.perfil, isNull);
+      expect(pedidos, 2);
+    },
+  );
+
+  test('un 409 de la edición se marca como dato repetido', () async {
+    final sesion = Sesion(
+      credenciales: CredencialesFalsas(),
+      api: apiRutas({
+        'GET /yo': (200, perfilJson()),
+        'PUT /yo': (409, '{"errores": {"dni": "Este DNI ya está registrado"}}'),
+      }),
+    );
+    await sesion.iniciar('a@b.com', 'Clave1234');
+    await expectLater(
+      sesion.editarPerfil(
+        nombre: 'N',
+        apellido: 'M',
+        dni: '30111222',
+        fechaNacimiento: '2000-03-14',
+      ),
+      throwsA(
+        isA<DatosRechazados>().having((e) => e.repetido, 'repetido', isTrue),
+      ),
+    );
   });
 
   test('cerrar la sesión olvida el perfil', () async {

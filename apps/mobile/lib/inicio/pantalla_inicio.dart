@@ -38,9 +38,12 @@ class PantallaInicio extends StatelessWidget {
                         style: Textos.sobretitulo.copyWith(color: p.accentInk),
                       ),
                       const SizedBox(height: Medidas.s4),
-                      Text(
-                        sesion.perfil?.nombre ?? '',
-                        style: Textos.h1.copyWith(color: p.textPrimary),
+                      ListenableBuilder(
+                        listenable: sesion,
+                        builder: (context, _) => Text(
+                          sesion.perfil?.nombre ?? '',
+                          style: Textos.h1.copyWith(color: p.textPrimary),
+                        ),
                       ),
                     ],
                   ),

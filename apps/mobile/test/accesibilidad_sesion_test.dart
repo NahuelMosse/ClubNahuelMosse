@@ -91,6 +91,26 @@ void main() {
     });
   }
 
+  for (final MapEntry(key: modo, value: tema) in temas.entries) {
+    testWidgets('el perfil en edición cumple las guías en modo $modo', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montar(
+        tester,
+        PantallaMiPerfil(
+          sesion: SesionFalsa(perfilUsuario),
+          apariencia: Apariencia.enMemoria(),
+        ),
+        tema: tema,
+      );
+      await tester.tap(find.text('Editar'));
+      await tester.pumpAndSettle();
+      await cumpleLasGuias(tester);
+      semantica.dispose();
+    });
+  }
+
   testWidgets('los campos del login anuncian su nombre', (tester) async {
     final semantica = tester.ensureSemantics();
     await montar(tester, login(), tema: temaOscuro);

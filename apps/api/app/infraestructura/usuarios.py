@@ -2,7 +2,7 @@ from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
 from app.aplicacion.errores import Duplicado
-from app.dominio.usuarios import Perfil, Registro
+from app.dominio.usuarios import Perfil, PerfilEditado, Registro
 
 _INDICE_A_CAMPO = {"usuario_correo_unico": "correo", "usuario_dni_unico": "dni"}
 
@@ -66,6 +66,32 @@ class UsuariosSql:
             {"id": id_usuario},
         )
         self._conn.commit()
+
+    def actualizar(self, id_usuario: int, editado: PerfilEditado) -> None:
+        try:
+            self._conn.execute(
+                text(
+                    "UPDATE usuario SET nombre = :nombre, apellido = :apellido, dni = :dni,"
+                    " fecha_nacimiento = :nacimiento WHERE id = :id AND activo"
+                ),
+                {
+                    "id": id_usuario,
+                    "nombre": editado.nombre,
+                    "apellido": editado.apellido,
+                    "dni": editado.dni,
+                    "nacimiento": editado.fecha_nacimiento,
+                },
+            )
+            self._conn.commit()
+        except IntegrityError as e:
+            self._conn.rollback()
+            indice = getattr(getattr(e.orig, "diag", None), "constraint_name", None)
+            if indice in _INDICE_A_CAMPO:
+                raise Duplicado([_INDICE_A_CAMPO[indice]]) from e
+            raise
+        except BaseException:
+            self._conn.rollback()
+            raise
 
     def marcar_cambio_de_contrasena(self, id_usuario: int) -> None:
         self._conn.execute(

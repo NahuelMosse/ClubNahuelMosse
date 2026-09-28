@@ -16,7 +16,13 @@ class BotonCuenta extends StatelessWidget {
   final Sesion sesion;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) => ListenableBuilder(
+    // Las iniciales siguen al perfil, también cuando se edita.
+    listenable: sesion,
+    builder: (context, _) => _avatar(context),
+  );
+
+  Widget _avatar(BuildContext context) {
     final perfil = sesion.perfil;
     if (perfil == null) return const SizedBox.shrink();
     void abrir() => mostrarTarjetaCuenta(context, sesion);

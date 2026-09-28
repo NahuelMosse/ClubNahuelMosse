@@ -17,21 +17,29 @@ void main() {
   setUpAll(cargarFuentes);
 
   late CredencialesFalsas credenciales;
+  final ediciones = <String>[];
 
   /// La app real en el perfil con una sesión iniciada. [yo] es lo que responde `GET /yo`
   /// al abrir el perfil; al iniciar sesión responde el perfil de siempre.
   Future<Apariencia> montarPerfil(
     WidgetTester tester, {
     (int, String) yo = (200, ''),
+    (int, String) edicion = (200, ''),
     Apariencia? apariencia,
   }) async {
     credenciales = CredencialesFalsas();
-    var pedidos = 0;
+    ediciones.clear();
+    var consultas = 0;
     final api = ClienteApi(
       'http://api.falsa',
-      cliente: MockClient((_) async {
-        pedidos++;
-        final (codigo, cuerpo) = pedidos == 1 || yo.$1 == 200
+      cliente: MockClient((pedido) async {
+        if (pedido.method == 'PUT') {
+          ediciones.add(pedido.body);
+          final (codigo, cuerpo) = edicion;
+          return http.Response.bytes(utf8.encode(cuerpo), codigo);
+        }
+        consultas++;
+        final (codigo, cuerpo) = consultas == 1 || yo.$1 == 200
             ? (200, perfilJson())
             : yo;
         return http.Response.bytes(utf8.encode(cuerpo), codigo);
@@ -154,5 +162,172 @@ void main() {
       sesion.iniciar('a@b.com', 'Clave1234'),
       throwsA(isA<Exception>()),
     );
+  });
+
+  group('editar los datos personales', () {
+    Future<void> editar(WidgetTester tester) async {
+      await tester.tap(find.text('Editar'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> guardar(WidgetTester tester) async {
+      await tester.ensureVisible(find.text('GUARDAR'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GUARDAR'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('guarda los datos normalizados y vuelve a lectura', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarPerfil(
+        tester,
+        edicion: (
+          200,
+          '{"nombre": "Agustín", "apellido": "Mosse", "correo": "nahuel@correo.com", '
+              '"rol": "usuario", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}',
+        ),
+      );
+      await editar(tester);
+      await tester.enterText(find.bySemanticsLabel('Nombre'), '  Agustín ');
+      await guardar(tester);
+
+      expect(ediciones, [
+        '{"nombre":"Agustín","apellido":"Mosse","dni":"42118507",'
+            '"fecha_nacimiento":"2000-03-14"}',
+      ]);
+      expect(find.text('GUARDAR'), findsNothing);
+      expect(find.text('Agustín Mosse'), findsOneWidget);
+      semantica.dispose();
+    });
+
+    testWidgets(
+      'marca los datos inválidos con el mensaje del prototipo y no manda nada',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montarPerfil(tester);
+        await editar(tester);
+        await tester.enterText(find.bySemanticsLabel('DNI'), '42118');
+        await tester.enterText(
+          find.bySemanticsLabel('Fecha de nacimiento'),
+          '32132000',
+        );
+        await tester.enterText(find.bySemanticsLabel('Apellido'), '');
+        await guardar(tester);
+
+        expect(
+          find.text('El formato de los datos no es válido'),
+          findsNWidgets(3),
+        );
+        expect(ediciones, isEmpty);
+
+        // Al corregir un campo se va su error y quedan los demás.
+        await tester.enterText(find.bySemanticsLabel('DNI'), '42118507');
+        await tester.pump();
+        expect(
+          find.text('El formato de los datos no es válido'),
+          findsNWidgets(2),
+        );
+        semantica.dispose();
+      },
+    );
+
+    testWidgets('un DNI de otra cuenta se marca con su propio mensaje', (
+      tester,
+    ) async {
+      // Verifica CU-06-SUP-02.
+      final semantica = tester.ensureSemantics();
+      await montarPerfil(
+        tester,
+        edicion: (409, '{"errores": {"dni": "Este DNI ya está registrado"}}'),
+      );
+      await editar(tester);
+      await tester.enterText(find.bySemanticsLabel('DNI'), '30111222');
+      await guardar(tester);
+      expect(find.text('Este DNI ya está registrado'), findsOneWidget);
+      expect(find.text('GUARDAR'), findsOneWidget);
+      semantica.dispose();
+    });
+
+    testWidgets('si el servidor falla conserva lo escrito', (tester) async {
+      final semantica = tester.ensureSemantics();
+      await montarPerfil(tester, edicion: (500, ''));
+      await editar(tester);
+      await tester.enterText(find.bySemanticsLabel('Nombre'), 'Agustín');
+      await guardar(tester);
+      expect(find.text('Error del servidor'), findsOneWidget);
+      await tester.tap(find.text('ACEPTAR'));
+      await tester.pumpAndSettle();
+      final nombre = tester.widget<TextField>(
+        find.descendant(
+          of: find.bySemanticsLabel('Nombre'),
+          matching: find.byType(TextField),
+        ),
+      );
+      expect(nombre.controller?.text, 'Agustín');
+      semantica.dispose();
+    });
+  });
+
+  testWidgets(
+    'el calendario abre aunque la fecha escrita sea de hoy o futura',
+    (tester) async {
+      final semantica = tester.ensureSemantics();
+      await montarPerfil(tester);
+      await tester.tap(find.text('Editar'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.bySemanticsLabel('Fecha de nacimiento'),
+        '01012999',
+      );
+      await tester.tap(find.byTooltip('Elegir la fecha en el calendario'));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      semantica.dispose();
+    },
+  );
+
+  testWidgets('el Home y el avatar siguen al perfil cuando cambia', (
+    tester,
+  ) async {
+    final semantica = tester.ensureSemantics();
+    final sesion = Sesion(
+      credenciales: CredencialesFalsas(),
+      api: apiRutas({
+        'GET /yo': (200, perfilJson()),
+        'PUT /yo': (
+          200,
+          '{"nombre": "Agustín", "apellido": "Paz", "correo": "nahuel@correo.com", '
+              '"rol": "usuario", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}',
+        ),
+      }),
+    );
+    await sesion.iniciar('a@b.com', 'Clave1234');
+    tester.view.physicalSize = const Size(393, 852) * 3;
+    tester.view.devicePixelRatio = 3;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      App(
+        api: apiFalsa(),
+        sesion: sesion,
+        apariencia: Apariencia.enMemoria(),
+        inicio: '/inicio',
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Nahuel'), findsOneWidget);
+
+    await sesion.editarPerfil(
+      nombre: 'Agustín',
+      apellido: 'Paz',
+      dni: '42118507',
+      fechaNacimiento: '2000-03-14',
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Agustín'), findsOneWidget);
+    expect(find.text('AP'), findsOneWidget);
+    semantica.dispose();
   });
 }

@@ -62,8 +62,28 @@ def _fecha(texto: str) -> date | None:
         return None
 
 
-def validar_registro(datos: DatosRegistro, hoy: date) -> tuple[Registro | None, dict[str, str]]:
-    """Devuelve el registro normalizado, o los errores por campo si hay alguno."""
+@dataclass(frozen=True)
+class DatosPersonales:
+    """Lo que la persona puede cambiar de su perfil: todo menos el correo (RF 2)."""
+
+    nombre: str
+    apellido: str
+    dni: str
+    fecha_nacimiento: str
+
+
+@dataclass(frozen=True)
+class PerfilEditado:
+    nombre: str
+    apellido: str
+    dni: str
+    fecha_nacimiento: date
+
+
+def _errores_personales(
+    datos: DatosPersonales, hoy: date
+) -> tuple[dict[str, str], str, date | None]:
+    """Las reglas de nombre, apellido, DNI y fecha, compartidas por el registro y la edición."""
     errores: dict[str, str] = {}
 
     for campo, valor, obligatorio in (
@@ -90,6 +110,15 @@ def validar_registro(datos: DatosRegistro, hoy: date) -> tuple[Registro | None, 
     elif nacimiento >= hoy:
         errores["fecha_nacimiento"] = "La fecha tiene que ser anterior a hoy"
 
+    return errores, dni, nacimiento
+
+
+def validar_registro(datos: DatosRegistro, hoy: date) -> tuple[Registro | None, dict[str, str]]:
+    """Devuelve el registro normalizado, o los errores por campo si hay alguno."""
+    errores, dni, nacimiento = _errores_personales(
+        DatosPersonales(datos.nombre, datos.apellido, datos.dni, datos.fecha_nacimiento), hoy
+    )
+
     correo = normalizar_correo(datos.correo)
     if not correo:
         errores["correo"] = "El correo es obligatorio"
@@ -111,6 +140,24 @@ def validar_registro(datos: DatosRegistro, hoy: date) -> tuple[Registro | None, 
             fecha_nacimiento=nacimiento,
             correo=correo,
             contrasena=datos.contrasena,
+        ),
+        {},
+    )
+
+
+def validar_edicion(
+    datos: DatosPersonales, hoy: date
+) -> tuple[PerfilEditado | None, dict[str, str]]:
+    """Los datos personales normalizados, o los errores por campo si hay alguno."""
+    errores, dni, nacimiento = _errores_personales(datos, hoy)
+    if errores or nacimiento is None:
+        return None, errores
+    return (
+        PerfilEditado(
+            nombre=datos.nombre.strip(),
+            apellido=datos.apellido.strip(),
+            dni=dni,
+            fecha_nacimiento=nacimiento,
         ),
         {},
     )

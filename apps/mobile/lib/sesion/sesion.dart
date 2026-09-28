@@ -36,6 +36,15 @@ class SesionVencida implements Exception {
   const SesionVencida();
 }
 
+/// La API rechazó los datos personales: cada campo con su mensaje.
+class DatosRechazados implements Exception {
+  const DatosRechazados(this.errores, {this.repetido = false});
+  final Map<String, String> errores;
+
+  /// Otra cuenta ya tiene ese dato (409), no es un problema de formato.
+  final bool repetido;
+}
+
 /// La API rechazó el cambio: cada campo con su mensaje.
 class ContrasenaRechazada implements Exception {
   const ContrasenaRechazada(this.errores);
@@ -170,13 +179,63 @@ class Sesion extends ChangeNotifier {
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
   Future<Perfil> refrescar() async {
+    final antes = _perfil;
     final Perfil perfil;
     try {
       perfil = await _perfilPropio();
     } on CredencialesInvalidas {
       throw const SesionVencida();
     }
+    _siSigueLaMisma(antes, perfil);
+    return perfil;
+  }
+
+  /// Guarda [perfil] sólo si la sesión es la misma que cuando salió el pedido: si mientras
+  /// tanto se cerró o entró otra cuenta, la respuesta ya no le corresponde.
+  void _siSigueLaMisma(Perfil? antes, Perfil perfil) {
+    if (!identical(_perfil, antes)) throw const SesionVencida();
     _actual = perfil;
+  }
+
+  /// Guarda los datos personales y devuelve el perfil que quedó en la API. El correo no
+  /// se manda: no se puede cambiar.
+  ///
+  /// Lanza [DatosRechazados], [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<Perfil> editarPerfil({
+    required String nombre,
+    required String apellido,
+    required String dni,
+    required String fechaNacimiento,
+  }) async {
+    final String? token;
+    try {
+      token = await _credenciales.token();
+    } on CredencialesInvalidas {
+      throw const SesionVencida();
+    }
+    if (token == null) throw const SesionVencida();
+    final antes = _perfil;
+    final r = await _api.put('/yo', {
+      'nombre': nombre,
+      'apellido': apellido,
+      'dni': dni,
+      'fecha_nacimiento': fechaNacimiento,
+    }, token: token);
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 409 || r.codigo == 422) {
+      final errores = switch (r.cuerpo['errores']) {
+        final Map<String, Object?> mapa => {
+          for (final MapEntry(:key, :value) in mapa.entries)
+            if (value is String) key: value,
+        },
+        _ => const <String, String>{},
+      };
+      if (errores.isNotEmpty) {
+        throw DatosRechazados(errores, repetido: r.codigo == 409);
+      }
+    }
+    final perfil = _perfilDe(r);
+    _siSigueLaMisma(antes, perfil);
     return perfil;
   }
 
@@ -233,7 +292,10 @@ class Sesion extends ChangeNotifier {
   Future<Perfil> _perfilPropio() async {
     final token = await _credenciales.token();
     if (token == null) throw const CredencialesInvalidas();
-    final r = await _api.get('/yo', token: token);
+    return _perfilDe(await _api.get('/yo', token: token));
+  }
+
+  Perfil _perfilDe(Respuesta r) {
     if (r.codigo == 401) throw const CredencialesInvalidas();
     if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
     if (r.cuerpo case {

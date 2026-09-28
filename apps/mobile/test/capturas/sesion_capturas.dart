@@ -174,6 +174,44 @@ void main() {
         });
       }
 
+      for (final (nombre, invalido) in [
+        ('edicion', false),
+        ('edicion_invalida', true),
+      ]) {
+        testWidgets('mi perfil $nombre $ancho $modo', (tester) async {
+          final semantica = tester.ensureSemantics();
+          await montar(
+            tester,
+            PantallaMiPerfil(
+              sesion: SesionFalsa(perfilUsuario),
+              apariencia: Apariencia.enMemoria(oscuro: modo == 'oscuro'),
+            ),
+            tema: tema,
+            tamano: tamano,
+          );
+          await tester.tap(find.text('Editar'));
+          await tester.pumpAndSettle();
+          if (invalido) {
+            await tester.enterText(find.bySemanticsLabel('DNI'), '42118');
+            await tester.enterText(
+              find.bySemanticsLabel('Fecha de nacimiento'),
+              '32132000',
+            );
+            await tester.ensureVisible(find.text('GUARDAR'));
+            await tester.pumpAndSettle();
+            await tester.tap(find.text('GUARDAR'));
+            await tester.pumpAndSettle();
+            await tester.ensureVisible(find.text('DATOS PERSONALES'));
+            await tester.pumpAndSettle();
+          }
+          await capturar(
+            tester,
+            'sesion/mi_perfil_${nombre}_${ancho}_$modo.png',
+          );
+          semantica.dispose();
+        });
+      }
+
       testWidgets('panel admin $ancho $modo', (tester) async {
         await montar(
           tester,
