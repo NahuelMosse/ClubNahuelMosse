@@ -384,3 +384,38 @@ Future<void> vencerEnlace(String codigo) async {
   final r = await http.post(_pruebas('recuperacion/$codigo/vencer'));
   if (r.statusCode != 204) throw StateError('vencer: ${r.statusCode}');
 }
+
+/// Las próximas reservas de la cuenta [correo], preguntadas a la API y no a la app: el
+/// espacio y la hora de inicio (`HH:MM`, en la hora del club) de cada una.
+Future<List<(String, String)>> reservasDe(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final r = await http.get(
+    Uri.parse(
+      '${Configuracion.desdeEntorno().apiUrl}/reservas?cuando=proximas',
+    ),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
+  return [
+    if (jsonDecode(utf8.decode(r.bodyBytes)) case {
+      'reservas': final List<Object?> reservas,
+    })
+      for (final reserva in reservas)
+        if (reserva case {
+          'espacio': final String espacio,
+          'inicio': final String inicio,
+        })
+          (
+            espacio,
+            DateTime.parse(inicio)
+                .toUtc()
+                .subtract(const Duration(hours: 3))
+                .toIso8601String()
+                .substring(11, 16),
+          ),
+  ];
+}
