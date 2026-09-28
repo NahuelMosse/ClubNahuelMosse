@@ -118,7 +118,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     final nombre = 'Sede Ituzaingó ${unico()}';
     await crearSede(nombre, 'Av. Ratti 1400');
-    final cancha = await crearEspacio(nombre);
+    await crearEspacio(nombre);
     await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
     await abrirSedes(tester);
     await entrarA(tester, nombre);
@@ -130,8 +130,11 @@ void main() {
     await esperarA(tester, find.text('SELECCIONÁ CANCHA'));
     expect(find.text(nombre.toUpperCase()), findsOneWidget);
     expect(
-      find.bySemanticsLabel(RegExp('^${RegExp.escape(cancha)}.*elegida')),
-      findsOneWidget,
+      tester
+          .getSemantics(find.bySemanticsLabel('Cancha 1, Techada'))
+          .flagsCollection
+          .isSelected,
+      isTrue,
     );
     semantica.dispose();
   });
