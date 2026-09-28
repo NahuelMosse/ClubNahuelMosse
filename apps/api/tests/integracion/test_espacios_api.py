@@ -424,3 +424,74 @@ def test_los_horarios_se_piden_con_sesion_y_dentro_de_la_semana(
     assert api.get(ruta, headers=_con(token_usuario), params=lejos).status_code == 422
     assert api.get(ruta, headers=_con(token_usuario), params={"horas": 5}).status_code == 422
     assert api.get("/espacios/999999999/horarios", headers=_con(token_usuario)).status_code == 404
+
+
+def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, prefijo = sede
+    ids = [
+        api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, **c)).json()["id"]
+        for c in ({}, {}, {"tipo": "F7"})
+    ]
+    hoy = date.fromisoformat(
+        api.get(f"/espacios/{ids[0]}/horarios", headers=_con(token_usuario)).json()["hoy"]
+    )
+    manana = hoy + timedelta(days=1)
+    with motor.begin() as conn:
+        for espacio, hora in ((ids[0], 9), (ids[1], 11)):
+            conn.execute(
+                text(
+                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
+                    " total) SELECT min(id), :e, x.i, x.i + interval '1 hour', 38000, 38000"
+                    " FROM usuario, (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
+                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x GROUP BY x.i"
+                ),
+                {"e": espacio, "dia": manana, "h": hora},
+            )
+    consulta = {"sede_id": sede_id, "deporte": "Futbol", "fecha": manana.isoformat()}
+
+    def nombres(**cambios: object) -> list[str]:
+        r = api.get(
+            "/espacios/disponibles",
+            headers=_con(token_usuario),
+            params=consulta | {"desde": "10:00", "hasta": "12:00"} | cambios,
+        )
+        assert r.status_code == 200, r.text
+        return [e["nombre"] for e in r.json()["espacios"]]
+
+    assert nombres(tipo="F5") == [f"{prefijo}_Futbol_F5_1"]
+    assert nombres() == [f"{prefijo}_Futbol_F5_1", f"{prefijo}_Futbol_F7_1"]
+    assert nombres(tipo="F5", desde="09:00", hasta="12:00") == []
+    assert len(nombres(tipo="F5", desde="12:00", hasta="14:00")) == 2
+
+
+def test_las_canchas_disponibles_rechazan_un_rango_invalido(
+    api: TestClient, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    base = {"sede_id": sede_id, "deporte": "Futbol", "fecha": "2020-01-01"}
+
+    r = api.get(
+        "/espacios/disponibles",
+        headers=_con(token_usuario),
+        params=base | {"desde": "10:00", "hasta": "10:00"},
+    )
+    assert r.status_code == 422
+    assert r.json()["errores"] == {
+        "fecha": "La fecha tiene que ser futura",
+        "hasta": "La duración mínima es de una hora",
+    }
+    r = api.get(
+        "/espacios/disponibles",
+        headers=_con(token_usuario),
+        params=base | {"desde": "10", "hasta": "11:00"},
+    )
+    assert r.json()["errores"] == {"desde": "Elegí una hora en punto"}
+    r = api.get(
+        "/espacios/disponibles",
+        headers=_con(token_usuario),
+        params=base | {"sede_id": 999999999, "desde": "10:00", "hasta": "11:00"},
+    )
+    assert r.json()["errores"] == {"sede_id": "La sede ya no está disponible"}
+    assert api.get("/espacios/disponibles", params=base).status_code in (401, 422)

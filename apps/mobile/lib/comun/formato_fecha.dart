@@ -26,3 +26,27 @@ class FormatoFecha extends TextInputFormatter {
 
 /// Deja sólo dígitos y puntos, como se escribe un DNI.
 final formatoDni = FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'));
+
+/// Convierte `DD / MM / AAAA` en fecha, o `null` si no es una fecha que exista.
+DateTime? leerFecha(String valor) {
+  final partes = valor.trim().split(' / ');
+  if (partes.length != 3 ||
+      partes[0].length != 2 ||
+      partes[1].length != 2 ||
+      partes[2].length != 4) {
+    return null;
+  }
+  final dia = int.tryParse(partes[0]);
+  final mes = int.tryParse(partes[1]);
+  final anio = int.tryParse(partes[2]);
+  if (dia == null || mes == null || anio == null || anio < 1) return null;
+  final fecha = DateTime(anio, mes, dia);
+  if (fecha.year != anio || fecha.month != mes || fecha.day != dia) return null;
+  return fecha;
+}
+
+/// La fecha como se escribe en el campo (`DD / MM / AAAA`), la inversa de [leerFecha].
+String formatearFecha(DateTime fecha) =>
+    '${_dosCifras(fecha.day)} / ${_dosCifras(fecha.month)} / ${fecha.year}';
+
+String _dosCifras(int n) => n.toString().padLeft(2, '0');

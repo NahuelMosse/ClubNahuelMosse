@@ -34,6 +34,9 @@ class PantallaHorarios extends StatefulWidget {
     required this.espacios,
     required this.horarios,
     required this.sesion,
+    this.fecha,
+    this.horas,
+    this.inicio,
   });
 
   final int sedeId;
@@ -43,6 +46,12 @@ class PantallaHorarios extends StatefulWidget {
   final Horarios horarios;
   final Sesion sesion;
 
+  /// Lo que ya viene elegido desde la consulta de canchas: el día, la duración y la hora
+  /// de inicio (`HH:MM`). La hora queda elegida si está disponible.
+  final DateTime? fecha;
+  final int? horas;
+  final String? inicio;
+
   @override
   State<PantallaHorarios> createState() => _PantallaHorariosState();
 }
@@ -50,8 +59,11 @@ class PantallaHorarios extends StatefulWidget {
 class _PantallaHorariosState extends State<PantallaHorarios> {
   (Sede, List<Espacio>, Catalogo)? _datos;
   late int _elegida = widget.espacioId;
-  DateTime? _fecha;
-  int _horas = _minHoras;
+  late DateTime? _fecha = widget.fecha;
+  late int _horas = switch (widget.horas) {
+    final h? when h >= _minHoras && h <= _maxHoras => h,
+    _ => _minHoras,
+  };
   Grilla? _grilla;
 
   /// La cancha y la duración con que se pidió la grilla que está en pantalla: mientras
@@ -61,7 +73,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   /// El día de hoy en el club, según la última grilla: FECHA sigue a la vista aunque la
   /// consulta siguiente falle.
   DateTime? _hoy;
-  String? _inicio;
+  late String? _inicio = widget.inicio;
   bool _consultando = false;
   bool _fallo = false;
 
@@ -152,6 +164,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       // El día elegido ya pasó (la pantalla quedó abierta de un día para otro): vuelve a hoy.
       if (!mounted || pedido != _pedido || _fecha == null) return;
       _fecha = null;
+      _inicio = null;
       await _consultar();
       return;
     } on SesionVencida {
@@ -229,7 +242,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     if (datos == null || cancha == null || fecha == null || franja == null) {
       return;
     }
-    context.go(
+    context.push(
       '/sedes/${widget.sedeId}/canchas/${widget.espacioId}/reservar',
       extra: Eleccion(
         sede: datos.$1,
@@ -271,7 +284,10 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                     sede: datos.$1,
                     tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
                     deporte: cancha.deporte,
-                    alVolver: () => context.go('/sedes/${widget.sedeId}'),
+                    volverA: widget.fecha == null ? 'Sedes' : 'Buscar cancha',
+                    alVolver: () => context.canPop()
+                        ? context.pop()
+                        : context.go('/sedes/${widget.sedeId}'),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -448,12 +464,16 @@ class _Portada extends StatelessWidget {
     required this.sede,
     required this.tipo,
     required this.deporte,
+    required this.volverA,
     required this.alVolver,
   });
 
   final Sede sede;
   final String tipo;
   final String deporte;
+
+  /// El nombre de la pantalla a la que se vuelve.
+  final String volverA;
   final VoidCallback alVolver;
 
   @override
@@ -481,7 +501,7 @@ class _Portada extends StatelessWidget {
                   textStyle: Textos.leyenda,
                 ),
                 icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                label: const Text('Sedes'),
+                label: Text(volverA),
               ),
               const SizedBox(height: Medidas.s32),
               Padding(

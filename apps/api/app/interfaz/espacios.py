@@ -81,7 +81,7 @@ class ListaDeEspacios(BaseModel):
     espacios: list[EspacioVista]
 
 
-def _vista(e: Espacio) -> EspacioVista:
+def vista_de_espacio(e: Espacio) -> EspacioVista:
     return EspacioVista(
         id=e.id,
         nombre=e.nombre,
@@ -110,7 +110,7 @@ def listar_espacios(
     tipo: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
 ) -> ListaDeEspacios:
     espacios = espacios_activos(EspaciosSql(conn), sede_id, deporte, tipo)
-    return ListaDeEspacios(espacios=[_vista(e) for e in espacios])
+    return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in espacios])
 
 
 class Sugerencia(BaseModel):
@@ -228,4 +228,4 @@ def alta_de_espacio(
             except (NoDisponible, DatosInvalidos):
                 pass
         return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=contenido)
-    return _vista(espacio)
+    return vista_de_espacio(espacio)

@@ -2,6 +2,10 @@
 /// Los mensajes son idénticos a los que devuelve `POST /registro`.
 library;
 
+import '../comun/formato_fecha.dart';
+
+export '../comun/formato_fecha.dart' show formatearFecha, leerFecha;
+
 const largoMaximoNombre = 60;
 
 String? validarNombre(String valor, {required String obligatorio}) {
@@ -22,24 +26,6 @@ String? validarDni(String valor) {
     return 'El DNI tiene 7 u 8 números';
   }
   return null;
-}
-
-/// Convierte `DD / MM / AAAA` en fecha, o `null` si no es una fecha que exista.
-DateTime? leerFecha(String valor) {
-  final partes = valor.trim().split(' / ');
-  if (partes.length != 3 ||
-      partes[0].length != 2 ||
-      partes[1].length != 2 ||
-      partes[2].length != 4) {
-    return null;
-  }
-  final dia = int.tryParse(partes[0]);
-  final mes = int.tryParse(partes[1]);
-  final anio = int.tryParse(partes[2]);
-  if (dia == null || mes == null || anio == null || anio < 1) return null;
-  final fecha = DateTime(anio, mes, dia);
-  if (fecha.year != anio || fecha.month != mes || fecha.day != dia) return null;
-  return fecha;
 }
 
 String? validarFechaNacimiento(String valor, DateTime hoy) {
@@ -79,10 +65,6 @@ String _dos(int n) => n.toString().padLeft(2, '0');
 /// La fecha en el formato que espera la API (`AAAA-MM-DD`).
 String fechaIso(DateTime fecha) =>
     '${fecha.year.toString().padLeft(4, '0')}-${_dos(fecha.month)}-${_dos(fecha.day)}';
-
-/// La fecha como se escribe en el campo (`DD / MM / AAAA`), la inversa de [leerFecha].
-String formatearFecha(DateTime fecha) =>
-    '${_dos(fecha.day)} / ${_dos(fecha.month)} / ${fecha.year}';
 
 /// La fecha para leer, como en el perfil (`DD/MM/AAAA`).
 String fechaLegible(DateTime fecha) =>

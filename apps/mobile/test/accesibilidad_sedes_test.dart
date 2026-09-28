@@ -96,5 +96,33 @@ void main() {
       await cumpleLasGuias(tester);
       semantica.dispose();
     });
+
+    testWidgets('la consulta de canchas cumple las guías en modo $modo', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarUsuario(
+        tester,
+        oscuro: oscuro,
+        inicio: '/inicio/buscar',
+        api: apiRutas(rutasDeSedes()),
+      );
+      await cumpleLasGuias(tester);
+      semantica.dispose();
+    });
+
+    testWidgets('el inicio con sus accesos cumple las guías en modo $modo', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarUsuario(
+        tester,
+        oscuro: oscuro,
+        inicio: '/inicio',
+        api: apiRutas(rutasDeSedes()),
+      );
+      await cumpleLasGuias(tester);
+      semantica.dispose();
+    });
   }
 }

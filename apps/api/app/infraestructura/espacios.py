@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from app.aplicacion.errores import Duplicado, NoDisponible, NumeroOcupado
 from app.dominio.espacios import Espacio, EspacioNuevo, NombreSugerido, SedeDelEspacio
 
-_COLUMNAS = (
+COLUMNAS_DE_ESPACIO = (
     "e.id, e.nombre, e.sede_id, s.nombre AS sede, e.deporte, e.tipo, e.numero, e.techada,"
     " e.iluminada, e.precio_por_hora"
 )
@@ -18,7 +18,7 @@ _CANDADO_NUMERACION = 21
 _VENTANA_DE_REINTENTO = "5 minutes"
 
 
-def _espacio(fila: Any) -> Espacio:
+def espacio_de_fila(fila: Any) -> Espacio:
     return Espacio(
         id=int(fila.id),
         nombre=fila.nombre,
@@ -45,7 +45,7 @@ class EspaciosSql:
     ) -> list[Espacio]:
         filas = self._conn.execute(
             text(
-                f"SELECT {_COLUMNAS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
+                f"SELECT {COLUMNAS_DE_ESPACIO} FROM espacio e JOIN sede s ON s.id = e.sede_id"
                 " WHERE e.activo AND s.activa"
                 " AND (CAST(:sede AS bigint) IS NULL OR e.sede_id = :sede)"
                 " AND (CAST(:deporte AS text) IS NULL OR e.deporte = :deporte)"
@@ -55,7 +55,7 @@ class EspaciosSql:
             {"sede": sede_id, "deporte": deporte, "tipo": tipo},
         ).all()
         self._conn.rollback()
-        return [_espacio(f) for f in filas]
+        return [espacio_de_fila(f) for f in filas]
 
     def _sede(self, sede_id: int, bloquear: bool) -> SedeDelEspacio | None:
         fila = self._conn.execute(
@@ -108,7 +108,7 @@ class EspaciosSql:
     def _repetido(self, nuevo: EspacioNuevo, numero: int, autor: int) -> Espacio | None:
         fila = self._conn.execute(
             text(
-                f"SELECT {_COLUMNAS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
+                f"SELECT {COLUMNAS_DE_ESPACIO} FROM espacio e JOIN sede s ON s.id = e.sede_id"
                 " WHERE e.sede_id = :sede AND e.deporte = :deporte AND e.tipo = :tipo"
                 " AND e.numero = :numero AND e.activo AND e.creado_por = :autor"
                 " AND e.techada = :techada AND e.iluminada = :iluminada"
@@ -126,7 +126,7 @@ class EspaciosSql:
                 "precio": nuevo.precio_por_hora,
             },
         ).first()
-        return None if fila is None else _espacio(fila)
+        return None if fila is None else espacio_de_fila(fila)
 
     def insertar(
         self,
@@ -163,7 +163,7 @@ class EspaciosSql:
                     " iluminada, precio_por_hora, creado_por, modificado_por)"
                     " VALUES (:sede, :deporte, :tipo, :numero, :nombre, :techada, :iluminada,"
                     " :precio, :autor, :autor) RETURNING *)"
-                    f" SELECT {_COLUMNAS} FROM nuevo e JOIN sede s ON s.id = e.sede_id"
+                    f" SELECT {COLUMNAS_DE_ESPACIO} FROM nuevo e JOIN sede s ON s.id = e.sede_id"
                 ),
                 {
                     "sede": nuevo.sede_id,
@@ -188,4 +188,4 @@ class EspaciosSql:
         except BaseException:
             self._conn.rollback()
             raise
-        return _espacio(fila)
+        return espacio_de_fila(fila)

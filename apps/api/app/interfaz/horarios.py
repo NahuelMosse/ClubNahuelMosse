@@ -1,4 +1,5 @@
-from datetime import date, datetime
+import re
+from datetime import date, datetime, time
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
@@ -7,12 +8,14 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import Connection
 
+from app.aplicacion.disponibilidad import canchas_disponibles
 from app.aplicacion.errores import DatosInvalidos, NoDisponible
 from app.aplicacion.horarios import horarios_disponibles
 from app.dominio.horarios import MAX_HORAS, MIN_HORAS
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.horarios import HorariosSql
+from app.interfaz.espacios import ListaDeEspacios, vista_de_espacio
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["horarios"])
@@ -86,3 +89,65 @@ def ver_horarios(
         ],
         no_disponibles=g.no_disponibles,
     )
+
+
+SEDE_NO_DISPONIBLE = "La sede ya no está disponible"
+_HORA = re.compile(r"\d{2}:\d{2}")
+
+
+def _leer_hora(valor: str) -> time | None:
+    """`HH:MM` y nada más."""
+    if not _HORA.fullmatch(valor):
+        return None
+    try:
+        return time.fromisoformat(valor)
+    except ValueError:
+        return None
+
+
+@router.get(
+    "/espacios/disponibles",
+    response_model=ListaDeEspacios,
+    responses={401: {"model": SinSesion}, 422: {"model": Errores}},
+    summary="Las canchas de una sede libres en todo un rango",
+    description=(
+        "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas "
+        "que pisen [desde, hasta) el día `fecha`, en la hora del club. `hasta` a las 00:00 es la "
+        "medianoche. El rango tiene que ser futuro, de horas completas, de 1 a 4 horas, de los "
+        "próximos 7 días y dentro del horario de la sede: si no, 422 con el error de cada campo."
+    ),
+)
+def ver_disponibles(
+    _: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sede_id: Annotated[int, Query(ge=1, le=2**63 - 1)],
+    deporte: Annotated[str, Query(min_length=1, max_length=40)],
+    fecha: Annotated[date, Query()],
+    desde: Annotated[str, Query(max_length=5)],
+    hasta: Annotated[str, Query(max_length=5)],
+    tipo: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
+) -> ListaDeEspacios | JSONResponse:
+    inicio, fin = _leer_hora(desde), _leer_hora(hasta)
+    errores = {
+        campo: "Elegí una hora en punto"
+        for campo, hora in (("desde", inicio), ("hasta", fin))
+        if hora is None
+    }
+    if inicio is None or fin is None:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": errores}
+        )
+    try:
+        libres = canchas_disponibles(
+            HorariosSql(conn), sede_id, deporte, tipo, fecha, inicio, fin, datetime.now(ZONA)
+        )
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    except NoDisponible:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content={"errores": {"sede_id": SEDE_NO_DISPONIBLE}},
+        )
+    return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in libres])

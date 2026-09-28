@@ -20,3 +20,26 @@ Future<DateTime?> elegirFechaDeNacimiento(
     lastDate: ultima,
   );
 }
+
+/// El calendario de los [dias] que siguen desde [hoy], con [propuesta] marcada si cae
+/// entre ellos.
+Future<DateTime?> elegirDiaProximo(
+  BuildContext context, {
+  required DateTime hoy,
+  required int dias,
+  DateTime? propuesta,
+}) {
+  final primera = DateTime(hoy.year, hoy.month, hoy.day);
+  final ultima = DateTime(hoy.year, hoy.month, hoy.day + dias - 1);
+  final elegida = propuesta == null
+      ? primera
+      : DateTime(propuesta.year, propuesta.month, propuesta.day);
+  return showDatePicker(
+    context: context,
+    initialDate: elegida.isBefore(primera) || elegida.isAfter(ultima)
+        ? primera
+        : elegida,
+    firstDate: primera,
+    lastDate: ultima,
+  );
+}

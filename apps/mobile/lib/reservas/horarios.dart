@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../espacios/espacio.dart';
 import '../sesion/sesion.dart';
 
 /// La cancha o su sede ya no se pueden reservar.
@@ -9,6 +10,12 @@ class CanchaNoDisponible implements Exception {
 /// El día pedido ya no está entre los que se pueden consultar: pasó la medianoche.
 class FechaVencida implements Exception {
   const FechaVencida();
+}
+
+/// La API rechazó el rango consultado: cada campo con su mensaje.
+class RangoRechazado implements Exception {
+  const RangoRechazado(this.errores);
+  final Map<String, String> errores;
 }
 
 /// Una hora de inicio de la grilla, con su fin según la duración consultada.
@@ -127,5 +134,49 @@ class Horarios {
     final grilla = r.codigo == 200 ? Grilla.desdeJson(r.cuerpo) : null;
     if (grilla == null) throw ErrorDelServidor(r.codigo);
     return grilla;
+  }
+
+  /// Las canchas de [sedeId] y [deporte] (y [tipo] si viene) libres en todo el rango
+  /// [desde] a [hasta] (`HH:MM`) el [fecha].
+  ///
+  /// Lanza [RangoRechazado], [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<List<Espacio>> libres({
+    required int sedeId,
+    required String deporte,
+    String? tipo,
+    required DateTime fecha,
+    required String desde,
+    required String hasta,
+  }) async {
+    final consulta = Uri(
+      path: '/espacios/disponibles',
+      queryParameters: {
+        'sede_id': '$sedeId',
+        'deporte': deporte,
+        'tipo': ?tipo,
+        'fecha':
+            '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-'
+            '${fecha.day.toString().padLeft(2, '0')}',
+        'desde': desde,
+        'hasta': hasta,
+      },
+    );
+    final r = await _api.get(consulta.toString(), token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.cuerpo case {
+      'errores': final Map<String, Object?> errores,
+    } when r.codigo == 422) {
+      throw RangoRechazado({
+        for (final MapEntry(:key, :value) in errores.entries)
+          if (value is String) key: value,
+      });
+    }
+    if (r.codigo == 200) {
+      if (r.cuerpo case {'espacios': final List<Object?> lista}) {
+        final leidos = [for (final e in lista) Espacio.desdeJson(e)];
+        if (!leidos.contains(null)) return [...leidos.nonNulls];
+      }
+    }
+    throw ErrorDelServidor(r.codigo);
   }
 }

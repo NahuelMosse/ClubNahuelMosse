@@ -23,6 +23,7 @@ import 'sesion/pantalla_recuperar_contrasena.dart';
 import 'sesion/recuperacion.dart';
 import 'reservas/eleccion.dart';
 import 'reservas/horarios.dart';
+import 'reservas/pantalla_buscar_cancha.dart';
 import 'reservas/pantalla_confirmar_reserva.dart';
 import 'reservas/pantalla_horarios.dart';
 import 'sedes/pantalla_sede.dart';
@@ -68,6 +69,12 @@ class _AppState extends State<App> {
   late final _sedes = Sedes(api: widget.api, sesion: widget.sesion);
   late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
   late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
+
+  /// `AAAA-MM-DD` de un enlace como día del club; `null` si no viene o no es una fecha.
+  static DateTime? _dia(String? iso) => switch (DateTime.tryParse(iso ?? '')) {
+    final d? => DateTime.utc(d.year, d.month, d.day),
+    null => null,
+  };
 
   late final GoRouter _rutas = GoRouter(
     initialLocation: widget.inicio,
@@ -125,6 +132,17 @@ class _AppState extends State<App> {
       GoRoute(
         path: '/inicio',
         builder: (context, _) => PantallaInicio(sesion: widget.sesion),
+        routes: [
+          GoRoute(
+            path: 'buscar',
+            builder: (context, _) => PantallaBuscarCancha(
+              sedes: _sedes,
+              espacios: _espacios,
+              horarios: _horarios,
+              sesion: widget.sesion,
+            ),
+          ),
+        ],
       ),
       GoRoute(
         path: '/perfil',
@@ -170,6 +188,11 @@ class _AppState extends State<App> {
                   espacios: _espacios,
                   horarios: _horarios,
                   sesion: widget.sesion,
+                  fecha: _dia(estado.uri.queryParameters['fecha']),
+                  horas: int.tryParse(
+                    estado.uri.queryParameters['horas'] ?? '',
+                  ),
+                  inicio: estado.uri.queryParameters['inicio'],
                 ),
                 routes: [
                   GoRoute(

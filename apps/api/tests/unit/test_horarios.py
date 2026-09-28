@@ -5,7 +5,7 @@ import pytest
 
 from app.aplicacion.errores import DatosInvalidos, NoDisponible
 from app.aplicacion.horarios import horarios_disponibles
-from app.dominio.horarios import Agenda, Grilla, grilla, validar_consulta
+from app.dominio.horarios import Agenda, Grilla, grilla, validar_consulta, validar_rango
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 TODOS = (1, 2, 3, 4, 5, 6, 7)
@@ -99,3 +99,43 @@ def test_una_fecha_fuera_de_la_semana_se_rechaza() -> None:
             _Horarios(Agenda(time(8), time(23), TODOS)), 1, JUEVES + timedelta(8), 1,
             _a(JUEVES, 9),
         )  # fmt: skip
+
+
+@pytest.mark.parametrize(
+    ("desde", "hasta", "errores"),
+    [
+        (10, 12, {}),
+        (22, 0, {"hasta": "La sede cierra a las 23:00"}),
+        (18, 18, {"hasta": "La duración mínima es de una hora"}),
+        (20, 18, {"hasta": "La duración mínima es de una hora"}),
+        (10, 15, {"hasta": "La duración máxima es de 4 horas"}),
+        (7, 9, {"desde": "La sede abre a las 08:00"}),
+    ],
+)
+def test_un_rango_se_valida_contra_el_horario_de_la_sede(
+    desde: int, hasta: int, errores: dict[str, str]
+) -> None:
+    agenda = Agenda(time(8), time(23), TODOS)
+    assert validar_rango(
+        agenda, JUEVES, time(desde), time(hasta), _a(JUEVES - timedelta(1), 9)
+    ) == (errores)
+
+
+def test_un_rango_que_ya_empezo_o_de_otro_dia_no_se_consulta() -> None:
+    agenda = Agenda(time(8), time(23), (1, 2, 3, 4))
+    ahora = datetime.combine(JUEVES, time(18, 20), tzinfo=ZONA)
+    assert validar_rango(agenda, JUEVES, time(18), time(19), ahora) == {
+        "desde": "El horario tiene que ser futuro"
+    }
+    assert validar_rango(agenda, JUEVES - timedelta(1), time(18), time(19), ahora) == {
+        "fecha": "La fecha tiene que ser futura"
+    }
+    assert validar_rango(agenda, JUEVES + timedelta(1), time(18), time(19), ahora) == {
+        "fecha": "La sede no abre ese día"
+    }
+    assert validar_rango(agenda, JUEVES + timedelta(7), time(18), time(19), ahora) == {
+        "fecha": "Elegí un día de los próximos 7"
+    }
+    assert validar_rango(agenda, JUEVES, time(19, 30), time(21), ahora) == {
+        "desde": "Elegí una hora en punto"
+    }

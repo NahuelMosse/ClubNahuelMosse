@@ -3,7 +3,7 @@ su sede y en el futuro (RF 3)."""
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time, timedelta, tzinfo
 
 MIN_HORAS = 1
 MAX_HORAS = 4
@@ -75,3 +75,49 @@ def grilla(
             franjas.append(Franja(inicio=inicio, fin=fin, disponible=libre))
         inicio += timedelta(hours=1)
     return Grilla(fecha=fecha, hoy=hoy, abre=True, franjas=tuple(franjas))
+
+
+def _hhmm(hora: time) -> str:
+    return hora.strftime("%H:%M")
+
+
+def rango(fecha: date, desde: time, hasta: time, zona: tzinfo | None) -> tuple[datetime, datetime]:
+    """Inicio y fin de [desde, hasta) el [fecha]; hasta las 00:00 es la medianoche."""
+    inicio = datetime.combine(fecha, desde, tzinfo=zona)
+    fin = datetime.combine(fecha, hasta, tzinfo=zona)
+    if hasta == time(0, 0):
+        fin += timedelta(days=1)
+    return inicio, fin
+
+
+def validar_rango(
+    agenda: Agenda, fecha: date, desde: time, hasta: time, ahora: datetime
+) -> dict[str, str]:
+    """Los errores de un rango consultado, por campo: futuro, en horas completas, de 1 a 4
+    horas y dentro del horario de la sede (RF 3)."""
+    errores: dict[str, str] = {}
+    hoy = ahora.date()
+    if fecha < hoy:
+        errores["fecha"] = "La fecha tiene que ser futura"
+    elif fecha >= hoy + timedelta(days=DIAS_A_LA_VISTA):
+        errores["fecha"] = f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"
+    elif fecha.isoweekday() not in agenda.dias:
+        errores["fecha"] = "La sede no abre ese día"
+    for campo, hora in (("desde", desde), ("hasta", hasta)):
+        if (hora.minute, hora.second, hora.microsecond) != (0, 0, 0):
+            errores[campo] = "Elegí una hora en punto"
+    if errores.keys() & {"desde", "hasta"}:
+        return errores
+    inicio, fin = rango(fecha, desde, hasta, ahora.tzinfo)
+    apertura, cierre = rango(fecha, agenda.apertura, agenda.cierre, ahora.tzinfo)
+    if fin - inicio < timedelta(hours=MIN_HORAS):
+        errores["hasta"] = "La duración mínima es de una hora"
+    elif fin - inicio > timedelta(hours=MAX_HORAS):
+        errores["hasta"] = f"La duración máxima es de {MAX_HORAS} horas"
+    elif fin > cierre:
+        errores["hasta"] = f"La sede cierra a las {_hhmm(agenda.cierre)}"
+    if inicio < apertura:
+        errores["desde"] = f"La sede abre a las {_hhmm(agenda.apertura)}"
+    elif "fecha" not in errores and inicio <= ahora:
+        errores["desde"] = "El horario tiene que ser futuro"
+    return errores
