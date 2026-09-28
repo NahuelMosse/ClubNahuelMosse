@@ -5,7 +5,15 @@ import 'package:clubnahuelmosse/configuracion.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-enum EstadoApi { normal, sinRed, falla }
+enum EstadoApi {
+  normal,
+  sinRed,
+  falla,
+
+  /// Reenvía igual que [normal], pero tres segundos más tarde: deja ver lo que la app
+  /// muestra mientras espera.
+  lenta,
+}
 
 /// Una API intermedia en el mismo dispositivo que la app: reenvía a la API de la corrida
 /// hasta que el escenario la corta o la hace fallar. Sirve para simular que la red o el
@@ -42,6 +50,10 @@ class ApiIntermedia {
         pedido.response.statusCode = HttpStatus.internalServerError;
         await pedido.response.close();
       case EstadoApi.normal:
+      case EstadoApi.lenta:
+        if (estado == EstadoApi.lenta) {
+          await Future<void>.delayed(const Duration(seconds: 3));
+        }
         final reenvio = await _cliente.openUrl(
           pedido.method,
           _destino.replace(
