@@ -52,3 +52,12 @@ CU-09-AMB-10 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-09-AMB-10 · 2026-09-27 · resuelta · se cancela hasta el inicio, sin anticipación mínima; se muestra el precio pero no hay pagos ni reintegros (decisión 13)
 CU-09-AMB-12 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-09-AMB-12 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)
+CU-09-AMB-13 · 2026-09-28 · abierta · si la confirmación llega a la API y se corta la respuesta, ¿volver a confirmar crea otra reserva o devuelve la misma?
+CU-09-AMB-14 · 2026-09-28 · abierta · FA2 pide un mensaje con el campo faltante: ¿dónde, si a la confirmación sólo se llega con todo elegido?
+CU-09-AMB-01 · 2026-09-28 · vencida → CU-09-SUP-01 · sí: el enunciado sólo prohíbe la superposición en el mismo espacio; un usuario puede tener reservas a la misma hora en espacios distintos
+CU-09-AMB-04 · 2026-09-28 · vencida → CU-09-SUP-02 · no hay tope de reservas activas por usuario; el administrador no reserva: la API le responde 403 y la app no le ofrece la sección
+CU-09-AMB-06 · 2026-09-28 · vencida → CU-09-SUP-03 · gana una sola: la restricción de exclusión de la base rechaza la segunda, que la API responde con 409 y la app muestra como FA1 («Ese horario se ocupó», 393:6553)
+CU-09-AMB-09 · 2026-09-28 · vencida → CU-09-SUP-04 · el comprobante espera, como el prototipo (decisión 12): VER MIS RESERVAS o Volver al inicio
+CU-09-AMB-11 · 2026-09-28 · vencida → CU-09-SUP-05 · al volver a iniciar sesión con la misma cuenta, la app vuelve a la confirmación con la misma elección, mientras siga abierta; si se cerró, arranca en el inicio
+CU-09-AMB-13 · 2026-09-28 · vencida → CU-09-SUP-06 · la misma persona, el mismo espacio y el mismo horario dentro de los cinco minutos es el mismo pedido repetido: la API devuelve la reserva que ya creó, como el alta de espacio
+CU-09-AMB-14 · 2026-09-28 · vencida → CU-09-SUP-07 · el campo que falta se dice en los horarios: el resumen muestra «Sin horario elegido» y CONTINUAR queda deshabilitado (CU-12-SUP-08); la confirmación siempre llega completa
