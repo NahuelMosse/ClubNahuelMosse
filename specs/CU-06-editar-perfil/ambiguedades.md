@@ -41,3 +41,4 @@ CU-06-AMB-02 · 2026-09-27 · vencida → CU-06-SUP-02 · un DNI que ya tiene ot
 CU-06-AMB-05 · 2026-09-27 · vencida → CU-06-SUP-03 · no hay «Cancelar» (el prototipo no lo tiene): salir de la pantalla descarta la edición sin preguntar
 CU-06-AMB-07 · 2026-09-27 · vencida → CU-06-SUP-04 · los mismos límites que el registro: nombre y apellido de hasta 60 caracteres y fecha pasada
 CU-06-AMB-08 · 2026-09-27 · vencida → CU-06-SUP-05 · gana el último guardado
+CU-06-TESTS · 2026-09-27 · congelados en 01ffb51 · 4 escenarios de pantalla en rojo porque el modo edición no tiene campos; H01-03 nace en verde: el selector de tema lo trajo CU-05
