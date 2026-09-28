@@ -37,17 +37,25 @@ class Ocupacion(BaseModel):
     fecha: date
     hora: int
     horas: int = 1
+    # De quién es la reserva; sin correo, de la primera cuenta de la base.
+    correo: str | None = None
+    estado: str = "activa"
+    motivo: str | None = None
 
 
 @router.post("/reservas", status_code=status.HTTP_204_NO_CONTENT)
 def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
-    """Una reserva de otra persona: la primera cuenta de la base."""
+    """Una reserva cargada por fuera de la app, de [correo] o de otra persona."""
     insertadas = conn.execute(
         text(
-            "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
-            " SELECT (SELECT min(id) FROM usuario), e.id, x.inicio,"
+            "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total,"
+            " estado, motivo, cancelada_en)"
+            " SELECT coalesce((SELECT id FROM usuario"
+            "                  WHERE lower(correo) = lower(CAST(:correo AS text))),"
+            "                 (SELECT min(id) FROM usuario)), e.id, x.inicio,"
             "        x.inicio + make_interval(hours => :horas),"
-            "        e.precio_por_hora, e.precio_por_hora * :horas"
+            "        e.precio_por_hora, e.precio_por_hora * :horas, :estado, :motivo,"
+            "        CASE WHEN CAST(:estado AS text) <> 'activa' THEN now() END"
             " FROM espacio e,"
             "      LATERAL (SELECT (CAST(:fecha AS date) + make_interval(hours => :hora))"
             "               AT TIME ZONE 'America/Argentina/Buenos_Aires' AS inicio) x"

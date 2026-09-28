@@ -269,13 +269,17 @@ DateTime hoyEnElClub() {
 int horaEnElClub() =>
     DateTime.now().toUtc().subtract(const Duration(hours: 3)).hour;
 
-/// Otra persona reserva el espacio [nombreEspacio] el [dia] a la [hora] en punto, por
-/// [horas] horas.
+/// Una reserva del espacio [nombreEspacio] el [dia] a la [hora] en punto, por [horas]
+/// horas, cargada por fuera de la app: de la cuenta [correo] o, si no viene, de otra
+/// persona. [estado] es `activa`, `cancelada` o `anulada` (con [motivo]).
 Future<void> ocupar(
   String nombreEspacio,
   DateTime dia,
   int hora, {
   int horas = 1,
+  String? correo,
+  String estado = 'activa',
+  String? motivo,
 }) async {
   final fecha =
       '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
@@ -288,6 +292,9 @@ Future<void> ocupar(
       'fecha': fecha,
       'hora': hora,
       'horas': horas,
+      'correo': ?correo,
+      'estado': estado,
+      'motivo': ?motivo,
     }),
   );
   if (r.statusCode != 204) throw StateError('ocupar: ${r.statusCode}');
