@@ -29,3 +29,7 @@ CU-07-AMB-03 · 2026-09-27 · resuelta · todas las entidades guardan fecha de c
 CU-07-AMB-06 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-07-AMB-06 · 2026-09-27 · resuelta · estados Activa, Completada, Cancelada (por el usuario) y Anulada (por el club, con motivo); todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 3, 4)
 CU-07-AMB-01 · 2026-09-27 · vencida · → CU-07-SUP-01: una cuenta dada de baja libera su correo y su DNI; se puede crear otra con los mismos (índices únicos sólo entre cuentas activas, MOD-01)
+CU-07-AMB-02 · 2026-09-27 · vencida → CU-07-SUP-02 · alcanza con confirmar el diálogo: no se pide la contraseña (el prototipo no la pide)
+CU-07-AMB-04 · 2026-09-27 · vencida → CU-07-SUP-03 · sólo un usuario da de baja su cuenta: el administrador no tiene perfil en la app y la API le responde 403
+CU-07-AMB-05 · 2026-09-27 · vencida → CU-07-SUP-04 · las reservas activas que todavía no empezaron pasan a «cancelada» por el mismo usuario; una que ya está en curso se deja terminar
+CU-07-AMB-07 · 2026-09-27 · vencida → CU-07-SUP-05 · no se envía ninguna notificación por esas cancelaciones: la cuenta ya no existe
