@@ -12,10 +12,10 @@ void main() {
   final manana = hoyEnElClub().add(const Duration(days: 1));
   final ayer = hoyEnElClub().subtract(const Duration(days: 1));
 
-  /// «29/09/2026».
+  /// «29 / 09 / 2026», como la muestra el campo.
   String fecha(DateTime dia) =>
-      '${dia.day.toString().padLeft(2, '0')}/'
-      '${dia.month.toString().padLeft(2, '0')}/${dia.year}';
+      '${dia.day.toString().padLeft(2, '0')} / '
+      '${dia.month.toString().padLeft(2, '0')} / ${dia.year}';
 
   const dias = [
     'Lunes',
