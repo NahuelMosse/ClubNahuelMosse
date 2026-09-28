@@ -31,3 +31,13 @@ CU-16-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-16-AMB-07 · 2026-09-27 · resuelta · la sede tiene apertura, cierre y los días de la semana en que abre; el horario es el mismo todos esos días (decisión 7)
 CU-16-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-16-AMB-08 · 2026-09-27 · resuelta · el puntaje por sede se quita (decisión 15)
+CU-16-AMB-10 · 2026-09-28 · abierta · el prototipo describe cada cancha con un texto propio («Hockey 7 · Al aire libre · césped sintético»); ningún alta lo pide: ¿de dónde sale?
+CU-16-AMB-11 · 2026-09-28 · abierta · ¿cuándo una cancha está «no disponible» con el botón deshabilitado y el Badge-Estado?
+CU-16-AMB-01 · 2026-09-28 · vencida → CU-16-SUP-01 · sin sedes, el listado dice «Todavía no hay sedes» y «El club todavía no cargó sus sedes.», con el mismo estado vacío que la sede sin canchas
+CU-16-AMB-03 · 2026-09-28 · vencida → CU-16-SUP-02 · las sedes se consultan con la sesión iniciada, como dice el actor del CU; sin sesión la app lleva al login
+CU-16-AMB-04 · 2026-09-28 · vencida → CU-16-SUP-03 · no hay paginación: se muestran todas las sedes y todas las canchas de la sede
+CU-16-AMB-05 · 2026-09-28 · vencida → CU-16-SUP-04 · las sedes van por nombre (CU-17-SUP-06) y las canchas de una sede por deporte, tipo y número
+CU-16-AMB-06 · 2026-09-28 · vencida → CU-16-SUP-05 · las canchas se vuelven a pedir al entrar a la sede; si la sede ya no está, «Esta sede ya no está disponible» y vuelve al listado; lo que pase al reservar una cancha dada de baja es de CU-12 y CU-09
+CU-16-AMB-09 · 2026-09-28 · vencida → CU-16-SUP-06 · la foto es una imagen fija de la app: cada sede toma una de las cuatro portadas del prototipo y cada cancha la de su deporte; el administrador no carga fotos
+CU-16-AMB-10 · 2026-09-28 · vencida → CU-16-SUP-07 · la descripción de la cancha se arma con lo que tiene cargado: tipo, condición e iluminación («Fútbol 5 · Al aire libre · con iluminación»)
+CU-16-AMB-11 · 2026-09-28 · vencida → CU-16-SUP-08 · todas las canchas activas se muestran disponibles; una cancha dada de baja no aparece (decisión 4). El Badge-Estado queda para cuando exista un «fuera de servicio» (CU-22-AMB-01)
