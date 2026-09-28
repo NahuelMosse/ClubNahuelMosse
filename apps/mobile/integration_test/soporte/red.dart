@@ -61,8 +61,12 @@ class ApiIntermedia {
             query: pedido.uri.hasQuery ? pedido.uri.query : null,
           ),
         );
+        // Una conexión reutilizada puede llegar cerrada por la API (su keep-alive vence
+        // antes que el del cliente) y el reenvío fallaría sin que la app tenga la culpa.
+        reenvio.persistentConnection = false;
         pedido.headers.forEach((nombre, valores) {
-          if (nombre != HttpHeaders.hostHeader) {
+          if (nombre != HttpHeaders.hostHeader &&
+              nombre != HttpHeaders.connectionHeader) {
             for (final valor in valores) {
               reenvio.headers.add(nombre, valor);
             }
