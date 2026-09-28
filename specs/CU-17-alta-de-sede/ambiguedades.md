@@ -31,3 +31,14 @@ CU-17-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-17-AMB-07 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-17-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-17-AMB-08 · 2026-09-27 · resuelta · la sede tiene apertura, cierre y los días de la semana en que abre; el horario es el mismo todos esos días (decisión 7)
+CU-17-AMB-10 · 2026-09-28 · abierta · ¿qué opciones ofrece «DÍAS QUE ABRE»? el prototipo muestra sólo «Lunes a domingo» y el listado también «Lunes a sábado» y «Todos los días»
+CU-17-AMB-11 · 2026-09-28 · abierta · el CU (FA2) hace que el administrador intente guardar y se le marquen los faltantes; el prototipo deja GUARDAR SEDE al 40 % mientras falten datos: ¿se puede tocar?
+CU-17-AMB-01 · 2026-09-28 · vencida → CU-17-SUP-01 · sin sedes, el panel dice «0 SEDES ACTIVAS» y «Todavía no hay sedes», con AGREGAR SEDE arriba como siempre
+CU-17-AMB-02 · 2026-09-28 · vencida → CU-17-SUP-02 · no puede haber dos sedes activas con el mismo nombre, sin distinguir mayúsculas: «Ya existe una sede con ese nombre»; la dirección sí puede repetirse. Lo garantiza un índice único, así que dos altas a la vez no pasan las dos
+CU-17-AMB-03 · 2026-09-28 · vencida → CU-17-SUP-03 · los horarios son horas en punto; el cierre va después de la apertura, y 00:00 como cierre es la medianoche: «El cierre tiene que ser después de la apertura»
+CU-17-AMB-04 · 2026-09-28 · vencida → CU-17-SUP-04 · la sede nace activa y los usuarios la ven apenas se crea, aunque todavía no tenga canchas
+CU-17-AMB-05 · 2026-09-28 · vencida → CU-17-SUP-05 · nombre hasta 60 caracteres y dirección hasta 80; el horario no cruza la medianoche salvo cerrar justo a las 00:00
+CU-17-AMB-06 · 2026-09-28 · vencida → CU-17-SUP-06 · las sedes se listan por nombre, en orden alfabético
+CU-17-AMB-09 · 2026-09-28 · vencida → CU-17-SUP-07 · la dirección es un solo campo «Calle y altura»; la altura es el número del final y, si falta, «Escribí la calle y la altura»
+CU-17-AMB-10 · 2026-09-28 · vencida → CU-17-SUP-08 · «DÍAS QUE ABRE» ofrece «Lunes a domingo» (el que viene elegido), «Lunes a sábado» y «Lunes a viernes»
+CU-17-AMB-11 · 2026-09-28 · vencida → CU-17-SUP-09 · GUARDAR SEDE se ve al 40 % mientras falten datos, como el prototipo, pero se puede tocar: no envía nada y marca en rojo cada campo que falta, como el CU. Un campo que se deja vacío se marca al salir de él
