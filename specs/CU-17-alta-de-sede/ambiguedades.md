@@ -42,3 +42,4 @@ CU-17-AMB-06 · 2026-09-28 · vencida → CU-17-SUP-06 · las sedes se listan po
 CU-17-AMB-09 · 2026-09-28 · vencida → CU-17-SUP-07 · la dirección es un solo campo «Calle y altura»; la altura es el número del final y, si falta, «Escribí la calle y la altura»
 CU-17-AMB-10 · 2026-09-28 · vencida → CU-17-SUP-08 · «DÍAS QUE ABRE» ofrece «Lunes a domingo» (el que viene elegido), «Lunes a sábado» y «Lunes a viernes»
 CU-17-AMB-11 · 2026-09-28 · vencida → CU-17-SUP-09 · GUARDAR SEDE se ve al 40 % mientras falten datos, como el prototipo, pero se puede tocar: no envía nada y marca en rojo cada campo que falta, como el CU. Un campo que se deja vacío se marca al salir de él
+CU-17-TESTS · 2026-09-28 · congelados en bebde07 · 6 escenarios de pantalla en rojo porque el panel admin no tiene la sección SEDES, y H01-03 de API en rojo porque no existe POST /sedes (404)
