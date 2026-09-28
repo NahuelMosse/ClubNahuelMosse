@@ -47,11 +47,14 @@ class Espacios extends ChangeNotifier {
     return _catalogo = leido;
   }
 
-  /// Los espacios activos, por sede y por nombre.
+  /// Los espacios activos por sede, deporte, tipo y número; sólo los de [sedeId] si se
+  /// pide.
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<List<Espacio>> activos() async {
-    final r = await _get('/espacios');
+  Future<List<Espacio>> activos({int? sedeId}) async {
+    final r = await _get(
+      sedeId == null ? '/espacios' : '/espacios?sede_id=$sedeId',
+    );
     if (r.codigo == 200) {
       if (r.cuerpo case {'espacios': final List<Object?> lista}) {
         final leidos = [for (final e in lista) Espacio.desdeJson(e)];
@@ -125,6 +128,10 @@ class Espacios extends ChangeNotifier {
     notifyListeners();
     return espacio;
   }
+
+  /// Avisa que lo que se vio de los espacios ya no vale (por ejemplo, uno que se dio de
+  /// baja): quien los muestra los vuelve a pedir.
+  void avisarCambio() => notifyListeners();
 
   static Map<String, String> _errores(Respuesta r) =>
       switch (r.cuerpo['errores']) {

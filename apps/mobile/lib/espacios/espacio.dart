@@ -31,6 +31,15 @@ class Catalogo {
         : '${d.nombre} · ${t.nombre}';
   }
 
+  /// La etiqueta de la cancha: «Fútbol 5», o sólo «Tenis» si el tipo no nombra al
+  /// deporte («Polvo de ladrillo»).
+  String tipoCorto(String deporte, String tipo) {
+    final d = this.deporte(deporte);
+    final t = d?.tipos.where((t) => t.clave == tipo).firstOrNull;
+    if (d == null || t == null) return deporte;
+    return t.nombre.startsWith(d.nombre) ? t.nombre : d.nombre;
+  }
+
   static Catalogo? desdeJson(Object? json) {
     if (json case {'deportes': final List<Object?> deportes}) {
       final leidos = [
@@ -61,6 +70,7 @@ class Espacio {
     required this.sede,
     required this.deporte,
     required this.tipo,
+    required this.numero,
     required this.techada,
     required this.iluminada,
     required this.precioPorHora,
@@ -74,11 +84,16 @@ class Espacio {
   final String sede;
   final String deporte;
   final String tipo;
+
+  /// El número correlativo de ese tipo en esa sede: «Cancha 2».
+  final int numero;
   final bool techada;
   final bool iluminada;
   final int precioPorHora;
 
   String get condicion => techada ? 'Techada' : 'Al aire libre';
+
+  String get iluminacion => iluminada ? 'Iluminada' : 'Sin iluminación';
 
   /// «Fútbol 5 · Al aire libre · $ 38.000 por hora».
   String descripcion(Catalogo catalogo) =>
@@ -93,6 +108,7 @@ class Espacio {
       'sede': final String sede,
       'deporte': final String deporte,
       'tipo': final String tipo,
+      'numero': final int numero,
       'techada': final bool techada,
       'iluminada': final bool iluminada,
       'precio_por_hora': final int precio,
@@ -104,6 +120,7 @@ class Espacio {
         sede: sede,
         deporte: deporte,
         tipo: tipo,
+        numero: numero,
         techada: techada,
         iluminada: iluminada,
         precioPorHora: precio,

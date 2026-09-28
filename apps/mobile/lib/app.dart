@@ -21,6 +21,8 @@ import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_nueva_contrasena.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
 import 'sesion/recuperacion.dart';
+import 'reservas/pantalla_horarios.dart';
+import 'sedes/pantalla_sede.dart';
 import 'sedes/pantalla_sedes.dart';
 import 'sesion/sesion.dart';
 import 'tema/tema.dart';
@@ -50,11 +52,11 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  /// Las pantallas de adentro del usuario; las del panel son las de `/admin`.
+  /// Las secciones de adentro del usuario, con todo lo que cuelga de cada una; las del
+  /// panel son las de `/admin`.
   static const _rolDe = {
     '/inicio': Rol.usuario,
     '/perfil': Rol.usuario,
-    '/perfil/contrasena': Rol.usuario,
     '/sedes': Rol.usuario,
     '/reservas': Rol.usuario,
   };
@@ -73,7 +75,10 @@ class _AppState extends State<App> {
       // queda abierta por olvidarse de anotarla.
       final rol = ruta == '/admin' || ruta.startsWith('/admin/')
           ? Rol.admin
-          : _rolDe[ruta];
+          : _rolDe.entries
+                .where((e) => ruta == e.key || ruta.startsWith('${e.key}/'))
+                .firstOrNull
+                ?.value;
       final perfil = widget.sesion.perfil;
       if (rol == null) return null;
       if (perfil == null) return '/';
@@ -131,7 +136,41 @@ class _AppState extends State<App> {
           ),
         ],
       ),
-      GoRoute(path: '/sedes', builder: (context, _) => const PantallaSedes()),
+      GoRoute(
+        path: '/sedes',
+        builder: (context, _) => PantallaSedes(
+          sedes: _sedes,
+          espacios: _espacios,
+          sesion: widget.sesion,
+        ),
+        routes: [
+          GoRoute(
+            path: ':sede',
+            builder: (context, estado) => PantallaSede(
+              key: ValueKey(estado.pathParameters['sede']),
+              sedeId: int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
+              sedes: _sedes,
+              espacios: _espacios,
+              sesion: widget.sesion,
+            ),
+            routes: [
+              GoRoute(
+                path: 'canchas/:cancha',
+                builder: (context, estado) => PantallaHorarios(
+                  key: ValueKey(estado.pathParameters['cancha']),
+                  sedeId:
+                      int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
+                  espacioId:
+                      int.tryParse(estado.pathParameters['cancha'] ?? '') ?? 0,
+                  sedes: _sedes,
+                  espacios: _espacios,
+                  sesion: widget.sesion,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       GoRoute(
         path: '/reservas',
         builder: (context, _) => const PantallaMisReservas(),

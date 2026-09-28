@@ -26,6 +26,7 @@ class SedeVista(BaseModel):
     cierre: str
     dias: list[int]
     canchas: int
+    deportes: list[str]
 
 
 class Sedes(BaseModel):
@@ -49,6 +50,7 @@ def _vista(sede: Sede) -> SedeVista:
         cierre=_hora(sede.cierre),
         dias=list(sede.dias),
         canchas=sede.canchas,
+        deportes=list(sede.deportes),
     )
 
 
@@ -56,7 +58,7 @@ def _vista(sede: Sede) -> SedeVista:
     "/sedes",
     response_model=Sedes,
     responses={401: {"model": SinSesion}},
-    summary="Las sedes activas, por nombre, con cuántas canchas tiene cada una",
+    summary="Las sedes activas, por nombre, con sus canchas y los deportes que ofrecen",
 )
 def listar_sedes(
     _: Annotated[Perfil, Depends(usuario_actual)],

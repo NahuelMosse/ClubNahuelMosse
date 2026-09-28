@@ -9,7 +9,7 @@ from app.dominio.sedes import Sede, SedeNueva
 _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
 
 
-def _sede(fila: Any, canchas: int) -> Sede:
+def _sede(fila: Any, canchas: int, deportes: tuple[str, ...] = ()) -> Sede:
     return Sede(
         id=int(fila.id),
         nombre=fila.nombre,
@@ -19,6 +19,7 @@ def _sede(fila: Any, canchas: int) -> Sede:
         cierre=fila.cierre,
         dias=tuple(int(d) for d in fila.dias),
         canchas=canchas,
+        deportes=deportes,
     )
 
 
@@ -29,13 +30,15 @@ class SedesSql:
     def activas(self) -> list[Sede]:
         filas = self._conn.execute(
             text(
-                f"SELECT {_COLUMNAS}, count(e.id) AS canchas FROM sede s"
+                f"SELECT {_COLUMNAS}, count(e.id) AS canchas,"
+                " coalesce(array_agg(DISTINCT e.deporte ORDER BY e.deporte)"
+                " FILTER (WHERE e.id IS NOT NULL), '{}') AS deportes FROM sede s"
                 " LEFT JOIN espacio e ON e.sede_id = s.id AND e.activo"
                 " WHERE s.activa GROUP BY s.id ORDER BY lower(s.nombre), s.id"
             )
         ).all()
         self._conn.rollback()
-        return [_sede(f, int(f.canchas)) for f in filas]
+        return [_sede(f, int(f.canchas), tuple(f.deportes)) for f in filas]
 
     def insertar(self, nueva: SedeNueva, autor: int) -> Sede:
         try:

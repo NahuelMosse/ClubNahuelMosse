@@ -146,11 +146,27 @@ Future<void> esperarA(
 
 Future<void> tocar(WidgetTester tester, String texto) async {
   final boton = find.text(texto);
+  await _esperarPantallaQuieta(tester);
   await tester.ensureVisible(boton);
   // El scroll se aplica en el cuadro siguiente: sin esperarlo, el toque va a la posición vieja.
   await tester.pumpAndSettle();
   await tester.tap(boton);
   await tester.pumpAndSettle();
+}
+
+/// Espera a que el teclado del dispositivo termine de abrirse o cerrarse. Android lo mueve
+/// por su cuenta (por ejemplo, cuando un campo recupera el foco al cerrarse un aviso) y
+/// `pumpAndSettle` no lo espera: un toque en medio cae donde el botón ya no está.
+Future<void> _esperarPantallaQuieta(WidgetTester tester) async {
+  final fin = DateTime.now().add(const Duration(seconds: 3));
+  var anterior = tester.view.viewInsets.bottom;
+  var quieto = 0;
+  while (quieto < 4 && DateTime.now().isBefore(fin)) {
+    await tester.pump(const Duration(milliseconds: 100));
+    final ahora = tester.view.viewInsets.bottom;
+    quieto = ahora == anterior ? quieto + 1 : 0;
+    anterior = ahora;
+  }
 }
 
 Future<void> escribir(WidgetTester tester, String campo, String valor) async {

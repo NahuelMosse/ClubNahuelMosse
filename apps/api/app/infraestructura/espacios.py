@@ -37,13 +37,15 @@ class EspaciosSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def activos(self) -> list[Espacio]:
+    def activos(self, sede_id: int | None = None) -> list[Espacio]:
         filas = self._conn.execute(
             text(
                 f"SELECT {_COLUMNAS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
                 " WHERE e.activo AND s.activa"
+                " AND (CAST(:sede AS bigint) IS NULL OR e.sede_id = :sede)"
                 " ORDER BY lower(s.nombre), s.id, e.deporte, e.tipo, e.numero"
-            )
+            ),
+            {"sede": sede_id},
         ).all()
         self._conn.rollback()
         return [_espacio(f) for f in filas]

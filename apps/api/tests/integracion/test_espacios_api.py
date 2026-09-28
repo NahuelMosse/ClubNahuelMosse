@@ -314,3 +314,43 @@ def test_el_pedido_de_otro_administrador_no_se_toma_como_propio(
     assert api.post("/espacios", headers=_con(otro), json=_espacio(sede_id, numero=1)).is_success
     r = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, numero=1))
     assert r.status_code == 409
+
+
+def test_se_filtran_los_espacios_de_una_sede_y_la_sede_dice_sus_deportes(
+    api: TestClient,
+    token_admin: str,
+    token_usuario: str,
+    sede: tuple[int, str],
+    unico: Callable[[], str],
+) -> None:
+    sede_id, prefijo = sede
+    otra = api.post(
+        "/sedes",
+        headers=_con(token_admin),
+        json={
+            "nombre": f"Sede Castelar {unico()}",
+            "direccion": "Av. Rivadavia 23500",
+            "apertura": "08:00",
+            "cierre": "22:00",
+            "dias": [1, 2, 3, 4, 5, 6, 7],
+        },
+    ).json()["id"]
+    api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, tipo="F7"))
+    api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id))
+    api.post(
+        "/espacios",
+        headers=_con(token_admin),
+        json=_espacio(sede_id, deporte="Tenis", tipo="PDL"),
+    )
+    api.post("/espacios", headers=_con(token_admin), json=_espacio(otra))
+
+    r = api.get("/espacios", headers=_con(token_usuario), params={"sede_id": sede_id})
+
+    assert [e["nombre"] for e in r.json()["espacios"]] == [
+        f"{prefijo}_Futbol_F5_1",
+        f"{prefijo}_Futbol_F7_1",
+        f"{prefijo}_Tenis_PDL_1",
+    ]
+    sedes = {s["id"]: s for s in api.get("/sedes", headers=_con(token_usuario)).json()["sedes"]}
+    assert (sedes[sede_id]["canchas"], sedes[sede_id]["deportes"]) == (3, ["Futbol", "Tenis"])
+    assert sedes[otra]["deportes"] == ["Futbol"]

@@ -30,9 +30,13 @@ enum SeccionAdmin {
 
 /// `BottomNav` del usuario: cuatro pestañas fijas, la de la sección actual en lima.
 class BarraInferior extends StatelessWidget {
-  const BarraInferior({super.key, required this.actual});
+  const BarraInferior({super.key, required this.actual, this.enRaiz = true});
 
   final Seccion actual;
+
+  /// `false` adentro de la sección (una sede, sus horarios): la pestaña activa vuelve al
+  /// principio de la sección.
+  final bool enRaiz;
 
   @override
   Widget build(BuildContext context) => _Barra(
@@ -42,6 +46,7 @@ class BarraInferior extends StatelessWidget {
           titulo: s.titulo,
           icono: s.icono,
           activa: s == actual,
+          tocable: s != actual || !enRaiz,
           alTocar: () => context.go(s.ruta),
         ),
     ],
@@ -62,6 +67,7 @@ class BarraAdmin extends StatelessWidget {
           titulo: s.titulo,
           icono: s.icono,
           activa: s == actual,
+          tocable: s != actual,
           alTocar: () => context.go(s.ruta),
         ),
     ],
@@ -101,12 +107,14 @@ class _Pestana extends StatelessWidget {
     required this.titulo,
     required this.icono,
     required this.activa,
+    required this.tocable,
     required this.alTocar,
   });
 
   final String titulo;
   final IconData icono;
   final bool activa;
+  final bool tocable;
   final VoidCallback alTocar;
 
   @override
@@ -117,7 +125,7 @@ class _Pestana extends StatelessWidget {
       button: true,
       selected: activa,
       child: InkResponse(
-        onTap: activa ? null : alTocar,
+        onTap: tocable ? alTocar : null,
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: Medidas.altoControl),
           child: Column(

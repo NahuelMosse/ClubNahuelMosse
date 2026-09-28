@@ -43,6 +43,8 @@ class Sede:
     cierre: time
     dias: tuple[int, ...]
     canchas: int
+    # Las claves de los deportes de sus canchas activas, sin repetir.
+    deportes: tuple[str, ...] = ()
 
     @property
     def direccion(self) -> str:

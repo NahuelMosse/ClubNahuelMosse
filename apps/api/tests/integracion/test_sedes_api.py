@@ -81,6 +81,7 @@ def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
         "cierre": "23:00",
         "dias": [1, 2, 3, 4, 5, 6],
         "canchas": 0,
+        "deportes": [],
     }
     with motor.connect() as conn:
         fila = conn.execute(

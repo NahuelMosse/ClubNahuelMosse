@@ -30,9 +30,12 @@ class BotonPrimario extends StatelessWidget {
     final simbolo = icono;
     return Opacity(
       opacity: habilitado || cargando ? 1 : 0.4,
-      child: SizedBox(
-        height: Medidas.altoControl,
-        width: double.infinity,
+      // Alto mínimo y no fijo: con el texto agrandado, el botón crece en vez de cortarlo.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: Medidas.altoControl,
+          minWidth: double.infinity,
+        ),
         child: FilledButton(
           onPressed: habilitado ? alTocar : null,
           style: FilledButton.styleFrom(
@@ -64,9 +67,7 @@ class BotonPrimario extends StatelessWidget {
                   children: [
                     Icon(simbolo, size: 20),
                     const SizedBox(width: Medidas.s8),
-                    Flexible(
-                      child: Text(texto, overflow: TextOverflow.ellipsis),
-                    ),
+                    Flexible(child: Text(texto, textAlign: TextAlign.center)),
                   ],
                 ),
         ),

@@ -71,6 +71,7 @@ class EspacioVista(BaseModel):
     sede: str
     deporte: str
     tipo: str
+    numero: int
     techada: bool
     iluminada: bool
     precio_por_hora: int
@@ -88,6 +89,7 @@ def _vista(e: Espacio) -> EspacioVista:
         sede=e.sede,
         deporte=e.deporte,
         tipo=e.tipo,
+        numero=e.numero,
         techada=e.techada,
         iluminada=e.iluminada,
         precio_por_hora=e.precio_por_hora,
@@ -98,13 +100,15 @@ def _vista(e: Espacio) -> EspacioVista:
     "/espacios",
     response_model=ListaDeEspacios,
     responses={401: {"model": SinSesion}},
-    summary="Los espacios activos de las sedes activas, por sede y por nombre",
+    summary="Los espacios activos de las sedes activas, por sede, deporte, tipo y número",
 )
 def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sede_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
 ) -> ListaDeEspacios:
-    return ListaDeEspacios(espacios=[_vista(e) for e in espacios_activos(EspaciosSql(conn))])
+    espacios = espacios_activos(EspaciosSql(conn), sede_id)
+    return ListaDeEspacios(espacios=[_vista(e) for e in espacios])
 
 
 class Sugerencia(BaseModel):

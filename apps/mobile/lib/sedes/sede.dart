@@ -8,6 +8,7 @@ class Sede {
     required this.cierre,
     required this.dias,
     required this.canchas,
+    this.deportes = const [],
   });
 
   final int id;
@@ -21,6 +22,9 @@ class Sede {
   /// Días de la semana en que abre, de 1 (lunes) a 7 (domingo).
   final List<int> dias;
   final int canchas;
+
+  /// Las claves de los deportes de sus canchas (`Futbol`, `Tenis`), sin repetir.
+  final List<String> deportes;
 
   /// «Lunes a sábado», o los días sueltos si no son seguidos desde el lunes.
   String get diasLegibles => diasDeLaSemana(dias);
@@ -43,6 +47,10 @@ class Sede {
         cierre: cierre,
         dias: [...dias.whereType<int>()],
         canchas: canchas,
+        deportes: switch (json['deportes']) {
+          final List<Object?> lista => [...lista.whereType<String>()],
+          _ => const [],
+        },
       );
     }
     return null;

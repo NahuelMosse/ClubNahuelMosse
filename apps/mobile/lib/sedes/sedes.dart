@@ -72,4 +72,8 @@ class Sedes extends ChangeNotifier {
     notifyListeners();
     return sede;
   }
+
+  /// Avisa que lo que se vio de las sedes ya no vale (por ejemplo, una que se dio de baja):
+  /// quien las muestra las vuelve a pedir.
+  void avisarCambio() => notifyListeners();
 }
