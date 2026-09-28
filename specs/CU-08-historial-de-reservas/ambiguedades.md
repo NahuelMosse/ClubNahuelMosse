@@ -44,3 +44,4 @@ CU-08-AMB-07 · 2026-09-28 · vencida → CU-08-SUP-05 · una cancelada o anulad
 CU-08-AMB-08 · 2026-09-28 · vencida → CU-08-SUP-06 · MODIFICAR y CANCELAR llegan con CU-11 y CU-10; esta card muestra las tarjetas sin acciones
 CU-08-AMB-09 · 2026-09-28 · vencida → CU-08-SUP-07 · como el prototipo (decisión 12): «Cancelada por vos · el horario quedó liberado» y «Anulada por el administrador · <motivo>»
 CU-08-AMB-10 · 2026-09-28 · vencida → CU-08-SUP-08 · el total que se guardó al reservar (decisión 4), aunque después cambie el precio del espacio
+CU-08-TESTS · 2026-09-28 · congelados en f17d8d3 · 9 escenarios en rojo porque Mis reservas es una pantalla vacía: no pide las reservas ni tiene Próximas e Historial
