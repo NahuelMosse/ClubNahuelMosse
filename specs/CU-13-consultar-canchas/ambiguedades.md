@@ -51,3 +51,4 @@ CU-13-AMB-13 · 2026-09-28 · vencida → CU-13-SUP-10 · la tarjeta del prototi
 CU-13-AMB-14 · 2026-09-28 · vencida → CU-13-SUP-11 · al cambiar un filtro los resultados se quitan hasta volver a consultar, para no mostrar canchas de otra búsqueda como si fueran de ésta (FA4)
 CU-13-AMB-15 · 2026-09-28 · vencida → CU-13-SUP-12 · se entra desde el inicio por «Buscar cancha · Por sede, fecha y horario», como el prototipo (37:147); la sección Reservas es el historial de CU-08
 CU-13-TESTS · 2026-09-28 · congelados en 1d5ee15 · 10 escenarios en rojo porque el inicio no tiene el acceso «Buscar cancha» ni existe la consulta de canchas
+CU-13-TESTS · 2026-09-28 · recongelados en d5d1b28 · la fecha se escribe y se muestra «DD / MM / AAAA», como en el prototipo (52:824) y en el registro; los escenarios la esperaban sin espacios
