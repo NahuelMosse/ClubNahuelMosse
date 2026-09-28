@@ -65,6 +65,32 @@ Future<void> entrarComoUsuario(
   await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
 }
 
+/// Abre la app e inicia sesión con la cuenta de administrador hasta llegar al panel.
+Future<void> entrarComoAdmin(WidgetTester tester, {String? apiUrl}) async {
+  await abrirApp(tester, apiUrl: apiUrl);
+  await escribir(tester, 'Correo', correoAdmin);
+  await escribir(tester, 'Contraseña', contrasenaAdmin);
+  await tocar(tester, 'INICIAR SESIÓN');
+  await esperarA(tester, find.text('PANEL ADMIN'));
+}
+
+/// Abre el selector de hora de [campo] y elige [hora], por ejemplo `08:00`.
+Future<void> elegirHora(WidgetTester tester, String campo, String hora) async {
+  final selector = find.bySemanticsLabel(campo);
+  await tester.ensureVisible(selector);
+  await tester.pumpAndSettle();
+  await tester.tap(selector);
+  await tester.pumpAndSettle();
+  final opcion = find.descendant(
+    of: find.byType(Dialog),
+    matching: find.text(hora),
+  );
+  await tester.ensureVisible(opcion);
+  await tester.pumpAndSettle();
+  await tester.tap(opcion);
+  await tester.pumpAndSettle();
+}
+
 /// Registra una cuenta por la API, como si la persona ya se hubiera registrado.
 Future<void> crearCuenta({
   required String correo,

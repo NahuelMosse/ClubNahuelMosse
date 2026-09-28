@@ -136,6 +136,43 @@ Future<void> cambiarDesdeOtroDispositivo(
   }
 }
 
+/// Las sedes que ve hoy una persona con cuenta de usuario, preguntado a la API de la
+/// corrida y no a la app: nombre y cantidad de canchas de cada una.
+Future<Map<String, int>> sedesQueVeUnUsuario() async {
+  final correo = 'mirada.${DateTime.now().microsecondsSinceEpoch}@correo.com';
+  const contrasena = 'ClubNahuel1';
+  final api = Configuracion.desdeEntorno().apiUrl;
+  final alta = await http.post(
+    Uri.parse('$api/registro'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({
+      'nombre': 'Mirada',
+      'apellido': 'Externa',
+      'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
+          .toString(),
+      'fecha_nacimiento': '1995-05-20',
+      'correo': correo,
+      'contrasena': contrasena,
+    }),
+  );
+  if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta nueva no entra');
+  final r = await http.get(
+    Uri.parse('$api/sedes'),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('sedes: ${r.statusCode}');
+  return {
+    if (jsonDecode(utf8.decode(r.bodyBytes)) case {
+      'sedes': final List<Object?> sedes,
+    })
+      for (final sede in sedes)
+        if (sede case {'nombre': final String nombre, 'canchas': final int n})
+          nombre: n,
+  };
+}
+
 Uri _pruebas(String ruta) =>
     Uri.parse('${Configuracion.desdeEntorno().apiUrl}/_pruebas/$ruta');
 
