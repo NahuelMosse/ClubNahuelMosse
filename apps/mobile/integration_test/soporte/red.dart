@@ -238,15 +238,55 @@ Future<Map<String, Object?>> _comoAdmin(
   return datos;
 }
 
-/// Da de alta una sede por la API, abierta todos los días de 08:00 a 23:00.
-Future<void> crearSede(String nombre, String direccion) async {
+/// Da de alta una sede por la API, abierta de 08:00 a 23:00 los [dias] de la semana (1 es
+/// lunes): por defecto, todos.
+Future<void> crearSede(
+  String nombre,
+  String direccion, {
+  List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
+}) async {
   await _comoAdmin('/sedes', {
     'nombre': nombre,
     'direccion': direccion,
     'apertura': '08:00',
     'cierre': '23:00',
-    'dias': [1, 2, 3, 4, 5, 6, 7],
+    'dias': dias,
   });
+}
+
+/// El día de hoy en el club, que está en la hora de Argentina (UTC−3, sin horario de
+/// verano), sea cual sea la zona del teléfono de prueba.
+DateTime hoyEnElClub() {
+  final ahora = DateTime.now().toUtc().subtract(const Duration(hours: 3));
+  return DateTime.utc(ahora.year, ahora.month, ahora.day);
+}
+
+/// La hora en punto que está corriendo ahora en el club.
+int horaEnElClub() =>
+    DateTime.now().toUtc().subtract(const Duration(hours: 3)).hour;
+
+/// Otra persona reserva el espacio [nombreEspacio] el [dia] a la [hora] en punto, por
+/// [horas] horas.
+Future<void> ocupar(
+  String nombreEspacio,
+  DateTime dia,
+  int hora, {
+  int horas = 1,
+}) async {
+  final fecha =
+      '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
+      '${dia.day.toString().padLeft(2, '0')}';
+  final r = await http.post(
+    _pruebas('reservas'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({
+      'espacio': nombreEspacio,
+      'fecha': fecha,
+      'hora': hora,
+      'horas': horas,
+    }),
+  );
+  if (r.statusCode != 204) throw StateError('ocupar: ${r.statusCode}');
 }
 
 /// Da de alta por la API el próximo espacio de [deporte] y [tipo] en la sede [nombreSede],
