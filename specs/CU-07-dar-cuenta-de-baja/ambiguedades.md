@@ -33,3 +33,4 @@ CU-07-AMB-02 · 2026-09-27 · vencida → CU-07-SUP-02 · alcanza con confirmar 
 CU-07-AMB-04 · 2026-09-27 · vencida → CU-07-SUP-03 · sólo un usuario da de baja su cuenta: el administrador no tiene perfil en la app y la API le responde 403
 CU-07-AMB-05 · 2026-09-27 · vencida → CU-07-SUP-04 · las reservas activas que todavía no empezaron pasan a «cancelada» por el mismo usuario; una que ya está en curso se deja terminar
 CU-07-AMB-07 · 2026-09-27 · vencida → CU-07-SUP-05 · no se envía ninguna notificación por esas cancelaciones: la cuenta ya no existe
+CU-07-TESTS · 2026-09-27 · congelados en 529d8a1 · 4 escenarios de pantalla en rojo porque la confirmación no tiene «ELIMINAR CUENTA», y H01-02 de API en rojo porque no existe DELETE /yo; H02-01 nace en verde: cancelar lo trajo CU-05
