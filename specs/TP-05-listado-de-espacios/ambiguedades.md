@@ -25,3 +25,8 @@ TP-05-AMB-00 · 2026-09-27 · snapshot · congelado en b43ce50
 TP-05-AMB-03 · 2026-09-27 · preguntada · al usuario, en la sesión
 TP-05-AMB-03 · 2026-09-27 · resuelta · no hay pantalla de usuario con todas las sedes: el producto se pensó desde el principio por sede; cada sede muestra sus espacios con la sede, y el panel del administrador lista los de todas
 TP-05-AMB-00 · 2026-09-27 · snapshot · congelado en 98e4e30
+TP-05-AMB-01 · 2026-09-28 · vencida → TP-05-SUP-01 · la sede sin canchas dice «Todavía no hay canchas» (CU-16), el panel sin espacios «Todavía no hay espacios» (CU-21), y el filtro nunca deja la lista vacía porque sus chips salen de las canchas de la sede (CU-20-SUP-01)
+TP-05-AMB-02 · 2026-09-28 · vencida → TP-05-SUP-02 · sólo se listan los espacios activos; los dados de baja quedan fuera (decisión 4)
+TP-05-AMB-04 · 2026-09-28 · vencida → TP-05-SUP-03 · sin paginación: una sede tiene pocas canchas y el panel lista todas en una sola lectura
+TP-05-AMB-05 · 2026-09-28 · vencida → TP-05-SUP-04 · en la sede, por deporte, tipo y número (CU-16-SUP-04); en el panel, por nombre de sede y después por deporte, tipo y número
+TP-05-AMB-06 · 2026-09-28 · vencida → TP-05-SUP-05 · el «tipo» del enunciado es el deporte, y dentro del deporte se puede elegir además la variante (CU-20, decisión 8)
