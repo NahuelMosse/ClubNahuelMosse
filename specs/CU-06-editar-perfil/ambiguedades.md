@@ -36,3 +36,8 @@ CU-06-AMB-09 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-06-AMB-09 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-06-AMB-10 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-06-AMB-10 · 2026-09-27 · resuelta · si el CU y el prototipo dicen distinto, manda el prototipo (decisión 12)
+CU-06-AMB-01 · 2026-09-27 · vencida → CU-06-SUP-01 · nombre, apellido, DNI y fecha son obligatorios también al editar; un campo vaciado se marca con el mismo «El formato de los datos no es válido»
+CU-06-AMB-02 · 2026-09-27 · vencida → CU-06-SUP-02 · un DNI que ya tiene otra cuenta activa no se guarda: el campo muestra «Este DNI ya está registrado», como en el registro
+CU-06-AMB-05 · 2026-09-27 · vencida → CU-06-SUP-03 · no hay «Cancelar» (el prototipo no lo tiene): salir de la pantalla descarta la edición sin preguntar
+CU-06-AMB-07 · 2026-09-27 · vencida → CU-06-SUP-04 · los mismos límites que el registro: nombre y apellido de hasta 60 caracteres y fecha pasada
+CU-06-AMB-08 · 2026-09-27 · vencida → CU-06-SUP-05 · gana el último guardado
