@@ -75,19 +75,23 @@ Future<void> entrarComoAdmin(WidgetTester tester, {String? apiUrl}) async {
 }
 
 /// Abre el selector de hora de [campo] y elige [hora], por ejemplo `08:00`.
-Future<void> elegirHora(WidgetTester tester, String campo, String hora) async {
+Future<void> elegirHora(WidgetTester tester, String campo, String hora) =>
+    elegir(tester, campo, hora);
+
+/// Abre el selector de [campo] y toca [opcion].
+Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
   final selector = find.bySemanticsLabel(campo);
   await tester.ensureVisible(selector);
   await tester.pumpAndSettle();
   await tester.tap(selector);
   await tester.pumpAndSettle();
-  final opcion = find.descendant(
+  final boton = find.descendant(
     of: find.byType(Dialog),
-    matching: find.text(hora),
+    matching: find.text(opcion),
   );
-  await tester.ensureVisible(opcion);
+  await tester.ensureVisible(boton);
   await tester.pumpAndSettle();
-  await tester.tap(opcion);
+  await tester.tap(boton);
   await tester.pumpAndSettle();
 }
 

@@ -173,6 +173,117 @@ Future<Map<String, int>> sedesQueVeUnUsuario() async {
   };
 }
 
+/// Los nombres de los espacios activos que ve hoy una persona con cuenta de usuario.
+Future<List<String>> espaciosQueVeUnUsuario() async {
+  final correo = 'mira.${DateTime.now().microsecondsSinceEpoch}@correo.com';
+  const contrasena = 'ClubNahuel1';
+  final api = Configuracion.desdeEntorno().apiUrl;
+  final alta = await http.post(
+    Uri.parse('$api/registro'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({
+      'nombre': 'Mirada',
+      'apellido': 'Externa',
+      'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
+          .toString(),
+      'fecha_nacimiento': '1995-05-20',
+      'correo': correo,
+      'contrasena': contrasena,
+    }),
+  );
+  if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta nueva no entra');
+  final r = await http.get(
+    Uri.parse('$api/espacios'),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('espacios: ${r.statusCode}');
+  return [
+    if (jsonDecode(utf8.decode(r.bodyBytes)) case {
+      'espacios': final List<Object?> espacios,
+    })
+      for (final espacio in espacios)
+        if (espacio case {'nombre': final String nombre}) nombre,
+  ];
+}
+
+/// La sesión del administrador que siembra `scripts/e2e.sh`, como la de otro teléfono.
+Future<String> _tokenAdmin() async {
+  final token = await _token(
+    const String.fromEnvironment('ADMIN_CORREO'),
+    const String.fromEnvironment('ADMIN_CONTRASENA'),
+  );
+  if (token == null) throw StateError('el administrador no entra');
+  return token;
+}
+
+/// Un alta en la API de la corrida hecha por el administrador desde otro teléfono.
+Future<Map<String, Object?>> _comoAdmin(
+  String ruta,
+  Map<String, Object?> cuerpo,
+) async {
+  final token = await _tokenAdmin();
+  final r = await http.post(
+    Uri.parse('${Configuracion.desdeEntorno().apiUrl}$ruta'),
+    headers: {
+      'content-type': 'application/json',
+      'authorization': 'Bearer $token',
+    },
+    body: jsonEncode(cuerpo),
+  );
+  if (r.statusCode != 201) throw StateError('$ruta: ${r.statusCode}');
+  final datos = jsonDecode(utf8.decode(r.bodyBytes));
+  if (datos is! Map<String, Object?>) throw StateError('$ruta: respuesta rara');
+  return datos;
+}
+
+/// Da de alta una sede por la API, abierta todos los días de 08:00 a 23:00.
+Future<void> crearSede(String nombre, String direccion) async {
+  await _comoAdmin('/sedes', {
+    'nombre': nombre,
+    'direccion': direccion,
+    'apertura': '08:00',
+    'cierre': '23:00',
+    'dias': [1, 2, 3, 4, 5, 6, 7],
+  });
+}
+
+/// Da de alta por la API el próximo espacio de [deporte] y [tipo] en la sede [nombreSede],
+/// y devuelve su nombre compuesto.
+Future<String> crearEspacio(
+  String nombreSede, {
+  String deporte = 'Futbol',
+  String tipo = 'F5',
+}) async {
+  final api = Configuracion.desdeEntorno().apiUrl;
+  final r = await http.get(
+    Uri.parse('$api/sedes'),
+    headers: {'authorization': 'Bearer ${await _tokenAdmin()}'},
+  );
+  final sedes = jsonDecode(utf8.decode(r.bodyBytes));
+  final id = switch (sedes) {
+    {'sedes': final List<Object?> lista} => [
+      for (final s in lista)
+        if (s case {'id': final int id, 'nombre': final String n})
+          if (n == nombreSede) id,
+    ].firstOrNull,
+    _ => null,
+  };
+  if (id == null) throw StateError('no está la sede $nombreSede');
+  final espacio = await _comoAdmin('/espacios', {
+    'sede_id': id,
+    'deporte': deporte,
+    'tipo': tipo,
+    'techada': false,
+    'iluminada': true,
+    'precio_por_hora': 38000,
+  });
+  final nombre = espacio['nombre'];
+  if (nombre is! String) throw StateError('el alta no devolvió el nombre');
+  return nombre;
+}
+
 Uri _pruebas(String ruta) =>
     Uri.parse('${Configuracion.desdeEntorno().apiUrl}/_pruebas/$ruta');
 
