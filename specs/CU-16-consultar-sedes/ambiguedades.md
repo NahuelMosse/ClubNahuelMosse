@@ -43,3 +43,4 @@ CU-16-AMB-10 · 2026-09-28 · vencida → CU-16-SUP-07 · la descripción de la 
 CU-16-AMB-11 · 2026-09-28 · vencida → CU-16-SUP-08 · todas las canchas activas se muestran disponibles; una cancha dada de baja no aparece (decisión 4). El Badge-Estado queda para cuando exista un «fuera de servicio» (CU-22-AMB-01)
 CU-16-TESTS · 2026-09-28 · congelados en 1cb1155 · 8 escenarios de pantalla en rojo porque la pestaña SEDES no lista sedes ni pide nada a la API (no aparecen las tarjetas ni el error del servidor)
 CU-16-TESTS · 2026-09-28 · recongelados en 32954b9 · el contador de la sede lleva el filtro de CU-20 («N CANCHAS · TODOS LOS DEPORTES»), como el prototipo 406:6534; los escenarios esperaban sólo la cantidad
+CU-16-TESTS · 2026-09-28 · recongelados en ed2c39b · H01-04 buscaba la etiqueta del esqueleto de horarios (nombre compuesto y «elegida»); CU-12 la reemplaza por lo que se ve, «Cancha 1, Techada», con elegida como estado
