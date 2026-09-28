@@ -166,3 +166,35 @@ class BarraDeAccion extends StatelessWidget {
     );
   }
 }
+
+/// `Btn/Type=Danger`: pill rojo para confirmar algo que no se deshace.
+///
+/// El rojo es el del modo claro en los dos modos: con el del modo oscuro el texto blanco no
+/// llega al contraste mínimo.
+class BotonPeligro extends StatelessWidget {
+  const BotonPeligro({super.key, required this.texto, required this.alTocar});
+
+  final String texto;
+  final VoidCallback? alTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        minHeight: Medidas.altoControl,
+        minWidth: double.infinity,
+      ),
+      child: FilledButton(
+        onPressed: alTocar,
+        style: FilledButton.styleFrom(
+          backgroundColor: Paleta.clara.stateDanger,
+          foregroundColor: Colors.white,
+          shape: const StadiumBorder(),
+          textStyle: Textos.boton,
+          padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+        ),
+        child: Text(texto, textAlign: TextAlign.center),
+      ),
+    );
+  }
+}

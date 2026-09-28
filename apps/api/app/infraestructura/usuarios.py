@@ -93,6 +93,34 @@ class UsuariosSql:
             self._conn.rollback()
             raise
 
+    def dar_de_baja(self, id_usuario: int) -> bool:
+        try:
+            # Primero la cuenta: su bloqueo ordena lo que venga después, y una cuenta que ya
+            # estaba de baja no se vuelve a procesar.
+            dada = self._conn.execute(
+                text(
+                    "UPDATE usuario SET activo = false, dado_de_baja_en = clock_timestamp()"
+                    " WHERE id = :id AND activo RETURNING id"
+                ),
+                {"id": id_usuario},
+            ).first()
+            if dada is None:
+                self._conn.rollback()
+                return False
+            self._conn.execute(
+                text(
+                    "UPDATE reserva SET estado = 'cancelada', cancelada_en = clock_timestamp(),"
+                    " cancelada_por = :id WHERE usuario_id = :id AND estado = 'activa'"
+                    " AND inicio > clock_timestamp()"
+                ),
+                {"id": id_usuario},
+            )
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
+        return True
+
     def marcar_cambio_de_contrasena(self, id_usuario: int) -> None:
         self._conn.execute(
             text("UPDATE usuario SET contrasena_cambiada_en = clock_timestamp() WHERE id = :id"),

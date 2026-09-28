@@ -111,6 +111,28 @@ void main() {
     });
   }
 
+  for (final MapEntry(key: modo, value: tema) in temas.entries) {
+    testWidgets('la confirmación de la baja cumple las guías en modo $modo', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montar(
+        tester,
+        PantallaMiPerfil(
+          sesion: SesionFalsa(perfilUsuario),
+          apariencia: Apariencia.enMemoria(),
+        ),
+        tema: tema,
+      );
+      await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await cumpleLasGuias(tester);
+      semantica.dispose();
+    });
+  }
+
   testWidgets('los campos del login anuncian su nombre', (tester) async {
     final semantica = tester.ensureSemantics();
     await montar(tester, login(), tema: temaOscuro);

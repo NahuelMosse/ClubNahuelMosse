@@ -53,6 +53,13 @@ class ClienteApi {
     ),
   );
 
+  Future<Respuesta> delete(String ruta, {required String token}) => _enviar(
+    () => _cliente.delete(
+      _base.resolve(ruta),
+      headers: {'authorization': 'Bearer $token'},
+    ),
+  );
+
   /// [token] es el ID token de Firebase de quien inició sesión.
   Future<Respuesta> get(String ruta, {String? token}) => _enviar(
     () => _cliente.get(

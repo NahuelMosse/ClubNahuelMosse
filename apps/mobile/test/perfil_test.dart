@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
@@ -18,6 +20,7 @@ void main() {
 
   late CredencialesFalsas credenciales;
   final ediciones = <String>[];
+  var bajas = 0;
 
   /// La app real en el perfil con una sesión iniciada. [yo] es lo que responde `GET /yo`
   /// al abrir el perfil; al iniciar sesión responde el perfil de siempre.
@@ -25,14 +28,21 @@ void main() {
     WidgetTester tester, {
     (int, String) yo = (200, ''),
     (int, String) edicion = (200, ''),
+    (int, String) baja = (204, ''),
     Apariencia? apariencia,
   }) async {
     credenciales = CredencialesFalsas();
     ediciones.clear();
+    bajas = 0;
     var consultas = 0;
     final api = ClienteApi(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
+        if (pedido.method == 'DELETE') {
+          bajas++;
+          final (codigo, cuerpo) = baja;
+          return http.Response.bytes(utf8.encode(cuerpo), codigo);
+        }
         if (pedido.method == 'PUT') {
           ediciones.add(pedido.body);
           final (codigo, cuerpo) = edicion;
@@ -330,4 +340,137 @@ void main() {
     expect(find.text('AP'), findsOneWidget);
     semantica.dispose();
   });
+
+  group('dar la cuenta de baja', () {
+    Future<void> confirmarBaja(WidgetTester tester) async {
+      await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('ELIMINAR CUENTA'),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('confirmada, da de baja, cierra la sesión y va al login', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarPerfil(tester);
+      await confirmarBaja(tester);
+      expect(bajas, 1);
+      expect(credenciales.salidas, 1);
+      expect(find.text('INICIAR SESIÓN'), findsOneWidget);
+      semantica.dispose();
+    });
+
+    testWidgets(
+      'si el servidor falla la cuenta sigue y el botón vuelve a estar',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montarPerfil(tester, baja: (500, ''));
+        await confirmarBaja(tester);
+        expect(find.text('Error del servidor'), findsOneWidget);
+        await tester.tap(find.text('ACEPTAR'));
+        await tester.pumpAndSettle();
+        expect(credenciales.salidas, 0);
+        expect(find.text('ELIMINAR CUENTA'), findsOneWidget);
+        expect(find.text('DATOS PERSONALES'), findsOneWidget);
+        semantica.dispose();
+      },
+    );
+
+    testWidgets('con la sesión vencida avisa y cierra la sesión', (
+      tester,
+    ) async {
+      final semantica = tester.ensureSemantics();
+      await montarPerfil(tester, baja: (401, '{}'));
+      await confirmarBaja(tester);
+      expect(find.text('Tu sesión expiró'), findsOneWidget);
+      semantica.dispose();
+    });
+  });
+
+  test(
+    'una baja que vuelve después de entrar con otra cuenta no la cierra',
+    () async {
+      final respuesta = Completer<http.Response>();
+      final credenciales = CredencialesFalsas();
+      final sesion = Sesion(
+        credenciales: credenciales,
+        api: ClienteApi(
+          'http://api.falsa',
+          cliente: MockClient((pedido) async {
+            if (pedido.method == 'DELETE') return respuesta.future;
+            return http.Response(perfilJson(), 200);
+          }),
+        ),
+      );
+      await sesion.iniciar('a@b.com', 'Clave1234');
+      final baja = sesion.darDeBaja();
+      await sesion.cerrar();
+      await sesion.iniciar('otra@b.com', 'Clave1234');
+      respuesta.complete(http.Response('', 204));
+      await baja;
+
+      expect(sesion.perfil, isNotNull);
+      expect(credenciales.salidas, 1);
+    },
+  );
+
+  testWidgets(
+    'un 401 al reintentar después de un corte cuenta como baja hecha',
+    (tester) async {
+      final semantica = tester.ensureSemantics();
+      var intentos = 0;
+      credenciales = CredencialesFalsas();
+      final api = ClienteApi(
+        'http://api.falsa',
+        cliente: MockClient((pedido) async {
+          if (pedido.method == 'DELETE') {
+            intentos++;
+            if (intentos == 1) throw const SocketException('se cortó');
+            return http.Response('{}', 401);
+          }
+          return http.Response.bytes(utf8.encode(perfilJson()), 200);
+        }),
+      );
+      final sesion = Sesion(credenciales: credenciales, api: api);
+      await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+      tester.view.physicalSize = const Size(393, 852) * 3;
+      tester.view.devicePixelRatio = 3;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        App(
+          api: api,
+          sesion: sesion,
+          apariencia: Apariencia.enMemoria(),
+          inicio: '/perfil',
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('ELIMINAR CUENTA'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('ELIMINAR CUENTA'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Error de conexión'), findsOneWidget);
+
+      await tester.tap(find.text('REINTENTAR'));
+      await tester.pumpAndSettle();
+      expect(find.text('Tu sesión expiró'), findsNothing);
+      expect(find.text('INICIAR SESIÓN'), findsOneWidget);
+      semantica.dispose();
+    },
+  );
 }

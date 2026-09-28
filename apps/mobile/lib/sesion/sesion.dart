@@ -283,6 +283,33 @@ class Sesion extends ChangeNotifier {
     }
   }
 
+  /// Da de baja la cuenta y cierra la sesión del dispositivo.
+  ///
+  /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor]; en esos casos la cuenta
+  /// sigue igual.
+  Future<void> darDeBaja() async {
+    final String? token;
+    try {
+      token = await _credenciales.token();
+    } on CredencialesInvalidas {
+      throw const SesionVencida();
+    }
+    if (token == null) throw const SesionVencida();
+    final antes = _perfil;
+    final r = await _api.delete('/yo', token: token);
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    // Si mientras tanto se cerró la sesión o entró otra cuenta, no se la toca.
+    if (!identical(_perfil, antes)) return;
+    try {
+      await _credenciales.salir();
+    } on Exception {
+      // La cuenta ya no existe en la API: aunque quede la sesión de Firebase guardada, el
+      // próximo arranque la encuentra vencida y la cierra.
+    }
+    _actual = null;
+  }
+
   /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
   Future<void> cerrar() async {
     await _credenciales.salir();

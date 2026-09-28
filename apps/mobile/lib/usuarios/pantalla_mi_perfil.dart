@@ -38,6 +38,7 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
   Perfil? _perfil;
   bool _editando = false;
   bool _cargando = true;
+  bool _dandoDeBaja = false;
 
   @override
   void initState() {
@@ -89,11 +90,56 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
     }
   }
 
-  Future<void> _confirmarBaja() => showDialog<void>(
-    context: context,
-    barrierColor: context.paleta.bgScrim,
-    builder: (context) => const _ConfirmarBaja(),
-  );
+  Future<void> _confirmarBaja() async {
+    final confirmada = await showDialog<bool>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => const _ConfirmarBaja(),
+    );
+    if (confirmada == true && mounted) await _darDeBaja();
+  }
+
+  /// Si el intento anterior se cortó por la red, el servidor pudo haber terminado la baja.
+  bool _huboCorte = false;
+
+  Future<void> _darDeBaja() async {
+    if (_dandoDeBaja) return;
+    setState(() => _dandoDeBaja = true);
+    Object? fallo;
+    var vencida = false;
+    try {
+      // Si sale bien, la sesión se cierra y las rutas llevan al login.
+      await widget.sesion.darDeBaja();
+      return;
+    } on SesionVencida {
+      vencida = true;
+    } on SinConexion catch (e) {
+      fallo = e;
+    } on ErrorDelServidor catch (e) {
+      fallo = e;
+    } finally {
+      if (mounted) setState(() => _dandoDeBaja = false);
+    }
+    if (vencida && (_huboCorte || !mounted)) {
+      // Un 401 después de un corte es la baja que ya se hizo; y si la persona salió de la
+      // pantalla, la sesión que no vale se cierra igual. En los dos casos, al login.
+      try {
+        await widget.sesion.cerrar();
+      } on Exception {
+        // El próximo arranque la encuentra vencida y la cierra.
+      }
+      return;
+    }
+    if (!mounted) return;
+    if (vencida) {
+      await mostrarSesionVencida(context);
+      if (mounted) await cerrarSesion(context, widget.sesion);
+    } else if (fallo != null) {
+      _huboCorte = fallo is SinConexion;
+      final reintentar = await mostrarErrorDeRed(context, fallo);
+      if (reintentar && mounted) await _darDeBaja();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,13 +214,17 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
                         const SizedBox(height: Medidas.s20),
                         BotonContorno(
                           texto: 'CERRAR SESIÓN',
-                          alTocar: () => cerrarSesion(context, widget.sesion),
+                          alTocar: _dandoDeBaja
+                              ? null
+                              : () => cerrarSesion(context, widget.sesion),
                         ),
                         const SizedBox(height: Medidas.s8),
                         BotonContorno(
-                          texto: 'ELIMINAR CUENTA',
+                          texto: _dandoDeBaja
+                              ? 'ELIMINANDO TU CUENTA…'
+                              : 'ELIMINAR CUENTA',
                           peligro: true,
-                          alTocar: _confirmarBaja,
+                          alTocar: _dandoDeBaja ? null : _confirmarBaja,
                         ),
                       ],
                     ),
@@ -648,9 +698,14 @@ class _ConfirmarBaja extends StatelessWidget {
               style: Textos.cuerpo.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: Medidas.s12),
+            BotonPeligro(
+              texto: 'ELIMINAR CUENTA',
+              alTocar: () => Navigator.of(context).pop(true),
+            ),
+            const SizedBox(height: Medidas.s8),
             BotonContorno(
               texto: 'CANCELAR',
-              alTocar: () => Navigator.of(context).pop(),
+              alTocar: () => Navigator.of(context).pop(false),
             ),
           ],
         ),

@@ -22,3 +22,7 @@ class Demorado(Exception):
 
 class CuentaExistente(Exception):
     """Ya hay una cuenta activa con ese correo y no se pidió ascenderla."""
+
+
+class Prohibido(Exception):
+    """Quien pide la operación no puede hacerla."""

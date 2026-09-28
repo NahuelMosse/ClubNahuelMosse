@@ -1,3 +1,4 @@
+import contextlib
 import json
 import logging
 import os
@@ -59,7 +60,9 @@ class ProveedorFirebase:
             return None
 
     def borrar_cuenta(self, uid: str) -> None:
-        auth.delete_user(uid, app=_app_firebase())
+        # Si ya no estaba, otro pedido la borró antes, que es lo que se quería.
+        with contextlib.suppress(auth.UserNotFoundError):
+            auth.delete_user(uid, app=_app_firebase())
 
     def uid_del_token(self, token: str) -> str | None:
         try:

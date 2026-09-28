@@ -212,6 +212,23 @@ void main() {
         });
       }
 
+      testWidgets('mi perfil confirmar baja $ancho $modo', (tester) async {
+        await montar(
+          tester,
+          PantallaMiPerfil(
+            sesion: SesionFalsa(perfilUsuario),
+            apariencia: Apariencia.enMemoria(oscuro: modo == 'oscuro'),
+          ),
+          tema: tema,
+          tamano: tamano,
+        );
+        await tester.ensureVisible(find.text('ELIMINAR CUENTA'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('ELIMINAR CUENTA'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sesion/confirmar_baja_${ancho}_$modo.png');
+      });
+
       testWidgets('panel admin $ancho $modo', (tester) async {
         await montar(
           tester,

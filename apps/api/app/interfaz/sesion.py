@@ -8,8 +8,15 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy import Connection
 
+from app.aplicacion.baja import dar_de_baja
 from app.aplicacion.contrasena import cambiar_contrasena
-from app.aplicacion.errores import DatosInvalidos, Demorado, Duplicado, NoAutenticado
+from app.aplicacion.errores import (
+    DatosInvalidos,
+    Demorado,
+    Duplicado,
+    NoAutenticado,
+    Prohibido,
+)
 from app.aplicacion.perfil import editar_perfil
 from app.aplicacion.sesion import perfil_autenticado
 from app.dominio.usuarios import DatosPersonales, Perfil, Rol
@@ -163,3 +170,27 @@ def editar_perfil_propio(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return perfil_propio(actualizado)
+
+
+@router.delete(
+    "/yo",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Un administrador no se da de baja desde la app"},
+    },
+    summary="Dar de baja la cuenta de quien inició sesión",
+    description=(
+        "Baja lógica: la cuenta deja de estar activa, sus reservas que todavía no empezaron "
+        "pasan a canceladas y el historial se conserva."
+    ),
+)
+def dar_de_baja_propia(
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+) -> Response:
+    try:
+        dar_de_baja(perfil, UsuariosSql(conn), ProveedorFirebase())
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
