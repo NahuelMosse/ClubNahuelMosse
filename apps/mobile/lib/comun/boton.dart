@@ -10,16 +10,24 @@ class BotonPrimario extends StatelessWidget {
     required this.texto,
     required this.alTocar,
     this.cargando = false,
+    this.atenuado = false,
+    this.icono,
   });
 
   final String texto;
   final VoidCallback? alTocar;
   final bool cargando;
 
+  /// Se ve deshabilitado pero acepta el toque: el formulario lo usa para marcar lo que
+  /// falta en vez de no hacer nada.
+  final bool atenuado;
+  final IconData? icono;
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final habilitado = alTocar != null && !cargando;
+    final simbolo = icono;
     return Opacity(
       opacity: habilitado || cargando ? 1 : 0.4,
       child: SizedBox(
@@ -28,7 +36,11 @@ class BotonPrimario extends StatelessWidget {
         child: FilledButton(
           onPressed: habilitado ? alTocar : null,
           style: FilledButton.styleFrom(
-            backgroundColor: p.accentBase,
+            // Atenuado baja sólo el fondo: el texto de un botón que se puede tocar tiene
+            // que seguir leyéndose.
+            backgroundColor: atenuado
+                ? p.accentBase.withValues(alpha: 0.4)
+                : p.accentBase,
             foregroundColor: p.accentOn,
             disabledBackgroundColor: p.accentBase,
             disabledForegroundColor: p.accentOn,
@@ -45,7 +57,18 @@ class BotonPrimario extends StatelessWidget {
                     color: p.accentOn,
                   ),
                 )
-              : Text(texto),
+              : simbolo == null
+              ? Text(texto)
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(simbolo, size: 20),
+                    const SizedBox(width: Medidas.s8),
+                    Flexible(
+                      child: Text(texto, overflow: TextOverflow.ellipsis),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

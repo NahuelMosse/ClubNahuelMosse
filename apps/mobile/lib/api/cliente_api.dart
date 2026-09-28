@@ -30,10 +30,17 @@ class ClienteApi {
   final http.Client _cliente;
   static const _limite = Duration(seconds: 15);
 
-  Future<Respuesta> post(String ruta, Map<String, Object?> cuerpo) => _enviar(
+  Future<Respuesta> post(
+    String ruta,
+    Map<String, Object?> cuerpo, {
+    String? token,
+  }) => _enviar(
     () => _cliente.post(
       _base.resolve(ruta),
-      headers: {'content-type': 'application/json'},
+      headers: {
+        'content-type': 'application/json',
+        if (token != null) 'authorization': 'Bearer $token',
+      },
       body: jsonEncode(cuerpo),
     ),
   );

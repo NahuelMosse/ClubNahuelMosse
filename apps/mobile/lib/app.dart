@@ -2,7 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'admin/pantalla_alta_sede.dart';
+import 'admin/pantalla_espacios_admin.dart';
 import 'admin/pantalla_panel_admin.dart';
+import 'admin/pantalla_sede_creada.dart';
+import 'admin/pantalla_sedes_admin.dart';
+import 'sedes/sede.dart';
+import 'sedes/sedes.dart';
 import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
@@ -40,24 +46,29 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  /// Las pantallas de adentro y el rol que las usa.
+  /// Las pantallas de adentro del usuario; las del panel son las de `/admin`.
   static const _rolDe = {
     '/inicio': Rol.usuario,
     '/perfil': Rol.usuario,
     '/perfil/contrasena': Rol.usuario,
     '/sedes': Rol.usuario,
     '/reservas': Rol.usuario,
-    '/admin': Rol.admin,
   };
 
   late final _recuperacion = Recuperacion(widget.api);
+  late final _sedes = Sedes(api: widget.api, sesion: widget.sesion);
 
   late final GoRouter _rutas = GoRouter(
     initialLocation: widget.inicio,
     // Al iniciar o cerrar la sesión, las rutas se vuelven a evaluar.
     refreshListenable: widget.sesion,
     redirect: (context, estado) {
-      final rol = _rolDe[estado.matchedLocation];
+      final ruta = estado.matchedLocation;
+      // Todo lo que cuelga de /admin es del administrador: una ruta nueva del panel no
+      // queda abierta por olvidarse de anotarla.
+      final rol = ruta == '/admin' || ruta.startsWith('/admin/')
+          ? Rol.admin
+          : _rolDe[ruta];
       final perfil = widget.sesion.perfil;
       if (rol == null) return null;
       if (perfil == null) return '/';
@@ -124,12 +135,40 @@ class _AppState extends State<App> {
         path: '/admin',
         builder: (context, _) => PantallaPanelAdmin(sesion: widget.sesion),
       ),
+      GoRoute(
+        path: '/admin/sedes',
+        builder: (context, _) =>
+            PantallaSedesAdmin(sedes: _sedes, sesion: widget.sesion),
+        routes: [
+          GoRoute(
+            path: 'nueva',
+            builder: (context, _) =>
+                PantallaAltaSede(sedes: _sedes, sesion: widget.sesion),
+          ),
+          GoRoute(
+            path: 'creada',
+            // Sin la sede recién guardada (un enlace, la app reabierta) no hay éxito que
+            // mostrar: va al listado, donde está.
+            redirect: (context, estado) =>
+                estado.extra is Sede ? null : '/admin/sedes',
+            builder: (context, estado) => switch (estado.extra) {
+              final Sede sede => PantallaSedeCreada(sede: sede),
+              _ => const SizedBox.shrink(),
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/admin/espacios',
+        builder: (context, _) => PantallaEspaciosAdmin(sesion: widget.sesion),
+      ),
     ],
   );
 
   @override
   void dispose() {
     widget.api.cerrar();
+    _sedes.dispose();
     _rutas.dispose();
     super.dispose();
   }

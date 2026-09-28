@@ -310,6 +310,20 @@ class Sesion extends ChangeNotifier {
     _actual = null;
   }
 
+  /// El ID token de quien tiene la sesión, para los pedidos de otras pantallas.
+  ///
+  /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<String> token() async {
+    final String? token;
+    try {
+      token = await _credenciales.token();
+    } on CredencialesInvalidas {
+      throw const SesionVencida();
+    }
+    if (token == null) throw const SesionVencida();
+    return token;
+  }
+
   /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
   Future<void> cerrar() async {
     await _credenciales.salir();

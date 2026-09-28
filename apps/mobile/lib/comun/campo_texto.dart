@@ -116,25 +116,29 @@ class CampoTexto extends StatelessWidget {
         ),
         if (mensaje != null) ...[
           const SizedBox(height: Medidas.s8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 1),
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  size: 16,
-                  color: p.stateDangerInk,
+          // El lector de pantalla anuncia el error apenas aparece.
+          Semantics(
+            liveRegion: true,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 1),
+                  child: Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: p.stateDangerInk,
+                  ),
                 ),
-              ),
-              const SizedBox(width: Medidas.s8),
-              Expanded(
-                child: Text(
-                  mensaje,
-                  style: Textos.leyenda.copyWith(color: p.stateDangerInk),
+                const SizedBox(width: Medidas.s8),
+                Expanded(
+                  child: Text(
+                    mensaje,
+                    style: Textos.leyenda.copyWith(color: p.stateDangerInk),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ],

@@ -16,11 +16,62 @@ enum Seccion {
   final String ruta;
 }
 
+/// Las tres pestañas del panel de administración (`BottomNav-Admin`).
+enum SeccionAdmin {
+  reservas('RESERVAS', Icons.calendar_today_outlined, '/admin'),
+  sedes('SEDES', Icons.place_outlined, '/admin/sedes'),
+  espacios('ESPACIOS', Icons.grid_view_outlined, '/admin/espacios');
+
+  const SeccionAdmin(this.titulo, this.icono, this.ruta);
+  final String titulo;
+  final IconData icono;
+  final String ruta;
+}
+
 /// `BottomNav` del usuario: cuatro pestañas fijas, la de la sección actual en lima.
 class BarraInferior extends StatelessWidget {
   const BarraInferior({super.key, required this.actual});
 
   final Seccion actual;
+
+  @override
+  Widget build(BuildContext context) => _Barra(
+    pestanas: [
+      for (final s in Seccion.values)
+        _Pestana(
+          titulo: s.titulo,
+          icono: s.icono,
+          activa: s == actual,
+          alTocar: () => context.go(s.ruta),
+        ),
+    ],
+  );
+}
+
+/// `BottomNav-Admin`: Reservas, Sedes y Espacios.
+class BarraAdmin extends StatelessWidget {
+  const BarraAdmin({super.key, required this.actual});
+
+  final SeccionAdmin actual;
+
+  @override
+  Widget build(BuildContext context) => _Barra(
+    pestanas: [
+      for (final s in SeccionAdmin.values)
+        _Pestana(
+          titulo: s.titulo,
+          icono: s.icono,
+          activa: s == actual,
+          alTocar: () => context.go(s.ruta),
+        ),
+    ],
+  );
+}
+
+class _Barra extends StatelessWidget {
+  const _Barra({required this.pestanas});
+
+  final List<_Pestana> pestanas;
 
   @override
   Widget build(BuildContext context) {
@@ -36,14 +87,7 @@ class BarraInferior extends StatelessWidget {
           padding: const EdgeInsets.only(top: Medidas.s8, bottom: Medidas.s8),
           child: Row(
             children: [
-              for (final seccion in Seccion.values)
-                Expanded(
-                  child: _Pestana(
-                    seccion: seccion,
-                    activa: seccion == actual,
-                    alTocar: () => context.go(seccion.ruta),
-                  ),
-                ),
+              for (final pestana in pestanas) Expanded(child: pestana),
             ],
           ),
         ),
@@ -54,12 +98,14 @@ class BarraInferior extends StatelessWidget {
 
 class _Pestana extends StatelessWidget {
   const _Pestana({
-    required this.seccion,
+    required this.titulo,
+    required this.icono,
     required this.activa,
     required this.alTocar,
   });
 
-  final Seccion seccion;
+  final String titulo;
+  final IconData icono;
   final bool activa;
   final VoidCallback alTocar;
 
@@ -78,10 +124,10 @@ class _Pestana extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(seccion.icono, size: 24, color: color),
+              Icon(icono, size: 24, color: color),
               const SizedBox(height: Medidas.s4),
               Text(
-                seccion.titulo,
+                titulo,
                 maxLines: 1,
                 overflow: TextOverflow.visible,
                 style: Textos.sobretitulo.copyWith(color: color),
