@@ -156,7 +156,21 @@ Future<void> escribir(WidgetTester tester, String campo, String valor) async {
   final finder = find.bySemanticsLabel(campo);
   await tester.ensureVisible(finder);
   await tester.pumpAndSettle();
-  await tester.enterText(finder, valor);
+  await tester.showKeyboard(finder);
+  // Como una escritura de verdad y no con `enterText`: en la app real `enterText` no le
+  // avisa del cambio a Android, y un campo precargado puede volver con el texto viejo
+  // cuando el teclado del dispositivo manda su estado.
+  tester
+      .state<EditableTextState>(
+        find.descendant(of: finder, matching: find.byType(EditableText)),
+      )
+      .userUpdateTextEditingValue(
+        TextEditingValue(
+          text: valor,
+          selection: TextSelection.collapsed(offset: valor.length),
+        ),
+        SelectionChangedCause.keyboard,
+      );
   await tester.pumpAndSettle();
 }
 
