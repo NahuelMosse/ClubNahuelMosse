@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../comun/barra_inferior.dart';
 import '../comun/barra_superior.dart';
 
 /// Mis reservas, a la que se llega desde la tarjeta de la cuenta.
@@ -8,6 +9,9 @@ class PantallaMisReservas extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(appBar: const BarraSuperior(titulo: 'Mis reservas'));
+    return const Scaffold(
+      appBar: BarraSuperior(titulo: 'Mis reservas'),
+      bottomNavigationBar: BarraInferior(actual: Seccion.reservas),
+    );
   }
 }

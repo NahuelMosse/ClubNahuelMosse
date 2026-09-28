@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../comun/barra_inferior.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -16,6 +17,7 @@ class PantallaInicio extends StatelessWidget {
     final p = context.paleta;
     return Scaffold(
       backgroundColor: p.bgBase,
+      bottomNavigationBar: const BarraInferior(actual: Seccion.inicio),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(

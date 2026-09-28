@@ -127,3 +127,5 @@ class Perfil:
     apellido: str
     correo: str
     rol: Rol
+    dni: str
+    fecha_nacimiento: date

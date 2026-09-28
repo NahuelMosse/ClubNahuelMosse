@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
@@ -100,7 +101,10 @@ void main() {
       testWidgets('mi perfil $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaMiPerfil(sesion: SesionFalsa(perfilUsuario)),
+          PantallaMiPerfil(
+            sesion: SesionFalsa(perfilUsuario),
+            apariencia: Apariencia.enMemoria(oscuro: modo == 'oscuro'),
+          ),
           tema: tema,
           tamano: tamano,
         );

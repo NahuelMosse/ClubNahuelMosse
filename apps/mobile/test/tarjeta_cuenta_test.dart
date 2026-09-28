@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/comun/avatar.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
@@ -21,7 +22,12 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      App(api: apiFalsa(), sesion: sesion, inicio: inicio),
+      App(
+        api: apiFalsa(),
+        sesion: sesion,
+        apariencia: Apariencia.enMemoria(),
+        inicio: inicio,
+      ),
     );
     await tester.pumpAndSettle();
     return GoRouter.of(tester.element(find.byType(Scaffold).first));
@@ -120,8 +126,14 @@ void main() {
   testWidgets('«CERRAR SESIÓN» de Mi perfil cierra la sesión', (tester) async {
     final semantica = tester.ensureSemantics();
     final sesion = SesionFalsa(perfilUsuario);
-    await montar(tester, PantallaMiPerfil(sesion: sesion), tema: temaOscuro);
+    await montar(
+      tester,
+      PantallaMiPerfil(sesion: sesion, apariencia: Apariencia.enMemoria()),
+      tema: temaOscuro,
+    );
 
+    await tester.ensureVisible(find.text('CERRAR SESIÓN'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('CERRAR SESIÓN'));
     await tester.pump();
 
@@ -169,6 +181,8 @@ void main() {
     await tester.tap(find.text('Perfil completo'));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('CERRAR SESIÓN'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('CERRAR SESIÓN'));
     await tester.pumpAndSettle();
     expect(find.text('INICIAR SESIÓN'), findsOneWidget);

@@ -131,21 +131,25 @@ class CredencialesFalsas implements Credenciales {
 
 /// El perfil que devuelve `GET /yo` en los tests.
 String perfilJson({String rol = 'usuario'}) =>
-    '{"nombre": "Nahuel", "apellido": "Mosse", '
-    '"correo": "nahuel@correo.com", "rol": "$rol"}';
+    '{"nombre": "Nahuel", "apellido": "Mosse", "correo": "nahuel@correo.com", '
+    '"rol": "$rol", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}';
 
-const perfilUsuario = Perfil(
+final perfilUsuario = Perfil(
   nombre: 'Nahuel',
   apellido: 'Mosse',
   correo: 'nmosse@unimoron.edu.ar',
   rol: Rol.usuario,
+  dni: '42118507',
+  fechaNacimiento: DateTime(2000, 3, 14),
 );
 
-const perfilAdmin = Perfil(
+final perfilAdmin = Perfil(
   nombre: 'Ana',
   apellido: 'Díaz',
   correo: 'admin@clubnahuelmosse.com',
   rol: Rol.admin,
+  dni: '20000001',
+  fechaNacimiento: DateTime(1980, 1, 1),
 );
 
 /// Una sesión ya iniciada con [perfil], sin Firebase ni API.
@@ -158,6 +162,13 @@ class SesionFalsa extends Sesion {
 
   @override
   Perfil? get perfil => _perfilFalso;
+
+  @override
+  Future<Perfil> refrescar() async {
+    final perfil = _perfilFalso;
+    if (perfil == null) throw const SesionVencida();
+    return perfil;
+  }
 
   @override
   Future<void> cerrar() async {

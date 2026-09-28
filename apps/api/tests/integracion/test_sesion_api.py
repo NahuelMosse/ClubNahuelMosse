@@ -37,7 +37,15 @@ def test_con_el_token_de_la_cuenta_devuelve_su_perfil_y_su_rol(
     correo = _registrar(api, unico())
     codigo, cuerpo = _yo(api, iniciar_sesion(correo, CONTRASENA))
     assert codigo == 200
-    assert cuerpo == {"nombre": "Lucía", "apellido": "Gómez", "correo": correo, "rol": "usuario"}
+    assert cuerpo == {
+        "nombre": "Lucía",
+        "apellido": "Gómez",
+        "correo": correo,
+        "rol": "usuario",
+        "dni": cuerpo["dni"],
+        "fecha_nacimiento": "1998-11-02",
+    }
+    assert isinstance(cuerpo["dni"], str) and len(cuerpo["dni"]) == 8
 
 
 @pytest.mark.parametrize("cabecera", [None, "Bearer ", "Bearer basura", "Basic dXNlcjpwYXNz"])

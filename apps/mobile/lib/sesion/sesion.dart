@@ -11,12 +11,16 @@ class Perfil {
     required this.apellido,
     required this.correo,
     required this.rol,
+    required this.dni,
+    required this.fechaNacimiento,
   });
 
   final String nombre;
   final String apellido;
   final String correo;
   final Rol rol;
+  final String dni;
+  final DateTime fechaNacimiento;
 
   /// La ruta a la que entra cada rol después de iniciar sesión.
   String get inicio => rol == Rol.admin ? '/admin' : '/inicio';
@@ -162,6 +166,20 @@ class Sesion extends ChangeNotifier {
     }
   }
 
+  /// Vuelve a pedir el perfil a la API: los datos no se guardan en el dispositivo.
+  ///
+  /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<Perfil> refrescar() async {
+    final Perfil perfil;
+    try {
+      perfil = await _perfilPropio();
+    } on CredencialesInvalidas {
+      throw const SesionVencida();
+    }
+    _actual = perfil;
+    return perfil;
+  }
+
   /// Cambia la contraseña de quien tiene la sesión y vuelve a entrar con la nueva, porque
   /// la API invalida todas las sesiones abiertas de la cuenta, esta incluida.
   ///
@@ -223,14 +241,19 @@ class Sesion extends ChangeNotifier {
       'apellido': final String apellido,
       'correo': final String correo,
       'rol': final String rol,
+      'dni': final String dni,
+      'fecha_nacimiento': final String nacimiento,
     }) {
       final conocido = Rol.values.asNameMap()[rol];
-      if (conocido != null) {
+      final fecha = DateTime.tryParse(nacimiento);
+      if (conocido != null && fecha != null) {
         return Perfil(
           nombre: nombre,
           apellido: apellido,
           correo: correo,
           rol: conocido,
+          dni: dni,
+          fechaNacimiento: fecha,
         );
       }
     }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'api/cliente_api.dart';
 import 'app.dart';
+import 'comun/apariencia.dart';
 import 'configuracion.dart';
 import 'sesion/firebase.dart';
 import 'sesion/sesion.dart';
@@ -14,6 +15,7 @@ Future<void> arrancar(Configuracion configuracion) async {
   final api = ClienteApi(configuracion.apiUrl);
   final sesion = Sesion(credenciales: CredencialesFirebase(auth), api: api);
   // La sesión queda abierta en el dispositivo: si todavía vale, se entra directo.
+  final apariencia = await Apariencia.cargar();
   final perfil = await sesion.retomar();
   // Una key nueva por arranque: la app se arma de cero aunque runApp se llame otra vez.
   runApp(
@@ -21,6 +23,7 @@ Future<void> arrancar(Configuracion configuracion) async {
       key: UniqueKey(),
       api: api,
       sesion: sesion,
+      apariencia: apariencia,
       inicio: perfil?.inicio ?? '/',
     ),
   );

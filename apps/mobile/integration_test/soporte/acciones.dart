@@ -7,6 +7,7 @@ import 'package:clubnahuelmosse/sesion/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Un valor que sólo usa este test: los escenarios afirman sobre datos propios.
 String unico() => DateTime.now().microsecondsSinceEpoch.toString();
@@ -35,8 +36,9 @@ Future<void> abrirApp(
     apiUrl: apiUrl,
     authEmulador: authEmulador,
   );
-  // Cada escenario arranca sin la sesión que haya dejado abierta el anterior.
+  // Cada escenario arranca sin la sesión ni el tema que haya dejado el anterior.
   await (await iniciarFirebase(configuracion)).signOut();
+  await (await SharedPreferences.getInstance()).clear();
   await app.arrancar(configuracion);
   await tester.pumpAndSettle();
 }
@@ -114,6 +116,8 @@ Future<void> esperarA(
 Future<void> tocar(WidgetTester tester, String texto) async {
   final boton = find.text(texto);
   await tester.ensureVisible(boton);
+  // El scroll se aplica en el cuadro siguiente: sin esperarlo, el toque va a la posición vieja.
+  await tester.pumpAndSettle();
   await tester.tap(boton);
   await tester.pumpAndSettle();
 }
@@ -121,6 +125,7 @@ Future<void> tocar(WidgetTester tester, String texto) async {
 Future<void> escribir(WidgetTester tester, String campo, String valor) async {
   final finder = find.bySemanticsLabel(campo);
   await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
   await tester.enterText(finder, valor);
   await tester.pumpAndSettle();
 }
@@ -129,6 +134,7 @@ Future<void> escribir(WidgetTester tester, String campo, String valor) async {
 Future<void> entrarYSalir(WidgetTester tester, String campo) async {
   final finder = find.bySemanticsLabel(campo);
   await tester.ensureVisible(finder);
+  await tester.pumpAndSettle();
   await tester.tap(finder);
   await tester.pumpAndSettle();
   FocusManager.instance.primaryFocus?.unfocus();

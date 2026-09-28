@@ -32,7 +32,8 @@ class UsuariosSql:
     def perfil_activo(self, uid: str) -> Perfil | None:
         fila = self._conn.execute(
             text(
-                "SELECT id, firebase_uid, nombre, apellido, correo, rol FROM usuario"
+                "SELECT id, firebase_uid, nombre, apellido, correo, rol, dni, fecha_nacimiento"
+                " FROM usuario"
                 " WHERE firebase_uid = :uid AND activo"
             ),
             {"uid": uid},
@@ -47,6 +48,8 @@ class UsuariosSql:
             apellido=fila.apellido,
             correo=fila.correo,
             rol=fila.rol,
+            dni=fila.dni,
+            fecha_nacimiento=fila.fecha_nacimiento,
         )
 
     def id_activo_por_correo(self, correo: str) -> int | None:

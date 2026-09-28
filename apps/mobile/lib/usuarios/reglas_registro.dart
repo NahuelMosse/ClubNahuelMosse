@@ -83,3 +83,17 @@ String fechaIso(DateTime fecha) =>
 /// La fecha como se escribe en el campo (`DD / MM / AAAA`), la inversa de [leerFecha].
 String formatearFecha(DateTime fecha) =>
     '${_dos(fecha.day)} / ${_dos(fecha.month)} / ${fecha.year}';
+
+/// La fecha para leer, como en el perfil (`DD/MM/AAAA`).
+String fechaLegible(DateTime fecha) =>
+    '${_dos(fecha.day)}/${_dos(fecha.month)}/${fecha.year}';
+
+/// El DNI con los puntos de mil, como se lee en el documento: `42.118.507`.
+String dniLegible(String dni) {
+  final digitos = normalizarDni(dni);
+  final grupos = <String>[];
+  for (var fin = digitos.length; fin > 0; fin -= 3) {
+    grupos.insert(0, digitos.substring(fin - 3 < 0 ? 0 : fin - 3, fin));
+  }
+  return grupos.join('.');
+}

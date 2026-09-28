@@ -98,10 +98,18 @@ class BotonTexto extends StatelessWidget {
 
 /// `Btn/Type=Secondary`: pill de 52 con borde, para acciones que no son la principal.
 class BotonContorno extends StatelessWidget {
-  const BotonContorno({super.key, required this.texto, required this.alTocar});
+  const BotonContorno({
+    super.key,
+    required this.texto,
+    required this.alTocar,
+    this.peligro = false,
+  });
 
   final String texto;
   final VoidCallback? alTocar;
+
+  /// `Btn/Type=Danger-Outline`: borde y texto rojos, para acciones que no se deshacen.
+  final bool peligro;
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +122,11 @@ class BotonContorno extends StatelessWidget {
       child: OutlinedButton(
         onPressed: alTocar,
         style: OutlinedButton.styleFrom(
-          foregroundColor: p.textPrimary,
-          side: BorderSide(color: p.borderControl, width: 1.5),
+          foregroundColor: peligro ? p.stateDangerInk : p.textPrimary,
+          side: BorderSide(
+            color: peligro ? p.stateDanger : p.borderControl,
+            width: 1.5,
+          ),
           shape: const StadiumBorder(),
           textStyle: Textos.boton,
           padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),

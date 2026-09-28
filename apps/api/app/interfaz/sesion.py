@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -46,6 +47,8 @@ class PerfilPropio(BaseModel):
     apellido: str
     correo: str
     rol: Rol
+    dni: str
+    fecha_nacimiento: date
 
 
 @router.get(
@@ -56,7 +59,12 @@ class PerfilPropio(BaseModel):
 )
 def perfil_propio(perfil: Annotated[Perfil, Depends(usuario_actual)]) -> PerfilPropio:
     return PerfilPropio(
-        nombre=perfil.nombre, apellido=perfil.apellido, correo=perfil.correo, rol=perfil.rol
+        nombre=perfil.nombre,
+        apellido=perfil.apellido,
+        correo=perfil.correo,
+        rol=perfil.rol,
+        dni=perfil.dni,
+        fecha_nacimiento=perfil.fecha_nacimiento,
     )
 
 

@@ -1,3 +1,5 @@
+from datetime import date
+
 import pytest
 
 from app.aplicacion.errores import NoAutenticado
@@ -5,7 +7,14 @@ from app.aplicacion.sesion import perfil_autenticado
 from app.dominio.usuarios import Perfil
 
 PERFIL = Perfil(
-    id=7, uid="u", nombre="Lucía", apellido="Gómez", correo="lucia@correo.com", rol="usuario"
+    id=7,
+    uid="u",
+    nombre="Lucía",
+    apellido="Gómez",
+    correo="lucia@correo.com",
+    rol="usuario",
+    dni="30111222",
+    fecha_nacimiento=date(1998, 11, 2),
 )
 
 

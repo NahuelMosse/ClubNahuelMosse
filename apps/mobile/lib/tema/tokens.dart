@@ -8,6 +8,7 @@ class Paleta extends ThemeExtension<Paleta> {
     required this.bgSurface,
     required this.bgSurfaceRaised,
     required this.bgScrim,
+    required this.bgHeroFrom,
     required this.textPrimary,
     required this.textSecondary,
     required this.textMuted,
@@ -37,6 +38,7 @@ class Paleta extends ThemeExtension<Paleta> {
     bgSurface: Color(0xFF141416),
     bgSurfaceRaised: Color(0xFF1E1E21),
     bgScrim: Color(0xA8000000),
+    bgHeroFrom: Color(0xFF1A3329),
     textPrimary: Color(0xFFFFFFFF),
     textSecondary: Color(0xFFA1A1AA),
     textMuted: Color(0xFF85858C),
@@ -66,6 +68,7 @@ class Paleta extends ThemeExtension<Paleta> {
     bgSurface: Color(0xFFF4F4F6),
     bgSurfaceRaised: Color(0xFFFFFFFF),
     bgScrim: Color(0x73000000),
+    bgHeroFrom: Color(0xFFEAF8D8),
     textPrimary: Color(0xFF0A0A0B),
     textSecondary: Color(0xFF52525B),
     textMuted: Color(0xFF6B6B75),
@@ -94,6 +97,9 @@ class Paleta extends ThemeExtension<Paleta> {
   final Color bgSurface;
   final Color bgSurfaceRaised;
   final Color bgScrim;
+
+  /// Arriba del degradé de las cabeceras con foto o color, como la del perfil.
+  final Color bgHeroFrom;
   final Color textPrimary;
   final Color textSecondary;
   final Color textMuted;

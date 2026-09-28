@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
@@ -260,6 +261,7 @@ void main() {
           App(
             api: api,
             sesion: SesionFalsa(null),
+            apariencia: Apariencia.enMemoria(),
             inicio: '/recuperar?codigo=viejo',
           ),
         );
@@ -286,6 +288,7 @@ void main() {
             'PUT /recuperacion': (204, ''),
           }),
           sesion: sesion,
+          apariencia: Apariencia.enMemoria(),
           inicio: '/recuperar?codigo=abc',
         ),
       );

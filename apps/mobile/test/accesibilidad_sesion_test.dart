@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
@@ -42,7 +43,10 @@ void main() {
     'recuperar contraseña': () => PantallaRecuperarContrasena(
       recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
     ),
-    'Mi perfil': () => PantallaMiPerfil(sesion: SesionFalsa(perfilUsuario)),
+    'Mi perfil': () => PantallaMiPerfil(
+      sesion: SesionFalsa(perfilUsuario),
+      apariencia: Apariencia.enMemoria(),
+    ),
     'la contraseña nueva': () => PantallaNuevaContrasena(
       recuperacion: Recuperacion(apiFalsa(codigo: 204, cuerpo: '')),
       sesion: SesionFalsa(null),

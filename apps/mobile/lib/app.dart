@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'admin/pantalla_panel_admin.dart';
+import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
 import 'reservas/pantalla_mis_reservas.dart';
@@ -10,6 +11,7 @@ import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_nueva_contrasena.dart';
 import 'sesion/pantalla_recuperar_contrasena.dart';
 import 'sesion/recuperacion.dart';
+import 'sedes/pantalla_sedes.dart';
 import 'sesion/sesion.dart';
 import 'tema/tema.dart';
 import 'usuarios/pantalla_cambiar_contrasena.dart';
@@ -22,11 +24,13 @@ class App extends StatefulWidget {
     super.key,
     required this.api,
     required this.sesion,
+    required this.apariencia,
     this.inicio = '/',
   });
 
   final ClienteApi api;
   final Sesion sesion;
+  final Apariencia apariencia;
 
   /// Dónde arranca la app: el login, o el inicio de quien ya tenía la sesión abierta.
   final String inicio;
@@ -41,6 +45,7 @@ class _AppState extends State<App> {
     '/inicio': Rol.usuario,
     '/perfil': Rol.usuario,
     '/perfil/contrasena': Rol.usuario,
+    '/sedes': Rol.usuario,
     '/reservas': Rol.usuario,
     '/admin': Rol.admin,
   };
@@ -98,7 +103,10 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/perfil',
-        builder: (context, _) => PantallaMiPerfil(sesion: widget.sesion),
+        builder: (context, _) => PantallaMiPerfil(
+          sesion: widget.sesion,
+          apariencia: widget.apariencia,
+        ),
         routes: [
           GoRoute(
             path: 'contrasena',
@@ -107,6 +115,7 @@ class _AppState extends State<App> {
           ),
         ],
       ),
+      GoRoute(path: '/sedes', builder: (context, _) => const PantallaSedes()),
       GoRoute(
         path: '/reservas',
         builder: (context, _) => const PantallaMisReservas(),
@@ -127,16 +136,19 @@ class _AppState extends State<App> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'ClubNahuelMosse',
-      debugShowCheckedModeBanner: false,
-      theme: temaClaro,
-      darkTheme: temaOscuro,
-      themeMode: ThemeMode.dark,
-      routerConfig: _rutas,
-      locale: const Locale('es', 'AR'),
-      supportedLocales: const [Locale('es', 'AR')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    return ListenableBuilder(
+      listenable: widget.apariencia,
+      builder: (context, _) => MaterialApp.router(
+        title: 'ClubNahuelMosse',
+        debugShowCheckedModeBanner: false,
+        theme: temaClaro,
+        darkTheme: temaOscuro,
+        themeMode: widget.apariencia.modo,
+        routerConfig: _rutas,
+        locale: const Locale('es', 'AR'),
+        supportedLocales: const [Locale('es', 'AR')],
+        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+      ),
     );
   }
 }
