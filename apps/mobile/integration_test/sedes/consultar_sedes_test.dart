@@ -63,7 +63,7 @@ void main() {
       await entrarA(tester, nombre);
 
       // Verifica: la sede muestra su portada con el contador y cada cancha con sus datos.
-      await esperarA(tester, find.text('2 CANCHAS'));
+      await esperarA(tester, find.text('2 CANCHAS · TODOS LOS DEPORTES'));
       expect(find.text(nombre.toUpperCase()), findsOneWidget);
       expect(
         find.bySemanticsLabel(
@@ -106,7 +106,7 @@ void main() {
         ),
       );
       await entrarA(tester, nombre);
-      await esperarA(tester, find.text('1 CANCHA'));
+      await esperarA(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
       expect(find.text(cancha), findsOneWidget);
       semantica.dispose();
     },
@@ -122,7 +122,7 @@ void main() {
     await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
     await abrirSedes(tester);
     await entrarA(tester, nombre);
-    await esperarA(tester, find.text('1 CANCHA'));
+    await esperarA(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
 
     await tocar(tester, 'VER HORARIOS / RESERVAR');
 
@@ -203,7 +203,7 @@ void main() {
       await esperarA(tester, find.text('Error de conexión'));
       api.estado = EstadoApi.normal;
       await tocar(tester, 'REINTENTAR');
-      await esperarA(tester, find.text('1 CANCHA'));
+      await esperarA(tester, find.text('1 CANCHA · TODOS LOS DEPORTES'));
       expect(find.text(cancha), findsOneWidget);
       semantica.dispose();
     },
