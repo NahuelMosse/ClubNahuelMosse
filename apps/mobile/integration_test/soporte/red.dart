@@ -40,7 +40,21 @@ class ApiIntermedia {
 
   String get url => 'http://127.0.0.1:${_servidor.port}';
 
+  /// Un reenvío que se corta a mitad de camino (la API cierra la conexión) llega a la app
+  /// como una red que se cayó, y no como un error del escenario que esté corriendo.
   Future<void> _atender(HttpRequest pedido) async {
+    try {
+      await _reenviar(pedido);
+    } on Object {
+      try {
+        (await pedido.response.detachSocket(writeHeaders: false)).destroy();
+      } on Object {
+        // La respuesta ya había empezado a salir: la conexión se cierra con ella.
+      }
+    }
+  }
+
+  Future<void> _reenviar(HttpRequest pedido) async {
     switch (estado) {
       case EstadoApi.sinRed:
         // La conexión se corta sin respuesta, como cuando se va la señal.
