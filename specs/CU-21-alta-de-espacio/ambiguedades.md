@@ -35,3 +35,11 @@ CU-21-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-21-AMB-07 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)
 CU-21-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-21-AMB-08 · 2026-09-27 · resuelta · cada cancha es un espacio; deporte y tipo salen de un catálogo fijo; el nombre lleva la altura, sin tildes ni espacios; el número no se reutiliza; el nombre no cambia si se edita la sede; el alta pide techada o al aire libre e iluminación (decisión 8)
+CU-21-AMB-09 · 2026-09-28 · abierta · el CU (FA3) pide «No se pudo guardar el espacio deportivo…» en un Snackbar-Error; el prototipo usa los overlays compartidos de conexión y servidor
+CU-21-AMB-10 · 2026-09-28 · abierta · el CU (FA2) deja «Guardar espacio» deshabilitado; ¿se puede tocar para ver qué falta, como en el alta de sede?
+CU-21-AMB-01 · 2026-09-28 · vencida → CU-21-SUP-01 · sin sedes, el campo SEDE dice «Todavía no hay sedes» y no se puede guardar; «ALTA ESPACIO» sigue a la vista
+CU-21-AMB-02 · 2026-09-28 · vencida → CU-21-SUP-02 · el precio por hora es en pesos enteros, mayor a cero y hasta $ 9.999.999
+CU-21-AMB-04 · 2026-09-28 · vencida → CU-21-SUP-03 · los espacios se listan por sede (por nombre de sede) y dentro de cada sede por nombre de espacio
+CU-21-AMB-08 · 2026-09-28 · vencida → CU-21-SUP-04 · el catálogo es el del prototipo más el pádel del CU: Fútbol (F5 Fútbol 5, F7 Fútbol 7, F8 Fútbol 8, F11 Fútbol 11), Tenis (PDL Polvo de ladrillo, CEM Cemento), Pádel (PAD Pádel), Vóley (IND Indoor, PLA Vóley playa), Hockey (H7 Hockey 7) y Golf (DR Driving range, 9H 9 hoyos); vive en el código de la API y la app lo pide
+CU-21-AMB-09 · 2026-09-28 · vencida → CU-21-SUP-05 · los errores de conexión y del servidor usan los overlays compartidos, como el prototipo (decisión 12); los datos quedan en el formulario
+CU-21-AMB-10 · 2026-09-28 · vencida → CU-21-SUP-06 · GUARDAR ESPACIO se ve al 40 % mientras falten datos pero se puede tocar: no envía y marca cada campo que falta con «Este campo es obligatorio», igual que el alta de sede (CU-17-SUP-09)
