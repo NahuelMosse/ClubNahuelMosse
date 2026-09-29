@@ -38,3 +38,4 @@ CU-23-AMB-05 · 2026-09-30 · vencida → CU-23-SUP-02 · sólo un administrador
 CU-23-AMB-06 · 2026-09-30 · vencida → CU-23-SUP-03 · se puede dar de baja el último espacio de una sede: la sede sigue activa y se ve sin canchas (CU-16 FA1)
 CU-23-AMB-08 · 2026-09-30 · vencida → CU-23-SUP-04 · un espacio con una reserva activa que todavía no terminó no se da de baja (decisión 5, como CU-19-SUP-01): «No se puede dar de baja el espacio», con el mismo overlay de la sede (42:345)
 CU-23-AMB-09 · 2026-09-30 · vencida → CU-23-SUP-05 · el listado sin el espacio y un aviso abajo «El espacio fue dado de baja correctamente», como la baja de sede (CU-19-SUP-03); desde la edición (CU-22-SUP-04) termina en el listado
+CU-23-TESTS · 2026-09-30 · congelados en abb76a1 · 5 escenarios en rojo porque la tarjeta del espacio no tiene «Baja» ni existe DELETE /espacios/{id}
