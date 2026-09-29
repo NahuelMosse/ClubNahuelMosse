@@ -61,15 +61,28 @@ class HorariosSql:
         return [espacio_de_fila(f) for f in filas]
 
     def ocupadas(
-        self, espacio_id: int, desde: datetime, hasta: datetime
+        self,
+        espacio_id: int,
+        desde: datetime,
+        hasta: datetime,
+        salvo: tuple[int, int] | None = None,
     ) -> list[tuple[datetime, datetime]]:
+        reserva, usuario = salvo or (None, None)
         filas = self._conn.execute(
             text(
                 "SELECT inicio, fin FROM reserva"
                 " WHERE espacio_id = :id AND estado = 'activa'"
                 " AND inicio < :hasta AND fin > :desde"
+                " AND (CAST(:reserva AS bigint) IS NULL"
+                "      OR NOT (id = :reserva AND usuario_id = CAST(:usuario AS bigint)))"
             ),
-            {"id": espacio_id, "desde": desde, "hasta": hasta},
+            {
+                "id": espacio_id,
+                "desde": desde,
+                "hasta": hasta,
+                "reserva": reserva,
+                "usuario": usuario,
+            },
         ).all()
         self._conn.rollback()
         return [(f.inicio, f.fin) for f in filas]

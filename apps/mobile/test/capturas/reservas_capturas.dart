@@ -42,7 +42,10 @@ void main() {
         String proximasJson = '[]',
         String historialJson = '[]',
       }) {
-        final rutas = rutasDeSedes();
+        // La reserva de las 21 es la que se modifica: la grilla la da por libre.
+        final rutas = rutasDeSedes(
+          grilla: grillaJson(ocupadas: {9, 12, 16, 17}),
+        );
         return montarUsuario(
           tester,
           oscuro: oscuro,
@@ -77,6 +80,27 @@ void main() {
         await tester.tap(find.text('CANCELAR').first);
         await tester.pumpAndSettle();
         await capturar(tester, 'reservas/cancelar_${ancho}_$modo.png');
+      });
+
+      testWidgets('elegir el nuevo horario $ancho $modo', (tester) async {
+        await abrir(tester, proximasJson: proximas);
+        await tester.tap(find.text('MODIFICAR').first);
+        await tester.pumpAndSettle();
+        await capturar(tester, 'reservas/modificar_${ancho}_$modo.png');
+      });
+
+      testWidgets('confirmar el cambio $ancho $modo', (tester) async {
+        await abrir(tester, proximasJson: proximas);
+        await tester.tap(find.text('MODIFICAR').first);
+        await tester.pumpAndSettle();
+        final franja = find.text('19:00 – 20:00');
+        await tester.ensureVisible(franja);
+        await tester.pumpAndSettle();
+        await tester.tap(franja);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('CONTINUAR CON EL CAMBIO'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'reservas/confirmar_cambio_${ancho}_$modo.png');
       });
 
       testWidgets('historial $ancho $modo', (tester) async {

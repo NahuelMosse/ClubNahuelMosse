@@ -82,7 +82,11 @@ class _Horarios:
         return self._agenda
 
     def ocupadas(
-        self, espacio_id: int, desde: datetime, hasta: datetime
+        self,
+        espacio_id: int,
+        desde: datetime,
+        hasta: datetime,
+        salvo: tuple[int, int] | None = None,
     ) -> list[tuple[datetime, datetime]]:
         self.pedido = (desde, hasta)
         return []

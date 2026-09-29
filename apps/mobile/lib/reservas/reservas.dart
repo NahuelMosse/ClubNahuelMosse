@@ -27,6 +27,7 @@ class Reserva {
   const Reserva({
     required this.id,
     required this.espacioId,
+    required this.sedeId,
     required this.espacio,
     required this.deporte,
     required this.tipo,
@@ -42,6 +43,7 @@ class Reserva {
 
   final int id;
   final int espacioId;
+  final int sedeId;
 
   /// El nombre compuesto del espacio.
   final String espacio;
@@ -64,6 +66,7 @@ class Reserva {
     if (json case {
       'id': final int id,
       'espacio_id': final int espacioId,
+      'sede_id': final int sedeId,
       'espacio': final String espacio,
       'deporte': final String deporte,
       'tipo': final String tipo,
@@ -82,6 +85,7 @@ class Reserva {
       return Reserva(
         id: id,
         espacioId: espacioId,
+        sedeId: sedeId,
         espacio: espacio,
         deporte: deporte,
         tipo: tipo,
@@ -175,5 +179,39 @@ class Reservas {
     final cancelada = r.codigo == 200 ? Reserva.desdeJson(r.cuerpo) : null;
     if (cancelada == null) throw ErrorDelServidor(r.codigo);
     return cancelada;
+  }
+
+  /// Pasa [reserva] a la cancha, el día y la hora de [nueva], con la misma duración.
+  ///
+  /// Lanza [HorarioOcupado], [ReservaCambiada], [CanchaNoDisponible], [ReservaRechazada],
+  /// [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<Reserva> modificar(Reserva reserva, Eleccion nueva) async {
+    final f = nueva.fecha;
+    final r = await _api.post('/reservas/${reserva.id}/modificar', {
+      'espacio_id': nueva.cancha.id,
+      'fecha':
+          '${f.year}-${f.month.toString().padLeft(2, '0')}-'
+          '${f.day.toString().padLeft(2, '0')}',
+      'desde': nueva.inicio,
+    }, token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 404) throw const ReservaCambiada();
+    if (r.cuerpo case {'errores': final Map<String, Object?> errores}) {
+      if (r.codigo == 409) {
+        throw errores.containsKey('horario')
+            ? const HorarioOcupado()
+            : const ReservaCambiada();
+      }
+      if (r.codigo == 422) {
+        if (errores.containsKey('espacio_id')) throw const CanchaNoDisponible();
+        throw ReservaRechazada({
+          for (final MapEntry(:key, :value) in errores.entries)
+            if (value is String) key: value,
+        });
+      }
+    }
+    final modificada = r.codigo == 200 ? Reserva.desdeJson(r.cuerpo) : null;
+    if (modificada == null) throw ErrorDelServidor(r.codigo);
+    return modificada;
   }
 }

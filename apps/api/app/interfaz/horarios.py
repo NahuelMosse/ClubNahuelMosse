@@ -62,14 +62,22 @@ def _hora(momento: datetime) -> str:
     ),
 )
 def ver_horarios(
-    _: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
     fecha: Annotated[date | None, Query()] = None,
     horas: Annotated[int, Query(ge=MIN_HORAS, le=MAX_HORAS)] = MIN_HORAS,
+    reserva_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
 ) -> GrillaVista | JSONResponse:
     try:
-        g = horarios_disponibles(HorariosSql(conn), espacio_id, fecha, horas, datetime.now(ZONA))
+        g = horarios_disponibles(
+            HorariosSql(conn),
+            espacio_id,
+            fecha,
+            horas,
+            datetime.now(ZONA),
+            None if reserva_id is None else (reserva_id, perfil.id),
+        )
     except DatosInvalidos as e:
         return JSONResponse(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}

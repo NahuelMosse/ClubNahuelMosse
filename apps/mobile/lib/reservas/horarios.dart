@@ -109,12 +109,20 @@ class Horarios {
   ///
   /// Lanza [CanchaNoDisponible], [FechaVencida], [SesionVencida], [SinConexion] o
   /// [ErrorDelServidor].
-  Future<Grilla> de(int espacioId, {DateTime? fecha, int horas = 1}) async {
+  ///
+  /// [reservaId] es la reserva que se está modificando: no cuenta como ocupada.
+  Future<Grilla> de(
+    int espacioId, {
+    DateTime? fecha,
+    int horas = 1,
+    int? reservaId,
+  }) async {
     final dia = fecha;
     final consulta = Uri(
       path: '/espacios/$espacioId/horarios',
       queryParameters: {
         'horas': '$horas',
+        'reserva_id': ?reservaId?.toString(),
         if (dia != null)
           'fecha':
               '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'

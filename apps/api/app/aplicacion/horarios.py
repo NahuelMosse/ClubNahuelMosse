@@ -12,14 +12,24 @@ class Horarios(Protocol):
         ...
 
     def ocupadas(
-        self, espacio_id: int, desde: datetime, hasta: datetime
+        self,
+        espacio_id: int,
+        desde: datetime,
+        hasta: datetime,
+        salvo: tuple[int, int] | None = None,
     ) -> list[tuple[datetime, datetime]]:
-        """Inicio y fin de las reservas activas del espacio que pisan [desde, hasta)."""
+        """Inicio y fin de las reservas activas del espacio que pisan [desde, hasta), salvo
+        la reserva [salvo] = (número, usuario) si es de ese usuario."""
         ...
 
 
 def horarios_disponibles(
-    horarios: Horarios, espacio_id: int, fecha: date | None, horas: int, ahora: datetime
+    horarios: Horarios,
+    espacio_id: int,
+    fecha: date | None,
+    horas: int,
+    ahora: datetime,
+    salvo: tuple[int, int] | None = None,
 ) -> Grilla:
     """La grilla del espacio para [fecha] (hoy si no viene) con franjas de [horas].
 
@@ -35,5 +45,5 @@ def horarios_disponibles(
     if agenda is None:
         raise NoDisponible("el espacio no está activo")
     desde = datetime.combine(dia, datetime.min.time(), tzinfo=ahora.tzinfo)
-    ocupadas = horarios.ocupadas(espacio_id, desde, desde + timedelta(days=2))
+    ocupadas = horarios.ocupadas(espacio_id, desde, desde + timedelta(days=2), salvo)
     return grilla(agenda, dia, horas, ahora, ocupadas)

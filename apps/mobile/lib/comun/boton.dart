@@ -127,6 +127,7 @@ class BotonContorno extends StatelessWidget {
     required this.texto,
     required this.alTocar,
     this.peligro = false,
+    this.compacto = false,
   });
 
   final String texto;
@@ -134,6 +135,9 @@ class BotonContorno extends StatelessWidget {
 
   /// `Btn/Type=Danger-Outline`: borde y texto rojos, para acciones que no se deshacen.
   final bool peligro;
+
+  /// Menos aire a los costados, para dos botones lado a lado en un teléfono chico.
+  final bool compacto;
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +157,9 @@ class BotonContorno extends StatelessWidget {
           ),
           shape: const StadiumBorder(),
           textStyle: Textos.boton,
-          padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+          padding: EdgeInsets.symmetric(
+            horizontal: compacto ? Medidas.s8 : Medidas.s24,
+          ),
         ),
         child: Text(texto, textAlign: TextAlign.center),
       ),

@@ -16,7 +16,13 @@ from app.aplicacion.errores import (
     NoEncontrada,
     Prohibido,
 )
-from app.aplicacion.reservas import Cuando, cancelar_reserva, mis_reservas, reservar
+from app.aplicacion.reservas import (
+    Cuando,
+    cancelar_reserva,
+    mis_reservas,
+    modificar_reserva,
+    reservar,
+)
 from app.dominio.reservas import Estado, Reserva
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
@@ -34,6 +40,7 @@ _HORA = re.compile(r"\d{2}:\d{2}")
 class ReservaVista(BaseModel):
     id: int
     espacio_id: int
+    sede_id: int
     espacio: str
     deporte: str
     tipo: str
@@ -56,6 +63,7 @@ def _vista(r: Reserva) -> ReservaVista:
     return ReservaVista(
         id=r.id,
         espacio_id=r.espacio_id,
+        sede_id=r.sede_id,
         espacio=r.espacio,
         deporte=r.deporte,
         tipo=r.tipo,
@@ -193,5 +201,73 @@ def cancelar(
     except Cambiado:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
+        )
+    return _vista(reserva)
+
+
+class PedidoDeCambio(BaseModel):
+    espacio_id: int
+    fecha: date
+    desde: str
+
+
+@router.post(
+    "/reservas/{reserva_id}/modificar",
+    response_model=ReservaVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Un administrador no reserva"},
+        404: {"description": "No hay una reserva de quien pide con ese número"},
+        409: {
+            "model": Errores,
+            "description": "El horario nuevo se ocupó (`horario`) o la reserva ya no se puede "
+            "modificar (`reserva`)",
+        },
+        422: {"model": Errores},
+    },
+    summary="Modificar una reserva propia",
+    description=(
+        "Otra cancha del mismo tipo en la misma sede, otro día u otro horario, con la misma "
+        "duración. El horario anterior se libera sólo si el nuevo queda tomado; la reserva "
+        "conserva su número y el total pasa al precio de ahora del espacio. Repetir un cambio "
+        "que ya se hizo responde igual."
+    ),
+)
+def modificar(
+    pedido: PedidoDeCambio,
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> ReservaVista | Response:
+    try:
+        reserva = modificar_reserva(
+            ReservasSql(conn),
+            perfil,
+            reserva_id,
+            pedido.espacio_id,
+            pedido.fecha,
+            _leer_hora(pedido.desde),
+            datetime.now(ZONA),
+        )
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    except NoDisponible:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            content={"errores": {"espacio_id": NO_DISPONIBLE}},
+        )
+    except Cambiado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
+        )
+    except HorarioOcupado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content={"errores": {"horario": OCUPADO}}
         )
     return _vista(reserva)

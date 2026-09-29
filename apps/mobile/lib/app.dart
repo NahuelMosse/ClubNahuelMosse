@@ -27,6 +27,7 @@ import 'sesion/recuperacion.dart';
 import 'reservas/eleccion.dart';
 import 'reservas/horarios.dart';
 import 'reservas/pantalla_buscar_cancha.dart';
+import 'reservas/pantalla_confirmar_cambio.dart';
 import 'reservas/pantalla_confirmar_reserva.dart';
 import 'reservas/pantalla_horarios.dart';
 import 'sedes/pantalla_sede.dart';
@@ -232,6 +233,43 @@ class _AppState extends State<App> {
           sesion: widget.sesion,
         ),
         routes: [
+          GoRoute(
+            path: ':reserva/modificar',
+            // La confirmación está anidada acá y trae su propio extra.
+            redirect: (context, estado) => switch (estado.extra) {
+              Reserva() || (Reserva(), Eleccion()) => null,
+              _ => '/reservas',
+            },
+            builder: (context, estado) => switch (estado.extra) {
+              final Reserva reserva => PantallaHorarios(
+                sedeId: reserva.sedeId,
+                espacioId: reserva.espacioId,
+                sedes: _sedes,
+                espacios: _espacios,
+                horarios: _horarios,
+                sesion: widget.sesion,
+                modificando: reserva,
+              ),
+              _ => const SizedBox.shrink(),
+            },
+            routes: [
+              GoRoute(
+                path: 'confirmar',
+                redirect: (context, estado) =>
+                    estado.extra is (Reserva, Eleccion) ? null : '/reservas',
+                builder: (context, estado) => switch (estado.extra) {
+                  (final Reserva reserva, final Eleccion eleccion) =>
+                    PantallaConfirmarCambio(
+                      reserva: reserva,
+                      eleccion: eleccion,
+                      reservas: _reservas,
+                      sesion: widget.sesion,
+                    ),
+                  _ => const SizedBox.shrink(),
+                },
+              ),
+            ],
+          ),
           GoRoute(
             path: 'confirmada',
             redirect: (context, estado) =>

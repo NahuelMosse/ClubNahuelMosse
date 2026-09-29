@@ -18,7 +18,9 @@ import '../tema/tokens.dart';
 import 'eleccion.dart';
 import 'fechas.dart';
 import 'horarios.dart';
+import 'pantalla_confirmar_cambio.dart';
 import 'pantalla_confirmar_reserva.dart';
+import 'reservas.dart';
 
 const _minHoras = 1;
 const _maxHoras = 4;
@@ -38,6 +40,7 @@ class PantallaHorarios extends StatefulWidget {
     this.fecha,
     this.horas,
     this.inicio,
+    this.modificando,
   });
 
   final int sedeId;
@@ -53,6 +56,10 @@ class PantallaHorarios extends StatefulWidget {
   final int? horas;
   final String? inicio;
 
+  /// La reserva que se está modificando: se mantiene su duración, su franja se ve libre y
+  /// marcada, y CONTINUAR CON EL CAMBIO lleva a «Confirmá el cambio».
+  final Reserva? modificando;
+
   @override
   State<PantallaHorarios> createState() => _PantallaHorariosState();
 }
@@ -60,9 +67,13 @@ class PantallaHorarios extends StatefulWidget {
 class _PantallaHorariosState extends State<PantallaHorarios> {
   (Sede, List<Espacio>, Catalogo)? _datos;
   late int _elegida = widget.espacioId;
-  late DateTime? _fecha = widget.fecha;
-  late int _horas = switch (widget.horas) {
-    final h? when h >= _minHoras && h <= _maxHoras => h,
+  late DateTime? _fecha = switch (widget.modificando) {
+    final r? => _diaDe(r.inicio),
+    null => widget.fecha,
+  };
+  late int _horas = switch ((widget.modificando, widget.horas)) {
+    (final r?, _) => r.fin.difference(r.inicio).inHours,
+    (_, final h?) when h >= _minHoras && h <= _maxHoras => h,
     _ => _minHoras,
   };
   Grilla? _grilla;
@@ -74,7 +85,10 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   /// El día de hoy en el club, según la última grilla: FECHA sigue a la vista aunque la
   /// consulta siguiente falle.
   DateTime? _hoy;
-  late String? _inicio = widget.inicio;
+  late String? _inicio = switch (widget.modificando) {
+    final r? => _hhmm(r.inicio),
+    null => widget.inicio,
+  };
   bool _consultando = false;
   bool _fallo = false;
 
@@ -88,6 +102,21 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   }
 
   Espacio? get _cancha => _datos?.$2.where((c) => c.id == _elegida).firstOrNull;
+
+  /// La franja de [inicio] en la cancha y el día elegidos es la de la reserva que se
+  /// modifica.
+  bool _esLaActual(String inicio) => switch (widget.modificando) {
+    final r? =>
+      r.espacioId == _elegida &&
+          _fecha == _diaDe(r.inicio) &&
+          inicio == _hhmm(r.inicio),
+    null => false,
+  };
+
+  bool get _puedeSeguir {
+    final inicio = _inicio;
+    return inicio != null && !_consultando && !_esLaActual(inicio);
+  }
 
   Future<void> _cargar() async {
     setState(() => _fallo = false);
@@ -103,7 +132,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
           .firstOrNull;
       if (!mounted) return;
       if (sede == null || elegida == null) {
-        _yaNoEsta(sede == null);
+        await _yaNoEsta(sede == null);
         return;
       }
       setState(() {
@@ -144,6 +173,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
         _elegida,
         fecha: _fecha,
         horas: _horas,
+        reservaId: widget.modificando?.id,
       );
       if (!mounted || pedido != _pedido) return;
       setState(() {
@@ -159,7 +189,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       });
       return;
     } on CanchaNoDisponible {
-      if (mounted && pedido == _pedido) _yaNoEsta(false);
+      if (mounted && pedido == _pedido) await _yaNoEsta(false);
       return;
     } on FechaVencida {
       // El día elegido ya pasó (la pantalla quedó abierta de un día para otro): vuelve a hoy.
@@ -204,7 +234,13 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     }
   }
 
-  void _yaNoEsta(bool laSede) {
+  Future<void> _yaNoEsta(bool laSede) async {
+    // La reserva que se modifica ya no se puede pasar a esta cancha: vuelve a Mis reservas.
+    if (widget.modificando != null) {
+      await mostrarCambioMientrasTanto(context);
+      if (mounted) _salir(ResultadoDeModificar.cambio);
+      return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Esta cancha ya no está disponible')),
     );
@@ -243,21 +279,45 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     if (datos == null || cancha == null || fecha == null || franja == null) {
       return;
     }
+    final eleccion = Eleccion(
+      sede: datos.$1,
+      cancha: cancha,
+      tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
+      fecha: fecha,
+      inicio: franja.inicio,
+      fin: franja.fin,
+      horas: _horas,
+    );
+    if (widget.modificando case final reserva?) {
+      final resultado = await context.push<ResultadoDeModificar>(
+        '/reservas/${reserva.id}/modificar/confirmar',
+        extra: (reserva, eleccion),
+      );
+      if (!mounted) return;
+      if (resultado == ResultadoDeModificar.ocupado) {
+        setState(() => _inicio = null);
+        await _consultar();
+      } else if (resultado != null) {
+        _salir(resultado);
+      }
+      return;
+    }
     final resultado = await context.push<ResultadoDeConfirmar>(
       '/sedes/${widget.sedeId}/canchas/${widget.espacioId}/reservar',
-      extra: Eleccion(
-        sede: datos.$1,
-        cancha: cancha,
-        tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
-        fecha: fecha,
-        inicio: franja.inicio,
-        fin: franja.fin,
-        horas: _horas,
-      ),
+      extra: eleccion,
     );
     if (resultado == ResultadoDeConfirmar.ocupado && mounted) {
       setState(() => _inicio = null);
       await _consultar();
+    }
+  }
+
+  /// Vuelve a Mis reservas con cómo terminó la modificación.
+  void _salir([ResultadoDeModificar? resultado]) {
+    if (context.canPop()) {
+      context.pop(resultado);
+    } else {
+      context.go('/reservas');
     }
   }
 
@@ -266,12 +326,16 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     final p = context.paleta;
     final datos = _datos;
     final cancha = _cancha;
+    final modificando = widget.modificando;
     return Scaffold(
       backgroundColor: p.bgBase,
       bottomNavigationBar: datos == null
           ? null
           : _BarraAccion(
-              alContinuar: _inicio != null && !_consultando ? _continuar : null,
+              texto: modificando == null
+                  ? 'CONTINUAR'
+                  : 'CONTINUAR CON EL CAMBIO',
+              alContinuar: _puedeSeguir ? _continuar : null,
             ),
       body: datos == null || cancha == null
           ? SafeArea(
@@ -289,10 +353,16 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                     sede: datos.$1,
                     tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
                     deporte: cancha.deporte,
-                    volverA: widget.fecha == null ? 'Sedes' : 'Buscar cancha',
-                    alVolver: () => context.canPop()
-                        ? context.pop()
-                        : context.go('/sedes/${widget.sedeId}'),
+                    volverA: modificando != null
+                        ? 'Mis reservas'
+                        : widget.fecha == null
+                        ? 'Sedes'
+                        : 'Buscar cancha',
+                    alVolver: modificando != null
+                        ? _salir
+                        : () => context.canPop()
+                              ? context.pop()
+                              : context.go('/sedes/${widget.sedeId}'),
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -304,6 +374,17 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        if (modificando != null) ...[
+                          _Nota(
+                            texto:
+                                'Estás modificando tu reserva del '
+                                '${fechaLarga(modificando.inicio).split(' de ').first}, '
+                                '${_hhmm(modificando.inicio)} – ${_hhmm(modificando.fin)}. '
+                                'Mantenés la misma duración de ${duracion(_horas)} '
+                                'y el horario anterior se libera al guardar.',
+                          ),
+                          const SizedBox(height: Medidas.s24),
+                        ],
                         _Seccion(
                           titulo: 'SELECCIONÁ CANCHA',
                           child: _DeAPares(
@@ -326,26 +407,27 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                               alElegir: _elegirFecha,
                             ),
                           ),
-                          _Seccion(
-                            titulo: 'DURACIÓN',
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _Duracion(
-                                  horas: _horas,
-                                  alCambiar: _cambiarHoras,
-                                ),
-                                const SizedBox(height: Medidas.s8),
-                                Text(
-                                  'Horas completas, de $_minHoras a $_maxHoras h. '
-                                  'La sede cierra a las ${datos.$1.cierre}.',
-                                  style: Textos.leyenda.copyWith(
-                                    color: p.textSecondary,
+                          if (modificando == null)
+                            _Seccion(
+                              titulo: 'DURACIÓN',
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  _Duracion(
+                                    horas: _horas,
+                                    alCambiar: _cambiarHoras,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: Medidas.s8),
+                                  Text(
+                                    'Horas completas, de $_minHoras a $_maxHoras h. '
+                                    'La sede cierra a las ${datos.$1.cierre}.',
+                                    style: Textos.leyenda.copyWith(
+                                      color: p.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                         _grillaOAviso(p),
                         if ((_grilla, _deLaGrilla) case (
@@ -430,6 +512,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                       for (final f in grilla.franjas)
                         _TarjetaFranja(
                           franja: f,
+                          actual: _esLaActual(f.inicio),
                           elegida: f.inicio == _inicio,
                           alTocar: f.disponible
                               ? () => setState(() => _inicio = f.inicio)
@@ -865,26 +948,41 @@ class _TarjetaFranja extends StatelessWidget {
     required this.franja,
     required this.elegida,
     required this.alTocar,
+    this.actual = false,
   });
 
   final Franja franja;
   final bool elegida;
   final VoidCallback? alTocar;
 
+  /// Es el horario de la reserva que se modifica.
+  final bool actual;
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
+    final tinta = elegida ? p.accentOn : p.textPrimary;
     return _Elegible(
-      etiqueta: franja.texto,
+      etiqueta: actual ? '${franja.texto} (actual)' : franja.texto,
       elegido: elegida,
       alTocar: alTocar,
       atenuado: !franja.disponible,
       child: Center(
-        child: Text(
-          franja.texto,
-          style: Textos.cuerpoFuerte.copyWith(
-            color: elegida ? p.accentOn : p.textPrimary,
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              franja.texto,
+              style: Textos.cuerpoFuerte.copyWith(color: tinta),
+            ),
+            if (actual)
+              Text(
+                '(actual)',
+                style: Textos.leyenda.copyWith(
+                  color: elegida ? p.accentOn : p.textSecondary,
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -1025,8 +1123,9 @@ class _Resumen extends StatelessWidget {
 }
 
 class _BarraAccion extends StatelessWidget {
-  const _BarraAccion({required this.alContinuar});
+  const _BarraAccion({required this.texto, required this.alContinuar});
 
+  final String texto;
   final VoidCallback? alContinuar;
 
   @override
@@ -1046,9 +1145,18 @@ class _BarraAccion extends StatelessWidget {
             Medidas.s24,
             Medidas.s16,
           ),
-          child: BotonPrimario(texto: 'CONTINUAR', alTocar: alContinuar),
+          child: BotonPrimario(texto: texto, alTocar: alContinuar),
         ),
       ),
     );
   }
 }
+
+/// El día de [momento], en la hora del club.
+DateTime _diaDe(DateTime momento) =>
+    DateTime.utc(momento.year, momento.month, momento.day);
+
+/// «21:00».
+String _hhmm(DateTime momento) =>
+    '${momento.hour.toString().padLeft(2, '0')}:'
+    '${momento.minute.toString().padLeft(2, '0')}';

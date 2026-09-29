@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from typing import Literal, Protocol
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible, Prohibido
+from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.dominio.horarios import Agenda, rango, validar_reserva
 from app.dominio.reservas import Reserva
 from app.dominio.usuarios import Perfil
@@ -24,6 +24,32 @@ class Reservas(Protocol):
         self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
     ) -> Reserva | None:
         """La reserva activa que la misma persona hizo hace un momento con esos datos."""
+        ...
+
+    def propia(self, usuario_id: int, reserva_id: int) -> Reserva | None:
+        """La reserva [reserva_id] si es de [usuario_id]."""
+        ...
+
+    def tipo_de_espacio(self, espacio_id: int) -> tuple[int, str, str] | None:
+        """Sede, deporte y tipo del espacio."""
+        ...
+
+    def mover(
+        self,
+        usuario_id: int,
+        reserva_id: int,
+        antes: tuple[int, datetime],
+        espacio_id: int,
+        inicio: datetime,
+        fin: datetime,
+    ) -> Reserva:
+        """Pasa la reserva, que estaba en [antes] (espacio e inicio), a [espacio_id] de
+        [inicio] a [fin], con el precio de ahora de ese espacio. El horario anterior se libera
+        sólo si el nuevo queda tomado.
+
+        Lanza `NoEncontrada`, `Cambiado` (ya no activa, empezada o ya no en [antes]),
+        `NoDisponible` (el espacio nuevo ya no está) y `HorarioOcupado`.
+        """
         ...
 
     def cancelar(self, usuario_id: int, reserva_id: int) -> Reserva:
@@ -90,3 +116,50 @@ def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Res
     """Cancela una reserva propia que todavía no empezó (CU-10, decisión 13: hasta el
     inicio, sin anticipación mínima)."""
     return reservas.cancelar(perfil.id, reserva_id)
+
+
+def modificar_reserva(
+    reservas: Reservas,
+    perfil: Perfil,
+    reserva_id: int,
+    espacio_id: int,
+    fecha: date,
+    desde: time | None,
+    ahora: datetime,
+) -> Reserva:
+    """Cambia la cancha, el día o el horario de una reserva propia, con la misma duración
+    (CU-11). La reserva conserva su número.
+
+    Lanza `Prohibido` si quien pide es administrador, `NoEncontrada` si la reserva no es
+    suya, `DatosInvalidos` si el horario nuevo no vale, y `NoDisponible`, `Cambiado` y
+    `HorarioOcupado` como `Reservas.mover`.
+    """
+    if perfil.rol != "usuario":
+        raise Prohibido("sólo un usuario reserva")
+    if desde is None:
+        raise DatosInvalidos({"desde": "Elegí una hora en punto"})
+    actual = reservas.propia(perfil.id, reserva_id)
+    if actual is None:
+        raise NoEncontrada("no hay una reserva suya con ese número")
+    inicio, _ = rango(fecha, desde, desde, ahora.tzinfo)
+    # Un reintento después de un corte llega con la reserva ya movida: se devuelve como está.
+    if actual.estado == "activa" and (actual.espacio_id, actual.inicio) == (espacio_id, inicio):
+        return actual
+    nuevo = reservas.tipo_de_espacio(espacio_id)
+    if nuevo is None or nuevo != (actual.sede_id, actual.deporte, actual.tipo):
+        raise DatosInvalidos({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
+    agenda = reservas.agenda(espacio_id)
+    if agenda is None:
+        raise NoDisponible("el espacio no está activo")
+    horas = int((actual.fin - actual.inicio).total_seconds()) // 3600
+    errores = validar_reserva(agenda, fecha, desde, horas, ahora)
+    if errores:
+        raise DatosInvalidos(errores)
+    return reservas.mover(
+        perfil.id,
+        reserva_id,
+        (actual.espacio_id, actual.inicio),
+        espacio_id,
+        inicio,
+        inicio + timedelta(hours=horas),
+    )

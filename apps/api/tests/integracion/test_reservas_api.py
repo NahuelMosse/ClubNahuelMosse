@@ -281,3 +281,150 @@ def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
     assert cancelar(mia) == 409
     assert cancelar(anulada) == 409
     assert api.post(f"/reservas/{mia}/cancelar").status_code == 401
+
+
+def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    una = _espacio_nuevo(api, token_admin, sede_id)
+    otra = api.post(
+        "/espacios",
+        headers=_con(token_admin),
+        json={
+            "sede_id": sede_id,
+            "deporte": "Futbol",
+            "tipo": "F5",
+            "techada": True,
+            "iluminada": True,
+            "precio_por_hora": 43000,
+        },
+    ).json()["id"]
+    manana = (date.today() + timedelta(days=1)).isoformat()
+    reserva = api.post(
+        "/reservas",
+        headers=_con(token_usuario),
+        json={"espacio_id": una, "fecha": manana, "desde": "21:00", "horas": 2},
+    ).json()
+
+    r = api.post(
+        f"/reservas/{reserva['id']}/modificar",
+        headers=_con(token_usuario),
+        json={"espacio_id": otra, "fecha": manana, "desde": "18:00"},
+    )
+
+    assert r.status_code == 200, r.text
+    assert (r.json()["id"], r.json()["espacio_id"], r.json()["total"]) == (
+        reserva["id"],
+        otra,
+        86000,
+    )
+    # El horario anterior quedó libre y la grilla de la cancha nueva lo ignora sólo para su
+    # dueño.
+    libre = api.post(
+        "/reservas",
+        headers=_con(token_usuario),
+        json={"espacio_id": una, "fecha": manana, "desde": "21:00", "horas": 1},
+    )
+    assert libre.status_code == 201
+    grilla = api.get(
+        f"/espacios/{otra}/horarios",
+        headers=_con(token_usuario),
+        params={"fecha": manana, "horas": 2, "reserva_id": reserva["id"]},
+    ).json()
+    assert {f["inicio"]: f["disponible"] for f in grilla["franjas"]}["18:00"] is True
+    ajena = api.get(
+        f"/espacios/{otra}/horarios",
+        headers=_con(token_admin),
+        params={"fecha": manana, "horas": 2, "reserva_id": reserva["id"]},
+    ).json()
+    assert {f["inicio"]: f["disponible"] for f in ajena["franjas"]}["18:00"] is False
+
+
+def test_modificar_rechaza_lo_que_no_corresponde(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    espacio = _espacio_nuevo(api, token_admin, sede_id)
+    hockey = api.post(
+        "/espacios",
+        headers=_con(token_admin),
+        json={
+            "sede_id": sede_id,
+            "deporte": "Hockey",
+            "tipo": "H7",
+            "techada": False,
+            "iluminada": True,
+            "precio_por_hora": 50000,
+        },
+    ).json()["id"]
+    manana = (date.today() + timedelta(days=1)).isoformat()
+    mia = api.post(
+        "/reservas",
+        headers=_con(token_usuario),
+        json={"espacio_id": espacio, "fecha": manana, "desde": "10:00", "horas": 1},
+    ).json()["id"]
+    _reservar(motor, _yo(api, motor, token_admin), espacio, date.today() + timedelta(days=1), 12)
+
+    def cambiar(cuerpo: dict[str, object], token: str = token_usuario) -> tuple[int, object]:
+        r = api.post(f"/reservas/{mia}/modificar", headers=_con(token), json=cuerpo)
+        return r.status_code, r.json() if r.content else None
+
+    # El mismo horario es un reintento de un cambio que ya se hizo: responde la reserva.
+    mismo = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "10:00"})
+    assert mismo[0] == 200
+    assert isinstance(mismo[1], dict)
+    assert mismo[1]["id"] == mia
+    assert cambiar({"espacio_id": hockey, "fecha": manana, "desde": "10:00"})[0] == 422
+    ocupado = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "12:00"})
+    assert ocupado == (409, {"errores": {"horario": "Ese horario se ocupó"}})
+    assert (
+        cambiar({"espacio_id": espacio, "fecha": manana, "desde": "15:00"}, token_admin)[0] == 403
+    )
+    with motor.begin() as conn:
+        conn.execute(
+            text("UPDATE reserva SET estado = 'anulada', motivo = 'lluvia' WHERE id = :id"),
+            {"id": mia},
+        )
+    cambio = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "15:00"})
+    assert cambio == (409, {"errores": {"reserva": "Esto cambió mientras tanto"}})
+
+
+def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    a = _espacio_nuevo(api, token_admin, sede_id)
+    b = _espacio_nuevo(api, token_admin, sede_id)
+    yo = _yo(api, motor, token_usuario)
+    manana = datetime.combine(
+        date.today() + timedelta(days=1), time(0), tzinfo=ZoneInfo("America/Argentina/Buenos_Aires")
+    )
+    for hora in range(8, 20, 2):
+        diez, once = manana + timedelta(hours=hora), manana + timedelta(hours=hora + 1)
+        hora_ = timedelta(hours=1)
+        with motor.connect() as conn:
+            r1 = ReservasSql(conn).insertar(yo, a, diez, diez + hora_).id
+            r2 = ReservasSql(conn).insertar(yo, b, once, once + hora_).id
+        barrera = Barrier(2)
+
+        # Cada una quiere el lugar de la otra, que sigue tomado: las dos terminan en ocupado.
+        def mover(
+            cambio: tuple[int, tuple[int, datetime], int, datetime],
+            barrera: Barrier = barrera,
+            hora_: timedelta = hora_,
+        ) -> str:
+            reserva, antes, espacio, inicio = cambio
+            with motor.connect() as conn:
+                barrera.wait()
+                try:
+                    ReservasSql(conn).mover(yo, reserva, antes, espacio, inicio, inicio + hora_)
+                except HorarioOcupado:
+                    return "ocupado"
+                return "movida"
+
+        with ThreadPoolExecutor(2) as hilos:
+            resultados = list(
+                hilos.map(mover, [(r1, (a, diez), b, once), (r2, (b, once), a, diez)])
+            )
+        assert resultados == ["ocupado", "ocupado"]

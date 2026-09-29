@@ -11,7 +11,7 @@ from app.dominio.reservas import Reserva
 from app.infraestructura.horarios import HorariosSql
 
 _COLUMNAS = (
-    "r.id, r.espacio_id, e.nombre AS espacio, e.deporte, e.tipo,"
+    "r.id, r.espacio_id, e.sede_id, e.nombre AS espacio, e.deporte, e.tipo,"
     " s.nombre AS sede, s.calle || ' ' || s.altura AS direccion, r.inicio, r.fin,"
     " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
     " (r.estado_actual = 'activa' AND r.inicio > now()) AS cancelable"
@@ -24,6 +24,7 @@ def _reserva(f: Any) -> Reserva:
     return Reserva(
         id=int(f.id),
         espacio_id=int(f.espacio_id),
+        sede_id=int(f.sede_id),
         espacio=f.espacio,
         deporte=f.deporte,
         tipo=f.tipo,
@@ -89,6 +90,105 @@ class ReservasSql:
             {"id": reserva_id},
         ).one()
         return _reserva(fila)
+
+    def propia(self, usuario_id: int, reserva_id: int) -> Reserva | None:
+        fila = self._conn.execute(
+            text(
+                f"SELECT {_COLUMNAS} FROM reserva_con_estado r JOIN espacio e"
+                " ON e.id = r.espacio_id JOIN sede s ON s.id = e.sede_id"
+                " WHERE r.id = :id AND r.usuario_id = :usuario"
+            ),
+            {"id": reserva_id, "usuario": usuario_id},
+        ).first()
+        self._conn.rollback()
+        return None if fila is None else _reserva(fila)
+
+    def tipo_de_espacio(self, espacio_id: int) -> tuple[int, str, str] | None:
+        fila = self._conn.execute(
+            text("SELECT sede_id, deporte, tipo FROM espacio WHERE id = :id"),
+            {"id": espacio_id},
+        ).first()
+        self._conn.rollback()
+        return None if fila is None else (int(fila.sede_id), fila.deporte, fila.tipo)
+
+    def mover(
+        self,
+        usuario_id: int,
+        reserva_id: int,
+        antes: tuple[int, datetime],
+        espacio_id: int,
+        inicio: datetime,
+        fin: datetime,
+    ) -> Reserva:
+        datos = {
+            "usuario": usuario_id,
+            "id": reserva_id,
+            "antes": antes[0],
+            "desde_antes": antes[1],
+            "espacio": espacio_id,
+            "inicio": inicio,
+            "fin": fin,
+        }
+        try:
+            # El mismo orden que al reservar, la sede compartida y después los espacios
+            # exclusivos, y recién entonces la reserva. Los dos espacios van por número: dos
+            # cambios cruzados entre las mismas canchas se esperan en vez de trabarse.
+            sede = self._conn.execute(
+                text(
+                    "SELECT s.id FROM sede s JOIN espacio e ON e.sede_id = s.id"
+                    " WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
+                ),
+                datos,
+            ).first()
+            espacios = {
+                e.id: e
+                for e in self._conn.execute(
+                    text(
+                        "SELECT id, precio_por_hora, activo FROM espacio"
+                        " WHERE id IN (:antes, :espacio) ORDER BY id FOR NO KEY UPDATE"
+                    ),
+                    datos,
+                )
+            }
+            fila = self._conn.execute(
+                text(
+                    "SELECT estado, inicio <= now() AS empezo,"
+                    " espacio_id = :antes AND inicio = :desde_antes AS donde_estaba"
+                    " FROM reserva WHERE id = :id AND usuario_id = :usuario FOR UPDATE"
+                ),
+                datos,
+            ).first()
+            if fila is None:
+                raise NoEncontrada("no hay una reserva suya con ese número")
+            if fila.estado != "activa" or fila.empezo or not fila.donde_estaba:
+                raise Cambiado("la reserva ya no está activa, ya empezó o ya se movió")
+            espacio = espacios.get(espacio_id)
+            if sede is None or espacio is None or not espacio.activo:
+                raise NoDisponible("el espacio nuevo ya no está activo")
+            # El horario anterior se libera en la misma transacción que toma el nuevo: si el
+            # nuevo choca con otra reserva, no cambia nada.
+            self._conn.execute(
+                text(
+                    "UPDATE reserva SET espacio_id = :espacio, inicio = :inicio, fin = :fin,"
+                    " precio_por_hora = :precio,"
+                    " total = :precio * (extract(epoch FROM CAST(:fin AS timestamptz)"
+                    " - CAST(:inicio AS timestamptz))::integer / 3600)"
+                    " WHERE id = :id"
+                ),
+                datos | {"precio": int(espacio.precio_por_hora)},
+            )
+            self._conn.commit()
+        except IntegrityError as e:
+            self._conn.rollback()
+            if getattr(e.orig, "sqlstate", None) == "23P01":
+                raise HorarioOcupado("otra reserva activa pisa ese horario") from e
+            raise
+        except BaseException:
+            self._conn.rollback()
+            raise
+        reserva = self._una(reserva_id)
+        self._conn.rollback()
+        return reserva
 
     def cancelar(self, usuario_id: int, reserva_id: int) -> Reserva:
         datos = {"usuario": usuario_id, "id": reserva_id}

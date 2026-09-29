@@ -13,6 +13,7 @@ class Reserva:
 
     id: int
     espacio_id: int
+    sede_id: int
     espacio: str
     deporte: str
     tipo: str

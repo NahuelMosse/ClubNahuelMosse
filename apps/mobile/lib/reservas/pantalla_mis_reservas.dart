@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
@@ -15,6 +16,7 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fechas.dart';
+import 'pantalla_confirmar_cambio.dart';
 import 'reservas.dart';
 
 /// «Mis reservas»: las próximas y el historial de quien inició sesión.
@@ -149,6 +151,21 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
     }
   }
 
+  /// Abre la grilla para cambiar [r] de horario y, al volver, lee la lista de nuevo.
+  Future<void> _modificar(Reserva r) async {
+    final resultado = await context.push<ResultadoDeModificar>(
+      '/reservas/${r.id}/modificar',
+      extra: r,
+    );
+    if (!mounted) return;
+    if (resultado == ResultadoDeModificar.modificada) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Reserva modificada')));
+    }
+    await _releerSinAvisar();
+  }
+
   /// Vuelve a leer la lista sin avisos: si no se puede, queda la que había.
   Future<void> _releerSinAvisar() async {
     final pedido = ++_pedido;
@@ -248,6 +265,9 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                         alCancelar: _cancelando == null
                             ? () => _cancelar(r, datos.$2)
                             : null,
+                        alModificar: _cancelando == null
+                            ? () => _modificar(r)
+                            : null,
                       ),
                       const SizedBox(height: Medidas.s12),
                     ],
@@ -338,6 +358,7 @@ class TarjetaReserva extends StatelessWidget {
     this.cancelable = false,
     this.cancelando = false,
     this.alCancelar,
+    this.alModificar,
   });
 
   final Reserva reserva;
@@ -351,6 +372,9 @@ class TarjetaReserva extends StatelessWidget {
 
   /// `null` deshabilita CANCELAR (hay otra cancelación en camino).
   final VoidCallback? alCancelar;
+
+  /// `null` deshabilita MODIFICAR.
+  final VoidCallback? alModificar;
 
   String get _horario => _horarioDe(reserva);
 
@@ -385,7 +409,12 @@ class TarjetaReserva extends StatelessWidget {
       ],
     );
     final cancelar = alCancelar;
-    // La tarjeta se lee entera como un dato; CANCELAR queda afuera, como botón propio.
+    final modificar = alModificar;
+    final deQue =
+        '${catalogo.tipoCorto(r.deporte, r.tipo)}, '
+        '${fechaLarga(r.inicio).split(' de ').first}, $_horario';
+    // La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
+    // botones propios.
     final datos = Semantics(
       container: true,
       excludeSemantics: true,
@@ -567,32 +596,77 @@ class TarjetaReserva extends StatelessWidget {
                 Medidas.s16,
                 Medidas.s16,
               ),
-              child: Semantics(
-                label: cancelando
-                    ? 'Cancelando la reserva'
-                    : 'Cancelar la reserva de '
-                          '${catalogo.tipoCorto(r.deporte, r.tipo)}, '
-                          '${fechaLarga(r.inicio).split(' de ').first}, '
-                          '$_horario',
-                excludeSemantics: true,
-                button: true,
-                enabled: cancelar != null && !cancelando,
-                onTap: cancelando ? null : cancelar,
-                child: cancelando
-                    ? const SizedBox(
+              child: cancelando
+                  ? Semantics(
+                      label: 'Cancelando la reserva',
+                      excludeSemantics: true,
+                      child: const SizedBox(
                         height: Medidas.altoControl,
                         child: Center(child: CircularProgressIndicator()),
-                      )
-                    : BotonContorno(
-                        texto: 'CANCELAR',
-                        alTocar: cancelar,
-                        peligro: true,
                       ),
-              ),
+                    )
+                  : Flex(
+                      direction: grande ? Axis.vertical : Axis.horizontal,
+                      crossAxisAlignment: grande
+                          ? CrossAxisAlignment.stretch
+                          : CrossAxisAlignment.center,
+                      children: [
+                        _Accion(
+                          expandir: !grande,
+                          etiqueta: 'Modificar la reserva de $deQue',
+                          alTocar: modificar,
+                          child: BotonContorno(
+                            texto: 'MODIFICAR',
+                            alTocar: modificar,
+                            compacto: true,
+                          ),
+                        ),
+                        const SizedBox(width: Medidas.s8, height: Medidas.s8),
+                        _Accion(
+                          expandir: !grande,
+                          etiqueta: 'Cancelar la reserva de $deQue',
+                          alTocar: cancelar,
+                          child: BotonContorno(
+                            texto: 'CANCELAR',
+                            alTocar: cancelar,
+                            peligro: true,
+                            compacto: true,
+                          ),
+                        ),
+                      ],
+                    ),
             ),
         ],
       ),
     );
+  }
+}
+
+/// Un botón de la tarjeta, que dice de qué reserva es.
+class _Accion extends StatelessWidget {
+  const _Accion({
+    required this.expandir,
+    required this.etiqueta,
+    required this.alTocar,
+    required this.child,
+  });
+
+  final bool expandir;
+  final String etiqueta;
+  final VoidCallback? alTocar;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final boton = Semantics(
+      label: etiqueta,
+      excludeSemantics: true,
+      button: true,
+      enabled: alTocar != null,
+      onTap: alTocar,
+      child: child,
+    );
+    return expandir ? Expanded(child: boton) : boton;
   }
 }
 
