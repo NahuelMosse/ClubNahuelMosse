@@ -33,3 +33,4 @@ CU-22-AMB-05 · 2026-09-30 · vencida → CU-22-SUP-04 · la baja se inicia desd
 CU-22-AMB-06 · 2026-09-30 · vencida → CU-22-SUP-05 · los mensajes del alta: vacío «Este campo es obligatorio», fuera de rango «Ingresá un precio entre $ 1 y $ 9.999.999»; el campo sólo acepta dígitos, así que las letras no llegan a escribirse
 CU-22-AMB-07 · 2026-09-30 · vencida → CU-22-SUP-06 · GUARDAR ESPACIO se deshabilita mientras el precio sea inválido o no haya cambios (CU FA2 y FA3), como la edición de sede (CU-18-SUP-06)
 CU-22-AMB-08 · 2026-09-30 · vencida → CU-22-SUP-07 · al guardar, un aviso abajo con «Los cambios se guardaron correctamente» y el listado releído; FA4 con el overlay compartido «Esto cambió mientras tanto» (393:6532) y el listado
+CU-22-TESTS · 2026-09-30 · congelados en e26f9e9 · 9 escenarios en rojo porque la tarjeta del espacio no tiene «Editar» ni existe PUT /espacios/{id}
