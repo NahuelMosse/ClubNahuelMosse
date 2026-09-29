@@ -32,3 +32,8 @@ CU-14-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-14-AMB-07 · 2026-09-27 · resuelta · la baja de una sede o de un espacio con reservas futuras no se permite; la cancelación forzosa sale sólo de CU-15 (decisión 5)
 CU-14-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-14-AMB-08 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-14-AMB-02 · 2026-09-29 · vencida → CU-14-SUP-01 · el historial global se pagina en el servidor con offset/límite de tamaño fijo (20 por página); sin tope adicional de resultados
+CU-14-AMB-03 · 2026-09-29 · vencida → CU-14-SUP-02 · la búsqueda es por coincidencia parcial insensible a mayúsculas (ILIKE), sin normalizar tildes
+CU-14-AMB-04 · 2026-09-29 · vencida → CU-14-SUP-03 · no hay aviso especial de cambio concurrente; el detalle siempre refleja el estado vigente al abrirlo o al volver a consultarlo
+CU-14-AMB-05 · 2026-09-29 · vencida → CU-14-SUP-04 · la anulación (paso 9, FA7, H01-07, H08-01) se difiere a CU-15 por alcance asignado explícitamente para esta card; CU-14 entrega listado y detalle en modo sólo lectura, con la estructura preparada para que CU-15 agregue la acción
+CU-14-AMB-06 · 2026-09-29 · vencida → CU-14-SUP-05 · no se implementa un log de auditoría aparte para las consultas; alcanza con la trazabilidad que ya guarda cada reserva (creación y, si corresponde, anulación)
