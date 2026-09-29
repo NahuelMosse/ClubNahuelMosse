@@ -23,3 +23,13 @@ CU-22-AMB-05 · 2026-09-27 · abierta · ¿la baja se inicia desde la edición (
 CU-22-AMB-00 · 2026-09-27 · snapshot · congelado en c75c540
 CU-22-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-22-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-22-AMB-06 · 2026-09-30 · abierta · el mensaje de precio inválido: ¿el del CU, el del prototipo 390:6522 o el del alta (CU-21)?
+CU-22-AMB-07 · 2026-09-30 · abierta · con el precio inválido, ¿GUARDAR ESPACIO se deshabilita (CU FA2) o se ve atenuado y marca el campo al tocarlo, como el alta?
+CU-22-AMB-08 · 2026-09-30 · abierta · ¿cómo se muestra «Los cambios se guardaron correctamente» y adónde vuelve? ¿y cómo se informa FA4?
+CU-22-AMB-01 · 2026-09-30 · vencida → CU-22-SUP-01 · la «condición» es techada o al aire libre, más la iluminación, editables como en el prototipo 63:2302; no hay un estado «fuera de servicio»: sacar un espacio de servicio es darlo de baja (CU-23)
+CU-22-AMB-02 · 2026-09-30 · vencida → CU-22-SUP-02 · pesos enteros entre $ 1 y $ 9.999.999, los mismos límites del alta (CU-21)
+CU-22-AMB-03 · 2026-09-30 · vencida → CU-22-SUP-03 · con dos administradores editando el mismo espacio gana el último que guarda; sólo la baja en otra sesión se avisa (FA4)
+CU-22-AMB-05 · 2026-09-30 · vencida → CU-22-SUP-04 · la baja se inicia desde la edición con DAR DE BAJA EL ESPACIO (CU FA6) y también desde «Baja» en la tarjeta del listado (prototipo 63:1895, CU-23); en esta card el botón abre la confirmación de CU-23
+CU-22-AMB-06 · 2026-09-30 · vencida → CU-22-SUP-05 · los mensajes del alta: vacío «Este campo es obligatorio», fuera de rango «Ingresá un precio entre $ 1 y $ 9.999.999»; el campo sólo acepta dígitos, así que las letras no llegan a escribirse
+CU-22-AMB-07 · 2026-09-30 · vencida → CU-22-SUP-06 · GUARDAR ESPACIO se deshabilita mientras el precio sea inválido o no haya cambios (CU FA2 y FA3), como la edición de sede (CU-18-SUP-06)
+CU-22-AMB-08 · 2026-09-30 · vencida → CU-22-SUP-07 · al guardar, un aviso abajo con «Los cambios se guardaron correctamente» y el listado releído; FA4 con el overlay compartido «Esto cambió mientras tanto» (393:6532) y el listado
