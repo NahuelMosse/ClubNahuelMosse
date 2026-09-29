@@ -31,3 +31,10 @@ CU-23-AMB-04 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-23-AMB-04 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-23-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-23-AMB-07 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
+CU-23-AMB-08 · 2026-09-30 · abierta · con reservas pendientes (decisión 5), ¿qué ve el administrador?
+CU-23-AMB-09 · 2026-09-30 · abierta · el CU vuelve a cargar el listado sin el espacio: ¿hay además un aviso de que salió bien?
+CU-23-AMB-01 · 2026-09-30 · vencida → CU-23-SUP-01 · ya dado de baja en otra sesión: el overlay compartido «Esto cambió mientras tanto» (393:6532) y el listado releído
+CU-23-AMB-05 · 2026-09-30 · vencida → CU-23-SUP-02 · sólo un administrador da de baja espacios; «el usuario» del paso 1 es el administrador de las precondiciones
+CU-23-AMB-06 · 2026-09-30 · vencida → CU-23-SUP-03 · se puede dar de baja el último espacio de una sede: la sede sigue activa y se ve sin canchas (CU-16 FA1)
+CU-23-AMB-08 · 2026-09-30 · vencida → CU-23-SUP-04 · un espacio con una reserva activa que todavía no terminó no se da de baja (decisión 5, como CU-19-SUP-01): «No se puede dar de baja el espacio», con el mismo overlay de la sede (42:345)
+CU-23-AMB-09 · 2026-09-30 · vencida → CU-23-SUP-05 · el listado sin el espacio y un aviso abajo «El espacio fue dado de baja correctamente», como la baja de sede (CU-19-SUP-03); desde la edición (CU-22-SUP-04) termina en el listado
