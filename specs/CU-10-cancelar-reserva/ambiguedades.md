@@ -46,3 +46,4 @@ CU-10-AMB-04 · 2026-09-28 · vencida → CU-10-SUP-02 · la reserva de otra cue
 CU-10-AMB-05 · 2026-09-28 · vencida → CU-10-SUP-03 · si la reserva ya no está activa (anulada por el club o ya empezada), el overlay compartido «Esto cambió mientras tanto» (393:6532) con VER LO ACTUALIZADO, que vuelve a leer la lista
 CU-10-AMB-09 · 2026-09-28 · vencida → CU-10-SUP-04 · una reserva en curso usa el mismo overlay «Esto cambió mientras tanto» (decisión 12): la lista se vuelve a leer; una reserva que ya empezó no muestra CANCELAR y pasa al historial cuando termina
 CU-10-AMB-10 · 2026-09-28 · vencida → CU-10-SUP-05 · el overlay compartido de error del servidor, como el prototipo (decisión 12)
+CU-10-TESTS · 2026-09-28 · congelados en 67f6c58 · 6 escenarios en rojo porque las tarjetas de Mis reservas no tienen CANCELAR ni existe la cancelación en la API
