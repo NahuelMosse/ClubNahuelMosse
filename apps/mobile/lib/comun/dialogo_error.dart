@@ -40,6 +40,54 @@ Future<void> mostrarHorarioOcupado(BuildContext context, String texto) =>
       ),
     );
 
+/// La confirmación de cancelar una reserva ([texto] dice cuál). Devuelve `true` si la
+/// persona confirmó.
+Future<bool> confirmarCancelacion(BuildContext context, String texto) async =>
+    await showDialog<bool>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => _Modal(
+        icono: Icons.warning_amber_rounded,
+        titulo: '¿Cancelar la reserva?',
+        texto: texto,
+        principal: 'CANCELAR RESERVA',
+        principalPeligro: true,
+        secundaria: 'NO CANCELAR',
+        secundariaContorno: true,
+      ),
+    ) ??
+    false;
+
+/// La reserva quedó cancelada.
+Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
+  context: context,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => const _Modal(
+    icono: Icons.check_circle_outline_rounded,
+    exito: true,
+    titulo: 'Reserva cancelada con éxito',
+    texto: 'El horario quedó liberado y la reserva pasó a tu historial.',
+    principal: 'ACEPTAR',
+  ),
+);
+
+/// El overlay compartido «Esto cambió mientras tanto»: lo que se veía ya no está así, y
+/// quien llama lo vuelve a leer.
+Future<void> mostrarCambioMientrasTanto(
+  BuildContext context,
+) => showDialog<void>(
+  context: context,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => const _Modal(
+    icono: Icons.sync_problem_rounded,
+    titulo: 'Esto cambió mientras tanto',
+    texto:
+        'Otra persona modificó estos datos mientras los estabas viendo. Los '
+        'actualizamos para que veas el estado real.',
+    principal: 'VER LO ACTUALIZADO',
+  ),
+);
+
 /// El overlay compartido de sesión expirada. No se puede descartar: la única salida es
 /// volver a iniciar sesión, que hace quien llama cuando esto termina.
 Future<void> mostrarSesionVencida(BuildContext context) => showDialog<void>(
@@ -58,6 +106,19 @@ Future<void> mostrarSesionVencida(BuildContext context) => showDialog<void>(
   ),
 );
 
+/// El texto que más contraste da sobre [fondo]: el blanco o el fondo de la app.
+Color textoSobre(Color fondo, Paleta p) {
+  double contraste(Color a, Color b) {
+    final (x, y) = (a.computeLuminance(), b.computeLuminance());
+    return (x > y ? x + 0.05 : y + 0.05) / (x > y ? y + 0.05 : x + 0.05);
+  }
+
+  const blanco = Color(0xFFFFFFFF);
+  return contraste(blanco, fondo) >= contraste(p.bgBase, fondo)
+      ? blanco
+      : p.bgBase;
+}
+
 /// `Modal` del prototipo: ícono en círculo, título, texto y hasta dos acciones. La
 /// principal cierra con `true` y la secundaria con `false`.
 class _Modal extends StatelessWidget {
@@ -67,6 +128,9 @@ class _Modal extends StatelessWidget {
     required this.texto,
     this.principal,
     this.secundaria,
+    this.exito = false,
+    this.principalPeligro = false,
+    this.secundariaContorno = false,
   });
 
   final IconData icono;
@@ -74,6 +138,13 @@ class _Modal extends StatelessWidget {
   final String texto;
   final String? principal;
   final String? secundaria;
+
+  /// El ícono en verde: el aviso cuenta que algo salió bien.
+  final bool exito;
+
+  /// La acción principal en rojo: no se deshace.
+  final bool principalPeligro;
+  final bool secundariaContorno;
 
   @override
   Widget build(BuildContext context) {
@@ -100,10 +171,14 @@ class _Modal extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: p.stateDangerMuted,
+                    color: exito ? p.stateSuccessMuted : p.stateDangerMuted,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icono, size: 28, color: p.stateDangerInk),
+                  child: Icon(
+                    icono,
+                    size: 28,
+                    color: exito ? p.stateSuccessInk : p.stateDangerInk,
+                  ),
                 ),
               ),
               const SizedBox(height: Medidas.s12),
@@ -123,8 +198,12 @@ class _Modal extends StatelessWidget {
                 FilledButton(
                   onPressed: () => Navigator.of(context).pop(true),
                   style: FilledButton.styleFrom(
-                    backgroundColor: p.accentBase,
-                    foregroundColor: p.accentOn,
+                    backgroundColor: principalPeligro
+                        ? p.stateDanger
+                        : p.accentBase,
+                    foregroundColor: principalPeligro
+                        ? textoSobre(p.stateDanger, p)
+                        : p.accentOn,
                     minimumSize: const Size.fromHeight(Medidas.altoControl),
                     shape: const StadiumBorder(),
                     textStyle: Textos.boton,
@@ -133,7 +212,19 @@ class _Modal extends StatelessWidget {
                 ),
               if (accionPrincipal != null && accionSecundaria != null)
                 const SizedBox(height: Medidas.s8),
-              if (accionSecundaria != null)
+              if (accionSecundaria != null && secundariaContorno)
+                OutlinedButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: p.textPrimary,
+                    side: BorderSide(color: p.borderControl),
+                    minimumSize: const Size.fromHeight(Medidas.altoControl),
+                    shape: const StadiumBorder(),
+                    textStyle: Textos.boton,
+                  ),
+                  child: Text(accionSecundaria),
+                )
+              else if (accionSecundaria != null)
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(false),
                   style: TextButton.styleFrom(

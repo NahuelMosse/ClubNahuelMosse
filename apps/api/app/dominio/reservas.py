@@ -24,3 +24,5 @@ class Reserva:
     total: int
     estado: Estado
     motivo: str | None
+    # Activa y sin empezar, según el reloj del servidor: la app no decide con el suyo.
+    cancelable: bool = False

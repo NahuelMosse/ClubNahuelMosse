@@ -78,14 +78,16 @@ class Espacio(BaseModel):
 
 @router.post("/reservas/empezar", status_code=status.HTTP_204_NO_CONTENT)
 def empezar(pedido: Espacio, conn: Conexion) -> Response:
-    """Las reservas activas de [espacio] pasan a empezar en la hora en curso del club, como
-    si el tiempo hubiera corrido mientras la app estaba abierta."""
+    """La próxima reserva activa de [espacio] pasa a empezar en la hora en curso del club,
+    como si el tiempo hubiera corrido mientras la app estaba abierta."""
     conn.execute(
         text(
             "UPDATE reserva r SET fin = x.ahora + (r.fin - r.inicio), inicio = x.ahora"
-            " FROM espacio e, (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires')"
+            " FROM (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires')"
             "                  AS ahora) x"
-            " WHERE e.id = r.espacio_id AND e.nombre = :espacio AND r.estado = 'activa'"
+            " WHERE r.id = (SELECT r2.id FROM reserva r2 JOIN espacio e ON e.id = r2.espacio_id"
+            "               WHERE e.nombre = :espacio AND r2.estado = 'activa'"
+            "               ORDER BY r2.inicio LIMIT 1)"
         ),
         pedido.model_dump(),
     )

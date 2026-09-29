@@ -1,7 +1,8 @@
 import 'dart:math' as math;
 
+import 'package:clubnahuelmosse/comun/dialogo_error.dart';
 import 'package:clubnahuelmosse/tema/tokens.dart';
-import 'package:flutter/painting.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 /// El contraste WCAG entre dos colores opacos.
@@ -36,6 +37,11 @@ void main() {
           );
         }
       }
+    });
+
+    test('el texto de un botón rojo llega a 4,5:1 en modo $modo', () {
+      final texto = textoSobre(p.stateDanger, p);
+      expect(contraste(texto, p.stateDanger), greaterThanOrEqualTo(4.5));
     });
   }
 }

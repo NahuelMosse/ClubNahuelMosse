@@ -72,6 +72,13 @@ void main() {
         await capturar(tester, 'reservas/proximas_${ancho}_$modo.png');
       });
 
+      testWidgets('confirmar la cancelación $ancho $modo', (tester) async {
+        await abrir(tester, proximasJson: proximas);
+        await tester.tap(find.text('CANCELAR').first);
+        await tester.pumpAndSettle();
+        await capturar(tester, 'reservas/cancelar_${ancho}_$modo.png');
+      });
+
       testWidgets('historial $ancho $modo', (tester) async {
         await abrir(tester, historialJson: historial);
         await tester.tap(find.text('Historial'));

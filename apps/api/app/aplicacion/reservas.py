@@ -26,6 +26,14 @@ class Reservas(Protocol):
         """La reserva activa que la misma persona hizo hace un momento con esos datos."""
         ...
 
+    def cancelar(self, usuario_id: int, reserva_id: int) -> Reserva:
+        """Cancela la reserva de [usuario_id] y estampa cuándo y quién (RF 3: el horario
+        vuelve a quedar libre). Si ya la había cancelado esa persona, la devuelve igual.
+
+        Lanza `NoEncontrada` si no es suya y `Cambiado` si ya no está activa o ya empezó.
+        """
+        ...
+
     def insertar(
         self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
     ) -> Reserva:
@@ -76,3 +84,9 @@ def reservar(
     if errores:
         raise DatosInvalidos(errores)
     return reservas.insertar(perfil.id, espacio_id, inicio, fin)
+
+
+def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Reserva:
+    """Cancela una reserva propia que todavía no empezó (CU-10, decisión 13: hasta el
+    inicio, sin anticipación mínima)."""
+    return reservas.cancelar(perfil.id, reserva_id)

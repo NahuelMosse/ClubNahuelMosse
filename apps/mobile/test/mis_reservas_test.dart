@@ -14,12 +14,14 @@ String reservaJson({
   String fin = '2026-11-13T01:00:00+00:00',
   String estado = 'activa',
   String? motivo,
+  bool? cancelable,
 }) =>
     '{"id": $id, "espacio_id": 9, "espacio": "Moron_Rivadavia_19850_Futbol_F5_1", '
     '"deporte": "Futbol", "tipo": "F5", "sede": "Sede Morón", '
     '"direccion": "Av. Rivadavia 19850", "inicio": "$inicio", "fin": "$fin", '
     '"precio_por_hora": 38000, "total": 38000, "estado": "$estado", '
-    '"motivo": ${motivo == null ? 'null' : '"$motivo"'}}';
+    '"motivo": ${motivo == null ? 'null' : '"$motivo"'}, '
+    '"cancelable": ${cancelable ?? estado == 'activa'}}';
 
 void main() {
   const proximas = '[{"id": 1}]';

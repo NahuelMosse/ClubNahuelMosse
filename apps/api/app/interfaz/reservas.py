@@ -3,13 +3,20 @@ from datetime import date, datetime, time
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import Connection
 
-from app.aplicacion.errores import DatosInvalidos, HorarioOcupado, NoDisponible, Prohibido
-from app.aplicacion.reservas import Cuando, mis_reservas, reservar
+from app.aplicacion.errores import (
+    Cambiado,
+    DatosInvalidos,
+    HorarioOcupado,
+    NoDisponible,
+    NoEncontrada,
+    Prohibido,
+)
+from app.aplicacion.reservas import Cuando, cancelar_reserva, mis_reservas, reservar
 from app.dominio.reservas import Estado, Reserva
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
@@ -38,6 +45,7 @@ class ReservaVista(BaseModel):
     total: int
     estado: Estado
     motivo: str | None
+    cancelable: bool
 
 
 class ListaDeReservas(BaseModel):
@@ -59,6 +67,7 @@ def _vista(r: Reserva) -> ReservaVista:
         total=r.total,
         estado=r.estado,
         motivo=r.motivo,
+        cancelable=r.cancelable,
     )
 
 
@@ -151,5 +160,38 @@ def hacer_reserva(
     except HorarioOcupado:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"errores": {"horario": OCUPADO}}
+        )
+    return _vista(reserva)
+
+
+CAMBIO = "Esto cambió mientras tanto"
+
+
+@router.post(
+    "/reservas/{reserva_id}/cancelar",
+    response_model=ReservaVista,
+    responses={
+        401: {"model": SinSesion},
+        404: {"description": "No hay una reserva de quien pide con ese número"},
+        409: {"model": Errores, "description": "La reserva ya no está activa o ya empezó"},
+    },
+    summary="Cancelar una reserva propia",
+    description=(
+        "Hasta el inicio del turno. El horario vuelve a quedar libre y la reserva pasa al "
+        "historial como cancelada. Cancelar una que ya canceló la misma persona responde igual."
+    ),
+)
+def cancelar(
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> ReservaVista | Response:
+    try:
+        reserva = cancelar_reserva(ReservasSql(conn), perfil, reserva_id)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except Cambiado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
         )
     return _vista(reserva)

@@ -87,6 +87,82 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
     }
   }
 
+  /// La reserva que se está cancelando: su botón muestra que espera y los demás quedan
+  /// deshabilitados.
+  int? _cancelando;
+
+  /// Pide confirmación y cancela [r]. Al terminar, bien o porque la reserva ya había
+  /// cambiado, la lista se vuelve a leer.
+  Future<void> _cancelar(Reserva r, Catalogo catalogo) async {
+    if (_cancelando != null) return;
+    final horario = _horarioDe(r);
+    final confirmo = await confirmarCancelacion(
+      context,
+      '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
+      '${fechaLarga(r.inicio).split(' de ').first}, $horario · ${pesos(r.total)}. '
+      'El horario vuelve a quedar libre.',
+    );
+    if (!confirmo || !mounted) return;
+    setState(() => _cancelando = r.id);
+    while (mounted) {
+      Object? fallo;
+      try {
+        await widget.reservas.cancelar(r);
+        if (!mounted) return;
+        // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
+        setState(() {
+          if (_datos case (final lista, final catalogo)) {
+            _datos = ([...lista.where((x) => x.id != r.id)], catalogo);
+          }
+          _cancelando = null;
+        });
+        await mostrarCancelada(context);
+        if (mounted) await _cargar(deCero: false);
+        return;
+      } on ReservaCambiada {
+        if (!mounted) return;
+        setState(() => _cancelando = null);
+        await mostrarCambioMientrasTanto(context);
+        if (mounted) await _cargar(deCero: false);
+        return;
+      } on SesionVencida {
+        if (!mounted) return;
+        setState(() => _cancelando = null);
+        await mostrarSesionVencida(context);
+        if (mounted) await cerrarSesion(context, widget.sesion);
+        return;
+      } on SinConexion catch (e) {
+        fallo = e;
+      } on ErrorDelServidor catch (e) {
+        fallo = e;
+      }
+      if (!mounted) return;
+      setState(() => _cancelando = null);
+      final otraVez = await mostrarErrorDeRed(context, fallo);
+      if (!mounted) return;
+      if (!otraVez) {
+        // Si el corte llegó después de que el servidor la canceló, la lista lo muestra.
+        await _releerSinAvisar();
+        return;
+      }
+      setState(() => _cancelando = r.id);
+    }
+  }
+
+  /// Vuelve a leer la lista sin avisos: si no se puede, queda la que había.
+  Future<void> _releerSinAvisar() async {
+    final pedido = ++_pedido;
+    try {
+      final lista = await widget.reservas.mias(historial: _historial);
+      final catalogo = await widget.espacios.catalogo();
+      if (mounted && pedido == _pedido) {
+        setState(() => _datos = (lista, catalogo));
+      }
+    } on Exception {
+      // Sin red o con el servidor caído, la lista vieja sigue siendo lo mejor que hay.
+    }
+  }
+
   void _elegir(bool historial) {
     if (historial == _historial) return;
     setState(() => _historial = historial);
@@ -97,75 +173,99 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final datos = _datos;
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      bottomNavigationBar: const BarraInferior(actual: Seccion.reservas),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () => _cargar(deCero: false),
-          // Una persona tiene pocas reservas: se construyen todas, así el lector de
-          // pantalla llega a cada una sin tener que deslizar primero.
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s40,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Semantics(
-                        header: true,
-                        child: Text(
-                          'Mis reservas',
-                          style: Textos.h1.copyWith(color: p.textPrimary),
+    return PopScope(
+      canPop: _cancelando == null,
+      child: Scaffold(
+        backgroundColor: p.bgBase,
+        bottomNavigationBar: IgnorePointer(
+          ignoring: _cancelando != null,
+          child: const BarraInferior(actual: Seccion.reservas),
+        ),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () => _cargar(deCero: false),
+            // Una persona tiene pocas reservas: se construyen todas, así el lector de
+            // pantalla llega a cada una sin tener que deslizar primero.
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s24,
+                Medidas.s24,
+                Medidas.s24,
+                Medidas.s40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Semantics(
+                          header: true,
+                          child: Text(
+                            'Mis reservas',
+                            style: Textos.h1.copyWith(color: p.textPrimary),
+                          ),
+                        ),
+                      ),
+                      BotonCuenta(sesion: widget.sesion),
+                    ],
+                  ),
+                  const SizedBox(height: Medidas.s16),
+                  _Pestanas(historial: _historial, alElegir: _elegir),
+                  const SizedBox(height: Medidas.s16),
+                  if (datos == null && !_fallo)
+                    const Padding(
+                      padding: EdgeInsets.all(Medidas.s40),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  if (datos == null && _fallo)
+                    Padding(
+                      padding: const EdgeInsets.all(Medidas.s24),
+                      child: Center(
+                        child: BotonTexto(
+                          texto: 'REINTENTAR',
+                          alTocar: _cargar,
                         ),
                       ),
                     ),
-                    BotonCuenta(sesion: widget.sesion),
-                  ],
-                ),
-                const SizedBox(height: Medidas.s16),
-                _Pestanas(historial: _historial, alElegir: _elegir),
-                const SizedBox(height: Medidas.s16),
-                if (datos == null && !_fallo)
-                  const Padding(
-                    padding: EdgeInsets.all(Medidas.s40),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                if (datos == null && _fallo)
-                  Padding(
-                    padding: const EdgeInsets.all(Medidas.s24),
-                    child: Center(
-                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                  if (datos != null && datos.$1.isEmpty)
+                    EstadoVacio(
+                      titulo: _historial
+                          ? 'No hay reservas pasadas'
+                          : 'No hay próximas reservas',
+                      texto: _historial
+                          ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
+                          : 'No se encontraron próximas reservas asociadas a tu cuenta.',
                     ),
-                  ),
-                if (datos != null && datos.$1.isEmpty)
-                  EstadoVacio(
-                    titulo: _historial
-                        ? 'No hay reservas pasadas'
-                        : 'No hay próximas reservas',
-                    texto: _historial
-                        ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
-                        : 'No se encontraron próximas reservas asociadas a tu cuenta.',
-                  ),
-                if (datos != null)
-                  for (final r in datos.$1) ...[
-                    TarjetaReserva(reserva: r, catalogo: datos.$2),
-                    const SizedBox(height: Medidas.s12),
-                  ],
-              ],
+                  if (datos != null)
+                    for (final r in datos.$1) ...[
+                      TarjetaReserva(
+                        reserva: r,
+                        catalogo: datos.$2,
+                        cancelable: !_historial && r.cancelable,
+                        cancelando: _cancelando == r.id,
+                        alCancelar: _cancelando == null
+                            ? () => _cancelar(r, datos.$2)
+                            : null,
+                      ),
+                      const SizedBox(height: Medidas.s12),
+                    ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// «21:00 – 22:00».
+String _horarioDe(Reserva r) {
+  String dos(int n) => n.toString().padLeft(2, '0');
+  return '${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
+      '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
 }
 
 /// `Segmented-Tab`: Próximas o Historial.
@@ -235,17 +335,24 @@ class TarjetaReserva extends StatelessWidget {
     super.key,
     required this.reserva,
     required this.catalogo,
+    this.cancelable = false,
+    this.cancelando = false,
+    this.alCancelar,
   });
 
   final Reserva reserva;
   final Catalogo catalogo;
 
-  String get _horario {
-    String dos(int n) => n.toString().padLeft(2, '0');
-    final r = reserva;
-    return '${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-        '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
-  }
+  /// Muestra CANCELAR: una próxima que todavía no empezó.
+  final bool cancelable;
+
+  /// La cancelación de esta reserva está en camino.
+  final bool cancelando;
+
+  /// `null` deshabilita CANCELAR (hay otra cancelación en camino).
+  final VoidCallback? alCancelar;
+
+  String get _horario => _horarioDe(reserva);
 
   String? get _porque => switch (reserva.estado) {
     EstadoDeReserva.cancelada =>
@@ -277,7 +384,9 @@ class TarjetaReserva extends StatelessWidget {
         _Estado(estado: r.estado),
       ],
     );
-    return Semantics(
+    final cancelar = alCancelar;
+    // La tarjeta se lee entera como un dato; CANCELAR queda afuera, como botón propio.
+    final datos = Semantics(
       container: true,
       excludeSemantics: true,
       label: [
@@ -290,165 +399,198 @@ class TarjetaReserva extends StatelessWidget {
         r.espacio,
         ?porque,
       ].join(', '),
-      child: Container(
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.borderDefault),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(Medidas.s16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(Medidas.radioMd),
-                    child: Image(
-                      image: fotoDeDeporte(r.deporte),
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      excludeFromSemantics: true,
-                    ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(Medidas.s16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(Medidas.radioMd),
+                  child: Image(
+                    image: fotoDeDeporte(r.deporte),
+                    width: 56,
+                    height: 56,
+                    fit: BoxFit.cover,
+                    excludeFromSemantics: true,
                   ),
-                  const SizedBox(width: Medidas.s12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              iconoDeDeporte(r.deporte),
-                              size: 16,
-                              color: p.textSecondary,
-                            ),
-                            const SizedBox(width: Medidas.s4),
-                            Flexible(
-                              child: Text(
-                                catalogo.tipoCorto(r.deporte, r.tipo),
-                                style: Textos.titulo.copyWith(
-                                  color: p.textPrimary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: Medidas.s4),
-                        Text(
-                          '${r.sede} · ${r.direccion}',
-                          style: Textos.leyenda.copyWith(
-                            color: p.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!grande) ...[
-                    const SizedBox(width: Medidas.s8),
-                    precioYEstado,
-                  ],
-                ],
-              ),
-            ),
-            if (grande)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s16,
-                  0,
-                  Medidas.s16,
-                  Medidas.s16,
                 ),
-                child: precioYEstado,
-              ),
-            Divider(height: 1, color: p.borderDefault),
-            Padding(
-              padding: const EdgeInsets.all(Medidas.s16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    r.espacio,
-                    style: Textos.mono.copyWith(color: p.textMuted),
-                  ),
-                  const SizedBox(height: Medidas.s8),
-                  Wrap(
-                    spacing: Medidas.s16,
-                    runSpacing: Medidas.s8,
-                    crossAxisAlignment: WrapCrossAlignment.center,
+                const SizedBox(width: Medidas.s12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.calendar_today_outlined,
+                            iconoDeDeporte(r.deporte),
                             size: 16,
                             color: p.textSecondary,
                           ),
-                          const SizedBox(width: Medidas.s8),
+                          const SizedBox(width: Medidas.s4),
                           Flexible(
                             child: Text(
-                              fechaLarga(r.inicio),
-                              style: Textos.leyenda.copyWith(
-                                color: p.textSecondary,
+                              catalogo.tipoCorto(r.deporte, r.tipo),
+                              style: Textos.titulo.copyWith(
+                                color: p.textPrimary,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.schedule_rounded,
-                            size: 18,
-                            color: p.accentInk,
-                          ),
-                          const SizedBox(width: Medidas.s8),
-                          Flexible(
-                            child: Text(
-                              _horario,
-                              style: Textos.cuerpoFuerte.copyWith(
-                                color: p.accentInk,
-                              ),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: Medidas.s4),
+                      Text(
+                        '${r.sede} · ${r.direccion}',
+                        style: Textos.leyenda.copyWith(color: p.textSecondary),
                       ),
                     ],
                   ),
-                  if (porque != null) ...[
-                    const SizedBox(height: Medidas.s8),
+                ),
+                if (!grande) ...[
+                  const SizedBox(width: Medidas.s8),
+                  precioYEstado,
+                ],
+              ],
+            ),
+          ),
+          if (grande)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s16,
+                0,
+                Medidas.s16,
+                Medidas.s16,
+              ),
+              child: precioYEstado,
+            ),
+          Divider(height: 1, color: p.borderDefault),
+          Padding(
+            padding: const EdgeInsets.all(Medidas.s16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  r.espacio,
+                  style: Textos.mono.copyWith(color: p.textMuted),
+                ),
+                const SizedBox(height: Medidas.s8),
+                Wrap(
+                  spacing: Medidas.s16,
+                  runSpacing: Medidas.s8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          Icons.error_outline_rounded,
+                          Icons.calendar_today_outlined,
                           size: 16,
-                          color: anulada ? p.stateDangerInk : p.textSecondary,
+                          color: p.textSecondary,
                         ),
                         const SizedBox(width: Medidas.s8),
-                        Expanded(
+                        Flexible(
                           child: Text(
-                            porque,
+                            fechaLarga(r.inicio),
                             style: Textos.leyenda.copyWith(
-                              color: anulada
-                                  ? p.stateDangerInk
-                                  : p.textSecondary,
+                              color: p.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule_rounded,
+                          size: 18,
+                          color: p.accentInk,
+                        ),
+                        const SizedBox(width: Medidas.s8),
+                        Flexible(
+                          child: Text(
+                            _horario,
+                            style: Textos.cuerpoFuerte.copyWith(
+                              color: p.accentInk,
                             ),
                           ),
                         ),
                       ],
                     ),
                   ],
+                ),
+                if (porque != null) ...[
+                  const SizedBox(height: Medidas.s8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.error_outline_rounded,
+                        size: 16,
+                        color: anulada ? p.stateDangerInk : p.textSecondary,
+                      ),
+                      const SizedBox(width: Medidas.s8),
+                      Expanded(
+                        child: Text(
+                          porque,
+                          style: Textos.leyenda.copyWith(
+                            color: anulada ? p.stateDangerInk : p.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return Container(
+      decoration: BoxDecoration(
+        color: p.bgSurfaceRaised,
+        borderRadius: BorderRadius.circular(Medidas.radioLg),
+        border: Border.all(color: p.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          datos,
+          if (cancelable)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s16,
+                0,
+                Medidas.s16,
+                Medidas.s16,
+              ),
+              child: Semantics(
+                label: cancelando
+                    ? 'Cancelando la reserva'
+                    : 'Cancelar la reserva de '
+                          '${catalogo.tipoCorto(r.deporte, r.tipo)}, '
+                          '${fechaLarga(r.inicio).split(' de ').first}, '
+                          '$_horario',
+                excludeSemantics: true,
+                button: true,
+                enabled: cancelar != null && !cancelando,
+                onTap: cancelando ? null : cancelar,
+                child: cancelando
+                    ? const SizedBox(
+                        height: Medidas.altoControl,
+                        child: Center(child: CircularProgressIndicator()),
+                      )
+                    : BotonContorno(
+                        texto: 'CANCELAR',
+                        alTocar: cancelar,
+                        peligro: true,
+                      ),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

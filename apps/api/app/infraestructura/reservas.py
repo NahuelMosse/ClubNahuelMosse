@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import HorarioOcupado, NoDisponible
+from app.aplicacion.errores import Cambiado, HorarioOcupado, NoDisponible, NoEncontrada
 from app.aplicacion.reservas import Cuando
 from app.dominio.horarios import Agenda
 from app.dominio.reservas import Reserva
@@ -13,7 +13,8 @@ from app.infraestructura.horarios import HorariosSql
 _COLUMNAS = (
     "r.id, r.espacio_id, e.nombre AS espacio, e.deporte, e.tipo,"
     " s.nombre AS sede, s.calle || ' ' || s.altura AS direccion, r.inicio, r.fin,"
-    " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo"
+    " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
+    " (r.estado_actual = 'activa' AND r.inicio > now()) AS cancelable"
 )
 # Cuánto después de hecha una reserva se reconoce como el mismo pedido repetido.
 _VENTANA_DE_REINTENTO = "5 minutes"
@@ -34,6 +35,7 @@ def _reserva(f: Any) -> Reserva:
         total=int(f.total),
         estado=f.estado,
         motivo=f.motivo,
+        cancelable=bool(f.cancelable),
     )
 
 
@@ -87,6 +89,38 @@ class ReservasSql:
             {"id": reserva_id},
         ).one()
         return _reserva(fila)
+
+    def cancelar(self, usuario_id: int, reserva_id: int) -> Reserva:
+        datos = {"usuario": usuario_id, "id": reserva_id}
+        try:
+            fila = self._conn.execute(
+                text(
+                    "SELECT estado, cancelada_por, inicio <= now() AS empezo FROM reserva"
+                    " WHERE id = :id AND usuario_id = :usuario FOR UPDATE"
+                ),
+                datos,
+            ).first()
+            if fila is None:
+                raise NoEncontrada("no hay una reserva suya con ese número")
+            if fila.estado == "cancelada" and fila.cancelada_por == usuario_id:
+                self._conn.rollback()
+                return self._una(reserva_id)
+            if fila.estado != "activa" or fila.empezo:
+                raise Cambiado("la reserva ya no está activa o ya empezó")
+            self._conn.execute(
+                text(
+                    "UPDATE reserva SET estado = 'cancelada', cancelada_en = now(),"
+                    " cancelada_por = :usuario WHERE id = :id"
+                ),
+                datos,
+            )
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
+        reserva = self._una(reserva_id)
+        self._conn.rollback()
+        return reserva
 
     def insertar(
         self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime

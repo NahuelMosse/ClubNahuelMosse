@@ -8,6 +8,12 @@ class HorarioOcupado implements Exception {
   const HorarioOcupado();
 }
 
+/// La reserva ya no estaba como se la veía: anulada, cancelada desde otro lado o ya
+/// empezada.
+class ReservaCambiada implements Exception {
+  const ReservaCambiada();
+}
+
 /// La API rechazó el horario elegido: cada campo con su mensaje.
 class ReservaRechazada implements Exception {
   const ReservaRechazada(this.errores);
@@ -31,6 +37,7 @@ class Reserva {
     required this.total,
     required this.estado,
     required this.motivo,
+    this.cancelable = false,
   });
 
   final int id;
@@ -49,6 +56,9 @@ class Reserva {
   final int total;
   final EstadoDeReserva estado;
   final String? motivo;
+
+  /// Activa y sin empezar, según el servidor.
+  final bool cancelable;
 
   static Reserva? desdeJson(Object? json) {
     if (json case {
@@ -82,6 +92,7 @@ class Reserva {
         total: total,
         estado: est.first,
         motivo: motivo is String ? motivo : null,
+        cancelable: json['cancelable'] == true,
       );
     }
     return null;
@@ -148,5 +159,21 @@ class Reservas {
     final reserva = r.codigo == 201 ? Reserva.desdeJson(r.cuerpo) : null;
     if (reserva == null) throw ErrorDelServidor(r.codigo);
     return reserva;
+  }
+
+  /// Cancela [reserva]; el horario vuelve a quedar libre.
+  ///
+  /// Lanza [ReservaCambiada], [SesionVencida], [SinConexion] o [ErrorDelServidor].
+  Future<Reserva> cancelar(Reserva reserva) async {
+    final r = await _api.post(
+      '/reservas/${reserva.id}/cancelar',
+      const {},
+      token: await _sesion.token(),
+    );
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();
+    final cancelada = r.codigo == 200 ? Reserva.desdeJson(r.cuerpo) : null;
+    if (cancelada == null) throw ErrorDelServidor(r.codigo);
+    return cancelada;
   }
 }

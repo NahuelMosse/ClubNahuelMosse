@@ -43,3 +43,12 @@ class NumeroOcupado(Exception):
 
 class HorarioOcupado(Exception):
     """Otra reserva activa del mismo espacio se superpone con el horario pedido."""
+
+
+class NoEncontrada(Exception):
+    """No hay nada con ese número que sea de quien lo pide."""
+
+
+class Cambiado(Exception):
+    """Lo que se quería cambiar ya no está como se lo veía (otra persona o el tiempo lo
+    cambiaron)."""

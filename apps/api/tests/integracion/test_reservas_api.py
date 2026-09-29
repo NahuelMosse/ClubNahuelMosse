@@ -217,3 +217,67 @@ def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
     with ThreadPoolExecutor(2) as hilos:
         a, b = hilos.map(repetir, [0, 1])
     assert a == b
+
+
+def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    espacio = _espacio_nuevo(api, token_admin, sede_id)
+    manana = (date.today() + timedelta(days=1)).isoformat()
+    pedido = {"espacio_id": espacio, "fecha": manana, "desde": "18:00", "horas": 1}
+    reserva = api.post("/reservas", headers=_con(token_usuario), json=pedido).json()["id"]
+
+    r = api.post(f"/reservas/{reserva}/cancelar", headers=_con(token_usuario))
+    otra_vez = api.post(f"/reservas/{reserva}/cancelar", headers=_con(token_usuario))
+
+    assert r.status_code == 200
+    assert r.json()["estado"] == "cancelada"
+    assert otra_vez.status_code == 200
+    with motor.connect() as conn:
+        fila = conn.execute(
+            text(
+                "SELECT cancelada_en IS NOT NULL, cancelada_por = usuario_id FROM reserva"
+                " WHERE id = :id"
+            ),
+            {"id": reserva},
+        ).one()
+    assert tuple(fila) == (True, True)
+    # El horario vuelve a estar libre para otra reserva.
+    assert api.post("/reservas", headers=_con(token_usuario), json=pedido).status_code == 201
+
+
+def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    espacio = _espacio_nuevo(api, token_admin, sede_id)
+    yo = _yo(api, motor, token_usuario)
+    otro = _yo(api, motor, token_admin)
+    hoy = date.today()
+    _reservar(motor, otro, espacio, hoy + timedelta(days=1), 10)
+    _reservar(motor, yo, espacio, hoy + timedelta(days=1), 12)
+    _reservar(motor, yo, espacio, hoy + timedelta(days=2), 12, "anulada", "lluvia")
+    with motor.begin() as conn:
+        ajena, mia, anulada = (
+            int(i)
+            for i in conn.execute(
+                text("SELECT id FROM reserva WHERE espacio_id = :e ORDER BY inicio"),
+                {"e": espacio},
+            ).scalars()
+        )
+        conn.execute(
+            text(
+                "UPDATE reserva SET inicio = date_trunc('hour', now()), fin ="
+                " date_trunc('hour', now()) + interval '1 hour' WHERE id = :id"
+            ),
+            {"id": mia},
+        )
+
+    def cancelar(reserva: int) -> int:
+        return api.post(f"/reservas/{reserva}/cancelar", headers=_con(token_usuario)).status_code
+
+    assert cancelar(ajena) == 404
+    assert cancelar(mia) == 409
+    assert cancelar(anulada) == 409
+    assert api.post(f"/reservas/{mia}/cancelar").status_code == 401
