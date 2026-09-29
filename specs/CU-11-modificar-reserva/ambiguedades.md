@@ -45,3 +45,4 @@ CU-11-AMB-06 · 2026-09-28 · vencida → CU-11-SUP-05 · el total se recalcula 
 CU-11-AMB-07 · 2026-09-28 · vencida → CU-11-SUP-06 · el recordatorio sigue al horario nuevo; se programa con CU-24.1, que lo calcula del horario vigente de la reserva
 CU-11-AMB-09 · 2026-09-28 · vencida → CU-11-SUP-07 · la API de horarios recibe la reserva que se modifica y no la cuenta como ocupada, sólo si es de quien consulta
 CU-11-AMB-10 · 2026-09-28 · vencida → CU-11-SUP-08 · vuelve a Mis reservas, que se lee de nuevo, con el aviso «Reserva modificada» y el horario nuevo en la tarjeta
+CU-11-TESTS · 2026-09-29 · congelados en 4840a22 · 9 escenarios en rojo porque Mis reservas no tiene MODIFICAR ni existe POST /reservas/{id}/modificar
