@@ -130,6 +130,21 @@ def dar_de_baja_sede(pedido: NombreDeSede, conn: Conexion) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post("/espacios/baja", status_code=status.HTTP_204_NO_CONTENT)
+def dar_de_baja_espacio(pedido: Espacio, conn: Conexion) -> Response:
+    """El espacio [espacio] deja de estar activo, como si lo diera de baja otro administrador."""
+    conn.execute(
+        text(
+            "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
+            " dado_de_baja_por = (SELECT min(id) FROM usuario)"
+            " WHERE nombre = :espacio AND activo"
+        ),
+        pedido.model_dump(),
+    )
+    conn.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post("/recuperacion/{codigo}/vencer", status_code=status.HTTP_204_NO_CONTENT)
 def vencer(codigo: str, conn: Conexion) -> Response:
     conn.execute(

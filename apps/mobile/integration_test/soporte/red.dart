@@ -575,3 +575,96 @@ Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
         if (f case {'inicio': final String inicio, 'disponible': true}) inicio,
   ];
 }
+
+/// Otro administrador da de baja el espacio [nombre] mientras la app lo sigue mostrando.
+Future<void> darDeBajaEspacioDesdeOtraSesion(String nombre) async {
+  final r = await http.post(
+    _pruebas('espacios/baja'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({'espacio': nombre}),
+  );
+  if (r.statusCode != 204) throw StateError('baja de espacio: ${r.statusCode}');
+}
+
+/// El espacio activo [nombre] como lo ve un usuario (precio, condición, iluminación), o
+/// `null` si no lo ve.
+Future<Map<String, Object?>?> espacioQueVeUnUsuario(String nombre) async {
+  final datos = await _leer('/espacios', await _tokenDeOtraPersona());
+  if (datos case {'espacios': final List<Object?> espacios}) {
+    for (final espacio in espacios) {
+      if (espacio case final Map<String, Object?> e
+          when e['nombre'] == nombre) {
+        return e;
+      }
+    }
+  }
+  return null;
+}
+
+/// La cuenta [correo] reserva por la API una hora de [nombreEspacio] el [dia] a la [hora]
+/// en punto, y devuelve el total que quedó guardado.
+Future<int> reservarPorLaApi(
+  String correo,
+  String nombreEspacio,
+  DateTime dia,
+  int hora, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final espacios = await _leer('/espacios', token);
+  final id = switch (espacios) {
+    {'espacios': final List<Object?> lista} => [
+      for (final e in lista)
+        if (e case {'id': final int id, 'nombre': final String n})
+          if (n == nombreEspacio) id,
+    ].firstOrNull,
+    _ => null,
+  };
+  if (id == null) throw StateError('no está el espacio $nombreEspacio');
+  final r = await http.post(
+    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/reservas'),
+    headers: {
+      'content-type': 'application/json',
+      'authorization': 'Bearer $token',
+    },
+    body: jsonEncode({
+      'espacio_id': id,
+      'fecha':
+          '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
+          '${dia.day.toString().padLeft(2, '0')}',
+      'desde': '${hora.toString().padLeft(2, '0')}:00',
+      'horas': 1,
+    }),
+  );
+  if (r.statusCode != 201) throw StateError('reservar: ${r.statusCode}');
+  return switch (jsonDecode(utf8.decode(r.bodyBytes))) {
+    {'total': final int total} => total,
+    _ => throw StateError('la reserva no trae el total'),
+  };
+}
+
+/// Los totales de las próximas reservas de la cuenta [correo], por hora de inicio
+/// (`HH:MM`, en la hora del club).
+Future<Map<String, int>> totalesDeReservas(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final datos = await _leer('/reservas?cuando=proximas', token);
+  return {
+    if (datos case {'reservas': final List<Object?> reservas})
+      for (final reserva in reservas)
+        if (reserva case {
+          'inicio': final String inicio,
+          'total': final int total,
+        })
+          DateTime.parse(inicio)
+                  .toUtc()
+                  .subtract(const Duration(hours: 3))
+                  .toIso8601String()
+                  .substring(11, 16):
+              total,
+  };
+}
