@@ -5,10 +5,11 @@ from datetime import date, datetime, time, timedelta
 from threading import Barrier
 from zoneinfo import ZoneInfo
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.aplicacion.errores import HorarioOcupado
+from app.aplicacion.errores import AgendaCambiada, HorarioOcupado
 from app.infraestructura.reservas import ReservasSql
 
 
@@ -193,7 +194,10 @@ def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
             with motor.connect() as conn:
                 barrera.wait()
                 try:
-                    return str(ReservasSql(conn).insertar(usuario, espacio, inicio, fin).id)
+                    sql = ReservasSql(conn)
+                    agenda = sql.agenda(espacio)
+                    assert agenda is not None
+                    return str(sql.insertar(usuario, espacio, inicio, fin, agenda).id)
                 except HorarioOcupado:
                     return "ocupado"
 
@@ -210,9 +214,10 @@ def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
     def repetir(_: int) -> str:
         with motor.connect() as conn:
             barrera.wait()
-            return str(
-                ReservasSql(conn).insertar(yo, espacio, inicio, inicio + timedelta(hours=1)).id
-            )
+            sql = ReservasSql(conn)
+            agenda = sql.agenda(espacio)
+            assert agenda is not None
+            return str(sql.insertar(yo, espacio, inicio, inicio + timedelta(hours=1), agenda).id)
 
     with ThreadPoolExecutor(2) as hilos:
         a, b = hilos.map(repetir, [0, 1])
@@ -400,12 +405,16 @@ def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
     manana = datetime.combine(
         date.today() + timedelta(days=1), time(0), tzinfo=ZoneInfo("America/Argentina/Buenos_Aires")
     )
+    with motor.connect() as conn:
+        agenda = ReservasSql(conn).agenda(a)
+    assert agenda is not None
     for hora in range(8, 20, 2):
         diez, once = manana + timedelta(hours=hora), manana + timedelta(hours=hora + 1)
         hora_ = timedelta(hours=1)
         with motor.connect() as conn:
-            r1 = ReservasSql(conn).insertar(yo, a, diez, diez + hora_).id
-            r2 = ReservasSql(conn).insertar(yo, b, once, once + hora_).id
+            sql = ReservasSql(conn)
+            r1 = sql.insertar(yo, a, diez, diez + hora_, agenda).id
+            r2 = sql.insertar(yo, b, once, once + hora_, agenda).id
         barrera = Barrier(2)
 
         # Cada una quiere el lugar de la otra, que sigue tomado: las dos terminan en ocupado.
@@ -418,7 +427,9 @@ def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
             with motor.connect() as conn:
                 barrera.wait()
                 try:
-                    ReservasSql(conn).mover(yo, reserva, antes, espacio, inicio, inicio + hora_)
+                    ReservasSql(conn).mover(
+                        yo, reserva, antes, espacio, inicio, inicio + hora_, agenda
+                    )
                 except HorarioOcupado:
                     return "ocupado"
                 return "movida"
@@ -428,3 +439,36 @@ def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
                 hilos.map(mover, [(r1, (a, diez), b, once), (r2, (b, once), a, diez)])
             )
         assert resultados == ["ocupado", "ocupado"]
+
+
+def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    espacio = _espacio_nuevo(api, token_admin, sede_id)
+    yo = _yo(api, motor, token_usuario)
+    manana = datetime.combine(
+        date.today() + timedelta(days=1), time(8), tzinfo=ZoneInfo("America/Argentina/Buenos_Aires")
+    )
+    with motor.connect() as conn:
+        vieja = ReservasSql(conn).agenda(espacio)
+    assert vieja is not None
+    with motor.begin() as conn:
+        conn.execute(text("UPDATE sede SET apertura = '09:00' WHERE id = :s"), {"s": sede_id})
+
+    # Verifica: la reserva de las 8, validada antes del cambio, no entra.
+    with motor.connect() as conn, pytest.raises(AgendaCambiada):
+        ReservasSql(conn).insertar(yo, espacio, manana, manana + timedelta(hours=1), vieja)
+    # Verifica: por la API, se vuelve a validar con el horario nuevo.
+    r = api.post(
+        "/reservas",
+        headers=_con(token_usuario),
+        json={
+            "espacio_id": espacio,
+            "fecha": manana.date().isoformat(),
+            "desde": "08:00",
+            "horas": 1,
+        },
+    )
+    assert r.status_code == 422
+    assert r.json()["errores"]["desde"] == "La sede abre a las 09:00"

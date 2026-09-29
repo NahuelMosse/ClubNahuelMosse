@@ -23,29 +23,47 @@ final _calleYAltura = RegExp(r'^.*\S\s+(\d{1,6})$');
 
 String _hora(int h) => '${h.toString().padLeft(2, '0')}:00';
 
-/// Alta de sede: nombre, dirección, apertura, cierre y días que abre.
-class PantallaAltaSede extends StatefulWidget {
-  const PantallaAltaSede({
+/// `HH:MM` a la hora; `null` si no es una hora en punto.
+int? _deHora(String hhmm) => switch (hhmm.split(':')) {
+  [final h, '00'] => int.tryParse(h),
+  _ => null,
+};
+
+/// El formulario de una sede: nombre, dirección, apertura, cierre y días que abre. Sin
+/// [editando] da de alta una sede nueva; con [editando], corrige esa.
+class PantallaFormularioSede extends StatefulWidget {
+  const PantallaFormularioSede({
     super.key,
     required this.sedes,
     required this.sesion,
+    this.editando,
   });
 
   final Sedes sedes;
   final Sesion sesion;
+  final Sede? editando;
 
   @override
-  State<PantallaAltaSede> createState() => _PantallaAltaSedeState();
+  State<PantallaFormularioSede> createState() => _PantallaFormularioSedeState();
 }
 
-class _PantallaAltaSedeState extends State<PantallaAltaSede> {
-  final _nombre = TextEditingController();
-  final _direccion = TextEditingController();
+class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
+  late final _nombre = TextEditingController(text: widget.editando?.nombre);
+  late final _direccion = TextEditingController(
+    text: widget.editando?.direccion,
+  );
   final _focoNombre = FocusNode();
   final _focoDireccion = FocusNode();
-  int? _apertura;
-  int? _cierre;
-  var _dias = DiasQueAbre.lunesADomingo;
+  late int? _apertura = switch (widget.editando) {
+    final s? => _deHora(s.apertura),
+    null => null,
+  };
+  late int? _cierre = switch (widget.editando) {
+    final s? => _deHora(s.cierre),
+    null => null,
+  };
+  late List<int> _dias =
+      widget.editando?.dias ?? DiasQueAbre.lunesADomingo.dias;
   final _tocados = <_Campo>{};
   final _erroresDelServidor = <_Campo, String>{};
   bool _intentoGuardar = false;
@@ -54,6 +72,8 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
   /// Un envío anterior se cortó: la API pudo haber guardado la sede sin que llegara la
   /// respuesta.
   bool _huboCorte = false;
+
+  bool get _editando => widget.editando != null;
 
   @override
   void initState() {
@@ -75,7 +95,11 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
         // El controlador también avisa cuando se mueve el cursor: sólo cuenta el texto.
         if (controlador.text == anterior) return;
         anterior = controlador.text;
-        setState(() => _erroresDelServidor.remove(campo));
+        setState(() {
+          _erroresDelServidor.remove(campo);
+          // En la edición los datos ya vienen cargados: el error se ve apenas se escribe.
+          if (_editando) _tocados.add(campo);
+        });
       });
     }
   }
@@ -161,16 +185,52 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
       context,
       titulo: 'Días que abre',
       opciones: [for (final d in DiasQueAbre.values) (d, d.texto)],
-      elegida: _dias,
+      elegida: DiasQueAbre.values
+          .where((d) => diasDeLaSemana(d.dias) == diasDeLaSemana(_dias))
+          .firstOrNull,
     );
     if (elegidos == null || !mounted) return;
     setState(() {
-      _dias = elegidos;
+      _dias = elegidos.dias;
       _erroresDelServidor.remove(_Campo.dias);
     });
   }
 
-  Future<void> _guardar() async {
+  Future<Sede> _enviar(int apertura, int cierre, {required bool confirmar}) {
+    final nombre = _nombre.text.trim();
+    final direccion = _direccion.text.trim();
+    final sede = widget.editando;
+    return sede == null
+        ? widget.sedes.darDeAlta(
+            nombre: nombre,
+            direccion: direccion,
+            apertura: _hora(apertura),
+            cierre: _hora(cierre),
+            dias: _dias,
+          )
+        : widget.sedes.editar(
+            sede.id,
+            nombre: nombre,
+            direccion: direccion,
+            apertura: _hora(apertura),
+            cierre: _hora(cierre),
+            dias: _dias,
+            confirmar: confirmar,
+          );
+  }
+
+  void _listo(Sede sede) {
+    if (!_editando) {
+      context.go('/admin/sedes/creada', extra: sede);
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Los cambios se guardaron correctamente')),
+    );
+    context.go('/admin/sedes');
+  }
+
+  Future<void> _guardar({bool confirmar = false}) async {
     final apertura = _apertura;
     final cierre = _cierre;
     if (_enviando) return;
@@ -182,22 +242,22 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
     setState(() => _enviando = true);
     Object? fallo;
     var vencida = false;
+    int? afuera;
+    var yaNoEsta = false;
     try {
-      final sede = await widget.sedes.darDeAlta(
-        nombre: _nombre.text.trim(),
-        direccion: _direccion.text.trim(),
-        apertura: _hora(apertura),
-        cierre: _hora(cierre),
-        dias: _dias.dias,
-      );
-      if (mounted) context.go('/admin/sedes/creada', extra: sede);
+      final sede = await _enviar(apertura, cierre, confirmar: confirmar);
+      if (mounted) _listo(sede);
       return;
+    } on ReservasAfuera catch (e) {
+      afuera = e.cantidad;
+    } on SedeNoDisponible {
+      yaNoEsta = true;
     } on SedeRechazada catch (e) {
-      final guardada = e.repetido && _huboCorte
+      final guardada = !_editando && e.repetido && _huboCorte
           ? await _laQueSeGuardo(apertura, cierre)
           : null;
       if (guardada != null) {
-        if (mounted) context.go('/admin/sedes/creada', extra: guardada);
+        if (mounted) _listo(guardada);
         return;
       }
       if (mounted) {
@@ -219,13 +279,60 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
       if (mounted) setState(() => _enviando = false);
     }
     if (!mounted) return;
-    if (vencida) {
+    if (afuera case final n?) {
+      final guardarIgual = await confirmarHorarioNuevo(
+        context,
+        _textoDeAfuera(n, apertura, cierre),
+      );
+      if (guardarIgual && mounted) await _guardar(confirmar: true);
+    } else if (yaNoEsta) {
+      await mostrarCambioMientrasTanto(context);
+      widget.sedes.avisarCambio();
+      if (mounted) context.go('/admin/sedes');
+    } else if (vencida) {
       await mostrarSesionVencida(context);
       if (mounted) await cerrarSesion(context, widget.sesion);
     } else if (fallo != null) {
       final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
+      if (reintentar && mounted) await _guardar(confirmar: confirmar);
     }
+  }
+
+  /// «2 reservas futuras de Sede Morón empiezan antes de las 09:00…», según qué se achicó.
+  String _textoDeAfuera(int n, int apertura, int cierre) {
+    final antes = widget.editando;
+    final una = n == 1;
+    final sujeto =
+        '$n ${una ? 'reserva futura' : 'reservas futuras'} de ${antes?.nombre}';
+    final hasta = cierre == 0 ? 24 : cierre;
+    final antesApertura = antes == null ? null : _deHora(antes.apertura);
+    final antesCierre = switch (antes == null ? null : _deHora(antes.cierre)) {
+      0 => 24,
+      final c => c,
+    };
+    final motivos = [
+      if (antesApertura != null && apertura > antesApertura)
+        '${una ? 'empieza' : 'empiezan'} antes de las ${_hora(apertura)}',
+      if (antesCierre != null && hasta < antesCierre)
+        '${una ? 'termina' : 'terminan'} después de las ${_hora(cierre)}',
+      if (antes != null && antes.dias.any((d) => !_dias.contains(d)))
+        '${una ? 'cae' : 'caen'} en un día que la sede deja de abrir',
+    ];
+    final motivo = motivos.length == 1
+        ? motivos.single
+        : '${una ? 'queda' : 'quedan'} fuera del horario nuevo';
+    return '$sujeto $motivo. Si guardás, ${una ? 'se mantiene' : 'se mantienen'} '
+        'en su horario original: el cambio rige para las reservas nuevas.';
+  }
+
+  Future<void> _darDeBaja() async {
+    final sede = widget.editando;
+    if (sede == null) return;
+    await confirmarBajaDeSede(
+      context,
+      '${sede.nombre} · ${sede.direccion}. Sus espacios deportivos dejan de '
+      'estar disponibles.',
+    );
   }
 
   /// La sede que guardó el envío cortado, si es esta misma: así el reintento no la
@@ -242,7 +349,7 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
                 normal(s.direccion) == normal(_direccion.text) &&
                 s.apertura == _hora(apertura) &&
                 s.cierre == _hora(cierre) &&
-                diasDeLaSemana(s.dias) == _dias.texto,
+                diasDeLaSemana(s.dias) == diasDeLaSemana(_dias),
           )
           .firstOrNull;
     } on Exception {
@@ -255,12 +362,15 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
     final p = context.paleta;
     final apertura = _apertura;
     final cierre = _cierre;
-    // Mientras se guarda no se sale: la sede se crearía sin que se viera el éxito.
+    final editando = widget.editando;
+    // Mientras se guarda no se sale: la sede se guardaría sin que se viera el éxito.
     return PopScope(
       canPop: !_enviando,
       child: Scaffold(
         backgroundColor: p.bgBase,
-        appBar: const BarraSuperior(titulo: 'Agregar sede'),
+        appBar: BarraSuperior(
+          titulo: editando == null ? 'Agregar sede' : 'Editar sede',
+        ),
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
@@ -276,7 +386,7 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
                 Semantics(
                   header: true,
                   child: Text(
-                    'Nueva sede',
+                    editando?.nombre ?? 'Nueva sede',
                     style: Textos.h1.copyWith(color: p.textPrimary),
                   ),
                 ),
@@ -305,7 +415,9 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
                   etiquetaAccesible: 'Dirección',
                   controlador: _direccion,
                   foco: _focoDireccion,
-                  placeholder: 'Calle y altura',
+                  placeholder: editando == null
+                      ? 'Calle y altura'
+                      : 'Escribí la dirección',
                   error: _error(_Campo.direccion),
                   habilitado: !_enviando,
                   teclado: TextInputType.streetAddress,
@@ -341,7 +453,7 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
                 CampoSelector(
                   etiqueta: 'DÍAS QUE ABRE',
                   etiquetaAccesible: 'Días que abre',
-                  valor: _dias.texto,
+                  valor: diasDeLaSemana(_dias),
                   placeholder: DiasQueAbre.lunesADomingo.texto,
                   icono: Icons.expand_more_rounded,
                   error: _error(_Campo.dias),
@@ -352,12 +464,30 @@ class _PantallaAltaSedeState extends State<PantallaAltaSede> {
           ),
         ),
         bottomNavigationBar: BarraDeAccion(
-          child: BotonPrimario(
-            texto: 'GUARDAR SEDE',
-            cargando: _enviando,
-            atenuado: !_completo,
-            alTocar: _guardar,
-          ),
+          child: editando == null
+              ? BotonPrimario(
+                  texto: 'GUARDAR SEDE',
+                  cargando: _enviando,
+                  atenuado: !_completo,
+                  alTocar: _guardar,
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    BotonPrimario(
+                      texto: 'GUARDAR CAMBIOS',
+                      cargando: _enviando,
+                      alTocar: _completo ? _guardar : null,
+                    ),
+                    const SizedBox(height: Medidas.s12),
+                    BotonContorno(
+                      texto: 'DAR DE BAJA LA SEDE',
+                      peligro: true,
+                      alTocar: _enviando ? null : _darDeBaja,
+                    ),
+                  ],
+                ),
         ),
       ),
     );

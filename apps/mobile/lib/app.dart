@@ -3,7 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'admin/pantalla_alta_espacio.dart';
-import 'admin/pantalla_alta_sede.dart';
+import 'admin/pantalla_formulario_sede.dart';
 import 'admin/pantalla_espacio_creado.dart';
 import 'admin/pantalla_espacios_admin.dart';
 import 'admin/pantalla_panel_admin.dart';
@@ -310,7 +310,22 @@ class _AppState extends State<App> {
           GoRoute(
             path: 'nueva',
             builder: (context, _) =>
-                PantallaAltaSede(sedes: _sedes, sesion: widget.sesion),
+                PantallaFormularioSede(sedes: _sedes, sesion: widget.sesion),
+          ),
+          GoRoute(
+            path: ':sede/editar',
+            // Sin la sede que se tocó en el listado (un enlace, la app reabierta), vuelve al
+            // listado.
+            redirect: (context, estado) =>
+                estado.extra is Sede ? null : '/admin/sedes',
+            builder: (context, estado) => switch (estado.extra) {
+              final Sede sede => PantallaFormularioSede(
+                sedes: _sedes,
+                sesion: widget.sesion,
+                editando: sede,
+              ),
+              _ => const SizedBox.shrink(),
+            },
           ),
           GoRoute(
             path: 'creada',

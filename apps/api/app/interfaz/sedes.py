@@ -2,13 +2,19 @@ import re
 from datetime import time
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import Connection
 
-from app.aplicacion.errores import DatosInvalidos, Duplicado, Prohibido
-from app.aplicacion.sedes import dar_de_alta_sede, sedes_activas
+from app.aplicacion.errores import (
+    DatosInvalidos,
+    Duplicado,
+    NoEncontrada,
+    Prohibido,
+    ReservasAfuera,
+)
+from app.aplicacion.sedes import dar_de_alta_sede, editar_sede, sedes_activas
 from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
@@ -125,5 +131,69 @@ def alta_de_sede(
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
             content={"errores": {"nombre": "Ya existe una sede con ese nombre"}},
+        )
+    return _vista(sede)
+
+
+class PedidoDeEdicion(PedidoDeSede):
+    # Guardar igual un horario que deja reservas futuras afuera.
+    confirmar: bool = False
+
+
+class ReservasFueraDelHorario(BaseModel):
+    reservas_afuera: int
+
+
+@router.put(
+    "/sedes/{sede_id}",
+    response_model=SedeVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador edita sedes"},
+        404: {"description": "La sede ya no está activa"},
+        409: {
+            "model": ErroresDeSede | ReservasFueraDelHorario,
+            "description": "Otra sede activa ya tiene ese nombre, o el horario nuevo deja "
+            "afuera reservas futuras y falta `confirmar`",
+        },
+        422: {"model": ErroresDeSede},
+    },
+    summary="Editar una sede",
+    description=(
+        "Los mismos datos y reglas que el alta. Las reservas ya hechas se mantienen aunque "
+        "queden fuera del horario nuevo, que rige para las que vengan."
+    ),
+)
+def edicion_de_sede(
+    pedido: PedidoDeEdicion,
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> SedeVista | Response:
+    datos = DatosSede(
+        nombre=pedido.nombre,
+        direccion=pedido.direccion,
+        apertura=_leer_hora(pedido.apertura),
+        cierre=_leer_hora(pedido.cierre),
+        dias=tuple(pedido.dias),
+    )
+    try:
+        sede = editar_sede(perfil, sede_id, datos, pedido.confirmar, SedesSql(conn))
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    except Duplicado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={"errores": {"nombre": "Ya existe una sede con ese nombre"}},
+        )
+    except ReservasAfuera as e:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.cantidad}
         )
     return _vista(sede)

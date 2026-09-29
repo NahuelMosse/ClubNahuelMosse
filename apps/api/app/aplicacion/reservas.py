@@ -1,7 +1,15 @@
+from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from typing import Literal, Protocol
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
+from app.aplicacion.errores import (
+    AgendaCambiada,
+    DatosInvalidos,
+    HorarioOcupado,
+    NoDisponible,
+    NoEncontrada,
+    Prohibido,
+)
 from app.dominio.horarios import Agenda, rango, validar_reserva
 from app.dominio.reservas import Reserva
 from app.dominio.usuarios import Perfil
@@ -42,13 +50,15 @@ class Reservas(Protocol):
         espacio_id: int,
         inicio: datetime,
         fin: datetime,
+        agenda: Agenda,
     ) -> Reserva:
         """Pasa la reserva, que estaba en [antes] (espacio e inicio), a [espacio_id] de
         [inicio] a [fin], con el precio de ahora de ese espacio. El horario anterior se libera
         sólo si el nuevo queda tomado.
 
         Lanza `NoEncontrada`, `Cambiado` (ya no activa, empezada o ya no en [antes]),
-        `NoDisponible` (el espacio nuevo ya no está) y `HorarioOcupado`.
+        `NoDisponible` (el espacio nuevo ya no está), `HorarioOcupado` y `AgendaCambiada` si
+        la sede ya no tiene la [agenda] con que se validó.
         """
         ...
 
@@ -61,16 +71,43 @@ class Reservas(Protocol):
         ...
 
     def insertar(
-        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
+        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime, agenda: Agenda
     ) -> Reserva:
         """Guarda la reserva activa con el precio de ahora del espacio.
 
         Si la misma persona pidió lo mismo hace un momento, es su pedido repetido después de
         un corte y devuelve esa reserva. Lanza `HorarioOcupado` si otra reserva activa del
-        espacio se superpone y `NoDisponible` si el espacio, su sede o la cuenta ya no
-        están activos.
+        espacio se superpone, `NoDisponible` si el espacio, su sede o la cuenta ya no
+        están activos, y `AgendaCambiada` si la sede ya no tiene la [agenda] con que se
+        validó.
         """
         ...
+
+
+def _con_la_agenda_vigente(
+    reservas: Reservas,
+    espacio_id: int,
+    fecha: date,
+    desde: time,
+    horas: int,
+    ahora: datetime,
+    guardar: Callable[[Agenda], Reserva],
+) -> Reserva:
+    """Valida el horario con la agenda de la sede y guarda. Si un administrador cambió la
+    agenda en el medio, vuelve a validar con la nueva: lo que se guarda respeta el horario que
+    rige cuando se guarda (RF 3)."""
+    for _ in range(3):
+        agenda = reservas.agenda(espacio_id)
+        if agenda is None:
+            raise NoDisponible("el espacio no está activo")
+        errores = validar_reserva(agenda, fecha, desde, horas, ahora)
+        if errores:
+            raise DatosInvalidos(errores)
+        try:
+            return guardar(agenda)
+        except AgendaCambiada:
+            continue
+    raise HorarioOcupado("el horario de la sede cambió varias veces seguidas")
 
 
 def mis_reservas(reservas: Reservas, perfil: Perfil, cuando: Cuando) -> list[Reserva]:
@@ -103,13 +140,15 @@ def reservar(
     # se hizo, se devuelve sin volver a validar el horario.
     if horas > 0 and (ya := reservas.repetida(perfil.id, espacio_id, inicio, fin)):
         return ya
-    agenda = reservas.agenda(espacio_id)
-    if agenda is None:
-        raise NoDisponible("el espacio no está activo")
-    errores = validar_reserva(agenda, fecha, desde, horas, ahora)
-    if errores:
-        raise DatosInvalidos(errores)
-    return reservas.insertar(perfil.id, espacio_id, inicio, fin)
+    return _con_la_agenda_vigente(
+        reservas,
+        espacio_id,
+        fecha,
+        desde,
+        horas,
+        ahora,
+        lambda agenda: reservas.insertar(perfil.id, espacio_id, inicio, fin, agenda),
+    )
 
 
 def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Reserva:
@@ -148,18 +187,21 @@ def modificar_reserva(
     nuevo = reservas.tipo_de_espacio(espacio_id)
     if nuevo is None or nuevo != (actual.sede_id, actual.deporte, actual.tipo):
         raise DatosInvalidos({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
-    agenda = reservas.agenda(espacio_id)
-    if agenda is None:
-        raise NoDisponible("el espacio no está activo")
     horas = int((actual.fin - actual.inicio).total_seconds()) // 3600
-    errores = validar_reserva(agenda, fecha, desde, horas, ahora)
-    if errores:
-        raise DatosInvalidos(errores)
-    return reservas.mover(
-        perfil.id,
-        reserva_id,
-        (actual.espacio_id, actual.inicio),
+    return _con_la_agenda_vigente(
+        reservas,
         espacio_id,
-        inicio,
-        inicio + timedelta(hours=horas),
+        fecha,
+        desde,
+        horas,
+        ahora,
+        lambda agenda: reservas.mover(
+            perfil.id,
+            reserva_id,
+            (actual.espacio_id, actual.inicio),
+            espacio_id,
+            inicio,
+            inicio + timedelta(hours=horas),
+            agenda,
+        ),
     )

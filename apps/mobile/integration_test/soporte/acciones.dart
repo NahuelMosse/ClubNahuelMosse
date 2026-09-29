@@ -82,6 +82,9 @@ Future<void> elegirHora(WidgetTester tester, String campo, String hora) =>
 /// Abre el selector de [campo] y toca [opcion].
 Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
   final selector = find.bySemanticsLabel(campo);
+  // Al cerrarse el selector anterior, un campo de texto puede recuperar el foco y abrir el
+  // teclado, que corre la pantalla.
+  await _esperarPantallaQuieta(tester);
   await tester.ensureVisible(selector);
   await tester.pumpAndSettle();
   await tester.tap(selector);

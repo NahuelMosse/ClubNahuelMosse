@@ -128,6 +128,8 @@ class BotonContorno extends StatelessWidget {
     required this.alTocar,
     this.peligro = false,
     this.compacto = false,
+    this.icono,
+    this.etiquetaAccesible,
   });
 
   final String texto;
@@ -138,17 +140,23 @@ class BotonContorno extends StatelessWidget {
 
   /// Menos aire a los costados, para dos botones lado a lado en un teléfono chico.
   final bool compacto;
+  final IconData? icono;
+
+  /// Lo que lee el lector de pantalla cuando [texto] solo no dice de qué es el botón.
+  final String? etiquetaAccesible;
 
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
+    final simbolo = icono;
     return ConstrainedBox(
       constraints: const BoxConstraints(
         minHeight: Medidas.altoControl,
         minWidth: double.infinity,
       ),
-      child: OutlinedButton(
+      child: OutlinedButton.icon(
         onPressed: alTocar,
+        icon: simbolo == null ? null : Icon(simbolo, size: 18),
         style: OutlinedButton.styleFrom(
           foregroundColor: peligro ? p.stateDangerInk : p.textPrimary,
           side: BorderSide(
@@ -161,7 +169,14 @@ class BotonContorno extends StatelessWidget {
             horizontal: compacto ? Medidas.s8 : Medidas.s24,
           ),
         ),
-        child: Text(texto, textAlign: TextAlign.center),
+        label: switch (etiquetaAccesible) {
+          final etiqueta? => Semantics(
+            label: etiqueta,
+            excludeSemantics: true,
+            child: Text(texto, textAlign: TextAlign.center),
+          ),
+          null => Text(texto, textAlign: TextAlign.center),
+        },
       ),
     );
   }

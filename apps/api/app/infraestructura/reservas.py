@@ -4,7 +4,13 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import Cambiado, HorarioOcupado, NoDisponible, NoEncontrada
+from app.aplicacion.errores import (
+    AgendaCambiada,
+    Cambiado,
+    HorarioOcupado,
+    NoDisponible,
+    NoEncontrada,
+)
 from app.aplicacion.reservas import Cuando
 from app.dominio.horarios import Agenda
 from app.dominio.reservas import Reserva
@@ -38,6 +44,10 @@ def _reserva(f: Any) -> Reserva:
         motivo=f.motivo,
         cancelable=bool(f.cancelable),
     )
+
+
+def _agenda(fila: Any) -> Agenda:
+    return Agenda(apertura=fila.apertura, cierre=fila.cierre, dias=tuple(int(d) for d in fila.dias))
 
 
 class ReservasSql:
@@ -119,6 +129,7 @@ class ReservasSql:
         espacio_id: int,
         inicio: datetime,
         fin: datetime,
+        agenda: Agenda,
     ) -> Reserva:
         datos = {
             "usuario": usuario_id,
@@ -135,11 +146,13 @@ class ReservasSql:
             # cambios cruzados entre las mismas canchas se esperan en vez de trabarse.
             sede = self._conn.execute(
                 text(
-                    "SELECT s.id FROM sede s JOIN espacio e ON e.sede_id = s.id"
-                    " WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
+                    "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
+                    " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
                 ),
                 datos,
             ).first()
+            if sede is not None and _agenda(sede) != agenda:
+                raise AgendaCambiada("la sede cambió de horario")
             espacios = {
                 e.id: e
                 for e in self._conn.execute(
@@ -223,7 +236,7 @@ class ReservasSql:
         return reserva
 
     def insertar(
-        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
+        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime, agenda: Agenda
     ) -> Reserva:
         datos = {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
         try:
@@ -235,13 +248,17 @@ class ReservasSql:
             cuenta = self._conn.execute(
                 text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
             ).first()
+            # La sede compartida también fija su horario: si cambió desde que se validó la
+            # reserva, se vuelve a validar con el nuevo.
             sede = self._conn.execute(
                 text(
-                    "SELECT s.id FROM sede s JOIN espacio e ON e.sede_id = s.id"
-                    " WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
+                    "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
+                    " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
                 ),
                 datos,
             ).first()
+            if sede is not None and _agenda(sede) != agenda:
+                raise AgendaCambiada("la sede cambió de horario")
             espacio = self._conn.execute(
                 text(
                     "SELECT precio_por_hora FROM espacio WHERE id = :espacio AND activo"

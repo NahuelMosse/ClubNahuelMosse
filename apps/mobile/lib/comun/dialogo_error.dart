@@ -58,6 +58,40 @@ Future<bool> confirmarCancelacion(BuildContext context, String texto) async =>
     ) ??
     false;
 
+/// El horario nuevo de una sede deja afuera reservas futuras: GUARDAR IGUAL devuelve
+/// `true`.
+Future<bool> confirmarHorarioNuevo(BuildContext context, String texto) async =>
+    await showDialog<bool>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => _Modal(
+        icono: Icons.warning_amber_rounded,
+        titulo: '¿Guardar el horario nuevo?',
+        texto: texto,
+        principal: 'GUARDAR IGUAL',
+        secundaria: 'REVISAR EL HORARIO',
+        secundariaContorno: true,
+      ),
+    ) ??
+    false;
+
+/// Confirmar la baja de una sede: DAR DE BAJA devuelve `true`.
+Future<bool> confirmarBajaDeSede(BuildContext context, String texto) async =>
+    await showDialog<bool>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => _Modal(
+        icono: Icons.warning_amber_rounded,
+        titulo: '¿Dar de baja la sede?',
+        texto: texto,
+        principal: 'DAR DE BAJA',
+        principalPeligro: true,
+        secundaria: 'CANCELAR',
+        secundariaContorno: true,
+      ),
+    ) ??
+    false;
+
 /// La reserva quedó cancelada.
 Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   context: context,

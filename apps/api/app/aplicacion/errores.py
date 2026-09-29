@@ -52,3 +52,15 @@ class NoEncontrada(Exception):
 class Cambiado(Exception):
     """Lo que se quería cambiar ya no está como se lo veía (otra persona o el tiempo lo
     cambiaron)."""
+
+
+class ReservasAfuera(Exception):
+    """El horario nuevo deja afuera reservas futuras: hace falta confirmarlo."""
+
+    def __init__(self, cantidad: int) -> None:
+        super().__init__(f"{cantidad} reservas futuras quedan fuera del horario nuevo")
+        self.cantidad = cantidad
+
+
+class AgendaCambiada(Exception):
+    """El horario de la sede cambió entre que se validó una reserva y que se guardó."""

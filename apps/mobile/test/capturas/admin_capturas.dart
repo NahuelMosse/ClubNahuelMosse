@@ -116,6 +116,60 @@ void main() {
         semantica.dispose();
       });
 
+      Future<void> abrirEdicion(
+        WidgetTester tester, {
+        (int, String) alGuardar = (200, sedeMoronJson),
+      }) async {
+        await montarAdmin(
+          tester,
+          oscuro: oscuro,
+          tamano: tamano,
+          api: apiRutas({
+            'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
+            'PUT /sedes/1': alGuardar,
+          }),
+        );
+        await tester.tap(find.bySemanticsLabel('Editar sede Sede Morón'));
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('editar sede $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await abrirEdicion(tester);
+        await capturar(tester, 'admin/editar_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      testWidgets('editar sede con un campo vacío $ancho $modo', (
+        tester,
+      ) async {
+        final semantica = tester.ensureSemantics();
+        await abrirEdicion(tester);
+        await tester.enterText(find.bySemanticsLabel('Dirección'), '');
+        FocusManager.instance.primaryFocus?.unfocus();
+        await capturar(tester, 'admin/editar_vacio_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      testWidgets('editar sede con reservas afuera $ancho $modo', (
+        tester,
+      ) async {
+        final semantica = tester.ensureSemantics();
+        await abrirEdicion(tester, alGuardar: (409, '{"reservas_afuera": 3}'));
+        await elegir(tester, 'Horario de apertura', '10:00');
+        await tester.tap(find.text('GUARDAR CAMBIOS'));
+        await capturar(tester, 'admin/editar_afuera_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
+      testWidgets('confirmar la baja de la sede $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await abrirEdicion(tester);
+        await tester.tap(find.text('DAR DE BAJA LA SEDE'));
+        await capturar(tester, 'admin/baja_sede_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
       testWidgets('sede creada $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
         await montarAdmin(
