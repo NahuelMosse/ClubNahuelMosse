@@ -35,3 +35,13 @@ CU-11-AMB-05 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-11-AMB-05 · 2026-09-27 · resuelta · todas las entidades guardan fecha de creación y de modificación, las acciones del administrador guardan su autor, la reserva guarda el precio del momento; las bajas son lógicas y no borran historial (decisión 4)
 CU-11-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-11-AMB-08 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+CU-11-AMB-09 · 2026-09-28 · abierta · la grilla marca «(actual)» la franja de la reserva: ¿cómo se consulta la disponibilidad sin que la propia reserva la ocupe?
+CU-11-AMB-10 · 2026-09-28 · abierta · al guardar el cambio, ¿adónde vuelve y cómo se entera la persona de que salió bien?
+CU-11-AMB-01 · 2026-09-28 · vencida → CU-11-SUP-01 · la franja actual se muestra libre y marcada «(actual)»; si no hay otra libre, la grilla muestra sólo esa y el botón queda deshabilitado (FA3)
+CU-11-AMB-02 · 2026-09-28 · vencida → CU-11-SUP-02 · la reserva de otra cuenta responde 404, como al cancelar (CU-10-SUP-02)
+CU-11-AMB-03 · 2026-09-28 · vencida → CU-11-SUP-03 · sin tope de modificaciones: se puede modificar mientras la reserva siga activa y no haya empezado
+CU-11-AMB-04 · 2026-09-28 · vencida → CU-11-SUP-04 · como el prototipo (decisión 12): se mantiene la duración y se puede pasar a otra cancha del mismo tipo en la misma sede, a otro día y a otro horario
+CU-11-AMB-06 · 2026-09-28 · vencida → CU-11-SUP-05 · el total se recalcula con el precio del espacio nuevo en el momento del cambio, y la confirmación lo muestra antes de guardar
+CU-11-AMB-07 · 2026-09-28 · vencida → CU-11-SUP-06 · el recordatorio sigue al horario nuevo; se programa con CU-24.1, que lo calcula del horario vigente de la reserva
+CU-11-AMB-09 · 2026-09-28 · vencida → CU-11-SUP-07 · la API de horarios recibe la reserva que se modifica y no la cuenta como ocupada, sólo si es de quien consulta
+CU-11-AMB-10 · 2026-09-28 · vencida → CU-11-SUP-08 · vuelve a Mis reservas, que se lee de nuevo, con el aviso «Reserva modificada» y el horario nuevo en la tarjeta
