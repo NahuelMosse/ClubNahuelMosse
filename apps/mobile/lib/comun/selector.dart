@@ -15,6 +15,7 @@ class CampoSelector extends StatelessWidget {
     required this.icono,
     required this.alTocar,
     this.error,
+    this.soloLectura = false,
   });
 
   final String etiqueta;
@@ -25,6 +26,10 @@ class CampoSelector extends StatelessWidget {
   final VoidCallback? alTocar;
   final String? error;
 
+  /// Un dato que se muestra pero no se cambia: todo apagado, como el `Dropdown` deshabilitado
+  /// del prototipo.
+  final bool soloLectura;
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
@@ -34,7 +39,7 @@ class CampoSelector extends StatelessWidget {
       borderRadius: BorderRadius.circular(Medidas.radioPill),
       side: mensaje != null
           ? BorderSide(color: p.borderError, width: 1.5)
-          : BorderSide(color: p.borderControl),
+          : BorderSide(color: soloLectura ? p.borderDefault : p.borderControl),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,7 +47,9 @@ class CampoSelector extends StatelessWidget {
         ExcludeSemantics(
           child: Text(
             etiqueta,
-            style: Textos.sobretitulo.copyWith(color: p.textSecondary),
+            style: Textos.sobretitulo.copyWith(
+              color: soloLectura ? p.stateDisabled : p.textSecondary,
+            ),
           ),
         ),
         const SizedBox(height: Medidas.s8),
@@ -55,7 +62,7 @@ class CampoSelector extends StatelessWidget {
           excludeSemantics: true,
           onTap: alTocar,
           child: Material(
-            color: p.bgSurface,
+            color: soloLectura ? Colors.transparent : p.bgSurface,
             shape: forma,
             clipBehavior: Clip.antiAlias,
             child: InkWell(
@@ -72,14 +79,21 @@ class CampoSelector extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Textos.cuerpo.copyWith(
-                            color: elegido == null
+                            // Apagado, pero el dato se tiene que poder leer.
+                            color: soloLectura
+                                ? p.textSecondary
+                                : elegido == null
                                 ? p.textMuted
                                 : p.textPrimary,
                           ),
                         ),
                       ),
                       const SizedBox(width: Medidas.s12),
-                      Icon(icono, size: 24, color: p.textSecondary),
+                      Icon(
+                        icono,
+                        size: 24,
+                        color: soloLectura ? p.stateDisabled : p.textSecondary,
+                      ),
                     ],
                   ),
                 ),

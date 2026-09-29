@@ -153,6 +153,47 @@ class Espacio:
     precio_por_hora: int
 
 
+@dataclass(frozen=True)
+class CambioDeEspacio:
+    """Lo que se corrige de un espacio (CU-22); `None` es lo que queda como está. El nombre
+    compuesto no cambia."""
+
+    techada: bool | None
+    iluminada: bool | None
+    precio_por_hora: int | None
+
+
+def _error_de_precio(precio: int | None) -> str | None:
+    if precio is None:
+        return OBLIGATORIO
+    if not 0 < precio <= PRECIO_MAXIMO:
+        return "Ingresá un precio entre $ 1 y $ 9.999.999"
+    return None
+
+
+def validar_cambio(
+    techada: bool | None,
+    iluminada: bool | None,
+    precio_por_hora: int | None,
+    *,
+    dados: frozenset[str],
+) -> tuple[CambioDeEspacio | None, dict[str, str]]:
+    """El cambio listo para guardar, o los errores de cada campo. Sólo cambia lo que está en
+    [dados]: lo que no vino no pisa lo que otro haya guardado mientras tanto."""
+    errores: dict[str, str] = {}
+    if not dados & {"techada", "iluminada", "precio_por_hora"}:
+        errores["cambio"] = "No hay nada que cambiar"
+    if "techada" in dados and techada is None:
+        errores["techada"] = OBLIGATORIO
+    if "iluminada" in dados and iluminada is None:
+        errores["iluminada"] = OBLIGATORIO
+    if "precio_por_hora" in dados and (error := _error_de_precio(precio_por_hora)):
+        errores["precio_por_hora"] = error
+    if errores:
+        return None, errores
+    return CambioDeEspacio(techada, iluminada, precio_por_hora), {}
+
+
 def validar_espacio(datos: DatosEspacio) -> tuple[EspacioNuevo | None, dict[str, str]]:
     """El espacio listo para guardar, o los errores de cada campo."""
     errores: dict[str, str] = {}
@@ -172,10 +213,8 @@ def validar_espacio(datos: DatosEspacio) -> tuple[EspacioNuevo | None, dict[str,
     if datos.iluminada is None:
         errores["iluminada"] = OBLIGATORIO
     precio = datos.precio_por_hora
-    if precio is None:
-        errores["precio_por_hora"] = OBLIGATORIO
-    elif not 0 < precio <= PRECIO_MAXIMO:
-        errores["precio_por_hora"] = "Ingresá un precio entre $ 1 y $ 9.999.999"
+    if (error := _error_de_precio(precio)) is not None:
+        errores["precio_por_hora"] = error
     if (
         errores
         or datos.sede_id is None

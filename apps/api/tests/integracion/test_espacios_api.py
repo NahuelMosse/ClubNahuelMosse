@@ -437,3 +437,87 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
     )
     assert r.json()["errores"] == {"sede_id": "La sede ya no está disponible"}
     assert api.get("/espacios/disponibles", params=base).status_code in (401, 422)
+
+
+def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las_reservas(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    with motor.begin() as conn:
+        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        conn.execute(
+            text(
+                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                " SELECT :u, :e, i, i + interval '1 hour', :p, :p"
+                " FROM (SELECT date_trunc('hour', now()) + interval '1 day' AS i) x"
+            ),
+            {"u": dueno, "e": alta["id"], "p": alta["precio_por_hora"]},
+        )
+    cambio = {"techada": not alta["techada"], "iluminada": False, "precio_por_hora": 45000}
+
+    r = api.put(f"/espacios/{alta['id']}", headers=_con(token_admin), json=cambio)
+
+    assert r.status_code == 200
+    assert r.json() == alta | cambio
+    with motor.connect() as conn:
+        fila = conn.execute(
+            text(
+                "SELECT e.modificado_por IS NOT NULL, r.total FROM espacio e"
+                " JOIN reserva r ON r.espacio_id = e.id WHERE e.id = :id"
+            ),
+            {"id": alta["id"]},
+        ).one()
+    assert tuple(fila) == (True, alta["precio_por_hora"])
+    assert (
+        api.put(f"/espacios/{alta['id']}", headers=_con(token_usuario), json=cambio).status_code
+        == 403
+    )
+
+
+def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    ruta = f"/espacios/{alta['id']}"
+
+    for precio, mensaje in [
+        (None, "Este campo es obligatorio"),
+        (0, "Ingresá un precio entre $ 1 y $ 9.999.999"),
+        (10_000_000, "Ingresá un precio entre $ 1 y $ 9.999.999"),
+    ]:
+        r = api.put(
+            ruta,
+            headers=_con(token_admin),
+            json={"techada": True, "iluminada": True, "precio_por_hora": precio},
+        )
+        assert r.status_code == 422
+        assert r.json()["errores"] == {"precio_por_hora": mensaje}
+    with motor.begin() as conn:
+        conn.execute(
+            text("UPDATE espacio SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
+            {"id": alta["id"]},
+        )
+    valido = {"techada": True, "iluminada": True, "precio_por_hora": 45000}
+    assert api.put(ruta, headers=_con(token_admin), json=valido).status_code == 404
+
+
+def test_editar_sin_un_campo_lo_deja_como_estaba(
+    api: TestClient, token_admin: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    ruta = f"/espacios/{alta['id']}"
+
+    # Otro administrador cambió el precio; éste sólo cambia la condición.
+    assert (
+        api.put(ruta, headers=_con(token_admin), json={"precio_por_hora": 50000}).status_code == 200
+    )
+    r = api.put(ruta, headers=_con(token_admin), json={"techada": not alta["techada"]})
+
+    assert r.status_code == 200
+    assert (r.json()["precio_por_hora"], r.json()["techada"]) == (50000, not alta["techada"])
+    vacio = api.put(ruta, headers=_con(token_admin), json={})
+    assert vacio.status_code == 422
+    assert vacio.json()["errores"] == {"cambio": "No hay nada que cambiar"}

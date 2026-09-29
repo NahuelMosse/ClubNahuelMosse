@@ -4,8 +4,14 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import Duplicado, NoDisponible, NumeroOcupado
-from app.dominio.espacios import Espacio, EspacioNuevo, NombreSugerido, SedeDelEspacio
+from app.aplicacion.errores import Duplicado, NoDisponible, NoEncontrada, NumeroOcupado
+from app.dominio.espacios import (
+    CambioDeEspacio,
+    Espacio,
+    EspacioNuevo,
+    NombreSugerido,
+    SedeDelEspacio,
+)
 
 COLUMNAS_DE_ESPACIO = (
     "e.id, e.nombre, e.sede_id, s.nombre AS sede, e.deporte, e.tipo, e.numero, e.techada,"
@@ -185,6 +191,56 @@ class EspaciosSql:
             if indice == "espacio_nombre_key":
                 raise Duplicado(["nombre"]) from e
             raise
+        except BaseException:
+            self._conn.rollback()
+            raise
+        return espacio_de_fila(fila)
+
+    def actualizar(self, espacio_id: int, cambio: CambioDeEspacio, autor: int) -> Espacio:
+        datos = {
+            "id": espacio_id,
+            "techada": cambio.techada,
+            "iluminada": cambio.iluminada,
+            "precio": cambio.precio_por_hora,
+            "autor": autor,
+        }
+        try:
+            # La sede compartida y después la fila del espacio, el orden de una reserva: la
+            # que se está guardando toma el precio de antes o el de ahora, entero.
+            sede = self._conn.execute(
+                text(
+                    "SELECT s.id FROM sede s JOIN espacio e ON e.sede_id = s.id"
+                    " WHERE e.id = :id AND e.activo AND s.activa FOR SHARE OF s"
+                ),
+                datos,
+            ).first()
+            if sede is None:
+                raise NoEncontrada("el espacio ya no está activo")
+            # El espacio pudo darse de baja entre el chequeo y acá: si no se tocó ninguna
+            # fila, no se guardó nada.
+            if (
+                self._conn.execute(
+                    text(
+                        "UPDATE espacio SET"
+                        " techada = coalesce(CAST(:techada AS boolean), techada),"
+                        " iluminada = coalesce(CAST(:iluminada AS boolean), iluminada),"
+                        " precio_por_hora = coalesce(CAST(:precio AS integer), precio_por_hora),"
+                        " modificado_por = :autor, modificado_en = now()"
+                        " WHERE id = :id AND activo RETURNING id"
+                    ),
+                    datos,
+                ).first()
+                is None
+            ):
+                raise NoEncontrada("el espacio se dio de baja mientras tanto")
+            fila = self._conn.execute(
+                text(
+                    f"SELECT {COLUMNAS_DE_ESPACIO} FROM espacio e JOIN sede s ON s.id = e.sede_id"
+                    " WHERE e.id = :id"
+                ),
+                datos,
+            ).one()
+            self._conn.commit()
         except BaseException:
             self._conn.rollback()
             raise

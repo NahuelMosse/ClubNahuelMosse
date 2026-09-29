@@ -106,6 +106,26 @@ Future<void> mostrarSedeConReservas(BuildContext context) => showDialog<void>(
   ),
 );
 
+/// Confirmar la baja del espacio [nombre]: CONFIRMAR BAJA devuelve `true`.
+Future<bool> confirmarBajaDeEspacio(
+  BuildContext context,
+  String nombre,
+) async =>
+    await showDialog<bool>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => _Modal(
+        icono: Icons.warning_amber_rounded,
+        titulo: '¿Dar de baja el espacio?',
+        texto: '$nombre. La acción es permanente.',
+        principal: 'CONFIRMAR BAJA',
+        principalPeligro: true,
+        secundaria: 'CANCELAR',
+        secundariaContorno: true,
+      ),
+    ) ??
+    false;
+
 /// La reserva quedó cancelada.
 Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   context: context,

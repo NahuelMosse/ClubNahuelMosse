@@ -188,6 +188,28 @@ void main() {
         semantica.dispose();
       });
 
+      testWidgets('editar espacio $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montarAdmin(
+          tester,
+          oscuro: oscuro,
+          tamano: tamano,
+          inicio: '/admin/espacios',
+          api: apiRutas({
+            'GET /espacios': (200, '{"espacios": [$espacioF5Json]}'),
+            'GET /espacios/catalogo': (200, catalogoJson),
+          }),
+        );
+        await tester.tap(
+          find.bySemanticsLabel('Editar Moron_Rivadavia_19850_Futbol_F5_1'),
+        );
+        await tester.pumpAndSettle();
+        await tester.enterText(find.bySemanticsLabel('Precio por hora'), '0');
+        FocusManager.instance.primaryFocus?.unfocus();
+        await capturar(tester, 'admin/editar_espacio_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
       testWidgets('sede creada $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
         await montarAdmin(

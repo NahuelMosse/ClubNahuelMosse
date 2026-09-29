@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'admin/pantalla_alta_espacio.dart';
+import 'admin/pantalla_editar_espacio.dart';
 import 'admin/pantalla_formulario_sede.dart';
 import 'admin/pantalla_espacio_creado.dart';
 import 'admin/pantalla_espacios_admin.dart';
@@ -345,6 +346,21 @@ class _AppState extends State<App> {
         builder: (context, _) =>
             PantallaEspaciosAdmin(espacios: _espacios, sesion: widget.sesion),
         routes: [
+          GoRoute(
+            path: ':espacio/editar',
+            // Sin el espacio que se tocó en el listado (un enlace, la app reabierta), vuelve
+            // al listado.
+            redirect: (context, estado) =>
+                estado.extra is Espacio ? null : '/admin/espacios',
+            builder: (context, estado) => switch (estado.extra) {
+              final Espacio espacio => PantallaEditarEspacio(
+                espacio: espacio,
+                espacios: _espacios,
+                sesion: widget.sesion,
+              ),
+              _ => const SizedBox.shrink(),
+            },
+          ),
           GoRoute(
             path: 'nuevo',
             builder: (context, _) => PantallaAltaEspacio(

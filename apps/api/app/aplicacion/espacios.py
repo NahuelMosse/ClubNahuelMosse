@@ -4,6 +4,7 @@ from typing import Protocol
 from app.aplicacion.errores import DatosInvalidos, NoDisponible, Prohibido
 from app.dominio.espacios import (
     CATALOGO,
+    CambioDeEspacio,
     DatosEspacio,
     Deporte,
     Espacio,
@@ -12,6 +13,7 @@ from app.dominio.espacios import (
     SedeDelEspacio,
     nombre_compuesto,
     tipo_del_catalogo,
+    validar_cambio,
     validar_espacio,
 )
 from app.dominio.usuarios import Perfil
@@ -49,6 +51,14 @@ class Espacios(Protocol):
         ese número lo haya tomado hace un momento el mismo [autor] con los mismos datos: es
         su propio pedido repetido después de un corte, y lo devuelve. Lanza `NoDisponible`
         si la sede ya no está activa.
+        """
+        ...
+
+    def actualizar(self, espacio_id: int, cambio: CambioDeEspacio, autor: int) -> Espacio:
+        """Guarda el cambio del espacio activo [espacio_id]. Las reservas ya hechas conservan
+        el precio con que se hicieron.
+
+        Lanza `NoEncontrada` si el espacio o su sede ya no están activos.
         """
         ...
 
@@ -105,3 +115,21 @@ def espacios_activos(
     """Los espacios que se pueden reservar, por sede, deporte, tipo y número; sólo los de
     [sede_id], [deporte] y [tipo] si se piden."""
     return espacios.activos(sede_id, deporte, tipo)
+
+
+def editar_espacio(
+    perfil: Perfil,
+    espacio_id: int,
+    techada: bool | None,
+    iluminada: bool | None,
+    precio_por_hora: int | None,
+    dados: frozenset[str],
+    espacios: Espacios,
+) -> Espacio:
+    """Corrige la condición, la iluminación o el precio de un espacio (CU-22); sólo cambia lo
+    que está en [dados]. El precio nuevo rige para las reservas que vengan."""
+    _solo_admin(perfil)
+    cambio, errores = validar_cambio(techada, iluminada, precio_por_hora, dados=dados)
+    if cambio is None:
+        raise DatosInvalidos(errores)
+    return espacios.actualizar(espacio_id, cambio, perfil.id)

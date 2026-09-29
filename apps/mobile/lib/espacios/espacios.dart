@@ -4,6 +4,11 @@ import '../api/cliente_api.dart';
 import '../sesion/sesion.dart';
 import 'espacio.dart';
 
+/// El espacio o su sede ya no están activos: los dio de baja otra sesión.
+class EspacioNoDisponible implements Exception {
+  const EspacioNoDisponible();
+}
+
 /// La API rechazó el espacio: cada campo con su mensaje.
 class EspacioRechazado implements Exception {
   const EspacioRechazado(this.errores);
@@ -18,8 +23,8 @@ class NombreOcupado implements Exception {
   final int numero;
 }
 
-/// Los espacios deportivos, leídos y dados de alta en la API con la sesión abierta. Avisa
-/// a quien escucha cada vez que se da de alta uno.
+/// Los espacios deportivos, leídos, dados de alta y editados en la API con la sesión
+/// abierta. Avisa a quien escucha cada vez que se da de alta o se edita uno.
 class Espacios extends ChangeNotifier {
   Espacios({required ClienteApi api, required Sesion sesion})
     : _api = api,
@@ -135,6 +140,34 @@ class Espacios extends ChangeNotifier {
       if (errores.isNotEmpty) throw EspacioRechazado(errores);
     }
     final espacio = r.codigo == 201 ? Espacio.desdeJson(r.cuerpo) : null;
+    if (espacio == null) throw ErrorDelServidor(r.codigo);
+    notifyListeners();
+    return espacio;
+  }
+
+  /// Guarda lo que cambió de la condición, la iluminación y el precio del espacio [id].
+  ///
+  /// Lanza [EspacioNoDisponible], [EspacioRechazado], [SesionVencida], [SinConexion] o
+  /// [ErrorDelServidor].
+  Future<Espacio> editar(
+    int id, {
+    bool? techada,
+    bool? iluminada,
+    int? precioPorHora,
+  }) async {
+    // Sólo lo que cambió: lo demás queda como lo haya guardado quien guardó último.
+    final r = await _api.put('/espacios/$id', {
+      'techada': ?techada,
+      'iluminada': ?iluminada,
+      'precio_por_hora': ?precioPorHora,
+    }, token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 404) throw const EspacioNoDisponible();
+    if (r.codigo == 422) {
+      final errores = _errores(r);
+      if (errores.isNotEmpty) throw EspacioRechazado(errores);
+    }
+    final espacio = r.codigo == 200 ? Espacio.desdeJson(r.cuerpo) : null;
     if (espacio == null) throw ErrorDelServidor(r.codigo);
     notifyListeners();
     return espacio;

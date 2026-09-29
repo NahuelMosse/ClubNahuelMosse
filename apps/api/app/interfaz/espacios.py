@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response, status
+from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import Connection
@@ -9,12 +9,14 @@ from app.aplicacion.errores import (
     DatosInvalidos,
     Duplicado,
     NoDisponible,
+    NoEncontrada,
     NumeroOcupado,
     Prohibido,
 )
 from app.aplicacion.espacios import (
     catalogo,
     dar_de_alta_espacio,
+    editar_espacio,
     espacios_activos,
     nombre_sugerido,
 )
@@ -228,4 +230,53 @@ def alta_de_espacio(
             except (NoDisponible, DatosInvalidos):
                 pass
         return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=contenido)
+    return vista_de_espacio(espacio)
+
+
+class PedidoDeCambio(BaseModel):
+    techada: bool | None = None
+    iluminada: bool | None = None
+    precio_por_hora: int | None = None
+
+
+@router.put(
+    "/espacios/{espacio_id}",
+    response_model=EspacioVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador edita espacios"},
+        404: {"description": "El espacio o su sede ya no están activos"},
+        422: {"model": Errores},
+    },
+    summary="Editar un espacio",
+    description=(
+        "Condición, iluminación y precio por hora; lo que no viene queda como está. La sede, "
+        "el deporte, el tipo y el nombre compuesto no cambian; las reservas ya hechas "
+        "conservan su precio."
+    ),
+)
+def edicion_de_espacio(
+    pedido: PedidoDeCambio,
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> EspacioVista | Response:
+    try:
+        espacio = editar_espacio(
+            perfil,
+            espacio_id,
+            pedido.techada,
+            pedido.iluminada,
+            pedido.precio_por_hora,
+            frozenset(pedido.model_fields_set),
+            EspaciosSql(conn),
+        )
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
     return vista_de_espacio(espacio)

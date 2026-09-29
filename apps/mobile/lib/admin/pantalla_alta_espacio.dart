@@ -474,7 +474,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
                             : null,
                       ),
                       const SizedBox(height: Medidas.s12),
-                      _DeAPares(
+                      ParDeCampos(
                         izquierda: CampoSelector(
                           etiqueta: 'CONDICIÓN',
                           etiquetaAccesible: 'Condición',
@@ -519,7 +519,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
                         formateadores: const [FormatoPrecio()],
                       ),
                       const SizedBox(height: Medidas.s16),
-                      _NombreGenerado(
+                      NombreGenerado(
                         nombre: _sugerido?.$1,
                         calculando: _calculando,
                         falta: _faltaParaElNombre,
@@ -552,8 +552,12 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
 
 /// Dos campos lado a lado, como el prototipo; en un teléfono chico no entran sus valores
 /// («Al aire libre», «Sin iluminación») y van uno debajo del otro.
-class _DeAPares extends StatelessWidget {
-  const _DeAPares({required this.izquierda, required this.derecha});
+class ParDeCampos extends StatelessWidget {
+  const ParDeCampos({
+    super.key,
+    required this.izquierda,
+    required this.derecha,
+  });
 
   final Widget izquierda;
   final Widget derecha;
@@ -581,12 +585,13 @@ class _DeAPares extends StatelessWidget {
 }
 
 /// `Card-PreviewNombre`: el nombre que va a tener el espacio, o lo que falta para armarlo.
-class _NombreGenerado extends StatelessWidget {
-  const _NombreGenerado({
+class NombreGenerado extends StatelessWidget {
+  const NombreGenerado({
+    super.key,
     required this.nombre,
-    required this.calculando,
-    required this.falta,
-    required this.alReintentar,
+    this.calculando = false,
+    this.falta = '',
+    this.alReintentar,
   });
 
   final String? nombre;

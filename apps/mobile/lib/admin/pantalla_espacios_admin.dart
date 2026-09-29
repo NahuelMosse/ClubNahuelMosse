@@ -175,7 +175,8 @@ class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
   }
 }
 
-/// `Card-Espacio`: deporte, tipo, condición y precio, con el nombre compuesto debajo.
+/// `Card-Espacio`: deporte, tipo, condición y precio, con el nombre compuesto debajo y
+/// «Editar».
 class TarjetaEspacioAdmin extends StatelessWidget {
   const TarjetaEspacioAdmin({
     super.key,
@@ -190,52 +191,70 @@ class TarjetaEspacioAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final descripcion = espacio.descripcion(catalogo);
-    return Semantics(
+    // Los datos se leen como uno; «Editar» queda afuera, como botón propio.
+    final datos = Semantics(
       container: true,
       excludeSemantics: true,
       label: '$descripcion, ${espacio.sede}, ${espacio.nombre}',
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.borderDefault),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: Medidas.tactil,
-              height: Medidas.tactil,
-              decoration: BoxDecoration(
-                color: p.accentMuted,
-                borderRadius: BorderRadius.circular(Medidas.radioMd),
-              ),
-              child: Icon(
-                iconoDeDeporte(espacio.deporte),
-                size: 22,
-                color: p.accentInk,
-              ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: Medidas.tactil,
+            height: Medidas.tactil,
+            decoration: BoxDecoration(
+              color: p.accentMuted,
+              borderRadius: BorderRadius.circular(Medidas.radioMd),
             ),
-            const SizedBox(width: Medidas.s12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    descripcion,
-                    style: Textos.titulo.copyWith(color: p.textPrimary),
-                  ),
-                  const SizedBox(height: Medidas.s4),
-                  Text(
-                    espacio.nombre,
-                    style: Textos.mono.copyWith(color: p.textMuted),
-                  ),
-                ],
-              ),
+            child: Icon(
+              iconoDeDeporte(espacio.deporte),
+              size: 22,
+              color: p.accentInk,
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: Medidas.s12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  descripcion,
+                  style: Textos.titulo.copyWith(color: p.textPrimary),
+                ),
+                const SizedBox(height: Medidas.s4),
+                Text(
+                  espacio.nombre,
+                  style: Textos.mono.copyWith(color: p.textMuted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+    return Container(
+      padding: const EdgeInsets.all(Medidas.s16),
+      decoration: BoxDecoration(
+        color: p.bgSurfaceRaised,
+        borderRadius: BorderRadius.circular(Medidas.radioLg),
+        border: Border.all(color: p.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          datos,
+          const SizedBox(height: Medidas.s12),
+          BotonContorno(
+            texto: 'Editar',
+            icono: Icons.edit_outlined,
+            compacto: true,
+            etiquetaAccesible: 'Editar ${espacio.nombre}',
+            alTocar: () => context.go(
+              '/admin/espacios/${espacio.id}/editar',
+              extra: espacio,
+            ),
+          ),
+        ],
       ),
     );
   }
