@@ -92,6 +92,20 @@ Future<bool> confirmarBajaDeSede(BuildContext context, String texto) async =>
     ) ??
     false;
 
+/// La sede tiene reservas pendientes y no se puede dar de baja.
+Future<void> mostrarSedeConReservas(BuildContext context) => showDialog<void>(
+  context: context,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => const _Modal(
+    icono: Icons.event_busy_rounded,
+    titulo: 'No se puede dar de baja la sede',
+    texto:
+        'La sede posee reservas futuras asociadas a sus espacios deportivos. '
+        'Gestionalas primero.',
+    principal: 'ACEPTAR',
+  ),
+);
+
 /// La reserva quedó cancelada.
 Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   context: context,

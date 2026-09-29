@@ -11,6 +11,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'baja_sede.dart';
 
 /// «Gestionar sedes» del panel: las sedes activas y el acceso a dar de alta una nueva.
 class PantallaSedesAdmin extends StatefulWidget {
@@ -30,6 +31,9 @@ class PantallaSedesAdmin extends StatefulWidget {
 class _PantallaSedesAdminState extends State<PantallaSedesAdmin> {
   List<Sede>? _sedes;
   bool _fallo = false;
+
+  /// La sede que se está dando de baja: mientras tanto no se toca ninguna tarjeta.
+  int? _dandoDeBaja;
 
   @override
   void initState() {
@@ -162,18 +166,45 @@ class _PantallaSedesAdminState extends State<PantallaSedesAdmin> {
         ),
       ),
     for (final sede in sedes) ...[
-      TarjetaSedeAdmin(sede: sede),
+      TarjetaSedeAdmin(
+        sede: sede,
+        dandoDeBaja: _dandoDeBaja == sede.id,
+        habilitada: _dandoDeBaja == null,
+        alDarDeBaja: () => darDeBajaSede(
+          context,
+          sede: sede,
+          sedes: widget.sedes,
+          sesion: widget.sesion,
+          enviando: (enCamino) {
+            if (!mounted) return;
+            setState(() => _dandoDeBaja = enCamino ? sede.id : null);
+          },
+        ),
+      ),
       const SizedBox(height: Medidas.s16),
     ],
   ];
 }
 
-/// `Card-Sede-Admin`: nombre, dirección, cantidad de canchas y días con horario, y
-/// «Editar sede».
+/// `Card-Sede-Admin`: nombre, dirección, cantidad de canchas y días con horario, con
+/// «Editar sede» y «Dar de baja».
 class TarjetaSedeAdmin extends StatelessWidget {
-  const TarjetaSedeAdmin({super.key, required this.sede});
+  const TarjetaSedeAdmin({
+    super.key,
+    required this.sede,
+    this.alDarDeBaja,
+    this.dandoDeBaja = false,
+    this.habilitada = true,
+  });
 
   final Sede sede;
+  final VoidCallback? alDarDeBaja;
+
+  /// La baja de esta sede está en camino.
+  final bool dandoDeBaja;
+
+  /// `false` deshabilita sus botones (hay otra baja en camino).
+  final bool habilitada;
 
   void _editar(BuildContext context) =>
       context.go('/admin/sedes/${sede.id}/editar', extra: sede);
@@ -182,7 +213,33 @@ class TarjetaSedeAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final canchas = sede.canchas == 1 ? '1 cancha' : '${sede.canchas} canchas';
-    // Los datos se leen como uno; «Editar sede» queda afuera, como botón propio.
+    // Con cualquier agrandado del texto, los botones lado a lado ya no entran en 360.
+    final grande = MediaQuery.textScalerOf(context).scale(10) > 10.5;
+    final editar = BotonContorno(
+      texto: 'Editar sede',
+      icono: Icons.edit_outlined,
+      compacto: true,
+      etiquetaAccesible: 'Editar sede ${sede.nombre}',
+      alTocar: habilitada ? () => _editar(context) : null,
+    );
+    final Widget baja = dandoDeBaja
+        ? Semantics(
+            label: 'Dando de baja ${sede.nombre}',
+            excludeSemantics: true,
+            child: const SizedBox(
+              height: Medidas.altoControl,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        : BotonContorno(
+            texto: 'Dar de baja',
+            icono: Icons.delete_outline_rounded,
+            compacto: true,
+            peligro: true,
+            etiquetaAccesible: 'Dar de baja ${sede.nombre}',
+            alTocar: habilitada ? alDarDeBaja : null,
+          );
+    // Los datos se leen como uno; los botones quedan afuera, cada uno con su nombre.
     final datos = Semantics(
       container: true,
       excludeSemantics: true,
@@ -264,13 +321,18 @@ class TarjetaSedeAdmin extends StatelessWidget {
         children: [
           datos,
           const SizedBox(height: Medidas.s12),
-          BotonContorno(
-            texto: 'Editar sede',
-            icono: Icons.edit_outlined,
-            compacto: true,
-            etiquetaAccesible: 'Editar sede ${sede.nombre}',
-            alTocar: () => _editar(context),
-          ),
+          if (grande) ...[
+            editar,
+            const SizedBox(height: Medidas.s8),
+            baja,
+          ] else
+            Row(
+              children: [
+                Expanded(child: editar),
+                const SizedBox(width: Medidas.s8),
+                Expanded(child: baja),
+              ],
+            ),
         ],
       ),
     );

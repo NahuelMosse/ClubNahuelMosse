@@ -18,6 +18,11 @@ class SedeNoDisponible implements Exception {
   const SedeNoDisponible();
 }
 
+/// La sede tiene reservas activas que todavía no terminaron: no se da de baja.
+class SedeConReservas implements Exception {
+  const SedeConReservas();
+}
+
 /// El horario nuevo deja afuera [cantidad] reservas futuras: hay que confirmarlo.
 class ReservasAfuera implements Exception {
   const ReservasAfuera(this.cantidad);
@@ -97,6 +102,19 @@ class Sedes extends ChangeNotifier {
       throw ReservasAfuera(cantidad);
     }
     return _guardada(r, 200);
+  }
+
+  /// Da de baja la sede [id] y sus espacios.
+  ///
+  /// Lanza [SedeNoDisponible], [SedeConReservas], [SesionVencida], [SinConexion] o
+  /// [ErrorDelServidor].
+  Future<void> darDeBaja(int id) async {
+    final r = await _api.delete('/sedes/$id', token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 404) throw const SedeNoDisponible();
+    if (r.codigo == 409) throw const SedeConReservas();
+    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    notifyListeners();
   }
 
   Sede _guardada(Respuesta r, int exito) {

@@ -8,13 +8,14 @@ from pydantic import BaseModel
 from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
+    ConReservasFuturas,
     DatosInvalidos,
     Duplicado,
     NoEncontrada,
     Prohibido,
     ReservasAfuera,
 )
-from app.aplicacion.sedes import dar_de_alta_sede, editar_sede, sedes_activas
+from app.aplicacion.sedes import dar_de_alta_sede, dar_de_baja_sede, editar_sede, sedes_activas
 from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
@@ -197,3 +198,42 @@ def edicion_de_sede(
             status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.cantidad}
         )
     return _vista(sede)
+
+
+@router.delete(
+    "/sedes/{sede_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador da de baja sedes"},
+        404: {"description": "La sede ya no está activa"},
+        409: {"model": ErroresDeSede, "description": "La sede tiene reservas que no terminaron"},
+    },
+    summary="Dar de baja una sede",
+    description=(
+        "Baja lógica: la sede y sus espacios dejan de verse y de poder reservarse, y el "
+        "historial los sigue nombrando. No se permite con reservas activas sin terminar."
+    ),
+)
+def baja_de_sede(
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> Response:
+    try:
+        dar_de_baja_sede(perfil, sede_id, SedesSql(conn))
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except ConReservasFuturas:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={
+                "errores": {
+                    "sede": "No se puede dar de baja la sede porque posee reservas futuras "
+                    "asociadas."
+                }
+            },
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

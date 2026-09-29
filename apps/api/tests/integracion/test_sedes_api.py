@@ -324,3 +324,86 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
             {"e": espacio},
         ).scalar_one()
     assert activas == 3
+
+
+def test_la_baja_deja_la_sede_y_sus_espacios_inactivos_con_su_rastro(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, unico: Callable[[], str]
+) -> None:
+    nombre = f"Sede Haedo {unico()}"
+    sede = _alta(api, token_admin, nombre)
+    espacio = api.post(
+        "/espacios",
+        headers=_con(token_admin),
+        json={
+            "sede_id": sede,
+            "deporte": "Futbol",
+            "tipo": "F5",
+            "techada": False,
+            "iluminada": True,
+            "precio_por_hora": 38000,
+        },
+    ).json()["id"]
+    assert api.delete(f"/sedes/{sede}", headers=_con(token_usuario)).status_code == 403
+    assert api.delete(f"/sedes/{sede}").status_code == 401
+
+    assert api.delete(f"/sedes/{sede}", headers=_con(token_admin)).status_code == 204
+
+    with motor.connect() as conn:
+        fila = conn.execute(
+            text(
+                "SELECT s.activa, s.dado_de_baja_en IS NOT NULL, e.activo,"
+                " e.dado_de_baja_por = s.dado_de_baja_por"
+                " FROM sede s JOIN espacio e ON e.sede_id = s.id WHERE s.id = :id"
+            ),
+            {"id": sede},
+        ).one()
+    assert tuple(fila) == (False, True, False, True)
+    sedes = api.get("/sedes", headers=_con(token_usuario)).json()["sedes"]
+    assert nombre not in [s["nombre"] for s in sedes]
+    espacios = api.get("/espacios", headers=_con(token_usuario)).json()["espacios"]
+    assert espacio not in [e["id"] for e in espacios]
+    # Ya dada de baja: 404, y su nombre queda libre para una sede nueva.
+    assert api.delete(f"/sedes/{sede}", headers=_con(token_admin)).status_code == 404
+    assert api.post("/sedes", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
+
+
+def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
+    api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
+) -> None:
+    sede = _alta(api, token_admin, f"Sede Morón {unico()}")
+    espacio = api.post(
+        "/espacios",
+        headers=_con(token_admin),
+        json={
+            "sede_id": sede,
+            "deporte": "Futbol",
+            "tipo": "F5",
+            "techada": False,
+            "iluminada": True,
+            "precio_por_hora": 38000,
+        },
+    ).json()["id"]
+    with motor.begin() as conn:
+        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        # Una en curso: empezó en esta hora y termina en dos.
+        conn.execute(
+            text(
+                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                " SELECT :u, :e, i, i + interval '2 hours', 38000, 76000"
+                " FROM (SELECT date_trunc('hour', now()) AS i) x"
+            ),
+            {"u": dueno, "e": espacio},
+        )
+
+    r = api.delete(f"/sedes/{sede}", headers=_con(token_admin))
+
+    assert r.status_code == 409
+    assert r.json() == {
+        "errores": {
+            "sede": "No se puede dar de baja la sede porque posee reservas futuras asociadas."
+        }
+    }
+    with motor.connect() as conn:
+        assert conn.execute(
+            text("SELECT activa FROM sede WHERE id = :id"), {"id": sede}
+        ).scalar_one()

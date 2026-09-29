@@ -64,3 +64,7 @@ class ReservasAfuera(Exception):
 
 class AgendaCambiada(Exception):
     """El horario de la sede cambió entre que se validó una reserva y que se guardó."""
+
+
+class ConReservasFuturas(Exception):
+    """La sede o el espacio tienen reservas activas que todavía no terminaron."""

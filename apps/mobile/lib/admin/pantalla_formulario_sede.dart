@@ -14,6 +14,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'baja_sede.dart';
 
 enum _Campo { nombre, direccion, apertura, cierre, dias }
 
@@ -68,6 +69,10 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
   final _erroresDelServidor = <_Campo, String>{};
   bool _intentoGuardar = false;
   bool _enviando = false;
+  bool _dandoDeBaja = false;
+
+  /// Guardando o dando de baja: el formulario no se toca ni se sale.
+  bool get _ocupado => _enviando || _dandoDeBaja;
 
   /// Un envío anterior se cortó: la API pudo haber guardado la sede sin que llegara la
   /// respuesta.
@@ -233,7 +238,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
   Future<void> _guardar({bool confirmar = false}) async {
     final apertura = _apertura;
     final cierre = _cierre;
-    if (_enviando) return;
+    if (_ocupado) return;
     if (!_completo || apertura == null || cierre == null) {
       setState(() => _intentoGuardar = true);
       return;
@@ -328,10 +333,15 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
   Future<void> _darDeBaja() async {
     final sede = widget.editando;
     if (sede == null) return;
-    await confirmarBajaDeSede(
+    await darDeBajaSede(
       context,
-      '${sede.nombre} · ${sede.direccion}. Sus espacios deportivos dejan de '
-      'estar disponibles.',
+      sede: sede,
+      sedes: widget.sedes,
+      sesion: widget.sesion,
+      volverAlListado: true,
+      enviando: (enCamino) {
+        if (mounted) setState(() => _dandoDeBaja = enCamino);
+      },
     );
   }
 
@@ -365,7 +375,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     final editando = widget.editando;
     // Mientras se guarda no se sale: la sede se guardaría sin que se viera el éxito.
     return PopScope(
-      canPop: !_enviando,
+      canPop: !_ocupado,
       child: Scaffold(
         backgroundColor: p.bgBase,
         appBar: BarraSuperior(
@@ -403,7 +413,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                   foco: _focoNombre,
                   placeholder: 'Ej. Sede Haedo',
                   error: _error(_Campo.nombre),
-                  habilitado: !_enviando,
+                  habilitado: !_ocupado,
                   accion: TextInputAction.next,
                   formateadores: [
                     LengthLimitingTextInputFormatter(_largoNombre),
@@ -419,7 +429,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                       ? 'Calle y altura'
                       : 'Escribí la dirección',
                   error: _error(_Campo.direccion),
-                  habilitado: !_enviando,
+                  habilitado: !_ocupado,
                   teclado: TextInputType.streetAddress,
                   autocompletar: const [AutofillHints.streetAddressLine1],
                   accion: TextInputAction.done,
@@ -447,7 +457,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                   placeholder: '23:00',
                   icono: Icons.schedule_rounded,
                   error: _error(_Campo.cierre),
-                  alTocar: _enviando ? null : () => _elegirHora(_Campo.cierre),
+                  alTocar: _ocupado ? null : () => _elegirHora(_Campo.cierre),
                 ),
                 const SizedBox(height: Medidas.s12),
                 CampoSelector(
@@ -457,7 +467,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                   placeholder: DiasQueAbre.lunesADomingo.texto,
                   icono: Icons.expand_more_rounded,
                   error: _error(_Campo.dias),
-                  alTocar: _enviando ? null : _elegirDias,
+                  alTocar: _ocupado ? null : _elegirDias,
                 ),
               ],
             ),
@@ -478,14 +488,24 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                     BotonPrimario(
                       texto: 'GUARDAR CAMBIOS',
                       cargando: _enviando,
-                      alTocar: _completo ? _guardar : null,
+                      alTocar: _completo && !_dandoDeBaja ? _guardar : null,
                     ),
                     const SizedBox(height: Medidas.s12),
-                    BotonContorno(
-                      texto: 'DAR DE BAJA LA SEDE',
-                      peligro: true,
-                      alTocar: _enviando ? null : _darDeBaja,
-                    ),
+                    if (_dandoDeBaja)
+                      Semantics(
+                        label: 'Dando de baja la sede',
+                        excludeSemantics: true,
+                        child: const SizedBox(
+                          height: Medidas.altoControl,
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      )
+                    else
+                      BotonContorno(
+                        texto: 'DAR DE BAJA LA SEDE',
+                        peligro: true,
+                        alTocar: _enviando ? null : _darDeBaja,
+                      ),
                   ],
                 ),
         ),

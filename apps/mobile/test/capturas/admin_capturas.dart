@@ -170,6 +170,24 @@ void main() {
         semantica.dispose();
       });
 
+      testWidgets('sede con reservas pendientes $ancho $modo', (tester) async {
+        final semantica = tester.ensureSemantics();
+        await montarAdmin(
+          tester,
+          oscuro: oscuro,
+          tamano: tamano,
+          api: apiRutas({
+            'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
+            'DELETE /sedes/1': (409, '{"errores": {"sede": "x"}}'),
+          }),
+        );
+        await tester.tap(find.bySemanticsLabel('Dar de baja Sede Morón'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('DAR DE BAJA'));
+        await capturar(tester, 'admin/baja_con_reservas_${ancho}_$modo.png');
+        semantica.dispose();
+      });
+
       testWidgets('sede creada $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
         await montarAdmin(

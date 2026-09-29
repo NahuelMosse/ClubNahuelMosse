@@ -3,7 +3,7 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import Duplicado, NoEncontrada, ReservasAfuera
+from app.aplicacion.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
 from app.dominio.sedes import Sede, SedeNueva
 
 _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
@@ -153,3 +153,45 @@ class SedesSql:
         if guardada is None:
             raise NoEncontrada("la sede se dio de baja apenas se guardó")
         return guardada
+
+    def dar_de_baja(self, sede_id: int, autor: int) -> None:
+        datos = {"id": sede_id, "autor": autor}
+        try:
+            # Exclusiva: una reserva que se está haciendo en la sede termina antes y acá se la
+            # ve, o espera y encuentra la sede dada de baja.
+            if (
+                self._conn.execute(
+                    text("SELECT 1 FROM sede WHERE id = :id AND activa FOR UPDATE"), datos
+                ).first()
+                is None
+            ):
+                raise NoEncontrada("la sede ya no está activa")
+            pendientes: int = self._conn.execute(
+                text(
+                    "SELECT count(*) FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
+                    " WHERE e.sede_id = :id AND r.estado = 'activa' AND r.fin > now()"
+                ),
+                datos,
+            ).scalar_one()
+            if pendientes:
+                raise ConReservasFuturas("la sede tiene reservas que todavía no terminaron")
+            self._conn.execute(
+                text(
+                    "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
+                    " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
+                    " WHERE sede_id = :id AND activo"
+                ),
+                datos,
+            )
+            self._conn.execute(
+                text(
+                    "UPDATE sede SET activa = false, dado_de_baja_en = now(),"
+                    " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
+                    " WHERE id = :id"
+                ),
+                datos,
+            )
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
