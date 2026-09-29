@@ -35,7 +35,9 @@ class ApiIntermedia {
 
   final HttpServer _servidor;
   final Uri _destino;
-  final _cliente = HttpClient();
+  // Una conexión que queda quieta se suelta antes de que la API la cierre por su cuenta
+  // (su keep-alive es de cinco segundos): así no se reusa una que ya está cerrada.
+  final _cliente = HttpClient()..idleTimeout = const Duration(seconds: 1);
   EstadoApi estado = EstadoApi.normal;
 
   String get url => 'http://127.0.0.1:${_servidor.port}';
@@ -68,6 +70,39 @@ class ApiIntermedia {
         if (estado == EstadoApi.lenta) {
           await Future<void>.delayed(const Duration(seconds: 3));
         }
+        final cuerpo = await pedido.fold<List<int>>(
+          [],
+          (bytes, parte) => bytes..addAll(parte),
+        );
+        final (codigo, encabezados, respuesta) = await _pedirALaApi(
+          pedido,
+          cuerpo,
+        );
+        pedido.response.statusCode = codigo;
+        encabezados.forEach((nombre, valores) {
+          // El largo y la conexión son de este tramo, no del de la API.
+          if (nombre != HttpHeaders.transferEncodingHeader &&
+              nombre != HttpHeaders.connectionHeader &&
+              nombre != HttpHeaders.contentLengthHeader) {
+            for (final valor in valores) {
+              pedido.response.headers.add(nombre, valor);
+            }
+          }
+        });
+        pedido.response.contentLength = respuesta.length;
+        pedido.response.add(respuesta);
+        await pedido.response.close();
+    }
+  }
+
+  /// Reenvía el pedido entero a la API y trae la respuesta entera. Si la conexión llega
+  /// cerrada, lo intenta una vez más con otra.
+  Future<(int, HttpHeaders, List<int>)> _pedirALaApi(
+    HttpRequest pedido,
+    List<int> cuerpo,
+  ) async {
+    for (var intento = 1; ; intento++) {
+      try {
         final reenvio = await _cliente.openUrl(
           pedido.method,
           _destino.replace(
@@ -75,29 +110,26 @@ class ApiIntermedia {
             query: pedido.uri.hasQuery ? pedido.uri.query : null,
           ),
         );
-        // Una conexión reutilizada puede llegar cerrada por la API (su keep-alive vence
-        // antes que el del cliente) y el reenvío fallaría sin que la app tenga la culpa.
-        reenvio.persistentConnection = false;
         pedido.headers.forEach((nombre, valores) {
           if (nombre != HttpHeaders.hostHeader &&
-              nombre != HttpHeaders.connectionHeader) {
+              nombre != HttpHeaders.connectionHeader &&
+              nombre != HttpHeaders.contentLengthHeader) {
             for (final valor in valores) {
               reenvio.headers.add(nombre, valor);
             }
           }
         });
-        await reenvio.addStream(pedido);
+        reenvio.contentLength = cuerpo.length;
+        reenvio.add(cuerpo);
         final respuesta = await reenvio.close();
-        pedido.response.statusCode = respuesta.statusCode;
-        respuesta.headers.forEach((nombre, valores) {
-          if (nombre != HttpHeaders.transferEncodingHeader) {
-            for (final valor in valores) {
-              pedido.response.headers.add(nombre, valor);
-            }
-          }
-        });
-        await pedido.response.addStream(respuesta);
-        await pedido.response.close();
+        final bytes = await respuesta.fold<List<int>>(
+          [],
+          (todo, parte) => todo..addAll(parte),
+        );
+        return (respuesta.statusCode, respuesta.headers, bytes);
+      } on HttpException {
+        if (intento == 2) rethrow;
+      }
     }
   }
 }
