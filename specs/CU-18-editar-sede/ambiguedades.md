@@ -40,3 +40,4 @@ CU-18-AMB-08 · 2026-09-29 · vencida → CU-18-SUP-06 · GUARDAR CAMBIOS se des
 CU-18-AMB-09 · 2026-09-29 · vencida → CU-18-SUP-07 · el overlay compartido «Esto cambió mientras tanto» (393:6532); VER LO ACTUALIZADO vuelve al listado, que se lee de nuevo
 CU-18-AMB-10 · 2026-09-29 · vencida → CU-18-SUP-08 · DAR DE BAJA LA SEDE abre la confirmación de CU-19 (42:329); lo que pasa al confirmar es de CU-19
 CU-18-AMB-11 · 2026-09-29 · vencida → CU-18-SUP-09 · un aviso abajo con «Los cambios se guardaron correctamente» y vuelta al listado del panel, que se lee de nuevo
+CU-18-TESTS · 2026-09-29 · congelados en 0d87f4e · 10 escenarios en rojo porque el listado del panel no tiene «Editar sede» ni existe PUT /sedes/{id}
