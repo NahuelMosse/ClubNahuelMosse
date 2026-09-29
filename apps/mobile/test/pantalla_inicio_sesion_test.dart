@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
@@ -26,7 +27,10 @@ void main() {
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => PantallaInicioSesion(sesion: sesion),
+          builder: (_, _) => PantallaInicioSesion(
+            sesion: sesion,
+            pendiente: ReservaPendiente(),
+          ),
         ),
         GoRoute(path: '/inicio', builder: (_, _) => const Text('HOME')),
         GoRoute(path: '/admin', builder: (_, _) => const Text('PANEL')),

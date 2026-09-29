@@ -106,7 +106,7 @@ def validar_rango(
     for campo, hora in (("desde", desde), ("hasta", hasta)):
         if (hora.minute, hora.second, hora.microsecond) != (0, 0, 0):
             errores[campo] = "Elegí una hora en punto"
-    if errores.keys() & {"desde", "hasta"}:
+    if errores.keys() & {"desde", "hasta"} or fecha >= date.max - timedelta(days=1):
         return errores
     inicio, fin = rango(fecha, desde, hasta, ahora.tzinfo)
     apertura, cierre = rango(fecha, agenda.apertura, agenda.cierre, ahora.tzinfo)
@@ -121,3 +121,24 @@ def validar_rango(
     elif "fecha" not in errores and inicio <= ahora:
         errores["desde"] = "El horario tiene que ser futuro"
     return errores
+
+
+def validar_reserva(
+    agenda: Agenda, fecha: date, desde: time, horas: int, ahora: datetime
+) -> dict[str, str]:
+    """Los errores de reservar [horas] horas desde [desde] el [fecha]: los de un rango (RF 3)
+    más una duración entera que no pase de la medianoche."""
+    if not MIN_HORAS <= horas <= MAX_HORAS:
+        errores = validar_rango(agenda, fecha, desde, desde, ahora)
+        errores["hasta"] = (
+            "La duración mínima es de una hora"
+            if horas < MIN_HORAS
+            else f"La duración máxima es de {MAX_HORAS} horas"
+        )
+        return errores
+    fin = desde.hour + horas
+    if fin > 24:
+        errores = validar_rango(agenda, fecha, desde, time(0, 0), ahora)
+        errores["hasta"] = f"La sede cierra a las {_hhmm(agenda.cierre)}"
+        return errores
+    return validar_rango(agenda, fecha, desde, time(fin % 24, desde.minute), ahora)

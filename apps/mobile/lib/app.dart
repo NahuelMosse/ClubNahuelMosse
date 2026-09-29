@@ -17,6 +17,8 @@ import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
 import 'reservas/pantalla_mis_reservas.dart';
+import 'reservas/pantalla_reserva_confirmada.dart';
+import 'reservas/reserva_pendiente.dart';
 import 'reservas/reservas.dart';
 import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_nueva_contrasena.dart';
@@ -64,6 +66,7 @@ class _AppState extends State<App> {
     '/perfil': Rol.usuario,
     '/sedes': Rol.usuario,
     '/reservas': Rol.usuario,
+    '/reservar': Rol.usuario,
   };
 
   late final _recuperacion = Recuperacion(widget.api);
@@ -71,6 +74,7 @@ class _AppState extends State<App> {
   late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
   late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
   late final _reservas = Reservas(api: widget.api, sesion: widget.sesion);
+  final _pendiente = ReservaPendiente();
 
   /// `AAAA-MM-DD` de un enlace como día del club; `null` si no viene o no es una fecha.
   static DateTime? _dia(String? iso) => switch (DateTime.tryParse(iso ?? '')) {
@@ -100,7 +104,8 @@ class _AppState extends State<App> {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, _) => PantallaInicioSesion(sesion: widget.sesion),
+        builder: (context, _) =>
+            PantallaInicioSesion(sesion: widget.sesion, pendiente: _pendiente),
         routes: [
           GoRoute(
             path: 'registro',
@@ -206,6 +211,9 @@ class _AppState extends State<App> {
                     builder: (context, estado) => switch (estado.extra) {
                       final Eleccion eleccion => PantallaConfirmarReserva(
                         eleccion: eleccion,
+                        reservas: _reservas,
+                        pendiente: _pendiente,
+                        sesion: widget.sesion,
                       ),
                       _ => const SizedBox.shrink(),
                     },
@@ -223,6 +231,34 @@ class _AppState extends State<App> {
           espacios: _espacios,
           sesion: widget.sesion,
         ),
+        routes: [
+          GoRoute(
+            path: 'confirmada',
+            redirect: (context, estado) =>
+                estado.extra is Reserva ? null : '/reservas',
+            builder: (context, estado) => switch (estado.extra) {
+              final Reserva reserva => PantallaReservaConfirmada(
+                reserva: reserva,
+              ),
+              _ => const SizedBox.shrink(),
+            },
+          ),
+        ],
+      ),
+      // La reserva que quedó pendiente cuando venció la sesión, al volver a entrar.
+      GoRoute(
+        path: '/reservar',
+        redirect: (context, estado) =>
+            estado.extra is Eleccion ? null : '/inicio',
+        builder: (context, estado) => switch (estado.extra) {
+          final Eleccion eleccion => PantallaConfirmarReserva(
+            eleccion: eleccion,
+            reservas: _reservas,
+            pendiente: _pendiente,
+            sesion: widget.sesion,
+          ),
+          _ => const SizedBox.shrink(),
+        },
       ),
       GoRoute(
         path: '/admin',

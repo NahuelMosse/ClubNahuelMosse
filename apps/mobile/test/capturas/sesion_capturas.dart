@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
@@ -21,6 +22,7 @@ void main() {
   final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
 
   Widget login() => PantallaInicioSesion(
+    pendiente: ReservaPendiente(),
     sesion: Sesion(
       credenciales: CredencialesFalsas(
         alIngresar: (_, _) async => throw const CredencialesInvalidas(),

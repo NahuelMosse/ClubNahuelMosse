@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import '../mis_reservas_test.dart' show reservaJson;
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
 import '../soporte/usuario.dart';
@@ -53,6 +54,13 @@ void main() {
         api: apiRutas({
           ...rutasDeSedes(sedes: sedes, espacios: espacios),
           'GET /espacios/catalogo': (200, catalogoCompleto),
+          'POST /reservas': (
+            201,
+            reservaJson(
+              inicio: '2026-11-12T21:00:00+00:00',
+              fin: '2026-11-12T22:00:00+00:00',
+            ),
+          ),
         }),
       );
 
@@ -97,6 +105,9 @@ void main() {
         await tester.tap(find.text('CONTINUAR'));
         await tester.pumpAndSettle();
         await capturar(tester, 'sedes/confirmar_${ancho}_$modo.png');
+        await tester.tap(find.text('CONFIRMAR RESERVA'));
+        await tester.pumpAndSettle();
+        await capturar(tester, 'sedes/confirmada_${ancho}_$modo.png');
         semantica.dispose();
       });
 

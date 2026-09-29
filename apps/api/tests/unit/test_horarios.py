@@ -5,7 +5,14 @@ import pytest
 
 from app.aplicacion.errores import DatosInvalidos, NoDisponible
 from app.aplicacion.horarios import horarios_disponibles
-from app.dominio.horarios import Agenda, Grilla, grilla, validar_consulta, validar_rango
+from app.dominio.horarios import (
+    Agenda,
+    Grilla,
+    grilla,
+    validar_consulta,
+    validar_rango,
+    validar_reserva,
+)
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 TODOS = (1, 2, 3, 4, 5, 6, 7)
@@ -139,3 +146,21 @@ def test_un_rango_que_ya_empezo_o_de_otro_dia_no_se_consulta() -> None:
     assert validar_rango(agenda, JUEVES, time(19, 30), time(21), ahora) == {
         "desde": "Elegí una hora en punto"
     }
+
+
+@pytest.mark.parametrize(
+    ("desde", "horas", "campo", "mensaje"),
+    [
+        (10, 0, "hasta", "La duración mínima es de una hora"),
+        (10, 5, "hasta", "La duración máxima es de 4 horas"),
+        (22, 3, "hasta", "La sede cierra a las 23:00"),
+        (21, 2, None, None),
+    ],
+)
+def test_una_reserva_se_valida_por_su_inicio_y_su_duracion(
+    desde: int, horas: int, campo: str | None, mensaje: str | None
+) -> None:
+    errores = validar_reserva(
+        Agenda(time(8), time(23), TODOS), JUEVES, time(desde), horas, _a(JUEVES - timedelta(1), 9)
+    )
+    assert errores == ({} if campo is None else {campo: mensaje})

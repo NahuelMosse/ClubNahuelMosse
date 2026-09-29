@@ -18,6 +18,7 @@ import '../tema/tokens.dart';
 import 'eleccion.dart';
 import 'fechas.dart';
 import 'horarios.dart';
+import 'pantalla_confirmar_reserva.dart';
 
 const _minHoras = 1;
 const _maxHoras = 4;
@@ -232,7 +233,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     _consultar();
   }
 
-  void _continuar() {
+  Future<void> _continuar() async {
     final datos = _datos;
     final cancha = _cancha;
     final fecha = _fecha;
@@ -242,7 +243,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     if (datos == null || cancha == null || fecha == null || franja == null) {
       return;
     }
-    context.push(
+    final resultado = await context.push<ResultadoDeConfirmar>(
       '/sedes/${widget.sedeId}/canchas/${widget.espacioId}/reservar',
       extra: Eleccion(
         sede: datos.$1,
@@ -254,6 +255,10 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
         horas: _horas,
       ),
     );
+    if (resultado == ResultadoDeConfirmar.ocupado && mounted) {
+      setState(() => _inicio = null);
+      await _consultar();
+    }
   }
 
   @override

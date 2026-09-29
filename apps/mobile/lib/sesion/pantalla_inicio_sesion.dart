@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../reservas/reserva_pendiente.dart';
 import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
@@ -16,23 +17,31 @@ const mensajeCredencialesInvalidas =
 /// Inicio de sesión sobre la foto del club. Va siempre en oscuro: el texto se apoya en la
 /// foto oscurecida, no en el fondo del tema.
 class PantallaInicioSesion extends StatelessWidget {
-  const PantallaInicioSesion({super.key, required this.sesion});
+  const PantallaInicioSesion({
+    super.key,
+    required this.sesion,
+    required this.pendiente,
+  });
 
   final Sesion sesion;
+
+  /// La reserva que se estaba confirmando cuando venció la sesión.
+  final ReservaPendiente pendiente;
 
   @override
   Widget build(BuildContext context) {
     return Theme(
       data: temaOscuro,
-      child: _Formulario(sesion: sesion),
+      child: _Formulario(sesion: sesion, pendiente: pendiente),
     );
   }
 }
 
 class _Formulario extends StatefulWidget {
-  const _Formulario({required this.sesion});
+  const _Formulario({required this.sesion, required this.pendiente});
 
   final Sesion sesion;
+  final ReservaPendiente pendiente;
 
   @override
   State<_Formulario> createState() => _FormularioState();
@@ -83,7 +92,12 @@ class _FormularioState extends State<_Formulario> {
     Object? fallo;
     try {
       final perfil = await widget.sesion.iniciar(correo, contrasena);
-      if (mounted) context.go(perfil.inicio);
+      if (!mounted) return;
+      if (widget.pendiente.esDe(perfil.correo)) {
+        context.go('/reservar', extra: widget.pendiente.tomar());
+      } else {
+        context.go(perfil.inicio);
+      }
       return;
     } on CredencialesInvalidas {
       if (mounted) setState(() => _aviso = mensajeCredencialesInvalidas);

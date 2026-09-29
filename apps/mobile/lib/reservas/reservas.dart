@@ -1,5 +1,18 @@
 import '../api/cliente_api.dart';
 import '../sesion/sesion.dart';
+import 'eleccion.dart';
+import 'horarios.dart';
+
+/// Otra reserva activa tomó ese horario antes.
+class HorarioOcupado implements Exception {
+  const HorarioOcupado();
+}
+
+/// La API rechazó el horario elegido: cada campo con su mensaje.
+class ReservaRechazada implements Exception {
+  const ReservaRechazada(this.errores);
+  final Map<String, String> errores;
+}
 
 enum EstadoDeReserva { activa, completada, cancelada, anulada }
 
@@ -105,5 +118,35 @@ class Reservas {
       }
     }
     throw ErrorDelServidor(r.codigo);
+  }
+
+  /// Reserva lo que se eligió en los horarios.
+  ///
+  /// Lanza [HorarioOcupado], [CanchaNoDisponible], [ReservaRechazada], [SesionVencida],
+  /// [SinConexion] o [ErrorDelServidor].
+  Future<Reserva> reservar(Eleccion eleccion) async {
+    final f = eleccion.fecha;
+    final r = await _api.post('/reservas', {
+      'espacio_id': eleccion.cancha.id,
+      'fecha':
+          '${f.year}-${f.month.toString().padLeft(2, '0')}-'
+          '${f.day.toString().padLeft(2, '0')}',
+      'desde': eleccion.inicio,
+      'horas': eleccion.horas,
+    }, token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 409) throw const HorarioOcupado();
+    if (r.cuerpo case {
+      'errores': final Map<String, Object?> errores,
+    } when r.codigo == 422) {
+      if (errores.containsKey('espacio_id')) throw const CanchaNoDisponible();
+      throw ReservaRechazada({
+        for (final MapEntry(:key, :value) in errores.entries)
+          if (value is String) key: value,
+      });
+    }
+    final reserva = r.codigo == 201 ? Reserva.desdeJson(r.cuerpo) : null;
+    if (reserva == null) throw ErrorDelServidor(r.codigo);
+    return reserva;
   }
 }

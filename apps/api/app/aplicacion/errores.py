@@ -39,3 +39,7 @@ class NumeroOcupado(Exception):
         super().__init__(f"número ocupado; el siguiente es {siguiente} ({nombre})")
         self.siguiente = siguiente
         self.nombre = nombre
+
+
+class HorarioOcupado(Exception):
+    """Otra reserva activa del mismo espacio se superpone con el horario pedido."""

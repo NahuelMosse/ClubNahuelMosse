@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
@@ -18,6 +19,7 @@ void main() {
   setUpAll(cargarFuentes);
 
   Widget login({bool rechaza = false}) => PantallaInicioSesion(
+    pendiente: ReservaPendiente(),
     sesion: Sesion(
       credenciales: CredencialesFalsas(
         alIngresar: rechaza

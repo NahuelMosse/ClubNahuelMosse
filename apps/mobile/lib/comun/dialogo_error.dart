@@ -26,6 +26,20 @@ Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async {
   return reintentar ?? false;
 }
 
+/// El aviso de que otra persona tomó el horario mientras se confirmaba ([texto] dice cuál).
+/// La única salida es elegir otro.
+Future<void> mostrarHorarioOcupado(BuildContext context, String texto) =>
+    showDialog<void>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => _Modal(
+        icono: Icons.schedule_rounded,
+        titulo: 'Ese horario se ocupó',
+        texto: texto,
+        principal: 'ELEGIR OTRO HORARIO',
+      ),
+    );
+
 /// El overlay compartido de sesión expirada. No se puede descartar: la única salida es
 /// volver a iniciar sesión, que hace quien llama cuando esto termina.
 Future<void> mostrarSesionVencida(BuildContext context) => showDialog<void>(

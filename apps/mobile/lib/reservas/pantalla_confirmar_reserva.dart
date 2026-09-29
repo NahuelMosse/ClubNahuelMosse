@@ -1,18 +1,179 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
+import '../comun/dialogo_error.dart';
 import '../comun/formato_precio.dart';
 import '../sedes/fotos.dart';
+import '../sesion/sesion.dart';
+import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
 import 'fechas.dart';
+import 'horarios.dart';
+import 'reserva_pendiente.dart';
+import 'reservas.dart';
 
-/// «Confirmá tu reserva»: la cancha, la fecha, el horario y el total que se eligieron.
-class PantallaConfirmarReserva extends StatelessWidget {
-  const PantallaConfirmarReserva({super.key, required this.eleccion});
+/// Lo que la confirmación le devuelve a los horarios al cerrarse: si el horario se ocupó,
+/// la grilla se vuelve a leer.
+enum ResultadoDeConfirmar { ocupado }
+
+/// «Confirmá tu reserva»: la cancha, la fecha, el horario y el total que se eligieron, y
+/// CONFIRMAR RESERVA, que la guarda.
+class PantallaConfirmarReserva extends StatefulWidget {
+  const PantallaConfirmarReserva({
+    super.key,
+    required this.eleccion,
+    required this.reservas,
+    required this.pendiente,
+    required this.sesion,
+  });
+
+  final Eleccion eleccion;
+  final Reservas reservas;
+  final ReservaPendiente pendiente;
+  final Sesion sesion;
+
+  @override
+  State<PantallaConfirmarReserva> createState() =>
+      _PantallaConfirmarReservaState();
+}
+
+class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
+  bool _enviando = false;
+
+  /// Vuelve a los horarios tal como quedaron. Sin nada debajo (se llegó al volver a
+  /// iniciar sesión), a los horarios de esa cancha si hay que elegir otro, o a la sede.
+  void _volver([ResultadoDeConfirmar? resultado]) {
+    if (_enviando) return;
+    final e = widget.eleccion;
+    if (context.canPop()) {
+      context.pop(resultado);
+    } else if (resultado == ResultadoDeConfirmar.ocupado) {
+      context.go('/sedes/${e.sede.id}/canchas/${e.cancha.id}');
+    } else {
+      context.go('/sedes/${e.sede.id}');
+    }
+  }
+
+  Future<void> _confirmar() async {
+    if (_enviando) return;
+    setState(() => _enviando = true);
+    final e = widget.eleccion;
+    Object? fallo;
+    try {
+      final reserva = await widget.reservas.reservar(e);
+      if (mounted) context.go('/reservas/confirmada', extra: reserva);
+      return;
+    } on HorarioOcupado {
+      if (!mounted) return;
+      setState(() => _enviando = false);
+      await mostrarHorarioOcupado(
+        context,
+        'Mientras confirmabas, otra persona reservó Cancha ${e.cancha.numero} · '
+        '${fechaLarga(e.fecha).split(' de ').first}, ${e.inicio} – ${e.fin}. '
+        'Elegí otro horario disponible.',
+      );
+      if (mounted) _volver(ResultadoDeConfirmar.ocupado);
+      return;
+    } on CanchaNoDisponible {
+      if (!mounted) return;
+      setState(() => _enviando = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Esta cancha ya no está disponible')),
+      );
+      context.go('/sedes/${e.sede.id}');
+      return;
+    } on ReservaRechazada catch (r) {
+      // El horario dejó de valer mientras se confirmaba (por ejemplo, ya empezó).
+      if (!mounted) return;
+      setState(() => _enviando = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
+      _volver(ResultadoDeConfirmar.ocupado);
+      return;
+    } on SesionVencida {
+      final correo = widget.sesion.perfil?.correo;
+      if (correo != null) widget.pendiente.guardar(e, correo);
+      if (!mounted) return;
+      setState(() => _enviando = false);
+      await mostrarSesionVencida(context);
+      if (mounted) await cerrarSesion(context, widget.sesion);
+      return;
+    } on SinConexion catch (x) {
+      fallo = x;
+    } on ErrorDelServidor catch (x) {
+      fallo = x;
+    }
+    if (!mounted) return;
+    setState(() => _enviando = false);
+    final reintentar = await mostrarErrorDeRed(context, fallo);
+    if (reintentar && mounted) await _confirmar();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    final e = widget.eleccion;
+    // Mientras se guarda no se sale: la reserva podría quedar hecha sin comprobante.
+    return PopScope(
+      canPop: !_enviando,
+      child: Scaffold(
+        backgroundColor: p.bgBase,
+        appBar: BarraSuperior(titulo: 'Confirmá tu reserva', alVolver: _volver),
+        bottomNavigationBar: DecoratedBox(
+          decoration: BoxDecoration(
+            color: p.bgSurface,
+            border: Border(top: BorderSide(color: p.borderDefault)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.all(Medidas.s24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BotonPrimario(
+                    texto: 'CONFIRMAR RESERVA',
+                    alTocar: _confirmar,
+                    cargando: _enviando,
+                  ),
+                  const SizedBox(height: Medidas.s12),
+                  BotonContorno(
+                    texto: 'CANCELAR',
+                    alTocar: _enviando ? null : _volver,
+                    peligro: true,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(
+            Medidas.s24,
+            Medidas.s24,
+            Medidas.s24,
+            Medidas.s40,
+          ),
+          children: [
+            const PasosDeReserva(actual: 1),
+            const SizedBox(height: Medidas.s24),
+            _TarjetaDeReserva(eleccion: e),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TarjetaDeReserva extends StatelessWidget {
+  const _TarjetaDeReserva({required this.eleccion});
 
   final Eleccion eleccion;
 
@@ -21,105 +182,57 @@ class PantallaConfirmarReserva extends StatelessWidget {
     final p = context.paleta;
     const foto = Paleta.oscura;
     final e = eleccion;
-    // Vuelve a los horarios tal como quedaron; sin nada debajo, a la sede.
-    void volver() =>
-        context.canPop() ? context.pop() : context.go('/sedes/${e.sede.id}');
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      appBar: BarraSuperior(titulo: 'Confirmá tu reserva', alVolver: volver),
-      bottomNavigationBar: DecoratedBox(
-        decoration: BoxDecoration(
-          color: p.bgSurface,
-          border: Border(top: BorderSide(color: p.borderDefault)),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.all(Medidas.s24),
-            child: BotonContorno(texto: 'CANCELAR', alTocar: volver),
-          ),
-        ),
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: p.bgSurfaceRaised,
+        borderRadius: BorderRadius.circular(Medidas.radioLg),
+        border: Border.all(color: p.borderDefault),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(
-          Medidas.s24,
-          Medidas.s24,
-          Medidas.s24,
-          Medidas.s40,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _Pasos(actual: 1),
-          const SizedBox(height: Medidas.s24),
-          Container(
-            clipBehavior: Clip.antiAlias,
-            decoration: BoxDecoration(
-              color: p.bgSurfaceRaised,
-              borderRadius: BorderRadius.circular(Medidas.radioLg),
-              border: Border.all(color: p.borderDefault),
+          ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 76),
+            child: FotoConVelo(
+              imagen: fotoDeDeporte(e.cancha.deporte),
+              child: Padding(
+                padding: const EdgeInsets.all(Medidas.s16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      e.tipo,
+                      style: Textos.sobretitulo.copyWith(
+                        color: foto.accentBase,
+                      ),
+                    ),
+                    Text(
+                      e.sede.nombre.toUpperCase(),
+                      style: Textos.h2.copyWith(color: foto.textPrimary),
+                    ),
+                  ],
+                ),
+              ),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(Medidas.s16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 76),
-                  child: FotoConVelo(
-                    imagen: fotoDeDeporte(e.cancha.deporte),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Medidas.s16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            e.tipo,
-                            style: Textos.sobretitulo.copyWith(
-                              color: foto.accentBase,
-                            ),
-                          ),
-                          Text(
-                            e.sede.nombre.toUpperCase(),
-                            style: Textos.h2.copyWith(color: foto.textPrimary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                FilaDeDato(
+                  dato: 'Cancha',
+                  valor: 'Cancha ${e.cancha.numero} · ${e.cancha.condicion}',
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(Medidas.s16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _Fila(
-                        dato: 'Cancha',
-                        valor:
-                            'Cancha ${e.cancha.numero} · ${e.cancha.condicion}',
-                      ),
-                      _Fila(dato: 'Fecha', valor: fechaLarga(e.fecha)),
-                      _Fila(dato: 'Horario', valor: e.horario, destacado: true),
-                      const SizedBox(height: Medidas.s8),
-                      Divider(height: 1, color: p.borderDefault),
-                      const SizedBox(height: Medidas.s16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'TOTAL',
-                              style: Textos.sobretitulo.copyWith(
-                                color: p.textMuted,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            pesos(e.total),
-                            style: Textos.h1.copyWith(color: p.accentInk),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
+                FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
+                FilaDeDato(dato: 'Horario', valor: e.horario, destacado: true),
+                const SizedBox(height: Medidas.s8),
+                Divider(height: 1, color: p.borderDefault),
+                const SizedBox(height: Medidas.s16),
+                FilaDeTotal(total: e.total),
               ],
             ),
           ),
@@ -129,20 +242,40 @@ class PantallaConfirmarReserva extends StatelessWidget {
   }
 }
 
-class _Fila extends StatelessWidget {
-  const _Fila({
+/// Un dato de la reserva: el nombre a la izquierda y el valor a la derecha.
+class FilaDeDato extends StatelessWidget {
+  const FilaDeDato({
+    super.key,
     required this.dato,
     required this.valor,
     this.destacado = false,
+    this.codigo = false,
   });
 
   final String dato;
   final String valor;
   final bool destacado;
 
+  /// Un código largo sin espacios (el nombre compuesto del espacio): va debajo del dato,
+  /// en la fuente mono, para no partirse a mitad de palabra.
+  final bool codigo;
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
+    if (codigo) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: Medidas.s12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(dato, style: Textos.cuerpo.copyWith(color: p.textSecondary)),
+            const SizedBox(height: Medidas.s4),
+            Text(valor, style: Textos.mono.copyWith(color: p.textPrimary)),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: Medidas.s12),
       child: Row(
@@ -165,9 +298,30 @@ class _Fila extends StatelessWidget {
   }
 }
 
+/// TOTAL y el monto en lima.
+class FilaDeTotal extends StatelessWidget {
+  const FilaDeTotal({super.key, required this.total});
+
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      spacing: Medidas.s8,
+      children: [
+        Text('TOTAL', style: Textos.sobretitulo.copyWith(color: p.textMuted)),
+        Text(pesos(total), style: Textos.h1.copyWith(color: p.accentInk)),
+      ],
+    );
+  }
+}
+
 /// Los tres pasos de la reserva, con [actual] contado desde cero.
-class _Pasos extends StatelessWidget {
-  const _Pasos({required this.actual});
+class PasosDeReserva extends StatelessWidget {
+  const PasosDeReserva({super.key, required this.actual});
 
   final int actual;
 
@@ -180,6 +334,7 @@ class _Pasos extends StatelessWidget {
       label: 'Paso ${actual + 1} de ${_nombres.length}: ${_nombres[actual]}',
       excludeSemantics: true,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           for (var i = 0; i < _nombres.length; i++) ...[
             if (i > 0) const SizedBox(width: Medidas.s8),
@@ -196,6 +351,7 @@ class _Pasos extends StatelessWidget {
                   const SizedBox(height: Medidas.s8),
                   Text(
                     _nombres[i],
+                    textAlign: TextAlign.center,
                     style: Textos.leyenda.copyWith(
                       color: i == actual ? p.textPrimary : p.textMuted,
                       fontWeight: i == actual ? FontWeight.w600 : null,
