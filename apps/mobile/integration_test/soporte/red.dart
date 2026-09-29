@@ -495,3 +495,83 @@ Future<List<int>> numerosDeReservas(
         if (reserva case {'id': final int id}) id,
   ];
 }
+
+/// Otro administrador da de baja la sede [nombre] mientras la app la sigue mostrando.
+Future<void> darDeBajaSedeDesdeOtraSesion(String nombre) async {
+  final r = await http.post(
+    _pruebas('sedes/baja'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({'nombre': nombre}),
+  );
+  if (r.statusCode != 204) throw StateError('baja de sede: ${r.statusCode}');
+}
+
+/// La sesión de una cuenta de usuario nueva, como la de otra persona que mira la app.
+Future<String> _tokenDeOtraPersona() async {
+  final correo = 'otra.${DateTime.now().microsecondsSinceEpoch}@correo.com';
+  const contrasena = 'ClubNahuel1';
+  final alta = await http.post(
+    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/registro'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({
+      'nombre': 'Mirada',
+      'apellido': 'Externa',
+      'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
+          .toString(),
+      'fecha_nacimiento': '1995-05-20',
+      'correo': correo,
+      'contrasena': contrasena,
+    }),
+  );
+  if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta nueva no entra');
+  return token;
+}
+
+Future<Object?> _leer(String ruta, String token) async {
+  final r = await http.get(
+    Uri.parse('${Configuracion.desdeEntorno().apiUrl}$ruta'),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('$ruta: ${r.statusCode}');
+  return jsonDecode(utf8.decode(r.bodyBytes));
+}
+
+/// La sede activa [nombre] como la ve un usuario (dirección, apertura, cierre, días), o
+/// `null` si no la ve.
+Future<Map<String, Object?>?> sedeQueVeUnUsuario(String nombre) async {
+  final datos = await _leer('/sedes', await _tokenDeOtraPersona());
+  if (datos case {'sedes': final List<Object?> sedes}) {
+    for (final sede in sedes) {
+      if (sede case final Map<String, Object?> s when s['nombre'] == nombre) {
+        return s;
+      }
+    }
+  }
+  return null;
+}
+
+/// Las horas de inicio (`HH:MM`) que un usuario puede elegir el [dia] en [nombreEspacio].
+Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
+  final token = await _tokenDeOtraPersona();
+  final espacios = await _leer('/espacios', token);
+  final id = switch (espacios) {
+    {'espacios': final List<Object?> lista} => [
+      for (final e in lista)
+        if (e case {'id': final int id, 'nombre': final String n})
+          if (n == nombreEspacio) id,
+    ].firstOrNull,
+    _ => null,
+  };
+  if (id == null) throw StateError('no está el espacio $nombreEspacio');
+  final fecha =
+      '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
+      '${dia.day.toString().padLeft(2, '0')}';
+  final grilla = await _leer('/espacios/$id/horarios?fecha=$fecha', token);
+  return [
+    if (grilla case {'franjas': final List<Object?> franjas})
+      for (final f in franjas)
+        if (f case {'inicio': final String inicio, 'disponible': true}) inicio,
+  ];
+}

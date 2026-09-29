@@ -111,6 +111,25 @@ def anular(pedido: Espacio, conn: Conexion) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+class NombreDeSede(BaseModel):
+    nombre: str
+
+
+@router.post("/sedes/baja", status_code=status.HTTP_204_NO_CONTENT)
+def dar_de_baja_sede(pedido: NombreDeSede, conn: Conexion) -> Response:
+    """La sede [nombre] deja de estar activa, como si la diera de baja otro administrador."""
+    conn.execute(
+        text(
+            "UPDATE sede SET activa = false, dado_de_baja_en = now(),"
+            " dado_de_baja_por = (SELECT min(id) FROM usuario)"
+            " WHERE nombre = :nombre AND activa"
+        ),
+        pedido.model_dump(),
+    )
+    conn.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post("/recuperacion/{codigo}/vencer", status_code=status.HTTP_204_NO_CONTENT)
 def vencer(codigo: str, conn: Conexion) -> Response:
     conn.execute(
