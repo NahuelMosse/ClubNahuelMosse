@@ -72,6 +72,27 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+class Espacio(BaseModel):
+    espacio: str
+
+
+@router.post("/reservas/empezar", status_code=status.HTTP_204_NO_CONTENT)
+def empezar(pedido: Espacio, conn: Conexion) -> Response:
+    """Las reservas activas de [espacio] pasan a empezar en la hora en curso del club, como
+    si el tiempo hubiera corrido mientras la app estaba abierta."""
+    conn.execute(
+        text(
+            "UPDATE reserva r SET fin = x.ahora + (r.fin - r.inicio), inicio = x.ahora"
+            " FROM espacio e, (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires')"
+            "                  AS ahora) x"
+            " WHERE e.id = r.espacio_id AND e.nombre = :espacio AND r.estado = 'activa'"
+        ),
+        pedido.model_dump(),
+    )
+    conn.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post("/recuperacion/{codigo}/vencer", status_code=status.HTTP_204_NO_CONTENT)
 def vencer(codigo: str, conn: Conexion) -> Response:
     conn.execute(

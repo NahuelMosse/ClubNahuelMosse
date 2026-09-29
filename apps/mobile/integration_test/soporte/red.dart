@@ -451,3 +451,14 @@ Future<List<(String, String)>> reservasDe(
           ),
   ];
 }
+
+/// Las reservas activas de [nombreEspacio] pasan a haber empezado en la hora en curso del
+/// club, como si el tiempo corriera mientras la app está abierta.
+Future<void> empezarReservasDe(String nombreEspacio) async {
+  final r = await http.post(
+    _pruebas('reservas/empezar'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({'espacio': nombreEspacio}),
+  );
+  if (r.statusCode != 204) throw StateError('empezar: ${r.statusCode}');
+}
