@@ -13,6 +13,10 @@ enum EstadoApi {
   /// Reenvía igual que [normal], pero tres segundos más tarde: deja ver lo que la app
   /// muestra mientras espera.
   lenta,
+
+  /// La API responde como si la sesión ya no fuera válida (401), sin llegar a tocar la
+  /// API real: simula una sesión vencida sin depender de que Firebase la venza de verdad.
+  sesionVencida,
 }
 
 /// Una API intermedia en el mismo dispositivo que la app: reenvía a la API de la corrida
@@ -64,6 +68,9 @@ class ApiIntermedia {
         socket.destroy();
       case EstadoApi.falla:
         pedido.response.statusCode = HttpStatus.internalServerError;
+        await pedido.response.close();
+      case EstadoApi.sesionVencida:
+        pedido.response.statusCode = HttpStatus.unauthorized;
         await pedido.response.close();
       case EstadoApi.normal:
       case EstadoApi.lenta:
