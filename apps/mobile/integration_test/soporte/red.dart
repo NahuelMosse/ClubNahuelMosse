@@ -462,3 +462,36 @@ Future<void> empezarReservasDe(String nombreEspacio) async {
   );
   if (r.statusCode != 204) throw StateError('empezar: ${r.statusCode}');
 }
+
+/// El club anula las reservas activas de [nombreEspacio], como lo haría un administrador.
+Future<void> anularReservasDe(String nombreEspacio) async {
+  final r = await http.post(
+    _pruebas('reservas/anular'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({'espacio': nombreEspacio}),
+  );
+  if (r.statusCode != 204) throw StateError('anular: ${r.statusCode}');
+}
+
+/// Los números de las próximas reservas de la cuenta [correo], según la API.
+Future<List<int>> numerosDeReservas(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final r = await http.get(
+    Uri.parse(
+      '${Configuracion.desdeEntorno().apiUrl}/reservas?cuando=proximas',
+    ),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
+  return [
+    if (jsonDecode(utf8.decode(r.bodyBytes)) case {
+      'reservas': final List<Object?> reservas,
+    })
+      for (final reserva in reservas)
+        if (reserva case {'id': final int id}) id,
+  ];
+}

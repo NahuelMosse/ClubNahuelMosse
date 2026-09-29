@@ -95,6 +95,22 @@ def empezar(pedido: Espacio, conn: Conexion) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post("/reservas/anular", status_code=status.HTTP_204_NO_CONTENT)
+def anular(pedido: Espacio, conn: Conexion) -> Response:
+    """El club anula las reservas activas de [espacio], como lo haría un administrador."""
+    conn.execute(
+        text(
+            "UPDATE reserva r SET estado = 'anulada', motivo = 'mantenimiento de la cancha',"
+            " cancelada_en = now(), cancelada_por = (SELECT min(id) FROM usuario)"
+            " FROM espacio e WHERE e.id = r.espacio_id AND e.nombre = :espacio"
+            " AND r.estado = 'activa'"
+        ),
+        pedido.model_dump(),
+    )
+    conn.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post("/recuperacion/{codigo}/vencer", status_code=status.HTTP_204_NO_CONTENT)
 def vencer(codigo: str, conn: Conexion) -> Response:
     conn.execute(
