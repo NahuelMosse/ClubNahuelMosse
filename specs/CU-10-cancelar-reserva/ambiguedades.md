@@ -39,3 +39,10 @@ CU-10-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisione
 CU-10-AMB-07 · 2026-09-27 · resuelta · las tres notificaciones van por push y quedan en el centro de notificaciones; una reserva hecha con menos de una hora de anticipación no recibe recordatorio (decisión 10)
 CU-10-AMB-08 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 CU-10-AMB-08 · 2026-09-27 · resuelta · se cancela hasta el inicio, sin anticipación mínima; se muestra el precio pero no hay pagos ni reintegros (decisión 13)
+CU-10-AMB-09 · 2026-09-28 · abierta · FA4 pide avisar que no se puede cancelar un turno en curso: el prototipo no trae ese aviso, ¿qué dice?
+CU-10-AMB-10 · 2026-09-28 · abierta · FA3 trae su propio texto («No se pudo cancelar la reserva en este momento. Intente más tarde»); el prototipo usa el overlay compartido del servidor: ¿cuál va?
+CU-10-AMB-01 · 2026-09-28 · vencida → CU-10-SUP-01 · cancelar una reserva que la misma persona ya canceló responde como éxito sin cambiar nada: un doble toque o un reintento después de un corte no muestra un error
+CU-10-AMB-04 · 2026-09-28 · vencida → CU-10-SUP-02 · la reserva de otra cuenta responde 404, como si no existiera: no se revela que hay una reserva con ese número
+CU-10-AMB-05 · 2026-09-28 · vencida → CU-10-SUP-03 · si la reserva ya no está activa (anulada por el club o ya empezada), el overlay compartido «Esto cambió mientras tanto» (393:6532) con VER LO ACTUALIZADO, que vuelve a leer la lista
+CU-10-AMB-09 · 2026-09-28 · vencida → CU-10-SUP-04 · una reserva en curso usa el mismo overlay «Esto cambió mientras tanto» (decisión 12): la lista se vuelve a leer; una reserva que ya empezó no muestra CANCELAR y pasa al historial cuando termina
+CU-10-AMB-10 · 2026-09-28 · vencida → CU-10-SUP-05 · el overlay compartido de error del servidor, como el prototipo (decisión 12)
