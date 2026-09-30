@@ -5,18 +5,10 @@ import '../tema/tokens.dart';
 
 /// El `AppBar` del prototipo: volver a la izquierda y el título.
 class BarraSuperior extends StatelessWidget implements PreferredSizeWidget {
-  const BarraSuperior({
-    super.key,
-    required this.titulo,
-    this.alVolver,
-    this.botonDelSistema = false,
-  });
+  const BarraSuperior({super.key, required this.titulo, this.alVolver});
 
   final String titulo;
   final VoidCallback? alVolver;
-
-  /// El botón de volver se deja localizar como el «Back» del sistema.
-  final bool botonDelSistema;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -41,31 +33,15 @@ class BarraSuperior extends StatelessWidget implements PreferredSizeWidget {
           label: 'Volver',
           onTap: volver,
           excludeSemantics: true,
-          child: botonDelSistema
-              ? Tooltip(
-                  // Nunca se muestra: `WidgetTester.pageBack` localiza el botón de volver por
-                  // el tooltip «Back» y con el idioma de la app el del sistema dice otra cosa.
-                  message: 'Back',
-                  triggerMode: TooltipTriggerMode.manual,
-                  excludeFromSemantics: true,
-                  child: IconButton(
-                    onPressed: volver,
-                    icon: Icon(
-                      Icons.chevron_left_rounded,
-                      color: p.textPrimary,
-                      size: 28,
-                    ),
-                  ),
-                )
-              : IconButton(
-                  tooltip: 'Volver',
-                  onPressed: volver,
-                  icon: Icon(
-                    Icons.chevron_left_rounded,
-                    color: p.textPrimary,
-                    size: 28,
-                  ),
-                ),
+          child: IconButton(
+            tooltip: 'Volver',
+            onPressed: volver,
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              color: p.textPrimary,
+              size: 28,
+            ),
+          ),
         ),
       ),
       title: Text(titulo, style: Textos.titulo.copyWith(color: p.textPrimary)),

@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
+import 'notificacion.dart';
 import 'sistema.dart';
 
 /// El sistema de notificaciones real: Firebase Cloud Messaging con el proyecto de la
@@ -31,19 +32,24 @@ class SistemaFcm implements SistemaDeNotificaciones {
   @override
   Future<String?> token() => _mensajeria.getToken();
 
-  static int? _reservaDe(RemoteMessage mensaje) =>
-      int.tryParse(mensaje.data['reserva_id']?.toString() ?? '');
+  @override
+  Future<void> olvidarToken() => _mensajeria.deleteToken();
+
+  static AvisoTocado _aviso(RemoteMessage mensaje) => AvisoTocado(
+    tipo: TipoDeNotificacion.de(mensaje.data['tipo']?.toString() ?? ''),
+    reservaId: int.tryParse(mensaje.data['reserva_id']?.toString() ?? ''),
+  );
 
   @override
-  Stream<int?> get alLlegar => FirebaseMessaging.onMessage.map(_reservaDe);
+  Stream<void> get alLlegar => FirebaseMessaging.onMessage;
 
   @override
-  Stream<int?> get alTocar =>
-      FirebaseMessaging.onMessageOpenedApp.map(_reservaDe);
+  Stream<AvisoTocado> get alTocar =>
+      FirebaseMessaging.onMessageOpenedApp.map(_aviso);
 
   @override
-  Future<int?> abiertaPor() async {
+  Future<AvisoTocado?> abiertaPor() async {
     final mensaje = await _mensajeria.getInitialMessage();
-    return mensaje == null ? null : _reservaDe(mensaje);
+    return mensaje == null ? null : _aviso(mensaje);
   }
 }

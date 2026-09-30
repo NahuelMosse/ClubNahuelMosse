@@ -108,7 +108,6 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
           backgroundColor: p.bgBase,
           appBar: BarraSuperior(
             titulo: 'Notificaciones',
-            botonDelSistema: true,
             alVolver: () =>
                 context.canPop() ? context.pop() : context.go('/inicio'),
           ),

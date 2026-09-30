@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import '../sesion/sesion.dart';
 import 'notificacion.dart';
@@ -11,7 +11,8 @@ import 'sistema.dart';
 /// sistema y el panel que avisa con la app abierta.
 ///
 /// Sólo actúa mientras hay un usuario con la sesión iniciada: registra el teléfono en la API,
-/// consulta el centro cada [cada] y baja el teléfono antes de cerrar la sesión.
+/// consulta el centro cada [cada] mientras la app se ve, y baja el teléfono antes de cerrar la
+/// sesión.
 class CentroDeNotificaciones extends ChangeNotifier {
   CentroDeNotificaciones({
     required Notificaciones notificaciones,
@@ -24,7 +25,9 @@ class CentroDeNotificaciones extends ChangeNotifier {
        _sistema = sistema {
     _sesion.addListener(_alCambiarLaSesion);
     _sesion.alCerrar.add(_darDeBajaElDispositivo);
+    _sesion.alSalir.add(_olvidarElToken);
     _suscripcion = _sistema.alLlegar.listen((_) => _sondear());
+    _ciclo = AppLifecycleListener(onStateChange: _alCambiarElCiclo);
     _alCambiarLaSesion();
   }
 
@@ -38,9 +41,14 @@ class CentroDeNotificaciones extends ChangeNotifier {
   /// El reloj del teléfono, para saber qué llegó mientras la app arrancaba.
   final DateTime Function() ahora;
 
-  StreamSubscription<int?>? _suscripcion;
+  StreamSubscription<void>? _suscripcion;
+  late final AppLifecycleListener _ciclo;
   Timer? _reloj;
   bool _activo = false;
+  bool _liberado = false;
+
+  /// La app no se ve (en segundo plano): no se consulta hasta que vuelva.
+  bool _oculta = false;
 
   /// Sube con cada arranque y cierre de sesión: la respuesta de una sesión anterior se
   /// descarta.
@@ -83,9 +91,9 @@ class CentroDeNotificaciones extends ChangeNotifier {
   bool get panelAbierto => _panelAbierto && sinLeer.isNotEmpty;
 
   /// La persona tocó un aviso de la bandeja del sistema.
-  Stream<int?> get alTocarDesdeElSistema => _sistema.alTocar;
+  Stream<AvisoTocado> get alTocarDesdeElSistema => _sistema.alTocar;
 
-  Future<int?> abiertaPor() => _sistema.abiertaPor();
+  Future<AvisoTocado?> abiertaPor() => _sistema.abiertaPor();
 
   void _alCambiarLaSesion() {
     final esUsuario = _sesion.perfil?.rol == Rol.usuario;
@@ -101,11 +109,35 @@ class CentroDeNotificaciones extends ChangeNotifier {
     final sesion = ++_sesionActual;
     _desde = enDelClub(ahora()).subtract(const Duration(minutes: 5));
     await _revisarPermiso(registrar: true);
-    if (sesion != _sesionActual) return;
+    if (_liberado || sesion != _sesionActual) return;
     await _sondear();
-    if (sesion != _sesionActual) return;
-    if (cada > Duration.zero) {
+    if (_liberado || sesion != _sesionActual) return;
+    _programar();
+  }
+
+  /// Arranca la consulta periódica, si la app se ve y hay cada cuánto.
+  void _programar() {
+    _reloj?.cancel();
+    _reloj = null;
+    if (cada > Duration.zero && !_oculta && _activo && !_liberado) {
       _reloj = Timer.periodic(cada, (_) => unawaited(_sondear()));
+    }
+  }
+
+  /// Mientras la app no se ve no se consulta; al volver se lee enseguida, porque pudo haber
+  /// llegado cualquier cosa.
+  void _alCambiarElCiclo(AppLifecycleState estado) {
+    if (estado == AppLifecycleState.hidden ||
+        estado == AppLifecycleState.paused) {
+      _oculta = true;
+      _reloj?.cancel();
+      _reloj = null;
+    } else if (estado == AppLifecycleState.resumed && _oculta) {
+      _oculta = false;
+      if (_activo && !_liberado) {
+        _programar();
+        unawaited(_sondear());
+      }
     }
   }
 
@@ -150,13 +182,13 @@ class CentroDeNotificaciones extends ChangeNotifier {
     final sesion = _sesionActual;
     await _revisarPermiso();
     final lectura = await _repositorio.centro();
-    if (sesion != _sesionActual) return;
+    if (_liberado || sesion != _sesionActual) return;
     _aplicar(lectura);
   }
 
   /// La lectura periódica: si falla, queda lo que había.
   Future<void> _sondear() async {
-    if (!_activo) return;
+    if (!_activo || _liberado) return;
     try {
       await cargar();
     } on Exception {
@@ -238,10 +270,10 @@ class CentroDeNotificaciones extends ChangeNotifier {
     }
   }
 
-  bool _liberado = false;
+  /// Sea cual sea la forma de salir —cerrar, una sesión que ya no vale, una baja de cuenta—,
+  /// el token del teléfono se borra: aunque la API no se entere, lo que mande deja de llegar.
+  Future<void> _olvidarElToken() => _sistema.olvidarToken();
 
-  /// Una lectura o un registro en camino puede terminar después de que la app se rearmó y este
-  /// centro se liberó: ya no hay a quién avisarle.
   @override
   void notifyListeners() {
     if (!_liberado) super.notifyListeners();
@@ -250,8 +282,12 @@ class CentroDeNotificaciones extends ChangeNotifier {
   @override
   void dispose() {
     _liberado = true;
+    _activo = false;
+    _sesionActual++;
     _sesion.removeListener(_alCambiarLaSesion);
     _sesion.alCerrar.remove(_darDeBajaElDispositivo);
+    _sesion.alSalir.remove(_olvidarElToken);
+    _ciclo.dispose();
     unawaited(_suscripcion?.cancel());
     _reloj?.cancel();
     super.dispose();

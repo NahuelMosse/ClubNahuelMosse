@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
@@ -63,6 +64,7 @@ class SistemaFalso implements SistemaDeNotificaciones {
 
   bool concedido;
   int solicitudes = 0;
+  int olvidos = 0;
 
   @override
   String get plataforma => 'android';
@@ -81,13 +83,44 @@ class SistemaFalso implements SistemaDeNotificaciones {
   Future<String?> token() async => 'token-del-telefono';
 
   @override
-  Stream<int?> get alLlegar => const Stream.empty();
+  Future<void> olvidarToken() async => olvidos++;
 
   @override
-  Stream<int?> get alTocar => const Stream.empty();
+  Stream<void> get alLlegar => const Stream.empty();
 
   @override
-  Future<int?> abiertaPor() async => null;
+  Stream<AvisoTocado> get alTocar => const Stream.empty();
+
+  @override
+  Future<AvisoTocado?> abiertaPor() async => null;
+}
+
+/// Un sistema cuyo permiso tarda lo que el test decida en contestar.
+class SistemaLento extends SistemaFalso {
+  final respuesta = Completer<bool>();
+
+  @override
+  Future<bool> permitido() => respuesta.future;
+}
+
+/// Firebase con un cierre de sesión que tarda, como en un teléfono de verdad.
+class CredencialesLentas extends CredencialesFalsas {
+  CredencialesLentas({this.tarda = const Duration(milliseconds: 100)});
+
+  final Duration tarda;
+
+  /// Mientras sea `true`, el token nunca llega.
+  bool sinToken = false;
+
+  @override
+  Future<String?> token() =>
+      sinToken ? Completer<String?>().future : super.token();
+
+  @override
+  Future<void> salir() async {
+    await Future<void>.delayed(tarda);
+    await super.salir();
+  }
 }
 
 /// La API de notificaciones, con lo que devuelve el centro y cada pedido anotado.
@@ -110,6 +143,7 @@ class ApiFalsa {
           '{"notificaciones": [${avisos.join(', ')}], "no_leidas": $noLeidas}',
         ),
         ('GET', '/yo') => (200, perfilJson()),
+        ('DELETE', '/yo') => (204, ''),
         ('GET', '/reservas') => (
           200,
           '{"reservas": [${reservaJson()}, ${reservaJson(id: 2, inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
@@ -182,6 +216,29 @@ void main() {
       expect(grupos.map((g) => g.rotulo), ['HOY', 'AYER']);
       expect(grupos.first.notificaciones.map((n) => n.id), [3, 2]);
     });
+
+    test(
+      'cada aviso lleva a la pestaña de Mis reservas que le corresponde',
+      () {
+        expect(
+          rutaDelAviso(TipoDeNotificacion.recordatorio, 7),
+          '/reservas?reserva=7',
+        );
+        expect(
+          rutaDelAviso(TipoDeNotificacion.cancelacionForzosa, 7),
+          '/reservas?historial=1&reserva=7',
+        );
+        expect(
+          rutaDelAviso(TipoDeNotificacion.cancelacionUsuario, 7),
+          '/reservas?historial=1&reserva=7',
+        );
+        expect(
+          rutaDelAviso(TipoDeNotificacion.recordatorio, null),
+          '/reservas',
+        );
+        expect(rutaDelAviso(null, null), '/reservas');
+      },
+    );
 
     test('un tipo que la app no conoce no se lee', () {
       expect(
@@ -556,6 +613,51 @@ void main() {
       expect(centro.noLeidas, 1);
     });
 
+    testWidgets(
+      'el atrás del sistema cierra el panel sin marcar nada ni tocar lo de abajo',
+      (tester) async {
+        final (api, centro, _) = await abrir(tester);
+        await llega(tester, api, centro, [recordatorio]);
+        expect(find.text('MARCAR TODAS'), findsOneWidget);
+
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+
+        expect(find.text('MARCAR TODAS'), findsNothing);
+        expect(centro.noLeidas, 1);
+        expect(find.text('la pantalla de abajo'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'con el panel abierto el lector de pantalla no llega a lo de abajo y lo anuncia',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        final (api, centro, _) = await abrir(tester);
+        List<String> etiquetas() => [
+          for (final nodo in tester.semantics.simulatedAccessibilityTraversal())
+            nodo.label,
+        ];
+        expect(etiquetas(), contains('la pantalla de abajo'));
+
+        await llega(tester, api, centro, [recordatorio]);
+
+        expect(etiquetas(), isNot(contains('la pantalla de abajo')));
+        expect(etiquetas(), contains('MARCAR TODAS'));
+        expect(
+          tester
+              .getSemantics(find.text('NOTIFICACIONES'))
+              .flagsCollection
+              .isLiveRegion,
+          isTrue,
+        );
+        await tester.binding.handlePopRoute();
+        await tester.pumpAndSettle();
+        expect(etiquetas(), contains('la pantalla de abajo'));
+        semantica.dispose();
+      },
+    );
+
     for (final ancho in [360.0, 430.0]) {
       testWidgets(
         'con el texto al 200 % en ${ancho.toInt()} de ancho entra en pantalla',
@@ -661,6 +763,210 @@ void main() {
       await llega(tester, api, centro, [reciente(6)]);
 
       expect(find.text('MARCAR TODAS'), findsOneWidget);
+    });
+  });
+
+  group('salir de la sesión', () {
+    testWidgets('cerrar borra el token del teléfono', (tester) async {
+      final api = ApiFalsa();
+      final sistema = SistemaFalso();
+      final sesion = Sesion(
+        credenciales: CredencialesFalsas(),
+        api: api.cliente,
+      );
+      centroDe(api, sesion, sistema: sistema);
+      await tester.runAsync(() async {
+        await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+        await sesion.cerrar();
+      });
+
+      expect(sistema.olvidos, 1);
+    });
+
+    testWidgets('una sesión que ya no vale también borra el token', (
+      tester,
+    ) async {
+      final api = ApiFalsa();
+      final sistema = SistemaFalso();
+      final credenciales = CredencialesFalsas(conCuenta: true)
+        ..tokenFalla = true;
+      final sesion = Sesion(credenciales: credenciales, api: api.cliente);
+      centroDe(api, sesion, sistema: sistema);
+
+      final perfil = await tester.runAsync(sesion.retomar);
+
+      expect(perfil, isNull);
+      expect(credenciales.salidas, 1);
+      expect(sistema.olvidos, 1);
+    });
+
+    testWidgets('si falla el perfil después de entrar, también', (
+      tester,
+    ) async {
+      final api = ApiFalsa();
+      final sistema = SistemaFalso();
+      final sesion = Sesion(
+        credenciales: CredencialesFalsas(),
+        api: ClienteApi(
+          'http://api.falsa',
+          cliente: MockClient((_) async => http.Response('{}', 500)),
+        ),
+      );
+      centroDe(api, sesion, sistema: sistema);
+
+      await tester.runAsync(() async {
+        await expectLater(
+          sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+          throwsA(isA<ErrorDelServidor>()),
+        );
+      });
+
+      expect(sistema.olvidos, 1);
+    });
+
+    testWidgets('dar de baja la cuenta borra el token', (tester) async {
+      final api = ApiFalsa();
+      final sistema = SistemaFalso();
+      final sesion = Sesion(
+        credenciales: CredencialesFalsas(),
+        api: api.cliente,
+      );
+      centroDe(api, sesion, sistema: sistema);
+      await tester.runAsync(() async {
+        await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+        await sesion.darDeBaja();
+      });
+
+      expect(sistema.olvidos, 1);
+    });
+
+    testWidgets('sin nada que avisar, cerrar no espera el token', (
+      tester,
+    ) async {
+      final credenciales = CredencialesLentas(tarda: Duration.zero);
+      final sesion = Sesion(
+        credenciales: credenciales,
+        api: ApiFalsa().cliente,
+      );
+      await tester.runAsync(
+        () => sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+      );
+      credenciales.sinToken = true;
+
+      await tester.runAsync(sesion.cerrar);
+
+      expect(credenciales.salidas, 1);
+    });
+
+    testWidgets(
+      'con el token colgado, cerrar espera dos segundos y sale igual',
+      (tester) async {
+        final credenciales = CredencialesLentas(tarda: Duration.zero);
+        final sesion = Sesion(
+          credenciales: credenciales,
+          api: ApiFalsa().cliente,
+        );
+        sesion.alCerrar.add((_) async => fail('no había token que dar'));
+        await tester.runAsync(
+          () => sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+        );
+        credenciales.sinToken = true;
+        var cerro = false;
+
+        unawaited(sesion.cerrar().then((_) => cerro = true));
+        await tester.pump(const Duration(seconds: 1));
+        expect(cerro, isFalse);
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pump();
+
+        expect(cerro, isTrue);
+        expect(credenciales.salidas, 1);
+      },
+    );
+
+    testWidgets(
+      'si la baja falla antes de que termine de salir, no queda un error sin atrapar',
+      (tester) async {
+        final credenciales = CredencialesLentas();
+        final sesion = Sesion(
+          credenciales: credenciales,
+          api: ApiFalsa().cliente,
+        );
+        sesion.alCerrar.add(
+          (_) => Future<void>.error(StateError('la API se cayó')),
+        );
+        await tester.runAsync(
+          () => sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+        );
+
+        await tester.runAsync(sesion.cerrar);
+
+        expect(tester.takeException(), isNull);
+        expect(credenciales.salidas, 1);
+        expect(sesion.perfil, isNull);
+      },
+    );
+  });
+
+  group('la consulta periódica', () {
+    int lecturas(ApiFalsa api) => api.de('GET', '/notificaciones').length;
+
+    testWidgets('un centro liberado mientras arrancaba no deja un reloj vivo', (
+      tester,
+    ) async {
+      final api = ApiFalsa();
+      final sistema = SistemaLento();
+      final centro = CentroDeNotificaciones(
+        notificaciones: Notificaciones(
+          api: api.cliente,
+          sesion: SesionFalsa(perfilUsuario),
+        ),
+        sesion: SesionFalsa(perfilUsuario),
+        sistema: sistema,
+        cada: const Duration(seconds: 5),
+      );
+
+      centro.dispose();
+      sistema.respuesta.complete(true);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump(const Duration(seconds: 30));
+
+      expect(lecturas(api), 0);
+    });
+
+    testWidgets('en segundo plano no consulta y al volver lee enseguida', (
+      tester,
+    ) async {
+      final api = ApiFalsa();
+      final centro = CentroDeNotificaciones(
+        notificaciones: Notificaciones(
+          api: api.cliente,
+          sesion: SesionFalsa(perfilUsuario),
+        ),
+        sesion: SesionFalsa(perfilUsuario),
+        sistema: SistemaFalso(),
+        cada: const Duration(seconds: 10),
+      );
+      await tester.pump(const Duration(seconds: 1));
+      final alArrancar = lecturas(api);
+      await tester.pump(const Duration(seconds: 25));
+      final conLaAppAbierta = lecturas(api);
+      expect(conLaAppAbierta, greaterThan(alArrancar));
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      await tester.pump(const Duration(seconds: 60));
+      expect(lecturas(api), conLaAppAbierta);
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(lecturas(api), conLaAppAbierta + 1);
+
+      centro.dispose();
+      await tester.pump();
     });
   });
 
@@ -860,6 +1166,54 @@ void main() {
       expect(resaltada('21:00 – 22:00'), isFalse);
       semantica.dispose();
     });
+
+    testWidgets(
+      'un aviso de cancelación abre el historial con esa reserva resaltada',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        final api = ApiFalsa()
+          ..avisos = [
+            notif(
+              id: 4,
+              club: DateTime.utc(2026, 11, 12, 19, 58),
+              tipo: 'cancelacion_usuario',
+              titulo: 'Reserva cancelada',
+              reservaId: 2,
+            ),
+          ]
+          ..noLeidas = 1;
+        await montarUsuario(
+          tester,
+          inicio: '/notificaciones',
+          api: api.cliente,
+          centro: (sesion) => centroDe(api, sesion),
+        );
+
+        await tester.tap(find.text('Reserva cancelada'));
+        await tester.pumpAndSettle();
+
+        expect(
+          api.pedidos.any(
+            (p) =>
+                p.url.path == '/reservas' &&
+                p.url.queryParameters['cuando'] == 'historial',
+          ),
+          isTrue,
+        );
+        expect(
+          tester
+              .getSemantics(
+                find.bySemanticsLabel(
+                  RegExp('^Fútbol 5, Sede Morón, .*10:00 – 11:00'),
+                ),
+              )
+              .flagsCollection
+              .isSelected,
+          isTrue,
+        );
+        semantica.dispose();
+      },
+    );
 
     testWidgets('sin reserva en el aviso abre Mis reservas sin resaltar nada', (
       tester,

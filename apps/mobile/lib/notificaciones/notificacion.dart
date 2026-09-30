@@ -12,6 +12,19 @@ enum TipoDeNotificacion {
       values.where((t) => t.clave == clave).firstOrNull;
 }
 
+/// A dónde lleva tocar un aviso: Mis reservas con la reserva resaltada. Las cancelaciones —del
+/// club o de la propia persona— dejaron la reserva en el historial, así que abren esa pestaña.
+String rutaDelAviso(TipoDeNotificacion? tipo, int? reservaId) {
+  final historial =
+      tipo == TipoDeNotificacion.cancelacionForzosa ||
+      tipo == TipoDeNotificacion.cancelacionUsuario;
+  final parametros = [
+    if (historial) 'historial=1',
+    if (reservaId != null) 'reserva=$reservaId',
+  ];
+  return parametros.isEmpty ? '/reservas' : '/reservas?${parametros.join('&')}';
+}
+
 /// Una entrada del centro de notificaciones.
 class Notificacion {
   const Notificacion({

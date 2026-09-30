@@ -20,6 +20,8 @@ import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
 import 'notificaciones/centro.dart';
+import 'notificaciones/notificacion.dart';
+import 'notificaciones/sistema.dart';
 import 'notificaciones/panel_avisos.dart';
 import 'notificaciones/pantalla_notificaciones.dart';
 import 'reservas/pantalla_mis_reservas.dart';
@@ -87,11 +89,11 @@ class _AppState extends State<App> {
   late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
   late final _reservas = Reservas(api: widget.api, sesion: widget.sesion);
   final _pendiente = ReservaPendiente();
-  StreamSubscription<int?>? _alTocarUnAviso;
+  StreamSubscription<AvisoTocado>? _alTocarUnAviso;
 
   /// Mis reservas, con la reserva del aviso a la vista si el aviso trae una.
-  static String _rutaDeReservas(int? reservaId) =>
-      reservaId == null ? '/reservas' : '/reservas?reserva=$reservaId';
+  /// El navegador de la app, para abrir el panel de avisos desde arriba del `Navigator`.
+  final _navegador = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -100,11 +102,13 @@ class _AppState extends State<App> {
     if (centro == null) return;
     // Un aviso de la bandeja del sistema abre la app en la reserva que avisa.
     _alTocarUnAviso = centro.alTocarDesdeElSistema.listen(
-      (id) => _rutas.go(_rutaDeReservas(id)),
+      (aviso) => _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId)),
     );
     unawaited(
-      centro.abiertaPor().then((id) {
-        if (id != null) _rutas.go(_rutaDeReservas(id));
+      centro.abiertaPor().then((aviso) {
+        if (aviso != null) {
+          _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId));
+        }
       }),
     );
   }
@@ -116,6 +120,7 @@ class _AppState extends State<App> {
   };
 
   late final GoRouter _rutas = GoRouter(
+    navigatorKey: _navegador,
     initialLocation: widget.inicio,
     // Al iniciar o cerrar la sesión, las rutas se vuelven a evaluar.
     refreshListenable: widget.sesion,
@@ -191,7 +196,8 @@ class _AppState extends State<App> {
           final CentroDeNotificaciones centro => PantallaNotificaciones(
             centro: centro,
             sesion: widget.sesion,
-            alAbrir: (context, n) => context.go(_rutaDeReservas(n.reservaId)),
+            alAbrir: (context, n) =>
+                context.go(rutaDelAviso(n.tipo, n.reservaId)),
           ),
           null => const SizedBox.shrink(),
         },
@@ -276,6 +282,7 @@ class _AppState extends State<App> {
           espacios: _espacios,
           sesion: widget.sesion,
           reservaId: int.tryParse(estado.uri.queryParameters['reserva'] ?? ''),
+          enHistorial: estado.uri.queryParameters['historial'] == '1',
         ),
         routes: [
           GoRoute(
@@ -456,9 +463,10 @@ class _AppState extends State<App> {
             if (widget.centro case final centro?)
               PanelDeAvisos(
                 centro: centro,
+                navegador: _navegador,
                 alAbrir: (n) {
                   centro.marcarLeida(n);
-                  _rutas.go(_rutaDeReservas(n.reservaId));
+                  _rutas.go(rutaDelAviso(n.tipo, n.reservaId));
                 },
               ),
           ],

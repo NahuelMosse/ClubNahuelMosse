@@ -1,5 +1,16 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'notificacion.dart';
+
+/// Qué avisó el aviso que la persona tocó en la bandeja del sistema: lo que hace falta para
+/// abrir la pantalla que corresponde.
+class AvisoTocado {
+  const AvisoTocado({this.tipo, this.reservaId});
+
+  final TipoDeNotificacion? tipo;
+  final int? reservaId;
+}
+
 /// El sistema de notificaciones del teléfono: el permiso, el token del dispositivo y lo que
 /// llega mientras la app está abierta o se abre tocando un aviso de la bandeja.
 abstract interface class SistemaDeNotificaciones {
@@ -13,14 +24,18 @@ abstract interface class SistemaDeNotificaciones {
 
   Future<String?> token();
 
-  /// Un aviso llegó con la app abierta; trae el número de reserva si es de una.
-  Stream<int?> get alLlegar;
+  /// Borra el token del dispositivo: lo que la API todavía le mande a ese token deja de llegar.
+  /// El próximo [token] es otro.
+  Future<void> olvidarToken();
+
+  /// Un aviso llegó con la app abierta.
+  Stream<void> get alLlegar;
 
   /// La persona tocó un aviso de la bandeja y la app se abrió (o volvió al frente).
-  Stream<int?> get alTocar;
+  Stream<AvisoTocado> get alTocar;
 
   /// El aviso que abrió la app desde cero, si la abrió uno.
-  Future<int?> abiertaPor();
+  Future<AvisoTocado?> abiertaPor();
 }
 
 /// El sistema de un dispositivo de prueba, sin Firebase Cloud Messaging.
@@ -60,11 +75,16 @@ class SistemaSimulado implements SistemaDeNotificaciones {
   }
 
   @override
-  Stream<int?> get alLlegar => const Stream.empty();
+  Future<void> olvidarToken() async {
+    await (await SharedPreferences.getInstance()).remove(_claveToken);
+  }
 
   @override
-  Stream<int?> get alTocar => const Stream.empty();
+  Stream<void> get alLlegar => const Stream.empty();
 
   @override
-  Future<int?> abiertaPor() async => null;
+  Stream<AvisoTocado> get alTocar => const Stream.empty();
+
+  @override
+  Future<AvisoTocado?> abiertaPor() async => null;
 }

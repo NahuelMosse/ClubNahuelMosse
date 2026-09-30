@@ -27,6 +27,7 @@ class PantallaMisReservas extends StatefulWidget {
     required this.espacios,
     required this.sesion,
     this.reservaId,
+    this.enHistorial = false,
   });
 
   final Reservas reservas;
@@ -36,12 +37,15 @@ class PantallaMisReservas extends StatefulWidget {
   /// La reserva que se resalta y se trae a la vista, si se llegó desde un aviso.
   final int? reservaId;
 
+  /// Abre en el historial: para los avisos de una reserva que ya no está entre las próximas.
+  final bool enHistorial;
+
   @override
   State<PantallaMisReservas> createState() => _PantallaMisReservasState();
 }
 
 class _PantallaMisReservasState extends State<PantallaMisReservas> {
-  bool _historial = false;
+  late bool _historial = widget.enHistorial;
   (List<Reserva>, Catalogo)? _datos;
   bool _fallo = false;
 
@@ -60,12 +64,14 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   @override
   void didUpdateWidget(PantallaMisReservas anterior) {
     super.didUpdateWidget(anterior);
-    if (widget.reservaId == null || widget.reservaId == anterior.reservaId) {
+    if (widget.reservaId == null ||
+        (widget.reservaId == anterior.reservaId &&
+            widget.enHistorial == anterior.enHistorial)) {
       return;
     }
-    // Un aviso nuevo con la pantalla ya abierta: se vuelve a Próximas y se lee de nuevo.
-    if (_historial) {
-      setState(() => _historial = false);
+    // Un aviso nuevo con la pantalla ya abierta: se va a la pestaña del aviso y se lee de nuevo.
+    if (_historial != widget.enHistorial) {
+      setState(() => _historial = widget.enHistorial);
       _cargar();
     } else {
       _cargar(deCero: false);
@@ -293,10 +299,8 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                       TarjetaReserva(
                         reserva: r,
                         catalogo: datos.$2,
-                        key: r.id == widget.reservaId && !_historial
-                            ? _resaltada
-                            : null,
-                        resaltada: r.id == widget.reservaId && !_historial,
+                        key: r.id == widget.reservaId ? _resaltada : null,
+                        resaltada: r.id == widget.reservaId,
                         cancelable: !_historial && r.cancelable,
                         cancelando: _cancelando == r.id,
                         alCancelar: _cancelando == null
