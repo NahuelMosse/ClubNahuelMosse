@@ -691,37 +691,39 @@ void main() {
       expect(api.pedidos, isEmpty);
     });
 
-    testWidgets('al cerrar la sesión da de baja el teléfono antes de salir', (
-      tester,
-    ) async {
-      final api = ApiFalsa();
-      final credenciales = CredencialesFalsas();
-      final sesion = Sesion(credenciales: credenciales, api: api.cliente);
-      int? salidasAlDarDeBaja;
-      api.alPedir = (p) {
-        if (p.url.path == '/dispositivos/baja') {
-          salidasAlDarDeBaja = credenciales.salidas;
-        }
-      };
-      final centro = centroDe(api, sesion);
-      await tester.runAsync(() async {
-        await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
-        await Future<void>.delayed(const Duration(milliseconds: 100));
-      });
-      await tester.pumpAndSettle();
-      expect(api.de('PUT', '/dispositivos'), hasLength(1));
+    testWidgets(
+      'al cerrar la sesión da de baja el teléfono con la sesión que se cierra',
+      (tester) async {
+        final api = ApiFalsa();
+        final credenciales = CredencialesFalsas();
+        final sesion = Sesion(credenciales: credenciales, api: api.cliente);
+        String? autorizacionDeLaBaja;
+        api.alPedir = (p) {
+          if (p.url.path == '/dispositivos/baja') {
+            autorizacionDeLaBaja = p.headers['authorization'];
+          }
+        };
+        final centro = centroDe(api, sesion);
+        await tester.runAsync(() async {
+          await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        });
+        await tester.pumpAndSettle();
+        expect(api.de('PUT', '/dispositivos'), hasLength(1));
 
-      await tester.runAsync(sesion.cerrar);
-      await tester.pumpAndSettle();
+        await tester.runAsync(sesion.cerrar);
+        await tester.pumpAndSettle();
 
-      expect(api.de('POST', '/dispositivos/baja'), hasLength(1));
-      expect(cuerpoDe(api.de('POST', '/dispositivos/baja').single), {
-        'token': 'token-del-telefono',
-      });
-      expect(salidasAlDarDeBaja, 0);
-      expect(credenciales.salidas, 1);
-      expect(centro.lista, isEmpty);
-    });
+        expect(api.de('POST', '/dispositivos/baja'), hasLength(1));
+        expect(cuerpoDe(api.de('POST', '/dispositivos/baja').single), {
+          'token': 'token-del-telefono',
+        });
+        // La baja va con la sesión que se cerró, tomada antes de cerrarla.
+        expect(autorizacionDeLaBaja, 'Bearer token-falso');
+        expect(credenciales.salidas, 1);
+        expect(centro.lista, isEmpty);
+      },
+    );
 
     testWidgets(
       'si no se puede dar de baja el teléfono, la sesión se cierra igual',

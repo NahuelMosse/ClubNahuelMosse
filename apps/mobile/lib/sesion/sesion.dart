@@ -132,8 +132,9 @@ class Sesion extends ChangeNotifier {
   final Credenciales _credenciales;
   final ClienteApi _api;
 
-  /// Lo que hay que hacer con la sesión todavía abierta antes de cerrarla, como avisarle a la
-  /// API que este teléfono deja de recibir avisos. Si algo falla, la sesión se cierra igual.
+  /// Lo que hay que empezar con la sesión todavía abierta al cerrarla, como avisarle a la API
+  /// que este teléfono deja de recibir avisos: cada una toma lo que necesita de la sesión antes
+  /// de que se cierre. Si algo falla, la sesión se cierra igual.
   final alCerrar = <Future<void> Function()>[];
 
   /// Cuánto puede esperar el arranque a la API antes de mostrar el login.
@@ -330,15 +331,16 @@ class Sesion extends ChangeNotifier {
 
   /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
   Future<void> cerrar() async {
-    for (final antes in [...alCerrar]) {
+    final antes = [for (final f in alCerrar) f()];
+    await _credenciales.salir();
+    _actual = null;
+    for (final f in antes) {
       try {
-        await antes().timeout(const Duration(seconds: 3));
+        await f.timeout(const Duration(seconds: 3));
       } on Exception {
         // Sin red o con la API caída, la persona igual sale.
       }
     }
-    await _credenciales.salir();
-    _actual = null;
   }
 
   Future<Perfil> _perfilPropio() async {

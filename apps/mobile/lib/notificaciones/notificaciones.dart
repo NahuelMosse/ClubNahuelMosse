@@ -76,10 +76,15 @@ class Notificaciones {
   /// Este teléfono deja de recibir los avisos de la cuenta.
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<void> darDeBajaDispositivo(String token) async {
+  ///
+  /// [sesion] es el token de la sesión que se está cerrando, tomado antes de que se cierre.
+  Future<void> darDeBajaDispositivo(
+    String token, {
+    required String sesion,
+  }) async {
     final r = await _api.post('/dispositivos/baja', {
       'token': token,
-    }, token: await _sesion.token());
+    }, token: sesion);
     _esperar204(r);
   }
 
