@@ -129,7 +129,7 @@ class _ContenidoDelPanel extends StatelessWidget {
     builder: (context, _) {
       final p = context.paleta;
       final medidas = MediaQuery.of(context);
-      final lista = centro.sinLeer;
+      final lista = centro.enElPanel;
       return SafeArea(
         child: Align(
           alignment: Alignment.topCenter,

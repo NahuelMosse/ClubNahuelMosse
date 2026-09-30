@@ -63,6 +63,15 @@ class CentroDeNotificaciones extends ChangeNotifier {
   /// Las que el panel ya mostró en esta sesión.
   final _avisadas = <int>{};
 
+  /// Confirmaciones de cancelación que llegaron con la persona en Mis reservas, donde ya vio
+  /// el mensaje de éxito: siguen sin leer, pero el panel no las muestra.
+  final _silenciadas = <int>{};
+
+  /// La ruta en la que está la persona; la app la conecta al enrutador.
+  String Function() ubicacion = _sinUbicacion;
+
+  static String _sinUbicacion() => '';
+
   List<Notificacion> _lista = const [];
   int _noLeidas = 0;
   bool _permitido = true;
@@ -86,9 +95,15 @@ class CentroDeNotificaciones extends ChangeNotifier {
       if (!n.leida) n,
   ];
 
+  /// Las sin leer que el panel puede mostrar.
+  List<Notificacion> get enElPanel => [
+    for (final n in sinLeer)
+      if (!_silenciadas.contains(n.id)) n,
+  ];
+
   /// El panel se muestra con la app abierta cuando llega una notificación nueva y el sistema
   /// dejó mostrarlas.
-  bool get panelAbierto => _panelAbierto && sinLeer.isNotEmpty;
+  bool get panelAbierto => _panelAbierto && enElPanel.isNotEmpty;
 
   /// La persona tocó un aviso de la bandeja del sistema.
   Stream<AvisoTocado> get alTocarDesdeElSistema => _sistema.alTocar;
@@ -151,6 +166,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _leyoAlguna = false;
     _ultimoPresentado = 0;
     _avisadas.clear();
+    _silenciadas.clear();
     _panelAbierto = false;
     notifyListeners();
   }
@@ -200,9 +216,19 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _lista = lectura.notificaciones;
     _noLeidas = lectura.noLeidas;
     final masNueva = _lista.fold<int>(0, (m, n) => n.id > m ? n.id : m);
+    if (ubicacion() == '/reservas') {
+      _silenciadas.addAll([
+        for (final n in _lista)
+          if (!n.leida &&
+              n.tipo == TipoDeNotificacion.cancelacionUsuario &&
+              n.id > _ultimoPresentado)
+            n.id,
+      ]);
+    }
     final llegoUnaNueva = _lista.any(
       (n) =>
           !n.leida &&
+          !_silenciadas.contains(n.id) &&
           n.id > _ultimoPresentado &&
           (_leyoAlguna || n.creada.isAfter(_desde)),
     );
@@ -213,7 +239,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
     );
     if (llegoUnaNueva && !quedanAvisadas && _permitido) {
       _panelAbierto = true;
-      _avisadas.addAll(sinLeer.map((n) => n.id));
+      _avisadas.addAll(enElPanel.map((n) => n.id));
     }
     if (masNueva > _ultimoPresentado) _ultimoPresentado = masNueva;
     _leyoAlguna = true;

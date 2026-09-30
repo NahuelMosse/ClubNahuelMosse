@@ -100,6 +100,8 @@ class _AppState extends State<App> {
     super.initState();
     final centro = widget.centro;
     if (centro == null) return;
+    centro.ubicacion = () =>
+        _rutas.routerDelegate.currentConfiguration.uri.path;
     // Un aviso de la bandeja del sistema abre la app en la reserva que avisa.
     _alTocarUnAviso = centro.alTocarDesdeElSistema.listen(
       (aviso) => _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId)),
