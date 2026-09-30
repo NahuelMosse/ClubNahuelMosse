@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/barra_inferior.dart';
+import '../notificaciones/campana.dart';
+import '../notificaciones/centro.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -9,9 +11,12 @@ import '../tema/tokens.dart';
 
 /// El Home de quien inicia sesión como usuario.
 class PantallaInicio extends StatelessWidget {
-  const PantallaInicio({super.key, required this.sesion});
+  const PantallaInicio({super.key, required this.sesion, this.centro});
 
   final Sesion sesion;
+
+  /// Sin él no hay campana: la pantalla no avisa de notificaciones.
+  final CentroDeNotificaciones? centro;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +54,8 @@ class PantallaInicio extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (centro case final centro?)
+                  BotonNotificaciones(centro: centro),
                 BotonCuenta(sesion: sesion),
               ],
             ),

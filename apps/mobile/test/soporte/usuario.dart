@@ -1,6 +1,8 @@
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
+import 'package:clubnahuelmosse/notificaciones/centro.dart';
+import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -53,15 +55,18 @@ Future<void> montarUsuario(
   String inicio = '/sedes',
   bool oscuro = true,
   Size tamano = const Size(393, 852),
+  CentroDeNotificaciones Function(Sesion)? centro,
 }) async {
   tester.view.physicalSize = tamano * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
+  final sesion = SesionFalsa(perfilUsuario);
   await tester.pumpWidget(
     App(
       api: api,
-      sesion: SesionFalsa(perfilUsuario),
+      sesion: sesion,
       apariencia: Apariencia.enMemoria(oscuro: oscuro),
+      centro: centro?.call(sesion),
       inicio: inicio,
     ),
   );

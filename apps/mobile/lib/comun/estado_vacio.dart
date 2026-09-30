@@ -12,12 +12,14 @@ class EstadoVacio extends StatelessWidget {
     required this.texto,
     this.accion,
     this.alTocar,
+    this.icono = Icons.grid_view_outlined,
   });
 
   final String titulo;
   final String texto;
   final String? accion;
   final VoidCallback? alTocar;
+  final IconData icono;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +35,7 @@ class EstadoVacio extends StatelessWidget {
               color: p.bgSurfaceRaised,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.grid_view_outlined, size: 28, color: p.textMuted),
+            child: Icon(icono, size: 28, color: p.textMuted),
           ),
           const SizedBox(height: Medidas.s16),
           Text(
