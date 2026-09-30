@@ -225,7 +225,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      await tester.pageBack();
+      await tester.binding.handlePopRoute();
       await tester.pumpAndSettle();
       await esperarA(tester, campana(1));
       semantica.dispose();
