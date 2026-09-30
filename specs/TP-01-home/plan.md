@@ -45,8 +45,8 @@ widget de accesibilidad y capturas del Home con datos servidos por un cliente fa
 ## Supuestos sin cobertura
 
 - **TP-01-SUP-02** (overlay de error compartido): ningún escenario del snapshot pide simular una
-  carga que falla en el Home; la ruta reusa el mismo patrón ya probado en Mis reservas
-  (`cancelar_reserva_test.dart`), pero no tiene un test propio en esta card.
+  carga que falla en el Home, así que no lleva `@supuesto`; lo ejercita un test de widget sin
+  tag de card (`test/inicio_test.dart`, «si la lectura falla avisa y deja reintentar»).
 - **TP-01-SUP-03** (reserva en curso sigue como próxima): el snapshot no trae un escenario de
   «reserva ya empezada»; la regla vive enteramente en la consulta SQL existente, que CU-09 ya
   ejercita para otro flujo, pero esta card no agrega un caso que la pruebe desde el Home.
@@ -59,9 +59,12 @@ widget de accesibilidad y capturas del Home con datos servidos por un cliente fa
 |---|---|---|
 | `apps/mobile/lib/inicio/pantalla_inicio.dart` | El Home entero | `StatefulWidget` con `Reservas`, `Espacios` y `Sedes` inyectados; carga los tres en `initState`; loading/retry de pantalla completa como en `PantallaMisReservas`; `TarjetaReserva` de `pantalla_mis_reservas.dart` reusada para la próxima reserva, sin duplicar su UI; `_Hero` calcula sedes y canchas sumando `Sede.canchas`; `_Deportes` itera `Catalogo.deportes` sin acción; cancelar/modificar reusan el mismo ciclo que Mis reservas y recargan el Home al volver |
 | `apps/mobile/lib/app.dart` | Ruta `/inicio` | Inyecta `_reservas`, `_espacios` y `_sedes` (ya existían para otras pantallas) al `PantallaInicio` |
+| `apps/mobile/lib/reservas/pantalla_mis_reservas.dart` | `textoDeCancelacion` | El texto de confirmación de cancelar sale de una función pública que usan Mis reservas y el Home, para que digan lo mismo |
 | `apps/mobile/integration_test/inicio/home_test.dart` | Los diez escenarios de la card | Un `testWidgets` por ID; `@supuesto:TP-01-SUP-05` y `@supuesto:TP-01-SUP-07` van en el mismo test que ya ejercita ese escenario |
-| `apps/mobile/test/soporte/montar.dart` | `inicioFalso(sesion)` | Cliente de API falso con fixtures fijas (4 sedes / 17 canchas, el catálogo completo de deportes, una próxima reserva parecida a la del prototipo) para los tests de widget y las capturas |
+| `apps/mobile/test/soporte/montar.dart` | `apiInicio` e `inicioFalso(sesion)` | Cliente de API falso con fixtures fijas (4 sedes / 17 canchas, el catálogo de deportes, una próxima reserva parecida a la del prototipo) para los tests de widget y las capturas |
+| `apps/mobile/test/inicio_test.dart` | Widget del Home | Saludo, conteo, próxima reserva, Home sin reservas, texto al 200 % en 360 px en los dos modos, y la lectura que falla (`TP-01-SUP-02`) |
 | `apps/mobile/test/accesibilidad_sesion_test.dart` | «el Home» en la matriz de accesibilidad | Usa `inicioFalso` en vez de instanciar `PantallaInicio` directo (cambió su constructor) |
+| `apps/mobile/test/perfil_test.dart` | «el Home y el avatar siguen al perfil» | Monta la app con `apiInicio()` para que el Home lea datos válidos |
 | `apps/mobile/test/capturas/sesion_capturas.dart` | Capturas `home_*` y `tarjeta_cuenta_*` | Mismo cambio de constructor |
 
 ## Brief visual
@@ -76,6 +79,10 @@ ejecución cuidada: la jerarquía tipográfica y el acento lima hacen el trabajo
 - **Teléfono chico.** En 360 el saludo, el hero y el estado de la próxima reserva entran sin
   scroll; DEPORTES y ACCESOS RÁPIDOS quedan más abajo. Nada del hero se trunca: el texto de
   conteo es una sola línea corta.
+- **Hero.** La portada lleva la foto de fútbol con el velo de la app y el saludo encima, como
+  el prototipo; como va sobre foto usa los colores del modo oscuro en los dos modos. Los chips
+  de DEPORTES son todos iguales (ninguno lima): resaltar uno sugeriría una selección que no
+  existe (`TP-01-SUP-06`). En 360 el título ocupa dos líneas.
 - **Variables visuales.** El lima (`accentInk`) marca lo que se puede tocar y lo que importa hoy
   (saludo, «VER TODAS →», precio de la reserva); el verde de éxito es sólo el estado ACTIVA,
   igual que en Mis reservas — ninguna variable nueva, se reusan los tokens ya definidos.

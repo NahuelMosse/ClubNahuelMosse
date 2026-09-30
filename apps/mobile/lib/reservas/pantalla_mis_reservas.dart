@@ -97,12 +97,9 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   /// cambiado, la lista se vuelve a leer.
   Future<void> _cancelar(Reserva r, Catalogo catalogo) async {
     if (_cancelando != null) return;
-    final horario = _horarioDe(r);
     final confirmo = await confirmarCancelacion(
       context,
-      '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
-      '${fechaLarga(r.inicio).split(' de ').first}, $horario · ${pesos(r.total)}. '
-      'El horario vuelve a quedar libre.',
+      textoDeCancelacion(r, catalogo),
     );
     if (!confirmo || !mounted) return;
     setState(() => _cancelando = r.id);
@@ -280,6 +277,12 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
     );
   }
 }
+
+/// Lo que se le pide confirmar a quien va a cancelar [r].
+String textoDeCancelacion(Reserva r, Catalogo catalogo) =>
+    '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
+    '${fechaLarga(r.inicio).split(' de ').first}, ${_horarioDe(r)} · '
+    '${pesos(r.total)}. El horario vuelve a quedar libre.';
 
 /// «21:00 – 22:00».
 String _horarioDe(Reserva r) {

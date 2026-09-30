@@ -1,7 +1,6 @@
 import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
@@ -79,7 +78,7 @@ void main() {
       testWidgets('home $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+          inicioFalso(SesionFalsa(perfilUsuario)),
           tema: tema,
           tamano: tamano,
         );
@@ -90,7 +89,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montar(
           tester,
-          PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+          inicioFalso(SesionFalsa(perfilUsuario)),
           tema: tema,
           tamano: tamano,
         );

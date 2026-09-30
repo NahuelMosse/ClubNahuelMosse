@@ -1,7 +1,6 @@
 import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
@@ -39,7 +38,7 @@ void main() {
   final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
   final pantallas = <String, Widget Function()>{
     'el login': login,
-    'el Home': () => PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+    'el Home': () => inicioFalso(SesionFalsa(perfilUsuario)),
     'el panel de administración': () =>
         PantallaPanelAdmin(sesion: SesionFalsa(perfilAdmin)),
     'recuperar contraseña': () => PantallaRecuperarContrasena(

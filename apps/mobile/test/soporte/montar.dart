@@ -1,6 +1,10 @@
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/espacios/espacios.dart';
+import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
+import 'package:clubnahuelmosse/reservas/reservas.dart';
+import 'package:clubnahuelmosse/sedes/sedes.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -40,6 +44,55 @@ ClienteApi apiRutas(
     );
   }),
 );
+
+const _catalogoJson =
+    '{"deportes": ['
+    '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
+    '{"clave": "F5", "nombre": "Fútbol 5"}, {"clave": "F7", "nombre": "Fútbol 7"}]}, '
+    '{"clave": "Tenis", "nombre": "Tenis", "tipos": ['
+    '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}, '
+    '{"clave": "Padel", "nombre": "Pádel", "tipos": [{"clave": "PAD", "nombre": "Pádel"}]}, '
+    '{"clave": "Voley", "nombre": "Vóley", "tipos": [{"clave": "IND", "nombre": "Indoor"}]}, '
+    '{"clave": "Hockey", "nombre": "Hockey", "tipos": [{"clave": "H7", "nombre": "Hockey 7"}]}, '
+    '{"clave": "Golf", "nombre": "Golf", "tipos": [{"clave": "DR", "nombre": "Driving range"}]}'
+    ']}';
+
+String _sedeJson(int id, String nombre, String direccion, int canchas) =>
+    '{"id": $id, "nombre": "$nombre", "direccion": "$direccion", '
+    '"apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7], '
+    '"canchas": $canchas, "deportes": ["Futbol", "Tenis"]}';
+
+const _proximaJson =
+    '{"id": 1, "espacio_id": 3, "sede_id": 2, '
+    '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
+    '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
+    '"inicio": "2026-11-13T00:00:00Z", "fin": "2026-11-13T01:00:00Z", '
+    '"total": 38000, "estado": "activa", "motivo": null, "cancelable": true}';
+
+/// Una API con lo que lee el Home: 4 sedes con 17 canchas, el catálogo de deportes y, con
+/// [conReserva], una próxima reserva.
+ClienteApi apiInicio({bool conReserva = true}) => apiRutas({
+  'GET /reservas': (200, '{"reservas": [${conReserva ? _proximaJson : ''}]}'),
+  'GET /espacios/catalogo': (200, _catalogoJson),
+  'GET /sedes': (
+    200,
+    '{"sedes": [${_sedeJson(1, 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+        '${_sedeJson(2, 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
+        '${_sedeJson(3, 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
+        '${_sedeJson(4, 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
+  ),
+});
+
+/// El Home leyendo de [apiInicio].
+Widget inicioFalso(Sesion sesion, {bool conReserva = true}) {
+  final api = apiInicio(conReserva: conReserva);
+  return PantallaInicio(
+    sesion: sesion,
+    reservas: Reservas(api: api, sesion: sesion),
+    espacios: Espacios(api: api, sesion: sesion),
+    sedes: Sedes(api: api, sesion: sesion),
+  );
+}
 
 /// Monta [pantalla] con el tema y el idioma de la app, en un teléfono de [tamano].
 Future<void> montar(

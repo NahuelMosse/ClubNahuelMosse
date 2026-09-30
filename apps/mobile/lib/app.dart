@@ -140,7 +140,12 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/inicio',
-        builder: (context, _) => PantallaInicio(sesion: widget.sesion),
+        builder: (context, _) => PantallaInicio(
+          sesion: widget.sesion,
+          reservas: _reservas,
+          espacios: _espacios,
+          sedes: _sedes,
+        ),
         routes: [
           GoRoute(
             path: 'buscar',
