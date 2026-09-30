@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'admin/historial_reservas.dart';
 import 'admin/pantalla_alta_espacio.dart';
+import 'admin/pantalla_detalle_reserva.dart';
 import 'admin/pantalla_editar_espacio.dart';
 import 'admin/pantalla_formulario_sede.dart';
 import 'admin/pantalla_espacio_creado.dart';
@@ -10,6 +12,7 @@ import 'admin/pantalla_espacios_admin.dart';
 import 'admin/pantalla_panel_admin.dart';
 import 'admin/pantalla_sede_creada.dart';
 import 'admin/pantalla_sedes_admin.dart';
+import 'comun/pantalla_acceso_denegado.dart';
 import 'espacios/espacio.dart';
 import 'espacios/espacios.dart';
 import 'sedes/sede.dart';
@@ -76,7 +79,12 @@ class _AppState extends State<App> {
   late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
   late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
   late final _reservas = Reservas(api: widget.api, sesion: widget.sesion);
+  late final _historialAdmin = HistorialDeReservas(
+    api: widget.api,
+    sesion: widget.sesion,
+  );
   final _pendiente = ReservaPendiente();
+  final _filtrosPendientes = FiltrosDePanelPendientes();
 
   /// `AAAA-MM-DD` de un enlace como día del club; `null` si no viene o no es una fecha.
   static DateTime? _dia(String? iso) => switch (DateTime.tryParse(iso ?? '')) {
@@ -90,6 +98,9 @@ class _AppState extends State<App> {
     refreshListenable: widget.sesion,
     redirect: (context, estado) {
       final ruta = estado.matchedLocation;
+      // «Acceso denegado» es la única ruta bajo /admin que no exige el rol: es adonde va
+      // la entrada bare cuando no lo tiene (CU-14-SUP-06).
+      if (ruta == '/admin/acceso-denegado') return null;
       // Todo lo que cuelga de /admin es del administrador: una ruta nueva del panel no
       // queda abierta por olvidarse de anotarla.
       final rol = ruta == '/admin' || ruta.startsWith('/admin/')
@@ -101,7 +112,11 @@ class _AppState extends State<App> {
       final perfil = widget.sesion.perfil;
       if (rol == null) return null;
       if (perfil == null) return '/';
-      return perfil.rol == rol ? null : perfil.inicio;
+      if (perfil.rol == rol) return null;
+      // Sólo la entrada bare del panel (la pestaña Reservas de esta card) muestra la
+      // pantalla dedicada por enlace profundo (CU-14 FA4); las subrutas de sedes y
+      // espacios conservan el redirect silencioso de siempre.
+      return ruta == '/admin' ? '/admin/acceso-denegado' : perfil.inicio;
     },
     routes: [
       GoRoute(
@@ -309,7 +324,34 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/admin',
-        builder: (context, _) => PantallaPanelAdmin(sesion: widget.sesion),
+        builder: (context, _) => PantallaPanelAdmin(
+          historial: _historialAdmin,
+          sedes: _sedes,
+          espacios: _espacios,
+          sesion: widget.sesion,
+          pendientes: _filtrosPendientes,
+        ),
+        routes: [
+          GoRoute(
+            path: 'reserva/:id',
+            // Sin la reserva que se tocó en el listado (un enlace, la app reabierta),
+            // vuelve al listado.
+            redirect: (context, estado) =>
+                estado.extra is ReservaHistorial ? null : '/admin',
+            builder: (context, estado) => switch (estado.extra) {
+              final ReservaHistorial r => PantallaDetalleReserva(
+                reserva: r,
+                historial: _historialAdmin,
+                sesion: widget.sesion,
+              ),
+              _ => const SizedBox.shrink(),
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/admin/acceso-denegado',
+        builder: (context, _) => const PantallaAccesoDenegado(),
       ),
       GoRoute(
         path: '/admin/sedes',

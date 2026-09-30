@@ -1,6 +1,9 @@
 import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
+import 'package:clubnahuelmosse/admin/historial_reservas.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
+import 'package:clubnahuelmosse/espacios/espacios.dart';
+import 'package:clubnahuelmosse/sedes/sedes.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
@@ -39,8 +42,24 @@ void main() {
   final pantallas = <String, Widget Function()>{
     'el login': login,
     'el Home': () => inicioFalso(SesionFalsa(perfilUsuario)),
-    'el panel de administración': () =>
-        PantallaPanelAdmin(sesion: SesionFalsa(perfilAdmin)),
+    'el panel de administración': () {
+      final sesion = SesionFalsa(perfilAdmin);
+      final api = apiRutas({
+        'GET /reservas/todas': (
+          200,
+          '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
+              ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
+              ' "anuladas": 0}}',
+        ),
+      });
+      return PantallaPanelAdmin(
+        historial: HistorialDeReservas(api: api, sesion: sesion),
+        sedes: Sedes(api: api, sesion: sesion),
+        espacios: Espacios(api: api, sesion: sesion),
+        sesion: sesion,
+        pendientes: FiltrosDePanelPendientes(),
+      );
+    },
     'recuperar contraseña': () => PantallaRecuperarContrasena(
       recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
     ),

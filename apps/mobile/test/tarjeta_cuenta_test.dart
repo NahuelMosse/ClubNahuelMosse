@@ -12,6 +12,16 @@ import 'soporte/montar.dart';
 void main() {
   setUpAll(cargarFuentes);
 
+  /// Lo que necesita el panel admin (CU-14) para no fallar con un pedido real.
+  final apiConPanelAdmin = apiRutas({
+    'GET /reservas/todas': (
+      200,
+      '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
+          ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
+          ' "anuladas": 0}}',
+    ),
+  });
+
   /// La app real con una sesión ya iniciada, arrancando en [inicio].
   Future<GoRouter> montarApp(
     WidgetTester tester,
@@ -23,7 +33,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
-        api: apiInicio(),
+        api: inicio.startsWith('/admin') ? apiConPanelAdmin : apiInicio(),
         sesion: sesion,
         apariencia: Apariencia.enMemoria(),
         inicio: inicio,
@@ -193,7 +203,8 @@ void main() {
     final usuario = await montarApp(tester, SesionFalsa(perfilUsuario));
     usuario.go('/admin');
     await tester.pumpAndSettle();
-    expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
+    // Por enlace profundo, sin rol de administrador ve «Acceso denegado» (CU-14 FA4).
+    expect(find.text('Acceso denegado'), findsOneWidget);
 
     final admin = await montarApp(
       tester,
