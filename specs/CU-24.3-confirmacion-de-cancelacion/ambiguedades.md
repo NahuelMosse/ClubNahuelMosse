@@ -33,3 +33,4 @@ CU-24.3-AMB-07 · 2026-09-30 · abierta · tocar la confirmación abre Mis reser
 CU-24.3-AMB-07 · 2026-09-30 · sin canal · tocar la confirmación abre Mis reservas en Historial con esa reserva resaltada, que figura como cancelada → CU-24.3-SUP-06
 CU-24.3-AMB-08 · 2026-09-30 · abierta · la tarjeta que FA1 suprime queda sin leer (cuenta en la campana y está en el centro) y no vuelve a salir en el panel durante esa sesión
 CU-24.3-AMB-08 · 2026-09-30 · sin canal · la tarjeta que FA1 suprime queda sin leer (cuenta en la campana y está en el centro) y no vuelve a salir en el panel durante esa sesión → CU-24.3-SUP-07
+CU-24.3-TESTS · 2026-09-30 · congelados en 4ec5358 · rojo pendiente de la pasada final
