@@ -113,9 +113,12 @@ void main() {
       final total = sedes.values.fold(0, (a, b) => a + b);
 
       // Verifica: el hero muestra exactamente lo que la API devuelve, no un valor fijo.
+      final cuantasSedes = sedes.length == 1 ? 'sede' : 'sedes';
+      final cuantasCanchas = total == 1 ? 'cancha' : 'canchas';
       expect(
         find.text(
-          '${sedes.length} sedes · $total canchas · disponibilidad en tiempo real',
+          '${sedes.length} $cuantasSedes · $total $cuantasCanchas'
+          ' · disponibilidad en tiempo real',
         ),
         findsOneWidget,
       );
@@ -179,8 +182,12 @@ void main() {
     (tester) async {
       await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
 
-      // Verifica: el Home carga (el hero está) y el bloque de la próxima reserva no.
-      await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+      // Verifica: el Home terminó de cargar y el bloque de la próxima reserva no está.
+      await esperarA(
+        tester,
+        find.textContaining('disponibilidad en tiempo real'),
+      );
+      expect(find.text('REINTENTAR'), findsNothing);
       expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
     },
   );

@@ -121,13 +121,23 @@ Future<void> crearCuenta({
       'contrasena': contrasena,
     }),
   );
-  if (r.statusCode == 409) throw const CuentaYaCreada();
+  if (r.statusCode == 409 && _soloElCorreoRepetido(r.body)) {
+    throw const CuentaYaCreada();
+  }
   if (r.statusCode != 201) {
-    throw StateError('no se pudo crear la cuenta de prueba: ${r.statusCode}');
+    throw StateError(
+      'no se pudo crear la cuenta de prueba: ${r.statusCode} ${r.body}',
+    );
   }
 }
 
-/// La API ya tiene una cuenta con ese correo o ese DNI.
+/// El 409 del registro dice que el único campo repetido es el correo.
+bool _soloElCorreoRepetido(String cuerpo) {
+  if (jsonDecode(cuerpo) case {'campos': ['correo']}) return true;
+  return false;
+}
+
+/// La API ya tiene una cuenta con ese correo.
 class CuentaYaCreada implements Exception {
   const CuentaYaCreada();
 
