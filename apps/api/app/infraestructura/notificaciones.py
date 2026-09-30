@@ -20,7 +20,7 @@ class NotificacionesSql:
                 " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
                 " JOIN sede s ON s.id = e.sede_id JOIN usuario u ON u.id = r.usuario_id"
                 " WHERE r.estado = 'activa' AND u.activo"
-                " AND r.inicio > :ahora AND r.inicio - interval '1 hour' <= :ahora"
+                " AND r.inicio > :ahora AND r.inicio <= :ahora + interval '1 hour'"
                 # Una reserva hecha o movida con menos de una hora de anticipación no avisa.
                 " AND greatest(r.creado_en, r.modificado_en) <= r.inicio - interval '1 hour'"
                 " AND (CAST(:usuario AS bigint) IS NULL OR r.usuario_id = :usuario)"
@@ -45,23 +45,48 @@ class NotificacionesSql:
         ]
 
     def registrar(self, recordatorio: Recordatorio, aviso: Aviso) -> int | None:
-        fila = self._conn.execute(
-            text(
-                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                " reserva_inicio, envio) VALUES (:usuario, 'recordatorio', :titulo, :cuerpo,"
-                " :reserva, :inicio, 'pendiente')"
-                " ON CONFLICT (reserva_id, reserva_inicio) WHERE tipo = 'recordatorio'"
-                " DO NOTHING RETURNING id"
-            ),
-            {
-                "usuario": recordatorio.usuario_id,
-                "titulo": aviso.titulo,
-                "cuerpo": aviso.cuerpo,
-                "reserva": recordatorio.reserva_id,
-                "inicio": recordatorio.inicio,
-            },
-        ).first()
-        self._conn.commit()
+        datos = {
+            "usuario": recordatorio.usuario_id,
+            "titulo": aviso.titulo,
+            "cuerpo": aviso.cuerpo,
+            "reserva": recordatorio.reserva_id,
+            "inicio": recordatorio.inicio,
+        }
+        try:
+            # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
+            # la cuenta darse de baja. Se vuelve a mirar con la cuenta y la reserva compartidas,
+            # en el orden de las reservas, así ninguna de las dos cambia hasta el commit.
+            cuenta = self._conn.execute(
+                text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
+            ).first()
+            vigente = None
+            if cuenta is not None:
+                vigente = self._conn.execute(
+                    text(
+                        "SELECT 1 FROM reserva WHERE id = :reserva AND estado = 'activa'"
+                        " AND inicio = :inicio AND inicio > now()"
+                        " AND greatest(creado_en, modificado_en) <= inicio - interval '1 hour'"
+                        " FOR SHARE"
+                    ),
+                    datos,
+                ).first()
+            if vigente is None:
+                self._conn.rollback()
+                return None
+            fila = self._conn.execute(
+                text(
+                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+                    " reserva_inicio, envio) VALUES (:usuario, 'recordatorio', :titulo, :cuerpo,"
+                    " :reserva, :inicio, 'pendiente')"
+                    " ON CONFLICT (reserva_id, reserva_inicio) WHERE tipo = 'recordatorio'"
+                    " DO NOTHING RETURNING id"
+                ),
+                datos,
+            ).first()
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
         return None if fila is None else int(fila.id)
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]:

@@ -3,7 +3,11 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.aplicacion.notificaciones import ResultadoDeEnvio, enviar_recordatorios
+from app.aplicacion.notificaciones import (
+    CanalNoConfigurado,
+    ResultadoDeEnvio,
+    enviar_recordatorios,
+)
 from app.dominio.notificaciones import Aviso, Envio, Recordatorio, mensaje_recordatorio, tipo_corto
 from app.infraestructura import push
 
@@ -136,5 +140,13 @@ def test_sin_credenciales_de_firebase_el_canal_no_sale_a_ninguna_red(
     canal = push.canal_push()
 
     assert isinstance(canal, push.CanalNulo)
-    assert canal.enviar(["t"], mensaje_recordatorio(_recordatorio())).enviados == 1
+    with pytest.raises(CanalNoConfigurado):
+        canal.enviar(["t"], mensaje_recordatorio(_recordatorio()))
     push.canal_push.cache_clear()
+
+
+def test_sin_canal_configurado_el_aviso_no_figura_como_enviado() -> None:
+    repo = RepositorioEnMemoria([_recordatorio()], ["t"])
+
+    assert enviar_recordatorios(repo, push.CanalNulo(), AHORA) == 1
+    assert repo.envios == {1: "sin_canal"}

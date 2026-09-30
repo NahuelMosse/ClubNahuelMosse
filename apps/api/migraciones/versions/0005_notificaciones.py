@@ -50,7 +50,7 @@ def upgrade() -> None:
             -- el horario al que refiere: si la reserva se mueve, es otro aviso
             reserva_inicio timestamptz,
             envio text NOT NULL
-                CHECK (envio IN ('pendiente', 'enviada', 'sin_permiso', 'fallida')),
+                CHECK (envio IN ('pendiente', 'enviada', 'sin_permiso', 'sin_canal', 'fallida')),
             creada_en timestamptz NOT NULL DEFAULT now(),
             enviada_en timestamptz,
             leida_en timestamptz,
@@ -64,8 +64,11 @@ def upgrade() -> None:
         " ON notificacion (reserva_id, reserva_inicio) WHERE tipo = 'recordatorio'"
     )
     op.execute("CREATE INDEX notificacion_usuario ON notificacion (usuario_id, creada_en DESC)")
+    # El barrido busca las reservas activas que empiezan en la hora que viene.
+    op.execute("CREATE INDEX reserva_activa_inicio ON reserva (inicio) WHERE estado = 'activa'")
 
 
 def downgrade() -> None:
+    op.execute("DROP INDEX reserva_activa_inicio")
     op.execute("DROP TABLE notificacion")
     op.execute("DROP TABLE dispositivo")

@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -15,6 +16,8 @@ from app.dominio.usuarios import Perfil
 
 PLATAFORMAS = ("android", "ios")
 
+_registro = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class ResultadoDeEnvio:
@@ -24,10 +27,16 @@ class ResultadoDeEnvio:
     invalidos: tuple[str, ...] = ()
 
 
+class CanalNoConfigurado(Exception):
+    """No hay un servicio de notificaciones configurado: nada salió hacia el teléfono."""
+
+
 class CanalPush(Protocol):
     """El servicio que entrega el aviso al teléfono."""
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio: ...
+    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+        """Lanza `CanalNoConfigurado` si no hay servicio al que enviarle el aviso."""
+        ...
 
 
 class Notificaciones(Protocol):
@@ -93,9 +102,14 @@ def enviar_recordatorios(
             continue
         try:
             resultado = canal.enviar(tokens, aviso)
-        except Exception:
+        except CanalNoConfigurado:
+            notificaciones.marcar_envio(nuevo, "sin_canal")
+            continue
+        except Exception as e:
             # El servicio de afuera puede fallar de cualquier forma; el aviso ya está en el
-            # centro y un barrido no puede cortarse por el de una persona.
+            # centro y un barrido no puede cortarse por el de una persona. Se loguea el tipo
+            # del error y no su texto, que puede traer el token del teléfono.
+            _registro.warning("el envío del aviso falló: %s", type(e).__name__)
             notificaciones.marcar_envio(nuevo, "fallida")
             continue
         notificaciones.dar_de_baja_tokens(resultado.invalidos)

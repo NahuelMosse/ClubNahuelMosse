@@ -9,7 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 from app.aplicacion.notificaciones import ResultadoDeEnvio, enviar_recordatorios
-from app.dominio.notificaciones import Aviso
+from app.dominio.notificaciones import Aviso, Recordatorio
 from app.infraestructura.notificaciones import NotificacionesSql
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -405,3 +405,113 @@ def test_las_respuestas_del_centro_no_traen_campos_de_mas_ni_se_cachean(
     assert r.status_code == 200
     assert set(r.json()) == {"notificaciones", "no_leidas"}
     assert "no-store" in r.headers.get("cache-control", "")
+
+
+class EntreLaFotoYElRegistro(NotificacionesSql):
+    """Hace que algo pase justo después de que el barrido mira las reservas y antes de que
+    registre el aviso."""
+
+    def __init__(self, conn: Any, alguien: Callable[[], None]) -> None:
+        super().__init__(conn)
+        self._alguien = alguien
+
+    def vencidos(self, ahora: datetime, usuario_id: int | None) -> list[Recordatorio]:
+        foto = super().vencidos(ahora, usuario_id)
+        self._alguien()
+        return foto
+
+
+def _barrer_con(
+    motor: Engine, usuario: int, canal: Canal, ahora: datetime, alguien: Callable[[], None]
+) -> int:
+    with motor.connect() as conn:
+        return enviar_recordatorios(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
+
+
+def _sin_avisos(motor: Engine, usuario: int) -> bool:
+    with motor.connect() as conn:
+        return (
+            conn.execute(
+                text("SELECT count(*) FROM notificacion WHERE usuario_id = :u"), {"u": usuario}
+            ).scalar_one()
+            == 0
+        )
+
+
+def test_una_reserva_cancelada_entre_la_lectura_y_el_registro_no_recibe_aviso(
+    api: TestClient,
+    motor: Engine,
+    token_admin: str,
+    token_usuario: str,
+    sede: tuple[int, str],
+    unico: Callable[[], str],
+) -> None:
+    espacio = _espacio(api, token_admin, sede[0])
+    usuario = _yo(api, motor, token_usuario)
+    _registrar(api, token_usuario, f"fcm-{unico()}")
+    reserva = _reservar(api, token_usuario, espacio)
+    canal = Canal()
+
+    def cancelar() -> None:
+        r = api.post(f"/reservas/{reserva['id']}/cancelar", headers=_con(token_usuario))
+        assert r.status_code == 200
+
+    assert _barrer_con(motor, usuario, canal, _manana_a_las(20), cancelar) == 0
+    assert canal.enviados == []
+    assert _sin_avisos(motor, usuario)
+
+
+def test_una_reserva_movida_entre_la_lectura_y_el_registro_no_avisa_el_horario_viejo(
+    api: TestClient,
+    motor: Engine,
+    token_admin: str,
+    token_usuario: str,
+    sede: tuple[int, str],
+    unico: Callable[[], str],
+) -> None:
+    espacio = _espacio(api, token_admin, sede[0])
+    usuario = _yo(api, motor, token_usuario)
+    _registrar(api, token_usuario, f"fcm-{unico()}")
+    reserva = _reservar(api, token_usuario, espacio)
+    canal = Canal()
+
+    def mover() -> None:
+        r = api.post(
+            f"/reservas/{reserva['id']}/modificar",
+            headers=_con(token_usuario),
+            json={
+                "espacio_id": espacio,
+                "fecha": _manana_a_las(0).date().isoformat(),
+                "desde": "22:00",
+            },
+        )
+        assert r.status_code == 200
+
+    assert _barrer_con(motor, usuario, canal, _manana_a_las(20), mover) == 0
+    assert canal.enviados == []
+    assert _sin_avisos(motor, usuario)
+
+
+def test_una_cuenta_dada_de_baja_entre_la_lectura_y_el_registro_no_recibe_aviso(
+    api: TestClient,
+    motor: Engine,
+    token_admin: str,
+    token_usuario: str,
+    sede: tuple[int, str],
+    unico: Callable[[], str],
+) -> None:
+    espacio = _espacio(api, token_admin, sede[0])
+    usuario = _yo(api, motor, token_usuario)
+    _registrar(api, token_usuario, f"fcm-{unico()}")
+    _reservar(api, token_usuario, espacio)
+    canal = Canal()
+
+    def dar_de_baja() -> None:
+        with motor.begin() as conn:
+            conn.execute(
+                text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE id = :u"),
+                {"u": usuario},
+            )
+
+    assert _barrer_con(motor, usuario, canal, _manana_a_las(20), dar_de_baja) == 0
+    assert canal.enviados == []
