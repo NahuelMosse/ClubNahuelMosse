@@ -54,3 +54,4 @@ CU-24.1-AMB-16 · 2026-09-30 · abierta · en el emulador de Firebase Auth (esce
 CU-24.1-AMB-16 · 2026-09-30 · sin canal · en el emulador de Firebase Auth (escenarios) la app usa un sistema de notificaciones simulado cuyo permiso se guarda en el dispositivo y arranca concedido; tocar el aviso en la bandeja del sistema y verlo en la pantalla bloqueada no se pueden ejecutar → CU-24.1-SUP-13
 CU-24.1-AMB-17 · 2026-09-30 · abierta · el aviso nombra el deporte con el tipo corto del catálogo («Fútbol 5», «Tenis») y las horas en la hora del club
 CU-24.1-AMB-17 · 2026-09-30 · sin canal · el aviso nombra el deporte con el tipo corto del catálogo («Fútbol 5», «Tenis») y las horas en la hora del club → CU-24.1-SUP-14
+CU-24.1-TESTS · 2026-09-30 · congelados en 7b15a2d
