@@ -109,7 +109,10 @@ void main() {
           find.bySemanticsLabel('Buscar reserva'),
           'sin coincidencia',
         );
-        await capturar(tester, 'admin/reservas_sin_resultados_${ancho}_$modo.png');
+        await capturar(
+          tester,
+          'admin/reservas_sin_resultados_${ancho}_$modo.png',
+        );
       });
 
       testWidgets('historial vacío $ancho $modo', (tester) async {
@@ -172,7 +175,10 @@ void main() {
         await tester.pumpAndSettle();
         await tester.enterText(find.bySemanticsLabel('Desde'), '30112026');
         await tester.enterText(find.bySemanticsLabel('Hasta'), '01112026');
-        await capturar(tester, 'admin/reservas_rango_invalido_${ancho}_$modo.png');
+        await capturar(
+          tester,
+          'admin/reservas_rango_invalido_${ancho}_$modo.png',
+        );
       });
 
       testWidgets('detalle de reserva $ancho $modo', (tester) async {
@@ -208,7 +214,10 @@ void main() {
           }),
         );
         await tester.tap(find.text('RamosMejia_Belgrano_1240_Hockey_H7_1'));
-        await capturar(tester, 'admin/reservas_detalle_anulada_${ancho}_$modo.png');
+        await capturar(
+          tester,
+          'admin/reservas_detalle_anulada_${ancho}_$modo.png',
+        );
       });
 
       testWidgets('acceso denegado $ancho $modo', (tester) async {

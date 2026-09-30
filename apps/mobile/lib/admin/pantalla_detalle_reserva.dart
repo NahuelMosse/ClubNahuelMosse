@@ -166,10 +166,7 @@ class _TarjetaDatos extends StatelessWidget {
               ],
             ),
             const SizedBox(height: Medidas.s8),
-            Text(
-              r.espacio,
-              style: Textos.mono.copyWith(color: p.textMuted),
-            ),
+            Text(r.espacio, style: Textos.mono.copyWith(color: p.textMuted)),
             const SizedBox(height: Medidas.s8),
             Wrap(
               spacing: Medidas.s16,
@@ -193,11 +190,7 @@ class _TarjetaDatos extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 18,
-                      color: p.accentInk,
-                    ),
+                    Icon(Icons.schedule_rounded, size: 18, color: p.accentInk),
                     const SizedBox(width: Medidas.s8),
                     Text(
                       horario,

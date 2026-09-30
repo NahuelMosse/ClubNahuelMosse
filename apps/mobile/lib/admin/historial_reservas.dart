@@ -247,9 +247,10 @@ class HistorialDeReservas {
     FiltrosDeHistorial filtros, {
     int pagina = 1,
   }) async {
-    final query = [filtros._query, 'pagina=$pagina']
-        .where((s) => s.isNotEmpty)
-        .join('&');
+    final query = [
+      filtros._query,
+      'pagina=$pagina',
+    ].where((s) => s.isNotEmpty).join('&');
     final r = await _api.get(
       '/reservas/todas?$query',
       token: await _sesion.token(),
