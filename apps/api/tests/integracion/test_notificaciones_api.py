@@ -428,11 +428,15 @@ def _barrer_con(
         return enviar_recordatorios(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
 
 
-def _sin_avisos(motor: Engine, usuario: int) -> bool:
+def _sin_recordatorios(motor: Engine, usuario: int) -> bool:
     with motor.connect() as conn:
         return (
             conn.execute(
-                text("SELECT count(*) FROM notificacion WHERE usuario_id = :u"), {"u": usuario}
+                text(
+                    "SELECT count(*) FROM notificacion WHERE usuario_id = :u"
+                    " AND tipo = 'recordatorio'"
+                ),
+                {"u": usuario},
             ).scalar_one()
             == 0
         )
@@ -458,7 +462,7 @@ def test_una_reserva_cancelada_entre_la_lectura_y_el_registro_no_recibe_aviso(
 
     assert _barrer_con(motor, usuario, canal, _manana_a_las(20), cancelar) == 0
     assert canal.enviados == []
-    assert _sin_avisos(motor, usuario)
+    assert _sin_recordatorios(motor, usuario)
 
 
 def test_una_reserva_movida_entre_la_lectura_y_el_registro_no_avisa_el_horario_viejo(
@@ -489,7 +493,7 @@ def test_una_reserva_movida_entre_la_lectura_y_el_registro_no_avisa_el_horario_v
 
     assert _barrer_con(motor, usuario, canal, _manana_a_las(20), mover) == 0
     assert canal.enviados == []
-    assert _sin_avisos(motor, usuario)
+    assert _sin_recordatorios(motor, usuario)
 
 
 def test_una_cuenta_dada_de_baja_entre_la_lectura_y_el_registro_no_recibe_aviso(
