@@ -65,6 +65,9 @@ widget de accesibilidad y capturas del Home con datos servidos por un cliente fa
 | `apps/mobile/test/inicio_test.dart` | Widget del Home | Saludo, conteo, próxima reserva, Home sin reservas, texto al 200 % en 360 px en los dos modos, y la lectura que falla (`TP-01-SUP-02`) |
 | `apps/mobile/test/accesibilidad_sesion_test.dart` | «el Home» en la matriz de accesibilidad | Usa `inicioFalso` en vez de instanciar `PantallaInicio` directo (cambió su constructor) |
 | `apps/mobile/test/perfil_test.dart` | «el Home y el avatar siguen al perfil» | Monta la app con `apiInicio()` para que el Home lea datos válidos |
+| `apps/mobile/test/tarjeta_cuenta_test.dart` | La tarjeta de cuenta desde el Home | Monta la app con `apiInicio()` |
+| `apps/mobile/test/accesibilidad_sedes_test.dart` | «el inicio con sus accesos» | Sirve `GET /reservas` además de las rutas de sedes |
+| `apps/mobile/integration_test/soporte/acciones.dart` | `entrarComoUsuario` | Tolera la cuenta ya registrada por el escenario (`CuentaYaCreada`) |
 | `apps/mobile/test/capturas/sesion_capturas.dart` | Capturas `home_*` y `tarjeta_cuenta_*` | Mismo cambio de constructor |
 
 ## Brief visual

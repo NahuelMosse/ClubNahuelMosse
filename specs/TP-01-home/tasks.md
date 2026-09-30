@@ -5,27 +5,28 @@
 
 ## Phase 1: API
 
-- [ ] T001 Sin cambios: el Home reusa `GET /reservas?cuando=proximas`, `GET /espacios/catalogo`
+- [x] T001 Sin cambios: el Home reusa `GET /reservas?cuando=proximas`, `GET /espacios/catalogo`
   y `GET /sedes`, ya existentes y ya probados por otras cards.
 
 ## Phase 2: App (TP-01-H01-01 a H03-01)
 
-- [ ] T002 Cabecera con saludo y nombre, hero con sedes/canchas de los datos cargados (H01-01,
+- [x] T002 Cabecera con saludo y nombre, hero con sedes/canchas de los datos cargados (H01-01,
   H01-05)
-- [ ] T003 Bloque «Tu próxima reserva» con `TarjetaReserva` reusada, «Ver todas» a Mis reservas,
+- [x] T003 Bloque «Tu próxima reserva» con `TarjetaReserva` reusada, «Ver todas» a Mis reservas,
   y sin bloque si no hay ninguna (H01-02, H01-04, H02-01)
-- [ ] T004 Modificar y cancelar desde el Home, recargando al volver (H01-03)
-- [ ] T005 Chips de DEPORTES y accesos rápidos existentes (H01-06)
-- [ ] T006 Barra inferior y tarjeta del avatar (H01-07, H01-08) — ya existían, sólo escenario
+- [x] T004 Modificar y cancelar desde el Home, recargando al volver (H01-03)
+- [x] T005 Chips de DEPORTES y accesos rápidos existentes (H01-06)
+- [x] T006 Barra inferior y tarjeta del avatar (H01-07, H01-08) — ya existían, sólo escenario
   nuevo
-- [ ] T007 Redirección del administrador al panel (H03-01) — ya existía (`Perfil.inicio`), sólo
+- [x] T007 Redirección del administrador al panel (H03-01) — ya existía (`Perfil.inicio`), sólo
   escenario nuevo
 
 ## Phase 3: Polish
 
-- [ ] T008 `inicioFalso` en `test/soporte/montar.dart` y su uso en accesibilidad y capturas
-- [ ] T009 Capturas del paso 9 (360/430 × claro/oscuro) del Home y la tarjeta de cuenta
-- [ ] T010 `scripts/test.sh` y `scripts/e2e.sh integration_test/inicio/home_test.dart` en verde
+- [x] T008 `apiInicio` e `inicioFalso` en `test/soporte/montar.dart` y su uso en accesibilidad,
+  tarjeta de cuenta, perfil y capturas; `test/inicio_test.dart`
+- [x] T009 Capturas del paso 9 (360/430 × claro/oscuro) del Home y la tarjeta de cuenta
+- [x] T010 `scripts/test.sh` y `scripts/e2e.sh integration_test/inicio/home_test.dart` en verde
 
 ## Dependencies
 
