@@ -480,6 +480,46 @@ Future<void> anularReservasDe(String nombreEspacio) async {
   if (r.statusCode != 204) throw StateError('anular: ${r.statusCode}');
 }
 
+/// El barrido de recordatorios de la API corre como si en el club fueran las [hora]:[minuto]
+/// del [dia], sólo para las reservas de la cuenta [correo], y devuelve cuántos avisos
+/// registró.
+Future<int> despacharRecordatorios({
+  required String correo,
+  required DateTime dia,
+  required int hora,
+  int minuto = 0,
+}) async {
+  String dos(int n) => n.toString().padLeft(2, '0');
+  final ahora =
+      '${dia.year}-${dos(dia.month)}-${dos(dia.day)}T${dos(hora)}:${dos(minuto)}:00-03:00';
+  final r = await http.post(
+    _pruebas('recordatorios'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({'correo': correo, 'ahora': ahora}),
+  );
+  if (r.statusCode != 200) throw StateError('recordatorios: ${r.statusCode}');
+  if (jsonDecode(utf8.decode(r.bodyBytes)) case {'registrados': final int n}) {
+    return n;
+  }
+  throw StateError('recordatorios: respuesta sin conteo');
+}
+
+/// Si el permiso de cada dispositivo activo de la cuenta [correo] está concedido, según la
+/// API y no según la app.
+Future<List<bool>> dispositivosDe(String correo) async {
+  final r = await http.get(
+    _pruebas('dispositivos?correo=${Uri.encodeQueryComponent(correo)}'),
+  );
+  if (r.statusCode != 200) throw StateError('dispositivos: ${r.statusCode}');
+  return [
+    if (jsonDecode(utf8.decode(r.bodyBytes)) case {
+      'dispositivos': final List<Object?> dispositivos,
+    })
+      for (final d in dispositivos)
+        if (d case {'permiso': final bool permiso}) permiso,
+  ];
+}
+
 /// Los números de las próximas reservas de la cuenta [correo], según la API.
 Future<List<int>> numerosDeReservas(
   String correo, {
@@ -730,4 +770,23 @@ Future<List<(String, String, String?)>> historialDe(
         })
           (espacio, estado, motivo is String ? motivo : null),
   ];
+}
+
+/// La cuenta [correo] cancela por la API su única reserva próxima, como si lo hiciera desde
+/// otro teléfono.
+Future<void> cancelarDesdeOtroTelefono(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final numeros = await numerosDeReservas(correo, contrasena: contrasena);
+  if (numeros.length != 1) throw StateError('cancelar: hay ${numeros.length}');
+  final r = await http.post(
+    Uri.parse(
+      '${Configuracion.desdeEntorno().apiUrl}/reservas/${numeros.single}/cancelar',
+    ),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
 }

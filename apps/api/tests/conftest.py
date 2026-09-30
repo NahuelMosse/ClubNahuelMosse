@@ -17,6 +17,8 @@ URL_PRUEBAS = os.environ.get(
 os.environ["DATABASE_URL"] = URL_PRUEBAS
 os.environ.setdefault("FIREBASE_PROJECT_ID", "demo-clubnahuelmosse")
 os.environ.setdefault("CORREO_MODO", "buzon")
+# El barrido de recordatorios no corre solo en los tests: cada uno lo dispara con su reloj.
+os.environ["RECORDATORIOS_CADA"] = "0"
 RAIZ_API = Path(__file__).resolve().parents[1]
 
 

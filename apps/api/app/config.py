@@ -22,6 +22,8 @@ class Config(BaseSettings):
     correo_remitente: str = ""
     # Habilita /_pruebas (el buzón y el vencimiento de enlaces), y sólo contra el emulador.
     pruebas: bool = False
+    # Cada cuántos segundos el barrido manda los recordatorios que ya les toca; 0 lo apaga.
+    recordatorios_cada: int = 30
 
 
 config = Config()

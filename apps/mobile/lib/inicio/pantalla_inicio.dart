@@ -8,6 +8,8 @@ import '../comun/dialogo_error.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
+import '../notificaciones/campana.dart';
+import '../notificaciones/centro.dart';
 import '../reservas/pantalla_confirmar_cambio.dart';
 import '../reservas/pantalla_mis_reservas.dart';
 import '../reservas/reservas.dart';
@@ -30,12 +32,16 @@ class PantallaInicio extends StatefulWidget {
     required this.reservas,
     required this.espacios,
     required this.sedes,
+    this.centro,
   });
 
   final Sesion sesion;
   final Reservas reservas;
   final Espacios espacios;
   final Sedes sedes;
+
+  /// Sin él no hay campana: la pantalla no avisa de notificaciones.
+  final CentroDeNotificaciones? centro;
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
@@ -235,6 +241,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
               children: [
                 _Hero(
                   sesion: widget.sesion,
+                  centro: widget.centro,
                   resumen: datos == null ? null : _resumen(datos.sedes),
                 ),
                 if (datos == null && !_fallo)
@@ -285,9 +292,11 @@ String _resumen(List<Sede> sedes) {
 /// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
 /// colores son los del modo oscuro en los dos modos.
 class _Hero extends StatelessWidget {
-  const _Hero({required this.sesion, required this.resumen});
+  const _Hero({required this.sesion, required this.resumen, this.centro});
 
   final Sesion sesion;
+
+  final CentroDeNotificaciones? centro;
 
   /// `null` mientras se lee.
   final String? resumen;
@@ -332,6 +341,8 @@ class _Hero extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (centro case final centro?)
+                  BotonNotificaciones(centro: centro),
                 BotonCuenta(sesion: sesion),
               ],
             ),
