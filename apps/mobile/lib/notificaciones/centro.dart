@@ -228,11 +228,10 @@ class CentroDeNotificaciones extends ChangeNotifier {
     return concedido;
   }
 
-  /// Al cerrar la sesión: este teléfono deja de recibir los avisos de la cuenta. Toma el token
-  /// de la sesión antes de cualquier otra espera, mientras todavía está abierta.
-  Future<void> _darDeBajaElDispositivo() async {
+  /// Al cerrar la sesión: este teléfono deja de recibir los avisos de la cuenta, con el token
+  /// de la sesión que se cierra.
+  Future<void> _darDeBajaElDispositivo(String sesion) async {
     if (!_activo) return;
-    final sesion = await _sesion.token();
     final token = await _sistema.token();
     if (token != null) {
       await _repositorio.darDeBajaDispositivo(token, sesion: sesion);

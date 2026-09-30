@@ -133,9 +133,9 @@ class Sesion extends ChangeNotifier {
   final ClienteApi _api;
 
   /// Lo que hay que empezar con la sesión todavía abierta al cerrarla, como avisarle a la API
-  /// que este teléfono deja de recibir avisos: cada una toma lo que necesita de la sesión antes
-  /// de que se cierre. Si algo falla, la sesión se cierra igual.
-  final alCerrar = <Future<void> Function()>[];
+  /// que este teléfono deja de recibir avisos: recibe el token de la sesión que se cierra. Si
+  /// algo falla, la sesión se cierra igual.
+  final alCerrar = <Future<void> Function(String)>[];
 
   /// Cuánto puede esperar el arranque a la API antes de mostrar el login.
   final Duration limiteAlRetomar;
@@ -331,7 +331,16 @@ class Sesion extends ChangeNotifier {
 
   /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
   Future<void> cerrar() async {
-    final antes = [for (final f in alCerrar) f()];
+    String? token;
+    try {
+      token = await _credenciales.token();
+    } on Exception {
+      // Sin token no hay nada que avisarle a la API: la sesión se cierra igual.
+    }
+    final antes = [
+      if (token != null)
+        for (final f in alCerrar) f(token),
+    ];
     await _credenciales.salir();
     _actual = null;
     for (final f in antes) {
