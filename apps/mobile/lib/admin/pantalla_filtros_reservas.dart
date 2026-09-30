@@ -17,14 +17,11 @@ Future<FiltrosDeHistorial?> abrirFiltrosDeReservas(
   required FiltrosDeHistorial filtros,
   required List<Sede> sedes,
   required Catalogo catalogo,
-}) => showModalBottomSheet<FiltrosDeHistorial>(
-  context: context,
-  isScrollControlled: true,
-  backgroundColor: Colors.transparent,
-  builder: (context) => _PanelDeFiltros(
-    filtros: filtros,
-    sedes: sedes,
-    catalogo: catalogo,
+}) => Navigator.of(context).push<FiltrosDeHistorial>(
+  MaterialPageRoute(
+    fullscreenDialog: true,
+    builder: (context) =>
+        _PanelDeFiltros(filtros: filtros, sedes: sedes, catalogo: catalogo),
   ),
 );
 
@@ -115,205 +112,186 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, control) => DecoratedBox(
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(Medidas.radioLg),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s24,
-                  Medidas.s16,
-                  Medidas.s16,
-                  0,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Semantics(
-                        header: true,
-                        child: Text(
-                          'Filtros',
-                          style: Textos.h2.copyWith(color: p.textPrimary),
-                        ),
+    return Scaffold(
+      backgroundColor: p.bgSurfaceRaised,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s24,
+                Medidas.s16,
+                Medidas.s16,
+                0,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Semantics(
+                      header: true,
+                      child: Text(
+                        'Filtros',
+                        style: Textos.h2.copyWith(color: p.textPrimary),
                       ),
                     ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded),
-                      color: p.textSecondary,
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  controller: control,
-                  padding: const EdgeInsets.fromLTRB(
-                    Medidas.s24,
-                    Medidas.s8,
-                    Medidas.s24,
-                    Medidas.s24,
                   ),
-                  children: [
-                    CampoTexto(
-                      etiquetaAccesible: 'Buscar por usuario, sede o espacio',
-                      placeholder: 'Buscar por usuario, sede o espacio',
-                      controlador: _busqueda,
-                      accionFinal: Icon(
-                        Icons.search_rounded,
-                        color: p.textMuted,
-                      ),
-                    ),
-                    const SizedBox(height: Medidas.s20),
-                    _Titulo('SEDE'),
-                    const SizedBox(height: Medidas.s8),
-                    Wrap(
-                      spacing: Medidas.s8,
-                      runSpacing: Medidas.s8,
-                      children: [
-                        for (final sede in widget.sedes)
-                          _Chip(
-                            texto: sede.nombre,
-                            elegido: _sedeId == sede.id,
-                            alTocar: () => setState(
-                              () => _sedeId = _sedeId == sede.id
-                                  ? null
-                                  : sede.id,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: Medidas.s20),
-                    _Titulo('DEPORTE'),
-                    const SizedBox(height: Medidas.s8),
-                    Wrap(
-                      spacing: Medidas.s8,
-                      runSpacing: Medidas.s8,
-                      children: [
-                        for (final deporte in widget.catalogo.deportes)
-                          _Chip(
-                            texto: deporte.nombre,
-                            elegido: _deporte == deporte.clave,
-                            alTocar: () => setState(
-                              () => _deporte = _deporte == deporte.clave
-                                  ? null
-                                  : deporte.clave,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: Medidas.s20),
-                    _Titulo('ESTADO'),
-                    const SizedBox(height: Medidas.s8),
-                    Wrap(
-                      spacing: Medidas.s8,
-                      runSpacing: Medidas.s8,
-                      children: [
-                        _Chip(
-                          texto: 'Todas',
-                          elegido: _estado == null,
-                          alTocar: () => setState(() => _estado = null),
-                        ),
-                        for (final e in const [
-                          EstadoDeReserva.activa,
-                          EstadoDeReserva.completada,
-                          EstadoDeReserva.anulada,
-                        ])
-                          _Chip(
-                            texto: switch (e) {
-                              EstadoDeReserva.activa => 'Activas',
-                              EstadoDeReserva.completada => 'Completadas',
-                              _ => 'Anuladas',
-                            },
-                            elegido: _estado == e,
-                            alTocar: () => setState(
-                              () => _estado = _estado == e ? null : e,
-                            ),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: Medidas.s20),
-                    _Titulo('RANGO DE FECHAS'),
-                    const SizedBox(height: Medidas.s8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: CampoTexto(
-                            etiqueta: 'Desde',
-                            etiquetaAccesible: 'Desde',
-                            placeholder: 'DD / MM / AAAA',
-                            controlador: _desde,
-                            teclado: TextInputType.number,
-                            formateadores: const [FormatoFecha()],
-                            accionFinal: Icon(
-                              Icons.calendar_today_outlined,
-                              size: 16,
-                              color: p.textMuted,
-                            ),
-                            error: _rangoInvalido
-                                ? 'Desde no puede ser posterior a Hasta'
-                                : null,
-                          ),
-                        ),
-                        const SizedBox(width: Medidas.s12),
-                        Expanded(
-                          child: CampoTexto(
-                            etiqueta: 'Hasta',
-                            etiquetaAccesible: 'Hasta',
-                            placeholder: 'DD / MM / AAAA',
-                            controlador: _hasta,
-                            teclado: TextInputType.number,
-                            formateadores: const [FormatoFecha()],
-                            accionFinal: Icon(
-                              Icons.calendar_today_outlined,
-                              size: 16,
-                              color: p.textMuted,
-                            ),
-                            error: _rangoInvalido ? ' ' : null,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close_rounded),
+                    color: p.textSecondary,
+                  ),
+                ],
               ),
-              Padding(
+            ),
+            Expanded(
+              child: ListView(
                 padding: const EdgeInsets.fromLTRB(
                   Medidas.s24,
-                  0,
+                  Medidas.s8,
                   Medidas.s24,
                   Medidas.s24,
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: BotonContorno(texto: 'LIMPIAR', alTocar: _limpiar),
-                    ),
-                    const SizedBox(width: Medidas.s12),
-                    Expanded(
-                      child: BotonPrimario(
-                        texto: 'APLICAR',
-                        alTocar: _rangoInvalido ? null : _aplicar,
+                children: [
+                  CampoTexto(
+                    etiquetaAccesible: 'Buscar por usuario, sede o espacio',
+                    placeholder: 'Buscar por usuario, sede o espacio',
+                    controlador: _busqueda,
+                    accionFinal: Icon(Icons.search_rounded, color: p.textMuted),
+                  ),
+                  const SizedBox(height: Medidas.s20),
+                  _Titulo('SEDE'),
+                  const SizedBox(height: Medidas.s8),
+                  Wrap(
+                    spacing: Medidas.s8,
+                    runSpacing: Medidas.s8,
+                    children: [
+                      for (final sede in widget.sedes)
+                        _Chip(
+                          texto: sede.nombre,
+                          elegido: _sedeId == sede.id,
+                          alTocar: () => setState(
+                            () => _sedeId = _sedeId == sede.id ? null : sede.id,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: Medidas.s20),
+                  _Titulo('DEPORTE'),
+                  const SizedBox(height: Medidas.s8),
+                  Wrap(
+                    spacing: Medidas.s8,
+                    runSpacing: Medidas.s8,
+                    children: [
+                      for (final deporte in widget.catalogo.deportes)
+                        _Chip(
+                          texto: deporte.nombre,
+                          elegido: _deporte == deporte.clave,
+                          alTocar: () => setState(
+                            () => _deporte = _deporte == deporte.clave
+                                ? null
+                                : deporte.clave,
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: Medidas.s20),
+                  _Titulo('ESTADO'),
+                  const SizedBox(height: Medidas.s8),
+                  Wrap(
+                    spacing: Medidas.s8,
+                    runSpacing: Medidas.s8,
+                    children: [
+                      _Chip(
+                        texto: 'Todas',
+                        elegido: _estado == null,
+                        alTocar: () => setState(() => _estado = null),
                       ),
-                    ),
-                  ],
-                ),
+                      for (final e in const [
+                        EstadoDeReserva.activa,
+                        EstadoDeReserva.completada,
+                        EstadoDeReserva.anulada,
+                      ])
+                        _Chip(
+                          texto: switch (e) {
+                            EstadoDeReserva.activa => 'Activas',
+                            EstadoDeReserva.completada => 'Completadas',
+                            _ => 'Anuladas',
+                          },
+                          elegido: _estado == e,
+                          alTocar: () =>
+                              setState(() => _estado = _estado == e ? null : e),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: Medidas.s20),
+                  _Titulo('RANGO DE FECHAS'),
+                  const SizedBox(height: Medidas.s8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: CampoTexto(
+                          etiqueta: 'Desde',
+                          etiquetaAccesible: 'Desde',
+                          placeholder: 'DD / MM / AAAA',
+                          controlador: _desde,
+                          teclado: TextInputType.number,
+                          formateadores: const [FormatoFecha()],
+                          accionFinal: Icon(
+                            Icons.calendar_today_outlined,
+                            size: 16,
+                            color: p.textMuted,
+                          ),
+                          error: _rangoInvalido
+                              ? 'Desde no puede ser posterior a Hasta'
+                              : null,
+                        ),
+                      ),
+                      const SizedBox(width: Medidas.s12),
+                      Expanded(
+                        child: CampoTexto(
+                          etiqueta: 'Hasta',
+                          etiquetaAccesible: 'Hasta',
+                          placeholder: 'DD / MM / AAAA',
+                          controlador: _hasta,
+                          teclado: TextInputType.number,
+                          formateadores: const [FormatoFecha()],
+                          accionFinal: Icon(
+                            Icons.calendar_today_outlined,
+                            size: 16,
+                            color: p.textMuted,
+                          ),
+                          error: _rangoInvalido ? ' ' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s24,
+                0,
+                Medidas.s24,
+                Medidas.s24,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: BotonContorno(texto: 'LIMPIAR', alTocar: _limpiar),
+                  ),
+                  const SizedBox(width: Medidas.s12),
+                  Expanded(
+                    child: BotonPrimario(
+                      texto: 'APLICAR',
+                      alTocar: _rangoInvalido ? null : _aplicar,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );

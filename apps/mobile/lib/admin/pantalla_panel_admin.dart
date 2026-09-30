@@ -74,6 +74,9 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
     widget.espacios.catalogo().then((c) {
       if (mounted) setState(() => _catalogo = c);
     }).ignore();
+    widget.sedes.activas().then((s) {
+      if (mounted) setState(() => _sedesActivas = s);
+    }).ignore();
   }
 
   @override
@@ -183,17 +186,26 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
   }
 
   Future<void> _abrirFiltros() async {
-    final sedes = _sedesActivas ??= await widget.sedes.activas();
+    // Se precargan al abrir la pantalla: si el servidor falla ahora, el panel abre igual
+    // con lo que ya se tenía.
+    var sedes = _sedesActivas;
+    var catalogo = _catalogo;
+    try {
+      sedes ??= await widget.sedes.activas();
+      catalogo ??= await widget.espacios.catalogo();
+    } on Exception {
+      // Sin la lista, el panel abre sin esas opciones; el resto de los filtros sigue.
+    }
     if (!mounted) return;
-    setState(() => _sedesActivas = sedes);
-    final catalogo = _catalogo ??= await widget.espacios.catalogo();
-    if (!mounted) return;
-    setState(() => _catalogo = catalogo);
+    setState(() {
+      _sedesActivas = sedes;
+      _catalogo = catalogo;
+    });
     final elegidos = await abrirFiltrosDeReservas(
       context,
       filtros: _filtros,
-      sedes: sedes,
-      catalogo: catalogo,
+      sedes: sedes ?? const [],
+      catalogo: catalogo ?? const Catalogo([]),
     );
     if (elegidos == null || !mounted) return;
     _debounce?.cancel();
@@ -326,9 +338,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
               if (resultado == null && !_fallo)
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: Medidas.s40,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: Medidas.s40),
                     child: Column(
                       children: [
                         Semantics(
@@ -340,8 +350,6 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                             ),
                           ),
                         ),
-                        const SizedBox(height: Medidas.s16),
-                        const CircularProgressIndicator(),
                       ],
                     ),
                   ),
@@ -586,7 +594,10 @@ class _TarjetaReservaAdmin extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: Medidas.s8),
-                Text(r.espacio, style: Textos.mono.copyWith(color: p.textMuted)),
+                Text(
+                  r.espacio,
+                  style: Textos.mono.copyWith(color: p.textMuted),
+                ),
                 const SizedBox(height: Medidas.s8),
                 Wrap(
                   spacing: Medidas.s16,
