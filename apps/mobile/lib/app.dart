@@ -14,6 +14,7 @@ import 'espacios/espacio.dart';
 import 'espacios/espacios.dart';
 import 'sedes/sede.dart';
 import 'sedes/sedes.dart';
+import 'comun/acceso_denegado.dart';
 import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
@@ -101,7 +102,9 @@ class _AppState extends State<App> {
       final perfil = widget.sesion.perfil;
       if (rol == null) return null;
       if (perfil == null) return '/';
-      return perfil.rol == rol ? null : perfil.inicio;
+      if (perfil.rol == rol) return null;
+      // Un usuario en el panel no es un desvío: se le dice que no tiene acceso.
+      return rol == Rol.admin ? '/acceso-denegado' : perfil.inicio;
     },
     routes: [
       GoRoute(
@@ -298,6 +301,15 @@ class _AppState extends State<App> {
           ),
           _ => const SizedBox.shrink(),
         },
+      ),
+      GoRoute(
+        path: '/acceso-denegado',
+        redirect: (context, estado) => switch (widget.sesion.perfil) {
+          null => '/',
+          final p when p.rol == Rol.admin => p.inicio,
+          _ => null,
+        },
+        builder: (context, _) => const PantallaAccesoDenegado(),
       ),
       GoRoute(
         path: '/admin',

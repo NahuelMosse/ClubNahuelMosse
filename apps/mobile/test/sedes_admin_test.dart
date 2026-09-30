@@ -432,7 +432,7 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Nueva sede'), findsNothing);
-    expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
+    expect(find.text('Acceso denegado'), findsOneWidget);
   });
 }
 

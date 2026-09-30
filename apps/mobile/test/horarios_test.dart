@@ -191,7 +191,10 @@ void main() {
       },
     );
 
-    expect(find.text('Esta cancha ya no está disponible'), findsOneWidget);
+    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+    await tester.tap(find.text('VER LO ACTUALIZADO'));
+    await tester.pumpAndSettle();
+    expect(find.text('Esto cambió mientras tanto'), findsNothing);
     expect(find.text('SELECCIONÁ CANCHA'), findsNothing);
   });
 

@@ -83,9 +83,9 @@ class _PantallaSedeState extends State<PantallaSede> {
       final sede = sedes.where((s) => s.id == widget.sedeId).firstOrNull;
       if (sede == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Esta sede ya no está disponible')),
-        );
+        setState(() => _cargando = false);
+        await mostrarCambioMientrasTanto(context);
+        if (!mounted) return;
         widget.sedes.avisarCambio();
         context.go('/sedes');
         return;

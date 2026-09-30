@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../tema/tema.dart';
@@ -7,8 +8,14 @@ import '../tema/tokens.dart';
 /// Los overlays compartidos de error de conexión y de error del servidor.
 ///
 /// Devuelve `true` si la persona eligió reintentar; quien llama reintenta cuando el
-/// intento anterior ya terminó.
+/// intento anterior ya terminó. Un 403 de la API no es una falla: es «Acceso denegado», y
+/// lleva a Mis reservas.
 Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async {
+  if (error is ErrorDelServidor && error.codigo == 403) {
+    await mostrarAccesoDenegado(context);
+    if (context.mounted) context.go('/reservas');
+    return false;
+  }
   final sinConexion = error is SinConexion;
   final reintentar = await showDialog<bool>(
     context: context,
@@ -166,6 +173,24 @@ Future<void> mostrarCambioMientrasTanto(
         'Otra persona modificó estos datos mientras los estabas viendo. Los '
         'actualizamos para que veas el estado real.',
     principal: 'VER LO ACTUALIZADO',
+  ),
+);
+
+/// El overlay compartido «Acceso denegado»: la cuenta no tiene el rol que pide lo que se
+/// intentó. Quien llama lleva a Mis reservas cuando esto termina.
+Future<void> mostrarAccesoDenegado(BuildContext context) => showDialog<void>(
+  context: context,
+  barrierDismissible: false,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => const PopScope(
+    canPop: false,
+    child: _Modal(
+      icono: Icons.lock_outline_rounded,
+      titulo: 'Acceso denegado',
+      texto:
+          'Tu cuenta no tiene permisos de administrador. Te llevamos a Mis reservas.',
+      principal: 'IR A MIS RESERVAS',
+    ),
   ),
 );
 

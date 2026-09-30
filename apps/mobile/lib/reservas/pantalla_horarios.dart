@@ -92,6 +92,9 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   bool _consultando = false;
   bool _fallo = false;
 
+  /// La cancha ya no está y se está avisando: no queda nada cargando detrás del aviso.
+  bool _cambio = false;
+
   /// Sube con cada consulta: la respuesta de una que ya no es la última se descarta.
   int _pedido = 0;
 
@@ -235,15 +238,18 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   }
 
   Future<void> _yaNoEsta(bool laSede) async {
+    setState(() {
+      _consultando = false;
+      _cambio = true;
+    });
     // La reserva que se modifica ya no se puede pasar a esta cancha: vuelve a Mis reservas.
     if (widget.modificando != null) {
       await mostrarCambioMientrasTanto(context);
       if (mounted) _salir(ResultadoDeModificar.cambio);
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Esta cancha ya no está disponible')),
-    );
+    await mostrarCambioMientrasTanto(context);
+    if (!mounted) return;
     if (laSede) {
       widget.sedes.avisarCambio();
     } else {
@@ -340,7 +346,9 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       body: datos == null || cancha == null
           ? SafeArea(
               child: Center(
-                child: _fallo
+                child: _cambio
+                    ? const SizedBox.shrink()
+                    : _fallo
                     ? BotonTexto(texto: 'REINTENTAR', alTocar: _cargar)
                     : const CircularProgressIndicator(),
               ),
@@ -469,7 +477,9 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       return Padding(
         padding: const EdgeInsets.all(Medidas.s24),
         child: Center(
-          child: _consultando || !_fallo
+          child: _cambio
+              ? const SizedBox.shrink()
+              : _consultando || !_fallo
               ? const CircularProgressIndicator()
               : BotonTexto(texto: 'REINTENTAR', alTocar: _consultar),
         ),

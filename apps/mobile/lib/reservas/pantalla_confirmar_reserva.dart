@@ -82,9 +82,8 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
     } on CanchaNoDisponible {
       if (!mounted) return;
       setState(() => _enviando = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Esta cancha ya no está disponible')),
-      );
+      await mostrarCambioMientrasTanto(context);
+      if (!mounted) return;
       context.go('/sedes/${e.sede.id}');
       return;
     } on ReservaRechazada catch (r) {

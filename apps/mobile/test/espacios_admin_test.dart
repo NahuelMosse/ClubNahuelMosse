@@ -459,6 +459,6 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('Nuevo espacio deportivo'), findsNothing);
-    expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
+    expect(find.text('Acceso denegado'), findsOneWidget);
   });
 }

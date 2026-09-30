@@ -126,17 +126,20 @@ void main() {
       expect(find.text('VER HORARIOS / RESERVAR'), findsNothing);
     });
 
-    testWidgets('una sede que ya no está vuelve al listado con el aviso', (
-      tester,
-    ) async {
-      await montarUsuario(
-        tester,
-        inicio: '/sedes/99',
-        api: apiRutas(rutasDeSedes()),
-      );
-      expect(find.text('Esta sede ya no está disponible'), findsOneWidget);
-      expect(find.text('Sedes'), findsOneWidget);
-    });
+    testWidgets(
+      'una sede que ya no está avisa que cambió y vuelve al listado',
+      (tester) async {
+        await montarUsuario(
+          tester,
+          inicio: '/sedes/99',
+          api: apiRutas(rutasDeSedes()),
+        );
+        expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+        await tester.tap(find.text('VER LO ACTUALIZADO'));
+        await tester.pumpAndSettle();
+        expect(find.text('Sedes'), findsOneWidget);
+      },
+    );
 
     testWidgets('«Todas las sedes» vuelve al listado', (tester) async {
       await montarUsuario(tester, api: apiRutas(rutasDeSedes(espacios: '[]')));

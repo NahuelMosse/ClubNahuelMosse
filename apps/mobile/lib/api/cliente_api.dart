@@ -22,13 +22,18 @@ class Respuesta {
 }
 
 class ClienteApi {
-  ClienteApi(String base, {http.Client? cliente})
-    : _base = Uri.parse(base),
-      _cliente = cliente ?? http.Client();
+  ClienteApi(
+    String base, {
+    http.Client? cliente,
+    this.limite = const Duration(seconds: 15),
+  }) : _base = Uri.parse(base),
+       _cliente = cliente ?? http.Client();
 
   final Uri _base;
   final http.Client _cliente;
-  static const _limite = Duration(seconds: 15);
+
+  /// Cuánto espera una respuesta antes de tratar a la API como inalcanzable.
+  final Duration limite;
 
   Future<Respuesta> post(
     String ruta,
@@ -78,7 +83,7 @@ class ClienteApi {
   Future<Respuesta> _enviar(Future<http.Response> Function() pedido) async {
     final http.Response r;
     try {
-      r = await pedido().timeout(_limite);
+      r = await pedido().timeout(limite);
     } on Exception {
       // Sin red, DNS, TLS, la conexión cortada o la API que no contesta a tiempo.
       throw const SinConexion();

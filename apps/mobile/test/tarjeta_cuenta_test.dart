@@ -193,7 +193,10 @@ void main() {
     final usuario = await montarApp(tester, SesionFalsa(perfilUsuario));
     usuario.go('/admin');
     await tester.pumpAndSettle();
-    expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
+    expect(find.text('Acceso denegado'), findsOneWidget);
+    await tester.tap(find.text('IR A MIS RESERVAS'));
+    await tester.pumpAndSettle();
+    expect(find.text('PANEL ADMIN'), findsNothing);
 
     final admin = await montarApp(
       tester,
