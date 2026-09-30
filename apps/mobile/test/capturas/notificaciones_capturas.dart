@@ -14,6 +14,7 @@ import '../notificaciones_test.dart'
         confirmacion,
         recordatorio;
 import '../soporte/montar.dart';
+import '../soporte/usuario.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
@@ -101,6 +102,21 @@ void main() {
           tester,
           'notificaciones/desactivadas_con_avisos_${ancho}_$modo.png',
         );
+      });
+
+      testWidgets('home con la campana $ancho $modo', (tester) async {
+        final api = ApiFalsa()
+          ..avisos = [recordatorio, confirmacion]
+          ..noLeidas = 2;
+        await montarUsuario(
+          tester,
+          oscuro: oscuro,
+          tamano: tamano,
+          inicio: '/inicio',
+          api: api.cliente,
+          centro: (sesion) => centroDe(api, sesion),
+        );
+        await capturar(tester, 'notificaciones/home_${ancho}_$modo.png');
       });
 
       testWidgets('panel con la app abierta $ancho $modo', (tester) async {
