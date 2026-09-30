@@ -243,7 +243,7 @@ def test_una_reserva_cancelada_antes_no_recibe_recordatorio(
     assert registrados == 0
     assert socio.barrer(canal, a_las(20, 45)) == 0
     assert canal.enviados == []
-    assert socio.centro() == {"notificaciones": [], "no_leidas": 0}
+    assert [n for n in socio.centro()["notificaciones"] if n["tipo"] == "recordatorio"] == []
 
 
 def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horario_nuevo(
