@@ -14,9 +14,11 @@ from app.interfaz import (
     sesion,
 )
 from app.interfaz.protecciones import Protecciones
+from app.interfaz.registro_errores import RegistroDeErrores, configurar_registro
 
 
 def crear_app() -> FastAPI:
+    configurar_registro()
     app = FastAPI(
         title="ClubNahuelMosse API",
         version="0.1.0",
@@ -32,6 +34,7 @@ def crear_app() -> FastAPI:
     # Un segundo candado: el buzón sólo se abre contra el emulador, nunca en producción.
     if config.pruebas and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
         app.include_router(pruebas.router)
+    app.add_middleware(RegistroDeErrores)
     app.add_middleware(Protecciones)
     return app
 

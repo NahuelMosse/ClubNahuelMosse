@@ -2,7 +2,7 @@ from datetime import date, datetime
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
@@ -33,16 +33,19 @@ class SinSesion(BaseModel):
 
 
 def usuario_actual(
+    peticion: Request,
     credencial: Annotated[HTTPAuthorizationCredentials | None, Depends(_portador)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
 ) -> Perfil:
     """Quién hace el pedido, según el token de Firebase de la cabecera `Authorization`."""
     try:
-        return perfil_autenticado(
+        perfil = perfil_autenticado(
             credencial.credentials if credencial else None,
             identidad=ProveedorFirebase(),
             usuarios=UsuariosSql(conn),
         )
+        peticion.state.usuario_id = perfil.id
+        return perfil
     except NoAutenticado as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
