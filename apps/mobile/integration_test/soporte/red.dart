@@ -708,3 +708,22 @@ Future<Map<String, int>> totalesDeReservas(
               total,
   };
 }
+
+/// La cuenta [correo] cancela por la API su única reserva próxima, como si lo hiciera desde
+/// otro teléfono.
+Future<void> cancelarDesdeOtroTelefono(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final numeros = await numerosDeReservas(correo, contrasena: contrasena);
+  if (numeros.length != 1) throw StateError('cancelar: hay ${numeros.length}');
+  final r = await http.post(
+    Uri.parse(
+      '${Configuracion.desdeEntorno().apiUrl}/reservas/${numeros.single}/cancelar',
+    ),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
+}
