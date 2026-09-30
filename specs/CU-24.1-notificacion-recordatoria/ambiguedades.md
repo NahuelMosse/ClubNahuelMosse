@@ -59,3 +59,4 @@ CU-24.1-AMB-18 · 2026-09-30 · abierta · el panel sólo se abre por una llegad
 CU-24.1-AMB-18 · 2026-09-30 · sin canal · el panel sólo se abre por una llegada si no quedan sin leer que ya avisó en esta sesión; lo que llega después de cerrarlo sin leer suma a la campana y no vuelve a tapar la pantalla, y en la primera lectura avisa lo que llegó en los últimos cinco minutos → CU-24.1-SUP-15
 CU-24.1-AMB-19 · 2026-09-30 · abierta · el teléfono borra su token de FCM en todo camino de salida de la sesión; no se hace una baja por token sin sesión para reintentarla en el próximo arranque
 CU-24.1-AMB-19 · 2026-09-30 · sin canal · el teléfono borra su token de FCM en todo camino de salida de la sesión; no se hace una baja por token sin sesión para reintentarla en el próximo arranque → CU-24.1-SUP-16
+CU-24.1-TESTS · 2026-09-30 · recongelados en 2e82581 · H04-01 vuelve con handlePopRoute: el tooltip «Back» que pedía pageBack() era un hack
