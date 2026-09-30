@@ -9,6 +9,11 @@ class EspacioNoDisponible implements Exception {
   const EspacioNoDisponible();
 }
 
+/// El espacio tiene reservas activas que todavía no terminaron: no se da de baja.
+class EspacioConReservas implements Exception {
+  const EspacioConReservas();
+}
+
 /// La API rechazó el espacio: cada campo con su mensaje.
 class EspacioRechazado implements Exception {
   const EspacioRechazado(this.errores);
@@ -23,8 +28,8 @@ class NombreOcupado implements Exception {
   final int numero;
 }
 
-/// Los espacios deportivos, leídos, dados de alta y editados en la API con la sesión
-/// abierta. Avisa a quien escucha cada vez que se da de alta o se edita uno.
+/// Los espacios deportivos, leídos, dados de alta, editados y dados de baja en la API
+/// con la sesión abierta. Avisa a quien escucha cada vez que uno cambia.
 class Espacios extends ChangeNotifier {
   Espacios({required ClienteApi api, required Sesion sesion})
     : _api = api,
@@ -171,6 +176,19 @@ class Espacios extends ChangeNotifier {
     if (espacio == null) throw ErrorDelServidor(r.codigo);
     notifyListeners();
     return espacio;
+  }
+
+  /// Da de baja el espacio [id].
+  ///
+  /// Lanza [EspacioNoDisponible], [EspacioConReservas], [SesionVencida], [SinConexion] o
+  /// [ErrorDelServidor].
+  Future<void> darDeBaja(int id) async {
+    final r = await _api.delete('/espacios/$id', token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 404) throw const EspacioNoDisponible();
+    if (r.codigo == 409) throw const EspacioConReservas();
+    if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
+    notifyListeners();
   }
 
   /// Avisa que lo que se vio de los espacios ya no vale (por ejemplo, uno que se dio de

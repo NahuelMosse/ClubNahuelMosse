@@ -12,6 +12,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'baja_espacio.dart';
 
 /// «Gestionar espacios» del panel: los espacios activos y el acceso al alta.
 class PantallaEspaciosAdmin extends StatefulWidget {
@@ -31,6 +32,9 @@ class PantallaEspaciosAdmin extends StatefulWidget {
 class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
   (List<Espacio>, Catalogo)? _datos;
   bool _fallo = false;
+
+  /// El espacio que se está dando de baja: mientras tanto no se toca ninguna tarjeta.
+  int? _dandoDeBaja;
 
   @override
   void initState() {
@@ -79,67 +83,71 @@ class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final datos = _datos;
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      bottomNavigationBar: const BarraAdmin(actual: SeccionAdmin.espacios),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _cargar,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s40,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PANEL ADMIN',
-                            style: Textos.sobretitulo.copyWith(
-                              color: p.accentInk,
+    // Mientras una baja está en camino no se sale del listado: el resultado se perdería.
+    return AbsorbPointer(
+      absorbing: _dandoDeBaja != null,
+      child: Scaffold(
+        backgroundColor: p.bgBase,
+        bottomNavigationBar: const BarraAdmin(actual: SeccionAdmin.espacios),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _cargar,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s24,
+                Medidas.s24,
+                Medidas.s24,
+                Medidas.s40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PANEL ADMIN',
+                              style: Textos.sobretitulo.copyWith(
+                                color: p.accentInk,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: Medidas.s4),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              'Espacios',
-                              style: Textos.h1.copyWith(color: p.textPrimary),
+                            const SizedBox(height: Medidas.s4),
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                'Espacios',
+                                style: Textos.h1.copyWith(color: p.textPrimary),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      BotonCuenta(sesion: widget.sesion),
+                    ],
+                  ),
+                  const SizedBox(height: Medidas.s16),
+                  BotonPrimario(
+                    texto: 'ALTA ESPACIO',
+                    icono: Icons.add_rounded,
+                    alTocar: () => context.go('/admin/espacios/nuevo'),
+                  ),
+                  const SizedBox(height: Medidas.s16),
+                  if (datos != null) ..._listado(datos.$1, datos.$2, p),
+                  if (datos == null && !_fallo)
+                    const Padding(
+                      padding: EdgeInsets.all(Medidas.s40),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                    BotonCuenta(sesion: widget.sesion),
-                  ],
-                ),
-                const SizedBox(height: Medidas.s16),
-                BotonPrimario(
-                  texto: 'ALTA ESPACIO',
-                  icono: Icons.add_rounded,
-                  alTocar: () => context.go('/admin/espacios/nuevo'),
-                ),
-                const SizedBox(height: Medidas.s16),
-                if (datos != null) ..._listado(datos.$1, datos.$2, p),
-                if (datos == null && !_fallo)
-                  const Padding(
-                    padding: EdgeInsets.all(Medidas.s40),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                if (datos == null && _fallo)
-                  Center(
-                    child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
-                  ),
-              ],
+                  if (datos == null && _fallo)
+                    Center(
+                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
@@ -168,30 +176,86 @@ class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
           ),
         ),
       for (final espacio in espacios) ...[
-        TarjetaEspacioAdmin(espacio: espacio, catalogo: catalogo),
+        TarjetaEspacioAdmin(
+          espacio: espacio,
+          catalogo: catalogo,
+          dandoDeBaja: _dandoDeBaja == espacio.id,
+          habilitada: _dandoDeBaja == null,
+          alDarDeBaja: () => darDeBajaEspacio(
+            context,
+            espacio: espacio,
+            espacios: widget.espacios,
+            sesion: widget.sesion,
+            enviando: (enCamino) {
+              if (!mounted) return;
+              setState(() => _dandoDeBaja = enCamino ? espacio.id : null);
+            },
+          ),
+        ),
         const SizedBox(height: Medidas.s12),
       ],
     ];
   }
 }
 
-/// `Card-Espacio`: deporte, tipo, condición y precio, con el nombre compuesto debajo y
-/// «Editar».
+/// `Card-Espacio`: deporte, tipo, condición y precio, con el nombre compuesto debajo,
+/// «Editar» y «Baja».
 class TarjetaEspacioAdmin extends StatelessWidget {
   const TarjetaEspacioAdmin({
     super.key,
     required this.espacio,
     required this.catalogo,
+    this.alDarDeBaja,
+    this.dandoDeBaja = false,
+    this.habilitada = true,
   });
 
   final Espacio espacio;
   final Catalogo catalogo;
+  final VoidCallback? alDarDeBaja;
+
+  /// La baja de este espacio está en camino.
+  final bool dandoDeBaja;
+
+  /// `false` deshabilita sus botones (hay otra baja en camino).
+  final bool habilitada;
 
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final descripcion = espacio.descripcion(catalogo);
-    // Los datos se leen como uno; «Editar» queda afuera, como botón propio.
+    // Con cualquier agrandado del texto, los botones lado a lado ya no entran en 360.
+    final grande = MediaQuery.textScalerOf(context).scale(10) > 10.5;
+    final editar = BotonContorno(
+      texto: 'Editar',
+      icono: Icons.edit_outlined,
+      compacto: true,
+      etiquetaAccesible: 'Editar ${espacio.nombre}',
+      alTocar: habilitada
+          ? () => context.go(
+              '/admin/espacios/${espacio.id}/editar',
+              extra: espacio,
+            )
+          : null,
+    );
+    final Widget baja = dandoDeBaja
+        ? Semantics(
+            label: 'Dando de baja ${espacio.nombre}',
+            excludeSemantics: true,
+            child: const SizedBox(
+              height: Medidas.altoControl,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          )
+        : BotonContorno(
+            texto: 'Baja',
+            icono: Icons.delete_outline_rounded,
+            compacto: true,
+            peligro: true,
+            etiquetaAccesible: 'Baja ${espacio.nombre}',
+            alTocar: habilitada ? alDarDeBaja : null,
+          );
+    // Los datos se leen como uno; los botones quedan afuera, cada uno con su nombre.
     final datos = Semantics(
       container: true,
       excludeSemantics: true,
@@ -244,16 +308,18 @@ class TarjetaEspacioAdmin extends StatelessWidget {
         children: [
           datos,
           const SizedBox(height: Medidas.s12),
-          BotonContorno(
-            texto: 'Editar',
-            icono: Icons.edit_outlined,
-            compacto: true,
-            etiquetaAccesible: 'Editar ${espacio.nombre}',
-            alTocar: () => context.go(
-              '/admin/espacios/${espacio.id}/editar',
-              extra: espacio,
+          if (grande) ...[
+            editar,
+            const SizedBox(height: Medidas.s8),
+            baja,
+          ] else
+            Row(
+              children: [
+                Expanded(child: editar),
+                const SizedBox(width: Medidas.s8),
+                Expanded(child: baja),
+              ],
             ),
-          ),
         ],
       ),
     );

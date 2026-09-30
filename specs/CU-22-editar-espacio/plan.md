@@ -1,6 +1,6 @@
 # Implementation Plan: CU-22 · Editar espacio deportivo
 
-**Branch**: `card/CU-22` | **Date**: 2026-09-30 | **Spec**: [card.snapshot.md](card.snapshot.md)
+**Branch**: `card/CU-22` | **Date**: 2026-09-29 | **Spec**: [card.snapshot.md](card.snapshot.md)
 
 ## Summary
 

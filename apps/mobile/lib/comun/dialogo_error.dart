@@ -126,6 +126,19 @@ Future<bool> confirmarBajaDeEspacio(
     ) ??
     false;
 
+/// El espacio tiene reservas pendientes y no se puede dar de baja.
+Future<void> mostrarEspacioConReservas(BuildContext context) =>
+    showDialog<void>(
+      context: context,
+      barrierColor: context.paleta.bgScrim,
+      builder: (context) => const _Modal(
+        icono: Icons.event_busy_rounded,
+        titulo: 'No se puede dar de baja el espacio',
+        texto: 'El espacio posee reservas futuras. Gestionalas primero.',
+        principal: 'ACEPTAR',
+      ),
+    );
+
 /// La reserva quedó cancelada.
 Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   context: context,

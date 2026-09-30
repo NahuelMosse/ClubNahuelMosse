@@ -14,6 +14,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'baja_espacio.dart';
 import 'pantalla_alta_espacio.dart';
 
 const _obligatorio = 'Este campo es obligatorio';
@@ -46,6 +47,10 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
   Catalogo? _catalogo;
   String? _errorDelServidor;
   bool _enviando = false;
+  bool _dandoDeBaja = false;
+
+  /// Guardando o dando de baja: el formulario no se toca ni se sale.
+  bool get _ocupado => _enviando || _dandoDeBaja;
 
   @override
   void initState() {
@@ -115,7 +120,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
 
   Future<void> _guardar() async {
     final precio = leerPrecio(_precio.text);
-    if (_enviando || !_sePuedeGuardar || precio == null) return;
+    if (_ocupado || !_sePuedeGuardar || precio == null) return;
     FocusScope.of(context).unfocus();
     setState(() => _enviando = true);
     Object? fallo;
@@ -168,7 +173,16 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
   }
 
   Future<void> _darDeBaja() async {
-    await confirmarBajaDeEspacio(context, widget.espacio.nombre);
+    await darDeBajaEspacio(
+      context,
+      espacio: widget.espacio,
+      espacios: widget.espacios,
+      sesion: widget.sesion,
+      volverAlListado: true,
+      enviando: (enCamino) {
+        if (mounted) setState(() => _dandoDeBaja = enCamino);
+      },
+    );
   }
 
   @override
@@ -184,7 +198,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
         (leerPrecio(_precio.text) == e.precioPorHora ? null : _errorDePrecio);
     return PopScope(
       // Mientras se guarda no se sale: el cambio quedaría hecho sin que se viera.
-      canPop: !_enviando,
+      canPop: !_ocupado,
       child: Scaffold(
         backgroundColor: p.bgBase,
         appBar: const BarraSuperior(titulo: 'Editar espacio'),
@@ -251,7 +265,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                     valor: _techada ? 'Techada' : 'Al aire libre',
                     placeholder: '',
                     icono: Icons.expand_more_rounded,
-                    alTocar: _enviando
+                    alTocar: _ocupado
                         ? null
                         : () => _elegirSiNo(condicion: true),
                   ),
@@ -261,7 +275,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                     valor: _iluminada ? 'Iluminada' : 'Sin iluminación',
                     placeholder: '',
                     icono: Icons.expand_more_rounded,
-                    alTocar: _enviando
+                    alTocar: _ocupado
                         ? null
                         : () => _elegirSiNo(condicion: false),
                   ),
@@ -273,7 +287,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                   controlador: _precio,
                   placeholder: '\$ 0',
                   error: errorDePrecio,
-                  habilitado: !_enviando,
+                  habilitado: !_ocupado,
                   teclado: TextInputType.number,
                   accion: TextInputAction.done,
                   formateadores: const [FormatoPrecio()],
@@ -284,21 +298,31 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                 BotonPrimario(
                   texto: 'GUARDAR ESPACIO',
                   cargando: _enviando,
-                  alTocar: _sePuedeGuardar ? _guardar : null,
+                  alTocar: _sePuedeGuardar && !_dandoDeBaja ? _guardar : null,
                 ),
                 const SizedBox(height: Medidas.s12),
                 BotonContorno(
                   texto: 'CANCELAR',
-                  alTocar: _enviando
+                  alTocar: _ocupado
                       ? null
                       : () => Navigator.of(context).maybePop(),
                 ),
                 const SizedBox(height: Medidas.s12),
-                BotonContorno(
-                  texto: 'DAR DE BAJA EL ESPACIO',
-                  peligro: true,
-                  alTocar: _enviando ? null : _darDeBaja,
-                ),
+                if (_dandoDeBaja)
+                  Semantics(
+                    label: 'Dando de baja el espacio',
+                    excludeSemantics: true,
+                    child: const SizedBox(
+                      height: Medidas.altoControl,
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  )
+                else
+                  BotonContorno(
+                    texto: 'DAR DE BAJA EL ESPACIO',
+                    peligro: true,
+                    alTocar: _ocupado ? null : _darDeBaja,
+                  ),
               ],
             ),
           ),

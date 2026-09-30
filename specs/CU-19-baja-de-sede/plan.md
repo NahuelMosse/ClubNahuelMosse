@@ -1,6 +1,6 @@
 # Implementation Plan: CU-19 · Dar de baja sede
 
-**Branch**: `card/CU-19` | **Date**: 2026-09-30 | **Spec**: [card.snapshot.md](card.snapshot.md)
+**Branch**: `card/CU-19` | **Date**: 2026-09-29 | **Spec**: [card.snapshot.md](card.snapshot.md)
 
 ## Summary
 

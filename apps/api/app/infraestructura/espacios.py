@@ -4,7 +4,13 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import Duplicado, NoDisponible, NoEncontrada, NumeroOcupado
+from app.aplicacion.errores import (
+    ConReservasFuturas,
+    Duplicado,
+    NoDisponible,
+    NoEncontrada,
+    NumeroOcupado,
+)
 from app.dominio.espacios import (
     CambioDeEspacio,
     Espacio,
@@ -245,3 +251,40 @@ class EspaciosSql:
             self._conn.rollback()
             raise
         return espacio_de_fila(fila)
+
+    def dar_de_baja(self, espacio_id: int, autor: int) -> None:
+        datos = {"id": espacio_id, "autor": autor}
+        try:
+            # La sede compartida y después el espacio exclusivo, el orden de una reserva: la
+            # que se está haciendo termina antes y acá se la ve, o espera y encuentra el
+            # espacio dado de baja.
+            fila = self._conn.execute(
+                text(
+                    "SELECT e.id FROM espacio e JOIN sede s ON s.id = e.sede_id"
+                    " WHERE e.id = :id AND e.activo FOR SHARE OF s FOR UPDATE OF e"
+                ),
+                datos,
+            ).first()
+            if fila is None:
+                raise NoEncontrada("el espacio ya no está activo")
+            pendientes: int = self._conn.execute(
+                text(
+                    "SELECT count(*) FROM reserva WHERE espacio_id = :id"
+                    " AND estado = 'activa' AND fin > now()"
+                ),
+                datos,
+            ).scalar_one()
+            if pendientes:
+                raise ConReservasFuturas("el espacio tiene reservas que todavía no terminaron")
+            self._conn.execute(
+                text(
+                    "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
+                    " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
+                    " WHERE id = :id"
+                ),
+                datos,
+            )
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise

@@ -521,3 +521,87 @@ def test_editar_sin_un_campo_lo_deja_como_estaba(
     vacio = api.put(ruta, headers=_con(token_admin), json={})
     assert vacio.status_code == 422
     assert vacio.json()["errores"] == {"cambio": "No hay nada que cambiar"}
+
+
+def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    ruta = f"/espacios/{uno['id']}"
+    assert api.delete(ruta, headers=_con(token_usuario)).status_code == 403
+    assert api.delete(ruta).status_code == 401
+
+    assert api.delete(ruta, headers=_con(token_admin)).status_code == 204
+
+    with motor.connect() as conn:
+        fila = conn.execute(
+            text(
+                "SELECT activo, dado_de_baja_en IS NOT NULL, dado_de_baja_por IS NOT NULL"
+                " FROM espacio WHERE id = :id"
+            ),
+            {"id": uno["id"]},
+        ).one()
+    assert tuple(fila) == (False, True, True)
+    espacios = api.get("/espacios", headers=_con(token_usuario)).json()["espacios"]
+    assert uno["id"] not in [e["id"] for e in espacios]
+    assert api.delete(ruta, headers=_con(token_admin)).status_code == 404
+
+
+def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+    uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+    with motor.begin() as conn:
+        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        # Una en curso: empezó en esta hora y termina en dos.
+        conn.execute(
+            text(
+                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                " SELECT :u, :e, i, i + interval '2 hours', 38000, 76000"
+                " FROM (SELECT date_trunc('hour', now()) AS i) x"
+            ),
+            {"u": dueno, "e": uno["id"]},
+        )
+
+    r = api.delete(f"/espacios/{uno['id']}", headers=_con(token_admin))
+
+    assert r.status_code == 409
+    assert r.json() == {
+        "errores": {"espacio": "No se puede dar de baja el espacio porque posee reservas futuras."}
+    }
+    with motor.connect() as conn:
+        assert conn.execute(
+            text("SELECT activo FROM espacio WHERE id = :id"), {"id": uno["id"]}
+        ).scalar_one()
+
+
+def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+) -> None:
+    sede_id, _ = sede
+
+    def con_reserva(desde: str, estado: str) -> int:
+        espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
+        with motor.begin() as conn:
+            dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+            conn.execute(
+                text(
+                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
+                    " total, estado, cancelada_en)"
+                    " SELECT :u, :e, i, i + interval '1 hour', 38000, 38000, :estado,"
+                    " CASE WHEN :estado <> 'activa' THEN now() END"
+                    f" FROM (SELECT date_trunc('hour', now()) + interval '{desde}' AS i) x"
+                ),
+                {"u": dueno, "e": espacio["id"], "estado": estado},
+            )
+        return int(espacio["id"])
+
+    futura = con_reserva("1 day", "activa")
+    terminada = con_reserva("-1 day", "activa")
+    cancelada = con_reserva("1 day", "cancelada")
+
+    assert api.delete(f"/espacios/{futura}", headers=_con(token_admin)).status_code == 409
+    assert api.delete(f"/espacios/{terminada}", headers=_con(token_admin)).status_code == 204
+    assert api.delete(f"/espacios/{cancelada}", headers=_con(token_admin)).status_code == 204

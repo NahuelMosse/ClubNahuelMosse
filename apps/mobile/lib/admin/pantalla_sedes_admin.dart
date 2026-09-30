@@ -82,67 +82,71 @@ class _PantallaSedesAdminState extends State<PantallaSedesAdmin> {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final sedes = _sedes;
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      bottomNavigationBar: const BarraAdmin(actual: SeccionAdmin.sedes),
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _cargar,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s40,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'PANEL ADMIN',
-                            style: Textos.sobretitulo.copyWith(
-                              color: p.accentInk,
+    // Mientras una baja está en camino no se sale del listado: el resultado se perdería.
+    return AbsorbPointer(
+      absorbing: _dandoDeBaja != null,
+      child: Scaffold(
+        backgroundColor: p.bgBase,
+        bottomNavigationBar: const BarraAdmin(actual: SeccionAdmin.sedes),
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: _cargar,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s24,
+                Medidas.s24,
+                Medidas.s24,
+                Medidas.s40,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PANEL ADMIN',
+                              style: Textos.sobretitulo.copyWith(
+                                color: p.accentInk,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: Medidas.s4),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              'Sedes',
-                              style: Textos.h1.copyWith(color: p.textPrimary),
+                            const SizedBox(height: Medidas.s4),
+                            Semantics(
+                              header: true,
+                              child: Text(
+                                'Sedes',
+                                style: Textos.h1.copyWith(color: p.textPrimary),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      BotonCuenta(sesion: widget.sesion),
+                    ],
+                  ),
+                  const SizedBox(height: Medidas.s16),
+                  BotonPrimario(
+                    texto: 'AGREGAR SEDE',
+                    icono: Icons.add_rounded,
+                    alTocar: () => context.go('/admin/sedes/nueva'),
+                  ),
+                  const SizedBox(height: Medidas.s16),
+                  if (sedes != null) ..._listado(sedes, p),
+                  if (sedes == null && !_fallo)
+                    const Padding(
+                      padding: EdgeInsets.all(Medidas.s40),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                    BotonCuenta(sesion: widget.sesion),
-                  ],
-                ),
-                const SizedBox(height: Medidas.s16),
-                BotonPrimario(
-                  texto: 'AGREGAR SEDE',
-                  icono: Icons.add_rounded,
-                  alTocar: () => context.go('/admin/sedes/nueva'),
-                ),
-                const SizedBox(height: Medidas.s16),
-                if (sedes != null) ..._listado(sedes, p),
-                if (sedes == null && !_fallo)
-                  const Padding(
-                    padding: EdgeInsets.all(Medidas.s40),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-                if (sedes == null && _fallo)
-                  Center(
-                    child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
-                  ),
-              ],
+                  if (sedes == null && _fallo)
+                    Center(
+                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                    ),
+                ],
+              ),
             ),
           ),
         ),

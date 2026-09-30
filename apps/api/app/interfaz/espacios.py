@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
+    ConReservasFuturas,
     DatosInvalidos,
     Duplicado,
     NoDisponible,
@@ -16,6 +17,7 @@ from app.aplicacion.errores import (
 from app.aplicacion.espacios import (
     catalogo,
     dar_de_alta_espacio,
+    dar_de_baja_espacio,
     editar_espacio,
     espacios_activos,
     nombre_sugerido,
@@ -280,3 +282,41 @@ def edicion_de_espacio(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
         )
     return vista_de_espacio(espacio)
+
+
+@router.delete(
+    "/espacios/{espacio_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador da de baja espacios"},
+        404: {"description": "El espacio ya no está activo"},
+        409: {"model": Errores, "description": "El espacio tiene reservas que no terminaron"},
+    },
+    summary="Dar de baja un espacio",
+    description=(
+        "Baja lógica: el espacio deja de verse y de poder reservarse, y el historial lo sigue "
+        "nombrando. No se permite con reservas activas sin terminar."
+    ),
+)
+def baja_de_espacio(
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> Response:
+    try:
+        dar_de_baja_espacio(perfil, espacio_id, EspaciosSql(conn))
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except ConReservasFuturas:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT,
+            content={
+                "errores": {
+                    "espacio": "No se puede dar de baja el espacio porque posee reservas futuras."
+                }
+            },
+        )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -62,6 +62,15 @@ class Espacios(Protocol):
         """
         ...
 
+    def dar_de_baja(self, espacio_id: int, autor: int) -> None:
+        """Da de baja el espacio activo [espacio_id] a nombre de [autor]. Las reservas pasadas
+        lo siguen nombrando.
+
+        Lanza `NoEncontrada` si ya no está activo y `ConReservasFuturas` si tiene una reserva
+        activa que todavía no terminó.
+        """
+        ...
+
 
 def _solo_admin(perfil: Perfil) -> None:
     if perfil.rol != "admin":
@@ -133,3 +142,10 @@ def editar_espacio(
     if cambio is None:
         raise DatosInvalidos(errores)
     return espacios.actualizar(espacio_id, cambio, perfil.id)
+
+
+def dar_de_baja_espacio(perfil: Perfil, espacio_id: int, espacios: Espacios) -> None:
+    """Retira un espacio (CU-23): deja de verse y de poder reservarse. No se permite con
+    reservas pendientes (decisión 5): la cancelación forzosa es de CU-15."""
+    _solo_admin(perfil)
+    espacios.dar_de_baja(espacio_id, perfil.id)
