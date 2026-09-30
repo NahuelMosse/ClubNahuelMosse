@@ -13,7 +13,13 @@ from app.aplicacion.errores import (
 )
 from app.aplicacion.reservas import Cuando
 from app.dominio.horarios import Agenda
-from app.dominio.reservas import Reserva
+from app.dominio.reservas import (
+    Contadores,
+    FiltrosHistorial,
+    HistorialDeReservas,
+    Reserva,
+    ReservaHistorial,
+)
 from app.infraestructura.horarios import HorariosSql
 
 _COLUMNAS = (
@@ -22,8 +28,25 @@ _COLUMNAS = (
     " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
     " (r.estado_actual = 'activa' AND r.inicio > now()) AS cancelable"
 )
+_COLUMNAS_HISTORIAL = (
+    "r.id, r.espacio_id, e.sede_id, e.nombre AS espacio, e.deporte, e.tipo,"
+    " s.nombre AS sede, s.calle || ' ' || s.altura AS direccion, r.inicio, r.fin,"
+    " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
+    " r.usuario_id, u.nombre || ' ' || u.apellido AS usuario, r.creado_en, r.cancelada_en,"
+    " administrador.nombre || ' ' || administrador.apellido AS cancelada_por_nombre,"
+    " (NOT e.activo OR NOT s.activa) AS espacio_de_baja"
+)
+_JOIN_HISTORIAL = (
+    " FROM reserva_con_estado r"
+    " JOIN espacio e ON e.id = r.espacio_id"
+    " JOIN sede s ON s.id = e.sede_id"
+    " JOIN usuario u ON u.id = r.usuario_id"
+    " LEFT JOIN usuario administrador ON administrador.id = r.cancelada_por"
+)
 # Cuánto después de hecha una reserva se reconoce como el mismo pedido repetido.
 _VENTANA_DE_REINTENTO = "5 minutes"
+# Tamaño fijo de página del historial global (CU-14-SUP-01): sin tope adicional de resultados.
+POR_PAGINA = 20
 
 
 def _reserva(f: Any) -> Reserva:
@@ -43,6 +66,31 @@ def _reserva(f: Any) -> Reserva:
         estado=f.estado,
         motivo=f.motivo,
         cancelable=bool(f.cancelable),
+    )
+
+
+def _reserva_historial(f: Any) -> ReservaHistorial:
+    return ReservaHistorial(
+        id=int(f.id),
+        espacio_id=int(f.espacio_id),
+        sede_id=int(f.sede_id),
+        espacio=f.espacio,
+        deporte=f.deporte,
+        tipo=f.tipo,
+        sede=f.sede,
+        direccion=f.direccion,
+        inicio=f.inicio,
+        fin=f.fin,
+        precio_por_hora=int(f.precio_por_hora),
+        total=int(f.total),
+        estado=f.estado,
+        motivo=f.motivo,
+        usuario_id=int(f.usuario_id),
+        usuario=f.usuario,
+        creado_en=f.creado_en,
+        cancelada_en=f.cancelada_en,
+        cancelada_por_nombre=f.cancelada_por_nombre,
+        espacio_de_baja=bool(f.espacio_de_baja),
     )
 
 
@@ -301,3 +349,75 @@ class ReservasSql:
         reserva = self._una(int(nueva))
         self._conn.rollback()
         return reserva
+
+    def historial(self, filtros: FiltrosHistorial) -> HistorialDeReservas:
+        comunes: list[str] = []
+        parametros: dict[str, Any] = {}
+        if filtros.sede_id is not None:
+            comunes.append("e.sede_id = :sede_id")
+            parametros["sede_id"] = filtros.sede_id
+        if filtros.deporte is not None:
+            comunes.append("e.deporte = :deporte")
+            parametros["deporte"] = filtros.deporte
+        if filtros.desde is not None:
+            comunes.append("r.inicio >= CAST(:desde AS date)")
+            parametros["desde"] = filtros.desde
+        if filtros.hasta is not None:
+            comunes.append("r.inicio < CAST(:hasta AS date) + interval '1 day'")
+            parametros["hasta"] = filtros.hasta
+        if filtros.q is not None and filtros.q.strip():
+            comunes.append(
+                "(u.nombre || ' ' || u.apellido ILIKE :q OR s.nombre ILIKE :q"
+                " OR e.nombre ILIKE :q)"
+            )
+            parametros["q"] = f"%{filtros.q.strip()}%"
+        where_comun = " AND ".join(["true", *comunes])
+        condiciones = list(comunes)
+        if filtros.estado is not None:
+            condiciones.append("r.estado_actual = :estado")
+            parametros["estado"] = filtros.estado
+        where = " AND ".join(["true", *condiciones])
+
+        total: int = self._conn.execute(
+            text(f"SELECT count(*){_JOIN_HISTORIAL} WHERE {where}"), parametros
+        ).scalar_one()
+        fila_contadores = self._conn.execute(
+            text(
+                "SELECT count(*) AS todas,"
+                " count(*) FILTER (WHERE r.estado_actual = 'activa') AS activas,"
+                " count(*) FILTER (WHERE r.estado_actual = 'completada') AS completadas,"
+                " count(*) FILTER (WHERE r.estado_actual = 'anulada') AS anuladas"
+                f"{_JOIN_HISTORIAL} WHERE {where_comun}"
+            ),
+            parametros,
+        ).one()
+        pagina = max(1, filtros.pagina)
+        filas = self._conn.execute(
+            text(
+                f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE {where}"
+                " ORDER BY r.inicio DESC, r.id DESC LIMIT :limite OFFSET :offset"
+            ),
+            parametros | {"limite": POR_PAGINA, "offset": (pagina - 1) * POR_PAGINA},
+        ).all()
+        self._conn.rollback()
+        total_int = int(total)
+        return HistorialDeReservas(
+            reservas=[_reserva_historial(f) for f in filas],
+            total=total_int,
+            pagina=pagina,
+            por_pagina=POR_PAGINA,
+            contadores=Contadores(
+                todas=int(fila_contadores.todas),
+                activas=int(fila_contadores.activas),
+                completadas=int(fila_contadores.completadas),
+                anuladas=int(fila_contadores.anuladas),
+            ),
+        )
+
+    def una_de_cualquiera(self, reserva_id: int) -> ReservaHistorial | None:
+        fila = self._conn.execute(
+            text(f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE r.id = :id"),
+            {"id": reserva_id},
+        ).first()
+        self._conn.rollback()
+        return None if fila is None else _reserva_historial(fila)

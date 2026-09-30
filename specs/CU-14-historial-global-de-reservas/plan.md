@@ -26,9 +26,9 @@ cancelada, anulada) y `/_pruebas/espacios/baja`; integración de `GET /reservas/
 
 | Principio | Cómo se cumple |
 |---|---|
-| I · El CU es la especificación | 14 escenarios de los 16 del snapshot; H01-07 y H08-01 (anular) quedan para CU-15 (SUP-04) |
+| I · El CU es la especificación | 16 escenarios de los 18 del snapshot (15 en la app, 1 en la API); H01-07 y H08-01 (anular) quedan para CU-15 (SUP-04) |
 | II · Nada se supone en silencio | `CU-14-SUP-01` a `SUP-07`, con AMB-02 a AMB-10 vencidas |
-| III · Tests antes del código | 14 escenarios de app + 1 de API, congelados en rojo |
+| III · Tests antes del código | 15 escenarios de app + 1 de API, congelados en rojo |
 | IV · El backend es la autoridad | `GET /reservas/todas` valida el rol, el rango de fechas y arma la página; la app no filtra por su cuenta |
 | V · Rastro | La consulta no escribe nada (poscondición); la trazabilidad que se muestra ya está en `creado_en`/`usuario_id` y `cancelada_en`/`cancelada_por`/`motivo` de cada reserva (RNF 5, decisión 4) |
 

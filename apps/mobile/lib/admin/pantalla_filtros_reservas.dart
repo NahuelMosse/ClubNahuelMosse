@@ -1,0 +1,375 @@
+import 'package:flutter/material.dart';
+
+import '../comun/boton.dart';
+import '../comun/campo_texto.dart';
+import '../comun/formato_fecha.dart';
+import '../espacios/espacio.dart';
+import '../reservas/reservas.dart';
+import '../sedes/sede.dart';
+import '../tema/tema.dart';
+import '../tema/tokens.dart';
+import 'historial_reservas.dart';
+
+/// El panel de Filtros del historial global (CU-14, paso 5): sede, deporte, estado y rango
+/// de fechas, más el buscador. Abre con lo ya aplicado y sólo devuelve algo al confirmar.
+Future<FiltrosDeHistorial?> abrirFiltrosDeReservas(
+  BuildContext context, {
+  required FiltrosDeHistorial filtros,
+  required List<Sede> sedes,
+  required Catalogo catalogo,
+}) => showModalBottomSheet<FiltrosDeHistorial>(
+  context: context,
+  isScrollControlled: true,
+  backgroundColor: Colors.transparent,
+  builder: (context) => _PanelDeFiltros(
+    filtros: filtros,
+    sedes: sedes,
+    catalogo: catalogo,
+  ),
+);
+
+class _PanelDeFiltros extends StatefulWidget {
+  const _PanelDeFiltros({
+    required this.filtros,
+    required this.sedes,
+    required this.catalogo,
+  });
+
+  final FiltrosDeHistorial filtros;
+  final List<Sede> sedes;
+  final Catalogo catalogo;
+
+  @override
+  State<_PanelDeFiltros> createState() => _PanelDeFiltrosState();
+}
+
+class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
+  late int? _sedeId = widget.filtros.sedeId;
+  late String? _deporte = widget.filtros.deporte;
+  late EstadoDeReserva? _estado = widget.filtros.estado;
+  late final _busqueda = TextEditingController(text: widget.filtros.q ?? '');
+  late final _desde = TextEditingController(
+    text: switch (widget.filtros.desde) {
+      final d? => formatearFecha(d),
+      null => '',
+    },
+  );
+  late final _hasta = TextEditingController(
+    text: switch (widget.filtros.hasta) {
+      final d? => formatearFecha(d),
+      null => '',
+    },
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _desde.addListener(() => setState(() {}));
+    _hasta.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _busqueda.dispose();
+    _desde.dispose();
+    _hasta.dispose();
+    super.dispose();
+  }
+
+  DateTime? get _fechaDesde =>
+      _desde.text.trim().isEmpty ? null : leerFecha(_desde.text);
+  DateTime? get _fechaHasta =>
+      _hasta.text.trim().isEmpty ? null : leerFecha(_hasta.text);
+
+  bool get _rangoInvalido {
+    final d = _fechaDesde;
+    final h = _fechaHasta;
+    return d != null && h != null && d.isAfter(h);
+  }
+
+  void _limpiar() {
+    setState(() {
+      _sedeId = null;
+      _deporte = null;
+      _estado = null;
+      _desde.clear();
+      _hasta.clear();
+      _busqueda.clear();
+    });
+  }
+
+  void _aplicar() {
+    if (_rangoInvalido) return;
+    Navigator.of(context).pop(
+      FiltrosDeHistorial(
+        estado: _estado,
+        sedeId: _sedeId,
+        deporte: _deporte,
+        desde: _fechaDesde,
+        hasta: _fechaHasta,
+        q: _busqueda.text,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (context, control) => DecoratedBox(
+        decoration: BoxDecoration(
+          color: p.bgSurfaceRaised,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(Medidas.radioLg),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Medidas.s24,
+                  Medidas.s16,
+                  Medidas.s16,
+                  0,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Text(
+                          'Filtros',
+                          style: Textos.h2.copyWith(color: p.textPrimary),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close_rounded),
+                      color: p.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: control,
+                  padding: const EdgeInsets.fromLTRB(
+                    Medidas.s24,
+                    Medidas.s8,
+                    Medidas.s24,
+                    Medidas.s24,
+                  ),
+                  children: [
+                    CampoTexto(
+                      etiquetaAccesible: 'Buscar por usuario, sede o espacio',
+                      placeholder: 'Buscar por usuario, sede o espacio',
+                      controlador: _busqueda,
+                      accionFinal: Icon(
+                        Icons.search_rounded,
+                        color: p.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: Medidas.s20),
+                    _Titulo('SEDE'),
+                    const SizedBox(height: Medidas.s8),
+                    Wrap(
+                      spacing: Medidas.s8,
+                      runSpacing: Medidas.s8,
+                      children: [
+                        for (final sede in widget.sedes)
+                          _Chip(
+                            texto: sede.nombre,
+                            elegido: _sedeId == sede.id,
+                            alTocar: () => setState(
+                              () => _sedeId = _sedeId == sede.id
+                                  ? null
+                                  : sede.id,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: Medidas.s20),
+                    _Titulo('DEPORTE'),
+                    const SizedBox(height: Medidas.s8),
+                    Wrap(
+                      spacing: Medidas.s8,
+                      runSpacing: Medidas.s8,
+                      children: [
+                        for (final deporte in widget.catalogo.deportes)
+                          _Chip(
+                            texto: deporte.nombre,
+                            elegido: _deporte == deporte.clave,
+                            alTocar: () => setState(
+                              () => _deporte = _deporte == deporte.clave
+                                  ? null
+                                  : deporte.clave,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: Medidas.s20),
+                    _Titulo('ESTADO'),
+                    const SizedBox(height: Medidas.s8),
+                    Wrap(
+                      spacing: Medidas.s8,
+                      runSpacing: Medidas.s8,
+                      children: [
+                        _Chip(
+                          texto: 'Todas',
+                          elegido: _estado == null,
+                          alTocar: () => setState(() => _estado = null),
+                        ),
+                        for (final e in const [
+                          EstadoDeReserva.activa,
+                          EstadoDeReserva.completada,
+                          EstadoDeReserva.anulada,
+                        ])
+                          _Chip(
+                            texto: switch (e) {
+                              EstadoDeReserva.activa => 'Activas',
+                              EstadoDeReserva.completada => 'Completadas',
+                              _ => 'Anuladas',
+                            },
+                            elegido: _estado == e,
+                            alTocar: () => setState(
+                              () => _estado = _estado == e ? null : e,
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: Medidas.s20),
+                    _Titulo('RANGO DE FECHAS'),
+                    const SizedBox(height: Medidas.s8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: CampoTexto(
+                            etiqueta: 'Desde',
+                            etiquetaAccesible: 'Desde',
+                            placeholder: 'DD / MM / AAAA',
+                            controlador: _desde,
+                            teclado: TextInputType.number,
+                            formateadores: const [FormatoFecha()],
+                            accionFinal: Icon(
+                              Icons.calendar_today_outlined,
+                              size: 16,
+                              color: p.textMuted,
+                            ),
+                            error: _rangoInvalido
+                                ? 'Desde no puede ser posterior a Hasta'
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: Medidas.s12),
+                        Expanded(
+                          child: CampoTexto(
+                            etiqueta: 'Hasta',
+                            etiquetaAccesible: 'Hasta',
+                            placeholder: 'DD / MM / AAAA',
+                            controlador: _hasta,
+                            teclado: TextInputType.number,
+                            formateadores: const [FormatoFecha()],
+                            accionFinal: Icon(
+                              Icons.calendar_today_outlined,
+                              size: 16,
+                              color: p.textMuted,
+                            ),
+                            error: _rangoInvalido ? ' ' : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  Medidas.s24,
+                  0,
+                  Medidas.s24,
+                  Medidas.s24,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: BotonContorno(texto: 'LIMPIAR', alTocar: _limpiar),
+                    ),
+                    const SizedBox(width: Medidas.s12),
+                    Expanded(
+                      child: BotonPrimario(
+                        texto: 'APLICAR',
+                        alTocar: _rangoInvalido ? null : _aplicar,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Titulo extends StatelessWidget {
+  const _Titulo(this.texto);
+  final String texto;
+
+  @override
+  Widget build(BuildContext context) => Text(
+    texto,
+    style: Textos.sobretitulo.copyWith(color: context.paleta.textMuted),
+  );
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.texto,
+    required this.elegido,
+    required this.alTocar,
+  });
+
+  final String texto;
+  final bool elegido;
+  final VoidCallback alTocar;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Semantics(
+      button: true,
+      selected: elegido,
+      excludeSemantics: true,
+      label: texto,
+      child: Material(
+        color: elegido ? p.accentBase : p.bgSurface,
+        shape: const StadiumBorder(),
+        child: InkWell(
+          onTap: alTocar,
+          customBorder: const StadiumBorder(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Medidas.s16,
+              vertical: Medidas.s8,
+            ),
+            child: Text(
+              texto,
+              style: Textos.cuerpo.copyWith(
+                color: elegido ? p.accentOn : p.textPrimary,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

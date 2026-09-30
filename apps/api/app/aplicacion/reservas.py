@@ -11,7 +11,7 @@ from app.aplicacion.errores import (
     Prohibido,
 )
 from app.dominio.horarios import Agenda, rango, validar_reserva
-from app.dominio.reservas import Reserva
+from app.dominio.reservas import FiltrosHistorial, HistorialDeReservas, Reserva, ReservaHistorial
 from app.dominio.usuarios import Perfil
 
 Cuando = Literal["proximas", "historial"]
@@ -81,6 +81,15 @@ class Reservas(Protocol):
         están activos, y `AgendaCambiada` si la sede ya no tiene la [agenda] con que se
         validó.
         """
+        ...
+
+    def historial(self, filtros: FiltrosHistorial) -> HistorialDeReservas:
+        """El historial global de todos los usuarios y todas las sedes que cumple
+        [filtros] (CU-14), de la más reciente a la más antigua, paginado."""
+        ...
+
+    def una_de_cualquiera(self, reserva_id: int) -> ReservaHistorial | None:
+        """La reserva [reserva_id], sea de quien sea, con su trazabilidad completa."""
         ...
 
 
@@ -205,3 +214,33 @@ def modificar_reserva(
             agenda,
         ),
     )
+
+
+def historial_global(
+    reservas: Reservas, perfil: Perfil, filtros: FiltrosHistorial
+) -> HistorialDeReservas:
+    """El historial completo de reservas de todos los usuarios y todas las sedes (CU-14, RF
+    6): sólo lo consulta un administrador. No modifica nada (la consulta es de sólo lectura).
+
+    Lanza `Prohibido` si quien pide no es administrador y `DatosInvalidos` si el rango de
+    fechas tiene `desde` posterior a `hasta`.
+    """
+    if perfil.rol != "admin":
+        raise Prohibido("sólo un administrador consulta el historial global")
+    if filtros.desde is not None and filtros.hasta is not None and filtros.desde > filtros.hasta:
+        raise DatosInvalidos({"fechas": "Desde no puede ser posterior a Hasta"})
+    return reservas.historial(filtros)
+
+
+def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: int) -> ReservaHistorial:
+    """El detalle de cualquier reserva del sistema, para un administrador (CU-14).
+
+    Lanza `Prohibido` si quien pide no es administrador y `NoEncontrada` si no hay ninguna
+    reserva con ese número.
+    """
+    if perfil.rol != "admin":
+        raise Prohibido("sólo un administrador consulta el detalle de cualquier reserva")
+    detalle = reservas.una_de_cualquiera(reserva_id)
+    if detalle is None:
+        raise NoEncontrada("no hay una reserva con ese número")
+    return detalle
