@@ -675,3 +675,59 @@ Future<Map<String, int>> totalesDeReservas(
               total,
   };
 }
+
+/// La cuenta [correo] cancela por la API todas sus próximas reservas, como si lo hiciera desde
+/// otro teléfono mientras el administrador mira la confirmación.
+Future<void> cancelarProximasDe(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  for (final id in await numerosDeReservas(correo, contrasena: contrasena)) {
+    final r = await http.post(
+      Uri.parse('${Configuracion.desdeEntorno().apiUrl}/reservas/$id/cancelar'),
+      headers: {'authorization': 'Bearer $token'},
+    );
+    if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
+  }
+}
+
+/// La reserva de [nombreEspacio] como la ve el administrador en la API (estado, motivo,
+/// quién y cuándo la anuló), o `null` si el espacio no tiene ninguna.
+Future<Map<String, Object?>?> reservaQueVeElAdmin(String nombreEspacio) async {
+  final datos = await _leer(
+    '/reservas/todas?q=${Uri.encodeQueryComponent(nombreEspacio)}',
+    await _tokenAdmin(),
+  );
+  if (datos case {'reservas': final List<Object?> reservas}) {
+    for (final reserva in reservas) {
+      if (reserva is Map<String, Object?> &&
+          reserva['espacio'] == nombreEspacio) {
+        return reserva;
+      }
+    }
+  }
+  return null;
+}
+
+/// Las reservas del historial de la cuenta [correo] según la API: el espacio, el estado y el
+/// motivo de cada una.
+Future<List<(String, String, String?)>> historialDe(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final datos = await _leer('/reservas?cuando=historial', token);
+  return [
+    if (datos case {'reservas': final List<Object?> reservas})
+      for (final reserva in reservas)
+        if (reserva case {
+          'espacio': final String espacio,
+          'estado': final String estado,
+          'motivo': final Object? motivo,
+        })
+          (espacio, estado, motivo is String ? motivo : null),
+  ];
+}
