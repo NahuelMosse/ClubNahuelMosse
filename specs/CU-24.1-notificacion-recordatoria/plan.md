@@ -105,6 +105,7 @@ cola ni caché: consulta la fuente de verdad. El dominio no importa nada de afue
 | `apps/mobile/lib/comun/estado_vacio.dart` | `icono` opcional | por defecto el de antes |
 | `apps/mobile/lib/inicio/pantalla_inicio.dart` | la campana junto al avatar | sólo con `centro` |
 | `apps/mobile/lib/reservas/pantalla_mis_reservas.dart` | `reservaId` resalta una tarjeta | borde de acento y `Semantics(selected)` |
+| `apps/mobile/test/accesibilidad_notificaciones_test.dart` | guías de Flutter por pantalla en los dos modos | sin tag de card |
 | `apps/mobile/test/notificaciones_test.dart`, `apps/mobile/test/capturas/notificaciones_capturas.dart`, `apps/mobile/test/soporte/usuario.dart` | widget al 200 % en 360, capturas; `montarUsuario` recibe el centro | sin tag de card |
 | `apps/mobile/integration_test/notificaciones/notificaciones_test.dart`, `soporte/red.dart`, `soporte/acciones.dart` | escenarios y soporte (ya commiteados) | permiso simulado por `SharedPreferences` |
 

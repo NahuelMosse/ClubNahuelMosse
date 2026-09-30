@@ -374,3 +374,34 @@ def test_las_notificaciones_son_de_quien_las_recibe(
     )
     api.post("/notificaciones/leer-todas", headers=_con(token_otra))
     assert api.get("/notificaciones", headers=_con(token_usuario)).json()["no_leidas"] == 1
+
+
+def test_el_borde_de_dispositivos_y_notificaciones_responde_con_un_codigo(
+    api: TestClient, token_usuario: str
+) -> None:
+    sesion = _con(token_usuario)
+    base = {"token": "fcm-x", "plataforma": "android", "permiso": True}
+
+    assert (
+        api.put("/dispositivos", headers=sesion, json=base | {"permiso": "quizás"}).status_code
+        == 422
+    )
+    assert api.put("/dispositivos", headers=sesion, json={"token": "fcm-x"}).status_code == 422
+    assert api.put("/dispositivos", headers=sesion, content=b"{roto").status_code == 422
+    assert api.put("/dispositivos", headers=sesion, json=base | {"token": 7}).status_code == 422
+    enorme = api.put("/dispositivos", headers=sesion, json=base | {"token": "x" * 1_000_000})
+    assert enorme.status_code in (204, 413, 422)
+    assert api.post("/notificaciones/0/leer", headers=sesion).status_code == 422
+    assert api.post(f"/notificaciones/{2**63}/leer", headers=sesion).status_code == 422
+    assert api.post("/notificaciones/abc/leer", headers=sesion).status_code == 422
+    assert api.post("/notificaciones/999999/leer", headers=sesion).status_code == 404
+
+
+def test_las_respuestas_del_centro_no_traen_campos_de_mas_ni_se_cachean(
+    api: TestClient, token_usuario: str
+) -> None:
+    r = api.get("/notificaciones", headers=_con(token_usuario))
+
+    assert r.status_code == 200
+    assert set(r.json()) == {"notificaciones", "no_leidas"}
+    assert "no-store" in r.headers.get("cache-control", "")

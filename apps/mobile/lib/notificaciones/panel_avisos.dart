@@ -37,6 +37,7 @@ class PanelDeAvisos extends StatelessWidget {
           Positioned.fill(
             child: Semantics(
               button: true,
+              excludeSemantics: true,
               label: 'Cerrar las notificaciones',
               onTap: centro.cerrarPanel,
               child: GestureDetector(
@@ -96,7 +97,7 @@ class PanelDeAvisos extends StatelessWidget {
                               ),
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(
-                                  minHeight: Medidas.tactil,
+                                  minHeight: kMinInteractiveDimension,
                                 ),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(
