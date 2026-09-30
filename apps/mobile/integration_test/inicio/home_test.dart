@@ -131,7 +131,8 @@ void main() {
       await tocar(tester, 'Buscar cancha');
       await esperarA(tester, find.text('Consultar canchas'));
 
-      await tocar(tester, 'INICIO');
+      await tester.tap(find.byTooltip('Volver'));
+      await tester.pumpAndSettle();
       await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
       await tocar(tester, 'Ver sedes');
       await esperarA(tester, find.text('Sedes'));
@@ -163,8 +164,7 @@ void main() {
       await tester.pumpAndSettle();
       await tocar(tester, 'Perfil completo');
       await esperarA(tester, find.text('DATOS PERSONALES'));
-      await tester.pageBack();
-      await tester.pumpAndSettle();
+      await tocar(tester, 'INICIO');
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
       await tester.pumpAndSettle();

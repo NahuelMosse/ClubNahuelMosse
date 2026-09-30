@@ -58,7 +58,11 @@ Future<void> entrarComoUsuario(
   String nombre = 'Nahuel',
   String? apiUrl,
 }) async {
-  await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
+  try {
+    await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
+  } on CuentaYaCreada {
+    // El escenario ya la registró para cargarle datos antes de entrar.
+  }
   await abrirApp(tester, apiUrl: apiUrl);
   await escribir(tester, 'Correo', correo);
   await escribir(tester, 'Contraseña', contrasena);
@@ -117,9 +121,18 @@ Future<void> crearCuenta({
       'contrasena': contrasena,
     }),
   );
+  if (r.statusCode == 409) throw const CuentaYaCreada();
   if (r.statusCode != 201) {
     throw StateError('no se pudo crear la cuenta de prueba: ${r.statusCode}');
   }
+}
+
+/// La API ya tiene una cuenta con ese correo o ese DNI.
+class CuentaYaCreada implements Exception {
+  const CuentaYaCreada();
+
+  @override
+  String toString() => 'la cuenta de prueba ya existe (409)';
 }
 
 /// Una API que responde 500 a todo, en el mismo dispositivo que la app.
