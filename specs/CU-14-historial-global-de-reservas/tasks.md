@@ -7,23 +7,23 @@
 
 ## Phase 1: API
 
-- [ ] T001 `GET /reservas/todas` y `GET /reservas/todas/{id}` con sus tests de integración
+- [x] T001 `GET /reservas/todas` y `GET /reservas/todas/{id}` con sus tests de integración
       (paginación, filtros, rango inválido, permisos)
 
 ## Phase 2: App (CU-14-H01-01 a H09-01, sin H01-07 ni H08-01)
 
-- [ ] T002 Listado con pestañas de estado, contador y scroll perezoso (H01-01, H01-02, H01-03,
+- [x] T002 Listado con pestañas de estado, contador y scroll perezoso (H01-01, H01-02, H01-03,
       H01-09)
-- [ ] T003 Panel de Filtros (sede, deporte, estado, rango) y búsqueda combinada (H01-04, H01-05,
+- [x] T003 Panel de Filtros (sede, deporte, estado, rango) y búsqueda combinada (H01-04, H01-05,
       H04-01)
-- [ ] T004 Detalle de sólo lectura con trazabilidad, y volver conservando filtros (H01-06, H01-08)
-- [ ] T005 Estados vacío y sin resultados, error de red, sesión vencida, acceso denegado (H02-01,
+- [x] T004 Detalle de sólo lectura con trazabilidad, y volver conservando filtros (H01-06, H01-08)
+- [x] T005 Estados vacío y sin resultados, error de red, sesión vencida, acceso denegado (H02-01,
       H03-01, H05-01, H06-01, H07-01)
-- [ ] T006 Reserva de un espacio dado de baja marcada en el historial (H09-01)
+- [x] T006 Reserva de un espacio dado de baja marcada en el historial (H09-01)
 
 ## Phase 3: Polish
 
-- [ ] T007 Tests de widget, accesibilidad y capturas del paso 9
+- [x] T007 Tests de widget, accesibilidad y capturas del paso 9
 - [ ] T008 `scripts/test.sh` y el e2e del archivo en verde
 
 ## Dependencies
