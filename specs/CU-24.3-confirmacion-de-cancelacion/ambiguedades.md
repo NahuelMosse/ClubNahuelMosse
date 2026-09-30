@@ -36,3 +36,5 @@ CU-24.3-AMB-08 · 2026-09-30 · sin canal · la tarjeta que FA1 suprime queda si
 CU-24.3-TESTS · 2026-09-30 · congelados en 4ec5358 · rojo pendiente de la pasada final
 CU-24.3-AMB-09 · 2026-09-30 · abierta · Una reserva cancelada deja su confirmación en el centro, así que el escenario CU-24.1-H05-01 (congelado, de otra card) que afirma centro vacío tras cancelar deja de valer: tiene que afirmar que no hay recordatorio, no que no hay nada; lo corrige quien recongele CU-24.1 y acá queda sin cobertura
 CU-24.3-AMB-09 · 2026-09-30 · sin canal · Una reserva cancelada deja su confirmación en el centro, así que el escenario CU-24.1-H05-01 (congelado, de otra card) que afirma centro vacío tras cancelar deja de valer: tiene que afirmar que no hay recordatorio, no que no hay nada; lo corrige quien recongele CU-24.1 y acá queda sin cobertura → CU-24.3-SUP-08
+CU-24.3-TESTS · 2026-09-30 · recongelados en a03137e · mismo contenido, rebase sobre CU-24.1; el hash anterior (4ec5358) ya no existe
+CU-24.3-AMB-09 · 2026-09-30 · resuelta · CU-24.1-H05-01 recongelado en cb62d50: afirma que no hay recordatorio y no que el centro esté vacío (decisión 10) → CU-24.3-SUP-08 cerrado

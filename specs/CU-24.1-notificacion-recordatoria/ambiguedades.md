@@ -60,3 +60,4 @@ CU-24.1-AMB-18 · 2026-09-30 · sin canal · el panel sólo se abre por una lleg
 CU-24.1-AMB-19 · 2026-09-30 · abierta · el teléfono borra su token de FCM en todo camino de salida de la sesión; no se hace una baja por token sin sesión para reintentarla en el próximo arranque
 CU-24.1-AMB-19 · 2026-09-30 · sin canal · el teléfono borra su token de FCM en todo camino de salida de la sesión; no se hace una baja por token sin sesión para reintentarla en el próximo arranque → CU-24.1-SUP-16
 CU-24.1-TESTS · 2026-09-30 · recongelados en 2e82581 · H04-01 vuelve con handlePopRoute: el tooltip «Back» que pedía pageBack() era un hack
+CU-24.1-TESTS · 2026-09-30 · recongelados en cb62d50 · la confirmación de CU-24.3 (decisión 10) también queda en el centro

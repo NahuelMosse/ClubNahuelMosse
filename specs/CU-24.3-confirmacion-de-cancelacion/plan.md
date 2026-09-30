@@ -45,14 +45,13 @@ texto; la infraestructura de reservas lo encola junto con la cancelación.
 | CU-24.3-SUP-05 | Cuerpo «{tipo corto} · {sede} · {Día} {d}, {HH:MM}. El horario quedó liberado.» con el día del prototipo (Mié, no Mar) y el mismo texto en push, panel y centro | `@CU-24.3-H01-01`; `tests/unit/test_despacho_de_confirmaciones.py` |
 | CU-24.3-SUP-06 | Tocarla abre Mis reservas en Historial con la reserva resaltada | `@CU-24.3-H01-02`; `test/confirmacion_cancelacion_test.dart` |
 | CU-24.3-SUP-07 | La tarjeta suprimida queda sin leer y no vuelve al panel en esa sesión | `@CU-24.3-H02-01`; `test/confirmacion_cancelacion_test.dart` |
-| CU-24.3-SUP-08 | `CU-24.1-H05-01` (congelado) afirma centro vacío tras cancelar; ya no vale | Supuestos sin cobertura |
+| CU-24.3-SUP-08 | El centro trae la confirmación tras cancelar (decisión 10); `CU-24.1-H05-01` afirma que no hay recordatorio, no que el centro esté vacío | `test_recordatorio.py` (recongelado) |
 
 ## Supuestos sin cobertura
 
 | ID | Motivo |
 |---|---|
-| CU-24.3-SUP-01, 02, 04, 05 (parte), 03, 06, 07 | Los prueban tests de `tests/unit`, `tests/escenarios/test_confirmacion_cancelacion_reglas.py` y de widget con su tag `@supuesto`; ningún escenario de la card los ejercita por sí solo |
-| CU-24.3-SUP-08 | El escenario congelado `CU-24.1-H05-01` (`apps/api/tests/escenarios/test_recordatorio.py`) falla con esta card: espera el centro vacío tras cancelar y ahora trae la confirmación. Hay que recongelarlo afirmando que no hay recordatorio; acá no se edita porque es de otra card |
+| CU-24.3-SUP-01, 02, 03, 04, 05 (parte), 06, 07 | Los prueban tests de `tests/unit`, `tests/escenarios/test_confirmacion_cancelacion_reglas.py` y de widget con su tag `@supuesto`; ningún escenario de la card los ejercita por sí solo |
 | Entrega real | La entrega por FCM, la bandeja del sistema y la pantalla bloqueada no se pueden ejecutar sin proyecto de Firebase ni teléfono (igual que CU-24.1-SUP-13) |
 | Emulador | Los escenarios de `integration_test` de esta card están congelados pero no se corrieron: rojo y verde en el emulador quedan para la pasada final |
 
