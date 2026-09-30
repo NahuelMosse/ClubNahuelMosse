@@ -133,15 +133,19 @@ class ApiFalsa {
       pedidos.where((p) => p.method == metodo && p.url.path == ruta);
 }
 
+/// Por defecto el teléfono está en las 21:00 del club del 12 de noviembre: lo que ya estaba sin
+/// leer a las 19:58 no llegó mientras la app arrancaba.
 CentroDeNotificaciones centroDe(
   ApiFalsa api,
   Sesion sesion, {
   SistemaDeNotificaciones? sistema,
+  DateTime Function()? ahora,
 }) => CentroDeNotificaciones(
   notificaciones: Notificaciones(api: api.cliente, sesion: sesion),
   sesion: sesion,
   sistema: sistema ?? SistemaFalso(),
   cada: Duration.zero,
+  ahora: ahora ?? () => DateTime.utc(2026, 11, 13),
 );
 
 void main() {
@@ -363,6 +367,30 @@ void main() {
       },
     );
 
+    testWidgets(
+      'si la lectura falla no muestra un centro vacío que quedó de antes',
+      (tester) async {
+        final api = ApiFalsa();
+        final sesion = SesionFalsa(perfilUsuario);
+        final centro = centroDe(api, sesion);
+        await tester.runAsync(centro.cargar);
+        api.caida = true;
+        await montar(
+          tester,
+          PantallaNotificaciones(
+            centro: centro,
+            sesion: sesion,
+            ahora: () => ahoraClub,
+            alAbrir: (_, _) {},
+          ),
+          tema: temaOscuro,
+        );
+
+        expect(find.text('Error de conexión'), findsOneWidget);
+        expect(find.text('Todavía no tenés notificaciones'), findsNothing);
+      },
+    );
+
     for (final (nombre, oscuro) in [('oscuro', true), ('claro', false)]) {
       testWidgets(
         'con el texto al 200 % en 360 de ancho nada se recorta ($nombre)',
@@ -554,6 +582,88 @@ void main() {
     }
   });
 
+  group('cuándo abre el panel', () {
+    Future<(ApiFalsa, CentroDeNotificaciones)> montarPanel(
+      WidgetTester tester,
+      List<String> avisos,
+    ) async {
+      final api = ApiFalsa()
+        ..avisos = avisos
+        ..noLeidas = avisos.length;
+      final centro = centroDe(
+        api,
+        SesionFalsa(perfilUsuario),
+        ahora: DateTime.now,
+      );
+      await montar(
+        tester,
+        Stack(
+          children: [
+            const Scaffold(body: SizedBox.expand()),
+            PanelDeAvisos(centro: centro, alAbrir: (_) {}),
+          ],
+        ),
+        tema: temaOscuro,
+      );
+      return (api, centro);
+    }
+
+    Future<void> llega(
+      WidgetTester tester,
+      ApiFalsa api,
+      CentroDeNotificaciones centro,
+      List<String> avisos,
+    ) async {
+      api
+        ..avisos = avisos
+        ..noLeidas = avisos.length;
+      await tester.runAsync(centro.cargar);
+      await tester.pumpAndSettle();
+    }
+
+    String reciente(int id) => notif(id: id, club: enDelClub(DateTime.now()));
+
+    testWidgets('lo que llega mientras la app arranca abre el panel', (
+      tester,
+    ) async {
+      await montarPanel(tester, [reciente(5)]);
+
+      expect(find.text('MARCAR TODAS'), findsOneWidget);
+    });
+
+    testWidgets(
+      'si se cerró el panel sin leer, lo que llega después no lo reabre',
+      (tester) async {
+        final (api, centro) = await montarPanel(tester, []);
+        await llega(tester, api, centro, [reciente(5)]);
+        expect(find.text('MARCAR TODAS'), findsOneWidget);
+
+        await tester.tap(
+          find.bySemanticsLabel('Cerrar las notificaciones'),
+          warnIfMissed: false,
+        );
+        await tester.pumpAndSettle();
+        await llega(tester, api, centro, [reciente(6), reciente(5)]);
+
+        expect(find.text('MARCAR TODAS'), findsNothing);
+        expect(centro.noLeidas, 2);
+      },
+    );
+
+    testWidgets('después de leer todo, lo que llega abre el panel de nuevo', (
+      tester,
+    ) async {
+      final (api, centro) = await montarPanel(tester, []);
+      await llega(tester, api, centro, [reciente(5)]);
+      await tester.tap(find.text('MARCAR TODAS'));
+      await tester.pumpAndSettle();
+
+      await llega(tester, api, centro, [reciente(6)]);
+
+      expect(find.text('MARCAR TODAS'), findsOneWidget);
+    });
+  });
+
   group('el teléfono y la sesión', () {
     testWidgets('registra el teléfono con el permiso que tiene', (
       tester,
@@ -636,32 +746,33 @@ void main() {
   });
 
   group('la campana y Mis reservas', () {
-    testWidgets('la campana del Home cuenta las sin leer y abre el centro', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      final api = ApiFalsa()
-        ..avisos = [recordatorio, confirmacion]
-        ..noLeidas = 2;
-      await montarUsuario(
-        tester,
-        inicio: '/inicio',
-        api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
-      );
+    testWidgets(
+      'la campana del Home cuenta las sin leer y abre el centro @supuesto:CU-24.1-SUP-10',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        final api = ApiFalsa()
+          ..avisos = [recordatorio, confirmacion]
+          ..noLeidas = 2;
+        await montarUsuario(
+          tester,
+          inicio: '/inicio',
+          api: api.cliente,
+          centro: (sesion) => centroDe(api, sesion),
+        );
 
-      expect(
-        find.bySemanticsLabel('Notificaciones, 2 sin leer'),
-        findsOneWidget,
-      );
-      expect(find.text('2'), findsOneWidget);
-      await tester.tap(find.bySemanticsLabel('Notificaciones, 2 sin leer'));
-      await tester.pumpAndSettle();
+        expect(
+          find.bySemanticsLabel('Notificaciones, 2 sin leer'),
+          findsOneWidget,
+        );
+        expect(find.text('2'), findsOneWidget);
+        await tester.tap(find.bySemanticsLabel('Notificaciones, 2 sin leer'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Notificaciones'), findsOneWidget);
-      expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
-      semantica.dispose();
-    });
+        expect(find.text('Notificaciones'), findsOneWidget);
+        expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
+        semantica.dispose();
+      },
+    );
 
     testWidgets('sin avisos sin leer la campana no cuenta nada', (
       tester,
@@ -687,16 +798,19 @@ void main() {
       semantica.dispose();
     });
 
-    testWidgets('un administrador no llega al centro', (tester) async {
-      await montarAdmin(
-        tester,
-        inicio: '/notificaciones',
-        api: ApiFalsa().cliente,
-      );
+    testWidgets(
+      'un administrador no llega al centro @supuesto:CU-24.1-SUP-10',
+      (tester) async {
+        await montarAdmin(
+          tester,
+          inicio: '/notificaciones',
+          api: ApiFalsa().cliente,
+        );
 
-      expect(find.text('Notificaciones'), findsNothing);
-      expect(find.text('PANEL ADMIN'), findsOneWidget);
-    });
+        expect(find.text('Notificaciones'), findsNothing);
+        expect(find.text('PANEL ADMIN'), findsOneWidget);
+      },
+    );
 
     testWidgets('tocar un aviso abre Mis reservas con esa reserva resaltada', (
       tester,

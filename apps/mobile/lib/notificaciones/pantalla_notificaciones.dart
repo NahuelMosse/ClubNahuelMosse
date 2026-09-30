@@ -45,6 +45,9 @@ class PantallaNotificaciones extends StatefulWidget {
 class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
   bool _cargando = true;
 
+  /// La lectura de esta visita salió bien: hasta entonces un centro vacío sería un dato viejo.
+  bool _leido = false;
+
   /// La lectura falló y ya se avisó: queda REINTENTAR en lugar de la lista.
   bool _fallo = false;
 
@@ -63,7 +66,12 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
     var vencida = false;
     try {
       await widget.centro.cargar();
-      if (mounted) setState(() => _cargando = false);
+      if (mounted) {
+        setState(() {
+          _cargando = false;
+          _leido = true;
+        });
+      }
       return;
     } on SesionVencida {
       vencida = true;
@@ -94,12 +102,13 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       listenable: widget.centro,
       builder: (context, _) {
         final centro = widget.centro;
-        final sinAvisos = centro.cargado && centro.lista.isEmpty;
+        final sinAvisos = _leido && centro.lista.isEmpty;
         final desactivadas = !centro.permitido;
         return Scaffold(
           backgroundColor: p.bgBase,
           appBar: BarraSuperior(
             titulo: 'Notificaciones',
+            botonDelSistema: true,
             alVolver: () =>
                 context.canPop() ? context.pop() : context.go('/inicio'),
           ),
@@ -122,7 +131,7 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
     CentroDeNotificaciones centro,
     bool sinAvisos,
   ) {
-    if (!centro.cargado) {
+    if (!_leido && centro.lista.isEmpty) {
       if (_cargando) return const Center(child: CircularProgressIndicator());
       // Con el aviso de error abierto no hay nada más que mostrar: el reintento es el del aviso.
       return _fallo

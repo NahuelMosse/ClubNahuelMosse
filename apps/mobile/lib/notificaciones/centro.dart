@@ -18,6 +18,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
     required Sesion sesion,
     required SistemaDeNotificaciones sistema,
     this.cada = const Duration(seconds: 20),
+    this.ahora = DateTime.now,
   }) : _repositorio = notificaciones,
        _sesion = sesion,
        _sistema = sistema {
@@ -34,6 +35,9 @@ class CentroDeNotificaciones extends ChangeNotifier {
   /// Cada cuánto se consulta la API mientras la app está abierta; cero, nunca.
   final Duration cada;
 
+  /// El reloj del teléfono, para saber qué llegó mientras la app arrancaba.
+  final DateTime Function() ahora;
+
   StreamSubscription<int?>? _suscripcion;
   Timer? _reloj;
   bool _activo = false;
@@ -43,6 +47,13 @@ class CentroDeNotificaciones extends ChangeNotifier {
   int _sesionActual = 0;
   bool _leyoAlguna = false;
   int _ultimoPresentado = 0;
+
+  /// Desde cuándo una notificación sin leer cuenta como recién llegada en la primera lectura:
+  /// una que llegó mientras la app arrancaba avisa; una de hace días queda en la campana.
+  DateTime _desde = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+
+  /// Las que el panel ya mostró en esta sesión.
+  final _avisadas = <int>{};
 
   List<Notificacion> _lista = const [];
   int _noLeidas = 0;
@@ -88,6 +99,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
   Future<void> _arrancar() async {
     _activo = true;
     final sesion = ++_sesionActual;
+    _desde = enDelClub(ahora()).subtract(const Duration(minutes: 5));
     await _revisarPermiso(registrar: true);
     if (sesion != _sesionActual) return;
     await _sondear();
@@ -106,6 +118,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _noLeidas = 0;
     _leyoAlguna = false;
     _ultimoPresentado = 0;
+    _avisadas.clear();
     _panelAbierto = false;
     notifyListeners();
   }
@@ -154,11 +167,20 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _noLeidas = lectura.noLeidas;
     final masNueva = _lista.fold<int>(0, (m, n) => n.id > m ? n.id : m);
     final llegoUnaNueva = _lista.any(
-      (n) => !n.leida && n.id > _ultimoPresentado,
+      (n) =>
+          !n.leida &&
+          n.id > _ultimoPresentado &&
+          (_leyoAlguna || n.creada.isAfter(_desde)),
     );
-    // Lo que ya estaba sin leer al abrir la app queda en la campana: sólo lo que llega con la
-    // app abierta avisa con el panel.
-    if (_leyoAlguna && llegoUnaNueva && _permitido) _panelAbierto = true;
+    // Si la persona cerró el panel sin leer, lo que llegue después suma a la campana y no
+    // vuelve a tapar la pantalla.
+    final quedanAvisadas = _lista.any(
+      (n) => !n.leida && _avisadas.contains(n.id),
+    );
+    if (llegoUnaNueva && !quedanAvisadas && _permitido) {
+      _panelAbierto = true;
+      _avisadas.addAll(sinLeer.map((n) => n.id));
+    }
     if (masNueva > _ultimoPresentado) _ultimoPresentado = masNueva;
     _leyoAlguna = true;
     notifyListeners();

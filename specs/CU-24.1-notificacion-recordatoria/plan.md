@@ -34,7 +34,7 @@ API), widget tests a 360 con texto al 200 %, capturas, `integration_test` con
 | Principio | Cómo se cumple |
 |---|---|
 | I · El CU es la especificación | Diez escenarios; pantallas 65:401, 65:470, 43:1462 |
-| II · Nada se supone en silencio | `CU-24.1-SUP-01` a `SUP-14`; AMB-04, 07 y 08 resueltas por decisiones 10 y 14 |
+| II · Nada se supone en silencio | `CU-24.1-SUP-01` a `SUP-15`; AMB-04, 07 y 08 resueltas por decisiones 10 y 14 |
 | III · Tests antes del código | Diez escenarios congelados en rojo (evento `CU-24.1-TESTS` de `ambiguedades.md`) |
 | IV · El backend es la autoridad | La API decide cuándo vence el aviso, a quién llega y qué queda leído; la app no usa su reloj |
 | V · Rastro | `creada_en`, `enviada_en`, `leida_en`, `envio`; `dispositivo` con alta, baja y permiso |
@@ -61,11 +61,14 @@ cola ni caché: consulta la fuente de verdad. El dominio no importa nada de afue
 | CU-24.1-SUP-12 | Una reserva modificada recibe un aviso nuevo; el anterior no se retira | `tests/unit/test_recordatorios.py` |
 | CU-24.1-SUP-13 | Sistema simulado con el emulador de Auth; bandeja y pantalla bloqueada no se ejecutan | `SistemaSimulado`; supuestos sin cobertura |
 | CU-24.1-SUP-14 | Tipo corto del catálogo y hora del club | `mensaje_recordatorio`; `@CU-24.1-H01-01` |
+| CU-24.1-SUP-15 | El panel no se reabre mientras queden sin leer que ya avisó; en la primera lectura avisa lo de los últimos cinco minutos | `CentroDeNotificaciones`; `@CU-24.1-H01-03`; `notificaciones_test.dart` |
 
 ## Supuestos sin cobertura
 
 | ID | Motivo |
 |---|---|
+| CU-24.1-SUP-02, 05, 06, 07, 12, 14, 15 | Los prueban tests de `tests/unit`, `tests/integracion` y de widget con su tag `@supuesto`, que caen fuera de `$E2E`; ningún escenario de `$E2E` los ejercita |
+| CU-24.1-SUP-10 | Lo prueban los tests de widget de `apps/mobile/test/notificaciones_test.dart`, fuera de `$E2E` |
 | CU-24.1-SUP-13 (parte) | La entrega por el servicio real (FCM), el aviso en la bandeja o la pantalla bloqueada y el toque sobre ellos necesitan un proyecto de Firebase y un teléfono con permiso del sistema: no se pueden ejecutar acá. Queda verificado hasta el puerto y hasta el centro de la app |
 
 ## Mapa de archivos
@@ -98,9 +101,11 @@ cola ni caché: consulta la fuente de verdad. El dominio no importa nada de afue
 | `apps/mobile/lib/notificaciones/campana.dart` | `BotonNotificaciones` | etiqueta «Notificaciones» o «Notificaciones, N sin leer» |
 | `apps/mobile/lib/app.dart`, `apps/mobile/lib/main.dart` | ruta `/notificaciones`, `centro` opcional, panel en el `builder` | sin `centro` la app no sondea ni muestra campana |
 | `apps/mobile/lib/sesion/sesion.dart` | `alCerrar` | callbacks best effort antes de salir |
+| `apps/mobile/lib/comun/barra_superior.dart` | `botonDelSistema`: el `BackButton` de Material con la misma flecha | sólo lo usa el centro; el resto de las pantallas sigue igual |
+| `apps/mobile/lib/comun/estado_vacio.dart` | `icono` opcional | por defecto el de antes |
 | `apps/mobile/lib/inicio/pantalla_inicio.dart` | la campana junto al avatar | sólo con `centro` |
 | `apps/mobile/lib/reservas/pantalla_mis_reservas.dart` | `reservaId` resalta una tarjeta | borde de acento y `Semantics(selected)` |
-| `apps/mobile/test/notificaciones_test.dart`, `apps/mobile/test/capturas/notificaciones_capturas.dart` | widget al 200 % en 360, capturas | sin tag de card |
+| `apps/mobile/test/notificaciones_test.dart`, `apps/mobile/test/capturas/notificaciones_capturas.dart`, `apps/mobile/test/soporte/usuario.dart` | widget al 200 % en 360, capturas; `montarUsuario` recibe el centro | sin tag de card |
 | `apps/mobile/integration_test/notificaciones/notificaciones_test.dart`, `soporte/red.dart`, `soporte/acciones.dart` | escenarios y soporte (ya commiteados) | permiso simulado por `SharedPreferences` |
 
 ## Perímetro

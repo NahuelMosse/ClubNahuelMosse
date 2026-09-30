@@ -55,3 +55,5 @@ CU-24.1-AMB-16 · 2026-09-30 · sin canal · en el emulador de Firebase Auth (es
 CU-24.1-AMB-17 · 2026-09-30 · abierta · el aviso nombra el deporte con el tipo corto del catálogo («Fútbol 5», «Tenis») y las horas en la hora del club
 CU-24.1-AMB-17 · 2026-09-30 · sin canal · el aviso nombra el deporte con el tipo corto del catálogo («Fútbol 5», «Tenis») y las horas en la hora del club → CU-24.1-SUP-14
 CU-24.1-TESTS · 2026-09-30 · congelados en 7b15a2d
+CU-24.1-AMB-18 · 2026-09-30 · abierta · el panel sólo se abre por una llegada si no quedan sin leer que ya avisó en esta sesión; lo que llega después de cerrarlo sin leer suma a la campana y no vuelve a tapar la pantalla, y en la primera lectura avisa lo que llegó en los últimos cinco minutos
+CU-24.1-AMB-18 · 2026-09-30 · sin canal · el panel sólo se abre por una llegada si no quedan sin leer que ya avisó en esta sesión; lo que llega después de cerrarlo sin leer suma a la campana y no vuelve a tapar la pantalla, y en la primera lectura avisa lo que llegó en los últimos cinco minutos → CU-24.1-SUP-15
