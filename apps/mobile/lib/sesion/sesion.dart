@@ -355,8 +355,10 @@ class Sesion extends ChangeNotifier {
         }
       }
     }
-    await _salir();
+    await _credenciales.salir();
     _actual = null;
+    // La pantalla ya muestra el login: lo que queda se hace sin hacer esperar a la persona.
+    await _avisarQueSalio();
     await Future.wait(bajas);
   }
 
@@ -364,6 +366,10 @@ class Sesion extends ChangeNotifier {
   /// ya no es de esa cuenta. Lo que falle después de salir no cambia que se salió.
   Future<void> _salir() async {
     await _credenciales.salir();
+    await _avisarQueSalio();
+  }
+
+  Future<void> _avisarQueSalio() async {
     for (final f in [...alSalir]) {
       try {
         await f().timeout(const Duration(seconds: 3));
