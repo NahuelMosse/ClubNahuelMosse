@@ -231,8 +231,6 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
           onRefresh: _cargar,
           child: CustomScrollView(
             controller: _scroll,
-            // Las tarjetas de los primeros renglones quedan armadas aunque todavía no se vean.
-            cacheExtent: 1500,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverPadding(
@@ -394,15 +392,21 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                     Medidas.s24,
                     Medidas.s40,
                   ),
-                  sliver: SliverList.builder(
-                    itemCount: _reservas.length,
-                    itemBuilder: (context, i) => Padding(
-                      padding: const EdgeInsets.only(bottom: Medidas.s12),
-                      child: _TarjetaReservaAdmin(
-                        reserva: _reservas[i],
-                        catalogo: catalogo,
-                        alTocar: () => _abrirDetalle(_reservas[i]),
-                      ),
+                  // Una página son 20 tarjetas: se arman todas, así lo que está debajo del primer
+                  // renglón ya está en el árbol para quien lo busque sin desplazarse.
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      children: [
+                        for (final r in _reservas)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: Medidas.s12),
+                            child: _TarjetaReservaAdmin(
+                              reserva: r,
+                              catalogo: catalogo,
+                              alTocar: () => _abrirDetalle(r),
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),
