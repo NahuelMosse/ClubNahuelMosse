@@ -32,3 +32,5 @@ TP-01-AMB-03 · 2026-09-29 · vencida → TP-01-SUP-03 · una reserva activa ya 
 TP-01-AMB-05 · 2026-09-29 · vencida → TP-01-SUP-05 · "tu próxima reserva" es la reserva activa (no cancelada) cuyo inicio es el más cercano; si ya está en curso, se ordena por su fin
 TP-01-AMB-06 · 2026-09-29 · vencida → TP-01-SUP-06 · los chips de deporte del Home son decorativos en esta card: no navegan a ningún lado
 TP-01-AMB-07 · 2026-09-29 · vencida → TP-01-SUP-07 · el saludo muestra siempre "BUENOS DÍAS," tal como el prototipo, sin lógica horaria
+TP-01-TESTS · 2026-09-30 · congelados en 15823ef · 4 de 10 escenarios en rojo (H01-02, H01-03, H01-04, H01-05) porque el Home todavía no muestra la próxima reserva, sus acciones, «Ver todas» ni el conteo de sedes y canchas; los otros 6 ya los cumple el Home existente
+TP-01-TESTS · 2026-09-30 · recongelados en 4ef1c09 · H01-02/03/04 registraban la cuenta dos veces (409), H01-06 tocaba INICIO en Consultar canchas y H01-08 usaba pageBack en Mi perfil, y ninguna de las dos pantallas los tiene
