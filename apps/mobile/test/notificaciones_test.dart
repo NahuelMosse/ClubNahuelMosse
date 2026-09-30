@@ -681,6 +681,22 @@ void main() {
       expect(pedido['token'], 'token-del-telefono');
     });
 
+    testWidgets(
+      'si se libera con un pedido en camino, al terminar no avisa a nadie',
+      (tester) async {
+        final api = ApiFalsa();
+        final centro = centroDe(api, SesionFalsa(perfilUsuario));
+
+        centro.dispose();
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+      },
+    );
+
     testWidgets('un administrador no registra teléfono ni consulta el centro', (
       tester,
     ) async {

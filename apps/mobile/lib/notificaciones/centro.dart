@@ -238,8 +238,18 @@ class CentroDeNotificaciones extends ChangeNotifier {
     }
   }
 
+  bool _liberado = false;
+
+  /// Una lectura o un registro en camino puede terminar después de que la app se rearmó y este
+  /// centro se liberó: ya no hay a quién avisarle.
+  @override
+  void notifyListeners() {
+    if (!_liberado) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _liberado = true;
     _sesion.removeListener(_alCambiarLaSesion);
     _sesion.alCerrar.remove(_darDeBajaElDispositivo);
     unawaited(_suscripcion?.cancel());
