@@ -231,6 +231,8 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
           onRefresh: _cargar,
           child: CustomScrollView(
             controller: _scroll,
+            // Las tarjetas de los primeros renglones quedan armadas aunque todavía no se vean.
+            cacheExtent: 1500,
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               SliverPadding(
