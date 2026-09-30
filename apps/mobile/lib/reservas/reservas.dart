@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../api/cliente_api.dart';
 import '../sesion/sesion.dart';
 import 'eleccion.dart';
@@ -108,8 +110,9 @@ class Reserva {
       DateTime.tryParse(iso)?.toUtc().subtract(const Duration(hours: 3));
 }
 
-/// Las reservas de quien inició sesión, leídas en la API.
-class Reservas {
+/// Las reservas de quien inició sesión, leídas en la API. Avisa a quien escucha cada vez
+/// que se reserva, se cancela o se modifica una.
+class Reservas extends ChangeNotifier {
   Reservas({required ClienteApi api, required Sesion sesion})
     : _api = api,
       _sesion = sesion;
@@ -162,6 +165,7 @@ class Reservas {
     }
     final reserva = r.codigo == 201 ? Reserva.desdeJson(r.cuerpo) : null;
     if (reserva == null) throw ErrorDelServidor(r.codigo);
+    notifyListeners();
     return reserva;
   }
 
@@ -178,6 +182,7 @@ class Reservas {
     if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();
     final cancelada = r.codigo == 200 ? Reserva.desdeJson(r.cuerpo) : null;
     if (cancelada == null) throw ErrorDelServidor(r.codigo);
+    notifyListeners();
     return cancelada;
   }
 
@@ -212,6 +217,7 @@ class Reservas {
     }
     final modificada = r.codigo == 200 ? Reserva.desdeJson(r.cuerpo) : null;
     if (modificada == null) throw ErrorDelServidor(r.codigo);
+    notifyListeners();
     return modificada;
   }
 }

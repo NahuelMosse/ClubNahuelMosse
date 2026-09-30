@@ -69,23 +69,32 @@ const _proximaJson =
     '"inicio": "2026-11-13T00:00:00Z", "fin": "2026-11-13T01:00:00Z", '
     '"total": 38000, "estado": "activa", "motivo": null, "cancelable": true}';
 
-/// Una API con lo que lee el Home: 4 sedes con 17 canchas, el catálogo de deportes y, con
-/// [conReserva], una próxima reserva.
-ClienteApi apiInicio({bool conReserva = true}) => apiRutas({
+/// Una API con lo que lee el Home: 4 sedes con 17 canchas (o, con [unaSede], una sede con
+/// una cancha), el catálogo de deportes y, con [conReserva], una próxima reserva.
+ClienteApi apiInicio({
+  bool conReserva = true,
+  bool unaSede = false,
+}) => apiRutas({
   'GET /reservas': (200, '{"reservas": [${conReserva ? _proximaJson : ''}]}'),
   'GET /espacios/catalogo': (200, _catalogoJson),
   'GET /sedes': (
     200,
-    '{"sedes": [${_sedeJson(1, 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
-        '${_sedeJson(2, 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
-        '${_sedeJson(3, 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
-        '${_sedeJson(4, 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
+    unaSede
+        ? '{"sedes": [${_sedeJson(1, 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
+        : '{"sedes": [${_sedeJson(1, 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+              '${_sedeJson(2, 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
+              '${_sedeJson(3, 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
+              '${_sedeJson(4, 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
   ),
 });
 
 /// El Home leyendo de [apiInicio].
-Widget inicioFalso(Sesion sesion, {bool conReserva = true}) {
-  final api = apiInicio(conReserva: conReserva);
+Widget inicioFalso(
+  Sesion sesion, {
+  bool conReserva = true,
+  bool unaSede = false,
+}) {
+  final api = apiInicio(conReserva: conReserva, unaSede: unaSede);
   return PantallaInicio(
     sesion: sesion,
     reservas: Reservas(api: api, sesion: sesion),

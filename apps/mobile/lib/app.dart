@@ -255,6 +255,9 @@ class _AppState extends State<App> {
                 horarios: _horarios,
                 sesion: widget.sesion,
                 modificando: reserva,
+                volverA: estado.uri.queryParameters['desde'] == 'inicio'
+                    ? 'Inicio'
+                    : 'Mis reservas',
               ),
               _ => const SizedBox.shrink(),
             },
@@ -394,6 +397,7 @@ class _AppState extends State<App> {
     widget.api.cerrar();
     _sedes.dispose();
     _espacios.dispose();
+    _reservas.dispose();
     _rutas.dispose();
     super.dispose();
   }

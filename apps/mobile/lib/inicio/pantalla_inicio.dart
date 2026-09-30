@@ -54,7 +54,20 @@ class _PantallaInicioState extends State<PantallaInicio> {
   @override
   void initState() {
     super.initState();
+    widget.reservas.addListener(_alCambiarLasReservas);
     _cargar();
+  }
+
+  @override
+  void dispose() {
+    widget.reservas.removeListener(_alCambiarLasReservas);
+    super.dispose();
+  }
+
+  /// Una reserva cambió desde otra pantalla: la próxima puede ser otra. Las que cambian
+  /// desde acá se releen al terminar.
+  void _alCambiarLasReservas() {
+    if (_cancelando == null) _releerSinAvisar();
   }
 
   /// Con [deCero] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
@@ -133,6 +146,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
       textoDeCancelacion(r, catalogo),
     );
     if (!confirmo || !mounted) return;
+    // Una lectura que venía en camino (deslizar para refrescar) ya no vale.
+    _pedido++;
     setState(() => _cancelando = r.id);
     while (mounted) {
       Object? fallo;
@@ -185,7 +200,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
   /// Abre la grilla para cambiar [r] de horario y, al volver, lee el Home de nuevo.
   Future<void> _modificar(Reserva r) async {
     final resultado = await context.push<ResultadoDeModificar>(
-      '/reservas/${r.id}/modificar',
+      '/reservas/${r.id}/modificar?desde=inicio',
       extra: r,
     );
     if (!mounted) return;
@@ -202,51 +217,57 @@ class _PantallaInicioState extends State<PantallaInicio> {
     final p = context.paleta;
     final datos = _datos;
     final proxima = datos?.proxima;
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      bottomNavigationBar: IgnorePointer(
-        ignoring: _cancelando != null,
-        child: const BarraInferior(actual: Seccion.inicio),
-      ),
-      body: RefreshIndicator(
-        onRefresh: () => _cargar(deCero: false),
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.zero,
-          children: [
-            _Hero(
-              sesion: widget.sesion,
-              resumen: datos == null ? null : _resumen(datos.sedes),
+    return PopScope(
+      canPop: _cancelando == null,
+      child: Scaffold(
+        backgroundColor: p.bgBase,
+        bottomNavigationBar: IgnorePointer(
+          ignoring: _cancelando != null,
+          child: const BarraInferior(actual: Seccion.inicio),
+        ),
+        body: AbsorbPointer(
+          absorbing: _cancelando != null,
+          child: RefreshIndicator(
+            onRefresh: () => _cargar(deCero: false),
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.zero,
+              children: [
+                _Hero(
+                  sesion: widget.sesion,
+                  resumen: datos == null ? null : _resumen(datos.sedes),
+                ),
+                if (datos == null && !_fallo)
+                  const Padding(
+                    padding: EdgeInsets.all(Medidas.s40),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                if (datos == null && _fallo)
+                  Padding(
+                    padding: const EdgeInsets.all(Medidas.s24),
+                    child: Center(
+                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                    ),
+                  ),
+                if (datos != null) ...[
+                  if (proxima != null)
+                    _Proxima(
+                      reserva: proxima,
+                      catalogo: datos.catalogo,
+                      cancelando: _cancelando == proxima.id,
+                      alCancelar: _cancelando == null
+                          ? () => _cancelar(proxima, datos.catalogo)
+                          : null,
+                      alModificar: _cancelando == null
+                          ? () => _modificar(proxima)
+                          : null,
+                    ),
+                  _Deportes(catalogo: datos.catalogo),
+                  const _Accesos(),
+                ],
+              ],
             ),
-            if (datos == null && !_fallo)
-              const Padding(
-                padding: EdgeInsets.all(Medidas.s40),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            if (datos == null && _fallo)
-              Padding(
-                padding: const EdgeInsets.all(Medidas.s24),
-                child: Center(
-                  child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
-                ),
-              ),
-            if (datos != null) ...[
-              if (proxima != null)
-                _Proxima(
-                  reserva: proxima,
-                  catalogo: datos.catalogo,
-                  cancelando: _cancelando == proxima.id,
-                  alCancelar: _cancelando == null
-                      ? () => _cancelar(proxima, datos.catalogo)
-                      : null,
-                  alModificar: _cancelando == null
-                      ? () => _modificar(proxima)
-                      : null,
-                ),
-              _Deportes(catalogo: datos.catalogo),
-              const _Accesos(),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -255,7 +276,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
 String _resumen(List<Sede> sedes) {
   final canchas = sedes.fold(0, (total, s) => total + s.canchas);
-  return '${sedes.length} sedes · $canchas canchas · disponibilidad en tiempo real';
+  final cuantasSedes = sedes.length == 1 ? 'sede' : 'sedes';
+  final cuantasCanchas = canchas == 1 ? 'cancha' : 'canchas';
+  return '${sedes.length} $cuantasSedes · $canchas $cuantasCanchas · '
+      'disponibilidad en tiempo real';
 }
 
 /// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
