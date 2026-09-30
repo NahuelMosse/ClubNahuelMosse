@@ -4,6 +4,7 @@ import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/comun/dialogo_error.dart';
+import 'package:clubnahuelmosse/comun/pantalla_acceso_denegado.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +27,6 @@ void main() {
       (c) => mostrarErrorDeRed(c, const ErrorDelServidor(500)),
     ),
     'sesión expirada': ('IR AL INICIO DE SESIÓN', mostrarSesionVencida),
-    'acceso denegado': ('IR A MIS RESERVAS', mostrarAccesoDenegado),
     'esto cambió mientras tanto': (
       'VER LO ACTUALIZADO',
       mostrarCambioMientrasTanto,
@@ -65,6 +65,21 @@ void main() {
     });
   }
 
+  testWidgets('«Acceso denegado» entra en 360 con el texto al 200 %', (
+    tester,
+  ) async {
+    await montar(
+      tester,
+      const PantallaAccesoDenegado(),
+      tema: temaOscuro,
+      tamano: const Size(360, 800),
+      escalaTexto: 2,
+    );
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('IR A MIS RESERVAS'), findsOneWidget);
+  });
+
   testWidgets(
     'un 403 de la API muestra «Acceso denegado» y lleva a Mis reservas',
     (tester) async {
@@ -79,6 +94,10 @@ void main() {
                 child: const Text('ABRIR'),
               ),
             ),
+          ),
+          GoRoute(
+            path: '/admin/acceso-denegado',
+            builder: (context, _) => const PantallaAccesoDenegado(),
           ),
           GoRoute(
             path: '/reservas',

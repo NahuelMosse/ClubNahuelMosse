@@ -13,7 +13,14 @@ from app.aplicacion.errores import (
 )
 from app.aplicacion.reservas import Cuando
 from app.dominio.horarios import Agenda
-from app.dominio.reservas import Reserva
+from app.dominio.notificaciones import mensaje_cancelacion
+from app.dominio.reservas import (
+    Contadores,
+    FiltrosHistorial,
+    HistorialDeReservas,
+    Reserva,
+    ReservaHistorial,
+)
 from app.infraestructura.horarios import HorariosSql
 
 _COLUMNAS = (
@@ -22,8 +29,26 @@ _COLUMNAS = (
     " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
     " (r.estado_actual = 'activa' AND r.inicio > now()) AS cancelable"
 )
+_COLUMNAS_HISTORIAL = (
+    "r.id, r.espacio_id, e.sede_id, e.nombre AS espacio, e.deporte, e.tipo,"
+    " s.nombre AS sede, s.calle || ' ' || s.altura AS direccion, r.inicio, r.fin,"
+    " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
+    " r.usuario_id, u.nombre || ' ' || u.apellido AS usuario, r.creado_en, r.cancelada_en,"
+    " administrador.nombre || ' ' || administrador.apellido AS cancelada_por_nombre,"
+    " (NOT e.activo OR NOT s.activa) AS espacio_de_baja,"
+    " (r.estado_actual = 'activa' AND r.inicio > now()) AS anulable"
+)
+_JOIN_HISTORIAL = (
+    " FROM reserva_con_estado r"
+    " JOIN espacio e ON e.id = r.espacio_id"
+    " JOIN sede s ON s.id = e.sede_id"
+    " JOIN usuario u ON u.id = r.usuario_id"
+    " LEFT JOIN usuario administrador ON administrador.id = r.cancelada_por"
+)
 # Cuánto después de hecha una reserva se reconoce como el mismo pedido repetido.
 _VENTANA_DE_REINTENTO = "5 minutes"
+# Tamaño fijo de página del historial global (CU-14-SUP-01): sin tope adicional de resultados.
+POR_PAGINA = 20
 
 
 def _reserva(f: Any) -> Reserva:
@@ -43,6 +68,32 @@ def _reserva(f: Any) -> Reserva:
         estado=f.estado,
         motivo=f.motivo,
         cancelable=bool(f.cancelable),
+    )
+
+
+def _reserva_historial(f: Any) -> ReservaHistorial:
+    return ReservaHistorial(
+        id=int(f.id),
+        espacio_id=int(f.espacio_id),
+        sede_id=int(f.sede_id),
+        espacio=f.espacio,
+        deporte=f.deporte,
+        tipo=f.tipo,
+        sede=f.sede,
+        direccion=f.direccion,
+        inicio=f.inicio,
+        fin=f.fin,
+        precio_por_hora=int(f.precio_por_hora),
+        total=int(f.total),
+        estado=f.estado,
+        motivo=f.motivo,
+        usuario_id=int(f.usuario_id),
+        usuario=f.usuario,
+        creado_en=f.creado_en,
+        cancelada_en=f.cancelada_en,
+        cancelada_por_nombre=f.cancelada_por_nombre,
+        espacio_de_baja=bool(f.espacio_de_baja),
+        anulable=bool(f.anulable),
     )
 
 
@@ -227,12 +278,23 @@ class ReservasSql:
                 ),
                 datos,
             )
+            reserva = self._una(reserva_id)
+            # La confirmación se encola en la misma transacción: si la cancelación no se
+            # completa no queda aviso, y el índice único evita repetirlo.
+            aviso = mensaje_cancelacion(reserva)
+            self._conn.execute(
+                text(
+                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+                    " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_usuario', :titulo,"
+                    " :cuerpo, :id, :inicio, 'pendiente')"
+                    " ON CONFLICT (reserva_id) WHERE tipo = 'cancelacion_usuario' DO NOTHING"
+                ),
+                datos | {"titulo": aviso.titulo, "cuerpo": aviso.cuerpo, "inicio": reserva.inicio},
+            )
             self._conn.commit()
         except BaseException:
             self._conn.rollback()
             raise
-        reserva = self._una(reserva_id)
-        self._conn.rollback()
         return reserva
 
     def insertar(
@@ -301,3 +363,150 @@ class ReservasSql:
         reserva = self._una(int(nueva))
         self._conn.rollback()
         return reserva
+
+    def anular(
+        self, admin_id: int, reserva_id: int, motivo: str, espacio_id: int, inicio: datetime
+    ) -> ReservaHistorial:
+        datos: dict[str, Any] = {
+            "admin": admin_id,
+            "id": reserva_id,
+            "motivo": motivo,
+            "espacio": espacio_id,
+            "inicio": inicio,
+        }
+        try:
+            # Se mira sin bloquear a quién pertenece la reserva para tomar los bloqueos en el
+            # orden de siempre: la cuenta y la sede compartidas, el espacio exclusivo y recién
+            # entonces la reserva. Si la reserva se movió de espacio en el medio, el espacio
+            # bloqueado ya no es el suyo y se rechaza como cambiada.
+            previa = self._conn.execute(
+                text(
+                    "SELECT r.usuario_id, r.espacio_id, e.sede_id FROM reserva r"
+                    " JOIN espacio e ON e.id = r.espacio_id WHERE r.id = :id"
+                ),
+                datos,
+            ).first()
+            if previa is None:
+                raise NoEncontrada("no hay una reserva con ese número")
+            datos |= {
+                "usuario": previa.usuario_id,
+                "sede": previa.sede_id,
+                "espacio_previo": previa.espacio_id,
+            }
+            self._conn.execute(text("SELECT 1 FROM usuario WHERE id = :usuario FOR SHARE"), datos)
+            self._conn.execute(text("SELECT 1 FROM sede WHERE id = :sede FOR SHARE"), datos)
+            self._conn.execute(
+                text("SELECT 1 FROM espacio WHERE id = :espacio_previo FOR NO KEY UPDATE"), datos
+            )
+            fila = self._conn.execute(
+                text(
+                    "SELECT estado, motivo, cancelada_por, inicio <= now() AS empezo,"
+                    " espacio_id = :espacio_previo AND espacio_id = :espacio"
+                    " AND inicio = CAST(:inicio AS timestamptz) AS como_se_vio"
+                    " FROM reserva WHERE id = :id FOR UPDATE"
+                ),
+                datos,
+            ).first()
+            if fila is None:
+                raise NoEncontrada("no hay una reserva con ese número")
+            if (
+                fila.estado == "anulada"
+                and fila.cancelada_por == admin_id
+                and fila.motivo == motivo
+            ):
+                self._conn.rollback()
+                return self._detalle(reserva_id)
+            if fila.estado != "activa" or fila.empezo or not fila.como_se_vio:
+                raise Cambiado("la reserva ya no está activa, ya empezó o cambió")
+            self._conn.execute(
+                text(
+                    "UPDATE reserva SET estado = 'anulada', motivo = :motivo,"
+                    " cancelada_en = now(), cancelada_por = :admin WHERE id = :id"
+                ),
+                datos,
+            )
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
+        return self._detalle(reserva_id)
+
+    def _detalle(self, reserva_id: int) -> ReservaHistorial:
+        fila = self._conn.execute(
+            text(f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE r.id = :id"),
+            {"id": reserva_id},
+        ).one()
+        self._conn.rollback()
+        return _reserva_historial(fila)
+
+    def historial(self, filtros: FiltrosHistorial) -> HistorialDeReservas:
+        comunes: list[str] = []
+        parametros: dict[str, Any] = {}
+        if filtros.sede_id is not None:
+            comunes.append("e.sede_id = :sede_id")
+            parametros["sede_id"] = filtros.sede_id
+        if filtros.deporte is not None:
+            comunes.append("e.deporte = :deporte")
+            parametros["deporte"] = filtros.deporte
+        if filtros.desde is not None:
+            comunes.append("r.inicio >= CAST(:desde AS date)")
+            parametros["desde"] = filtros.desde
+        if filtros.hasta is not None:
+            comunes.append("r.inicio < CAST(:hasta AS date) + interval '1 day'")
+            parametros["hasta"] = filtros.hasta
+        if filtros.q is not None and filtros.q.strip():
+            comunes.append(
+                "(u.nombre || ' ' || u.apellido ILIKE :q OR s.nombre ILIKE :q"
+                " OR e.nombre ILIKE :q)"
+            )
+            parametros["q"] = f"%{filtros.q.strip()}%"
+        where_comun = " AND ".join(["true", *comunes])
+        condiciones = list(comunes)
+        if filtros.estado is not None:
+            condiciones.append("r.estado_actual = :estado")
+            parametros["estado"] = filtros.estado
+        where = " AND ".join(["true", *condiciones])
+
+        total: int = self._conn.execute(
+            text(f"SELECT count(*){_JOIN_HISTORIAL} WHERE {where}"), parametros
+        ).scalar_one()
+        fila_contadores = self._conn.execute(
+            text(
+                "SELECT count(*) AS todas,"
+                " count(*) FILTER (WHERE r.estado_actual = 'activa') AS activas,"
+                " count(*) FILTER (WHERE r.estado_actual = 'completada') AS completadas,"
+                " count(*) FILTER (WHERE r.estado_actual = 'anulada') AS anuladas"
+                f"{_JOIN_HISTORIAL} WHERE {where_comun}"
+            ),
+            parametros,
+        ).one()
+        pagina = max(1, filtros.pagina)
+        filas = self._conn.execute(
+            text(
+                f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE {where}"
+                " ORDER BY r.inicio DESC, r.id DESC LIMIT :limite OFFSET :offset"
+            ),
+            parametros | {"limite": POR_PAGINA, "offset": (pagina - 1) * POR_PAGINA},
+        ).all()
+        self._conn.rollback()
+        total_int = int(total)
+        return HistorialDeReservas(
+            reservas=[_reserva_historial(f) for f in filas],
+            total=total_int,
+            pagina=pagina,
+            por_pagina=POR_PAGINA,
+            contadores=Contadores(
+                todas=int(fila_contadores.todas),
+                activas=int(fila_contadores.activas),
+                completadas=int(fila_contadores.completadas),
+                anuladas=int(fila_contadores.anuladas),
+            ),
+        )
+
+    def una_de_cualquiera(self, reserva_id: int) -> ReservaHistorial | None:
+        fila = self._conn.execute(
+            text(f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE r.id = :id"),
+            {"id": reserva_id},
+        ).first()
+        self._conn.rollback()
+        return None if fila is None else _reserva_historial(fila)

@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
+import 'admin/historial_reservas.dart';
 import 'admin/pantalla_alta_espacio.dart';
+import 'admin/pantalla_detalle_reserva.dart';
 import 'admin/pantalla_editar_espacio.dart';
 import 'admin/pantalla_formulario_sede.dart';
 import 'admin/pantalla_espacio_creado.dart';
@@ -10,14 +14,19 @@ import 'admin/pantalla_espacios_admin.dart';
 import 'admin/pantalla_panel_admin.dart';
 import 'admin/pantalla_sede_creada.dart';
 import 'admin/pantalla_sedes_admin.dart';
+import 'comun/pantalla_acceso_denegado.dart';
 import 'espacios/espacio.dart';
 import 'espacios/espacios.dart';
 import 'sedes/sede.dart';
 import 'sedes/sedes.dart';
-import 'comun/acceso_denegado.dart';
 import 'comun/apariencia.dart';
 import 'api/cliente_api.dart';
 import 'inicio/pantalla_inicio.dart';
+import 'notificaciones/centro.dart';
+import 'notificaciones/notificacion.dart';
+import 'notificaciones/sistema.dart';
+import 'notificaciones/panel_avisos.dart';
+import 'notificaciones/pantalla_notificaciones.dart';
 import 'reservas/pantalla_mis_reservas.dart';
 import 'reservas/pantalla_reserva_confirmada.dart';
 import 'reservas/reserva_pendiente.dart';
@@ -47,12 +56,16 @@ class App extends StatefulWidget {
     required this.api,
     required this.sesion,
     required this.apariencia,
+    this.centro,
     this.inicio = '/',
   });
 
   final ClienteApi api;
   final Sesion sesion;
   final Apariencia apariencia;
+
+  /// Las notificaciones de la app. Sin él no hay campana, ni panel, ni centro que consultar.
+  final CentroDeNotificaciones? centro;
 
   /// Dónde arranca la app: el login, o el inicio de quien ya tenía la sesión abierta.
   final String inicio;
@@ -70,6 +83,7 @@ class _AppState extends State<App> {
     '/sedes': Rol.usuario,
     '/reservas': Rol.usuario,
     '/reservar': Rol.usuario,
+    '/notificaciones': Rol.usuario,
   };
 
   late final _recuperacion = Recuperacion(widget.api);
@@ -77,7 +91,37 @@ class _AppState extends State<App> {
   late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
   late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
   late final _reservas = Reservas(api: widget.api, sesion: widget.sesion);
+  late final _historialAdmin = HistorialDeReservas(
+    api: widget.api,
+    sesion: widget.sesion,
+  );
   final _pendiente = ReservaPendiente();
+  final _filtrosPendientes = FiltrosDePanelPendientes();
+
+  StreamSubscription<AvisoTocado>? _alTocarUnAviso;
+
+  /// El navegador de la app, para abrir el panel de avisos desde arriba del `Navigator`.
+  final _navegador = GlobalKey<NavigatorState>();
+
+  @override
+  void initState() {
+    super.initState();
+    final centro = widget.centro;
+    if (centro == null) return;
+    centro.ubicacion = () =>
+        _rutas.routerDelegate.currentConfiguration.uri.path;
+    // Un aviso de la bandeja del sistema abre la app en la reserva que avisa.
+    _alTocarUnAviso = centro.alTocarDesdeElSistema.listen(
+      (aviso) => _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId)),
+    );
+    unawaited(
+      centro.abiertaPor().then((aviso) {
+        if (aviso != null) {
+          _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId));
+        }
+      }),
+    );
+  }
 
   /// `AAAA-MM-DD` de un enlace como día del club; `null` si no viene o no es una fecha.
   static DateTime? _dia(String? iso) => switch (DateTime.tryParse(iso ?? '')) {
@@ -86,11 +130,15 @@ class _AppState extends State<App> {
   };
 
   late final GoRouter _rutas = GoRouter(
+    navigatorKey: _navegador,
     initialLocation: widget.inicio,
     // Al iniciar o cerrar la sesión, las rutas se vuelven a evaluar.
     refreshListenable: widget.sesion,
     redirect: (context, estado) {
       final ruta = estado.matchedLocation;
+      // «Acceso denegado» es la única ruta bajo /admin que no exige el rol: es adonde va
+      // quien pide una ruta de administrador sin el rol (CU-14-SUP-06, TP-07-SUP-03).
+      if (ruta == '/admin/acceso-denegado') return null;
       // Todo lo que cuelga de /admin es del administrador: una ruta nueva del panel no
       // queda abierta por olvidarse de anotarla.
       final rol = ruta == '/admin' || ruta.startsWith('/admin/')
@@ -103,8 +151,8 @@ class _AppState extends State<App> {
       if (rol == null) return null;
       if (perfil == null) return '/';
       if (perfil.rol == rol) return null;
-      // Un usuario en el panel no es un desvío: se le dice que no tiene acceso.
-      return rol == Rol.admin ? '/acceso-denegado' : perfil.inicio;
+      // Un usuario en el panel no es un desvío: se le dice que no tiene acceso (CU-14 FA4).
+      return rol == Rol.admin ? '/admin/acceso-denegado' : perfil.inicio;
     },
     routes: [
       GoRoute(
@@ -143,7 +191,13 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/inicio',
-        builder: (context, _) => PantallaInicio(sesion: widget.sesion),
+        builder: (context, _) => PantallaInicio(
+          sesion: widget.sesion,
+          reservas: _reservas,
+          espacios: _espacios,
+          sedes: _sedes,
+          centro: widget.centro,
+        ),
         routes: [
           GoRoute(
             path: 'buscar',
@@ -155,6 +209,18 @@ class _AppState extends State<App> {
             ),
           ),
         ],
+      ),
+      GoRoute(
+        path: '/notificaciones',
+        builder: (context, _) => switch (widget.centro) {
+          final CentroDeNotificaciones centro => PantallaNotificaciones(
+            centro: centro,
+            sesion: widget.sesion,
+            alAbrir: (context, n) =>
+                context.go(rutaDelAviso(n.tipo, n.reservaId)),
+          ),
+          null => const SizedBox.shrink(),
+        },
       ),
       GoRoute(
         path: '/perfil',
@@ -231,10 +297,12 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/reservas',
-        builder: (context, _) => PantallaMisReservas(
+        builder: (context, estado) => PantallaMisReservas(
           reservas: _reservas,
           espacios: _espacios,
           sesion: widget.sesion,
+          reservaId: int.tryParse(estado.uri.queryParameters['reserva'] ?? ''),
+          enHistorial: estado.uri.queryParameters['historial'] == '1',
         ),
         routes: [
           GoRoute(
@@ -253,6 +321,9 @@ class _AppState extends State<App> {
                 horarios: _horarios,
                 sesion: widget.sesion,
                 modificando: reserva,
+                volverA: estado.uri.queryParameters['desde'] == 'inicio'
+                    ? 'Inicio'
+                    : 'Mis reservas',
               ),
               _ => const SizedBox.shrink(),
             },
@@ -303,17 +374,35 @@ class _AppState extends State<App> {
         },
       ),
       GoRoute(
-        path: '/acceso-denegado',
-        redirect: (context, estado) => switch (widget.sesion.perfil) {
-          null => '/',
-          final p when p.rol == Rol.admin => p.inicio,
-          _ => null,
-        },
-        builder: (context, _) => const PantallaAccesoDenegado(),
+        path: '/admin',
+        builder: (context, _) => PantallaPanelAdmin(
+          historial: _historialAdmin,
+          sedes: _sedes,
+          espacios: _espacios,
+          sesion: widget.sesion,
+          pendientes: _filtrosPendientes,
+        ),
+        routes: [
+          GoRoute(
+            path: 'reserva/:id',
+            // Sin la reserva que se tocó en el listado (un enlace, la app reabierta),
+            // vuelve al listado.
+            redirect: (context, estado) =>
+                estado.extra is ReservaHistorial ? null : '/admin',
+            builder: (context, estado) => switch (estado.extra) {
+              final ReservaHistorial r => PantallaDetalleReserva(
+                reserva: r,
+                historial: _historialAdmin,
+                sesion: widget.sesion,
+              ),
+              _ => const SizedBox.shrink(),
+            },
+          ),
+        ],
       ),
       GoRoute(
-        path: '/admin',
-        builder: (context, _) => PantallaPanelAdmin(sesion: widget.sesion),
+        path: '/admin/acceso-denegado',
+        builder: (context, _) => const PantallaAccesoDenegado(),
       ),
       GoRoute(
         path: '/admin/sedes',
@@ -398,9 +487,12 @@ class _AppState extends State<App> {
 
   @override
   void dispose() {
+    unawaited(_alTocarUnAviso?.cancel());
+    widget.centro?.dispose();
     widget.api.cerrar();
     _sedes.dispose();
     _espacios.dispose();
+    _reservas.dispose();
     _rutas.dispose();
     super.dispose();
   }
@@ -416,6 +508,20 @@ class _AppState extends State<App> {
         darkTheme: temaOscuro,
         themeMode: widget.apariencia.modo,
         routerConfig: _rutas,
+        builder: (context, hijo) => Stack(
+          children: [
+            hijo ?? const SizedBox.shrink(),
+            if (widget.centro case final centro?)
+              PanelDeAvisos(
+                centro: centro,
+                navegador: _navegador,
+                alAbrir: (n) {
+                  centro.marcarLeida(n);
+                  _rutas.go(rutaDelAviso(n.tipo, n.reservaId));
+                },
+              ),
+          ],
+        ),
         locale: const Locale('es', 'AR'),
         supportedLocales: const [Locale('es', 'AR')],
         localizationsDelegates: GlobalMaterialLocalizations.delegates,

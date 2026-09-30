@@ -9,11 +9,10 @@ import '../tema/tokens.dart';
 ///
 /// Devuelve `true` si la persona eligió reintentar; quien llama reintenta cuando el
 /// intento anterior ya terminó. Un 403 de la API no es una falla: es «Acceso denegado», y
-/// lleva a Mis reservas.
+/// lleva a su pantalla.
 Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async {
   if (error is ErrorDelServidor && error.codigo == 403) {
-    await mostrarAccesoDenegado(context);
-    if (context.mounted) context.go('/reservas');
+    context.go('/admin/acceso-denegado');
     return false;
   }
   final sinConexion = error is SinConexion;
@@ -159,6 +158,19 @@ Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   ),
 );
 
+/// El administrador anuló la reserva.
+Future<void> mostrarReservaAnulada(BuildContext context) => showDialog<void>(
+  context: context,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => const _Modal(
+    icono: Icons.check_circle_outline_rounded,
+    exito: true,
+    titulo: 'Reserva anulada correctamente',
+    texto: 'El horario quedó liberado y la reserva pasó a las anuladas.',
+    principal: 'ACEPTAR',
+  ),
+);
+
 /// El overlay compartido «Esto cambió mientras tanto»: lo que se veía ya no está así, y
 /// quien llama lo vuelve a leer.
 Future<void> mostrarCambioMientrasTanto(
@@ -173,24 +185,6 @@ Future<void> mostrarCambioMientrasTanto(
         'Otra persona modificó estos datos mientras los estabas viendo. Los '
         'actualizamos para que veas el estado real.',
     principal: 'VER LO ACTUALIZADO',
-  ),
-);
-
-/// El overlay compartido «Acceso denegado»: la cuenta no tiene el rol que pide lo que se
-/// intentó. Quien llama lleva a Mis reservas cuando esto termina.
-Future<void> mostrarAccesoDenegado(BuildContext context) => showDialog<void>(
-  context: context,
-  barrierDismissible: false,
-  barrierColor: context.paleta.bgScrim,
-  builder: (context) => const PopScope(
-    canPop: false,
-    child: _Modal(
-      icono: Icons.lock_outline_rounded,
-      titulo: 'Acceso denegado',
-      texto:
-          'Tu cuenta no tiene permisos de administrador. Te llevamos a Mis reservas.',
-      principal: 'IR A MIS RESERVAS',
-    ),
   ),
 );
 

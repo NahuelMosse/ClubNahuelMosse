@@ -11,10 +11,13 @@ from app.aplicacion.errores import (
     Prohibido,
 )
 from app.dominio.horarios import Agenda, rango, validar_reserva
-from app.dominio.reservas import Reserva
+from app.dominio.reservas import FiltrosHistorial, HistorialDeReservas, Reserva, ReservaHistorial
 from app.dominio.usuarios import Perfil
 
 Cuando = Literal["proximas", "historial"]
+
+# Largo máximo del motivo de una anulación.
+MOTIVO_MAXIMO = 500
 
 
 class Reservas(Protocol):
@@ -81,6 +84,27 @@ class Reservas(Protocol):
         están activos, y `AgendaCambiada` si la sede ya no tiene la [agenda] con que se
         validó.
         """
+        ...
+
+    def anular(
+        self, admin_id: int, reserva_id: int, motivo: str, espacio_id: int, inicio: datetime
+    ) -> ReservaHistorial:
+        """Anula la reserva [reserva_id], que el administrador vio en [espacio_id] desde
+        [inicio], y estampa quién, cuándo y el [motivo] (CU-15): el horario vuelve a quedar
+        libre. Si ya la había anulado ese administrador con ese motivo, la devuelve igual.
+
+        Lanza `NoEncontrada` si no existe y `Cambiado` si ya no está activa, ya empezó o ya no
+        está en ese espacio y horario.
+        """
+        ...
+
+    def historial(self, filtros: FiltrosHistorial) -> HistorialDeReservas:
+        """El historial global de todos los usuarios y todas las sedes que cumple
+        [filtros] (CU-14), de la más reciente a la más antigua, paginado."""
+        ...
+
+    def una_de_cualquiera(self, reserva_id: int) -> ReservaHistorial | None:
+        """La reserva [reserva_id], sea de quien sea, con su trazabilidad completa."""
         ...
 
 
@@ -205,3 +229,57 @@ def modificar_reserva(
             agenda,
         ),
     )
+
+
+def historial_global(
+    reservas: Reservas, perfil: Perfil, filtros: FiltrosHistorial
+) -> HistorialDeReservas:
+    """El historial completo de reservas de todos los usuarios y todas las sedes (CU-14, RF
+    6): sólo lo consulta un administrador. No modifica nada (la consulta es de sólo lectura).
+
+    Lanza `Prohibido` si quien pide no es administrador y `DatosInvalidos` si el rango de
+    fechas tiene `desde` posterior a `hasta`.
+    """
+    if perfil.rol != "admin":
+        raise Prohibido("sólo un administrador consulta el historial global")
+    if filtros.desde is not None and filtros.hasta is not None and filtros.desde > filtros.hasta:
+        raise DatosInvalidos({"fechas": "Desde no puede ser posterior a Hasta"})
+    return reservas.historial(filtros)
+
+
+def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: int) -> ReservaHistorial:
+    """El detalle de cualquier reserva del sistema, para un administrador (CU-14).
+
+    Lanza `Prohibido` si quien pide no es administrador y `NoEncontrada` si no hay ninguna
+    reserva con ese número.
+    """
+    if perfil.rol != "admin":
+        raise Prohibido("sólo un administrador consulta el detalle de cualquier reserva")
+    detalle = reservas.una_de_cualquiera(reserva_id)
+    if detalle is None:
+        raise NoEncontrada("no hay una reserva con ese número")
+    return detalle
+
+
+def anular_reserva(
+    reservas: Reservas,
+    perfil: Perfil,
+    reserva_id: int,
+    motivo: str,
+    espacio_id: int,
+    inicio: datetime,
+) -> ReservaHistorial:
+    """Anula por una causa operativa una reserva activa que todavía no empezó (CU-15, RF 3):
+    el horario vuelve a quedar libre y la reserva guarda quién la anuló, cuándo y por qué.
+
+    Lanza `Prohibido` si quien pide no es administrador, `DatosInvalidos` si el motivo está
+    vacío o es demasiado largo, y `NoEncontrada` y `Cambiado` como `Reservas.anular`.
+    """
+    if perfil.rol != "admin":
+        raise Prohibido("sólo un administrador anula una reserva")
+    limpio = motivo.strip()
+    if not limpio:
+        raise DatosInvalidos({"motivo": "El motivo es obligatorio para anular"})
+    if len(limpio) > MOTIVO_MAXIMO:
+        raise DatosInvalidos({"motivo": f"El motivo admite hasta {MOTIVO_MAXIMO} caracteres"})
+    return reservas.anular(perfil.id, reserva_id, limpio, espacio_id, inicio)

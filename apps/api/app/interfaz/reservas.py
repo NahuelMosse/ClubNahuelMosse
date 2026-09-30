@@ -3,9 +3,9 @@ from datetime import date, datetime, time
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel
 from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
@@ -16,17 +16,23 @@ from app.aplicacion.errores import (
     NoEncontrada,
     Prohibido,
 )
+from app.aplicacion.notificaciones import CanalPush
 from app.aplicacion.reservas import (
     Cuando,
+    anular_reserva,
     cancelar_reserva,
+    detalle_admin,
+    historial_global,
     mis_reservas,
     modificar_reserva,
     reservar,
 )
-from app.dominio.reservas import Estado, Reserva
+from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva, ReservaHistorial
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
+from app.infraestructura.push import canal_push
 from app.infraestructura.reservas import ReservasSql
+from app.interfaz.barrido import despachar_de
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["reservas"])
@@ -185,14 +191,17 @@ CAMBIO = "Esto cambió mientras tanto"
     },
     summary="Cancelar una reserva propia",
     description=(
-        "Hasta el inicio del turno. El horario vuelve a quedar libre y la reserva pasa al "
-        "historial como cancelada. Cancelar una que ya canceló la misma persona responde igual."
+        "Hasta el inicio del turno. El horario vuelve a quedar libre, la reserva pasa al "
+        "historial como cancelada y la confirmación queda en el centro de notificaciones y sale "
+        "por push. Cancelar una que ya canceló la misma persona responde igual."
     ),
 )
 def cancelar(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    despues: BackgroundTasks,
+    canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaVista | Response:
     try:
         reserva = cancelar_reserva(ReservasSql(conn), perfil, reserva_id)
@@ -202,6 +211,7 @@ def cancelar(
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
         )
+    despues.add_task(despachar_de, perfil.id, canal)
     return _vista(reserva)
 
 
@@ -271,3 +281,206 @@ def modificar(
             status_code=status.HTTP_409_CONFLICT, content={"errores": {"horario": OCUPADO}}
         )
     return _vista(reserva)
+
+
+class ReservaHistorialVista(BaseModel):
+    id: int
+    espacio_id: int
+    sede_id: int
+    espacio: str
+    deporte: str
+    tipo: str
+    sede: str
+    direccion: str
+    inicio: datetime
+    fin: datetime
+    precio_por_hora: int
+    total: int
+    estado: Estado
+    motivo: str | None
+    usuario_id: int
+    usuario: str
+    creado_en: datetime
+    cancelada_en: datetime | None
+    cancelada_por_nombre: str | None
+    espacio_de_baja: bool
+    anulable: bool
+
+
+class ContadoresVista(BaseModel):
+    todas: int
+    activas: int
+    completadas: int
+    anuladas: int
+
+
+class HistorialVista(BaseModel):
+    reservas: list[ReservaHistorialVista]
+    total: int
+    pagina: int
+    por_pagina: int
+    contadores: ContadoresVista
+
+
+def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
+    return ReservaHistorialVista(
+        id=r.id,
+        espacio_id=r.espacio_id,
+        sede_id=r.sede_id,
+        espacio=r.espacio,
+        deporte=r.deporte,
+        tipo=r.tipo,
+        sede=r.sede,
+        direccion=r.direccion,
+        inicio=r.inicio,
+        fin=r.fin,
+        precio_por_hora=r.precio_por_hora,
+        total=r.total,
+        estado=r.estado,
+        motivo=r.motivo,
+        usuario_id=r.usuario_id,
+        usuario=r.usuario,
+        creado_en=r.creado_en,
+        cancelada_en=r.cancelada_en,
+        cancelada_por_nombre=r.cancelada_por_nombre,
+        espacio_de_baja=r.espacio_de_baja,
+        anulable=r.anulable,
+    )
+
+
+@router.get(
+    "/reservas/todas",
+    response_model=HistorialVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador consulta el historial global"},
+        422: {"model": Errores},
+    },
+    summary="El historial global de reservas (CU-14)",
+    description=(
+        "Todos los usuarios, todas las sedes. Filtra por estado (`activa`, `completada` o"
+        " `anulada`; sin filtro trae también las canceladas por su usuario), sede, deporte,"
+        " rango de fechas y texto (usuario, sede o espacio); pagina de a 20, de la más"
+        " reciente a la más antigua. No modifica nada."
+    ),
+)
+def listar_todas(
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    estado: Annotated[FiltroEstado | None, Query()] = None,
+    sede_id: Annotated[int | None, Query(ge=1)] = None,
+    deporte: Annotated[str | None, Query()] = None,
+    desde: Annotated[date | None, Query()] = None,
+    hasta: Annotated[date | None, Query()] = None,
+    q: Annotated[str | None, Query()] = None,
+    pagina: Annotated[int, Query(ge=1)] = 1,
+) -> HistorialVista | Response:
+    try:
+        historial = historial_global(
+            ReservasSql(conn),
+            perfil,
+            FiltrosHistorial(
+                estado=estado,
+                sede_id=sede_id,
+                deporte=deporte,
+                desde=desde,
+                hasta=hasta,
+                q=q,
+                pagina=pagina,
+            ),
+        )
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    return HistorialVista(
+        reservas=[_vista_admin(r) for r in historial.reservas],
+        total=historial.total,
+        pagina=historial.pagina,
+        por_pagina=historial.por_pagina,
+        contadores=ContadoresVista(
+            todas=historial.contadores.todas,
+            activas=historial.contadores.activas,
+            completadas=historial.contadores.completadas,
+            anuladas=historial.contadores.anuladas,
+        ),
+    )
+
+
+@router.get(
+    "/reservas/todas/{reserva_id}",
+    response_model=ReservaHistorialVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador consulta el detalle de cualquier reserva"},
+        404: {"description": "No hay una reserva con ese número"},
+    },
+    summary="El detalle de cualquier reserva (CU-14)",
+)
+def detalle(
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> ReservaHistorialVista | Response:
+    try:
+        return _vista_admin(detalle_admin(ReservasSql(conn), perfil, reserva_id))
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+class PedidoDeAnulacion(BaseModel):
+    motivo: str
+    espacio_id: int
+    inicio: AwareDatetime
+
+
+@router.post(
+    "/reservas/{reserva_id}/anular",
+    response_model=ReservaHistorialVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador anula una reserva"},
+        404: {"description": "No hay una reserva con ese número"},
+        409: {"model": Errores, "description": "La reserva ya no está activa, ya empezó o cambió"},
+        422: {"model": Errores},
+    },
+    summary="Anular una reserva (CU-15)",
+    description=(
+        "Hasta el inicio del turno. `espacio_id` e `inicio` son la cancha y el horario que el "
+        "administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a "
+        "quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una "
+        "anulación ya hecha por el mismo administrador con el mismo motivo responde igual."
+    ),
+)
+def anular(
+    pedido: PedidoDeAnulacion,
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> ReservaHistorialVista | Response:
+    try:
+        reserva = anular_reserva(
+            ReservasSql(conn),
+            perfil,
+            reserva_id,
+            pedido.motivo,
+            pedido.espacio_id,
+            pedido.inicio,
+        )
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    except Cambiado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
+        )
+    return _vista_admin(reserva)

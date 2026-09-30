@@ -32,7 +32,7 @@ está disponible» ×2) eran un SnackBar. En la API, los errores no quedaban reg
 |---|---|---|
 | TP-07-SUP-01 | Las validaciones de formulario son de cada CU | sin cambios; sin cobertura propia |
 | TP-07-SUP-02 | Sin cola: REINTENTAR es de la persona | `mostrarErrorDeRed`; `@TP-07-H01-02` |
-| TP-07-SUP-03 | «Acceso denegado» cubre `/admin` sin rol y todo 403; lleva a Mis reservas | `PantallaAccesoDenegado`, `mostrarErrorDeRed`; `@TP-07-H06-01` |
+| TP-07-SUP-03 | «Acceso denegado» cubre toda ruta de `/admin` sin rol y todo 403; es la pantalla de CU-14 y lleva a Mis reservas | `PantallaAccesoDenegado`, `mostrarErrorDeRed`; `@TP-07-H06-01` |
 | TP-07-SUP-04 | 15 s sin respuesta es «Error de conexión» | `ClienteApi.limite` |
 | TP-07-SUP-05 | Sede o cancha que ya no está: «Esto cambió mientras tanto» | `pantalla_sede`, `pantalla_horarios`, `pantalla_confirmar_reserva`; `@TP-07-H07-01` |
 | TP-07-SUP-06 | La API registra excepciones, 5xx, 401, 403 y 409 | `RegistroDeErrores`; `test_registro_de_errores.py` |
@@ -54,9 +54,9 @@ registro con `If-Match`.
 
 | Ruta | Responsabilidad | Decisiones ya tomadas |
 |---|---|---|
-| `apps/mobile/lib/comun/dialogo_error.dart` | `mostrarAccesoDenegado`; un 403 en `mostrarErrorDeRed` | el 403 abre «Acceso denegado» y va a `/reservas`; no se puede descartar |
-| `apps/mobile/lib/comun/acceso_denegado.dart` | destino de quien pide una sección de administrador sin serlo | muestra el aviso y al aceptarlo va a `/reservas` |
-| `apps/mobile/lib/app.dart` | la ruta `/acceso-denegado` y el redirect por rol | sólo `/admin*` sin rol va al aviso; un administrador en una ruta de usuario sigue yendo a su panel |
+| `apps/mobile/lib/comun/dialogo_error.dart` | un 403 en `mostrarErrorDeRed` | el 403 va a `/admin/acceso-denegado`, la pantalla única de «Acceso denegado» |
+| `apps/mobile/lib/comun/pantalla_acceso_denegado.dart` | la pantalla única de «Acceso denegado» (de CU-14) | texto del prototipo; IR A MIS RESERVAS |
+| `apps/mobile/lib/app.dart` | el redirect por rol | toda ruta bajo `/admin` sin rol va a `/admin/acceso-denegado`; un administrador en una ruta de usuario sigue yendo a su panel |
 | `apps/mobile/lib/api/cliente_api.dart` | `limite` inyectable | 15 s por defecto |
 | `apps/mobile/lib/sedes/pantalla_sede.dart`, `apps/mobile/lib/reservas/pantalla_horarios.dart`, `apps/mobile/lib/reservas/pantalla_confirmar_reserva.dart` | el aviso de lo que ya no está | overlay compartido en lugar del SnackBar; nada cargando detrás del aviso |
 | `apps/api/app/interfaz/registro_errores.py`, `apps/api/app/main.py` | middleware de registro y su configuración | error para excepciones y 5xx, aviso para 401, 403 y 409; logger `clubnahuelmosse.errores` |
@@ -69,7 +69,7 @@ registro con `If-Match`.
 **Invención 1 · densidad 1.** Un único aviso por situación, el del prototipo, igual en todas las
 pantallas.
 
-- **Desde dónde.** Desde cualquier pantalla con red; «Acceso denegado» desde el enlace al panel.
+- **Desde dónde.** Desde cualquier pantalla con red; «Acceso denegado» desde el enlace al panel o tras un 403.
 - **Teléfono chico.** En 360 y con el texto al 200 % la acción del aviso queda a la vista o a un
   desplazamiento dentro del aviso, sin cortes.
 - **Variables visuales.** Ícono en rojo apagado = no se pudo; las acciones son las del prototipo.

@@ -58,7 +58,11 @@ Future<void> entrarComoUsuario(
   String nombre = 'Nahuel',
   String? apiUrl,
 }) async {
-  await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
+  try {
+    await crearCuenta(correo: correo, contrasena: contrasena, nombre: nombre);
+  } on CuentaYaCreada {
+    // El escenario ya la registró para cargarle datos antes de entrar.
+  }
   await abrirApp(tester, apiUrl: apiUrl);
   await escribir(tester, 'Correo', correo);
   await escribir(tester, 'Contraseña', contrasena);
@@ -99,6 +103,16 @@ Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
   await tester.pumpAndSettle();
 }
 
+/// Lo que el sistema operativo simulado del dispositivo de prueba contesta cuando la app
+/// pregunta por el permiso de notificaciones. Se fija después de abrir la app y antes de
+/// iniciar sesión.
+Future<void> fijarPermisoDeNotificaciones({required bool concedido}) async {
+  await (await SharedPreferences.getInstance()).setString(
+    'permiso_notificaciones_simulado',
+    concedido ? 'concedido' : 'denegado',
+  );
+}
+
 /// Registra una cuenta por la API, como si la persona ya se hubiera registrado.
 Future<void> crearCuenta({
   required String correo,
@@ -117,9 +131,28 @@ Future<void> crearCuenta({
       'contrasena': contrasena,
     }),
   );
-  if (r.statusCode != 201) {
-    throw StateError('no se pudo crear la cuenta de prueba: ${r.statusCode}');
+  if (r.statusCode == 409 && _soloElCorreoRepetido(r.body)) {
+    throw const CuentaYaCreada();
   }
+  if (r.statusCode != 201) {
+    throw StateError(
+      'no se pudo crear la cuenta de prueba: ${r.statusCode} ${r.body}',
+    );
+  }
+}
+
+/// El 409 del registro dice que el único campo repetido es el correo.
+bool _soloElCorreoRepetido(String cuerpo) {
+  if (jsonDecode(cuerpo) case {'campos': ['correo']}) return true;
+  return false;
+}
+
+/// La API ya tiene una cuenta con ese correo.
+class CuentaYaCreada implements Exception {
+  const CuentaYaCreada();
+
+  @override
+  String toString() => 'la cuenta de prueba ya existe (409)';
 }
 
 /// Una API que responde 500 a todo, en el mismo dispositivo que la app.

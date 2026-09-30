@@ -130,7 +130,10 @@ void main() {
         tester,
         oscuro: oscuro,
         inicio: '/inicio',
-        api: apiRutas(rutasDeSedes()),
+        api: apiRutas({
+          ...rutasDeSedes(),
+          'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
+        }),
       );
       await cumpleLasGuias(tester);
       semantica.dispose();

@@ -1,7 +1,9 @@
 import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
+import 'package:clubnahuelmosse/admin/historial_reservas.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
+import 'package:clubnahuelmosse/espacios/espacios.dart';
+import 'package:clubnahuelmosse/sedes/sedes.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
@@ -79,7 +81,7 @@ void main() {
       testWidgets('home $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+          inicioFalso(SesionFalsa(perfilUsuario)),
           tema: tema,
           tamano: tamano,
         );
@@ -90,7 +92,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montar(
           tester,
-          PantallaInicio(sesion: SesionFalsa(perfilUsuario)),
+          inicioFalso(SesionFalsa(perfilUsuario)),
           tema: tema,
           tamano: tamano,
         );
@@ -232,9 +234,24 @@ void main() {
       });
 
       testWidgets('panel admin $ancho $modo', (tester) async {
+        final sesionAdmin = SesionFalsa(perfilAdmin);
+        final apiPanel = apiRutas({
+          'GET /reservas/todas': (
+            200,
+            '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
+                ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
+                ' "anuladas": 0}}',
+          ),
+        });
         await montar(
           tester,
-          PantallaPanelAdmin(sesion: SesionFalsa(perfilAdmin)),
+          PantallaPanelAdmin(
+            historial: HistorialDeReservas(api: apiPanel, sesion: sesionAdmin),
+            sedes: Sedes(api: apiPanel, sesion: sesionAdmin),
+            espacios: Espacios(api: apiPanel, sesion: sesionAdmin),
+            sesion: sesionAdmin,
+            pendientes: FiltrosDePanelPendientes(),
+          ),
           tema: tema,
           tamano: tamano,
         );

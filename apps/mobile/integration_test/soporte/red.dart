@@ -13,6 +13,10 @@ enum EstadoApi {
   /// Reenvía igual que [normal], pero tres segundos más tarde: deja ver lo que la app
   /// muestra mientras espera.
   lenta,
+
+  /// La API responde como si la sesión ya no fuera válida (401), sin llegar a tocar la
+  /// API real: simula una sesión vencida sin depender de que Firebase la venza de verdad.
+  sesionVencida,
 }
 
 /// Una API intermedia en el mismo dispositivo que la app: reenvía a la API de la corrida
@@ -64,6 +68,9 @@ class ApiIntermedia {
         socket.destroy();
       case EstadoApi.falla:
         pedido.response.statusCode = HttpStatus.internalServerError;
+        await pedido.response.close();
+      case EstadoApi.sesionVencida:
+        pedido.response.statusCode = HttpStatus.unauthorized;
         await pedido.response.close();
       case EstadoApi.normal:
       case EstadoApi.lenta:
@@ -473,6 +480,46 @@ Future<void> anularReservasDe(String nombreEspacio) async {
   if (r.statusCode != 204) throw StateError('anular: ${r.statusCode}');
 }
 
+/// El barrido de recordatorios de la API corre como si en el club fueran las [hora]:[minuto]
+/// del [dia], sólo para las reservas de la cuenta [correo], y devuelve cuántos avisos
+/// registró.
+Future<int> despacharRecordatorios({
+  required String correo,
+  required DateTime dia,
+  required int hora,
+  int minuto = 0,
+}) async {
+  String dos(int n) => n.toString().padLeft(2, '0');
+  final ahora =
+      '${dia.year}-${dos(dia.month)}-${dos(dia.day)}T${dos(hora)}:${dos(minuto)}:00-03:00';
+  final r = await http.post(
+    _pruebas('recordatorios'),
+    headers: {'content-type': 'application/json'},
+    body: jsonEncode({'correo': correo, 'ahora': ahora}),
+  );
+  if (r.statusCode != 200) throw StateError('recordatorios: ${r.statusCode}');
+  if (jsonDecode(utf8.decode(r.bodyBytes)) case {'registrados': final int n}) {
+    return n;
+  }
+  throw StateError('recordatorios: respuesta sin conteo');
+}
+
+/// Si el permiso de cada dispositivo activo de la cuenta [correo] está concedido, según la
+/// API y no según la app.
+Future<List<bool>> dispositivosDe(String correo) async {
+  final r = await http.get(
+    _pruebas('dispositivos?correo=${Uri.encodeQueryComponent(correo)}'),
+  );
+  if (r.statusCode != 200) throw StateError('dispositivos: ${r.statusCode}');
+  return [
+    if (jsonDecode(utf8.decode(r.bodyBytes)) case {
+      'dispositivos': final List<Object?> dispositivos,
+    })
+      for (final d in dispositivos)
+        if (d case {'permiso': final bool permiso}) permiso,
+  ];
+}
+
 /// Los números de las próximas reservas de la cuenta [correo], según la API.
 Future<List<int>> numerosDeReservas(
   String correo, {
@@ -667,4 +714,79 @@ Future<Map<String, int>> totalesDeReservas(
                   .substring(11, 16):
               total,
   };
+}
+
+/// La cuenta [correo] cancela por la API todas sus próximas reservas, como si lo hiciera desde
+/// otro teléfono mientras el administrador mira la confirmación.
+Future<void> cancelarProximasDe(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  for (final id in await numerosDeReservas(correo, contrasena: contrasena)) {
+    final r = await http.post(
+      Uri.parse('${Configuracion.desdeEntorno().apiUrl}/reservas/$id/cancelar'),
+      headers: {'authorization': 'Bearer $token'},
+    );
+    if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
+  }
+}
+
+/// La reserva de [nombreEspacio] como la ve el administrador en la API (estado, motivo,
+/// quién y cuándo la anuló), o `null` si el espacio no tiene ninguna.
+Future<Map<String, Object?>?> reservaQueVeElAdmin(String nombreEspacio) async {
+  final datos = await _leer(
+    '/reservas/todas?q=${Uri.encodeQueryComponent(nombreEspacio)}',
+    await _tokenAdmin(),
+  );
+  if (datos case {'reservas': final List<Object?> reservas}) {
+    for (final reserva in reservas) {
+      if (reserva is Map<String, Object?> &&
+          reserva['espacio'] == nombreEspacio) {
+        return reserva;
+      }
+    }
+  }
+  return null;
+}
+
+/// Las reservas del historial de la cuenta [correo] según la API: el espacio, el estado y el
+/// motivo de cada una.
+Future<List<(String, String, String?)>> historialDe(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final datos = await _leer('/reservas?cuando=historial', token);
+  return [
+    if (datos case {'reservas': final List<Object?> reservas})
+      for (final reserva in reservas)
+        if (reserva case {
+          'espacio': final String espacio,
+          'estado': final String estado,
+          'motivo': final Object? motivo,
+        })
+          (espacio, estado, motivo is String ? motivo : null),
+  ];
+}
+
+/// La cuenta [correo] cancela por la API su única reserva próxima, como si lo hiciera desde
+/// otro teléfono.
+Future<void> cancelarDesdeOtroTelefono(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final numeros = await numerosDeReservas(correo, contrasena: contrasena);
+  if (numeros.length != 1) throw StateError('cancelar: hay ${numeros.length}');
+  final r = await http.post(
+    Uri.parse(
+      '${Configuracion.desdeEntorno().apiUrl}/reservas/${numeros.single}/cancelar',
+    ),
+    headers: {'authorization': 'Bearer $token'},
+  );
+  if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
 }

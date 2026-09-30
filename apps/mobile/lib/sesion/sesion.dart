@@ -132,6 +132,15 @@ class Sesion extends ChangeNotifier {
   final Credenciales _credenciales;
   final ClienteApi _api;
 
+  /// Lo que hay que empezar con la sesión todavía abierta al cerrarla, como avisarle a la API
+  /// que este teléfono deja de recibir avisos: recibe el token de la sesión que se cierra. Si
+  /// algo falla, la sesión se cierra igual.
+  final alCerrar = <Future<void> Function(String)>[];
+
+  /// Lo que hay que hacer cada vez que el teléfono sale de una sesión, sea cual sea el camino:
+  /// cerrarla, una cuenta que ya no vale o una baja. Si algo falla, se sigue igual.
+  final alSalir = <Future<void> Function()>[];
+
   /// Cuánto puede esperar el arranque a la API antes de mostrar el login.
   final Duration limiteAlRetomar;
   Perfil? _perfil;
@@ -152,7 +161,7 @@ class Sesion extends ChangeNotifier {
       _actual = perfil;
       return perfil;
     } on Object {
-      await _credenciales.salir();
+      await _salir();
       rethrow;
     }
   }
@@ -168,7 +177,7 @@ class Sesion extends ChangeNotifier {
       _actual = perfil;
       return perfil;
     } on CredencialesInvalidas {
-      await _credenciales.salir();
+      await _salir();
       return null;
     } on Exception {
       return null;
@@ -302,7 +311,7 @@ class Sesion extends ChangeNotifier {
     // Si mientras tanto se cerró la sesión o entró otra cuenta, no se la toca.
     if (!identical(_perfil, antes)) return;
     try {
-      await _credenciales.salir();
+      await _salir();
     } on Exception {
       // La cuenta ya no existe en la API: aunque quede la sesión de Firebase guardada, el
       // próximo arranque la encuentra vencida y la cierra.
@@ -326,8 +335,48 @@ class Sesion extends ChangeNotifier {
 
   /// Si Firebase no puede borrar la sesión del dispositivo, lanza y la sesión sigue abierta.
   Future<void> cerrar() async {
+    final bajas = <Future<void>>[];
+    if (alCerrar.isNotEmpty) {
+      String? token;
+      try {
+        token = await _credenciales.token().timeout(const Duration(seconds: 2));
+      } on Exception {
+        // Sin token no hay nada que avisarle a la API: la sesión se cierra igual.
+      }
+      if (token != null) {
+        // El error se engancha al crear cada pedido: si falla antes de que termine de cerrarse
+        // la sesión, no queda un error sin atrapar.
+        for (final f in alCerrar) {
+          bajas.add(
+            f(token)
+                .timeout(const Duration(seconds: 3))
+                .then((_) {}, onError: (Object _) {}),
+          );
+        }
+      }
+    }
     await _credenciales.salir();
     _actual = null;
+    // La pantalla ya muestra el login: lo que queda se hace sin hacer esperar a la persona.
+    await _avisarQueSalio();
+    await Future.wait(bajas);
+  }
+
+  /// Borra la sesión de Firebase del dispositivo y le avisa a quien lo necesite que el teléfono
+  /// ya no es de esa cuenta. Lo que falle después de salir no cambia que se salió.
+  Future<void> _salir() async {
+    await _credenciales.salir();
+    await _avisarQueSalio();
+  }
+
+  Future<void> _avisarQueSalio() async {
+    for (final f in [...alSalir]) {
+      try {
+        await f().timeout(const Duration(seconds: 3));
+      } on Exception {
+        // Sin red o con el servicio caído, la persona igual salió.
+      }
+    }
   }
 
   Future<Perfil> _perfilPropio() async {

@@ -1,14 +1,17 @@
 """Lo que los escenarios necesitan ver o forzar y la app no. Sólo existe con `PRUEBAS=1`."""
 
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel
 from sqlalchemy import Connection, text
 
+from app.aplicacion.notificaciones import enviar_recordatorios
 from app.aplicacion.recuperacion import hash_de
 from app.infraestructura.db import conexion
+from app.infraestructura.notificaciones import NotificacionesSql
+from app.infraestructura.push import canal_push
 
 router = APIRouter(prefix="/_pruebas", include_in_schema=False)
 Conexion = Annotated[Connection, Depends(conexion, scope="function")]
@@ -156,3 +159,55 @@ def vencer(codigo: str, conn: Conexion) -> Response:
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+class Barrido(BaseModel):
+    # Sólo las reservas de esta cuenta; sin correo, las de todas.
+    correo: str | None = None
+    # La hora en que se hace correr el barrido; sin ella, la de ahora.
+    ahora: datetime | None = None
+
+
+class Registrados(BaseModel):
+    registrados: int
+
+
+@router.post("/recordatorios")
+def barrer(pedido: Barrido, conn: Conexion) -> Registrados:
+    """El barrido de recordatorios corriendo a la hora [ahora], como si el reloj del servidor
+    fuera ésa."""
+    usuario = None
+    if pedido.correo is not None:
+        usuario = conn.execute(
+            text("SELECT id FROM usuario WHERE activo AND lower(correo) = lower(:c)"),
+            {"c": pedido.correo},
+        ).scalar_one_or_none()
+        conn.rollback()
+        if usuario is None:
+            return Registrados(registrados=0)
+    ahora = pedido.ahora or datetime.now().astimezone()
+    return Registrados(
+        registrados=enviar_recordatorios(NotificacionesSql(conn), canal_push(), ahora, usuario)
+    )
+
+
+class Dispositivo(BaseModel):
+    permiso: bool
+
+
+class Dispositivos(BaseModel):
+    dispositivos: list[Dispositivo]
+
+
+@router.get("/dispositivos")
+def dispositivos(correo: str, conn: Conexion) -> Dispositivos:
+    """Los teléfonos que hoy tienen registrados la cuenta [correo], con su permiso."""
+    filas = conn.execute(
+        text(
+            "SELECT d.permiso FROM dispositivo d JOIN usuario u ON u.id = d.usuario_id"
+            " WHERE d.activo AND u.activo AND lower(u.correo) = lower(:c) ORDER BY d.id"
+        ),
+        {"c": correo.strip()},
+    ).all()
+    conn.rollback()
+    return Dispositivos(dispositivos=[Dispositivo(permiso=f.permiso) for f in filas])

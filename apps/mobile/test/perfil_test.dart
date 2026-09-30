@@ -320,7 +320,7 @@ void main() {
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
-        api: apiFalsa(),
+        api: apiInicio(),
         sesion: sesion,
         apariencia: Apariencia.enMemoria(),
         inicio: '/inicio',

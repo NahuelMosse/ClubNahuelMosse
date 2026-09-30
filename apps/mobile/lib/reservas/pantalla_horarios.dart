@@ -41,6 +41,7 @@ class PantallaHorarios extends StatefulWidget {
     this.horas,
     this.inicio,
     this.modificando,
+    this.volverA = 'Mis reservas',
   });
 
   final int sedeId;
@@ -59,6 +60,9 @@ class PantallaHorarios extends StatefulWidget {
   /// La reserva que se está modificando: se mantiene su duración, su franja se ve libre y
   /// marcada, y CONTINUAR CON EL CAMBIO lleva a «Confirmá el cambio».
   final Reserva? modificando;
+
+  /// Cómo se llama la pantalla a la que vuelve la modificación.
+  final String volverA;
 
   @override
   State<PantallaHorarios> createState() => _PantallaHorariosState();
@@ -318,7 +322,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     }
   }
 
-  /// Vuelve a Mis reservas con cómo terminó la modificación.
+  /// Vuelve a la pantalla de la que vino con cómo terminó la modificación.
   void _salir([ResultadoDeModificar? resultado]) {
     if (context.canPop()) {
       context.pop(resultado);
@@ -362,7 +366,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                     tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
                     deporte: cancha.deporte,
                     volverA: modificando != null
-                        ? 'Mis reservas'
+                        ? widget.volverA
                         : widget.fecha == null
                         ? 'Sedes'
                         : 'Buscar cancha',

@@ -1,9 +1,20 @@
+/// Por dónde le llegan los avisos a la app.
+enum Push {
+  /// Firebase Cloud Messaging, con el proyecto real.
+  fcm,
+
+  /// Sin Firebase Cloud Messaging: el permiso y el token son de un dispositivo de prueba.
+  simulado,
+}
+
 /// Lo que cambia entre ambientes llega por `--dart-define`.
 class Configuracion {
   const Configuracion({
     required this.apiUrl,
     required this.firebase,
     this.authEmulador,
+    this.push = Push.fcm,
+    this.avisosCada = const Duration(seconds: 20),
   });
 
   factory Configuracion.desdeEntorno() {
@@ -14,16 +25,27 @@ class Configuracion {
       );
     }
     const authEmulador = String.fromEnvironment('AUTH_EMULADOR');
+    // Con el emulador no hay proyecto de Firebase: los avisos son simulados y la app los
+    // consulta seguido, para que los escenarios no esperen.
+    const segundos = int.fromEnvironment(
+      'AVISOS_SEGUNDOS',
+      defaultValue: authEmulador == '' ? 20 : 2,
+    );
+    const push = String.fromEnvironment('PUSH');
     if (authEmulador.isNotEmpty) {
       return const Configuracion(
         apiUrl: apiUrl,
         firebase: ProyectoFirebase.emulador,
         authEmulador: authEmulador,
+        push: Push.simulado,
+        avisosCada: Duration(seconds: segundos),
       );
     }
     return Configuracion(
       apiUrl: apiUrl,
       firebase: ProyectoFirebase.desdeEntorno(),
+      push: push == 'simulado' ? Push.simulado : Push.fcm,
+      avisosCada: const Duration(seconds: segundos),
     );
   }
 
@@ -32,11 +54,17 @@ class Configuracion {
 
   /// `host:puerto` del emulador de Firebase Auth; sin él, se usa el proyecto real.
   final String? authEmulador;
+  final Push push;
+
+  /// Cada cuánto la app abierta consulta si llegó algún aviso.
+  final Duration avisosCada;
 
   Configuracion con({String? apiUrl, String? authEmulador}) => Configuracion(
     apiUrl: apiUrl ?? this.apiUrl,
     firebase: firebase,
     authEmulador: authEmulador ?? this.authEmulador,
+    push: push,
+    avisosCada: avisosCada,
   );
 }
 

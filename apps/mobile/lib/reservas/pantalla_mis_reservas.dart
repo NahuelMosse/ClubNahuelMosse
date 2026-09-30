@@ -26,28 +26,66 @@ class PantallaMisReservas extends StatefulWidget {
     required this.reservas,
     required this.espacios,
     required this.sesion,
+    this.reservaId,
+    this.enHistorial = false,
   });
 
   final Reservas reservas;
   final Espacios espacios;
   final Sesion sesion;
 
+  /// La reserva que se resalta y se trae a la vista, si se llegó desde un aviso.
+  final int? reservaId;
+
+  /// Abre en el historial: para los avisos de una reserva que ya no está entre las próximas.
+  final bool enHistorial;
+
   @override
   State<PantallaMisReservas> createState() => _PantallaMisReservasState();
 }
 
 class _PantallaMisReservasState extends State<PantallaMisReservas> {
-  bool _historial = false;
+  late bool _historial = widget.enHistorial;
   (List<Reserva>, Catalogo)? _datos;
   bool _fallo = false;
 
   /// Sube con cada lectura: la respuesta de una pestaña que ya no se mira se descarta.
   int _pedido = 0;
 
+  /// La tarjeta resaltada, para traerla a la vista.
+  final _resaltada = GlobalKey();
+
   @override
   void initState() {
     super.initState();
     _cargar();
+  }
+
+  @override
+  void didUpdateWidget(PantallaMisReservas anterior) {
+    super.didUpdateWidget(anterior);
+    if (widget.reservaId == null ||
+        (widget.reservaId == anterior.reservaId &&
+            widget.enHistorial == anterior.enHistorial)) {
+      return;
+    }
+    // Un aviso nuevo con la pantalla ya abierta: se va a la pestaña del aviso y se lee de nuevo.
+    if (_historial != widget.enHistorial) {
+      setState(() => _historial = widget.enHistorial);
+      _cargar();
+    } else {
+      _cargar(deCero: false);
+    }
+  }
+
+  void _traerALaVista() {
+    if (widget.reservaId == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final tarjeta = _resaltada.currentContext;
+      if (mounted && tarjeta != null) {
+        Scrollable.ensureVisible(tarjeta, alignment: 0.1);
+      }
+    });
   }
 
   /// Con [deCero] (otra pestaña) la lista se vacía mientras llega la nueva; al refrescar
@@ -65,6 +103,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       final lista = await widget.reservas.mias(historial: _historial);
       if (mounted && pedido == _pedido) {
         setState(() => _datos = (lista, catalogo));
+        _traerALaVista();
       }
       return;
     } on SesionVencida {
@@ -97,12 +136,9 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   /// cambiado, la lista se vuelve a leer.
   Future<void> _cancelar(Reserva r, Catalogo catalogo) async {
     if (_cancelando != null) return;
-    final horario = _horarioDe(r);
     final confirmo = await confirmarCancelacion(
       context,
-      '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
-      '${fechaLarga(r.inicio).split(' de ').first}, $horario · ${pesos(r.total)}. '
-      'El horario vuelve a quedar libre.',
+      textoDeCancelacion(r, catalogo),
     );
     if (!confirmo || !mounted) return;
     setState(() => _cancelando = r.id);
@@ -260,6 +296,8 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                       TarjetaReserva(
                         reserva: r,
                         catalogo: datos.$2,
+                        key: r.id == widget.reservaId ? _resaltada : null,
+                        resaltada: r.id == widget.reservaId,
                         cancelable: !_historial && r.cancelable,
                         cancelando: _cancelando == r.id,
                         alCancelar: _cancelando == null
@@ -280,6 +318,12 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
     );
   }
 }
+
+/// Lo que se le pide confirmar a quien va a cancelar [r].
+String textoDeCancelacion(Reserva r, Catalogo catalogo) =>
+    '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
+    '${fechaLarga(r.inicio).split(' de ').first}, ${_horarioDe(r)} · '
+    '${pesos(r.total)}. El horario vuelve a quedar libre.';
 
 /// «21:00 – 22:00».
 String _horarioDe(Reserva r) {
@@ -355,6 +399,7 @@ class TarjetaReserva extends StatelessWidget {
     super.key,
     required this.reserva,
     required this.catalogo,
+    this.resaltada = false,
     this.cancelable = false,
     this.cancelando = false,
     this.alCancelar,
@@ -363,6 +408,9 @@ class TarjetaReserva extends StatelessWidget {
 
   final Reserva reserva;
   final Catalogo catalogo;
+
+  /// Viene de un aviso: se marca con el borde de acento.
+  final bool resaltada;
 
   /// Muestra CANCELAR: una próxima que todavía no empezó.
   final bool cancelable;
@@ -417,6 +465,7 @@ class TarjetaReserva extends StatelessWidget {
     // botones propios.
     final datos = Semantics(
       container: true,
+      selected: resaltada,
       excludeSemantics: true,
       label: [
         catalogo.tipoCorto(r.deporte, r.tipo),
@@ -582,7 +631,10 @@ class TarjetaReserva extends StatelessWidget {
       decoration: BoxDecoration(
         color: p.bgSurfaceRaised,
         borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
+        border: Border.all(
+          color: resaltada ? p.borderFocus : p.borderDefault,
+          width: resaltada ? 2 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

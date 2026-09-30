@@ -130,6 +130,7 @@ class BotonContorno extends StatelessWidget {
     this.compacto = false,
     this.icono,
     this.etiquetaAccesible,
+    this.expandir = true,
   });
 
   final String texto;
@@ -145,14 +146,18 @@ class BotonContorno extends StatelessWidget {
   /// Lo que lee el lector de pantalla cuando [texto] solo no dice de qué es el botón.
   final String? etiquetaAccesible;
 
+  /// `false` lo achica a su contenido en vez de estirarlo a todo el ancho disponible:
+  /// para un botón corto junto a otro control, como «Filtros» junto al buscador.
+  final bool expandir;
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final simbolo = icono;
     return ConstrainedBox(
-      constraints: const BoxConstraints(
+      constraints: BoxConstraints(
         minHeight: Medidas.altoControl,
-        minWidth: double.infinity,
+        minWidth: expandir ? double.infinity : 0,
       ),
       child: OutlinedButton.icon(
         onPressed: alTocar,
