@@ -44,7 +44,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
   late int? _sedeId = widget.filtros.sedeId;
   late String? _deporte = widget.filtros.deporte;
   late EstadoDeReserva? _estado = widget.filtros.estado;
-  late final _busqueda = TextEditingController(text: widget.filtros.q ?? '');
+  late String? _q = widget.filtros.q;
   late final _desde = TextEditingController(
     text: switch (widget.filtros.desde) {
       final d? => formatearFecha(d),
@@ -67,7 +67,6 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
 
   @override
   void dispose() {
-    _busqueda.dispose();
     _desde.dispose();
     _hasta.dispose();
     super.dispose();
@@ -91,7 +90,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
       _estado = null;
       _desde.clear();
       _hasta.clear();
-      _busqueda.clear();
+      _q = null;
     });
   }
 
@@ -104,7 +103,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
         deporte: _deporte,
         desde: _fechaDesde,
         hasta: _fechaHasta,
-        q: _busqueda.text,
+        q: _q,
       ),
     );
   }
@@ -152,13 +151,6 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                   Medidas.s24,
                 ),
                 children: [
-                  CampoTexto(
-                    etiquetaAccesible: 'Buscar por usuario, sede o espacio',
-                    placeholder: 'Buscar por usuario, sede o espacio',
-                    controlador: _busqueda,
-                    accionFinal: Icon(Icons.search_rounded, color: p.textMuted),
-                  ),
-                  const SizedBox(height: Medidas.s20),
                   _Titulo('SEDE'),
                   const SizedBox(height: Medidas.s8),
                   Wrap(
