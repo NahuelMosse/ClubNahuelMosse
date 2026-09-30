@@ -3,13 +3,17 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from app.dominio.espacios import CATALOGO
+from app.dominio.reservas import Reserva
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
-Envio = Literal["pendiente", "enviada", "sin_permiso", "sin_canal", "fallida"]
+Envio = Literal[
+    "pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"
+]
 
 # El club está en UTC−3, sin horario de verano.
 HORA_DEL_CLUB = timezone(timedelta(hours=-3))
 ANTICIPACION = timedelta(hours=1)
+DIAS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
 
 
 @dataclass(frozen=True)
@@ -65,5 +69,24 @@ def mensaje_recordatorio(r: Recordatorio) -> Aviso:
     return Aviso(
         titulo="Tu reserva es en 1 hora",
         cuerpo=f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {_hora(r.inicio)} – {_hora(r.fin)}",
-        datos={"tipo": "recordatorio", "reserva_id": str(r.reserva_id)},
+        datos=datos_del_aviso("recordatorio", r.reserva_id),
+    )
+
+
+def datos_del_aviso(tipo: TipoDeAviso, reserva_id: int | None) -> dict[str, str]:
+    """Con qué datos la app sabe adónde llevar a la persona al tocar el aviso."""
+    return {"tipo": tipo} | ({} if reserva_id is None else {"reserva_id": str(reserva_id)})
+
+
+def mensaje_cancelacion(r: Reserva) -> Aviso:
+    """«Reserva cancelada» con «Fútbol 5 · Sede Morón · Mié 11, 20:00. El horario quedó
+    liberado.», en la hora del club."""
+    inicio = r.inicio.astimezone(HORA_DEL_CLUB)
+    return Aviso(
+        titulo="Reserva cancelada",
+        cuerpo=(
+            f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {DIAS[inicio.weekday()]} "
+            f"{inicio.day}, {_hora(inicio)}. El horario quedó liberado."
+        ),
+        datos=datos_del_aviso("cancelacion_usuario", r.id),
     )

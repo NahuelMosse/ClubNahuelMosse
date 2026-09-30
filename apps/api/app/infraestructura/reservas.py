@@ -13,6 +13,7 @@ from app.aplicacion.errores import (
 )
 from app.aplicacion.reservas import Cuando
 from app.dominio.horarios import Agenda
+from app.dominio.notificaciones import mensaje_cancelacion
 from app.dominio.reservas import Reserva
 from app.infraestructura.horarios import HorariosSql
 
@@ -227,12 +228,23 @@ class ReservasSql:
                 ),
                 datos,
             )
+            reserva = self._una(reserva_id)
+            # La confirmación se encola en la misma transacción: si la cancelación no se
+            # completa no queda aviso, y el índice único evita repetirlo.
+            aviso = mensaje_cancelacion(reserva)
+            self._conn.execute(
+                text(
+                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+                    " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_usuario', :titulo,"
+                    " :cuerpo, :id, :inicio, 'pendiente')"
+                    " ON CONFLICT (reserva_id) WHERE tipo = 'cancelacion_usuario' DO NOTHING"
+                ),
+                datos | {"titulo": aviso.titulo, "cuerpo": aviso.cuerpo, "inicio": reserva.inicio},
+            )
             self._conn.commit()
         except BaseException:
             self._conn.rollback()
             raise
-        reserva = self._una(reserva_id)
-        self._conn.rollback()
         return reserva
 
     def insertar(

@@ -3,7 +3,7 @@ from datetime import date, datetime, time
 from typing import Annotated
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Path, Query, Response, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy import Connection
@@ -16,6 +16,7 @@ from app.aplicacion.errores import (
     NoEncontrada,
     Prohibido,
 )
+from app.aplicacion.notificaciones import CanalPush
 from app.aplicacion.reservas import (
     Cuando,
     cancelar_reserva,
@@ -26,7 +27,9 @@ from app.aplicacion.reservas import (
 from app.dominio.reservas import Estado, Reserva
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
+from app.infraestructura.push import canal_push
 from app.infraestructura.reservas import ReservasSql
+from app.interfaz.barrido import despachar_de
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["reservas"])
@@ -185,14 +188,17 @@ CAMBIO = "Esto cambió mientras tanto"
     },
     summary="Cancelar una reserva propia",
     description=(
-        "Hasta el inicio del turno. El horario vuelve a quedar libre y la reserva pasa al "
-        "historial como cancelada. Cancelar una que ya canceló la misma persona responde igual."
+        "Hasta el inicio del turno. El horario vuelve a quedar libre, la reserva pasa al "
+        "historial como cancelada y la confirmación queda en el centro de notificaciones y sale "
+        "por push. Cancelar una que ya canceló la misma persona responde igual."
     ),
 )
 def cancelar(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    despues: BackgroundTasks,
+    canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaVista | Response:
     try:
         reserva = cancelar_reserva(ReservasSql(conn), perfil, reserva_id)
@@ -202,6 +208,7 @@ def cancelar(
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
         )
+    despues.add_task(despachar_de, perfil.id, canal)
     return _vista(reserva)
 
 

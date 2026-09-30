@@ -3,7 +3,14 @@ from datetime import datetime
 
 from sqlalchemy import Connection, text
 
-from app.dominio.notificaciones import Aviso, Envio, Notificacion, Recordatorio
+from app.aplicacion.notificaciones import Pendiente
+from app.dominio.notificaciones import (
+    Aviso,
+    Envio,
+    Notificacion,
+    Recordatorio,
+    datos_del_aviso,
+)
 
 # Cuántas notificaciones trae el centro: las más nuevas.
 LIMITE_DEL_CENTRO = 100
@@ -99,6 +106,34 @@ class NotificacionesSql:
         ).all()
         self._conn.rollback()
         return [f.token for f in filas]
+
+    def tomar_pendientes(self, usuario_id: int | None) -> list[Pendiente]:
+        filas = self._conn.execute(
+            text(
+                "UPDATE notificacion SET envio = 'enviando' WHERE id IN ("
+                " SELECT id FROM notificacion WHERE envio = 'pendiente'"
+                " AND tipo <> 'recordatorio'"
+                " AND (CAST(:usuario AS bigint) IS NULL OR usuario_id = :usuario)"
+                " ORDER BY id FOR UPDATE SKIP LOCKED)"
+                " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
+            ),
+            {"usuario": usuario_id},
+        ).all()
+        self._conn.commit()
+        return [
+            Pendiente(
+                notificacion_id=int(f.id),
+                usuario_id=int(f.usuario_id),
+                aviso=Aviso(
+                    titulo=f.titulo,
+                    cuerpo=f.cuerpo,
+                    datos=datos_del_aviso(
+                        f.tipo, None if f.reserva_id is None else int(f.reserva_id)
+                    ),
+                ),
+            )
+            for f in sorted(filas, key=lambda f: int(f.id))
+        ]
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None:
         self._conn.execute(

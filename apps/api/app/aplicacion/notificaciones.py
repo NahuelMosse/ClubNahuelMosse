@@ -20,6 +20,15 @@ _registro = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
+class Pendiente:
+    """Un aviso ya registrado en el centro que todavía no salió hacia el teléfono."""
+
+    notificacion_id: int
+    usuario_id: int
+    aviso: Aviso
+
+
+@dataclass(frozen=True)
 class ResultadoDeEnvio:
     """Cuántos dispositivos aceptó el servicio y qué tokens rechazó por inválidos."""
 
@@ -51,6 +60,12 @@ class Notificaciones(Protocol):
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]: ...
 
+    def tomar_pendientes(self, usuario_id: int | None) -> list[Pendiente]:
+        """Reserva para quien llama los avisos registrados junto con el hecho que avisan
+        (no los recordatorios) y sin enviar, de [usuario_id] o de todos: pasan a `enviando`,
+        así dos despachos al mismo tiempo no mandan el mismo dos veces."""
+        ...
+
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None: ...
 
     def dar_de_baja_tokens(self, tokens: Sequence[str]) -> None: ...
@@ -76,6 +91,49 @@ class Notificaciones(Protocol):
     def leer_todas(self, usuario_id: int) -> None: ...
 
 
+def entregar(
+    notificaciones: Notificaciones,
+    canal: CanalPush,
+    notificacion_id: int,
+    usuario_id: int,
+    aviso: Aviso,
+) -> None:
+    """Manda un aviso ya registrado a los teléfonos con permiso y deja anotado cómo salió.
+
+    Sin ningún dispositivo con permiso queda sólo en el centro. Un envío que falla no se
+    reintenta desde acá: queda marcado como fallido.
+    """
+    tokens = notificaciones.tokens_con_permiso(usuario_id)
+    if not tokens:
+        notificaciones.marcar_envio(notificacion_id, "sin_permiso")
+        return
+    try:
+        resultado = canal.enviar(tokens, aviso)
+    except CanalNoConfigurado:
+        notificaciones.marcar_envio(notificacion_id, "sin_canal")
+        return
+    except Exception as e:
+        # El servicio de afuera puede fallar de cualquier forma; el aviso ya está en el
+        # centro y un envío no puede cortar el de otra persona. Se loguea el tipo del error
+        # y no su texto, que puede traer el token del teléfono.
+        _registro.warning("el envío del aviso falló: %s", type(e).__name__)
+        notificaciones.marcar_envio(notificacion_id, "fallida")
+        return
+    notificaciones.dar_de_baja_tokens(resultado.invalidos)
+    notificaciones.marcar_envio(notificacion_id, "enviada" if resultado.enviados > 0 else "fallida")
+
+
+def despachar_pendientes(
+    notificaciones: Notificaciones, canal: CanalPush, usuario_id: int | None = None
+) -> int:
+    """Manda los avisos que se registraron junto con el hecho que avisan, como la confirmación
+    de una cancelación, y devuelve cuántos salieron a despacho."""
+    pendientes = notificaciones.tomar_pendientes(usuario_id)
+    for p in pendientes:
+        entregar(notificaciones, canal, p.notificacion_id, p.usuario_id, p.aviso)
+    return len(pendientes)
+
+
 def enviar_recordatorios(
     notificaciones: Notificaciones,
     canal: CanalPush,
@@ -86,8 +144,7 @@ def enviar_recordatorios(
     devuelve cuántos registró.
 
     El aviso se registra antes de enviarlo: el índice único de la base hace que dos barridos
-    al mismo tiempo no lo manden dos veces. Sin ningún dispositivo con permiso queda sólo en
-    el centro. Un envío que falla no se reintenta desde acá: queda marcado como fallido.
+    al mismo tiempo no lo manden dos veces.
     """
     registrados = 0
     for recordatorio in notificaciones.vencidos(ahora, usuario_id):
@@ -96,24 +153,7 @@ def enviar_recordatorios(
         if nuevo is None:
             continue
         registrados += 1
-        tokens = notificaciones.tokens_con_permiso(recordatorio.usuario_id)
-        if not tokens:
-            notificaciones.marcar_envio(nuevo, "sin_permiso")
-            continue
-        try:
-            resultado = canal.enviar(tokens, aviso)
-        except CanalNoConfigurado:
-            notificaciones.marcar_envio(nuevo, "sin_canal")
-            continue
-        except Exception as e:
-            # El servicio de afuera puede fallar de cualquier forma; el aviso ya está en el
-            # centro y un barrido no puede cortarse por el de una persona. Se loguea el tipo
-            # del error y no su texto, que puede traer el token del teléfono.
-            _registro.warning("el envío del aviso falló: %s", type(e).__name__)
-            notificaciones.marcar_envio(nuevo, "fallida")
-            continue
-        notificaciones.dar_de_baja_tokens(resultado.invalidos)
-        notificaciones.marcar_envio(nuevo, "enviada" if resultado.enviados > 0 else "fallida")
+        entregar(notificaciones, canal, nuevo, recordatorio.usuario_id, aviso)
     return registrados
 
 
