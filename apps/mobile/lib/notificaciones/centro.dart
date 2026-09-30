@@ -127,8 +127,8 @@ class CentroDeNotificaciones extends ChangeNotifier {
   Future<void> _revisarPermiso({bool registrar = false}) async {
     final ahora = await _sistema.permitido();
     if (ahora == _permitido && !registrar) return;
-    _permitido = ahora;
-    notifyListeners();
+    // Primero se le cuenta a la API y recién entonces cambia lo que se ve: la pantalla no dice
+    // «activadas» mientras la API todavía cree que el teléfono no tiene permiso.
     try {
       final token = await _sistema.token();
       if (token != null) {
@@ -141,6 +141,8 @@ class CentroDeNotificaciones extends ChangeNotifier {
     } on Exception {
       // Sin red el registro queda para la próxima vez que cambie el permiso o se abra la app.
     }
+    _permitido = ahora;
+    notifyListeners();
   }
 
   /// Lee el centro. Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
