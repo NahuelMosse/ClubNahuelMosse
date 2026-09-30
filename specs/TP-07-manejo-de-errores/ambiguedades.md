@@ -25,3 +25,9 @@ TP-07-AMB-07 · 2026-09-27 · abierta · ¿un único overlay de conexión y uno 
 TP-07-AMB-00 · 2026-09-27 · snapshot · congelado en b1d835f
 TP-07-AMB-07 · 2026-09-27 · preguntada · al usuario, en la ronda de decisiones transversales
 TP-07-AMB-07 · 2026-09-27 · resuelta · se usan los overlays compartidos del prototipo en toda la app (decisión 11)
+TP-07-AMB-01 · 2026-09-30 · vencida → TP-07-SUP-01 · las validaciones de formulario siguen siendo de cada CU, con el mensaje junto al campo; esta card no agrega ni cambia reglas de formulario
+TP-07-AMB-02 · 2026-09-30 · vencida → TP-07-SUP-02 · sin conexión la app avisa con REINTENTAR y Volver; no guarda la operación para reintentarla sola
+TP-07-AMB-03 · 2026-09-30 · vencida → TP-07-SUP-03 · «Acceso denegado» cubre a quien entra al panel sin ser administrador y cualquier 403 de la API (también el administrador que intenta reservar, CU-09-SUP-02); lleva a Mis reservas
+TP-07-AMB-04 · 2026-09-30 · vencida → TP-07-SUP-04 · 15 segundos sin respuesta (el límite del cliente de la API); se muestra «Error de conexión» con REINTENTAR, porque la API no se alcanzó
+TP-07-AMB-05 · 2026-09-30 · vencida → TP-07-SUP-05 · detectan el cambio concurrente las operaciones que ya lo resuelven por estado del servidor (409 o 404: reservas, bajas, ediciones de sede y espacio); no hay versión de registro ni If-Match y en el resto gana el último; una sede o cancha que ya no está muestra «Esto cambió mientras tanto» en lugar de un aviso suelto
+TP-07-AMB-06 · 2026-09-30 · vencida → TP-07-SUP-06 · el backend registra en el log estándar, con fecha, método y ruta, código y usuario, las excepciones no atrapadas, los 5xx y los 401, 403 y 409; no hay tabla de errores
