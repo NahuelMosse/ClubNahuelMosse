@@ -331,7 +331,11 @@ class _AppState extends State<App> {
             redirect: (context, estado) =>
                 estado.extra is ReservaHistorial ? null : '/admin',
             builder: (context, estado) => switch (estado.extra) {
-              final ReservaHistorial r => PantallaDetalleReserva(reserva: r),
+              final ReservaHistorial r => PantallaDetalleReserva(
+                reserva: r,
+                historial: _historialAdmin,
+                sesion: widget.sesion,
+              ),
               _ => const SizedBox.shrink(),
             },
           ),

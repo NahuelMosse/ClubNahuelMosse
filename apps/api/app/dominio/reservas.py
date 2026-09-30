@@ -73,6 +73,8 @@ class ReservaHistorial:
     # El espacio o su sede ya no están activos: la reserva sigue en el historial (FA8), con
     # el nombre técnico que tenía al reservar.
     espacio_de_baja: bool
+    # Activa y sin empezar, según el reloj del servidor: la app no decide con el suyo.
+    anulable: bool = False
 
 
 @dataclass(frozen=True)

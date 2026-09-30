@@ -21,6 +21,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'anular_reserva.dart';
 import 'estado_reserva_chip.dart';
 import 'historial_reservas.dart';
 import 'pantalla_filtros_reservas.dart';
@@ -215,7 +216,27 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
   }
 
   Future<void> _abrirDetalle(ReservaHistorial r) async {
-    await context.push<void>('/admin/reserva/${r.id}', extra: r);
+    final cambio = await context.push<bool>('/admin/reserva/${r.id}', extra: r);
+    if (cambio == true && mounted) unawaited(_cargar());
+  }
+
+  /// La anulación de [r] está en camino: el listado no responde hasta que termine.
+  bool _anulando = false;
+
+  Future<void> _anular(ReservaHistorial r) async {
+    if (_anulando) return;
+    final resultado = await anularReserva(
+      context,
+      reserva: r,
+      historial: widget.historial,
+      sesion: widget.sesion,
+      enviando: (v) {
+        if (mounted) setState(() => _anulando = v);
+      },
+    );
+    if (resultado != ResultadoDeAnulacion.nada && mounted) {
+      unawaited(_cargar());
+    }
   }
 
   @override
@@ -404,6 +425,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                               reserva: r,
                               catalogo: catalogo,
                               alTocar: () => _abrirDetalle(r),
+                              alAnular: _anulando ? null : () => _anular(r),
                             ),
                           ),
                       ],
@@ -493,11 +515,15 @@ class _TarjetaReservaAdmin extends StatelessWidget {
     required this.reserva,
     required this.catalogo,
     required this.alTocar,
+    required this.alAnular,
   });
 
   final ReservaHistorial reserva;
   final Catalogo? catalogo;
   final VoidCallback alTocar;
+
+  /// `null` deshabilita ANULAR RESERVA (hay otra anulación en camino).
+  final VoidCallback? alAnular;
 
   String get _horario {
     String dos(int n) => n.toString().padLeft(2, '0');
@@ -531,147 +557,171 @@ class _TarjetaReservaAdmin extends StatelessWidget {
         '${fechaLarga(r.inicio)}, $_horario, ${pesos(r.total)}, '
         '${r.estado.name}'
         '${r.espacioDeBaja ? ', baja del espacio deportivo' : ''}';
-    return Semantics(
-      button: true,
-      label: semantica,
-      excludeSemantics: true,
-      child: Material(
-        color: p.bgSurfaceRaised,
+    final anular = alAnular;
+    return Material(
+      color: p.bgSurfaceRaised,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Medidas.radioLg),
-        child: InkWell(
-          onTap: alTocar,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          child: Container(
-            padding: const EdgeInsets.all(Medidas.s16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(Medidas.radioLg),
-              border: Border.all(color: p.borderDefault),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      iconoDeDeporte(r.deporte),
-                      size: 20,
-                      color: p.textSecondary,
-                    ),
-                    const SizedBox(width: Medidas.s8),
-                    Expanded(
-                      child: Text(
-                        nombreDeporte,
-                        style: Textos.titulo.copyWith(color: p.textPrimary),
-                      ),
-                    ),
-                    // Con el texto muy agrandado, precio y estado bajan debajo del
-                    // nombre en vez de disputarle el ancho.
-                    if (!_grande(context)) ...[
-                      const SizedBox(width: Medidas.s8),
-                      _precioYEstado(p),
-                    ],
-                  ],
-                ),
-                if (_grande(context)) ...[
-                  const SizedBox(height: Medidas.s8),
-                  _precioYEstado(p),
-                ],
-                const SizedBox(height: Medidas.s4),
-                Text(
-                  '${r.sede} · ${r.direccion}',
-                  style: Textos.leyenda.copyWith(color: p.textSecondary),
-                ),
-                const SizedBox(height: Medidas.s12),
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 16,
-                      color: p.textSecondary,
-                    ),
-                    const SizedBox(width: Medidas.s8),
-                    Expanded(
-                      child: Text(
-                        r.usuario,
-                        style: Textos.cuerpo.copyWith(color: p.textPrimary),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: Medidas.s8),
-                Text(
-                  r.espacio,
-                  style: Textos.mono.copyWith(color: p.textMuted),
-                ),
-                const SizedBox(height: Medidas.s8),
-                Wrap(
-                  spacing: Medidas.s16,
-                  runSpacing: Medidas.s4,
+        side: BorderSide(color: p.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Semantics(
+            button: true,
+            label: semantica,
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: alTocar,
+              child: Padding(
+                padding: const EdgeInsets.all(Medidas.s16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
-                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          Icons.calendar_today_outlined,
+                          iconoDeDeporte(r.deporte),
+                          size: 20,
+                          color: p.textSecondary,
+                        ),
+                        const SizedBox(width: Medidas.s8),
+                        Expanded(
+                          child: Text(
+                            nombreDeporte,
+                            style: Textos.titulo.copyWith(color: p.textPrimary),
+                          ),
+                        ),
+                        // Con el texto muy agrandado, precio y estado bajan debajo del
+                        // nombre en vez de disputarle el ancho.
+                        if (!_grande(context)) ...[
+                          const SizedBox(width: Medidas.s8),
+                          _precioYEstado(p),
+                        ],
+                      ],
+                    ),
+                    if (_grande(context)) ...[
+                      const SizedBox(height: Medidas.s8),
+                      _precioYEstado(p),
+                    ],
+                    const SizedBox(height: Medidas.s4),
+                    Text(
+                      '${r.sede} · ${r.direccion}',
+                      style: Textos.leyenda.copyWith(color: p.textSecondary),
+                    ),
+                    const SizedBox(height: Medidas.s12),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
                           size: 16,
                           color: p.textSecondary,
                         ),
                         const SizedBox(width: Medidas.s8),
-                        Flexible(
+                        Expanded(
                           child: Text(
-                            fechaLarga(r.inicio),
-                            style: Textos.leyenda.copyWith(
+                            r.usuario,
+                            style: Textos.cuerpo.copyWith(color: p.textPrimary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: Medidas.s8),
+                    Text(
+                      r.espacio,
+                      style: Textos.mono.copyWith(color: p.textMuted),
+                    ),
+                    const SizedBox(height: Medidas.s8),
+                    Wrap(
+                      spacing: Medidas.s16,
+                      runSpacing: Medidas.s4,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              size: 16,
                               color: p.textSecondary,
                             ),
-                          ),
+                            const SizedBox(width: Medidas.s8),
+                            Flexible(
+                              child: Text(
+                                fechaLarga(r.inicio),
+                                style: Textos.leyenda.copyWith(
+                                  color: p.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 18,
-                          color: p.accentInk,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Flexible(
-                          child: Text(
-                            _horario,
-                            style: Textos.cuerpoFuerte.copyWith(
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.schedule_rounded,
+                              size: 18,
                               color: p.accentInk,
                             ),
-                          ),
+                            const SizedBox(width: Medidas.s8),
+                            Flexible(
+                              child: Text(
+                                _horario,
+                                style: Textos.cuerpoFuerte.copyWith(
+                                  color: p.accentInk,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-                if (r.espacioDeBaja) ...[
-                  const SizedBox(height: Medidas.s8),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline_rounded,
-                        size: 14,
-                        color: p.textMuted,
-                      ),
-                      const SizedBox(width: Medidas.s4),
-                      Flexible(
-                        child: Text(
-                          'Baja del espacio deportivo',
-                          style: Textos.leyenda.copyWith(color: p.textMuted),
-                        ),
+                    if (r.espacioDeBaja) ...[
+                      const SizedBox(height: Medidas.s8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 14,
+                            color: p.textMuted,
+                          ),
+                          const SizedBox(width: Medidas.s4),
+                          Flexible(
+                            child: Text(
+                              'Baja del espacio deportivo',
+                              style: Textos.leyenda.copyWith(
+                                color: p.textMuted,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                ],
-              ],
+                  ],
+                ),
+              ),
             ),
           ),
-        ),
+          if (r.anulable)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                Medidas.s16,
+                0,
+                Medidas.s16,
+                Medidas.s16,
+              ),
+              child: BotonContorno(
+                texto: 'ANULAR RESERVA',
+                peligro: true,
+                etiquetaAccesible:
+                    'Anular la reserva de ${r.usuario}, $nombreDeporte, '
+                    '${fechaLarga(r.inicio)}, $_horario',
+                alTocar: anular,
+              ),
+            ),
+        ],
       ),
     );
   }

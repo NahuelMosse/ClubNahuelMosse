@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
+import '../sesion/sesion.dart';
+import 'anular_reserva.dart';
 import '../comun/formato_precio.dart';
 import '../espacios/iconos.dart';
 import '../reservas/fechas.dart';
@@ -9,12 +11,45 @@ import '../tema/tokens.dart';
 import 'estado_reserva_chip.dart';
 import 'historial_reservas.dart';
 
-/// El detalle de sólo lectura de una reserva del historial global (CU-14): datos y
-/// trazabilidad. La acción de anular (CU-15) todavía no vive acá.
-class PantallaDetalleReserva extends StatelessWidget {
-  const PantallaDetalleReserva({super.key, required this.reserva});
+/// El detalle de una reserva del historial global (CU-14): datos y trazabilidad, y si la
+/// reserva se puede anular (CU-15), la acción de anularla. Al volver avisa con `true` que
+/// la reserva cambió y el listado tiene que volver a leerse.
+class PantallaDetalleReserva extends StatefulWidget {
+  const PantallaDetalleReserva({
+    super.key,
+    required this.reserva,
+    required this.historial,
+    required this.sesion,
+  });
 
   final ReservaHistorial reserva;
+  final HistorialDeReservas historial;
+  final Sesion sesion;
+
+  @override
+  State<PantallaDetalleReserva> createState() => _PantallaDetalleReservaState();
+}
+
+class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
+  bool _anulando = false;
+
+  ReservaHistorial get reserva => widget.reserva;
+
+  Future<void> _anular() async {
+    if (_anulando) return;
+    final resultado = await anularReserva(
+      context,
+      reserva: reserva,
+      historial: widget.historial,
+      sesion: widget.sesion,
+      enviando: (v) {
+        if (mounted) setState(() => _anulando = v);
+      },
+    );
+    if (resultado != ResultadoDeAnulacion.nada && mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
 
   String get _horario {
     String dos(int n) => n.toString().padLeft(2, '0');
@@ -76,11 +111,31 @@ class PantallaDetalleReserva extends StatelessWidget {
                     const SizedBox(height: Medidas.s16),
                     _Trazabilidad(reserva: r),
                     const SizedBox(height: Medidas.s24),
+                    if (r.anulable) ...[
+                      _anulando
+                          ? Semantics(
+                              label: 'Anulando la reserva',
+                              excludeSemantics: true,
+                              child: const SizedBox(
+                                height: Medidas.altoControl,
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              ),
+                            )
+                          : BotonContorno(
+                              texto: 'ANULAR RESERVA',
+                              peligro: true,
+                              etiquetaAccesible:
+                                  'Anular la reserva de ${r.usuario}',
+                              alTocar: _anular,
+                            ),
+                      const SizedBox(height: Medidas.s12),
+                    ],
                     BotonContorno(
                       texto: 'VOLVER AL LISTADO',
                       alTocar: () => Navigator.of(context).pop(),
                     ),
-                    // La acción de anular (CU-15) va acá, sobre una reserva vigente.
                   ],
                 ),
               ),
@@ -166,10 +221,7 @@ class _TarjetaDatos extends StatelessWidget {
               ],
             ),
             const SizedBox(height: Medidas.s8),
-            Text(
-              r.espacio,
-              style: Textos.mono.copyWith(color: p.textMuted),
-            ),
+            Text(r.espacio, style: Textos.mono.copyWith(color: p.textMuted)),
             const SizedBox(height: Medidas.s8),
             Wrap(
               spacing: Medidas.s16,
@@ -193,11 +245,7 @@ class _TarjetaDatos extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 18,
-                      color: p.accentInk,
-                    ),
+                    Icon(Icons.schedule_rounded, size: 18, color: p.accentInk),
                     const SizedBox(width: Medidas.s8),
                     Text(
                       horario,

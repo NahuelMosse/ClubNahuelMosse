@@ -34,7 +34,8 @@ _COLUMNAS_HISTORIAL = (
     " r.precio_por_hora, r.total, r.estado_actual AS estado, r.motivo,"
     " r.usuario_id, u.nombre || ' ' || u.apellido AS usuario, r.creado_en, r.cancelada_en,"
     " administrador.nombre || ' ' || administrador.apellido AS cancelada_por_nombre,"
-    " (NOT e.activo OR NOT s.activa) AS espacio_de_baja"
+    " (NOT e.activo OR NOT s.activa) AS espacio_de_baja,"
+    " (r.estado_actual = 'activa' AND r.inicio > now()) AS anulable"
 )
 _JOIN_HISTORIAL = (
     " FROM reserva_con_estado r"
@@ -91,6 +92,7 @@ def _reserva_historial(f: Any) -> ReservaHistorial:
         cancelada_en=f.cancelada_en,
         cancelada_por_nombre=f.cancelada_por_nombre,
         espacio_de_baja=bool(f.espacio_de_baja),
+        anulable=bool(f.anulable),
     )
 
 
@@ -349,6 +351,81 @@ class ReservasSql:
         reserva = self._una(int(nueva))
         self._conn.rollback()
         return reserva
+
+    def anular(
+        self, admin_id: int, reserva_id: int, motivo: str, espacio_id: int, inicio: datetime
+    ) -> ReservaHistorial:
+        datos: dict[str, Any] = {
+            "admin": admin_id,
+            "id": reserva_id,
+            "motivo": motivo,
+            "espacio": espacio_id,
+            "inicio": inicio,
+        }
+        try:
+            # Se mira sin bloquear a quién pertenece la reserva para tomar los bloqueos en el
+            # orden de siempre: la cuenta y la sede compartidas, el espacio exclusivo y recién
+            # entonces la reserva. Si la reserva se movió de espacio en el medio, el espacio
+            # bloqueado ya no es el suyo y se rechaza como cambiada.
+            previa = self._conn.execute(
+                text(
+                    "SELECT r.usuario_id, r.espacio_id, e.sede_id FROM reserva r"
+                    " JOIN espacio e ON e.id = r.espacio_id WHERE r.id = :id"
+                ),
+                datos,
+            ).first()
+            if previa is None:
+                raise NoEncontrada("no hay una reserva con ese número")
+            datos |= {
+                "usuario": previa.usuario_id,
+                "sede": previa.sede_id,
+                "espacio_previo": previa.espacio_id,
+            }
+            self._conn.execute(text("SELECT 1 FROM usuario WHERE id = :usuario FOR SHARE"), datos)
+            self._conn.execute(text("SELECT 1 FROM sede WHERE id = :sede FOR SHARE"), datos)
+            self._conn.execute(
+                text("SELECT 1 FROM espacio WHERE id = :espacio_previo FOR NO KEY UPDATE"), datos
+            )
+            fila = self._conn.execute(
+                text(
+                    "SELECT estado, motivo, cancelada_por, inicio <= now() AS empezo,"
+                    " espacio_id = :espacio_previo AND espacio_id = :espacio"
+                    " AND inicio = CAST(:inicio AS timestamptz) AS como_se_vio"
+                    " FROM reserva WHERE id = :id FOR UPDATE"
+                ),
+                datos,
+            ).first()
+            if fila is None:
+                raise NoEncontrada("no hay una reserva con ese número")
+            if (
+                fila.estado == "anulada"
+                and fila.cancelada_por == admin_id
+                and fila.motivo == motivo
+            ):
+                self._conn.rollback()
+                return self._detalle(reserva_id)
+            if fila.estado != "activa" or fila.empezo or not fila.como_se_vio:
+                raise Cambiado("la reserva ya no está activa, ya empezó o cambió")
+            self._conn.execute(
+                text(
+                    "UPDATE reserva SET estado = 'anulada', motivo = :motivo,"
+                    " cancelada_en = now(), cancelada_por = :admin WHERE id = :id"
+                ),
+                datos,
+            )
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
+        return self._detalle(reserva_id)
+
+    def _detalle(self, reserva_id: int) -> ReservaHistorial:
+        fila = self._conn.execute(
+            text(f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE r.id = :id"),
+            {"id": reserva_id},
+        ).one()
+        self._conn.rollback()
+        return _reserva_historial(fila)
 
     def historial(self, filtros: FiltrosHistorial) -> HistorialDeReservas:
         comunes: list[str] = []

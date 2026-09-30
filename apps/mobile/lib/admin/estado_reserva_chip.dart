@@ -15,10 +15,8 @@ class EstadoReservaChip extends StatelessWidget {
     final p = context.paleta;
     final (fondo, tinta) = switch (estado) {
       EstadoDeReserva.activa => (p.stateSuccessMuted, p.stateSuccessInk),
-      EstadoDeReserva.anulada || EstadoDeReserva.cancelada => (
-        p.stateDangerMuted,
-        p.stateDangerInk,
-      ),
+      EstadoDeReserva.anulada ||
+      EstadoDeReserva.cancelada => (p.stateDangerMuted, p.stateDangerInk),
       EstadoDeReserva.completada => (p.bgSurface, p.textSecondary),
     };
     return Container(

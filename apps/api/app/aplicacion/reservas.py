@@ -16,6 +16,9 @@ from app.dominio.usuarios import Perfil
 
 Cuando = Literal["proximas", "historial"]
 
+# Largo máximo del motivo de una anulación.
+MOTIVO_MAXIMO = 500
+
 
 class Reservas(Protocol):
     def de_usuario(self, usuario_id: int, cuando: Cuando) -> list[Reserva]:
@@ -80,6 +83,18 @@ class Reservas(Protocol):
         espacio se superpone, `NoDisponible` si el espacio, su sede o la cuenta ya no
         están activos, y `AgendaCambiada` si la sede ya no tiene la [agenda] con que se
         validó.
+        """
+        ...
+
+    def anular(
+        self, admin_id: int, reserva_id: int, motivo: str, espacio_id: int, inicio: datetime
+    ) -> ReservaHistorial:
+        """Anula la reserva [reserva_id], que el administrador vio en [espacio_id] desde
+        [inicio], y estampa quién, cuándo y el [motivo] (CU-15): el horario vuelve a quedar
+        libre. Si ya la había anulado ese administrador con ese motivo, la devuelve igual.
+
+        Lanza `NoEncontrada` si no existe y `Cambiado` si ya no está activa, ya empezó o ya no
+        está en ese espacio y horario.
         """
         ...
 
@@ -244,3 +259,27 @@ def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Reserv
     if detalle is None:
         raise NoEncontrada("no hay una reserva con ese número")
     return detalle
+
+
+def anular_reserva(
+    reservas: Reservas,
+    perfil: Perfil,
+    reserva_id: int,
+    motivo: str,
+    espacio_id: int,
+    inicio: datetime,
+) -> ReservaHistorial:
+    """Anula por una causa operativa una reserva activa que todavía no empezó (CU-15, RF 3):
+    el horario vuelve a quedar libre y la reserva guarda quién la anuló, cuándo y por qué.
+
+    Lanza `Prohibido` si quien pide no es administrador, `DatosInvalidos` si el motivo está
+    vacío o es demasiado largo, y `NoEncontrada` y `Cambiado` como `Reservas.anular`.
+    """
+    if perfil.rol != "admin":
+        raise Prohibido("sólo un administrador anula una reserva")
+    limpio = motivo.strip()
+    if not limpio:
+        raise DatosInvalidos({"motivo": "El motivo es obligatorio para anular"})
+    if len(limpio) > MOTIVO_MAXIMO:
+        raise DatosInvalidos({"motivo": f"El motivo admite hasta {MOTIVO_MAXIMO} caracteres"})
+    return reservas.anular(perfil.id, reserva_id, limpio, espacio_id, inicio)

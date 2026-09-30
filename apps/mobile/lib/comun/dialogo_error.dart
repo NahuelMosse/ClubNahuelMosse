@@ -139,6 +139,19 @@ Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   ),
 );
 
+/// El administrador anuló la reserva.
+Future<void> mostrarReservaAnulada(BuildContext context) => showDialog<void>(
+  context: context,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => const _Modal(
+    icono: Icons.check_circle_outline_rounded,
+    exito: true,
+    titulo: 'Reserva anulada correctamente',
+    texto: 'El horario quedó liberado y la reserva pasó a las anuladas.',
+    principal: 'ACEPTAR',
+  ),
+);
+
 /// El overlay compartido «Esto cambió mientras tanto»: lo que se veía ya no está así, y
 /// quien llama lo vuelve a leer.
 Future<void> mostrarCambioMientrasTanto(

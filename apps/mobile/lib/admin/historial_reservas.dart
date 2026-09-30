@@ -1,5 +1,6 @@
 import '../api/cliente_api.dart';
-import '../reservas/reservas.dart' show EstadoDeReserva;
+import '../reservas/reservas.dart'
+    show EstadoDeReserva, ReservaCambiada, ReservaRechazada;
 import '../sesion/sesion.dart';
 
 /// Lo que un administrador eligió para acotar el historial global (CU-14). `null` en
@@ -127,6 +128,7 @@ class ReservaHistorial {
     required this.canceladaEn,
     required this.canceladaPorNombre,
     required this.espacioDeBaja,
+    this.anulable = false,
   });
 
   final int id;
@@ -150,6 +152,9 @@ class ReservaHistorial {
 
   /// El espacio o su sede ya no están activos: la reserva sigue en el historial (FA8).
   final bool espacioDeBaja;
+
+  /// Activa y sin empezar, según el reloj del servidor: sólo entonces se ofrece anularla.
+  final bool anulable;
 
   /// El club está en UTC−3, sin horario de verano.
   static DateTime? _enElClub(String iso) =>
@@ -206,6 +211,7 @@ class ReservaHistorial {
             ? canceladaPorNombre
             : null,
         espacioDeBaja: espacioDeBaja,
+        anulable: json['anulable'] == true,
       );
     }
     return null;
@@ -247,9 +253,10 @@ class HistorialDeReservas {
     FiltrosDeHistorial filtros, {
     int pagina = 1,
   }) async {
-    final query = [filtros._query, 'pagina=$pagina']
-        .where((s) => s.isNotEmpty)
-        .join('&');
+    final query = [
+      filtros._query,
+      'pagina=$pagina',
+    ].where((s) => s.isNotEmpty).join('&');
     final r = await _api.get(
       '/reservas/todas?$query',
       token: await _sesion.token(),
@@ -294,6 +301,38 @@ class HistorialDeReservas {
       if (leida != null) return leida;
     }
     throw ErrorDelServidor(r.codigo);
+  }
+
+  /// Anula [reserva] con [motivo], tal como el administrador la vio (cancha y horario); el
+  /// horario vuelve a quedar libre. Repetir un pedido que ya se hizo responde igual.
+  ///
+  /// Lanza [ReservaCambiada], [ReservaRechazada], [SesionVencida], [SinConexion] o
+  /// [ErrorDelServidor].
+  Future<ReservaHistorial> anular(
+    ReservaHistorial reserva,
+    String motivo,
+  ) async {
+    final r = await _api.post('/reservas/${reserva.id}/anular', {
+      'motivo': motivo,
+      'espacio_id': reserva.espacioId,
+      // El horario del club está corrido tres horas del instante real.
+      'inicio': reserva.inicio.add(const Duration(hours: 3)).toIso8601String(),
+    }, token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();
+    if (r.cuerpo case {
+      'errores': final Map<String, Object?> errores,
+    } when r.codigo == 422) {
+      throw ReservaRechazada({
+        for (final MapEntry(:key, :value) in errores.entries)
+          if (value is String) key: value,
+      });
+    }
+    final anulada = r.codigo == 200
+        ? ReservaHistorial.desdeJson(r.cuerpo)
+        : null;
+    if (anulada == null) throw ErrorDelServidor(r.codigo);
+    return anulada;
   }
 }
 

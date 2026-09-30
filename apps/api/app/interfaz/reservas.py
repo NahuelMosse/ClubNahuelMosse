@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import AwareDatetime, BaseModel
 from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
@@ -18,6 +18,7 @@ from app.aplicacion.errores import (
 )
 from app.aplicacion.reservas import (
     Cuando,
+    anular_reserva,
     cancelar_reserva,
     detalle_admin,
     historial_global,
@@ -296,6 +297,7 @@ class ReservaHistorialVista(BaseModel):
     cancelada_en: datetime | None
     cancelada_por_nombre: str | None
     espacio_de_baja: bool
+    anulable: bool
 
 
 class ContadoresVista(BaseModel):
@@ -335,6 +337,7 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
         cancelada_en=r.cancelada_en,
         cancelada_por_nombre=r.cancelada_por_nombre,
         espacio_de_baja=r.espacio_de_baja,
+        anulable=r.anulable,
     )
 
 
@@ -420,3 +423,57 @@ def detalle(
         return Response(status_code=status.HTTP_403_FORBIDDEN)
     except NoEncontrada:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
+
+
+class PedidoDeAnulacion(BaseModel):
+    motivo: str
+    espacio_id: int
+    inicio: AwareDatetime
+
+
+@router.post(
+    "/reservas/{reserva_id}/anular",
+    response_model=ReservaHistorialVista,
+    responses={
+        401: {"model": SinSesion},
+        403: {"description": "Sólo un administrador anula una reserva"},
+        404: {"description": "No hay una reserva con ese número"},
+        409: {"model": Errores, "description": "La reserva ya no está activa, ya empezó o cambió"},
+        422: {"model": Errores},
+    },
+    summary="Anular una reserva (CU-15)",
+    description=(
+        "Hasta el inicio del turno. `espacio_id` e `inicio` son la cancha y el horario que el "
+        "administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a "
+        "quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una "
+        "anulación ya hecha por el mismo administrador con el mismo motivo responde igual."
+    ),
+)
+def anular(
+    pedido: PedidoDeAnulacion,
+    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+) -> ReservaHistorialVista | Response:
+    try:
+        reserva = anular_reserva(
+            ReservasSql(conn),
+            perfil,
+            reserva_id,
+            pedido.motivo,
+            pedido.espacio_id,
+            pedido.inicio,
+        )
+    except Prohibido:
+        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    except NoEncontrada:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    except Cambiado:
+        return JSONResponse(
+            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
+        )
+    return _vista_admin(reserva)
