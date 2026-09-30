@@ -99,6 +99,16 @@ Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
   await tester.pumpAndSettle();
 }
 
+/// Lo que el sistema operativo simulado del dispositivo de prueba contesta cuando la app
+/// pregunta por el permiso de notificaciones. Se fija después de abrir la app y antes de
+/// iniciar sesión.
+Future<void> fijarPermisoDeNotificaciones({required bool concedido}) async {
+  await (await SharedPreferences.getInstance()).setString(
+    'permiso_notificaciones_simulado',
+    concedido ? 'concedido' : 'denegado',
+  );
+}
+
 /// Registra una cuenta por la API, como si la persona ya se hubiera registrado.
 Future<void> crearCuenta({
   required String correo,
