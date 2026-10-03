@@ -32,3 +32,5 @@ RNF-01-TESTS · 2026-10-03 · recongelados en a81ce1c · la cota de H06-02 era 3
 RNF-01-SUP-07 · 2026-10-03 · supuesto · el .env.example vive en apps/api, donde config.py lee el .env, y sólo lista las variables que lee; las del entorno van comentadas
 RNF-01-SUP-08 · 2026-10-03 · supuesto · la cota de operaciones protegidas es 28, medida sobre las rutas registradas en la app (incluye las que no están en OpenAPI), en un test de integración sin tag
 RNF-01-TESTS · 2026-10-03 · rojo observado en d879013 · 4 fallan por falta de implementación (H01-01, H07-01, H07-02 y H08-01), 5 ya pasaban (H02-01, H03-01, H04-01, H05-01 y H06-03), 1 no corrió (H06-01, necesita API_URL_NUBE), y 1 con motivo equivocado: H06-02 falla porque la cota de 30 operaciones rechazadas era mayor que las 28 reales, y con la cota corregida en a81ce1c ya pasaba sin implementación
+RNF-01-AMB-05 · 2026-10-03 · preguntada · al usuario
+RNF-01-AMB-05 · 2026-10-03 · resuelta · Render: web service para la API y Postgres gestionado
