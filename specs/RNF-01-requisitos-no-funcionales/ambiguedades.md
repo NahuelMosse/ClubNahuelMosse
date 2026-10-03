@@ -28,3 +28,4 @@ RNF-01-AMB-05 · 2026-10-03 · abierta · H06-01, el deploy real: ¿qué proveed
 RNF-01-SUP-05 · 2026-10-03 · supuesto · los README se verifican contra el código (variables, scripts y comandos existen) y no se ejecutan desde una máquina limpia; ese recorrido queda sin cubrir
 RNF-01-SUP-06 · 2026-10-03 · supuesto · «commits a lo largo del desarrollo» se verifica como al menos 50 commits en al menos 3 días distintos
 RNF-01-TESTS · 2026-10-03 · congelados en d879013 · escenarios H01-01 a H08-01 en apps/api/tests/escenarios/test_requisitos_no_funcionales.py
+RNF-01-TESTS · 2026-10-03 · recongelados en a81ce1c · la cota de H06-02 era 30 y la API tiene 28 operaciones protegidas
