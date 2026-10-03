@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'notificaciones_test.dart' show ApiFalsa, ahoraClub, centroDe, notif;
 import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
 
 final leida = notif(
   id: 5,
