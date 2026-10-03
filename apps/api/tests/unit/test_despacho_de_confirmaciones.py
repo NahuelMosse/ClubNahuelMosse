@@ -31,6 +31,7 @@ class RepositorioEnMemoria:
     def __init__(self, pendientes: list[Pendiente], tokens: list[str]) -> None:
         self.pendientes = pendientes
         self.tokens = tokens
+        self.hay_dispositivos = True
         self.envios: dict[int, Envio] = {}
         self.bajas: list[str] = []
         self.falla_en: int | None = None
@@ -47,6 +48,9 @@ class RepositorioEnMemoria:
         if self.falla_en == usuario_id:
             raise OSError("la base no contesta")
         return list(self.tokens)
+
+    def tiene_dispositivos(self, usuario_id: int) -> bool:
+        return self.hay_dispositivos
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None:
         if self.no_puede_marcar:
@@ -99,6 +103,15 @@ def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
 
     assert repo.envios == {1: "sin_permiso"}
     assert canal.enviados == []
+
+
+def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
+    repo = RepositorioEnMemoria([_pendiente(1)], [])
+    repo.hay_dispositivos = False
+
+    assert despachar_pendientes(repo, CanalQueAcepta()) == 1
+
+    assert repo.envios == {1: "sin_canal"}
 
 
 def test_un_envio_que_falla_queda_fallido_sin_reintento_y_no_corta_el_despacho() -> None:

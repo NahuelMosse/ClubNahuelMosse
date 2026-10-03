@@ -213,6 +213,16 @@ class NotificacionesSql:
         self._conn.rollback()
         return [f.token for f in filas]
 
+    def tiene_dispositivos(self, usuario_id: int) -> bool:
+        hay: bool = self._conn.execute(
+            text(
+                "SELECT EXISTS (SELECT 1 FROM dispositivo WHERE usuario_id = :usuario AND activo)"
+            ),
+            {"usuario": usuario_id},
+        ).scalar_one()
+        self._conn.rollback()
+        return bool(hay)
+
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
         f = self._conn.execute(
             text(

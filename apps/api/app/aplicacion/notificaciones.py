@@ -60,6 +60,10 @@ class Notificaciones(Protocol):
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]: ...
 
+    def tiene_dispositivos(self, usuario_id: int) -> bool:
+        """Si [usuario_id] tiene algún dispositivo registrado, con o sin permiso."""
+        ...
+
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
         """Reserva para quien llama el aviso más viejo de los registrados junto con el hecho
         que avisan (no los recordatorios) y sin enviar, de [usuario_id] o de todos: pasa a
@@ -101,12 +105,17 @@ def entregar(
 ) -> None:
     """Manda un aviso ya registrado a los teléfonos con permiso y deja anotado cómo salió.
 
-    Sin ningún dispositivo con permiso queda sólo en el centro. Un envío que falla no se
-    reintenta desde acá: queda marcado como fallido.
+    Sin ningún dispositivo con permiso queda sólo en el centro: `sin_permiso` si hay
+    dispositivos que no lo dieron y `sin_canal` si no hay ninguno al que mandarlo, igual que
+    cuando no hay servicio de envío. Un envío que falla no se reintenta desde acá: queda
+    marcado como fallido.
     """
     tokens = notificaciones.tokens_con_permiso(usuario_id)
     if not tokens:
-        notificaciones.marcar_envio(notificacion_id, "sin_permiso")
+        hay_dispositivos = notificaciones.tiene_dispositivos(usuario_id)
+        notificaciones.marcar_envio(
+            notificacion_id, "sin_permiso" if hay_dispositivos else "sin_canal"
+        )
         return
     try:
         resultado = canal.enviar(tokens, aviso)

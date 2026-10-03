@@ -26,6 +26,7 @@ class RepositorioEnMemoria:
     def __init__(self, pendientes: list[Recordatorio], tokens: list[str]) -> None:
         self.pendientes = pendientes
         self.tokens = tokens
+        self.hay_dispositivos = True
         self.registrados: dict[int, Recordatorio] = {}
         self.envios: dict[int, Envio] = {}
         self.bajas: list[str] = []
@@ -42,6 +43,9 @@ class RepositorioEnMemoria:
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]:
         return list(self.tokens)
+
+    def tiene_dispositivos(self, usuario_id: int) -> bool:
+        return self.hay_dispositivos
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None:
         self.envios[notificacion_id] = envio
@@ -120,6 +124,14 @@ def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
 
     assert enviar_recordatorios(repo, CanalQueFalla(), AHORA) == 1
     assert repo.envios == {1: "sin_permiso"}
+
+
+def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
+    repo = RepositorioEnMemoria([_recordatorio()], [])
+    repo.hay_dispositivos = False
+
+    assert enviar_recordatorios(repo, CanalQueFalla(), AHORA) == 1
+    assert repo.envios == {1: "sin_canal"}
 
 
 def test_un_aviso_que_otro_barrido_ya_registro_no_se_envia_de_nuevo() -> None:
