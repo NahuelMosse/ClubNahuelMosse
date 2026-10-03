@@ -302,7 +302,10 @@ void main() {
       300,
       maxScrolls: 100,
       scrollable: find
-          .ancestor(of: find.text('SEDE'), matching: find.byType(Scrollable))
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
           .first,
     );
 
