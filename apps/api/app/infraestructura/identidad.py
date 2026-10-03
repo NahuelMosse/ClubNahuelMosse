@@ -11,6 +11,7 @@ from firebase_admin import auth
 
 from app.aplicacion.errores import Demorado, Duplicado
 from app.config import config
+from app.infraestructura.credencial_firebase import credencial_de_servicio
 
 identidad_log = logging.getLogger("clubnahuelmosse.identidad")
 
@@ -19,7 +20,8 @@ identidad_log = logging.getLogger("clubnahuelmosse.identidad")
 def _app_firebase() -> firebase_admin.App:
     # Con FIREBASE_AUTH_EMULATOR_HOST definido, firebase-admin habla con el emulador.
     return firebase_admin.initialize_app(
-        options={"projectId": config.firebase_project_id, "httpTimeout": _ESPERA_S}
+        credential=credencial_de_servicio(),
+        options={"projectId": config.firebase_project_id, "httpTimeout": _ESPERA_S},
     )
 
 

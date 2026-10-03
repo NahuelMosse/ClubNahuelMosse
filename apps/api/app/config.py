@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,6 +11,9 @@ class Config(BaseSettings):
     firebase_project_id: str = "demo-clubnahuelmosse"
     # La clave web del proyecto, para comprobar contraseñas; el emulador no la necesita.
     firebase_api_key: str = ""
+    # El JSON de la cuenta de servicio de Firebase, para las plataformas que no montan archivos
+    # desde un blueprint. Con GOOGLE_APPLICATION_CREDENTIALS definida se usa el archivo.
+    firebase_credenciales_json: str = ""
     # La dirección pública de esta API: los enlaces de los correos apuntan acá.
     url_publica: str = "http://localhost:8000"
     # "smtp" en producción; "buzon" deja los correos en la tabla correo_saliente, con los
@@ -24,6 +28,15 @@ class Config(BaseSettings):
     pruebas: bool = False
     # Cada cuántos segundos el barrido manda los recordatorios que ya les toca; 0 lo apaga.
     recordatorios_cada: int = 30
+
+    @field_validator("database_url")
+    @classmethod
+    def _con_driver_psycopg(cls, url: str) -> str:
+        """Render entrega `postgresql://...`; SQLAlchemy necesita nombrar el driver."""
+        for esquema in ("postgres://", "postgresql://"):
+            if url.startswith(esquema):
+                return "postgresql+psycopg://" + url.removeprefix(esquema)
+        return url
 
 
 config = Config()

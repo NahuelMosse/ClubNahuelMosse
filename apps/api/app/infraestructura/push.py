@@ -7,7 +7,9 @@ import firebase_admin
 from firebase_admin import credentials, exceptions, messaging
 
 from app.aplicacion.notificaciones import CanalNoConfigurado, CanalPush, ResultadoDeEnvio
+from app.config import config
 from app.dominio.notificaciones import Aviso
+from app.infraestructura.credencial_firebase import credencial_de_servicio
 
 _registro = logging.getLogger(__name__)
 
@@ -56,7 +58,9 @@ class CanalFcm:
 
     def __init__(self) -> None:
         self._app = firebase_admin.initialize_app(
-            credentials.ApplicationDefault(), options={"httpTimeout": 10}, name="push"
+            credencial_de_servicio() or credentials.ApplicationDefault(),
+            options={"httpTimeout": 10},
+            name="push",
         )
 
     def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
@@ -75,6 +79,6 @@ class CanalFcm:
 @cache
 def canal_push() -> CanalPush:
     """El de Firebase sólo si el entorno trae credenciales; si no, el que no envía."""
-    if os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+    if config.firebase_credenciales_json or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
         return CanalFcm()
     return CanalNulo()
