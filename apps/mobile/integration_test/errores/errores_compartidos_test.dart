@@ -233,7 +233,11 @@ void main() {
       await entrarComoUsuario(tester, correo: 'socio.${unico()}@correo.com');
       await tocar(tester, 'SEDES');
       await entrarA(tester, sede);
-      await tocar(tester, 'VER HORARIOS / RESERVAR');
+      // La sede tiene dos canchas: se abren los horarios de la primera, que es cancha1.
+      final reservar = find.text('VER HORARIOS / RESERVAR').first;
+      await tester.ensureVisible(reservar);
+      await tester.pumpAndSettle();
+      await tester.tap(reservar);
       await esperarA(tester, find.text('HORARIO DISPONIBLE'));
 
       await darDeBajaEspacioDesdeOtraSesion(cancha1);
