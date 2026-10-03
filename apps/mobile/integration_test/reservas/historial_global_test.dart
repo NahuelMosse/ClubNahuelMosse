@@ -248,7 +248,19 @@ void main() {
       );
 
       await tocar(tester, 'LIMPIAR FILTROS');
-      await esperarA(tester, find.text(cancha));
+      // La lista perezosa deja la reserva fuera de pantalla entre las demás de la corrida.
+      await esperarA(tester, find.textContaining('RESERVAS EN TOTAL'));
+      await tester.scrollUntilVisible(
+        find.text(cancha),
+        400,
+        maxScrolls: 300,
+        scrollable: find
+            .descendant(
+              of: find.byType(CustomScrollView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       semantica.dispose();
     },
   );
