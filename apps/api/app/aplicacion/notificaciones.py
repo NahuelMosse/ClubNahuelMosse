@@ -60,10 +60,11 @@ class Notificaciones(Protocol):
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]: ...
 
-    def tomar_pendientes(self, usuario_id: int | None) -> list[Pendiente]:
-        """Reserva para quien llama los avisos registrados junto con el hecho que avisan
-        (no los recordatorios) y sin enviar, de [usuario_id] o de todos: pasan a `enviando`,
-        así dos despachos al mismo tiempo no mandan el mismo dos veces."""
+    def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+        """Reserva para quien llama el aviso más viejo de los registrados junto con el hecho
+        que avisan (no los recordatorios) y sin enviar, de [usuario_id] o de todos: pasa a
+        `enviando`, así dos despachos al mismo tiempo no mandan el mismo dos veces. `None` si
+        no queda ninguno."""
         ...
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None: ...
@@ -127,11 +128,20 @@ def despachar_pendientes(
     notificaciones: Notificaciones, canal: CanalPush, usuario_id: int | None = None
 ) -> int:
     """Manda los avisos que se registraron junto con el hecho que avisan, como la confirmación
-    de una cancelación, y devuelve cuántos salieron a despacho."""
-    pendientes = notificaciones.tomar_pendientes(usuario_id)
-    for p in pendientes:
-        entregar(notificaciones, canal, p.notificacion_id, p.usuario_id, p.aviso)
-    return len(pendientes)
+    de una cancelación, y devuelve cuántos salieron a despacho.
+
+    Toma de a uno: lo que no se intentó sigue `pendiente`, y un aviso que falla por cualquier
+    motivo queda `fallida` sin cortar los que siguen.
+    """
+    despachados = 0
+    while (p := notificaciones.tomar_siguiente(usuario_id)) is not None:
+        despachados += 1
+        try:
+            entregar(notificaciones, canal, p.notificacion_id, p.usuario_id, p.aviso)
+        except Exception as e:
+            _registro.warning("el despacho del aviso falló: %s", type(e).__name__)
+            notificaciones.marcar_envio(p.notificacion_id, "fallida")
+    return despachados
 
 
 def enviar_recordatorios(
@@ -148,12 +158,16 @@ def enviar_recordatorios(
     """
     registrados = 0
     for recordatorio in notificaciones.vencidos(ahora, usuario_id):
-        aviso = mensaje_recordatorio(recordatorio)
-        nuevo = notificaciones.registrar(recordatorio, aviso)
-        if nuevo is None:
-            continue
-        registrados += 1
-        entregar(notificaciones, canal, nuevo, recordatorio.usuario_id, aviso)
+        try:
+            aviso = mensaje_recordatorio(recordatorio)
+            nuevo = notificaciones.registrar(recordatorio, aviso)
+            if nuevo is None:
+                continue
+            registrados += 1
+            entregar(notificaciones, canal, nuevo, recordatorio.usuario_id, aviso)
+        except Exception as e:
+            # El recordatorio de una persona no corta el de las demás.
+            _registro.warning("el recordatorio falló: %s", type(e).__name__)
     return registrados
 
 

@@ -1,0 +1,72 @@
+"""La cancelación y su confirmación se confirman juntas o no se confirman."""
+
+from collections.abc import Callable, Iterator
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import Engine, text
+from test_recordatorio import CanalDePrueba, un_socio
+
+from app.infraestructura.push import canal_push
+
+
+@pytest.fixture
+def canal(api: TestClient) -> Iterator[CanalDePrueba]:
+    canal = CanalDePrueba()
+    api.app.dependency_overrides[canal_push] = lambda: canal
+    yield canal
+    api.app.dependency_overrides.pop(canal_push, None)
+
+
+@pytest.fixture
+def aviso_que_falla(motor: Engine) -> Iterator[None]:
+    """Hace fallar el INSERT de la confirmación, que corre después del UPDATE de la reserva."""
+    with motor.begin() as conn:
+        conn.execute(
+            text(
+                "CREATE FUNCTION falla_la_confirmacion() RETURNS trigger LANGUAGE plpgsql AS"
+                " $$ BEGIN RAISE EXCEPTION 'falla el aviso'; END $$"
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE TRIGGER falla_la_confirmacion BEFORE INSERT ON notificacion"
+                " FOR EACH ROW WHEN (NEW.tipo = 'cancelacion_usuario')"
+                " EXECUTE FUNCTION falla_la_confirmacion()"
+            )
+        )
+    yield
+    with motor.begin() as conn:
+        conn.execute(text("DROP TRIGGER falla_la_confirmacion ON notificacion"))
+        conn.execute(text("DROP FUNCTION falla_la_confirmacion()"))
+
+
+def test_si_falla_el_aviso_la_reserva_sigue_activa_y_no_queda_ningun_aviso(
+    api: TestClient,
+    motor: Engine,
+    iniciar_sesion: Callable[[str, str], str | None],
+    unico: Callable[[], str],
+    canal: CanalDePrueba,
+    aviso_que_falla: None,
+) -> None:
+    """una cancelación cuyo aviso no se registra no se confirma @supuesto:CU-24.3-SUP-04"""
+    socio = un_socio(api, motor, iniciar_sesion, unico)
+    reserva = socio.reservar("21:00")
+
+    try:
+        respuesta = api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
+        assert respuesta.status_code >= 500
+    except Exception as e:
+        # El cliente de pruebas propaga el error del servidor en vez de responder 500.
+        assert "falla el aviso" in str(e)
+
+    with motor.connect() as conn:
+        estado = conn.execute(
+            text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
+        ).scalar_one()
+        avisos = conn.execute(
+            text("SELECT count(*) FROM notificacion WHERE usuario_id = :u"),
+            {"u": socio.usuario_id},
+        ).scalar_one()
+    assert (estado, avisos) == ("activa", 0)
+    assert canal.enviados == []
