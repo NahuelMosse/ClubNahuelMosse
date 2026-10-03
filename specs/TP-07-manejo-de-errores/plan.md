@@ -54,12 +54,14 @@ registro con `If-Match`.
 
 | Ruta | Responsabilidad | Decisiones ya tomadas |
 |---|---|---|
-| `apps/mobile/lib/comun/dialogo_error.dart` | un 403 en `mostrarErrorDeRed` | el 403 va a `/admin/acceso-denegado`, la pantalla única de «Acceso denegado» |
-| `apps/mobile/lib/comun/pantalla_acceso_denegado.dart` | la pantalla única de «Acceso denegado» (de CU-14) | texto del prototipo; IR A MIS RESERVAS |
+| `apps/mobile/lib/comun/dialogo_error.dart` | un 403 en `atenderErrorDeRed` | el 403 va a `/admin/acceso-denegado` y devuelve `accesoDenegado`: quien llama no navega encima; `mostrarErrorDeRed` devuelve sólo si hay que reintentar |
+| `apps/mobile/lib/comun/pantalla_acceso_denegado.dart` | la pantalla única de «Acceso denegado» (de CU-14) | texto del prototipo; relee el perfil antes de IR A MIS RESERVAS; «Cerrar sesión» |
 | `apps/mobile/lib/app.dart` | el redirect por rol | toda ruta bajo `/admin` sin rol va a `/admin/acceso-denegado`; un administrador en una ruta de usuario sigue yendo a su panel |
 | `apps/mobile/lib/api/cliente_api.dart` | `limite` inyectable | 15 s por defecto |
 | `apps/mobile/lib/sedes/pantalla_sede.dart`, `apps/mobile/lib/reservas/pantalla_horarios.dart`, `apps/mobile/lib/reservas/pantalla_confirmar_reserva.dart` | el aviso de lo que ya no está | overlay compartido en lugar del SnackBar; nada cargando detrás del aviso |
 | `apps/api/app/interfaz/registro_errores.py`, `apps/api/app/main.py` | middleware de registro y su configuración | error para excepciones y 5xx, aviso para 401, 403 y 409; logger `clubnahuelmosse.errores` |
+| `apps/api/app/infraestructura/db.py` | el motor oculta los parámetros | el traceback del log no lleva DNI, correo ni nombre |
+| `apps/mobile/lib/usuarios/pantalla_registro.dart`, `apps/mobile/lib/reservas/pantalla_mis_reservas.dart`, `apps/mobile/lib/admin/anular_reserva.dart` | reintento tras un corte | un 409 después de un corte es éxito (cancelar, anular) o «tu cuenta ya existe» (registro) |
 | `apps/api/app/interfaz/sesion.py` | `usuario_actual` deja el id del usuario en el estado del pedido | sin sesión el registro dice «anónimo» |
 | `apps/mobile/integration_test/errores/errores_compartidos_test.dart`, `apps/api/tests/escenarios/test_registro_de_errores.py` | escenarios congelados | |
 | `apps/mobile/test/errores_compartidos_test.dart`, `apps/mobile/test/horarios_test.dart`, `apps/mobile/test/sedes_usuario_test.dart`, `apps/mobile/test/espacios_admin_test.dart`, `apps/mobile/test/sedes_admin_test.dart`, `apps/mobile/test/tarjeta_cuenta_test.dart` | unitarios del aviso y de los avisos que cambiaron | texto al 200 % en 360 |
