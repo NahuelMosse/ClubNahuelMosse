@@ -41,7 +41,7 @@ texto; la infraestructura de reservas lo encola junto con la cancelación.
 | CU-24.3-SUP-01 | Sin reintento propio; un envío fallido queda `fallida` y un token inválido se da de baja | `tests/unit/test_despacho_de_confirmaciones.py`; `test_confirmacion_cancelacion_reglas.py` |
 | CU-24.3-SUP-02 | Una confirmación por reserva cancelada, sin agrupar; un reintento no la duplica | `test_confirmacion_cancelacion_reglas.py`; índice `notificacion_cancelacion_unica` |
 | CU-24.3-SUP-03 | La app suprime la tarjeta si la ruta actual es exactamente Mis reservas | `@CU-24.3-H02-01`; `test/confirmacion_cancelacion_test.dart` |
-| CU-24.3-SUP-04 | Encolada con la cancelación, despachada después; el barrido retoma lo pendiente; `enviando` evita el doble envío y un proceso que muere en el medio no reenvía | `test_confirmacion_cancelacion_reglas.py`; `tests/unit/test_despacho_de_confirmaciones.py` |
+| CU-24.3-SUP-04 | Encolada con la cancelación, despachada después; el barrido retoma lo pendiente; `enviando` evita el doble envío y un proceso que muere en el medio no reenvía. El despacho toma de a un aviso: el que falla queda `fallida` y los demás siguen `pendiente` hasta su turno; un fallo del despacho no corta los recordatorios del barrido | `test_confirmacion_cancelacion_reglas.py`; `test_confirmacion_cancelacion_atomicidad.py`; `test_despacho_robusto.py`; `tests/unit/test_despacho_de_confirmaciones.py` |
 | CU-24.3-SUP-05 | Cuerpo «{tipo corto} · {sede} · {Día} {d}, {HH:MM}. El horario quedó liberado.» con el día del prototipo (Mié, no Mar) y el mismo texto en push, panel y centro | `@CU-24.3-H01-01`; `tests/unit/test_despacho_de_confirmaciones.py` |
 | CU-24.3-SUP-06 | Tocarla abre Mis reservas en Historial con la reserva resaltada | `@CU-24.3-H01-02`; `test/confirmacion_cancelacion_test.dart` |
 | CU-24.3-SUP-07 | La tarjeta suprimida queda sin leer y no vuelve al panel en esa sesión | `@CU-24.3-H02-01`; `test/confirmacion_cancelacion_test.dart` |
@@ -61,13 +61,15 @@ texto; la infraestructura de reservas lo encola junto con la cancelación.
 |---|---|---|
 | `apps/api/migraciones/versions/0006_confirmacion_de_cancelacion.py` | estado `enviando`, índice único por reserva cancelada | una reserva se cancela una vez |
 | `apps/api/app/dominio/notificaciones.py` | `mensaje_cancelacion`, `datos_del_aviso`, `DIAS` | el texto y los datos del aviso viven en el dominio |
-| `apps/api/app/aplicacion/notificaciones.py` | `Pendiente`, `tomar_pendientes`, `entregar`, `despachar_pendientes` | `entregar` lo comparten recordatorio y despacho |
-| `apps/api/app/infraestructura/notificaciones.py` | `tomar_pendientes` | `FOR UPDATE SKIP LOCKED` y paso a `enviando`; nunca toma recordatorios |
+| `apps/api/app/aplicacion/notificaciones.py` | `Pendiente`, `tomar_siguiente`, `entregar`, `despachar_pendientes` | `entregar` lo comparten recordatorio y despacho; un aviso que falla queda `fallida` y no corta el lote |
+| `apps/api/app/infraestructura/notificaciones.py` | `tomar_siguiente` | un aviso por vez con `LIMIT 1 FOR UPDATE SKIP LOCKED` y paso a `enviando`; nunca toma recordatorios ni avisos reemplazados |
 | `apps/api/app/infraestructura/reservas.py` | `cancelar` encola la notificación | misma transacción que la baja |
 | `apps/api/app/interfaz/reservas.py` | la ruta de cancelar despacha después de responder | `BackgroundTasks` con su propia conexión y `canal_push` como dependencia |
-| `apps/api/app/interfaz/barrido.py` | `despachar_de` y el despacho del barrido | un fallo no cambia la cancelación |
+| `apps/api/app/interfaz/barrido.py` | `despachar_de` y el despacho del barrido | un fallo no cambia la cancelación ni corta los recordatorios |
 | `apps/api/tests/escenarios/test_confirmacion_cancelacion.py` | escenarios (congelado) | canal de prueba por `dependency_overrides` |
 | `apps/api/tests/escenarios/test_confirmacion_cancelacion_reglas.py` | SUP-01, 02, 04 contra la base | sin tags de escenario |
+| `apps/api/tests/escenarios/test_confirmacion_cancelacion_atomicidad.py` | la reserva sigue activa y no queda aviso si el INSERT del aviso falla | un disparador de la base hace fallar el INSERT |
+| `apps/api/tests/escenarios/test_despacho_robusto.py` | un aviso que falla no deja a los demás en `enviando`; el barrido sigue | sin tags de escenario |
 | `apps/api/tests/unit/test_despacho_de_confirmaciones.py` | mensaje y despacho con fakes | sin base |
 | `apps/mobile/lib/notificaciones/centro.dart` | `ubicacion`, `enElPanel`, silenciadas | sólo silencia `cancelacion_usuario` llegadas en `/reservas` |
 | `apps/mobile/lib/notificaciones/panel_avisos.dart` | el panel lista `enElPanel` | cambio de una línea |
