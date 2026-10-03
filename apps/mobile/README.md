@@ -76,15 +76,33 @@ El script lee `AVD` (el emulador a arrancar si no hay dispositivo), `DISPOSITIVO
 
 ## Construir el APK
 
-Con las mismas `--dart-define` que `flutter run`; sin `API_URL` la app no arranca:
+El APK apunta a la API desplegada en Render y a Firebase Authentication real. Hace falta:
+
+- `API_URL`: la dirección pública de la API, `https://<servicio>.onrender.com` (la misma que
+  `URL_PUBLICA` en Render).
+- Los datos de la app Android registrada en el proyecto de Firebase. En la consola de Firebase,
+  *Configuración del proyecto* → *General* → *Tus apps* → *Agregar app* → Android, con el nombre de
+  paquete `ar.edu.unimoron.clubnahuelmosse`. De ahí salen `FIREBASE_PROJECT_ID` (ID del proyecto),
+  `FIREBASE_SENDER_ID` (número del proyecto, «ID del remitente»), `FIREBASE_APP_ID` («ID de la app»,
+  con la forma `1:<número>:android:<hash>`) y `FIREBASE_API_KEY` (la clave de API).
+
+La app inicia Firebase con esas `--dart-define` (`lib/sesion/firebase.dart`), así que no usa el
+plugin de Google Services: **no hace falta `google-services.json`** ni tocar los `build.gradle.kts`.
+Sin `AUTH_EMULADOR`, la app usa el proyecto real.
 
 ```sh
-flutter build apk --release   --dart-define=API_URL=<dirección pública de la API>   --dart-define=FIREBASE_API_KEY=<clave>   --dart-define=FIREBASE_APP_ID=<id de la app>   --dart-define=FIREBASE_SENDER_ID=<id del remitente>   --dart-define=FIREBASE_PROJECT_ID=<id del proyecto>
+cd apps/mobile
+flutter build apk --release   --dart-define=API_URL=https://<servicio>.onrender.com   --dart-define=FIREBASE_API_KEY=<clave de API>   --dart-define=FIREBASE_APP_ID=<ID de la app>   --dart-define=FIREBASE_SENDER_ID=<ID del remitente>   --dart-define=FIREBASE_PROJECT_ID=<ID del proyecto>
 ```
 
-`flutter build apk --debug` lleva las mismas `--dart-define`.
+`flutter build apk --debug` lleva las mismas `--dart-define`. Sin `API_URL` la app no arranca; sin
+las cuatro de Firebase ni `AUTH_EMULADOR`, tampoco.
 
 El archivo queda en `build/app/outputs/flutter-apk/`. Se instala con
-`adb install -r build/app/outputs/flutter-apk/app-debug.apk` (o `app-release.apk`). La versión
+`adb install -r build/app/outputs/flutter-apk/app-release.apk` (o `app-debug.apk`). La versión
 `release` queda firmada con la clave de depuración mientras no se configure una propia en
 `android/app/build.gradle.kts`.
+
+La API gratuita de Render se duerme tras 15 minutos sin tráfico: el primer inicio de sesión del día
+puede tardar alrededor de un minuto, más que los 15 segundos que la app espera por pedido. Conviene
+abrir `<URL>/docs` en el navegador antes de usar la app.

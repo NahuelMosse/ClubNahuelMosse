@@ -32,7 +32,8 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | Servidor de correo saliente con `CORREO_MODO=smtp` |
 | `PRUEBAS` | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
 | `RECORDATORIOS_CADA` | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. Obligatoria en producción: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. En producción hace falta ésta o `FIREBASE_CREDENCIALES_JSON`: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
+| `FIREBASE_CREDENCIALES_JSON` | El contenido del JSON de la cuenta de servicio, para plataformas que no montan archivos (Render, con un Blueprint). Si `GOOGLE_APPLICATION_CREDENTIALS` también está definida, manda el JSON |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
 | `ADMIN_CONTRASENA` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
 | `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
@@ -88,29 +89,59 @@ uv run pytest
 uv run pytest tests/escenarios --card <ID>
 ```
 
-## Desplegar
+## Desplegar en Render
 
-La API es una aplicación ASGI común: sirve en cualquier plataforma que ejecute Python y ofrezca
-PostgreSQL. Los pasos, sin importar cuál:
+El `render.yaml` de la raíz del repo describe todo: un web service de Python para la API
+(`apps/api`) y una base Postgres gestionada, ambos en el plan `free`. Render instala con `uv sync`
+(detecta `uv.lock`), migra con `alembic upgrade head` dentro del build, arranca `uvicorn` en el
+`$PORT` que asigna y consulta `/docs` como health check.
 
-1. **Base de datos.** Crear una base PostgreSQL y tomar su cadena de conexión para `DATABASE_URL`.
-2. **Variables de entorno.** Definir `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`,
-   `URL_PUBLICA` (la dirección pública que le asigne la plataforma) y las `SMTP_*` con
-   `CORREO_REMITENTE`. Dejar sin definir `PRUEBAS` y `FIREBASE_AUTH_EMULATOR_HOST`.
-3. **Credencial de Firebase (obligatoria).** Descargar de la consola de Firebase una cuenta de
-   servicio, ponerla como archivo secreto en la plataforma y apuntar `GOOGLE_APPLICATION_CREDENTIALS`
-   a su ruta. Sin ella la API no crea ni borra usuarios, no verifica tokens y no manda avisos. El
-   archivo no se sube al repositorio.
-4. **Instalar.** `uv sync --no-dev` en `apps/api`.
-5. **Migrar.** `uv run alembic upgrade head` antes de arrancar y en cada versión nueva.
-6. **Arrancar.** `uv run uvicorn app.main:app --host 0.0.0.0 --port <puerto que indique la plataforma>`.
-7. **Sembrar al administrador**, una vez, con el comando de «Configurar» contra la base de producción.
-8. **Comprobar.** `<URL_PUBLICA>/docs` muestra la documentación y `GET <URL_PUBLICA>/sedes` sin
-   sesión responde 401. Con la dirección en `API_URL_NUBE`, el escenario RNF-01-H06-01 hace esa
-   comprobación: `uv run pytest tests/escenarios --card RNF-01`.
+1. **Cuenta de Render.** Crear la cuenta en <https://render.com> y autorizar el acceso a GitHub.
+2. **Proyecto de Firebase.** En <https://console.firebase.google.com> crear un proyecto
+   y, dentro de él:
+   - *Authentication* → *Sign-in method*: habilitar «Correo electrónico y contraseña».
+   - *Configuración del proyecto* → *General*: anotar el **ID del proyecto** (`FIREBASE_PROJECT_ID`)
+     y la **clave de API web** (`FIREBASE_API_KEY`).
+   - *Configuración del proyecto* → *Cuentas de servicio* → *Generar nueva clave privada*: se
+     descarga un `.json`. Es un secreto: no se sube al repositorio.
+3. **Repositorio en GitHub.** Subir este repo (el `render.yaml` tiene que estar en la raíz de la
+   rama que Render va a seguir).
+4. **Blueprint.** En Render: *New* → *Blueprint*, elegir el repo y la rama, y confirmar. Render
+   crea `clubnahuelmosse-api` y `clubnahuelmosse-db` y pide los valores de las variables marcadas
+   `sync: false`:
 
-Un servicio que se apaga por inactividad tarda en contestar el primer pedido después de dormir;
-conviene despertarlo antes de una demostración.
+   | Variable | Valor |
+   |---|---|
+   | `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` | los del paso 2 |
+   | `FIREBASE_CREDENCIALES_JSON` | el **contenido completo** del `.json` de la cuenta de servicio |
+   | `URL_PUBLICA` | `https://<nombre del servicio>.onrender.com`, la dirección que Render muestra para `clubnahuelmosse-api` |
+   | `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | los de la cuenta de correo saliente (`SMTP_PUERTO` ya está en 587) |
+
+   Render pide estos valores sólo al crear el Blueprint; para cambiarlos después, se editan en
+   *Environment* del servicio. `DATABASE_URL` sale de la base: `config.py` le agrega el driver
+   `psycopg` a la `postgresql://` que entrega Render. `PRUEBAS` y `FIREBASE_AUTH_EMULATOR_HOST`
+   no se definen.
+5. **Sembrar al administrador**, una vez, desde esta máquina contra la base de Render. En la
+   base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
+
+   ```sh
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.interfaz.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   ```
+
+6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y
+   `GET /sedes` sin sesión responde 401. Con la dirección en `API_URL_NUBE`, el escenario
+   RNF-01-H06-01 hace esa comprobación: `uv run pytest tests/escenarios --card RNF-01`.
+
+Los despliegues siguientes salen solos con cada commit a la rama enlazada.
+
+Límites del plan `free`:
+
+- El servicio se duerme tras 15 minutos sin tráfico y el primer pedido después tarda alrededor
+  de un minuto: conviene despertarlo antes de una demostración. Mientras duerme, el barrido de
+  recordatorios no corre.
+- La base gratuita vence a los 30 días de creada, sin backups, y hay una por workspace.
+- `preDeployCommand` no existe en el plan gratuito; por eso las migraciones corren en el build.
+  Con un plan pago, se mueve esa parte a `preDeployCommand` en el `render.yaml`.
 
 La app recibe la dirección con `--dart-define=API_URL=<URL_PUBLICA>` al construirse; ver el README de
 `apps/mobile`.
