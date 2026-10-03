@@ -61,16 +61,33 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  /// Cancela desde Mis reservas y acepta el mensaje de éxito; la app queda en Mis reservas.
-  Future<void> cancelarEnLaApp(WidgetTester tester, String cancha) async {
+  /// Cancela la reserva de [cancha] de mañana a las [hora] desde Mis reservas, con el botón de
+  /// su tarjeta, y acepta el mensaje de éxito; la app queda en Mis reservas, ya sin esa tarjeta.
+  Future<void> cancelarEnLaApp(
+    WidgetTester tester,
+    String cancha, {
+    int hora = 21,
+  }) async {
     await tocar(tester, 'RESERVAS');
     await esperarA(tester, find.text(cancha));
-    await tocar(tester, 'CANCELAR');
+    final boton = find.bySemanticsLabel(
+      'Cancelar la reserva de Fútbol 5, '
+      '${dias[manana.weekday - 1]} ${manana.day}, $hora:00 – ${hora + 1}:00',
+    );
+    await tester.ensureVisible(boton);
+    await tester.pumpAndSettle();
+    await tester.tap(boton);
+    await tester.pumpAndSettle();
     await esperarA(tester, find.text('¿Cancelar la reserva?'));
     await tocar(tester, 'CANCELAR RESERVA');
     await esperarA(tester, find.text('Reserva cancelada con éxito'));
     await tocar(tester, 'ACEPTAR');
-    await esperarA(tester, find.text('No hay próximas reservas'));
+    final fin = DateTime.now().add(const Duration(seconds: 20));
+    while (find.text(cancha).evaluate().isNotEmpty &&
+        DateTime.now().isBefore(fin)) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(find.text(cancha), findsNothing);
   }
 
   bool resaltada(WidgetTester tester, String sede) => tester

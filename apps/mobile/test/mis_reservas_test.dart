@@ -1,8 +1,10 @@
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/reservas/pantalla_mis_reservas.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -130,4 +132,26 @@ void main() {
     );
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'un aviso agrupado tocado desde Próximas abre el historial sin reserva puntual',
+    (tester) async {
+      final pedidos = await abrir(
+        tester,
+        proximas: '[${reservaJson()}]',
+        historial:
+            '[${reservaJson(id: 2, estado: 'anulada', motivo: 'Lluvia')}]',
+      );
+      expect(find.text('ACTIVA'), findsOneWidget);
+
+      GoRouter.of(
+        tester.element(find.byType(PantallaMisReservas)),
+      ).go('/reservas?historial=1');
+      await tester.pumpAndSettle();
+
+      expect(pedidos.last.url.queryParameters['cuando'], 'historial');
+      expect(find.text('ANULADA'), findsOneWidget);
+      expect(find.text('ACTIVA'), findsNothing);
+    },
+  );
 }

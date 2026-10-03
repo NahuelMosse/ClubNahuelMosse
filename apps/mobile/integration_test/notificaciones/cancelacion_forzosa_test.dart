@@ -191,7 +191,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       final (correo, sede, cancha) = await reservaDeManana();
       final [reserva] = await proximasDe(correo);
-      await entrar(tester, correo);
+      // Sin permiso el panel no se abre solo en el Home y la campana abre el centro.
+      await entrar(tester, correo, permiso: false);
       await tocar(tester, 'RESERVAS');
       await esperarA(tester, find.text(cancha));
       await tocar(tester, 'CANCELAR');

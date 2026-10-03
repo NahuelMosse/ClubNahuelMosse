@@ -19,6 +19,11 @@ from app.dominio.notificaciones import (
 LIMITE_DEL_CENTRO = 100
 
 
+# Primer número del par de `pg_advisory_xact_lock` con que se serializa, por persona, el
+# agrupado de avisos de anulación.
+_BLOQUEO_DE_ANULACIONES = 2402
+
+
 def encolar_cancelacion_forzosa(
     conn: Connection, usuario_id: int, reserva_ids: Sequence[int]
 ) -> None:
@@ -27,9 +32,16 @@ def encolar_cancelacion_forzosa(
     cancelación no se completa no queda aviso.
 
     Una reserva que ya tiene aviso se salta. Si la persona tiene un aviso de anulación sin leer
-    que no está saliendo en este momento, las reservas nuevas se suman a ese aviso, que vuelve
-    a quedar pendiente con la cantidad; si no, se abre uno nuevo.
+    que no está saliendo en este momento, se abre un aviso nuevo con la cantidad total y el
+    anterior queda reemplazado: cada reserva sigue ligada al aviso que se lo informó. Si el
+    anterior no había salido, sus reservas pasan al nuevo.
     """
+    # Es el último bloqueo de la transacción: las anulaciones simultáneas de una misma persona
+    # se esperan acá, después de los bloqueos de la cuenta, la sede, el espacio y la reserva.
+    conn.execute(
+        text("SELECT pg_advisory_xact_lock(:ns, CAST(:usuario AS integer))"),
+        {"ns": _BLOQUEO_DE_ANULACIONES, "usuario": usuario_id},
+    )
     filas = conn.execute(
         text(
             "SELECT r.id, r.inicio, e.deporte, e.tipo, s.nombre AS sede, r.motivo"
@@ -56,42 +68,50 @@ def encolar_cancelacion_forzosa(
     ]
     previo = conn.execute(
         text(
-            "SELECT n.id, n.envio, (SELECT count(*) FROM notificacion_reserva nr"
-            " WHERE nr.notificacion_id = n.id) AS cubiertas FROM notificacion n"
+            "SELECT n.id, n.envio, coalesce(n.cantidad, 1) AS cantidad FROM notificacion n"
             " WHERE n.usuario_id = :usuario AND n.tipo = 'cancelacion_forzosa'"
-            " AND n.leida_en IS NULL ORDER BY n.id DESC LIMIT 1 FOR UPDATE"
+            " AND n.leida_en IS NULL AND n.reemplazada_por IS NULL"
+            " ORDER BY n.id DESC LIMIT 1 FOR UPDATE"
         ),
         {"usuario": usuario_id},
     ).first()
-    if previo is not None and previo.envio != "enviando":
-        notificacion_id = int(previo.id)
-        aviso = mensaje_cancelaciones_forzosas(int(previo.cubiertas) + len(nuevas))
+    # Un aviso que está saliendo no se toca: la anulación siguiente abre otro.
+    reemplaza = previo if previo is not None and previo.envio != "enviando" else None
+    total = len(nuevas) + (0 if reemplaza is None else int(reemplaza.cantidad))
+    aviso = (
+        mensaje_cancelaciones_forzosas(total) if total > 1 else mensaje_cancelacion_forzosa(nuevas)
+    )
+    unica = nuevas[0] if total == 1 else None
+    notificacion_id = int(
         conn.execute(
             text(
-                "UPDATE notificacion SET titulo = :titulo, cuerpo = :cuerpo, reserva_id = NULL,"
-                " reserva_inicio = NULL, envio = 'pendiente' WHERE id = :id"
+                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+                " reserva_inicio, envio, cantidad) VALUES (:usuario, 'cancelacion_forzosa',"
+                " :titulo, :cuerpo, :reserva, :inicio, 'pendiente', :cantidad) RETURNING id"
             ),
-            {"titulo": aviso.titulo, "cuerpo": aviso.cuerpo, "id": notificacion_id},
+            {
+                "usuario": usuario_id,
+                "titulo": aviso.titulo,
+                "cuerpo": aviso.cuerpo,
+                "reserva": None if unica is None else unica.reserva_id,
+                "inicio": None if unica is None else unica.inicio,
+                "cantidad": total,
+            },
+        ).scalar_one()
+    )
+    if reemplaza is not None:
+        conn.execute(
+            text("UPDATE notificacion SET reemplazada_por = :nuevo WHERE id = :id"),
+            {"nuevo": notificacion_id, "id": reemplaza.id},
         )
-    else:
-        aviso = mensaje_cancelacion_forzosa(nuevas)
-        unica = nuevas[0] if len(nuevas) == 1 else None
-        notificacion_id = int(
+        if reemplaza.envio == "pendiente":
             conn.execute(
                 text(
-                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                    " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_forzosa', :titulo,"
-                    " :cuerpo, :reserva, :inicio, 'pendiente') RETURNING id"
+                    "UPDATE notificacion_reserva SET notificacion_id = :nuevo"
+                    " WHERE notificacion_id = :id"
                 ),
-                {
-                    "usuario": usuario_id,
-                    "titulo": aviso.titulo,
-                    "cuerpo": aviso.cuerpo,
-                    "reserva": None if unica is None else unica.reserva_id,
-                    "inicio": None if unica is None else unica.inicio,
-                },
-            ).scalar_one()
-        )
+                {"nuevo": notificacion_id, "id": reemplaza.id},
+            )
     for r in nuevas:
         conn.execute(
             text(
@@ -193,33 +213,30 @@ class NotificacionesSql:
         self._conn.rollback()
         return [f.token for f in filas]
 
-    def tomar_pendientes(self, usuario_id: int | None) -> list[Pendiente]:
-        filas = self._conn.execute(
+    def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+        f = self._conn.execute(
             text(
-                "UPDATE notificacion SET envio = 'enviando' WHERE id IN ("
+                "UPDATE notificacion SET envio = 'enviando' WHERE id = ("
                 " SELECT id FROM notificacion WHERE envio = 'pendiente'"
-                " AND tipo <> 'recordatorio'"
+                " AND tipo <> 'recordatorio' AND reemplazada_por IS NULL"
                 " AND (CAST(:usuario AS bigint) IS NULL OR usuario_id = :usuario)"
-                " ORDER BY id FOR UPDATE SKIP LOCKED)"
+                " ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED)"
                 " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
             ),
             {"usuario": usuario_id},
-        ).all()
+        ).first()
         self._conn.commit()
-        return [
-            Pendiente(
-                notificacion_id=int(f.id),
-                usuario_id=int(f.usuario_id),
-                aviso=Aviso(
-                    titulo=f.titulo,
-                    cuerpo=f.cuerpo,
-                    datos=datos_del_aviso(
-                        f.tipo, None if f.reserva_id is None else int(f.reserva_id)
-                    ),
-                ),
-            )
-            for f in sorted(filas, key=lambda f: int(f.id))
-        ]
+        if f is None:
+            return None
+        return Pendiente(
+            notificacion_id=int(f.id),
+            usuario_id=int(f.usuario_id),
+            aviso=Aviso(
+                titulo=f.titulo,
+                cuerpo=f.cuerpo,
+                datos=datos_del_aviso(f.tipo, None if f.reserva_id is None else int(f.reserva_id)),
+            ),
+        )
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None:
         self._conn.execute(
@@ -292,6 +309,7 @@ class NotificacionesSql:
             text(
                 "SELECT id, tipo, titulo, cuerpo, reserva_id, creada_en,"
                 " leida_en IS NOT NULL AS leida FROM notificacion WHERE usuario_id = :usuario"
+                " AND reemplazada_por IS NULL"
                 f" ORDER BY creada_en DESC, id DESC LIMIT {LIMITE_DEL_CENTRO}"
             ),
             {"usuario": usuario_id},
@@ -299,6 +317,7 @@ class NotificacionesSql:
         sin_leer: int = self._conn.execute(
             text(
                 "SELECT count(*) FROM notificacion WHERE usuario_id = :usuario AND leida_en IS NULL"
+                " AND reemplazada_por IS NULL"
             ),
             {"usuario": usuario_id},
         ).scalar_one()

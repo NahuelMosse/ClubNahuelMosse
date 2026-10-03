@@ -7,7 +7,7 @@
 
 - [x] T001 Migración 0006 y mensaje del dominio
 - [x] T002 `cancelar` encola la confirmación en la misma transacción (H01-01, H01-03, H04-01)
-- [x] T003 Despacho de pendientes y `entregar` compartido (H03-01)
+- [x] T003 Despacho de pendientes de a uno y `entregar` compartido (H03-01)
 - [x] T004 La ruta de cancelar despacha después de responder; el barrido retoma lo pendiente
 
 ## Phase 2: App

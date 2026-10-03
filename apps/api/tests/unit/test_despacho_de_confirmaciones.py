@@ -1,6 +1,8 @@
 from collections.abc import Sequence
 from datetime import UTC, datetime
 
+import pytest
+
 from app.aplicacion.notificaciones import Pendiente, ResultadoDeEnvio, despachar_pendientes
 from app.dominio.notificaciones import Aviso, Envio, mensaje_cancelacion
 from app.dominio.reservas import Reserva
@@ -31,15 +33,24 @@ class RepositorioEnMemoria:
         self.tokens = tokens
         self.envios: dict[int, Envio] = {}
         self.bajas: list[str] = []
+        self.falla_en: int | None = None
+        self.no_puede_marcar = False
 
-    def tomar_pendientes(self, usuario_id: int | None) -> list[Pendiente]:
-        tomados, self.pendientes = self.pendientes, []
-        return tomados
+    def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+        if not self.pendientes:
+            return None
+        siguiente = self.pendientes.pop(0)
+        self.envios[siguiente.notificacion_id] = "enviando"
+        return siguiente
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]:
+        if self.falla_en == usuario_id:
+            raise OSError("la base no contesta")
         return list(self.tokens)
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None:
+        if self.no_puede_marcar:
+            raise OSError("la base no contesta")
         self.envios[notificacion_id] = envio
 
     def dar_de_baja_tokens(self, tokens: Sequence[str]) -> None:
@@ -118,3 +129,34 @@ def test_un_despacho_no_repite_lo_que_otro_ya_tomó() -> None:
     assert despachar_pendientes(repo, canal) == 0
 
     assert len(canal.enviados) == 1
+
+
+def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> None:
+    """el aviso en curso pasa a fallido y los siguientes salen @supuesto:CU-24.3-SUP-04"""
+    repo = RepositorioEnMemoria(
+        [
+            Pendiente(1, 7, Aviso("t", "c", {"tipo": "cancelacion_usuario"})),
+            _pendiente(2),
+            _pendiente(3),
+        ],
+        ["t"],
+    )
+    repo.falla_en = 7
+    canal = CanalQueAcepta()
+
+    assert despachar_pendientes(repo, canal) == 3
+
+    assert repo.envios == {1: "fallida", 2: "enviada", 3: "enviada"}
+    assert len(canal.enviados) == 2
+
+
+def test_lo_que_no_se_intento_sigue_pendiente_si_el_despacho_se_corta() -> None:
+    """un despacho que se corta no deja avisos en `enviando` más allá del que estaba en curso"""
+    repo = RepositorioEnMemoria([_pendiente(1), _pendiente(2)], ["t"])
+    repo.falla_en = 3
+    repo.no_puede_marcar = True
+
+    with pytest.raises(OSError):
+        despachar_pendientes(repo, CanalQueAcepta())
+
+    assert [p.notificacion_id for p in repo.pendientes] == [2]

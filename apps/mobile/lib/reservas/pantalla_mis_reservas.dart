@@ -64,9 +64,8 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   @override
   void didUpdateWidget(PantallaMisReservas anterior) {
     super.didUpdateWidget(anterior);
-    if (widget.reservaId == null ||
-        (widget.reservaId == anterior.reservaId &&
-            widget.enHistorial == anterior.enHistorial)) {
+    if (widget.reservaId == anterior.reservaId &&
+        widget.enHistorial == anterior.enHistorial) {
       return;
     }
     // Un aviso nuevo con la pantalla ya abierta: se va a la pestaña del aviso y se lee de nuevo.

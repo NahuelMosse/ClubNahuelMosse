@@ -6,9 +6,9 @@
 ## Phase 1: API
 
 - [x] T001 Migración 0007 y mensaje del dominio
-- [x] T002 `encolar_cancelacion_forzosa` con agrupado e idempotencia (H02-01, H03-01)
+- [x] T002 `encolar_cancelacion_forzosa` con agrupado por aviso nuevo, bloqueo por persona e idempotencia (H02-01, H03-01)
 - [x] T003 `anular` encola en la misma transacción; el historial trae el envío (H01-01, H01-03, H05-01)
-- [x] T004 La ruta de anular despacha después de responder (H01-01, H04-01)
+- [x] T004 La ruta de anular despacha después de responder; el push de anulación lleva clave de reemplazo (H01-01, H04-01)
 
 ## Phase 2: App
 

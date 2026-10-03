@@ -17,8 +17,11 @@ def barrer_una_vez() -> int:
         notificaciones = NotificacionesSql(conn)
         canal = canal_push()
         # Lo que se registró con un hecho y no llegó a salir, por ejemplo si el servidor se
-        # cayó justo después de cancelar.
-        despachar_pendientes(notificaciones, canal)
+        # cayó justo después de cancelar. Si falla, los recordatorios salen igual.
+        try:
+            despachar_pendientes(notificaciones, canal)
+        except Exception:
+            _registro.exception("el despacho de avisos pendientes falló")
         return enviar_recordatorios(notificaciones, canal, datetime.now(UTC))
 
 
