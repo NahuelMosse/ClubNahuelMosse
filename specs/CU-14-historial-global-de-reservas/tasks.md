@@ -23,7 +23,11 @@
 
 ## Phase 3: Polish
 
-- [x] T007 Tests de widget, accesibilidad y capturas del paso 9
+- [x] T007 Tests de widget, accesibilidad y capturas del paso 9: scroll infinito sin trabarse ni
+      repetir, detalle que relee lo vigente, nombres accesibles de «Volver» y «Cerrar», fecha
+      inválida en Filtros
+- [x] T009 Tests de integración de API: corte de días en la hora del club (21:00 y 23:00) y
+      comodines de la búsqueda como texto
 - [ ] T008 `scripts/test.sh` y el e2e del archivo en verde
 
 ## Dependencies

@@ -36,7 +36,8 @@ API
   («Esto cambió mientras tanto») y 422 (`motivo`).
 - `apps/api/tests/escenarios/test_anular_reserva.py` — H01-04 (congelado).
 - `apps/api/tests/integracion/test_anular_reserva_api.py` — rastro, libera el horario, repetición,
-  rechazos, `anulable` y concurrencia contra la cancelación del usuario.
+  rechazos, `anulable`, concurrencia contra la cancelación del usuario y el rechazo de una reserva
+  empezada aunque se mande su horario vigente.
 
 App
 - `apps/mobile/lib/admin/historial_reservas.dart` — `ReservaHistorial.anulable` y
@@ -44,12 +45,13 @@ App
 - `apps/mobile/lib/admin/dialogo_anular_reserva.dart` — la confirmación «¿Anular esta reserva?»
   con los datos y el motivo; devuelve el motivo o `null`.
 - `apps/mobile/lib/admin/anular_reserva.dart` — el flujo: confirmación, pedido, reintento tras un
-  corte, aviso de éxito, «Esto cambió mientras tanto», sesión vencida. Lo usan el listado y el
-  detalle.
+  corte, aviso de éxito, «Esto cambió mientras tanto», sesión vencida (deja los filtros del
+  listado en `pendientes`, como la carga). Lo usan el listado y el detalle.
 - `apps/mobile/lib/admin/pantalla_panel_admin.dart` — ANULAR RESERVA en la tarjeta, fuera de la
   zona que abre el detalle; vuelve a leer el listado al terminar.
 - `apps/mobile/lib/admin/pantalla_detalle_reserva.dart` — ANULAR RESERVA en el detalle; vuelve con
-  `true` si la reserva cambió.
+  `true` si la reserva cambió. Con la anulación en camino no se sale (`PopScope`, flecha y
+  VOLVER deshabilitados); el listado se relee siempre al volver.
 - `apps/mobile/lib/comun/dialogo_error.dart` — overlay «Reserva anulada correctamente».
 - `apps/mobile/lib/app.dart` — el detalle recibe el cliente y la sesión.
 - `apps/mobile/integration_test/reservas/anular_reserva_test.dart` — 8 escenarios (congelado).

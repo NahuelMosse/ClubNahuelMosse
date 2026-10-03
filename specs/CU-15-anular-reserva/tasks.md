@@ -9,7 +9,9 @@
 - [x] App: `HistorialDeReservas.anular` y `ReservaHistorial.anulable`.
 - [x] App: confirmación con motivo y flujo de anulación con reintento.
 - [x] App: ANULAR RESERVA en la tarjeta del listado y en el detalle.
-- [x] App: widget tests, incluido texto al 200 % en 360 de ancho.
+- [x] App: widget tests, incluido texto al 200 % en 360 de ancho y la salida bloqueada del
+      detalle mientras se anula.
+- [x] API: la reserva empezada se rechaza aunque se mande su horario vigente.
 - [x] App: capturas del paso 9 (goldens de 360 y 430, claro y oscuro).
 - [ ] Pasada final: rojo de los escenarios en el emulador, e2e verdes y capturas contra Figma.
 - [ ] Pasada final: revisión con oracle.
