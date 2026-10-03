@@ -1,0 +1,49 @@
+# Blueprint de Render: la API y su base. Los valores con `sync: false` los pide Render al crear
+# el Blueprint; no viven en el repo.
+services:
+  - type: web
+    name: clubnahuelmosse-api
+    runtime: python
+    plan: free
+    rootDir: apps/api
+    # Las migraciones van en el build porque preDeployCommand no existe en el plan free.
+    # Con un plan pago, pasarlas a `preDeployCommand: uv run --no-sync alembic upgrade head`.
+    buildCommand: uv sync --frozen --no-dev && uv run --no-sync alembic upgrade head
+    startCommand: uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # Ruta pública: Render sólo acepta 2xx o 3xx y las demás responden 401 sin sesión.
+    healthCheckPath: /docs
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.11"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: clubnahuelmosse-db
+          property: connectionString
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_API_KEY
+        sync: false
+      # Contenido del JSON de la cuenta de servicio (un Blueprint no declara Secret Files).
+      - key: FIREBASE_CREDENCIALES_JSON
+        sync: false
+      # https://<nombre del servicio>.onrender.com, la que muestra Render al crearlo.
+      - key: URL_PUBLICA
+        sync: false
+      - key: CORREO_MODO
+        value: smtp
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PUERTO
+        value: "587"
+      - key: SMTP_USUARIO
+        sync: false
+      - key: SMTP_CONTRASENA
+        sync: false
+      - key: CORREO_REMITENTE
+        sync: false
+
+databases:
+  - name: clubnahuelmosse-db
+    plan: free
+    databaseName: club
+    user: club
