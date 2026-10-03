@@ -790,3 +790,60 @@ Future<void> cancelarDesdeOtroTelefono(
   );
   if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
 }
+
+/// Una reserva próxima como la ve quien la hizo: lo que el administrador necesita para anularla.
+typedef ReservaAnulable = ({int id, int espacioId, String inicio});
+
+/// Las próximas reservas de la cuenta [correo], según la API, de la más cercana a la más lejana.
+Future<List<ReservaAnulable>> proximasDe(
+  String correo, {
+  String contrasena = 'ClubNahuel1',
+}) async {
+  final token = await _token(correo, contrasena);
+  if (token == null) throw StateError('la cuenta $correo no entra');
+  final datos = await _leer('/reservas?cuando=proximas', token);
+  return [
+    if (datos case {'reservas': final List<Object?> reservas})
+      for (final reserva in reservas)
+        if (reserva case {
+          'id': final int id,
+          'espacio_id': final int espacioId,
+          'inicio': final String inicio,
+        })
+          (id: id, espacioId: espacioId, inicio: inicio),
+  ];
+}
+
+/// El administrador anula [reserva] con [motivo] desde otro teléfono, por la API, y devuelve el
+/// estado de la respuesta.
+Future<int> anularDesdeElAdmin(
+  ReservaAnulable reserva, {
+  String motivo = 'mantenimiento de la cancha',
+}) async {
+  final r = await http.post(
+    Uri.parse(
+      '${Configuracion.desdeEntorno().apiUrl}/reservas/${reserva.id}/anular',
+    ),
+    headers: {
+      'content-type': 'application/json',
+      'authorization': 'Bearer ${await _tokenAdmin()}',
+    },
+    body: jsonEncode({
+      'motivo': motivo,
+      'espacio_id': reserva.espacioId,
+      'inicio': reserva.inicio,
+    }),
+  );
+  return r.statusCode;
+}
+
+/// Espera a que la API registre el envío del aviso de la reserva de [nombreEspacio], que sale
+/// después de responder la anulación, y devuelve cómo salió.
+Future<String> esperarElEnvioDelAviso(String nombreEspacio) async {
+  for (var i = 0; i < 40; i++) {
+    final reserva = await reservaQueVeElAdmin(nombreEspacio);
+    if (reserva?['aviso_envio'] case final String envio) return envio;
+    await Future<void>.delayed(const Duration(milliseconds: 250));
+  }
+  throw StateError('el aviso de $nombreEspacio no salió a despacho');
+}
