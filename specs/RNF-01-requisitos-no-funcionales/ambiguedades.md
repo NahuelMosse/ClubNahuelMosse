@@ -29,3 +29,5 @@ RNF-01-SUP-05 · 2026-10-03 · supuesto · los README se verifican contra el có
 RNF-01-SUP-06 · 2026-10-03 · supuesto · «commits a lo largo del desarrollo» se verifica como al menos 50 commits en al menos 3 días distintos
 RNF-01-TESTS · 2026-10-03 · congelados en d879013 · escenarios H01-01 a H08-01 en apps/api/tests/escenarios/test_requisitos_no_funcionales.py
 RNF-01-TESTS · 2026-10-03 · recongelados en a81ce1c · la cota de H06-02 era 30 y la API tiene 28 operaciones protegidas
+RNF-01-SUP-07 · 2026-10-03 · supuesto · el .env.example vive en apps/api, donde config.py lee el .env, y sólo lista las variables que lee; las del entorno van comentadas
+RNF-01-SUP-08 · 2026-10-03 · supuesto · la cota de operaciones protegidas es 28, medida sobre las rutas registradas en la app (incluye las que no están en OpenAPI), en un test de integración sin tag

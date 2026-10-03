@@ -17,6 +17,8 @@ abierta como RNF-01-AMB-05 y su test se salta sin `API_URL_NUBE`.
 | `apps/mobile/assets/icono/icono.png` | Imagen fuente del ícono, lima `#D4FF3D` sobre `#0A0A0B` (tokens de `tema/tokens.dart`) |
 | `apps/mobile/android/app/src/main/res/mipmap-*` | Íconos generados con `dart run flutter_launcher_icons`, incluido el adaptativo |
 | `apps/mobile/README.md` | Configurar, ejecutar, probar y construir la app; variables `--dart-define` de `configuracion.dart` |
+| `apps/api/.env.example` | Variables de `config.py` sin valores secretos; las que sólo se leen del entorno, comentadas |
+| `apps/api/tests/integracion/test_rutas_protegidas.py` | Recorre `app.routes` (también lo que no está en OpenAPI) y exige 401 en las 28 operaciones fuera de las públicas |
 | `apps/api/README.md` | Configurar, ejecutar, probar y desplegar la API; variables de `app/config.py`, migraciones, Auth |
 | `specs/RNF-01-requisitos-no-funcionales/{plan,tasks,ambiguedades}.md` | Registro de la card |
 
