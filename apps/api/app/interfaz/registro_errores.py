@@ -43,7 +43,15 @@ class RegistroDeErrores:
         try:
             await self.app(scope, receive, enviar)
         except Exception:
-            _registro.error("%s 500 usuario=%s", _operacion(scope), _usuario(scope), exc_info=True)
+            # Con la respuesta ya enviada (tarea de fondo) vale el código que recibió el cliente.
+            _registro.error(
+                "%s %d usuario=%s%s",
+                _operacion(scope),
+                codigo or 500,
+                _usuario(scope),
+                " (el fallo fue posterior a la respuesta)" if codigo else "",
+                exc_info=True,
+            )
             raise
         if codigo >= 500:
             _registro.error("%s %d usuario=%s", _operacion(scope), codigo, _usuario(scope))
