@@ -23,6 +23,7 @@ void main() {
     'sin ninguna reserva en el sistema ve «No hay reservas», sin «Limpiar filtros» @CU-14-H07-01',
     (tester) async {
       final semantica = tester.ensureSemantics();
+      await vaciarReservas();
       await entrarComoAdmin(tester);
       await esperarA(tester, find.text('No hay reservas'));
       expect(
