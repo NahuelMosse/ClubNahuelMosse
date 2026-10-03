@@ -81,11 +81,11 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
     if (!mounted) return;
     // Sin datos frescos no se muestra nada: ni parciales ni viejos.
     setState(() => _cargando = false);
-    final reintentar = await mostrarErrorDeRed(context, fallo);
+    final resultado = await atenderErrorDeRed(context, fallo);
     if (!mounted) return;
-    if (reintentar) {
+    if (resultado == ResultadoDeError.reintentar) {
       await _cargar();
-    } else {
+    } else if (resultado == ResultadoDeError.cerrado) {
       context.go('/inicio');
     }
   }

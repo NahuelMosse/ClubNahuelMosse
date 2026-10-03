@@ -138,7 +138,9 @@ class _AppState extends State<App> {
       final ruta = estado.matchedLocation;
       // «Acceso denegado» es la única ruta bajo /admin que no exige el rol: es adonde va
       // quien pide una ruta de administrador sin el rol (CU-14-SUP-06, TP-07-SUP-03).
-      if (ruta == '/admin/acceso-denegado') return null;
+      if (ruta == '/admin/acceso-denegado') {
+        return widget.sesion.perfil == null ? '/' : null;
+      }
       // Todo lo que cuelga de /admin es del administrador: una ruta nueva del panel no
       // queda abierta por olvidarse de anotarla.
       final rol = ruta == '/admin' || ruta.startsWith('/admin/')
@@ -402,7 +404,7 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/admin/acceso-denegado',
-        builder: (context, _) => const PantallaAccesoDenegado(),
+        builder: (context, _) => PantallaAccesoDenegado(sesion: widget.sesion),
       ),
       GoRoute(
         path: '/admin/sedes',

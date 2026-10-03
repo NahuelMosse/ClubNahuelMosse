@@ -223,7 +223,7 @@ void main() {
       testWidgets('acceso denegado $ancho $modo', (tester) async {
         await montar(
           tester,
-          const PantallaAccesoDenegado(),
+          PantallaAccesoDenegado(sesion: SesionFalsa(perfilUsuario)),
           tema: oscuro ? temaOscuro : temaClaro,
           tamano: tamano,
         );

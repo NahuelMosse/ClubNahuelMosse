@@ -125,11 +125,11 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       await mostrarSesionVencida(context);
       if (mounted) await cerrarSesion(context, widget.sesion);
     } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
+      final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
-      if (reintentar) {
+      if (resultado == ResultadoDeError.reintentar) {
         await _cargar();
-      } else {
+      } else if (resultado == ResultadoDeError.cerrado) {
         context.go('/admin/espacios');
       }
     }

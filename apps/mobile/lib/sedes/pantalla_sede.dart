@@ -137,11 +137,11 @@ class _PantallaSedeState extends State<PantallaSede> {
       await mostrarSesionVencida(context);
       if (mounted) await cerrarSesion(context, widget.sesion);
     } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
+      final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
-      if (reintentar) {
+      if (resultado == ResultadoDeError.reintentar) {
         await _cargar();
-      } else if (_datos == null) {
+      } else if (resultado == ResultadoDeError.cerrado && _datos == null) {
         context.go('/sedes');
       }
     }
