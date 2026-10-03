@@ -470,6 +470,12 @@ Future<void> empezarReservasDe(String nombreEspacio) async {
   if (r.statusCode != 204) throw StateError('empezar: ${r.statusCode}');
 }
 
+/// El sistema queda sin ninguna reserva (ni los avisos que las mencionan).
+Future<void> vaciarReservas() async {
+  final r = await http.post(_pruebas('reservas/vaciar'));
+  if (r.statusCode != 204) throw StateError('vaciar: ${r.statusCode}');
+}
+
 /// El club anula las reservas activas de [nombreEspacio], como lo haría un administrador.
 Future<void> anularReservasDe(String nombreEspacio) async {
   final r = await http.post(

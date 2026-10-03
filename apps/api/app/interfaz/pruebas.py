@@ -75,6 +75,15 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.post("/reservas/vaciar", status_code=status.HTTP_204_NO_CONTENT)
+def vaciar_reservas(conn: Conexion) -> Response:
+    """El sistema queda sin ninguna reserva, ni los avisos que las mencionan: la base de la
+    corrida es una sola y los escenarios del historial global parten de cero."""
+    conn.execute(text("TRUNCATE notificacion_reserva, notificacion, reserva"))
+    conn.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 class Espacio(BaseModel):
     espacio: str
 
