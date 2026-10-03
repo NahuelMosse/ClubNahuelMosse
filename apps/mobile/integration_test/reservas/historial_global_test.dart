@@ -283,8 +283,7 @@ void main() {
       expect(find.textContaining('RESULTADO'), findsNothing);
 
       api.estado = EstadoApi.normal;
-      await tester.tap(find.widgetWithText(FilledButton, 'REINTENTAR'));
-      await tester.pumpAndSettle();
+      await tocar(tester, 'REINTENTAR');
       await esperarA(tester, find.textContaining('RESERVA'));
       semantica.dispose();
     },
