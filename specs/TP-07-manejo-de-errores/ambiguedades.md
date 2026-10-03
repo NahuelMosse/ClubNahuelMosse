@@ -35,3 +35,4 @@ TP-07-TESTS · 2026-09-30 · congelados en 467a731 · rojo pendiente de la pasad
 TP-07-SUP-07 · 2026-10-03 · supuesto · «Acceso denegado» vuelve a leer el perfil antes de llevar a Mis reservas, ofrece «Cerrar sesión» y un 403 no navega a otra pantalla encima; si la lectura falla, sigue con el perfil guardado
 TP-07-SUP-08 · 2026-10-03 · supuesto · después de un corte de red, un 409 al reintentar registro, cancelar o anular se lee como que el pedido cortado sí llegó: registro dice que la cuenta ya existe y ofrece iniciar sesión; cancelar y anular cuentan como éxito
 TP-07-SUP-09 · 2026-10-03 · supuesto · el registro no lleva los parámetros de las consultas (hide_parameters); el texto de error de PostgreSQL (por ejemplo el DETAIL de una violación de unicidad) sí puede traer valores y no se filtra: queda sin cubrir
+TP-07-TESTS · 2026-10-03 · recongelados en d3895ac · H07-01 tocaba «VER HORARIOS / RESERVAR» con dos canchas en la sede; abre la primera (cancha1)
