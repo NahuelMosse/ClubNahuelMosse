@@ -99,6 +99,11 @@ void main() {
       await escribir(tester, 'Contraseña', 'ClubNahuel1');
       await tocar(tester, 'INICIAR SESIÓN');
       await esperarA(tester, find.text('RESERVÁ TU CANCHA'));
+      // La anulación ya generó su aviso (CU-24.2): el panel se abre solo al entrar y tapa la
+      // pantalla hasta que se cierra.
+      await esperarA(tester, find.text('El club anuló tu reserva'));
+      await tester.tap(find.bySemanticsLabel('Cerrar las notificaciones'));
+      await tester.pumpAndSettle();
       await tocar(tester, 'RESERVAS');
       await tocar(tester, 'Historial');
 
