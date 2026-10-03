@@ -35,6 +35,7 @@ Future<ResultadoDeAnulacion> anularReserva(
 }) async {
   final motivo = await pedirMotivoDeAnulacion(context, reserva);
   if (motivo == null || !context.mounted) return ResultadoDeAnulacion.nada;
+  var huboCorte = false;
   while (true) {
     Object? fallo;
     var vencida = false;
@@ -43,10 +44,12 @@ Future<ResultadoDeAnulacion> anularReserva(
     try {
       await historial.anular(reserva, motivo);
     } on ReservaCambiada {
-      cambio = true;
+      // Después de un corte, que ya esté anulada es que el pedido cortado la anuló.
+      cambio = !huboCorte;
     } on SesionVencida {
       vencida = true;
     } on SinConexion catch (e) {
+      huboCorte = true;
       fallo = e;
     } on ErrorDelServidor catch (e) {
       fallo = e;

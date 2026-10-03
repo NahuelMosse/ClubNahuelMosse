@@ -85,11 +85,11 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
       fallo = e;
     }
     if (fallo != null && mounted) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
+      final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
-      if (reintentar) {
+      if (resultado == ResultadoDeError.reintentar) {
         await _comprobar();
-      } else {
+      } else if (resultado == ResultadoDeError.cerrado) {
         context.go('/');
       }
     }

@@ -8,7 +8,8 @@ from app.config import config
 
 @cache
 def motor() -> Engine:
-    return create_engine(config.database_url, pool_pre_ping=True)
+    # Sin los parámetros en los mensajes de error: llevan DNI, correo y nombre y terminan en el log.
+    return create_engine(config.database_url, pool_pre_ping=True, hide_parameters=True)
 
 
 def conexion() -> Iterator[Connection]:

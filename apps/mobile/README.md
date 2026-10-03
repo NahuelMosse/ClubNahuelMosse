@@ -34,7 +34,7 @@ con `dart run flutter_launcher_icons`.
 
 ## Ejecutar
 
-Contra el emulador de Firebase Auth y una API local (ver «Probar» en el README de la API para
+Contra el emulador de Firebase Auth y una API local (ver «Ejecutar» en el README de la API para
 levantarlos):
 
 ```sh
@@ -60,12 +60,13 @@ dart format --output=none --set-exit-if-changed lib test
 flutter test
 ```
 
-Desde la raíz del repo, `sh scripts/test.sh` corre además los chequeos y las pruebas de la API.
+`sh scripts/test.sh`, desde la raíz del repo, corre además los chequeos y las pruebas de la API.
 
 Los escenarios de pantalla (`integration_test/`) corren en un emulador de Android o un teléfono
 conectado, con la API y el emulador de Firebase Auth que levanta el propio script:
 
 ```sh
+# desde la raíz del repo
 sh scripts/e2e.sh
 sh scripts/e2e.sh integration_test/<área> --name "@<ID>-"
 ```
@@ -75,12 +76,13 @@ El script lee `AVD` (el emulador a arrancar si no hay dispositivo), `DISPOSITIVO
 
 ## Construir el APK
 
-Con las mismas `--dart-define` que `flutter run`:
+Con las mismas `--dart-define` que `flutter run`; sin `API_URL` la app no arranca:
 
 ```sh
-flutter build apk --debug
-flutter build apk --release --dart-define=API_URL=<dirección pública de la API> ...
+flutter build apk --release   --dart-define=API_URL=<dirección pública de la API>   --dart-define=FIREBASE_API_KEY=<clave>   --dart-define=FIREBASE_APP_ID=<id de la app>   --dart-define=FIREBASE_SENDER_ID=<id del remitente>   --dart-define=FIREBASE_PROJECT_ID=<id del proyecto>
 ```
+
+`flutter build apk --debug` lleva las mismas `--dart-define`.
 
 El archivo queda en `build/app/outputs/flutter-apk/`. Se instala con
 `adb install -r build/app/outputs/flutter-apk/app-debug.apk` (o `app-release.apk`). La versión

@@ -27,6 +27,9 @@
 
 - [x] T006 Unitarios al 200 % en 360 del aviso y de las pantallas que cambiaron
 - [x] T007 Capturas del paso 9 (360/430 × claro/oscuro)
+- [x] T009 el log no lleva los parámetros de las consultas y una tarea de fondo que falla registra el código enviado
+- [x] T010 un 409 después de un corte cuenta como éxito en registro, cancelar y anular (TP-07-SUP-08)
+- [x] T011 «Acceso denegado» relee el perfil, ofrece «Cerrar sesión» y los 403 no navegan encima (TP-07-SUP-07)
 - [ ] T008 `scripts/e2e.sh integration_test/errores/errores_compartidos_test.dart` en verde
   (pasada final en el emulador)
 

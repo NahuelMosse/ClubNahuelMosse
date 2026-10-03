@@ -49,6 +49,12 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   final _tocados = <_Campo>{};
   final _erroresDelServidor = <_Campo, String>{};
   String? _aviso;
+
+  /// Un pedido anterior se cortó sin respuesta: la API pudo haber creado la cuenta igual.
+  bool _huboCorte = false;
+
+  /// El 409 llegó después de un corte: la cuenta que se mandó crear ya existe.
+  bool _yaExiste = false;
   bool _enviando = false;
   bool _contrasenaVisible = false;
 
@@ -72,7 +78,11 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     setState(() {
       _textos[campo.index] = texto;
       _erroresDelServidor.remove(campo);
-      if (campo == _Campo.correo || campo == _Campo.dni) _aviso = null;
+      if (campo == _Campo.correo || campo == _Campo.dni) {
+        _aviso = null;
+        _huboCorte = false;
+        _yaExiste = false;
+      }
     });
   }
 
@@ -128,6 +138,10 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         context.go('/registro/exitoso');
         return;
       }
+      if (r.codigo == 409 && _huboCorte) {
+        setState(() => _yaExiste = true);
+        return;
+      }
       final errores = r.cuerpo['errores'];
       final mensaje = r.cuerpo['mensaje'];
       if (errores is! Map<String, Object?> || errores.isEmpty) {
@@ -144,6 +158,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         });
       }
     } on SinConexion catch (e) {
+      _huboCorte = true;
       fallo = e;
     } on ErrorDelServidor catch (e) {
       fallo = e;
@@ -220,7 +235,18 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (aviso != null) ...[
+              if (_yaExiste) ...[
+                const _Aviso(
+                  texto:
+                      'Tu cuenta ya existe: el registro se completó antes del corte. '
+                      'Iniciá sesión con tu correo y tu contraseña.',
+                ),
+                BotonTexto(
+                  texto: 'INICIAR SESIÓN',
+                  alTocar: () => context.go('/'),
+                ),
+                const SizedBox(height: Medidas.s16),
+              ] else if (aviso != null) ...[
                 _Aviso(texto: aviso),
                 const SizedBox(height: Medidas.s16),
               ],

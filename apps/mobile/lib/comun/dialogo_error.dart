@@ -5,15 +5,28 @@ import '../api/cliente_api.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
+/// Cómo terminó el aviso de [atenderErrorDeRed].
+enum ResultadoDeError {
+  /// La persona eligió reintentar: quien llama reintenta cuando el intento anterior ya terminó.
+  reintentar,
+
+  /// La persona cerró el aviso.
+  cerrado,
+
+  /// Era un 403: ya se la llevó a «Acceso denegado» y quien llama no navega encima.
+  accesoDenegado,
+}
+
 /// Los overlays compartidos de error de conexión y de error del servidor.
 ///
-/// Devuelve `true` si la persona eligió reintentar; quien llama reintenta cuando el
-/// intento anterior ya terminó. Un 403 de la API no es una falla: es «Acceso denegado», y
-/// lleva a su pantalla.
-Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async {
+/// Un 403 de la API no es una falla: es «Acceso denegado», y lleva a su pantalla.
+Future<ResultadoDeError> atenderErrorDeRed(
+  BuildContext context,
+  Object error,
+) async {
   if (error is ErrorDelServidor && error.codigo == 403) {
     context.go('/admin/acceso-denegado');
-    return false;
+    return ResultadoDeError.accesoDenegado;
   }
   final sinConexion = error is SinConexion;
   final reintentar = await showDialog<bool>(
@@ -29,8 +42,14 @@ Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async {
       secundaria: sinConexion ? 'Volver' : 'ACEPTAR',
     ),
   );
-  return reintentar ?? false;
+  return reintentar == true
+      ? ResultadoDeError.reintentar
+      : ResultadoDeError.cerrado;
 }
+
+/// [atenderErrorDeRed] para quien sólo necesita saber si hay que reintentar.
+Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async =>
+    await atenderErrorDeRed(context, error) == ResultadoDeError.reintentar;
 
 /// El aviso de que otra persona tomó el horario mientras se confirmaba ([texto] dice cuál).
 /// La única salida es elegir otro.

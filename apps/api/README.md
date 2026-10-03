@@ -17,7 +17,10 @@ cd apps/api
 uv sync
 ```
 
-La configuración llega por variables de entorno (o un archivo `.env` local, que no se versiona):
+La configuración llega por variables de entorno. `app/config.py` también lee un archivo `.env`
+local, que no se versiona; `.env.example` lista las variables. `FIREBASE_AUTH_EMULATOR_HOST`,
+`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_CONTRASENA` y `TEST_DATABASE_URL` se leen sólo del
+entorno del proceso: en el `.env` no tienen efecto.
 
 | Variable | Qué es |
 |---|---|
@@ -29,9 +32,10 @@ La configuración llega por variables de entorno (o un archivo `.env` local, que
 | `SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | Servidor de correo saliente con `CORREO_MODO=smtp` |
 | `PRUEBAS` | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
 | `RECORDATORIOS_CADA` | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Ruta a un archivo de cuenta de servicio de Firebase; con él la API manda avisos por Firebase Cloud Messaging, sin él no los envía |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. Obligatoria en producción: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
 | `ADMIN_CONTRASENA` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
+| `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
 
 Crear las tablas en la base de `DATABASE_URL`:
 
@@ -66,14 +70,15 @@ Con el emulador de Firebase Auth levantado y una base cuyo nombre termine en `_t
 y recrea su esquema):
 
 ```sh
+# desde la raíz del repo
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
 DATABASE_URL=postgresql+psycopg://<usuario>:<contraseña>@<host>:<puerto>/<base>_test \
 TEST_DATABASE_URL=postgresql+psycopg://<usuario>:<contraseña>@<host>:<puerto>/<base>_test \
   sh scripts/test.sh
 ```
 
-`scripts/test.sh` (en la raíz del repo) corre `ruff`, `mypy` y `pytest` de la API y después
-`flutter analyze`, el formato y `flutter test` de la app. Sólo la API:
+`scripts/test.sh` se corre desde la raíz del repo; corre `ruff`, `mypy` y `pytest` de la API y
+después `flutter analyze`, el formato y `flutter test` de la app. Sólo la API:
 
 ```sh
 cd apps/api
@@ -92,9 +97,10 @@ PostgreSQL. Los pasos, sin importar cuál:
 2. **Variables de entorno.** Definir `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`,
    `URL_PUBLICA` (la dirección pública que le asigne la plataforma) y las `SMTP_*` con
    `CORREO_REMITENTE`. Dejar sin definir `PRUEBAS` y `FIREBASE_AUTH_EMULATOR_HOST`.
-3. **Avisos push.** Descargar de la consola de Firebase una cuenta de servicio, ponerla como
-   archivo secreto en la plataforma y apuntar `GOOGLE_APPLICATION_CREDENTIALS` a su ruta. El archivo
-   no se sube al repositorio.
+3. **Credencial de Firebase (obligatoria).** Descargar de la consola de Firebase una cuenta de
+   servicio, ponerla como archivo secreto en la plataforma y apuntar `GOOGLE_APPLICATION_CREDENTIALS`
+   a su ruta. Sin ella la API no crea ni borra usuarios, no verifica tokens y no manda avisos. El
+   archivo no se sube al repositorio.
 4. **Instalar.** `uv sync --no-dev` en `apps/api`.
 5. **Migrar.** `uv run alembic upgrade head` antes de arrancar y en cada versión nueva.
 6. **Arrancar.** `uv run uvicorn app.main:app --host 0.0.0.0 --port <puerto que indique la plataforma>`.
