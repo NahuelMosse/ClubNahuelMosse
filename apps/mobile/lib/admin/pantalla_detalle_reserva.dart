@@ -1,30 +1,42 @@
 import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
-import '../sesion/sesion.dart';
-import 'anular_reserva.dart';
 import '../comun/formato_precio.dart';
+import '../espacios/espacio.dart';
+import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
 import '../reservas/fechas.dart';
+import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'anular_reserva.dart';
 import 'estado_reserva_chip.dart';
 import 'historial_reservas.dart';
 
 /// El detalle de una reserva del historial global (CU-14): datos y trazabilidad, y si la
-/// reserva se puede anular (CU-15), la acción de anularla. Al volver avisa con `true` que
-/// la reserva cambió y el listado tiene que volver a leerse.
+/// reserva se puede anular (CU-15), la acción de anularla. Muestra lo que el servidor dice al
+/// abrirla, no lo que el listado tenía. Mientras la anulación está en camino no se puede salir.
+/// Al volver avisa con `true` que la reserva cambió.
 class PantallaDetalleReserva extends StatefulWidget {
   const PantallaDetalleReserva({
     super.key,
     required this.reserva,
     required this.historial,
     required this.sesion,
+    required this.espacios,
+    required this.filtros,
+    required this.pendientes,
   });
 
+  /// La reserva como la mostraba el listado, hasta que llegue la vigente.
   final ReservaHistorial reserva;
   final HistorialDeReservas historial;
   final Sesion sesion;
+  final Espacios espacios;
+
+  /// Los filtros del listado de donde se vino y dónde se guardan si la sesión vence.
+  final FiltrosDeHistorial filtros;
+  final FiltrosDePanelPendientes pendientes;
 
   @override
   State<PantallaDetalleReserva> createState() => _PantallaDetalleReservaState();
@@ -32,8 +44,21 @@ class PantallaDetalleReserva extends StatefulWidget {
 
 class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
   bool _anulando = false;
+  late ReservaHistorial _vigente = widget.reserva;
+  Catalogo? _catalogo;
 
-  ReservaHistorial get reserva => widget.reserva;
+  ReservaHistorial get reserva => _vigente;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.historial.detalle(widget.reserva.id).then((r) {
+      if (mounted && r != null) setState(() => _vigente = r);
+    }).ignore();
+    widget.espacios.catalogo().then((c) {
+      if (mounted) setState(() => _catalogo = c);
+    }).ignore();
+  }
 
   Future<void> _anular() async {
     if (_anulando) return;
@@ -42,6 +67,8 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
       reserva: reserva,
       historial: widget.historial,
       sesion: widget.sesion,
+      filtros: widget.filtros,
+      pendientes: widget.pendientes,
       enviando: (v) {
         if (mounted) setState(() => _anulando = v);
       },
@@ -61,86 +88,99 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final r = reserva;
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s8,
-                Medidas.s16,
-                Medidas.s24,
-                Medidas.s8,
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    color: p.textPrimary,
-                  ),
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        'Detalle de reserva',
-                        style: Textos.h2.copyWith(color: p.textPrimary),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
+    return PopScope(
+      canPop: !_anulando,
+      child: Scaffold(
+        backgroundColor: p.bgBase,
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
                 padding: const EdgeInsets.fromLTRB(
+                  Medidas.s8,
+                  Medidas.s16,
                   Medidas.s24,
-                  0,
-                  Medidas.s24,
-                  Medidas.s24,
+                  Medidas.s8,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: Row(
                   children: [
-                    _TarjetaDatos(reserva: r, horario: _horario),
-                    if (r.espacioDeBaja) ...[
-                      const SizedBox(height: Medidas.s12),
-                      _AvisoDeBaja(),
-                    ],
-                    const SizedBox(height: Medidas.s16),
-                    _Trazabilidad(reserva: r),
-                    const SizedBox(height: Medidas.s24),
-                    if (r.anulable) ...[
-                      _anulando
-                          ? Semantics(
-                              label: 'Anulando la reserva',
-                              excludeSemantics: true,
-                              child: const SizedBox(
-                                height: Medidas.altoControl,
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              ),
-                            )
-                          : BotonContorno(
-                              texto: 'ANULAR RESERVA',
-                              peligro: true,
-                              etiquetaAccesible:
-                                  'Anular la reserva de ${r.usuario}',
-                              alTocar: _anular,
-                            ),
-                      const SizedBox(height: Medidas.s12),
-                    ],
-                    BotonContorno(
-                      texto: 'VOLVER AL LISTADO',
-                      alTocar: () => Navigator.of(context).pop(),
+                    IconButton(
+                      onPressed: _anulando
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      tooltip: 'Volver',
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      color: p.textPrimary,
+                    ),
+                    Expanded(
+                      child: Semantics(
+                        header: true,
+                        child: Text(
+                          'Detalle de reserva',
+                          style: Textos.h2.copyWith(color: p.textPrimary),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    Medidas.s24,
+                    0,
+                    Medidas.s24,
+                    Medidas.s24,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _TarjetaDatos(
+                        reserva: r,
+                        horario: _horario,
+                        nombreDeporte:
+                            _catalogo?.deporte(r.deporte)?.nombre ?? r.deporte,
+                      ),
+                      if (r.espacioDeBaja) ...[
+                        const SizedBox(height: Medidas.s12),
+                        _AvisoDeBaja(),
+                      ],
+                      const SizedBox(height: Medidas.s16),
+                      _Trazabilidad(reserva: r),
+                      const SizedBox(height: Medidas.s24),
+                      if (r.anulable) ...[
+                        _anulando
+                            ? Semantics(
+                                label: 'Anulando la reserva',
+                                excludeSemantics: true,
+                                child: const SizedBox(
+                                  height: Medidas.altoControl,
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                ),
+                              )
+                            : BotonContorno(
+                                texto: 'ANULAR RESERVA',
+                                peligro: true,
+                                etiquetaAccesible:
+                                    'Anular la reserva de ${r.usuario}',
+                                alTocar: _anular,
+                              ),
+                        const SizedBox(height: Medidas.s12),
+                      ],
+                      BotonContorno(
+                        texto: 'VOLVER AL LISTADO',
+                        alTocar: _anulando
+                            ? null
+                            : () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -148,10 +188,15 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
 }
 
 class _TarjetaDatos extends StatelessWidget {
-  const _TarjetaDatos({required this.reserva, required this.horario});
+  const _TarjetaDatos({
+    required this.reserva,
+    required this.horario,
+    required this.nombreDeporte,
+  });
 
   final ReservaHistorial reserva;
   final String horario;
+  final String nombreDeporte;
 
   @override
   Widget build(BuildContext context) {
@@ -161,7 +206,7 @@ class _TarjetaDatos extends StatelessWidget {
       container: true,
       excludeSemantics: true,
       label:
-          '${r.deporte}, sede ${r.sede}, ${r.direccion}, ${pesos(r.total)}, '
+          '$nombreDeporte, sede ${r.sede}, ${r.direccion}, ${pesos(r.total)}, '
           '${r.estado.name}, usuario ${r.usuario}, ${r.espacio}, '
           '${fechaLarga(r.inicio)}, $horario',
       child: Container(
@@ -185,7 +230,7 @@ class _TarjetaDatos extends StatelessWidget {
                 const SizedBox(width: Medidas.s8),
                 Expanded(
                   child: Text(
-                    r.deporte,
+                    nombreDeporte,
                     style: Textos.titulo.copyWith(color: p.textPrimary),
                   ),
                 ),

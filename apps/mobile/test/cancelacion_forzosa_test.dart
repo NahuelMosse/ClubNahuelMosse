@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:clubnahuelmosse/admin/historial_reservas.dart';
 import 'package:clubnahuelmosse/admin/pantalla_detalle_reserva.dart';
+import 'package:clubnahuelmosse/espacios/espacios.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,12 +36,16 @@ void main() {
     final reserva = ReservaHistorial.desdeJson(jsonDecode(json));
     if (reserva == null) fail('la reserva de prueba no se lee');
     final sesion = SesionFalsa(perfilAdmin);
+    final api = apiRutas({});
     await montar(
       tester,
       PantallaDetalleReserva(
         reserva: reserva,
-        historial: HistorialDeReservas(api: apiRutas({}), sesion: sesion),
+        historial: HistorialDeReservas(api: api, sesion: sesion),
         sesion: sesion,
+        espacios: Espacios(api: api, sesion: sesion),
+        filtros: const FiltrosDeHistorial(),
+        pendientes: FiltrosDePanelPendientes(),
       ),
       tema: temaOscuro,
       tamano: tamano,

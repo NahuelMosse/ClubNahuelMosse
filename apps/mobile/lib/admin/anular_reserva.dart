@@ -22,12 +22,15 @@ enum ResultadoDeAnulacion {
 
 /// Pide el motivo, anula [reserva] y avisa cómo terminó. [enviando] avisa mientras el pedido
 /// está en camino. Si la conexión o el servidor fallan, la reserva conserva su estado y se
-/// ofrece reintentar.
+/// ofrece reintentar. Si la sesión vence, [filtros] queda en [pendientes] para restaurarse al
+/// volver a entrar.
 Future<ResultadoDeAnulacion> anularReserva(
   BuildContext context, {
   required ReservaHistorial reserva,
   required HistorialDeReservas historial,
   required Sesion sesion,
+  required FiltrosDeHistorial filtros,
+  required FiltrosDePanelPendientes pendientes,
   required ValueChanged<bool> enviando,
 }) async {
   final motivo = await pedirMotivoDeAnulacion(context, reserva);
@@ -58,6 +61,7 @@ Future<ResultadoDeAnulacion> anularReserva(
       return ResultadoDeAnulacion.cambio;
     }
     if (vencida) {
+      pendientes.guardar(filtros);
       await mostrarSesionVencida(context);
       if (context.mounted) await cerrarSesion(context, sesion);
       return ResultadoDeAnulacion.nada;

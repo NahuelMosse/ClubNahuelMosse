@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:clubnahuelmosse/admin/historial_reservas.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
@@ -6,6 +9,8 @@ import 'package:clubnahuelmosse/sedes/sedes.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
@@ -107,6 +112,90 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Reservas'), findsOneWidget);
+    },
+  );
+
+  String reservaN(int id) => reservaJson
+      .replaceFirst('"id": 1,', '"id": $id,')
+      .replaceFirst('Nahuel Mosse', 'Socio $id');
+
+  String pagina(Iterable<int> ids, int numero) =>
+      '{"reservas": [${ids.map(reservaN).join(',')}], "total": 40,'
+      ' "pagina": $numero, "por_pagina": 20, "contadores": {"todas": 40,'
+      ' "activas": 40, "completadas": 0, "anuladas": 0}}';
+
+  testWidgets(
+    'un cambio de filtro con la página siguiente en camino no traba el scroll '
+    'y la página siguiente no repite reservas',
+    (tester) async {
+      final segundas = <Completer<http.Response>>[];
+      final api = ClienteApi(
+        'http://api.falsa',
+        cliente: MockClient((pedido) async {
+          final cabeceras = {'content-type': 'application/json; charset=utf-8'};
+          if (pedido.url.path == '/reservas/todas') {
+            if (pedido.url.queryParameters['pagina'] == '2') {
+              final c = Completer<http.Response>();
+              segundas.add(c);
+              return c.future;
+            }
+            return http.Response.bytes(
+              utf8.encode(pagina(List.generate(20, (i) => i + 1), 1)),
+              200,
+              headers: cabeceras,
+            );
+          }
+          return http.Response.bytes(
+            utf8.encode(catalogoJson),
+            pedido.url.path == '/espacios/catalogo' ? 200 : 404,
+            headers: cabeceras,
+          );
+        }),
+      );
+      await montar(
+        tester,
+        pantalla(api: api),
+        tema: temaOscuro,
+        tamano: const Size(393, 852),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
+      await tester.pump();
+      await tester.pump();
+      expect(segundas, hasLength(1));
+      expect(
+        find.byType(CircularProgressIndicator, skipOffstage: false),
+        findsOneWidget,
+      );
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, 20000));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Activas (40)'));
+      await tester.pumpAndSettle();
+      expect(
+        find.byType(CircularProgressIndicator, skipOffstage: false),
+        findsNothing,
+      );
+
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
+      await tester.pump();
+      expect(segundas, hasLength(2));
+
+      // La página siguiente repite la última reserva de la primera.
+      segundas.last.complete(
+        http.Response.bytes(
+          utf8.encode(pagina([20, 21], 2)),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Socio 20'), findsOneWidget);
+      expect(find.text('Socio 21'), findsOneWidget);
     },
   );
 }

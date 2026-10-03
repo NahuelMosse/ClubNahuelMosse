@@ -119,6 +119,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
       _resultado = null;
       _reservas.clear();
       _fallo = false;
+      _cargandoMas = false;
     });
     Object? error;
     var vencida = false;
@@ -163,7 +164,10 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
       if (!mounted || pedido != _pedido) return;
       setState(() {
         _resultado = siguiente;
-        _reservas.addAll(siguiente.reservas);
+        // Con la paginación por OFFSET, una reserva nueva o anulada entre dos páginas
+        // corre las filas: se descartan las que ya están.
+        final vistas = {for (final r in _reservas) r.id};
+        _reservas.addAll(siguiente.reservas.where((r) => vistas.add(r.id)));
       });
     } on Exception {
       // Sin red o con el servidor caído: lo que ya se cargó sigue viéndose, y el
@@ -216,8 +220,8 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
   }
 
   Future<void> _abrirDetalle(ReservaHistorial r) async {
-    final cambio = await context.push<bool>('/admin/reserva/${r.id}', extra: r);
-    if (cambio == true && mounted) unawaited(_cargar());
+    await context.push<bool>('/admin/reserva/${r.id}', extra: (r, _filtros));
+    if (mounted) unawaited(_cargar());
   }
 
   /// La anulación de [r] está en camino: el listado no responde hasta que termine.
@@ -230,6 +234,8 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
       reserva: r,
       historial: widget.historial,
       sesion: widget.sesion,
+      filtros: _filtros,
+      pendientes: widget.pendientes,
       enviando: (v) {
         if (mounted) setState(() => _anulando = v);
       },
@@ -413,23 +419,20 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                     Medidas.s24,
                     Medidas.s40,
                   ),
-                  // Una página son 20 tarjetas: se arman todas, así lo que está debajo del primer
-                  // renglón ya está en el árbol para quien lo busque sin desplazarse.
-                  sliver: SliverToBoxAdapter(
-                    child: Column(
-                      children: [
-                        for (final r in _reservas)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: Medidas.s12),
-                            child: _TarjetaReservaAdmin(
-                              reserva: r,
-                              catalogo: catalogo,
-                              alTocar: () => _abrirDetalle(r),
-                              alAnular: _anulando ? null : () => _anular(r),
-                            ),
-                          ),
-                      ],
-                    ),
+                  sliver: SliverList.builder(
+                    itemCount: _reservas.length,
+                    itemBuilder: (context, i) {
+                      final r = _reservas[i];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: Medidas.s12),
+                        child: _TarjetaReservaAdmin(
+                          reserva: r,
+                          catalogo: catalogo,
+                          alTocar: () => _abrirDetalle(r),
+                          alAnular: _anulando ? null : () => _anular(r),
+                        ),
+                      );
+                    },
                   ),
                 ),
               if (_cargandoMas)

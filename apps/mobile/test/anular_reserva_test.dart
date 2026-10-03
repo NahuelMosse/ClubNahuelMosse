@@ -224,6 +224,9 @@ void main() {
                           sesion: sesion,
                         ),
                         sesion: sesion,
+                        espacios: Espacios(api: api, sesion: sesion),
+                        filtros: const FiltrosDeHistorial(),
+                        pendientes: FiltrosDePanelPendientes(),
                       ),
                     ),
                   );

@@ -77,6 +77,12 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
   DateTime? get _fechaHasta =>
       _hasta.text.trim().isEmpty ? null : leerFecha(_hasta.text);
 
+  /// Hay texto en el campo y no es una fecha que exista.
+  bool _noEsFecha(TextEditingController c) =>
+      c.text.trim().isNotEmpty && leerFecha(c.text) == null;
+
+  bool get _hayFechaInvalida => _noEsFecha(_desde) || _noEsFecha(_hasta);
+
   bool get _rangoInvalido {
     final d = _fechaDesde;
     final h = _fechaHasta;
@@ -95,7 +101,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
   }
 
   void _aplicar() {
-    if (_rangoInvalido) return;
+    if (_rangoInvalido || _hayFechaInvalida) return;
     Navigator.of(context).pop(
       FiltrosDeHistorial(
         estado: _estado,
@@ -136,6 +142,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Cerrar',
                     icon: const Icon(Icons.close_rounded),
                     color: p.textSecondary,
                   ),
@@ -234,7 +241,9 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                             size: 16,
                             color: p.textMuted,
                           ),
-                          error: _rangoInvalido
+                          error: _noEsFecha(_desde)
+                              ? 'Fecha inválida'
+                              : _rangoInvalido
                               ? 'Desde no puede ser posterior a Hasta'
                               : null,
                         ),
@@ -253,7 +262,11 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                             size: 16,
                             color: p.textMuted,
                           ),
-                          error: _rangoInvalido ? ' ' : null,
+                          error: _noEsFecha(_hasta)
+                              ? 'Fecha inválida'
+                              : _rangoInvalido
+                              ? ' '
+                              : null,
                         ),
                       ),
                     ],
@@ -277,7 +290,9 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                   Expanded(
                     child: BotonPrimario(
                       texto: 'APLICAR',
-                      alTocar: _rangoInvalido ? null : _aplicar,
+                      alTocar: _rangoInvalido || _hayFechaInvalida
+                          ? null
+                          : _aplicar,
                     ),
                   ),
                 ],

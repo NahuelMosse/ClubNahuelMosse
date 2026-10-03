@@ -385,16 +385,22 @@ class _AppState extends State<App> {
         routes: [
           GoRoute(
             path: 'reserva/:id',
-            // Sin la reserva que se tocó en el listado (un enlace, la app reabierta),
-            // vuelve al listado.
+            // Sin la reserva y los filtros del listado de donde se vino (un enlace, la app
+            // reabierta), vuelve al listado.
             redirect: (context, estado) =>
-                estado.extra is ReservaHistorial ? null : '/admin',
+                estado.extra is (ReservaHistorial, FiltrosDeHistorial)
+                ? null
+                : '/admin',
             builder: (context, estado) => switch (estado.extra) {
-              final ReservaHistorial r => PantallaDetalleReserva(
-                reserva: r,
-                historial: _historialAdmin,
-                sesion: widget.sesion,
-              ),
+              final (ReservaHistorial, FiltrosDeHistorial) e =>
+                PantallaDetalleReserva(
+                  reserva: e.$1,
+                  filtros: e.$2,
+                  historial: _historialAdmin,
+                  sesion: widget.sesion,
+                  espacios: _espacios,
+                  pendientes: _filtrosPendientes,
+                ),
               _ => const SizedBox.shrink(),
             },
           ),
