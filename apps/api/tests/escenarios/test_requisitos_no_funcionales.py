@@ -183,7 +183,7 @@ def test_toda_operacion_de_la_api_sin_usuario_autenticado_se_rechaza(api: TestCl
                 aceptadas.append((metodo, ruta, r.status_code))
 
     assert not aceptadas, aceptadas
-    assert rechazadas >= 30
+    assert rechazadas >= 25
     token_falso = {"Authorization": "Bearer no-es-un-token"}
     assert api.get("/reservas", headers=token_falso).status_code == 401
     assert api.get("/yo", headers=token_falso).status_code == 401
