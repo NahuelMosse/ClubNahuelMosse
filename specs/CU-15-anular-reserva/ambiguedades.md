@@ -31,3 +31,4 @@ CU-15-AMB-07 · 2026-09-30 · sin canal · ¿qué pasa al repetir un pedido de a
 CU-15-AMB-08 · 2026-09-30 · sin canal · la pantalla «No pudimos anular la reserva» del CU no está en el prototipo → CU-15-SUP-08 · se usan los overlays compartidos «Error de conexión» (REINTENTAR / Volver) y «Error del servidor» (ACEPTAR), como CU-10
 CU-15-TESTS · 2026-09-30 · congelados en bd41351 · 9 escenarios (8 de app y 1 de API) congelados; rojo pendiente de la pasada final: sin emulador no se corrieron, y POST /reservas/{id}/anular todavía no existe
 CU-15-TESTS · 2026-09-30 · precisión sobre congelados en bd41351 · los escenarios de app son 10 casos sobre 8 escenarios (H05-01 tiene tres casos); con el de API son 9 escenarios únicos
+CU-15-TESTS · 2026-10-03 · recongelados en 4da7442 · el escenario H01-03 no cerraba el panel de avisos de CU-24.2 («El club anuló tu reserva»), que se abre solo al entrar y tapa RESERVAS

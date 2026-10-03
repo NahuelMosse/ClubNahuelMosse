@@ -45,3 +45,8 @@ CU-14-AMB-12 · 2026-10-03 · sin canal · el filtro de sede, ¿ofrece también 
 CU-14-AMB-13 · 2026-10-03 · sin canal · la paginación por OFFSET repite o salta reservas si el historial cambia entre dos páginas → CU-14-SUP-10 · se mantiene `pagina` en el contrato y la app descarta por id las reservas que ya tiene; un cursor (inicio, id) cambiaría el contrato de la API
 CU-14-AMB-14 · 2026-10-03 · sin canal · el listado de tarjetas, ¿se arma entero o a demanda? → CU-14-SUP-11 · a demanda (`SliverList.builder`); un escenario congelado de `integration_test` que busque texto de una tarjeta sin desplazarse puede fallar por eso, y la pasada final de e2e decide si se desplaza el escenario o se cambia la lista
 CU-14-AMB-15 · 2026-10-03 · sin canal · si falla la relectura del detalle al abrirlo → CU-14-SUP-12 · el detalle queda con lo que mostraba el listado, sin error: la anulación vuelve a verificar contra el servidor
+CU-14-TESTS · 2026-10-03 · recongelados en 1f97663 · H07-01 parte de un sistema sin reservas con la API de pruebas: la base de la corrida se comparte entre archivos
+CU-14-TESTS · 2026-10-03 · recongelados en fad15b7 · H02-01 busca la reserva con scroll tras limpiar los filtros: la lista perezosa (CU-14-SUP-11) la deja fuera de pantalla
+CU-14-TESTS · 2026-10-03 · recongelados en a70b38e · H03-01 toca REINTENTAR por su texto: el botón de la app es un TextButton, no un FilledButton
+CU-14-TESTS · 2026-10-03 · recongelados en ea95cb2 · H04-01 baja hasta el rango de fechas del filtro: con las sedes de la corrida queda fuera de lo que arma la lista (primer intento en 8efcc08)
+CU-14-TESTS · 2026-10-03 · recongelados en 6407653 · H05-01 navega con el contexto de una pantalla: el de MaterialApp está por encima del GoRouter
