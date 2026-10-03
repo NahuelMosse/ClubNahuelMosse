@@ -67,6 +67,7 @@ envía.
 | `apps/api/app/infraestructura/notificaciones.py` | `encolar_cancelacion_forzosa(conn, usuario_id, reserva_ids)` | corre en la transacción de quien llama, sin commit; no agrupa en un aviso `enviando` |
 | `apps/api/app/infraestructura/reservas.py` | `anular` encola; el historial trae `aviso_envio` y `aviso_en` | orden de bloqueos intacto: cuenta, sede, espacio, reserva, y recién después el aviso |
 | `apps/api/app/dominio/reservas.py` | `aviso_envio`, `aviso_en` en `ReservaHistorial` | pendiente se ve como `None` |
+| `apps/api/tests/integracion/test_anular_reserva_api.py` | repetir la anulación responde igual, salvo el envío del aviso | el envío sale después de responder |
 | `apps/api/app/interfaz/reservas.py` | la ruta de anular despacha después de responder | `BackgroundTasks` y `canal_push` como dependencia |
 | `apps/api/tests/escenarios/test_cancelacion_forzosa.py` | escenarios (congelado) | canal de prueba por `dependency_overrides` |
 | `apps/api/tests/escenarios/test_cancelacion_forzosa_reglas.py` | SUP-02 y SUP-08 contra la base | sin tags de escenario |

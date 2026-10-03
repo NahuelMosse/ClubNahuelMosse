@@ -77,7 +77,11 @@ def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repe
     assert r.json()["cancelada_por_nombre"] == "Ana Díaz"
     assert r.json()["cancelada_en"] is not None
     assert otra_vez.status_code == 200
-    assert otra_vez.json() == r.json()
+    # El envío del aviso sale después de responder: lo único que cambia entre las dos.
+    envio = {"aviso_envio", "aviso_en"}
+    assert {k: v for k, v in otra_vez.json().items() if k not in envio} == {
+        k: v for k, v in r.json().items() if k not in envio
+    }
     assert distinto.status_code == 409
     with motor.connect() as conn:
         fila = conn.execute(
