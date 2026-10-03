@@ -149,6 +149,7 @@ class ApiFalsa {
           '{"reservas": [${reservaJson()}, ${reservaJson(id: 2, inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
         ),
         ('GET', '/espacios/catalogo') => (200, catalogoJson),
+        ('GET', '/sedes') => (200, '{"sedes": []}'),
         ('PUT', '/dispositivos') ||
         ('POST', '/dispositivos/baja') ||
         ('POST', '/notificaciones/leer-todas') => (204, ''),
