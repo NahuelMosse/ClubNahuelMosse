@@ -29,6 +29,28 @@ _TOKEN_INVALIDO = (
 )
 
 
+def _clave_de_reemplazo(aviso: Aviso) -> str | None:
+    """Con qué clave el sistema reemplaza en la bandeja el aviso anterior. Un aviso de anulación
+    agrupado sale con un id nuevo y tiene que tomar el lugar del que ya estaba, así que la
+    clave es estable por persona (los tokens son de una sola) y por tipo."""
+    return "cancelacion_forzosa" if aviso.datos.get("tipo") == "cancelacion_forzosa" else None
+
+
+def armar_mensaje(tokens: Sequence[str], aviso: Aviso) -> messaging.MulticastMessage:
+    clave = _clave_de_reemplazo(aviso)
+    return messaging.MulticastMessage(
+        tokens=list(tokens),
+        notification=messaging.Notification(title=aviso.titulo, body=aviso.cuerpo),
+        data=aviso.datos,
+        android=None
+        if clave is None
+        else messaging.AndroidConfig(
+            collapse_key=clave, notification=messaging.AndroidNotification(tag=clave)
+        ),
+        apns=None if clave is None else messaging.APNSConfig(headers={"apns-collapse-id": clave}),
+    )
+
+
 class CanalFcm:
     """Firebase Cloud Messaging con las credenciales por defecto del entorno."""
 
@@ -38,12 +60,7 @@ class CanalFcm:
         )
 
     def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
-        mensaje = messaging.MulticastMessage(
-            tokens=list(tokens),
-            notification=messaging.Notification(title=aviso.titulo, body=aviso.cuerpo),
-            data=aviso.datos,
-        )
-        respuesta = messaging.send_each_for_multicast(mensaje, app=self._app)
+        respuesta = messaging.send_each_for_multicast(armar_mensaje(tokens, aviso), app=self._app)
         invalidos: list[str] = []
         for token, r in zip(tokens, respuesta.responses, strict=True):
             if r.success:
