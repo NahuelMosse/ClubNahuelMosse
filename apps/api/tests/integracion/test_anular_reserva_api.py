@@ -190,3 +190,38 @@ def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
                 text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
             ).scalar_one()
         assert (a, c, estado) in {(200, 409, "anulada"), (409, 200, "cancelada")}
+
+
+def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    """anular lo que ya empezó se rechaza por empezada, no por un horario desactualizado"""
+    espacio = _espacio_nuevo(api, token_admin, sede[0])
+    empezada = _reservar(api, token_usuario, espacio)
+    with motor.begin() as conn:
+        conn.execute(
+            text(
+                "UPDATE reserva SET inicio = date_trunc('hour', now()), fin ="
+                " date_trunc('hour', now()) + interval '1 hour' WHERE id = :id"
+            ),
+            {"id": empezada["id"]},
+        )
+    vigente = api.get(f"/reservas/todas/{empezada['id']}", headers=_con(token_admin)).json()
+    assert vigente["anulable"] is False
+
+    r = api.post(
+        f"/reservas/{empezada['id']}/anular",
+        headers=_con(token_admin),
+        json=_pedido(vigente),
+    )
+
+    assert r.status_code == 409
+    with motor.connect() as conn:
+        fila = conn.execute(
+            text(
+                "SELECT estado, inicio <= now() AS empezo,"
+                " inicio = CAST(:inicio AS timestamptz) AS coincide FROM reserva WHERE id = :id"
+            ),
+            {"id": empezada["id"], "inicio": vigente["inicio"]},
+        ).one()
+    assert (fila.estado, fila.empezo, fila.coincide) == ("activa", True, True)
