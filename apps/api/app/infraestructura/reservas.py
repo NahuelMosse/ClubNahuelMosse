@@ -58,6 +58,9 @@ _VENTANA_DE_REINTENTO = "5 minutes"
 # Tamaño fijo de página del historial global (CU-14-SUP-01): sin tope adicional de resultados.
 POR_PAGINA = 20
 
+# Los días del filtro se cortan a medianoche del club, no de la sesión de Postgres (UTC).
+_ZONA_CLUB = "'America/Argentina/Buenos_Aires'"
+
 
 def _reserva(f: Any) -> Reserva:
     return Reserva(
@@ -461,17 +464,24 @@ class ReservasSql:
             comunes.append("e.deporte = :deporte")
             parametros["deporte"] = filtros.deporte
         if filtros.desde is not None:
-            comunes.append("r.inicio >= CAST(:desde AS date)")
+            comunes.append(
+                f"r.inicio >= (CAST(:desde AS date)::timestamp AT TIME ZONE {_ZONA_CLUB})"
+            )
             parametros["desde"] = filtros.desde
         if filtros.hasta is not None:
-            comunes.append("r.inicio < CAST(:hasta AS date) + interval '1 day'")
+            comunes.append(
+                f"r.inicio < ((CAST(:hasta AS date) + 1)::timestamp AT TIME ZONE {_ZONA_CLUB})"
+            )
             parametros["hasta"] = filtros.hasta
         if filtros.q is not None and filtros.q.strip():
             comunes.append(
-                "(u.nombre || ' ' || u.apellido ILIKE :q OR s.nombre ILIKE :q"
-                " OR e.nombre ILIKE :q)"
+                "(u.nombre || ' ' || u.apellido ILIKE :q ESCAPE '\\'"
+                " OR s.nombre ILIKE :q ESCAPE '\\' OR e.nombre ILIKE :q ESCAPE '\\')"
             )
-            parametros["q"] = f"%{filtros.q.strip()}%"
+            literal = (
+                filtros.q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            )
+            parametros["q"] = f"%{literal}%"
         where_comun = " AND ".join(["true", *comunes])
         condiciones = list(comunes)
         if filtros.estado is not None:
