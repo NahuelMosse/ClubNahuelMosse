@@ -25,6 +25,7 @@ dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
 
 flutter:
   uses-material-design: true
@@ -52,3 +53,10 @@ flutter:
     - family: JetBrains Mono
       fonts:
         - asset: assets/fuentes/JetBrainsMono-Regular.ttf
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icono/icono.png"
+  adaptive_icon_background: "#0A0A0B"
+  adaptive_icon_foreground: "assets/icono/icono_primer_plano.png"
