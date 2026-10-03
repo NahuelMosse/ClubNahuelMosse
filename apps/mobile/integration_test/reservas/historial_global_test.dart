@@ -296,6 +296,15 @@ void main() {
     await entrarComoAdmin(tester);
     await tocar(tester, 'Filtros');
     await esperarA(tester, find.text('APLICAR'));
+    // Con las sedes de la corrida el rango de fechas queda debajo de lo que arma el listado.
+    await tester.scrollUntilVisible(
+      find.text('RANGO DE FECHAS'),
+      300,
+      maxScrolls: 100,
+      scrollable: find
+          .ancestor(of: find.text('SEDE'), matching: find.byType(Scrollable))
+          .first,
+    );
 
     await escribir(tester, 'Desde', fechaTexto(manana.add(const Duration(days: 10))));
     await escribir(tester, 'Hasta', fechaTexto(manana));
