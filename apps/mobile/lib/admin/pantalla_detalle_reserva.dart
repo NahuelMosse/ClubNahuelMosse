@@ -236,9 +236,11 @@ class _TarjetaDatos extends StatelessWidget {
                       color: p.textSecondary,
                     ),
                     const SizedBox(width: Medidas.s8),
-                    Text(
-                      fechaLarga(r.inicio),
-                      style: Textos.leyenda.copyWith(color: p.textSecondary),
+                    Flexible(
+                      child: Text(
+                        fechaLarga(r.inicio),
+                        style: Textos.leyenda.copyWith(color: p.textSecondary),
+                      ),
                     ),
                   ],
                 ),
@@ -247,9 +249,11 @@ class _TarjetaDatos extends StatelessWidget {
                   children: [
                     Icon(Icons.schedule_rounded, size: 18, color: p.accentInk),
                     const SizedBox(width: Medidas.s8),
-                    Text(
-                      horario,
-                      style: Textos.cuerpoFuerte.copyWith(color: p.accentInk),
+                    Flexible(
+                      child: Text(
+                        horario,
+                        style: Textos.cuerpoFuerte.copyWith(color: p.accentInk),
+                      ),
                     ),
                   ],
                 ),
@@ -322,6 +326,21 @@ class _Trazabilidad extends StatelessWidget {
         ),
       },
     };
+    final aviso = switch ((r.estado.name, r.avisoEnvio, r.avisoEn)) {
+      ('anulada', 'enviada', final cuando?) => (
+        'Notificación enviada al usuario',
+        Icons.notifications_active_outlined,
+        p.stateSuccessInk,
+        _fechaHora(cuando),
+      ),
+      ('anulada', final String _, _?) => (
+        'Aviso en el centro del usuario',
+        Icons.notifications_off_outlined,
+        p.textSecondary,
+        'El push no salió',
+      ),
+      _ => null,
+    };
     return Container(
       padding: const EdgeInsets.all(Medidas.s16),
       decoration: BoxDecoration(
@@ -350,6 +369,15 @@ class _Trazabilidad extends StatelessWidget {
               color: segunda.$3,
               titulo: segunda.$1,
               subtitulo: segunda.$4,
+            ),
+          ],
+          if (aviso != null) ...[
+            const SizedBox(height: Medidas.s12),
+            _Paso(
+              icono: aviso.$2,
+              color: aviso.$3,
+              titulo: aviso.$1,
+              subtitulo: aviso.$4,
             ),
           ],
         ],

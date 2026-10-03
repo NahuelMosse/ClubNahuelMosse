@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Literal
@@ -51,6 +52,22 @@ class Recordatorio:
     sede: str
 
 
+@dataclass(frozen=True)
+class ReservaAnulada:
+    """Una reserva que el club canceló, con lo que hace falta para avisárselo a quien la hizo."""
+
+    reserva_id: int
+    inicio: datetime
+    deporte: str
+    tipo: str
+    sede: str
+    motivo: str
+
+
+# Cuánto del motivo entra en el aviso: el resto se lee en el historial.
+LIMITE_DEL_MOTIVO = 200
+
+
 def tipo_corto(deporte: str, tipo: str) -> str:
     """«Fútbol 5»; sólo «Tenis» si el tipo no nombra al deporte («Polvo de ladrillo»)."""
     d = next((d for d in CATALOGO if d.clave == deporte), None)
@@ -78,15 +95,48 @@ def datos_del_aviso(tipo: TipoDeAviso, reserva_id: int | None) -> dict[str, str]
     return {"tipo": tipo} | ({} if reserva_id is None else {"reserva_id": str(reserva_id)})
 
 
+def _cuando(momento: datetime) -> str:
+    """«Mié 11, 20:00», en la hora del club."""
+    local = momento.astimezone(HORA_DEL_CLUB)
+    return f"{DIAS[local.weekday()]} {local.day}, {_hora(local)}"
+
+
 def mensaje_cancelacion(r: Reserva) -> Aviso:
     """«Reserva cancelada» con «Fútbol 5 · Sede Morón · Mié 11, 20:00. El horario quedó
     liberado.», en la hora del club."""
-    inicio = r.inicio.astimezone(HORA_DEL_CLUB)
     return Aviso(
         titulo="Reserva cancelada",
         cuerpo=(
-            f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {DIAS[inicio.weekday()]} "
-            f"{inicio.day}, {_hora(inicio)}. El horario quedó liberado."
+            f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {_cuando(r.inicio)}. "
+            "El horario quedó liberado."
         ),
         datos=datos_del_aviso("cancelacion_usuario", r.id),
+    )
+
+
+def mensaje_cancelacion_forzosa(anuladas: Sequence[ReservaAnulada]) -> Aviso:
+    """«El club anuló tu reserva» con la reserva y el motivo; con varias, sólo cuántas son y
+    sin apuntar a una en particular."""
+    if len(anuladas) == 1:
+        r = anuladas[0]
+        motivo = r.motivo.strip()
+        if len(motivo) > LIMITE_DEL_MOTIVO:
+            motivo = motivo[: LIMITE_DEL_MOTIVO - 1].rstrip() + "…"
+        return Aviso(
+            titulo="El club anuló tu reserva",
+            cuerpo=(
+                f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {_cuando(r.inicio)}. "
+                f"Motivo: {motivo}."
+            ),
+            datos=datos_del_aviso("cancelacion_forzosa", r.reserva_id),
+        )
+    return mensaje_cancelaciones_forzosas(len(anuladas))
+
+
+def mensaje_cancelaciones_forzosas(cantidad: int) -> Aviso:
+    """El aviso de [cantidad] reservas anuladas por el club, que lleva al historial."""
+    return Aviso(
+        titulo=f"El club anuló {cantidad} de tus reservas",
+        cuerpo=f"Tenés {cantidad} reservas anuladas por el club. Mirá el detalle en tu historial.",
+        datos=datos_del_aviso("cancelacion_forzosa", None),
     )

@@ -75,6 +75,10 @@ class ReservaHistorial:
     espacio_de_baja: bool
     # Activa y sin empezar, según el reloj del servidor: la app no decide con el suyo.
     anulable: bool = False
+    # Cómo salió el aviso de la anulación a quien reservó, y cuándo; `None` si no hubo aviso
+    # o todavía no salió.
+    aviso_envio: str | None = None
+    aviso_en: datetime | None = None
 
 
 @dataclass(frozen=True)

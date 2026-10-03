@@ -22,6 +22,7 @@ from app.dominio.reservas import (
     ReservaHistorial,
 )
 from app.infraestructura.horarios import HorariosSql
+from app.infraestructura.notificaciones import encolar_cancelacion_forzosa
 
 _COLUMNAS = (
     "r.id, r.espacio_id, e.sede_id, e.nombre AS espacio, e.deporte, e.tipo,"
@@ -36,7 +37,12 @@ _COLUMNAS_HISTORIAL = (
     " r.usuario_id, u.nombre || ' ' || u.apellido AS usuario, r.creado_en, r.cancelada_en,"
     " administrador.nombre || ' ' || administrador.apellido AS cancelada_por_nombre,"
     " (NOT e.activo OR NOT s.activa) AS espacio_de_baja,"
-    " (r.estado_actual = 'activa' AND r.inicio > now()) AS anulable"
+    " (r.estado_actual = 'activa' AND r.inicio > now()) AS anulable,"
+    # Un aviso pendiente todavía no consta en la trazabilidad.
+    " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL ELSE aviso.envio END"
+    " AS aviso_envio,"
+    " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL"
+    " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creada_en END AS aviso_en"
 )
 _JOIN_HISTORIAL = (
     " FROM reserva_con_estado r"
@@ -44,6 +50,8 @@ _JOIN_HISTORIAL = (
     " JOIN sede s ON s.id = e.sede_id"
     " JOIN usuario u ON u.id = r.usuario_id"
     " LEFT JOIN usuario administrador ON administrador.id = r.cancelada_por"
+    " LEFT JOIN notificacion_reserva vinculo ON vinculo.reserva_id = r.id"
+    " LEFT JOIN notificacion aviso ON aviso.id = vinculo.notificacion_id"
 )
 # Cuánto después de hecha una reserva se reconoce como el mismo pedido repetido.
 _VENTANA_DE_REINTENTO = "5 minutes"
@@ -94,6 +102,8 @@ def _reserva_historial(f: Any) -> ReservaHistorial:
         cancelada_por_nombre=f.cancelada_por_nombre,
         espacio_de_baja=bool(f.espacio_de_baja),
         anulable=bool(f.anulable),
+        aviso_envio=f.aviso_envio,
+        aviso_en=f.aviso_en,
     )
 
 
@@ -425,6 +435,8 @@ class ReservasSql:
                 ),
                 datos,
             )
+            # El aviso se encola en la misma transacción, después de los bloqueos de siempre.
+            encolar_cancelacion_forzosa(self._conn, int(previa.usuario_id), [reserva_id])
             self._conn.commit()
         except BaseException:
             self._conn.rollback()

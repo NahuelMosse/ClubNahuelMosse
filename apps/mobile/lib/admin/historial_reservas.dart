@@ -129,6 +129,8 @@ class ReservaHistorial {
     required this.canceladaPorNombre,
     required this.espacioDeBaja,
     this.anulable = false,
+    this.avisoEnvio,
+    this.avisoEn,
   });
 
   final int id;
@@ -155,6 +157,11 @@ class ReservaHistorial {
 
   /// Activa y sin empezar, según el reloj del servidor: sólo entonces se ofrece anularla.
   final bool anulable;
+
+  /// Cómo salió el aviso de la anulación a quien reservó (`enviada`, `sin_permiso`,
+  /// `sin_canal` o `fallida`) y cuándo; `null` si no hubo aviso o todavía no salió.
+  final String? avisoEnvio;
+  final DateTime? avisoEn;
 
   /// El club está en UTC−3, sin horario de verano.
   static DateTime? _enElClub(String iso) =>
@@ -212,6 +219,12 @@ class ReservaHistorial {
             : null,
         espacioDeBaja: espacioDeBaja,
         anulable: json['anulable'] == true,
+        avisoEnvio: json['aviso_envio'] is String
+            ? json['aviso_envio'] as String
+            : null,
+        avisoEn: json['aviso_en'] is String
+            ? _enElClub(json['aviso_en'] as String)
+            : null,
       );
     }
     return null;

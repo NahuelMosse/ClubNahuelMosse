@@ -305,6 +305,8 @@ class ReservaHistorialVista(BaseModel):
     cancelada_por_nombre: str | None
     espacio_de_baja: bool
     anulable: bool
+    aviso_envio: str | None
+    aviso_en: datetime | None
 
 
 class ContadoresVista(BaseModel):
@@ -345,6 +347,8 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
         cancelada_por_nombre=r.cancelada_por_nombre,
         espacio_de_baja=r.espacio_de_baja,
         anulable=r.anulable,
+        aviso_envio=r.aviso_envio,
+        aviso_en=r.aviso_en,
     )
 
 
@@ -453,7 +457,8 @@ class PedidoDeAnulacion(BaseModel):
         "Hasta el inicio del turno. `espacio_id` e `inicio` son la cancha y el horario que el "
         "administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a "
         "quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una "
-        "anulación ya hecha por el mismo administrador con el mismo motivo responde igual."
+        "anulación ya hecha por el mismo administrador con el mismo motivo responde igual. "
+        "Le avisa a quien reservó, con el motivo, sin repetir el aviso."
     ),
 )
 def anular(
@@ -461,6 +466,8 @@ def anular(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    despues: BackgroundTasks,
+    canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaHistorialVista | Response:
     try:
         reserva = anular_reserva(
@@ -483,4 +490,6 @@ def anular(
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
         )
+    # El aviso a quien reservó sale recién con la anulación confirmada y la respuesta enviada.
+    despues.add_task(despachar_de, reserva.usuario_id, canal)
     return _vista_admin(reserva)

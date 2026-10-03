@@ -9,11 +9,97 @@ from app.dominio.notificaciones import (
     Envio,
     Notificacion,
     Recordatorio,
+    ReservaAnulada,
     datos_del_aviso,
+    mensaje_cancelacion_forzosa,
+    mensaje_cancelaciones_forzosas,
 )
 
 # Cuántas notificaciones trae el centro: las más nuevas.
 LIMITE_DEL_CENTRO = 100
+
+
+def encolar_cancelacion_forzosa(
+    conn: Connection, usuario_id: int, reserva_ids: Sequence[int]
+) -> None:
+    """Registra en el centro de [usuario_id] el aviso de las reservas que el club canceló, con
+    el envío pendiente, dentro de la transacción de quien llama: sin commit, así que si la
+    cancelación no se completa no queda aviso.
+
+    Una reserva que ya tiene aviso se salta. Si la persona tiene un aviso de anulación sin leer
+    que no está saliendo en este momento, las reservas nuevas se suman a ese aviso, que vuelve
+    a quedar pendiente con la cantidad; si no, se abre uno nuevo.
+    """
+    filas = conn.execute(
+        text(
+            "SELECT r.id, r.inicio, e.deporte, e.tipo, s.nombre AS sede, r.motivo"
+            " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
+            " JOIN sede s ON s.id = e.sede_id"
+            " WHERE r.id = ANY(:ids) AND r.usuario_id = :usuario AND r.estado = 'anulada'"
+            " AND NOT EXISTS (SELECT 1 FROM notificacion_reserva nr WHERE nr.reserva_id = r.id)"
+            " ORDER BY r.inicio, r.id"
+        ),
+        {"ids": list(reserva_ids), "usuario": usuario_id},
+    ).all()
+    if not filas:
+        return
+    nuevas = [
+        ReservaAnulada(
+            reserva_id=int(f.id),
+            inicio=f.inicio,
+            deporte=f.deporte,
+            tipo=f.tipo,
+            sede=f.sede,
+            motivo=f.motivo or "",
+        )
+        for f in filas
+    ]
+    previo = conn.execute(
+        text(
+            "SELECT n.id, n.envio, (SELECT count(*) FROM notificacion_reserva nr"
+            " WHERE nr.notificacion_id = n.id) AS cubiertas FROM notificacion n"
+            " WHERE n.usuario_id = :usuario AND n.tipo = 'cancelacion_forzosa'"
+            " AND n.leida_en IS NULL ORDER BY n.id DESC LIMIT 1 FOR UPDATE"
+        ),
+        {"usuario": usuario_id},
+    ).first()
+    if previo is not None and previo.envio != "enviando":
+        notificacion_id = int(previo.id)
+        aviso = mensaje_cancelaciones_forzosas(int(previo.cubiertas) + len(nuevas))
+        conn.execute(
+            text(
+                "UPDATE notificacion SET titulo = :titulo, cuerpo = :cuerpo, reserva_id = NULL,"
+                " reserva_inicio = NULL, envio = 'pendiente' WHERE id = :id"
+            ),
+            {"titulo": aviso.titulo, "cuerpo": aviso.cuerpo, "id": notificacion_id},
+        )
+    else:
+        aviso = mensaje_cancelacion_forzosa(nuevas)
+        unica = nuevas[0] if len(nuevas) == 1 else None
+        notificacion_id = int(
+            conn.execute(
+                text(
+                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+                    " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_forzosa', :titulo,"
+                    " :cuerpo, :reserva, :inicio, 'pendiente') RETURNING id"
+                ),
+                {
+                    "usuario": usuario_id,
+                    "titulo": aviso.titulo,
+                    "cuerpo": aviso.cuerpo,
+                    "reserva": None if unica is None else unica.reserva_id,
+                    "inicio": None if unica is None else unica.inicio,
+                },
+            ).scalar_one()
+        )
+    for r in nuevas:
+        conn.execute(
+            text(
+                "INSERT INTO notificacion_reserva (notificacion_id, reserva_id)"
+                " VALUES (:notificacion, :reserva)"
+            ),
+            {"notificacion": notificacion_id, "reserva": r.reserva_id},
+        )
 
 
 class NotificacionesSql:
