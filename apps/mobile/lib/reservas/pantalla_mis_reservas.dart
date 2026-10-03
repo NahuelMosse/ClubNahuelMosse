@@ -142,10 +142,16 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
     );
     if (!confirmo || !mounted) return;
     setState(() => _cancelando = r.id);
+    var huboCorte = false;
     while (mounted) {
       Object? fallo;
       try {
-        await widget.reservas.cancelar(r);
+        try {
+          await widget.reservas.cancelar(r);
+        } on ReservaCambiada {
+          // Después de un corte, que ya esté cancelada es que el pedido cortado la cancelo.
+          if (!huboCorte) rethrow;
+        }
         if (!mounted) return;
         // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
         setState(() {
@@ -170,6 +176,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
         if (mounted) await cerrarSesion(context, widget.sesion);
         return;
       } on SinConexion catch (e) {
+        huboCorte = true;
         fallo = e;
       } on ErrorDelServidor catch (e) {
         fallo = e;
