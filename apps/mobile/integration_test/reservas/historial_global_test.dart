@@ -325,7 +325,7 @@ void main() {
       await entrarComoUsuario(tester, correo: correo);
       expect(find.text('PANEL ADMIN'), findsNothing);
 
-      final contexto = tester.element(find.byType(MaterialApp));
+      final contexto = tester.element(find.byType(Scaffold).first);
       GoRouter.of(contexto).go('/admin');
       await tester.pumpAndSettle();
 
