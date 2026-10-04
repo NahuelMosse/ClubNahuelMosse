@@ -305,11 +305,11 @@ las capturas **5**.
 
 → **Producí el artefacto** — mecánico y binario:
 ```
-cd apps/mobile && flutter test test/capturas --tags capturas --update-goldens   # 360 y 430 de ancho, claro y oscuro
+cd apps/mobile && flutter test --update-goldens test/capturas/*_capturas.dart   # 360 y 430 de ancho, claro y oscuro
 ```
 **Y las capturas quedan fuera de la corrida por defecto.** No alcanza con ponerlas en otra
-carpeta: `flutter test` sin argumentos corre todo `test/`. Se excluyen con el tag `capturas` en
-`dart_test.yaml`. Medido: una
+carpeta: `flutter test` sin argumentos corre todo `test/`. Se excluyen por el nombre: terminan en
+`_capturas.dart` y no en `_test.dart`, que es lo único que toma la corrida por defecto. Medido: una
 corrida reportó «41 de 41» y eran 29 tests más 12 capturas que no afirman nada. *El conteo del
 cierre tiene que ser de casos que verifican algo — si no, el número miente hacia arriba.*
 ```

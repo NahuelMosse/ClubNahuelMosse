@@ -147,13 +147,14 @@ resume: la etiqueta está entera en el árbol y truncada por `TextOverflow.ellip
 
 → **Producí el artefacto** — esto sí es mecánico y binario:
 ```
-cd apps/mobile && flutter test test/capturas --tags capturas --update-goldens
+cd apps/mobile && flutter test --update-goldens test/capturas/*_capturas.dart
 ```
-Es un archivo propio del repo: un `testWidgets` por vista con el tag `capturas`, que arma la
+Es un archivo propio del repo, `test/capturas/<área>_capturas.dart`: un `testWidgets` por vista, que arma la
 pantalla y la guarda con `matchesGoldenFile`. No afirma nada — si afirmara, volveríamos al
 problema de arriba. Ese archivo **sí** lo toca el que implementa, porque no está tagueado por card.
 
-**Y queda fuera de la corrida por defecto.** El tag `capturas` se excluye en `dart_test.yaml`.
+**Y queda fuera de la corrida por defecto.** Termina en `_capturas.dart` y no en `_test.dart`, así
+que `flutter test` sin argumentos no lo toma.
 *Lo que no es un test no cuenta como test: si entra a la suite, suma casos verdes que no afirman
 nada y el conteo del cierre miente.* En el repo del que sale esta regla pasó exactamente eso: una
 captura archivada como test contaminó el gate.

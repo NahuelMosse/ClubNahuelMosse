@@ -53,7 +53,7 @@ Los IDs de card pueden llevar letra o punto (`CU-04b`, `CU-24.1`), así que el p
 | Escenarios de una card, app | `cd apps/mobile && flutter test integration_test --name "@<ID>-"` |
 | Escenarios de una card, API | `cd apps/api && pytest tests/escenarios --card <ID>`: un hook de `conftest.py` filtra por el tag del docstring. Lo crea la primera card |
 | Suite entera de escenarios (el gate) | `cd apps/mobile && flutter test integration_test` y `cd apps/api && pytest tests/escenarios` |
-| Capturas del paso 9 | `cd apps/mobile && flutter test test/capturas --tags capturas --update-goldens`; el tag `capturas` queda excluido de la corrida por defecto en `dart_test.yaml` |
+| Capturas del paso 9 | `cd apps/mobile && flutter test --update-goldens test/capturas/*_capturas.dart`; los archivos terminan en `_capturas.dart` y no en `_test.dart`, así que la corrida por defecto no los toma |
 
 Los escenarios de la app corren contra un emulador de Android con la API levantada localmente y
 una base propia de la corrida. Sin emulador, esos escenarios son **no se pudo correr**.
