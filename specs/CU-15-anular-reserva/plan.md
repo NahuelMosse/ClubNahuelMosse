@@ -70,6 +70,7 @@ Cubiertos por un test con `@supuesto:` (en tests sin tag de card, no en `$E2E`):
   `test/anular_reserva_test.dart`.
 - CU-15-SUP-07 · repetir la anulación propia responde igual — `test_anular_reserva_api.py`.
 - CU-15-SUP-08 · errores de red y servidor con los overlays compartidos — `test/anular_reserva_test.dart`.
+- CU-15-SUP-09 · «Cuándo» de la confirmación va en dos líneas, día completo y horario — visual, sin test.
 
 ## Supuestos sin cobertura
 

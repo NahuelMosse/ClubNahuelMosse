@@ -117,7 +117,7 @@ class _DialogoAnularState extends State<_DialogoAnular> {
                     _Dato('Usuario', r.usuario),
                     _Dato('Sede', r.sede),
                     _Dato('Cancha', r.espacio, tecnico: true),
-                    _Dato('Cuándo', '${fechaLarga(r.inicio)} · $_horario'),
+                    _Dato('Cuándo', '${fechaLarga(r.inicio)}\n$_horario'),
                     _Dato('Importe', pesos(r.total)),
                   ],
                 ),
