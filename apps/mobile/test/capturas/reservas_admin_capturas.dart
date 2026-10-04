@@ -28,7 +28,7 @@ void main() {
       ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
       ' "estado": "activa", "motivo": null, "usuario_id": 1, "usuario": "Nahuel Mosse",'
       ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-      ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
+      ' "cancelada_por_nombre": null, "espacio_de_baja": false, "anulable": true}';
 
   const reservaCompletadaJson =
       '{"id": 2, "espacio_id": 10, "sede_id": 2, "espacio":'
@@ -47,13 +47,15 @@ void main() {
       ' "estado": "anulada", "motivo": "mantenimiento de la cancha", "usuario_id": 1,'
       ' "usuario": "Nahuel Mosse", "creado_en": "2026-10-21T11:07:00-03:00",'
       ' "cancelada_en": "2026-10-28T09:15:00-03:00", "cancelada_por_nombre":'
-      ' "Admin Sistema", "espacio_de_baja": false}';
+      ' "Admin Sistema", "espacio_de_baja": false, "aviso_envio": "enviada",'
+      ' "aviso_en": "2026-10-28T09:15:00-03:00"}';
 
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
       testWidgets('listado con reservas $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -72,6 +74,7 @@ void main() {
       testWidgets('listado cargando $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -93,6 +96,7 @@ void main() {
       testWidgets('sin resultados $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -118,6 +122,7 @@ void main() {
       testWidgets('historial vacío $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -136,6 +141,7 @@ void main() {
       testWidgets('panel de filtros $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -158,6 +164,7 @@ void main() {
       testWidgets('rango de fechas inválido $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -184,6 +191,7 @@ void main() {
       testWidgets('detalle de reserva $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
@@ -202,6 +210,7 @@ void main() {
       testWidgets('detalle de reserva anulada $ancho $modo', (tester) async {
         await montarAdmin(
           tester,
+          inicio: '/admin',
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({

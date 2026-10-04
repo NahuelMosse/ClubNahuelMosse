@@ -306,7 +306,11 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                           Expanded(
                             child: CampoTexto(
                               etiquetaAccesible: 'Buscar reserva',
-                              placeholder: 'Buscar reserva',
+                              // Con el botón Filtros al lado, en 360 «Buscar reserva» no entra entero.
+                              placeholder:
+                                  MediaQuery.sizeOf(context).width < 400
+                                  ? 'Buscar'
+                                  : 'Buscar reserva',
                               controlador: _busqueda,
                               accionFinal: Icon(
                                 Icons.search_rounded,

@@ -48,6 +48,7 @@ cancelada, anulada) y `/_pruebas/espacios/baja`; integración de `GET /reservas/
 | CU-14-SUP-10 | La paginación sigue por OFFSET y la app descarta por id las reservas repetidas entre páginas | `_PantallaPanelAdminState._cargarMas` |
 | CU-14-SUP-11 | El listado arma las tarjetas a demanda; un escenario congelado que busque texto sin desplazarse puede fallar por eso | `PantallaPanelAdmin` (`SliverList.builder`) |
 | CU-14-SUP-12 | Si falla la relectura del detalle, queda lo que mostraba el listado | `PantallaDetalleReserva` |
+| CU-14-SUP-13 | En 360 de ancho el buscador dice «Buscar» y los campos Desde y Hasta se apilan, para que nada quede cortado | `PantallaPanelAdmin`, `PantallaFiltrosReservas` (visual, sin test) |
 
 ## Supuestos sin cobertura
 

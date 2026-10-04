@@ -225,51 +225,67 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                   const SizedBox(height: Medidas.s20),
                   _Titulo('RANGO DE FECHAS'),
                   const SizedBox(height: Medidas.s8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: CampoTexto(
-                          etiqueta: 'Desde',
-                          etiquetaAccesible: 'Desde',
-                          placeholder: 'DD / MM / AAAA',
-                          controlador: _desde,
-                          teclado: TextInputType.number,
-                          formateadores: const [FormatoFecha()],
-                          accionFinal: Icon(
-                            Icons.calendar_today_outlined,
-                            size: 16,
-                            color: p.textMuted,
-                          ),
-                          error: _noEsFecha(_desde)
-                              ? 'Fecha inválida'
-                              : _rangoInvalido
-                              ? 'Desde no puede ser posterior a Hasta'
-                              : null,
+                  // En un teléfono chico dos campos lado a lado no dejan ver la fecha
+                  // entera; se apilan.
+                  LayoutBuilder(
+                    builder: (context, caja) {
+                      final desde = CampoTexto(
+                        etiqueta: 'Desde',
+                        etiquetaAccesible: 'Desde',
+                        placeholder: 'DD / MM / AAAA',
+                        controlador: _desde,
+                        teclado: TextInputType.number,
+                        formateadores: const [FormatoFecha()],
+                        accionFinal: Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: p.textMuted,
                         ),
-                      ),
-                      const SizedBox(width: Medidas.s12),
-                      Expanded(
-                        child: CampoTexto(
-                          etiqueta: 'Hasta',
-                          etiquetaAccesible: 'Hasta',
-                          placeholder: 'DD / MM / AAAA',
-                          controlador: _hasta,
-                          teclado: TextInputType.number,
-                          formateadores: const [FormatoFecha()],
-                          accionFinal: Icon(
-                            Icons.calendar_today_outlined,
-                            size: 16,
-                            color: p.textMuted,
-                          ),
-                          error: _noEsFecha(_hasta)
-                              ? 'Fecha inválida'
-                              : _rangoInvalido
-                              ? ' '
-                              : null,
+                        error: _noEsFecha(_desde)
+                            ? 'Fecha inválida'
+                            : _rangoInvalido
+                            ? 'Desde no puede ser posterior a Hasta'
+                            : null,
+                      );
+                      final hasta = CampoTexto(
+                        etiqueta: 'Hasta',
+                        etiquetaAccesible: 'Hasta',
+                        placeholder: 'DD / MM / AAAA',
+                        controlador: _hasta,
+                        teclado: TextInputType.number,
+                        formateadores: const [FormatoFecha()],
+                        accionFinal: Icon(
+                          Icons.calendar_today_outlined,
+                          size: 16,
+                          color: p.textMuted,
                         ),
-                      ),
-                    ],
+                        error: _noEsFecha(_hasta)
+                            ? 'Fecha inválida'
+                            : _rangoInvalido
+                            ? (caja.maxWidth < 330
+                                  ? 'Hasta no puede ser anterior a Desde'
+                                  : ' ')
+                            : null,
+                      );
+                      if (caja.maxWidth < 330) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            desde,
+                            const SizedBox(height: Medidas.s12),
+                            hasta,
+                          ],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: desde),
+                          const SizedBox(width: Medidas.s12),
+                          Expanded(child: hasta),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),

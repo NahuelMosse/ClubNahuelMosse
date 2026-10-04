@@ -50,3 +50,4 @@ CU-14-TESTS · 2026-10-03 · recongelados en fad15b7 · H02-01 busca la reserva 
 CU-14-TESTS · 2026-10-03 · recongelados en a70b38e · H03-01 toca REINTENTAR por su texto: el botón de la app es un TextButton, no un FilledButton
 CU-14-TESTS · 2026-10-03 · recongelados en ea95cb2 · H04-01 baja hasta el rango de fechas del filtro: con las sedes de la corrida queda fuera de lo que arma la lista (primer intento en 8efcc08)
 CU-14-TESTS · 2026-10-03 · recongelados en 6407653 · H05-01 navega con el contexto de una pantalla: el de MaterialApp está por encima del GoRouter
+CU-14-AMB-16 · 2026-10-03 · sin canal · en un teléfono de 360 de ancho el prototipo (393) no entra tal cual: «Buscar reserva» queda cortado junto a Filtros y los dos campos de fecha cortan «DD / MM / AAAA» → CU-14-SUP-13 · por debajo de 400 de ancho el campo dice «Buscar» y, por debajo de 330 de ancho útil, Desde y Hasta se apilan con el error bajo cada uno; la etiqueta accesible y el resto no cambian
