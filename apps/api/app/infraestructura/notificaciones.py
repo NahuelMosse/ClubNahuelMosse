@@ -31,9 +31,9 @@ def encolar_cancelacion_forzosa(
     el envío pendiente, dentro de la transacción de quien llama: sin commit, así que si la
     cancelación no se completa no queda aviso.
 
-    Una reserva que ya tiene aviso se salta. Si la persona tiene un aviso de anulación sin leer
-    que no está saliendo en este momento, se abre un aviso nuevo con la cantidad total y el
-    anterior queda reemplazado: cada reserva sigue ligada al aviso que se lo informó. Si el
+    Una reserva que ya tiene aviso se salta. Si la persona tiene un aviso de anulación sin leer,
+    se abre un aviso nuevo con la cantidad total y el anterior queda reemplazado, esté o no
+    saliendo en este momento: cada reserva sigue ligada al aviso que se lo informó. Si el
     anterior no había salido, sus reservas pasan al nuevo.
     """
     # Es el último bloqueo de la transacción: las anulaciones simultáneas de una misma persona
@@ -75,8 +75,9 @@ def encolar_cancelacion_forzosa(
         ),
         {"usuario": usuario_id},
     ).first()
-    # Un aviso que está saliendo no se toca: la anulación siguiente abre otro.
-    reemplaza = previo if previo is not None and previo.envio != "enviando" else None
+    # Uno que está saliendo también se reemplaza: sale igual y su push lo pisa el del nuevo en
+    # la bandeja, pero el centro tiene que mostrar uno solo.
+    reemplaza = previo
     total = len(nuevas) + (0 if reemplaza is None else int(reemplaza.cantidad))
     aviso = (
         mensaje_cancelaciones_forzosas(total) if total > 1 else mensaje_cancelacion_forzosa(nuevas)
