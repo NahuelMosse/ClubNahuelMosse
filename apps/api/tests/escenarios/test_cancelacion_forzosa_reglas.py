@@ -9,7 +9,7 @@ admin = base.admin
 canal = base.canal
 
 
-def test_un_aviso_que_esta_saliendo_no_se_agrupa_con_la_anulacion_siguiente(
+def test_un_aviso_que_esta_saliendo_se_agrupa_con_la_anulacion_siguiente(
     api: TestClient,
     motor: Engine,
     iniciar_sesion: Callable[[str, str], str | None],
@@ -17,7 +17,8 @@ def test_un_aviso_que_esta_saliendo_no_se_agrupa_con_la_anulacion_siguiente(
     canal: CanalDePrueba,
     admin: dict[str, str],
 ) -> None:
-    """el aviso en curso no se modifica: la anulación siguiente abre otro @supuesto:CU-24.2-SUP-02"""
+    """el aviso en curso sale igual y la anulación siguiente abre uno con la cantidad total, que es
+    el único del centro @supuesto:CU-24.2-SUP-02"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     primera = socio.reservar("20:00")
     segunda = socio.reservar("21:00")
@@ -31,8 +32,8 @@ def test_un_aviso_que_esta_saliendo_no_se_agrupa_con_la_anulacion_siguiente(
     assert base.anular(socio, admin, segunda) == 200
 
     centro = socio.centro()
-    assert centro["no_leidas"] == 2
-    assert [e["titulo"] for e in centro["notificaciones"]] == [base.TITULO, base.TITULO]
+    assert centro["no_leidas"] == 1
+    assert [e["titulo"] for e in centro["notificaciones"]] == ["El club anuló 2 de tus reservas"]
 
 
 def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(

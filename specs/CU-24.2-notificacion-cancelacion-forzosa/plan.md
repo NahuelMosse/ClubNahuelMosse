@@ -42,7 +42,7 @@ envía.
 | ID | Supuesto | Dónde se encoda |
 |---|---|---|
 | CU-24.2-SUP-01 | Sin reintento propio; envío fallido queda `fallida` y un token inválido se da de baja | `test_cancelacion_forzosa.py` (push que falla) |
-| CU-24.2-SUP-02 | Se agrupa mientras el aviso anterior siga sin leer, o si llegan en una misma acción; uno ya leído no se reabre. Agrupar abre un aviso nuevo con la cantidad total y el anterior queda reemplazado, fuera del centro; sus reservas siguen ligadas a él, salvo que no hubiera salido | `@CU-24.2-H03-01`; `test_cancelacion_forzosa.py`; `test_cancelacion_forzosa_reglas.py`; `test_cancelacion_forzosa_agrupado.py` |
+| CU-24.2-SUP-02 | Se agrupa mientras el aviso anterior siga sin leer, o si llegan en una misma acción; uno ya leído no se reabre. Agrupar abre un aviso nuevo con la cantidad total y el anterior queda reemplazado, fuera del centro; sus reservas siguen ligadas a él, salvo que no hubiera salido | `@CU-24.2-H03-01`; `test_cancelacion_forzosa.py`; `test_cancelacion_forzosa_reglas.py`; `test_cancelacion_forzosa_agrupado.py`; `test_cancelacion_forzosa_carrera.py` |
 | CU-24.2-SUP-03 | El encolado es una función compartida que recibe reservas ya canceladas por el club | `@CU-24.2-H02-01` |
 | CU-24.2-SUP-04 | El aviso agrupado abre Mis reservas en Historial; el de una reserva la resalta | `@CU-24.2-H01-02`, `@CU-24.2-H03-01` |
 | CU-24.2-SUP-05 | Achicar el horario de una sede no anula reservas ni avisa | Sin cobertura |
