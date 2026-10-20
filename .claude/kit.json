@@ -1,0 +1,93 @@
+{
+  "kit": "3.0.0",
+  "stack": "node-ts",
+  "e2e": "apps/e2e",
+  "rulePaths": {
+    "architecture": [
+      "apps/**",
+      "src/**",
+      "packages/**",
+      "lib/**"
+    ],
+    "interface": [
+      "**/*.css",
+      "**/*.tsx",
+      "**/*.jsx",
+      "**/*.vue",
+      "**/*.svelte",
+      "**/*.html"
+    ],
+    "arquitectura": [
+      "apps/mobile/lib/**",
+      "apps/api/app/**"
+    ],
+    "interfaz": [
+      "apps/mobile/lib/**/*.dart",
+      "apps/mobile/test/capturas/**"
+    ]
+  },
+  "source": {
+    "path": "D:\\Temp\\kit-lote24",
+    "commit": "72de10cf0049d0e4508777255c89102e390a89ad"
+  },
+  "modules": {
+    "ui": {
+      "state": "on",
+      "version": "1.0.0",
+      "since": "install 2026-10-20"
+    },
+    "api": {
+      "state": "on",
+      "version": "1.0.0",
+      "since": "install 2026-10-20"
+    },
+    "data": {
+      "state": "on",
+      "version": "1.0.0",
+      "since": "install 2026-10-20"
+    },
+    "infra": {
+      "state": "on",
+      "version": "1.0.0",
+      "since": "install 2026-10-20"
+    },
+    "ci": {
+      "state": "off",
+      "reason": "not chosen at install: no signal found in the repo",
+      "by": "person",
+      "at": "2026-10-20",
+      "signalsAtDecision": []
+    },
+    "observability": {
+      "state": "on",
+      "version": "1.0.0",
+      "since": "install 2026-10-20"
+    },
+    "docs": {
+      "state": "off",
+      "reason": "not chosen at install: no signal found in the repo",
+      "by": "person",
+      "at": "2026-10-20",
+      "signalsAtDecision": []
+    },
+    "i18n": {
+      "state": "off",
+      "reason": "not chosen at install: no signal found in the repo",
+      "by": "person",
+      "at": "2026-10-20",
+      "signalsAtDecision": []
+    },
+    "security-l2": {
+      "state": "on",
+      "version": "1.0.0",
+      "since": "install 2026-10-20"
+    }
+  },
+  "grade": {
+    "level": "production",
+    "reason": "the app goes to production with login, sessions and personal data",
+    "by": "person",
+    "at": "2026-10-20",
+    "history": []
+  }
+}

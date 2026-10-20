@@ -1,0 +1,997 @@
+#!/usr/bin/env node
+// verify.mjs — run from the repo root, with a card in progress.
+//
+// Everything mechanical about a card, at once and in parallel: the commands of the plan's
+// `## Verification`, each through once.mjs —what already passed on the same code is not repeated—,
+// and then required.mjs. Returns a single list of actions.
+// Measured: with one executor per pause, a final serial repeat and the suite run a dozen times, a
+// one-minute card without the method took two hours with the method.
+//
+// In the plan, a code block with one command per line:
+//   suite: npm test
+//   lint: npx eslint src test e2e
+//   mutate src/app.mjs: node --test test/app.test.mjs
+//   attacks: npm run attacks
+// `mutate <file>: <suite>` expands to mutate.mjs from the start of the card, with the declared
+// equivalents, and in parallel if the suite is not a screen one.
+// What uses a browser or starts the app goes one at a time: two on the same port take each other down.
+// It prints to stderr a line when each command starts and when it ends, with its duration, and one a
+// minute while it runs. Each line has a time limit —`name [timeout 30 min]: command` in the plan, or else
+// the greater of `VERIFY_TIMEOUT_MIN` (20 min by default) and 4 times the measured duration of the
+// command's last run—: past it the command is killed and reported as
+// `could not run: timeout`, never as passed.
+// What the grade leaves out does not run: a `mutate` line over a file the grade does not ask to mutate
+// (required.mjs `mutationRequired`: none at poc, the domain at mvp), a line whose criterion the grade leaves
+// out (`LINE_CRITERIA`) and the duplication and HTML checks (K4, K11) are reported as
+// `skipped: not required by grade <g>`, never as passed. Measured: a card at mvp ran 13 mutations for 2
+// domain files and chased survivors in code the grade does not ask to mutate.
+// A line whose command another line already includes (`web` inside `suite`, because `npm test` runs
+// `verify:web`) is not run: it is reported as `covered by <line>`. Measured: running it twice cost 31 min.
+// The fast lines go first —lint, tsc, contract, docs, mutation, whatever is not a browser—; the lines that
+// drive a browser start only if those passed. Measured: a red lint threw away a 34-minute run.
+// A suite that fails with at most 3 failing tests gets only those re-run, 3 times (`failingTests` and
+// `rerunSpec`, which calls the runner itself, no npm and no shell): a test that fails 3 of 3 keeps the line red; otherwise the line
+// is `passed with flaky k/3 <test>`, listed in `.validation/verify/flaky.md` for the closing, never a
+// plain `passed`.
+// A line that resolves —through package.json scripts, as far as they go— to a chain `a && b && c` with a part
+// that drives a browser and a part that does not is split (`splitLine`): the parts without a browser run beside
+// the other lines without one, the parts with a browser in the browser chain, and the line passes only if all its
+// parts do. Measured: `npm test` = `tsc && npm run test:api && npm run test:web` held 8.5 minutes of API tests
+// in series ahead of the browser. Those parts run in a lane of their own from the start, never in the queue of the
+// serial lines and never holding the browser chain back, whether measured or not (a part that already failed when
+// the chain starts still keeps it from starting). A chain with `||`, `;`, a pipe or a `cd`, or whose scripts have pre/post hooks, runs whole.
+// The logs of the parts are `.validation/verify/<line>.<n>.log`; the line's own log joins them, and its record
+// (name and command of the line) is what required.mjs reads.
+// Exits 0 if there are no actions, 1 if there are, 2 if there is no card or the plan does not say what to run.
+import { spawn, spawnSync } from 'node:child_process';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { cpus } from 'node:os';
+import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { active } from './kit.mjs';
+import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
+import { endsWithLine } from './final-line.mjs';
+import { logPath, readRecord, writeRecord } from './once.mjs';
+import { missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
+
+const TOOLS = relative(process.cwd(), join(import.meta.dirname)).split('\\').join('/') || '.';
+const ONE_AT_A_TIME = /playwright|cypress|attack|server|start|axe|schemathesis|lhci|lighthouse|k6|autocannon|gatling|locust/i;
+// A line runs alone when its command, its package.json scripts or the node script it runs write to
+// `test-results/` or launch Playwright (or one of ONE_AT_A_TIME): two of them in parallel overwrite
+// each other's output. `npm test`, `npm run <x>`, `pnpm/yarn [run] <x>` and `node <file>` are followed
+// into the scripts and files they run, up to DEPTH levels; what cannot be resolved (no package.json,
+// no such script, a file that cannot be read, too deep) counts as serial: in doubt, alone.
+const WRITES_RESULTS = /playwright|test-results/i;
+const DEPTH = 4;
+const SEGMENTS = /&&|\|\||[;|\n]/;
+const NPM = /^(npm|pnpm|yarn)(?:\s+--?\S+)*\s+(run(?:-script)?\s+)?([\w:.-]+)/;
+// npm's own subcommands are not package.json scripts; `npm test` and its aliases are.
+const NPM_OWN = /^(?:install|i|ci|add|remove|uninstall|update|audit|ls|list|prune|dedupe|outdated|config|cache|pack|publish|version|view|init|exec|dlx|help|info|why)$/;
+const NODE_FILE = /^node(?:\s+-\S+)*\s+(\S+\.(?:[cm]?js))\b/;
+// `node --test` names its files, often as quoted globs: those are expanded, not read as a file. `npx -y node@22` is node.
+const NODE_TEST = /^node(?:\s+\S+)*?\s+--test(?=\s|$)/;
+const NPX_NODE = /^npx(?:\s+-\S+)*\s+node@\S+/;
+const GLOB_CHARS = /[*?{]/;
+const SKIP_DIRS = new Set(['node_modules', '.git']);
+const MAX_GLOB_FILES = 5000;
+const globRegex = (pattern) => {
+  let out = '';
+  for (let i = 0; i < pattern.length; i++) {
+    const ch = pattern[i];
+    if (ch === '*' && pattern[i + 1] === '*') {
+      i++;
+      if (pattern[i + 1] === '/') { i++; out += '(?:.*/)?'; } else out += '.*';
+    } else if (ch === '*') out += '[^/]*';
+    else if (ch === '?') out += '[^/]';
+    else if (ch === '{') out += '(?:';
+    else if (ch === '}') out += ')';
+    else if (ch === ',' && /\{[^}]*$/.test(pattern.slice(0, i))) out += '|';
+    else out += ch.replace(/[.+^$()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${out}$`);
+};
+// The files a glob names, relative to cwd. The walk starts at the folder before the first wildcard.
+export const expandGlob = (cwd, pattern) => {
+  const normal = pattern.replace(/\\/g, '/').replace(/^\.\//, '');
+  const segments = normal.split('/');
+  const firstWild = segments.findIndex((s) => GLOB_CHARS.test(s));
+  const base = segments.slice(0, Math.max(0, firstWild)).join('/');
+  const re = globRegex(normal);
+  const found = [];
+  const walk = (rel) => {
+    let entries;
+    try { entries = readdirSync(join(cwd, rel), { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      if (found.length >= MAX_GLOB_FILES) return;
+      const path = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) { if (!SKIP_DIRS.has(e.name)) walk(path); } else if (re.test(path)) found.push(path);
+    }
+  };
+  walk(base);
+  return found;
+};
+export const isSerial = (command, cwd = process.cwd()) => {
+  if (ONE_AT_A_TIME.test(command)) return true;
+  let scripts;
+  try { scripts = JSON.parse(readFileSync(join(cwd, 'package.json'), 'utf8')).scripts ?? {}; } catch { scripts = null; }
+  const seen = new Set();
+  // A file the line runs launches a browser when it writes results or when what it runs in turn does.
+  const fileSerial = (path, depth) => {
+    if (seen.has(path)) return false;
+    seen.add(path);
+    let body;
+    try { body = readFileSync(path, 'utf8'); } catch { return true; }
+    if (WRITES_RESULTS.test(body)) return true;
+    const refs = [...body.matchAll(/\b(?:npm|pnpm|yarn)\s+(?:run\s+)?[\w:.-]+|\bnode\s+(?:-\S+\s+)?[\w./\\-]+\.[cm]?js\b/g)].map((m) => m[0]);
+    return refs.some((r) => serial(r, depth + 1));
+  };
+  const serial = (text, depth) => text.split(SEGMENTS).map((s) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean).some((raw) => {
+    const part = raw.replace(NPX_NODE, 'node');
+    if (WRITES_RESULTS.test(part) || ONE_AT_A_TIME.test(part)) return true;
+    const m = part.match(NPM);
+    const npm = m && (m[2] || !NPM_OWN.test(m[3])) ? { name: m[3] === 't' && m[1] === 'npm' && !m[2] ? 'test' : m[3] } : null;
+    if (!npm && NODE_TEST.test(part)) {
+      const named = part.split(/\s+/).slice(1).map((t) => t.replace(/^["']|["']$/g, ''))
+        .filter((t) => !t.startsWith('-') && /\.[cm]?js$/.test(t));
+      if (!named.length) return false;
+      if (depth >= DEPTH) return true;
+      // A test file is serial when it launches a browser. What it says about `node server.mjs` is a test of the
+      // server on its own port, not a second run of the app: its references are not followed.
+      return named.some((t) => (GLOB_CHARS.test(t) ? expandGlob(cwd, t) : [t]).some((f) => {
+        try { return WRITES_RESULTS.test(readFileSync(resolve(cwd, f), 'utf8')); } catch { return true; }
+      }));
+    }
+    const file = part.match(NODE_FILE);
+    if (!npm && !file) return false;
+    if (depth >= DEPTH) return true;
+    if (npm) {
+      const name = npm.name;
+      if (!scripts || typeof scripts[name] !== 'string') return true;
+      if (seen.has(`npm:${name}`)) return false;
+      seen.add(`npm:${name}`);
+      return serial(scripts[name], depth + 1);
+    }
+    return fileSerial(resolve(cwd, file[1]), depth);
+  });
+  return serial(command, 0);
+};
+// The parts of a command written as a chain: split at `&&` outside quotes. null when anything else joins
+// the commands (`||`, `;`, a pipe, a line break, a lone `&`, parentheses): those run as one.
+const chainParts = (command) => {
+  const parts = [];
+  let current = '';
+  let quote = '';
+  for (let i = 0; i < command.length; i++) {
+    const ch = command[i];
+    if (quote) { current += ch; if (ch === quote) quote = ''; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; current += ch; continue; }
+    if (ch === '&' && command[i + 1] === '&') { parts.push(current); current = ''; i++; continue; }
+    const redirect = ch === '&' && (command[i - 1] === '>' || command[i - 1] === '<' || command[i + 1] === '>');
+    if (!redirect && /[&|;\n()]/.test(ch)) return null;
+    current += ch;
+  }
+  parts.push(current);
+  const clean = parts.map((part) => part.replace(/\s+/g, ' ').trim());
+  return clean.every(Boolean) ? clean : null;
+};
+const SHELL_STATE = /^(cd|pushd|popd|export|set|source|\.)\s/;
+// `npm test`, `npm run x`: the name of the package.json script a whole command runs, else null.
+export const scriptNamed = (part) => {
+  const m = part.match(/^(?:npm|pnpm|yarn)\s+(run(?:-script)?\s+)?([\w:.-]+)$/);
+  if (!m || (!m[1] && NPM_OWN.test(m[2]))) return null;
+  return m[2] === 't' && !m[1] && part.startsWith('npm') ? 'test' : m[2];
+};
+
+// The parts of a line that is a top-level `&&` chain, `{ fast, heavy }` as they run (named `<line>.<n>`), or
+// null when it is not split: a single command, a chain whose parts all drive a browser or none does, or one
+// that cannot be split without changing what it does.
+export const splitLine = (name, command, root) => {
+  let scripts = {};
+  try { scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}; } catch { return null; }
+  const used = new Set();
+  const flatten = (part, depth) => {
+    const script = scriptNamed(part);
+    if (script === null || typeof scripts[script] !== 'string' || depth >= DEPTH) return [part];
+    const inner = chainParts(scripts[script]);
+    if (!inner || inner.length < 2) return [part];
+    used.add(script);
+    return inner.flatMap((p) => flatten(p, depth + 1));
+  };
+  const top = chainParts(command);
+  if (!top) return null;
+  const all = top.flatMap((p) => flatten(p, 0));
+  if (all.length < 2 || all.some((p) => SHELL_STATE.test(p))) return null;
+  if ([...used, scriptNamed(command)].filter(Boolean).some((n) => scripts[`pre${n}`] !== undefined || scripts[`post${n}`] !== undefined)) return null;
+  const parts = all.map((c, i) => ({ name: `${name}.${i + 1}`, command: c, browser: usesBrowser(c, root) }));
+  if (!parts.some((part) => part.browser) || parts.every((part) => part.browser)) return null;
+  return { fast: parts.filter((part) => !part.browser), heavy: parts.filter((part) => part.browser) };
+};
+
+// The mutation wrapper's own tool is not the suite: what is judged is the command after `--`.
+const suiteOf = (command) => command.replace(/^.*mutate\.mjs.*? -- /, '');
+// What measures time or load runs alone, one at a time, when everything else has finished: with
+// another suite running, the number measures the machine and not the app.
+const FINAL_PHASE = /^(p95|budget|vitals|load)/i;
+const MUTATOR = /mutate\.mjs/;
+// What measures frames —motion, the motion audit— fails when other lines load the machine and passes alone
+// (measured: a card's `motion` line failed beside the suites and passed by itself). When one of these lines fails
+// with other lines in the run, it is run again alone at the end, and the result is the one of the run alone.
+const FRAME_LINE = /^(?:motion|frames?|fps|jank)/i;
+const FRAME_COMMAND = /motion-audit\.mjs|\bnpm\s+run\s+\S*motion\b/i;
+export const measuresFrames = (line) => FRAME_LINE.test(line.name ?? '') || FRAME_COMMAND.test(line.command ?? '');
+const TIMEOUT_TAG = /\s*\[timeout\s+(\d+(?:\.\d+)?)\s*(min|h)\]/i;
+// The criteria a line of the plan proves, by the start of its name: the line does not run when the grade
+// leaves all of them out.
+const LINE_CRITERIA = { cycles: ['D3'], p95: ['O10'], budget: ['O10', 'O15'], vitals: ['O15'], load: ['O22'] };
+// Measured: a line that started a server and never ended left verify.mjs silent for 10 minutes and the
+// agent gave up on it. Each line has a limit, and a line that exceeds it is reported, not left hanging.
+const DEFAULT_TIMEOUT_MIN = 20;
+const HEARTBEAT_MS = 60000;
+// A line that already ran gets 4 times its measured duration (a line that repeats a suite three times
+// plus margin), never less than the floor: `VERIFY_TIMEOUT_MIN`, 20 min without it. What a line
+// declares in the plan (`[timeout N min]`) is not touched. The durations are those of verify.mjs's own
+// runs, kept in `.validation/verify/durations.json` by command; a run killed at its limit counts as the
+// limit, so the next one gets more room instead of timing out again.
+const MARGIN = 4;
+const SLOW_MIN = 5;
+const DURATIONS = 'durations.json';
+const floorMin = () => (Number(process.env.VERIFY_TIMEOUT_MIN) > 0 ? Number(process.env.VERIFY_TIMEOUT_MIN) : DEFAULT_TIMEOUT_MIN);
+const readDurations = (logsDir) => {
+  try { return JSON.parse(readFileSync(join(logsDir, DURATIONS), 'utf8')); } catch { return {}; }
+};
+const recordDuration = (logsDir, command, minutes) => {
+  const all = readDurations(logsDir);
+  all[command] = +minutes.toFixed(2);
+  writeFileSync(join(logsDir, DURATIONS), JSON.stringify(all, null, 1));
+};
+// The line's own last run, or that of any command it contains: `stable` loops over the suite's command.
+export const measuredMin = (durations, command) => Math.max(0, ...Object.entries(durations)
+  .filter(([known]) => known && command.includes(known)).map(([, minutes]) => Number(minutes) || 0));
+export const limitMin = (c, durations = {}) => c.timeoutMin ?? Math.max(floorMin(), Math.ceil(MARGIN * measuredMin(durations, c.command ?? '')));
+const say = (text) => process.stderr.write(`[verify] ${text}\n`);
+const seconds = (ms) => (ms < 10000 ? `${(ms / 1000).toFixed(1)} s` : ms < 120000 ? `${Math.round(ms / 1000)} s` : `${(ms / 60000).toFixed(1)} min`);
+const killTree = (p) => {
+  if (process.platform === 'win32') spawnSync('taskkill', ['/PID', String(p.pid), '/T', '/F'], { stdio: 'ignore' });
+  else try { process.kill(-p.pid, 'SIGKILL'); } catch { p.kill('SIGKILL'); }
+};
+
+// `app:` and `seed:` tell app.mjs how to start the app the judges share; they are not checks.
+const ENVIRONMENT_LINE = /^(app|seed):/;
+export const planCommands = (plan, { base, cardDir }) => {
+  const section = plan.split(/^## /m).find((s) => s.startsWith('Verification'));
+  if (!section) return null;
+  const block = section.match(/```[^\n]*\n([\s\S]*?)```/);
+  if (!block) return null;
+  const equivalents = relative(process.cwd(), join(cardDir, 'equivalents.md')).split('\\').join('/');
+  return block[1].split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#') && !ENVIRONMENT_LINE.test(l)).map((l) => {
+    const i = l.indexOf(':');
+    // `name [timeout 30 min]: command` sets the limit of that line; without it, see limitMin.
+    const limit = l.slice(0, i).match(TIMEOUT_TAG);
+    const name = l.slice(0, i).replace(TIMEOUT_TAG, '').trim();
+    const timeoutMin = limit ? Number(limit[1]) * (/^h/i.test(limit[2]) ? 60 : 1) : undefined;
+    const command = l.slice(i + 1).trim();
+    const mutate = name.match(/^mutate\s+(\S+)$/);
+    if (!mutate) return { name, command, ...(timeoutMin ? { timeoutMin } : {}) };
+    const parallel = isSerial(command) ? '' : ' --parallel 4';
+    return {
+      name,
+      file: mutate[1],
+      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${command}`,
+      ...(timeoutMin ? { timeoutMin } : {}),
+    };
+  });
+};
+
+// A command with the package.json scripts it runs written out: `npm test` becomes the body of the
+// `test` script, and so on down `npm run <other>` calls.
+
+// The commands a line runs at its top level: its segments split by `&&`, `||` or `;` outside quotes, and
+// the body of each npm script it calls, down its sub-scripts. A command inside quotes or given as an
+// argument (`mutate.mjs … --test "node --test x"`) is not one the line runs itself.
+const topLevel = (command, scripts, depth = 0) => {
+  const parts = [];
+  let current = '';
+  let quote = '';
+  for (let i = 0; i < command.length; i++) {
+    const ch = command[i];
+    if (quote) { current += ch; if (ch === quote) quote = ''; continue; }
+    if (ch === '"' || ch === "'") { quote = ch; current += ch; continue; }
+    if (ch === ';' || ch === '\n' || ((ch === '&' || ch === '|') && command[i + 1] === ch)) {
+      parts.push(current);
+      current = '';
+      if (ch !== ';' && ch !== '\n') i++;
+      continue;
+    }
+    current += ch;
+  }
+  parts.push(current);
+  const all = [];
+  for (const part of parts.map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean)) {
+    all.push(part);
+    const m = part.match(/^npm\s+(?:run(?:-script)?\s+)?([\w:.-]+)$/);
+    if (m && typeof scripts[m[1]] === 'string' && depth < 5) all.push(...topLevel(scripts[m[1]], scripts, depth + 1));
+  }
+  return all;
+};
+
+// The verification lines whose command another line runs at its top level: the same script run twice.
+// Measured: a plan ran the screens suite on its own line although `suite` already included it. In doubt a
+// line is not covered and runs. `mutate` lines wrap a unit suite on purpose and are left out.
+export const containedCommands = (planned, root) => {
+  let scripts = {};
+  try { scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}; } catch {}
+  const norm = (c) => c.command.replace(/\s+/g, ' ').trim();
+  const lines = planned.filter((c) => c.file === undefined && (c.command ?? '').length >= 8);
+  const found = [];
+  for (const inner of lines) {
+    const own = norm(inner);
+    const outer = lines.find((o) => o !== inner && topLevel(o.command, scripts).includes(own) &&
+      (norm(o) !== own || lines.indexOf(o) < lines.indexOf(inner)));
+    if (outer) found.push({ inner: inner.name, outer: outer.name });
+  }
+  return found;
+};
+
+// What a bare run of the whole of a verification line looks like when it is not spelled as the line: the npm
+// script a line reaches (even a part verify.mjs splits), that script's literal body, `playwright test` with the
+// config of a line and `node --test` with the globs of a line, the last two with no spec, `--grep`/`-g` or name
+// filter. Returns `{ line, what }` or null; a bounded run is null. guard-shell uses it inside subagents.
+const WORDS = /"([^"]*)"|'([^']*)'|(\S+)/g;
+const wordsOf = (text) => [...text.replace(NPX_NODE, 'node').matchAll(WORDS)].map((m) => m[1] ?? m[2] ?? m[3]);
+const PLAYWRIGHT_VALUE_FLAGS = new Set(['-c', '-j', '--workers', '--project', '--reporter', '--retries', '--repeat-each', '--timeout', '--shard', '--grep-invert', '--max-failures', '--output', '--global-timeout', '--trace', '--tsconfig', '--ui-host', '--ui-port']);
+const NODE_VALUE_FLAGS = new Set(['--test-name-pattern', '--test-skip-pattern', '--test-concurrency', '--test-timeout', '--test-reporter', '--test-reporter-destination', '--test-shard', '--import', '--require', '-r', '--env-file']);
+const parsePlaywright = (text) => {
+  const w = wordsOf(text);
+  const at = w.findIndex((x, k) => /(^|[\\/])playwright(\.cmd)?$/.test(x) && w[k + 1] === 'test');
+  if (at < 0) return null;
+  let config = null;
+  let filtered = false;
+  const files = [];
+  for (let k = at + 2; k < w.length; k++) {
+    const x = w[k];
+    if (x === '-c' || x === '--config') config = w[++k] ?? null;
+    else if (x.startsWith('--config=')) config = x.slice('--config='.length);
+    else if (x === '-g' || x === '--grep') { filtered = true; k++; } else if (x.startsWith('--grep=')) filtered = true;
+    else if (x.startsWith('-')) { if (PLAYWRIGHT_VALUE_FLAGS.has(x)) k++; } else files.push(x);
+  }
+  return { config: config && config.replace(/\\/g, '/').replace(/^\.\//, ''), bounded: filtered || files.length > 0 };
+};
+const parseNodeTest = (text) => {
+  const w = wordsOf(text);
+  const at = w[0] === 'node' ? w.indexOf('--test') : -1;
+  if (at < 0) return null;
+  let filtered = false;
+  const files = [];
+  for (let k = at + 1; k < w.length; k++) {
+    const x = w[k];
+    if (x.startsWith('-')) {
+      if (/^--test-name-pattern\b/.test(x)) filtered = true;
+      if (!x.includes('=') && NODE_VALUE_FLAGS.has(x)) k++;
+    } else files.push(x.replace(/\\/g, '/').replace(/^\.\//, ''));
+  }
+  return { key: [...new Set(files)].sort().join('\0'), bounded: filtered };
+};
+export const wholeRunOf = (asked, planned, root) => {
+  let scripts = {};
+  try { scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}; } catch {}
+  const lines = planned.filter((c) => c.file === undefined);
+  const reach = [];
+  const names = new Map();
+  for (const l of lines) {
+    for (const text of topLevel(l.command, scripts)) {
+      reach.push({ text, line: l.name });
+      const name = scriptNamed(text);
+      if (name && typeof scripts[name] === 'string') names.set(name, l.name);
+    }
+  }
+  const bodies = new Map([...names].map(([name, line]) => [scripts[name].replace(/\s+/g, ' ').trim(), { line, name }]));
+  const whole = asked.replace(/\s+/g, ' ').trim();
+  if (bodies.has(whole)) return { line: bodies.get(whole).line, what: `the body of its script \`${bodies.get(whole).name}\`` };
+  for (const part of topLevel(asked, {})) {
+    const name = scriptNamed(part);
+    if (name && names.has(name)) return { line: names.get(name), what: `its script \`${name}\`` };
+    if (bodies.has(part)) return { line: bodies.get(part).line, what: `the body of its script \`${bodies.get(part).name}\`` };
+    const pw = parsePlaywright(part);
+    if (pw && !pw.bounded) {
+      const hit = reach.find((r) => { const o = parsePlaywright(r.text); return o && !o.bounded && o.config === pw.config; });
+      if (hit) return { line: hit.line, what: `\`playwright test\` with ${pw.config ? `its config ${pw.config}` : 'the default config'}, no spec and no filter` };
+    }
+    const nt = parseNodeTest(part);
+    if (nt && !nt.bounded) {
+      const hit = reach.find((r) => { const o = parseNodeTest(r.text); return o && !o.bounded && o.key === nt.key; });
+      if (hit) return { line: hit.line, what: '`node --test` with the same files, no name filter' };
+    }
+  }
+  return null;
+};
+
+// A line drives a browser when the scripts it runs name Playwright or Cypress or write test-results/:
+// those start after the fast lines pass.
+const BROWSER = /playwright|cypress|test-results/i;
+export const usesBrowser = (command, root) => {
+  let scripts = {};
+  try { scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}; } catch {}
+  const text = expandScripts(suiteOf(command), scripts);
+  return BROWSER.test(text) && isSerial(suiteOf(command), root);
+};
+
+// The failing tests an output names, for the runners we can re-run by name: node:test (`✖ name`,
+// `not ok N - name`), Playwright (`1) [project] › file:line:col › title`) and jest or vitest (`✕|× name`).
+export const failingTests = (output) => {
+  const found = new Map();
+  let at = null;
+  for (const line of output.split('\n')) {
+    let m;
+    if ((m = line.match(/^\s*test at (.+?):\d+:\d+\s*$/))) {
+      at = m[1];
+    } else if ((m = line.match(/^\s*\d+\) (?:\[([^\]]+)\] › )?(\S+?):(\d+):\d+ › (.+?)\s*$/))) {
+      found.set(`${m[2]}:${m[3]} › ${m[4]}`, { name: `${m[2]}:${m[3]} › ${m[4]}`, file: `${m[2]}:${m[3]}`, project: m[1] });
+    } else if ((m = line.match(/^\s*✖ (.+?)(?: \(\d+(?:\.\d+)?ms\))?\s*$/)) && !/^failing tests:?$/.test(m[1])) {
+      // node:test names, in its summary, the file of each failing test on the line before: `test at <file>:<line>:<col>`.
+      found.set(m[1], { ...found.get(m[1]), name: m[1], ...(at ? { nodeFile: at } : {}) });
+      at = null;
+    } else if ((m = line.match(/^not ok \d+ - (.+?)\s*$/))) {
+      found.set(m[1], { name: m[1] });
+    } else if ((m = line.match(/^\s*[✕×] (.+?)(?: \(\d+(?:\.\d+)? ?m?s\))?\s*$/))) {
+      found.set(m[1], { name: m[1] });
+    }
+  }
+  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? 0);
+  const tests = [...found.values()];
+  return total > 3 ? [] : tests;
+};
+
+const escapeRegex = (name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// What runs only the failing tests: `{ cmd, args, env }` for spawn with no shell, or null if this runner cannot be
+// filtered. The runner is called itself (node, or the script of the installed Playwright, vitest or jest) with the
+// name as one argument: through npm and cmd.exe the quotes of a filter are stripped and a name with spaces became
+// «el», which ran nearly the whole suite (measured). A line whose command is compound, a mutation or an unknown
+// runner has no triage.
+export const rerunSpec = (command, tests, root) => {
+  if (!tests.length || /&&|\|\||[;|]/.test(command) || MUTATOR.test(command)) return null;
+  let scripts = {};
+  try { scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}; } catch {}
+  const text = expandScripts(command, scripts);
+  if (/&&|\|\||[;|]/.test(text)) return null;
+  const words = wordsOf(text);
+  const env = {};
+  while (words.length && /^[A-Za-z_]\w*=/.test(words[0])) { const [k, ...v] = words.shift().split('='); env[k] = v.join('='); }
+  const installed = (...paths) => paths.map((p) => join(root, 'node_modules', ...p.split('/'))).find((p) => existsSync(p));
+  const keep = (flags, valued, drop) => {
+    const out = [];
+    for (let k = 0; k < flags.length; k++) {
+      const x = flags[k];
+      const skip = drop.some((d) => x === d || x.startsWith(`${d}=`));
+      if (!x.startsWith('-')) continue;
+      if (!x.includes('=') && valued.has(x) && k + 1 < flags.length) { if (!skip) out.push(x, flags[k + 1]); k++; } else if (!skip) out.push(x);
+    }
+    return out;
+  };
+  if (words[0] === 'node' && words.includes('--test')) {
+    const at = words.indexOf('--test');
+    const rest = words.slice(at + 1);
+    const flags = keep(rest, NODE_VALUE_FLAGS, ['--test-name-pattern', '--test-skip-pattern']);
+    // The files that hold the failing tests when the output said which; else the ones the line names. A file that
+    // failed as a whole (its name is the failing «test») is re-run whole, with no name filter.
+    const wholeFiles = tests.filter((t) => /\.[cm]?[jt]sx?$/.test(t.name)).map((t) => t.name);
+    const named = tests.map((t) => t.nodeFile);
+    const lineFiles = rest.filter((x, k) => !x.startsWith('-') && !(k > 0 && rest[k - 1].startsWith('-') && !rest[k - 1].includes('=') && NODE_VALUE_FLAGS.has(rest[k - 1])));
+    const files = wholeFiles.length ? wholeFiles : named.every(Boolean) ? [...new Set(named)] : lineFiles;
+    const filters = wholeFiles.length ? [] : tests.map((t) => `--test-name-pattern=(?:^| )${escapeRegex(t.name)}$`);
+    // A re-run of a few tests never waits on a handle the first run left open: it carries `--test-force-exit` as a call of an agent does.
+    return { cmd: process.execPath, args: [...words.slice(1, at), '--test', ...(flags.includes('--test-force-exit') ? [] : ['--test-force-exit']), ...flags, ...filters, ...files], env };
+  }
+  const flagsAfter = (from, valued, drop) => keep(words.slice(from), valued, drop);
+  const files = (from, valued) => words.slice(from).filter((x, k, all) => !x.startsWith('-') && !(k > 0 && all[k - 1].startsWith('-') && !all[k - 1].includes('=') && valued.has(all[k - 1])));
+  const pwAt = words.findIndex((x, k) => /(^|[\\/])playwright(\.cmd)?$/.test(x) && words[k + 1] === 'test');
+  if (pwAt >= 0) {
+    const cli = installed('@playwright/test/cli.js', 'playwright/cli.js');
+    if (!cli || !tests.every((t) => t.file)) return null;
+    const projects = [...new Set(tests.map((t) => t.project).filter(Boolean))];
+    const flags = flagsAfter(pwAt + 2, PLAYWRIGHT_VALUE_FLAGS, ['--grep', '-g', '--project']);
+    return { cmd: process.execPath, args: [cli, 'test', ...flags, ...new Set(tests.map((t) => t.file)), ...(projects.length === 1 ? [`--project=${projects[0]}`] : [])], env };
+  }
+  const runnerAt = words.findIndex((x) => /(^|[\\/])(vitest|jest)(\.cmd)?$/.test(x));
+  if (runnerAt >= 0) {
+    const jest = /jest/.test(words[runnerAt]);
+    const script = jest ? installed('jest/bin/jest.js') : installed('vitest/vitest.mjs');
+    if (!script) return null;
+    const valued = new Set(['-c', '--config', '--root', '-r', '--project', '--reporter', '-t', '--testNamePattern', '--test-name-pattern']);
+    const pattern = tests.map((t) => escapeRegex(t.name)).join('|');
+    const rest = words.slice(runnerAt + 1);
+    const sub = !jest && rest[0] === 'run' ? ['run'] : [];
+    return { cmd: process.execPath, args: [script, ...sub, ...keep(rest.slice(sub.length), valued, ['-t', '--testNamePattern', '--test-name-pattern']), '-t', pattern, ...files(runnerAt + 1 + sub.length, valued)], env };
+  }
+  return null;
+};
+
+// Why the grade leaves a line of the plan out, or null if it runs.
+export const skippedBy = (line, exempt, map, root = process.cwd()) => {
+  const reason = `not required by grade ${exempt.grade}`;
+  if (line.file !== undefined) return mutationRequired(exempt, map, line.file, root) ? null : reason;
+  if (exempt.procedures?.has('motion-audit') && /motion-audit\.mjs/.test(line.command ?? '')) return reason;
+  const key = Object.keys(LINE_CRITERIA).find((k) => line.name.toLowerCase().startsWith(k));
+  return key && LINE_CRITERIA[key].every((id) => exempt.criteria.has(id)) ? reason : null;
+};
+
+// A card that touches a screen works inside the project's design line: it uses it and extends it,
+// it does not invent values; every control has its states, and there is motion with its reduced
+// version. Measured: a screen with no motion at all read as old even though it passed every
+// validation, and four runs used between 6 and 15 loose font sizes with no scale.
+const IS_SCREEN = /\.(css|scss|html?|jsx|tsx|vue|svelte)$/;
+// A module that builds HTML or CSS in a string is also a screen: some apps have no other.
+const BUILDS_SCREEN = /<(html|style|body|main|button|input|form|table|section)\b|\{[^{}]*\b(color|background|transition|font-size)\s*:/i;
+export const LINE = 'design/line.md';
+export const SET = 'design/components';
+// A control from the set carries one of its classes; in a component framework, it is the set's component.
+// A control from the set carries one of the classes the set defines —in whatever language the
+// project names them—; in a component framework, it is the set's component, not a raw tag.
+const setClasses = (root, files) => new Set(files.filter((f) => f.endsWith('.css'))
+  .flatMap((f) => [...readFileSync(join(root, f), 'utf8').matchAll(/\.([A-Za-z_][\w-]*)/g)].map((m) => m[1])));
+const fromSet = (tag, classes) => [...tag.matchAll(/class(?:Name)?=["'{`]([^"'`}]*)/g)].some((m) => m[1].split(/\s+/).some((c) => classes.has(c)));
+const CONTROL_TAG = /<(button|input|select|textarea)\b[^>]*>?/g;
+// A hidden input carries a value, it is not a control: nobody sees it, focuses it or presses it.
+const HIDDEN_INPUT = /<input\b[^>]*?(?<![\w-])type\s*=\s*["'`{]?hidden\b[^>]*>?/gi;
+const withoutHidden = (lines) => lines.join('\n').replace(HIDDEN_INPUT, '');
+
+// The lines the card added and removed in a file; a file new to git counts as all added.
+const diffOf = (root, base, f) => {
+  const d = spawnSync('git', ['diff', '-U0', base, '--', f], { cwd: root, encoding: 'utf8' }).stdout ?? '';
+  if (!d) return { added: readFileSync(join(root, f), 'utf8').split('\n'), removed: [] };
+  const lines = d.split('\n');
+  const pick = (sign) => lines.filter((l) => l.startsWith(sign) && !l.startsWith(sign.repeat(3))).map((l) => l.slice(1));
+  return { added: pick('+'), removed: pick('-') };
+};
+const added = (root, base, f) => diffOf(root, base, f).added;
+// The added lines with their number in the file, from the hunk headers; a file new to git is all added.
+const addedAt = (root, base, f) => {
+  const d = spawnSync('git', ['diff', '-U0', base, '--', f], { cwd: root, encoding: 'utf8' }).stdout ?? '';
+  if (!d) return readFileSync(join(root, f), 'utf8').split('\n').map((text, i) => ({ n: i + 1, text }));
+  const out = [];
+  let n = 0;
+  for (const l of d.split('\n')) {
+    const hunk = l.match(/^@@ -\d+(?:,\d+)? \+(\d+)/);
+    if (hunk) { n = Number(hunk[1]); continue; }
+    if (l.startsWith('+') && !l.startsWith('+++')) out.push({ n: n++, text: l.slice(1) });
+  }
+  return out;
+};
+// `file:line value` for each hand-written value of the kinds in `patterns` that the card added, to cite in a finding.
+const placesOf = (root, base, files, patterns) => files.flatMap((f) => addedAt(root, base, f)
+  .filter((l) => !DECLARES_TOKEN.test(l.text))
+  .flatMap((l) => patterns.flatMap((re) => (l.text.match(re) ?? []).map((value) => `${f}:${l.n} ${value}`))));
+const CONTROL = /<(button|input|select|textarea)\b|\b(button|input|select|textarea)\s*[{:,]|\[role=["']?button/g;
+const controls = (lines) => withoutHidden(lines).match(CONTROL)?.length ?? 0;
+
+// `off` are the procedures the grade leaves out (kit.mjs `exemption`): at poc there is no design line
+// and no component set to check against.
+export const design = (root, cardDir, off = new Set()) => {
+  const base = cardStart(root, cardDir);
+  const touched = cardFiles(root, base)
+    .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
+    .filter((f) => IS_SCREEN.test(f) || (IS_CODE.test(f) && BUILDS_SCREEN.test(readFileSync(join(root, f), 'utf8'))));
+  if (!touched.length) return [];
+  // The component set is checked as a whole in its gallery; the screens, for how they use it.
+  const inSet = (f) => f.startsWith(`${SET}/`);
+  const screen = touched.filter((f) => !inSet(f) && !/^design\//.test(f));
+  const setFiles = existsSync(join(root, SET)) ? readdirSync(join(root, SET), { recursive: true }).map((f) => `${SET}/${String(f).split('\\').join('/')}`).filter((f) => /\.(css|m?js|html?|tsx?|jsx|vue|svelte)$/.test(f)) : [];
+  const problems = [];
+  const closing = 'per .claude/templates/design-line.md and .claude/reference/modern-interface.md';
+
+  if (!off.has('design-line') && !existsSync(join(root, LINE)))
+    problems.push(`I-line · the card touches a screen and the project has no design line (${LINE}) · close: \`cp .claude/templates/design-line.md ${LINE}\`, then write its sections 1 to 5 (references, direction, tokens, component set, state changes) and the values in design/tokens.css, ${closing}`);
+
+  // Only what the card wrote counts: old code is not rewritten because of this.
+  const text = (files) => files.map((f) => readFileSync(join(root, f), 'utf8')).join('\n');
+  const raw = touched.flatMap((f) => {
+    const lines = added(root, base, f).filter((l) => !DECLARES_TOKEN.test(l)).join('\n');
+    const n = (lines.match(RAW_COLOR)?.length ?? 0) + (lines.match(RAW_DURATION)?.length ?? 0);
+    return n ? [`${f} (${n})`] : [];
+  });
+  if (raw.length && !off.has('design-line'))
+    problems.push(`I-tokens · colors or durations written by hand in what the card added: ${raw.join(', ')} · at: ${placesOf(root, base, touched, [RAW_COLOR, RAW_DURATION]).join('; ')} · close: in each place write \`var(--<token>)\` instead of the value; a missing token is declared once in design/tokens.css as \`--<name>: <value>;\``);
+  // On a screen —not in the set, where the scales are defined— space, radius and shadow come from
+  // tokens or primitives too: that is what keeps a new screen in the product's language.
+  const rawLayout = screen.flatMap((f) => {
+    const lines = added(root, base, f).filter((l) => !DECLARES_TOKEN.test(l)).join('\n');
+    const n = lines.match(RAW_LAYOUT)?.length ?? 0;
+    return n ? [`${f} (${n})`] : [];
+  });
+  if (rawLayout.length && !off.has('design-line'))
+    problems.push(`I-tokens · space, radius or shadow written by hand on a screen: ${rawLayout.join(', ')} · at: ${placesOf(root, base, screen, [RAW_LAYOUT]).join('; ')} · close: in each place write \`var(--space-<n>)\`, \`var(--radius-<n>)\` or \`var(--shadow-<n>)\`, or use the primitives (stack, inline, grid, surface) of the set`);
+
+  const all = text([...touched, ...setFiles]);
+  // States are required when the card adds controls; those that were already missing predate it.
+  // Editing a line that already had a control does not add one: removed lines are discounted.
+  const addsControls = touched.some((f) => {
+    const d = diffOf(root, base, f);
+    return controls(d.added) > controls(d.removed);
+  });
+  // In a repo of the catalog (components.json), screens use the installed components: a raw
+  // button, input, select, textarea or dialog in a screen —outside components/— is drawn by hand.
+  if (off.has('component-set')) {
+    // poc: no set to compose from.
+  } else if (existsSync(join(root, 'components.json'))) {
+    const RAW_JSX = /<(button|input|select|textarea|dialog)\b/g;
+    const handmade = screen.filter((f) => !/(^|\/)components\//.test(f)).flatMap((f) => {
+      const n = withoutHidden(added(root, base, f)).match(RAW_JSX)?.length ?? 0;
+      return n ? [`${f} (${n})`] : [];
+    });
+    if (handmade.length)
+      problems.push(`I-components · controls written by hand on a screen instead of installed from the catalog: ${handmade.join(', ')} · close: the component of .claude/reference/components.md (\`npx shadcn@latest add @shadcn/button\`, \`@coss/dialog\`, …), adapted to the tokens`);
+  } else if (setFiles.length) {
+  // Screens are composed from the set: a control written by hand when the set exists is a finding.
+    const classes = setClasses(root, setFiles);
+    const handmade = screen.flatMap((f) => {
+      const n = (withoutHidden(added(root, base, f)).match(CONTROL_TAG) ?? []).filter((tag) => !fromSet(tag, classes)).length;
+      return n ? [`${f} (${n})`] : [];
+    });
+    if (handmade.length)
+      problems.push(`I-components · controls written by hand instead of taken from the set: ${handmade.join(', ')} · close: use the component of ${SET}/; if it does not exist, it enters the set and its gallery first`);
+  } else {
+    // A card that adds controls, or designs how existing ones respond —states, transitions—, is
+    // the moment to create the set: otherwise the interaction is drawn screen by screen.
+    const designsInteraction = screen.some((f) => /:(hover|active|focus-visible)\b|\btransition\s*:|@keyframes|\.animate\(/.test(added(root, base, f).join('\n')));
+    if (addsControls || designsInteraction)
+      problems.push(`I-components · the card ${addsControls ? 'adds controls' : 'designs how the screen responds'} and the project has no component set (${SET}/) · close: the set, from .claude/templates/components/, adapted to the design line, with its gallery and its tests; the screen composed from it`);
+  }
+  if (addsControls) {
+    const lacking = [':hover', ':focus-visible', ':active', ':disabled'].filter((e) => !all.includes(e));
+    if (lacking.length)
+      problems.push(`I-states · there are controls and their states ${lacking.join(', ')} are missing · close: every control with rest, hover, visible focus, press, disabled and loading, ${closing}`);
+  }
+
+  // Motion is asked of what the card builds: a new screen or a new control. Changing a text on a
+  // screen that already exists does not make the card owe that screen its motion.
+  const existed = (f) => spawnSync('git', ['cat-file', '-e', `${base}:${f}`], { cwd: root }).status === 0;
+  if (!addsControls && touched.every(existed)) return problems;
+  if (!/\b(transition|animation)\s*:|\.animate\(|startViewTransition|animation-timeline/.test(all))
+    problems.push(`I-motion · the screen declares no motion (${touched.join(', ')}) · close: hover, press and focus transitions, and the entrance of the main content, ${closing}`);
+  else if (!/prefers-reduced-motion/.test(all))
+    problems.push(`I-motion · there is motion without a prefers-reduced-motion rule (${touched.join(', ')}) · close: an @media (prefers-reduced-motion: reduce) block that removes shifts and scales`);
+  return problems;
+};
+
+const defaultRun = (cmd, args, cwd) => {
+  const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', shell: process.platform === 'win32', maxBuffer: 1 << 28 });
+  return { status: r.status, stdout: r.stdout ?? '', stderr: `${r.stderr ?? ''}${r.error ? r.error.message : ''}` };
+};
+const lastLine = (text) => text.trim().split('\n').filter(Boolean).at(-1) ?? 'no output';
+
+// The code files the card touched, kit and specs left out.
+const cardCode = (root, cardDir) => cardFiles(root, cardStart(root, cardDir))
+  .filter((f) => IS_CODE.test(f) && !/^(specs|\.claude)\//.test(f) && existsSync(join(root, f)));
+
+// K4 — measured: duplication was never measured in 3 inspections. Clones between files of the card,
+// or between them and the rest of the repo, one action each.
+export const duplication = (root, cardDir, run = defaultRun) => {
+  const files = cardCode(root, cardDir);
+  if (!files.length) return [];
+  const out = '.validation/jscpd';
+  const common = ['--silent', '--gitignore', '--reporters', 'json', '--output', out,
+    '--ignore', '**/node_modules/**,**/.claude/**,**/specs/**,**/.validation/**', '.'];
+  const local = join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'jscpd.cmd' : 'jscpd');
+  rmSync(join(root, out), { recursive: true, force: true });
+  // The arguments are jscpd 4's: an installed jscpd of another major would fail on them (measured).
+  let major = null;
+  try { major = Number(JSON.parse(readFileSync(join(root, 'node_modules', 'jscpd', 'package.json'), 'utf8')).version.split('.')[0]); } catch { /* not installed */ }
+  const r = existsSync(local) && major === 4 ? run(local, common, root) : run('npx', ['-y', 'jscpd@4', ...common], root);
+  const reportPath = join(root, out, 'jscpd-report.json');
+  if (r.status !== 0 || !existsSync(reportPath))
+    return [`K4 · jscpd could not run: ${lastLine(r.stderr || r.stdout)} · close: make \`npx -y jscpd@4\` run; duplication is not measured until it does`];
+  let report;
+  try { report = JSON.parse(readFileSync(reportPath, 'utf8')); } catch (e) {
+    return [`K4 · jscpd could not run: unreadable report (${e.message}) · close: make \`npx -y jscpd@4\` run`];
+  }
+  const norm = (n) => (isAbsolute(n) ? relative(root, n) : n).split('\\').join('/');
+  return (report.duplicates ?? []).flatMap((d) => {
+    const a = norm(d.firstFile.name);
+    const b = norm(d.secondFile.name);
+    if (!files.includes(a) && !files.includes(b)) return [];
+    return [`K4 · clone of ${d.lines} lines: ${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end} · close: extract what both share into one place, or write why the two must differ`];
+  });
+};
+
+// K11 — measured: `role="table"aria-labelledby` shipped. An attribute value's closing quote glued to
+// the next attribute name, in a string that builds HTML.
+const GLUED_ATTRIBUTE = /<[a-zA-Z][^<>]*?\s[\w:-]+=(?:"[^"]*"|'[^']*')[a-zA-Z]/;
+export const attributeSyntax = (lines) => lines.flatMap((l, i) => (GLUED_ATTRIBUTE.test(l) ? [i + 1] : []));
+
+export const htmlProblems = (root, cardDir, run = defaultRun) => {
+  const base = cardStart(root, cardDir);
+  const touched = cardFiles(root, base).filter((f) => !/^(specs|\.claude)\//.test(f) && existsSync(join(root, f)));
+  const actions = [];
+  const pages = touched.filter((f) => /\.html?$/.test(f));
+  if (pages.length) {
+    const r = run('npx', ['-y', 'html-validate@8', '--formatter', 'json', ...pages], root);
+    let findings = null;
+    try { findings = JSON.parse(r.stdout); } catch { /* not json: it did not run */ }
+    if (!Array.isArray(findings) || (r.status !== 0 && !findings.length))
+      actions.push(`K11 · html-validate could not run: ${lastLine(r.stderr || r.stdout)} · close: make \`npx -y html-validate@8\` run; the HTML is not validated until it does`);
+    // Only the lines the card added: a finding on a line that was already there (the base's `<!doctype html>`) is the base's
+    // debt, a `R8`, not an action of this card.
+    else for (const file of findings) {
+      const name = (isAbsolute(file.filePath) ? relative(root, file.filePath) : file.filePath).split('\\').join('/');
+      const mine = new Set(addedAt(root, base, name).map((l) => l.n));
+      for (const m of (file.messages ?? []).filter((x) => !Number.isInteger(x.line) || mine.has(x.line)))
+        actions.push(`K11 · ${name}:${m.line}:${m.column} ${m.ruleId}: ${m.message} · close: fix the markup so \`npx -y html-validate@8 ${name}\` is clean`);
+    }
+  }
+  for (const f of touched.filter((x) => IS_CODE.test(x))) {
+    const whole = readFileSync(join(root, f), 'utf8').split('\n');
+    const mine = new Set(added(root, base, f));
+    for (const n of attributeSyntax(whole).filter((i) => mine.has(whole[i - 1])))
+      actions.push(`K11 · ${f}:${n} · attribute quote followed by a letter in a string that builds HTML · close: a space between attributes`);
+  }
+  return actions;
+};
+
+// Each log keeps beside it the key of the code it came from and how that run ended, so that a later
+// «already passed» notice is only appended to the log of the run that passed.
+const readMeta = (log) => { try { return JSON.parse(readFileSync(`${log}.json`, 'utf8')); } catch { return null; } };
+const FLAKY_RUNS = 3;
+
+// Re-runs only the failing tests, FLAKY_RUNS times. Returns null when it does not apply, or what each
+// test did: `failed` runs out of FLAKY_RUNS.
+const triage = (command, output, minutes) => {
+  const root = process.cwd();
+  const tests = failingTests(output);
+  const rerun = tests.length ? rerunSpec(command, tests, root) : null;
+  if (!rerun) return null;
+  const counts = new Map(tests.map((t) => [t.name, 0]));
+  // The re-runs write the same `test-results/` as any browser run: they hold the lock while they last.
+  const release = launchesPlaywright(command, root) ? takeLock(root, `${rerun.cmd} ${rerun.args.join(' ')}`) : () => {};
+  for (let i = 0; i < FLAKY_RUNS; i++) {
+    say(`flaky triage ${i + 1}/${FLAKY_RUNS}: ${tests.map((t) => t.name).join(' | ')}`);
+    const r = spawnSync(rerun.cmd, rerun.args, { cwd: root, shell: false, env: { ...process.env, ...rerun.env }, encoding: 'utf8', maxBuffer: 1 << 28, timeout: minutes * 60000 });
+    const text = `${r.stdout ?? ''}${r.stderr ?? ''}`;
+    const names = new Set(failingTests(text).map((t) => t.name));
+    for (const t of tests) if (r.status !== 0 && (!names.size || names.has(t.name))) counts.set(t.name, counts.get(t.name) + 1);
+  }
+  release();
+  return tests.map((t) => ({ test: t.name, failed: counts.get(t.name) }));
+};
+
+const run = (line, logsDir) => new Promise((done) => {
+  const { name, command } = line;
+  const log = join(logsDir, `${name.replace(/[^\w.-]+/g, '_')}.log`);
+  const minutes = limitMin(line, readDurations(logsDir));
+  const started = Date.now();
+  const key = keyOf(process.cwd(), command);
+  say(`start ${name} (limit ${minutes} min)`);
+  const p = spawn('node', [join(import.meta.dirname, 'once.mjs'), name, '--', command],
+    { shell: false, stdio: ['ignore', 'pipe', 'pipe'], detached: process.platform !== 'win32', env: line.env ?? process.env });
+  let output = '';
+  let timedOut = false;
+  p.stdout.on('data', (d) => { output += d; });
+  p.stderr.on('data', (d) => { output += d; });
+  const beat = setInterval(() => say(`still running ${name} (${seconds(Date.now() - started)})`), HEARTBEAT_MS);
+  const limit = setTimeout(() => { timedOut = true; killTree(p); }, minutes * 60000);
+  p.on('close', (code) => {
+    clearInterval(beat);
+    clearTimeout(limit);
+    let exit = timedOut ? 124 : code ?? 1;
+    let flaky = [];
+    const skippedRun = code === 0 && /: already passed on this same code .* not repeated\./.test(output);
+    if (skippedRun) {
+      // A skip over code that already passed keeps the log of the real run (its counts are what the
+      // close cites): the notice is appended to it. If the log on disk is of another run —one that
+      // failed before the fix, say—, it is replaced by the output of the run that passed.
+      const meta = readMeta(log);
+      if (existsSync(log) && meta?.key === key && meta.exit === 0) appendFileSync(log, `\n${output}`);
+      else writeFileSync(log, `${existsSync(logPath(process.cwd(), name, command)) ? `${readFileSync(logPath(process.cwd(), name, command), 'utf8')}\n` : ''}${output}`);
+      flaky = readRecord(process.cwd(), name, command)?.flaky ?? [];
+    } else {
+      if (exit !== 0 && !timedOut && !MUTATOR.test(command)) {
+        const found = triage(command, output, minutes);
+        if (found) {
+          const summary = found.map((f) => `flaky ${f.failed}/${FLAKY_RUNS} ${f.test}`).join('\n');
+          output += `\n[verify] flaky triage of the failing tests, re-run ${FLAKY_RUNS} times:\n${summary}\n`;
+          if (found.every((f) => f.failed < FLAKY_RUNS)) {
+            exit = 0;
+            flaky = found;
+            output += `[verify] passed with flaky: every failing test passed at least once in the re-run\n`;
+            writeRecord(process.cwd(), { name, command, exit: 0, minutes: (Date.now() - started) / 60000, flaky });
+            writeFileSync(logPath(process.cwd(), name, command), output);
+          }
+        }
+      }
+      writeFileSync(log, output);
+    }
+    writeFileSync(`${log}.json`, JSON.stringify({ key, exit }));
+    // A skip lasts seconds: what the line measures is its real run, the one once.mjs recorded.
+    const measured = skippedRun ? readRecord(process.cwd(), name, command)?.minutes : timedOut ? minutes : (Date.now() - started) / 60000;
+    if (measured > 0) recordDuration(logsDir, command, measured);
+    say(`${timedOut ? `could not run: timeout after ${minutes} min` : exit === 0 ? (flaky.length ? 'passed with flaky' : 'passed') : `exit ${exit}`} ${name} (${seconds(Date.now() - started)})`);
+    done({ name, command, exit, timedOut, minutes, log, flaky, tail: output.trim().split('\n').slice(-4).join(' ⏎ ') });
+  });
+});
+
+// The parts of a split line that go together, one after the other and stopping at the first that fails, as
+// `&&` would. A part that passed earlier on the same code is skipped by its own once record.
+const runChain = async (line, logsDir) => {
+  const started = Date.now();
+  const done = [];
+  for (const part of line.parts) {
+    const r = await run({ name: part.name, command: part.command, timeoutMin: line.timeoutMin, env: line.env }, logsDir);
+    done.push(r);
+    if (r.exit !== 0) break;
+  }
+  const last = done.find((r) => r.exit !== 0) ?? done.at(-1);
+  return {
+    name: line.name, command: line.command, exit: last.exit, timedOut: last.timedOut, minutes: last.minutes, log: last.log,
+    flaky: done.flatMap((r) => r.flaky ?? []), tail: last.tail, elapsedMin: (Date.now() - started) / 60000, partLogs: done.map((r) => r.log),
+  };
+};
+
+// What the parts of a split line did, as the one result of the line: the first part that failed decides it
+// (with its own log), else the one not started, else it passed. The line's log joins the logs of the parts that ran.
+const mergeChunks = (root, line, parts, mine, logsDir) => {
+  const logOf = (part) => join(logsDir, `${part.name.replace(/[^\w.-]+/g, '_')}.log`);
+  const ran = new Set(mine.flatMap((r) => r.partLogs ?? []));
+  const joined = parts.filter((part) => ran.has(logOf(part)))
+    .map((part) => `== ${part.name}: ${part.command} ==\n${readFileSync(logOf(part), 'utf8')}`).join('\n');
+  const lineLog = join(logsDir, `${line.name.replace(/[^\w.-]+/g, '_')}.log`);
+  const bad = mine.find((r) => r.exit !== 0 && !r.notRun);
+  const blocked = mine.find((r) => r.notRun);
+  const final = bad ?? blocked ?? {
+    name: line.name, command: line.command, exit: 0, timedOut: false, minutes: 0, log: lineLog, flaky: mine.flatMap((r) => r.flaky ?? []),
+    tail: joined.trim().split('\n').slice(-4).join(' ⏎ '),
+  };
+  if (joined) writeFileSync(lineLog, joined);
+  writeFileSync(`${lineLog}.json`, JSON.stringify({ key: keyOf(root, line.command), exit: final.exit }));
+  if (final.exit === 0) {
+    const minutes = mine.reduce((sum, r) => sum + (r.elapsedMin ?? 0), 0);
+    writeRecord(root, { name: line.name, command: line.command, exit: 0, minutes, ...(final.flaky.length ? { flaky: final.flaky } : {}) });
+  }
+  return final;
+};
+
+export const verify = async (root) => {
+  const cardDir = currentCard(root);
+  if (!cardDir) return { error: 'No card in progress.' };
+  const planPath = join(cardDir, 'plan.md');
+  const planned = existsSync(planPath) && planCommands(readFileSync(planPath, 'utf8'), { base: cardStart(root, cardDir), cardDir });
+  if (!planned?.length) return { error: 'The plan has no `## Verification` with a block of commands.' };
+
+  // What the grade leaves out is named and not run.
+  const { exempt } = active(root);
+  const map = fileMapLines(cardDir) ?? [];
+  const skipped = planned.flatMap((c) => { const reason = skippedBy(c, exempt, map, root); return reason ? [{ name: c.name, reason }] : []; });
+  const graded = planned.filter((c) => !skipped.some((s) => s.name === c.name));
+  // A line another line already includes is not run twice: `covered by <line>`, and once that line
+  // passes the covered one gets its own record, so what looks for evidence of it finds it.
+  const covered = containedCommands(graded, root).map(({ inner, outer }) => ({ inner: graded.find((c) => c.name === inner), outer }));
+  const commands = graded.filter((c) => !covered.some((v) => v.inner === c));
+  for (const v of covered) say(`covered by ${v.outer}: ${v.inner.name} is not run on its own`);
+  for (const id of ['K4', 'K11']) if (exempt.criteria.has(id)) skipped.push({ name: `${id} ${id === 'K4' ? 'duplication' : 'html'}`, reason: `not required by grade ${exempt.grade}` });
+  for (const s of skipped) say(`skipped: ${s.reason} ${s.name}`);
+
+  const logsDir = join(root, '.validation', 'verify');
+  mkdirSync(logsDir, { recursive: true });
+  const last = commands.filter((c) => FINAL_PHASE.test(c.name));
+  const rest = commands.filter((c) => !last.includes(c));
+  // A line that is a chain of parts with and without a browser goes in both groups, each with its own parts.
+  const env = { ...process.env };
+  const pathKey = Object.keys(env).find((k) => k.toLowerCase() === 'path') ?? 'PATH';
+  env[pathKey] = `${join(root, 'node_modules', '.bin')}${delimiter}${env[pathKey] ?? ''}`;
+  const durations = readDurations(logsDir);
+  const splits = new Map();
+  const heavy = [];
+  const noBrowser = [];
+  // The parts without a browser of a split line run in a lane of their own from the start: they never hold the
+  // browser chain back, measured or not, and no other line without a browser waits in a queue behind them.
+  const beside = [];
+  for (const c of rest) {
+    const parts = c.file === undefined && !MUTATOR.test(c.command) ? splitLine(c.name, c.command, root) : null;
+    if (parts) {
+      splits.set(c, parts);
+      say(`split ${c.name}: ${parts.fast.length} parts without a browser run beside the other lines, ${parts.heavy.length} with a browser start with the browser chain`);
+      beside.push({ ...c, parts: parts.fast, env });
+      heavy.push({ ...c, parts: parts.heavy, env });
+    } else (usesBrowser(c.command, root) ? heavy : noBrowser).push(c);
+  }
+  const exec = (c) => (c.parts ? runChain(c, logsDir) : run(c, logsDir));
+  const serialOf = (c) => isSerial(suiteOf(c.command), root);
+  const expectedMin = (c) => Math.max(measuredMin(durations, c.command), readRecord(root, c.name, c.command)?.minutes ?? 0);
+  // A line without a browser that took more than SLOW_MIN in its last run does not hold the browser chain
+  // back: it runs beside it. A line never measured counts as fast.
+  const slow = noBrowser.filter((c) => expectedMin(c) > SLOW_MIN);
+  const fast = noBrowser.filter((c) => !slow.includes(c));
+  const alone = fast.filter(serialOf);
+  const together = fast.filter((c) => !alone.includes(c));
+  const slowAlone = slow.filter(serialOf);
+  const limit = Math.max(2, Math.floor(cpus().length / 2));
+  const results = [];
+  // A mutation that exits 3 found nothing to mutate in the file: required.mjs accepts it as well.
+  const failed = (r) => r.exit !== 0 && !(r.exit === 3 && MUTATOR.test(r.command));
+  const queue = [...together];
+  const sideRuns = Promise.all(beside.map(async (c) => { results.push(await exec(c)); }));
+  const slowRuns = Promise.all([
+    ...slow.filter((c) => !slowAlone.includes(c)).map(async (c) => { results.push(await exec(c)); }),
+    (async () => { for (const c of slowAlone) results.push(await exec(c)); })(),
+  ]);
+  await Promise.all([
+    ...Array.from({ length: limit }, async () => {
+      for (let c = queue.shift(); c; c = queue.shift()) results.push(await exec(c));
+    }),
+    (async () => { for (const c of alone) results.push(await exec(c)); })(),
+  ]);
+  // The browser lines start only if every fast line passed; the slow ones, and the parts of split lines, keep running
+  // beside them (a part that already failed when the chain starts still keeps it from starting).
+  const redFast = results.filter((r) => failed(r) && [...fast, ...beside].some((c) => c.name === r.name)).map((r) => r.name);
+  for (const c of heavy) {
+    if (redFast.length) {
+      say(`not started ${c.name}: ${redFast.join(', ')} failed first`);
+      results.push({ name: c.name, command: c.command, exit: 125, notRun: true, blockedBy: redFast, flaky: [], tail: '' });
+    } else results.push(await exec(c));
+  }
+  await Promise.all([slowRuns, sideRuns]);
+  // A frame line that failed while others ran is measured again with the machine to itself.
+  for (const c of rest.filter((x) => x.file === undefined && !splits.has(x) && measuresFrames(x))) {
+    const at = results.findIndex((r) => r.name === c.name);
+    const first = results[at];
+    if (commands.length < 2 || !first || !failed(first) || first.notRun) continue;
+    const firstLog = existsSync(first.log) ? readFileSync(first.log, 'utf8') : '';
+    say(`${c.name} failed with other lines running: run again alone`);
+    const again = await run(c, logsDir);
+    const note = `[verify] ${c.name} first run, with other lines running: exit ${first.exit}\n${firstLog}\n[verify] re-run alone: exit ${again.exit}; its result is the one of the run alone\n`;
+    writeFileSync(again.log, `${note}${existsSync(again.log) ? readFileSync(again.log, 'utf8') : ''}`);
+    results[at] = { ...again, rerunAlone: { first: first.exit, alone: again.exit } };
+  }
+  for (const c of last) results.push(await run(c, logsDir));
+  for (const [line, parts] of splits) {
+    const all = [...parts.fast, ...parts.heavy].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    const merged = mergeChunks(root, line, all, results.filter((r) => r.name === line.name), logsDir);
+    results.splice(0, results.length, ...results.filter((r) => r.name !== line.name), merged);
+  }
+
+  for (const v of covered) {
+    const by = results.find((r) => r.name === v.outer);
+    if (by && by.exit === 0) writeRecord(root, { name: v.inner.name, command: v.inner.command, exit: 0, coveredBy: v.outer });
+  }
+
+  const actions = results.filter(failed)
+    .map((r) => (r.notRun
+      ? `${r.name} · could not run: not started because ${r.blockedBy.join(', ')} failed first, and the lines that drive a browser start only after the fast ones pass · close: fix those, then \`node ${TOOLS}/verify.mjs\` again`
+      : r.timedOut
+      ? `${r.name} · could not run: timeout after ${r.minutes} min, killed: ${r.tail} · log: ${relative(root, r.log)} · close: \`${r.command}\` ends by itself within the limit (a server is started and stopped by the command). To raise the limit of this line write \`${r.name} [timeout <N> min]: …\` in the plan's \`## Verification\` (the name, then the tag), or set \`VERIFY_TIMEOUT_MIN\` for every line; without either, the limit is the greater of 20 min and 4 times the last measured run of the command, and a killed run counts as its limit, so the next run gets more room`
+      : `${r.name} · fails (exit ${r.exit}): ${r.tail} · log: ${relative(root, r.log)} · close: \`${r.command}\` exits 0`));
+  writeSessionLines(root, cardDir);
+  const { actions: lacking, pending } = splitPending(missing(root) ?? []);
+  for (const f of lacking) actions.push(`${f} · close: \`node ${TOOLS}/required.mjs\` exits 0`);
+  actions.push(...design(root, cardDir, exempt.procedures),
+    ...(exempt.criteria.has('K4') ? [] : duplication(root, cardDir)),
+    ...(exempt.criteria.has('K11') ? [] : htmlProblems(root, cardDir)));
+  const flaky = results.flatMap((r) => (r.flaky ?? []).map((f) => ({ line: r.name, ...f })));
+  if (flaky.length) writeFileSync(join(logsDir, 'flaky.md'), `# Passed with flaky\n\n${flaky.map((f) => `- ${f.line}: ${f.test} — failed ${f.failed}/${FLAKY_RUNS} in the re-run`).join('\n')}\n`);
+  else rmSync(join(logsDir, 'flaky.md'), { force: true });
+  return { results, actions, pending, failed, skipped, covered: covered.map((v) => ({ name: v.inner.name, by: v.outer })), flaky };
+};
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  endsWithLine('verify');
+  const r = await verify(process.cwd());
+  if (r.error) {
+    console.error(r.error);
+    process.exit(2);
+  }
+  for (const x of r.results.sort((a, b) => a.name.localeCompare(b.name))) console.log(`${x.exit === 0 ? (x.flaky?.length ? 'passed with flaky' : 'passed') : x.notRun ? 'COULD NOT RUN: not started' : x.timedOut ? 'COULD NOT RUN: timeout' : r.failed(x) ? 'FAILED' : 'nothing to mutate'}  ${x.name}`);
+  for (const x of r.results.filter((y) => y.rerunAlone)) console.log(`re-run alone  ${x.name}  (first exit ${x.rerunAlone.first} with other lines running, alone exit ${x.rerunAlone.alone}: the result is the one alone)`);
+  for (const s of r.skipped) console.log(`skipped: ${s.reason}  ${s.name}`);
+  for (const c of r.covered) console.log(`covered by ${c.by}  ${c.name}`);
+  for (const f of r.flaky) console.log(`flaky ${f.failed}/${FLAKY_RUNS}  ${f.line}: ${f.test}  (list it in closing.md under ## Passed as «passed with flaky»; \`.validation/verify/flaky.md\`)`);
+  if (r.actions.length === 0 && r.pending.length === 0) {
+    console.log('Nothing to fix: everything mechanical passed on the code as it is now.');
+    process.exit(0);
+  }
+  console.log(`\n${r.actions.length} actions:`);
+  r.actions.forEach((a, i) => console.log(`ACT-${String(i + 1).padStart(2, '0')} · ${a}`));
+  if (r.pending.length) {
+    console.log(`\n${r.pending.length} pending, not actions (their agent still runs; wait for it with wait.mjs --agent, then run required.mjs):`);
+    r.pending.forEach((p) => console.log(`  - ${p}`));
+  }
+  process.exit(1);
+}

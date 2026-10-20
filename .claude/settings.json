@@ -1,4 +1,63 @@
 {
+  "promptCacheTtl": "1h",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/tools/hook-dispatch.mjs PreToolUse",
+            "timeout": 60
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/tools/hook-dispatch.mjs PostToolUse",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/tools/hook-dispatch.mjs Stop",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/tools/hook-dispatch.mjs SubagentStop",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/tools/hook-dispatch.mjs SessionStart",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
   "enabledPlugins": {
     "figma@claude-plugins-official": true
   },
@@ -9,29 +68,5 @@
         "repo": "anthropics/claude-plugins-official"
       }
     }
-  },
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write|NotebookEdit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/guardia.mjs",
-            "timeout": 10
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/guardia-shell.mjs",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
   }
 }

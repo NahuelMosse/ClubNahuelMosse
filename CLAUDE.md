@@ -1,209 +1,136 @@
-# Cómo se trabaja en este repo
+# Este repo
 
-El **caso de uso es la especificación**. El QUÉ vive en el CU; el CÓMO, en el plan que genera
-spec-kit; el comportamiento verificado, en los tests tagueados por card. No se genera una spec
-paralela.
+El **caso de uso es la card**. Los CU viven en `../CU/` y `../CU-nuevos/`, fuera del repo: cada uno trae
+actor, flujo principal, flujos alternativos y reglas de negocio, y se congela con `sources:` apuntando al
+archivo. El enunciado del TP —`../Trabajo Práctico_2026.docx.pdf`— manda por encima de cualquier CU.
+No hay Jira: las dudas van directo a `<ID>-ASM-NN` y se listan en el cierre.
 
-Los CU viven en `../CU/` y `../CU-nuevos/`, fuera del repo. Cada uno trae actor, flujo principal,
-flujos alternativos y reglas de negocio: eso es la card. El enunciado del TP —
-`../Trabajo Práctico_2026.docx.pdf` — manda por encima de cualquier CU.
+- No se pushea ni se publica nada salvo pedido expreso: lo que el método publica solo (rama, PR,
+  comentario de cierre) queda como *no se pudo correr*, declarado.
+- Stack: app Flutter en `apps/mobile`, API FastAPI + SQLAlchemy en `apps/api`, autenticación con Firebase
+  (emulador en `firebase.json`), API y base desplegadas en Render (`render.yaml`). Rutas, comandos y equivalencias de Flutter y pytest: `.claude/STACK.md`.
+- `apps/mobile/lib/**` y `apps/api/app/**`: `.claude/rules/arquitectura.md` e `interfaz.md`, propias de
+  este repo, se cargan solas junto con las del kit.
 
-## Lo primero, antes de tocar nada
+<!-- sdd-kit:start -->
+# How we work in this repo
 
-> **Si estás leyendo esto, el método aplica. Leé `.claude/METODOLOGIA.md` entero antes de la
-> primera herramienta.** Son nueve pasos y cada uno cierra con un comando; ahí está todo lo que
-> este archivo no repite.
+The **Jira card is the specification**. The WHAT lives in Jira; the HOW, in the plan the
+main thread writes (`specs/<card>/plan.md`); the verified behavior, in the tests tagged per card.
 
-**No decidas primero si el método aplica.** Medido en la primera corrida: el agente supo que el
-método existía, pudo nombrar sus pasos, y nunca abrió `METODOLOGIA.md` — *«decidí que el método
-no aplicaba, por el directorio, antes de bajar al nivel de ¿reviso los pasos?»*. La decisión de
-si esto «es una card» se toma por encima de la instrucción de leer, y una vez tomada en contra,
-lo que diga el archivo ya no importa.
+## First, before touching anything
 
-Así que: **que el directorio parezca vacío, que el pedido llegue pegado en el prompt en vez de
-como CU, que no haya `specs/` todavía, o que no parezca «el proyecto del método», no son
-motivos para saltearlo.** Este archivo cargado es la señal, y es la única que hace falta. Si
-algo del método no se puede correr acá, eso se descubre leyéndolo y se declara — no se presume
-antes.
+**If you are reading this, the method applies. Read `.claude/METHOD.md` in full before your first
+tool call.** One page: nine steps, each closing with a command, each naming its annex.
 
-| Cuándo | Qué leer |
+**Do not decide first whether the method applies.** An empty directory, a pasted request, no
+`specs/`: none is a reason to skip it. What cannot run is declared.
+
+**The kit is in English; the work speaks the repo's language.** Every card artifact —snapshot
+notes, questions, plan prose, test names, comments, commits, UI text, the PR and Jira comments—
+goes in the language the repo and its team already use. File names, section headers, IDs and
+tags stay in English: the hooks and tools read them.
+
+| When | What to read |
 |---|---|
-| Cualquier card, antes de empezar | `.claude/METODOLOGIA.md` — los 9 pasos, sus validaciones y qué skill va en cada uno |
-| No hay nadie mirando (corrida desatendida) | `.claude/AUTONOMIA.md` — qué garantiza y qué no, y qué hacer al llegar a un límite |
-| Vas a escribir el snapshot | `.claude/plantillas/card.snapshot.md` |
-| Tenés que elegir entre dos skills de revisión, o justificar por qué no corriste una | `.claude/skills/CUANDO.md` |
-| Vas a vendorizar una skill o querés saber de dónde salió una | `.claude/skills/PROCEDENCIA.md` |
-| Vas a escribir o correr tests, o un comando del método está en su forma web | `.claude/STACK.md` — rutas, comandos y equivalencias de Flutter y pytest |
-| Tocaste `apps/mobile/lib/**` o `apps/api/app/**` | `.claude/rules/arquitectura.md`, y en la app también `interfaz.md` — **se cargan solas**, no las busques |
+| Any card | `.claude/METHOD.md`; then, at each step, `node .claude/tools/help.mjs step N`: the `## At a glance` of its documents; the rest only if one says so. Steps 6–9 are the main thread's; `bar.mjs --route` says when they go to the `conductor` |
+| A module's part of a step (a screen: `ui`) | `steps/m-<mod>.md`; which modules are on: `tools/kit.mjs status` |
+| Closing, or checking whether you skipped something | `.claude/MATRIX.md` |
+| First card of a repo, or a command that does not run in this stack | `.claude/stacks/` |
+| An item of `/validate` seems like too much | `.claude/reference/why-validate.md` |
+| The plan's bar, or inspecting | `node .claude/tools/bar.mjs [IDs]`, not `criteria.md` whole |
+| Publishing, the one round of questions, what only a person decides | `.claude/AUTONOMY.md` |
+| Writing the snapshot | `.claude/templates/card.snapshot.md` |
+| Choosing between review skills | `.claude/skills/WHEN.md` |
+| The repo's grade | `kit.mjs status`; «Grades» in `reference/criteria.md` |
+| You touched production code | `.claude/rules/architecture.md` — **loads by itself** |
+| You touched the kit —`.claude/` or this file— | `node --test .claude/tests/*.test.mjs` passes, `KIT_PLAYWRIGHT_ROOT` set to a Playwright repo |
 
-Nada más se carga solo. Este archivo, las descripciones de skills y agentes, y nada más.
+## What does not depend on your good will
 
-## Lo que no depende de tu buena voluntad
+- `.claude/hooks/guard.mjs` blocks editing `card.snapshot.md`, `Edit` on `ambiguities.md`
+  (append-only), a committed tagged test, a migration already in main, `.claude/kit*.json` (only
+  `tools/kit.mjs` writes it), and removing or changing a line of a verification config that
+  existed before the card. If it stops you, do not look for a way around: read the message.
+- `.claude/hooks/require-at-close.mjs` does not let `/close` start while the mutation of a
+  production file or the linter of a test in the diff is missing (`tools/required.mjs`).
+- `.claude/hooks/publish.mjs` lets out the card's branch, its PR, one comment of questions and one
+  closing comment; not main, force, a draft, a merge, a second round or a closing without `closing.md`.
+- `.claude/hooks/delegate-code.mjs` lets only the `implementer` and the `grunt` write production
+  code during a card, from the plan and the tests in red.
+- `.claude/hooks/no-pending-close.mjs` does not let you end the turn promising to continue when
+  something finishes: wait for it or dispatch it to whoever will wait. A subagent's last message
+  is its whole report.
+- `.claude/hooks/require-bar.mjs` asks the plan's `## Time plan` for `cap: <N> min` or `cap: <N> h`;
+  `time-cap.mjs` warns past 70 % and, past 100 %, blocks new agents, suites and mutation: close
+  with what there is and declare what did not run.
+- The hooks take the card in progress from `specs/.current`, written by `/card`.
+- **Hooks that block, block also when they fail**, and they reach subagents too.
 
-`.claude/hooks/guardia.mjs` bloquea, con el motivo en pantalla: editar `card.snapshot.md`,
-`Edit` sobre `ambiguedades.md` (es append-only), y editar un test tagueado que ya está
-commiteado. Si te frena, no busques la vuelta: el mensaje dice qué hacer en su lugar.
+## The invariants
 
-## Los invariantes
+1. **Never code without reading the whole requirement in this session** —not from memory, a
+   summary or the plan—. With a Jira card: via MCP, with comments, attachments and links; if the
+   MCP does not respond, stop: there is no requirement. **A requirement that arrived as text is
+   frozen all the same**, with `sources:` and `not_read:`.
+2. **Never resolve an ambiguity on your own.** It is `<ID>-AMB-NN` in `ambiguities.md`, asked on
+   the card, and if it expires, assumption `<ID>-ASM-NN` in the cheapest-to-undo interpretation,
+   tagged in its test. *Silently filling a gap is the most serious failure of this repo.*
+3. **Three states: passed · failed · could not run** (`.claude/METHOD.md`); what did not run is
+   never “passed”. **Not applicable** only when the requirement says the feature does not exist.
+4. **The snapshot is born `status: proposed`** and stays so: nothing waits for a signature. The
+   human review is the PR, and the PR says it.
+5. **One round of questions, on the card.** Every `AMB-NN` goes in a single Jira comment, posted
+   without asking approval; answers are read at fixed points (before the red tests, before the
+   plan); the unanswered become `ASM-NN`. Never a second round: a later doubt is an `ASM-NN`,
+   listed in the PR. No Jira: straight to `ASM-NN`. *The client sees the card.*
+6. **The close publishes by itself, and only that:** the card's branch, a PR ready for review, the
+   CI result and the closing comment on Jira, from the output of the validations. Never main,
+   `--force` or a merge. A step that cannot run is *could not run*, declared (`.claude/AUTONOMY.md`).
 
-Estos no tienen momento en el que algo te los recuerde. El resto está en `METODOLOGIA.md`.
+## How to work
 
-1. **Nunca se codea sin leer el requerimiento entero en esta sesión.** Ni de memoria, ni de un
-   resumen, ni del plan ya escrito.
-   *Porque un resumen viejo no sabe qué decía el CU completo.*
-   - **Hay CU escrito:** se lee el archivo entero, con sus flujos alternativos y sus reglas de
-     negocio. Un CU al que sólo se le leyó el flujo principal no está leído.
-   - **El requerimiento llegó como texto** —pegado en el prompt, un mail, un mensaje—: **ese
-     texto es la fuente y se congela igual.** `fuentes:` dice de dónde salió y `no_leido:` lista
-     lo que no se pudo consultar. El método sigue entero desde el paso 2.
-     *No tener CU escrito no es no tener card.*
+- **Before saying “done”, check again**: everything, or only the main part? A TODO, a test not
+  run? Resolve it now.
+- **Before saying “blocked”**: another way? Can you assume it as `ASM-NN`? What does not depend on
+  it? Do that.
+- **Doubts go to the queue** —`ambiguities.md`—, not stop the work. Stop only when everything
+  pending is blocked by the same doubt.
+- **The deliverable shows the result, not the process** —code, tests, plan, Jira comment—. Out:
+  notes that narrate the change, old code commented out, `_v2`/`_old`, change sections nobody
+  asked for. A comment stays only if it explains what the code does not show.
+- **Nothing that can pass ~30 s goes in the foreground of the main thread** —tests, builds,
+  installs, servers, `gh pr checks --watch`—: background with a log, read by `Grep` or a subagent.
+  **But the turn does not end with a validation pending**: wait for its notification or a subagent
+  that waits; the report carries the output, not the promise of it.
+- **What you open, you close — and only what you opened.** Servers, ports, containers, subagents,
+  shells. **Kill by PID, never by process name**: `taskkill /IM node.exe` takes down other agents.
+- **Dedicated tools, not shell**: `Read`, `Grep`, `Glob`, `Edit` to read, search and edit.
 
-2. **Nunca resuelvas una ambigüedad por tu cuenta.** Se registra como `<ID>-AMB-NN` en
-   `ambiguedades.md`, se pregunta al usuario, y si no hay respuesta se vuelve supuesto
-   `<ID>-SUP-NN` en la interpretación más barata de deshacer, tagueado en el test que lo encoda.
-   *Porque rellenar un hueco en silencio es la falla más grave de este repo.*
+## Cost: optimize how the list runs, never what it contains
 
-3. **Tres estados, no dos: pasó · falló · no se pudo correr.** Si un comando no existe, no se
-   pudo correr, o no lo corriste — **no digas que pasó.** Decí cuál no corrió y por qué, y **no
-   cierres la card.**
-   *Porque decir que algo se verificó cuando no se sabe es la mentira que este método existe
-   para evitar.*
+**No check is removed to save money.** What is paid most is re-reading (`.claude/reference/cost.md`):
+**the main thread decides and reviews; it does not write code nor read long output**. Write each
+file whole instead of editing it ten times, and group independent calls into one message.
 
-4. **El snapshot nace `estado: propuesta`** y pasa a `firmado` sólo con revisión humana.
-
-5. **No se publica el informe de cierre sin aprobación previa**, y ese informe sale sólo de la
-   salida de las validaciones, nunca de la memoria de la sesión.
-   *Porque es lo que se defiende en la entrega.*
-
-6. **No pushees salvo pedido expreso.**
-
-## Cómo trabajar
-
-**Antes de decir «terminé», revisá de nuevo.** ¿Hiciste todo o sólo lo principal? ¿Quedó un TODO,
-un caso sin cubrir, un test sin correr? ¿Funciona o lo asumiste? Si queda algo y lo podés
-resolver, **resolvelo ahora** — no lo listes como pendiente. Repetí hasta que no quede nada.
-*Porque nadie va a preguntarte si quedaron pendientes.*
-
-**Antes de decir «bloqueado», autopreguntate:** ¿hay otra forma de conseguirlo? ¿puedo asumir y
-registrarlo como `SUP-NN`? ¿qué parte **no** depende de esto? → hacela y terminala. Bloqueado con
-trabajo que sí podías hacer no es un bloqueo, es una parada temprana.
-
-**Las dudas van a la cola, no frenan el trabajo.** La cola es `ambiguedades.md`. Se asume lo más
-razonable, se registra el supuesto, y se sigue con todo lo que no dependa de eso. Se frena sólo
-cuando **todo** lo pendiente está bloqueado por la misma duda.
-
-**El entregable muestra el resultado, no el proceso.** Vale para código, tests, plan e informe de
-cierre. Afuera: notas que narran el cambio («antes X», «ahora Y», `fix:`, `NUEVO`, «actualizado»),
-código viejo comentado por las dudas, archivos `_v2`/`_old`, secciones de cambios que nadie pidió,
-rastros de la card en un comentario. Un comentario se gana el lugar sólo si explica algo que **no
-se deduce leyendo el código** — una restricción externa, un bug de una dependencia, una decisión
-contraintuitiva. El historial ya lo guarda git.
-*La prueba: alguien abre esto en seis meses sin la card y sin saber que existió esta sesión.*
-
-**Nada bloquea el turno.** Nada que pueda pasar de ~30 s va en foreground: tests, builds,
-instalaciones, servidores. Van en background redirigidos a un log, y el log se lee con `Grep` o
-se lo lee un subagente. **Nunca se vuelca un log entero al contexto.**
-
-**Pero el turno no termina con una validación pendiente**, y **si no hay nadie mirando esta regla se invierte entera** (`.claude/AUTONOMIA.md`). Mandar al fondo sirve para seguir
-trabajando mientras corre; **no sirve para cerrar.** Medido: una corrida terminó escribiendo *«las
-validaciones 7 a 11 siguen corriendo en background, sigo cuando terminen»* — y no hubo un
-«cuando terminen», porque el turno se había acabado. Si lo único que queda es esperar un
-resultado, **esperalo**: el reporte se escribe con la salida, no con la promesa de la salida.
-
-## Lo que cuesta una card, y de dónde sale
-
-**Antes de leer nada de esto: no se optimiza sacando chequeos.** Lo que hace que este método
-valga es que te dice **todo** lo que hay que tener en cuenta — el que codea no tiene que
-acordarse de la accesibilidad, del origen de la petición, de la fecha que después no se
-reconstruye. Sacar una fila de una tabla para ahorrar dos dólares destruye exactamente eso.
-
-*Lo que se optimiza es cómo se ejecuta la lista, nunca qué tiene la lista.* Si una corrida sale
-cara, la pregunta es **qué se está releyendo cuatrocientas veces**, no qué chequeo se puede
-saltear.
-
-**Medido sobre nueve corridas: el costo es casi lineal en peticiones, ~11 centavos cada una**, y
-la mitad de eso es **releer el contexto** que se fue acumulando. Todo lo que entra al hilo
-principal se vuelve a pagar en cada petición que sigue: una salida cruda leída en la petición 50
-de 500 se paga **450 veces**.
-
-De ahí salen tres cosas concretas, en orden de cuánto pesan:
-
-- **Escribí el archivo entero, no lo edites diez veces.** Dos corridas del mismo kit con la misma
-  nota: una hizo **115 `Edit`** y la otra **4 `Edit` y 53 `Write`**. La diferencia fueron 111
-  peticiones y **$25**. Pensá el archivo completo antes de escribirlo; corregir en el editor es
-  gratis, corregir acá cuesta una petición y queda en el contexto para siempre.
-- **La salida larga no entra acá.** Tests, builds, instalaciones y logs van a `runner`, que
-  devuelve el veredicto. Medido: las corridas usan `Agent` **cuatro veces en quinientas
-  peticiones** y se comen la salida de setenta comandos. *Delegar no es una preferencia de estilo:
-  es el único lugar donde la salida se lee una vez en vez de cuatrocientas.*
-- **Agrupá lo independiente en una llamada.** Tres `grep` que no dependen entre sí son una
-  petición, no tres.
-- **Y la palanca más grande: los chequeos mecánicos no los corre el que decide.** Toda la lista
-  de `/validar` que es comando —los `grep`, los conteos, los exit codes, los ataques contra la
-  app levantada— la ejecuta `runner`, que devuelve el veredicto y los errores. **La lista se
-  corre entera igual**; lo que cambia es que su salida se lee una vez en un contexto barato en
-  vez de cuatrocientas en el caro. *Leer un log en Sonnet contra Opus es cinco veces menos por
-  exactamente el mismo trabajo.*
-
-*Cada petición que no gastás en releer es presupuesto para un chequeo más. Ésa es la única
-dirección en la que se mueve esto: más cobertura por el mismo dinero, nunca menos cobertura por
-menos dinero.*
-
-**Lo que abrís, lo cerrás — y sólo lo que abriste vos.** Servidores, puertos, contenedores,
-subagentes, shells de background: antes de cerrar la card no queda nada tuyo vivo sin
-explicación.
-
-**Matá por PID, nunca por nombre de proceso.** Guardá el pid de lo que levantás y bajá ese. Un
-`taskkill /IM node.exe`, un `pkill node` o un `killall` se llevan puestos los procesos de otros
-agentes, del editor y del usuario — y no hay forma de deshacerlo. Si no sabés el pid, buscalo por
-el puerto que reservaste; si tampoco, dejalo vivo y decilo.
-*Pasó: un agente de revisión liberó su puerto con `taskkill /F /IM node.exe /T` y tiró abajo un
-servidor MCP de la sesión que lo había lanzado.*
-
-**Herramientas dedicadas, no shell.** `Read`, `Grep`, `Glob` y `Edit` para leer, buscar y editar:
-traen más por llamada y no vuelcan salida cruda. Bash y PowerShell son para **ejecutar procesos**.
-
-**Delegá lo que ensucia el contexto, y al agente que corresponde.** El hilo principal decide y
-revisa; no explora ni ejecuta.
-*Porque una card larga se muere por contexto gastado en salidas que no había que leer enteras —
-y porque lo que más se paga no es escribir, es releer.*
-
-| Si la tarea es | Va a |
+| If the task is | It goes to |
 |---|---|
-| Barrer archivos, «dónde está X», leer más de dos archivos, mapear cómo funciona algo | `scout` |
-| Correr una lista de comandos y devolver exit codes, sin interpretar | `ejecutor` |
-| Correr tests, builds, linters, type-checks, instalaciones, o leer cualquier log | `runner` |
-| Traer un requerimiento de su fuente y congelarlo tal cual | `archivista` |
-| Aplicar un cambio ya decidido en varios lugares — renombres, migrar una firma, un patrón repetido | `grunt` |
-| Escribir el código de un plan que ya trae el mapa de archivos con sus decisiones de estructura | `implementador` |
-| Decidir el orden y los riesgos de algo grande **antes** de que `/speckit-plan` escriba el plan | `planner` |
-| Un problema difícil donde ya falló lo obvio: un bug que no cierra, un diff que no se entiende | `oracle` |
+| Sweeping the product's files, “where is X” (kit docs: `help.mjs step N`, never a `scout`) | `scout` |
+| Running a list of commands and returning exit codes | `executor` |
+| Running tests, builds, linters, installs, or reading any log | `runner` |
+| Fetching a requirement from its source and freezing it as is | `archivist` |
+| Applying an already-decided change in several places | `grunt` |
+| Steps 6 to 9 of a big card (`bar.mjs --route`), from `handoff.md` | `conductor` |
+| The code of the plan and the fixes of `actions.md` | `implementer` |
+| Order and risks of something big, before the plan | `planner` |
+| A second look at the red scenarios (one round), a screen or a route that writes | `reviewer` |
+| The judgment criteria and F1 against the running app, in step 8 | `inspector` |
+| A hard problem where the obvious already failed | `oracle` |
 
-**Cada agente trae su modelo y su esfuerzo declarados, y ésa es media optimización.** El criterio
-para elegir: **delegá al modelo más barato cuya salida puedas verificar sin rehacer el trabajo.**
-Un exit code se verifica mirándolo; un juicio no. Por eso `ejecutor` y `archivista` corren en
-haiku —devuelven números y transcripciones— y `oracle` corre en opus con esfuerzo `max`.
-
-**Y lo que decide no se delega nunca**, por barato que sea: las diez preguntas del paso 2, qué
-significa un test en rojo, y el veredicto de la pantalla se quedan acá.
-
-*Medido: el guardia de `.claude/hooks/` **sí alcanza a los subagentes** — un `grunt` que intenta
-editar un test congelado recibe el mismo bloqueo que el hilo principal, con el mismo mensaje y sin
-tocar el archivo. No está documentado; se probó. Por eso delegar un paso que toca archivos
-congelados no abre un agujero.*
-
-**Nunca uses `general-purpose` para algo que cubre uno de los cinco.** Medido: una corrida delegó
-cuatro tareas —*«chequeos mecánicos del paso 8»*, *«aplicar correcciones»*— al genérico, que
-hereda **Opus**, teniendo `runner` y `grunt` definidos en **Sonnet** en ese mismo repo. Leer
-contexto en Sonnet cuesta **$0,30 el millón contra $1,50**: cinco veces menos por exactamente el
-mismo trabajo de leer un log o aplicar un cambio ya decidido. *El genérico no es el default: es
-el último recurso.*
-
-`planner` y `oracle` corren en Opus a propósito: no los llames para algo que resuelve `scout` o
-`runner`, y si el problema es difícil de verdad no lo mandes a un sonnet para ahorrar dos
-centavos. **El reporte del agente es el resultado** — no rehagas su trabajo para verificarlo; si
-no confiás en lo que volvió, pedile más al mismo agente. Las subtareas independientes salen en
-paralelo, en un solo mensaje.
-
-**No se delega:** las decisiones de diseño, y nada que dependa de contexto que el agente no
-tiene. Un `grep` de un símbolo que ya sabés dónde está no es una subtarea.
+- **Never `general-purpose` for something one of these covers**: it inherits Opus and your
+  context.
+- **What decides is never delegated to a `sonnet`**: the ten questions, the bar, what the PR and the
+  Jira comment say (main thread); what a red means, the screen's verdict (also the conductor).
+- **The agent's report is the result**: do not redo its work; ask the same agent for more.
+  Independent subtasks go out in parallel, in one message.
+<!-- sdd-kit:end -->

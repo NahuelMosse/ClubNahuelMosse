@@ -1,0 +1,172 @@
+{
+  "kit": "3.0.0",
+  "laneRequires": "ui",
+  "stacks": {
+    "node-ts": [".claude/stacks/node-ts.md"],
+    "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
+    "others": [".claude/stacks/others.md"]
+  },
+  "breaking": {},
+  "grades": {
+    "order": ["poc", "mvp", "production"],
+    "default": "production",
+    "levels": {
+      "poc": {
+        "does": "see whether the concept works: the invariants and nothing else",
+        "goalTimes": 3, "capTimes": 5, "mutation": "none", "without": ["inspector", "reviewer"]
+      },
+      "mvp": {
+        "does": "a first real use: basic security, AA where it touches, the reviewer, the API documented, mutation of the domain",
+        "goalTimes": 4, "capTimes": 8, "mutation": "domain", "without": []
+      },
+      "production": {
+        "does": "the whole bar",
+        "goalTimes": 5, "capTimes": 10, "mutation": "all", "without": []
+      }
+    }
+  },
+  "core": {
+    "byGrade": {
+      "mvp": {
+        "performance-budgets": { "reason": "budgets, load and front vitals are measured once the concept has proven itself", "criteria": ["R9", "O10", "O15", "O22"] },
+        "architecture-depth": { "reason": "layer tests, cycles, static-analysis rules, ADRs and adapters wait for production", "criteria": ["D2", "D3", "D4", "D9", "D11", "D12", "D13", "D14", "D15", "K2", "K3", "K4", "K5", "O16"] },
+        "reliability-depth": { "reason": "idempotency, typed errors, retries and graceful shutdown wait for production", "criteria": ["E4", "E7", "E9", "E10", "E11", "E12", "E16", "O4", "O9"] },
+        "security-depth": { "reason": "the threat model, ASVS rows, dynamic scan, notices and runtime hardening wait for production", "criteria": ["S6", "S7", "S12", "S14", "S15", "S16", "S17", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "P2", "P15"] },
+        "data-depth": { "reason": "expand-migrate-contract, retention, keyset pagination and the data model document wait for production", "criteria": ["P4", "P7", "P10", "P11", "P12", "P13", "P14"] },
+        "operations-depth": { "reason": "JSON logs, correlation, RED/USE, SLOs, alerts and the pipeline's gates wait for production", "criteria": ["O5", "O17", "O19", "O20", "O21", "O25", "O26", "O27", "O28", "O30"] },
+        "interface-depth": { "reason": "the full WCAG 2.2 AA sweep, the screen reader protocol, the APG patterns, the statement and loops wait for production", "criteria": ["I14", "I15", "I16", "I17", "I25"] },
+        "documentation-depth": { "reason": "Diátaxis, business and technical docs and diagrams wait for production", "criteria": ["W2", "W3", "W4", "W10", "W11"] },
+        "test-depth": { "reason": "the 80 % coverage gate and the repetition of model reviews wait for production", "criteria": ["T11", "A7"] }
+      },
+      "poc": {
+        "mutation-and-test-depth": { "reason": "no mutation and no test-quality bar: a test per scenario is enough", "criteria": ["T3", "T5", "T6", "T7", "T8", "T9", "T10", "T12", "T13"] },
+        "security-basics": { "reason": "the OWASP top-10 basics start at mvp", "criteria": ["R10", "D10", "K8", "S3", "S4", "S8", "S10", "S11", "S13", "P1", "P3", "A8"] },
+        "accessibility-aa": { "reason": "accessibility AA on what is touched starts at mvp", "criteria": ["I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8", "I9", "I13", "V5"] },
+        "interface-patterns": { "reason": "the interaction patterns and explicit formats start at mvp", "criteria": ["I18", "I19", "I20", "I21", "I22", "I23", "I24", "I26"] },
+        "design-and-code-hygiene": { "reason": "structure, naming, resource hygiene and executable project constraints start at mvp", "criteria": ["D1", "D5", "D8", "K1", "K6", "K7", "K9", "K10", "K11", "A4"] },
+        "reliability-basics": { "reason": "what survives a restart, partial writes, timeouts and error branches start at mvp", "criteria": ["E1", "E2", "E3", "E5", "E6", "E8", "E13", "E15"] },
+        "data-basics": { "reason": "tested migrations, integrity, types and indexes start at mvp", "criteria": ["P5", "P6", "P8", "P9"] },
+        "compatibility": { "reason": "real consumers, uncommon data and existing clients start at mvp", "criteria": ["C1", "C2", "C4"] },
+        "evidence-and-operability": { "reason": "README decisions, a clean-clone start, configuration, the session record and kept evidence start at mvp", "criteria": ["R4", "O1", "O2", "O3", "O12", "V4"] }
+      }
+    }
+  },
+  "modules": {
+    "ui": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": ["i18n"], "signals": ["screen"],
+      "does": "screens: visual brief, component set, accessibility, captures and the visual verdict",
+      "gradeProcedures": {
+        "poc": {
+          "design-line": { "reason": "no design/line.md at poc: the screen is judged against the brief alone" },
+          "component-set": { "reason": "the component set is not copied at poc: controls are plain and the set starts at mvp" },
+          "screen-audit": { "reason": "no screen-audit.md at poc: the audit of every screen state starts at mvp" },
+          "capture-widths": { "reason": "one capture width at poc, the one the card names or 390 px; the 1280 px one starts at mvp" },
+          "motion-audit": { "reason": "no motion-audit at poc: the response of every element starts at mvp" }
+        },
+        "mvp": {
+          "full-component-set": { "reason": "the whole component set waits for production: the card creates only the components it uses" }
+        }
+      },
+      "files": [
+        ".claude/steps/m-ui.md", ".claude/steps/m-ui-screen.md", ".claude/steps/m-ui-craft.md", ".claude/steps/m-ui-showcase.md", ".claude/rules/interface.md",
+        ".claude/reference/components.md", ".claude/reference/component-techniques.md", ".claude/reference/modern-interface.md",
+        ".claude/reference/showcase.md", ".claude/reference/motion-benchmark.md", ".claude/reference/accessibility.md",
+        ".claude/reference/ui-patterns.md", ".claude/reference/why-ui.md",
+        ".claude/templates/components/**", "!.claude/templates/components/*.spec.mjs", "!.claude/templates/components/*.spec.mjs-snapshots/**",
+        ".claude/templates/design-line.md", ".claude/templates/accessibility-statement.md",
+        ".claude/tools/motion-audit.mjs", ".claude/tools/showreel.mjs", ".claude/tools/overflow.mjs", ".claude/tools/checks/ui.mjs",
+        ".claude/commands/design-deslop.md",
+        ".claude/skills/apple-design/**", ".claude/skills/build-awwwards-quality-sites/**", ".claude/skills/cinematic-gsap-lenis-motion-system/**",
+        ".claude/skills/interface-design/**", ".claude/skills/find-animation-opportunities/**", ".claude/skills/accessibility-audit/**",
+        ".claude/skills/design-review/**", ".claude/skills/review-animations/**",
+        ".claude/stacks/react-shadcn.md"
+      ],
+      "criteria": ["I1", "I2", "I3", "I4", "I5", "I6", "I7", "I8", "I9", "I10", "I11", "I12", "I13", "I14", "I15", "I16", "I17", "I18", "I19", "I20", "I21", "I22", "I23", "I24", "I25", "T12", "T14", "O11", "O15", "S4", "D13", "V5"],
+      "items": ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "R4", "Q18"],
+      "cost": { "tokensPerCard": "20000-25000", "minutesPerCard": "15-40", "idleTokens": 400, "measured": false }
+    },
+    "api": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": ["observability"], "signals": ["route", "listen", "http-dependency"],
+      "does": "HTTP surface: contract, attacks, dynamic scan, load test",
+      "grades": { "poc": "off", "mvp": "on" }, "gradeNote": "the HTTP surface's security and contract start at mvp",
+      "files": [".claude/steps/m-api.md", ".claude/templates/load-test.md", ".claude/tools/checks/api.mjs"],
+      "criteria": ["S1", "S2", "S5", "S7", "S17", "O7", "O22", "W8", "W9"],
+      "items": ["G2", "Q5", "Q8", "Q9", "R10"],
+      "cost": { "tokensPerCard": "2000-4000", "minutesPerCard": "5-15", "idleTokens": 150, "measured": false }
+    },
+    "data": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": ["infra"], "signals": ["schema", "data-dependency"],
+      "does": "stored data: migrations, indexes, integrity, least-privilege user, restore",
+      "files": [".claude/steps/m-data.md", ".claude/reference/database.md", ".claude/tools/checks/data.mjs"],
+      "criteria": ["P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13", "P14", "P16", "S20", "D11"],
+      "items": ["Q7", "Q19", "R5", "R6"],
+      "cost": { "tokensPerCard": "3000-5000", "minutesPerCard": "5-15", "idleTokens": 200, "measured": false }
+    },
+    "infra": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": ["data"], "signals": ["infra", "cloud-dependency"],
+      "does": "infrastructure: cost model, system design, queues, deployment, rollback",
+      "grades": { "poc": "off", "mvp": "off" }, "gradeNote": "the cost model, system design, queues and rollback are production work",
+      "files": [".claude/steps/m-infra.md", ".claude/reference/infrastructure.md", ".claude/templates/infra-cost.md", ".claude/templates/runbook.md", ".claude/tools/checks/infra.mjs"],
+      "criteria": ["O13", "O14", "O24", "O29", "E14", "W5"],
+      "items": ["Q14", "R11"],
+      "cost": { "tokensPerCard": "3000-6000", "minutesPerCard": "5-10", "idleTokens": 100, "measured": false }
+    },
+    "ci": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": [], "signals": ["ci"],
+      "does": "the pipeline: same commands as the plan, supply chain, required checks",
+      "grades": { "poc": "off", "mvp": "on" }, "gradeNote": "the pipeline starts at mvp",
+      "files": [".claude/steps/m-ci.md", ".claude/reference/ci-cd.md", ".claude/tools/checks/ci.mjs"],
+      "criteria": ["O23", "O25", "O26", "O27", "O28", "O30", "S23"],
+      "items": ["Q13"],
+      "cost": { "tokensPerCard": "1000-2000", "minutesPerCard": "2-5", "idleTokens": 100, "measured": false }
+    },
+    "observability": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": ["api"], "signals": ["route", "listen", "worker"],
+      "does": "long-lived services: correlation, health, metrics, traces, SLOs, alerts",
+      "grades": { "poc": "off", "mvp": "on" }, "gradeNote": "visibility of failures starts at mvp",
+      "files": [".claude/steps/m-observability.md", ".claude/reference/observability.md", ".claude/tools/checks/observability.mjs"],
+      "criteria": ["O6", "O17", "O18", "O19", "O20", "O21"],
+      "items": ["R8", "R9", "Q15"],
+      "cost": { "tokensPerCard": "2000-4000", "minutesPerCard": "3-8", "idleTokens": 100, "measured": false }
+    },
+    "docs": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": [], "signals": ["docs"],
+      "does": "the documentation site: Diátaxis structure, links, docs in the same diff",
+      "grades": { "poc": "off", "mvp": "on" }, "gradeNote": "the documentation site starts at mvp",
+      "files": [".claude/steps/m-docs.md", ".claude/reference/documentation.md", ".claude/templates/docs.md", ".claude/tools/checks/docs.mjs"],
+      "criteria": ["W1", "W2", "W3", "W4", "W6", "W7", "W10", "W11"],
+      "items": ["Q10"],
+      "cost": { "tokensPerCard": "1000-3000", "minutesPerCard": "2-5", "idleTokens": 100, "measured": false }
+    },
+    "i18n": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": ["ui"], "signals": ["i18n"], "textSignal": true,
+      "does": "more than one language: catalogs, plurals, RTL, locale negotiation, translation flow",
+      "grades": { "poc": "off", "mvp": "off" }, "gradeNote": "more than one language is production work",
+      "files": [".claude/steps/m-i18n.md", ".claude/reference/i18n.md", ".claude/tools/checks/i18n.mjs"],
+      "criteria": ["I27", "I28", "I29", "I30", "I31", "I32"],
+      "items": ["Q16", "Q17"],
+      "cost": { "tokensPerCard": "1000-3000", "minutesPerCard": "1-3", "idleTokens": 150, "measured": false }
+    },
+    "security-l2": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": [], "signals": ["auth-dependency"], "blocksLate": false, "optIn": true,
+      "does": "ASVS level 2 matrix, for auth, sessions and payments; decided by R10, not by a signal",
+      "grades": { "poc": "off", "mvp": "off" }, "gradeNote": "ASVS level 2 is production work",
+      "files": [".claude/templates/asvs-level-2.md", ".claude/tools/checks/security-l2.mjs"],
+      "criteria": [],
+      "items": [],
+      "cost": { "tokensPerCard": "2000-5000", "minutesPerCard": "10-20", "idleTokens": 0, "measured": false }
+    },
+    "kit-dev": {
+      "version": "1.0.0", "core": "^3", "requires": [], "with": [], "signals": [], "installable": false,
+      "does": "the kit's own tests, experiment agents and the skills the method forbids",
+      "files": [
+        ".claude/tests/**", ".claude/agents/sdd-*.md",
+        ".claude/templates/components/*.spec.mjs", ".claude/templates/components/*.spec.mjs-snapshots/**",
+        ".claude/skills/speckit-specify/**", ".claude/skills/speckit-clarify/**"
+      ],
+      "criteria": [],
+      "items": [],
+      "cost": { "tokensPerCard": "0", "minutesPerCard": "0", "idleTokens": 0, "measured": false }
+    }
+  }
+}

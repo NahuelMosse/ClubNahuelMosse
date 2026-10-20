@@ -25,3 +25,4 @@ build/
 # Node
 node_modules/
 firebase-debug.log
+.claude/.kit-incoming/

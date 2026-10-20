@@ -1,89 +1,88 @@
 ---
-description: Congela el requerimiento en un snapshot y lista las ambigüedades. Lee el CU entero si lo hay; si llegó como texto, congela ese texto.
-argument-hint: <CU-ID>
+description: Freezes the requirement into a snapshot and lists the ambiguities. Fetches it from Jira over MCP if there is a card; if it arrived as text, freezes that text.
+argument-hint: <CARD-ID>
 ---
 
 Card: `$1`.
 
-## 1 · Leer entero, nunca recordar
+## At a glance
 
-**Si `$1` es un caso de uso:** leé el archivo completo de `../CU/` o `../CU-nuevos/` — flujo
-principal, **todos** los flujos alternativos y de excepción, precondiciones, postcondiciones y
-reglas de negocio. Cruzá contra el enunciado del TP (`../Trabajo Práctico_2026.docx.pdf`), que
-manda por encima del CU. Si el CU y el enunciado se contradicen, eso es una ambigüedad del paso 3,
-no algo que se resuelve acá. Nada de memoria ni de resúmenes.
+Fetch the whole card (Jira over MCP: description, all comments with author and date, attachments, linked pages; text that
+arrived in the prompt is the source, frozen all the same, with `not_read:` for what has no channel). Write, with `Write`, whole,
+`specs/$1-<slug>/card.snapshot.md` from `.claude/templates/card.snapshot.md`: `sources:` never empty, `not_read:` present,
+`status: proposed`, one `- [ ] $1-H<NN>-<NN> — <title>` line per scenario (two digits), the card transcribed, not interpreted.
+Write the folder name alone on one line to `specs/.current`; switch to branch `$1-<slug>` if on the default branch. Answer the
+ten questions (`steps/02-ambiguities.md`), commit the snapshot alone and append
+`$1-AMB-00 · <date> · snapshot · frozen at <hash>` to `ambiguities.md`.
 
-**Si el requerimiento llegó como texto** —pegado en el prompt, un mail, un mensaje— **ese texto
-es la fuente y se congela igual.** No hay nada que traer y no se frena: `fuentes:` dice de dónde
-salió, y `no_leido:` lista lo que no se pudo consultar porque no existe el canal.
-El resto del comando sigue idéntico.
+**Closes with:** `git diff --name-only <hash>..HEAD -- specs/$1-<slug>/card.snapshot.md` lists nothing; report the scenario count,
+the open ambiguities and `not_read:`.
 
-*No tener CU escrito no es no tener card. Frenar acá deja al método sin entrada.*
+Read the rest only when the card changed after its snapshot (the old one is renamed `card.snapshot.<old-date>.md`).
 
-## 2 · Escribir el snapshot
+## 1 · Fetch, never remember
 
-Creá la carpeta `specs/$1-<slug-corto>/` —todavía no existe, la crea este paso— y escribí ahí
-`card.snapshot.md`, con la plantilla `.claude/plantillas/card.snapshot.md`. En el paso 5 de la
-metodología esta misma carpeta se le indica a `/speckit-plan`; si spec-kit igual crea la suya
-propia, en ese momento se mueven los archivos de este método ahí.
+**If `$1` is a Jira card:** fetch over the Atlassian MCP the whole card; **all** the comments with
+author and date; **all** the attachments —open the ones you can—; the linked Confluence pages. If
+the MCP does not respond, stop and say so: without the requirement there is no card. No memory,
+no summaries.
 
-- `fuentes:` no puede ir vacía. `no_leido:` puede ir vacía pero no puede faltar: lo que existe y
-  no pudiste abrir se declara ahí.
-- `estado: propuesta` — lo redactaste vos, no lo aprobó nadie.
-- En `## Escenarios`, una línea por escenario: `- [ ] $1-H<NN>-<NN> — <título en el idioma de la
-  card>`. Dos dígitos siempre: `H01`, no `H1`.
-- Transcribí la card; no la interpretes. Lo que se resuelve, se resuelve en el plan.
+**If the requirement arrived as text** —pasted in the prompt, an email, a message— **that text is
+the source and it is frozen all the same.** There is nothing to fetch and you do not stop:
+`sources:` says where it came from, and `not_read:` lists what could not be consulted because the
+channel does not exist —comments, attachments, Confluence—. The rest of the command stays
+identical.
 
-Si ya existe un snapshot y la card cambió: renombralo a `card.snapshot.<fecha-vieja>.md`
-y escribí uno nuevo. **Nunca lo edites.**
+*Not having Jira is not not having a card. Stopping here leaves the method with no input in any
+project that does not have a board yet.*
 
-## 3 · Ambigüedades
+## 2 · Write the snapshot
 
-**No releas "buscando": contestá las diez.** Medido, un hueco que no se contesta explícitamente
-se resuelve solo y en silencio. `ambiguedades.md` arranca con este bloque, escrito de una, y
-**ninguna fila queda sin respuesta** — ni siquiera las que la card sí contesta:
+Create the folder `specs/$1-<short-slug>/` —it does not exist yet, this step creates it— and write
+`card.snapshot.md` there, with the template `.claude/templates/card.snapshot.md`. The plan
+(`plan.md`) goes in this same folder; if `/speckit-plan` is invoked in step 5 and creates its own,
+the files of this method are moved there at that point. Write the folder name, alone on one line, to
+`specs/.current`: the hooks take the card in progress from it.
 
-```
-## Las diez preguntas
-| Caso vacío    | la card no lo dice → $1-AMB-01
-| Duplicados    | la card no lo dice → $1-AMB-02
-| Validación    | la card dice: "el CUIT tiene que ser válido"
-| Error         | la card no lo dice → $1-AMB-03
-| Estado        | no aplica: el cliente no tiene estados
-| Permisos      | la card dice: "sólo el analista da de alta"
-| Límites       | la card no lo dice → $1-AMB-04
-| Orden         | no aplica
-| Concurrencia  | no aplica
-| Rastro        | la card no lo dice → $1-AMB-05
+- **The snapshot is created with the `Write` tool, whole, in one call.** Not with a heredoc, `cat >`
+  or `echo >` in the shell: `guard-shell` rejects it and the file would be generated again.
+- `sources:` cannot be empty. `not_read:` can be empty but cannot be missing: what exists and you
+  could not open is declared there.
+- `status: proposed` — you wrote it, and it stays so: the review is the PR's.
+- Under `## Scenarios`, one line per scenario: `- [ ] $1-H<NN>-<NN> — <title in the card's
+  language>`. Always two digits: `H01`, not `H1`.
+- Transcribe the card; do not interpret it. What gets resolved, gets resolved in the plan.
 
-## Eventos
-```
+If a snapshot already exists and the card changed: rename it to `card.snapshot.<old-date>.md`
+and write a new one. **Never edit it.**
 
-`no aplica` es una respuesta válida y hay que escribirla; **una fila en blanco no lo es.**
+**The card's branch.** Work goes on a branch named like the folder, `$1-<short-slug>`: if HEAD is on
+the default branch, `git switch -c $1-<short-slug>` before the first commit; if it is already on a
+branch that starts with `$1-`, stay. The close pushes that branch and nothing else
+(`.claude/AUTONOMY.md`).
 
-Debajo de `## Eventos`, append-only, una línea por evento:
+## 3 · Ambiguities
 
-```
-$1-AMB-01 · 2026-09-01 · abierta · ¿el CUIT se busca con guiones, sin guiones, o las dos?
-$1-AMB-01 · 2026-09-02 · preguntada · comentario en la card, plazo acordado: 2026-09-05
-```
+**Do not reread "looking for them": answer the ten questions** of
+`.claude/steps/02-ambiguities.md`, which is where they live, with the format of the
+`## The ten questions` block and of the events under `## Events`. No row is left unanswered, not
+even the ones the card does answer. Do not resolve any ambiguity on your own: all of them go in
+**one** comment on the card, posted without asking approval (invariant 5 of `CLAUDE.md`; how, in
+`.claude/steps/02-ambiguities.md`). That is the only round: after it, a doubt is an `ASM-NN`.
 
-No resuelvas ninguna por tu cuenta. Preguntá en la card **sólo con aprobación del usuario**.
+## 4 · Close the step
 
-## 4 · Cerrar el paso
-
-Commiteá el snapshot solo, guardate el hash del commit y agregalo como evento en
-`ambiguedades.md`:
-
-```
-$1-AMB-00 · 2026-09-01 · snapshot · congelado en <hash>
-```
-
-Verificá:
+Commit the snapshot alone, keep the commit hash and add it as an event in `ambiguities.md`:
 
 ```
-git diff --name-only <hash>..HEAD -- specs/$1-<slug-corto>/card.snapshot.md
+$1-AMB-00 · 2026-09-01 · snapshot · frozen at <hash>
 ```
 
-No puede listar nada. Reportá: cuántos escenarios, cuántas ambigüedades abiertas, qué quedó en
-`no_leido:`. Si algún comando no lo pudiste correr, decilo y no sigas.
+Verify:
+
+```
+git diff --name-only <hash>..HEAD -- specs/$1-<short-slug>/card.snapshot.md
+```
+
+It cannot list anything. Report: how many scenarios, how many open ambiguities, what ended up in
+`not_read:`. If you could not run some command, say so and do not go on.
