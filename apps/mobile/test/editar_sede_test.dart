@@ -101,7 +101,7 @@ void main() {
   });
 
   testWidgets(
-    'con un obligatorio vacío, el aviso y GUARDAR CAMBIOS deshabilitado',
+    'con un obligatorio vacío, el aviso y GUARDAR CAMBIOS se puede tocar pero no envía',
     (tester) async {
       final semantica = tester.ensureSemantics();
       final pedidos = await abrir(tester);
@@ -110,7 +110,9 @@ void main() {
 
       expect(find.text('El nombre es obligatorio'), findsOneWidget);
       final boton = find.bySemanticsLabel('GUARDAR CAMBIOS');
-      expect(tester.getSemantics(boton).flagsCollection.isEnabled, isFalse);
+      expect(tester.getSemantics(boton).flagsCollection.isEnabled, isTrue);
+      await tocar(tester, 'GUARDAR CAMBIOS');
+      expect(find.text('El nombre es obligatorio'), findsOneWidget);
       expect(pedidos.where((p) => p.method == 'PUT'), isEmpty);
       semantica.dispose();
     },

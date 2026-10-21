@@ -207,18 +207,32 @@ void main() {
       semantica.dispose();
     });
 
-    testWidgets('un campo que se deja vacío se marca al salir de él', (
+    testWidgets(
+      'un campo que se deja vacío no se marca hasta intentar guardar',
+      (tester) async {
+        final semantica = tester.ensureSemantics();
+        await abrirAlta(tester);
+        await tester.tap(find.bySemanticsLabel('Dirección'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.bySemanticsLabel('Nombre de la sede'));
+        await tester.pumpAndSettle();
+        expect(find.text('La dirección es obligatoria'), findsNothing);
+        await tester.tap(find.text('GUARDAR SEDE'));
+        await tester.pumpAndSettle();
+        expect(find.text('La dirección es obligatoria'), findsOneWidget);
+        semantica.dispose();
+      },
+    );
+
+    testWidgets('una dirección escrita a medias se marca al salir de ella', (
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
       await abrirAlta(tester);
-      await tester.tap(find.bySemanticsLabel('Dirección'));
-      await tester.pumpAndSettle();
-      expect(find.text('La dirección es obligatoria'), findsNothing);
+      await tester.enterText(find.bySemanticsLabel('Dirección'), 'Av. Vergara');
       await tester.tap(find.bySemanticsLabel('Nombre de la sede'));
       await tester.pumpAndSettle();
-      expect(find.text('La dirección es obligatoria'), findsOneWidget);
-      expect(find.text('El nombre es obligatorio'), findsNothing);
+      expect(find.text('Escribí la calle y la altura'), findsOneWidget);
       semantica.dispose();
     });
 

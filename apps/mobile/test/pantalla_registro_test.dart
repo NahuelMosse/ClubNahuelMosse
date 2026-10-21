@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
+import 'package:clubnahuelmosse/usuarios/reglas_registro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -133,6 +134,20 @@ void main() {
     await tocar(tester, find.text('CREAR CUENTA'));
     await tester.pumpAndSettle();
     expect(find.text('Error del servidor'), findsOneWidget);
+    semantica.dispose();
+  });
+
+  testWidgets('un dato inválido escrito se marca al salir del campo', (
+    tester,
+  ) async {
+    final semantica = tester.ensureSemantics();
+    await montar(tester, PantallaRegistro(api: apiFalsa()), tema: temaOscuro);
+
+    await tester.enterText(find.bySemanticsLabel('Correo electrónico'), 'ana');
+    await tester.tap(find.bySemanticsLabel('Nombre'));
+    await tester.pumpAndSettle();
+
+    expect(find.text(validarCorreo('ana')!), findsOneWidget);
     semantica.dispose();
   });
 }
