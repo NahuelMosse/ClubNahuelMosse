@@ -10,8 +10,7 @@ from app.aplicacion.errores import DatosInvalidos
 from app.dominio.reservas import Marcador
 
 INVALIDO = "El marcador de página no es válido"
-# Un marcador real mide unos 60 caracteres: más que esto no es uno.
-_LARGO_MAXIMO = 100
+# El número de una reserva es un bigint de la base.
 _ID_MAXIMO = 2**63 - 1
 
 
@@ -30,7 +29,7 @@ def codificar(marcador: Marcador) -> str:
 
 def leer(valor: str) -> Marcador:
     """Lanza `DatosInvalidos` si [valor] no es un marcador que `codificar` haya armado."""
-    marcador = _decodificar(valor) if 0 < len(valor) <= _LARGO_MAXIMO else None
+    marcador = _decodificar(valor)
     if marcador is None:
         raise DatosInvalidos({"despues": INVALIDO})
     return marcador

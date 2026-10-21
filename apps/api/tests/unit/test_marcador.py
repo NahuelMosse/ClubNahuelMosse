@@ -1,16 +1,40 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 
 from app.aplicacion.errores import DatosInvalidos
 from app.dominio.reservas import Marcador
-from app.interfaz.marcador import codificar, leer
+from app.interfaz.marcador import codificar, leer, siguiente
 
 INICIO = datetime(2026, 11, 12, 21, 0, tzinfo=UTC)
 
 
 def test_un_marcador_codificado_se_lee_igual() -> None:
     assert leer(codificar(Marcador(INICIO, 4321))) == Marcador(INICIO, 4321)
+
+
+@pytest.mark.parametrize("id_", [1, 12, 123, 1234, 2**63 - 1])
+@pytest.mark.parametrize("microsegundos", [0, 250_000])
+def test_un_marcador_se_lee_igual_con_cualquier_numero_de_reserva(
+    id_: int, microsegundos: int
+) -> None:
+    marcador = Marcador(INICIO.replace(microsecond=microsegundos), id_)
+
+    assert leer(codificar(marcador)) == marcador
+
+
+def test_el_marcador_de_la_tanda_que_sigue_es_el_de_la_ultima_reserva_entregada() -> None:
+    @dataclass(frozen=True)
+    class Fila:
+        inicio: datetime
+        id: int
+
+    filas = [Fila(INICIO + timedelta(hours=-h), 10 + h) for h in range(3)]
+
+    assert siguiente(filas, hay_mas=True) == codificar(Marcador(filas[2].inicio, 12))
+    assert siguiente(filas, hay_mas=False) is None
+    assert siguiente([], hay_mas=True) is None
 
 
 def test_el_marcador_conserva_los_microsegundos_y_la_zona() -> None:
