@@ -106,3 +106,23 @@ El archivo queda en `build/app/outputs/flutter-apk/`. Se instala con
 La API gratuita de Render se duerme tras 15 minutos sin tráfico: el primer inicio de sesión del día
 puede tardar alrededor de un minuto, más que los 15 segundos que la app espera por pedido. Conviene
 abrir `<URL>/docs` en el navegador antes de usar la app.
+
+## Supuestos que limitan lo que muestra la app
+
+Decisiones tomadas sin respuesta del cliente, que cambian lo que ve quien usa la app. Cada ID está
+registrado en `specs/<card>/ambiguedades.md`; los demás supuestos de cada card están ahí.
+
+- CU-13-SUP-07 · la fecha de una reserva se elige en el calendario, que ofrece los próximos 7 días
+  (siete días), y las horas son en punto; la duración llega hasta 4 horas (CU-13-SUP-08).
+- CU-09-SUP-02 · el administrador no reserva: la app no le ofrece la sección de reservas y una
+  respuesta 403 lleva a «Acceso denegado».
+- CU-21-SUP-04 · el catálogo de deportes y tipos es fijo: la app lo pide a la API y no permite
+  editarlo.
+- CU-12-SUP-05 · la app muestra el precio y el total de la reserva, pero no hay pagos ni
+  reintegros.
+- CU-12-SUP-02 · la grilla de horarios se lee al entrar y al cambiar cancha, fecha o duración, y
+  no se refresca sola: si el horario se ocupa antes de confirmar, la API responde 409.
+- CU-16-SUP-06 · las fotos de sedes y canchas son imágenes fijas de la app; el administrador no
+  carga fotos.
+- CU-24.1-SUP-10 · el centro de avisos se abre desde una campana en el Home del usuario; el
+  administrador no tiene centro de avisos.

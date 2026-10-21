@@ -172,3 +172,29 @@ Límites del plan `free`:
 
 La app recibe la dirección con `--dart-define=API_URL=<URL_PUBLICA>` al construirse; ver el README de
 `apps/mobile`.
+
+Para volver atrás un despliegue, rotar un secreto o atender un incidente: `docs/technical/runbook.md`.
+
+## Supuestos que limitan lo que hace la API
+
+Decisiones tomadas sin respuesta del cliente, que cambian lo que ve quien usa la API o lo que hace
+quien la opera. Cada ID está registrado en `specs/<card>/ambiguedades.md`; los demás supuestos de
+cada card están ahí.
+
+- CU-13-SUP-08 · una reserva dura de 1 a 4 horas, en horas en punto; la API rechaza una duración
+  menor a una hora o mayor a 4 horas.
+- CU-13-SUP-07 · sólo se reserva hasta 7 días de anticipación (los próximos siete días) y en
+  horarios futuros, en la hora del club.
+- CU-09-SUP-02 · el administrador no reserva: la API le responde 403. No hay tope de reservas
+  activas por usuario.
+- CU-09-SUP-03 · si dos personas piden el mismo horario a la vez gana una: la restricción de
+  exclusión de la base rechaza la segunda con 409.
+- CU-21-SUP-04 · el catálogo de deportes y tipos de espacio es fijo, vive en el código de la API y
+  no se edita desde la app (hoy no incluye Básquet).
+- CU-12-SUP-05 · el precio es el del espacio, igual a toda hora; la app lo muestra pero no hay
+  pagos ni reintegros (CU-09-AMB-10, CU-10-AMB-08).
+- CU-24.1-SUP-02 · el backend no reintenta un aviso push fallido: queda en el centro de avisos
+  como fallido, y un token que Firebase rechaza por inválido se da de baja.
+- CU-01-SUP-02 · la API no bloquea por intentos fallidos de ingreso; sólo corta Firebase
+  (`TOO_MANY_ATTEMPTS`, respondido como 429).
+- CU-07-SUP-01 · una cuenta dada de baja libera su correo y su DNI para una cuenta nueva.
