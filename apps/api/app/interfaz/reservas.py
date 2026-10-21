@@ -33,6 +33,7 @@ from app.infraestructura.push import canal_push
 from app.infraestructura.reservas import ReservasSql
 from app.interfaz.barrido import despachar_de
 from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40
+from app.interfaz.marcador import leer, siguiente
 from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -68,8 +69,14 @@ class ReservaVista(_CamposDeReserva):
     cancelable: bool
 
 
+class Errores(BaseModel):
+    errores: dict[str, str]
+
+
 class ListaDeReservas(BaseModel):
     reservas: list[ReservaVista]
+    # El `despues` de la tanda que sigue; `null` si esta es la última.
+    siguiente: str | None
 
 
 def _vista(r: Reserva) -> ReservaVista:
@@ -79,21 +86,32 @@ def _vista(r: Reserva) -> ReservaVista:
 @router.get(
     "/reservas",
     response_model=ListaDeReservas,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": SinSesion}, 422: {"model": Errores}},
     summary="Las reservas de quien consulta",
     description=(
         "`proximas`: las activas que no terminaron, de la más cercana a la más lejana. "
         "`historial`: las completadas, canceladas y anuladas, de la más reciente a la más "
-        "vieja. El total es el que se guardó al reservar."
+        "vieja. El total es el que se guardó al reservar. Trae 20 por tanda: si hay más, "
+        "`siguiente` es el valor de `despues` que pide la tanda que sigue; sin `despues` "
+        "trae las primeras 20. Un `despues` que no sale de un `siguiente` es un 422."
     ),
 )
 def listar_reservas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     cuando: Annotated[Cuando, Query()] = "proximas",
-) -> ListaDeReservas:
+    despues: Annotated[str | None, Query()] = None,
+) -> ListaDeReservas | Response:
+    try:
+        marcador = None if despues is None else leer(despues)
+    except DatosInvalidos as e:
+        return JSONResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
+        )
+    tanda = mis_reservas(ReservasSql(conn), perfil, cuando, marcador)
     return ListaDeReservas(
-        reservas=[_vista(r) for r in mis_reservas(ReservasSql(conn), perfil, cuando)]
+        reservas=[_vista(r) for r in tanda.reservas],
+        siguiente=siguiente(tanda.reservas, tanda.hay_mas),
     )
 
 
@@ -103,10 +121,6 @@ class PedidoDeReserva(BaseModel):
     desde: Texto40
     # Sin cota acá: el caso de uso rechaza una duración fuera de rango antes de calcular nada.
     horas: int
-
-
-class Errores(BaseModel):
-    errores: dict[str, str]
 
 
 def _leer_hora(valor: str) -> time | None:
@@ -286,6 +300,8 @@ class HistorialVista(BaseModel):
     pagina: int
     por_pagina: int
     contadores: ContadoresVista
+    # El `despues` de la página que sigue; `null` si esta es la última.
+    siguiente: str | None
 
 
 def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
@@ -305,7 +321,10 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
         "Todos los usuarios, todas las sedes. Filtra por estado (`activa`, `completada` o"
         " `anulada`; sin filtro trae también las canceladas por su usuario), sede, deporte,"
         " rango de fechas y texto (usuario, sede o espacio); pagina de a 20, de la más"
-        " reciente a la más antigua. No modifica nada."
+        " reciente a la más antigua: `siguiente` es el valor de `despues` que pide la página"
+        " que sigue, y un `despues` que no sale de un `siguiente` es un 422. `pagina` sigue"
+        " valiendo para las apps ya instaladas; con `despues`, `pagina` no cuenta. No"
+        " modifica nada."
     ),
 )
 def listar_todas(
@@ -318,6 +337,7 @@ def listar_todas(
     hasta: Annotated[date | None, Query()] = None,
     q: Annotated[Busqueda | None, Query()] = None,
     pagina: Annotated[int, Query(ge=1, le=PAGINA_MAXIMA)] = 1,
+    despues: Annotated[str | None, Query()] = None,
 ) -> HistorialVista | Response:
     try:
         historial = historial_global(
@@ -331,6 +351,7 @@ def listar_todas(
                 hasta=hasta,
                 q=q,
                 pagina=pagina,
+                despues=None if despues is None else leer(despues),
             ),
         )
     except Prohibido:
@@ -348,6 +369,7 @@ def listar_todas(
             completadas=historial.contadores.completadas,
             anuladas=historial.contadores.anuladas,
         ),
+        siguiente=siguiente(historial.reservas, historial.hay_mas),
     )
 
 
