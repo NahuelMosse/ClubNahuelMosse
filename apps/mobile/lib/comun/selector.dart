@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'campo_texto.dart';
 
 /// Un campo que no se escribe sino que se elige: se ve como `Input` o `Dropdown` del
 /// prototipo y al tocarlo abre las opciones.
@@ -59,6 +60,8 @@ class CampoSelector extends StatelessWidget {
           enabled: alTocar != null,
           label: etiquetaAccesible,
           value: elegido ?? '',
+          hint: mensaje,
+          liveRegion: mensaje != null,
           excludeSemantics: true,
           onTap: alTocar,
           child: Material(
@@ -103,30 +106,7 @@ class CampoSelector extends StatelessWidget {
         ),
         if (mensaje != null) ...[
           const SizedBox(height: Medidas.s8),
-          // El lector de pantalla anuncia el error apenas aparece.
-          Semantics(
-            liveRegion: true,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Icon(
-                    Icons.warning_amber_rounded,
-                    size: 16,
-                    color: p.stateDangerInk,
-                  ),
-                ),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: Text(
-                    mensaje,
-                    style: Textos.leyenda.copyWith(color: p.stateDangerInk),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          AvisoDeCampo(mensaje),
         ],
       ],
     );

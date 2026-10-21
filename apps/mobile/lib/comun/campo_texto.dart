@@ -66,6 +66,9 @@ class CampoTexto extends StatelessWidget {
         Semantics(
           container: true,
           label: etiquetaAccesible,
+          hint: ayudaAccesible(formato: ayuda, error: mensaje),
+          // El error se anuncia apenas aparece.
+          liveRegion: conError,
           child: SizedBox(
             height: Medidas.altoControl,
             child: TextField(
@@ -80,7 +83,7 @@ class CampoTexto extends StatelessWidget {
               autofillHints: autocompletar,
               style: Textos.cuerpo.copyWith(color: p.textPrimary),
               decoration: InputDecoration(
-                // El placeholder no forma parte de la etiqueta accesible del campo.
+                // El placeholder se anuncia como ayuda del campo, no como su etiqueta.
                 hint: ayuda == null
                     ? null
                     : ExcludeSemantics(
@@ -116,34 +119,53 @@ class CampoTexto extends StatelessWidget {
         ),
         if (mensaje != null) ...[
           const SizedBox(height: Medidas.s8),
-          // El lector de pantalla anuncia el error apenas aparece.
-          Semantics(
-            liveRegion: true,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Icon(
-                    Icons.warning_amber_rounded,
-                    size: 16,
-                    color: p.stateDangerInk,
-                  ),
-                ),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: Text(
-                    mensaje,
-                    style: Textos.leyenda.copyWith(color: p.stateDangerInk),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          AvisoDeCampo(mensaje),
         ],
       ],
     );
   }
+}
+
+/// El error que se ve debajo de un campo. El lector de pantalla no lo recorre aparte: lo
+/// anuncia el campo, que lo trae en su propio nodo.
+class AvisoDeCampo extends StatelessWidget {
+  const AvisoDeCampo(this.mensaje, {super.key});
+
+  final String mensaje;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return ExcludeSemantics(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.warning_amber_rounded,
+              size: 16,
+              color: p.stateDangerInk,
+            ),
+          ),
+          const SizedBox(width: Medidas.s8),
+          Expanded(
+            child: Text(
+              mensaje,
+              style: Textos.leyenda.copyWith(color: p.stateDangerInk),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lo que el lector dice de un campo además de su etiqueta: el formato esperado y el
+/// error, en ese orden. `null` si no hay nada que agregar.
+String? ayudaAccesible({String? formato, String? error}) {
+  final partes = [?formato, ?error];
+  return partes.isEmpty ? null : partes.join('. ');
 }
 
 /// El ojo que muestra u oculta la contraseña, al final del campo.

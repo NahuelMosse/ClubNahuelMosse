@@ -54,16 +54,27 @@ Future<bool> mostrarErrorDeRed(BuildContext context, Object error) async =>
 /// El aviso de que otra persona tomó el horario mientras se confirmaba ([texto] dice cuál).
 /// La única salida es elegir otro.
 Future<void> mostrarHorarioOcupado(BuildContext context, String texto) =>
-    showDialog<void>(
-      context: context,
-      barrierColor: context.paleta.bgScrim,
-      builder: (context) => _Modal(
-        icono: Icons.schedule_rounded,
-        titulo: 'Ese horario se ocupó',
-        texto: texto,
-        principal: 'ELEGIR OTRO HORARIO',
-      ),
-    );
+    _avisarDeHorario(context, 'Ese horario se ocupó', texto);
+
+/// El aviso de que el club rechazó el horario elegido ([texto] es el motivo que dio). No se
+/// cierra solo: la persona lo lee y elige otro.
+Future<void> mostrarHorarioRechazado(BuildContext context, String texto) =>
+    _avisarDeHorario(context, 'No se pudo confirmar el horario', texto);
+
+Future<void> _avisarDeHorario(
+  BuildContext context,
+  String titulo,
+  String texto,
+) => showDialog<void>(
+  context: context,
+  barrierColor: context.paleta.bgScrim,
+  builder: (context) => _Modal(
+    icono: Icons.schedule_rounded,
+    titulo: titulo,
+    texto: texto,
+    principal: 'ELEGIR OTRO HORARIO',
+  ),
+);
 
 /// La confirmación de cancelar una reserva ([texto] dice cuál). Devuelve `true` si la
 /// persona confirmó.
@@ -270,6 +281,8 @@ class _Modal extends StatelessWidget {
     final p = context.paleta;
     final accionPrincipal = principal;
     final accionSecundaria = secundaria;
+    // En lo que no se deshace, el foco arranca en la salida que no destruye.
+    final enfocarSecundaria = principalPeligro;
     return Dialog(
       backgroundColor: p.bgSurfaceRaised,
       insetPadding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
@@ -333,6 +346,7 @@ class _Modal extends StatelessWidget {
                 const SizedBox(height: Medidas.s8),
               if (accionSecundaria != null && secundariaContorno)
                 OutlinedButton(
+                  autofocus: enfocarSecundaria,
                   onPressed: () => Navigator.of(context).pop(false),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: p.textPrimary,
@@ -345,6 +359,7 @@ class _Modal extends StatelessWidget {
                 )
               else if (accionSecundaria != null)
                 TextButton(
+                  autofocus: enfocarSecundaria,
                   onPressed: () => Navigator.of(context).pop(false),
                   style: TextButton.styleFrom(
                     foregroundColor: p.accentInk,
