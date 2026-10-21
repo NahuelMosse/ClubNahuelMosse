@@ -9,11 +9,6 @@ const minHoras = 1;
 const maxHoras = 4;
 const diasALaVista = 7;
 
-/// El momento actual en el club, que está en la hora de Argentina (UTC−3, sin horario de
-/// verano), sea cual sea la zona del teléfono.
-DateTime ahoraEnElClub() =>
-    DateTime.now().toUtc().subtract(const Duration(hours: 3));
-
 /// La hora en punto de `HH:MM`; `null` si no lo es.
 int? horaEnPunto(String hhmm) {
   final partes = hhmm.split(':');

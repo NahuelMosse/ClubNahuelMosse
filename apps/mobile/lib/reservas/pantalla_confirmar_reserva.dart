@@ -90,10 +90,8 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
       // El horario dejó de valer mientras se confirmaba (por ejemplo, ya empezó).
       if (!mounted) return;
       setState(() => _enviando = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
-      _volver(ResultadoDeConfirmar.ocupado);
+      await mostrarHorarioRechazado(context, r.errores.values.first);
+      if (mounted) _volver(ResultadoDeConfirmar.ocupado);
       return;
     } on SesionVencida {
       final correo = widget.sesion.perfil?.correo;

@@ -85,10 +85,8 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
       // El horario dejó de valer mientras se confirmaba (por ejemplo, ya empezó).
       if (!mounted) return;
       setState(() => _enviando = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
-      _volver(ResultadoDeModificar.ocupado);
+      await mostrarHorarioRechazado(context, r.errores.values.first);
+      if (mounted) _volver(ResultadoDeModificar.ocupado);
       return;
     } on SesionVencida {
       if (!mounted) return;

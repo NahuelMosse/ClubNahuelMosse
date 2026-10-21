@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/reservas/reglas_busqueda.dart';
+import 'package:clubnahuelmosse/comun/reloj.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
