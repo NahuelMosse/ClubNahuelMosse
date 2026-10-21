@@ -26,3 +26,4 @@ REV-04-AMB-07 · 2026-10-20 · no channel · El botón «atenuado» es el de gua
 REV-04-AMB-08 · 2026-10-20 · no channel · El calendario de fecha de nacimiento toma el día del teléfono: ¿tiene que tomar el día del club, igual que el de reservas? → REV-04-ASM-08
 REV-04-OUT-01 · 2026-10-20 · medium · apps/mobile/lib/reservas/reservas.dart:161 · un 422 con un error que no es texto se descarta y errores.values.first revienta si queda vacío — not touched
 REV-04-OUT-02 · 2026-10-20 · proposal · fechas y precios con DateFormat por locale, zona IANA e ISO 4217 (I26), fuera del alcance por REV-04-ASM-06 — not built
+REV-04-TESTS · 2026-10-20 · frozen at dfc129d
