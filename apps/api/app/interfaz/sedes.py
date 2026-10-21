@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
@@ -20,6 +20,7 @@ from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.sedes import SedesSql
+from app.interfaz.entradas import Texto40, Texto120
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["sedes"])
@@ -75,11 +76,12 @@ def listar_sedes(
 
 
 class PedidoDeSede(BaseModel):
-    nombre: str = ""
-    direccion: str = ""
-    apertura: str = ""
-    cierre: str = ""
-    dias: list[int] = []
+    nombre: Texto120 = ""
+    direccion: Texto120 = ""
+    apertura: Texto40 = ""
+    cierre: Texto40 = ""
+    # Los días de la semana van de 1 a 7: más de siete no tiene sentido.
+    dias: Annotated[list[int], Field(max_length=7)] = []
 
 
 _HORA = re.compile(r"\d{2}:\d{2}", re.ASCII)

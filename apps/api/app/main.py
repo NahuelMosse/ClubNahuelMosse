@@ -7,8 +7,10 @@ from fastapi import FastAPI
 
 from app.config import config
 from app.interfaz import (
+    entradas,
     espacios,
     horarios,
+    limites,
     notificaciones,
     pruebas,
     recuperacion,
@@ -46,6 +48,8 @@ def crear_app() -> FastAPI:
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
         lifespan=_ciclo_de_vida,
     )
+    entradas.instalar(app)
+    limites.instalar(app)
     app.include_router(registro.router)
     app.include_router(sesion.router)
     app.include_router(recuperacion.router)

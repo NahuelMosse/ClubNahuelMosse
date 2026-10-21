@@ -33,9 +33,13 @@ from app.infraestructura.db import conexion
 from app.infraestructura.push import canal_push
 from app.infraestructura.reservas import ReservasSql
 from app.interfaz.barrido import despachar_de
+from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["reservas"])
+
+# Con 20 por página, diez mil páginas son doscientas mil reservas.
+PAGINA_MAXIMA = 10_000
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 OCUPADO = "Ese horario se ocupó"
@@ -107,9 +111,10 @@ def listar_reservas(
 
 
 class PedidoDeReserva(BaseModel):
-    espacio_id: int
+    espacio_id: Identificador
     fecha: date
-    desde: str
+    desde: Texto40
+    # Sin cota acá: el caso de uso rechaza una duración fuera de rango antes de calcular nada.
     horas: int
 
 
@@ -216,9 +221,9 @@ def cancelar(
 
 
 class PedidoDeCambio(BaseModel):
-    espacio_id: int
+    espacio_id: Identificador
     fecha: date
-    desde: str
+    desde: Texto40
 
 
 @router.post(
@@ -372,12 +377,12 @@ def listar_todas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     estado: Annotated[FiltroEstado | None, Query()] = None,
-    sede_id: Annotated[int | None, Query(ge=1)] = None,
-    deporte: Annotated[str | None, Query()] = None,
+    sede_id: Annotated[Identificador | None, Query()] = None,
+    deporte: Annotated[Texto40 | None, Query()] = None,
     desde: Annotated[date | None, Query()] = None,
     hasta: Annotated[date | None, Query()] = None,
-    q: Annotated[str | None, Query()] = None,
-    pagina: Annotated[int, Query(ge=1)] = 1,
+    q: Annotated[Busqueda | None, Query()] = None,
+    pagina: Annotated[int, Query(ge=1, le=PAGINA_MAXIMA)] = 1,
 ) -> HistorialVista | Response:
     try:
         historial = historial_global(
@@ -437,8 +442,8 @@ def detalle(
 
 
 class PedidoDeAnulacion(BaseModel):
-    motivo: str
-    espacio_id: int
+    motivo: Parrafo
+    espacio_id: Identificador
     inicio: AwareDatetime
 
 

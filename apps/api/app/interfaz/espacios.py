@@ -26,6 +26,7 @@ from app.dominio.espacios import DatosEspacio, Espacio
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.espacios import EspaciosSql
+from app.interfaz.entradas import Identificador, Texto40
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["espacios"])
@@ -110,8 +111,8 @@ def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     sede_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
-    deporte: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
-    tipo: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
+    deporte: Annotated[Texto40 | None, Query(min_length=1)] = None,
+    tipo: Annotated[Texto40 | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
     espacios = espacios_activos(EspaciosSql(conn), sede_id, deporte, tipo)
     return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in espacios])
@@ -139,9 +140,9 @@ class Errores(BaseModel):
 def sugerir_nombre(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
-    sede_id: Annotated[int, Query()],
-    deporte: Annotated[str, Query()],
-    tipo: Annotated[str, Query()],
+    sede_id: Annotated[Identificador, Query()],
+    deporte: Annotated[Texto40, Query()],
+    tipo: Annotated[Texto40, Query()],
 ) -> Sugerencia | Response:
     try:
         s = nombre_sugerido(perfil, sede_id, deporte, tipo, EspaciosSql(conn))
@@ -160,9 +161,9 @@ def sugerir_nombre(
 
 
 class PedidoDeEspacio(BaseModel):
-    sede_id: int | None = None
-    deporte: str = ""
-    tipo: str = ""
+    sede_id: Identificador | None = None
+    deporte: Texto40 = ""
+    tipo: Texto40 = ""
     techada: bool | None = None
     iluminada: bool | None = None
     precio_por_hora: int | None = None
@@ -236,6 +237,10 @@ def alta_de_espacio(
 
 
 class PedidoDeCambio(BaseModel):
+    # El deporte y el tipo no cambian: se aceptan y se ignoran, para que un cliente que reenvía
+    # el espacio entero siga andando, pero tienen que ser texto válido.
+    deporte: Texto40 | None = None
+    tipo: Texto40 | None = None
     techada: bool | None = None
     iluminada: bool | None = None
     precio_por_hora: int | None = None

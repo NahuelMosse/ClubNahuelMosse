@@ -18,6 +18,7 @@ from app.dominio.notificaciones import Notificacion, TipoDeAviso
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.notificaciones import NotificacionesSql
+from app.interfaz.entradas import TokenDeDispositivo
 from app.interfaz.reservas import Errores
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -25,13 +26,13 @@ router = APIRouter(tags=["notificaciones"])
 
 
 class PedidoDeDispositivo(BaseModel):
-    token: str
+    token: TokenDeDispositivo
     plataforma: Literal["android", "ios"]
     permiso: bool
 
 
 class BajaDeDispositivo(BaseModel):
-    token: str
+    token: TokenDeDispositivo
 
 
 @router.put(

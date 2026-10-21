@@ -10,7 +10,13 @@ from app.aplicacion.errores import (
     NoEncontrada,
     Prohibido,
 )
-from app.dominio.horarios import Agenda, rango, validar_reserva
+from app.dominio.horarios import (
+    DIAS_A_LA_VISTA,
+    Agenda,
+    error_de_duracion,
+    rango,
+    validar_reserva,
+)
 from app.dominio.reservas import FiltrosHistorial, HistorialDeReservas, Reserva, ReservaHistorial
 from app.dominio.usuarios import Perfil
 
@@ -139,6 +145,13 @@ def mis_reservas(reservas: Reservas, perfil: Perfil, cuando: Cuando) -> list[Res
     return reservas.de_usuario(perfil.id, cuando)
 
 
+def _exigir_fecha_a_la_vista(fecha: date, ahora: datetime) -> None:
+    """Una fecha más allá de la ventana de reserva se rechaza antes de calcular el fin del
+    turno: cerca de `date.max` esa cuenta se desborda."""
+    if fecha >= ahora.date() + timedelta(days=DIAS_A_LA_VISTA):
+        raise DatosInvalidos({"fecha": f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"})
+
+
 def reservar(
     reservas: Reservas,
     perfil: Perfil,
@@ -158,11 +171,16 @@ def reservar(
         raise Prohibido("sólo un usuario reserva")
     if desde is None:
         raise DatosInvalidos({"desde": "Elegí una hora en punto"})
+    if error := error_de_duracion(horas):
+        # Antes de calcular el fin del turno: con una duración desmesurada esa cuenta se
+        # desborda. `hasta` es el campo que ya leen los clientes.
+        raise DatosInvalidos({"horas": error, "hasta": error})
+    _exigir_fecha_a_la_vista(fecha, ahora)
     inicio, _ = rango(fecha, desde, desde, ahora.tzinfo)
     fin = inicio + timedelta(hours=horas)
     # Un reintento después de un corte puede llegar cuando el turno ya empezó: si la reserva
     # se hizo, se devuelve sin volver a validar el horario.
-    if horas > 0 and (ya := reservas.repetida(perfil.id, espacio_id, inicio, fin)):
+    if ya := reservas.repetida(perfil.id, espacio_id, inicio, fin):
         return ya
     return _con_la_agenda_vigente(
         reservas,
@@ -201,6 +219,7 @@ def modificar_reserva(
         raise Prohibido("sólo un usuario reserva")
     if desde is None:
         raise DatosInvalidos({"desde": "Elegí una hora en punto"})
+    _exigir_fecha_a_la_vista(fecha, ahora)
     actual = reservas.propia(perfil.id, reserva_id)
     if actual is None:
         raise NoEncontrada("no hay una reserva suya con ese número")

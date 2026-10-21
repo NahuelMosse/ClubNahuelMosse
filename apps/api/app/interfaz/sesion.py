@@ -23,6 +23,8 @@ from app.dominio.usuarios import DatosPersonales, Perfil, Rol
 from app.infraestructura.db import conexion
 from app.infraestructura.identidad import ProveedorFirebase
 from app.infraestructura.usuarios import UsuariosSql
+from app.interfaz.entradas import Clave, Texto40, Texto120
+from app.interfaz.limites import Frenado, frenar_por_cuenta
 
 router = APIRouter(tags=["sesión"])
 _portador = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
@@ -81,8 +83,8 @@ def perfil_propio(perfil: Annotated[Perfil, Depends(usuario_actual)]) -> PerfilP
 
 
 class PedidoCambioDeContrasena(BaseModel):
-    actual: str = ""
-    nueva: str = ""
+    actual: Clave = ""
+    nueva: Clave = ""
 
 
 class ErroresDeContrasena(BaseModel):
@@ -126,10 +128,16 @@ ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 class PedidoDeEdicion(BaseModel):
-    nombre: str = ""
-    apellido: str = ""
-    dni: str = ""
-    fecha_nacimiento: str = ""
+    nombre: Texto120 = ""
+    apellido: Texto120 = ""
+    dni: Texto40 = ""
+    fecha_nacimiento: Texto40 = ""
+
+
+def _frenar_edicion(peticion: Request, perfil: Annotated[Perfil, Depends(usuario_actual)]) -> None:
+    """Cada intento con un DNI cuenta, sea ajeno o propio: no sirve para averiguar quién es
+    socio."""
+    frenar_por_cuenta(peticion, "editar-perfil", perfil.id)
 
 
 @router.put(
@@ -139,9 +147,11 @@ class PedidoDeEdicion(BaseModel):
         401: {"model": SinSesion},
         409: {"model": ErroresDeContrasena, "description": "Otra cuenta ya tiene ese DNI"},
         422: {"model": ErroresDeContrasena},
+        429: {"model": Frenado},
     },
     summary="Editar los datos personales de quien inició sesión",
     description="Todo menos el correo, que no se puede cambiar.",
+    dependencies=[Depends(_frenar_edicion)],
 )
 def editar_perfil_propio(
     pedido: PedidoDeEdicion,
