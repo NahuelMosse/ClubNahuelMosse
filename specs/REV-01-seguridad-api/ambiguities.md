@@ -26,3 +26,4 @@ REV-01-AMB-07 · 2026-10-20 · no channel · Al cerrar la documentación en la n
 REV-01-AMB-08 · 2026-10-20 · no channel · ¿Cómo cuentan para el límite los pedidos que llegan exactamente al mismo tiempo? → REV-01-ASM-08
 REV-01-AMB-09 · 2026-10-20 · no channel · ¿Qué queda anotado cuando se frena un pedido por exceso o por venir de un dominio ajeno? → REV-01-ASM-09
 REV-01-AMB-10 · 2026-10-20 · no channel · ¿En qué condiciones tiene que negarse a arrancar la API cuando ve configurado el emulador de autenticación? → REV-01-ASM-10
+REV-01-TESTS · 2026-10-20 · frozen at 2a31441
