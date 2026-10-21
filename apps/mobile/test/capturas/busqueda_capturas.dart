@@ -1,9 +1,10 @@
 import 'package:clubnahuelmosse/comun/reloj.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
+import '../soporte/reloj_fijo.dart';
 import '../soporte/usuario.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
@@ -78,7 +79,14 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/inicio',
-          api: apiRutas(rutasDeSedes()),
+          api: apiRutas({
+            ...rutasDeSedes(),
+            'GET /reservas': (200, '{"reservas": []}'),
+            'GET /notificaciones': (
+              200,
+              '{"notificaciones": [], "no_leidas": 0}',
+            ),
+          }),
         );
         await capturar(tester, 'busqueda/inicio_${ancho}_$modo.png');
       });

@@ -1,10 +1,11 @@
 import 'package:clubnahuelmosse/comun/pantalla_acceso_denegado.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
+import '../soporte/reloj_fijo.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo (CU-14).
 void main() {
