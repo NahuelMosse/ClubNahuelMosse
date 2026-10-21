@@ -1,5 +1,5 @@
 {
-  "kit": "6.3.2",
+  "kit": "5.0.0",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "662f6063e4a27ab9180c22b1c6b076d1f0ddbf0f"
+    "commit": "d7c92c83fa055a140ca5dca9c16c1899c6d45191"
   },
   "modules": {
     "ui": {
@@ -81,8 +81,8 @@
       "confirmed": [
         {
           "at": "2026-10-21",
-          "card": "REV-01-seguridad-api",
-          "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale, y esta card no agrega textos en otro idioma.",
+          "card": "REV-07-documentacion-produccion",
+          "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale.",
           "signals": [
             "the card asks for a language, a translation or a locale"
           ]
@@ -101,23 +101,5 @@
     "by": "person",
     "at": "2026-10-20",
     "history": []
-  },
-  "profiles": {
-    "web": {
-      "since": "update 2026-10-22",
-      "reason": "derived from the modules that were on",
-      "state": "on",
-      "mcp": {
-        "motion": {
-          "type": "http",
-          "url": "https://mcp.motion.dev"
-        }
-      }
-    },
-    "backend": {
-      "since": "update 2026-10-22",
-      "reason": "derived from the modules that were on",
-      "state": "on"
-    }
   }
 }
