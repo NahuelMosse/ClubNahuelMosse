@@ -9,9 +9,8 @@ from app.dominio.reservas import Reserva
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
 Envio = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
 
-# El club está en UTC−3, sin horario de verano.
+# El club está tres horas detrás de UTC, sin horario de verano.
 HORA_DEL_CLUB = timezone(timedelta(hours=-3))
-ANTICIPACION = timedelta(hours=1)
 DIAS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
 
 
@@ -87,7 +86,7 @@ class AvisoPerdido:
 def que_hacer_con_varado(tipo: TipoDeAviso, intentos: int) -> DestinoDelVarado:
     """Qué se hace con un aviso que quedó `enviando` sin que se sepa si salió.
 
-    Un recordatorio no se repite (CU-24.1: «se envía una sola vez»). Uno de cancelación sí,
+    Un recordatorio no se repite (el CU lo fija: «se envía una sola vez»). Uno de cancelación sí,
     porque la persona no puede perdérselo, hasta [INTENTOS_MAXIMOS] veces.
     """
     if tipo == "recordatorio" or intentos >= INTENTOS_MAXIMOS:
