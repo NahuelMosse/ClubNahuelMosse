@@ -23,3 +23,4 @@ REV-07-AMB-04 · 2026-10-20 · no channel · La documentación para usuarios del
 REV-07-AMB-05 · 2026-10-20 · no channel · Otras correcciones en curso van a cambiar la seguridad, los datos y la operación: ¿cada una actualiza estos documentos al terminar? → REV-07-ASM-05
 REV-07-OUT-01 · 2026-10-20 · proposal · los supuestos viejos se llaman SUP-NN y los snapshots usan fuentes: y no_leido:; corregirlo cambia snapshots congelados (hallazgos 22 y 24) — not touched
 REV-07-OUT-02 · 2026-10-20 · medium · specs/MOD-01-modelo-de-datos/data-model.md · documenta 4 de 9 tablas; el modelo completo queda en docs/technical/system-design.md — not touched
+REV-07-TESTS · 2026-10-20 · frozen at 7dbf987
