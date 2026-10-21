@@ -12,9 +12,9 @@ from app.dominio.notificaciones import (
 
 
 def test_los_plazos_de_la_cola_son_los_que_se_acordaron() -> None:
-    assert TOMA_VENCIDA == timedelta(minutes=5)
-    assert ESPERA_DEL_RECORDATORIO == timedelta(minutes=1)
-    assert INTENTOS_MAXIMOS == 3
+    plazos = (TOMA_VENCIDA, ESPERA_DEL_RECORDATORIO, INTENTOS_MAXIMOS)
+
+    assert plazos == (timedelta(minutes=5), timedelta(minutes=1), 3)
 
 
 @pytest.mark.parametrize("tipo", ["cancelacion_forzosa", "cancelacion_usuario"])

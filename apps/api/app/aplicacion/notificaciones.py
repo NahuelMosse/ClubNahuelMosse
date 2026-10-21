@@ -7,6 +7,7 @@ from typing import Protocol
 from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.dominio.notificaciones import (
     Aviso,
+    AvisoPerdido,
     Envio,
     Notificacion,
     Recordatorio,
@@ -64,11 +65,17 @@ class Notificaciones(Protocol):
         """Si [usuario_id] tiene algún dispositivo registrado, con o sin permiso."""
         ...
 
+    def marcar_varados_fallidos(self, usuario_id: int | None) -> list[AvisoPerdido]:
+        """Pasa a `fallida`, y devuelve, los avisos de [usuario_id] o de todos que no van a
+        salir: los `enviando` con la toma vencida que `que_hacer_con_varado` da por fallidos y
+        los recordatorios registrados cuyo turno ya empezó o se canceló."""
+        ...
+
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
-        """Reserva para quien llama el aviso más viejo de los registrados junto con el hecho
-        que avisan (no los recordatorios) y sin enviar, de [usuario_id] o de todos: pasa a
-        `enviando`, así dos despachos al mismo tiempo no mandan el mismo dos veces. `None` si
-        no queda ninguno."""
+        """Reserva para quien llama el aviso más viejo de [usuario_id] o de todos que está
+        sin enviar —un recordatorio sólo si sigue vigente— o que quedó `enviando` con la toma
+        vencida y se puede reintentar: pasa a `enviando` con un intento más, así dos despachos
+        al mismo tiempo no mandan el mismo dos veces. `None` si no queda ninguno."""
         ...
 
     def marcar_envio(self, notificacion_id: int, envio: Envio) -> None: ...
@@ -137,11 +144,18 @@ def despachar_pendientes(
     notificaciones: Notificaciones, canal: CanalPush, usuario_id: int | None = None
 ) -> int:
     """Manda los avisos que se registraron junto con el hecho que avisan, como la confirmación
-    de una cancelación, y devuelve cuántos salieron a despacho.
+    de una cancelación, y devuelve cuántos salieron a despacho. Retoma los que quedaron
+    `enviando` por un proceso caído y los recordatorios registrados que no salieron.
 
     Toma de a uno: lo que no se intentó sigue `pendiente`, y un aviso que falla por cualquier
-    motivo queda `fallida` sin cortar los que siguen.
+    motivo queda `fallida` sin cortar los que siguen. Antes de tomar, los que no van a salir
+    quedan `fallida` y se avisan en el log como `aviso_sin_enviar`.
     """
+    for perdido in notificaciones.marcar_varados_fallidos(usuario_id):
+        # Sólo el número y el tipo: nada de la persona ni del texto del aviso.
+        _registro.error(
+            "aviso_sin_enviar notificacion_id=%d tipo=%s", perdido.notificacion_id, perdido.tipo
+        )
     despachados = 0
     while (p := notificaciones.tomar_siguiente(usuario_id)) is not None:
         despachados += 1

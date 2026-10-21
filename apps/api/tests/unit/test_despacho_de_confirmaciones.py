@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 import pytest
 
 from app.aplicacion.notificaciones import Pendiente, ResultadoDeEnvio, despachar_pendientes
-from app.dominio.notificaciones import Aviso, Envio, mensaje_cancelacion
+from app.dominio.notificaciones import Aviso, AvisoPerdido, Envio, mensaje_cancelacion
 from app.dominio.reservas import Reserva
 
 
@@ -36,8 +36,15 @@ class RepositorioEnMemoria:
         self.bajas: list[str] = []
         self.falla_en: int | None = None
         self.no_puede_marcar = False
+        self.perdidos: list[AvisoPerdido] = []
+        self.orden: list[str] = []
+
+    def marcar_varados_fallidos(self, usuario_id: int | None) -> list[AvisoPerdido]:
+        self.orden.append("marcar_varados_fallidos")
+        return self.perdidos
 
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+        self.orden.append("tomar_siguiente")
         if not self.pendientes:
             return None
         siguiente = self.pendientes.pop(0)
@@ -161,6 +168,30 @@ def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> No
 
     assert repo.envios == {1: "fallida", 2: "enviada", 3: "enviada"}
     assert len(canal.enviados) == 2
+
+
+def test_cada_aviso_dado_por_fallido_queda_en_el_log_con_su_numero_y_su_tipo(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """el aviso perdido se ve en el log como `aviso_sin_enviar` @REV-03-H11-01"""
+    repo = RepositorioEnMemoria([], ["t"])
+    repo.perdidos = [AvisoPerdido(8, "cancelacion_forzosa"), AvisoPerdido(9, "recordatorio")]
+
+    with caplog.at_level("ERROR"):
+        despachar_pendientes(repo, CanalQueAcepta())
+
+    assert [(r.levelname, r.getMessage()) for r in caplog.records] == [
+        ("ERROR", "aviso_sin_enviar notificacion_id=8 tipo=cancelacion_forzosa"),
+        ("ERROR", "aviso_sin_enviar notificacion_id=9 tipo=recordatorio"),
+    ]
+
+
+def test_los_varados_se_dan_por_fallidos_antes_de_tomar_el_siguiente() -> None:
+    repo = RepositorioEnMemoria([_pendiente(1)], ["t"])
+
+    despachar_pendientes(repo, CanalQueAcepta())
+
+    assert repo.orden[:2] == ["marcar_varados_fallidos", "tomar_siguiente"]
 
 
 def test_lo_que_no_se_intento_sigue_pendiente_si_el_despacho_se_corta() -> None:
