@@ -26,3 +26,4 @@ REV-03-AMB-07 · 2026-10-20 · no channel · Si dos reservas empiezan a la misma
 REV-03-AMB-08 · 2026-10-20 · no channel · Si entra una reserva nueva mientras alguien recorre el historial, ¿tiene que aparecer en las páginas que ya vio? → REV-03-ASM-08
 REV-03-AMB-09 · 2026-10-20 · no channel · ¿Qué se anota de cada intento de envío de un aviso para que el administrador sepa qué pasó? → REV-03-ASM-09
 REV-03-AMB-10 · 2026-10-20 · no channel · El historial global muestra el total de reservas arriba: ¿ese total tiene que seguir siendo exacto en cada página, aunque contarlo cueste recorrer la tabla? → REV-03-ASM-10 · leaves without effect: «sin recorrer ni contar toda la tabla» para la primera página, que sigue contando por índice para el total de CU-14
+REV-03-TESTS · 2026-10-20 · frozen at f886ad0
