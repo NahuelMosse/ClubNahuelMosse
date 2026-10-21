@@ -19,3 +19,4 @@ REV-05-AMB-00 · 2026-10-20 · snapshot · frozen at b7d7c30
 REV-05-AMB-01 · 2026-10-20 · no channel · ¿Qué tipos de cancha de Básquet tiene el club: cancha completa, media cancha para 3 contra 3, o las dos? → REV-05-ASM-01
 REV-05-AMB-02 · 2026-10-20 · no channel · ¿En qué lugar de la lista de deportes aparece Básquet? → REV-05-ASM-03
 REV-05-AMB-03 · 2026-10-20 · no channel · La app no tiene una foto de una cancha de Básquet: ¿se usa por ahora otra portada del club o hay que conseguir una? → REV-05-ASM-02
+REV-05-TESTS · 2026-10-20 · frozen at 8f752a4
