@@ -12,6 +12,7 @@ const _portadas = [
 ImageProvider portadaDeSede(int id) => _portadas[id % _portadas.length];
 
 ImageProvider fotoDeDeporte(String deporte) => switch (deporte) {
+  'Basquet' => _portadas[0],
   'Tenis' || 'Padel' || 'Voley' => _portadas[1],
   'Golf' => _portadas[2],
   _ => _portadas[3],
