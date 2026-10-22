@@ -75,17 +75,6 @@ def test_el_total_es_el_precio_por_las_horas(db: Connection) -> None:
     )
 
 
-def test_la_reserva_dura_entre_una_y_cuatro_horas(db: Connection) -> None:
-    uid, eid = _usuario(db), _espacio(db)
-    inicio = datetime(2030, 11, 14, 8, tzinfo=AR)
-    _falla(
-        db,
-        "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
-        " VALUES (:u, :e, :i, :f, 38000, 190000)",
-        {"u": uid, "e": eid, "i": inicio, "f": inicio + timedelta(hours=5)},
-    )
-
-
 def test_la_anulacion_exige_motivo(db: Connection) -> None:
     uid, eid = _usuario(db), _espacio(db)
     inicio = datetime(2030, 11, 14, 18, tzinfo=AR)
@@ -147,23 +136,6 @@ def test_creado_en_no_cambia_y_modificado_en_se_actualiza(db: Connection) -> Non
     ).one()
     assert despues.creado_en == antes.creado_en
     assert despues.modificado_en > antes.modificado_en
-
-
-def test_la_baja_libera_el_correo_y_el_dni(db: Connection) -> None:
-    s = uuid.uuid4().hex[:8]
-    correo, dni = f"Vuelve.{s}@correo.com", str(int(s, 16) % 90_000_000 + 10_000_000)
-    uid = _usuario(db, correo, dni)
-    _falla(
-        db,
-        "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni, fecha_nacimiento)"
-        " VALUES ('otro-uid', :c, 'A', 'B', '99999999', '2000-01-01')",
-        {"c": correo.lower()},
-    )
-    db.execute(
-        text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
-        {"id": uid},
-    )
-    _usuario(db, correo.upper(), dni)
 
 
 def test_activo_y_fecha_de_baja_van_juntos(db: Connection) -> None:

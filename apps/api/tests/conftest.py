@@ -1,4 +1,5 @@
 import os
+import socket
 import uuid
 from collections.abc import Callable, Iterator
 from pathlib import Path
@@ -26,6 +27,12 @@ RAIZ_API = Path(__file__).resolve().parents[1]
 
 def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--card", action="store", default=None, help="sólo los escenarios de una card")
+    parser.addoption(
+        "--sin-emulador",
+        action="store_true",
+        default=False,
+        help="saltar los tests de API cuando no está el emulador de Firebase Auth",
+    )
 
 
 def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
@@ -71,20 +78,34 @@ def db(motor: Engine) -> Iterator[Connection]:
         tx.rollback()
 
 
-def _host_emulador() -> str:
+def _host_emulador(config: pytest.Config) -> str:
+    """El emulador de Firebase Auth: sin él la corrida falla, salvo que se pida saltarlo."""
     host = os.environ.get("FIREBASE_AUTH_EMULATOR_HOST")
+    motivo = ""
     if not host:
-        pytest.skip("hace falta el emulador de Firebase Auth (FIREBASE_AUTH_EMULATOR_HOST)")
-    return host
+        motivo = "falta la variable FIREBASE_AUTH_EMULATOR_HOST"
+    else:
+        nombre, _, puerto = host.rpartition(":")
+        try:
+            socket.create_connection((nombre, int(puerto)), timeout=2).close()
+        except (OSError, ValueError):
+            motivo = f"no responde en {host}"
+    if not motivo:
+        return str(host)
+    mensaje = f"hace falta el emulador de Firebase Auth: {motivo}"
+    if config.getoption("--sin-emulador"):
+        pytest.skip(f"{mensaje} (se salta por --sin-emulador)")
+    pytest.fail(f"{mensaje}; levantalo o corré con --sin-emulador", pytrace=False)
 
 
 @pytest.fixture
-def api(motor: Engine) -> Iterator[TestClient]:
+def api(request: pytest.FixtureRequest) -> Iterator[TestClient]:
     """La API real contra la base de pruebas y el emulador de Firebase Auth.
 
     No hay transacción envolvente: cada test usa datos propios y únicos.
     """
-    _host_emulador()
+    _host_emulador(request.config)
+    request.getfixturevalue("motor")
     from app.main import crear_app
 
     with TestClient(crear_app()) as cliente:
@@ -92,9 +113,9 @@ def api(motor: Engine) -> Iterator[TestClient]:
 
 
 @pytest.fixture
-def iniciar_sesion() -> Callable[[str, str], str | None]:
+def iniciar_sesion(request: pytest.FixtureRequest) -> Callable[[str, str], str | None]:
     """Inicia sesión contra el emulador como lo haría la app: devuelve el token o None."""
-    host = _host_emulador()
+    host = _host_emulador(request.config)
 
     def _iniciar(correo: str, contrasena: str) -> str | None:
         r = httpx2.post(
