@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf } from './card-doc.mjs';
 import { IS_CODE, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
+import { SCREEN_MARKUP } from './signals.mjs';
 
 
 const ok = (name, detail = '') => ({ name, state: 'passed', detail });
@@ -160,8 +161,26 @@ export const migrationsCheck = (root, cardDir) => {
   return runner ? ok('migrations', `${fresh.length} fresh migrations, wrapped by the runner`) : failed('migrations', `${open.slice(0, 5).join(', ')}: more than one statement outside a transaction (BEGIN/COMMIT in the file, or a runner that wraps it)`);
 };
 
+// `no-visual: <why>` in `## Gate` says the card touches code files that build markup without changing what a screen shows. It is a
+// declaration, not a command: risk.mjs keeps the visual lens off for it and this check holds it against the card's diff.
+export const noVisualOf = (doc) => gateLinesOf(doc).map((l) => l.match(/^no-visual\s*:\s*(\S.*)$/i)?.[1]?.trim()).find(Boolean) ?? null;
+const declaredVisual = (cardDir) => riskOf(cardDir)?.declared?.find((d) => d.lens === 'visual') ?? null;
+export const noVisualCheck = (root, cardDir) => {
+  const declared = declaredVisual(cardDir);
+  if (!declared) return [];
+  const diff = spawnSync('git', ['diff', '-U0', '--no-color', `${cardStart(root, cardDir)}..HEAD`, '--', ...declared.files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  if (diff.status !== 0) return [couldNot('no-visual', `git diff failed: ${(diff.stderr ?? '').trim().split('\n')[0]}`)];
+  let file = '';
+  for (const l of diff.stdout.split('\n')) {
+    if (l.startsWith('+++ ')) { file = l.slice(4).replace(/^b\//, ''); continue; }
+    if (l.startsWith('--- ') || !/^[+-]/.test(l)) continue;
+    if (SCREEN_MARKUP.test(l.slice(1))) return [failed('no-visual', `${file} changes markup: ${l.slice(1).trim()}`)];
+  }
+  return [ok('no-visual')];
+};
+
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...(root ? [layersCheck(root, cardDir), migrationsCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...(root ? [layersCheck(root, cardDir), migrationsCheck(root, cardDir), ...noVisualCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 

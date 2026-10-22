@@ -44,6 +44,8 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 
 ## visual
 
+A card that edits a code file with markup in it and does not change the screen declares `no-visual: <why>` in `## Gate`; a view file in `## Tasks` (`.css`, `.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`) voids it.
+
 - Does Enter submit from each control of the form, not only from the last one?
 - Where does focus go after an error and after a submit?
 - Does a long text with no spaces overflow at 320 px (`aaaaaaaaaaaaaaaaaaaaaaaa`)?

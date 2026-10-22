@@ -68,7 +68,7 @@ import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
 import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
 import { CARD_FILE, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
-import { cardChecks, probeRecords, screenChecks, specsCheck } from './gate-checks.mjs';
+import { cardChecks, noVisualCheck, probeRecords, screenChecks, specsCheck } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
 import { escalate } from './risk.mjs';
 import { changedBetween, snapshot } from './tree-snapshot.mjs';
@@ -274,8 +274,8 @@ const killTree = (p) => {
   else try { process.kill(-p.pid, 'SIGKILL'); } catch { p.kill('SIGKILL'); }
 };
 
-// `app:` and `seed:` tell app.mjs how to start the app the judges share; they are not checks.
-const ENVIRONMENT_LINE = /^(app|seed):/;
+// `app:` and `seed:` tell app.mjs how to start the app the judges share; `no-visual:` is a declaration risk.mjs reads: none is a check.
+const ENVIRONMENT_LINE = /^(app|seed|no-visual):/;
 // `heading` is `Verification` in plan.md and `Gate` in card.md: the same block, the same lines.
 const HOST_WORDS = /\bHost\b|\b[Vv]irtual[ -][Hh]osts?\b/;
 export const wantsStrictHost = (doc) => {
@@ -1100,6 +1100,8 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
 // A card is a screen card when its risk.json has the `visual` lens or the files it touched are a screen.
 const isScreenCard = (root, cardDir) => {
   if (riskOf(cardDir)?.lenses?.includes('visual')) return true;
+  // A declared `no-visual` that the gate verified (its check passed) leaves the card as not a screen.
+  if (noVisualCheck(root, cardDir).some((c) => c.state === 'passed')) return false;
   return Boolean(detectIn({ files: cardFiles(root, cardStart(root, cardDir)) }).screen);
 };
 

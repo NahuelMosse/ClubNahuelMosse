@@ -164,6 +164,12 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
   const notRun = [];
   if (!git(root, ['remote']).stdout?.trim()) notRun.push('- publication · no remote: no push, PR or CI');
   for (const l of risk?.lensesOff ?? []) notRun.push(`- ${l.lens} · profile ${l.profile} off: ${l.why}`);
+  // A `no-visual:` declaration the gate verified is a result, not something that did not run.
+  const declared = (risk?.declared ?? []).filter((d) => d.lens === 'visual').map((d) => `- visual · declared not visual: ${d.why} (no-visual passed)`);
+  if (declared.length) {
+    const at = parts.indexOf('## Passed') + 1;
+    if (parts[at] === 'none') parts.splice(at, 1, ...declared); else parts.splice(at + 1, 0, ...declared);
+  }
   if (/^Cost: could not run/.test(cost)) notRun.push(`- cost — ${cost.replace(/^Cost: could not run:\s*/, '')}`);
   if (notRun.length) {
     const at = parts.indexOf('## Could not run') + 1;
