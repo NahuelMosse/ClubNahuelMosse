@@ -21,7 +21,7 @@ Cada escenario lleva su tag en el test: `@REV-05-S1`.
 
 ## Tasks
 
-- T1 · S1,S2,S3 · apps/api/app/dominio/espacios.py (rule) · tests: apps/api/tests/escenarios/test_basquet.py "el catálogo de deportes ofrece Básquet con su tipo de cancha @REV-05-S1 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03"; apps/api/tests/escenarios/test_basquet.py "el administrador da de alta una cancha de Básquet @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "un tipo que no es de Básquet se rechaza @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "el socio filtra los espacios por Básquet @REV-05-S3"; apps/api/tests/escenarios/test_basquet.py "el administrador da de alta una cancha de Básquet 3x3 con su nombre compuesto @REV-05-S2 @assumption:REV-05-ASM-01"; apps/api/tests/escenarios/test_basquet.py "el socio filtra las canchas de Básquet 3x3 y no ve las de Básquet 5 @REV-05-S3 @assumption:REV-05-ASM-01"
+- T1 · S1,S2,S3 · apps/api/app/dominio/espacios.py (rule) · tests: apps/api/tests/escenarios/test_basquet.py "el catálogo de deportes ofrece Básquet con su tipo de cancha @REV-05-S1 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03"; apps/api/tests/escenarios/test_basquet.py "el administrador da de alta una cancha de Básquet @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "un tipo que no es de Básquet se rechaza @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "el socio filtra los espacios por Básquet @REV-05-S3"; apps/api/tests/escenarios/test_basquet_3x3.py "el administrador da de alta una cancha de Básquet 3x3 con su nombre compuesto @REV-05-S2 @assumption:REV-05-ASM-01"; apps/api/tests/escenarios/test_basquet_3x3.py "el socio filtra las canchas de Básquet 3x3 y no ve las de Básquet 5 @REV-05-S3 @assumption:REV-05-ASM-01"
 - T2 · S4 · apps/mobile/lib/espacios/iconos.dart (presentation), apps/mobile/test/basquet_test.dart · tests: apps/mobile/test/basquet_test.dart "la app muestra Básquet con su ícono @REV-05-S4"; apps/mobile/test/basquet_test.dart "un deporte que la app no conoce se muestra con el ícono genérico @REV-05-S4 @assumption:REV-05-ASM-04"
 - T3 · S4 · apps/mobile/lib/sedes/fotos.dart (presentation) · tests: apps/mobile/test/basquet_test.dart "la foto de Básquet no es la de una cancha de fútbol @REV-05-S4 @assumption:REV-05-ASM-02"
 - T4 · S4 · apps/mobile/test/soporte/montar.dart · tests: apps/mobile/test/basquet_test.dart "la app muestra Básquet con su ícono @REV-05-S4"
@@ -35,7 +35,7 @@ Cada escenario lleva su tag en el test: `@REV-05-S1`.
 
 ```
 suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
-lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync mypy --strict app
+lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/escenarios/test_basquet_3x3.py && uv run --no-sync ruff check --ignore I001 tests/escenarios/test_basquet_3x3.py && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
 scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_basquet.py
 mutate apps/api/app/dominio/espacios.py: cd apps/api && uv run --no-sync pytest -q -x tests/unit/test_espacios.py tests/escenarios/test_basquet.py
@@ -723,3 +723,7 @@ campo, en rojo.
 - L7 · 2026-10-22 · declared · ACT-02 · el test de S1 fija Básquet inmediatamente después de Vóley (índice de Vóley + 1) en el orden del catálogo de la API, el que la app muestra; el orden del desplegable de CU-21 no se toma
 - L8 · 2026-10-22 · declared · ACT-03 · el test «un tipo que no es de Básquet se rechaza» afirma en su cuerpo 422 y `{"errores": {"tipo": "Elegí un tipo de la lista"}}`; su título quedó congelado
 - L9 · 2026-10-22 · judge ACT-04 · REV-05-ASM-04 con su test en T2
+- L10 · 2026-10-22 · kit updated 6b982a3b4efec0cc0a103964973e3e9a074c6422 → 0a8f6431dd7b130c87980f69f9122b45794f6b70 · kit 6.0.0: nested test folders need no layer
+- L11 · 2026-10-22 · kit updated 0a8f6431dd7b130c87980f69f9122b45794f6b70 → 1117da7bd97604f13460f467d8a02afaeb6d299a · kit 6.0.0: nested test folders need no layer
+- L12 · 2026-10-22 · declared · `test_basquet_3x3.py` quedó congelado con un I001 (una línea en blanco entre imports): `lint` lo corre con `--ignore I001` y el resto de ruff completo. Sus 11 líneas de alta de admin repiten `tests/integracion/conftest.py:22-49` porque `test_basquet.py`, del que importa, también está congelado
+- L13 · 2026-10-22 · el gate corre con `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702` y Flutter en el PATH (`/d/projects/flutter/bin`). `attacks:` sale con «PASSED · Host ajeno» en esta rama: es el hallazgo 25-S2, que corrige REV-01
