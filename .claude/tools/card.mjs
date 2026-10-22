@@ -18,7 +18,7 @@ export const isProductionPath = (root, path) => {
   const rel = relative(root, path).split(sep).join('/');
   return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel) && !NOT_PRODUCTION.test(rel);
 };
-export const NOT_PRODUCTION = /^(specs|\.claude|\.specify|e2e|test|tests|scripts|docs)\/|\.(md|json|ya?ml|lock)$|(^|\/)[^/]*\.(test|spec)\.|^\.|(^|\/)(playwright|vitest|jest|eslint|tsconfig|jsconfig)[^/]*$|(^|\/)design\/components\/(serve\.mjs|gallery\.html)$/;
+export const NOT_PRODUCTION = /^(specs|\.claude|\.specify|scripts|docs)\/|(^|\/)(e2e|tests?|__tests__)\/|\.(md|json|ya?ml|lock)$|(^|\/)[^/]*\.(test|spec)\.|(^|\/)(test_[^/]*|[^/]*_test|conftest)\.py$|_test\.go$|^\.|(^|\/)(playwright|vitest|jest|eslint|tsconfig|jsconfig)[^/]*$|(^|\/)design\/components\/(serve\.mjs|gallery\.html)$/;
 export const IS_CODE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php)$/;
 export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.py$|_test\.(py|go)$|Tests?\.(cs|java|kt)$|\.feature$/;
 

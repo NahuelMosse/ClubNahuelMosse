@@ -75,12 +75,8 @@ export const skips = (name, input, card, hookUrl) => {
         const found = cardOf();
         return !found?.card || existsSync(join(found.card, 'closing.md')) || !['card.md', 'plan.md'].some((f) => existsSync(join(found.card, f)));
       }
-      case 'context-cap': {
-        if (input.agent_id) return !CAPPED.has(input.agent_type);
-        if (!input.transcript_path || !existsSync(input.transcript_path)) return true;
-        const found = cardOf();
-        return !found || existsSync(join(found.card, 'closing.md'));
-      }
+      // The main thread is never capped.
+      case 'context-cap': return !input.agent_id || !CAPPED.has(input.agent_type);
       // Only a subagent has turns; the main thread never has an `agent_id`.
       case 'turn-budget': return !input.agent_id;
       case 'require-at-close': {

@@ -21,7 +21,7 @@
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { active } from './kit.mjs';
+import { active, lensesOff } from './kit.mjs';
 import { importersOf } from './importers.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, fileMapLines, git, namedIn } from './card.mjs';
 import { AUTH_OR_PAYMENT, RISK_WORDS, hasTasksSection, readCard, requirementOf, sectionOf, tasksOf } from './card-doc.mjs';
@@ -79,6 +79,12 @@ export const risk = (root, cardArg) => {
   try { securityL2On = active(root).on.has('security-l2'); } catch { /* a repo without the kit's manifest has no module on */ }
   const files = [...new Set(tasks.flatMap((t) => t.files))];
   const result = classify({ files, taskCount: tasks.length, text, root, securityL2On });
+  // A lens whose instruments belong to a profile that is off is not asked for; the card says so and the close lists it.
+  const off = lensesOff(root).filter((x) => result.lenses.includes(x.lens));
+  if (off.length) {
+    result.lenses = result.lenses.filter((l) => !off.some((x) => x.lens === l));
+    result.lensesOff = off;
+  }
   const gaps = planProblems(doc, { cardDir, lenses: result.lenses, root });
   if (gaps.length) return { code: 3, message: planMessage(gaps) };
   writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`);
@@ -117,11 +123,20 @@ export const escalate = (root, cardArg) => {
     if (RANK[found.review] > RANK[review] || found.lenses.some((l) => !lenses.has(l)))
       raise(found.review, `${outside.length > 1 ? `${first} and ${outside.length - 1} more` : first} outside \`## Tasks\` bring ${found.modules.join(', ') || 'risk'}`, found.lenses);
   }
+  // A lens that belongs to a profile that is off is not added: it goes to `lensesOff`, as at the first classification.
+  const off = lensesOff(root).filter((x) => lenses.has(x.lens));
+  for (const x of off) lenses.delete(x.lens);
+  const known = frozen.lensesOff ?? [];
+  const newOff = off.filter((x) => !known.some((k) => k.lens === x.lens));
   const raised = RANK[review] > RANK[frozen.review] || [...lenses].some((l) => !frozen.lenses.includes(l));
+  if (newOff.length && !raised) {
+    writeFileSync(out, `${JSON.stringify({ ...frozen, lensesOff: [...known, ...newOff] }, null, 2)}\n`);
+    return { code: 0, escalated: frozen.escalated ?? null, line: `risk: ${newOff.map((x) => x.lens).join(', ')} needs the ${newOff.map((x) => x.profile).join(', ')} profile, which is off; listed in lensesOff` };
+  }
   if (!raised && !frozen.escalated) return { code: 0, escalated: null, line: 'risk: the diff stays inside the plan; the classification does not change' };
   const escalated = { review, lenses: [...lenses], why: [...new Set([...(current.why ?? []), ...why])] };
   const same = JSON.stringify(escalated) === JSON.stringify(frozen.escalated);
-  if (!same && raised) writeFileSync(out, `${JSON.stringify({ ...frozen, escalated }, null, 2)}
+  if (!same && raised) writeFileSync(out, `${JSON.stringify({ ...frozen, ...(newOff.length ? { lensesOff: [...known, ...newOff] } : {}), escalated }, null, 2)}
 `);
   return { code: 0, escalated: frozen.escalated ?? (raised ? escalated : null), line: `risk escalated by the diff: ${review} · lenses ${[...lenses].join(', ') || 'none'} · ${escalated.why.join('; ')}` };
 };

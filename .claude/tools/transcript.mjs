@@ -15,7 +15,8 @@ export const transcriptOf = (input) => {
   return join(dirname(main), basename(main, '.jsonl'), 'subagents', `agent-${input.agent_id}.jsonl`);
 };
 
-// The `usage` of the last assistant message that has one, or null.
+// The `usage` of the last assistant message that has one, or null. A compact boundary met first is null: the usage
+// before it measures the context that was compacted, not the one in use.
 export const lastUsage = (file) => {
   const fd = openSync(file, 'r');
   try {
@@ -26,6 +27,9 @@ export const lastUsage = (file) => {
     const lines = buffer.toString('utf8').split('\n');
     if (size > length) lines.shift();
     for (const line of lines.reverse()) {
+      if (line.includes('"compact_boundary"')) {
+        try { if (JSON.parse(line).subtype === 'compact_boundary') return null; } catch { /* a half-written line */ }
+      }
       if (!line.includes('"usage"')) continue;
       let entry;
       try { entry = JSON.parse(line); } catch { continue; }

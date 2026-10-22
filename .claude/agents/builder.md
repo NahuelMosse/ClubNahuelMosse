@@ -24,7 +24,7 @@ path of `specs/<card>/card.md`, your task IDs with their `S#`, and the gate comm
    - `visual`: one steps file and one `probe <state>: node .claude/tools/app.mjs probe <steps>.json --axe --contrast "<status selectors>" --out .validation/probe/<state>`
      line for **each state `## Specs` names** (`state: …`), the transient ones too (sending, loading), with the route held
      (`--route "POST /x=hold"`) so the state stays on screen while contrast and axe are taken.
-   - `contract`: `attacks: node .claude/tools/attack.mjs <url> --json --body-limit <bytes the card sets> --write "POST /path a=1" --read "/path"`;
+   - `contract` (profile backend): `attacks: node .claude/tools/attack.mjs <url> --json --body-limit <bytes the card sets> --write "POST /path a=1" --read "/path"`;
      the tool also tries a body that never ends, a multibyte body above the limit, `//` and invalid UTF-8.
 5. **Log.** Append to the end of `## Log` of card.md one line per task, `- L<n> · <date> · T<n> · <evidence: the command and what it
    returned>`. `## Log` only grows; no other heading, and never `L1`, is touched.

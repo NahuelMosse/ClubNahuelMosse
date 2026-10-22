@@ -12,7 +12,7 @@ Card: `$1`.
    - header: `status: proposed`, `cap: <N> min` (the time the card is worth; `time-cap` warns at 70 % and stops at 100 %),
      `sources:` never empty, `not_read:` present;
    - `## Specs`: every sentence or criterion of the card as `S<n> · "<verbatim quote>" · acceptance: …`; an assumption as
-     `$1-ASM-NN · <the cheapest reading to undo> · S<n>`; a `## Look` `ref:` comes from the card, the repo's design system or `.claude/reference/design-refs.md`, never «the simplest»: it is an `ASM` with the reference of level;
+     `$1-ASM-NN · <the cheapest reading to undo> · S<n>`; a `## Look` `ref:` comes from the card, the repo's design system or `.claude/reference/design-refs.md` (profile web), never «the simplest»: it is an `ASM` with the reference of level;
    - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`, one line per group of files; every production file carries `(rule)`, `(data)` or `(presentation)`, and every `S#` and `ASM` its planned test;
    - `## Gate`: the commands `verify.mjs` runs, one per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), plus what the plan already knows: a `probe <state>:` for each state `## Specs` names, `attacks:` with the limits the card says, `migrate-upgrade:` if it touches data;
    - before writing the Log: `Grep` the tags `@<ID>-S` of the earlier cards in the files the Tasks touch; each frozen test the new card contradicts goes in `## Log` as `replaces: <file> "<test>" · <why> · by: <file> "<test>"`;

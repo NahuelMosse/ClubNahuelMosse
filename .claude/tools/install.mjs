@@ -31,7 +31,7 @@ import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import { detectStack } from './doctor.mjs';
-import { GRADES, coreFiles, detectE2e, filesOfModule, listKit, openCard, readManifest, readModules, recordedGrade, writeManifest } from './kit.mjs';
+import { GRADES, coreFiles, detectE2e, filesOfModule, filesOfProfile, listKit, mcpAdd, openCard, readManifest, readModules, recordedGrade, writeManifest } from './kit.mjs';
 import { cardIdOf, kitLogLine } from './card-doc.mjs';
 import { describe, detect, evidenceOf } from './signals.mjs';
 
@@ -54,7 +54,7 @@ const parse = (argv) => {
     const a = argv[i];
     if (['--plan', '--update', '--adopt', '--major', '--help'].includes(a)) o[a.slice(2)] = true;
     else if (a === '--off') o.off.push(argv[++i] ?? '');
-    else if (['--target', '--modules', '--stack', '--e2e', '--from', '--card-open', '--rule-paths', '--grade', '--grade-reason'].includes(a)) o[a.slice(2).replace(/-(\w)/g, (_, c) => c.toUpperCase())] = argv[++i];
+    else if (['--target', '--modules', '--profiles', '--stack', '--e2e', '--from', '--card-open', '--rule-paths', '--grade', '--grade-reason'].includes(a)) o[a.slice(2).replace(/-(\w)/g, (_, c) => c.toUpperCase())] = argv[++i];
     else fail(`Unknown argument ${a}. See the header of install.mjs.`);
   }
   return o;
@@ -96,10 +96,56 @@ const render = (rel, text, { e2e, rulePaths }) => {
   return text;
 };
 
+const FRONT = /"(react|react-dom|vue|svelte|@angular\/core|solid-js|preact|next|nuxt|vite|astro|lit)"\s*:/;
+const read = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
+
+// The profiles the repo's files point to: a front framework or an index.html (web), routes, a listener or data
+// (backend), a Flutter pubspec (flutter).
+const suggestProfiles = (target, seen) => {
+  const out = [];
+  const html = ['index.html', 'public/index.html', 'src/index.html'].some((f) => existsSync(join(target, f)));
+  if (FRONT.test(read(join(target, 'package.json'))) || html || seen.ui?.evidence.length) out.push('web');
+  if (['api', 'data'].some((m) => seen[m]?.evidence.length)) out.push('backend');
+  if (/^flutter:/m.test(read(join(target, 'pubspec.yaml')))) out.push('flutter');
+  return out;
+};
+
+// `--profiles web,backend`: the modules of those profiles are on, a module with a signal that no profile
+// owns is on, and the rest is off with the reason that follows from the choice.
+const applyProfiles = (o, map, target) => {
+  const names = o.profiles.split(',').map((s) => s.trim()).filter(Boolean);
+  const all = map.profiles ?? {};
+  const unknown = names.filter((n) => !all[n]);
+  if (unknown.length) fail(`Unknown profile(s): ${unknown.join(', ')}. Profiles: ${Object.keys(all).join(', ')}.`);
+  const planned = names.filter((n) => all[n].status === 'planned');
+  if (planned.length) fail(`Profile ${planned.join(', ')} is planned, not available. Nothing was written.`);
+  const seen = survey(target, map);
+  const owned = new Map(Object.entries(all).flatMap(([p, d]) => [...d.modules, ...d.modulesIfSignal, ...d.optInModules].map((m) => [m, p])));
+  const optIn = new Set(Object.values(all).flatMap((d) => d.optInModules));
+  const on = new Set(o.modules === undefined ? [] : o.modules.split(',').map((s) => s.trim()).filter(Boolean));
+  for (const n of names) {
+    for (const m of all[n].modules) on.add(m);
+    for (const m of all[n].modulesIfSignal) if (seen[m]?.evidence.length) on.add(m);
+  }
+  for (const [m, s] of Object.entries(seen)) if (!owned.has(m) && !optIn.has(m) && s.evidence.length) on.add(m);
+  const named = new Set(o.off.map((x) => x.split('=')[0].trim()));
+  for (const m of Object.keys(seen)) {
+    if (on.has(m) || named.has(m)) continue;
+    const p = owned.get(m);
+    o.off.push(`${m}=${optIn.has(m) ? 'opt-in module, not chosen at install' : p && !names.includes(p) ? `profile ${p} not chosen at install` : p ? 'no signal found in the repo' : 'not chosen at install: no signal found in the repo'}`);
+  }
+  o.modules = [...on].filter((m) => seen[m]).join(',');
+  return names;
+};
+
+// The profiles an install or update leaves on: the recorded ones, or, with none recorded, those with a module on.
+const profilesOn = (map, on, recorded) => Object.entries(map.profiles ?? {})
+  .filter(([n, p]) => p.status !== 'planned' && (recorded ? recorded[n]?.state === 'on' : p.modules.some((m) => on.has(m)))).map(([n]) => n);
+
 // Every file that goes to the target for a choice of modules, with its rendered content.
-const bundle = (source, map, on, stack, settings) => {
+const bundle = (source, map, on, stack, settings, profiles = []) => {
   const all = listKit(source);
-  const files = [...coreFiles(map, all, stack), ...[...on].flatMap((name) => filesOfModule(map, name, all))];
+  const files = [...coreFiles(map, all, stack), ...[...on].flatMap((name) => filesOfModule(map, name, all)), ...profiles.flatMap((p) => filesOfProfile(map, p, all))];
   return [...new Set(files)].sort().map((rel) => {
     const raw = readFileSync(join(source, rel));
     const isText = /\.(md|json|mjs|js|ya?ml|txt|css|html)$/.test(rel);
@@ -174,6 +220,9 @@ const install = (o, target, map) => {
   const seen = survey(target, map);
   const lines = listLines(map, seen);
   const decided = decide(o, map, seen);
+  const suggested = suggestProfiles(target, seen);
+  if (o.profiles === undefined && Object.keys(map.profiles ?? {}).length && (o.plan || decided !== null))
+    console.log(`Profiles the repo points to: ${suggested.join(', ') || 'none'}. Choose with --profiles <list>; without the flag the modules decide, as before.`);
   if (o.plan || decided === null) {
     console.log(`Modules of the kit (${map.kit}); [x] means the repo shows a signal for it:\n${lines.join('\n')}\n`);
     if (o.plan) process.exit(0);
@@ -211,6 +260,7 @@ const main = async () => {
   if (o.update) return update(o, target, source, map);
 
   if (readManifest(target) && !o.adopt) fail('This repo already has .claude/kit.json: use --update, or `kit.mjs on|off` for a module.');
+  const chosenProfiles = o.profiles === undefined ? null : applyProfiles(o, map, target);
   let args = o;
   let result = install(args, target, map);
   if (result === null) { args = { ...o, ...(await choose(map, survey(target, map))) }; result = install(args, target, map); }
@@ -228,7 +278,8 @@ const main = async () => {
     e2e: o.e2e ?? (o.adopt && existsSync(join(target, readE2e(target) ?? '\0')) ? readE2e(target) : null) ?? detectE2e(target) ?? (o.adopt ? readE2e(target) : null) ?? readE2e(source),
     rulePaths: { ...readRulePaths(source), ...(o.adopt ? readRulePaths(target) : {}), ...(o.rulePaths ? Object.fromEntries(o.rulePaths.split(';').map((p) => { const [k, v] = p.split('='); return [k, v.split(',')]; })) : {}) },
   };
-  const files = bundle(source, map, on, stack, settings);
+  const profiles = profilesOn(map, on, chosenProfiles ? Object.fromEntries(chosenProfiles.map((n) => [n, { state: 'on' }])) : null);
+  const files = bundle(source, map, on, stack, settings, profiles);
   const manifest = {
     kit: map.kit, stack, e2e: settings.e2e, rulePaths: settings.rulePaths,
     source: { path: source, commit: commitOf(source) },
@@ -237,7 +288,7 @@ const main = async () => {
   };
   const grade = gradeChoice(o, map) ?? (o.adopt ? readManifest(target)?.grade : undefined);
   if (grade) manifest.grade = grade;
-  const owner = (rel) => Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core';
+  const owner = (rel) => { const p = Object.keys(map.profiles ?? {}).find((n) => filesOfProfile(map, n, [rel]).length); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
   const local = [];
   for (const { rel, content } of files) {
     const path = join(target, rel);
@@ -248,6 +299,14 @@ const main = async () => {
   }
   putClaudeMd(source, target);
   ensureIgnored(target);
+  if (chosenProfiles) {
+    manifest.profiles = {};
+    for (const [n, p] of Object.entries(map.profiles).filter(([, d]) => d.status !== 'planned')) {
+      if (!profiles.includes(n)) { manifest.profiles[n] = { state: 'off', reason: 'not chosen at install', by: 'person', at: today() }; continue; }
+      const mcp = mcpAdd(target, p.mcp);
+      manifest.profiles[n] = { state: 'on', since: `install ${today()}`, reason: 'chosen at install', ...(Object.keys(mcp).length ? { mcp } : {}) };
+    }
+  }
   writeManifest(target, manifest);
   const off = Object.keys(decided).filter((n) => decided[n].state === 'off');
   console.log(`${o.adopt ? 'Adopted' : 'Installed'} kit ${map.kit} in ${target}: ${files.length} files; on: ${[...on].join(', ') || 'none'}; off: ${off.join(', ') || 'none'}; grade: ${recordedGrade(manifest) ?? 'production'}.`);
@@ -276,9 +335,17 @@ const update = (o, target, source, map) => {
   const on = new Set(Object.entries(map.modules).filter(([n, m]) => m.installable !== false && state.modules[n]?.state !== 'off').map(([n]) => n));
   for (const n of on) state.modules[n] ??= { state: 'on', version: map.modules[n].version, since: `update ${today()}` };
   const settings = { e2e: manifest.e2e, rulePaths: manifest.rulePaths };
-  const files = bundle(source, map, on, manifest.stack, settings);
+  const profiles = profilesOn(map, on, manifest.profiles);
+  const files = bundle(source, map, on, manifest.stack, settings, profiles);
   const wanted = new Set(files.map((f) => f.rel));
-  const owner = (rel) => Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core';
+  const owner = (rel) => { const p = Object.keys(map.profiles ?? {}).find((n) => filesOfProfile(map, n, [rel]).length); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
+  // A repo that recorded no profiles gets them from its modules; the mcp entries of the ones on are written, never over what is there.
+  state.profiles = { ...(manifest.profiles ?? {}) };
+  for (const [n, p] of Object.entries(map.profiles ?? {}).filter(([n2, d]) => d.status !== 'planned' && !(manifest.profiles && !profiles.includes(n2)))) {
+    if (!profiles.includes(n)) { state.profiles[n] = { state: 'off', reason: 'no module of the profile was on at update', by: 'derived', at: today() }; continue; }
+    const mcp = mcpAdd(target, p.mcp);
+    state.profiles[n] = { ...(state.profiles[n] ?? { since: `update ${today()}`, reason: 'derived from the modules that were on' }), state: 'on', ...(Object.keys(mcp).length ? { mcp: { ...(state.profiles[n]?.mcp ?? {}), ...mcp } } : {}) };
+  }
   const replaced = [];
   const incoming = [];
   for (const { rel, content } of files) {

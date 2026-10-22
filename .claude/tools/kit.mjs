@@ -8,6 +8,11 @@
 //                                        a signal that appeared after the decision does not change it
 //   kit.mjs grade <poc|mvp|production> --reason "…"
 //                                        how much the bar asks; it only goes up; a person, no open card
+//   kit.mjs profile <on|off> <web|backend|flutter> --reason "…"
+//                                        a profile is a package of modules, tools, agents, references and extras
+//                                        (the skill and the MCP server of web) for one environment; on turns its
+//                                        modules on and copies its files, off turns them off and removes the files
+//                                        that are as installed; a person, no open card; flutter is planned: exit 2
 //   kit.mjs repair                       copies what an active module lacks
 //   kit.mjs e2e <path>                   the folder of the scenario tests, in kit.json and in METHOD.md; allowed
 //                                        with a card open, because a wrong folder is found while one is
@@ -161,6 +166,37 @@ export const offCriteria = (root) => {
   return new Set([...off.keys()].flatMap((name) => map.modules[name].criteria).concat([...exempt.criteria]));
 };
 
+// The profiles and their state: `on`, `off` (with its reason), or `planned` (declared, not available). A repo whose
+// kit.json has no `profiles` (installed before them) counts a profile as on when one of its modules is on, so an
+// update never turns one off in silence; `derived` marks that case.
+export const profileStates = (root) => {
+  const { on, map, manifest } = active(root);
+  const out = {};
+  for (const [name, p] of Object.entries(map?.profiles ?? {})) {
+    const rec = manifest?.profiles?.[name];
+    if (p.status === 'planned') out[name] = { state: 'planned' };
+    else if (rec?.state === 'off' && String(rec.reason ?? '').trim()) out[name] = { ...rec, state: 'off' };
+    else if (rec?.state === 'on') out[name] = { ...rec, state: 'on' };
+    else if (!manifest?.profiles) out[name] = { state: p.modules.some((m) => on.has(m)) ? 'on' : 'off', derived: true, reason: 'no profile recorded: derived from the modules that are on' };
+    else out[name] = { state: 'off', reason: 'not recorded' };
+  }
+  return out;
+};
+
+// The lenses a card needs an instrument of a profile for, and that profile is off: `{ lens, profile, why }`.
+// Only a repo that records its profiles decides this; one without them keeps every lens, as it always did.
+export const lensesOff = (root) => {
+  let map; let manifest; let states;
+  try { ({ map, manifest } = active(root)); states = profileStates(root); } catch { return []; }
+  if (!manifest?.profiles || !map?.profiles) return [];
+  const need = {};
+  for (const [name, p] of Object.entries(map.profiles)) for (const lens of Object.keys(p.lenses ?? {})) (need[lens] ??= []).push(name);
+  return Object.entries(need).filter(([, names]) => !names.some((n) => states[n]?.state === 'on')).map(([lens, names]) => {
+    const profile = names.find((n) => map.profiles[n].status !== 'planned') ?? names[0];
+    return { lens, profile, why: states[profile]?.reason ?? 'profile off' };
+  });
+};
+
 const globRe = (g) => new RegExp(`^${g.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*\*/g, '\u0000').replace(/\*/g, '[^/]*').replaceAll('\u0000', '.*')}$`);
 
 const SKIP = new Set(['worktrees', '.kit-incoming', '.validation', 'node_modules']);
@@ -178,12 +214,19 @@ export const listKit = (root) => {
   return out.sort();
 };
 
-export const filesOfModule = (map, name, all) => {
-  const globs = map.modules[name].files;
+const matching = (globs, all) => {
   const include = globs.filter((g) => !g.startsWith('!')).map(globRe);
   const exclude = globs.filter((g) => g.startsWith('!')).map((g) => globRe(g.slice(1)));
   return all.filter((f) => include.some((r) => r.test(f)) && !exclude.some((r) => r.test(f)));
 };
+
+export const filesOfModule = (map, name, all) => matching(map.modules[name].files, all);
+
+// The files only a profile brings (its tools, agent, references, skill, document).
+export const filesOfProfile = (map, name, all) => matching(map.profiles?.[name]?.files ?? [], all);
+
+// The profile that owns a file: none means a module or the base.
+export const profileOfFile = (map, file) => Object.keys(map?.profiles ?? {}).find((p) => filesOfProfile(map, p, [file]).length) ?? null;
 
 // Of the core's stack profiles, only the chosen one stays; the one a module owns comes with the module.
 export const forStack = (map, files, stack) => {
@@ -197,11 +240,24 @@ export const modulesOfFile = (map, file, all = [file]) =>
 
 // The core: everything no module owns; of the stack profiles, only the chosen one.
 export const coreFiles = (map, all, stack) => {
-  const owned = new Set(Object.keys(map.modules).flatMap((name) => filesOfModule(map, name, all)));
+  const owned = new Set([
+    ...Object.keys(map.modules).flatMap((name) => filesOfModule(map, name, all)),
+    ...Object.keys(map.profiles ?? {}).flatMap((name) => filesOfProfile(map, name, all)),
+  ]);
   return forStack(map, all.filter((f) => !owned.has(f)), stack);
 };
 
 export const sha256 = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
+
+// Removes an installed file and the folders it leaves empty, up to the root of the repo.
+const removeInstalled = (root, file) => {
+  rmSync(join(root, file));
+  for (let dir = dirname(file); dir !== '.' && dir !== ''; dir = dirname(dir)) {
+    const abs = join(root, dir);
+    if (!existsSync(abs) || readdirSync(abs).length) break;
+    rmSync(abs, { recursive: true });
+  }
+};
 
 // Copies `files` from one repo to another. A file already there that differs from the source is a
 // local edition: it is kept and listed, never overwritten, unless `overwrite`.
@@ -312,6 +368,38 @@ const appendAssumption = (cardDir, what) => {
   return line;
 };
 
+// The repo's `.mcp.json`: a profile adds its servers without overwriting one that is already there, and takes
+// them out again only while they are as it wrote them. A file that does not parse is left alone.
+export const MCP_JSON = '.mcp.json';
+export const mcpAdd = (root, entries) => {
+  const added = {};
+  if (!Object.keys(entries ?? {}).length) return added;
+  const path = join(root, MCP_JSON);
+  let doc = {};
+  if (existsSync(path)) { try { doc = JSON.parse(readFileSync(path, 'utf8')); } catch { return added; } }
+  doc.mcpServers ??= {};
+  for (const [name, entry] of Object.entries(entries)) if (!(name in doc.mcpServers)) { doc.mcpServers[name] = entry; added[name] = entry; }
+  if (Object.keys(added).length) writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
+  return added;
+};
+
+export const mcpRemove = (root, installed) => {
+  const removed = [];
+  const kept = [];
+  const path = join(root, MCP_JSON);
+  if (!Object.keys(installed ?? {}).length || !existsSync(path)) return { removed, kept };
+  let doc;
+  try { doc = JSON.parse(readFileSync(path, 'utf8')); } catch { return { removed, kept: Object.keys(installed) }; }
+  for (const [name, entry] of Object.entries(installed)) {
+    if (!doc.mcpServers || !(name in doc.mcpServers)) continue;
+    if (JSON.stringify(doc.mcpServers[name]) === JSON.stringify(entry)) { delete doc.mcpServers[name]; removed.push(name); } else kept.push(name);
+  }
+  if (!removed.length) return { removed, kept };
+  if (!Object.keys(doc.mcpServers).length) delete doc.mcpServers;
+  if (Object.keys(doc).length) writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`); else rmSync(path);
+  return { removed, kept };
+};
+
 const fail = (message) => {
   console.error(message);
   process.exit(2);
@@ -345,7 +433,13 @@ export const status = (root) => {
   const found = detect(root);
   const g = recordedGrade(manifest) ? manifest.grade : null;
   const head = g ? `grade · ${grade} (${g.at ?? 'undated'}) · ${g.reason}` : `grade · ${grade} (default)`;
-  return [head, ...known.map((name) => {
+  const states = profileStates(root);
+  const profileLines = Object.entries(states).map(([name, s]) => {
+    if (s.state === 'planned') return `profile ${name} · planned, not available`;
+    if (s.state === 'on') return `profile ${name} · on${s.derived ? ' (derived from its modules)' : ''}`;
+    return `profile ${name} · off${s.derived ? ' (derived from its modules)' : ` by ${s.by ?? 'decision'} (${s.at ?? 'undated'})`} · ${s.reason}`;
+  });
+  return [head, ...profileLines, ...known.map((name) => {
     const seen = evidenceOf(found, map.modules[name].signals).map((e) => describe(found, e));
     const now = seen.length ? ` · signals now: ${seen.join('; ')}` : '';
     if (on.has(name)) return `${name} · on${now}`;
@@ -437,7 +531,7 @@ const turnOff = (root, name, reason) => {
   for (const [f, rec] of Object.entries(manifest.files ?? {}).filter(([, r]) => r.module === name)) {
     const path = join(root, f);
     if (!existsSync(path)) { delete manifest.files[f]; continue; }
-    if (sha256(path) === rec.sha256) { rmSync(path); removed.push(f); delete manifest.files[f]; } else modified.push(f);
+    if (sha256(path) === rec.sha256) { removeInstalled(root, f); removed.push(f); delete manifest.files[f]; } else modified.push(f);
   }
   const found = detect(root);
   manifest.modules[name] = {
@@ -446,6 +540,66 @@ const turnOff = (root, name, reason) => {
   };
   writeManifest(root, manifest);
   console.log(`${name} is off: ${removed.length} file(s) removed.${modified.length ? ` Modified, not touched: ${modified.join(', ')}.` : ''}`);
+};
+
+const profileArg = (map, name) => {
+  const names = Object.keys(map?.profiles ?? {});
+  if (!name || !names.includes(name)) fail(`Unknown profile “${name ?? ''}”. Profiles: ${names.join(', ') || 'none'}.`);
+  return map.profiles[name];
+};
+
+// What every profile is now, written into kit.json the first time a profile changes, so the others keep their state.
+const recordProfiles = (root, manifest) => {
+  if (manifest.profiles) return;
+  manifest.profiles = Object.fromEntries(Object.entries(profileStates(root)).filter(([, s]) => s.state !== 'planned')
+    .map(([n, s]) => [n, s.state === 'on' ? { state: 'on', since: 'recorded from its modules' } : { state: 'off', reason: s.reason, by: 'derived', at: today() }]));
+};
+
+const turnProfile = (root, mode, name, reason) => {
+  const state = requireManifest(root);
+  if (!['on', 'off'].includes(mode)) fail('kit.mjs profile <on|off> <web|backend|flutter> --reason "…"');
+  const installed = profileArg(state.map, name);
+  if (installed.status === 'planned') fail(`Profile ${name} is planned, not available: it is declared in modules.json and has no files yet. Nothing changed.`);
+  if (mode === 'off' && process.env.SDD_UNATTENDED === '1') fail('Unattended nobody turns a profile off: that decision is a person\'s. `kit.mjs profile on <profile>` is the way to resolve it.');
+  if (!reason) fail(`Turning a profile ${mode} needs its reason: \`kit.mjs profile ${mode} ${name} --reason "<why>"\`. It is written in the manifest and repeated in every closing.`);
+  if (openCard(root)) fail('There is a card open: a profile changes between cards, so the bar the card was planned with does not change under it. Close the card first.');
+  const source = sourceOf(root, state.manifest);
+  const sourceMap = readModules(source);
+  const p = (mode === 'on' ? sourceMap : state.map).profiles?.[name] ?? installed;
+  recordProfiles(root, state.manifest);
+  writeManifest(root, state.manifest);
+  if (mode === 'on') {
+    const found = detect(root);
+    for (const m of [...p.modules, ...p.modulesIfSignal.filter((x) => evidenceOf(found, sourceMap.modules[x].signals).length)]) turnOn(root, m);
+    const manifest = readManifest(root);
+    const files = filesOfProfile(sourceMap, name, listKit(source));
+    const { copied, kept } = copyFiles(source, root, files);
+    manifest.files ??= {};
+    for (const f of [...copied, ...files.filter((x) => !kept.includes(x) && existsSync(join(root, x)))]) manifest.files[f] = { module: `profile:${name}`, sha256: sha256(join(root, f)) };
+    const mcp = mcpAdd(root, p.mcp);
+    manifest.profiles[name] = { state: 'on', since: `kit.mjs profile on ${today()}`, reason, ...(Object.keys(mcp).length ? { mcp } : {}) };
+    writeManifest(root, manifest);
+    console.log(`Profile ${name} is on: ${copied.length} file(s) copied${kept.length ? `; ${kept.length} already there with local changes, left as they are: ${kept.join(', ')}` : ''}${Object.keys(mcp).length ? `; ${MCP_JSON}: ${Object.keys(mcp).join(', ')} added` : ''}.`);
+    return;
+  }
+  const { off, manifest: before } = active(root);
+  for (const m of [...p.modules, ...p.modulesIfSignal, ...p.optInModules]) {
+    if (!state.known.includes(m) || off.has(m)) continue;
+    if (p.optInModules.includes(m) && before.modules?.[m]?.state !== 'on') continue;
+    turnOff(root, m, `profile ${name} off: ${reason}`);
+  }
+  const manifest = readManifest(root);
+  const removed = [];
+  const modified = [];
+  for (const [f, rec] of Object.entries(manifest.files ?? {}).filter(([, r]) => r.module === `profile:${name}`)) {
+    const path = join(root, f);
+    if (!existsSync(path)) { delete manifest.files[f]; continue; }
+    if (sha256(path) === rec.sha256) { removeInstalled(root, f); removed.push(f); delete manifest.files[f]; } else modified.push(f);
+  }
+  const mcp = mcpRemove(root, manifest.profiles?.[name]?.mcp);
+  manifest.profiles[name] = { state: 'off', reason, by: 'person', at: today() };
+  writeManifest(root, manifest);
+  console.log(`Profile ${name} is off: ${removed.length} file(s) removed.${modified.length ? ` Modified, not touched: ${modified.join(', ')}.` : ''}${mcp.removed.length ? ` ${MCP_JSON}: ${mcp.removed.join(', ')} removed.` : ''}${mcp.kept.length ? ` ${MCP_JSON}: ${mcp.kept.join(', ')} changed since it was installed, left as it is.` : ''}`);
 };
 
 const confirmOff = (root, name, reason) => {
@@ -489,10 +643,11 @@ const repair = (root) => {
   const wanted = [
     ...coreFiles(sourceMap, all, state.manifest.stack),
     ...[...state.on].flatMap((name) => filesOfModule(sourceMap, name, all)),
+    ...Object.entries(profileStates(root)).filter(([, s]) => s.state === 'on').flatMap(([name]) => filesOfProfile(sourceMap, name, all)),
   ];
   const { copied, kept } = copyFiles(source, root, wanted.filter((f) => !existsSync(join(root, f))));
   state.manifest.files ??= {};
-  for (const f of copied) state.manifest.files[f] = { module: modulesOfFile(sourceMap, f, all)[0] ?? 'core', sha256: sha256(join(root, f)) };
+  for (const f of copied) state.manifest.files[f] = { module: modulesOfFile(sourceMap, f, all)[0] ?? (profileOfFile(sourceMap, f) ? `profile:${profileOfFile(sourceMap, f)}` : 'core'), sha256: sha256(join(root, f)) };
   writeManifest(root, state.manifest);
   console.log(copied.length ? `Restored ${copied.length} missing file(s): ${copied.join(', ')}.` : 'Nothing is missing.');
   if (kept.length) console.log(`Left as they are: ${kept.join(', ')}.`);
@@ -507,9 +662,10 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     else if (command === 'off') turnOff(root, name, flag(rest, '--reason'));
     else if (command === 'confirm-off') confirmOff(root, name, flag(rest, '--reason'));
     else if (command === 'grade') turnGrade(root, name, flag(rest, '--reason'));
+    else if (command === 'profile') turnProfile(root, name, rest[0], flag(rest, '--reason'));
     else if (command === 'repair') repair(root);
     else if (command === 'e2e') setE2e(root, name);
-    else fail('kit.mjs status | on <module> | off <module> --reason "…" | confirm-off <module> --reason "…" | grade <poc|mvp|production> --reason "…" | repair | e2e <path>');
+    else fail('kit.mjs status | on <module> | off <module> --reason "…" | confirm-off <module> --reason "…" | grade <poc|mvp|production> --reason "…" | profile <on|off> <web|backend|flutter> --reason "…" | repair | e2e <path>');
   } catch (e) {
     fail(`kit.mjs failed: ${e.message}`);
   }

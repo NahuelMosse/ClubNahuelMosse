@@ -34,7 +34,7 @@ need to look for them here.
 | `.claude/templates/asvs-level-1.md` and `asvs-level-2.md` | **OWASP ASVS 5.0.0**, the level 1 requirements and those level 2 adds, unmodified, from the official CSV at `github.com/OWASP/ASVS` | **CC BY-SA 4.0** — if the text of the requirements is modified, the modified version is published under the same license |
 | `.claude/tools/mutate.mjs` | our own | — |
 | `.claude/tools/once.mjs` | our own | — |
-| `.claude/tools/attack.mjs` | our own | — |
+| `.claude/tools/attack.mjs` (profile backend) | our own | — |
 | The coverage and duplication thresholds of the gate (`stacks/`) | the **Sonar way** quality gate of SonarQube: no new issues, security hotspots reviewed, coverage of 80 % or more and duplication of 3 % or less over the new code | — |
 | The gate's static-analysis line with Semgrep | Semgrep Community Edition rules use the *Semgrep Rules License v1.0*: internal use, not for competing nor for a SaaS service | see the license before using it for a client |
 | The ladder of `.claude/rules/architecture.md` —reuse, standard library, platform, installed dependency— | the idea is from **Ponytail** (`github.com/DietrichGebert/ponytail`); the wording is our own and leaves out its testing doctrine | — |
@@ -52,6 +52,7 @@ from the upstream's repository data on 14/10/2026, and the project that installs
 |---|---|---|---|
 | `anatomy` | `wheresryan22/anatomy` (created 08/10/2026, v1.1.0) | MIT, © 2026 Ryan | `npx skills add wheresryan22/anatomy` [NV form]; pin the commit |
 | `diagram-design` | `cathrynlavery/diagram-design` | MIT | `npx skills add cathrynlavery/diagram-design` [NV form]; pin the commit |
+| `motion` | `motion-ai` 14.2.0 (`motiondivision/ai-kit`) | MIT, Matt Perry (declared in `package.json`; see `motion/PROVENANCE`) | manual copy, 22/10/2026; part of the `web` profile |
 | `archify` | `tt-a1i/archify` (v3.1.0) | MIT | `npx skills add tt-a1i/archify -g` |
 
 ## The rule
