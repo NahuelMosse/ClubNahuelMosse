@@ -1,0 +1,1 @@
+2026-10-21 · claude-opus-5-5 · cost not available · C:\Users\nahuelrecover\.claude\projects\D--desktop-folders-estudio-Universidad-de-moron-Electiva-general-app-tp\637d42d6-6fcc-4749-8d9a-fb63ddd17ac8.jsonl

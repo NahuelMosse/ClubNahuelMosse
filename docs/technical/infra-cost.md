@@ -1,6 +1,6 @@
 # Costo de la infraestructura · ClubNahuelMosse
 
-Modelo de costos de la API y su base. Hoy todo corre en los planes `free` de Render y cuesta USD 0 por mes; el modelo
+Describe la rama `kit-3`. Modelo de costos de la API y su base. Hoy todo corre en los planes `free` de Render y cuesta USD 0 por mes; el modelo
 dice cuánto costaría sostener la app en producción con los planes pagos más chicos y qué pasaría con diez veces el
 volumen. La arquitectura actual está en `docs/technical/system-design.md` (`## Infrastructure`); el hosting, en
 `docs/adr/0002-hosting-en-render.md`. Se actualiza en cada card que toca la infraestructura.

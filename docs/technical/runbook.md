@@ -1,6 +1,6 @@
 # Runbook · ClubNahuelMosse
 
-Para quien opera la API en Render y no la escribió. Frases cortas, comandos que se pegan, síntomas antes que causas. Lo que
+Describe la rama `kit-3`. Para quien opera la API en Render y no la escribió. Frases cortas, comandos que se pegan, síntomas antes que causas. Lo que
 no se ejecutó en Render dice `not verified`: el despliegue en Render no se hizo (escenario RNF-01-H06-01 saltado sin
 `API_URL_NUBE`, revisión «Cobertura sólo nominal»). La arquitectura está en `docs/technical/system-design.md`; los costos,
 en `docs/technical/infra-cost.md`.

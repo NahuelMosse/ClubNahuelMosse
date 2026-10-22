@@ -70,3 +70,4 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev07_app --json --no-ambient 
 - L4 · 2026-10-22 · judge ACT-01 a ACT-09 · se cierran con REV-07-ASM-09 a ASM-17 y sus tests en T1, T2 y T4
 - L5 · 2026-10-22 · declared · ACT-10 · el ID de cada supuesto es el `<card>-ASM-NN` del kit 5, que reemplaza a los SUP-NN que pedía el hallazgo 22; `fuentes:` y `no_leido:` son `sources:` y `not_read:` de cada card.md, y el test de ASM-02 exige los IDs `ASM-NN`
 - L6 · 2026-10-22 · declared · REV-07-ASM-11, REV-07-ASM-15, REV-07-ASM-16, REV-07-ASM-17 · «10», «12», «14» y «22» son números de otros supuestos y del hallazgo que se citan, y «cada requisito» cita S1; no son valores del comportamiento
+- L7 · 2026-10-22 · kit updated 6b982a3b4efec0cc0a103964973e3e9a074c6422 → 0a8f6431dd7b130c87980f69f9122b45794f6b70 · kit 6.0.0: nested test folders need no layer

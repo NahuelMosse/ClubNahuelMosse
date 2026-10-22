@@ -24,7 +24,7 @@ entorno del proceso: en el `.env` no tienen efecto.
 
 | Variable | Qué es |
 |---|---|
-| `DATABASE_URL` | Conexión a PostgreSQL, `postgresql+psycopg://usuario:contraseña@host:puerto/base`. Por defecto, `postgresql+psycopg://club:club@localhost:5432/club` |
+| `DATABASE_URL` | Conexión a PostgreSQL, `postgresql+psycopg://<usuario>:<contraseña>@host:puerto/base`. Por defecto, usuario, contraseña y base `club` en `localhost:5432` |
 | `FIREBASE_PROJECT_ID` | Identificador del proyecto de Firebase que emite los tokens |
 | `FIREBASE_API_KEY` | Clave web del proyecto; la API la usa para comprobar contraseñas. No hace falta con el emulador |
 | `URL_PUBLICA` | Dirección pública de esta API; los enlaces de los correos apuntan ahí |

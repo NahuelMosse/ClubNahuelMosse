@@ -48,7 +48,7 @@ Dentro de la API (`apps/api/app`): `dominio` (reglas puras), `aplicacion` (casos
 Motor: PostgreSQL con la extensión `btree_gist` (`migraciones/versions/0001_modelo_inicial.py:18`). Nueve tablas, creadas
 por las migraciones 0001 a 0007, y una vista, `reserva_con_estado`, que agrega `estado_actual` («completada» cuando una
 reserva activa ya terminó, `0001_modelo_inicial.py:187-195`). Las claves primarias son `id bigint GENERATED ALWAYS AS
-IDENTITY`. Las fechas son `timestamptz`; la zona del club es `America/Argentina/Buenos_Aires`
+IDENTITY`. Cada clave foránea apunta a `id` de otra tabla y los índices se nombran en cada tabla. Las fechas son `timestamptz`; la zona del club es `America/Argentina/Buenos_Aires`
 (`0001_modelo_inicial.py:14`).
 
 | Entity | Relations and cardinality | Owner module | Volume today | Growth per month |
@@ -89,7 +89,7 @@ Triggers comunes a `usuario`, `sede`, `espacio` y `reserva` (`0001_modelo_inicia
 (BEFORE DELETE, función `prohibir_borrado`: ningún `DELETE` pasa; las bajas son lógicas). El test
 `tests/integracion/test_restricciones.py:122` (`test_nada_se_borra`) lo verifica.
 
-**`usuario`** (`0001`, `0002`)
+#### `usuario` (`0001`, `0002`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -108,7 +108,7 @@ Triggers comunes a `usuario`, `sede`, `espacio` y `reserva` (`0001_modelo_inicia
 Índices: `usuario_correo_unico` (`lower(correo)` donde `activo`), `usuario_dni_unico` (`dni` donde `activo`). Trigger
 `usuario_correo_inmutable` (BEFORE UPDATE, `correo_inmutable`): el correo no cambia.
 
-**`sede`** (`0001`, `0004`)
+#### `sede` (`0001`, `0004`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -124,7 +124,7 @@ Triggers comunes a `usuario`, `sede`, `espacio` y `reserva` (`0001_modelo_inicia
 
 Índice: `sede_nombre_activa_unico` (`lower(nombre)` donde `activa`). Las tres FK a `usuario` no tienen índice (hallazgo 10).
 
-**`espacio`** (`0001`)
+#### `espacio` (`0001`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -143,7 +143,7 @@ Triggers comunes a `usuario`, `sede`, `espacio` y `reserva` (`0001_modelo_inicia
 Restricción única `(sede_id, deporte, tipo, numero)`. Trigger `espacio_nombre_inmutable` (BEFORE UPDATE): la identidad del
 espacio (`nombre`, `sede_id`, `deporte`, `tipo`, `numero`) no cambia.
 
-**`reserva`** (`0001`, `0005`)
+#### `reserva` (`0001`, `0005`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -163,7 +163,7 @@ Restricción de exclusión `EXCLUDE USING gist (espacio_id WITH =, tstzrange(ini
 dos reservas activas del mismo espacio no se superponen. Índice parcial `reserva_activa_inicio` (`inicio` donde
 `estado = 'activa'`, `0005_notificaciones.py:68`).
 
-**`enlace_recuperacion`** (`0003`)
+#### `enlace_recuperacion` (`0003`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -176,7 +176,7 @@ dos reservas activas del mismo espacio no se superponen. Índice parcial `reserv
 
 Índice: `enlace_recuperacion_por_usuario` (`usuario_id`, `emitido_en`).
 
-**`correo_saliente`** (`0003`)
+#### `correo_saliente` (`0003`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -186,7 +186,7 @@ dos reservas activas del mismo espacio no se superponen. Índice parcial `reserv
 
 Sin índices propios. Con `CORREO_MODO=buzon` guarda los códigos en claro (`config.py:19-20`): sólo desarrollo.
 
-**`dispositivo`** (`0005`)
+#### `dispositivo` (`0005`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -201,7 +201,7 @@ Sin índices propios. Con `CORREO_MODO=buzon` guarda los códigos en claro (`con
 
 Índices: `dispositivo_token_activo` (único, `token` donde `activo`), `dispositivo_usuario` (`usuario_id` donde `activo`).
 
-**`notificacion`** (`0005`, `0006`, `0007`)
+#### `notificacion` (`0005`, `0006`, `0007`)
 
 | Columna | Tipo y restricción |
 |---|---|
@@ -222,7 +222,7 @@ Sin índices propios. Con `CORREO_MODO=buzon` guarda los códigos en claro (`con
 donde `tipo = 'cancelacion_usuario'`), `notificacion_forzosa_sin_leer` (`usuario_id`, `id` descendente, parcial),
 `notificacion_por_despachar` (`id`, parcial: pendientes que no son recordatorios ni están reemplazados).
 
-**`notificacion_reserva`** (`0007`)
+#### `notificacion_reserva` (`0007`)
 
 | Columna | Tipo y restricción |
 |---|---|
