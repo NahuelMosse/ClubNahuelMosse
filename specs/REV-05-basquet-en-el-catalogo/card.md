@@ -17,11 +17,12 @@ Cada escenario lleva su tag en el test: `@REV-05-S1`.
 - REV-05-ASM-01 · Básquet tiene dos tipos: «Básquet 5» (`B5`, cancha completa) y «Básquet 3x3» (`3X3`, media cancha) · S1
 - REV-05-ASM-02 · hasta que haya una foto de Básquet, la cancha toma la portada 1 del club, que no es de ningún otro deporte · S4
 - REV-05-ASM-03 · Básquet va después de Vóley en el catálogo · S1
+- REV-05-ASM-04 · una app instalada antes de Básquet lo muestra con el ícono genérico de deporte, el mismo de cualquier deporte que no conoce, y no se fuerza a actualizar · S4
 
 ## Tasks
 
-- T1 · S1,S2,S3 · apps/api/app/dominio/espacios.py (rule) · tests: apps/api/tests/escenarios/test_basquet.py "el catálogo de deportes ofrece Básquet con su tipo de cancha @REV-05-S1 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03"; apps/api/tests/escenarios/test_basquet.py "el administrador da de alta una cancha de Básquet @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "un tipo que no es de Básquet se rechaza @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "el socio filtra los espacios por Básquet @REV-05-S3"
-- T2 · S4 · apps/mobile/lib/espacios/iconos.dart (presentation), apps/mobile/test/basquet_test.dart · tests: apps/mobile/test/basquet_test.dart "la app muestra Básquet con su ícono @REV-05-S4"
+- T1 · S1,S2,S3 · apps/api/app/dominio/espacios.py (rule) · tests: apps/api/tests/escenarios/test_basquet.py "el catálogo de deportes ofrece Básquet con su tipo de cancha @REV-05-S1 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03"; apps/api/tests/escenarios/test_basquet.py "el administrador da de alta una cancha de Básquet @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "un tipo que no es de Básquet se rechaza @REV-05-S2"; apps/api/tests/escenarios/test_basquet.py "el socio filtra los espacios por Básquet @REV-05-S3"; apps/api/tests/escenarios/test_basquet.py "el administrador da de alta una cancha de Básquet 3x3 con su nombre compuesto @REV-05-S2 @assumption:REV-05-ASM-01"; apps/api/tests/escenarios/test_basquet.py "el socio filtra las canchas de Básquet 3x3 y no ve las de Básquet 5 @REV-05-S3 @assumption:REV-05-ASM-01"
+- T2 · S4 · apps/mobile/lib/espacios/iconos.dart (presentation), apps/mobile/test/basquet_test.dart · tests: apps/mobile/test/basquet_test.dart "la app muestra Básquet con su ícono @REV-05-S4"; apps/mobile/test/basquet_test.dart "un deporte que la app no conoce se muestra con el ícono genérico @REV-05-S4 @assumption:REV-05-ASM-04"
 - T3 · S4 · apps/mobile/lib/sedes/fotos.dart (presentation) · tests: apps/mobile/test/basquet_test.dart "la foto de Básquet no es la de una cancha de fútbol @REV-05-S4 @assumption:REV-05-ASM-02"
 - T4 · S4 · apps/mobile/test/soporte/montar.dart · tests: apps/mobile/test/basquet_test.dart "la app muestra Básquet con su ícono @REV-05-S4"
 
@@ -718,3 +719,7 @@ campo, en rojo.
 - L3 · 2026-10-22 · declared · REV-05-ASM-01 · el test del catálogo afirma «Básquet 5» y «Básquet 3x3» con sus claves en el cuerpo; su título quedó congelado al etiquetarlo
 - L4 · 2026-10-22 · declared · REV-05-ASM-02 · el test de la foto afirma la portada 1 (`portada_1.jpg`) en el cuerpo y que ningún otro deporte la usa
 - L5 · 2026-10-22 · `app:` y `attacks:` usan D:/Temp/w/herramientas/api-app.sh y api-attacks.sh: base propia `club_rev05_app` migrada, admin sembrado y su token del emulador de Auth; el gate corre con `TEST_DATABASE_URL=…/club_rev05_test` y `FIREBASE_AUTH_EMULATOR_HOST` en el entorno
+- L6 · 2026-10-22 · judge ACT-01 · el alta y el filtro de Básquet 3x3 suman sus tests en T1, con ASM-01
+- L7 · 2026-10-22 · declared · ACT-02 · el test de S1 fija Básquet inmediatamente después de Vóley (índice de Vóley + 1) en el orden del catálogo de la API, el que la app muestra; el orden del desplegable de CU-21 no se toma
+- L8 · 2026-10-22 · declared · ACT-03 · el test «un tipo que no es de Básquet se rechaza» afirma en su cuerpo 422 y `{"errores": {"tipo": "Elegí un tipo de la lista"}}`; su título quedó congelado
+- L9 · 2026-10-22 · judge ACT-04 · REV-05-ASM-04 con su test en T2
