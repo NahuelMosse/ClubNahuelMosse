@@ -31,7 +31,7 @@ import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import { detectStack } from './doctor.mjs';
-import { GRADES, coreFiles, copiesOfProfile, detectE2e, filesOfModule, filesOfProfile, listKit, mcpAdd, openCard, profileOfFile, readManifest, readModules, recordedGrade, writeManifest } from './kit.mjs';
+import { GRADES, coreFiles, detectE2e, filesOfModule, filesOfProfile, listKit, mcpAdd, openCard, readManifest, readModules, recordedGrade, writeManifest } from './kit.mjs';
 import { cardIdOf, kitLogLine } from './card-doc.mjs';
 import { describe, detect, evidenceOf } from './signals.mjs';
 
@@ -106,7 +106,7 @@ const suggestProfiles = (target, seen) => {
   const html = ['index.html', 'public/index.html', 'src/index.html'].some((f) => existsSync(join(target, f)));
   if (FRONT.test(read(join(target, 'package.json'))) || html || seen.ui?.evidence.length) out.push('web');
   if (['api', 'data'].some((m) => seen[m]?.evidence.length)) out.push('backend');
-  if (/^flutter:|^\s+sdk:\s*flutter\b/m.test(read(join(target, 'pubspec.yaml')))) out.push('flutter');
+  if (/^flutter:/m.test(read(join(target, 'pubspec.yaml')))) out.push('flutter');
   return out;
 };
 
@@ -146,10 +146,8 @@ const profilesOn = (map, on, recorded) => Object.entries(map.profiles ?? {})
 const bundle = (source, map, on, stack, settings, profiles = []) => {
   const all = listKit(source);
   const files = [...coreFiles(map, all, stack), ...[...on].flatMap((name) => filesOfModule(map, name, all)), ...profiles.flatMap((p) => filesOfProfile(map, p, all))];
-  const copies = profiles.flatMap((p) => copiesOfProfile(map, p));
-  const origin = new Map(copies.map((c) => [c.to, c.from]));
-  return [...new Set([...files, ...copies.map((c) => c.to)])].sort().map((rel) => {
-    const raw = readFileSync(join(source, origin.get(rel) ?? rel));
+  return [...new Set(files)].sort().map((rel) => {
+    const raw = readFileSync(join(source, rel));
     const isText = /\.(md|json|mjs|js|ya?ml|txt|css|html)$/.test(rel);
     return { rel, content: isText ? Buffer.from(render(rel, raw.toString('utf8'), settings)) : raw };
   });
@@ -290,7 +288,7 @@ const main = async () => {
   };
   const grade = gradeChoice(o, map) ?? (o.adopt ? readManifest(target)?.grade : undefined);
   if (grade) manifest.grade = grade;
-  const owner = (rel) => { const p = profileOfFile(map, rel, profiles); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
+  const owner = (rel) => { const p = Object.keys(map.profiles ?? {}).find((n) => filesOfProfile(map, n, [rel]).length); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
   const local = [];
   for (const { rel, content } of files) {
     const path = join(target, rel);
@@ -340,7 +338,7 @@ const update = (o, target, source, map) => {
   const profiles = profilesOn(map, on, manifest.profiles);
   const files = bundle(source, map, on, manifest.stack, settings, profiles);
   const wanted = new Set(files.map((f) => f.rel));
-  const owner = (rel) => { const p = profileOfFile(map, rel, profiles); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
+  const owner = (rel) => { const p = Object.keys(map.profiles ?? {}).find((n) => filesOfProfile(map, n, [rel]).length); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
   // A repo that recorded no profiles gets them from its modules; the mcp entries of the ones on are written, never over what is there.
   state.profiles = { ...(manifest.profiles ?? {}) };
   for (const [n, p] of Object.entries(map.profiles ?? {}).filter(([n2, d]) => d.status !== 'planned' && !(manifest.profiles && !profiles.includes(n2)))) {
