@@ -301,7 +301,7 @@ void main() {
   });
 
   test(
-    'una API que no responde en el límite se trata como inalcanzable',
+    'una API que no responde en el límite se trata como sin respuesta del servidor',
     () async {
       final api = ClienteApi(
         'http://api.falsa',
@@ -309,7 +309,7 @@ void main() {
         cliente: MockClient((_) => Completer<http.Response>().future),
       );
 
-      await expectLater(api.get('/sedes'), throwsA(isA<SinConexion>()));
+      await expectLater(api.get('/sedes'), throwsA(isA<ServidorSinRespuesta>()));
     },
   );
 }

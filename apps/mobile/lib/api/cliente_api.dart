@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 /// No se llegó a la API: sin red, o la API no responde a tiempo.
@@ -10,11 +11,20 @@ class SinConexion implements Exception {
 
 /// La API respondió con un error propio (5xx) o con algo que no es la API.
 class ErrorDelServidor implements Exception {
-  const ErrorDelServidor(this.codigo, {this.mensaje});
+  const ErrorDelServidor(this.codigo, {this.mensaje, this.referencia});
   final int codigo;
 
   /// Lo que el servidor dice a la persona: sólo viene con un 429 (demasiados intentos).
   final String? mensaje;
+
+  /// El número con el que se encuentra este error en el registro de la API.
+  final String? referencia;
+}
+
+/// El pedido salió pero la API no contestó dentro del límite. Es un error del servidor, no
+/// de la red de la persona: lo atrapan donde se atrapa [ErrorDelServidor].
+class ServidorSinRespuesta extends ErrorDelServidor {
+  const ServidorSinRespuesta() : super(0);
 }
 
 /// Una respuesta de la API con su código y su cuerpo JSON ya leído.
@@ -28,15 +38,27 @@ class ClienteApi {
   ClienteApi(
     String base, {
     http.Client? cliente,
-    this.limite = const Duration(seconds: 15),
+    this.limite = const Duration(seconds: 60),
+    this.avisoDespuesDe = const Duration(seconds: 5),
   }) : _base = Uri.parse(base),
        _cliente = cliente ?? http.Client();
 
   final Uri _base;
   final http.Client _cliente;
 
-  /// Cuánto espera una respuesta antes de tratar a la API como inalcanzable.
+  /// Cuánto espera una respuesta antes de rendirse: una API gratuita tarda hasta un minuto
+  /// en despertar.
   final Duration limite;
+
+  /// Cuánto tarda un pedido antes de que [despertando] se encienda.
+  final Duration avisoDespuesDe;
+
+  final _despertando = ValueNotifier<bool>(false);
+
+  /// `true` mientras algún pedido lleva más de [avisoDespuesDe] sin respuesta.
+  ValueListenable<bool> get despertando => _despertando;
+
+  var _lentos = 0;
 
   Future<Respuesta> post(
     String ruta,
@@ -85,13 +107,25 @@ class ClienteApi {
 
   Future<Respuesta> _enviar(Future<http.Response> Function() pedido) async {
     final http.Response r;
+    var lento = false;
+    final aviso = Timer(avisoDespuesDe, () {
+      lento = true;
+      _despertando.value = ++_lentos > 0;
+    });
     try {
       r = await pedido().timeout(limite);
+    } on TimeoutException {
+      throw const ServidorSinRespuesta();
     } on Exception {
-      // Sin red, DNS, TLS, la conexión cortada o la API que no contesta a tiempo.
+      // Sin red, DNS, TLS o la conexión cortada.
       throw const SinConexion();
+    } finally {
+      aviso.cancel();
+      if (lento) _despertando.value = --_lentos > 0;
     }
-    if (r.statusCode >= 500) throw ErrorDelServidor(r.statusCode);
+    if (r.statusCode >= 500) {
+      throw ErrorDelServidor(r.statusCode, referencia: _referencia(r));
+    }
     final Object? datos;
     try {
       final texto = utf8.decode(r.bodyBytes);
@@ -108,6 +142,16 @@ class ClienteApi {
       throw ErrorDelServidor(429, mensaje: mensaje is String ? mensaje : null);
     }
     return Respuesta(r.statusCode, cuerpo);
+  }
+
+  static String? _referencia(http.Response r) {
+    try {
+      final datos = jsonDecode(utf8.decode(r.bodyBytes));
+      final referencia = datos is Map ? datos['referencia'] : null;
+      return referencia is String && referencia.isNotEmpty ? referencia : null;
+    } on FormatException {
+      return null;
+    }
   }
 
   void cerrar() => _cliente.close();

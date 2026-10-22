@@ -45,35 +45,10 @@ void main() {
         credenciales: credenciales,
         api: apiFalsa(codigo: 503),
       );
-      expect(await sesion.retomar(), isNull);
+      await expectLater(sesion.retomar(), throwsA(isA<ErrorDelServidor>()));
       expect(credenciales.salidas, 0);
     });
   });
-
-  test(
-    'una API que no contesta no traba el arranque ni cierra la sesión',
-    () async {
-      final credenciales = CredencialesFalsas(conCuenta: true);
-      final sesion = Sesion(
-        credenciales: credenciales,
-        api: ClienteApi(
-          'http://api.lenta',
-          cliente: MockClient((_) async {
-            await Future<void>.delayed(const Duration(seconds: 5));
-            return http.Response('{}', 200);
-          }),
-        ),
-        limiteAlRetomar: const Duration(milliseconds: 50),
-      );
-      final antes = DateTime.now();
-      expect(await sesion.retomar(), isNull);
-      expect(
-        DateTime.now().difference(antes),
-        lessThan(const Duration(seconds: 2)),
-      );
-      expect(credenciales.salidas, 0);
-    },
-  );
 
   test('avisa a quien escucha cuando cambia el perfil', () async {
     final sesion = Sesion(

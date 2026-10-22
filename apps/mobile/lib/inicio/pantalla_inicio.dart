@@ -5,6 +5,7 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/errores_no_manejados.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -138,8 +139,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
           ),
         );
       }
-    } on Exception {
+    } on Exception catch (e, pila) {
       // Sin red o con el servidor caído, lo que había sigue siendo lo mejor que hay.
+      registrarError(e, pila);
     }
   }
 

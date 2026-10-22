@@ -6,6 +6,7 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/errores_no_manejados.dart';
 import '../comun/formato_precio.dart';
 import '../comun/selector.dart';
 import '../espacios/espacio.dart';
@@ -75,8 +76,8 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
     try {
       final catalogo = await widget.espacios.catalogo();
       if (mounted) setState(() => _catalogo = catalogo);
-    } on Exception {
-      return;
+    } on Exception catch (e, pila) {
+      registrarError(e, pila);
     }
   }
 
