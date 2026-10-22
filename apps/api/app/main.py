@@ -1,12 +1,18 @@
 import asyncio
+import logging
 import os
+import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import DBAPIError, OperationalError
+from sqlalchemy.exc import TimeoutError as SATimeoutError
 
 from app.config import config
+from app.infraestructura.db import base_disponible, esquema_al_dia
 from app.interfaz import (
     entradas,
     espacios,
@@ -26,8 +32,31 @@ from app.interfaz.protecciones import Protecciones
 from app.interfaz.registro_errores import RegistroDeErrores, configurar_registro
 
 
+_registro = logging.getLogger("clubnahuelmosse.arranque")
+_MENSAJE_BASE = "La base de datos no respondió a tiempo. Probá de nuevo en unos minutos."
+
+
+async def _sin_base(request: Request, _: Exception) -> JSONResponse:
+    """Una base caída, lenta o bloqueada es un 503 con referencia, no un 500 sin explicar."""
+    referencia = request.headers.get("x-request-id") or str(uuid.uuid4())
+    return JSONResponse(
+        {"mensaje": _MENSAJE_BASE, "referencia": referencia},
+        status_code=503,
+        headers={"X-Request-ID": referencia},
+    )
+
+
+async def _verificar_arranque() -> None:
+    """El proceso sigue en pie sin base o sin esquema: /ready dice 503 y el aviso queda en el log."""
+    if not await asyncio.to_thread(base_disponible):
+        _registro.error("arranque_sin_base: la base de datos no responde")
+    elif not await asyncio.to_thread(esquema_al_dia):
+        _registro.error("arranque_sin_esquema: el esquema de la base no está al día")
+
+
 @asynccontextmanager
 async def _ciclo_de_vida(_: FastAPI) -> AsyncIterator[None]:
+    await _verificar_arranque()
     barrido = (
         asyncio.create_task(barrer_cada(config.recordatorios_cada))
         if config.recordatorios_cada > 0
@@ -67,7 +96,7 @@ def _documentar_el_400(app: FastAPI) -> None:
         if app.openapi_schema is None:
             esquema = original()
             for ruta, operaciones in esquema["paths"].items():
-                if ruta == "/health":
+                if ruta in ("/health", "/ready"):
                     continue
                 for operacion in operaciones.values():
                     operacion["responses"].setdefault(
@@ -102,12 +131,18 @@ def crear_app() -> FastAPI:
     configurar_registro()
     app = FastAPI(
         title="ClubNahuelMosse API",
-        version="0.1.0",
+        version=config.version,
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
         lifespan=_ciclo_de_vida,
         docs_url="/docs" if config.documentacion_interactiva else None,
         redoc_url="/redoc" if config.documentacion_interactiva else None,
+        responses={
+            500: {"description": "Error inesperado, con una referencia para soporte."},
+            503: {"description": "La base de datos no respondió."},
+        },
     )
+    for error in (OperationalError, SATimeoutError, DBAPIError):
+        app.add_exception_handler(error, _sin_base)
     entradas.instalar(app)
     limites.instalar(app)
     app.include_router(salud.router)
