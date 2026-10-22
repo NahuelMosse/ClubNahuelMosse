@@ -72,3 +72,5 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev07_app --json --no-ambient 
 - L6 · 2026-10-22 · declared · REV-07-ASM-11, REV-07-ASM-15, REV-07-ASM-16, REV-07-ASM-17 · «10», «12», «14» y «22» son números de otros supuestos y del hallazgo que se citan, y «cada requisito» cita S1; no son valores del comportamiento
 - L7 · 2026-10-22 · kit updated 6b982a3b4efec0cc0a103964973e3e9a074c6422 → 0a8f6431dd7b130c87980f69f9122b45794f6b70 · kit 6.0.0: nested test folders need no layer
 - L8 · 2026-10-22 · kit updated 0a8f6431dd7b130c87980f69f9122b45794f6b70 → 1117da7bd97604f13460f467d8a02afaeb6d299a · kit 6.0.0: nested test folders need no layer
+- L9 · 2026-10-22 · el test de ASM-02 acepta `SUP-NN` además de `ASM-NN`: los supuestos que vienen de los CU ya tienen su ID `CU-*-SUP-NN` y los README lo citan tal cual
+- L10 · 2026-10-22 · el gate corre con `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702`. `attacks:` sale con «PASSED · GET con Host ajeno» en esta rama: es el hallazgo 25-S2, que corrige REV-01; esta card no cambia la API
