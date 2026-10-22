@@ -1,14 +1,13 @@
 import asyncio
 import logging
 import os
-import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
 from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import DBAPIError, OperationalError
+from sqlalchemy.exc import InterfaceError, OperationalError
 from sqlalchemy.exc import TimeoutError as SATimeoutError
 
 from app.config import config
@@ -18,6 +17,7 @@ from app.interfaz import (
     espacios,
     horarios,
     limites,
+    metricas,
     notificaciones,
     pruebas,
     recuperacion,
@@ -29,7 +29,7 @@ from app.interfaz import (
 )
 from app.interfaz.barrido import barrer_cada
 from app.interfaz.protecciones import Protecciones
-from app.interfaz.registro_errores import RegistroDeErrores, configurar_registro
+from app.interfaz.registro_errores import RegistroDeErrores, configurar_registro, referencia_actual
 
 
 _registro = logging.getLogger("clubnahuelmosse.arranque")
@@ -38,7 +38,7 @@ _MENSAJE_BASE = "La base de datos no respondió a tiempo. Probá de nuevo en uno
 
 async def _sin_base(request: Request, _: Exception) -> JSONResponse:
     """Una base caída, lenta o bloqueada es un 503 con referencia, no un 500 sin explicar."""
-    referencia = request.headers.get("x-request-id") or str(uuid.uuid4())
+    referencia = referencia_actual()
     return JSONResponse(
         {"mensaje": _MENSAJE_BASE, "referencia": referencia},
         status_code=503,
@@ -141,11 +141,13 @@ def crear_app() -> FastAPI:
             503: {"description": "La base de datos no respondió."},
         },
     )
-    for error in (OperationalError, SATimeoutError, DBAPIError):
+    # Un SQL mal armado (ProgrammingError) es un error propio y sigue siendo un 500.
+    for error in (OperationalError, InterfaceError, SATimeoutError):
         app.add_exception_handler(error, _sin_base)
     entradas.instalar(app)
     limites.instalar(app)
     app.include_router(salud.router)
+    app.include_router(metricas.router)
     app.include_router(registro.router)
     app.include_router(sesion.router)
     app.include_router(recuperacion.router)
