@@ -38,6 +38,8 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 [tool.ruff.lint.per-file-ignores]
 # Los escenarios quedan congelados al commitearse en rojo: el estilo no justifica recongelarlos.
 "tests/escenarios/*" = ["E501", "SIM117"]
+# Estos escenarios importan los fixtures de test_datos.py para que pytest los vea.
+"tests/escenarios/test_datos_*.py" = ["E501", "SIM117", "F811"]
 
 [tool.mypy]
 strict = true

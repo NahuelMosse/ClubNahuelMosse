@@ -93,3 +93,17 @@ def test_la_busqueda_toma_los_comodines_como_texto(
     assert _ids(api, token_admin, f"q={nombre[:5]}%25") == set()
     assert _ids(api, token_admin, f"q={nombre[:4]}_{nombre[5:]}") == set()
     assert _ids(api, token_admin, "q=%5C") == set()
+
+
+def test_las_proximas_del_socio_llegan_enteras_y_sin_siguiente(
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+) -> None:
+    """las próximas del socio llegan enteras y sin marcador de tanda @REV-03-S2"""
+    espacio = _espacio_nuevo(api, token_admin, sede[0])
+    creadas = {_reservar(api, token_usuario, espacio, dia=d)["id"] for d in (1, 2)}
+
+    r = api.get("/reservas", headers=_con(token_usuario), params={"cuando": "proximas"})
+
+    assert r.status_code == 200
+    assert {x["id"] for x in r.json()["reservas"]} == creadas
+    assert r.json()["siguiente"] is None
