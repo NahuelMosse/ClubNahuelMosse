@@ -1,0 +1,70 @@
+# Questions by lens
+
+Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the ones the card will have), and by the plan `judge` at high. A question the card does not answer becomes `<ID>-AMB-NN` when there is someone to ask, or `<ID>-ASM-NN` in the reading cheapest to undo, with its planned test. One line per question, with a short real example.
+
+## interpretation
+
+- What counts as a space when trimming? Only ASCII, or also a non-breaking space and tabs (`" Ana"`)?
+- Do equality and search use the same case rule, ASCII or Unicode (`Ñandú` against `ñandú`)?
+- Which characters and how long may an id be when it is returned in a header (`X-Request-Id` with a newline)?
+- Does the product add text, routes or behavior the card does not ask for (a «welcome» line, a `/health`)? Each one is `OUT`.
+- Does each `S#` say the same as the sentence it quotes, no less and no more («at least 3» is not «more than 3»)?
+- Is there a sentence of `L1` that no `S#` covers (a second paragraph, a comment of Jira)?
+- Does a quantifier («each», «all», «any») name its members, and does each member have a test?
+- Which reading works with any answer to the open question, and is that the one assumed?
+- What does the card leave to the default of a library (sort order, time zone, rounding), and is it written down?
+- What does «empty» mean here: missing, `null`, `""` or only spaces?
+
+## contract
+
+- What does an unsupported method answer on an invalid id, 405 or 404 (`DELETE /items/xyz`)?
+- Is a `+` in the query a space or a plus (`?q=a+b`)?
+- What happens in a partial case, one valid field and one invalid (`{"name":"Ana","age":-1}`)?
+- Is the cap of an integer in the query said for every parameter, and what does it answer when passed (`?limit=1000000`)?
+- Which statuses does the contract (openapi) document that the app returns: 400, 404, 408, 413, 415, 431, 500?
+- What does a repeated or duplicate value answer, 409 or 200 with the existing one (`POST` of the same email twice)?
+- Which headers does every response carry (`content-type`, `cache-control`, the card's own), errors included?
+- What is the order of the fields and of the list when the card does not say (`name, email`; by creation)?
+- What answers a body of another content-type, empty, or with extra keys?
+- What does the client see on an error: a stable shape (`{error, message}`) and no stack?
+- Does an existing client keep working: which route, field or status of main changes?
+
+## integrity
+
+- What happens to the data already there when migrating (nulls against a new unique index)? Does the unique index live with several earlier rows in null, and does the test seed two or more?
+- Is the migration atomic: several statements inside one transaction?
+- Does a record survive a restart of the app on the same database?
+- What do two simultaneous writes do (the same email at the same time)?
+- What does a write that fails halfway leave behind (a row with no children)?
+- Does the upgrade run from the last state of main with seeded data, not only from an empty database?
+- Which type and length does each column take, and does the code validate the same limit?
+- What is deleted, and what does it take with it (cascade, orphans, a trail)?
+- What is stamped with a clock (created, updated) and in which zone?
+- Does a retry of the same request leave one record or two?
+
+## visual
+
+- Does Enter submit from each control of the form, not only from the last one?
+- Where does focus go after an error and after a submit?
+- Does a long text with no spaces overflow at 320 px (`aaaaaaaaaaaaaaaaaaaaaaaa`)?
+- Is a disabled control still legible, with contrast and a visible reason?
+- Does each state that can appear (loading, empty, error, sending, and the notice of a server error) have its `probe`?
+- Does the test of an `ASM` about style or level name the values it measures (font, colors, radius)?
+- Does the text the person typed show as text when it is echoed back (`<b>x</b>` visible as is)?
+- Do hover, focus and press answer on every actionable element, and does a motion line exist for them?
+- What does the screen show at 320, 768 and 1280 px, and does anything scroll sideways?
+- Does a transient state stay on screen long enough to be measured (route held)?
+- Is the `ref:` a product of level, and does each `behavior:` say when it happens and how often?
+
+## security
+
+- Is the person's text inserted as text, never as HTML (`<img onerror=…>`)?
+- Does the search escape the wildcards `%` and `_` (`?q=100%`)?
+- Is a huge body with another content-type cut without reading it all?
+- Does an internal error leave the process alive and answer 500 without a stack?
+- Who may call each route, and what does the call without credentials answer, 401 or 403?
+- Does a value of the request reach a header, a path or a command without being checked (`../`, `\r\n`)?
+- Does a log line or an error echo personal data or a secret?
+- Is the host or origin checked when the card names one (`Host`, CORS)?
+- Does anything sensitive travel in the query string?
+- Which limit stops a loop of requests (size, count, time), and what does it answer?

@@ -8,8 +8,7 @@ effort: medium
 
 You return a plan. You do not write production code.
 
-**A card's plan (`specs/<card>/plan.md`) is written by the main thread, as `steps/05-plan.md`
-says, not by you.** You come in when something has to be decided *beforehand*: in what order the
+**A card's `## Tasks` and `## Gate` (`specs/<card>/card.md`) are written by the main thread, not by you.** You come in when something has to be decided *beforehand*: in what order the
 steps go, what breaks if they are done the other way round, what trade-off there is between two
 paths. If the task is “build the plan for this card”, it is not yours.
 

@@ -1,6 +1,21 @@
 #!/usr/bin/env node
-// motion-audit.mjs <url> [--only <selector>]… [--cpu <rate>] [--frames <selector>]… [--out <dir>] [--measure] [--max <n>]
+// motion-audit.mjs [<url>] [--only <selector>]… [--cpu <rate>] [--frames [<selector>]]… [--out <dir>] [--measure] [--max <n>]
+//                  [--click <selector>] [--interrupt] [--scroll-story]
+// motion-audit.mjs compare <ref.json> <mine.json>
 // Run from the root of the repo of the card; Playwright is found there or at KIT_PLAYWRIGHT_ROOT.
+//
+// Curves: during every interaction it triggers (hover, press, focus, entrance on load and on scroll)
+// it samples the rect, opacity and transform of the element and its children on every animation frame,
+// and reports per property that moves its observed duration, overshoot, curve shape (linear, ease-out,
+// ease-in, ease-in-out, spring) and jumps (a frame over 3 times the median step). The trajectory is
+// measured, not the declared transition. Without --measure a jump is a finding.
+// Choreography: --click records everything that moves for 1500 ms after the click, with each element's
+// start delay and duration and the mean stagger step of a group of siblings; --interrupt (with --click)
+// clicks again halfway and checks that nothing jumps; --scroll-story scrolls end to end in 100 px steps
+// and records parallax, pinned and scroll-linked elements.
+// report.json carries `roles` (primary button hover and press, hero entrance, list entrance, section
+// entrance, click, scroll) and `grammar` (durations, curves, stagger); `compare` lines two reports up
+// by role. --frames without a selector uses the --click target, or else the primary button.
 //
 // Whether every state change of a screen has a designed response, measured in the browser and not
 // in the code. For each interactive element —or only the ones given with --only—: what changes on
@@ -17,6 +32,8 @@ import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { tracer, analyzeRecording, stagger, continuity, scrollStory, buildRoles, grammar, compare, primaryMove } from './motion-curves.mjs';
 
 const VISIBLE_PROPS = ['transform', 'opacity', 'background-color', 'background-image', 'color', 'box-shadow', 'border-color', 'outline-style', 'outline-width', 'outline-color', 'text-decoration-color', 'filter', 'scale', 'translate'];
 const LAYOUT_PROPS = /^(width|height|top|left|right|bottom|margin|padding|max-height|max-width|min-height|min-width)/;
@@ -24,9 +41,14 @@ const INTERACTIVE = 'a[href], button, input:not([type=hidden]), select, textarea
 
 const args = process.argv.slice(2);
 const opt = (name) => args.flatMap((a, i) => (a === name ? [args[i + 1]] : []));
-const url = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
+const url = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')) ?? process.env.APP_URL;
 const only = opt('--only');
-const frames = opt('--frames');
+const val = (name) => opt(name).filter((v) => v && !v.startsWith('--'));
+const frames = val('--frames');
+const framesFlag = args.includes('--frames');
+const click = val('--click')[0];
+const interrupt = args.includes('--interrupt');
+const story = args.includes('--scroll-story');
 const cpu = Number(opt('--cpu')[0] ?? 0);
 const out = resolve(opt('--out')[0] ?? join('.validation', 'motion'));
 const measure = args.includes('--measure');
@@ -79,6 +101,24 @@ const snapshotIn = (handle, props) => handle.evaluate((node, props) => {
 const diff = (a, b) => Object.keys(a).filter((k) => a[k] !== b[k]);
 const shot = async (page, box) => (await page.screenshot({ clip: { x: Math.max(0, box.x - 6), y: Math.max(0, box.y - 6), width: box.width + 12, height: box.height + 12 } })).toString('base64');
 
+// Traces one element and its descendants from `begin` until the snapshot taken by `end`.
+const traceBegin = (handle) => handle.evaluate((n) => window.__mt?.begin('m', { root: n, every: 1 })).catch(() => {});
+const traceEnd = async (page) => {
+  const rec = await page.evaluate(() => window.__mt?.end('m') ?? null).catch(() => null);
+  if (!rec) return [];
+  return analyzeRecording(rec, { origin: rec.t0 }).map(({ label, root, primary, startMs, endMs, moves }) => ({ label, root, primary, startMs, endMs, moves }));
+};
+
+// The primary button: a link or button on the first screen, by solid background times area.
+const scoreOf = (handle) => handle.evaluate((n) => {
+  if (!/^(A|BUTTON)$/.test(n.tagName) && n.getAttribute('role') !== 'button') return 0;
+  const r = n.getBoundingClientRect();
+  if (r.top + scrollY >= innerHeight || r.width < 2 || r.height < 2) return 0;
+  const m = getComputedStyle(n).backgroundColor.match(/[\d.]+/g)?.map(Number) ?? [0, 0, 0, 0];
+  const alpha = m.length > 3 ? m[3] : 1;
+  return alpha > 0.5 ? Math.round(r.width * r.height) : 0;
+}).catch(() => 0);
+
 const auditElement = async (page, original, label) => {
   // A visually hidden input (custom checkbox or switch) is felt through its label.
   const proxy = await original.evaluateHandle((n) => (n.matches('input') && getComputedStyle(n).opacity === '0' ? n.closest('label') ?? n : n));
@@ -106,28 +146,34 @@ const auditElement = async (page, original, label) => {
   const cy = box.y + box.height / 2;
   if (kind === 'focus-only') {
     const beforePx = await shot(page, box);
+    await traceBegin(handle);
     await page.keyboard.press('Shift');
     await handle.focus().catch(() => {});
     await page.waitForTimeout(250);
     const focused = await snapshotIn(handle, VISIBLE_PROPS);
+    const motion = await traceEnd(page);
     const pixels = (await shot(page, box)) !== beforePx;
     await handle.evaluate((n) => n.blur?.());
-    return { label, kind, selected, transition, moments: { focus: { changed: diff(rest, focused), pixels, transitioned: transition.properties, values: {} } } };
+    return { label, kind, selected, score: 0, transition, moments: { focus: { changed: diff(rest, focused), pixels, transitioned: transition.properties, values: {}, motion } } };
   }
   const restPx = await shot(page, box);
   // Hover
+  await traceBegin(handle);
   await page.mouse.move(cx, cy);
   await page.waitForTimeout(450);
   const hover = await snapshotIn(handle, VISIBLE_PROPS);
+  const hoverMotion = await traceEnd(page);
   const hoverPx = await shot(page, box);
-  moments.hover = { changed: diff(rest, hover), pixels: hoverPx !== restPx, transitioned: transition.properties, values: Object.fromEntries(diff(rest, hover).map((k) => [k, [rest[k], hover[k]]])) };
+  moments.hover = { changed: diff(rest, hover), pixels: hoverPx !== restPx, transitioned: transition.properties, values: Object.fromEntries(diff(rest, hover).map((k) => [k, [rest[k], hover[k]]])), motion: hoverMotion };
   // Press: down on the element, up away from it, so that nothing is clicked.
   if (kind !== 'input') {
+    await traceBegin(handle);
     await page.mouse.down();
     await page.waitForTimeout(200);
     const pressed = await snapshotIn(handle, VISIBLE_PROPS);
+    const pressMotion = await traceEnd(page);
     const pressPx = await shot(page, box);
-    moments.press = { changed: diff(hover, pressed), pixels: pressPx !== hoverPx, transitioned: transition.properties, values: Object.fromEntries(diff(hover, pressed).map((k) => [k, [hover[k], pressed[k]]])) };
+    moments.press = { changed: diff(hover, pressed), pixels: pressPx !== hoverPx, transitioned: transition.properties, values: Object.fromEntries(diff(hover, pressed).map((k) => [k, [hover[k], pressed[k]]])), motion: pressMotion };
     await page.mouse.move(1, 1);
     await page.mouse.up();
   } else {
@@ -140,13 +186,15 @@ const auditElement = async (page, original, label) => {
   const ringEl = ring.asElement() ?? original;
   const before = await snapshotIn(ringEl, VISIBLE_PROPS);
   const beforePx = await shot(page, box);
+  await traceBegin(ringEl);
   await page.keyboard.press('Shift');
   await original.focus().catch(() => {});
   await page.waitForTimeout(250);
   const focused = await snapshotIn(ringEl, VISIBLE_PROPS);
-  moments.focus = { changed: diff(before, focused), pixels: (await shot(page, box)) !== beforePx, transitioned: transition.properties, values: Object.fromEntries(diff(before, focused).map((k) => [k, [before[k], focused[k]]])) };
+  const focusMotion = await traceEnd(page);
+  moments.focus = { changed: diff(before, focused), pixels: (await shot(page, box)) !== beforePx, transitioned: transition.properties, values: Object.fromEntries(diff(before, focused).map((k) => [k, [before[k], focused[k]]])), motion: focusMotion };
   await original.evaluate((n) => n.blur?.());
-  return { label, kind, selected, transition, moments };
+  return { label, kind, selected, score: await scoreOf(handle), transition, moments };
 };
 
 const describe = (handle, i) => handle.evaluate((n, i) => {
@@ -193,8 +241,9 @@ const longFrames = (page) => page.evaluate(() => new Promise((done) => {
 }));
 
 const SHEET_MAX_HEIGHT = 1600;
-const contactSheet = async (page, browser, selector) => {
-  const handle = await page.$(selector);
+const contactSheet = async (page, browser, target) => {
+  const selector = typeof target === 'string' ? target : 'primary';
+  const handle = typeof target === 'string' ? await page.$(target) : target;
   if (!handle) return null;
   await handle.scrollIntoViewIfNeeded();
   const box = await handle.boundingBox();
@@ -228,6 +277,50 @@ const contactSheet = async (page, browser, selector) => {
   return files;
 };
 
+const CAP = 80;
+const reload = async (page) => { await page.reload({ waitUntil: 'load' }); await page.waitForFunction(() => !window.__mt?.active('load'), null, { timeout: 8000 }).catch(() => {}); };
+
+// The selector's element, in view and with its centre, ready for a real mouse click.
+const clickTarget = async (page, selector) => {
+  const h = await page.$(selector);
+  if (!h) return null;
+  await h.scrollIntoViewIfNeeded().catch(() => {});
+  const box = await h.boundingBox();
+  return box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : null;
+};
+
+// --click: everything that moves for 1500 ms after a real click. With `again` (a wait in ms) clicks a
+// second time that long after the first and returns the recording for the continuity check.
+const clickRun = async (page, selector, again = 0) => {
+  await reload(page);
+  const at = await clickTarget(page, selector);
+  if (!at) return null;
+  await page.evaluate(() => window.__mt.begin('click', { every: 1 }));
+  await page.waitForTimeout(250);
+  try {
+    await page.mouse.click(at.x, at.y);
+    if (again) { await page.waitForTimeout(again); await page.mouse.click(at.x, at.y); }
+    await page.waitForTimeout(again ? 900 : 1500);
+    return await page.evaluate(() => window.__mt.end('click'));
+  } catch { return null; }
+};
+
+const storyRun = async (page) => {
+  await reload(page);
+  const total = await page.evaluate(() => document.documentElement.scrollHeight);
+  const view = await page.evaluate(() => innerHeight);
+  const steps = [];
+  const metas = new Map();
+  for (let y = 0; y <= Math.max(0, total - view) && steps.length < 400; y += 100) {
+    await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' }), y);
+    await page.waitForTimeout(110);
+    const s = await page.evaluate(() => window.__mt.snapshot());
+    for (const [id, m] of s.fresh) metas.set(id, m);
+    steps.push({ y: s.y, rows: s.rows });
+  }
+  return scrollStory(steps, metas, total);
+};
+
 export const audit = async () => {
   const pw = playwright();
   if (!pw) return { error: 'Playwright is not installed in this repo: `npm i -D playwright` and `npx playwright install chromium`.' };
@@ -236,15 +329,23 @@ export const audit = async () => {
   // headless mode (`channel: 'chromium'`) renders with the real GPU. Falls back if it is not there.
   const browser = await pw.chromium.launch({ channel: 'chromium' }).catch(() => pw.chromium.launch());
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
+  await context.addInitScript(tracer);
   const page = await context.newPage();
   await page.goto(url, { waitUntil: 'load', timeout: 45000 });
   await page.waitForTimeout(1500);
+  // The load trace runs by itself for 4000 ms from the start of the document.
+  await page.waitForFunction(() => !window.__mt?.active('load'), null, { timeout: 8000 }).catch(() => {});
+  const loadRec = await page.evaluate(() => window.__mt?.end('load') ?? null).catch(() => null);
+  const load = loadRec ? analyzeRecording(loadRec, { origin: 0 }) : [];
   if (cpu > 1) {
     const cdp = await context.newCDPSession(page);
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpu });
   }
   // Entrances first, on the untouched page: auditing the elements scrolls through it.
+  await page.evaluate(() => window.__mt?.begin('scroll', { every: 3 })).catch(() => {});
   const sections = await entrances(page);
+  const scrollRec = await page.evaluate(() => window.__mt?.end('scroll') ?? null).catch(() => null);
+  const scroll = scrollRec ? analyzeRecording(scrollRec, { origin: scrollRec.t0 }) : [];
   await page.reload({ waitUntil: 'load' });
   await page.waitForTimeout(800);
   const handles = only.length ? (await Promise.all(only.map((s) => page.$$(s)))).flat() : await page.$$(INTERACTIVE);
@@ -264,11 +365,12 @@ export const audit = async () => {
     if (shown) visible.push(h);
   }
   const elements = [];
+  const handleOf = new Map();
   for (const [i, h] of visible.entries()) {
     await h.scrollIntoViewIfNeeded().catch(() => {});
     const label = await describe(h, i);
     const el = await auditElement(page, h, label).catch(() => null);
-    if (el) elements.push(el);
+    if (el) { elements.push(el); handleOf.set(el, h); }
   }
   const long = await longFrames(page);
 
@@ -304,24 +406,78 @@ export const audit = async () => {
   }).length);
   await reducedContext.close();
 
+  const primary = elements.filter((e) => e.score > 0).sort((a, b) => b.score - a.score)[0] ?? null;
+  const primaryHandle = primary ? handleOf.get(primary) ?? null : null;
   const sheets = [];
   for (const s of frames) sheets.push(await contactSheet(page, browser, s));
+  if (framesFlag && !frames.length) {
+    const target = click ?? primaryHandle;
+    if (target) sheets.push(await contactSheet(page, browser, target));
+  }
+
+  // Choreography runs on reloaded pages: the audit above leaves state behind.
+  let clickReport = null;
+  let interruptReport = null;
+  let storyReport = null;
+  let clickEls = [];
+  if (click) {
+    const rec = await clickRun(page, click);
+    if (rec) {
+      clickEls = analyzeRecording(rec, { origin: rec.marks[0] ?? rec.t0, ambientBefore: -34 });
+      const st = stagger(clickEls);
+      const totalMs = clickEls.length ? Math.max(...clickEls.map((e) => e.endMs)) - Math.min(...clickEls.map((e) => e.startMs)) : 0;
+      clickReport = { selector: click, count: clickEls.length, totalMs, stagger: st, elements: clickEls.slice(0, CAP) };
+    } else clickReport = { selector: click, error: 'the selector matches nothing visible, or the click left the page' };
+  }
+  if (interrupt && click && clickReport && !clickReport.error) {
+    const half = clickReport.totalMs ? Math.min(600, Math.max(60, clickReport.totalMs / 2)) : 120;
+    const rec = await clickRun(page, click, half);
+    if (rec && rec.marks.length > 1) {
+      const jumps = continuity(rec, rec.marks[1]);
+      interruptReport = { selector: click, afterMs: Math.round(half), continuous: !jumps.length, jumps };
+    } else interruptReport = { selector: click, error: 'the second click was not recorded' };
+  }
+  if (story) storyReport = await storyRun(page);
   await browser.close();
 
+  const jumpLines = (where, els) => els.flatMap((e) => e.moves.flatMap((m) => m.jumps.map((j) => `${where}: ${e.label} ${m.prop} jumps ${j.size} at ${j.atMs} ms`)));
+  const motionProblems = measure ? [] : [
+    ...jumpLines('load', load), ...jumpLines('scroll', scroll), ...jumpLines('click', clickEls),
+    ...elements.flatMap((e) => Object.entries(e.moments).flatMap(([name, d]) => jumpLines(`${e.label} ${name}`, d?.motion ?? []))),
+    ...(interruptReport?.jumps ?? []).map((j) => `interrupt: ${j.label} ${j.prop} jumps ${j.size} after the second click`),
+  ];
+  const roles = buildRoles({ load, scroll, click: clickEls, hover: primary, story: storyReport });
+  const hoverMoves = (name) => elements.filter((e) => (e.moments[name]?.motion ?? []).some((m) => m.moves.length)).length;
+  const grammarOf = grammar([...load, ...scroll, ...clickEls], roles, { hover: hoverMoves('hover'), press: hoverMoves('press'), focus: hoverMoves('focus'), of: elements.length });
+
   const problems = measure ? [] : [
+    ...motionProblems,
     ...elements.flatMap(judge),
     ...sections.filter((s) => !s.animated).map((s) => `section “${s.section}”: appears without an entrance the first time it is scrolled to`),
     ...(long?.length ? [`${long.length} animation frames over 50 ms while scrolling${cpu > 1 ? ` with the CPU ${cpu}× slower` : ''}: ${long.slice(0, 6).join(', ')} ms`] : []),
     ...(infinite ? [`${infinite} infinite animations remain with prefers-reduced-motion`] : []),
   ];
-  return { url, cpu, elements, sections, longFrames: long, infiniteReduced: infinite, sheets: sheets.flat().filter(Boolean), problems };
+  return {
+    url, cpu, elements, sections, longFrames: long, infiniteReduced: infinite, sheets: sheets.flat().filter(Boolean),
+    load: load.slice(0, CAP), scrollEntrances: scroll.slice(0, CAP), click: clickReport, interrupt: interruptReport, scrollStory: storyReport,
+    roles, grammar: grammarOf, problems,
+  };
 };
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  if (args[0] === 'compare') {
+    let ref, mine;
+    try { ref = JSON.parse(readFileSync(args[1], 'utf8')); mine = JSON.parse(readFileSync(args[2], 'utf8')); } catch (e) { console.error(`compare: cannot read the reports (${e.message}); usage: motion-audit.mjs compare <ref.json> <mine.json>`); process.exit(2); }
+    const c = compare(ref, mine);
+    for (const l of c.lines) console.log(l);
+    console.log(`${c.differ} of ${c.total} differ`);
+    process.exit(0);
+  }
   if (!url || args.includes('--help')) {
-    console.log('motion-audit.mjs <url> [--only <selector>]… [--cpu 4] [--frames <selector>]… [--out <dir>] [--measure] [--max 40]');
+    console.log('motion-audit.mjs [<url>] [--only <selector>]… [--cpu 4] [--frames [<selector>]]… [--click <selector>] [--interrupt] [--scroll-story] [--out <dir>] [--measure] [--max 40]   (without <url>: APP_URL of the environment)\nmotion-audit.mjs compare <ref.json> <mine.json>');
     process.exit(url ? 0 : 2);
   }
+  if (interrupt && !click) { console.error('--interrupt needs --click <selector>'); process.exit(2); }
   const r = await audit();
   if (r.error) { console.error(r.error); process.exit(2); }
   writeFileSync(join(out, 'report.json'), JSON.stringify(r, null, 1));
@@ -331,6 +487,9 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const actionable = r.elements.filter((e) => e.kind !== 'focus-only').length;
   console.log(`${r.elements.length} elements · respond on hover ${resp('hover')} · press ${resp('press')} · focus ${resp('focus')} · sections with entrance ${r.sections.filter((s) => s.animated).length}/${r.sections.length} · long frames ${r.longFrames?.length ?? 'n/a'}${r.cpu > 1 ? ` (CPU ${r.cpu}×)` : ''}`);
   console.log(`richness · of ${actionable} actionable elements: press with movement ${moves('press')}, hover with depth or movement ${moves('hover')} — the audit checks that what exists responds well; how alive the screen is, is judged against the references in step 9`);
+  const g = r.grammar;
+  const d = g.durationsMs;
+  console.log(`motion · durations ${d ? `${d.min}–${d.max} ms (median ${d.median})` : 'none measured'} · curves ${Object.entries(g.shapes).map(([k, n]) => `${k} ${n}`).join(', ') || 'none'} · stagger ${g.staggerMs} ms${r.click?.totalMs !== undefined ? ` · click moves ${r.click.count} elements over ${r.click.totalMs} ms` : ''}${r.interrupt && !r.interrupt.error ? ` · interrupt ${r.interrupt.continuous ? 'continuous' : `${r.interrupt.jumps.length} jumps`}` : ''}${r.scrollStory ? ` · scroll story ${r.scrollStory.summary.narrative ? 'yes' : 'no'} (${r.scrollStory.summary.parallax} parallax, ${r.scrollStory.summary.pinned} pin, ${r.scrollStory.summary.linked} linked)` : ''}`);
   if (r.sheets.length) console.log(`contact sheets: ${r.sheets.join(', ')}`);
   console.log(`report: ${join(out, 'report.json')}`);
   if (measure) process.exit(0);

@@ -1,9 +1,9 @@
 # Accessibility: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card touches a screen, a component, a form, a table, a chart, an
-email or a PDF the app generates; and at step 9, for the manual protocol of a new screen and the checklist
+**When it is read:** when the card touches a screen, a component, a form, a table, a chart, an
+email or a PDF the app generates; and by the `judge` (lens `visual`), for the manual protocol of a new screen and the checklist
 per pattern. **How:** only the sections the card touches, with `Read` and a line range of the heading;
-never whole. The plan names the rule IDs that apply, and the `implementer` receives those IDs and their
+never whole. `card.md` names the rule IDs that apply, and the `builder` receives those IDs and their
 ranges. Framework-independent: the examples use browser HTML/CSS and, for automatic verification, Playwright
 with `@axe-core/playwright`, which is what the kit already installs (`stacks/node-ts.md`). **Tools and
 reference products are options, not obligations.** **[NV] marks guidance not verified**: a hypothesis, never
@@ -265,7 +265,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **A11Y-PRO-02** — The `incomplete` result of axe is not discarded: each item is reviewed by hand and stays in the report as passes / fails. · How T+M · criterion none · every mechanizable WCAG · Check: PW write `r.incomplete` to `specs/<card>/axe-incomplete.json`; “incomplete … manual review is needed” · Source B15.
 
-**A11Y-PRO-03** — “Passed axe” is not “meets AA”: the report names the real coverage (about 57 % of the problems by volume; 20–30 % of the criteria; no tool, nor all together, reached 100 % in GDS's test) and what was not tried by hand stays *could not run*. · How J · criterion V5 · Check: the report states both figures with their base, so they do not contradict each other (`reference/why-validate.md` says automatic analysis covers about a third of WCAG: by criteria) · Source B15, B16, B17.
+**A11Y-PRO-03** — “Passed axe” is not “meets AA”: the report names the real coverage (about 57 % of the problems by volume; 20–30 % of the criteria; no tool, nor all together, reached 100 % in GDS's test) and what was not tried by hand stays *could not run*. · How J · criterion V5 · Check: the report states both figures with their base, so they do not contradict each other (automatic analysis covers about a third of WCAG by criteria) · Source B15, B16, B17.
 
 **A11Y-PRO-04** — Every new or changed screen passes the 10-minute manual protocol (below): keyboard, screen reader, zoom and reflow; its result goes in `specs/<card>/accessibility.md`. A person doing it counts as evidence of kind A; if nobody ran it, it is declared `could not run` with its reason, never `passed`. · How M · criterion I15 · Check: the protocol below, run on the production build, in the view and the states the card changed · Source B17, B18, B31.
 
@@ -273,7 +273,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **A11Y-PRO-06** — The conformance report uses VPAT 2.5Rev INT with the four terms (Supports, Partially Supports, Does Not Support, Not Applicable) and, if the app is public, an accessibility statement is published (`templates/accessibility-statement.md`, living in `docs/business/accessibility.md`) with standard, state, known limitations and contact. · How J · criterion I17 · Check: the statement exists and is current · Source B12, B13.
 
-**A11Y-PRO-07** — The target is WCAG 2.2 AA, which covers at once: Argentina (Disp. ONTI 6/2019, 30 of the 38 criteria of WCAG 2.0 A/AA), the United States 508 (WCAG 2.0 AA), the European Union (EN 301 549 V3.2.1 → WCAG 2.1 AA today; V4.1.1 → WCAG 2.2 AA when cited in the Official Journal, expected 16 December 2026) and the EAA since 28 June 2025. · How J · criterion V5 · Check: the plan's accessibility line names the target. The third-party skill `skills/accessibility-audit` audits against WCAG 2.1 AA; see `skills/WHEN.md` · Source B8, B9, B10, B11.
+**A11Y-PRO-07** — The target is WCAG 2.2 AA, which covers at once: Argentina (Disp. ONTI 6/2019, 30 of the 38 criteria of WCAG 2.0 A/AA), the United States 508 (WCAG 2.0 AA), the European Union (EN 301 549 V3.2.1 → WCAG 2.1 AA today; V4.1.1 → WCAG 2.2 AA when cited in the Official Journal, expected 16 December 2026) and the EAA since 28 June 2025. · How J · criterion V5 · Check: the plan's accessibility line names the target. The third-party skill `skills/accessibility-audit` audits against WCAG 2.1 AA · Source B8, B9, B10, B11.
 
 **A11Y-PRO-08** — Before launching a public service, test it with people with disabilities and with older people; before that, at least one audit by someone who did not build it. · How J · criterion none · Check: the evidence of the sessions · Source B18.
 

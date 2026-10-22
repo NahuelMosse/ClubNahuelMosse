@@ -1,10 +1,10 @@
 # Performance and load testing: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card has a performance requirement, touches a hot path (the
-word `hot-path` on its File map line), adds a list or an endpoint that grows with the data, a front
+**When it is read:** when the card has a performance requirement, touches a hot path (the
+word `hot-path` on its line of `## Tasks`), adds a list or an endpoint that grows with the data, a front
 route, or when a release asks for the full load test. **How:** only the sections the card touches, with
-`Read` and a line range of the heading; never whole. The plan names the rule IDs that apply, and the
-`implementer` receives those IDs and their ranges. **Tools are options, not obligations:** k6, Gatling,
+`Read` and a line range of the heading; never whole. `card.md` names the rule IDs that apply, and the
+`builder` receives those IDs and their ranges. **Tools are options, not obligations:** k6, Gatling,
 JMeter, Locust, Artillery, autocannon and wrk2 are named as options; a rule demands a property (open
 model, percentiles, a threshold that cuts the pipeline), never a tool. **[NV] marks guidance not
 verified**: a hypothesis, never the only evidence of a `meets`; **[kit convention]** marks a threshold
@@ -29,8 +29,8 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 ## 1. Default budgets (as ASM when the card gives none)
 
-When the card gives no number, the plan writes the default as an `ASM-NN` with its source (PERF-01). Where
-a source gives an example and not a norm, it says so; the implementer proposes another value with a source
+When the card gives no number, `card.md` writes the default as an `ASM-NN` with its source (PERF-01). Where
+a source gives an example and not a norm, it says so; the builder proposes another value with a source
 if the card justifies it.
 
 | What | Default | Source and nature |
@@ -52,7 +52,7 @@ if the card justifies it.
 | Resource limiting under nominal load | 70 % utilization or less | [kit convention] (Little and queueing: latency grows non-linearly near 1) |
 | Regression that fails a gate | +10 % of p95 or p99 and outside the spread between runs | [kit convention] (LOAD-23) |
 
-The per-card smoke test stays the 200-requests-per-screen script of the node-ts profile (R1): a sequential
+The per-card smoke test stays the 200-requests-per-screen script of the node-ts profile (O10): a sequential
 measure of the service time, under the O10 budget. The fixed-rate script of section 4 enters when the card
 asks for requests per second or concurrency; the full test (criterion O22) is for a release, a hot-path
 card or a volume requirement.
@@ -236,7 +236,7 @@ on a lab page with Playwright 1.63 and stable Chrome (2026-10-14: a bad page aga
 not verified, a hypothesis and never the only evidence of a `meets`; **[NV-ej]** an example written for this
 reference and not run. Source numbers `FBn` are in Sources. **Kit** says what the method already covers
 (`modern-interface.md`, `component-techniques.md` and `motion-audit.mjs`, all of module ui, and the
-`node-ts` profile) or “not covered”. The `rg` detectors are item Q18 of `validate-mechanical.md`: they
+`node-ts` profile) or “not covered”. The `rg` detectors are lines of the gate: they
 point, the measurement decides.
 
 **Which rule is a criterion.** The measurable ones back O15 (front: JS and Web Vitals under budget, by
@@ -428,7 +428,7 @@ It goes in the card's plan. If the card gives no numbers it is asked (AMB) and, 
 
 It closes with a table of three columns: finding, FE-PERF rule and evidence (capture or number). Without a number there is no finding (PERF-13).
 
-### 5.15 Detectors (item Q18, informative)
+### 5.15 Detectors (criterion O15, informative)
 
 `rg` with PCRE2 over the front-end files of the diff, excluding `*.spec.*` and `*.test.*`. Tried on a bad sample with 22 anti-patterns, a good one with the right versions and the kit's component set. They point and the measurement decides: **FE-DET-21** is a per-file heuristic that cannot see that a listener sits on a node that dies with the component, and **FE-DET-01** catches only the literal combination. `H` = `-g '*.{html,htm,astro,vue,svelte,jsx,tsx}'`, `C` = `-g '*.{css,scss,vue,svelte,astro,html}'`, `J` = `-g '*.{js,mjs,ts,jsx,tsx,vue,svelte}'`.
 

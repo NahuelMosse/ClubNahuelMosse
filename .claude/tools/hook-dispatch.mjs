@@ -31,7 +31,7 @@ export const ROUTES = {
     ['Read', ['light-images']],
     ['Skill|Agent', ['review-cap']],
     ['Agent|Skill|Bash|PowerShell', ['time-cap']],
-    ['.*', ['context-cap']],
+    ['.*', ['context-cap', 'turn-budget']],
     // /close never ran as a Skill in three cards: the same check also opens the close when closing.md is
     // written and when the card is published.
     ['Skill|Edit|Write|Bash|PowerShell', ['require-at-close']],
@@ -54,14 +54,14 @@ const GUARDING = new Set(['PreToolUse', 'close']);
 // A shell command that only reads: one simple command, no redirect, pipe, substitution or second command.
 const READ_ONLY = /^\s*(?:(?:ls|cat|head|tail|pwd|wc|grep)(?:\s+[^;&|<>`$()\n\\"']*)?|sed\s+-n\s+'?\d+(?:,\d+)?p'?\s+[^\s;&|<>`$()\\"']+|node\s+\.claude\/tools\/help\.mjs(?:\s+[\w.-]+)*)\s*$/;
 // Same list as `CAPPED` in hooks/context-cap.mjs (a test keeps them equal).
-export const CAPPED = new Set(['implementer', 'grunt', 'conductor']);
+export const CAPPED = new Set(['builder', 'grunt', 'designer']);
 
 // Whether a hook has nothing to say about this call, from what the hook itself would read first and end on
 // with exit 0 and no output. Each rule repeats the early exit of its hook; none of them changes a verdict.
 // Never when another kit's version of the hook would take the call over (`delegationTarget`).
 export const skips = (name, input, card, hookUrl) => {
   try {
-    if (!['shell-writes', 'commit-why', 'time-cap', 'context-cap', 'require-at-close'].includes(name)) return false;
+    if (!['shell-writes', 'commit-why', 'time-cap', 'context-cap', 'turn-budget', 'require-at-close'].includes(name)) return false;
     if (card.delegationTarget(hookUrl, input)) return false;
     const data = input.tool_input ?? {};
     const command = String(data.command ?? '');
@@ -73,7 +73,7 @@ export const skips = (name, input, card, hookUrl) => {
       case 'commit-why': return !/\bgit\s+(?:[^|;&\n"']*?\s)?commit\b/.test(command);
       case 'time-cap': {
         const found = cardOf();
-        return !found?.card || existsSync(join(found.card, 'closing.md')) || !existsSync(join(found.card, 'plan.md'));
+        return !found?.card || existsSync(join(found.card, 'closing.md')) || !['card.md', 'plan.md'].some((f) => existsSync(join(found.card, f)));
       }
       case 'context-cap': {
         if (input.agent_id) return !CAPPED.has(input.agent_type);
@@ -81,6 +81,8 @@ export const skips = (name, input, card, hookUrl) => {
         const found = cardOf();
         return !found || existsSync(join(found.card, 'closing.md'));
       }
+      // Only a subagent has turns; the main thread never has an `agent_id`.
+      case 'turn-budget': return !input.agent_id;
       case 'require-at-close': {
         const tool = input.tool_name;
         const closingFile = ['Write', 'Edit'].includes(tool) && /(^|\/)specs\/[^/]+\/closing\.md$/.test(String(data.file_path ?? '').replaceAll('\\', '/'));

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/tools/hook-dispatch.mjs PreToolUse",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs\" PreToolUse",
             "timeout": 60
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/tools/hook-dispatch.mjs PostToolUse",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs\" PostToolUse",
             "timeout": 30
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/tools/hook-dispatch.mjs Stop",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs\" Stop",
             "timeout": 30
           }
         ]
@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/tools/hook-dispatch.mjs SubagentStop",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs\" SubagentStop",
             "timeout": 30
           }
         ]
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/tools/hook-dispatch.mjs SessionStart",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs\" SessionStart",
             "timeout": 30
           }
         ]

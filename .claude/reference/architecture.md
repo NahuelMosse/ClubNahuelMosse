@@ -1,9 +1,9 @@
 # Modular architecture, TDD and the fast lane: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the plan adds a module, a boundary, an external library, a
+**When it is read:** when the card adds a module, a boundary, an external library, a
 component or a test strategy, or when the card is a candidate for the fast lane. **How:** only the
-sections the card touches, with `Read` and a line range of the heading; never whole. The plan names
-the rule IDs that apply, and the `implementer` receives those IDs and their ranges. This reference
+sections the card touches, with `Read` and a line range of the heading; never whole. `card.md` names
+the rule IDs that apply, and the `builder` receives those IDs and their ranges. This reference
 does not replace `rules/architecture.md`: the rule is short and loads by itself by path; this is the
 bibliography with IDs, and the rule cites it. **The tools are options, not obligations.** **[NV]
 marks guidance not verified**: a hypothesis, never the only evidence of a `meets`; **[V sec]** was
@@ -112,7 +112,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 No evidence was found that a risk-proportional process **with agents** lowers cost without raising defects: the closest is indirect (B39: trimming context and routing by difficulty lower the cost 21–64 % without losing performance in benchmarks). The rule rests on the human evidence of DORA and of per-change risk prediction; its effect in this method remains to be measured (LANE-09).
 
-**LANE-01** — Classify the lane with an automatic check over the diff, not with the agent's declaration: a closed list of allowed types (allow-list) and a list of paths and patterns that expel (deny-list). · How C · criterion T14 · Check: a script receives `git diff --numstat` and `git diff -U0` and returns `lane: fast` or `lane: full` with the reason (in the kit, `tools/lane.mjs`, called by the hooks and by `required.mjs`). Sketch for a stack without the kit: exit 1 on the first trigger; deny `/\.(test|spec)\.[tj]sx?$/`, `/(^|\/)(api|domain|application|infra|migrations)\//`, `/package(-lock)?\.json$/`, `/\.env/`, `/tokens?\.(css|json|ts)$/`; logic `/\b(if|else|switch|for|while|await|fetch)\b|\buse[A-Z]\w*\(|\bon[A-Z]\w*=|=>|data-testid|href=|name=/`; plus changed lines at most 30, files at most 3, a single screen/component directory. The same scheme works in a pre-commit hook or a CI step. A5 measures size but does not classify · Source B27 [V sec], B35 [V sec].
+**LANE-01** — Classify the lane with an automatic check over the diff, not with the agent's declaration: a closed list of allowed types (allow-list) and a list of paths and patterns that expel (deny-list). · How C · criterion T14 · Check: a script receives `git diff --numstat` and `git diff -U0` and returns `lane: fast` or `lane: full` with the reason (the kit has no fast lane: `risk.mjs` classifies by risk and the gate runs in every card). Sketch for a stack without the kit: exit 1 on the first trigger; deny `/\.(test|spec)\.[tj]sx?$/`, `/(^|\/)(api|domain|application|infra|migrations)\//`, `/package(-lock)?\.json$/`, `/\.env/`, `/tokens?\.(css|json|ts)$/`; logic `/\b(if|else|switch|for|while|await|fetch)\b|\buse[A-Z]\w*\(|\bon[A-Z]\w*=|=>|data-testid|href=|name=/`; plus changed lines at most 30, files at most 3, a single screen/component directory. The same scheme works in a pre-commit hook or a CI step. A5 measures size but does not classify · Source B27 [V sec], B35 [V sec].
 
 **LANE-02** — Only four types enter: (a) non-business text, (b) visual position within the same screen, (c) style using existing tokens, (d) replacement of an asset with the same role. · How C+J · criterion T14 · Check: the plan names the type; the diff contains only that type · Source B27 [V sec].
 

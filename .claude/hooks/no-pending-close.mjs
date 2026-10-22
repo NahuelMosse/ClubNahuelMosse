@@ -92,7 +92,7 @@ if (pending) {
     'finishes”: the turn ends here and whatever was left running goes with it. If the close depends ' +
     'on that result, wait for it in the foreground or dispatch it to a subagent that waits for it, ' +
     'and report with the real output. If it does not depend, say what was left running, its PID and ' +
-    'how to bring it down. A subagent launched in the foreground, such as the conductor of steps 6 to 9, has already returned: ' +
+    'how to bring it down. A subagent launched in the foreground, such as a builder, has already returned: ' +
     'its report is in the conversation, so there is nothing to wait for or to poll. One that came back as running in the background ' +
     'is awaited with `node .claude/tools/wait.mjs --agent <agentId> [--max 570]` or its notification, never by looking for the file it will write.\n'
   );

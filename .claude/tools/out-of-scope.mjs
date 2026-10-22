@@ -52,8 +52,9 @@ const touchedLines = (root, base, file) => {
 };
 
 export const outOfScopeThatBelongToTheCard = (root, base, cardDir, touchedFiles) => {
-  const log = join(cardDir, 'ambiguities.md');
-  if (!existsSync(log)) return [];
+  // The OUT lines live in ambiguities.md, or in the `## Log` of card.md when the card has no such file.
+  const log = [join(cardDir, 'ambiguities.md'), join(cardDir, 'card.md')].find((p) => existsSync(p));
+  if (!log) return [];
   const problems = [];
   const lines = readFileSync(log, 'utf8').split('\n');
   // The log is append-only: an OUT that stopped being one is not deleted, it is withdrawn with an

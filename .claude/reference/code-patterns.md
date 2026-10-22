@@ -1,9 +1,9 @@
 # Code patterns: when they pay and when they are overengineering
 
-**When it is read:** at step 5, when the plan brings a design decision (a new abstraction, an interface, a
-repository, a factory, a bus, a state machine, a layer), and by the reviewer when the diff introduces
+**When it is read:** when the card brings a design decision (a new abstraction, an interface, a
+repository, a factory, a bus, a state machine, a layer), and by the `judge` when the diff introduces
 one. **How:** only the sheet of the pattern the card touches, with `Read` and a line range of its heading;
-never whole. The plan names the rule IDs that apply, and the `implementer` receives those IDs and their
+never whole. `card.md` names the rule IDs that apply, and the `builder` receives those IDs and their
 ranges. This reference complements `rules/architecture.md` (the five rules, the ladder “Before writing a new
 piece” and “What not to do”, which link here), the criteria D4–D7, K4 and K5, `reference/architecture.md`,
 `reference/database.md` (module data) and `reference/errors.md`; when a sheet touches something already there it cites it by
@@ -189,9 +189,9 @@ Exceptions where the pattern **is not discussed** because it is a requirement of
 | A15 | A static utility class | `class StringUtils { static … }` | classes with only `static` | Module functions |
 | A16 | Result and exceptions mixed | part of the domain returns `Result`, part throws | `rg -n "neverthrow\|Result<" src/` against ``rg -n "throw new" src/**/domain/`` | One style (ERR-DES-06, K11) |
 
-## The detectors (mechanical items C12 to C16)
+## The detectors (mechanical, criteria D1, D4, D6 and K6)
 
-They are informative: the result is read by the inspector, it does not block. They were run over a sample tree (`/tmp/pat-sample`, deleted afterwards) with a positive and a negative case per command and gave only the positives. They need `rg` with `--pcre2` for C14. Each finding is looked at, not deleted blindly. Items C12–C16 of `reference/validate-mechanical.md` carry them; the commands by stack are in `stacks/node-ts.md`.
+They are informative: the result is read by the `judge`, it does not block. They were run over a sample tree (`/tmp/pat-sample`, deleted afterwards) with a positive and a negative case per command and gave only the positives. They need `rg` with `--pcre2` for the one over forwarding methods. Each finding is looked at, not deleted blindly. They are lines of the gate; the commands by stack are in `stacks/node-ts.md`.
 
 **C12 — Interfaces with at most 1 implementation and no fake in tests** [tried]:
 

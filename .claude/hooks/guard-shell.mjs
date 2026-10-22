@@ -37,11 +37,11 @@ const writesTo = (filePattern) =>
     `(>>?|\\btee\\b(\\s+-a)?|\\bsed\\b[^|;\\n]*\\s-i|\\bmv\\b|\\bcp\\b|\\b(?:${POWERSHELL_WRITE})\\b)[^|;&\\n]*${filePattern}`, 'i',
   ).test(cmd);
 
-if (writesTo('card\\.snapshot\\.md')) {
+// card.md is frozen at L1 and append-only in its Log by guard.mjs, which compares before and after: through the shell it cannot.
+if (writesTo('specs[/\\\\][^/\\\\\\s]+[/\\\\]card\\.md') || writesTo('specs[/\\\\][^/\\\\\\s]+[/\\\\]risk\\.json')) {
   reject(
-    'Writing card.snapshot.md through the shell dodges the guard. If the card changed: rename the ' +
-    'current one to card.snapshot.<date>.md and write a new one with /card. Creating it for the ' +
-    'first time can be done with Write.'
+    'Writing card.md or risk.json through the shell dodges the guard that keeps L1 and the Log of the card. ' +
+    'Create card.md with one Write; a later line goes at the end of `## Log` with Edit.'
   );
 }
 
@@ -109,7 +109,7 @@ try {
 // `docker compose --env-file .env up`) is allowed: the agent does not see the content.
 // Declared holes: `git diff` or `git show` of a versioned `.env`, a script that reads the file, and
 // `env` or `printenv` after loading it.
-const { isSecret, hookCard } = await import('../tools/card.mjs').catch((e) => reject(`The guard could not load the secret list (${e.message}). It blocks when in doubt: retry.`));
+const { isSecret, hookCard, actsAsMain } = await import('../tools/card.mjs').catch((e) => reject(`The guard could not load the secret list (${e.message}). It blocks when in doubt: retry.`));
 const READERS = 'cat|type|less|more|head|tail|bat|nl|od|xxd|hexdump|strings|base64|grep|rg|egrep|sed|awk|cut|sort|diff|cmp|cp|mv|scp|rsync|tar|zip|7z|openssl|source|Get-Content|gc|Select-String|Copy-Item|Move-Item|code|notepad|vim|nano';
 const READER = new RegExp(`(^|[\\s;&|(])(${READERS})(?=\\s)|^\\s*\\.\\s`, 'i');
 const wordsOf = (segment) => segment.split(/[\s"'`]+/).map((t) => t.replace(/^>+/, '')).filter(Boolean);
@@ -156,23 +156,26 @@ if (stashes) {
 // `npm run <script>` of a line that is a script) is refused: a bounded run (`npx playwright test --grep @X`,
 // `node --test one.test.mjs`) is not that line.
 // Inside a subagent the rule is wider: what is equivalent to a whole line (an npm script a line reaches, its body,
-// `playwright test -c <config>` or `node --test <globs>` with no filter) is refused as well, and an implementer or a
+// `playwright test -c <config>` or `node --test <globs>` with no filter) is refused as well, and a builder or a
 // grunt runs neither verify.mjs nor a line through once.mjs: the first whole run is the main thread's, in step 8.
 // For a subagent a parser that fails refuses; for the main thread it does not stop the shell, the rule is about cost.
 const agentType = String(input.agent_type ?? '');
-const noSuites = Boolean(input.agent_id) && /^(?:implementer|grunt)$/.test(agentType);
+const noSuites = Boolean(input.agent_id) && /^(?:builder|grunt)$/.test(agentType);
 try {
   const found = hookCard(input.cwd ?? process.cwd(), process.env, input);
-  const planPath = found && `${found.card}/plan.md`;
+  // The lines of the gate: `## Gate` of card.md, or `## Verification` of a plan.md a repo still has.
+  const cardPath = found && `${found.card}/card.md`;
+  const heading = cardPath && existsSync(cardPath) ? 'Gate' : 'Verification';
+  const planPath = found && (heading === 'Gate' ? cardPath : `${found.card}/plan.md`);
   if (planPath && existsSync(planPath)) {
     const plan = readFileSync(planPath, 'utf8');
-    const section = plan.split(/^## /m).find((s) => s.startsWith('Verification')) ?? '';
+    const section = plan.split(/^## /m).find((s) => s.startsWith(heading)) ?? '';
     const clean = (c) => c.trim().replace(/^cd\s+\S+\s*&&\s*/, '').replace(/\s*\|\s*(?:tail|head)\b[^|]*$/, '')
       .replace(/(?:\s+(?:\d*>>?|&>)\s*&?\S+)+\s*$/, '').replace(/\s+/g, ' ').trim();
     const { planCommands, scriptNamed, wholeRunOf } = await import('../tools/verify.mjs');
     const { commandsOf } = await import('../tools/shell-writes.mjs');
     const { records } = await import('../tools/once.mjs');
-    const planned = section && planCommands(plan, { base: 'HEAD', cardDir: found.card });
+    const planned = section && planCommands(plan, { base: 'HEAD', cardDir: found.card }, heading);
     const norm = (c) => c.replace(/\s+/g, ' ').trim();
     // Short: named lint, types or format, or measured under 30 s by verify.mjs (durations.json, by command) or once.mjs
     // (its records, by name); with several measures the longest counts. A line nobody has run is not short.
@@ -186,20 +189,13 @@ try {
       const known = measures.filter(Number.isFinite);
       return known.length > 0 && Math.max(...known) < SHORT_MIN;
     };
-    // A round of actions.md is over when it has action lines and every one of them is closed with its output.
-    const roundClosed = (card) => {
-      try {
-        const lines = readFileSync(join(card, 'actions.md'), 'utf8').split(/\r?\n/).filter((l) => /^\W*ACT-\w+\b/.test(l));
-        return lines.length > 0 && lines.every((l) => /· closed\b/.test(l) && !/· (?:open|suspect)\s*$/.test(l));
-      } catch { return false; }
-    };
-    const MAIN_THREAD ='A whole run is the main thread\'s: verify.mjs in step 8; a runner or an executor it sends runs a line through once.mjs. ';
+    const MAIN_THREAD ='A whole run is the gate\'s: verify.mjs, run by the builder or the main thread; a runner or an executor runs a line through once.mjs. ';
     const BOUNDED = 'A bounded run goes through: one spec file, `--grep` or `-g` on a tag, node --test over one file or with `--test-name-pattern`, tsc and eslint on what you touched.';
     // Each command the line runs is compared on its own: parentheses, a trailing `&`, `nohup`, `sh -c '…'`, an
     // environment prefix and `cd x &&` do not make a whole line another command.
     for (const asked of [...new Set(commandsOf(cmd).map(clean))].filter(Boolean)) {
-      if (planned && noSuites && /\bnode\s+(?:-\S+\s+)*\S*verify\.mjs(?:\s|$)/.test(asked) && !(agentType === 'implementer' && roundClosed(found.card))) {
-        reject(`An implementer or a grunt does not run verify.mjs (an implementer closes a round of actions.md with it, once every line is \`closed · <output>\`). ${MAIN_THREAD}${BOUNDED}`);
+      if (planned && noSuites && agentType === 'grunt' && /\bnode\s+(?:-\S+\s+)*\S*verify\.mjs(?:\s|$)/.test(asked)) {
+        reject(`A grunt does not run verify.mjs: the gate is the builder's or the main thread's. ${MAIN_THREAD}${BOUNDED}`);
       }
       // Through once.mjs the command is what comes after `--`.
       const viaOnce = noSuites && /\bnode\s+(?:-\S+\s+)*\S*once\.mjs\s/.test(asked);
@@ -211,7 +207,7 @@ try {
         // A subagent may run a short line: one named lint, types or format, or one measured under 30 s.
         const reached = input.agent_id && equivalent ? planned.find((c) => c.file === undefined && c.name === equivalent.line) : null;
         if (reached && shortLine(found.root, reached)) continue;
-        // To an implementer or a grunt, once.mjs is refused as well: it is not recommended.
+        // To a builder or a grunt, once.mjs is refused as well: it is not recommended.
         if (exact && !viaOnce && !noSuites) {
           reject(
             `That is the command of the verification line “${exact.name}” of the plan, run on its own: it leaves no record and verify.mjs repeats it. ` +
@@ -222,7 +218,7 @@ try {
         if (equivalent) {
           reject(
             `That is the whole of the verification line “${equivalent.line}” of the plan (${equivalent.what})${viaOnce ? ', even through once.mjs' : ' run bare inside a subagent'}: ` +
-            (noSuites ? 'an implementer or a grunt does not run whole suites. ' : 'it leaves no record and verify.mjs repeats it: run it as `node .claude/tools/once.mjs <name> -- <command>`. ') +
+            (noSuites ? 'a builder or a grunt does not run whole suites (the gate is verify.mjs). ' : 'it leaves no record and verify.mjs repeats it: run it as `node .claude/tools/once.mjs <name> -- <command>`. ') +
             MAIN_THREAD + BOUNDED
           );
         }
@@ -274,27 +270,6 @@ try {
     process.stdout.write(JSON.stringify({ systemMessage: advice, hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: advice } }));
   }
 } catch { /* advice only */ }
-
-// The fast lane (steps/fast-lane.md): through the shell the diff cannot be compared with what the lane
-// allows, so a write to a test or to production code goes through Edit or Write, where the hooks can.
-try {
-  const found = hookCard(input.cwd ?? process.cwd(), process.env, input);
-  if (found) {
-    const { laneOf, OUT_OF_LANE } = await import('../tools/lane.mjs');
-    const { IS_TEST, NOT_PRODUCTION, relativeTo } = await import('../tools/card.mjs');
-    const planPath = `${found.card}/plan.md`;
-    if (existsSync(planPath) && laneOf(readFileSync(planPath, 'utf8')) === 'fast') {
-      const WRITE = new RegExp(`(>>?|\\btee\\b|\\bsed\\b[^|;\\n]*\\s-i|\\bmv\\b|\\bcp\\b|\\b(?:${POWERSHELL_WRITE})\\b)`, 'i');
-      const targets = segments.filter((s) => WRITE.test(s)).flatMap(wordsOf)
-        .filter((w) => /[./\\]/.test(w) && !/^-/.test(w))
-        .map((w) => relativeTo(found.root, resolve(input.cwd ?? process.cwd(), w)))
-        .filter((rel) => !rel.startsWith('..') && (IS_TEST.test(rel) || !NOT_PRODUCTION.test(rel)));
-      if (targets.length) reject(OUT_OF_LANE([`a write through the shell to ${[...new Set(targets)].join(', ')}: use Edit or Write`]));
-    }
-  }
-} catch (e) {
-  reject(`The guard could not evaluate the fast lane (${e.message}). It blocks when in doubt: retry.`);
-}
 
 // The guards of production code see Edit and Write, not the shell: a subagent that writes it with `sed -i`, a
 // redirection, `tee` or a script that calls `writeFileSync` leaves no trace they can read. With a card in progress
@@ -368,7 +343,7 @@ const iterationsOf = (text) => {
 };
 const counterCap = Math.max(0, ...[...cmd.matchAll(/-(?:ge|gt|lt|le)\s+(\d+)/g)].map((m) => Number(m[1])), iterationsOf(cmd)) * wait;
 // A wait inside the prompt cache costs one turn; every wake-up past it rewrites the whole context. The main
-// thread and the agents that wait on suites (implementer, runner, executor) keep a one-hour cache, so one
+// thread and the agents that wait on suites (builder, runner, executor) keep a one-hour cache, so one
 // wait of up to 10 minutes is a single turn. Measured: a card polled every 25 s for 949 turns, USD 85 of 175.
 // A subagent (its hook input carries `agent_id`; the main thread's does not) that runs a card waits for its
 // own agents and processes: for it, a foreground wait is allowed when it has a ceiling of at most 570 s
@@ -394,7 +369,7 @@ const hourCache = await (async () => {
       return /^\s+cacheTtl:\s*1h\s*$/m.test(text.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? '');
     }
   }
-  return !input.agent_id;
+  return actsAsMain(input);
 })();
 const MAX_WAIT_S = hourCache ? 570 : 270;
 const MAX_CALL_MS = MAX_WAIT_S * 1000 + 30000;
@@ -414,7 +389,7 @@ if (!hourCache && waitMax.some((n) => n > MAX_WAIT_S)) {
 }
 const cap = Math.max(timeoutCap, counterCap);
 const toolTimeout = Number(input.tool_input?.timeout);
-const boundedSubagent = Boolean(input.agent_id) &&
+const boundedSubagent = !actsAsMain(input) &&
   ((toolTimeout > 0 && toolTimeout <= MAX_WAIT_S * 1000) || (cap > 0 && cap <= MAX_WAIT_S));
 // What a loop that waits for a port or a URL does is a server coming up: a few seconds, and fine.
 const waitsForEndpoint = /\b(curl|wget|nc|ncat|netcat|Test-NetConnection|Invoke-WebRequest|iwr)\b|\/dev\/tcp\//i.test(cmd);

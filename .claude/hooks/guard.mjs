@@ -2,6 +2,9 @@
 // PreToolUse: blocks what the method forbids, on any tool that names a file: reading or writing a
 // secret, and the writes that lower the bar.
 // A hook cannot force anything to be done; it can prevent. Only the latter goes here.
+// What it freezes: closing.md (close.mjs writes it), L1 and the `## Log` of card.md (the requirement as given, and a log that only grows), risk.json once it
+// is written, a test tagged `@<ID>-S<n>` once a commit holds it, the kit's manifest, an applied migration and the
+// lines of a verification config that existed before the card.
 // Contract: exit 0 lets it through, exit 2 blocks and Claude reads stderr. On its own error it
 // blocks: a guard that crashes and lets things through turns the rule into a suggestion.
 
@@ -10,13 +13,14 @@ import { basename, dirname } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const reject = (reason) => {
-  process.stderr.write(reason + '\n');
+  process.stderr.write(`${reason}\n`);
   process.exit(2);
 };
 
 try {
-  const { IS_TEST, IS_VERIFICATION_CONFIG, isSecret, isSecretGlob, rootOf, relativeTo, currentCard, cardStart, existedAt, pathTokens } =
+  const { IS_TEST, IS_VERIFICATION_CONFIG, isSecret, isSecretGlob, rootOf, relativeTo, currentCard, cardStart, existedAt } =
     await import('../tools/card.mjs');
+  const { applyEdit, cardIdOf, logViolation } = await import('../tools/card-doc.mjs');
   const raw = readFileSync(0, 'utf8');
   const input = JSON.parse(raw);
   await (await import('../tools/card.mjs')).delegateToRepo(import.meta.url, raw, input);
@@ -31,7 +35,7 @@ try {
     reject('Secrets are not read or written by the agent. The variable names are in .env.example ' +
            '(`cat .env.example`); the value is set by a person.');
   }
-  // The checks below are about writing: reading a snapshot, a test or a config is allowed.
+  // The checks below are about writing: reading a card, a test or a config is allowed.
   if (['Read', 'Grep'].includes(tool)) process.exit(0);
 
   const path = (data.file_path ?? data.notebook_path ?? '').replaceAll('\\', '/');
@@ -53,15 +57,7 @@ try {
   const applied = appliedMigration(path, input.cwd ?? process.cwd());
   if (applied) reject(IMMUTABLE_ADVICE(applied));
 
-  // Blocks editing it, not creating it: step 1 of the first card has to be able to write it.
-  if (/\/card\.snapshot\.md$/.test(path) && existsSync(path)) {
-    reject(
-      'card.snapshot.md is never edited. If the card changed: rename the current one to ' +
-      'card.snapshot.<date>.md and write a new one with /card. Editing it turns what was ' +
-      'red green without leaving a trace.'
-    );
-  }
-
+  // The questions of the one round on the card, and what publish.mjs records, live in ambiguities.md: one line per event.
   if (/\/ambiguities\.md$/.test(path) && tool === 'Edit') {
     reject(
       'ambiguities.md is append-only: one line per event, and a written line is not touched. ' +
@@ -69,106 +65,41 @@ try {
     );
   }
 
-  // Rule 7 — whoever implements does not lower the bar they themselves have to clear.
-  // The freeze is not a declared phase: it is the red commit of step 4. A tagged test that is
-  // already committed is frozen; one that has not entered git yet is being written.
-  // The one exception is the fast lane: a test may replace a string literal that the card itself
-  // took out of the presentation files, and lane.mjs decides whether that is all the write does.
-  const TAG = /@[A-Z]+-\d+-H\d+-\d+/;
-  const { TAG_G, RFZ_FORMAT, CLEANUP_ADVICE, cardIdOf, cleanupVerdict, refreezeVerdict } = await import('../tools/refreeze.mjs');
-  if (IS_TEST.test(path)) {
+  // closing.md is written whole by close.mjs (from node, so this guard does not see that write): by hand it only gets out of step.
+  if (/(^|\/)specs\/[^/]+\/closing\.md$/.test(path)) {
+    reject(
+      'closing.md is written whole by `node .claude/tools/close.mjs` and is not edited by hand. If something has to appear in it, ' +
+      'add a line at the end of `## Log` in card.md (`- L<n> · <date> · closing: <what>`) and run close.mjs again: it copies the Log lines that start with `closing:`.'
+    );
+  }
+
+  // card.md: the first write creates it; after that L1 stays as the card gave it and `## Log` is append-only.
+  if (/(^|\/)specs\/[^/]+\/card\.md$/.test(path) && existsSync(path)) {
+    const current = readFileSync(path, 'utf8');
+    const why = logViolation(current, applyEdit(current, data));
+    if (why) reject(`card.md: ${why}. The requirement is frozen; a later doubt or an answer is a new line at the end of \`## Log\`.`);
+  }
+  // risk.json is the classification that decides the size, the review and the lenses: written once by risk.mjs.
+  if (/(^|\/)specs\/[^/]+\/risk\.json$/.test(path) && existsSync(path)) {
+    reject('risk.json is frozen: risk.mjs wrote it once and a second run prints it. Only `node .claude/tools/risk.mjs --diff <card-dir>` (run by verify.mjs) raises it, from the real diff, and never lowers it. Changing the classification by hand lowers the review the card gets.');
+  }
+
+  // Whoever implements does not lower the bar they themselves have to clear. The freeze is the RED commit: a test
+  // tagged `@<ID>-S<n>` that HEAD already has is frozen; one that has not entered git yet is being written.
+  if (IS_TEST.test(path) && existsSync(path)) {
+    const head = spawnSync('git', ['show', `HEAD:./${basename(path)}`], { cwd: dirname(path), encoding: 'utf8', maxBuffer: 1 << 26 });
+    if (head.error) {
+      reject(`Could not query git for ${path} (${head.error.code}). Without being able to verify whether the test is frozen, the guard blocks.`);
+    }
     const root = rootOf(path);
-    const cardDir = root && currentCard(root);
-    const { laneOf, testWriteViolations, OUT_OF_LANE, applyEdit } = await import('../tools/lane.mjs');
-    const plan = cardDir && existsSync(`${cardDir}/plan.md`) ? readFileSync(`${cardDir}/plan.md`, 'utf8') : '';
-    const fast = cardDir && existsSync(path) && laneOf(plan) === 'fast';
-    if (fast) {
-      const content = tool === 'Edit' ? applyEdit(readFileSync(path, 'utf8'), data) : data.content ?? '';
-      const found = testWriteViolations(root, cardDir, { file: relativeTo(root, path), content });
-      if (found.length) reject(OUT_OF_LANE(found));
-    } else {
-      // A new test file with this card's scenario tags, created after the freeze (a `-TESTS` event
-      // exists), is a change to the frozen set: close check 8 diffs the tests since the last TESTS event.
-      const ownId = cardDir ? cardIdOf(cardDir) : null;
-      if (ownId && !existsSync(path) && tool === 'Write' && new RegExp(`@${ownId}-H\\d+-\\d+`).test(data.content ?? '')) {
-        const events = existsSync(`${cardDir}/ambiguities.md`) ? readFileSync(`${cardDir}/ambiguities.md`, 'utf8').split(/\r?\n/) : [];
-        const frozen = events.some((l) => l.startsWith(`${ownId}-TESTS · `));
-        const rel = relativeTo(root, path);
-        if (frozen && !events.some((l) => l.startsWith(`${ownId}-TESTS · `) && /refrozen at \S+/.test(l) && pathTokens(l).includes(rel))) {
-          reject(
-            `${rel} is a new test with scenario tags of ${ownId}, and the scenarios were already frozen: ` +
-            'close check 8 would flag it. Append to ' +
-            `${relativeTo(root, cardDir)}/ambiguities.md, before writing it, the event:\n` +
-            `  ${ownId}-TESTS · <date> · refrozen at pending · <reason> · ${rel}\n` +
-            'and after committing the file, a new `refrozen at <sha>` event (the last one wins). It is legitimate ' +
-            'only for tests that an action of step 8 or 9 adds over scenarios already frozen; the frozen tests ' +
-            'themselves are never changed.'
-          );
-        }
-      }
-      // Frozen is what HEAD has, by its content: the tags in HEAD freeze the file and say whose they are. A red
-      // test in the index but not committed, or a versioned one that only has its tags in the working copy,
-      // is still its author's.
-      let headText = null;
-      if (existsSync(path)) {
-        const head = spawnSync('git', ['show', `HEAD:./${basename(path)}`],
-                               { cwd: dirname(path), encoding: 'utf8', maxBuffer: 1 << 26 });
-        if (head.error) {
-          reject(`Could not query git for ${path} (${head.error.code}). ` +
-                 'Without being able to verify whether the test is frozen, the guard blocks.');
-        }
-        if (head.status === 0) headText = head.stdout;
-      }
-      // The freeze is the card's: with no `specs/.current` naming a card in progress there is nothing to be frozen for.
-      if (headText !== null && TAG.test(headText) && root && currentCard(root, { named: true })) {
-        let current;
-        try { current = readFileSync(path, 'utf8'); } catch (e) {
-          reject(`Could not read ${path} to see whether it has card tags (${e.code}). ` +
-                 'The guard blocks when in doubt.');
-        }
-        const own = cardDir ? cardIdOf(cardDir) : null;
-        const foreign = own && !(headText.match(TAG_G) ?? []).some((t) => t.startsWith(`@${own}-H`));
-        // A requirement of this card that contradicts a test of another, already closed, card; or, for a test of
-        // this card, an ACT of step 8 that shows its locator is wrong (a critical axe finding, or a criterion).
-        // The other exception is its cleanup: an edit that moves no assertion, title or tag, declared by an ACT that
-        // names the file (`cleanupVerdict`). Measured: a teardown that deleted a folder before the server closed its
-        // SQLite file failed with EPERM on Windows, and the reorder that fixes it was blocked as an edit of the test.
-        if (cardDir) {
-          // The one other change a frozen test takes: its cleanup repaired, with no assertion, title or tag moved.
-          const repaired = cleanupVerdict({ cardDir, rel: relativeTo(root, path), current, next: tool === 'Edit' ? applyEdit(current, data) : data.content ?? '' });
-          if (repaired.ok) process.exit(0);
-        }
-        if (own && cardDir) {
-          const next = tool === 'Edit' ? applyEdit(current, data) : data.content ?? '';
-          const verdict = refreezeVerdict({ cardDir, rel: relativeTo(root, path), current, next });
-          if (verdict.ok) process.exit(0);
-          if (!foreign) {
-            reject(
-              `${path} has tests tagged by this card and is already committed: frozen in step 4. Whoever implements does not ` +
-              'edit scenario tests; if one is wrong, report it (actions.md, and the gap in `## Uncovered assumptions`). The one ' +
-              'case that changes it is a locator that step 8 found wrong: a critical axe finding on what the test locates, or a ' +
-              'criterion of the card that contradicts the locator (a menu item found by a role the `menu` does not allow). Then ' +
-              `append to ${relativeTo(root, cardDir)}/ambiguities.md the event:\n  ${RFZ_FORMAT}\n` +
-              `(file = ${relativeTo(root, path)}; the tag is this card's; the reason cites a scenario and an ACT-NN of actions.md ` +
-              'whose evidence is that finding; after committing, `<ID>-TESTS · <date> · refrozen at <sha>`). ' +
-              `Not allowed now: ${verdict.why}. ${CLEANUP_ADVICE}`
-            );
-          }
-          reject(
-            `${path} has tests tagged by another card and is already committed: frozen. A card changes ` +
-            'it only when a requirement of THIS card contradicts it; if the other card\'s test still holds, ' +
-            'this card is wrong and the test is not touched. To change it, append to ' +
-            `${relativeTo(root, cardDir)}/ambiguities.md the event:\n  ${RFZ_FORMAT}\n` +
-            `(file = ${relativeTo(root, path)}; the reason cites a scenario of this card's snapshot; the PR lists it under ` +
-            `\`## Refrozen tests\`). Not allowed now: ${verdict.why}. ${CLEANUP_ADVICE}`
-          );
-        }
-        reject(
-          `${path} has tests tagged by card and is already committed: it was frozen in ` +
-          'step 4. Whoever implements does not edit scenario tests. If the test is wrong, report it ' +
-          `(actions.md, and the gap in \`## Uncovered assumptions\`: the PR lists it) — do not fix it yourself. ${CLEANUP_ADVICE}`
-        );
-      }
+    if (head.status === 0 && /@[A-Z][A-Z0-9]*-\d+-S\d+(?!\d)/.test(head.stdout) && root && currentCard(root, { named: true })) {
+      const own = cardIdOf(currentCard(root, { named: true }));
+      const mine = own && new RegExp(`@${own}-S\\d+(?!\\d)`).test(head.stdout);
+      reject(
+        `${relativeTo(root, path)} has tests tagged ${mine ? 'by this card' : 'by another card'} and a commit already holds them: frozen. ` +
+        'Whoever implements does not edit them. If one is wrong, say so in the `## Log` of card.md (a new line) and in judge.md or your report: a person decides; ' +
+        'a new behavior is a new test with its own tag.'
+      );
     }
   }
 
@@ -181,19 +112,14 @@ try {
     if (cardDir && existedAt(root, cardStart(root, cardDir), relativeTo(root, path))) {
       const linesOf = (t) => t.split('\n').map((l) => l.trim()).filter(Boolean);
       const current = readFileSync(path, 'utf8');
-      const next = tool === 'Edit'
-        ? (data.replace_all
-          ? current.replaceAll(data.old_string ?? '', data.new_string ?? '')
-          : current.replace(data.old_string ?? '', data.new_string ?? ''))
-        : data.content ?? '';
-      const remaining = new Set(linesOf(next));
+      const remaining = new Set(linesOf(applyEdit(current, data)));
       const lost = linesOf(current).filter((l) => !remaining.has(l));
       if (lost.length) {
         reject(
           `${relativeTo(root, path)} configures what gets verified and already existed before the card: ` +
           `lines are only added to it. This change removes or modifies ${lost.length}: “${lost[0]}”` +
           `${lost.length > 1 ? '…' : ''}. If a rule flags something, the code gets fixed. If the ` +
-          'rule is wrong, record it in ambiguities.md as an `OUT` and it goes to the PR; the rule stays.'
+          'rule is wrong, add a line to the `## Log` of card.md and it goes to the PR; the rule stays.'
         );
       }
     }

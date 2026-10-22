@@ -35,7 +35,7 @@ Then, before using it on a screen: tokens instead of its default colors, its red
 checked (`useReducedMotion` from `motion/react`, or `motion-reduce:` classes), and its place in the
 gallery route (`src/gallery.tsx`, `/gallery`) in every state.
 
-## The plan's `## Verification`
+## The `## Gate` of `card.md`
 
 ```
 types: npx tsc --noEmit
@@ -51,7 +51,7 @@ vitals: npm run verify:vitals
 ```
 
 `budget:` measures the initial JS per route against the budget of O15 and `vitals:` the LCP, INP and CLS
-(R4 of `stacks/node-ts.md`); both run alone, at the end, over the production build. Untested on this machine.
+(O15 of `stacks/node-ts.md`); both run alone, at the end, over the production build. Untested on this machine.
 
 - **Mutation only over logic with unit tests** (`src/lib/`): `mutate.mjs` refuses a browser suite.
   What a component does on screen is covered by the scenarios and the gallery tests.
@@ -62,9 +62,9 @@ vitals: npm run verify:vitals
   `npx playwright test --grep "@<ID>" --repeat-each=3`, and for unit tests
   `node .claude/tools/repeat.mjs 3 -- npx vitest run --sequence.shuffle`—; one failure is “could not run: unstable”, never frozen.
 - **The expected value is written**: the spec files' ESLint block carries the `no-restricted-syntax`
-  selector of `stacks/node-ts.md` (“Before freezing the scenarios”) against `expect(…filter|map|reduce|sort|find…)`.
-- **Components ahead**: the catalog components the design line names are installed in step 1, in
-  the background (`npx shadcn@latest add …` with a log), while the questions are answered; the
+  selector of `stacks/node-ts.md` (“Before committing the RED tests”) against `expect(…filter|map|reduce|sort|find…)`.
+- **Components ahead**: the catalog components the design line names are installed when the card
+  starts, in the background (`npx shadcn@latest add …` with a log), while the questions are answered; the
   card does not wait for the network at implementation. *Measured: 25 of 46 minutes of a lap were
   `shadcn add` over a slow network.*
 

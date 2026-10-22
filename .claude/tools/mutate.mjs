@@ -14,6 +14,12 @@
 // suite fail for another reason and would count as detected without being so. That is why the
 // comparison and arithmetic ones require spaces around them —so they do not touch generics, arrows
 // or comments— and nothing is mutated inside a string.
+//
+// Python: a `.py` file gets its own operators (== != · and or · not · None → 0 · is None · True False · < <= · > >= ·
+// `return x` → `return None`), described above `PY_OPERATORS`, and nothing in a string or a `#` comment is touched. The suite
+// is `pytest <the file's tests>`: `-x` is added if the command has no `-x`, `--exitfirst` or `--maxfail`, and
+// `PYTHONDONTWRITEBYTECODE` is set. Give it the file's own tests, never the whole suite: the 10-minute budget below
+// refuses a suite that is slow times the number of mutants (`node .claude/tools/affected.mjs <file>` lists them).
 import { readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
 import { copyTree } from './copy-tree.mjs';
 import { endsWithLine } from './final-line.mjs';
@@ -30,7 +36,14 @@ const given = sep > 0 ? process.argv.slice(sep + 1) : [];
 // mutants, same score. `--test-force-exit` is added after `--test` to a `node --test` command that lacks it.
 const NODE_TEST = /(^|\s)(node(?:\.exe)?\s[^|;&]*?--test)(?=\s|$)/;
 const forced = given.length > 0 && !given.join(' ').includes('--test-force-exit') && NODE_TEST.test(given.join(' '));
-const command = forced ? [given.join(' ').replace(NODE_TEST, '$1$2 --test-force-exit')] : given;
+const forcedCommand = forced ? [given.join(' ').replace(NODE_TEST, '$1$2 --test-force-exit')] : given;
+// A Python file is mutated against `pytest <its tests>`: the suite stops at the first failure (`-x`) because a detected
+// mutant needs only one failing test, and the run ends there instead of walking the rest of the file's tests.
+const isPy = /\.py$/.test(file ?? '');
+const PYTEST = /(^|\s)((?:python3?(?:\.exe)?\s+-m\s+)?pytest)(?=\s|$)/;
+const joined = forcedCommand.join(' ');
+const exitFirst = isPy && PYTEST.test(joined) && !/(^|\s)(-x|--exitfirst|--maxfail)(?=[\s=]|$)/.test(joined);
+const command = exitFirst ? [joined.replace(PYTEST, '$1$2 -x')] : forcedCommand;
 // Forcing the exit must never turn a green suite into a failure: node's own failure exits with 1, so any other
 // status from the forced command (an abort of the runtime at exit) is run again as the command was written.
 const option = (name) => {
@@ -76,6 +89,51 @@ const OPERATORS = [
   [/(?<![\w.$])\d+(?:\.\d+)?(?![\w.])/, bumpNumber],
 ];
 
+// Python (.py). The matching runs on a masked copy of the source —strings and comments, triple-quoted ones across lines
+// included, replaced by `S` and blanks— so nothing inside them is touched and no quote tracking is needed. Each operator
+// keeps the syntax valid: `not x` → `x` skips `is not` and `not in`; `None` → `0` skips what is a type or an identity
+// check (`-> None`, `X | None`, `Optional[None]`-style `, None]`, `is None`, `is not None`), since the identity check has
+// its own mutant. `0` was chosen because it is falsy like `None` but is not `None`: a test that checks `is None` or
+// `== None` notices it, one that only checks truthiness does not, and that is what the mutant measures.
+// `return x` → `return None` only when the expression ends on the same line (balanced brackets, no `\`).
+const balanced = (s) => {
+  let depth = 0;
+  for (const c of s) { if ('([{'.includes(c)) depth++; else if (')]}'.includes(c)) depth--; }
+  return depth === 0 && !/\\\s*$/.test(s);
+};
+const PY_OPERATORS = [
+  [/(?<![=!<>])==(?!=)/, '!='], [/!=/, '=='],
+  [/\band\b/, 'or'], [/\bor\b/, 'and'],
+  [/(?<!\bis )\bnot\s+(?!in\b)/, ''],
+  [/\bis not None\b/, 'is None'], [/\bis None\b/, 'is not None'],
+  [/(?<!\bis )(?<!\bis not )(?<!->\s*)(?<!\|\s*)\bNone\b(?!\s*[|\]])/, '0'],
+  [/\bTrue\b/, 'False'], [/\bFalse\b/, 'True'],
+  [/(?<![<>=!-])<=(?!=)/, '<'], [/(?<![<>=!-])>=(?!=)/, '>'],
+  [/ < /, ' <= '], [/ > /, ' >= '],
+  [/(?<=^\s*return )(?!None\s*$)\S.*?(?=\s*$)/, 'None', balanced],
+];
+const PY_NOISE = /^\s*(import\b|from\s+\S+\s+import\b|@)/;
+const maskPython = (src) => {
+  const out = src.split('');
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === '#') { while (i < src.length && src[i] !== '\n') out[i++] = ' '; continue; }
+    if (c !== '"' && c !== "'") { i++; continue; }
+    const q = src.startsWith(c.repeat(3), i) ? c.repeat(3) : c;
+    const start = i;
+    i += q.length;
+    while (i < src.length) {
+      if (src[i] === '\\') { i += 2; continue; }
+      if (src.startsWith(q, i)) { i += q.length; break; }
+      if (q.length === 1 && src[i] === '\n') break;
+      i++;
+    }
+    for (let j = start; j < Math.min(i, src.length); j++) if (src[j] !== '\n' && src[j] !== '\r') out[j] = 'S';
+  }
+  return out.join('');
+};
+
 const root = process.cwd();
 const rel = relative(root, resolve(file));
 if (rel.startsWith('..')) {
@@ -111,7 +169,7 @@ const mutants = [];
 let changed = null;
 // A file git does not track yet is all new: git diff shows none of it, and it would come out as
 // “nothing to mutate”. Measured: a new file passed the mutation that way, and the close sent a second
-// implementer to mutate it again.
+// agent to mutate it again.
 const untracked = fromRef && spawnSync('git', ['ls-files', '--error-unmatch', '--', file], { encoding: 'utf8' }).status !== 0;
 if (fromRef && !untracked) {
   const d = spawnSync('git', ['diff', '-U0', fromRef, '--', file], { encoding: 'utf8' });
@@ -131,13 +189,14 @@ const contextAt = (offset, length) => ({
   before: squeeze(original.slice(Math.max(0, offset - 6 * CONTEXT), offset)).slice(-CONTEXT),
   after: squeeze(original.slice(offset + length, offset + length + 6 * CONTEXT)).slice(0, CONTEXT),
 });
+const masked = isPy ? maskPython(original).split('\n') : null;
 lines.forEach((line, n) => {
   if (changed && !changed.has(n + 1)) return;
-  if (!atStart[n] && isNoise(line)) return;
-  const code = line.replace(/\s\/\/.*$/, '');
-  for (const [from, to] of OPERATORS) {
+  if (isPy ? PY_NOISE.test(masked[n]) : !atStart[n] && isNoise(line)) return;
+  const code = isPy ? masked[n] : line.replace(/\s\/\/.*$/, '');
+  for (const [from, to, applies] of isPy ? PY_OPERATORS : OPERATORS) {
     for (const m of code.matchAll(new RegExp(from.source, 'g'))) {
-      if (quoteAt(line, m.index, atStart[n])) continue;
+      if (isPy ? applies && !applies(m[0]) : quoteAt(line, m.index, atStart[n])) continue;
       const replacement = typeof to === 'function' ? to(m[0]) : to;
       const mutated = line.slice(0, m.index) + replacement + line.slice(m.index + m[0].length);
       mutants.push({ n: n + 1, from: m[0].trim(), to: replacement.trim(), ...contextAt(lineStart[n] + m.index, m[0].length), text: lines.map((l, i) => (i === n ? mutated : l)).join('\n') });
@@ -170,6 +229,9 @@ const copies = Array.from({ length: parallel }, () => mkdtempSync(join(tmpdir(),
 // children makes the nested suite exit fine without running anything: every mutant would look alive.
 const env = { ...process.env };
 delete env.NODE_TEST_CONTEXT;
+// Python caches bytecode by the source's mtime (in seconds) and size: two mutants of the same size written in the same
+// second would run the first one's bytecode, and the score would be of the wrong mutant.
+if (isPy) env.PYTHONDONTWRITEBYTECODE = '1';
 const run = async (copy, timeout) => {
   const result = await exec(copy, timeout, command);
   return forced && !result.timedOut && result.status !== 0 && result.status !== 1 ? exec(copy, timeout, given) : result;
@@ -186,6 +248,8 @@ const exec = (copy, timeout, cmd) => new Promise((done) => {
   p.on('exit', (code) => { clearTimeout(deadline); done({ status: code ?? 1, timedOut, ms: Date.now() - start }); });
 });
 let alive;
+let timedOut = 0;
+let baseMs = 0;
 try {
   for (const copy of copies) {
     copyTree(root, copy);
@@ -205,14 +269,19 @@ try {
   } else {
     // The per-mutant deadline comes from how long the suite takes: a fixed one makes every mutant
     // time out on a slow suite, and every timeout counts as detected — the score comes out inflated.
-    const deadline = Math.max(60_000, 3 * base.ms);
+    // 3 times the base run, never under 10 s: a mutant that passes it hung the suite and counts as detected (timeout).
+    baseMs = base.ms;
+    const deadline = Math.max(10_000, 3 * base.ms);
     alive = [];
+    timedOut = 0;
     const queue = [...mutants];
     await Promise.all(copies.map(async (copy) => {
       const target = join(copy, rel);
       for (let m = queue.shift(); m; m = queue.shift()) {
         writeFileSync(target, m.text);
-        if ((await run(copy, deadline)).status === 0) alive.push(m);
+        const r = await run(copy, deadline);
+        if (r.timedOut) timedOut++;
+        if (r.status === 0) alive.push(m);
       }
     }));
     alive.sort((a, b) => a.n - b.n);
@@ -259,6 +328,7 @@ const unexplained = alive.filter((v) => !declaration(v));
 const killed = mutants.length - alive.length;
 const score = Math.round((killed / mutants.length) * 100);
 console.log(`${file}: ${killed}/${mutants.length} detected (${score} %)`);
+if (timedOut) console.log(`  ${timedOut} of them timed out (over ${Math.round(Math.max(10_000, 3 * baseMs) / 1000)} s) and count as detected`);
 for (const v of alive) {
   const d = declaration(v);
   console.log(d

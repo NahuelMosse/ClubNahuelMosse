@@ -93,11 +93,19 @@ const appliedUnder = (loc, exact) => {
   });
 };
 
+// The top of the repository the hook works in (the card's); null when the cwd is in none. A path of another repository
+// is not evaluated: its migrations are not the card's base.
+const cardTop = (cwd) => {
+  const top = git(nearestDir(resolve(cwd)), ['rev-parse', '--show-toplevel']);
+  return top.status === 0 ? realpathSync(top.stdout.trim()) : null;
+};
+const outside = (loc, mine) => mine !== null && loc.top !== mine;
+
 // For the Edit/Write guard: the file, if it is a protected one that already exists in the base.
 export const appliedMigration = (path, cwd = process.cwd()) => {
   if (!isProtected(path.replaceAll('\\', '/'))) return null;
   const loc = locate(resolve(cwd, native(path)));
-  if (!loc || !isProtected(loc.rel)) return null;
+  if (!loc || !isProtected(loc.rel) || outside(loc, cardTop(cwd))) return null;
   return appliedUnder(loc, true) ? { file: loc.rel, label: loc.base.label } : null;
 };
 
@@ -242,6 +250,7 @@ const targetsOf = (command, cwd, depth) => {
 // protected file that exists in the base. Null when it does neither.
 export const shellViolation = (text, cwd) => {
   let here = cwd;
+  const mine = cardTop(cwd);
   for (const command of splitCommands(text)) {
     const raw = tokensOf(command);
     const toks = raw.map(bare);
@@ -254,7 +263,7 @@ export const shellViolation = (text, cwd) => {
     }
     for (const target of targetsOf(command, here, 0)) {
       const loc = locate(resolve(target.cwd, native(target.path)));
-      if (!loc || (target.exact && !isProtected(loc.rel))) continue;
+      if (!loc || outside(loc, mine) || (target.exact && !isProtected(loc.rel))) continue;
       const file = appliedUnder(loc, target.exact);
       if (file) return { file, label: loc.base.label };
     }

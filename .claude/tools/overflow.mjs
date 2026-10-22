@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// overflow.mjs <url> [--only <selector>]… [--pseudo 1.4]
+// overflow.mjs [<url>] [--only <selector>]… [--pseudo 1.4]
 // Run from the root of the repo of the card; Playwright is found there or at KIT_PLAYWRIGHT_ROOT.
 //
 // Whether any text overflows its box, measured in the browser: every text element —inside the
@@ -103,9 +103,9 @@ export const check = async (url, { selectors = [], factor = 1.4 } = {}) => {
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const opt = (name) => args.flatMap((a, i) => (a === name ? [args[i + 1]] : []));
-  const url = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--'));
+  const url = args.find((a, i) => !a.startsWith('--') && !args[i - 1]?.startsWith('--')) ?? process.env.APP_URL;
   if (!url || args.includes('--help')) {
-    console.log('overflow.mjs <url> [--only <selector>]… [--pseudo 1.4]');
+    console.log('overflow.mjs [<url>] [--only <selector>]… [--pseudo 1.4]   (without <url>: APP_URL of the environment)');
     process.exit(url ? 0 : 2);
   }
   const factor = Number(opt('--pseudo')[0] ?? 1.4);

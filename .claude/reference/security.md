@@ -1,17 +1,17 @@
 # Security and secrets handling: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card adds or changes a route, an integration, an upload, a
+**When it is read:** when the card adds or changes a route, an integration, an upload, a
 role, a secret, a personal datum, a dependency, a Dockerfile or a pipeline; and when a security
 incident has to be written up. **How:** only the sections the card touches, with `Read` and a line
-range of the heading; never whole. The plan names the rule IDs that apply, and the `implementer`
-receives those IDs and their ranges; the inspector reaches a rule through the Source column of the
+range of the heading; never whole. `card.md` names the rule IDs that apply, and the `builder`
+receives those IDs and their ranges; the `judge` reaches a rule through the Source column of the
 criterion. **Products are options, not obligations:** when a rule leans on one (GitHub, AWS, Azure, GCP,
 Vault) it is named as one of the options and the rule is written over the capability. **[NV] marks
 guidance not verified**: a hypothesis, never the only evidence of a `meets`.
 
 **What this reference does not repeat.** The kit already covers S1–S17, D10, E8, the ASVS 5.0 matrix at
-levels 1 and 2 per card (`templates/asvs-level-1.md`, `templates/asvs-level-2.md`, module security-l2), Semgrep (Q2), ZAP
-baseline (Q5, S17), secret search over code and history (G4, S9) and SBOM plus `npm audit` (G3, S10, S11).
+levels 1 and 2 per card (`templates/asvs-level-1.md`, `templates/asvs-level-2.md`, module security-l2), Semgrep (S3), ZAP
+baseline (S17), secret search over code and history (S9) and SBOM plus `npm audit` (S10, S11).
 Where a rule touches one of those it says what it adds. Three ASVS requirements that are level 3 enter
 as kit criteria, not as an L3 obligation: V13.3.4 (secrets that expire and rotate as documented, in
 SEC-SECR-06), V14.2.7 (retention classification and automatic deletion, in SEC-DAT-05) and V15.2.4

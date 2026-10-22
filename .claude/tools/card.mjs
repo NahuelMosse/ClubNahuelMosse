@@ -8,9 +8,12 @@ import { syncBuiltinESMExports } from 'node:module';
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
+// The bench runs each card in a subagent that acts as the main thread: for permissions and thresholds it is the main thread.
+export const actsAsMain = (input) => !input?.agent_id || /^sdd-corrida-/.test(String(input.agent_type ?? '')) || input.agent_type === 'sdd-control-experimento';
+
 // The component set's gallery server and page come from the kit's template: they are the set's
 // harness, not the product. Measured: mutating serve.mjs took 33 of a card's 61 minutes.
-// A path inside the repo that is production code: what delegate-code.mjs keeps for the implementer and the grunt.
+// A path inside the repo that is production code: what delegate-code.mjs keeps for the builder and the grunt.
 export const isProductionPath = (root, path) => {
   const rel = relative(root, path).split(sep).join('/');
   return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel) && !NOT_PRODUCTION.test(rel);
@@ -22,22 +25,11 @@ export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.py$|
 // The configs of what gets verified: loosening them is approving without fixing.
 export const IS_VERIFICATION_CONFIG = /(^|\/)(eslint\.config\.[cm]?[jt]s|\.eslintrc(\.[a-z]+)?|playwright\.config\.[cm]?[jt]s|stryker\.conf(ig)?\.[a-z]+|\.c8rc(\.json)?|\.nycrc(\.json)?|jest\.config\.[cm]?[jt]s|vitest\.config\.[cm]?[jt]s|tsconfig[^/]*\.json|ruff\.toml|\.ruff\.toml|mypy\.ini|pytest\.ini|\.golangci\.[a-z]+|\.axerc[^/]*)$/;
 
-// What kind of file a path is, for the hooks and for required.mjs, defined once in signals.mjs and
-// re-exported here so no import breaks. They are heuristics: a false positive is settled with the
-// plan's `<Doc>: unchanged — <why>` line; a false negative is judged by the inspector with D14, O13,
-// W6 or S21. Paths are relative, with `/`.
+// What kind of file a path is is defined once in signals.mjs and re-exported here so no import breaks. They are
+// heuristics; a false negative is for the judge to catch. Paths are relative, with `/`.
 export {
   I18N, INFRA_DEPENDENCY, IS_CI, IS_INFRA, IS_SCHEMA, IS_SCREEN, ROUTE, SCREEN_MARKUP, WRITING_ROUTE,
 } from './signals.mjs';
-import { IS_SCREEN as SCREEN_FILE, SCREEN_MARKUP as MARKUP, WRITING_ROUTE as WRITES } from './signals.mjs';
-
-// What the card's production code is, for the judge that reads it in a clean context: a screen, or a
-// route that writes. One reading for required.mjs (which asks for review.md) and review-cap.mjs (which
-// asks for the reviewer to go out before the round of corrections).
-export const reviewKinds = (root, code) => ({
-  screen: code.some((f) => SCREEN_FILE.test(f) || MARKUP.test(readFileSync(join(root, f), 'utf8'))),
-  writingRoute: code.some((f) => WRITES.test(readFileSync(join(root, f), 'utf8'))),
-});
 
 // What the agent never reads or writes: the value of a secret is set by a person. The example files
 // carry only the names of the variables.
@@ -58,73 +50,17 @@ export const RAW_DURATION = /\b(transition|animation)(-duration)?\s*:[^;]*\b\d+m
 export const RAW_LAYOUT = /\b(padding|margin|gap|row-gap|column-gap|border-radius|box-shadow)(-[a-z]+)?\s*:[^;{}]*?(?<![\w.-])(?!0\b|1px\b)\d*\.?\d+(px|rem|em)\b/g;
 export const DECLARES_TOKEN = /^\s*[+]?\s*--[\w-]+\s*:/;
 
-// The plan's `- <Doc>: unchanged — <why>` line under `## Changes to existing behavior`; Spanish plans
-// say `sin cambios` or `no cambia`. One reading for every document the close asks about.
-export const declaredUnchanged = (plan, name) =>
-  new RegExp(`^\\s*-\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b.*\\b(unchanged|sin cambios|no cambia)`, 'im').test(plan);
-
-// The lines of the plan's `## File map`; null when the plan or the section does not exist.
+// The lines of `## Tasks` of card.md (or of the `## File map` of a plan.md a repo still has); null when there is none.
 export const fileMapLines = (cardDir) => {
   const path = join(cardDir, 'plan.md');
-  if (!existsSync(path)) return null;
-  const section = readFileSync(path, 'utf8').split(/^## /m).find((s) => s.startsWith('File map'));
+  // A card with no plan lists its files in the `## Tasks` of card.md.
+  const [file, heading] = existsSync(path) ? [path, 'File map'] : [join(cardDir, 'card.md'), 'Tasks'];
+  if (!existsSync(file)) return null;
+  const section = readFileSync(file, 'utf8').split(/^## /m).find((s) => s.startsWith(heading));
   return section ? section.split('\n').slice(1) : null;
 };
 export const pathTokens = (line) => line.split(/[\s`|,;()*]+/)
   .map((t) => t.replaceAll('\\', '/').replace(/^\.\//, '').replace(/:\d+(:\d+)?$/, '').replace(/[.:]+$/, '')).filter(Boolean);
-
-// A File map row under a `migrations/` folder: the plan's `## Verification` carries `migrate-upgrade: <command>` (Q19).
-export const MIGRATE_UPGRADE = 'a `migrate-upgrade: <command>` line in the plan\'s ## Verification: the upgrade from main\'s last state with seeded data (Q19)';
-export const mapHasMigration = (cardDir) => (cardDir ? fileMapLines(cardDir) ?? [] : []).flatMap(pathTokens).some((t) => /(^|\/)migrations\/./.test(t));
-
-// How big a card is, from the production files its File map names (a path with a code extension that
-// `isProductionPath` accepts; a bare file name counts once, with the path that ends in it). It decides the
-// route (`routeOf`): a card of SMALL_CARD_FILES or fewer has one implementer for every group and one visual
-// judge; one of BIG_CARD_FILES or more is handed to the conductor and gets the judges' second lap.
-export const SMALL_CARD_FILES = 12;
-export const BIG_CARD_FILES = 15;
-const MAP_FILE = /\.(?:m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|html?|s?css|vue|svelte|sql)$/;
-export const mapProductionFiles = (root, cardDir) => {
-  const found = [...new Set((fileMapLines(cardDir) ?? []).flatMap(pathTokens)
-    .filter((t) => MAP_FILE.test(t) && !/^[a-z]+:\/\//i.test(t) && isProductionPath(root, join(root, t))))];
-  return found.filter((t) => t.includes('/') || !found.some((o) => o.endsWith(`/${t}`)));
-};
-export const routeOf = (root, cardDir) => {
-  const files = mapProductionFiles(root, cardDir).length;
-  return { files, conductor: files >= BIG_CARD_FILES, single: files <= SMALL_CARD_FILES };
-};
-// The route as one line, for bar.mjs. Null with no File map: the size of the card is not known yet.
-export const routeLine = (root, cardDir) => {
-  if (!cardDir || fileMapLines(cardDir) === null) return null;
-  const { files, conductor, single } = routeOf(root, cardDir);
-  if (conductor) return `Route: conductor · ${files} production files in the File map (${BIG_CARD_FILES} or more) · write handoff.md and launch the conductor for steps 6 to 9`;
-  return `Route: main thread · ${files} production files in the File map · ${single ? 'one implementer does every group, in order' : 'one implementer per group'}; steps 6 to 9 stay here unless context-cap.mjs warns of 230k tokens: then handoff.md and the conductor`;
-};
-
-// A `close:` condition is a verifiable command when it is one —it starts with a runner— or quotes one between
-// backticks (a runner and its arguments, or a script of the kit or of the repo). Steps a person follows and
-// descriptions of what has to look right are not.
-const RUNNER = '(?:node|npm|npx|pnpm|yarn|git|grep|rg|curl|playwright|pytest|go|dotnet|cargo|make|sh|bash|python3?|diff|test)';
-export const closeIsCommand = (condition) =>
-  new RegExp(`^\\s*(?:\\$\\s*)?${RUNNER}\\s+\\S|\`\\s*${RUNNER}\\s+[^\`]*\`|\`[\\w./-]+\\.(?:mjs|cjs|js|sh|py)\\b[^\`]*\``).test(condition);
-
-// Whether the judges' second lap is worth it: some action of the first round closes with something that is not a
-// command, so only a judge can say it was fixed, or the card is big. Otherwise the commands of the actions and the
-// final `verify.mjs` verify the fixes.
-export const secondLap = (root, cardDir) => {
-  const reasons = [];
-  const path = join(cardDir, 'actions.md');
-  const open = (existsSync(path) ? readFileSync(path, 'utf8') : '').split('\n').flatMap((line) => {
-    const id = line.match(/^\W*(ACT-\w+)\b/)?.[1];
-    if (!id || /\bmoved\b/i.test(line)) return [];
-    const close = line.match(/·\s*close:\s*(.*?)\s*(?:·\s*(?:open|closed|suspect)\b.*)?$/)?.[1] ?? '';
-    return closeIsCommand(close) ? [] : [id];
-  });
-  if (open.length) reasons.push(`${open.join(', ')} close${open.length === 1 ? 's' : ''} with something that is not a command`);
-  const { files, conductor } = routeOf(root, cardDir);
-  if (conductor) reasons.push(`the File map names ${files} production files (${BIG_CARD_FILES} or more)`);
-  return { needed: reasons.length > 0, reasons };
-};
 
 // The kit's own files are never the card's: they neither enter the card's diff nor make a file name
 // ambiguous.
@@ -248,7 +184,7 @@ export const kitRootOf = (path) => {
     dir = up;
   }
 };
-export const SOFT = new Set(['trim-output', 'session-record', 'light-images', 'edit-count', 'no-pending-close', 'context-cap', 'shell-writes']);
+export const SOFT = new Set(['trim-output', 'session-record', 'light-images', 'edit-count', 'no-pending-close', 'context-cap', 'turn-budget', 'shell-writes']);
 const real = (p) => { try { return realpathSync.native(p); } catch { return resolve(p); } };
 
 // A hook reads its call from fd 0. Once the call was read here, an imported hook of another kit
@@ -336,6 +272,9 @@ export const hookCard = (cwd, env = process.env, call = {}) => {
 
 export const relativeTo =(root, path) => relative(root, path).split(sep).join('/');
 
+// The document that marks a folder as a card: its snapshot, or `card.md` (the single document) when it has none.
+export const frozenOf = (dir) => ['card.md', 'card.snapshot.md'].map((f) => join(dir, f)).find((p) => existsSync(p)) ?? null;
+
 // The card in progress is the one `specs/.current` names —one line, the card's folder name, written
 // by /card—. Without that file, or if it names no folder with a snapshot, it is the specs/ folder
 // with the most recent snapshot: touching another card's snapshot then changes the answer, which
@@ -345,12 +284,12 @@ export const currentCard = (root, { named: onlyNamed = false } = {}) => {
   if (!existsSync(join(root, 'specs'))) return null;
   try {
     const named = readFileSync(join(root, 'specs', '.current'), 'utf8').trim();
-    if (/^[\w][\w.-]*$/.test(named) && existsSync(join(root, 'specs', named, 'card.snapshot.md'))) return join(root, 'specs', named);
+    if (/^[\w][\w.-]*$/.test(named) && frozenOf(join(root, 'specs', named))) return join(root, 'specs', named);
   } catch {}
   if (onlyNamed) return null;
   const snapshots = readdirSync(join(root, 'specs'))
-    .map((d) => join(root, 'specs', d, 'card.snapshot.md'))
-    .filter((s) => existsSync(s))
+    .map((d) => frozenOf(join(root, 'specs', d)))
+    .filter(Boolean)
     .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
   return snapshots.length ? join(snapshots[0], '..') : null;
 };
@@ -359,36 +298,25 @@ export const currentCard = (root, { named: onlyNamed = false } = {}) => {
 // Null when the section or the cap is missing. One reading for the plan-time check and the two hooks
 // that enforce it, so what the plan is asked to write is what gets read.
 export const TIME_PLAN_CAP = /\b(?:cap|tope)\b\s*:?\s*(\d+(?:[.,]\d+)?)\s*(h|hs|hours?|horas?|min|minutes?|minutos?)\b/i;
+// The cap of a card: the header of card.md (what precedes its first `## `), else the plan's `## Time plan`.
+export const cardCap = (cardDir) => {
+  const doc = join(cardDir, 'card.md');
+  if (existsSync(doc)) {
+    const m = readFileSync(doc, 'utf8').split(/^## /m)[0].match(TIME_PLAN_CAP);
+    return m ? Number(m[1].replace(',', '.')) * (/^h/i.test(m[2]) ? 60 : 1) : null;
+  }
+  const plan = join(cardDir, 'plan.md');
+  return existsSync(plan) ? capMinutes(readFileSync(plan, 'utf8')) : null;
+};
 export const capMinutes = (planText) => {
   const section = planText.split(/^## /m).find((s) => s.startsWith('Time plan')) ?? '';
   const m = section.match(TIME_PLAN_CAP);
   return m ? Number(m[1].replace(',', '.')) * (/^h/i.test(m[2]) ? 60 : 1) : null;
 };
 
-// `without method: 2–3–6 min`: optimistic, likely, pessimistic (steps/05-plan.md, “The time plan”).
-const WITHOUT_METHOD = /(?:without (?:the )?method|sin (?:el )?m[eé]todo)\s*:?\s*(\d+(?:[.,]\d+)?)\s*[–-]\s*(\d+(?:[.,]\d+)?)\s*[–-]\s*(\d+(?:[.,]\d+)?)\s*(h|hs|hours?|horas?|min|minutes?|minutos?)\b/i;
-const CAP_FORMAT = 'a cap written as `cap: <N> min` or `cap: <N> h` (`tope:` too)';
-
-// What the plan's `## Time plan` lacks, as lines the plan can act on: the section, a readable cap, and below
-// production a cap within `capTimes` × the likely time when the plan states it. `modules` is `kit.mjs`'s `active(root)`.
-// The plan-time check and `require-bar.mjs` ask the same thing.
-export const timePlanProblems = (text, modules) => {
-  if (!text.split('\n').some((l) => l.trim() === '## Time plan' || l.startsWith('## Time plan ')))
-    return [`“## Time plan” (size and risk, how long it would take without the method and the 5× cap, the critical path, the split by phase and what scope gets cut if it does not fit), with ${CAP_FORMAT}`];
-  const cap = capMinutes(text);
-  if (cap === null) return [`“## Time plan” without ${CAP_FORMAT}`];
-  const { grade, level } = modules.exempt;
-  const m = (text.split(/^## /m).find((s) => s.startsWith('Time plan')) ?? '').match(WITHOUT_METHOD);
-  if (grade === 'production' || !level?.capTimes || !m) return [];
-  const likely = Number(m[2].replace(',', '.')) * (/^h/i.test(m[4]) ? 60 : 1);
-  return cap > likely * level.capTimes
-    ? [`“## Time plan” with a cap of ${cap} min: the grade ${grade} allows ${level.capTimes}× the likely time without the method (${likely} min), at most ${likely * level.capTimes} min, and aims at ${level.goalTimes}×`]
-    : [];
-};
-
 // Minutes since the commit that froze the card's snapshot; null if that commit does not exist yet.
 export const minutesSinceSnapshot = (cwd, cardDir) => {
-  const sec = git(cwd, ['log', '-1', '--format=%ct', '--', join(cardDir, 'card.snapshot.md')]).stdout?.trim();
+  const sec = git(cwd, ['log', '-1', '--format=%ct', '--', frozenOf(cardDir) ?? join(cardDir, 'card.md')]).stdout?.trim();
   return sec ? (Date.now() / 1000 - Number(sec)) / 60 : null;
 };
 
@@ -397,11 +325,18 @@ export const minutesSinceSnapshot = (cwd, cardDir) => {
 // `<sha>~1`, not `<sha>^`: the ref ends up inside command lines that pass through cmd.exe on Windows,
 // where `^` is the escape character and is dropped.
 export const cardStart = (root, cardDir) => {
-  const snapshot = relativeTo(root, join(cardDir, 'card.snapshot.md'));
+  const snapshot = relativeTo(root, frozenOf(cardDir) ?? join(cardDir, 'card.snapshot.md'));
   const r = git(root, ['log', '--diff-filter=A', '--format=%H', '--', snapshot]);
   const sha = r.stdout?.trim().split('\n').filter(Boolean).at(-1);
   if (!sha) return 'HEAD';
   return git(root, ['rev-parse', '--verify', '-q', `${sha}~1`]).status === 0 ? `${sha}~1` : sha;
+};
+
+// Whether a commit already holds tests tagged for the card (`@<ID>-S<n>`): the RED that comes before the code.
+export const redCommitted = (root, cardDir) => {
+  const id = String(cardDir).split(/[\\/]/).filter(Boolean).pop()?.match(/^[A-Z][A-Z0-9]*-\d+[A-Za-z0-9]*/)?.[0];
+  if (!id) return false;
+  return git(root, ['grep', '-q', '-I', '-E', `@${id}-S[0-9]+`, 'HEAD', '--', ':(exclude)specs', ':(exclude).claude']).status === 0;
 };
 
 export const existedAt = (root, ref, rel) => git(root, ['cat-file', '-e', `${ref}:${rel}`]).status === 0;

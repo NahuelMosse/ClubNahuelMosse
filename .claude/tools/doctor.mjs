@@ -63,18 +63,25 @@ const wiring = (root) => {
   const settings = join(root, '.claude', 'settings.json');
   if (!existsSync(settings)) return { status: 'missing', text: 'hook wiring — .claude/settings.json does not exist: install the kit' };
   let registered;
+  const relative = [];
   try {
     // A hook is registered by its own command or by an event of the dispatcher, whose routes name it.
+    // The dispatcher is addressed from $CLAUDE_PROJECT_DIR: a path relative to the cwd fails with
+    // MODULE_NOT_FOUND once the session changes directory, and a hook error that is not exit 2 does not block.
     registered = new Set(Object.values(JSON.parse(readFileSync(settings, 'utf8')).hooks ?? {}).flat()
       .flatMap((g) => g.hooks ?? []).flatMap((h) => {
         const command = String(h.command);
-        const event = command.match(/^node \.claude\/tools\/hook-dispatch\.mjs (\w+)$/)?.[1];
+        if (/^node \.claude\//.test(command)) relative.push(command);
+        const event = command.match(/^node "\$CLAUDE_PROJECT_DIR\/\.claude\/tools\/hook-dispatch\.mjs" (\w+)$/)?.[1]
+          ?? command.match(/^node \.claude\/tools\/hook-dispatch\.mjs (\w+)$/)?.[1];
         if (event) return (ROUTES[event] ?? []).flatMap(([, names]) => names.map((n) => `${n}.mjs`));
         return [command.match(/^node \.claude\/hooks\/([\w-]+\.mjs)$/)?.[1]].filter(Boolean);
       }));
   } catch (e) {
     return { status: 'missing', text: `hook wiring — .claude/settings.json is not valid JSON (${e.message})` };
   }
+  if (relative.length)
+    return { status: 'missing', text: `hook wiring — ${relative.length} command(s) addressed relative to the cwd (${relative[0]}): use node "$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs" <event> in .claude/settings.json` };
   const dir = join(root, '.claude', 'hooks');
   const files = existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.mjs')) : [];
   const unregistered = files.filter((f) => !registered.has(f));

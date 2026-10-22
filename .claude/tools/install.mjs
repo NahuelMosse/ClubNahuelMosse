@@ -32,7 +32,7 @@ import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import { detectStack } from './doctor.mjs';
 import { GRADES, coreFiles, detectE2e, filesOfModule, listKit, openCard, readManifest, readModules, recordedGrade, writeManifest } from './kit.mjs';
-import { cardIdOf, kitEventLine } from './refreeze.mjs';
+import { cardIdOf, kitLogLine } from './card-doc.mjs';
 import { describe, detect, evidenceOf } from './signals.mjs';
 
 const SOURCE = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -261,7 +261,7 @@ const update = (o, target, source, map) => {
   const open = openCard(target);
   const reason = String(o.cardOpen ?? '').trim();
   if (open && !reason)
-    fail('There is a card open: update between cards, because the bar of the card in progress would change under it.\nIf the card needs the fix of the kit to close, run again with --card-open "<reason>"; it is recorded in the card\'s ambiguities.md.');
+    fail('There is a card open: update between cards, because the bar of the card in progress would change under it.\nIf the card needs the fix of the kit to close, run again with --card-open "<reason>"; it is recorded in the card\'s Log.');
   if (open && !cardIdOf(open)) fail(`The card in progress (${open}) has no ID in its folder name: the update cannot be recorded in it.`);
   const major = (v) => String(v).split('.')[0];
   if (major(map.kit) !== major(manifest.kit) && !o.major) {
@@ -306,7 +306,13 @@ const update = (o, target, source, map) => {
   putClaudeMd(source, target);
   ensureIgnored(target);
   writeManifest(target, state);
-  if (open) appendFileSync(join(open, 'ambiguities.md'), kitEventLine(open, manifest.source?.commit ?? 'unknown', state.source.commit, reason));
+  if (open) {
+    const doc = join(open, 'card.md');
+    const from = manifest.source?.commit ?? 'unknown';
+    // The update is a line at the end of the card's Log (card.md ends with it); an older card keeps its record in ambiguities.md.
+    if (existsSync(doc)) appendFileSync(doc, `${readFileSync(doc, 'utf8').endsWith('\n') ? '' : '\n'}${kitLogLine(readFileSync(doc, 'utf8'), from, state.source.commit, reason)}`);
+    else appendFileSync(join(open, 'ambiguities.md'), `${cardIdOf(open)}-KIT · kit ${from} → ${state.source.commit} · reason: ${reason}\n`);
+  }
   console.log(`Updated to kit ${map.kit}: ${replaced.length} replaced or added, ${removed.length} removed.`);
   if (incoming.length) console.log(`Edited here, not overwritten; the new version is in .claude/.kit-incoming/ (${incoming.length}): ${incoming.join(', ')}.`);
 };

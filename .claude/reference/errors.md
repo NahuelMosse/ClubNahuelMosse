@@ -1,9 +1,9 @@
 # Error handling: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card adds a failure path: a new error, an external call, a
+**When it is read:** when the card adds a failure path: a new error, an external call, a
 queue or a job, a screen that fetches data, a form, a process entry point. **How:** only the sections
-the card touches, with `Read` and a line range of the heading; never whole. The plan names the rule IDs
-that apply, and the `implementer` receives those IDs and their ranges. Language-independent: the main
+the card touches, with `Read` and a line range of the heading; never whole. `card.md` names the rule IDs
+that apply, and the `builder` receives those IDs and their ranges. Language-independent: the main
 example is TypeScript/Node and each rule brings its generic equivalent. **Libraries and tools are options,
 not obligations.** **[NV] marks guidance not verified**: a hypothesis, never the only evidence of a `meets`.
 Neighboring topics are cited by prefix: the problem-details body and the API contract in
@@ -46,9 +46,8 @@ with `rg` over a sample file (false positives are reviewed by hand). Source numb
 | ERR-UX-04, ERR-UX-05 | I7 |
 | ERR-UX-10 | I11 |
 
-The rules outside this table are judgment or guidance, with no criterion of their own. The mechanical item
-C11 of `/validate` (no catch that only logs, no floating promises, the cause chain kept) answers the detectors
-of the last section, by stack.
+The rules outside this table are judgment or guidance, with no criterion of their own. The detectors of the last
+section, by stack (no catch that only logs, no floating promises, the cause chain kept), are lines of the gate.
 
 ## 1. Taxonomy (TAX)
 

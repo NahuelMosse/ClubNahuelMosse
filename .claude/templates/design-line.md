@@ -46,7 +46,7 @@ lowering it is a decision of the business, asked as an `AMB`.
 - **The message** —who watches, what they must conclude, the three proofs— (`reference/showcase.md`).
 - **The scene table**: one row per section with the idea it states, the proof it shows, and **the
   reference image whose composition it copies** —its grid, where the figure goes, which card is
-  filled, how the chart is drawn—, looking at the image, not from memory. The implementer gets the
+  filled, how the chart is drawn—, looking at the image, not from memory. The builder gets the
   image with the row; the judge scores each scene against its own reference. *Measured: three laps
   of written composition rules moved the judge from 4–7 to 5–6; the gaps it named were always
   visible in a reference nobody had put next to the scene.*

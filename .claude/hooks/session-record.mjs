@@ -47,10 +47,8 @@ try {
     `${new Date().toISOString()} · session ${session} · ${input.source ?? (written ? 'write' : 'start')} · card ${name} · record: ${input.transcript_path ?? 'not available'}\n`);
   // A session that comes back after a compaction or a crash starts with the card's state in its
   // context (SessionStart adds this stdout): the summary may be out of date, the disk is not.
-  if (['compact', 'resume'].includes(input.source)) {
-    const { where } = await import('../tools/where.mjs');
-    const w = where(root);
-    if (w.card) process.stdout.write(`Card ${w.card} in progress: resume with .claude/steps/00-resume.md; where.mjs says step ${w.step}\n`);
+  if (cardDir && ['compact', 'resume'].includes(input.source)) {
+    process.stdout.write(`Card ${name} in progress: read specs/${name}/card.md (its Log is the state) and .claude/METHOD.md, then \`git status\` and \`git log -5\`.\n`);
   }
 } catch {}
 process.exit(0);

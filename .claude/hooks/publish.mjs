@@ -45,9 +45,9 @@ try {
       block('Publishing belongs to the close of a card, and there is no card in progress here (specs/.current). ' +
             'Nothing is pushed, opened or commented on outside a card.');
     }
-    const snapshot = read(join(found.card, 'card.snapshot.md'));
-    const id = snapshot.match(/^card:\s*(\S+)/m)?.[1] ?? found.card.split(/[\\/]/).pop().match(/^[A-Za-z]\w*-\d+/)?.[0];
-    if (!id) block('The card in progress has no `card:` in its snapshot: the branch and the Jira key cannot be checked.');
+    const title = read(join(found.card, 'card.md')).match(/^#\s+([A-Za-z]\w*-\d+[A-Za-z0-9]*)/m)?.[1];
+    const id = title ?? found.card.split(/[\\/]/).pop().match(/^[A-Za-z]\w*-\d+[A-Za-z0-9]*/)?.[0];
+    if (!id) block('The card in progress has no key in the title of its card.md nor in its folder name: the branch and the Jira key cannot be checked.');
     cached = { root: found.root, dir: found.card, id, ambiguitiesPath: join(found.card, 'ambiguities.md') };
     return cached;
   };

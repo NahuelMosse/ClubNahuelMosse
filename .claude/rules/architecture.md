@@ -16,7 +16,7 @@ simply nothing happens.
 
 *What did work, and why the critical content does not live only here:* the dependency-direction
 test was written anyway by the runs where this rule was not loaded, because the obligation is also
-in `/validate`, which is always invoked. **What rests on a single door is lost when that door does
+in the gate and the `judge`, which always run. **What rests on a single door is lost when that door does
 not open.**
 
 ## The five that matter
@@ -91,7 +91,7 @@ is in doubt, `.claude/reference/code-patterns.md`.
 
 *The ladder is Ponytail's, validated by others —10% less cost with the same success rate over 80
 paired tasks— and **it does not apply to what this method explicitly asks for**: edge validation,
-error handling, security, accessibility and the tests of `/validate` are not “extra” code, they
+error handling, security, accessibility and the tests of the gate are not “extra” code, they
 are the product. Ponytail itself excludes them; it is clarified here because an agent that
 receives “write the minimum” and “write these tests” picks one of the two if nobody tells it
 which one rules.*

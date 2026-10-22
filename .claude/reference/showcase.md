@@ -140,4 +140,4 @@ it once and it spun far more than the hand.*
 
 `showreel.mjs` records the 30–45 s tour above; a blind judge scores it against the design line's
 references —impact in 3 s, choreography, depth and materials, detail, *would you show it in a
-video?*— and it passes at 8 or more (`steps/m-ui-screen.md`).
+video?*— and it passes at 8 or more (lens `visual` of the `judge`).

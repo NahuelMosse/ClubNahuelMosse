@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // PreToolUse on Edit: counts the Edits of each file per agent, and on the fourth warns to write the file whole.
-// Measured: one implementer made 67 Edits and 25 Writes; every edit stays in the context and is re-read on each request.
+// Measured: one agent made 67 Edits and 25 Writes; every edit stays in the context and is re-read on each request.
 // Files of more than 200 lines or 6000 characters are not warned about. It is a warning, never a block. The count lives in the git folder of the file's repo, like review-cap's.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';

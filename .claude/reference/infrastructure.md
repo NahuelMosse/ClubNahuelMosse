@@ -1,10 +1,10 @@
 # Infrastructure and cost: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card adds or changes a piece of infrastructure (hosting, a
+**When it is read:** when the card adds or changes a piece of infrastructure (hosting, a
 database, a queue, a cache, a managed service, a region, a plan) or introduces a technology; and in the
 first card of a repo, which chooses the stack and the hosting. **How:** only the sections the card
-touches, with `Read` and a line range of the heading; never whole. The plan names the rule IDs that
-apply, and the `implementer` receives those IDs and their ranges. The price search goes to a `scout`
+touches, with `Read` and a line range of the heading; never whole. `card.md` names the rule IDs that
+apply, and the `builder` receives those IDs and their ranges. The price search goes to a `scout`
 with web access; the decision is the main thread's. Deployment rules (DPL-*) are in
 `reference/ci-cd.md` (module ci); performance and load rules in `reference/performance.md`. **Providers are examples
 of a price or a mechanism, never a recommendation:** AWS, Azure, GCP, Fly, Render, Railway, Vercel,

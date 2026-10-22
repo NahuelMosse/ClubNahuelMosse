@@ -1,7 +1,7 @@
 // What a repo or a card shows that a module of the kit is about, in one place. Core: the late signal
 // is looked for precisely when the module is not installed, so nothing here can live in a module.
 // The patterns are heuristics: a false positive is settled with `kit.mjs confirm-off`, a false
-// negative is caught by `required.mjs` over the diff or by the inspector.
+// negative is caught by `required.mjs` over the diff or by the judge.
 // Two readings of the same patterns: `detect(root)` looks at the whole repo (install, doctor,
 // status); `detectIn({ files, added, texts, asks })` looks at what one card touches. Both answer
 // `{ <signal id>: [evidence, …] }` with only the signals that are present; the evidence is the line

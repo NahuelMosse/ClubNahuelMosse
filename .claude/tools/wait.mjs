@@ -6,7 +6,7 @@
 // Waits in ONE process for a log to show a line, or for background subagents to finish, and ends with the state.
 // It is how to wait for something running in the background (verify.mjs, mutate.mjs, a suite, a subagent) without
 // polling: every poll is a turn, and each wake-up past the prompt cache rewrites the whole context (the main
-// thread, implementer, runner and executor keep it an hour). Measured: 949 polling turns, USD 85 of one card.
+// thread, builder, runner and executor keep it an hour). Measured: 949 polling turns, USD 85 of one card.
 // Give the call `timeout: 600000` (--max 570 plus a margin); the shell guard allows the wait.
 //
 // <log>      the file to read; it may not exist yet, but if nothing writes it within 15 s it is not a wait (exit 3).

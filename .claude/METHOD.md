@@ -1,62 +1,86 @@
-# SDD method — one page
+# SDD method
 
-**One rule: the Jira card is the specification. Nothing is assumed in silence; everything that is
-assumed is declared, numbered and open to objection.**
+**The Jira card is the specification. Nothing is assumed in silence: what is assumed is declared, numbered (`<ID>-ASM-NN`) and tied to a test.**
+The kit is in English; the work (card, tests, commits, PR) speaks the repo's language. Headings, IDs and tags stay in English:
+hooks and tools read them. Read nothing else of the kit.
 
-**The kit is in English; the work speaks the repo's language.** Write the content of every card
-artifact in the language the repo and its team already use; file names, section headers, IDs and
-tags stay in English: they are what the hooks and tools read (`CLAUDE.md`, «The language rule»).
+## The flow
 
-Each step closes with a command; the command's output is the evidence. **The detail of each step
-is in `.claude/steps/`, and is read on reaching that step**, not before: what is read early is
-re-read on every request of the card. `node .claude/tools/help.mjs step N` prints the `## At a glance` of every document that step uses, in one read: that is enough for most cards, and a full document is read only for the case its last glance line names. A kit document is read this way, never delegated to a `scout`. **Nobody reads the code of `verify.mjs`, `close.mjs`, `required.mjs` or `probe.mjs` to know what they ask: their messages say it, and `help.mjs <tool>` the rest.** **Modules** on: `node .claude/tools/kit.mjs status` (no manifest: all on); each adds
-its part to a step in `steps/m-<module>.md`. A tool: `node .claude/tools/help.mjs <tool>`.
-**Grade** —`poc`, `mvp`, `production` (the default)—: how much of the bar the repo asks, chosen with `kit.mjs grade` and only raised; what it leaves out is one line `off by grade` in the bar (`reference/criteria.md`, «Grades»).
+1. **`/card <ID>`.** Before `card.md`, one batch of at most 3 parallel calls, ~10k tokens (`git ls-files`, `Grep`, the files the card names); no test or whole file. Bring the whole requirement: Jira over MCP (description, comments, attachments, links; or the `archivist`),
+   or the text you were given. If the MCP does not answer, stop. Write `specs/<ID>-<slug>/card.md` with **one `Write`**
+   from `.claude/templates/card.md`:
+   - header: `status: proposed`, `cap: <N> min`, `sources:`, `not_read:`;
+   - `## Specs`: every sentence of the card as `S<n> · "<verbatim quote>"`; an assumption as `<ID>-ASM-NN · <reading> · S<n>`;
+   - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test;
+   - `## Gate`: one command per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), and the plan's own: a `probe <state>:` for each state `## Specs` names, `attacks:` with the card's limits, `migrate-upgrade:` if it touches data;
+   - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
+   - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`;
 
-**The card sets the size.** With the method, a task aims at **five times** what an agent without
-the method would take, and **never goes past ten**: a one-minute task aims at five, a one-hour
-task may take five. Going past ten is a failure of the method, not a slow card. Every criterion is always considered; what scales is how many apply and how much code
-has to be verified. **Time is managed from the plan, not by rushing at the end**: the plan
-decides from the start what runs on the side, what waits for what, and verifies while writing so
-that correction is not the longest phase (`steps/05-plan.md`, “The time plan”).
+   - `## Changes to existing behavior`: a route, screen or file of main the card changes (`none` if it only adds).
 
-**Where the files live.** `specs/<ID>-<short-slug>/`: snapshot, ambiguities, plan, actions,
-closing. The `ambiguities`, the `closing` and the plan of another card are not read: the model is `templates/`. The scenario tests folder is fixed once, here:
+   Before `## Specs` closes, walk the questions of the card's lenses in `.claude/reference/lenses.md`: what the card does not answer is an AMB or an ASM with its test.
+   Write the folder name to `specs/.current`, switch to branch `<ID>-<slug>`, commit `card.md`.
+   **Ambiguities:** what the card does not say (empty case, duplicates, validation, limits, permissions, states, error, order,
+   concurrency, trail) is `<ID>-AMB-NN` in `ambiguities.md` (append-only; `publish` reads it). With Jira, all of them go in **one** comment, posted without asking approval,
+   each with the option assumed if nobody answers; the unanswered become ASM lines of `## Specs` (cheapest reading to undo, with its test). Never a second round. Without Jira: straight to ASM.
+2. **`node .claude/tools/risk.mjs specs/<card>`** checks the plan, then classifies with code and freezes `risk.json`: `size` (small | large), `review`
+   (low | medium | high) and the `lenses` (visual, contract, integrity, interpretation, security). A gap in the plan (an `S#` or `ASM` with no test, a file with no layer, a state with no `probe`, no `## Look` under visual, no `attacks:` under contract, no migration line under integrity) is listed and nothing is written: complete the card, rerun. You do not reclassify.
+   **Plan judge** (`high` only; `low` and `medium` have no judge, the gate is the review): a `judge` with a prompt starting `PLAN` reads only `card.md` and writes `judge.md`, its ACT marked `plan`. Close each in the card before RED: a new `ASM-NN` with its planned test, a Gate line or `declared · <why>`; the line of `judge.md` says `closed · <ASM-NN, T<n> or Gate line>`; rerun `risk.mjs`.
+3. **Build.**
+   - **small:** you do it inline, no subagents. RED first: the planned tests, tag `@<ID>-S<n>` (an assumption: `@<ID>-ASM-NN`) in the title,
+     failing for the right reason, **committed before any code**; then the code; then the gate.
+   - **large:** one `builder` per group of `## Tasks`, prompted with only the path of `card.md`, its task IDs and `S#`, and the gate command. Wait with **one**
+     call, `node .claude/tools/wait.mjs --agent <id> --max 570`, repeated only if it expires; meanwhile run nothing.
+   - Visual lens: with the tests green, one `designer` does 2-3 capture rounds against `ref/` (`rondas.md`); without them the gate fails.
+   - An `S#` over a set («un campo», «cada», «todos») gets one planned test per member the card names.
+   - Validate what comes from outside on the way in; a missing key of a closed enumeration is an error, not a default. The scope is the
+     card's: an unasked control, endpoint or header is not built, it is a line `OUT · <what>` in the Log.
+4. **Gate.** `node .claude/tools/verify.mjs` runs each line of `## Gate` once (records in `.validation/`), checks every `S#` has a test, and
+   prints what fails. What a formatter or generator writes runs before the gate and is committed: a line that changes versioned files fails. Fix and rerun until green, or until two rounds without progress: then write it in the Log and stop; the close lists it in `## Could not run`.
+5. **`/close`.** `node .claude/tools/close.mjs` runs nine checks and writes `closing.md` (`## Passed`, `## Failed`, `## Could not run`,
+   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes the branch, a ready PR, the CI result and one card comment. Never main, `--force` or a merge.
+
+## The invariants
+
+- **The requirement is frozen and verbatim,** also when it arrived as text. Never code from a summary of it.
+- **Never resolve an ambiguity on your own.** It is an AMB, asked once, and if unanswered an ASM tied to a test. *Silently filling a gap is the worst failure.*
+- **Tagged tests are frozen once committed.** A wrong one is replaced, never edited: write the fixed test in a new file with the same tag and add to the Log `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate then says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.
+- **Three states: passed · failed · could not run.** What did not run is never "passed". A check that stops you is not turned off. An uncorrected finding stops the close.
+- **Nothing waits for a person.** The review is the PR; what only a person decides is not yours (`.claude/AUTONOMY.md`).
+- **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). **Modules** add lenses and gate lines, not steps.
+
+## Cost rules
+
+- **One `Write` per file, not ten `Edit`s.** Never `sed -i` or `node -e` to change a file: the guards do not see them.
+- **One wait per agent or process** (`wait.mjs`; its last line `<tool>: exit <N> in <X> min` ends it). No polling, no `sleep`.
+  Nothing over ~30 s runs in the foreground: background with a log, read with `Grep`.
+- **A subagent only from the table below.** Never `general-purpose`. What decides is never delegated to a Sonnet.
+- **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
+- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
+- **Context caps:** `context-cap` warns at 80k (main) or 90k (builder, designer), stops at 120k. Commit, write `specs/<card>/handoff.md` and continue in a fresh agent.
+
+## Who does what
+
+| Task | Agent |
+|---|---|
+| Builds a group of tasks (RED, code, gate) of a large card | `builder` |
+| Capture rounds of a `(presentation)` screen against its `ref/`, after the builder | `designer` |
+| Judges the plan at high (`PLAN`, 12 turns) against the lenses of `risk.json`; writes `judge.md`, does not fix | `judge` (Opus) |
+| Fetches the requirement from Jira and freezes it | `archivist` |
+| Sweeps more than two files | `scout` |
+| Runs tests, builds, installs, or reads a long log | `runner` · `executor` |
+| Applies a decided change in several places | `grunt` |
+| Order and risks of something big · a hard problem | `planner` · `oracle` |
+
+## What does not depend on your good will
+
+Hooks block, and also when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (one plan judge, only at high; no code judge, no `FIX`), `require-bar` (cap, Specs, Tasks, Gate before code),
+`time-cap` (warns at 70 % of `cap:`, stops at 100 %), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`. If one stops you, read its message; do not look for a way around.
+What you open, you close, by PID.
+
+## Where the scenario tests live
+
+Fixed once, here (`$E2E`); `kit.mjs e2e <path>` changes it.
 ```
 E2E=apps/e2e        # adjust to this repo's real path
 ```
-
-| Step | What | Detail |
-|---|---|---|
-| **1** | `/card <ID>`: the whole card —description, comments, attachments, links— frozen in `card.snapshot.md`, with `sources:` and `not_read:`. Never edited. The first card of a repo sets up the scaffolding | `node .claude/tools/help.mjs step 1` |
-| **2** | The **ten questions** answered in `ambiguities.md`; each gap is an `<ID>-AMB-NN`, and all of them go in **one** comment on the card, once | `node .claude/tools/help.mjs step 2` |
-| **3** | The answers are read from the card before the red tests and before the plan; what is still unanswered is an `<ID>-ASM-NN`, the option that works with any answer or the cheapest to undo, tagged in its test or declared uncovered | `node .claude/tools/help.mjs step 3` |
-| **4** | Each scenario of the card is a test tagged `@<ID>-H<NN>-<NN>`, **red, before the code** | `node .claude/tools/help.mjs step 4` |
-| **5** | `plan.md`: time plan, file map, assumptions, perimeter, bar of every criterion, edges, what changes of what was already there, visual brief if there is a screen. It is committed before the code | `node .claude/tools/help.mjs step 5` |
-| **6–9** | **The main thread's by default; the conductor's on a big card.** `node .claude/tools/bar.mjs --route` says which: the plan's File map names 15 or more production files, or `context-cap.mjs` warned the main thread at 230k tokens, and it writes `specs/<card>/handoff.md` (`templates/handoff.md`) and launches the `conductor` in the foreground, which does 6 to 9 and returns with `closing.md` committed; otherwise it does them itself. An `implementer` writes the code against the bar without touching the frozen tests —one for every group with 12 or fewer production files, one per group above that— (**6–7**, `steps/06-implement.md`); then **a single verdict** —`verify.mjs` plus a proportional judgment, every failure to `actions.md` and corrected at once (**8**, `steps/08-verify.md` · `/validate`)—, and a look at the screen if there is one (**9**, module ui, `steps/m-ui-screen.md`), ending with `closing.md` committed | `node .claude/tools/help.mjs step 6` · `help.mjs step 8` · `help.mjs step 9` |
-| **close** | The main thread reads `closing.md` and `actions.md`, then publishes (`/close`, «Publishing»): push of the card's branch, a PR ready for review, the CI result on it and the comment on the card; no merge | `node .claude/tools/help.mjs step close` |
-
-**A card cut by a compaction or a crash** is resumed with `node .claude/tools/where.mjs` and
-`.claude/steps/00-resume.md`. **Fast lane** (text, layout, style or an asset; presentation only; at
-most 30 lines and 3 files): `.claude/steps/fast-lane.md`; a hook takes the card out of it when it
-does not fit.
-
-**The three states: passed · failed · could not run.** If a command does not exist, could not be
-run, or you did not run it, **do not say it passed** and do not close the card. “Could not run”
-is “I don't know”.
-
-**No escape valve.** A check that stops for a reason nobody understands in under a minute is not
-turned off: it stops the card, which is reported with what it lacks (`.claude/AUTONOMY.md`).
-
-**Nothing waits for a person.** No approval of the plan, no signature of the snapshot, no «ok,
-continue»: the one round of questions goes on the card, the review is the PR, and what a person
-alone decides —turning a module off, lowering the grade— is not the agent's to do (`AUTONOMY.md`).
-
-**The card sets the scope.** What the card does not ask —an extra control, `/health` or `/ready`, a search box, a security header the grade does not require— is not built: it is proposed as `<ID>-OUT-NN` in `ambiguities.md`. What the active criteria of the grade ask is not extra.
-
-**An uncorrected finding stops the close.** Running a review, writing the report and closing anyway produces the evidence that something was wrong and files it away.
-
-**Spec-kit skills:** `/speckit-plan` and `/speckit-tasks` only when the card changes stored
-data, exposes a new interface or investigates something. `/speckit-specify` is **forbidden**:
-it rewrites the requirement. `/speckit-clarify` is not used: step 2 goes against the real card.
-Which skill goes at which moment: `.claude/skills/WHEN.md`.

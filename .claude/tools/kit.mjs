@@ -66,8 +66,15 @@ export const writeManifest = (root, manifest) => {
 
 // Where a repo keeps its scenario tests, by the folders teams usually use, the most specific first.
 // A hint only: `close.mjs` finds the card's tests by their tag.
-export const E2E_FOLDERS = ['apps/e2e', 'e2e', 'tests/e2e', 'test/e2e', 'tests', 'test', '__tests__', 'spec'];
-export const detectE2e = (root) => E2E_FOLDERS.find((d) => existsSync(join(root, d)) && statSync(join(root, d)).isDirectory()) ?? null;
+// Flutter keeps its e2e in `integration_test/`, at the root or inside the app (`apps/<app>/integration_test`).
+export const E2E_FOLDERS = ['apps/e2e', 'e2e', 'tests/e2e', 'test/e2e', 'integration_test', 'tests', 'test', '__tests__', 'spec'];
+const isDir = (root, d) => existsSync(join(root, d)) && statSync(join(root, d)).isDirectory();
+const nestedIntegration = (root) => {
+  try {
+    return readdirSync(join(root, 'apps')).sort().map((a) => `apps/${a}/integration_test`).find((d) => isDir(root, d));
+  } catch { return undefined; }
+};
+export const detectE2e = (root) => E2E_FOLDERS.slice(0, 5).find((d) => isDir(root, d)) ?? nestedIntegration(root) ?? E2E_FOLDERS.slice(5).find((d) => isDir(root, d)) ?? null;
 
 export const GRADES = ['poc', 'mvp', 'production'];
 const rank = (grade) => GRADES.indexOf(grade);
@@ -141,10 +148,10 @@ export const active = (root) => {
   return { on, off, known, map, manifest, grade: exempt.grade, exempt };
 };
 
-// criterion or item ID → the module that owns it; what is not here is core.
+// criterion ID → the module that owns it; what is not here is core.
 export const ownerOf = (map) => {
   const owner = new Map();
-  for (const [name, m] of Object.entries(map?.modules ?? {})) for (const id of [...m.criteria, ...m.items]) owner.set(id, name);
+  for (const [name, m] of Object.entries(map?.modules ?? {})) for (const id of m.criteria) owner.set(id, name);
   return owner;
 };
 
@@ -245,16 +252,16 @@ const merge = (a, b) => {
   return a;
 };
 
-// The signals a card shows, from its plan (the File map, the changes and the verification lines name
-// what it will touch) and the snapshot (only for a language), and optionally from its real diff.
+// The signals a card shows, from card.md (the Tasks and the Gate name what it will touch; the whole text, for a language)
+// and optionally from its real diff.
 export const cardSignals = (root, cardDir, { diff = false } = {}) => {
-  const plan = existsSync(join(cardDir, 'plan.md')) ? readFileSync(join(cardDir, 'plan.md'), 'utf8') : '';
-  const sections = plan.split(/^## /m).filter((s) => /^(File map|Changes to existing behavior|Verification)\b/.test(s));
+  const doc = ['card.md', 'plan.md'].map((f) => join(cardDir, f)).find((p) => existsSync(p));
+  const text = doc ? readFileSync(doc, 'utf8') : '';
+  const sections = text.split(/^## /m).filter((s) => /^(Tasks|Gate|File map|Changes to existing behavior|Verification)\b/.test(s));
   const files = (fileMapLines(cardDir) ?? []).flatMap(pathTokens);
   const found = detectIn({ files, texts: sections });
-  const snapshot = join(cardDir, 'card.snapshot.md');
-  if (existsSync(snapshot)) {
-    const asked = detectIn({ asks: [readFileSync(snapshot, 'utf8')] }).i18n;
+  if (text) {
+    const asked = detectIn({ asks: [text] }).i18n;
     if (asked) merge(found, { i18n: asked });
   }
   if (diff) {
@@ -298,7 +305,7 @@ const appendAssumption = (cardDir, what) => {
   const path = join(cardDir, 'ambiguities.md');
   const text = existsSync(path) ? readFileSync(path, 'utf8') : '';
   const folder = cardDir.split(/[\\/]/).pop();
-  const id = folder.match(/^[A-Za-z][A-Za-z0-9]*-\d+/)?.[0] ?? folder;
+  const id = folder.match(/^[A-Za-z][A-Za-z0-9]*-\d+[A-Za-z0-9]*/)?.[0] ?? folder;
   const next = Math.max(0, ...[...text.matchAll(/-ASM-(\d+)/g)].map((m) => Number(m[1]))) + 1;
   const line = `${id}-ASM-${String(next).padStart(2, '0')} · ${today()} · ${what}`;
   appendFileSync(path, `${text && !text.endsWith('\n') ? '\n' : ''}${line}\n`);

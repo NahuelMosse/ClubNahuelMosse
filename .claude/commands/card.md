@@ -1,88 +1,31 @@
 ---
-description: Freezes the requirement into a snapshot and lists the ambiguities. Fetches it from Jira over MCP if there is a card; if it arrived as text, freezes that text.
+description: Freezes the requirement into card.md (specs, tasks, gate, log), classifies it with risk.mjs and asks the one round of questions. Fetches it from Jira over MCP if there is a card; if it arrived as text, freezes that text.
 argument-hint: <CARD-ID>
 ---
 
 Card: `$1`.
 
-## At a glance
-
-Fetch the whole card (Jira over MCP: description, all comments with author and date, attachments, linked pages; text that
-arrived in the prompt is the source, frozen all the same, with `not_read:` for what has no channel). Write, with `Write`, whole,
-`specs/$1-<slug>/card.snapshot.md` from `.claude/templates/card.snapshot.md`: `sources:` never empty, `not_read:` present,
-`status: proposed`, one `- [ ] $1-H<NN>-<NN> — <title>` line per scenario (two digits), the card transcribed, not interpreted.
-Write the folder name alone on one line to `specs/.current`; switch to branch `$1-<slug>` if on the default branch. Answer the
-ten questions (`steps/02-ambiguities.md`), commit the snapshot alone and append
-`$1-AMB-00 · <date> · snapshot · frozen at <hash>` to `ambiguities.md`.
-
-**Closes with:** `git diff --name-only <hash>..HEAD -- specs/$1-<slug>/card.snapshot.md` lists nothing; report the scenario count,
-the open ambiguities and `not_read:`.
-
-Read the rest only when the card changed after its snapshot (the old one is renamed `card.snapshot.<old-date>.md`).
-
-## 1 · Fetch, never remember
-
-**If `$1` is a Jira card:** fetch over the Atlassian MCP the whole card; **all** the comments with
-author and date; **all** the attachments —open the ones you can—; the linked Confluence pages. If
-the MCP does not respond, stop and say so: without the requirement there is no card. No memory,
-no summaries.
-
-**If the requirement arrived as text** —pasted in the prompt, an email, a message— **that text is
-the source and it is frozen all the same.** There is nothing to fetch and you do not stop:
-`sources:` says where it came from, and `not_read:` lists what could not be consulted because the
-channel does not exist —comments, attachments, Confluence—. The rest of the command stays
-identical.
-
-*Not having Jira is not not having a card. Stopping here leaves the method with no input in any
-project that does not have a board yet.*
-
-## 2 · Write the snapshot
-
-Create the folder `specs/$1-<short-slug>/` —it does not exist yet, this step creates it— and write
-`card.snapshot.md` there, with the template `.claude/templates/card.snapshot.md`. The plan
-(`plan.md`) goes in this same folder; if `/speckit-plan` is invoked in step 5 and creates its own,
-the files of this method are moved there at that point. Write the folder name, alone on one line, to
-`specs/.current`: the hooks take the card in progress from it.
-
-- **The snapshot is created with the `Write` tool, whole, in one call.** Not with a heredoc, `cat >`
-  or `echo >` in the shell: `guard-shell` rejects it and the file would be generated again.
-- `sources:` cannot be empty. `not_read:` can be empty but cannot be missing: what exists and you
-  could not open is declared there.
-- `status: proposed` — you wrote it, and it stays so: the review is the PR's.
-- Under `## Scenarios`, one line per scenario: `- [ ] $1-H<NN>-<NN> — <title in the card's
-  language>`. Always two digits: `H01`, not `H1`.
-- Transcribe the card; do not interpret it. What gets resolved, gets resolved in the plan.
-
-If a snapshot already exists and the card changed: rename it to `card.snapshot.<old-date>.md`
-and write a new one. **Never edit it.**
-
-**The card's branch.** Work goes on a branch named like the folder, `$1-<short-slug>`: if HEAD is on
-the default branch, `git switch -c $1-<short-slug>` before the first commit; if it is already on a
-branch that starts with `$1-`, stay. The close pushes that branch and nothing else
-(`.claude/AUTONOMY.md`).
-
-## 3 · Ambiguities
-
-**Do not reread "looking for them": answer the ten questions** of
-`.claude/steps/02-ambiguities.md`, which is where they live, with the format of the
-`## The ten questions` block and of the events under `## Events`. No row is left unanswered, not
-even the ones the card does answer. Do not resolve any ambiguity on your own: all of them go in
-**one** comment on the card, posted without asking approval (invariant 5 of `CLAUDE.md`; how, in
-`.claude/steps/02-ambiguities.md`). That is the only round: after it, a doubt is an `ASM-NN`.
-
-## 4 · Close the step
-
-Commit the snapshot alone, keep the commit hash and add it as an event in `ambiguities.md`:
-
-```
-$1-AMB-00 · 2026-09-01 · snapshot · frozen at <hash>
-```
-
-Verify:
-
-```
-git diff --name-only <hash>..HEAD -- specs/$1-<short-slug>/card.snapshot.md
-```
-
-It cannot list anything. Report: how many scenarios, how many open ambiguities, what ended up in
-`not_read:`. If you could not run some command, say so and do not go on.
+1. **Fetch, never remember.** A Jira card: the whole card over the Atlassian MCP, all comments with author and date, all attachments
+   (open the ones you can), linked pages. If the MCP does not respond, stop: without the requirement there is no card. A requirement
+   that arrived as text is the source all the same: `sources:` says where it came from and `not_read:` what has no channel.
+2. **Write `specs/$1-<slug>/card.md` with one `Write`**, from `.claude/templates/card.md`:
+   - header: `status: proposed`, `cap: <N> min` (the time the card is worth; `time-cap` warns at 70 % and stops at 100 %),
+     `sources:` never empty, `not_read:` present;
+   - `## Specs`: every sentence or criterion of the card as `S<n> · "<verbatim quote>" · acceptance: …`; an assumption as
+     `$1-ASM-NN · <the cheapest reading to undo> · S<n>`; a `## Look` `ref:` comes from the card, the repo's design system or `.claude/reference/design-refs.md`, never «the simplest»: it is an `ASM` with the reference of level;
+   - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`, one line per group of files; every production file carries `(rule)`, `(data)` or `(presentation)`, and every `S#` and `ASM` its planned test;
+   - `## Gate`: the commands `verify.mjs` runs, one per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), plus what the plan already knows: a `probe <state>:` for each state `## Specs` names, `attacks:` with the limits the card says, `migrate-upgrade:` if it touches data;
+   - before writing the Log: `Grep` the tags `@<ID>-S` of the earlier cards in the files the Tasks touch; each frozen test the new card contradicts goes in `## Log` as `replaces: <file> "<test>" · <why> · by: <file> "<test>"`;
+   - `## Log`: `L1` is the requirement, verbatim and whole. `guard.mjs` freezes L1; the Log only grows.
+   Not with a heredoc or `echo >`: `guard-shell` refuses it. Write the folder name, alone on one line, to `specs/.current`, and switch
+   to branch `$1-<slug>` if you are on the default branch.
+3. **Walk the questions of the lenses.** With the lenses of `risk.json` (or the ones the card will have), go through their questions in `.claude/reference/lenses.md` before `## Specs` closes. What the card answers is a spec; what it does not is an AMB (someone to ask) or an `ASM-NN` in the cheapest reading to undo, with its planned test. A card that changes a route, screen or file of main has `## Changes to existing behavior` (`none` if it does not).
+4. **One round of questions.** What the card does not say (the empty case, duplicates, validation, limits, permissions, states, error,
+   order, concurrency, what must be stamped now) is `$1-AMB-NN · <date> · open · <question in the business's language, no IDs>` in
+   `specs/$1-<slug>/ambiguities.md`. With Jira, all of them go in **one** comment on the card, posted without asking approval, each with
+   the option assumed if nobody answers (`.claude/AUTONOMY.md`). Read the answers before the tests; what is unanswered becomes an
+   `$1-ASM-NN` line of `## Specs`, in the reading cheapest to undo, with its planned test. Never a second round.
+5. `node .claude/tools/risk.mjs specs/$1-<slug>` checks the plan (a test per `S#` and `ASM`, a layer per file, a `probe` per state, `attacks:`, the migration), lists what is missing without writing anything, and when complete writes `risk.json` (size, review, lenses) and freezes it. Complete the card and rerun.
+   With review `high` only, launch the `judge` with a prompt starting `PLAN` and the path of `card.md`: it writes `judge.md` with ACT lines marked `plan`. Close each one in the card before RED (a new `ASM-NN` with its planned test, a Gate line, or `declared · <why>`), write `closed · <ASM-NN, T<n> or Gate line>` on its line of `judge.md`, and rerun `risk.mjs`.
+6. Commit `card.md` alone. **Closes with:** `git diff --name-only <hash>..HEAD -- specs/$1-<slug>/card.md` lists nothing you
+   did not mean; report the specs, the open questions, `not_read:` and the `risk:` line.

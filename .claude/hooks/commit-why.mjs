@@ -3,9 +3,26 @@
 // Measured: in two runs the history had only subjects, and the decision behind each change was lost.
 // A single -m with no blank-line body, no second -m and no -F is blocked. Exempt: --no-edit, -C, -c
 // and --reuse-message (amends and merges that keep a message), and repos without a current card.
+// In the kit's own source repo the subject must also be a Conventional Commit (see tools/release.mjs).
 // Contract: exit 0 lets it through, exit 2 blocks and Claude reads stderr. On its own error it blocks.
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, resolve, dirname } from 'node:path';
 import { hookCard } from '../tools/card.mjs';
+
+const CONVENTIONAL = /^(feat|fix|perf|refactor|docs|test|chore|style|build|ci|revert)(\([^)]+\))?!?: .+/;
+
+// The source repo of the kit has its tests and installer and no kit.json; an installed repo has kit.json.
+const isKitSource = (from) => {
+  let dir = resolve(from);
+  for (;;) {
+    if (existsSync(join(dir, '.claude', 'tools', 'install.mjs'))) {
+      return existsSync(join(dir, '.claude', 'tests')) && !existsSync(join(dir, '.claude', 'kit.json'));
+    }
+    const up = dirname(dir);
+    if (up === dir) return false;
+    dir = up;
+  }
+};
 
 const reject = (reason) => {
   process.stderr.write(reason + '\n');
@@ -60,6 +77,14 @@ for (let i = 0; i < words.length; i++) {
   if (/^--message=/.test(w)) messages.push(w.slice(10));
   else if (w === '--message' || /^-[a-zA-Z]*m$/.test(w)) messages.push(words[++i] ?? '');
 }
+
+// The kit's source repo: its commits are Conventional Commits, which tools/release.mjs reads to set the version.
+if (messages.length > 0 && isKitSource(cwd) && !CONVENTIONAL.test(messages[0].split('\n')[0])) {
+  reject('Commits of the kit repo are Conventional Commits: `type(scope)!: subject`, with type feat | fix | perf | refactor | docs | test | chore | style | build | ci | revert.\n'
+    + 'feat raises the minor, fix and perf the patch. A major is marked with `!` after the type (`feat(card)!: ...`) or a `BREAKING CHANGE: ...` line in the body.\n'
+    + 'tools/release.mjs sets the kit version from them. Example: git commit -m "feat(release): the version follows the commits" -m "why".');
+}
+
 if (messages.length === 0 || messages.length > 1) process.exit(0);
 if (/\n\s*\n\s*\S/.test(messages[0])) process.exit(0);
 

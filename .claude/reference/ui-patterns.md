@@ -1,9 +1,9 @@
 # UI patterns: when to choose each component
 
-**When it is read:** at step 5, when the visual brief picks a component for a screen (a button, a field,
-a selection control, an overlay, a message, a collection, a loading state), and at step 9 when the verdict
+**When it is read:** when the visual brief picks a component for a screen (a button, a field,
+a selection control, an overlay, a message, a collection, a loading state), and by the `judge` (lens `visual`) when it
 judges the choice. **How:** only the sheet of the pattern the card touches, with `Read` and a line range of its
-heading; never whole. The plan names the rule IDs that apply, and the `implementer` receives those IDs and
+heading; never whole. `card.md` names the rule IDs that apply, and the `builder` receives those IDs and
 their ranges. `reference/components.md` says what component of the catalog exists and links each row to its
 sheet here; `reference/component-techniques.md` and `reference/modern-interface.md` say how it is built and
 with which values; this reference says **when it is chosen**: what it is for, when not and what goes in its

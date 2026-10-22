@@ -195,5 +195,5 @@ animation and without long frames. How it looks is step 9.
 
 ## After writing the screen
 
-Step 9 —looking at it: captures, verdict against the brief, `design-deslop`, the data, the
-material, what year it looks like— is in `.claude/steps/m-ui-screen.md`, and is read on reaching it.
+Looking at it —captures, verdict against the brief, `design-deslop`, the data, the material, what
+year it looks like— is the `judge`'s lens `visual` (`node .claude/tools/help.mjs judge`).

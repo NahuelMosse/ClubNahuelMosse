@@ -1,6 +1,6 @@
 ---
 name: grunt
-description: Mechanical, repetitive changes that are already specified. Use when the WHAT is already decided and it only needs applying in N places — renaming, migrating a signature, applying the same pattern across several files, adding types, fixing imports. Do not use for design decisions or where judgment is needed: never to write or complete a plan or its bar (`specs/*/plan.md`), which the main thread decides.
+description: Mechanical, repetitive changes that are already specified. Use when the WHAT is already decided and it only needs applying in N places — renaming, migrating a signature, applying the same pattern across several files, adding types, fixing imports. Do not use for design decisions or where judgment is needed: never to write or complete a card's specs, tasks or gate (`specs/*/card.md`), which the main thread decides.
 tools: Read, Edit, Write, Grep, Glob, Bash
 model: sonnet
 effort: low

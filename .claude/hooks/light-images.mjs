@@ -24,14 +24,14 @@ try {
     process.exit(2);
   }
   // A subagent reads a big file by its range: whole, it stays in its context for every request that follows.
-  // Not images or PDFs (read by pages), nor the card's plan and snapshot, which the agent has to read whole.
+  // Not images or PDFs (read by pages), nor the card's card.md, which the agent has to read whole.
   const absolute = resolve(input.cwd ?? process.cwd(), path);
   if (input.agent_id && path && input.tool_input?.offset === undefined && input.tool_input?.limit === undefined &&
       !/\.(png|jpe?g|gif|webp|svg|pdf)$/i.test(path) && statSync(absolute).size > WHOLE_FILE_CHARS &&
       readFileSync(absolute, 'utf8').length > WHOLE_FILE_CHARS) {
     const found = (await import('../tools/card.mjs')).hookCard(input.cwd ?? process.cwd(), process.env, input);
     const own = (name) => found && resolve(found.card, name) === absolute;
-    if (!own('plan.md') && !own('card.snapshot.md')) {
+    if (!own('card.md') && !own('plan.md')) {
       process.stderr.write(
         `This file has more than ${WHOLE_FILE_CHARS.toLocaleString('en-US')} characters and read whole it stays in your context for every request that follows. ` +
         'Grep first, then Read the range with offset/limit.\n'
@@ -54,7 +54,7 @@ try {
   process.stderr.write(
     `This capture is ${width} × ${height}: about ${Math.max(tokens, 5)} thousand tokens, re-read on every request that follows. ` +
     'Look at a capture of the viewport (`fullPage: false`, deviceScaleFactor 1) of the state the card changed, ' +
-    'or have a subagent look at the full strip against the visual brief and report what it found (steps/m-ui-screen.md).\n'
+    'or have a subagent look at the full strip against the visual brief and report what it found.\n'
   );
   process.exit(2);
 } catch {

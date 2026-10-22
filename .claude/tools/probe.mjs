@@ -3,7 +3,7 @@
 // Playwright comes from the repo it runs in, or from KIT_PLAYWRIGHT_ROOT; axe from `axe-core` there, or AXE_CORE.
 // `help.mjs judge` prints FLAGS, ACTION_DOC, EXAMPLE_STEPS, DEFAULT_OUT and RECORD_FIELDS from here: what a judge is told
 // about the probe is what the code accepts.
-// Measured: inspector, reviewer and judges each wrote their own script to read the same things from the app —
+// Measured: the reviewing agents each wrote their own script to read the same things from the app —
 // the focus, what a status region says, whether the page scrolls sideways, whether a node was really gone, the
 // contrast of a button —and each script's setup errors cost more than the judgment.
 import { createRequire } from 'node:module';
@@ -12,12 +12,13 @@ import { join } from 'node:path';
 
 // One entry per flag: how it is written, what it does, and whether it may be repeated.
 export const FLAGS = [
-  { use: '--widths 320,390,1280', note: 'viewport widths in px (200 to 3000), comma separated; the default is 320,390,1280' },
+  { use: '--widths 320,390,1280', note: 'viewports, comma separated: a width in px (200 to 3000, height 900) or `<width>x<height>` (`1440x900,390x844`: the sizes the visual rounds are captured at); the default is 320,390,1280' },
   { use: '--route "METHOD /path=<status>|hold"', note: 'the app\'s backend answers that method and path with the status, or never (`hold`: the request stays pending)', repeat: true },
   { use: '--axe', note: 'axe violations of the page after each step' },
   { use: '--watch <locator>', note: 'count of the locator at t=0 and +500 ms after each step (a node that is really gone is 0 at t=0)', repeat: true },
   { use: '--contrast "<selector>[,<selector>…]"', note: 'per selector and step: text color, effective background, font size and weight, contrast ratio, AA yes or no' },
-  { use: '--url <app url>', note: 'probe another app than the one of .validation/app.json' },
+  { use: '--enter-skip "<selector>[,<selector>…]"', note: 'css selectors of the controls `enter-each` does not fail for (a control that does not submit on Enter by design)' },
+  { use: '--url <app url>', note: 'probe another app than the one of APP_URL or .validation/app.json' },
   { use: '--out <folder>', note: 'write there instead of .validation/probe' },
   { use: '--quiet', note: 'print nothing' },
 ];
@@ -31,6 +32,9 @@ export const ACTION_DOC = {
   press: '{ "press": "Enter" }  a key to the page, or to a locator with "on": "<locator>"',
   select: '{ "select": "<locator>", "value": "option" }',
   wait: '{ "wait": 300 }  milliseconds, or { "wait": "<locator>" } until it shows',
+  scroll: '{ "scroll": "<locator>" }  brings the section to the top of the viewport: the capture of that step is that section, never the whole page',
+  'enter-each': '{ "enter-each": "<form locator>" }  per field of the form that is not a textarea or a button: replays the steps before this one, focuses it, presses Enter and records whether the form submitted (`enter` in the JSON); one that did not fails the probe unless `--enter-skip` names it',
+  'type-markup': '{ "type-markup": "<locator>" }  types `<b data-kit-markup>x</b>` into the field; if any `[data-kit-markup]` element exists afterwards the probe fails: a user text was read as HTML',
 };
 const ACTIONS = Object.keys(ACTION_DOC);
 export const EXAMPLE_STEPS = [
@@ -43,7 +47,7 @@ export const EXAMPLE_STEPS = [
   { wait: 300 },
 ];
 export const DEFAULT_OUT = '.validation/probe';
-export const RECORD_FIELDS = 'width, step, action, url, error, activeElement (tag, id, role, name, aria), announcements (role=status/alert texts), scrollWidth and clientWidth, animations running, axe (null without --axe), watch (per --watch locator: t0, t500), contrast (per --contrast selector)';
+export const RECORD_FIELDS = 'width, height, step, action, url, error, activeElement (tag, id, role, name, aria), announcements (role=status/alert texts), scrollWidth and clientWidth, animations running, axe (null without --axe), watch (per --watch locator: t0, t500), contrast (per --contrast selector; a disabled element is `skipped: disabled`), enter (per `enter-each` step: control, submitted), markup (after a `type-markup`: elements found), statusContrast (always: the alerts, live regions, invalid fields and what their aria-describedby points to), design (always: font families and sizes in use, and the action controls with no transition or animation), reduced (the last step: the large or continuous movement left with prefers-reduced-motion)';
 
 const STEP_TIMEOUT_MS = 5000;
 const WATCH_DELAY_MS = 500;
@@ -88,6 +92,7 @@ export const contrastOf = ({ color, background, fontSize, fontWeight }) => {
 };
 export const contrastLine = (c) => (c.found === false
   ? `  contrast ${c.selector} · not on the page`
+  : c.skipped ? `  contrast ${c.selector} · skipped: ${c.skipped}`
   : `  contrast ${c.selector} · ${c.color} on ${c.background}${c.approximate ? ' (a background image is under it: approximate)' : ''} · ${c.fontSize}px/${c.fontWeight}${c.large ? ' large' : ''} · ${c.ratio}:1 · AA ${c.aa ? 'pass' : `fail (needs ${c.needed})`}`);
 
 const playwright = () => {
@@ -125,7 +130,9 @@ const snapshotPage = () => {
 // Runs in the page: the colors, size and weight of the first element of each selector. The background is the
 // effective one: the element's own and each ancestor's, up to the first opaque one (white under the page),
 // composited from the bottom. Any CSS color is read through a canvas, so oklch(), color-mix() and the rest arrive as sRGB.
-const measureContrast = (selectors) => {
+// The elements that carry a status or an error are measured on every step whether or not they were declared: `[role=alert]`,
+// `[aria-live]`, `[aria-invalid=true]` and what the fields' `aria-describedby` points to. Only the ones that show something.
+const measureContrast = ([selectors, withStatus]) => {
   const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
   const rgba = (value) => {
     ctx.clearRect(0, 0, 1, 1);
@@ -136,9 +143,20 @@ const measureContrast = (selectors) => {
     return a === 0 ? [0, 0, 0, 0] : [r, g, b, a / 255];
   };
   const over = (top, under) => [0, 1, 2].map((i) => Math.round(top[i] * top[3] + under[i] * (1 - top[3])));
-  return selectors.map((selector) => {
-    const el = document.querySelector(selector);
+  const shows = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (e.textContent.trim() || e.value); };
+  const nameOf = (e) => (e.id ? `#${e.id}` : `${e.tagName.toLowerCase()}${e.getAttribute('role') ? `[role=${e.getAttribute('role')}]` : ''}`);
+  const entries = selectors.map((selector) => ({ selector, el: document.querySelector(selector) }));
+  if (withStatus) {
+    const found = new Set([...document.querySelectorAll('[role=alert],[aria-live],[aria-invalid=true]')]);
+    for (const field of document.querySelectorAll('[aria-describedby]')) {
+      for (const id of field.getAttribute('aria-describedby').split(/\s+/).filter(Boolean)) { const target = document.getElementById(id); if (target) found.add(target); }
+    }
+    for (const el of found) if (shows(el)) entries.push({ selector: nameOf(el), el, auto: true });
+  }
+  return entries.map(({ selector, el, auto }) => {
     if (!el) return { selector, found: false };
+    // WCAG exempts inactive controls.
+    if (el.matches(':disabled,[aria-disabled=true]') || el.closest('[aria-disabled=true]')) return { selector, found: true, auto, skipped: 'disabled' };
     const style = getComputedStyle(el);
     const layers = [];
     let approximate = false;
@@ -152,17 +170,99 @@ const measureContrast = (selectors) => {
     let background = [255, 255, 255];
     for (const layer of layers.reverse()) background = over(layer, background);
     const text = rgba(style.color);
-    return { selector, found: true, color: over(text, background), background, fontSize: parseFloat(style.fontSize), fontWeight: Number(style.fontWeight) || 400, approximate };
+    return { selector, auto, found: true, color: over(text, background), background, fontSize: parseFloat(style.fontSize), fontWeight: Number(style.fontWeight) || 400, approximate };
   });
 };
 
-const run = async (page, step, appUrl) => {
+// Runs in the page: what the computed CSS says about type and about the response of the controls. Cheap and deterministic.
+const measureDesign = () => {
+  const shown = (e) => { const r = e.getBoundingClientRect(); const s = getComputedStyle(e); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+  const families = new Set();
+  const sizes = new Set();
+  for (const e of document.body.querySelectorAll('*')) {
+    if (['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE'].includes(e.tagName) || !shown(e)) continue;
+    if (![...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+    const s = getComputedStyle(e);
+    const family = s.fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '').toLowerCase();
+    sizes.add(Math.round(parseFloat(s.fontSize) * 10) / 10);
+    // icon fonts, and the monospace of code, are not the page's type families
+    if (/icon|symbols|awesome|glyph|material/.test(family) || (/mono/.test(family) && e.closest('code,pre,kbd,samp'))) continue;
+    families.add(family);
+  }
+  const secs = (v) => Math.max(0, ...String(v).split(',').map((x) => (x.trim().endsWith('ms') ? parseFloat(x) / 1000 : parseFloat(x)) || 0));
+  const painted = (c) => c !== 'transparent' && !/^rgba\(.*,\s*0\)$/.test(c);
+  const buttonLike = (e) => {
+    const s = getComputedStyle(e);
+    const pad = parseFloat(s.paddingTop) > 0 && parseFloat(s.paddingLeft) > 0;
+    return e.getAttribute('role') === 'button' || (pad && (painted(s.backgroundColor) || (parseFloat(s.borderTopWidth) > 0 && painted(s.borderTopColor))));
+  };
+  const isAction = (e) => (e.tagName === 'A' ? e.hasAttribute('href') && !e.closest('p') && buttonLike(e) : true);
+  const controls = [...document.querySelectorAll('a[href],a[role=button],button,input:not([type=hidden]),select,textarea,summary,[role=button]')].filter((e) => shown(e) && isAction(e));
+  const label = (e) => `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}${typeof e.className === 'string' && e.className.trim() ? `.${e.className.trim().split(/\s+/)[0]}` : ''}`;
+  const unanimated = controls.filter((e) => {
+    const s = getComputedStyle(e);
+    return !((secs(s.transitionDuration) > 0 && s.transitionProperty !== 'none') || (s.animationName !== 'none' && secs(s.animationDuration) > 0));
+  }).map(label);
+  return { families: [...families].sort(), sizes: [...sizes].sort((a, b) => a - b), controls: controls.length, unanimated: [...new Set(unanimated)].slice(0, 8), unanimatedCount: unanimated.length };
+};
+
+// Runs in the page with prefers-reduced-motion emulated: the large or continuous movement still running: CSS or WAAPI
+// animations that loop forever or last over 1 s and change transform or position. Short hover and focus transitions and
+// opacity or color changes are allowed.
+const measureReduced = () => {
+  const MOVES = /^(transform|translate|rotate|scale|offsetDistance|offsetPath|top|left|right|bottom|inset|margin.*|insetBlock.*|insetInline.*)$/;
+  const big = document.getAnimations().filter((a) => {
+    if (a.playState !== 'running' || !a.effect?.getKeyframes) return false;
+    const t = a.effect.getComputedTiming();
+    if (!(t.iterations === Infinity || t.duration > 1000)) return false;
+    return a.effect.getKeyframes().some((k) => Object.keys(k).some((p) => MOVES.test(p))) || a.transitionProperty === 'transform';
+  });
+  const label = (a) => `${a.animationName ?? a.transitionProperty ?? 'unnamed'}${a.effect.target?.id ? `#${a.effect.target.id}` : ''}`;
+  return { moving: big.length, items: [...new Set(big.map(label))].slice(0, 5) };
+};
+
+const MARKUP = '<b data-kit-markup>x</b>';
+// The controls of a form that Enter submits from: every field but textareas and buttons.
+const ENTER_CONTROLS = 'input:not([type=hidden],[type=submit],[type=button],[type=reset],[type=image],[type=file],[disabled]),select:not([disabled])';
+
+// For each control of the form: the state the step started from is rebuilt (the steps before it run again on a blank page),
+// the control is focused, Enter is pressed and a capture-phase `submit` listener says whether the form submitted. The flag
+// lives in sessionStorage: a form that navigates away on submit still leaves it.
+const enterEach = async (page, step, ctx, appUrl) => {
+  const form = () => page.locator(step['enter-each']).first();
+  const count = await form().locator(ENTER_CONTROLS).count();
+  const skips = ctx.skip;
+  const out = [];
+  for (let k = 0; k < count; k++) {
+    if (k > 0) {
+      await page.goto('about:blank');
+      for (const before of ctx.steps.slice(0, ctx.i)) await run(page, before, appUrl, { ...ctx, silent: true });
+    }
+    const control = form().locator(ENTER_CONTROLS).nth(k);
+    const label = await control.evaluate((el) => `${el.tagName.toLowerCase()}${el.name ? `[name=${el.name}]` : el.id ? `#${el.id}` : ''}${el.tagName === 'INPUT' && el.type !== 'text' ? `[type=${el.type}]` : ''}`);
+    let skipped = false;
+    for (const s of skips) skipped ||= await control.evaluate((el, sel) => { try { return el.matches(sel); } catch { return false; } }, s);
+    await page.evaluate(() => sessionStorage.removeItem('kitSubmit'));
+    await form().evaluate((f) => f.addEventListener('submit', () => sessionStorage.setItem('kitSubmit', '1'), true));
+    await control.focus({ timeout: STEP_TIMEOUT_MS });
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(300);
+    const submitted = await page.evaluate(() => sessionStorage.getItem('kitSubmit') === '1');
+    out.push({ control: label, submitted, ...(skipped ? { skipped: true } : {}) });
+  }
+  return out;
+};
+
+const run = async (page, step, appUrl, ctx) => {
   const loc = (s) => page.locator(s).first();
-  if ('goto' in step) await page.goto(new URL(step.goto, appUrl).href, { waitUntil: 'load', timeout: STEP_TIMEOUT_MS * 3 });
+  if ('enter-each' in step) { if (!ctx.silent) ctx.found.enter = await enterEach(page, step, ctx, appUrl); }
+  else if ('type-markup' in step) { await loc(step['type-markup']).fill(MARKUP, { timeout: STEP_TIMEOUT_MS }); ctx.found.typed = true; }
+  else if ('goto' in step) await page.goto(new URL(step.goto, appUrl).href, { waitUntil: 'load', timeout: STEP_TIMEOUT_MS * 3 });
   else if ('fill' in step) await loc(step.fill).fill(step.value ?? '', { timeout: STEP_TIMEOUT_MS });
   else if ('click' in step) await loc(step.click).click({ timeout: STEP_TIMEOUT_MS });
   else if ('press' in step) await (step.on ? loc(step.on).press(step.press, { timeout: STEP_TIMEOUT_MS }) : page.keyboard.press(step.press));
   else if ('select' in step) await loc(step.select).selectOption(step.value ?? '', { timeout: STEP_TIMEOUT_MS });
+  else if ('scroll' in step) { await loc(step.scroll).evaluate((el) => el.scrollIntoView({ block: 'start' })); await page.waitForTimeout(400); }
   else if (typeof step.wait === 'number') await page.waitForTimeout(step.wait);
   else await loc(step.wait).waitFor({ timeout: STEP_TIMEOUT_MS });
 };
@@ -186,19 +286,20 @@ export const probe = async (argv, root = process.cwd()) => {
   const take = (name) => { const found = []; for (let i = args.indexOf(name); i >= 0; i = args.indexOf(name)) found.push(args.splice(i, 2)[1]); return found; };
   const axe = args.includes('--axe');
   if (axe) args.splice(args.indexOf('--axe'), 1);
-  const widths = (take('--widths')[0] ?? '320,390,1280').split(',').map(Number);
+  const viewports = (take('--widths')[0] ?? '320,390,1280').split(',').map((v) => { const [w, h = '900'] = v.trim().split('x'); return { width: Number(w), height: Number(h) }; });
   const routeTexts = take('--route');
   const watches = take('--watch');
   const contrastFlags = take('--contrast');
   const contrasts = contrastFlags.flatMap((v) => String(v ?? '').split(',').map((s) => s.trim()).filter(Boolean));
   // `--url` probes another app than the shared one and `--out` writes elsewhere: `app.mjs pairs` takes the base this way.
+  const enterSkip = take('--enter-skip').flatMap((v) => String(v ?? '').split(',').map((s) => s.trim()).filter(Boolean));
   const [urlFlag] = take('--url');
   const [outFlag] = take('--out');
   const quiet = args.includes('--quiet');
   if (quiet) args.splice(args.indexOf('--quiet'), 1);
   const log = (...a) => { if (!quiet) console.log(...a); };
   const [stepsPath, ...extra] = args;
-  if (!stepsPath || extra.length || widths.some((w) => !(w >= 200 && w <= 3000)) || [...routeTexts, ...watches].some((v) => !v)
+  if (!stepsPath || extra.length || viewports.some(({ width, height }) => !(width >= 200 && width <= 3000 && height >= 200 && height <= 3000)) || [...routeTexts, ...watches].some((v) => !v)
     || contrastFlags.length && !contrasts.length) {
     console.error(USAGE);
     return 2;
@@ -206,7 +307,7 @@ export const probe = async (argv, root = process.cwd()) => {
   const routes = routeTexts.map(parseRoute);
   if (routes.includes(null)) { console.error(`${USAGE}\n--route is METHOD /path=<status>|hold`); return 2; }
 
-  let appUrl = urlFlag;
+  let appUrl = urlFlag ?? process.env.APP_URL;
   if (!appUrl) try { appUrl = JSON.parse(readFileSync(join(root, '.validation', 'app.json'), 'utf8')).url; } catch { /* no state */ }
   if (!appUrl) { console.error('No app: `node .claude/tools/app.mjs up` writes .validation/app.json first.'); return 1; }
   let list;
@@ -225,8 +326,8 @@ export const probe = async (argv, root = process.cwd()) => {
   const browser = await (pw.chromium ?? pw.default.chromium).launch();
   let failed = false;
   try {
-    for (const width of widths) {
-      const context = await browser.newContext({ viewport: { width, height: 900 } });
+    for (const { width, height } of viewports) {
+      const context = await browser.newContext({ viewport: { width, height } });
       const page = await context.newPage();
       for (const r of routes) {
         await page.route(`**${r.path}`, (route) => {
@@ -235,31 +336,57 @@ export const probe = async (argv, root = process.cwd()) => {
           return route.fulfill({ status: r.answer, contentType: 'application/json', body: '{}' });
         });
       }
+      const found = {};
+      let markupHit = 0;
       for (const [i, step] of parsed.steps.entries()) {
-        const name = `w${width}-step${String(i + 1).padStart(2, '0')}`;
+        const name = `w${width}${height === 900 ? '' : `x${height}`}-step${String(i + 1).padStart(2, '0')}`;
         let error = null;
-        try { await run(page, step, appUrl); } catch (e) { error = `${JSON.stringify(step)}: ${String(e.message).split('\n')[0]}`; }
-        const record = { width, step: i + 1, action: step, url: page.url(), error };
+        delete found.enter;
+        try { await run(page, step, appUrl, { steps: parsed.steps, i, skip: enterSkip, found }); } catch (e) { error = `${JSON.stringify(step)}: ${String(e.message).split('\n')[0]}`; }
+        const record = { width, height, step: i + 1, action: step, url: page.url(), error };
+        if (found.enter) {
+          record.enter = found.enter;
+          const stuck = found.enter.filter((c) => !c.submitted && !c.skipped).map((c) => c.control);
+          if (stuck.length) { failed = true; log(`${name} enter-each · Enter did not submit from: ${stuck.join(', ')}`); }
+        }
+        if (found.typed) {
+          const n = await page.locator('[data-kit-markup]').count().catch(() => 0);
+          record.markup = { found: n };
+          if (n) markupHit = n;
+        }
         try {
           const t0 = {};
           for (const w of watches) t0[w] = await page.locator(w).count();
           Object.assign(record, await page.evaluate(snapshotPage));
-          if (contrasts.length) record.contrast = (await page.evaluate(measureContrast, contrasts)).map((c) => (c.found ? { selector: c.selector, ...contrastOf(c), approximate: c.approximate } : c));
+          // Colors are measured once the finite animations end: a message fading in is not its final contrast.
+          await page.evaluate(() => Promise.race([
+            Promise.all(document.getAnimations().filter((a) => a.playState === 'running' && a.effect?.getComputedTiming().endTime !== Infinity).map((a) => a.finished.catch(() => {}))),
+            new Promise((r) => setTimeout(r, 1500)),
+          ]));
+          const measures = (await page.evaluate(measureContrast, [contrasts, true])).map((c) => (c.skipped ? c : c.found ? { selector: c.selector, ...contrastOf(c), approximate: c.approximate, auto: c.auto } : c));
+          if (contrasts.length) record.contrast = measures.filter((c) => !c.auto);
+          record.statusContrast = measures.filter((c) => c.auto);
           if (axePath) {
             if (await page.evaluate(() => typeof window.axe) === 'undefined') await page.addScriptTag({ path: axePath });
             const result = await page.evaluate(() => window.axe.run());
             record.axe = { violations: result.violations.map((v) => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.slice(0, 5).map((n) => n.target.join(' ')) })) };
           } else record.axe = null;
+          record.design = await page.evaluate(measureDesign);
           await page.screenshot({ path: join(out, `${name}.png`) });
           record.watch = {};
           if (watches.length) await page.waitForTimeout(WATCH_DELAY_MS);
           for (const w of watches) record.watch[w] = { t0: t0[w], t500: await page.locator(w).count() };
+          if (i === parsed.steps.length - 1) {
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            record.reduced = await page.evaluate(measureReduced);
+          }
         } catch (e) { record.error ??= String(e.message).split('\n')[0]; }
         writeFileSync(join(out, `${name}.json`), JSON.stringify(record, null, 1));
         log(`${name} ${Object.keys(step)[0]} · focus ${record.activeElement ? `${record.activeElement.tag}${record.activeElement.id ? `#${record.activeElement.id}` : ''}` : 'none'} · announcements ${record.announcements?.length ?? 0} · scroll ${record.scrollWidth}/${record.clientWidth} · animations ${record.animations?.length ?? 0}${record.axe ? ` · axe ${record.axe.violations.length}` : ''}${error ? ` · ERROR ${error}` : ''}`);
-        for (const c of record.contrast ?? []) log(contrastLine(c));
+        for (const c of [...(record.contrast ?? []), ...(record.statusContrast ?? [])]) log(contrastLine(c));
         if (error || record.error) { failed = true; break; }
       }
+      if (markupHit) { failed = true; log(`w${width} type-markup · un texto del usuario se interpretó como HTML (${markupHit} [data-kit-markup])`); }
       await context.close();
     }
   } finally {

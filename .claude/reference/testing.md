@@ -1,10 +1,10 @@
 # Testing: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 4 when the scenarios are turned into tests (shape of the suite, techniques per
-requirement type, test data), at step 6 when the implementer writes or changes tests (doubles, oracles,
-determinism, e2e), and by the inspector on the area T criteria. **How:** only the sections the card touches,
-with `Read` and a line range of the heading; never whole. The plan names the rule IDs that apply and the
-implementer receives those IDs and their ranges. Examples are Node/TypeScript (Vitest, `node:test`,
+**When it is read:** when the specs are turned into tests (shape of the suite, techniques per
+requirement type, test data), when the builder writes or changes tests (doubles, oracles,
+determinism, e2e), and by the `judge` on the area T criteria. **How:** only the sections the card touches,
+with `Read` and a line range of the heading; never whole. `card.md` names the rule IDs that apply and the
+`builder` receives those IDs and their ranges. Examples are Node/TypeScript (Vitest, `node:test`,
 Playwright); each rule brings its generic equivalent (pytest, JUnit, xUnit). **Libraries and tools are options,
 not obligations.** **[NV] marks guidance not verified**: a hypothesis, never the only evidence of a `meets`.
 Neighboring topics are cited by prefix, not repeated: test first, red for the right reason, expected value from
@@ -34,8 +34,8 @@ smell planted, a clean sample and five real spec files (false positives are revi
 | TEST-COB-01, TEST-COB-04 | T11 |
 | TEST-E2E-01, TEST-E2E-04 | T12 |
 
-The rules outside this table are judgment or guidance, with no criterion of their own. The mechanical item C17
-of `/validate` (no test weakened in the card's diff) answers the detector D18 of the last topic.
+The rules outside this table are judgment or guidance, with no criterion of their own. The detector D18 of the
+last topic (no test weakened in the card's diff) is read by the `judge` from the diff.
 
 ## 1. Strategy and shape of the suite (EST)
 

@@ -1,8 +1,8 @@
 # Observability and supportability: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card adds or changes an endpoint, a job, an external call, a
+**When it is read:** when the card adds or changes an endpoint, a job, an external call, a
 log, an alert or an error the user sees. **How:** only the sections the card touches, with `Read` and a
-line range of the heading; never whole. The plan names the rule IDs that apply, and the `implementer`
+line range of the heading; never whole. `card.md` names the rule IDs that apply, and the `builder`
 receives those IDs and their ranges. **Vendors and commands are options, not obligations:** the common
 vocabulary is OpenTelemetry (OTel) and W3C Trace Context; Prometheus appears only as metric and alert
 syntax because its format is the most widespread; the code example is Node + TypeScript with `pino`.

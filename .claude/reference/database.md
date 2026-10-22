@@ -1,9 +1,9 @@
 # Database: rules a card can meet and a reviewer can check
 
-**When it is read:** at step 5, when the card touches stored data —a table, a column, a query, a
+**When it is read:** when the card touches stored data —a table, a column, a query, a
 migration, a connection, a backup—. **How:** only the sections the card touches, with `Read` and a
-line range of the heading; never whole. The plan names the rule IDs that apply, and the
-`implementer` receives those IDs and their ranges. **The commands are options, not obligations:**
+line range of the heading; never whole. `card.md` names the rule IDs that apply, and the
+`builder` receives those IDs and their ranges. **The commands are options, not obligations:**
 PostgreSQL is the main example, with MySQL/MariaDB and SQL Server where the command differs; what
 applies to NoSQL is named in its rule. **[NV] marks guidance not verified** —from general knowledge or
 from a source that could not be opened—: it is a hypothesis, never the only evidence of a `meets`.
