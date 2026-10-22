@@ -1,62 +1,11 @@
 {
-  "kit": "6.3.2",
+  "kit": "5.0.1",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
     "others": [".claude/stacks/others.md"]
   },
-  "profiles": {
-    "web": {
-      "status": "available",
-      "does": "screens in the browser: design references, the designer, captures, accessibility, motion and overflow measures",
-      "modules": ["ui"], "modulesIfSignal": ["i18n"], "optInModules": [],
-      "lenses": { "visual": "web" },
-      "stacks": ["react-shadcn", "node-ts"],
-      "tools": ["probe", "app.mjs probe", "motion-audit", "motion-curves", "overflow", "axe"],
-      "agents": ["designer"],
-      "gate": ["probe <state>:", "enter-each", "type-markup", "motion:", "overflow"],
-      "files": [
-        ".claude/profiles/web.md", ".claude/agents/designer.md", ".claude/reference/design-refs.md",
-        ".claude/tools/probe.mjs", ".claude/tools/motion-curves.mjs", ".claude/tools/motion-audit.mjs",
-        ".claude/tools/overflow.mjs", ".claude/tools/showreel.mjs",
-        ".claude/skills/motion/**"
-      ],
-      "mcp": { "motion": { "type": "http", "url": "https://mcp.motion.dev" } }
-    },
-    "backend": {
-      "status": "available",
-      "does": "HTTP services and stored data: contract, attacks, migrations, observability, infrastructure",
-      "modules": ["api", "data", "observability", "infra"], "modulesIfSignal": [], "optInModules": ["security-l2"],
-      "lenses": { "contract": "backend", "integrity": "backend" },
-      "stacks": [],
-      "tools": ["attack", "migrations", "migrate-upgrade"],
-      "agents": [],
-      "gate": ["attacks:", "--common-headers", "--unique", "--fault-db", "--openapi", "migrate-upgrade:"],
-      "files": [".claude/profiles/backend.md", ".claude/tools/attack.mjs"],
-      "mcp": {}
-    },
-    "flutter": {
-      "status": "available",
-      "does": "mobile screens in Flutter: golden, accessibility and motion checks, the flutter gate and the designer",
-      "modules": [], "modulesIfSignal": [], "optInModules": [],
-      "lenses": { "visual": "flutter" },
-      "stacks": [], "tools": ["flutter-gate"], "agents": ["designer"],
-      "gate": ["golden <state>:", "a11y:", "motion:", "flutter-gate"],
-      "files": [
-        ".claude/profiles/flutter.md", ".claude/profiles/flutter/**", ".claude/tools/flutter-gate.mjs",
-        ".claude/tools/motion-audit.mjs", ".claude/tools/motion-curves.mjs", ".claude/agents/designer.md",
-        ".claude/reference/design-refs-mobile.md"
-      ],
-      "copies": [
-        { "from": ".claude/profiles/flutter/test-kit/kit_states.dart", "to": "test/kit/kit_states.dart" },
-        { "from": ".claude/profiles/flutter/test-kit/kit_a11y.dart", "to": "test/kit/kit_a11y.dart" },
-        { "from": ".claude/profiles/flutter/test-kit/kit_motion.dart", "to": "test/kit/kit_motion.dart" }
-      ],
-      "mcp": {}
-    }
-  },
   "breaking": {
-    "profiles": "the kit is a base plus profiles (web, backend, flutter): `kit.mjs profile on|off <p>` and `install.mjs --profiles`; probe, motion-curves, attack, the designer and design-refs.md come with their profile, and a card whose lens needs a profile that is off lists it in `lensesOff`",
     "card": "specs/<card>/card.md is the single document (L1, Specs, Tasks, Gate, Log); card.snapshot.md, plan.md and the nine steps are gone",
     "agents": "builder and judge replace implementer, conductor, inspector and reviewer; review follows risk.json",
     "commands": "/scenarios and /validate are gone: /card, then build, the gate (verify.mjs), the plan judge at high, /close"
@@ -128,6 +77,7 @@
         ".claude/reference/ui-patterns.md",
         ".claude/templates/components/**", "!.claude/templates/components/*.spec.mjs", "!.claude/templates/components/*.spec.mjs-snapshots/**",
         ".claude/templates/design-line.md", ".claude/templates/accessibility-statement.md",
+        ".claude/tools/motion-audit.mjs", ".claude/tools/showreel.mjs", ".claude/tools/overflow.mjs",
         ".claude/commands/design-deslop.md",
         ".claude/skills/apple-design/**", ".claude/skills/build-awwwards-quality-sites/**", ".claude/skills/cinematic-gsap-lenis-motion-system/**",
         ".claude/skills/interface-design/**", ".claude/skills/find-animation-opportunities/**", ".claude/skills/accessibility-audit/**",

@@ -1,7 +1,8 @@
 # SDD method
 
 **The Jira card is the specification. Nothing is assumed in silence: what is assumed is declared, numbered (`<ID>-ASM-NN`) and tied to a test.**
-The kit is in English; the work (card, tests, commits, PR) speaks the repo's language. Headings, IDs and tags stay in English. Read nothing else of the kit.
+The kit is in English; the work (card, tests, commits, PR) speaks the repo's language. Headings, IDs and tags stay in English:
+hooks and tools read them. Read nothing else of the kit.
 
 ## The flow
 
@@ -13,7 +14,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
    - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test;
    - `## Gate`: one command per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), and the plan's own: a `probe <state>:` for each state `## Specs` names, `attacks:` with the card's limits, `migrate-upgrade:` if it touches data;
    - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
-   - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`, profile web; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`;
+   - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`;
 
    - `## Changes to existing behavior`: a route, screen or file of main the card changes (`none` if it only adds).
 
@@ -46,7 +47,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 - **Tagged tests are frozen once committed.** A wrong one is replaced, never edited: write the fixed test in a new file with the same tag and add to the Log `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate then says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.
 - **Three states: passed · failed · could not run.** What did not run is never "passed". A check that stops you is not turned off. An uncorrected finding stops the close.
 - **Nothing waits for a person.** The review is the PR; what only a person decides is not yours (`.claude/AUTONOMY.md`).
-- **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). **Modules** add lenses and gate lines, not steps. The method is the base; a **profile** (`web`, `backend`) brings the screen or API instruments.
+- **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). **Modules** add lenses and gate lines, not steps.
 
 ## Cost rules
 
@@ -56,7 +57,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 - **A subagent only from the table below.** Never `general-purpose`. What decides is never delegated to a Sonnet.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
 - **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
-- **Context caps:** `context-cap` warns a builder, grunt or designer at 90k, stops it at 120k: commit, `specs/<card>/handoff.md`, a fresh one. Never the main thread.
+- **Context caps:** `context-cap` warns a builder, grunt or designer at 90k and stops it at 120k: it commits, writes `specs/<card>/handoff.md` and a fresh agent continues. The main thread is not capped.
 
 ## Who does what
 
