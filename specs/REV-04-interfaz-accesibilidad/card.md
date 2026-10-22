@@ -1,0 +1,82 @@
+# REV-04 · interfaz y accesibilidad
+
+card: REV-04
+status: proposed
+cap: 14 h
+sources:
+  - "REVISION-kit3.md · D:/Temp/w/rev04/specs/REVISION-kit3.md @ 138bc54 · líneas 1-5 y hallazgos 17, 18 y 27 (completos)"
+  - "pedido (texto) · pedido del coordinador, recibido como texto en la sesión"
+  - "enunciado · D:/desktop folders/estudio/Universidad de moron/Electiva general/Trabajo Práctico_2026.docx.pdf · pdftotext -enc UTF-8 -layout, texto entero"
+  - "CU-03 Registrar usuario · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU/CU-03 Registrar usuario.pdf · pdftotext -enc UTF-8 -layout, entero"
+  - "CU-09 Reservar cancha · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU/CU-09_Reservar_cancha_MartinGaser .pdf · pdftotext -enc UTF-8 -layout, entero"
+  - "CU-11 Modificar reserva · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU-nuevos/CU-11 - Modificar reserva.md · leído como texto (Read), entero"
+  - "CU-12 Consultar horarios disponibles · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU/CU-12 - Consultar horarios disponibles.pdf · pdftotext -enc UTF-8 -layout, entero"
+  - "CU-17 Alta de sede · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU/CU-17-Alta de sede.docx.pdf · pdftotext -enc UTF-8 -layout, entero"
+  - "CU-18 Editar sede · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU-nuevos/CU-18 - Editar sede.md · leído como texto (Read), entero"
+  - "CU-21 Alta de espacio deportivo · D:/desktop folders/estudio/Universidad de moron/Electiva general/CU/CU-21 - Alta Espacio Deportivo.pdf · pdftotext -enc UTF-8 -layout, entero"
+not_read:
+  - "figuras e imágenes de los PDF del enunciado y de los CU (pantallas de Figma y capturas): pdftotext extrae sólo texto y no se abrieron las páginas como imagen; afecta sobre todo a CU-09 (pantallas 1 a 3), CU-12 (pantallas 1 a 6 con capturas), CU-17 (capturas del flujo) y CU-21 (pantallas P-01 a P-03 y Alt-1 a Alt-3)"
+  - "Figma, citado por los CU como «Resolución en Figma»: no consultado; el pedido sólo indicó archivos locales"
+  - "Jira: no consultado; la card llega como texto, sin ticket"
+  - "código citado dentro de los hallazgos (lib/…, apps/api/…): no abierto; este snapshot transcribe los hallazgos y no verifica el código"
+  - "resto de REVISION-kit3.md (hallazgos 1 a 16, 19 a 26 y 28 y secciones siguientes): leído completo con Read pero no transcrito, porque el pedido sólo incluía las líneas 1-5 y los hallazgos 17, 18 y 27"
+  - "CU de CU/ y CU-nuevos/ distintos de CU-03, CU-09, CU-11, CU-12, CU-17, CU-18 y CU-21 (por ejemplo CU-01, CU-02, CU-04, CU-04b, CU-05 a CU-08, CU-10, CU-13 a CU-16, CU-19, CU-20, CU-22 a CU-24.3): fuera del pedido, no abiertos"
+  - "CU/Distribucion CUs.jpeg: fuera del pedido, no abierto"
+
+## Specs
+
+- S1 · "tocar CREAR CUENTA con datos faltantes muestra cuáles faltan"
+- S2 · "guardar la edición de una sede con datos faltantes muestra cuáles faltan, igual que el alta"
+- S3 · "el lector de pantalla anuncia el error de un campo junto con el campo"
+- S4 · "el lector de pantalla anuncia el formato esperado de una fecha"
+- S5 · "el rechazo de una reserva queda a la vista hasta que la persona lo lee y lo cierra"
+- S6 · "el rechazo de un cambio de reserva queda a la vista hasta que la persona lo lee y lo cierra"
+- S7 · "en una confirmación irreversible el foco empieza en la opción que no destruye"
+- S8 · "con el texto al 200 % la barra inferior muestra cada destino completo"
+- S9 · "el botón atenuado en modo oscuro se lee con contraste suficiente"
+- S10 · "el calendario de reservas parte del día del club, no del día del teléfono"
+- S11 · "las capturas de pantalla no cambian según el día en que se generan"
+- S12 · "el alta de espacio se ve entera en una pantalla de 320 × 568"
+- REV-04-ASM-01 · los faltantes se muestran al tocar el botón de enviar, cada uno debajo de su campo, y el foco va al primero; después se actualizan mientras la persona escribe; antes del primer intento, salir de un campo vacío no muestra nada · S1
+- REV-04-ASM-02 · el rechazo de una reserva o de un cambio se muestra en un aviso que no se cierra solo, con el texto del club y el botón ELEGIR OTRO HORARIO, que vuelve a los horarios · S5,S6
+- REV-04-ASM-03 · en cada confirmación irreversible el foco empieza en la opción que no destruye; el orden de los botones no cambia · S7
+- REV-04-ASM-04 · la edición de sede deja GUARDAR CAMBIOS tocable y muestra qué falta, igual que el alta (deja sin efecto «Guardar cambios se deshabilita» de CU-18 FA2) · S2
+- REV-04-ASM-05 · con el texto grande, las etiquetas de la barra se achican hasta entrar enteras; los íconos y el alto no cambian · S8
+- REV-04-ASM-06 · fechas y precios siguen con el formato del club (es-AR, pesos con punto de miles) y la diferencia fija de −3 h, que es la de Argentina sin horario de verano; prepararlos para otras zonas o monedas no se hace (deja sin efecto «sin zona IANA, sin `DateFormat` con locale ni ISO 4217») · S10
+- REV-04-ASM-07 · el botón atenuado sigue viéndose apagado, con su texto en un color que llega a 4,5:1 · S9
+- REV-04-ASM-08 · el calendario de nacimiento termina el día anterior al día del club · S10
+- REV-04-ASM-09 · las capturas corren con el reloj fijo en el 12 de noviembre de 2026 a las 15:00 del club, la semana que usan los datos de prueba · S11
+
+## Tasks
+
+- T1 · S3,S4,S7,S8,S9,S10,S11 · apps/mobile/lib/comun/reloj.dart (rule), apps/mobile/lib/comun/calendario.dart (presentation), apps/mobile/lib/comun/campo_texto.dart (presentation), apps/mobile/lib/comun/selector.dart (presentation), apps/mobile/lib/comun/boton.dart (presentation), apps/mobile/lib/comun/dialogo_error.dart (presentation), apps/mobile/lib/comun/barra_inferior.dart (presentation) · tests: apps/mobile/test/interfaz_accesible_test.dart "el lector anuncia el formato de la fecha de nacimiento @REV-04-S4"; apps/mobile/test/interfaz_accesible_test.dart "el lector anuncia el error de un campo junto con el campo @REV-04-S3"; apps/mobile/test/interfaz_accesible_test.dart "el lector anuncia el error de un selector junto con el selector @REV-04-S3"; apps/mobile/test/interfaz_accesible_test.dart "en el registro el error de un campo es parte del campo y no un nodo aparte @REV-04-S3"; apps/mobile/test/interfaz_accesible_test.dart "al confirmar una cancelación el foco empieza en la opción que no cancela @REV-04-S7 @assumption:REV-04-ASM-03"; apps/mobile/test/interfaz_accesible_test.dart "al dar de baja una sede el foco empieza en CANCELAR @REV-04-S7 @assumption:REV-04-ASM-03"; apps/mobile/test/interfaz_accesible_test.dart "al dar de baja un espacio el foco empieza en CANCELAR @REV-04-S7 @assumption:REV-04-ASM-03"; apps/mobile/test/interfaz_accesible_test.dart "a ${ancho.toInt()} de ancho y con el texto al 200 % la barra del socio muestra cada destino entero @REV-04-S8 @assumption:REV-04-ASM-05"; apps/mobile/test/interfaz_accesible_test.dart "con el texto al 200 % la barra del socio muestra RESERVAS entera @REV-04-S8"; apps/mobile/test/interfaz_accesible_test.dart "con el texto al 200 % la barra del admin no pega ESPACIOS al borde @REV-04-S8"; apps/mobile/test/interfaz_accesible_test.dart "el botón atenuado en modo oscuro se lee con contraste suficiente @REV-04-S9"; apps/mobile/test/interfaz_accesible_test.dart "una fecha de nacimiento tipeada se compara con el día del club @REV-04-S10 @assumption:REV-04-ASM-08"; apps/mobile/test/interfaz_accesible_test.dart "el calendario de nacimiento termina el día anterior al del club @REV-04-S10 @assumption:REV-04-ASM-08"; apps/mobile/test/interfaz_accesible_test.dart "la hora del club sale del reloj, el que las capturas fijan @REV-04-S11"; apps/mobile/test/interfaz_accesible_test.dart "fechas y precios salen con el formato del club, es-AR con punto de miles y la hora a −3 h @REV-04-S10 @assumption:REV-04-ASM-06"; apps/mobile/test/interfaz_accesible_test.dart "el botón atenuado se sigue viendo apagado y su texto llega a 4,5:1 @REV-04-S9 @assumption:REV-04-ASM-07"; apps/mobile/test/interfaz_accesible_test.dart "las capturas corren con el reloj fijo el 12 de noviembre de 2026 a las 15:00 del club @REV-04-S11 @assumption:REV-04-ASM-09"
+- T2 · S1,S2,S12 · apps/mobile/lib/usuarios/pantalla_registro.dart (presentation), apps/mobile/lib/admin/pantalla_formulario_sede.dart (presentation), apps/mobile/lib/admin/pantalla_alta_espacio.dart (presentation) · tests: apps/mobile/test/interfaz_accesible_test.dart "tocar CREAR CUENTA con el formulario vacío muestra cada dato que falta @REV-04-S1"; apps/mobile/test/interfaz_accesible_test.dart "salir de un campo vacío no muestra un error antes de intentar crear la cuenta @REV-04-S1 @assumption:REV-04-ASM-01"; apps/mobile/test/interfaz_accesible_test.dart "con un dato completado sólo se marca lo que falta, y escribirlo borra su error @REV-04-S1 @assumption:REV-04-ASM-01"; apps/mobile/test/interfaz_accesible_test.dart "guardar la edición de una sede sin nombre muestra qué falta y no envía @REV-04-S2 @assumption:REV-04-ASM-04"; apps/mobile/test/interfaz_accesible_test.dart "el alta de espacio entra entera en una pantalla de 320 × 568 @REV-04-S12"; apps/mobile/test/interfaz_accesible_test.dart "a 320 × 568 los faltantes del alta de espacio entran enteros @REV-04-S12"; apps/mobile/test/interfaz_accesible_test.dart "a 320 × 568 el alta de espacio completa, con su nombre generado, entra entera @REV-04-S12"; apps/mobile/test/interfaz_accesible_test.dart "a 320 × 568 el selector de sede abierto entra entero @REV-04-S12"
+- T3 · S5,S6 · apps/mobile/lib/reservas/pantalla_confirmar_reserva.dart (presentation), apps/mobile/lib/reservas/pantalla_confirmar_cambio.dart (presentation), apps/mobile/lib/reservas/reglas_busqueda.dart (rule), apps/mobile/lib/notificaciones/panel_avisos.dart (presentation), apps/mobile/lib/notificaciones/pantalla_notificaciones.dart (presentation), apps/mobile/pubspec.yaml · tests: apps/mobile/test/interfaz_accesible_test.dart "el rechazo de una reserva sigue a la vista hasta que la persona lo cierra @REV-04-S5 @assumption:REV-04-ASM-02"; apps/mobile/test/interfaz_accesible_test.dart "el rechazo de un cambio de reserva sigue a la vista hasta que la persona lo cierra @REV-04-S6 @assumption:REV-04-ASM-02"
+- T4 · S11,S12 · apps/mobile/test/capturas/*_capturas.dart, apps/mobile/test/capturas/**/*.png · tests: apps/mobile/test/interfaz_accesible_test.dart "la hora del club sale del reloj, el que las capturas fijan @REV-04-S11"; apps/mobile/test/interfaz_accesible_test.dart "el alta de espacio entra entera en una pantalla de 320 × 568 @REV-04-S12"
+
+## Changes to existing behavior
+
+- CREAR CUENTA y GUARDAR CAMBIOS (sede) dejan de estar deshabilitados: muestran qué falta
+- Salir de un campo vacío deja de mostrar un error antes del primer intento
+- El rechazo de una reserva o de un cambio pasa de SnackBar a un aviso que se cierra con ELEGIR OTRO HORARIO
+- Las confirmaciones irreversibles abren con el foco en la opción que no destruye
+- El calendario de nacimiento y «ahora» toman el día del club
+- Las capturas corren con reloj fijo y suman 320 × 568 en el alta de espacio
+- Lo demás queda igual
+
+## Gate
+
+```
+suite: cd apps/mobile && flutter test
+lint: cd apps/mobile && flutter analyze && dart format --output=none --set-exit-if-changed lib test/interfaz_accesible_test.dart
+scenarios: cd apps/mobile && flutter test test/interfaz_accesible_test.dart
+captures: cd apps/mobile && flutter test test/capturas/registro_capturas.dart test/capturas/admin_capturas.dart test/capturas/espacios_capturas.dart test/capturas/reservas_capturas.dart test/capturas/notificaciones_capturas.dart
+stable: node .claude/tools/repeat.mjs 3 -- sh -c "cd apps/mobile && flutter test test/interfaz_accesible_test.dart"
+```
+
+## Log
+
+- L1 · # Revisión general · ClubNahuelMosse · kit SDD 3.0.0 · grado production. Rama `kit-3` @ 932cf77 · 2026-10-20 · módulos activos: ui, api, data, infra, observability, security-l2 (ci, docs e i18n apagados por decisión). Revisión de la app entera —API, app Flutter, datos, despliegue y seguridad— contra los 177 criterios activos de `node .claude/tools/bar.mjs`. No se corrigió código ni se abrieron cards. 17. El registro no muestra qué falta al enviar · I22 · falló · medido. `apps/mobile/lib/usuarios/pantalla_registro.dart:67-68,117-119,331`: al salir de un campo vacío aparece el error, CREAR CUENTA está deshabilitado, y tocarlo con el formulario vacío muestra 0 errores. Contradice CU-03 FA1 («presiona crear cuenta → se muestran los campos faltantes»). La edición de sede repite el patrón (`admin/pantalla_formulario_sede.dart:90-91,491`) y el alta no: dos formularios iguales se comportan distinto. 18. Accesibilidad de formularios, avisos y diálogos · I7, I20, I24, I9 · falló · medido. I7: el error de cada campo es un nodo aparte, y el formato esperado («DD / MM / AAAA») queda oculto para el lector (`lib/comun/campo_texto.dart:66-70,83-93,117-143`; igual en `selector.dart:104-129`). Afecta a todos los formularios. I20: el rechazo de una reserva sale en un SnackBar de 4 s y la pantalla vuelve atrás al mismo tiempo (`lib/reservas/pantalla_confirmar_reserva.dart:93-96`, `pantalla_confirmar_cambio.dart:88-90`). I24: en las confirmaciones irreversibles ningún botón tiene `autofocus` y el primer Tab cae en el destructivo (`lib/comun/dialogo_error.dart:316-345`). I9: con el texto al 200 %, la barra inferior corta «RESERVAS» en «RESERV», y en el panel de admin «ESPACIOS» toca el borde (`lib/comun/barra_inferior.dart:137-141`). I7, I20 e I24 salen de sondas de semántica y foco en widget tests; falta el recorrido real con TalkBack. 27. Interfaz menor · I1, I26 · falló. El botón `atenuado` en modo oscuro da 4,06:1 con 15 px en negrita, debajo de AA (`lib/comun/boton.dart:44-47`; GUARDAR SEDE y GUARDAR ESPACIO). Las fechas y la plata se arman a mano: −3 h fijo, sin zona IANA, sin `DateFormat` con locale ni ISO 4217 (`lib/reservas/fechas.dart`, `reservas.dart:110`). `lib/comun/calendario.dart:11` toma el día del dispositivo, no el del club. 24 capturas commiteadas cambian al regenerarlas porque dependen de la fecha del día, y 6 de alta de espacio fallan a 320×568, sin analizar. Pedido del coordinador: Corregir los hallazgos 17 (registro: CU-03 FA1), 18 (error atado al campo, SnackBar de rechazo, foco en Cancelar, barra al 200 %) y 27 (contraste del botón atenuado, día del club, capturas que dependen de la fecha) siguiendo el kit. Archivos principales: lib/comun/*, lib/usuarios/pantalla_registro.dart, lib/admin/pantalla_formulario_sede.dart, lib/reservas/pantalla_confirmar_*.dart. Mover la llamada HTTP fuera de PantallaRegistro es de otra card (arquitectura).
+- L2 · 2026-10-22 · kit updated d7c92c83fa055a140ca5dca9c16c1899c6d45191 → 6b982a3b4efec0cc0a103964973e3e9a074c6422 · kit 5.0.1: context-cap blocked the main thread after /compact
+- L3 · 2026-10-22 · declared · REV-04-ASM-04 · «18» y «Guardar cambios se deshabilita» citan CU-18 FA2, el texto que el supuesto deja sin efecto; el test afirma que GUARDAR CAMBIOS queda tocable y muestra qué falta
+- L4 · 2026-10-22 · declared · REV-04-ASM-06 · «sin zona IANA, sin `DateFormat` con locale ni ISO 4217» y «4217» citan lo que no se hace; el test afirma el formato es-AR y la diferencia de −3 h

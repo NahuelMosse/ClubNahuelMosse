@@ -52,7 +52,7 @@ void main() {
     ];
 
     testWidgets(
-      'tocar CREAR CUENTA con el formulario vacío muestra cada dato que falta @REV-04-H17-01',
+      'tocar CREAR CUENTA con el formulario vacío muestra cada dato que falta @REV-04-S1',
       (tester) async {
         final pedidos = <http.Request>[];
         await montar(
@@ -72,7 +72,7 @@ void main() {
 
     testWidgets(
       'salir de un campo vacío no muestra un error antes de intentar crear la cuenta '
-      '@REV-04-H17-01 @assumption:REV-04-ASM-01',
+      '@REV-04-S1 @assumption:REV-04-ASM-01',
       (tester) async {
         await montar(
           tester,
@@ -90,7 +90,7 @@ void main() {
     );
 
     testWidgets(
-      'el lector anuncia el formato de la fecha de nacimiento @REV-04-H18-02',
+      'el lector anuncia el formato de la fecha de nacimiento @REV-04-S4',
       (tester) async {
         final semantica = tester.ensureSemantics();
         await montar(
@@ -113,7 +113,7 @@ void main() {
   });
 
   testWidgets(
-    'el lector anuncia el error de un campo junto con el campo @REV-04-H18-01',
+    'el lector anuncia el error de un campo junto con el campo @REV-04-S3',
     (tester) async {
       final semantica = tester.ensureSemantics();
       await tester.pumpWidget(
@@ -145,7 +145,7 @@ void main() {
 
   testWidgets(
     'guardar la edición de una sede sin nombre muestra qué falta y no envía '
-    '@REV-04-H17-02 @assumption:REV-04-ASM-04',
+    '@REV-04-S2 @assumption:REV-04-ASM-04',
     (tester) async {
       final pedidos = <http.Request>[];
       await montarAdmin(
@@ -210,7 +210,7 @@ void main() {
 
   testWidgets(
     'el rechazo de una reserva sigue a la vista hasta que la persona lo cierra '
-    '@REV-04-H18-03 @assumption:REV-04-ASM-02',
+    '@REV-04-S5 @assumption:REV-04-ASM-02',
     (tester) async {
       await hastaConfirmarReserva(tester);
 
@@ -228,7 +228,7 @@ void main() {
 
   testWidgets(
     'el rechazo de un cambio de reserva sigue a la vista hasta que la persona lo cierra '
-    '@REV-04-H18-04 @assumption:REV-04-ASM-02',
+    '@REV-04-S6 @assumption:REV-04-ASM-02',
     (tester) async {
       final rutas = rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12}));
       await montarUsuario(
@@ -260,7 +260,7 @@ void main() {
 
   testWidgets(
     'al confirmar una cancelación el foco empieza en la opción que no cancela '
-    '@REV-04-H18-05 @assumption:REV-04-ASM-03',
+    '@REV-04-S7 @assumption:REV-04-ASM-03',
     (tester) async {
       final futura = DateTime.now().toUtc().add(const Duration(days: 2));
       final inicio = DateTime.utc(futura.year, futura.month, futura.day, 21);
@@ -310,7 +310,7 @@ void main() {
       Focus.of(tester.element(find.text(texto))).hasPrimaryFocus;
 
   testWidgets(
-    'al dar de baja una sede el foco empieza en CANCELAR @REV-04-H18-05 @assumption:REV-04-ASM-03',
+    'al dar de baja una sede el foco empieza en CANCELAR @REV-04-S7 @assumption:REV-04-ASM-03',
     (tester) async {
       await abrirDialogo(tester, (c) => confirmarBajaDeSede(c, 'Sede Morón'));
 
@@ -323,7 +323,7 @@ void main() {
   );
 
   testWidgets(
-    'al dar de baja un espacio el foco empieza en CANCELAR @REV-04-H18-05 @assumption:REV-04-ASM-03',
+    'al dar de baja un espacio el foco empieza en CANCELAR @REV-04-S7 @assumption:REV-04-ASM-03',
     (tester) async {
       await abrirDialogo(
         tester,
@@ -335,7 +335,7 @@ void main() {
   );
 
   testWidgets(
-    'el lector anuncia el error de un selector junto con el selector @REV-04-H18-01',
+    'el lector anuncia el error de un selector junto con el selector @REV-04-S3',
     (tester) async {
       final semantica = tester.ensureSemantics();
       await montar(
@@ -368,7 +368,7 @@ void main() {
   );
 
   testWidgets(
-    'en el registro el error de un campo es parte del campo y no un nodo aparte @REV-04-H18-01',
+    'en el registro el error de un campo es parte del campo y no un nodo aparte @REV-04-S3',
     (tester) async {
       final semantica = tester.ensureSemantics();
       await montar(
@@ -393,7 +393,7 @@ void main() {
 
   testWidgets(
     'con un dato completado sólo se marca lo que falta, y escribirlo borra su error '
-    '@REV-04-H17-01 @assumption:REV-04-ASM-01',
+    '@REV-04-S1 @assumption:REV-04-ASM-01',
     (tester) async {
       final pedidos = <http.Request>[];
       await montar(
@@ -434,7 +434,7 @@ void main() {
   );
 
   testWidgets(
-    'una fecha de nacimiento tipeada se compara con el día del club @REV-04-H27-02 '
+    'una fecha de nacimiento tipeada se compara con el día del club @REV-04-S10 '
     '@assumption:REV-04-ASM-08',
     (tester) async {
       // 02:30 UTC del 13 de noviembre: en el club todavía es el 12.
@@ -470,7 +470,7 @@ void main() {
   for (final ancho in [320.0, 360.0]) {
     testWidgets(
       'a ${ancho.toInt()} de ancho y con el texto al 200 % la barra del socio muestra cada destino '
-      'entero @REV-04-H18-06 @assumption:REV-04-ASM-05',
+      'entero @REV-04-S8 @assumption:REV-04-ASM-05',
       (tester) async {
         await montar(
           tester,
@@ -504,7 +504,7 @@ void main() {
   }
 
   testWidgets(
-    'con el texto al 200 % la barra del socio muestra RESERVAS entera @REV-04-H18-06',
+    'con el texto al 200 % la barra del socio muestra RESERVAS entera @REV-04-S8',
     (tester) async {
       await montar(
         tester,
@@ -525,7 +525,7 @@ void main() {
   );
 
   testWidgets(
-    'con el texto al 200 % la barra del admin no pega ESPACIOS al borde @REV-04-H18-06',
+    'con el texto al 200 % la barra del admin no pega ESPACIOS al borde @REV-04-S8',
     (tester) async {
       await montar(
         tester,
@@ -549,7 +549,7 @@ void main() {
   );
 
   testWidgets(
-    'el botón atenuado en modo oscuro se lee con contraste suficiente @REV-04-H27-01',
+    'el botón atenuado en modo oscuro se lee con contraste suficiente @REV-04-S9',
     (tester) async {
       await montar(
         tester,
@@ -579,7 +579,7 @@ void main() {
   );
 
   testWidgets(
-    'el calendario de nacimiento termina el día anterior al del club @REV-04-H27-02 '
+    'el calendario de nacimiento termina el día anterior al del club @REV-04-S10 '
     '@assumption:REV-04-ASM-08',
     (tester) async {
       DateTime? elegida;
@@ -613,7 +613,7 @@ void main() {
   );
 
   test(
-    'la hora del club sale del reloj, el que las capturas fijan @REV-04-H27-03',
+    'la hora del club sale del reloj, el que las capturas fijan @REV-04-S11',
     () {
       final ahora = withClock(
         Clock.fixed(DateTime.utc(2026, 11, 13, 2, 30)),
@@ -639,7 +639,7 @@ void main() {
   }
 
   testWidgets(
-    'el alta de espacio entra entera en una pantalla de 320 × 568 @REV-04-H27-04',
+    'el alta de espacio entra entera en una pantalla de 320 × 568 @REV-04-S12',
     (tester) async {
       await altaDeEspacio(tester);
       await elegir(tester, 'Sede', 'Sede Morón');
@@ -652,7 +652,7 @@ void main() {
   );
 
   testWidgets(
-    'a 320 × 568 los faltantes del alta de espacio entran enteros @REV-04-H27-04',
+    'a 320 × 568 los faltantes del alta de espacio entran enteros @REV-04-S12',
     (tester) async {
       await altaDeEspacio(tester);
 
@@ -664,7 +664,7 @@ void main() {
 
   testWidgets(
     'a 320 × 568 el alta de espacio completa, con su nombre generado, entra entera '
-    '@REV-04-H27-04',
+    '@REV-04-S12',
     (tester) async {
       await altaDeEspacio(tester, escala: 1.3);
       await elegir(tester, 'Sede', 'Sede Morón');
@@ -680,7 +680,7 @@ void main() {
   );
 
   testWidgets(
-    'a 320 × 568 el selector de sede abierto entra entero @REV-04-H27-04',
+    'a 320 × 568 el selector de sede abierto entra entero @REV-04-S12',
     (tester) async {
       await altaDeEspacio(tester);
 
