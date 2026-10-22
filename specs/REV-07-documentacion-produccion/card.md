@@ -1,0 +1,60 @@
+# REV-07 · documentación de producción
+
+card: REV-07
+status: proposed
+cap: 20 h
+sources: pedido (texto) — pedido del coordinador, recibido como texto en la sesión (sin Jira); file: specs/REVISION-kit3.md @ 138bc54 — líneas 1-5 (encabezado), hallazgos 21 y 22 completos, hallazgo 25 viñeta S12; file: "D:/desktop folders/estudio/Universidad de moron/Electiva general/Trabajo Práctico_2026.docx.pdf" — pdftotext -enc UTF-8 -layout, entero; listado de nombres de archivo: "D:/desktop folders/estudio/Universidad de moron/Electiva general/CU/" y ".../CU-nuevos/" (sólo nombres, consultables)
+not_read: contenido de los CU: no transcripto, la card no cambia comportamiento; consultables en esas carpetas; "Distribucion CUs.jpeg" (carpeta CU/): no abierto, mismo motivo
+
+## Specs
+
+- S1 · "la matriz ASVS de nivel 2 existe y cubre cada requisito con su estado y evidencia"
+- S2 · "el diseño del sistema describe amenazas, dependencias con su timeout y reintento, entornos y objetivos de servicio"
+- S3 · "las decisiones de arquitectura de stack y hosting están registradas"
+- S4 · "las licencias de terceros están declaradas"
+- S5 · "el costo de operar la app está calculado"
+- S6 · "el runbook dice cómo volver atrás, rotar secretos y atender un incidente"
+- S7 · "la declaración de accesibilidad y el registro por pantalla están publicados"
+- S8 · "el modelo de datos documenta las nueve tablas"
+- S9 · "el presupuesto de rendimiento y capacidad está escrito"
+- S10 · "quien opera la app encuentra los supuestos que la limitan en los README"
+- S11 · "las licencias MPL, LGPL y OFL tienen su excepción o su texto"
+- REV-07-ASM-01 · donde hoy falta algo (backups, SLOs medidos, presupuesto) el documento lo dice tal cual y escribe el objetivo como meta sin medir · S2
+- REV-07-ASM-02 · los README listan los supuestos que cambian lo que ve quien usa o lo que hace quien opera, con su ID, no los 545 · S10
+- REV-07-ASM-03 · el modelo de datos lleva columnas, claves, índices y triggers de cada tabla · S8
+- REV-07-ASM-04 · estos documentos se escriben aunque el módulo docs esté apagado: los pide el grado production (R9, D8, D9, S15, S19, S21, O13, O14, P7, P14, P15, W5, I17) · S1
+- REV-07-ASM-05 · los documentos describen `kit-3`; al integrar las otras cards, las filas y secciones que cambian se actualizan en esa integración · S1
+- REV-07-ASM-06 · las filas ASVS que hoy fallan quedan `fails` con el hallazgo y la card que las corrige; los plazos de remediación (V15.1.1) los decide una persona y la fila queda `fails` hasta entonces · S1
+- REV-07-ASM-07 · los avisos de terceros cubren todas las dependencias de producción (directas y transitivas) que el script lee de los metadatos instalados y de `pubspec.lock` · S4
+- REV-07-ASM-08 · los precios salen de https://render.com/pricing.md consultado el 2026-10-20; la página no dice si la base free tiene backups, y el documento lo cita así · S5
+
+## Tasks
+
+- T1 · S2,S8,S9 · docs/technical/system-design.md, docs/adr/0001-stack.md, docs/adr/0002-hosting-en-render.md · tests: apps/api/tests/escenarios/test_documentacion.py "el diseño del sistema describe amenazas, dependencias, entornos y objetivos de servicio @REV-07-S2"; apps/api/tests/escenarios/test_documentacion.py "el modelo de datos documenta las nueve tablas con sus columnas @REV-07-S8"; apps/api/tests/escenarios/test_documentacion.py "el presupuesto de rendimiento y capacidad está escrito @REV-07-S9"; apps/api/tests/escenarios/test_documentacion.py "las decisiones de arquitectura de stack y hosting están registradas @REV-07-S3"; apps/api/tests/escenarios/test_documentacion.py "el diseño del sistema dice lo que hoy falta y lo escribe como meta sin medir @REV-07-S2 @assumption:REV-07-ASM-01"; apps/api/tests/escenarios/test_documentacion.py "el modelo de datos lleva columnas, claves, índices y triggers de cada tabla @REV-07-S8 @assumption:REV-07-ASM-03"
+- T2 · S1 · specs/asvs.md · tests: apps/api/tests/escenarios/test_documentacion.py "la matriz ASVS de nivel 2 cubre cada requisito con su estado y evidencia @REV-07-S1"; apps/api/tests/escenarios/test_documentacion.py "los documentos del grado production existen aunque el módulo docs esté apagado @REV-07-S1 @assumption:REV-07-ASM-04"; apps/api/tests/escenarios/test_documentacion.py "los documentos dicen que describen la rama kit-3 @REV-07-S1 @assumption:REV-07-ASM-05"; apps/api/tests/escenarios/test_documentacion.py "las filas ASVS que fallan quedan fails con su hallazgo y su card, y V15.1.1 queda fails hasta que decida una persona @REV-07-S1 @assumption:REV-07-ASM-06"
+- T3 · S4,S11 · scripts/avisos_de_terceros.py, THIRD_PARTY_NOTICES.md, apps/mobile/assets/fuentes/OFL.txt · tests: apps/api/tests/escenarios/test_documentacion.py "las licencias de terceros están declaradas @REV-07-S4"; apps/api/tests/escenarios/test_documentacion.py "las licencias MPL, LGPL y OFL tienen su excepción o su texto @REV-07-S11"; apps/api/tests/escenarios/test_documentacion.py "los avisos de terceros cubren las dependencias de producción directas y transitivas de los metadatos instalados y de pubspec.lock @REV-07-S4 @assumption:REV-07-ASM-07"
+- T4 · S5,S6,S7,S10 · docs/technical/infra-cost.md, docs/technical/runbook.md, docs/business/accessibility.md, README.md, apps/api/README.md, apps/mobile/README.md · tests: apps/api/tests/escenarios/test_documentacion.py "el costo de operar la app está calculado @REV-07-S5"; apps/api/tests/escenarios/test_documentacion.py "el runbook dice cómo volver atrás, rotar secretos y atender un incidente @REV-07-S6"; apps/api/tests/escenarios/test_documentacion.py "la declaración de accesibilidad y el registro por pantalla están publicados @REV-07-S7"; apps/api/tests/escenarios/test_documentacion.py "quien opera la app encuentra los supuestos que la limitan en los README @REV-07-S10"; apps/api/tests/escenarios/test_documentacion.py "los README listan con su ID los supuestos que cambian lo que se ve u opera, no los 545 @REV-07-S10 @assumption:REV-07-ASM-02"; apps/api/tests/escenarios/test_documentacion.py "los precios citan https://render.com/pricing.md consultado el 2026-10-20 y que no dice si la base free tiene backups @REV-07-S5 @assumption:REV-07-ASM-08"
+
+## Changes to existing behavior
+
+- README: nuevo en la raíz; `apps/api/README.md` y `apps/mobile/README.md` suman los supuestos
+- ASVS: `specs/asvs.md` nuevo, niveles 1 y 2
+- Nuevo: system-design, dos ADR, avisos de terceros y su script, costos, runbook, declaración de accesibilidad, licencia OFL
+- Nada del comportamiento de la app cambia
+
+## Gate
+
+```
+suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
+scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_documentacion.py
+lint: cd apps/api && uv run --no-sync ruff check tests/escenarios/test_documentacion.py ../../scripts/avisos_de_terceros.py && uv run --no-sync ruff format --check tests/escenarios/test_documentacion.py ../../scripts/avisos_de_terceros.py
+notices: uv run --directory apps/api --no-sync python ../../scripts/avisos_de_terceros.py --comprobar
+app: sh D:/Temp/w/herramientas/api-app.sh rev07_app
+attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev07_app --json --no-ambient --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
+```
+
+## Log
+
+- L1 · **Encabezado del documento** (fuente: specs/REVISION-kit3.md @ 138bc54, líneas 1-5): Revisión general · ClubNahuelMosse · kit SDD 3.0.0 · grado production. Rama `kit-3` @ 932cf77 · 2026-10-20 · módulos activos: ui, api, data, infra, observability, security-l2 (ci, docs e i18n apagados por decisión). Revisión de la app entera —API, app Flutter, datos, despliegue y seguridad— contra los 177 criterios activos de `node .claude/tools/bar.mjs`. No se corrigió código ni se abrieron cards. **Pedido del coordinador:** Corregir los hallazgos 21 (asvs.md L2, system-design.md con STRIDE, dependencias, SLOs y entornos; ADRs; THIRD_PARTY_NOTICES; costos; runbook; declaración de accesibilidad; modelo de datos de las 9 tablas; presupuesto de rendimiento) y 22 (supuestos en los README), más S12 del 25, siguiendo el kit. Archivos: docs/, specs/asvs.md, los README. Los snapshots viejos están congelados: lo del hallazgo 24 no se corrige. La documentación describe la app como es hoy. **Hallazgo 21** (líneas 210-217): 21. Falta la documentación que el grado production pide · R10, D8, D9, D14, S15, S19, S21, S22, O13, O14, P14, W5, I15, I17, V5, R9 · falló · lectura. No existen: `specs/asvs.md` (matriz L2, que `.claude/tools/checks/security-l2.mjs` exige), `docs/technical/system-design.md` (STRIDE, dependencias con timeout y reintento, entornos, SLOs), ADRs, `THIRD_PARTY_NOTICES.md`, el modelo de costos, el runbook (rollback, rotación de secretos, incidentes), la declaración de accesibilidad y el registro de accesibilidad por pantalla. El modelo de datos documentado (`specs/MOD-01-modelo-de-datos/data-model.md`) cubre 4 de 9 tablas. No hay presupuesto de rendimiento ni de capacidad, ni la declaración de que no lo hay. **Hallazgo 22** (líneas 219-223): 22. Los supuestos no llegan a quien opera la app · R4 · falló · lectura. Ninguno de los 545 supuestos está en `apps/api/README.md` ni en `apps/mobile/README.md`, y no hay README en la raíz. Por ejemplo: de 1 a 4 h y hasta 7 días de anticipación, el admin no reserva, catálogo fijo, sin pagos. Están registrados como `SUP-NN`, no `ASM-NN`, y los snapshots usan `fuentes:` y `no_leido:` en vez de `sources:` y `not_read:`: las herramientas del kit 3.0.0 no los encuentran (`required.mjs`). **Hallazgo 25, viñeta S12** (línea 254): S12: MPL-2.0 (certifi) y LGPL-3.0 (psycopg) sin excepción escrita, y las fuentes OFL sin su licencia. **Enunciado** (Trabajo Práctico_2026.docx.pdf, Universidad de Morón, Electiva General, «Gestión de espacios deportivos») y **listado de los CU** (CU/ y CU-nuevos/): transcriptos enteros en `card.snapshot.md` de esta carpeta, sección «Card, as written».
+- L2 · 2026-10-22 · kit updated d7c92c83fa055a140ca5dca9c16c1899c6d45191 → 6b982a3b4efec0cc0a103964973e3e9a074c6422 · kit 5.0.1: context-cap blocked the main thread after /compact
+- L3 · 2026-10-22 · la card no cambia la API; `attacks:` corre igual sobre la API de esta rama, que es la que los documentos describen. `app:` y `attacks:` usan D:/Temp/w/herramientas/api-app.sh y api-attacks.sh: base propia `club_rev07_app` migrada, admin sembrado y su token del emulador de Auth; el gate corre con `TEST_DATABASE_URL=…/club_rev07_test` y `FIREBASE_AUTH_EMULATOR_HOST` en el entorno

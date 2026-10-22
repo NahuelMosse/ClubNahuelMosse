@@ -40,7 +40,7 @@ def _requisitos(plantilla: str) -> set[str]:
 
 
 def test_la_matriz_asvs_de_nivel_2_responde_cada_requisito() -> None:
-    """la matriz ASVS de nivel 2 cubre cada requisito con su estado y evidencia @REV-07-H21-01"""
+    """la matriz ASVS de nivel 2 cubre cada requisito con su estado y evidencia @REV-07-S1"""
     matriz = _texto(RAIZ / "specs" / "asvs.md")
     filas = {m.group(1): (m.group(2).strip("`"), m.group(3)) for m in FILA_ASVS.finditer(matriz)}
 
@@ -54,7 +54,7 @@ def test_la_matriz_asvs_de_nivel_2_responde_cada_requisito() -> None:
 
 def test_el_diseno_del_sistema_tiene_amenazas_dependencias_entornos_y_objetivos() -> None:
     """el diseño del sistema describe amenazas, dependencias, entornos y objetivos de servicio
-    @REV-07-H21-02
+    @REV-07-S2
     """
     diseno = _texto(DISENO)
     dependencias = _seccion(diseno, "External dependencies")
@@ -76,7 +76,7 @@ def test_el_diseno_del_sistema_tiene_amenazas_dependencias_entornos_y_objetivos(
 
 
 def test_las_decisiones_de_stack_y_hosting_estan_registradas() -> None:
-    """las decisiones de arquitectura de stack y hosting están registradas @REV-07-H21-03"""
+    """las decisiones de arquitectura de stack y hosting están registradas @REV-07-S3"""
     registros = sorted((RAIZ / "docs" / "adr").glob("[0-9][0-9][0-9][0-9]-*.md"))
     textos = [_texto(r) for r in registros]
 
@@ -103,7 +103,7 @@ def _fila(texto: str, nombre: str) -> str:
 
 
 def test_las_licencias_de_terceros_estan_declaradas() -> None:
-    """las licencias de terceros están declaradas @REV-07-H21-04"""
+    """las licencias de terceros están declaradas @REV-07-S4"""
     avisos = _texto(AVISOS)
 
     sin_licencia = [d for d in _dependencias_directas() if not LICENCIA.search(_fila(avisos, d))]
@@ -121,7 +121,7 @@ def test_las_licencias_de_terceros_estan_declaradas() -> None:
 
 
 def test_el_costo_de_operar_la_app_esta_calculado() -> None:
-    """el costo de operar la app está calculado @REV-07-H21-05"""
+    """el costo de operar la app está calculado @REV-07-S5"""
     costos = _texto(RAIZ / "docs" / "technical" / "infra-cost.md")
 
     assert _seccion(costos, "Volume assumptions").strip()
@@ -131,7 +131,7 @@ def test_el_costo_de_operar_la_app_esta_calculado() -> None:
 
 
 def test_el_runbook_dice_como_volver_atras_rotar_secretos_y_atender_incidentes() -> None:
-    """el runbook dice cómo volver atrás, rotar secretos y atender un incidente @REV-07-H21-06"""
+    """el runbook dice cómo volver atrás, rotar secretos y atender un incidente @REV-07-S6"""
     runbook = _texto(RAIZ / "docs" / "technical" / "runbook.md")
 
     for titulo in ("Deploy", "Roll back", "Incidents", "Secret rotation and revocation"):
@@ -144,7 +144,7 @@ def test_el_runbook_dice_como_volver_atras_rotar_secretos_y_atender_incidentes()
 
 
 def test_la_declaracion_de_accesibilidad_y_el_registro_por_pantalla_estan_publicados() -> None:
-    """la declaración de accesibilidad y el registro por pantalla están publicados @REV-07-H21-07"""
+    """la declaración de accesibilidad y el registro por pantalla están publicados @REV-07-S7"""
     declaracion = _texto(RAIZ / "docs" / "business" / "accessibility.md")
     pantallas = sorted(p.stem for p in (MOVIL / "lib").rglob("pantalla_*.dart"))
     termino = re.compile(r"Supports|Partially Supports|Does Not Support|Not Applicable")
@@ -175,7 +175,7 @@ def _columnas_por_tabla() -> dict[str, set[str]]:
 
 
 def test_el_modelo_de_datos_documenta_todas_las_tablas() -> None:
-    """el modelo de datos documenta las nueve tablas con sus columnas @REV-07-H21-08"""
+    """el modelo de datos documenta las nueve tablas con sus columnas @REV-07-S8"""
     datos = _seccion(_texto(DISENO), "Data")
     tablas = _columnas_por_tabla()
 
@@ -190,7 +190,7 @@ def test_el_modelo_de_datos_documenta_todas_las_tablas() -> None:
 
 
 def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:
-    """el presupuesto de rendimiento y capacidad está escrito @REV-07-H21-09"""
+    """el presupuesto de rendimiento y capacidad está escrito @REV-07-S9"""
     diseno = _texto(DISENO)
 
     assert re.search(r"p95[^\n]*\d+ ?ms", diseno)
@@ -203,7 +203,7 @@ def _ids_registrados() -> set[str]:
 
 
 def test_quien_opera_la_app_encuentra_los_supuestos_en_los_readme() -> None:
-    """quien opera la app encuentra los supuestos que la limitan en los README @REV-07-H22-01"""
+    """quien opera la app encuentra los supuestos que la limitan en los README @REV-07-S10"""
     raiz = _texto(RAIZ / "README.md")
     api = _texto(API / "README.md")
     movil = _texto(MOVIL / "README.md")
@@ -220,7 +220,7 @@ def test_quien_opera_la_app_encuentra_los_supuestos_en_los_readme() -> None:
 
 
 def test_las_licencias_mpl_lgpl_y_ofl_tienen_su_excepcion_o_su_texto() -> None:
-    """las licencias MPL, LGPL y OFL tienen su excepción o su texto @REV-07-H25-01"""
+    """las licencias MPL, LGPL y OFL tienen su excepción o su texto @REV-07-S11"""
     avisos = _texto(AVISOS)
     ofl = _texto(MOVIL / "assets" / "fuentes" / "OFL.txt")
 
