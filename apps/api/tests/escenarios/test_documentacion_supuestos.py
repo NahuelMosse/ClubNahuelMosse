@@ -4,6 +4,13 @@ import re
 import subprocess
 from pathlib import Path
 
+from tests.escenarios.test_documentacion import (
+    _columnas_por_tabla,
+    _requisitos,
+    _seccion,
+    _texto,
+)
+
 RAIZ = Path(__file__).resolve().parents[4]
 API = RAIZ / "apps" / "api"
 MOVIL = RAIZ / "apps" / "mobile"
@@ -30,35 +37,6 @@ DOCUMENTOS = (
     API / "README.md",
     MOVIL / "README.md",
 )
-
-
-def _texto(ruta: Path) -> str:
-    return ruta.read_text(encoding="utf-8")
-
-
-def _seccion(texto: str, titulo: str) -> str:
-    partes = re.split(r"^## ", texto, flags=re.M)
-    return next((p for p in partes if p.startswith(titulo)), "")
-
-
-def _requisitos(plantilla: str) -> set[str]:
-    return set(
-        re.findall(r"\*\*(V\d+\.\d+\.\d+)\*\*", _texto(RAIZ / ".claude" / "templates" / plantilla))
-    )
-
-
-def _columnas_por_tabla() -> dict[str, set[str]]:
-    migraciones = "".join(
-        _texto(m) for m in sorted((API / "migraciones" / "versions").glob("*.py"))
-    )
-    tablas: dict[str, set[str]] = {}
-    for tabla, cuerpo in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", migraciones, re.S):
-        tablas[tabla] = set(re.findall(rf"^\s*(\w+) (?:{TIPOS})\b", cuerpo, re.M))
-    for tabla, columna in re.findall(
-        rf"ALTER TABLE (\w+)\s+ADD COLUMN (\w+) (?:{TIPOS})", migraciones
-    ):
-        tablas.setdefault(tabla, set()).add(columna)
-    return tablas
 
 
 def _ids_registrados() -> set[str]:

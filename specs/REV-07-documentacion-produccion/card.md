@@ -74,3 +74,9 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev07_app --json --no-ambient 
 - L8 · 2026-10-22 · kit updated 0a8f6431dd7b130c87980f69f9122b45794f6b70 → 1117da7bd97604f13460f467d8a02afaeb6d299a · kit 6.0.0: nested test folders need no layer
 - L9 · 2026-10-22 · el test de ASM-02 acepta `SUP-NN` además de `ASM-NN`: los supuestos que vienen de los CU ya tienen su ID `CU-*-SUP-NN` y los README lo citan tal cual
 - L10 · 2026-10-22 · el gate corre con `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702`. `attacks:` sale con «PASSED · GET con Host ajeno» en esta rama: es el hallazgo 25-S2, que corrige REV-01; esta card no cambia la API
+- L11 · 2026-10-22 · T1 · test_documentacion.py + test_documentacion_supuestos.py: 30 passed; system-design, ADR 0001/0002 completos
+- L12 · 2026-10-22 · T2 · specs/asvs.md: tests S1 y ASM de la matriz en verde (30 passed)
+- L13 · 2026-10-22 · T3 · `avisos_de_terceros.py --comprobar`: notices passed en el gate
+- L14 · 2026-10-22 · T4 · infra-cost, runbook, accessibility y los tres README: tests en verde; lint, scenarios y notices passed en el gate
+- L15 · 2026-10-22 · replaces: test_documentacion_supuestos.py (helpers duplicados) · clones K4 contra test_documentacion.py · by: los mismos tests importan los helpers de test_documentacion.py (mismos títulos y tags)
+- L16 · 2026-10-22 · gate red · suite: timeout 20 min dentro de verify (sola dura 6:45); 413 passed, 1 failed `tests/integracion/test_contrasena_api.py::test_la_actual_equivocada_no_cambia_nada` (ResourceWarning como PytestUnraisableExceptionWarning), código que esta card no toca · layers: could not run, `## Tasks` sin roles (solo documentos) · attacks: failed por L10
