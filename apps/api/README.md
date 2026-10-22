@@ -37,6 +37,10 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
 | `ADMIN_CONTRASENA` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
 | `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
+| `DATABASE_URL_APP` | Conexión de la API con el usuario `club_app`, que lee y escribe filas y no cambia el esquema. Sin definir, la API usa `DATABASE_URL`. Las migraciones usan siempre `DATABASE_URL` |
+| `METRICAS_TOKEN` | Token que `GET /metrics` pide como `Authorization: Bearer`. Sin definir, `/metrics` responde 404 |
+| `VERSION` | Versión que informa `/health` y que lleva cada línea del log; por defecto sale del `pyproject.toml` |
+| `DETRAS_DE_PROXY` | `true` si un proxy (Render) delante de la API pone `X-Forwarded-For`; sin eso la API toma como cliente la dirección que ve |
 
 Crear las tablas en la base de `DATABASE_URL`:
 
@@ -115,6 +119,47 @@ uv run mypy app
 uv run pytest
 uv run pytest tests/escenarios --card <ID>
 ```
+
+## Operar
+
+**Recordatorios sin el servicio web.** El servicio gratuito duerme y con él el barrido. El mismo
+barrido corre como un comando de una pasada, para que lo dispare un cron o una tarea de Render:
+
+```sh
+cd apps/api
+uv run python -m app.interfaz.barrido --una-vez
+```
+
+Termina con código 0 si el barrido corrió y 1 si falló. Quién lo dispara no está decidido:
+`render.yaml` no suma una tarea paga. Un aviso que no salió deja una línea de error
+`aviso_sin_enviar` en el log, con el número de la notificación y el tipo del error, sin el token.
+
+**Usuario de la API.** Con el dueño de la base, una vez (y de nuevo para cambiar la clave):
+
+```sh
+python scripts/usuario_de_la_app.py --url <DATABASE_URL del dueño> --clave <clave nueva>
+```
+
+Después se define `DATABASE_URL_APP` con ese usuario (`club_app`). Si Render no deja crear el rol,
+se deja sin definir.
+
+**Respaldo y vuelta atrás.** Hacen falta `pg_dump` y `pg_restore` (herramientas cliente de
+PostgreSQL de la misma versión mayor que la base):
+
+```sh
+python scripts/respaldo.py guardar --url <DATABASE_URL> --archivo club.dump
+python scripts/respaldo.py restaurar --url <URL de una base vacía> --archivo club.dump
+```
+
+La vuelta atrás se prueba restaurando en otra base y comparando las filas, nunca sobre la de
+producción. Mientras no haya plan pago, la base gratuita vence a los 30 días: se guarda un respaldo
+antes. Objetivos que se asumen mientras una persona no decida otros: RPO igual al tiempo desde el
+último respaldo (se recomienda uno por día y otro antes de cada despliegue con migraciones) y RTO de
+una hora, que es lo que tarda crear una base, restaurar y cambiar `DATABASE_URL`.
+
+**Métricas y logs.** `GET /metrics` (con `METRICAS_TOKEN`) expone los contadores; `/ready` dice si la
+base responde y el esquema está al día. Cada error 500 devuelve una referencia que es el
+`X-Request-ID` del pedido y que se busca en el log.
 
 ## Desplegar en Render
 

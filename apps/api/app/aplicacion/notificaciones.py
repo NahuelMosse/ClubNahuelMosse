@@ -126,7 +126,9 @@ def entregar(
         # El servicio de afuera puede fallar de cualquier forma; el aviso ya está en el
         # centro y un envío no puede cortar el de otra persona. Se loguea el tipo del error
         # y no su texto, que puede traer el token del teléfono.
-        _registro.warning("el envío del aviso falló: %s", type(e).__name__)
+        _registro.error(
+            "aviso_sin_enviar notificacion=%s error=%s", notificacion_id, type(e).__name__
+        )
         notificaciones.marcar_envio(notificacion_id, "fallida")
         return
     notificaciones.dar_de_baja_tokens(resultado.invalidos)
@@ -148,7 +150,9 @@ def despachar_pendientes(
         try:
             entregar(notificaciones, canal, p.notificacion_id, p.usuario_id, p.aviso)
         except Exception as e:
-            _registro.warning("el despacho del aviso falló: %s", type(e).__name__)
+            _registro.error(
+                "aviso_sin_enviar notificacion=%s error=%s", p.notificacion_id, type(e).__name__
+            )
             notificaciones.marcar_envio(p.notificacion_id, "fallida")
     return despachados
 
