@@ -1,5 +1,5 @@
 {
-  "kit": "5.0.1",
+  "kit": "6.0.0",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "6b982a3b4efec0cc0a103964973e3e9a074c6422"
+    "commit": "1117da7bd97604f13460f467d8a02afaeb6d299a"
   },
   "modules": {
     "ui": {
@@ -101,5 +101,23 @@
     "by": "person",
     "at": "2026-10-20",
     "history": []
+  },
+  "profiles": {
+    "web": {
+      "since": "update 2026-10-22",
+      "reason": "derived from the modules that were on",
+      "state": "on",
+      "mcp": {
+        "motion": {
+          "type": "http",
+          "url": "https://mcp.motion.dev"
+        }
+      }
+    },
+    "backend": {
+      "since": "update 2026-10-22",
+      "reason": "derived from the modules that were on",
+      "state": "on"
+    }
   }
 }

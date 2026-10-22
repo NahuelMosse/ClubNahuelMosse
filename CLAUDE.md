@@ -25,6 +25,8 @@ request, no `specs/` are no reason to skip it. What cannot run is declared.
 **The kit is in English; the work speaks the repo's language.** Test names, comments, commits, UI text, the PR and the Jira comments
 go in the language the repo and its team use. File names, headings, IDs and tags stay in English: the hooks and tools read them.
 
+**The kit is a base plus profiles** (`web`, `backend`; `flutter` is planned): the screen and API instruments come with the profile, and `node .claude/tools/kit.mjs profile on|off <p> --reason "…"` turns one on or off.
+
 ## The invariants
 
 1. **Never code without reading the whole requirement in this session** (Jira via MCP, with comments, attachments and links; if the

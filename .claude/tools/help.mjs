@@ -5,7 +5,7 @@
 //
 // With no argument, one line per tool; with a name, the comment at the head of that tool, which says what it runs, its
 // arguments and its exit codes.
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIR = import.meta.dirname;
@@ -23,8 +23,21 @@ const head = (file) => {
 // What the judge needs of the tools, in one read: everything comes from the tools themselves —the flags, the actions and the
 // example of the probe are the constants its code parses with; the rest, the head comment of each tool up to its «Measured:»
 // line—, so it cannot go stale. The judge starts here and does not read the tools' code.
+const installed = (file) => existsSync(join(DIR, file));
+const notInstalled = (tool, profile) => `${tool}: not installed (profile ${profile} off)`;
 const judge = async () => {
-  const { ACTION_DOC, DEFAULT_OUT, EXAMPLE_STEPS, FLAGS, RECORD_FIELDS, USAGE } = await import('./probe.mjs');
+  const probe = installed('probe.mjs') ? await import('./probe.mjs') : null;
+  const probeLines = !probe ? [notInstalled('probe', 'web')] : [
+    '=== app.mjs probe: drive the running app, measure, capture ===',
+    probe.USAGE,
+    ...probe.FLAGS.map((f) => `  ${f.use}${f.repeat ? ' (repeatable)' : ''} — ${f.note}`),
+    'steps.json is a JSON list, one action per object; a locator is a Playwright one (css, `text=Save`, `role=button[name="Save"]`):',
+    ...Object.values(probe.ACTION_DOC).map((l) => `  ${l}`),
+    'example:',
+    JSON.stringify(probe.EXAMPLE_STEPS, null, 1).replace(/\n\s*/g, ' ').replace(/^\[ /, '[\n  ').replace(/\}, \{/g, '},\n  {').replace(/ \]$/, '\n]'),
+    `output: per step and width \`${probe.DEFAULT_OUT}/w<width>-step<NN>.png\` and \`.json\`; the JSON has ${probe.RECORD_FIELDS}.`,
+    'A step that fails is written with its `error` and the run exits 1. Contrast: `--contrast "button,.error"` before writing a script to measure colors.',
+  ];
   const usage = (file) => { const lines = head(file); const end = lines.findIndex((l) => l.startsWith('Measured')); return (end < 0 ? lines : lines.slice(0, end)).join('\n').trimEnd(); };
   console.log([
     '=== help.mjs judge · what the judge needs of the kit tools; do not read their code ===',
@@ -34,21 +47,11 @@ const judge = async () => {
     '=== what you read of the card, in one call ===',
     usage('judge-context.mjs'),
     '',
-    '=== app.mjs probe: drive the running app, measure, capture ===',
-    USAGE,
-    ...FLAGS.map((f) => `  ${f.use}${f.repeat ? ' (repeatable)' : ''} — ${f.note}`),
-    'steps.json is a JSON list, one action per object; a locator is a Playwright one (css, `text=Save`, `role=button[name="Save"]`):',
-    ...Object.values(ACTION_DOC).map((l) => `  ${l}`),
-    'example:',
-    JSON.stringify(EXAMPLE_STEPS, null, 1).replace(/\n\s*/g, ' ').replace(/^\[ /, '[\n  ').replace(/\}, \{/g, '},\n  {').replace(/ \]$/, '\n]'),
-    `output: per step and width \`${DEFAULT_OUT}/w<width>-step<NN>.png\` and \`.json\`; the JSON has ${RECORD_FIELDS}.`,
-    'A step that fails is written with its `error` and the run exits 1. Contrast: `--contrast "button,.error"` before writing a script to measure colors.',
+    ...probeLines,
     '',
-    '=== motion-audit.mjs ===',
-    usage('motion-audit.mjs'),
+    ...(installed('motion-audit.mjs') ? ['=== motion-audit.mjs ===', usage('motion-audit.mjs')] : [notInstalled('motion-audit', 'web')]),
     '',
-    '=== overflow.mjs ===',
-    usage('overflow.mjs'),
+    ...(installed('overflow.mjs') ? ['=== overflow.mjs ===', usage('overflow.mjs')] : [notInstalled('overflow', 'web')]),
   ].join('\n'));
 };
 

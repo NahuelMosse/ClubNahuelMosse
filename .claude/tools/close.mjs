@@ -163,6 +163,7 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
   const cost = since ? closingCost(root, null, since) : `Cost: could not run: no commit that added ${cardPath} to date the start of the card`;
   const notRun = [];
   if (!git(root, ['remote']).stdout?.trim()) notRun.push('- publication · no remote: no push, PR or CI');
+  for (const l of risk?.lensesOff ?? []) notRun.push(`- ${l.lens} · profile ${l.profile} off: ${l.why}`);
   if (/^Cost: could not run/.test(cost)) notRun.push(`- cost — ${cost.replace(/^Cost: could not run:\s*/, '')}`);
   if (notRun.length) {
     const at = parts.indexOf('## Could not run') + 1;
