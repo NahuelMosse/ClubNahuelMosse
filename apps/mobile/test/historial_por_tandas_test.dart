@@ -15,7 +15,7 @@ void main() {
       '"siguiente": ${siguiente == null ? 'null' : '"$siguiente"'}}';
 
   testWidgets(
-    'el historial propio trae la tanda siguiente al llegar al final @REV-03-H10-02',
+    'el historial propio trae la tanda siguiente al llegar al final @REV-03-S2',
     (tester) async {
       final pedidos = <http.Request>[];
       final rutas = rutasDeSedes();

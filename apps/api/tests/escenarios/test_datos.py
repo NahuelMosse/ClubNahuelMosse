@@ -89,7 +89,7 @@ def _indices(motor: Engine, tabla: str) -> list[str]:
 
 
 def test_el_historial_propio_tiene_un_indice_por_socio(motor: Engine) -> None:
-    """el historial propio se resuelve con un índice por socio @REV-03-H10-01"""
+    """el historial propio se resuelve con un índice por socio @REV-03-S1"""
     indices = _indices(motor, "reserva")
 
     assert any("(usuario_id" in i for i in indices)
@@ -114,7 +114,7 @@ def _empate(socio: Socio) -> None:
 
 
 def test_el_historial_propio_llega_por_tandas(api: TestClient, socio: Socio) -> None:
-    """el historial propio de reservas se entrega por páginas @REV-03-H10-02"""
+    """el historial propio de reservas se entrega por páginas @REV-03-S2"""
     _pasadas(socio, 25)
     _empate(socio)
 
@@ -139,7 +139,7 @@ MARCADORES_INVALIDOS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDow
 def test_un_marcador_de_tanda_que_no_se_entiende_es_un_dato_invalido(
     api: TestClient, socio: Socio, marcador: str
 ) -> None:
-    """un marcador de página inválido se rechaza @REV-03-H10-02 @assumption:REV-03-ASM-01"""
+    """un marcador de página inválido se rechaza @REV-03-S2 @assumption:REV-03-ASM-01"""
     r = api.get(
         "/reservas", headers=socio.sesion, params={"cuando": "historial", "despues": marcador}
     )
@@ -152,7 +152,7 @@ def test_un_marcador_de_tanda_que_no_se_entiende_es_un_dato_invalido(
 def test_un_marcador_invalido_del_historial_global_es_un_dato_invalido(
     api: TestClient, token_admin: str, marcador: str
 ) -> None:
-    """un marcador inválido del historial global se rechaza @REV-03-H10-03 @assumption:REV-03-ASM-01"""
+    """un marcador inválido del historial global se rechaza @REV-03-S3 @assumption:REV-03-ASM-01"""
     r = api.get(
         "/reservas/todas",
         headers={"Authorization": f"Bearer {token_admin}"},
@@ -166,7 +166,7 @@ def test_un_marcador_invalido_del_historial_global_es_un_dato_invalido(
 def test_el_historial_global_avanza_por_marcador(
     api: TestClient, socio: Socio, token_admin: str
 ) -> None:
-    """una página avanzada del historial global se resuelve por marcador @REV-03-H10-03"""
+    """una página avanzada del historial global se resuelve por marcador @REV-03-S3"""
     _pasadas(socio, 25)
     _empate(socio)
     admin = {"Authorization": f"Bearer {token_admin}"}
@@ -191,7 +191,7 @@ def test_las_apps_instaladas_siguen_paginando_por_numero(
     api: TestClient, socio: Socio, token_admin: str
 ) -> None:
     """el historial global sigue aceptando la página de las apps instaladas
-    @REV-03-H10-03 @assumption:REV-03-ASM-11
+    @REV-03-S3 @assumption:REV-03-ASM-11
     """
     _pasadas(socio, 25)
     admin = {"Authorization": f"Bearer {token_admin}"}
@@ -210,14 +210,14 @@ def test_las_apps_instaladas_siguen_paginando_por_numero(
 
 
 def test_el_historial_global_tiene_un_indice_por_fecha(motor: Engine) -> None:
-    """el historial global se ordena por un índice de inicio @REV-03-H10-03"""
+    """el historial global se ordena por un índice de inicio @REV-03-S3"""
     indices = _indices(motor, "reserva")
 
     assert any("(inicio DESC, id DESC)" in i for i in indices)
 
 
 def test_quien_cancelo_y_que_aviso_reemplazo_tienen_indice(motor: Engine) -> None:
-    """quién canceló y qué aviso reemplazó a otro se consultan por índice @REV-03-H10-04"""
+    """quién canceló y qué aviso reemplazó a otro se consultan por índice @REV-03-S4"""
     assert any("(cancelada_por" in i for i in _indices(motor, "reserva"))
     assert any("(reemplazada_por" in i for i in _indices(motor, "notificacion"))
 
@@ -257,7 +257,7 @@ def _despachar(socio: Socio, canal: CanalDePrueba) -> None:
 
 
 def test_un_aviso_varado_en_enviando_se_vuelve_a_mandar(socio: Socio, canal: CanalDePrueba) -> None:
-    """un aviso que quedó enviando por una caída se vuelve a enviar @REV-03-H11-01 @assumption:REV-03-ASM-04"""
+    """un aviso que quedó enviando por una caída se vuelve a enviar @REV-03-S5 @assumption:REV-03-ASM-04"""
     _cancelar(socio, "20:00")
     _varar(socio, "10 minutes")
     canal.enviados.clear()
@@ -279,7 +279,7 @@ def test_un_aviso_que_quedo_a_medio_mandar_lo_retoma_el_despacho_siguiente(
     socio: Socio, canal: CanalDePrueba
 ) -> None:
     """un aviso que quedó enviando por una caída real se vuelve a enviar
-    @REV-03-H11-01 @assumption:REV-03-ASM-04
+    @REV-03-S5 @assumption:REV-03-ASM-04
     """
     _cancelar(socio, "20:00")
     with socio.motor.begin() as conn:
@@ -310,7 +310,7 @@ def test_un_aviso_que_quedo_a_medio_mandar_lo_retoma_el_despacho_siguiente(
 def test_un_aviso_que_se_esta_mandando_no_se_toma_dos_veces(
     socio: Socio, canal: CanalDePrueba
 ) -> None:
-    """un aviso tomado hace un momento no se vuelve a tomar @REV-03-H11-01 @assumption:REV-03-ASM-04"""
+    """un aviso tomado hace un momento no se vuelve a tomar @REV-03-S5 @assumption:REV-03-ASM-04"""
     _cancelar(socio, "20:00")
     _varar(socio, "1 minute")
     canal.enviados.clear()
@@ -324,7 +324,7 @@ def test_un_aviso_que_se_esta_mandando_no_se_toma_dos_veces(
 def test_un_aviso_que_ya_se_intento_tres_veces_queda_fallido(
     socio: Socio, canal: CanalDePrueba
 ) -> None:
-    """el aviso que agotó sus intentos queda fallido @REV-03-H11-01 @assumption:REV-03-ASM-05"""
+    """el aviso que agotó sus intentos queda fallido @REV-03-S5 @assumption:REV-03-ASM-05"""
     _cancelar(socio, "20:00")
     _varar(socio, "10 minutes", intentos=3)
     canal.enviados.clear()
@@ -361,7 +361,7 @@ def _barrer(socio: Socio, canal: CanalDePrueba) -> None:
 def test_un_recordatorio_registrado_y_no_enviado_se_reintenta(
     socio: Socio, canal: CanalDePrueba
 ) -> None:
-    """un recordatorio registrado y no enviado se reintenta @REV-03-H11-02"""
+    """un recordatorio registrado y no enviado se reintenta @REV-03-S6"""
     _recordatorio(socio, "pendiente", "10 minutes")
     canal.enviados.clear()
 
@@ -374,7 +374,7 @@ def test_un_recordatorio_registrado_y_no_enviado_se_reintenta(
 def test_un_recordatorio_pendiente_de_una_reserva_cancelada_no_sale(
     socio: Socio, canal: CanalDePrueba
 ) -> None:
-    """el recordatorio pendiente de una reserva ya cancelada no se manda @REV-03-H11-02"""
+    """el recordatorio pendiente de una reserva ya cancelada no se manda @REV-03-S6"""
     _recordatorio(socio, "pendiente", "10 minutes")
     reserva = socio.reservas[-1]
     r = socio.api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
@@ -389,7 +389,7 @@ def test_un_recordatorio_pendiente_de_una_reserva_cancelada_no_sale(
 def test_un_recordatorio_varado_en_enviando_no_se_repite(
     socio: Socio, canal: CanalDePrueba
 ) -> None:
-    """el recordatorio varado queda fallido: se envía una sola vez @REV-03-H11-02 @assumption:REV-03-ASM-02"""
+    """el recordatorio varado queda fallido: se envía una sola vez @REV-03-S6 @assumption:REV-03-ASM-02"""
     _recordatorio(socio, "enviando", "10 minutes")
     canal.enviados.clear()
 
@@ -443,7 +443,7 @@ def _reservas(base: Engine) -> int:
 def test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo(
     base_de_migraciones: tuple[Engine, AlembicConfig],
 ) -> None:
-    """la migración nueva no bloquea las tablas mientras la versión anterior atiende @REV-03-H13-01"""
+    """la migración nueva no bloquea las tablas mientras la versión anterior atiende @REV-03-S7"""
     base, alembic = base_de_migraciones
     command.upgrade(alembic, "0007")
     _sembrar(base)
@@ -499,7 +499,7 @@ def test_cada_migracion_va_y_vuelve_con_datos(
     base_de_migraciones: tuple[Engine, AlembicConfig], anterior: str, revision: str
 ) -> None:
     """la suite vigila la ida y vuelta de las migraciones con datos
-    @REV-03-H13-02 @assumption:REV-03-ASM-06
+    @REV-03-S8 @assumption:REV-03-ASM-06
     """
     base, alembic = base_de_migraciones
     command.upgrade(alembic, "0001")

@@ -173,7 +173,7 @@ def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> No
 def test_cada_aviso_dado_por_fallido_queda_en_el_log_con_su_numero_y_su_tipo(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """el aviso perdido se ve en el log como `aviso_sin_enviar` @REV-03-H11-01"""
+    """el aviso perdido se ve en el log como `aviso_sin_enviar` @REV-03-S5"""
     repo = RepositorioEnMemoria([], ["t"])
     repo.perdidos = [AvisoPerdido(8, "cancelacion_forzosa"), AvisoPerdido(9, "recordatorio")]
 
