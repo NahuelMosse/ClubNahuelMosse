@@ -170,7 +170,7 @@ def _mensaje() -> Mensaje:
 def test_el_correo_exige_un_certificado_valido_para_el_nombre_del_servidor(
     smtp_falso: type[_SmtpFalso],
 ) -> None:
-    """el envío de correo pide un TLS que verifica certificado y nombre @REV-01-H01-01"""
+    """el envío de correo pide un TLS que verifica certificado y nombre @REV-01-S1"""
     correo.enviar(_mensaje())
 
     contexto = smtp_falso.contextos[0]
@@ -183,7 +183,7 @@ def test_con_un_certificado_invalido_no_se_mandan_las_credenciales(
     smtp_falso: type[_SmtpFalso], caplog: pytest.LogCaptureFixture
 ) -> None:
     """con un certificado inválido no se entregan usuario ni contraseña SMTP
-    @REV-01-H01-01 @assumption:REV-01-ASM-06
+    @REV-01-S1 @assumption:REV-01-ASM-06
     """
     smtp_falso.certificado_invalido = True
 
@@ -199,7 +199,7 @@ def test_la_recuperacion_responde_igual_aunque_el_correo_no_salga(
     api: TestClient, smtp_falso: type[_SmtpFalso]
 ) -> None:
     """quien pide recuperar ve lo mismo aunque el TLS del correo falle
-    @REV-01-H01-01 @assumption:REV-01-ASM-06
+    @REV-01-S1 @assumption:REV-01-ASM-06
     """
     smtp_falso.certificado_invalido = True
 
@@ -212,7 +212,7 @@ def test_la_recuperacion_responde_igual_aunque_el_correo_no_salga(
 def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
     api: TestClient, token_usuario: str, cancha: int, horas: object
 ) -> None:
-    """una reserva con horas desmesuradas se rechaza como dato inválido @REV-01-H05-01"""
+    """una reserva con horas desmesuradas se rechaza como dato inválido @REV-01-S2"""
     r = api.post(
         "/reservas",
         headers=_con(token_usuario),
@@ -231,7 +231,7 @@ def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
 def test_una_reserva_de_cuatro_horas_se_acepta(
     api: TestClient, token_usuario: str, cancha: int
 ) -> None:
-    """el borde de cuatro horas sigue aceptándose @REV-01-H05-01"""
+    """el borde de cuatro horas sigue aceptándose @REV-01-S2"""
     r = api.post(
         "/reservas",
         headers=_con(token_usuario),
@@ -245,7 +245,7 @@ def test_una_reserva_de_cuatro_horas_se_acepta(
 def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
     api: TestClient, token_usuario: str, cancha: int, desde: str, horas: int
 ) -> None:
-    """una reserva que termina después del último día representable es inválida @REV-01-H05-02"""
+    """una reserva que termina después del último día representable es inválida @REV-01-S3"""
     r = api.post(
         "/reservas",
         headers=_con(token_usuario),
@@ -260,7 +260,7 @@ def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
 def test_una_pagina_fuera_de_rango_del_historial_global_es_un_dato_invalido(
     api: TestClient, token_admin: str, pagina: object
 ) -> None:
-    """pedir una página enorme del historial global se rechaza como dato inválido @REV-01-H05-03"""
+    """pedir una página enorme del historial global se rechaza como dato inválido @REV-01-S4"""
     r = api.get("/reservas/todas", headers=_con(token_admin), params={"pagina": pagina})
 
     assert r.status_code == 422
@@ -270,7 +270,7 @@ def test_una_pagina_fuera_de_rango_del_historial_global_es_un_dato_invalido(
 def test_la_ultima_pagina_permitida_del_historial_global_responde(
     api: TestClient, token_admin: str
 ) -> None:
-    """el borde de la página 10000 sigue respondiendo @REV-01-H05-03 @assumption:REV-01-ASM-02"""
+    """el borde de la página 10000 sigue respondiendo @REV-01-S4 @assumption:REV-01-ASM-02"""
     r = api.get("/reservas/todas", headers=_con(token_admin), params={"pagina": 10_000})
 
     assert r.status_code == 200
@@ -308,7 +308,7 @@ ESPACIO = {"sede_id": 1, "tipo": "F5", "techada": False, "iluminada": True, "pre
 def test_un_caracter_nulo_sin_sesion_es_un_dato_invalido(
     api: TestClient, metodo: str, ruta: str, cuerpo: dict[str, object], campo: str
 ) -> None:
-    """un carácter nulo en un campo de texto se rechaza como dato inválido @REV-01-H05-04"""
+    """un carácter nulo en un campo de texto se rechaza como dato inválido @REV-01-S5"""
     r = api.request(metodo, ruta, json=cuerpo)
 
     assert r.status_code == 422
@@ -354,7 +354,7 @@ def test_un_caracter_nulo_de_un_socio_es_un_dato_invalido(
     cuerpo: dict[str, object],
     campo: str,
 ) -> None:
-    """un carácter nulo en un campo de texto de un socio es un dato inválido @REV-01-H05-04"""
+    """un carácter nulo en un campo de texto de un socio es un dato inválido @REV-01-S5"""
     r = api.request(metodo, ruta, headers=_con(token_usuario), json=cuerpo)
 
     assert r.status_code == 422
@@ -380,7 +380,7 @@ def test_un_caracter_nulo_del_administrador_es_un_dato_invalido(
     cuerpo: dict[str, object],
     campo: str,
 ) -> None:
-    """un carácter nulo en un campo de texto del admin es un dato inválido @REV-01-H05-04"""
+    """un carácter nulo en un campo de texto del admin es un dato inválido @REV-01-S5"""
     r = api.request(metodo, ruta, headers=_con(token_admin), json=cuerpo)
 
     assert r.status_code == 422
@@ -391,7 +391,7 @@ def test_un_caracter_nulo_del_administrador_es_un_dato_invalido(
 def test_un_caracter_nulo_en_la_busqueda_del_historial_es_un_dato_invalido(
     api: TestClient, token_admin: str
 ) -> None:
-    """un carácter nulo en la búsqueda del historial global es un dato inválido @REV-01-H05-04"""
+    """un carácter nulo en la búsqueda del historial global es un dato inválido @REV-01-S5"""
     r = api.get("/reservas/todas", headers=_con(token_admin), params={"q": NULO})
 
     assert r.status_code == 422
@@ -400,7 +400,7 @@ def test_un_caracter_nulo_en_la_busqueda_del_historial_es_un_dato_invalido(
 
 def test_las_recuperaciones_en_rafaga_quedan_frenadas(api: TestClient) -> None:
     """pedir recuperaciones de contraseña en ráfaga queda frenado por un límite
-    @REV-01-H06-01 @assumption:REV-01-ASM-03
+    @REV-01-S6 @assumption:REV-01-ASM-03
     """
     respuestas = [
         api.post("/recuperacion", json={"correo": "nadie.rafaga@correo.com"}) for _ in range(11)
@@ -416,7 +416,7 @@ def test_las_recuperaciones_en_rafaga_quedan_frenadas(api: TestClient) -> None:
 
 def test_un_origen_inventado_no_saltea_el_limite(api: TestClient) -> None:
     """cambiar X-Forwarded-For sin proxy no saltea el límite
-    @REV-01-H06-01 @assumption:REV-01-ASM-11
+    @REV-01-S6 @assumption:REV-01-ASM-11
     """
     codigos = [
         api.post(
@@ -431,7 +431,7 @@ def test_un_origen_inventado_no_saltea_el_limite(api: TestClient) -> None:
 
 
 def test_los_registros_en_rafaga_quedan_frenados(api: TestClient) -> None:
-    """intentar registros en ráfaga queda frenado por un límite de frecuencia @REV-01-H06-02"""
+    """intentar registros en ráfaga queda frenado por un límite de frecuencia @REV-01-S7"""
     codigos = [api.post("/registro", json={"correo": "x"}).status_code for _ in range(11)]
 
     assert codigos[:10] == [422] * 10
@@ -440,7 +440,7 @@ def test_los_registros_en_rafaga_quedan_frenados(api: TestClient) -> None:
 
 def test_probar_dni_ajenos_en_el_perfil_queda_frenado(api: TestClient, token_usuario: str) -> None:
     """probar DNI ajenos en el perfil en serie queda frenado
-    @REV-01-H06-03 @assumption:REV-01-ASM-01
+    @REV-01-S8 @assumption:REV-01-ASM-01
     """
     codigos = [
         api.put(
@@ -466,7 +466,7 @@ def test_probar_correos_ajenos_en_el_registro_queda_frenado(
     unico: Callable[[], str],
 ) -> None:
     """probar correos ajenos en el registro no sirve para saber quién tiene cuenta
-    @REV-01-H06-04 @assumption:REV-01-ASM-01
+    @REV-01-S9 @assumption:REV-01-ASM-01
     """
     _, ajeno = _alta_socio(api, iniciar_sesion, unico)
     codigos = [
@@ -489,7 +489,7 @@ def test_probar_correos_ajenos_en_el_registro_queda_frenado(
 
 
 def test_la_api_no_usa_un_certifi_con_vulnerabilidad_conocida() -> None:
-    """la API no depende de una versión de certifi con vulnerabilidad conocida @REV-01-H07-01"""
+    """la API no depende de una versión de certifi con vulnerabilidad conocida @REV-01-S10"""
     lock = tomllib.loads((RAIZ_API / "uv.lock").read_text(encoding="utf-8"))
     version = next(p["version"] for p in lock["package"] if p["name"] == "certifi")
 
@@ -500,7 +500,7 @@ def test_un_rechazo_del_servidor_de_correo_no_deja_la_direccion_en_el_log(
     smtp_falso: type[_SmtpFalso], caplog: pytest.LogCaptureFixture
 ) -> None:
     """un rechazo del servidor de correo no deja la dirección de la persona en el log
-    @REV-01-H09-01
+    @REV-01-S11
     """
     smtp_falso.rechazar = True
 
@@ -549,7 +549,7 @@ def test_el_log_de_accesos_no_guarda_lo_que_busca_el_administrador(
     servidor: tuple[str, Path],
 ) -> None:
     """el log de accesos no guarda el correo ni el DNI que busca el administrador
-    @REV-01-H09-02
+    @REV-01-S12
     """
     base, salida = servidor
 
@@ -567,7 +567,7 @@ def test_el_log_de_accesos_no_guarda_lo_que_busca_el_administrador(
 def test_una_ruta_con_saltos_de_linea_no_falsifica_el_log(
     api: TestClient, caplog: pytest.LogCaptureFixture, salto: str
 ) -> None:
-    """una ruta con saltos de línea no puede falsificar una línea del log @REV-01-H09-03"""
+    """una ruta con saltos de línea no puede falsificar una línea del log @REV-01-S13"""
     falsa = (
         f"/reservas/1{salto}2026-10-20 00:00:00,000 ERROR clubnahuelmosse.errores FALSO/cancelar"
     )
@@ -583,7 +583,7 @@ def test_una_ruta_con_saltos_de_linea_no_falsifica_el_log(
 def test_los_secretos_no_llegan_al_log_ni_a_las_respuestas(
     api: TestClient, token_usuario: str, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """contraseñas, tokens y códigos de recuperación no llegan al log @REV-01-H09-04"""
+    """contraseñas, tokens y códigos de recuperación no llegan al log @REV-01-S14"""
     with caplog.at_level(logging.DEBUG):
         respuestas = [
             api.put("/recuperacion", json={"codigo": "cod-secreto-7Q", "nueva": ["Clave9Secreta"]}),
@@ -609,7 +609,7 @@ def test_la_documentacion_interactiva_se_apaga_por_configuracion(
     monkeypatch: pytest.MonkeyPatch, motor: Engine
 ) -> None:
     """la documentación interactiva no se publica en producción
-    @REV-01-H16-01 @assumption:REV-01-ASM-05
+    @REV-01-S15 @assumption:REV-01-ASM-05
     """
     monkeypatch.setattr(config, "documentacion_interactiva", False)
 
@@ -627,7 +627,7 @@ def test_la_documentacion_interactiva_se_apaga_por_configuracion(
 
 def test_el_despliegue_en_render_apaga_la_documentacion_interactiva() -> None:
     """el blueprint de producción apaga la documentación interactiva y se chequea por /health
-    @REV-01-H16-01 @assumption:REV-01-ASM-05 @assumption:REV-01-ASM-07
+    @REV-01-S15 @assumption:REV-01-ASM-05 @assumption:REV-01-ASM-07
     """
     blueprint = yaml.safe_load((RAIZ_REPO / "render.yaml").read_text(encoding="utf-8"))
     web = blueprint["services"][0]
@@ -638,14 +638,14 @@ def test_el_despliegue_en_render_apaga_la_documentacion_interactiva() -> None:
 
 
 def test_el_contrato_versionado_coincide_con_la_api() -> None:
-    """el contrato OpenAPI versionado coincide con lo que la API publica @REV-01-H16-01"""
+    """el contrato OpenAPI versionado coincide con lo que la API publica @REV-01-S15"""
     versionado = json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
 
     assert versionado == crear_app().openapi()
 
 
 def test_las_respuestas_impiden_que_las_incrusten(api: TestClient) -> None:
-    """las respuestas llevan una política de contenido que impide incrustarlas @REV-01-H16-02"""
+    """las respuestas llevan una política de contenido que impide incrustarlas @REV-01-S16"""
     datos = api.get("/yo")
     pagina = api.get("/enlace/recuperar")
 
@@ -655,7 +655,7 @@ def test_las_respuestas_impiden_que_las_incrusten(api: TestClient) -> None:
 
 
 def test_un_host_ajeno_se_rechaza(api: TestClient) -> None:
-    """un pedido con un Host ajeno se rechaza @REV-01-H25-01 @assumption:REV-01-ASM-12"""
+    """un pedido con un Host ajeno se rechaza @REV-01-S17 @assumption:REV-01-ASM-12"""
     ajeno = api.get("/yo", headers={"Host": "attacker.example"})
     propio = api.get("/yo")
 
@@ -666,7 +666,7 @@ def test_un_host_ajeno_se_rechaza(api: TestClient) -> None:
 def test_una_escritura_con_un_host_ajeno_se_rechaza(
     api: TestClient, token_usuario: str, cancha: int
 ) -> None:
-    """una reserva con sesión y Host ajeno se rechaza @REV-01-H25-01"""
+    """una reserva con sesión y Host ajeno se rechaza @REV-01-S17"""
     r = api.post(
         "/reservas",
         headers={**_con(token_usuario), "Host": "attacker.example"},
@@ -679,7 +679,7 @@ def test_una_escritura_con_un_host_ajeno_se_rechaza(
 def test_la_api_no_arranca_con_el_emulador_y_credenciales_reales(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """la API se niega a arrancar con el emulador junto a credenciales reales @REV-01-H25-02"""
+    """la API se niega a arrancar con el emulador junto a credenciales reales @REV-01-S18"""
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.setattr(config, "firebase_credenciales_json", '{"type": "service_account"}')
 
@@ -690,7 +690,7 @@ def test_la_api_no_arranca_con_el_emulador_y_credenciales_reales(
 def test_la_api_no_arranca_con_el_emulador_y_un_archivo_de_credenciales(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    """la API se niega a arrancar con el emulador y un archivo de credenciales @REV-01-H25-02"""
+    """la API se niega a arrancar con el emulador y un archivo de credenciales @REV-01-S18"""
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.setenv("GOOGLE_APPLICATION_CREDENTIALS", str(tmp_path / "cuenta.json"))
 
@@ -701,7 +701,7 @@ def test_la_api_no_arranca_con_el_emulador_y_un_archivo_de_credenciales(
 def test_la_api_no_arranca_con_el_emulador_y_un_proyecto_real(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """la API se niega a arrancar con el emulador y un proyecto que no es de demo @REV-01-H25-02"""
+    """la API se niega a arrancar con el emulador y un proyecto que no es de demo @REV-01-S18"""
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.setattr(config, "firebase_project_id", "clubnahuelmosse-prod")
 
@@ -713,7 +713,7 @@ def test_la_api_arranca_con_el_emulador_y_un_proyecto_de_demo(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """con el emulador, un proyecto de demo y sin credenciales la API arranca
-    @REV-01-H25-02 @assumption:REV-01-ASM-10
+    @REV-01-S18 @assumption:REV-01-ASM-10
     """
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
@@ -743,7 +743,7 @@ def test_el_token_de_otra_persona_no_cambia_de_duenio(
     unico: Callable[[], str],
 ) -> None:
     """registrar el token de dispositivo de otra persona no se lo quita
-    @REV-01-H25-03 @assumption:REV-01-ASM-04
+    @REV-01-S19 @assumption:REV-01-ASM-04
     """
     duenia, correo_duenia = _alta_socio(api, iniciar_sesion, unico)
     intruso, _ = _alta_socio(api, iniciar_sesion, unico)
@@ -766,7 +766,7 @@ def test_un_token_dado_de_baja_pasa_a_quien_lo_registra(
     unico: Callable[[], str],
 ) -> None:
     """un teléfono que cerró sesión pasa a la siguiente persona
-    @REV-01-H25-03 @assumption:REV-01-ASM-04
+    @REV-01-S19 @assumption:REV-01-ASM-04
     """
     primera, _ = _alta_socio(api, iniciar_sesion, unico)
     segunda, correo_segunda = _alta_socio(api, iniciar_sesion, unico)
