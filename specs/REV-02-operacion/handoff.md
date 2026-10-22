@@ -1,14 +1,15 @@
-# Handoff · REV-02 (API)
+# Handoff T4 (apps/mobile)
 
-## Hecho (T1: S1, S2, S12)
-- 9 tests de T1 en verde (`tests/escenarios/test_operacion.py`, ~162 s): base inalcanzable, consulta >10 s, pool, bloqueo, `/ready`, render.yaml, arranque sin base / sin esquema.
-- Código: `app/infraestructura/db.py` (pool 5+5, timeouts, `base_disponible`, `esquema_al_dia`), `app/config.py` (`RAIZ_API`, `version` desde pyproject, `database_url_app`, `metricas_token`, env_file absoluto), `app/interfaz/salud.py` (`/health` con versión, `/ready`), `app/main.py` (lifespan que registra `arranque_sin_base`/`arranque_sin_esquema` y sigue, handlers 503 de SQLAlchemy con referencia, `version=config.version`, responses 500/503, router salud), `render.yaml` (`/ready`, `DATABASE_URL_APP`, `METRICAS_TOKEN`).
-- Entorno: `.venv` y `club_rev02_test` creados. `TEST_DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev02_test FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702`; correr con `apps/api/.venv/Scripts/python.exe -m pytest ...` en background con log y `wait.mjs <log> --until "^exit"`.
+Hecho: `apps/mobile/test/operacion_app_test.dart` (15 tests, títulos de la card, RED). Falta todo el código de T4.
 
-## Hecho (T2: S7, S9, S10, S13, S14, S15)
-- 19 tests en verde. `app/interfaz/registro_errores.py` (ContextVar, `referencia_actual()`, JSON por línea, 500 con referencia, métricas por pedido), `app/interfaz/metricas.py` (`/metrics` con bearer, 404 sin token), `main.py` (router, handlers 503 solo OperationalError/InterfaceError/Timeout), `salud.py`.
+API que los tests suponen (no existe todavía):
+- `lib/comun/errores_no_manejados.dart`: `typedef RegistroDeError = void Function(Object, StackTrace?)`; variable global asignable `RegistroDeError registroDeErrores` (por defecto a consola de depuración); `registrarError(Object, StackTrace?)` que la llama; `instalarCapturaDeErrores([RegistroDeError? destino])` (FlutterError.onError y PlatformDispatcher.onError, este devuelve true); `correrProtegido(void Function() cuerpo, [RegistroDeError? destino])` (runZonedGuarded).
+- `cliente_api.dart`: `limite` por defecto 60 s; `ServidorSinRespuesta` (excepción distinta de `SinConexion`) cuando se agota el límite (TimeoutException); `ClienteApi` expone un `ValueListenable<bool> despertando` (true si un pedido pasa de 5 s); `ErrorDelServidor` suma `referencia` (de `{"referencia"}` del 500/503).
+- `dialogo_error.dart`: `ServidorSinRespuesta` -> «El servidor no responde. Probá de nuevo en unos minutos.»; `ErrorDelServidor` con referencia -> el texto incluye la referencia; sin red sigue «Revisá tu conexión a internet».
+- Aviso «despertando … hasta un minuto»: hay que montarlo en `app.dart` (MaterialApp.builder, Stack ya existe en línea ~519), no está en la lista de T4: declarar en el Log como OUT/cambio mínimo.
+- `sesion.dart`: `retomar()` espera hasta 60 s (quitar `limiteAlRetomar`), y ante `ErrorDelServidor`/`ServidorSinRespuesta`/`SinConexion` relanza en vez de devolver null; `main.dart` debe mostrar el error con reintento, no el login. `CredencialesInvalidas` sigue cerrando sesión.
+- `main()` -> `correrProtegido(() => arrancar(...))`; `arrancar` llama `instalarCapturaDeErrores()`.
+- Los cuatro lugares: detalle_reserva (2 `.ignore()` -> `registrarError`), centro.dart (4 `on Exception` sin rastro: líneas ~189, 210, 265, 277), editar_espacio `_leerCatalogo`, inicio `_releerSinAvisar`; todos `registrarError(e, pila)`.
 
-## Falta
-- T3: `barrido.py --una-vez`, aviso `aviso_sin_enviar`, `scripts/respaldo.py` (pg_dump no existe en esta máquina: test «could not run»), `scripts/usuario_de_la_app.py`, `apps/api/README.md` (variables DATABASE_URL_APP, METRICAS_TOKEN, VERSION, DETRAS_DE_PROXY, RPO/RTO, ASM).
-- Ajenos: `test_requisitos_no_funcionales::test_toda_operacion...` falla por `/health` y `/ready` públicos (PUBLICAS es de REV-01 grupo 2); el del README es de T3.
-- Gate completo sin correr.
+Pendiente de verificar: el test del inicio adivina el botón `CANCELAR RESERVA`; si no existe, reemplazar con archivo nuevo mismo tag y registrar `replaces:` en el Log. Tests de pantallas usan `SesionFalsa`, `SistemaSimulado` (verificar nombres/constructores al compilar).
+Gate: `cd apps/mobile && PATH=/d/projects/flutter/bin:$PATH flutter analyze && flutter test`, y los 3 `mutate` de Dart con `node .claude/tools/once.mjs`.
