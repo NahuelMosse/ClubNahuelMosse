@@ -466,9 +466,14 @@ export const failingTests = (output, limit = 3) => {
       found.set(m[1], { name: m[1] });
     } else if ((m = line.match(/^\s*[✕×] (.+?)(?: \(\d+(?:\.\d+)? ?m?s\))?\s*$/))) {
       found.set(m[1], { name: m[1] });
+    } else if ((m = line.match(/^\s*\d+:\d+ \+\d+(?: ~\d+)?(?: -\d+)?: (.+?\.dart): (.+?) \[E\]\s*$/))) {
+      // flutter test: `00:05 +445 -1: <file>: <group and test name> [E]`.
+      found.set(m[2], { name: m[2], file: m[1] });
     }
   }
-  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? 0);
+  // flutter test counts the failures in its progress prefix (`+445 -1:`); the last one is the total.
+  const flutterFailed = [...output.matchAll(/^\s*\d+:\d+ \+\d+(?: ~\d+)? -(\d+):/gm)].at(-1)?.[1];
+  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? flutterFailed ?? 0);
   const tests = [...found.values()];
   return total > limit ? [] : tests;
 };
@@ -489,14 +494,16 @@ export const replacedFailures = (root, output) => {
   const declared = replacementsOf(doc);
   const names = new Set(failing.map((t) => t.name));
   const found = [];
-  for (const t of failing) {
-    const r = declared.find((d) => d.name === t.name && !names.has(d.byName));
-    if (!r) return null;
-    const path = join(root, r.by);
+  const holds = (r) => {
     const tags = r.name.match(SPEC_TAG) ?? [];
     let text = '';
-    try { text = readFileSync(path, 'utf8'); } catch { return null; }
-    if (!tags.length || !text.includes(r.byName) || !tags.every((g) => r.byName.includes(g))) return null;
+    try { text = readFileSync(join(root, r.by), 'utf8'); } catch { return false; }
+    return tags.length > 0 && text.includes(r.byName) && tags.every((g) => r.byName.includes(g));
+  };
+  for (const t of failing) {
+    // The Log is append-only: a later line corrects an earlier declaration of the same test, so the latest that holds counts.
+    const r = declared.filter((d) => d.name === t.name && !names.has(d.byName)).reverse().find(holds);
+    if (!r) return null;
     found.push(r);
   }
   return found;
