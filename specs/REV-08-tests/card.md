@@ -822,3 +822,5 @@ Reserva anulada                Error al anular
 - L10 · 2026-10-22 · declared · ACT-03 · RNF-01-H04-01 con el README pasa a ASM-08; «40 de 305 tests tienen lógica» es una medida del hallazgo, no un comportamiento; el mutador del kit actual ya muta `==`, `!=`, `and`/`or`, `not` e `is None` y no toca comentarios
 - L11 · 2026-10-22 · declared · REV-08-ASM-11 · «401» lo nombra el título del test; el supuesto no trae otros valores
 - L12 · 2026-10-22 · declared · REV-08-ASM-09, REV-08-ASM-10 · «los casos de uso de reservas» y «sin el emulador» citan las frases de S7 y S5 que el supuesto interpreta, no son valores del comportamiento
+- L13 · 2026-10-22 · T2 · cd apps/mobile && flutter test test/rutas_de_la_api_test.dart: 4 passed (contrato generado con app.openapi() en apps/api/openapi.json, sin versionar: REV-01 lo trae); flutter analyze: No issues; flutter test completo: 425 passed
+- L14 · 2026-10-22 · T3 · flutter test test/anular_desde_el_detalle_test.dart: 5 passed al primer intento (ASM-01: el comportamiento ya existía); se quitó un import sin uso de soporte/admin.dart que hacía fallar flutter analyze

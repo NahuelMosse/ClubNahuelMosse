@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:http/http.dart' as http;
+
+import 'rutas.dart';
 
 /// No se llegó a la API: sin red, o la API no responde a tiempo.
 class SinConexion implements Exception {
@@ -29,11 +32,22 @@ class ClienteApi {
     String base, {
     http.Client? cliente,
     this.limite = const Duration(seconds: 15),
+    this.verificarRutas = kDebugMode,
   }) : _base = Uri.parse(base),
        _cliente = cliente ?? http.Client();
 
   final Uri _base;
   final http.Client _cliente;
+
+  /// Si pedir una ruta que la app no declara en [rutasDeLaApi] falla. Es así en debug,
+  /// así lo vigilan todos los tests; en release el pedido sale igual.
+  final bool verificarRutas;
+
+  void _declarada(String metodo, String ruta) {
+    if (verificarRutas && !rutaDeclarada(metodo, ruta)) {
+      throw AssertionError('La app no declara pedir $metodo $ruta (lib/api/rutas.dart)');
+    }
+  }
 
   /// Cuánto espera una respuesta antes de tratar a la API como inalcanzable.
   final Duration limite;
@@ -43,6 +57,8 @@ class ClienteApi {
     Map<String, Object?> cuerpo, {
     String? token,
   }) => _enviar(
+    'POST',
+    ruta,
     () => _cliente.post(
       _base.resolve(ruta),
       headers: {
@@ -58,6 +74,8 @@ class ClienteApi {
     Map<String, Object?> cuerpo, {
     String? token,
   }) => _enviar(
+    'PUT',
+    ruta,
     () => _cliente.put(
       _base.resolve(ruta),
       headers: {
@@ -69,6 +87,8 @@ class ClienteApi {
   );
 
   Future<Respuesta> delete(String ruta, {required String token}) => _enviar(
+    'DELETE',
+    ruta,
     () => _cliente.delete(
       _base.resolve(ruta),
       headers: {'authorization': 'Bearer $token'},
@@ -77,13 +97,20 @@ class ClienteApi {
 
   /// [token] es el ID token de Firebase de quien inició sesión.
   Future<Respuesta> get(String ruta, {String? token}) => _enviar(
+    'GET',
+    ruta,
     () => _cliente.get(
       _base.resolve(ruta),
       headers: {if (token != null) 'authorization': 'Bearer $token'},
     ),
   );
 
-  Future<Respuesta> _enviar(Future<http.Response> Function() pedido) async {
+  Future<Respuesta> _enviar(
+    String metodo,
+    String ruta,
+    Future<http.Response> Function() pedido,
+  ) async {
+    _declarada(metodo, ruta);
     final http.Response r;
     try {
       r = await pedido().timeout(limite);
