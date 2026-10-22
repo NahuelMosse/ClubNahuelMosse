@@ -147,11 +147,13 @@ class ReservasSql:
                     if proximas
                     else " AND r.estado_actual <> 'activa' ORDER BY r.inicio DESC, r.id DESC"
                 )
-                + " LIMIT :limite"
+                + ("" if proximas else " LIMIT :limite")
             ),
             parametros,
         ).all()
         self._conn.rollback()
+        if proximas:
+            return TandaDeReservas(reservas=[_reserva(f) for f in filas], hay_mas=False)
         return TandaDeReservas(
             reservas=[_reserva(f) for f in filas[:limite]], hay_mas=len(filas) > limite
         )
