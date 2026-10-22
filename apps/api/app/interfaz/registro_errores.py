@@ -66,7 +66,7 @@ def _fabrica_con_referencia() -> None:
         return
 
     def fabrica(*args: object, **kwargs: object) -> logging.LogRecord:
-        registro = anterior(*args, **kwargs)  # type: ignore[arg-type]
+        registro = anterior(*args, **kwargs)
         registro.referencia = _referencia.get()
         registro.version = config.version
         return registro
@@ -125,7 +125,7 @@ class RegistroDeErrores:
             try:
                 await self.app(scope, receive, enviar)
             except Exception:
-                # Con la respuesta ya enviada (tarea de fondo) vale el código que recibió el cliente.
+                # Con la respuesta ya enviada (tarea de fondo) vale el código del cliente.
                 _registro.error(
                     "%s %d usuario=%s%s",
                     _operacion(scope),

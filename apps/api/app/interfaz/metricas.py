@@ -39,8 +39,10 @@ def _texto() -> str:
             )
         lineas.append("# TYPE solicitud_segundos histogram")
         for ruta, serie in sorted(_duraciones.items()):
-            for corte, cuenta in zip(_CORTES, serie, strict=False):
-                lineas.append(f'solicitud_segundos_bucket{{ruta="{ruta}",le="{corte}"}} {int(cuenta)}')
+            for corte, acumulado in zip(_CORTES, serie, strict=False):
+                lineas.append(
+                    f'solicitud_segundos_bucket{{ruta="{ruta}",le="{corte}"}} {int(acumulado)}'
+                )
             lineas.append(f'solicitud_segundos_bucket{{ruta="{ruta}",le="+Inf"}} {int(serie[-1])}')
             lineas.append(f'solicitud_segundos_sum{{ruta="{ruta}"}} {serie[-2]:.6f}')
             lineas.append(f'solicitud_segundos_count{{ruta="{ruta}"}} {int(serie[-1])}')

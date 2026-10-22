@@ -31,7 +31,6 @@ from app.interfaz.barrido import barrer_cada
 from app.interfaz.protecciones import Protecciones
 from app.interfaz.registro_errores import RegistroDeErrores, configurar_registro, referencia_actual
 
-
 _registro = logging.getLogger("clubnahuelmosse.arranque")
 _MENSAJE_BASE = "La base de datos no respondió a tiempo. Probá de nuevo en unos minutos."
 
@@ -47,7 +46,7 @@ async def _sin_base(request: Request, _: Exception) -> JSONResponse:
 
 
 async def _verificar_arranque() -> None:
-    """El proceso sigue en pie sin base o sin esquema: /ready dice 503 y el aviso queda en el log."""
+    """El proceso sigue en pie sin base o sin esquema: /ready dice 503 y el aviso va al log."""
     if not await asyncio.to_thread(base_disponible):
         _registro.error("arranque_sin_base: la base de datos no responde")
     elif not await asyncio.to_thread(esquema_al_dia):
