@@ -116,6 +116,10 @@ uv run pytest
 uv run pytest tests/escenarios --card <ID>
 ```
 
+Sin el emulador (variable ausente o emulador apagado) la corrida falla con «hace falta el emulador
+de Firebase Auth». `uv run pytest --sin-emulador` salta los tests que usan la API y corre el resto
+(los unitarios no necesitan base ni emulador); la salida cuenta los saltados como `skipped`.
+
 ## Desplegar en Render
 
 El `render.yaml` de la raíz del repo describe todo: un web service de Python para la API
