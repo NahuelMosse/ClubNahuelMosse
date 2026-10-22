@@ -824,3 +824,5 @@ Reserva anulada                Error al anular
 - L12 · 2026-10-22 · declared · REV-08-ASM-09, REV-08-ASM-10 · «los casos de uso de reservas» y «sin el emulador» citan las frases de S7 y S5 que el supuesto interpreta, no son valores del comportamiento
 - L13 · 2026-10-22 · T2 · cd apps/mobile && flutter test test/rutas_de_la_api_test.dart: 4 passed (contrato generado con app.openapi() en apps/api/openapi.json, sin versionar: REV-01 lo trae); flutter analyze: No issues; flutter test completo: 425 passed
 - L14 · 2026-10-22 · T3 · flutter test test/anular_desde_el_detalle_test.dart: 5 passed al primer intento (ASM-01: el comportamiento ya existía); se quitó un import sin uso de soporte/admin.dart que hacía fallar flutter analyze
+- L15 · 2026-10-22 · kit updated 1117da7bd97604f13460f467d8a02afaeb6d299a → 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a · kit 6.0.1: passed with replaced reads flutter test
+- L16 · 2026-10-22 · `apps/api/openapi.json` se versiona en esta rama, generado con `app.openapi()` de su API, porque el test de S4 lo lee; al integrar REV-01, que versiona el contrato con su comando, manda el de REV-01 y el test de S4 se vuelve a correr contra él
