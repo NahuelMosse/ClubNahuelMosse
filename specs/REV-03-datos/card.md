@@ -927,3 +927,5 @@ Las dos hablan de una reserva cancelada, pero no son lo mismo y no se ven igual:
 - L9 · 2026-10-22 · judge ACT-01 a ACT-08, ACT-10, ACT-11 y ACT-12 · se cierran con REV-03-ASM-12 a ASM-17 y los tests nuevos de T1, T2, T3 y T4
 - L10 · 2026-10-22 · declared · ACT-09 · por `pagina` las apps instaladas siguen con OFFSET y la página 500 cuesta lo que costaba; S3 vale para `despues`, el que la app de esta rama manda (ASM-11)
 - L11 · 2026-10-22 · declared · REV-03-ASM-12 · «10» y «14» nombran ASM-10 y CU-14, no son valores del comportamiento
+- L12 · 2026-10-22 · kit updated 6b982a3b4efec0cc0a103964973e3e9a074c6422 → 0a8f6431dd7b130c87980f69f9122b45794f6b70 · kit 6.0.0: nested test folders need no layer
+- L13 · 2026-10-22 · kit updated 0a8f6431dd7b130c87980f69f9122b45794f6b70 → 1117da7bd97604f13460f467d8a02afaeb6d299a · kit 6.0.0: nested test folders need no layer
