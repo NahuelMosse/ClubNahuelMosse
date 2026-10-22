@@ -32,7 +32,7 @@ A route, screen or file of main that this card changes, one line each, with the 
 
 ## Look
 
-Only with the lens `visual`, 15 lines or fewer; plan.mjs refuses the plan without the three keys. `ref:` is the design the card brings (Figma, a capture) saved in `specs/<card>/ref/`, or a URL; if the card brings none, it comes from the repo's design system or `.claude/reference/design-refs.md` (a product of that level, never «the simplest» or «the cheapest to undo») and is declared as an `ASM`.
+Only with the lens `visual`, 15 lines or fewer; plan.mjs refuses the plan without the three keys. `ref:` is the design the card brings (Figma, a capture) saved in `specs/<card>/ref/`, or a URL; if the card brings none, it comes from the repo's design system or `.claude/reference/design-refs.md` (profile web; a product of that level, never «the simplest» or «the cheapest to undo») and is declared as an `ASM`.
 
 - ref: specs/GST-208/ref/search.png · https://linear.app/issues
 - behavior: load · the rows enter in a 60 ms stagger, once

@@ -25,6 +25,8 @@ request, no `specs/` are no reason to skip it. What cannot run is declared.
 **The kit is in English; the work speaks the repo's language.** Test names, comments, commits, UI text, the PR and the Jira comments
 go in the language the repo and its team use. File names, headings, IDs and tags stay in English: the hooks and tools read them.
 
+**The kit is a base plus profiles** (`web`, `backend`; `flutter` is planned): the screen and API instruments come with the profile, and `node .claude/tools/kit.mjs profile on|off <p> --reason "…"` turns one on or off.
+
 ## The invariants
 
 1. **Never code without reading the whole requirement in this session** (Jira via MCP, with comments, attachments and links; if the
@@ -56,7 +58,7 @@ Hooks block, and block also when they fail; they reach subagents too. If one sto
 - `guard`: L1 and the Log of `card.md` (append-only), `risk.json`, committed tagged tests, migrations already in main, `kit.json`.
 - `delegate-code`: production code is written by the `builder`, the `grunt`, or the main thread on a small card after the RED commit.
 - `review-cap`: judges by `risk.json` (none in low and medium; one plan judge before building in high), no code judge and no correction round. `require-bar`: cap, Specs, Tasks, Gate.
-- `time-cap` and `context-cap`: warn, then stop new agents and suites; commit and write `handoff.md`.
+- `time-cap`: warns, then stops new agents and suites. `context-cap`: caps the builder, grunt and designer (commit, `handoff.md`, a fresh one); never the main thread.
 - `require-at-close` and `publish`: no close without gate, mutation, at high `judge.md` with its ACT closed; publish never main, force or merge.
 
 ## If the task is, it goes to

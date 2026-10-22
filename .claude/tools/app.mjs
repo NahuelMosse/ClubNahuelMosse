@@ -184,6 +184,7 @@ const command = process.argv[2];
 if (command === 'up') await up();
 else if (command === 'down') { const s = stop(); console.log(s ? `Brought down ${s.url} (pid ${s.pid}).` : 'No app was running.'); }
 else if (command === 'status') await status();
+else if (command === 'probe' && !existsSync(new URL('./probe.mjs', import.meta.url))) { console.error('probe: not installed (profile web off)'); process.exit(2); }
 else if (command === 'probe') { endsWithLine('probe'); process.exit(await (await import('./probe.mjs')).probe(process.argv.slice(3), root)); }
 else { console.error('usage: node app.mjs up|down|status|probe'); process.exit(2); }
 // The app lives on its own: the CLI must not wait for its pipes or timers.
