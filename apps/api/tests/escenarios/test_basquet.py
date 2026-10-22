@@ -86,7 +86,7 @@ def _cancha(sede: int, deporte: str, tipo: str) -> dict[str, object]:
 
 def test_el_catalogo_ofrece_basquet_con_su_tipo(api: TestClient, token_usuario: str) -> None:
     """el catálogo de deportes ofrece Básquet con su tipo de cancha
-    @REV-05-H19-01 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03
+    @REV-05-S1 @assumption:REV-05-ASM-01 @assumption:REV-05-ASM-03
     """
     catalogo = api.get("/espacios/catalogo", headers=_con(token_usuario)).json()
     claves = [d["clave"] for d in catalogo["deportes"]]
@@ -107,7 +107,7 @@ def test_el_catalogo_ofrece_basquet_con_su_tipo(api: TestClient, token_usuario: 
 def test_el_administrador_da_de_alta_una_cancha_de_basquet(
     api: TestClient, token_admin: str, sede: int
 ) -> None:
-    """el administrador da de alta una cancha de Básquet @REV-05-H19-02"""
+    """el administrador da de alta una cancha de Básquet @REV-05-S2"""
     r = api.post("/espacios", headers=_con(token_admin), json=_cancha(sede, "Basquet", "B5"))
 
     assert r.status_code == 201
@@ -118,7 +118,7 @@ def test_el_administrador_da_de_alta_una_cancha_de_basquet(
 def test_un_tipo_de_otro_deporte_no_sirve_para_basquet(
     api: TestClient, token_admin: str, sede: int
 ) -> None:
-    """un tipo que no es de Básquet se rechaza @REV-05-H19-02"""
+    """un tipo que no es de Básquet se rechaza @REV-05-S2"""
     r = api.post("/espacios", headers=_con(token_admin), json=_cancha(sede, "Basquet", "F5"))
 
     assert r.status_code == 422
@@ -128,7 +128,7 @@ def test_un_tipo_de_otro_deporte_no_sirve_para_basquet(
 def test_el_socio_filtra_los_espacios_por_basquet(
     api: TestClient, token_admin: str, token_usuario: str, sede: int
 ) -> None:
-    """el socio filtra los espacios por Básquet @REV-05-H19-03"""
+    """el socio filtra los espacios por Básquet @REV-05-S3"""
     basquet = api.post(
         "/espacios", headers=_con(token_admin), json=_cancha(sede, "Basquet", "3X3")
     ).json()

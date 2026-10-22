@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('la app muestra Básquet con su ícono @REV-05-H19-04', () {
+  test('la app muestra Básquet con su ícono @REV-05-S4', () {
     expect(iconoDeDeporte('Basquet'), Icons.sports_basketball_rounded);
   });
 
   test(
-    'la foto de Básquet no es la de una cancha de fútbol @REV-05-H19-04 @assumption:REV-05-ASM-02',
+    'la foto de Básquet no es la de una cancha de fútbol @REV-05-S4 @assumption:REV-05-ASM-02',
     () {
       expect(
         fotoDeDeporte('Basquet'),

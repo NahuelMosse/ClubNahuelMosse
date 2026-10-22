@@ -1,0 +1,28 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [
+    "sesión",
+    "contraseña",
+    "login",
+    "rol",
+    "permisos"
+  ],
+  "files": [
+    "apps/api/app/dominio/espacios.py",
+    "apps/mobile/lib/espacios/iconos.dart",
+    "apps/mobile/test/basquet_test.dart",
+    "apps/mobile/lib/sedes/fotos.dart",
+    "apps/mobile/test/soporte/montar.dart"
+  ],
+  "tasks": 4
+}
