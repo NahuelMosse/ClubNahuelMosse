@@ -26,8 +26,7 @@ import { importersOf } from './importers.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, fileMapLines, git, namedIn } from './card.mjs';
 import { AUTH_OR_PAYMENT, RISK_WORDS, hasTasksSection, readCard, requirementOf, sectionOf, tasksOf } from './card-doc.mjs';
 import { planProblems } from './plan.mjs';
-import { noVisualOf } from './gate-checks.mjs';
-import { IS_SCREEN, detectIn } from './signals.mjs';
+import { detectIn } from './signals.mjs';
 
 const SIZE_LIMIT = 200_000;
 // A file that is not written yet still says what it is by where it lives.
@@ -39,13 +38,10 @@ const linesOf = (root, file) => {
   try { return statSync(path).size <= SIZE_LIMIT ? readFileSync(path, 'utf8').split('\n').map((text) => ({ f: file, text })) : []; } catch { return []; }
 };
 
-export const classify = ({ files, taskCount, text, root, securityL2On = false, noVisual = null }) => {
+export const classify = ({ files, taskCount, text, root, securityL2On = false }) => {
   const found = detectIn({ files, added: files.flatMap((f) => linesOf(root, f)) });
-  // `no-visual:` holds only when the screen signal comes from markup inside code files (risk() refuses it when a file is a view).
-  const markup = (found.screen ?? []).flatMap((e) => e.match(/^markup in (.+)$/)?.[1] ?? []);
-  const declaredOff = Boolean(noVisual) && markup.length > 0 && !files.some((f) => IS_SCREEN.test(f));
   const modules = {
-    ui: Boolean(found.screen) && !declaredOff,
+    ui: Boolean(found.screen),
     api: Boolean(found.route || found.listen || found['http-dependency'] || files.some((f) => API_PATH.test(f))),
     data: Boolean(found.schema || found['data-dependency'] || files.some((f) => DATA_PATH.test(f))),
   };
@@ -58,13 +54,10 @@ export const classify = ({ files, taskCount, text, root, securityL2On = false, n
     ...(modules.ui ? ['visual'] : []), ...(modules.api ? ['contract'] : []), ...(modules.data ? ['integrity'] : []),
     ...(review === 'high' && (securityTouched || AUTH_OR_PAYMENT.test(words.join(' '))) ? ['interpretation', 'security'] : []),
   ];
-  return {
-    size, review, lenses, modules: touched, signals: Object.keys(found).sort(), words, files, tasks: taskCount,
-    ...(declaredOff ? { declared: [{ lens: 'visual', why: noVisual, files: markup }] } : {}),
-  };
+  return { size, review, lenses, modules: touched, signals: Object.keys(found).sort(), words, files, tasks: taskCount };
 };
 
-export const riskLine = (r) => `risk: ${r.size} · ${r.review} · lenses ${r.lenses.length ? r.lenses.join(', ') : 'none'}${r.lenses.length ? `\nquestions: .claude/reference/lenses.md (${r.lenses.join(', ')})` : ''}${(r.declared ?? []).filter((d) => d.lens === 'visual').map((d) => ` · visual declared off: ${d.why}`).join('')}`;
+export const riskLine = (r) => `risk: ${r.size} · ${r.review} · lenses ${r.lenses.length ? r.lenses.join(', ') : 'none'}${r.lenses.length ? `\nquestions: .claude/reference/lenses.md (${r.lenses.join(', ')})` : ''}`;
 
 const planMessage = (gaps) => `The plan in card.md is incomplete (${gaps.length}); risk.json is not written and nothing is built until it is:\n${gaps.map((g) => `  - ${g}`).join('\n')}`;
 
@@ -74,9 +67,6 @@ export const risk = (root, cardArg) => {
   if (doc === null) return { code: 2, message: `${cardDir}: no card.md here: risk.mjs reads the card's single document` };
   const tasks = tasksOf(doc);
   if (!hasTasksSection(doc) || !tasks.length) return { code: 2, message: 'card.md has no `## Tasks` with a line `T1 · S1,S2 · <files>`: the classification reads the files from there' };
-  const noVisual = noVisualOf(doc);
-  const view = noVisual ? tasks.flatMap((t) => t.files).find((f) => IS_SCREEN.test(f)) : undefined;
-  if (view) return { code: 3, message: planMessage([`no-visual cannot hold: ${view} is a view`]) };
   const out = join(cardDir, 'risk.json');
   if (existsSync(out)) {
     const frozen = JSON.parse(readFileSync(out, 'utf8'));
@@ -88,7 +78,7 @@ export const risk = (root, cardArg) => {
   let securityL2On = false;
   try { securityL2On = active(root).on.has('security-l2'); } catch { /* a repo without the kit's manifest has no module on */ }
   const files = [...new Set(tasks.flatMap((t) => t.files))];
-  const result = classify({ files, taskCount: tasks.length, text, root, securityL2On, noVisual });
+  const result = classify({ files, taskCount: tasks.length, text, root, securityL2On });
   // A lens whose instruments belong to a profile that is off is not asked for; the card says so and the close lists it.
   const off = lensesOff(root).filter((x) => result.lenses.includes(x.lens));
   if (off.length) {
