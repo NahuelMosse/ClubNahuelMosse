@@ -74,6 +74,7 @@ mutate apps/api/app/infraestructura/espacios.py: cd apps/api && uv run --no-sync
 mutate apps/mobile/lib/usuarios/registro.dart: cd apps/mobile && flutter test test/registro_servicio_test.dart
 mutate apps/mobile/lib/comun/tarjeta_reserva.dart: cd apps/mobile && flutter test test/tarjeta_reserva_test.dart
 mutate apps/mobile/lib/reservas/reservas.dart: cd apps/mobile && flutter test test/arquitectura_test.dart
+no-visual: la página de recuperacion.py sólo cambia el import de sus dependencias; ninguna pantalla cambia
 migrate-upgrade: cd apps/api && DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev06_test uv run --no-sync alembic upgrade head
 app: sh D:/Temp/w/herramientas/api-app.sh rev06_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev06_app --json --no-ambient --unique 'POST /sedes {"nombre": "Sede Unica", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
@@ -139,3 +140,4 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L6 · 2026-10-22 · declared · REV-06-ASM-09, REV-06-ASM-10 · «01» sale de ASM-01 y «5» de «kit 5»: referencias, no valores del comportamiento
 - L7 · 2026-10-22 · declared · mutate · de `interfaz/` sólo cambian los imports: la regla que se mueve vive en `dependencias.py` y en los repositorios, que sí se mutan; mutar las rutas repite la mutación de las cards que las crearon
 - L8 · 2026-10-22 · S10 habla de la zona «repetida», no de un valor único; `--unique` igual mide la sede de nombre único, que es lo que la API promete
+- L9 · 2026-10-22 · kit updated 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a → 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 · kit 6.1.0: no-visual for a code file with markup

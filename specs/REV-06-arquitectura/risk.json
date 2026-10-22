@@ -1,0 +1,78 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "integrity",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api",
+    "data"
+  ],
+  "signals": [
+    "data-dependency",
+    "http-dependency",
+    "route",
+    "screen"
+  ],
+  "words": [
+    "sesion",
+    "migración"
+  ],
+  "files": [
+    "apps/api/app/dependencias.py",
+    "apps/api/app/interfaz/barrido.py",
+    "apps/api/app/interfaz/espacios.py",
+    "apps/api/app/interfaz/horarios.py",
+    "apps/api/app/interfaz/notificaciones.py",
+    "apps/api/app/interfaz/pruebas.py",
+    "apps/api/app/interfaz/recuperacion.py",
+    "apps/api/app/interfaz/registro.py",
+    "apps/api/app/interfaz/reservas.py",
+    "apps/api/app/interfaz/sedes.py",
+    "apps/api/app/interfaz/sembrar_admin.py",
+    "apps/api/app/interfaz/sesion.py",
+    "apps/mobile/lib/reservas/reserva_pendiente.dart",
+    "apps/mobile/lib/comun/pantalla_acceso_denegado.dart",
+    "apps/mobile/lib/usuarios/reglas_contrasena.dart",
+    "apps/mobile/lib/usuarios/reglas_registro.dart",
+    "apps/mobile/lib/sesion/pantalla_inicio_sesion.dart",
+    "apps/mobile/lib/sesion/pantalla_nueva_contrasena.dart",
+    "apps/mobile/lib/sesion/pantalla_recuperar_contrasena.dart",
+    "apps/mobile/lib/sesion/tarjeta_cuenta.dart",
+    "apps/mobile/lib/usuarios/registro.dart",
+    "apps/mobile/lib/usuarios/pantalla_registro.dart",
+    "apps/mobile/lib/comun/tarjeta_reserva.dart",
+    "apps/mobile/lib/admin/pantalla_panel_admin.dart",
+    "apps/mobile/lib/reservas/pantalla_mis_reservas.dart",
+    "apps/api/app/infraestructura/usuarios.py",
+    "apps/api/app/infraestructura/reservas.py",
+    "apps/api/app/infraestructura/sedes.py",
+    "apps/api/app/infraestructura/notificaciones.py",
+    "apps/api/app/infraestructura/espacios.py",
+    "apps/api/pyproject.toml",
+    "apps/mobile/lib/admin/historial_reservas.dart",
+    "apps/api/tests/unit/test_espacios.py",
+    "apps/api/tests/unit/test_sedes.py",
+    "apps/api/app/dominio/zona.py",
+    "apps/api/app/dominio/notificaciones.py",
+    "apps/mobile/lib/comun/zona_club.dart",
+    "apps/mobile/lib/reservas/reservas.dart",
+    "apps/mobile/lib/reservas/reglas_busqueda.dart",
+    "apps/mobile/lib/notificaciones/notificacion.dart",
+    "apps/api/app/aplicacion/reservas.py",
+    "specs/REV-06-arquitectura/card.md"
+  ],
+  "tasks": 9,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "la página de recuperacion.py sólo cambia el import de sus dependencias; ninguna pantalla cambia",
+      "files": [
+        "apps/api/app/interfaz/recuperacion.py"
+      ]
+    }
+  ]
+}
