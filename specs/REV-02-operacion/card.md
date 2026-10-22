@@ -439,3 +439,5 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient 
 - L7 · 2026-10-22 · judge ACT-01 a ACT-08, ACT-11 y ACT-12 · se cierran con REV-02-ASM-11 a ASM-18 y los tests nuevos de T1, T2 y T4
 - L8 · 2026-10-22 · declared · ACT-09 · OUT · RPO/RTO, dónde queda la copia, inventario y retención de datos personales y la Ley 25.326: el pedido acota el hallazgo 4 a las copias, y cada cuánto se respalda depende del plan pago (REV-02-AMB-01), que decide una persona
 - L9 · 2026-10-22 · declared · ACT-10 · OUT · `traceparent`, SLOs y alertas: el club no tiene dónde mandar trazas (ASM-08) ni a quién alertar; REV-07 escribe los objetivos de servicio como meta sin medir
+- L10 · 2026-10-22 · kit updated 6b982a3b4efec0cc0a103964973e3e9a074c6422 → 0a8f6431dd7b130c87980f69f9122b45794f6b70 · kit 6.0.0: nested test folders need no layer
+- L11 · 2026-10-22 · kit updated 0a8f6431dd7b130c87980f69f9122b45794f6b70 → 1117da7bd97604f13460f467d8a02afaeb6d299a · kit 6.0.0: nested test folders need no layer
