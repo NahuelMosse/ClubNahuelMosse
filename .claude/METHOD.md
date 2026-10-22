@@ -57,7 +57,7 @@ hooks and tools read them. Read nothing else of the kit.
 - **A subagent only from the table below.** Never `general-purpose`. What decides is never delegated to a Sonnet.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
 - **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
-- **Context caps:** `context-cap` warns at 80k (main) or 90k (builder, designer), stops at 120k. Commit, write `specs/<card>/handoff.md` and continue in a fresh agent.
+- **Context caps:** `context-cap` warns a builder, grunt or designer at 90k and stops it at 120k: it commits, writes `specs/<card>/handoff.md` and a fresh agent continues. The main thread is not capped.
 
 ## Who does what
 

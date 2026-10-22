@@ -5,7 +5,7 @@
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "a7137ebde17bcd76fe2d1ee1e9f12214d755759ca39f7f7801618b4c606bd013"
+    "sha256": "dc2f46eff643ba239fbdf7f7e84c076ddb6f0beebd61cadd2fd1b4e6efb1b759"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -53,7 +53,7 @@
   },
   ".claude/hooks/context-cap.mjs": {
     "module": "core",
-    "sha256": "d7ab30d477feb9280f5e9e36da5be4e6cb4e850ecdf7ca4ef1c1ec391aeeb887"
+    "sha256": "9cb15fa87621b5a07c17f3590e30fd4ffd3bca1169b38ffdba4443a70aa02c7a"
   },
   ".claude/hooks/delegate-code.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "ff9fc7828f83a1cfc0843592718563146537d165d2cf1e7898e547ce60705f97"
+    "sha256": "317da6364954c71d06ade5d3aa37a4d886cc9d6850db53e920abf4da10ac8033"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1341,7 +1341,7 @@
   },
   ".claude/tools/hook-dispatch.mjs": {
     "module": "core",
-    "sha256": "fe1ed13881dd7fa322e9902aa6d28e1f948fd4666f02d742be611ab69391fab7"
+    "sha256": "a24db05b040ac2d593a808f4166c6ce60b86bffe252b24690ca21f6ad52b29a6"
   },
   ".claude/tools/hook-worker.mjs": {
     "module": "core",
@@ -1413,7 +1413,7 @@
   },
   ".claude/tools/transcript.mjs": {
     "module": "core",
-    "sha256": "cfce0c019fa8d239c5c525fa5bbebf53fa96ca03898707ba44acd4796de7a651"
+    "sha256": "31fd1972de5fdd2682659944a3eb8e3ef8b1514eb51ccefa4d24819e79c2d274"
   },
   ".claude/tools/trim.mjs": {
     "module": "core",
