@@ -4,7 +4,7 @@ import io
 import json
 import urllib.error
 import urllib.request
-from typing import Any
+from typing import Any, cast
 
 import pytest
 
@@ -14,7 +14,7 @@ from app.infraestructura.identidad import Demorado, ProveedorFirebase
 def _responde_400(monkeypatch: pytest.MonkeyPatch, mensaje: str) -> None:
     def pedir(*_: Any, **__: Any) -> Any:
         cuerpo = io.BytesIO(json.dumps({"error": {"message": mensaje}}).encode())
-        raise urllib.error.HTTPError("http://x", 400, "Bad Request", {}, cuerpo)  # type: ignore[arg-type]
+        raise urllib.error.HTTPError("http://x", 400, "Bad Request", cast(Any, {}), cuerpo)
 
     monkeypatch.setattr(urllib.request, "urlopen", pedir)
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:1")

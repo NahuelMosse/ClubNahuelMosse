@@ -63,8 +63,8 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
-lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/unit/test_capas.py,tests/unit/test_sin_supresiones.py && uv run --no-sync ruff check --ignore E501 tests/unit/test_capas.py tests/unit/test_sin_supresiones.py && uv run --no-sync mypy --strict app tests
-app-suite: cd apps/mobile && flutter analyze && flutter test
+lint: sh -c 'cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/unit/test_capas.py,tests/unit/test_sin_supresiones.py && uv run --no-sync ruff check --ignore E501 tests/unit/test_capas.py tests/unit/test_sin_supresiones.py && uv run --no-sync mypy --strict app tests'
+app-suite: sh -c 'PATH="/d/projects/flutter/bin:$PATH"; cd apps/mobile && flutter analyze && flutter test'
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
 duplication-app: npx -y jscpd@4 --silent --threshold 3 apps/mobile/lib
 duplication-api: npx -y jscpd@4 --silent --threshold 3 apps/api/app
@@ -74,9 +74,9 @@ mutate apps/api/app/infraestructura/reservas.py: sh D:/Temp/w/herramientas/pytes
 mutate apps/api/app/infraestructura/sedes.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/mobile/lib/usuarios/registro.dart: cd apps/mobile && flutter test test/registro_servicio_test.dart
-mutate apps/mobile/lib/comun/tarjeta_reserva.dart: cd apps/mobile && flutter test test/tarjeta_reserva_test.dart
-mutate apps/mobile/lib/reservas/reservas.dart: cd apps/mobile && flutter test test/arquitectura_test.dart
+mutate apps/mobile/lib/usuarios/registro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/registro_servicio_test.dart
+mutate apps/mobile/lib/comun/tarjeta_reserva.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/tarjeta_reserva_test.dart
+mutate apps/mobile/lib/reservas/reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/arquitectura_test.dart
 no-visual: la página de recuperacion.py sólo cambia el import de sus dependencias; ninguna pantalla cambia
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev06_test uv run --no-sync alembic upgrade head"
 mutate apps/api/app/aplicacion/errores.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
@@ -229,3 +229,7 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L82 · declared · K4 · apps/api/tests/escenarios/test_alta_espacio.py:15-31 y test_historial_reservas.py:12-28 · test congelado con tags, no se puede editar
 - L83 · 2026-10-23 · kit updated 720d5e70b54968dbbdd1989cc041eb6fa1089c43 → 1594a34f3e4027e9e7085fad559488f69ae6d96a · kit 6.3.1: kit 3 tags in replaces, no-visual skips design, flutter profile
 - L84 · 2026-10-23 · kit updated 84b012c6b61f3235df5e6d5637a5070deedf29b7 → 8db1c212392869ce6fa2e66b236ddbcd0538777f · kit 6.5.4
+- L85 · 2026-10-23 · rebase sobre card/REV-01 · conflictos de `aplicacion/reservas.py` e `interfaz/*` resueltos con los imports de REV-01 (`app.dependencias`, `app.interfaz.entradas/limites/respuestas`); `openapi.json` regenerado; `mypy --strict app tests` pasa (131 archivos) con `disable_error_code` en los 4 tests de REV-01 que ya traían anotaciones flojas
+- L86 · 2026-10-23 · `type: ignore` de `test_identidad_ingreso.py` y `test_protecciones.py` (REV-01): no llevan tag `@REV-01-S`, no están congelados; se reescriben con `cast(Any, …)`, sin supresión · `pytest` de los tres archivos 27 pasaron; `mypy --strict app tests` sin issues; `ruff` limpio
+- L87 · 2026-10-23 · el Gate reemplaza los `cd … && …` de `lint`, `app-suite` y las tres mutaciones de Dart por `sh -c` o `flutter-mobile.sh`: verify corre las líneas con cmd
+- L88 · 2026-10-23 · S5 · duplicación de `apps/api/app` 1,03 % (7 clones, 72 líneas; `npx -y jscpd@4 --silent --threshold 3 apps/api/app` sale 0)

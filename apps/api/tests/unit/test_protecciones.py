@@ -1,6 +1,7 @@
 """Las protecciones del borde (Host, tamaño, cabeceras), sobre una app mínima y sin base."""
 
 from collections.abc import Iterator
+from typing import Any, cast
 
 import pytest
 from fastapi.testclient import TestClient
@@ -142,6 +143,7 @@ def test_lo_que_no_es_http_pasa_sin_tocarse() -> None:
 
     import asyncio
 
-    asyncio.run(Protecciones(interior)({"type": "lifespan"}, None, None))  # type: ignore[arg-type]
+    nada = cast(Any, None)
+    asyncio.run(Protecciones(cast(Any, interior))({"type": "lifespan"}, nada, nada))
 
     assert llamadas == ["lifespan"]
