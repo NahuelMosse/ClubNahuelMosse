@@ -61,7 +61,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { asOneArg, cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
 import { active } from './kit.mjs';
 import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
 import { endsWithLine } from './final-line.mjs';
@@ -308,7 +308,7 @@ export const planCommands = (plan, { base, cardDir }, heading = 'Verification') 
     return {
       name,
       file: mutate[1],
-      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${command}`,
+      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${asOneArg(command)}`,
       ...(timeoutMin ? { timeoutMin } : {}),
     };
   });
@@ -508,7 +508,15 @@ export const replacedFailures = (root, output) => {
     const at = text.search(new RegExp(`^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${fn}[ \\t]*\\(`, 'm'));
     if (at < 0) return '';
     const rest = text.slice(at).split('\n');
-    const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
+    // A signature formatted over several lines (ruff, black) ends in `) -> None:` at column 0: the body starts after the line
+    // where the parentheses close and the `:` comes.
+    let depth = 0;
+    let sig = 0;
+    for (let k = 0; k < rest.length; k++) {
+      depth += (rest[k].match(/\(/g) ?? []).length - (rest[k].match(/\)/g) ?? []).length;
+      if (depth <= 0 && /:\s*(#.*)?\r?$/.test(rest[k])) { sig = k; break; }
+    }
+    const end = rest.findIndex((l, k) => k > sig && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
     return rest.slice(0, end < 0 ? undefined : end).join('\n');
   };
   const is = (t, file, title) => {
