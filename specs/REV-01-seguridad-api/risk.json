@@ -1,0 +1,67 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "infra",
+    "route",
+    "screen"
+  ],
+  "words": [
+    "contraseña",
+    "contraseñas",
+    "tokens",
+    "token",
+    "sesión",
+    "auth",
+    "sesion",
+    "rol",
+    "login",
+    "sesiones",
+    "permiso",
+    "permisos"
+  ],
+  "files": [
+    "apps/api/app/interfaz/entradas.py",
+    "apps/api/app/interfaz/limites.py",
+    "apps/api/app/aplicacion/reservas.py",
+    "apps/api/app/interfaz/registro.py",
+    "apps/api/app/interfaz/recuperacion.py",
+    "apps/api/app/interfaz/sesion.py",
+    "apps/api/app/interfaz/sedes.py",
+    "apps/api/app/interfaz/espacios.py",
+    "apps/api/app/interfaz/reservas.py",
+    "apps/api/tests/unit/test_limites.py",
+    "apps/api/tests/unit/test_entradas.py",
+    "apps/api/app/interfaz/registro_errores.py",
+    "apps/api/app/interfaz/protecciones.py",
+    "apps/api/app/config.py",
+    "apps/api/app/main.py",
+    "apps/api/app/interfaz/salud.py",
+    "apps/api/app/infraestructura/correo.py",
+    "apps/api/app/infraestructura/identidad.py",
+    "apps/api/app/infraestructura/notificaciones.py",
+    "apps/api/uv.lock",
+    "apps/api/openapi.json",
+    "render.yaml",
+    "apps/api/README.md",
+    "apps/api/tests/conftest.py"
+  ],
+  "tasks": 4,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "la página de recuperacion.py no cambia su markup; la card sólo valida las entradas de sus rutas",
+      "files": [
+        "apps/api/app/interfaz/recuperacion.py"
+      ]
+    }
+  ]
+}

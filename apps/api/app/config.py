@@ -28,6 +28,12 @@ class Config(BaseSettings):
     pruebas: bool = False
     # Cada cuántos segundos el barrido manda los recordatorios que ya les toca; 0 lo apaga.
     recordatorios_cada: int = 30
+    # Detrás del proxy de Render el origen de un pedido es el último valor de X-Forwarded-For.
+    detras_de_proxy: bool = False
+    # /docs y /redoc; en producción se apagan, el contrato sigue en /openapi.json.
+    documentacion_interactiva: bool = True
+    # Host que acepta la API además de los propios y el de url_publica, separados por coma.
+    hosts_permitidos: str = ""
 
     @field_validator("database_url")
     @classmethod

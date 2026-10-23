@@ -1,3 +1,5 @@
+import base64
+import hashlib
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
@@ -13,6 +15,8 @@ from app.infraestructura.db import conexion
 from app.infraestructura.enlaces import EnlacesSql
 from app.infraestructura.identidad import ProveedorFirebase
 from app.infraestructura.usuarios import UsuariosSql
+from app.interfaz.entradas import Clave, Codigo, Correo
+from app.interfaz.limites import Frenado, frenar_por_origen
 
 router = APIRouter(tags=["recuperación de contraseña"])
 Conexion = Annotated[Connection, Depends(conexion, scope="function")]
@@ -22,16 +26,16 @@ PAQUETE_ANDROID = "ar.edu.unimoron.clubnahuelmosse"
 
 
 class PedidoDeEnlace(BaseModel):
-    correo: str = ""
+    correo: Correo = ""
 
 
 class ConsultaDeEnlace(BaseModel):
-    codigo: str = ""
+    codigo: Codigo = ""
 
 
 class ContrasenaNueva(BaseModel):
-    codigo: str = ""
-    nueva: str = ""
+    codigo: Codigo = ""
+    nueva: Clave = ""
 
 
 class ErroresDeCampo(BaseModel):
@@ -47,9 +51,10 @@ def _invalidos(e: DatosInvalidos) -> JSONResponse:
 @router.post(
     "/recuperacion",
     status_code=status.HTTP_202_ACCEPTED,
-    responses={422: {"model": ErroresDeCampo}},
+    responses={422: {"model": ErroresDeCampo}, 429: {"model": Frenado}},
     summary="Pedir un enlace para crear una contraseña nueva",
     description="Responde lo mismo exista o no una cuenta con ese correo.",
+    dependencies=[Depends(frenar_por_origen("recuperacion"))],
 )
 def pedir(pedido: PedidoDeEnlace, tareas: BackgroundTasks, conn: Conexion) -> Response:
     try:
@@ -105,6 +110,12 @@ def usar(pedido: ContrasenaNueva, conn: Conexion) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+_SCRIPT_DEL_ENLACE = f"""
+  var codigo = new URLSearchParams(location.hash.slice(1)).get("codigo") || "";
+  location.replace("intent://app/recuperar?codigo=" + encodeURIComponent(codigo) +
+    "#Intent;scheme=clubnahuelmosse;package={PAQUETE_ANDROID};end");
+"""
+
 _PAGINA_DEL_ENLACE = f"""<!doctype html>
 <html lang="es">
 <meta charset="utf-8">
@@ -112,13 +123,17 @@ _PAGINA_DEL_ENLACE = f"""<!doctype html>
 <title>ClubNahuelMosse</title>
 <p>Abriendo la app de ClubNahuelMosse…</p>
 <p>Si no se abre, abrí este correo desde el teléfono que tiene la app instalada.</p>
-<script>
-  var codigo = new URLSearchParams(location.hash.slice(1)).get("codigo") || "";
-  location.replace("intent://app/recuperar?codigo=" + encodeURIComponent(codigo) +
-    "#Intent;scheme=clubnahuelmosse;package={PAQUETE_ANDROID};end");
-</script>
+<script>{_SCRIPT_DEL_ENLACE}</script>
 </html>
 """
+
+# La página sólo corre su propio script: el navegador lo reconoce por su hash.
+_HASH_DEL_SCRIPT = base64.b64encode(
+    hashlib.sha256(_SCRIPT_DEL_ENLACE.encode("utf-8")).digest()
+).decode("ascii")
+_POLITICA_DEL_ENLACE = (
+    f"default-src 'none'; script-src 'sha256-{_HASH_DEL_SCRIPT}'; frame-ancestors 'none'"
+)
 
 
 @router.get(
@@ -131,4 +146,10 @@ _PAGINA_DEL_ENLACE = f"""<!doctype html>
     ),
 )
 def pagina_del_enlace() -> HTMLResponse:
-    return HTMLResponse(_PAGINA_DEL_ENLACE, headers={"Referrer-Policy": "no-referrer"})
+    return HTMLResponse(
+        _PAGINA_DEL_ENLACE,
+        headers={
+            "Referrer-Policy": "no-referrer",
+            "Content-Security-Policy": _POLITICA_DEL_ENLACE,
+        },
+    )

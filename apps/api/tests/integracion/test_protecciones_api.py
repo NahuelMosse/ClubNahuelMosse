@@ -27,11 +27,16 @@ def test_un_content_length_mentido_se_rechaza_sin_leer(api: TestClient) -> None:
     assert r.status_code == 413
 
 
+def test_json_roto_da_400(api: TestClient) -> None:
+    r = api.post("/registro", content=b"{roto", headers={"content-type": "application/json"})
+    assert r.status_code == 400
+
+
 @pytest.mark.parametrize(
     "cuerpo",
-    [b"{roto", b"[]", b'{"nombre": 12, "dni": {"a": 1}}', b'"texto"', b""],
+    [b"[]", b'{"nombre": 12, "dni": {"a": 1}}', b'"texto"', b""],
 )
-def test_json_roto_o_con_tipos_equivocados_da_422(api: TestClient, cuerpo: bytes) -> None:
+def test_tipos_equivocados_dan_422(api: TestClient, cuerpo: bytes) -> None:
     r = api.post("/registro", content=cuerpo, headers={"content-type": "application/json"})
     assert r.status_code == 422
 

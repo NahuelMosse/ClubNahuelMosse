@@ -4,7 +4,6 @@ from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
-from fastapi.responses import JSONResponse
 from pydantic import AwareDatetime, BaseModel
 from sqlalchemy import Connection
 
@@ -33,9 +32,14 @@ from app.infraestructura.db import conexion
 from app.infraestructura.push import canal_push
 from app.infraestructura.reservas import ReservasSql
 from app.interfaz.barrido import despachar_de
+from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40
+from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["reservas"])
+
+# Con 20 por página, diez mil páginas son doscientas mil reservas.
+PAGINA_MAXIMA = 10_000
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 OCUPADO = "Ese horario se ocupó"
@@ -43,7 +47,7 @@ NO_DISPONIBLE = "Esta cancha ya no está disponible"
 _HORA = re.compile(r"\d{2}:\d{2}")
 
 
-class ReservaVista(BaseModel):
+class _CamposDeReserva(BaseModel):
     id: int
     espacio_id: int
     sede_id: int
@@ -58,6 +62,9 @@ class ReservaVista(BaseModel):
     total: int
     estado: Estado
     motivo: str | None
+
+
+class ReservaVista(_CamposDeReserva):
     cancelable: bool
 
 
@@ -66,23 +73,7 @@ class ListaDeReservas(BaseModel):
 
 
 def _vista(r: Reserva) -> ReservaVista:
-    return ReservaVista(
-        id=r.id,
-        espacio_id=r.espacio_id,
-        sede_id=r.sede_id,
-        espacio=r.espacio,
-        deporte=r.deporte,
-        tipo=r.tipo,
-        sede=r.sede,
-        direccion=r.direccion,
-        inicio=r.inicio,
-        fin=r.fin,
-        precio_por_hora=r.precio_por_hora,
-        total=r.total,
-        estado=r.estado,
-        motivo=r.motivo,
-        cancelable=r.cancelable,
-    )
+    return ReservaVista.model_validate(r, from_attributes=True)
 
 
 @router.get(
@@ -107,9 +98,10 @@ def listar_reservas(
 
 
 class PedidoDeReserva(BaseModel):
-    espacio_id: int
+    espacio_id: Identificador
     fecha: date
-    desde: str
+    desde: Texto40
+    # Sin cota acá: el caso de uso rechaza una duración fuera de rango antes de calcular nada.
     horas: int
 
 
@@ -161,24 +153,25 @@ def hacer_reserva(
             datetime.now(ZONA),
         )
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except NoDisponible:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"errores": {"espacio_id": NO_DISPONIBLE}},
-        )
+        return datos_invalidos({"espacio_id": NO_DISPONIBLE})
     except HorarioOcupado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"errores": {"horario": OCUPADO}}
-        )
+        return conflicto({"horario": OCUPADO})
     return _vista(reserva)
 
 
 CAMBIO = "Esto cambió mientras tanto"
+
+
+def _rechazo(e: Prohibido | NoEncontrada | DatosInvalidos) -> Response:
+    if isinstance(e, Prohibido):
+        return sin_permiso()
+    if isinstance(e, NoEncontrada):
+        return no_encontrado()
+    return datos_invalidos(e.errores)
 
 
 @router.post(
@@ -206,19 +199,17 @@ def cancelar(
     try:
         reserva = cancelar_reserva(ReservasSql(conn), perfil, reserva_id)
     except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return no_encontrado()
     except Cambiado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
-        )
+        return conflicto({"reserva": CAMBIO})
     despues.add_task(despachar_de, perfil.id, canal)
     return _vista(reserva)
 
 
 class PedidoDeCambio(BaseModel):
-    espacio_id: int
+    espacio_id: Identificador
     fecha: date
-    desde: str
+    desde: Texto40
 
 
 @router.post(
@@ -259,45 +250,18 @@ def modificar(
             _leer_hora(pedido.desde),
             datetime.now(ZONA),
         )
-    except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
-    except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
-    except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+    except (Prohibido, NoEncontrada, DatosInvalidos) as e:
+        return _rechazo(e)
     except NoDisponible:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"errores": {"espacio_id": NO_DISPONIBLE}},
-        )
+        return datos_invalidos({"espacio_id": NO_DISPONIBLE})
     except Cambiado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
-        )
+        return conflicto({"reserva": CAMBIO})
     except HorarioOcupado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"errores": {"horario": OCUPADO}}
-        )
+        return conflicto({"horario": OCUPADO})
     return _vista(reserva)
 
 
-class ReservaHistorialVista(BaseModel):
-    id: int
-    espacio_id: int
-    sede_id: int
-    espacio: str
-    deporte: str
-    tipo: str
-    sede: str
-    direccion: str
-    inicio: datetime
-    fin: datetime
-    precio_por_hora: int
-    total: int
-    estado: Estado
-    motivo: str | None
+class ReservaHistorialVista(_CamposDeReserva):
     usuario_id: int
     usuario: str
     creado_en: datetime
@@ -325,31 +289,7 @@ class HistorialVista(BaseModel):
 
 
 def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
-    return ReservaHistorialVista(
-        id=r.id,
-        espacio_id=r.espacio_id,
-        sede_id=r.sede_id,
-        espacio=r.espacio,
-        deporte=r.deporte,
-        tipo=r.tipo,
-        sede=r.sede,
-        direccion=r.direccion,
-        inicio=r.inicio,
-        fin=r.fin,
-        precio_por_hora=r.precio_por_hora,
-        total=r.total,
-        estado=r.estado,
-        motivo=r.motivo,
-        usuario_id=r.usuario_id,
-        usuario=r.usuario,
-        creado_en=r.creado_en,
-        cancelada_en=r.cancelada_en,
-        cancelada_por_nombre=r.cancelada_por_nombre,
-        espacio_de_baja=r.espacio_de_baja,
-        anulable=r.anulable,
-        aviso_envio=r.aviso_envio,
-        aviso_en=r.aviso_en,
-    )
+    return ReservaHistorialVista.model_validate(r, from_attributes=True)
 
 
 @router.get(
@@ -372,12 +312,12 @@ def listar_todas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     estado: Annotated[FiltroEstado | None, Query()] = None,
-    sede_id: Annotated[int | None, Query(ge=1)] = None,
-    deporte: Annotated[str | None, Query()] = None,
+    sede_id: Annotated[Identificador | None, Query()] = None,
+    deporte: Annotated[Texto40 | None, Query()] = None,
     desde: Annotated[date | None, Query()] = None,
     hasta: Annotated[date | None, Query()] = None,
-    q: Annotated[str | None, Query()] = None,
-    pagina: Annotated[int, Query(ge=1)] = 1,
+    q: Annotated[Busqueda | None, Query()] = None,
+    pagina: Annotated[int, Query(ge=1, le=PAGINA_MAXIMA)] = 1,
 ) -> HistorialVista | Response:
     try:
         historial = historial_global(
@@ -394,11 +334,9 @@ def listar_todas(
             ),
         )
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     return HistorialVista(
         reservas=[_vista_admin(r) for r in historial.reservas],
         total=historial.total,
@@ -431,14 +369,14 @@ def detalle(
     try:
         return _vista_admin(detalle_admin(ReservasSql(conn), perfil, reserva_id))
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return no_encontrado()
 
 
 class PedidoDeAnulacion(BaseModel):
-    motivo: str
-    espacio_id: int
+    motivo: Parrafo
+    espacio_id: Identificador
     inicio: AwareDatetime
 
 
@@ -478,18 +416,10 @@ def anular(
             pedido.espacio_id,
             pedido.inicio,
         )
-    except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
-    except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
-    except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+    except (Prohibido, NoEncontrada, DatosInvalidos) as e:
+        return _rechazo(e)
     except Cambiado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"errores": {"reserva": CAMBIO}}
-        )
+        return conflicto({"reserva": CAMBIO})
     # El aviso a quien reservó sale recién con la anulación confirmada y la respuesta enviada.
     despues.add_task(despachar_de, reserva.usuario_id, canal)
     return _vista_admin(reserva)

@@ -504,14 +504,18 @@ export const replacedFailures = (root, output) => {
   const pyBody = (file, fn) => {
     let text = '';
     try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
-    const at = text.search(new RegExp(`^\\s*(?:async\\s+)?def\\s+${fn}\\s*\\(`, 'm'));
+    // `[ \t]`, not `\s`: with the `m` flag `\s*` crosses the blank line above the `def` and the body comes back empty.
+    const at = text.search(new RegExp(`^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${fn}[ \\t]*\\(`, 'm'));
     if (at < 0) return '';
     const rest = text.slice(at).split('\n');
     const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
     return rest.slice(0, end < 0 ? undefined : end).join('\n');
   };
   const is = (t, file, title) => {
-    const sameFile = !fileOf(t) || resolve(root, fileOf(t)) === resolve(root, file);
+    // A runner started in a subfolder (`cd apps/api && pytest`) names its files from there: a path that ends the declared one counts.
+    const seenAs = fileOf(t).split('\\').join('/').replace(/^\.\//, '');
+    const declared = String(file).split('\\').join('/');
+    const sameFile = !seenAs || resolve(root, seenAs) === resolve(root, declared) || (!isAbsolute(seenAs) && declared.endsWith(`/${seenAs}`));
     return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
   };
   const failsIn = (by, name) => failing.some((t) => is(t, by, name));

@@ -29,6 +29,9 @@ Future<ResultadoDeError> atenderErrorDeRed(
     return ResultadoDeError.accesoDenegado;
   }
   final sinConexion = error is SinConexion;
+  final mensaje = error is ErrorDelServidor && error.codigo == 429
+      ? error.mensaje
+      : null;
   final reintentar = await showDialog<bool>(
     context: context,
     barrierColor: context.paleta.bgScrim,
@@ -37,7 +40,8 @@ Future<ResultadoDeError> atenderErrorDeRed(
       titulo: sinConexion ? 'Error de conexión' : 'Error del servidor',
       texto: sinConexion
           ? 'No pudimos conectarnos. Revisá tu conexión a internet y volvé a intentar.'
-          : 'No pudimos procesar la operación en este momento. Intentá más tarde.',
+          : mensaje ??
+                'No pudimos procesar la operación en este momento. Intentá más tarde.',
       principal: sinConexion ? 'REINTENTAR' : null,
       secundaria: sinConexion ? 'Volver' : 'ACEPTAR',
     ),

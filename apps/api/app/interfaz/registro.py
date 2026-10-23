@@ -13,6 +13,8 @@ from app.dominio.usuarios import DatosRegistro
 from app.infraestructura.db import conexion
 from app.infraestructura.identidad import ProveedorFirebase
 from app.infraestructura.usuarios import UsuariosSql
+from app.interfaz.entradas import Clave, Correo, Texto40, Texto120
+from app.interfaz.limites import Frenado, frenar_por_origen
 
 router = APIRouter(tags=["usuarios"])
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -24,12 +26,12 @@ MENSAJES_CAMPO = {
 
 
 class PedidoRegistro(BaseModel):
-    nombre: str = ""
-    apellido: str = ""
-    dni: str = ""
-    fecha_nacimiento: str = ""
-    correo: str = ""
-    contrasena: str = ""
+    nombre: Texto120 = ""
+    apellido: Texto120 = ""
+    dni: Texto40 = ""
+    fecha_nacimiento: Texto40 = ""
+    correo: Correo = ""
+    contrasena: Clave = ""
 
 
 class RegistroCreado(BaseModel):
@@ -50,8 +52,13 @@ class UsuarioRepetido(BaseModel):
     "/registro",
     status_code=status.HTTP_201_CREATED,
     response_model=RegistroCreado,
-    responses={422: {"model": ErroresDeCampo}, 409: {"model": UsuarioRepetido}},
+    responses={
+        422: {"model": ErroresDeCampo},
+        409: {"model": UsuarioRepetido},
+        429: {"model": Frenado},
+    },
     summary="Registrar un usuario nuevo",
+    dependencies=[Depends(frenar_por_origen("registro"))],
 )
 def registrar_usuario(
     pedido: PedidoRegistro, conn: Annotated[Connection, Depends(conexion, scope="function")]

@@ -19,6 +19,7 @@ PUBLICAS = {
     ("POST", "/recuperacion/consulta"),
     ("PUT", "/recuperacion"),
     ("GET", "/enlace/recuperar"),
+    ("GET", "/health"),
 }
 PROTEGIDAS = 28
 

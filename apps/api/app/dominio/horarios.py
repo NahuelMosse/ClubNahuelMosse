@@ -123,18 +123,23 @@ def validar_rango(
     return errores
 
 
+def error_de_duracion(horas: int) -> str | None:
+    """Por qué [horas] no es una duración reservable, o `None` si lo es."""
+    if horas < MIN_HORAS:
+        return "La duración mínima es de una hora"
+    if horas > MAX_HORAS:
+        return f"La duración máxima es de {MAX_HORAS} horas"
+    return None
+
+
 def validar_reserva(
     agenda: Agenda, fecha: date, desde: time, horas: int, ahora: datetime
 ) -> dict[str, str]:
     """Los errores de reservar [horas] horas desde [desde] el [fecha]: los de un rango (RF 3)
     más una duración entera que no pase de la medianoche."""
-    if not MIN_HORAS <= horas <= MAX_HORAS:
+    if error := error_de_duracion(horas):
         errores = validar_rango(agenda, fecha, desde, desde, ahora)
-        errores["hasta"] = (
-            "La duración mínima es de una hora"
-            if horas < MIN_HORAS
-            else f"La duración máxima es de {MAX_HORAS} horas"
-        )
+        errores["hasta"] = error
         return errores
     fin = desde.hour + horas
     if fin > 24:

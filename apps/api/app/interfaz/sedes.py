@@ -4,7 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
@@ -20,6 +20,8 @@ from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.sedes import SedesSql
+from app.interfaz.entradas import Texto40, Texto120
+from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["sedes"])
@@ -75,11 +77,12 @@ def listar_sedes(
 
 
 class PedidoDeSede(BaseModel):
-    nombre: str = ""
-    direccion: str = ""
-    apertura: str = ""
-    cierre: str = ""
-    dias: list[int] = []
+    nombre: Texto120 = ""
+    direccion: Texto120 = ""
+    apertura: Texto40 = ""
+    cierre: Texto40 = ""
+    # Los días de la semana van de 1 a 7: más de siete no tiene sentido.
+    dias: Annotated[list[int], Field(max_length=7)] = []
 
 
 _HORA = re.compile(r"\d{2}:\d{2}", re.ASCII)
@@ -93,6 +96,16 @@ def _leer_hora(valor: str) -> time | None:
         return time.fromisoformat(valor)
     except ValueError:
         return None
+
+
+def _datos(pedido: PedidoDeSede) -> DatosSede:
+    return DatosSede(
+        nombre=pedido.nombre,
+        direccion=pedido.direccion,
+        apertura=_leer_hora(pedido.apertura),
+        cierre=_leer_hora(pedido.cierre),
+        dias=tuple(pedido.dias),
+    )
 
 
 @router.post(
@@ -113,26 +126,14 @@ def alta_de_sede(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     conn: Annotated[Connection, Depends(conexion, scope="function")],
 ) -> SedeVista | Response:
-    datos = DatosSede(
-        nombre=pedido.nombre,
-        direccion=pedido.direccion,
-        apertura=_leer_hora(pedido.apertura),
-        cierre=_leer_hora(pedido.cierre),
-        dias=tuple(pedido.dias),
-    )
     try:
-        sede = dar_de_alta_sede(perfil, datos, SedesSql(conn))
+        sede = dar_de_alta_sede(perfil, _datos(pedido), SedesSql(conn))
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except Duplicado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={"errores": {"nombre": "Ya existe una sede con ese nombre"}},
-        )
+        return conflicto({"nombre": "Ya existe una sede con ese nombre"})
     return _vista(sede)
 
 
@@ -171,28 +172,16 @@ def edicion_de_sede(
     conn: Annotated[Connection, Depends(conexion, scope="function")],
     sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> SedeVista | Response:
-    datos = DatosSede(
-        nombre=pedido.nombre,
-        direccion=pedido.direccion,
-        apertura=_leer_hora(pedido.apertura),
-        cierre=_leer_hora(pedido.cierre),
-        dias=tuple(pedido.dias),
-    )
     try:
-        sede = editar_sede(perfil, sede_id, datos, pedido.confirmar, SedesSql(conn))
+        sede = editar_sede(perfil, sede_id, _datos(pedido), pedido.confirmar, SedesSql(conn))
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return no_encontrado()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except Duplicado:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={"errores": {"nombre": "Ya existe una sede con ese nombre"}},
-        )
+        return conflicto({"nombre": "Ya existe una sede con ese nombre"})
     except ReservasAfuera as e:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.cantidad}
@@ -223,17 +212,11 @@ def baja_de_sede(
     try:
         dar_de_baja_sede(perfil, sede_id, SedesSql(conn))
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return no_encontrado()
     except ConReservasFuturas:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={
-                "errores": {
-                    "sede": "No se puede dar de baja la sede porque posee reservas futuras "
-                    "asociadas."
-                }
-            },
+        return conflicto(
+            {"sede": "No se puede dar de baja la sede porque posee reservas futuras asociadas."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

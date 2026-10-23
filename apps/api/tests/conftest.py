@@ -19,6 +19,8 @@ os.environ.setdefault("FIREBASE_PROJECT_ID", "demo-clubnahuelmosse")
 os.environ.setdefault("CORREO_MODO", "buzon")
 # El barrido de recordatorios no corre solo en los tests: cada uno lo dispara con su reloj.
 os.environ["RECORDATORIOS_CADA"] = "0"
+# El cliente de pruebas pide con Host «testserver».
+os.environ.setdefault("HOSTS_PERMITIDOS", "testserver")
 RAIZ_API = Path(__file__).resolve().parents[1]
 
 
@@ -33,7 +35,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     elegidos, descartados = [], []
     for item in items:
         doc = getattr(getattr(item, "function", None), "__doc__", "") or ""
-        if f"@{card}-H" in doc:
+        if f"@{card}-H" in doc or f"@{card}-S" in doc or f"@assumption:{card}-ASM-" in doc:
             elegidos.append(item)
         else:
             descartados.append(item)

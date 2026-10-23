@@ -8,6 +8,7 @@ from app.aplicacion.horarios import horarios_disponibles
 from app.dominio.horarios import (
     Agenda,
     Grilla,
+    error_de_duracion,
     grilla,
     validar_consulta,
     validar_rango,
@@ -168,3 +169,18 @@ def test_una_reserva_se_valida_por_su_inicio_y_su_duracion(
         Agenda(time(8), time(23), TODOS), JUEVES, time(desde), horas, _a(JUEVES - timedelta(1), 9)
     )
     assert errores == ({} if campo is None else {campo: mensaje})
+
+
+@pytest.mark.parametrize(
+    ("horas", "mensaje"),
+    [
+        (-1, "La duración mínima es de una hora"),
+        (0, "La duración mínima es de una hora"),
+        (1, None),
+        (4, None),
+        (5, "La duración máxima es de 4 horas"),
+        (10**12, "La duración máxima es de 4 horas"),
+    ],
+)
+def test_una_duracion_es_reservable_de_una_a_cuatro_horas(horas: int, mensaje: str | None) -> None:
+    assert error_de_duracion(horas) == mensaje

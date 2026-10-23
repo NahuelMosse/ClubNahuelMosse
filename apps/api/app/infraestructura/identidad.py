@@ -86,14 +86,16 @@ class ProveedorFirebase:
             with urllib.request.urlopen(pedido, timeout=_ESPERA_S):
                 return True
         except urllib.error.HTTPError as e:
-            if e.code != 400:
+            # La respuesta de error es un recurso abierto: se cierra pase lo que pase.
+            with e:
+                if e.code != 400:
+                    raise
+                mensaje = str(json.loads(e.read()).get("error", {}).get("message", ""))
+                if mensaje.startswith("TOO_MANY_ATTEMPTS"):
+                    raise Demorado from e
+                if mensaje.split(" ")[0] in _RECHAZOS:
+                    return False
                 raise
-            mensaje = str(json.loads(e.read()).get("error", {}).get("message", ""))
-            if mensaje.startswith("TOO_MANY_ATTEMPTS"):
-                raise Demorado from e
-            if mensaje.split(" ")[0] in _RECHAZOS:
-                return False
-            raise
 
     def cambiar_contrasena(self, uid: str, nueva: str) -> None:
         auth.update_user(uid, password=nueva, app=_app_firebase())
