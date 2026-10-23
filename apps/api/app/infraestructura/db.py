@@ -17,7 +17,7 @@ _OPCIONES = "-c statement_timeout=10000 -c lock_timeout=5000"
 
 
 @cache
-def motor() -> Engine:
+def _crear_motor() -> Engine:
     # Sin los parámetros en los mensajes de error: llevan DNI, correo y nombre y terminan en el log.
     return create_engine(
         config.database_url_app or config.database_url,
@@ -28,6 +28,22 @@ def motor() -> Engine:
         pool_timeout=_ESPERA_CONEXION_S,
         connect_args={"connect_timeout": _ESPERA_CONEXION_S, "options": _OPCIONES},
     )
+
+
+class _Motor:
+    """El motor de la API, uno por proceso. Descartarlo cierra sus conexiones: una que
+    queda abierta sin dueño se cierra sola más tarde, fuera de quien la abrió."""
+
+    def __call__(self) -> Engine:
+        return _crear_motor()
+
+    def cache_clear(self) -> None:
+        if _crear_motor.cache_info().currsize:
+            _crear_motor().dispose()
+        _crear_motor.cache_clear()
+
+
+motor = _Motor()
 
 
 def conexion() -> Iterator[Connection]:
