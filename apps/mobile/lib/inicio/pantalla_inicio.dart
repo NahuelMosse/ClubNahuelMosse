@@ -5,6 +5,7 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -112,14 +113,13 @@ class _PantallaInicioState extends State<PantallaInicio> {
       _datos = null;
       _fallo = true;
     });
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+    );
   }
 
   /// Vuelve a leer sin avisos: si no se puede, queda lo que había.

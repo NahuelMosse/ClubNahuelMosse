@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
-import '../comun/barra_superior.dart';
-import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
-import '../sedes/fotos.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -82,12 +79,9 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     } on CanchaNoDisponible {
       cambio = ResultadoDeModificar.cambio;
     } on ReservaRechazada catch (r) {
-      // El horario dejó de valer mientras se confirmaba (por ejemplo, ya empezó).
       if (!mounted) return;
       setState(() => _enviando = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
+      avisarReservaRechazada(context, r);
       _volver(ResultadoDeModificar.ocupado);
       return;
     } on SesionVencida {
@@ -124,115 +118,27 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
         '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
     final ahora = '${dia(e.fecha)} · ${e.inicio} – ${e.fin}';
     // Mientras se guarda no se sale: el cambio podría quedar hecho sin que se vea.
-    return PopScope(
-      canPop: !_enviando,
-      child: Scaffold(
-        backgroundColor: p.bgBase,
-        appBar: BarraSuperior(titulo: 'Confirmá el cambio', alVolver: _volver),
-        bottomNavigationBar: DecoratedBox(
-          decoration: BoxDecoration(
-            color: p.bgSurface,
-            border: Border(top: BorderSide(color: p.borderDefault)),
+    return EsqueletoDeConfirmacion(
+      titulo: 'Confirmá el cambio',
+      enviando: _enviando,
+      alVolver: _volver,
+      textoPrimario: 'GUARDAR EL CAMBIO',
+      alPrimario: _guardar,
+      textoSecundario: 'DEJAR LA RESERVA COMO ESTÁ',
+      alSecundario: () => _volver(ResultadoDeModificar.desistida),
+      tarjeta: TarjetaDeEleccion(
+        eleccion: e,
+        filas: [
+          _Horario(titulo: 'ANTES', valor: antes, nuevo: false),
+          _Horario(titulo: 'AHORA', valor: ahora, nuevo: true),
+          Divider(height: Medidas.s16, color: p.borderDefault),
+          FilaDeDato(
+            dato: 'Cancha',
+            valor: 'Cancha ${e.cancha.numero} · ${e.cancha.condicion}',
           ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.all(Medidas.s24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  BotonPrimario(
-                    texto: 'GUARDAR EL CAMBIO',
-                    alTocar: _guardar,
-                    cargando: _enviando,
-                  ),
-                  const SizedBox(height: Medidas.s12),
-                  BotonContorno(
-                    texto: 'DEJAR LA RESERVA COMO ESTÁ',
-                    alTocar: _enviando
-                        ? null
-                        : () => _volver(ResultadoDeModificar.desistida),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        body: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s24,
-            Medidas.s24,
-            Medidas.s40,
-          ),
-          children: [
-            const PasosDeReserva(actual: 1),
-            const SizedBox(height: Medidas.s24),
-            Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                color: p.bgSurfaceRaised,
-                borderRadius: BorderRadius.circular(Medidas.radioLg),
-                border: Border.all(color: p.borderDefault),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 76),
-                    child: FotoConVelo(
-                      imagen: fotoDeDeporte(e.cancha.deporte),
-                      child: Padding(
-                        padding: const EdgeInsets.all(Medidas.s16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              e.tipo,
-                              style: Textos.sobretitulo.copyWith(
-                                color: Paleta.oscura.accentBase,
-                              ),
-                            ),
-                            Text(
-                              e.sede.nombre.toUpperCase(),
-                              style: Textos.h2.copyWith(
-                                color: Paleta.oscura.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(Medidas.s16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _Horario(titulo: 'ANTES', valor: antes, nuevo: false),
-                        _Horario(titulo: 'AHORA', valor: ahora, nuevo: true),
-                        Divider(height: Medidas.s16, color: p.borderDefault),
-                        FilaDeDato(
-                          dato: 'Cancha',
-                          valor:
-                              'Cancha ${e.cancha.numero} · ${e.cancha.condicion}',
-                        ),
-                        FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
-                        const SizedBox(height: Medidas.s8),
-                        Divider(height: 1, color: p.borderDefault),
-                        const SizedBox(height: Medidas.s16),
-                        FilaDeTotal(total: e.total),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
+          const SizedBox(height: Medidas.s8),
+        ],
       ),
     );
   }

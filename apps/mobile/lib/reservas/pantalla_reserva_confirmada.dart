@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/boton.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fechas.dart';
@@ -71,13 +72,8 @@ class PantallaReservaConfirmada extends StatelessWidget {
               style: Textos.cuerpo.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: Medidas.s24),
-            Container(
+            MarcoDeTarjeta(
               padding: const EdgeInsets.all(Medidas.s16),
-              decoration: BoxDecoration(
-                color: p.bgSurfaceRaised,
-                borderRadius: BorderRadius.circular(Medidas.radioLg),
-                border: Border.all(color: p.borderDefault),
-              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [

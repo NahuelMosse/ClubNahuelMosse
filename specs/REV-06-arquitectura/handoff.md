@@ -9,7 +9,14 @@ Alcance: NO tocar `apps/api/app` (lo extrae REV-01). Sólo `apps/mobile/lib` baj
 - `admin/listado_admin.dart`: `EncabezadoAdmin`, `PlantillaListadoAdmin`, `cabeceraDeListadoAdmin`, `TarjetaAdmin`; usados por espacios_admin, sedes_admin y panel_admin (encabezado + fallo).
 - `flutter analyze lib` sin problemas; `flutter test test/admin` verde (test/comun no existe). T4 de card.md ya lista estos archivos.
 
-## Pendiente, por ahorro
+## Hecho en la segunda tanda (4,75 % -> 4,09 %, 720 líneas; faltan ~240 para ~480)
+- `comun/marco_de_tarjeta.dart` (`MarcoDeTarjeta`), usado en pantalla_sede y reserva_confirmada.
+- confirmar_reserva.dart: `EsqueletoDeConfirmacion`, `TarjetaDeEleccion`, `avisarReservaRechazada`; confirmar_cambio los usa.
+- `fallo_de_carga.dart` pasó a `sesion/` (comun sólo puede importar api y tema); inicio y mis_reservas lo usan.
+- `flutter analyze lib` limpio; verdes: arquitectura, reservar, modificar_reserva, mis_reservas, inicio. Corrida completa sin capturas: sólo fallaban las 2 de arquitectura (ya arregladas).
+- Siguiente planeado: `MarcoDeDialogo`/`CirculoDeIcono` públicos en dialogo_error.dart para anular y `_ConfirmarBaja` (mi_perfil); `MensajeDeCampo` en dialogo_anular_reserva (170-186); luego los ítems 3-5 de abajo.
+
+## Pendiente, por ahorro (los 1 y 2 están hechos)
 1. `reservas/pantalla_confirmar_cambio.dart` vs `pantalla_confirmar_reserva.dart` (~80 líneas): extraer en confirmar_reserva.dart un `EsqueletoDeConfirmacion` (PopScope+Scaffold+BarraSuperior+pie con BotonPrimario/BotonContorno+ListView con PasosDeReserva), `TarjetaDeEleccion(eleccion, filas)` (foto + filas + Divider + FilaDeTotal) y un helper del snackbar de `ReservaRechazada`.
 2. Marco de tarjeta repetido (`Container clip antiAlias, bgSurfaceRaised, radioLg, borderDefault`, 20 usos): un `MarcoDeTarjeta` en `comun/` resuelve sede.dart:621, cambio:172, etc.
 3. `inicio/pantalla_inicio.dart` vs `reservas/pantalla_mis_reservas.dart` (26, 21, 15, 13, 11, 11, 10) y vs `usuarios/pantalla_mi_perfil.dart` (11).

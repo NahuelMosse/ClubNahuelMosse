@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import 'dialogo_error.dart';
+import '../comun/dialogo_error.dart';
+import 'sesion.dart';
+import 'tarjeta_cuenta.dart';
 
 /// Avisa el fallo de una carga de pantalla: la sesión vencida cierra la sesión; un error
 /// de red ofrece reintentar con [reintentar].

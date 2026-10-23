@@ -6,6 +6,7 @@ import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
@@ -118,14 +119,13 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       _datos = null;
       _fallo = true;
     });
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+    );
   }
 
   /// La reserva que se está cancelando: su botón muestra que espera y los demás quedan

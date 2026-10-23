@@ -8,7 +8,7 @@ import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/estado_vacio.dart';
-import '../comun/fallo_de_carga.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';

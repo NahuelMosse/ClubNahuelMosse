@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/fallo_de_carga.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
