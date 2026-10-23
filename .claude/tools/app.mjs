@@ -42,7 +42,8 @@ import { join } from 'node:path';
 import { currentCard, keyOf } from './card.mjs';
 import { endsWithLine } from './final-line.mjs';
 
-const START_TIMEOUT_MS = 60_000;
+// KIT_APP_START_TIMEOUT_S raises it on a loaded machine, where a cold Python import alone can pass 60 s.
+const START_TIMEOUT_MS = (Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 60) * 1000;
 const POLL_MS = 250;
 const root = process.cwd();
 const stateFile = join(root, '.validation', 'app.json');

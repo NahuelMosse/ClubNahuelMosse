@@ -68,7 +68,7 @@ import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
 import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
 import { CARD_FILE, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
-import { cardChecks, probeRecords, screenChecks, specsCheck } from './gate-checks.mjs';
+import { cardChecks, noVisualCheck, probeRecords, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
 import { escalate } from './risk.mjs';
 import { changedBetween, snapshot } from './tree-snapshot.mjs';
@@ -274,8 +274,8 @@ const killTree = (p) => {
   else try { process.kill(-p.pid, 'SIGKILL'); } catch { p.kill('SIGKILL'); }
 };
 
-// `app:` and `seed:` tell app.mjs how to start the app the judges share; they are not checks.
-const ENVIRONMENT_LINE = /^(app|seed):/;
+// `app:` and `seed:` tell app.mjs how to start the app the judges share; `no-visual:` is a declaration risk.mjs reads: none is a check.
+const ENVIRONMENT_LINE = /^(app|seed|no-visual):/;
 // `heading` is `Verification` in plan.md and `Gate` in card.md: the same block, the same lines.
 const HOST_WORDS = /\bHost\b|\b[Vv]irtual[ -][Hh]osts?\b/;
 export const wantsStrictHost = (doc) => {
@@ -469,11 +469,15 @@ export const failingTests = (output, limit = 3) => {
     } else if ((m = line.match(/^\s*\d+:\d+ \+\d+(?: ~\d+)?(?: -\d+)?: (.+?\.dart): (.+?) \[E\]\s*$/))) {
       // flutter test: `00:05 +445 -1: <file>: <group and test name> [E]`.
       found.set(m[2], { name: m[2], file: m[1] });
+    } else if ((m = line.match(/^FAILED (\S+?\.py)::(?:\S+::)?(\w+)(?:\[[^\]]*\])?(?: - .*)?\s*$/))) {
+      // pytest's short summary: `FAILED tests/x.py::TestC::test_y - AssertionError: ...`.
+      found.set(`${m[1]}::${m[2]}`, { name: m[2], file: m[1], pyFunc: true });
     }
   }
   // flutter test counts the failures in its progress prefix (`+445 -1:`); the last one is the total.
   const flutterFailed = [...output.matchAll(/^\s*\d+:\d+ \+\d+(?: ~\d+)? -(\d+):/gm)].at(-1)?.[1];
-  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? flutterFailed ?? 0);
+  const pytestFailed = output.match(/^=+ (?:.*?, )?(\d+) failed\b.*=+\s*$/m)?.[1];
+  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? flutterFailed ?? pytestFailed ?? 0);
   const tests = [...found.values()];
   return total > limit ? [] : tests;
 };
@@ -482,7 +486,8 @@ export const failingTests = (output, limit = 3) => {
 export const REPLACES = /replaces:\s*(\S+)\s+"([^"]+)"\s*·\s*(.*?)\s*·\s*by:\s*(\S+)\s+"([^"]+)"/;
 export const replacementsOf = (doc) => (String(doc).split(/^## Log\b.*$/m)[1] ?? '').split('\n')
   .map((l) => l.match(REPLACES)).filter(Boolean).map((m) => ({ file: m[1], name: m[2], why: m[3], by: m[4], byName: m[5] }));
-const SPEC_TAG = /@(?:assumption:)?[A-Z][A-Z0-9]*-\d+-(?:S|ASM-)\d+(?!\d)/g;
+// A frozen test of a card from kit 3 carries `@<ID>-H<n>[-<n>]` and `@supuesto:<ID>-SUP-<n>`: its replacement repeats them too.
+const SPEC_TAG = /@(?:assumption:|supuesto:)?[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+|SUP-\d+|H\d+(?:-\d+)?)(?!\d)/g;
 
 // When the failing tests of a suite are all declared replaced and each replacement exists, carries the same tag and is not
 // failing, they are what `passed with replaced` lists. Else null: the line stays failed.
@@ -492,7 +497,24 @@ export const replacedFailures = (root, output) => {
   const card = currentCard(root);
   const doc = card && existsSync(join(card, CARD_FILE)) ? readFileSync(join(card, CARD_FILE), 'utf8') : '';
   const declared = replacementsOf(doc);
-  const names = new Set(failing.map((t) => t.name));
+  // A replacement may keep the title of the test it replaces: it is failing only if a test of that name fails in its own
+  // file. A failure whose runner does not say the file counts against any file.
+  const fileOf = (t) => (t.file ?? t.nodeFile ?? '').replace(/:\d+(?::\d+)?$/, '');
+  // pytest names a failure by its function; the title with the tags is in the function's docstring or its body.
+  const pyBody = (file, fn) => {
+    let text = '';
+    try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
+    const at = text.search(new RegExp(`^\\s*(?:async\\s+)?def\\s+${fn}\\s*\\(`, 'm'));
+    if (at < 0) return '';
+    const rest = text.slice(at).split('\n');
+    const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
+    return rest.slice(0, end < 0 ? undefined : end).join('\n');
+  };
+  const is = (t, file, title) => {
+    const sameFile = !fileOf(t) || resolve(root, fileOf(t)) === resolve(root, file);
+    return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
+  };
+  const failsIn = (by, name) => failing.some((t) => is(t, by, name));
   const found = [];
   const holds = (r) => {
     const tags = r.name.match(SPEC_TAG) ?? [];
@@ -502,7 +524,7 @@ export const replacedFailures = (root, output) => {
   };
   for (const t of failing) {
     // The Log is append-only: a later line corrects an earlier declaration of the same test, so the latest that holds counts.
-    const r = declared.filter((d) => d.name === t.name && !names.has(d.byName)).reverse().find(holds);
+    const r = declared.filter((d) => is(t, d.file, d.name) && !failsIn(d.by, d.byName)).reverse().find(holds);
     if (!r) return null;
     found.push(r);
   }
@@ -628,6 +650,8 @@ const controls = (lines) => withoutHidden(lines).match(CONTROL)?.length ?? 0;
 // `off` are the procedures the grade leaves out (kit.mjs `exemption`): at poc there is no design line
 // and no component set to check against.
 export const design = (root, cardDir, off = new Set()) => {
+  // A card that declared `no-visual:` changes no markup (its gate check verifies the diff): it owes no design line.
+  if (riskOf(cardDir)?.declared?.some((d) => d.lens === 'visual')) return [];
   const base = cardStart(root, cardDir);
   const touched = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
@@ -699,6 +723,14 @@ const cardCode = (root, cardDir) => cardFiles(root, cardStart(root, cardDir))
 
 // K4 — measured: duplication was never measured in 3 inspections. Clones between files of the card,
 // or between them and the rest of the repo, one action each.
+// A clone that cannot be extracted —one copy is a frozen test— is declared in the Log: `declared · K4 · <file>[:<lines>] · <why>`.
+// A clone with a declared file on either side is not reported; close.mjs lists the declaration for a person.
+export const DECLARED_K4 = /declared\s*·\s*K4\s*·\s*([^\s·:]+)(?::[\d-]+)?\s*·\s*(.+?)\s*$/;
+export const declaredClones = (cardDir) => {
+  const doc = existsSync(join(cardDir, CARD_FILE)) ? readFileSync(join(cardDir, CARD_FILE), 'utf8') : '';
+  return new Map((doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').map((l) => l.match(DECLARED_K4)).filter(Boolean).map((m) => [m[1], m[2]]));
+};
+
 export const duplication = (root, cardDir, run = defaultRun) => {
   const files = cardCode(root, cardDir);
   if (!files.length) return [];
@@ -719,11 +751,13 @@ export const duplication = (root, cardDir, run = defaultRun) => {
     return [`K4 · jscpd could not run: unreadable report (${e.message}) · close: make \`npx -y jscpd@4\` run`];
   }
   const norm = (n) => (isAbsolute(n) ? relative(root, n) : n).split('\\').join('/');
+  const declared = declaredClones(cardDir);
   return (report.duplicates ?? []).flatMap((d) => {
     const a = norm(d.firstFile.name);
     const b = norm(d.secondFile.name);
     if (!files.includes(a) && !files.includes(b)) return [];
-    return [`K4 · clone of ${d.lines} lines: ${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end} · close: extract what both share into one place, or write why the two must differ`];
+    if (declared.has(a) || declared.has(b)) return [];
+    return [`K4 · clone of ${d.lines} lines: ${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end} · close: extract what both share into one place, or add to the Log \`declared · K4 · <file> · <why the two must differ>\``];
   });
 };
 
@@ -1100,11 +1134,13 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
 // A card is a screen card when its risk.json has the `visual` lens or the files it touched are a screen.
 const isScreenCard = (root, cardDir) => {
   if (riskOf(cardDir)?.lenses?.includes('visual')) return true;
+  // A declared `no-visual` that the gate verified (its check passed) leaves the card as not a screen.
+  if (noVisualCheck(root, cardDir).some((c) => c.state === 'passed')) return false;
   return Boolean(detectIn({ files: cardFiles(root, cardStart(root, cardDir)) }).screen);
 };
 
 // The gate's own checks: every spec has a tagged test, and a screen passes axe, contrast and focus.
-export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) ? screenChecks(probeRecords(root)) : [])];
+export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root).probe ? screenChecks(probeRecords(root)) : [])];
 
 // One line per check: `<name>: passed`, `<name>: failed: <why>` or `<name>: could not run: <why>`.
 const lineOf = (name, state, detail) => `${name}: ${state === 'passed' ? 'passed' : `${state}: ${detail}`}`;
