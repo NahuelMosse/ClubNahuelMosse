@@ -941,3 +941,4 @@ Las dos hablan de una reserva cancelada, pero no son lo mismo y no se ven igual:
 - L23 · 2026-10-22 · T3 · gate: mutate de los tres archivos de notificaciones passed
 - L24 · 2026-10-22 · T4 · gate: app-suite passed; mutate de los tres .dart passed
 - L25 · 2026-10-22 · gate red · suite y migrate-upgrade con errores de setup bajo carga, scenarios con los 4 tests congelados que fallan (los reemplazos pasan), attacks por foreign Host (25-S2, REV-01); required pide pyproject.toml en Tasks y clones K4 en tests
+- L26 · 2026-10-23 · kit updated 7a91c9699fa944f754191f53f20a024663a607bd → c3b49d603591e5747683ff5c839f33e26a20502c · kit 6.1.2: Dart in close and required, replaced tests need no lint
