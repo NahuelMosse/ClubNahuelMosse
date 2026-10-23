@@ -504,7 +504,8 @@ export const replacedFailures = (root, output) => {
   const pyBody = (file, fn) => {
     let text = '';
     try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
-    const at = text.search(new RegExp(`^\\s*(?:async\\s+)?def\\s+${fn}\\s*\\(`, 'm'));
+    // `[ \t]`, not `\s`: with the `m` flag `\s*` crosses the blank line above the `def` and the body comes back empty.
+    const at = text.search(new RegExp(`^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${fn}[ \\t]*\\(`, 'm'));
     if (at < 0) return '';
     const rest = text.slice(at).split('\n');
     const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
@@ -658,6 +659,9 @@ export const design = (root, cardDir, off = new Set()) => {
   const base = cardStart(root, cardDir);
   const touched = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
+    // A Dart widget is not a web screen: its `color:` is a named argument, not CSS. Flutter's design bar is its profile's
+    // goldens and guidelines, not the design line, tokens.css and CSS transitions checked here.
+    .filter((f) => !f.endsWith('.dart'))
     .filter((f) => IS_SCREEN.test(f) || (IS_CODE.test(f) && BUILDS_SCREEN.test(readFileSync(join(root, f), 'utf8'))));
   if (!touched.length) return [];
   // The component set is checked as a whole in its gallery; the screens, for how they use it.
@@ -972,7 +976,9 @@ export const verify = async (root) => {
   if (appLine) {
     const stateFile = join(root, '.validation', 'app.json');
     const pidBefore = readState(stateFile)?.pid;
-    const up = spawnSync('node', [join(import.meta.dirname, 'app.mjs'), 'up'], { cwd: root, encoding: 'utf8', timeout: 150000, maxBuffer: 1 << 26 });
+    // app.mjs waits KIT_APP_START_TIMEOUT_S (60 s by default) for the app, then runs the seed: this cut leaves it 90 s beyond its own wait.
+    const startS = Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 60;
+    const up = spawnSync('node', [join(import.meta.dirname, 'app.mjs'), 'up'], { cwd: root, encoding: 'utf8', timeout: Math.max(150_000, (startS + 90) * 1000), maxBuffer: 1 << 26 });
     const state = readState(stateFile);
     if (up.status !== 0 || !state) return { error: `The \`app:\` line could not start the app (exit ${up.status}): ${(up.stderr || up.stdout || '').trim().split('\n').slice(-6).join(' ⏎ ')}` };
     startedApp = state.pid !== pidBefore;
