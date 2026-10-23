@@ -62,11 +62,11 @@ not_read:
 ## Gate
 
 ```
-suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
+suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/escenarios/test_suite_confiable.py,tests/escenarios/test_contrato_publicado.py && uv run --no-sync ruff check --ignore F821,SIM300 tests/escenarios/test_suite_confiable.py tests/escenarios/test_contrato_publicado.py && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_suite_confiable.py
-mutate apps/api/app/aplicacion/reservas.py: cd apps/api && uv run --no-sync pytest -q -x tests/unit/test_casos_de_uso_reservas.py
+scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_suite_confiable.py
+mutate apps/api/app/aplicacion/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit/test_casos_de_uso_reservas.py
 mutate apps/mobile/lib/api/cliente_api.dart [timeout 90 min]: cd apps/mobile && flutter test test/rutas_de_la_api_test.dart
 mutate apps/mobile/lib/api/rutas.dart [timeout 90 min]: cd apps/mobile && flutter test test/rutas_de_la_api_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev08_app
