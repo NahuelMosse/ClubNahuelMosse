@@ -99,6 +99,7 @@ mutate apps/api/app/interfaz/notificaciones.py: cd apps/api && sh D:/Temp/w/herr
 mutate apps/api/app/interfaz/salud.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
 no-visual: la página de recuperacion.py no cambia su markup; la card sólo valida las entradas de sus rutas
 lint-app: dart format --output=none --set-exit-if-changed apps/mobile/lib/api/cliente_api.dart apps/mobile/lib/comun/dialogo_error.dart apps/mobile/test/limite_de_frecuencia_test.dart && cd apps/mobile && flutter analyze
+mutate apps/mobile/lib/api/cliente_api.dart [timeout 90 min]: cd apps/mobile && flutter test test/limite_de_frecuencia_test.dart
 mutate apps/api/app/dominio/horarios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_seguridad_api.py
 app: sh D:/Temp/w/herramientas/api-app.sh rev01_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev01_app --json --no-ambient --common-headers "Content-Security-Policy" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
