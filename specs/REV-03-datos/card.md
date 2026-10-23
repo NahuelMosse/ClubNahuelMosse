@@ -73,7 +73,7 @@ Cada spec cita un escenario de la card tal como está escrito. Un test lleva su 
 
 ```
 suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider --ignore-glob=tests/escenarios/test_datos*
-lint: sh D:/Temp/w/herramientas/lint-api-rev03.sh
+lint: sh D:/Temp/w/herramientas/ruff-mypy-api-rev03.sh apps/api/app apps/api/migraciones apps/api/tests apps/mobile/test
 app-suite: cd apps/mobile && flutter analyze && flutter test
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios --card REV-03
 migrate-upgrade: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_datos_migraciones.py
@@ -974,3 +974,7 @@ Las dos hablan de una reserva cancelada, pero no son lo mismo y no se ven igual:
 - L55 · 2026-10-23 · declared · K4 · apps/mobile/lib/admin/pantalla_detalle_reserva.dart · bloque previo a REV-03 (no tocó el archivo) igual a uno de pantalla_mis_reservas.dart
 - L56 · 2026-10-23 · declared · K4 · apps/mobile/lib/admin/estado_reserva_chip.dart · bloque previo a REV-03 (no tocó el archivo) igual a uno de otro archivo de la app
 - L57 · 2026-10-23 · T1 a T4 · arreglos del gate 2: lint y attacks pasan en wrappers (lint-api-rev03.sh; attacks con `--common-headers "Content-Security-Policy"`, sin X-Request-ID que es de REV-02; corrido a mano: exit 0, el timeout del JSON mal formado no se repitió); suite ignora tests/escenarios/test_datos* (los corre scenarios; el basename fijo de test_datos.py chocaba y dejaba conexiones abiertas que rompían tests ajenos: test_historial_reservas y test_datos_migraciones_lock pasan juntos, 2 passed); replaces L43-L47 con los títulos con etiquetas; mutate 0008: la línea corre los tests (0/2 vivos en :12 y :13, ambos equivalentes, declarados); K4 declarados L48-L56
+- L58 · 2026-10-23 · `lint:` corre por `ruff-mypy-api-rev03.sh`, que nombra lo que cubre: required.mjs sólo cuenta como linter un comando que dice ruff y las carpetas
+- L59 · 2026-10-23 · declared · K4 · apps/api/app/infraestructura/reservas.py · los tramos repetidos (71-106 contra 91-106, 278-288 contra 388-398) vienen de CU-09 y CU-11, anteriores a esta card; REV-03 sólo agrega el marcador y las tandas
+- L60 · 2026-10-23 · declared · K4 · apps/api/app/interfaz/reservas.py · el tramo 423-429 repite el de 250 desde CU-09 y CU-11, anteriores a esta card
+- L61 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_datos_migraciones_lock.py · reemplazo (L31) del test congelado de test_datos_tandas_y_cola.py: conserva su preparación
