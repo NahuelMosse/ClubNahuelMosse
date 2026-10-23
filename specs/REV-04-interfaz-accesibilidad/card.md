@@ -90,3 +90,4 @@ stable: node .claude/tools/repeat.mjs 3 -- sh -c "cd apps/mobile && flutter test
 - L13 · 2026-10-23 · kit updated 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 → 7a91c9699fa944f754191f53f20a024663a607bd · kit 6.1.1: Dart tests, pytest failures, replacements by file, migrated card start
 - L14 · 2026-10-23 · `faltantes.dart` (T2, el texto de lo que falta que comparten el registro y la sede) y `pantalla_buscar_cancha.dart` (T1, «ahora» sale del reloj del club) los cambió la card y faltaban en `## Tasks`; `lint` formatea también los tests que la card tocó, salvo `interfaz_accesible_test.dart`, congelado (L9)
 - L15 · 2026-10-23 · kit updated 7a91c9699fa944f754191f53f20a024663a607bd → c3b49d603591e5747683ff5c839f33e26a20502c · kit 6.1.2: Dart in close and required, replaced tests need no lint
+- L16 · 2026-10-23 · kit updated c3b49d603591e5747683ff5c839f33e26a20502c → 720d5e70b54968dbbdd1989cc041eb6fa1089c43 · kit 6.2.0: declared K4 for a clone with a frozen test
