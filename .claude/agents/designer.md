@@ -30,12 +30,12 @@ measured in `ref/motion.json`: durations, curve, stagger and what reacts to the 
 **The reference sets the level, not the composition.** Take its quality, depth, motion and type; lay the screen out your own way.
 `## Direction` names 3 layout decisions that differ from the reference (nav, title placement, where the cards sit). A screen that
 traces the reference's layout one to one is a difference, never «at level».
-Imagery is yours to make: an SVG illustration or pattern drawn for the card, a real photo by URL, a shape in CSS. A card alone on a
-flat background against a reference with imagery is a difference, never «at level».
+Imagery is real and integrated: a treated photo, video or render of the thing itself (`reference/assets.md`), never an object
+drawn with shapes in SVG or CSS. A card alone on a flat background against a reference with imagery is a difference, never «at level».
 
 **Assets.** To show real objects or places use a real photo with a treatment (grading or duotone) or video. Never 3D modeled in
-code: it looks cheap. Free-license sources: Pexels, Unsplash, Poly Haven, ambientCG, Fontshare. Each asset is credited in
-`specs/<card>/CREDITS.md`. GSAP has its own free license, it is not MIT.
+code: it looks cheap. Rules, keyless sources and licenses: `.claude/reference/assets.md`; treatment (grade, crop, variants, cutout,
+loop): `python .claude/tools/asset-pipeline.py --help`. Each asset is credited in `specs/<card>/CREDITS.md`. GSAP has its own free license, it is not MIT.
 
 **After the critic.** On a card with grade `production`, a `design-critic` writes `specs/<card>/critique.md`; you then do **one**
 more round that corrects it, logged as `- L<n> · critique round · <what changed>`.

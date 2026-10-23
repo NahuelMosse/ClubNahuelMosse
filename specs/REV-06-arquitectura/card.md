@@ -244,3 +244,4 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L97 · 2026-10-23 · declared · K4 · apps/mobile/test/capturas/sesion_capturas.dart · el encabezado (fuentes, teléfonos y temas) es el de todas las tiras de capturas desde antes de esta card, que sólo le cambió imports
 - L98 · 2026-10-23 · kit updated 8db1c212392869ce6fa2e66b236ddbcd0538777f → af65b9f2e97ac6a23c91e822a08900ac6b2390fe · kit 6.5.6: sufijo de ataques fuera de valores con formato
 - L99 · 2026-10-23 · `lint:` corre por `ruff-mypy-api-rev06.sh`, que nombra lo que cubre: required.mjs sólo cuenta como linter un comando que dice ruff y las carpetas
+- L100 · 2026-10-23 · kit updated af65b9f2e97ac6a23c91e822a08900ac6b2390fe → b0ac18c85062bad4936d3f17217b30830a9bb0f7 · kit 6.6.1: cada ataque varía un solo campo

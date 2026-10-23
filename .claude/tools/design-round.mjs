@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,390x844] [--gpu]
+// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,390x844] [--gpu] [--grain baked]
+// `--grain baked` (also what a card's `## Look` declares when the grain is baked into the image files) makes the grain rule pass
+// without a global layer and prints «grain: baked (declared)».
 // One whole capture round of a screen in a single call, so the designer spends its turns looking and fixing, not taking captures.
 // Per width it writes viewport captures, never a full page: the load at 0, 600 and 2000 ms; one per visible `section` or
 // `[data-section]`, scrolled to the top of the viewport; and, with --steps, the ones of a probe steps file (`help.mjs judge`
@@ -23,7 +25,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseSteps } from './probe.mjs';
 
-const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,390x844] [--gpu]';
+const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,390x844] [--gpu] [--grain baked]';
 const LOAD_MARKS = [0, 600, 2000];
 const STEP_TIMEOUT_MS = 5000;
 
@@ -87,7 +89,7 @@ const rendererOf = () => {
 };
 
 // The rules of `excellence.md` that a measure decides: value, range and whether it passes.
-export const rulesOf = (m) => {
+export const rulesOf = (m, grainBaked = false) => {
   const row = (rule, value, range, pass) => ({ rule, value, range, pass: value == null ? false : pass });
   return [
     row('display/body ratio', m.ratio, '5-9', m.ratio >= 5 && m.ratio <= 9),
@@ -95,7 +97,7 @@ export const rulesOf = (m) => {
     row('display tracking (em)', m.displayTrackingEm, '-0.03..-0.02', m.displayTrackingEm <= -0.02 && m.displayTrackingEm >= -0.05),
     row('body tracking (em)', m.bodyTrackingEm, '-0.03..-0.01', m.bodyTrackingEm <= -0.01 && m.bodyTrackingEm >= -0.05),
     row('font sizes, first viewport', m.sizeCount, '<= 9', m.sizeCount <= 9),
-    row('grain or noise', m.grain ? 'yes' : 'no', 'yes', m.grain),
+    row('grain or noise', m.grain ? 'yes' : grainBaked ? 'baked (declared)' : 'no', 'yes or baked', m.grain || grainBaked),
   ];
 };
 
@@ -134,10 +136,11 @@ const parseArgs = (argv) => {
   const gpu = args.includes('--gpu');
   if (gpu) args.splice(args.indexOf('--gpu'), 1);
   const out = take('--out'); const steps = take('--steps'); const widths = take('--widths') ?? '1440x900,390x844';
+  const grainFlag = take('--grain');
   const [url, ...extra] = args;
   const viewports = widths.split(',').map((v) => { const [w, h = '900'] = v.trim().split('x'); return { width: Number(w), height: Number(h) }; });
-  if (!url || extra.length || !out || viewports.some(({ width, height }) => !(width >= 200 && width <= 3000 && height >= 200 && height <= 3000))) return { error: USAGE };
-  return { url, out: resolve(out), steps, viewports, gpu };
+  if (!url || extra.length || !out || (grainFlag !== undefined && grainFlag !== 'baked') || viewports.some(({ width, height }) => !(width >= 200 && width <= 3000 && height >= 200 && height <= 3000))) return { error: USAGE };
+  return { url, out: resolve(out), steps, viewports, gpu, grainBaked: grainFlag === 'baked' };
 };
 
 export const round = async (argv) => {
@@ -180,7 +183,7 @@ export const round = async (argv) => {
         result.software = result.renderer ? /swiftshader|llvmpipe|software/i.test(result.renderer) : null;
       }
       const m = await page.evaluate(measure);
-      result.widths[key] = { measure: m, rules: rulesOf(m) };
+      result.widths[key] = { measure: m, rules: rulesOf(m, a.grainBaked) };
       const sections = await page.evaluate(() => {
         const els = [...document.querySelectorAll('section, [data-section]')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden'; });
         els.forEach((e, i) => e.setAttribute('data-design-round', String(i)));
@@ -216,7 +219,10 @@ export const round = async (argv) => {
   const lines = [`design-round · ${a.url}`, `renderer: ${result.renderer ?? 'none (no WebGL)'}${result.software ? ' · SOFTWARE: motion times do not count' : ''}`];
   for (const [key, w] of Object.entries(result.widths)) {
     lines.push(`-- ${key}`);
-    for (const r of w.rules) lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value ?? 'n/a'} (range ${r.range})`);
+    for (const r of w.rules) {
+      if (r.value === 'baked (declared)') lines.push('  pass  grain: baked (declared)');
+      else lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value ?? 'n/a'} (range ${r.range})`);
+    }
   }
   lines.push('-- load');
   if (result.load) for (const r of result.load.rules) lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value} (range ${r.range})`);

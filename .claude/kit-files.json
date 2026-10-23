@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "bea2fbaa6f3235825bf534c6d943d0c4f43acf96136eb029b779bb9c80989a3f"
+    "sha256": "42e90fb0befdf918fb58829540cc101e4117845eec2f47c5d54e33aba0d1da99"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1305,7 +1305,7 @@
   },
   ".claude/tools/attack.mjs": {
     "module": "profile:backend",
-    "sha256": "ea15057b388def1d5e31d5fb4307779231e2ebc4728d910f51120f073fece9a5"
+    "sha256": "ae18d2933780f15709a8b98eca8cc13b3ff8f792ee50056372477484ce2a7432"
   },
   ".claude/tools/bar.mjs": {
     "module": "core",
@@ -1433,7 +1433,7 @@
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "99655d9f44c1a00bb65ff823b60d705e1537e3a9c340593df273a2285905cabe"
+    "sha256": "3f283fa1e357cda832dd53a6e7f100d86647d33505a6f1f1066e4bb873859f50"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1509,7 +1509,7 @@
   },
   ".claude/profiles/web.md": {
     "module": "profile:web",
-    "sha256": "f40b34d4725ce3dbf47399ae9a9bca7ac5f07cb4193ed39d4958294f28e1265b"
+    "sha256": "bffd90f9ff473363ac43dc07b0a86a3a07297923e63a81bb13e56a2889463aaf"
   },
   ".claude/skills/motion/PROVENANCE": {
     "module": "profile:web",
@@ -1561,7 +1561,7 @@
   },
   ".claude/agents/design-critic.md": {
     "module": "profile:web",
-    "sha256": "7edca2b6d47e2c3180951452e20c1b90c32e98fa7ede7ea570d866a803ec3eaa"
+    "sha256": "185be8ffe36b0027104f15c62fe736385d4b66495c386c56bbe16d236f2d9fa1"
   },
   ".claude/reference/excellence.md": {
     "module": "profile:web",
@@ -1569,6 +1569,14 @@
   },
   ".claude/tools/design-round.mjs": {
     "module": "profile:web",
-    "sha256": "304de7b2af33f656bc89b2c6bbbd07aee419228d5466af4e8abe3a5554bb98cd"
+    "sha256": "355edabb2df64a33144b55fbf4f650d6b0e151520d9d99d1c5f82b958fff99bb"
+  },
+  ".claude/reference/assets.md": {
+    "module": "profile:web",
+    "sha256": "746b9f21805922a96c6fc59da5774783204fbead52928995899e7c4de37bde13"
+  },
+  ".claude/tools/asset-pipeline.py": {
+    "module": "profile:web",
+    "sha256": "b2ae1d77c623430268046cb1c592bb6c0e6812fa7253a9f4267ff4337e72c4d7"
   }
 }
