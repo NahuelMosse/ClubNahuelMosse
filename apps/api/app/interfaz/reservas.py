@@ -105,9 +105,7 @@ def listar_reservas(
     try:
         marcador = None if despues is None else leer(despues)
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     tanda = mis_reservas(ReservasSql(conn), perfil, cuando, marcador)
     return ListaDeReservas(
         reservas=[_vista(r) for r in tanda.reservas],
