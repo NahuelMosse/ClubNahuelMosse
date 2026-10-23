@@ -63,8 +63,8 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
-lint: sh -c 'cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/unit/test_capas.py,tests/unit/test_sin_supresiones.py && uv run --no-sync ruff check --ignore E501 tests/unit/test_capas.py tests/unit/test_sin_supresiones.py && uv run --no-sync mypy --strict app tests'
-app-suite: sh -c 'PATH="/d/projects/flutter/bin:$PATH"; cd apps/mobile && flutter analyze && flutter test'
+lint: sh D:/Temp/w/herramientas/lint-api-rev06.sh
+app-suite: sh D:/Temp/w/herramientas/flutter-app-rev06.sh
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
 duplication-app: npx -y jscpd@4 --silent --threshold 3 apps/mobile/lib
 duplication-api: npx -y jscpd@4 --silent --threshold 3 apps/api/app
