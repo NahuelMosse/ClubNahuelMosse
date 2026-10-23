@@ -34,11 +34,11 @@ Cada escenario lleva su tag en el test: `@REV-05-S1`.
 ## Gate
 
 ```
-suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
+suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/escenarios/test_basquet_3x3.py && uv run --no-sync ruff check --ignore I001 tests/escenarios/test_basquet_3x3.py && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_basquet.py
-mutate apps/api/app/dominio/espacios.py: cd apps/api && uv run --no-sync pytest -q -x tests/unit/test_espacios.py tests/escenarios/test_basquet.py
+scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_basquet.py
+mutate apps/api/app/dominio/espacios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit/test_espacios.py tests/escenarios/test_basquet.py
 mutate apps/mobile/lib/espacios/iconos.dart: cd apps/mobile && flutter test test/basquet_test.dart
 mutate apps/mobile/lib/sedes/fotos.dart: cd apps/mobile && flutter test test/basquet_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev05_app
@@ -727,3 +727,6 @@ campo, en rojo.
 - L11 · 2026-10-22 · kit updated 0a8f6431dd7b130c87980f69f9122b45794f6b70 → 1117da7bd97604f13460f467d8a02afaeb6d299a · kit 6.0.0: nested test folders need no layer
 - L12 · 2026-10-22 · declared · `test_basquet_3x3.py` quedó congelado con un I001 (una línea en blanco entre imports): `lint` lo corre con `--ignore I001` y el resto de ruff completo. Sus 11 líneas de alta de admin repiten `tests/integracion/conftest.py:22-49` porque `test_basquet.py`, del que importa, también está congelado
 - L13 · 2026-10-22 · el gate corre con `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702` y Flutter en el PATH (`/d/projects/flutter/bin`). `attacks:` sale con «PASSED · Host ajeno» en esta rama: es el hallazgo 25-S2, que corrige REV-01
+- L14 · 2026-10-22 · kit updated 1117da7bd97604f13460f467d8a02afaeb6d299a → 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a · kit 6.0.1: passed with replaced reads flutter test
+- L15 · 2026-10-22 · kit updated 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a → 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 · kit 6.1.0: no-visual for a code file with markup
+- L16 · 2026-10-23 · kit updated 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 → 7a91c9699fa944f754191f53f20a024663a607bd · kit 6.1.1: Dart tests, pytest failures, replacements by file, migrated card start
