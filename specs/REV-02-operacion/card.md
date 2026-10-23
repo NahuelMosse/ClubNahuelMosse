@@ -62,19 +62,19 @@ not_read: "Jira / Atlassian: no consultado; REV-02 no tiene card en Jira y el re
 ## Gate
 
 ```
-suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
+suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_operacion.py
-mutate apps/api/app/infraestructura/db.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "base or disponibilidad"
-mutate apps/api/app/interfaz/registro_errores.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py tests/escenarios/test_registro_de_errores.py tests/escenarios/test_seguridad_api.py -k "registro or referencia or correlacion or log"
-mutate apps/api/app/interfaz/metricas.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k metricas
-mutate apps/api/app/interfaz/salud.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "disponibilidad or version"
-mutate apps/api/app/main.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/config.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "configuracion or version"
-mutate apps/api/app/interfaz/barrido.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k recordatorios
-mutate scripts/respaldo.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py
-mutate scripts/usuario_de_la_app.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py
+scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_operacion.py
+mutate apps/api/app/infraestructura/db.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "base or disponibilidad"
+mutate apps/api/app/interfaz/registro_errores.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py tests/escenarios/test_registro_de_errores.py tests/escenarios/test_seguridad_api.py -k "registro or referencia or correlacion or log"
+mutate apps/api/app/interfaz/metricas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k metricas
+mutate apps/api/app/interfaz/salud.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "disponibilidad or version"
+mutate apps/api/app/main.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/config.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "configuracion or version"
+mutate apps/api/app/interfaz/barrido.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k recordatorios
+mutate scripts/respaldo.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py
+mutate scripts/usuario_de_la_app.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py
 mutate apps/mobile/lib/api/cliente_api.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
 mutate apps/mobile/lib/comun/dialogo_error.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
 mutate apps/mobile/lib/comun/errores_no_manejados.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
@@ -452,3 +452,4 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient 
 - L20 · 2026-10-22 · OUT · apps/mobile/lib/app.dart monta AvisoDespertando (ASM-11, cambio mínimo) y se suman lib/comun/aviso_despertando.dart y pantalla_error_de_arranque.dart; ServidorSinRespuesta extiende ErrorDelServidor (lo atrapan los handlers existentes, no es SinConexion); errores_compartidos_test.dart y sesion_test.dart (retomar con 503 ahora lanza; se quitó el test de limiteAlRetomar) actualizados al contrato nuevo.
 - L21 · 2026-10-22 · T4 · RED: operacion_app_test.dart no compilaba (errores_no_manejados.dart inexistente); GREEN: `flutter test test/operacion_registro_test.dart` 15 passed; `flutter analyze` No issues found; `flutter test` completo sin fallos tras actualizar los dos tests viejos (S7, S8, S11; ASM-06/11/12/13). Archivos de presentación listos para el designer: aviso_despertando.dart, pantalla_error_de_arranque.dart.
 - L22 · 2026-10-22 · T4 cambió dos tests sin tag de cards anteriores que pedían lo que ASM-12 deja sin efecto: `sesion_test.dart` «una API que no contesta no traba el arranque ni cierra la sesión» (cortaba a los 3 s) y `errores_compartidos_test.dart` «una API que no responde en el límite se trata como inalcanzable» (ahora es `ServidorSinRespuesta`, un error del servidor). Quedan para la revisión del PR. La card no lleva lente visual: el aviso y la pantalla de error de arranque no pasan por el designer
+- L23 · 2026-10-23 · kit updated 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 → 7a91c9699fa944f754191f53f20a024663a607bd · kit 6.1.1: Dart tests, pytest failures, replacements by file, migrated card start
