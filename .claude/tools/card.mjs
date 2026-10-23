@@ -443,6 +443,13 @@ const withoutDebris = (root, files, untracked, tokens) => {
   return files.filter((f) => !drop.has(f));
 };
 
+// A command line handed to a tool that runs it in a shell (`once.mjs`, `mutate.mjs`) has to stay one argument when it chains
+// commands: unquoted, the caller's shell splits `cd apps/mobile && flutter test` at the `&&` and the tool gets only the `cd`.
+const SHELL_CHAIN = /&&|\|\||[;|<>]/;
+export const asOneArg = (command) => (SHELL_CHAIN.test(command) ? `"${command.replace(/"/g, '\\"')}"` : command);
+// The command a tool got after `--`: one argument is the whole command; several are re-joined keeping each one whole.
+export const shellJoin = (tokens) => (tokens.length === 1 ? tokens[0] : tokens.map((t) => (/[\s&|;<>"]/.test(t) ? `"${t.replace(/"/g, '\\"')}"` : t)).join(' '));
+
 export const keyOf = (root, command) => {
   const { all, untracked } = listing(root) ?? { all: [], untracked: new Set() };
   const tokens = [...new Set(command.split(/\s+/).map((t) => t.replace(/^['"]|['"]$/g, '').replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '')))];

@@ -17,7 +17,7 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
+  IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
 } from './card.mjs';
 import { actHold, actsOf, gateBlock, readCard, riskOf } from './card-doc.mjs';
 import { active, lateSignals, LATE_ADVICE } from './kit.mjs';
@@ -153,9 +153,9 @@ export const missing = (root, { closing = true } = {}) => {
   const out = [
     ...production.filter((f) => mutationRequired(exempt, map, f, root))
       .filter((f) => !mutations.some((r) => covers(r.command, f, { folders: false })))
-      .map((f) => `mutation of ${f} · run: \`node .claude/tools/once.mjs mutate -- node .claude/tools/mutate.mjs ${f} --since ${base} -- ${gateLine(cardDir, 'suite') ?? '<unit suite command>'}\``),
+      .map((f) => `mutation of ${f} · run: \`node .claude/tools/once.mjs mutate -- node .claude/tools/mutate.mjs ${f} --since ${base} -- ${asOneArg(gateLine(cardDir, 'suite') ?? '<unit suite command>')}\``),
     ...(exempt.criteria.has('T6') ? [] : tests.filter((f) => !lints.some((r) => covers(r.command, f, { folders: true })))
-      .map((f) => `linter on ${f} · run: \`node .claude/tools/once.mjs lint -- ${gateLine(cardDir, 'lint') ?? `<linter command> ${f}`}\``)),
+      .map((f) => `linter on ${f} · run: \`node .claude/tools/once.mjs lint -- ${asOneArg(gateLine(cardDir, 'lint') ?? `<linter command> ${f}`)}\``)),
     // Measured: 2 runs brought files the card did not ask for.
     ...(map.length ? touched.filter((f) => !NOT_PRODUCTION.test(f) && !namedIn(map, f, root).length && !copiedFromKit(root, map, f))
       .map((f) => `${f} is not in the \`## Tasks\` of card.md: add it to a task line with its reason, or undo it`) : []),
