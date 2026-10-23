@@ -979,3 +979,4 @@ Las dos hablan de una reserva cancelada, pero no son lo mismo y no se ven igual:
 - L60 · 2026-10-23 · declared · K4 · apps/api/app/interfaz/reservas.py · el tramo 423-429 repite el de 250 desde CU-09 y CU-11, anteriores a esta card
 - L61 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_datos_migraciones_lock.py · reemplazo (L31) del test congelado de test_datos_tandas_y_cola.py: conserva su preparación
 - L62 · 2026-10-23 · kit updated e5818794483826acc7ac09b20b84b1c1884cb38c → b927271509c3ed9cdb1322253e90cd8f7cf17123 · kit 6.5.5: mutantes todos equivalentes
+- L63 · 2026-10-23 · closing: publicación sin correr — la rama, el PR y el comentario de cierre no se publican sin un pedido expreso (CLAUDE.md del repo)
