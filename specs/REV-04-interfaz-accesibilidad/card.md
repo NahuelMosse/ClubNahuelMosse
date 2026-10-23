@@ -68,7 +68,7 @@ not_read:
 
 ```
 suite: cd apps/mobile && flutter test
-lint: cd apps/mobile && flutter analyze && dart format --output=none --set-exit-if-changed lib test/interfaz_accesible_registro_test.dart test/interfaz_accesible_registro_reemplazo_test.dart test/buscar_cancha_test.dart test/editar_sede_test.dart test/pantalla_registro_test.dart test/sedes_admin_test.dart
+lint: dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/interfaz_accesible_registro_test.dart apps/mobile/test/interfaz_accesible_registro_reemplazo_test.dart apps/mobile/test/buscar_cancha_test.dart apps/mobile/test/editar_sede_test.dart apps/mobile/test/pantalla_registro_test.dart apps/mobile/test/sedes_admin_test.dart && cd apps/mobile && flutter analyze
 captures: cd apps/mobile && flutter test test/capturas/registro_capturas.dart test/capturas/admin_capturas.dart test/capturas/espacios_capturas.dart test/capturas/reservas_capturas.dart test/capturas/notificaciones_capturas.dart
 stable: node .claude/tools/repeat.mjs 3 -- sh -c "cd apps/mobile && flutter test test/interfaz_accesible_registro_test.dart"
 ```
