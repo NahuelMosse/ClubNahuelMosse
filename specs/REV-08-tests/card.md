@@ -67,6 +67,8 @@ lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/escena
 app-suite: cd apps/mobile && flutter analyze && flutter test
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_suite_confiable.py
 mutate apps/api/app/aplicacion/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_casos_de_uso_reservas.py
+mutate apps/mobile/lib/api/cliente_api.dart: cd apps/mobile && flutter test test/rutas_de_la_api_test.dart test/anular_desde_el_detalle_test.dart
+mutate apps/mobile/lib/api/rutas.dart: cd apps/mobile && flutter test test/rutas_de_la_api_test.dart test/anular_desde_el_detalle_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev08_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev08_app --json --no-ambient --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
 ```
@@ -849,3 +851,4 @@ Reserva anulada                Error al anular
 - L39 · 2026-10-23 · declared · K4 · apps/mobile/test/anular_desde_el_detalle_test.dart · tests con tag @REV-08 ya congelados (L14) que comparten montaje con cancelacion_forzosa_test.dart y editar_sede_test.dart (también congelados) y entre sus propios casos; no se pueden editar
 - L40 · 2026-10-23 · kit updated 84b012c6b61f3235df5e6d5637a5070deedf29b7 → 657ff3db69738f58a980615b84f7264952c0c979 · kit 6.4.0: design() fuera de Dart y arranque de la app
 - L41 · 2026-10-23 · kit updated 657ff3db69738f58a980615b84f7264952c0c979 → d156187c5be754b71de317ed01fe9b933cca5ad0 · kit 6.5.0: mutación de Dart
+- L42 · 2026-10-23 · vuelven a `## Gate` los `mutate` de cliente_api.dart y rutas.dart, con sus tests de pantalla: el kit 6.5.0 muta Dart (deja sin efecto lo que L34 llevaba a `## Could not run`)
