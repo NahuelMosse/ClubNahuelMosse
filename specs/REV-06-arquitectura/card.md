@@ -62,33 +62,33 @@ not_read:
 ## Gate
 
 ```
-suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
+suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/unit/test_capas.py,tests/unit/test_sin_supresiones.py && uv run --no-sync ruff check --ignore E501 tests/unit/test_capas.py tests/unit/test_sin_supresiones.py && uv run --no-sync mypy --strict app tests
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
+scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
 duplication-app: npx -y jscpd@4 --silent --threshold 3 apps/mobile/lib
 duplication-api: npx -y jscpd@4 --silent --threshold 3 apps/api/app
-mutate apps/api/app/dependencias.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/usuarios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/sedes.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/espacios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/dependencias.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/usuarios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/sedes.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/mobile/lib/usuarios/registro.dart: cd apps/mobile && flutter test test/registro_servicio_test.dart
 mutate apps/mobile/lib/comun/tarjeta_reserva.dart: cd apps/mobile && flutter test test/tarjeta_reserva_test.dart
 mutate apps/mobile/lib/reservas/reservas.dart: cd apps/mobile && flutter test test/arquitectura_test.dart
 no-visual: la página de recuperacion.py sólo cambia el import de sus dependencias; ninguna pantalla cambia
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev06_test uv run --no-sync alembic upgrade head"
-mutate apps/api/app/aplicacion/errores.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/aplicacion/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/aplicacion/recuperacion.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/aplicacion/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/dominio/errores.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/dominio/recuperacion.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/dominio/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/correo.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/identidad.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/push.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/aplicacion/errores.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/aplicacion/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/aplicacion/recuperacion.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/aplicacion/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/dominio/errores.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/dominio/recuperacion.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/correo.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/identidad.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/push.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
 app: sh D:/Temp/w/herramientas/api-app.sh rev06_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev06_app --json --no-ambient --unique 'POST /sedes {"nombre": "Sede Unica", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
 ```
