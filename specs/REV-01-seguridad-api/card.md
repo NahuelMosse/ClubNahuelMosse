@@ -77,31 +77,31 @@ not_read:
 ## Gate
 
 ```
-suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
+suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync ruff format --check app tests/escenarios/test_seguridad_api.py && uv run --no-sync mypy --strict app
-scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios --card REV-01
-mutate apps/api/app/interfaz/limites.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/unit
-mutate apps/api/app/interfaz/entradas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/unit
-mutate apps/api/app/interfaz/protecciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/integracion/test_protecciones_api.py
-mutate apps/api/app/interfaz/registro_errores.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/escenarios/test_registro_de_errores.py
-mutate apps/api/app/infraestructura/correo.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/infraestructura/identidad.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/unit/test_identidad_ingreso.py
-mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/unit
-mutate apps/api/app/main.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/config.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/registro.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/recuperacion.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/sesion.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/sedes.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/espacios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/interfaz/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/escenarios/test_seguridad_entradas.py
-mutate apps/api/app/interfaz/salud.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
+scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios --card REV-01
+mutate apps/api/app/interfaz/limites.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py tests/unit
+mutate apps/api/app/interfaz/entradas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py tests/unit
+mutate apps/api/app/interfaz/protecciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py tests/integracion/test_protecciones_api.py
+mutate apps/api/app/interfaz/registro_errores.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py tests/escenarios/test_registro_de_errores.py
+mutate apps/api/app/infraestructura/correo.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/infraestructura/identidad.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_identidad_ingreso.py
+mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py tests/unit
+mutate apps/api/app/main.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/config.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/registro.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/recuperacion.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/sesion.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/sedes.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/espacios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/interfaz/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py tests/escenarios/test_seguridad_entradas.py
+mutate apps/api/app/interfaz/salud.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_seguridad_api.py
 no-visual: la página de recuperacion.py no cambia su markup; la card sólo valida las entradas de sus rutas
 lint-app: dart format --output=none --set-exit-if-changed apps/mobile/lib/api/cliente_api.dart apps/mobile/lib/comun/dialogo_error.dart apps/mobile/test/limite_de_frecuencia_test.dart && cd apps/mobile && flutter analyze
 mutate apps/mobile/lib/api/cliente_api.dart [timeout 90 min]: cd apps/mobile && flutter test test/limite_de_frecuencia_test.dart
 mutate apps/mobile/lib/comun/dialogo_error.dart [timeout 90 min]: cd apps/mobile && flutter test test/limite_de_frecuencia_test.dart
-mutate apps/api/app/dominio/horarios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/dominio/horarios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_seguridad_api.py
 app: sh D:/Temp/w/herramientas/api-app.sh rev01_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev01_app --json --no-ambient --common-headers "Content-Security-Policy" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
 ```
