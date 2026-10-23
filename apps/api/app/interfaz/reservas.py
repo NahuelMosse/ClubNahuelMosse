@@ -166,6 +166,14 @@ def hacer_reserva(
 CAMBIO = "Esto cambió mientras tanto"
 
 
+def _rechazo(e: Prohibido | NoEncontrada | DatosInvalidos) -> Response:
+    if isinstance(e, Prohibido):
+        return sin_permiso()
+    if isinstance(e, NoEncontrada):
+        return no_encontrado()
+    return datos_invalidos(e.errores)
+
+
 @router.post(
     "/reservas/{reserva_id}/cancelar",
     response_model=ReservaVista,
@@ -242,12 +250,8 @@ def modificar(
             _leer_hora(pedido.desde),
             datetime.now(ZONA),
         )
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
+    except (Prohibido, NoEncontrada, DatosInvalidos) as e:
+        return _rechazo(e)
     except NoDisponible:
         return datos_invalidos({"espacio_id": NO_DISPONIBLE})
     except Cambiado:
@@ -412,12 +416,8 @@ def anular(
             pedido.espacio_id,
             pedido.inicio,
         )
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
+    except (Prohibido, NoEncontrada, DatosInvalidos) as e:
+        return _rechazo(e)
     except Cambiado:
         return conflicto({"reserva": CAMBIO})
     # El aviso a quien reservó sale recién con la anulación confirmada y la respuesta enviada.
