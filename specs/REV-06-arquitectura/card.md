@@ -75,7 +75,6 @@ mutate apps/api/app/infraestructura/sedes.py: sh D:/Temp/w/herramientas/pytest-a
 mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/mobile/lib/usuarios/registro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/registro_servicio_test.dart
-mutate apps/mobile/lib/comun/tarjeta_reserva.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/tarjeta_reserva_test.dart
 mutate apps/mobile/lib/reservas/reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/arquitectura_test.dart test/reserva_desde_json_test.dart
 no-visual: la página de recuperacion.py sólo cambia el import de sus dependencias; ninguna pantalla cambia
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev06_test uv run --no-sync alembic upgrade head"
@@ -239,3 +238,4 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L91 · 2026-10-23 · T4 · `mutate.mjs apps/mobile/lib/comun/tarjeta_reserva.dart --equivalents specs/REV-06-arquitectura/equivalents.md` · 0/3 detectados, 3 EQUIVALENT (tamaño de íconos, líneas 17, 61, 76), exit 1 porque mutate exige al menos un muerto · el archivo es (presentation) y required.mjs no pide su mutación
 - L92 · 2026-10-23 · declared · mutate · infraestructura/{usuarios,reservas,sedes,notificaciones,espacios,correo,identidad,push}, aplicacion/{errores,notificaciones,recuperacion,reservas}, dominio/{errores,recuperacion,reservas}: exit 3, ninguna línea cambiada admite un operador
 - L93 · 2026-10-23 · lint · `once.mjs lint -- sh D:/Temp/w/herramientas/ruff-mypy-api-rev06.sh apps/api/tests` exit 0 · `once.mjs lint -- dart analyze apps/mobile/test` exit 0 · `node .claude/tools/required.mjs` exit 0: «Everything required ran and passed on the code being delivered.»
+- L94 · 2026-10-23 · sale de `## Gate` el `mutate` de `comun/tarjeta_reserva.dart`: es `(presentation)` en T4 y el grado no pide mutarla; sus 3 mutantes son tamaños de ícono, declarados en equivalents.md, y mutate.mjs sale 1 cuando ninguno muere aunque todos sean equivalentes
