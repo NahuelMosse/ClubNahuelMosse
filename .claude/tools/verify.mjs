@@ -61,7 +61,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { asOneArg, cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
 import { active } from './kit.mjs';
 import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
 import { endsWithLine } from './final-line.mjs';
@@ -308,7 +308,7 @@ export const planCommands = (plan, { base, cardDir }, heading = 'Verification') 
     return {
       name,
       file: mutate[1],
-      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${command}`,
+      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${asOneArg(command)}`,
       ...(timeoutMin ? { timeoutMin } : {}),
     };
   });
@@ -508,7 +508,15 @@ export const replacedFailures = (root, output) => {
     const at = text.search(new RegExp(`^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${fn}[ \\t]*\\(`, 'm'));
     if (at < 0) return '';
     const rest = text.slice(at).split('\n');
-    const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
+    // A signature formatted over several lines (ruff, black) ends in `) -> None:` at column 0: the body starts after the line
+    // where the parentheses close and the `:` comes.
+    let depth = 0;
+    let sig = 0;
+    for (let k = 0; k < rest.length; k++) {
+      depth += (rest[k].match(/\(/g) ?? []).length - (rest[k].match(/\)/g) ?? []).length;
+      if (depth <= 0 && /:\s*(#.*)?\r?$/.test(rest[k])) { sig = k; break; }
+    }
+    const end = rest.findIndex((l, k) => k > sig && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
     return rest.slice(0, end < 0 ? undefined : end).join('\n');
   };
   const is = (t, file, title) => {
@@ -516,7 +524,19 @@ export const replacedFailures = (root, output) => {
     const seenAs = fileOf(t).split('\\').join('/').replace(/^\.\//, '');
     const declared = String(file).split('\\').join('/');
     const sameFile = !seenAs || resolve(root, seenAs) === resolve(root, declared) || (!isAbsolute(seenAs) && declared.endsWith(`/${seenAs}`));
-    return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
+    return sameFile && (t.name === title || (t.pyFunc && flat(pyBody(file, t.name)).includes(flat(title))));
+  };
+  // A docstring may break the title across lines, with the tags alone on the next one: whitespace is compared as one space.
+  const flat = (s) => String(s).replace(/\s+/g, ' ').trim();
+  // The Python function of `file` whose body carries `title`: there the tags of a two-line docstring are found.
+  const pyBlockWith = (file, title) => {
+    let text = '';
+    try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
+    for (const m of text.matchAll(/^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\(/gm)) {
+      const body = pyBody(file, m[1]);
+      if (flat(body).includes(flat(title))) return body;
+    }
+    return '';
   };
   const failsIn = (by, name) => failing.some((t) => is(t, by, name));
   const found = [];
@@ -524,7 +544,10 @@ export const replacedFailures = (root, output) => {
     const tags = r.name.match(SPEC_TAG) ?? [];
     let text = '';
     try { text = readFileSync(join(root, r.by), 'utf8'); } catch { return false; }
-    return tags.length > 0 && text.includes(r.byName) && tags.every((g) => r.byName.includes(g));
+    if (!tags.length || !flat(text).includes(flat(r.byName))) return false;
+    // In Python the replacement's tags may sit on the docstring line after its title: they count from its function's body.
+    const carries = /\.py$/.test(r.by) ? `${r.byName} ${pyBlockWith(r.by, r.byName)}` : r.byName;
+    return tags.every((g) => new RegExp(`${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).test(carries));
   };
   for (const t of failing) {
     // The Log is append-only: a later line corrects an earlier declaration of the same test, so the latest that holds counts.
@@ -883,7 +906,9 @@ const run = (line, logsDir) => new Promise((done) => {
       replaced = readRecord(process.cwd(), name, command)?.replaced ?? [];
       cached = readRecord(process.cwd(), name, command)?.when ?? null;
     } else {
-      const swapped = exit !== 0 && !timedOut && /^suite\b/i.test(name) && !MUTATOR.test(command) ? replacedFailures(process.cwd(), output) : null;
+      // Any test line, not only `suite`: a scenarios line that runs a frozen test the Log declares replaced counts its swap too.
+      // replacedFailures answers only when every failing test it reads has a replacement that holds.
+      const swapped = exit !== 0 && !timedOut && !/^mutate\b/i.test(name) && !MUTATOR.test(command) ? replacedFailures(process.cwd(), output) : null;
       if (swapped) {
         exit = 0;
         replaced = swapped.map((r) => ({ test: r.name, file: r.file, by: r.by, byName: r.byName, why: r.why }));
