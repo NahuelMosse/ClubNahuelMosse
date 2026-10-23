@@ -145,3 +145,4 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L8 · 2026-10-22 · S10 habla de la zona «repetida», no de un valor único; `--unique` igual mide la sede de nombre único, que es lo que la API promete
 - L9 · 2026-10-22 · kit updated 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a → 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 · kit 6.1.0: no-visual for a code file with markup
 - L10 · 2026-10-22 · judge ACT-01 y ACT-02 · se cierran con REV-06-ASM-11 y ASM-12 y sus tests en T5 y T2. declared · ACT-03 · la jerga de S12 vive en los `ambiguedades.md` de cards cerradas, que ASM-10 deja como historia; las cards de kit 5 llevan sus dudas como ASM en card.md, y «cada card.md» son las de `specs/` de esta rama
+- L11 · 2026-10-23 · kit updated 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 → 7a91c9699fa944f754191f53f20a024663a607bd · kit 6.1.1: Dart tests, pytest failures, replacements by file, migrated card start
