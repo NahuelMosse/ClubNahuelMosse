@@ -1,7 +1,6 @@
 import re
 from datetime import date, datetime, time
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
@@ -26,11 +25,10 @@ from app.aplicacion.reservas import (
     modificar_reserva,
     reservar,
 )
+from app.dependencias import ReservasSql, canal_push, conexion
 from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva, ReservaHistorial
 from app.dominio.usuarios import Perfil
-from app.infraestructura.db import conexion
-from app.infraestructura.push import canal_push
-from app.infraestructura.reservas import ReservasSql
+from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.barrido import despachar_de
 from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40
 from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
@@ -41,7 +39,6 @@ router = APIRouter(tags=["reservas"])
 # Con 20 por página, diez mil páginas son doscientas mil reservas.
 PAGINA_MAXIMA = 10_000
 
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 OCUPADO = "Ese horario se ocupó"
 NO_DISPONIBLE = "Esta cancha ya no está disponible"
 _HORA = re.compile(r"\d{2}:\d{2}")

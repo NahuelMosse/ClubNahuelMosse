@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
@@ -30,7 +31,7 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     )
     assert alta.status_code == 201
     with motor.begin() as conn:
-        espacio = conn.execute(
+        espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
@@ -72,7 +73,7 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     assert tarde.json()["errores"]["hasta"] == "La sede cierra a las 23:00"
     # Verifica: la reserva sigue en su horario.
     with motor.connect() as conn:
-        inicio = conn.execute(
+        inicio: Any = conn.execute(
             text("SELECT inicio FROM reserva WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()
     assert inicio.astimezone(ZONA).hour == 21

@@ -14,10 +14,9 @@ from app.aplicacion.notificaciones import (
     mis_notificaciones,
     registrar_dispositivo,
 )
+from app.dependencias import NotificacionesSql, conexion
 from app.dominio.notificaciones import Notificacion, TipoDeAviso
 from app.dominio.usuarios import Perfil
-from app.infraestructura.db import conexion
-from app.infraestructura.notificaciones import NotificacionesSql
 from app.interfaz.entradas import TokenDeDispositivo
 from app.interfaz.reservas import Errores
 from app.interfaz.sesion import SinSesion, usuario_actual

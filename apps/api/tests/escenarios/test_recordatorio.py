@@ -1,26 +1,33 @@
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from types import SimpleNamespace
-from typing import Any
+from typing import Any, cast
 from zoneinfo import ZoneInfo
 
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
+from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
+
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 CONTRASENA = "ClubNahuel1"
+
+
+def app_de(api: TestClient) -> FastAPI:
+    """La aplicación FastAPI detrás del cliente, para sustituir dependencias."""
+    return cast(FastAPI, api.app)
 
 
 class CanalDePrueba:
     """El servicio de notificaciones del teléfono, que anota lo que se le pide enviar."""
 
     def __init__(self) -> None:
-        self.enviados: list[tuple[list[str], Any]] = []
+        self.enviados: list[tuple[list[str], Aviso]] = []
 
-    def enviar(self, tokens: list[str], aviso: Any) -> SimpleNamespace:
+    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
         self.enviados.append((list(tokens), aviso))
-        return SimpleNamespace(enviados=len(tokens), invalidos=())
+        return ResultadoDeEnvio(enviados=len(tokens), invalidos=())
 
 
 @dataclass
@@ -100,7 +107,7 @@ def un_socio(
     assert alta.status_code == 201
     sede = f"Sede Morón {s}"
     with motor.begin() as conn:
-        espacio = conn.execute(
+        espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Rivadavia', 19850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
@@ -111,7 +118,7 @@ def un_socio(
             ),
             {"n": sede, "e": f"Moron{s}_Rivadavia_19850_Futbol_F5_1"},
         ).scalar_one()
-        usuario = conn.execute(
+        usuario: Any = conn.execute(
             text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
         ).scalar_one()
     token = iniciar_sesion(correo, CONTRASENA)

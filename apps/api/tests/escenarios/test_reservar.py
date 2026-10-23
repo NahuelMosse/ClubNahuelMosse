@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import date, datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -32,7 +33,7 @@ def cancha(
     )
     assert alta.status_code == 201
     with motor.begin() as conn:
-        espacio = conn.execute(
+        espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"

@@ -162,7 +162,7 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
     sin_reemplazar = [a for a in _avisos(motor, socio) if a.reemplazada_por is None]
     assert [a.cantidad for a in sin_reemplazar] == [total]
     with motor.connect() as conn:
-        vinculadas = conn.execute(
+        vinculadas: Any = conn.execute(
             text(
                 "SELECT count(*) FROM notificacion_reserva nr JOIN notificacion n"
                 " ON n.id = nr.notificacion_id WHERE n.usuario_id = :u"
@@ -221,7 +221,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
 def test_el_despacho_toma_los_pendientes_por_un_indice_parcial(motor: Engine) -> None:
     """la consulta del despacho tiene su índice"""
     with motor.connect() as conn:
-        definicion = conn.execute(
+        definicion: Any = conn.execute(
             text("SELECT indexdef FROM pg_indexes WHERE indexname = 'notificacion_por_despachar'")
         ).scalar_one()
     assert "envio = 'pendiente'" in definicion

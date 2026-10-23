@@ -1,6 +1,5 @@
 from datetime import date, datetime
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
@@ -19,10 +18,9 @@ from app.aplicacion.errores import (
 )
 from app.aplicacion.perfil import editar_perfil
 from app.aplicacion.sesion import perfil_autenticado
+from app.dependencias import ProveedorFirebase, UsuariosSql, conexion
 from app.dominio.usuarios import DatosPersonales, Perfil, Rol
-from app.infraestructura.db import conexion
-from app.infraestructura.identidad import ProveedorFirebase
-from app.infraestructura.usuarios import UsuariosSql
+from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.entradas import Clave, Texto40, Texto120
 from app.interfaz.limites import Frenado, frenar_por_cuenta
 
@@ -124,7 +122,6 @@ def cambiar_contrasena_propia(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 class PedidoDeEdicion(BaseModel):

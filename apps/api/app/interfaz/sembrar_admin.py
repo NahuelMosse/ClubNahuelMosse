@@ -11,16 +11,12 @@ import argparse
 import os
 import sys
 from datetime import datetime
-from zoneinfo import ZoneInfo
 
 from app.aplicacion.administradores import sembrar_admin
 from app.aplicacion.errores import CuentaExistente, DatosInvalidos, Duplicado
+from app.dependencias import ProveedorFirebase, UsuariosSql, motor
 from app.dominio.usuarios import DatosRegistro
-from app.infraestructura.db import motor
-from app.infraestructura.identidad import ProveedorFirebase
-from app.infraestructura.usuarios import UsuariosSql
-
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
+from app.dominio.zona import ZONA_CLUB as ZONA
 
 
 def main(argumentos: list[str] | None = None) -> int:

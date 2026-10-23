@@ -3,6 +3,7 @@
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -152,7 +153,7 @@ def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
         )
     assert codigos == [201, 409]
     with motor.connect() as conn:
-        n = conn.execute(
+        n: Any = conn.execute(
             text("SELECT count(*) FROM sede WHERE nombre = :n"), {"n": nombre}
         ).scalar_one()
     assert n == 1
@@ -277,8 +278,8 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
         },
     ).json()["id"]
     with motor.begin() as conn:
-        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
-        manana = conn.execute(
+        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        manana: Any = conn.execute(
             text("SELECT (now() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date + 1")
         ).scalar_one()
         for dia, hora, estado in [
@@ -319,7 +320,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
     # Lo que ya estaba afuera no se vuelve a preguntar.
     assert editar(apertura="09:00", dias=todos, direccion="Av. Rivadavia 19850")[0] == 200
     with motor.connect() as conn:
-        activas = conn.execute(
+        activas: Any = conn.execute(
             text("SELECT count(*) FROM reserva WHERE espacio_id = :e AND estado = 'activa'"),
             {"e": espacio},
         ).scalar_one()
@@ -384,7 +385,7 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
         },
     ).json()["id"]
     with motor.begin() as conn:
-        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(

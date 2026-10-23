@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -28,7 +29,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
         == 201
     )
     with motor.begin() as conn:
-        sede = conn.execute(
+        sede: Any = conn.execute(
             text(
                 "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"

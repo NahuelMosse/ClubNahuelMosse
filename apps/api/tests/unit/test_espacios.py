@@ -1,6 +1,7 @@
 from collections.abc import Callable
 from dataclasses import replace
 from datetime import date
+from typing import Any
 
 import pytest
 
@@ -8,6 +9,7 @@ from app.aplicacion.errores import DatosInvalidos, NoDisponible, Prohibido
 from app.aplicacion.espacios import dar_de_alta_espacio, nombre_sugerido
 from app.dominio.espacios import (
     CATALOGO,
+    CambioDeEspacio,
     DatosEspacio,
     Espacio,
     EspacioNuevo,
@@ -15,7 +17,7 @@ from app.dominio.espacios import (
     SedeDelEspacio,
     validar_espacio,
 )
-from app.dominio.usuarios import Perfil
+from app.dominio.usuarios import Perfil, Rol
 
 VALIDOS = DatosEspacio(
     sede_id=3,
@@ -27,8 +29,8 @@ VALIDOS = DatosEspacio(
 )
 
 
-def _errores(**cambios: object) -> dict[str, str]:
-    espacio, errores = validar_espacio(replace(VALIDOS, **cambios))  # type: ignore[arg-type]
+def _errores(**cambios: Any) -> dict[str, str]:
+    espacio, errores = validar_espacio(replace(VALIDOS, **cambios))
     assert espacio is None
     return errores
 
@@ -68,14 +70,14 @@ def test_el_catalogo_no_repite_claves() -> None:
         assert tipos and len(tipos) == len(set(tipos))
 
 
-def _perfil(rol: str) -> Perfil:
+def _perfil(rol: Rol) -> Perfil:
     return Perfil(
         id=7,
         uid="uid",
         nombre="Ana",
         apellido="Díaz",
         correo="ana@club.com",
-        rol=rol,  # type: ignore[arg-type]
+        rol=rol,
         dni="20000001",
         fecha_nacimiento=date(1985, 6, 1),
     )
@@ -116,6 +118,12 @@ class _EspaciosEnMemoria:
         return Espacio(1, compuesto, nuevo.sede_id, self.sede.nombre, nuevo.deporte,
                        nuevo.tipo, 3, nuevo.techada, nuevo.iluminada,
                        nuevo.precio_por_hora)  # fmt: skip
+
+    def actualizar(self, espacio_id: int, cambio: CambioDeEspacio, autor: int) -> Espacio:
+        raise NotImplementedError
+
+    def dar_de_baja(self, espacio_id: int, autor: int) -> None:
+        raise NotImplementedError
 
 
 MORON = SedeDelEspacio("Sede Morón", "Av. Rivadavia", 19850)

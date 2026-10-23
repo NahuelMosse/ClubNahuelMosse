@@ -3,6 +3,7 @@
 import os
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -32,7 +33,7 @@ def _registrar(api: TestClient, s: str) -> tuple[str, str]:
 
 def _espacio(motor: Engine, s: str) -> int:
     with motor.begin() as conn:
-        sede = conn.execute(
+        sede: Any = conn.execute(
             text(
                 "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Belgrano', 1240, '00:00', '00:00', ARRAY[1,2,3,4,5,6,7])"
@@ -85,13 +86,13 @@ def test_la_baja_es_logica_conserva_el_historial_y_libera_el_correo(
     assert api.delete("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 204
 
     with motor.connect() as conn:
-        estados = dict(
+        estados: dict[int, str] = dict(
             conn.execute(
                 text("SELECT id, estado FROM reserva WHERE id IN (:a, :b, :c)"),
                 {"a": pasada, "b": en_curso, "c": futura},
             ).all()
         )
-        activo = conn.execute(
+        activo: Any = conn.execute(
             text("SELECT activo FROM usuario WHERE correo = :c"), {"c": correo}
         ).scalar_one()
     # Verifica CU-07-SUP-04: la futura se cancela; la pasada y la que está en curso quedan.
@@ -158,7 +159,7 @@ def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
     # Una hace la baja; la otra ya la encuentra hecha (204) o la sesión vencida (401).
     assert codigos[0] == 204 and codigos[1] in (204, 401)
     with motor.connect() as conn:
-        activo = conn.execute(
+        activo: Any = conn.execute(
             text("SELECT activo FROM usuario WHERE correo = :c"), {"c": correo}
         ).scalar_one()
     assert activo is False

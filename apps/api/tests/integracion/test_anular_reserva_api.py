@@ -140,7 +140,7 @@ def test_anular_rechaza_lo_que_no_corresponde(
     assert anular(reserva["id"], _pedido(empezada)) == 409
     assert api.post(f"/reservas/{reserva['id']}/anular", json=_pedido(reserva)).status_code == 401
     with motor.connect() as conn:
-        estado = conn.execute(
+        estado: Any = conn.execute(
             text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()
     assert estado == "activa"
@@ -186,7 +186,7 @@ def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
         with ThreadPoolExecutor(2) as hilos:
             a, c = (f.result() for f in (hilos.submit(anular), hilos.submit(cancelar)))
         with motor.connect() as conn:
-            estado = conn.execute(
+            estado: Any = conn.execute(
                 text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
             ).scalar_one()
         assert (a, c, estado) in {(200, 409, "anulada"), (409, 200, "cancelada")}

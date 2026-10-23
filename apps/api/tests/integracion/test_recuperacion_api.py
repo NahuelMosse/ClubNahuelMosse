@@ -3,6 +3,7 @@
 import re
 import time
 from collections.abc import Callable
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -27,7 +28,7 @@ def _registrar(api: TestClient, s: str) -> str:
 
 def _codigos(motor: Engine, correo: str) -> list[str]:
     with motor.connect() as conn:
-        cuerpos = conn.execute(
+        cuerpos: Any = conn.execute(
             text("SELECT cuerpo FROM correo_saliente WHERE para = :p ORDER BY id"), {"p": correo}
         ).scalars()
         return [m.group(1) for c in cuerpos if (m := re.search(r"#codigo=([\w-]+)", c))]
@@ -148,7 +149,7 @@ def test_el_enlace_del_correo_es_https_y_el_codigo_no_llega_al_servidor(
     correo = _registrar(api, unico())
     api.post("/recuperacion", json={"correo": correo})
     with motor.connect() as conn:
-        cuerpo = conn.execute(
+        cuerpo: Any = conn.execute(
             text("SELECT cuerpo FROM correo_saliente WHERE para = :p"), {"p": correo}
         ).scalar_one()
     enlace = re.search(r"(\S+/enlace/recuperar)#codigo=", cuerpo)

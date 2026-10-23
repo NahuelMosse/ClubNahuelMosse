@@ -21,7 +21,7 @@ def _mundo(motor: Engine) -> dict[str, int]:
     """Una cuenta, una sede con un espacio, todo confirmado en la base."""
     s = uuid.uuid4().hex[:8]
     with motor.begin() as conn:
-        usuario = conn.execute(
+        usuario: Any = conn.execute(
             text(
                 "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
                 " fecha_nacimiento) VALUES (:uid, :correo, 'Ana', 'Pérez', :dni, '2000-03-14')"
@@ -33,7 +33,7 @@ def _mundo(motor: Engine) -> dict[str, int]:
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             },
         ).scalar_one()
-        sede = conn.execute(
+        sede: Any = conn.execute(
             text(
                 "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Rivadavia', 19850, '08:00', '23:00',"
@@ -41,7 +41,7 @@ def _mundo(motor: Engine) -> dict[str, int]:
             ),
             {"n": f"Sede Propia {s}"},
         ).scalar_one()
-        espacio = conn.execute(
+        espacio: Any = conn.execute(
             text(
                 "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
                 " iluminada, precio_por_hora) VALUES (:sede, 'Futbol', 'F5', 1, :n, false,"

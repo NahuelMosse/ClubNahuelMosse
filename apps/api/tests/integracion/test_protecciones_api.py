@@ -1,6 +1,7 @@
 """El repaso de seguridad del borde de la API, probado contra la app real."""
 
 from collections.abc import Callable, Iterator
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -61,7 +62,7 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
     # El rol no se toma del pedido: la cuenta nueva siempre es de usuario.
     motor = create_engine(config.database_url)
     with motor.connect() as conn:
-        rol = conn.execute(
+        rol: Any = conn.execute(
             text("SELECT rol FROM usuario WHERE correo = :c"), {"c": f"rol.{s}@correo.com"}
         ).scalar_one()
     motor.dispose()

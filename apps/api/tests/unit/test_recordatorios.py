@@ -5,10 +5,18 @@ import pytest
 
 from app.aplicacion.notificaciones import (
     CanalNoConfigurado,
+    Pendiente,
     ResultadoDeEnvio,
     enviar_recordatorios,
 )
-from app.dominio.notificaciones import Aviso, Envio, Recordatorio, mensaje_recordatorio, tipo_corto
+from app.dominio.notificaciones import (
+    Aviso,
+    Envio,
+    Notificacion,
+    Recordatorio,
+    mensaje_recordatorio,
+    tipo_corto,
+)
 from app.infraestructura import push
 
 AHORA = datetime(2026, 10, 1, 23, 0, tzinfo=UTC)
@@ -52,6 +60,26 @@ class RepositorioEnMemoria:
 
     def dar_de_baja_tokens(self, tokens: Sequence[str]) -> None:
         self.bajas.extend(tokens)
+
+    def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+        raise NotImplementedError
+
+    def registrar_dispositivo(
+        self, usuario_id: int, token: str, plataforma: str, permiso: bool
+    ) -> bool:
+        raise NotImplementedError
+
+    def baja_dispositivo(self, usuario_id: int, token: str) -> None:
+        raise NotImplementedError
+
+    def de_usuario(self, usuario_id: int) -> tuple[list[Notificacion], int]:
+        raise NotImplementedError
+
+    def leer(self, usuario_id: int, notificacion_id: int) -> bool:
+        raise NotImplementedError
+
+    def leer_todas(self, usuario_id: int) -> None:
+        raise NotImplementedError
 
 
 class CanalQueFalla:

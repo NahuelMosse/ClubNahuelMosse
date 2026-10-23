@@ -41,6 +41,9 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.mypy]
 strict = true
+files = ["app", "tests"]
+explicit_package_bases = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/tests/escenarios"
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]

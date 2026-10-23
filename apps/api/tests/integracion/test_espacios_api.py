@@ -3,6 +3,7 @@
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, timedelta
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -306,8 +307,9 @@ def test_se_filtran_los_espacios_por_deporte_y_tipo(
     for cambios in ({}, {"tipo": "F7"}, {"deporte": "Hockey", "tipo": "H7"}):
         api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, **cambios))
 
-    def nombres(**filtro: object) -> list[str]:
-        r = api.get("/espacios", headers=_con(token_usuario), params={"sede_id": sede_id} | filtro)
+    def nombres(**filtro: str) -> list[str]:
+        params: dict[str, str | int] = {"sede_id": sede_id, **filtro}
+        r = api.get("/espacios", headers=_con(token_usuario), params=params)
         return [e["nombre"] for e in r.json()["espacios"]]
 
     assert nombres(deporte="Futbol") == [f"{prefijo}_Futbol_F5_1", f"{prefijo}_Futbol_F7_1"]
@@ -315,7 +317,8 @@ def test_se_filtran_los_espacios_por_deporte_y_tipo(
     assert nombres(deporte="Golf") == []
     assert nombres(tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
     for malo in ({"deporte": ""}, {"tipo": ""}, {"deporte": "x" * 41}):
-        r = api.get("/espacios", headers=_con(token_usuario), params={"sede_id": sede_id} | malo)
+        params: dict[str, str | int] = {"sede_id": sede_id, **malo}
+        r = api.get("/espacios", headers=_con(token_usuario), params=params)
         assert r.status_code == 422
 
 
@@ -391,13 +394,17 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
                 ),
                 {"e": espacio, "dia": manana, "h": hora},
             )
-    consulta = {"sede_id": sede_id, "deporte": "Futbol", "fecha": manana.isoformat()}
+    consulta: dict[str, str | int] = {
+        "sede_id": sede_id,
+        "deporte": "Futbol",
+        "fecha": manana.isoformat(),
+    }
 
-    def nombres(**cambios: object) -> list[str]:
+    def nombres(**cambios: str) -> list[str]:
         r = api.get(
             "/espacios/disponibles",
             headers=_con(token_usuario),
-            params=consulta | {"desde": "10:00", "hasta": "12:00"} | cambios,
+            params={**consulta, "desde": "10:00", "hasta": "12:00", **cambios},
         )
         assert r.status_code == 200, r.text
         return [e["nombre"] for e in r.json()["espacios"]]
@@ -412,7 +419,7 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
     api: TestClient, token_usuario: str, sede: tuple[int, str]
 ) -> None:
     sede_id, _ = sede
-    base = {"sede_id": sede_id, "deporte": "Futbol", "fecha": "2020-01-01"}
+    base: dict[str, str | int] = {"sede_id": sede_id, "deporte": "Futbol", "fecha": "2020-01-01"}
 
     r = api.get(
         "/espacios/disponibles",
@@ -445,7 +452,7 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
     sede_id, _ = sede
     alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
         conn.execute(
             text(
                 "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
@@ -554,7 +561,7 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
     sede_id, _ = sede
     uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(
@@ -585,7 +592,7 @@ def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
     def con_reserva(desde: str, estado: str) -> int:
         espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
         with motor.begin() as conn:
-            dueno = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+            dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
             conn.execute(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"

@@ -1,14 +1,13 @@
 import threading
-from collections.abc import Callable, Iterator
-from types import SimpleNamespace
-from typing import Any
+from collections.abc import Callable, Iterator, Sequence
 
 import pytest
 import test_cancelacion_forzosa as base
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine
-from test_recordatorio import CanalDePrueba, un_socio
+from test_recordatorio import CanalDePrueba, app_de, un_socio
 
+from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
 from app.infraestructura.push import canal_push
 
 admin = base.admin
@@ -22,7 +21,7 @@ class CanalQueRetieneElPrimero(CanalDePrueba):
         self.saliendo = threading.Event()
         self.soltar = threading.Event()
 
-    def enviar(self, tokens: list[str], aviso: Any) -> SimpleNamespace:
+    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
         primero = not self.enviados
         resultado = super().enviar(tokens, aviso)
         if primero:
@@ -34,10 +33,10 @@ class CanalQueRetieneElPrimero(CanalDePrueba):
 @pytest.fixture
 def canal_lento(api: TestClient) -> Iterator[CanalQueRetieneElPrimero]:
     canal = CanalQueRetieneElPrimero()
-    api.app.dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[canal_push] = lambda: canal
     yield canal
     canal.soltar.set()
-    api.app.dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(canal_push, None)
 
 
 def test_la_anulacion_que_llega_con_el_aviso_anterior_saliendo_se_agrupa_igual(

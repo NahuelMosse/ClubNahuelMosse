@@ -16,10 +16,9 @@ from app.aplicacion.errores import (
     ReservasAfuera,
 )
 from app.aplicacion.sedes import dar_de_alta_sede, dar_de_baja_sede, editar_sede, sedes_activas
+from app.dependencias import SedesSql, conexion
 from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
-from app.infraestructura.db import conexion
-from app.infraestructura.sedes import SedesSql
 from app.interfaz.entradas import Texto40, Texto120
 from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
 from app.interfaz.sesion import SinSesion, usuario_actual

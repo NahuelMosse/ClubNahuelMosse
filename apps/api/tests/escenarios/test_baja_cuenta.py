@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import datetime, timedelta
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
@@ -38,10 +39,10 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
     )
     inicio = _proxima_hora(dias=2)
     with motor.begin() as conn:
-        usuario = conn.execute(
+        usuario: Any = conn.execute(
             text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
         ).scalar_one()
-        sede = conn.execute(
+        sede: Any = conn.execute(
             text(
                 "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Rivadavia', 19850, '08:00', '00:00', ARRAY[1,2,3,4,5,6,7])"
@@ -49,7 +50,7 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
             ),
             {"n": f"Sede {s}"},
         ).scalar_one()
-        espacio = conn.execute(
+        espacio: Any = conn.execute(
             text(
                 "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, precio_por_hora,"
                 " techada, iluminada) VALUES (:sede, 'Futbol', 'F5', 1, :nombre, 38000, false,"
@@ -57,7 +58,7 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
             ),
             {"sede": sede, "nombre": f"Moron_Rivadavia_19850_Futbol_F5_1_{s}"},
         ).scalar_one()
-        reserva = conn.execute(
+        reserva: Any = conn.execute(
             text(
                 "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
                 " VALUES (:u, :e, :i, :f, 38000, 38000) RETURNING id"
@@ -76,7 +77,7 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
         assert (estado, cancelada_por) == ("cancelada", usuario)
         # Verifica: el mismo horario del mismo espacio se puede volver a reservar; si siguiera
         # tomado, la base lo rechazaría por superposición.
-        otra = conn.execute(
+        otra: Any = conn.execute(
             text(
                 "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
                 " VALUES (:u, :e, :i, :f, 38000, 38000) RETURNING id"

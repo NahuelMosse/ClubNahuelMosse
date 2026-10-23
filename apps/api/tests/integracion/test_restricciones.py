@@ -1,7 +1,9 @@
 """Restricciones del esquema que no cubre ningún escenario de la card."""
 
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import pytest
 from sqlalchemy import Connection, text
@@ -89,7 +91,7 @@ def test_la_reserva_dura_entre_una_y_cuatro_horas(db: Connection) -> None:
 def test_la_anulacion_exige_motivo(db: Connection) -> None:
     uid, eid = _usuario(db), _espacio(db)
     inicio = datetime(2030, 11, 14, 18, tzinfo=AR)
-    rid = db.execute(
+    rid: Any = db.execute(
         text(
             "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
             " VALUES (:u, :e, :i, :f, 38000, 38000) RETURNING id"
@@ -120,7 +122,11 @@ def test_los_dias_son_una_lista_de_uno_a_siete(db: Connection, dias: str) -> Non
 
 @pytest.mark.parametrize("tabla", ["usuario", "sede", "espacio"])
 def test_nada_se_borra(db: Connection, tabla: str) -> None:
-    ids = {"usuario": _usuario, "sede": _sede, "espacio": _espacio}
+    ids: dict[str, Callable[[Connection], int]] = {
+        "usuario": _usuario,
+        "sede": _sede,
+        "espacio": _espacio,
+    }
     fila = ids[tabla](db)
     _falla(db, f"DELETE FROM {tabla} WHERE id = :id", {"id": fila})
 

@@ -1,12 +1,13 @@
 from dataclasses import replace
 from datetime import date, time
+from typing import Any
 
 import pytest
 
 from app.aplicacion.errores import DatosInvalidos, Prohibido
 from app.aplicacion.sedes import dar_de_alta_sede
 from app.dominio.sedes import DatosSede, Sede, SedeNueva, validar_sede
-from app.dominio.usuarios import Perfil
+from app.dominio.usuarios import Perfil, Rol
 
 VALIDOS = DatosSede(
     nombre="Sede Haedo",
@@ -17,8 +18,8 @@ VALIDOS = DatosSede(
 )
 
 
-def _errores(**cambios: object) -> dict[str, str]:
-    sede, errores = validar_sede(replace(VALIDOS, **cambios))  # type: ignore[arg-type]
+def _errores(**cambios: Any) -> dict[str, str]:
+    sede, errores = validar_sede(replace(VALIDOS, **cambios))
     assert sede is None
     return errores
 
@@ -84,14 +85,14 @@ def test_los_dias_son_de_la_semana() -> None:
     assert _errores(dias=(8,)) == {"dias": "Elegí los días que abre"}
 
 
-def _perfil(rol: str) -> Perfil:
+def _perfil(rol: Rol) -> Perfil:
     return Perfil(
         id=7,
         uid="uid",
         nombre="Ana",
         apellido="Díaz",
         correo="ana@club.com",
-        rol=rol,  # type: ignore[arg-type]
+        rol=rol,
         dni="20000001",
         fecha_nacimiento=date(1985, 6, 1),
     )
@@ -108,6 +109,12 @@ class _SedesEnMemoria:
         self.guardadas.append((nueva, autor))
         return Sede(1, nueva.nombre, nueva.calle, nueva.altura, nueva.apertura, nueva.cierre,
                     nueva.dias, 0)  # fmt: skip
+
+    def actualizar(self, sede_id: int, datos: SedeNueva, autor: int, confirmar: bool) -> Sede:
+        raise NotImplementedError
+
+    def dar_de_baja(self, sede_id: int, autor: int) -> None:
+        raise NotImplementedError
 
 
 def test_el_alta_queda_a_nombre_del_administrador() -> None:

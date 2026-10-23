@@ -9,9 +9,8 @@ from sqlalchemy import Connection, text
 
 from app.aplicacion.notificaciones import enviar_recordatorios
 from app.aplicacion.recuperacion import hash_de
-from app.infraestructura.db import conexion
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.push import canal_push
+from app.dependencias import NotificacionesSql, canal_push, conexion
+from app.dominio.zona import NOMBRE_ZONA_CLUB
 
 router = APIRouter(prefix="/_pruebas", include_in_schema=False)
 Conexion = Annotated[Connection, Depends(conexion, scope="function")]
@@ -59,7 +58,7 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
             "        CASE WHEN CAST(:estado AS text) <> 'activa' THEN now() END"
             " FROM espacio e,"
             "      LATERAL (SELECT (CAST(:fecha AS date) + make_interval(hours => :hora))"
-            "               AT TIME ZONE 'America/Argentina/Buenos_Aires' AS inicio) x,"
+            f"               AT TIME ZONE '{NOMBRE_ZONA_CLUB}' AS inicio) x,"
             "      (SELECT id FROM usuario WHERE CAST(:correo AS text) IS NULL"
             "         AND id = (SELECT min(id) FROM usuario)"
             "       UNION ALL"
@@ -95,7 +94,7 @@ def empezar(pedido: Espacio, conn: Conexion) -> Response:
     conn.execute(
         text(
             "UPDATE reserva r SET fin = x.ahora + (r.fin - r.inicio), inicio = x.ahora"
-            " FROM (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires')"
+            f" FROM (SELECT date_trunc('hour', now(), '{NOMBRE_ZONA_CLUB}')"
             "                  AS ahora) x"
             " WHERE r.id = (SELECT r2.id FROM reserva r2 JOIN espacio e ON e.id = r2.espacio_id"
             "               WHERE e.nombre = :espacio AND r2.estado = 'activa'"
