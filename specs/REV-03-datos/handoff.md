@@ -1,14 +1,17 @@
-# Handoff REV-03 (builder 3)
-
-Entorno igual que antes: TEST_DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev03_test, FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702, PATH con /d/projects/flutter/bin, VERIFY_TIMEOUT_MIN=45. Python 3.13 en apps/api/.venv.
+# Handoff REV-03 · arreglos del gate (ronda f)
 
 ## Hecho
-- `apps/api/tests/escenarios/test_datos_reemplazos.py`: los 4 reemplazos pasan (4 passed). Log L15 a L18 con `replaces:`.
-- `pyproject.toml`: F811 ignorado en `tests/escenarios/test_datos_*.py` (imports de fixtures); ruff check pasa.
-- `tests/conftest.py`: `--card` acepta `@<ID>-S<n>` además de `-H` (antes `scenarios` deseleccionaba los 121 tests).
-- `tests/integracion/test_historial_api.py`: test de próximas (@REV-03-S2) para matar el mutante `hay_mas=False` de reservas.py:156.
-- Commits: 529b722, 788f1a8.
+- Causa de los ERROR en `migrate-upgrade`/`suite`/`scenarios`: la fixture `base_de_migraciones` de `tests/escenarios/test_datos.py` crea la base fija `club_rev03_migraciones_test`; las líneas del gate corren en paralelo y chocan (`UniqueViolation pg_database_datname_index`). El de `test_datos_reemplazos.py` es un ResourceWarning en cascada (conexión del admin sin cerrar tras el fallo).
+- Reemplazo: `apps/api/tests/escenarios/test_datos_migraciones.py` (base de nombre único por test, se borra al final) con los tests de S7 y S8; Log L28 y L29 declaran `replaces`. SIN verificar todavía: `/tmp/rev03-f-1.log` (corrida de ese archivo) estaba en curso.
 
-## Gate (corrida 4, log /tmp/rev03-gate4.log; la 2 y la 3 cayeron por `app:` que no arrancó en 60 s por carga; a mano sí arranca)
-Fallos de la corrida 1 que NO son de esta card o del entorno: `suite` con 256 errors de setup (corrió a la vez que el mutate sobre la misma base), `attacks` (foreign Host 25-S2, de REV-01), K4/linter de `required` sobre archivos congelados o previos.
-Falta: leer /tmp/rev03-gate4.log al terminar (`FIN`), arreglar lo propio, agregar al Log una línea por T1..T4 con evidencia (T1 migrate-upgrade passed; T2/T3 test_datos + reemplazos; T4 app-suite passed). No pushear.
+## Hallazgo clave (mutaciones)
+Los `mutate` del Gate están rotos: `once.mjs`/`verify.mjs` spawnean con `shell: true` (cmd.exe en Windows) y `node mutate.mjs ... -- cd apps/api && sh ...` se parte en el `&&`: mutate corre el suite `cd apps/api` (siempre verde) => 0/N detectados, todos ALIVE, en los 4 archivos con sobrevivientes. Los tests que los matan YA existen (`tests/unit/test_cola_de_avisos.py` mata dominio/notificaciones.py:92-94).
+Arreglo propuesto: que la línea no tenga `&&` de nivel superior. Opción: nuevo `D:/Temp/w/herramientas/pytest-api.sh` (hace `cd apps/api` y llama a pytest-aislado.sh con el resto de los args) y las líneas `mutate ...: sh D:/Temp/w/herramientas/pytest-api.sh uv run --no-sync pytest -q -x <tests>`. Ojo: `cd` relativo, la mutación corre en una copia del repo (cwd = copia).
+Luego correr cada una: `node .claude/tools/once.mjs "mutate <archivo>" -- "node .claude/tools/mutate.mjs <archivo> --since <base> --equivalents specs/REV-03-datos/equivalents.md --parallel 2 -- <cmd>"` en background (el comando exacto lo arma `planCommands`, verify.mjs:289-315) y ver los sobrevivientes reales; matar con tests nuevos en archivos no congelados o declarar equivalente en `specs/REV-03-datos/equivalents.md`.
+
+## Falta
+1. Confirmar `/tmp/rev03-f-1.log` (test_datos_migraciones.py) y correr `-k migracion` junto a `suite` en paralelo para ver que no chocan.
+2. Reescribir líneas `mutate` del Gate (arriba) y añadir `mutate apps/api/app/dominio/reservas.py: ...` con sus tests (`affected.mjs`), y el archivo en la línea T que corresponda (T2 probable). `migrate-upgrade` debería apuntar también a `test_datos_migraciones.py`.
+3. Sobrevivientes reales: infraestructura/notificaciones.py:252 y :275, migraciones/env.py:16 (`transaction_per_migration` True->False: test que migre 0007->0008 con CONCURRENTLY, o asserts sobre `invalid` indexes), 0008 líneas 12-13 (`branch_labels/depends_on = None`: equivalente probable).
+4. Listar otros fallos de `required:` (`node .claude/tools/required.mjs`), dejar `attacks:` en paz. No correr verify, no pushear.
+5. Env: FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702, PATH="/d/projects/flutter/bin:$PATH".
