@@ -62,19 +62,19 @@ not_read: "Jira / Atlassian: no consultado; REV-02 no tiene card en Jira y el re
 ## Gate
 
 ```
-suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
+suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_operacion.py
-mutate apps/api/app/infraestructura/db.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "base or disponibilidad"
-mutate apps/api/app/interfaz/registro_errores.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py tests/escenarios/test_registro_de_errores.py tests/escenarios/test_seguridad_api.py -k "registro or referencia or correlacion or log"
-mutate apps/api/app/interfaz/metricas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k metricas
-mutate apps/api/app/interfaz/salud.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "disponibilidad or version"
-mutate apps/api/app/main.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/config.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k "configuracion or version"
-mutate apps/api/app/interfaz/barrido.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py -k recordatorios
-mutate scripts/respaldo.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py
-mutate scripts/usuario_de_la_app.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_operacion.py
+scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_operacion.py
+mutate apps/api/app/infraestructura/db.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k "base or disponibilidad"
+mutate apps/api/app/interfaz/registro_errores.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py tests/escenarios/test_registro_de_errores.py tests/escenarios/test_seguridad_api.py -k "registro or referencia or correlacion or log"
+mutate apps/api/app/interfaz/metricas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k metricas
+mutate apps/api/app/interfaz/salud.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k "disponibilidad or version"
+mutate apps/api/app/main.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/config.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k "configuracion or version"
+mutate apps/api/app/interfaz/barrido.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k recordatorios
+mutate scripts/respaldo.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py
+mutate scripts/usuario_de_la_app.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py
 mutate apps/mobile/lib/api/cliente_api.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
 mutate apps/mobile/lib/comun/dialogo_error.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
 mutate apps/mobile/lib/comun/errores_no_manejados.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
