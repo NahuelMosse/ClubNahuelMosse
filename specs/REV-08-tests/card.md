@@ -838,3 +838,4 @@ Reserva anulada                Error al anular
 - L26 · 2026-10-22 · T3 · anular_desde_el_detalle_test.dart corre dentro de la app-suite (passed); required: clones K4 sin resolver y archivos del kit cambiados durante la corrida
 - L27 · 2026-10-23 · declared · lint · dos archivos congelados traen un hallazgo de ruff que no se puede corregir sin editarlos: `test_suite_confiable.py` usa `CASOS_DE_USO` sin definir (F821, en el test reemplazado en L17-L21) y `test_contrato_publicado.py:41` compara al revés (SIM300). `lint` los corre con esas dos reglas apagadas y el resto de ruff completo
 - L28 · 2026-10-23 · los dos `mutate` de Dart corren con `[timeout 90 min]`: con la máquina cargada no terminaron en 45
+- L29 · 2026-10-23 · kit updated 7a91c9699fa944f754191f53f20a024663a607bd → c3b49d603591e5747683ff5c839f33e26a20502c · kit 6.1.2: Dart in close and required, replaced tests need no lint
