@@ -1,5 +1,5 @@
 {
-  "kit": "6.2.0",
+  "kit": "6.3.1",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
@@ -36,11 +36,23 @@
       "mcp": {}
     },
     "flutter": {
-      "status": "planned",
-      "does": "mobile screens in Flutter; implemented by lote 50",
+      "status": "available",
+      "does": "mobile screens in Flutter: golden, accessibility and motion checks, the flutter gate and the designer",
       "modules": [], "modulesIfSignal": [], "optInModules": [],
       "lenses": { "visual": "flutter" },
-      "stacks": [], "tools": [], "agents": [], "gate": [], "files": [], "mcp": {}
+      "stacks": [], "tools": ["flutter-gate"], "agents": ["designer"],
+      "gate": ["golden <state>:", "a11y:", "motion:", "flutter-gate"],
+      "files": [
+        ".claude/profiles/flutter.md", ".claude/profiles/flutter/**", ".claude/tools/flutter-gate.mjs",
+        ".claude/tools/motion-audit.mjs", ".claude/tools/motion-curves.mjs", ".claude/agents/designer.md",
+        ".claude/reference/design-refs-mobile.md"
+      ],
+      "copies": [
+        { "from": ".claude/profiles/flutter/test-kit/kit_states.dart", "to": "test/kit/kit_states.dart" },
+        { "from": ".claude/profiles/flutter/test-kit/kit_a11y.dart", "to": "test/kit/kit_a11y.dart" },
+        { "from": ".claude/profiles/flutter/test-kit/kit_motion.dart", "to": "test/kit/kit_motion.dart" }
+      ],
+      "mcp": {}
     }
   },
   "breaking": {
