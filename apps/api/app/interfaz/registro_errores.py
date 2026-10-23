@@ -17,6 +17,8 @@ _RECHAZOS = {400, 401, 403, 409, 429}
 _ID_VALIDO = re.compile(r"[A-Za-z0-9._-]{1,64}")
 _EVENTO = re.compile(r"^(\w+):")
 _referencia: ContextVar[str | None] = ContextVar("referencia", default=None)
+# Las fábricas de registros que armó este módulo: una no se envuelve dos veces.
+_PROPIAS: set[object] = set()
 
 MENSAJE_500 = "Ocurrió un error. Si le escribís a soporte, pasale esta referencia."
 
@@ -62,7 +64,7 @@ class _EnJson(logging.Formatter):
 
 def _fabrica_con_referencia() -> None:
     anterior = logging.getLogRecordFactory()
-    if getattr(anterior, "con_referencia", False):
+    if anterior in _PROPIAS:
         return
 
     def fabrica(*args: object, **kwargs: object) -> logging.LogRecord:
@@ -71,7 +73,7 @@ def _fabrica_con_referencia() -> None:
         registro.version = config.version
         return registro
 
-    fabrica.con_referencia = True  # type: ignore[attr-defined]
+    _PROPIAS.add(fabrica)
     logging.setLogRecordFactory(fabrica)
 
 

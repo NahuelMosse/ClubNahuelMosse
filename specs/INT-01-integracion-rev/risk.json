@@ -1,0 +1,29 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs",
+    "route"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/infraestructura/db.py",
+    "apps/api/app/dependencias.py",
+    "apps/api/app/interfaz/salud.py",
+    "apps/api/app/interfaz/metricas.py",
+    "apps/api/app/interfaz/registro_errores.py",
+    "apps/api/tests/unit/test_casos_de_uso_reservas.py",
+    "apps/api/tests/escenarios/test_contrato_publicado_con_operacion.py",
+    "apps/mobile/test/operacion_cliente_sin_verificar_rutas_test.dart",
+    "apps/api/THIRD_PARTY_NOTICES.md",
+    "docs/business/accessibility.md",
+    "apps/mobile/test/pantalla_error_de_arranque_test.dart"
+  ],
+  "tasks": 3
+}

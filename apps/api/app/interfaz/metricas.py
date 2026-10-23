@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from app.config import config
-from app.infraestructura.db import motor
+from app.dependencias import uso_del_pool
 
 router = APIRouter(tags=["operación"])
 
@@ -46,9 +46,9 @@ def _texto() -> str:
             lineas.append(f'solicitud_segundos_bucket{{ruta="{ruta}",le="+Inf"}} {int(serie[-1])}')
             lineas.append(f'solicitud_segundos_sum{{ruta="{ruta}"}} {serie[-2]:.6f}')
             lineas.append(f'solicitud_segundos_count{{ruta="{ruta}"}} {int(serie[-1])}')
-    pool = motor().pool
-    lineas.append(f"pool_conexiones_en_uso {pool.checkedout()}")  # type: ignore[attr-defined]
-    lineas.append(f"pool_conexiones_libres {pool.checkedin()}")  # type: ignore[attr-defined]
+    en_uso, libres = uso_del_pool()
+    lineas.append(f"pool_conexiones_en_uso {en_uso}")
+    lineas.append(f"pool_conexiones_libres {libres}")
     return "\n".join(lineas) + "\n"
 
 

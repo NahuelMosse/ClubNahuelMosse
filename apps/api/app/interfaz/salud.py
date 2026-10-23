@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from app.config import config
-from app.infraestructura.db import base_disponible, esquema_al_dia
+from app.dependencias import base_disponible, esquema_al_dia
 from app.interfaz.registro_errores import referencia_actual
 
 router = APIRouter(tags=["operación"])

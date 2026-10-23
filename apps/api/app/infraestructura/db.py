@@ -5,6 +5,7 @@ from pathlib import Path
 from alembic.config import Config as AlembicConfig
 from alembic.script import ScriptDirectory
 from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.pool import QueuePool
 
 from app.config import RAIZ_API, config
 
@@ -73,3 +74,11 @@ def esquema_al_dia() -> bool:
     except Exception:
         return False
     return actual == ultima
+
+
+def uso_del_pool() -> tuple[int, int]:
+    """Las conexiones en uso y las libres del pool, o (0, 0) si el pool no las cuenta."""
+    pool = motor().pool
+    if isinstance(pool, QueuePool):
+        return pool.checkedout(), pool.checkedin()
+    return 0, 0
