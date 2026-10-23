@@ -13,7 +13,7 @@ Dependencias de producción, directas y transitivas, instaladas en el entorno do
 | annotated-types | 0.8.0 | MIT | Adrian Garcia Badaracco, Samuel Colvin, Zac Hatfield-Dodds (https://github.com/annotated-types/annotated-types) |
 | anyio | 4.15.1 | MIT | Alex Grönholm (https://github.com/agronholm/anyio) |
 | cachecontrol | 0.14.4 | Apache-2.0 | Eric Larson, Frost Ming, William Woodruff (https://pypi.org/project/CacheControl/) |
-| certifi | 2026.7.22 | MPL-2.0 | Kenneth Reitz (https://github.com/certifi/python-certifi) |
+| certifi | 2026.10.19 | MPL-2.0 | Kenneth Reitz (https://github.com/certifi/python-certifi) |
 | cffi | 2.1.1 | MIT-0 | Armin Rigo, Maciej Fijalkowski (https://github.com/python-cffi/cffi) |
 | charset-normalizer | 3.5.1 | MIT | Ahmed R. TAHRI |
 | click | 8.5.0 | BSD-3-Clause | Pallets (https://github.com/pallets/click/) |
@@ -159,7 +159,7 @@ Archivos de `apps/mobile/assets/fuentes`, bajo la SIL Open Font License 1.1: el 
 
 ## MPL-2.0
 
-Paquetes con licencia MPL-2.0: `certifi` 2026.7.22.
+Paquetes con licencia MPL-2.0: `certifi` 2026.10.19.
 Se usan sin modificar: se instalan tal como los publica su registro y el repositorio no incluye parches ni copias de su código. El código fuente de cada uno está en el repositorio de su columna de atribución, y el texto de la licencia en https://www.mozilla.org/MPL/2.0/.
 
 ## LGPL-3.0
