@@ -9,7 +9,7 @@ Result: passed
 - 3 · every tag is a spec of card.md — 4 tagged files
 - 4 · each ASM is tagged or declared uncovered — 9 of 9 tagged
 - 5 · no tagged test touched since RED — none of 1 tagged file since 0e40b0511
-- 6 · diff and Tasks agree — 217 files in the diff against 2e3c525be22afb26f32adfb000223f05f4c2cbca~1
+- 6 · diff and Tasks agree — 218 files in the diff against 2e3c525be22afb26f32adfb000223f05f4c2cbca~1
 - 7 · gate green — 4 lines passed on this code
 - 8 · judge · skipped — risk.json says review: low
 - 9 · required.mjs — mutation, linter and scope ran and passed on this code
@@ -33,6 +33,9 @@ no judge: risk large · low; the gate is the whole review
 - REV-04-ASM-07 · tagged
 - REV-04-ASM-08 · tagged
 - REV-04-ASM-09 · tagged
+
+## Notes
+- L18 · 2026-10-23 · publicación sin correr — la rama `card/REV-04`, el PR, el CI y el comentario de cierre no se publican sin un pedido expreso (CLAUDE.md del repo); la rama queda local en el worktree `D:/Temp/w/rev04`
 
 ## Needs a person
 - replaced test: apps/mobile/test/interfaz_accesible_test.dart "con un dato completado sólo se marca lo que falta, y escribirlo borra su error @REV-04-S1 @assumption:REV-04-ASM-01" by apps/mobile/test/interfaz_accesible_registro_test.dart "con un dato completado sólo se marca lo que falta, y escribirlo borra su error" — el alta exitosa llama context.go y el test monta sin GoRouter (No GoRouter found in context); confirm the old test was wrong and the new one is not looser
