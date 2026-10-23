@@ -27,7 +27,7 @@ import { outOfScopeThatBelongToTheCard } from './out-of-scope.mjs';
 import { records } from './once.mjs';
 
 const MUTATOR = /mutate\.mjs|stryker|mutmut|pitest|go-mutesting|cosmic-ray/i;
-const LINTER = /eslint|ruff|golangci-lint|pylint|flake8|rubocop|ktlint|checkstyle|dotnet format/i;
+const LINTER = /eslint|ruff|golangci-lint|pylint|flake8|rubocop|ktlint|checkstyle|dotnet format|dart (?:analyze|format)|flutter analyze/i;
 
 const today = () => new Date().toISOString().slice(0, 10);
 const cardName = (cardDir) => cardDir.split(/[\\/]/).pop();
@@ -133,7 +133,9 @@ export const missing = (root, { closing = true } = {}) => {
   const touched = cardFiles(root, base);
   const production = touched.filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f));
   const map = fileMapLines(cardDir) ?? [];
-  const tests = touched.filter((f) => IS_TEST.test(f));
+  // A frozen test the Log declares replaced (`replaces: <file> "<title>"`) is not linted: a formatter would rewrite it.
+  const replaced = new Set([...(String(readCard(cardDir) ?? '').split(/^## Log\b.*$/m)[1] ?? '').matchAll(/replaces:\s*(\S+)\s+"/g)].map((m) => m[1]));
+  const tests = touched.filter((f) => IS_TEST.test(f) && !replaced.has(f));
   const { exempt, off, grade } = active(root);
   const name = cardName(cardDir);
 
