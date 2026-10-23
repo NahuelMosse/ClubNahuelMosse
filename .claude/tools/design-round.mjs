@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,390x844] [--gpu]
+// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1024x768,768x1024,390x844] [--gpu] [--grain baked]
+// `--grain baked` (also what a card's `## Look` declares when the grain is baked into the image files) makes the grain rule pass
+// without a global layer and prints «grain: baked (declared)».
 // One whole capture round of a screen in a single call, so the designer spends its turns looking and fixing, not taking captures.
 // Per width it writes viewport captures, never a full page: the load at 0, 600 and 2000 ms; one per visible `section` or
 // `[data-section]`, scrolled to the top of the viewport; and, with --steps, the ones of a probe steps file (`help.mjs judge`
@@ -11,6 +13,10 @@
 // The WebGL renderer (`UNMASKED_RENDERER`) is always in the summary; a software one (SwiftShader) is flagged, because with it
 // the motion times mean nothing. --gpu launches Chromium with `--use-angle=d3d11 --enable-gpu-rasterization
 // --ignore-gpu-blocklist` on Windows (the last two elsewhere).
+// By window class (`.claude/reference/responsive-classes.md`): widths under 600 (compact) measure tap targets under 44x44,
+// hover-only reveals, inputs under 16 px, document overflow, media queries (min-width against max-width), the share of the viewport
+// covered by fixed layers, where the first primary button falls and the navigation (bottom bar or labeled menu, not a bare
+// hamburger); from 840 up, no hamburger; from 1200, clicks of 24 px or more and buttons that do not all measure 48 or more.
 // Output: `<dir>/round.json` with everything, a short table on stdout (each rule: value, range, pass or fail; then the captures).
 // Exit 0 whenever it ran, a failed rule included; 2 when it could not run (bad arguments, no Playwright, the URL does not answer).
 // Run from the root of the repo of the card; Playwright is found there or at KIT_PLAYWRIGHT_ROOT.
@@ -23,7 +29,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseSteps } from './probe.mjs';
 
-const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,390x844] [--gpu]';
+const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1024x768,768x1024,390x844] [--gpu] [--grain baked]';
 const LOAD_MARKS = [0, 600, 2000];
 const STEP_TIMEOUT_MS = 5000;
 
@@ -77,6 +83,98 @@ export const measure = () => {
   };
 };
 
+// Runs in the page: what `responsive-classes.md` asks of the window class. Same-origin style sheets only.
+export const measureResponsive = () => {
+  const vw = innerWidth; const vh = innerHeight;
+  const shown = (el) => {
+    const r = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+    return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+  };
+  const label = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''}${el.classList.length ? `.${[...el.classList].slice(0, 2).join('.')}` : ''}`;
+  const rectOf = (el) => el.getBoundingClientRect();
+  const size = (el) => `${label(el)} ${Math.round(rectOf(el).width)}x${Math.round(rectOf(el).height)}`;
+  // Inline links inside running text are exempt from the target size (WCAG 2.5.8).
+  const interactive = [...document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [tabindex]:not([tabindex="-1"])')]
+    .filter((el) => shown(el) && !(el.tagName === 'A' && getComputedStyle(el).display === 'inline'));
+  const tapSmall = interactive.filter((el) => rectOf(el).width < 44 || rectOf(el).height < 44).map(size);
+  const clickSmall = interactive.filter((el) => rectOf(el).width < 24 || rectOf(el).height < 24).map(size);
+  // A card that is a button as a whole (a plan, a product) is not a control: past 64 px tall it is left out of the median.
+  const heights = interactive.filter((el) => el.matches('button, [role=button], input[type=submit], input[type=button]')).map((el) => rectOf(el).height)
+    .filter((h) => h <= 64).sort((a, b) => a - b);
+  const medianButton = heights.length ? Math.round(heights[Math.floor(heights.length / 2)]) : null;
+
+  const rules = [];
+  const walk = (list) => { for (const r of list) { rules.push(r); if (r.cssRules) walk(r.cssRules); } };
+  for (const sheet of document.styleSheets) { try { walk(sheet.cssRules); } catch { /* cross-origin sheet */ } }
+  const styled = rules.filter((r) => r.selectorText);
+  const tailsOf = (sel, pseudo) => sel.split(',').map((part) => { const i = part.lastIndexOf(pseudo); return i < 0 ? null : part.slice(i + pseudo.length).trim(); }).filter((t) => t);
+  const focusTails = new Set(styled.flatMap((r) => [':focus-within', ':focus-visible', ':focus'].flatMap((p) => tailsOf(r.selectorText, p))));
+  const hoverOnly = [];
+  for (const r of styled) {
+    if (!r.selectorText.includes(':hover') || !(r.style.display || r.style.visibility || r.style.opacity)) continue;
+    if (tailsOf(r.selectorText, ':hover').some((tail) => !focusTails.has(tail))) hoverOnly.push(r.selectorText);
+  }
+  const smallFields = [...document.querySelectorAll('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=range]), select, textarea')]
+    .filter((el) => shown(el) && parseFloat(getComputedStyle(el).fontSize) < 16).map((el) => `${label(el)} ${parseFloat(getComputedStyle(el).fontSize)}px`);
+  const queries = rules.filter((r) => r.media).map((r) => r.media.mediaText);
+  const minQ = queries.filter((q) => /min-width/.test(q)).length;
+  const maxQ = queries.filter((q) => /max-width/.test(q)).length;
+
+  const pinned = (el) => ['fixed', 'sticky'].includes(getComputedStyle(el).position);
+  let covered = 0;
+  for (const el of document.body.querySelectorAll('*')) {
+    if (!pinned(el) || !shown(el)) continue;
+    const r = rectOf(el);
+    covered += Math.max(0, Math.min(r.right, vw) - Math.max(r.left, 0)) * Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0));
+  }
+  const primary = interactive.find((el) => el.matches('[type=submit], [class*=primary], [class*=cta], [class*=btn], [class*=button]'))
+    || interactive.find((el) => el.matches('button, a[href]') && !el.closest('nav, header'));
+  let cta = null;
+  if (primary) {
+    let fixedBottom = false;
+    for (let p = primary; p; p = p.parentElement) if (pinned(p) && rectOf(p).bottom >= vh - 4) fixedBottom = true;
+    cta = { name: size(primary), topPct: Math.round((rectOf(primary).top / vh) * 100), pinned: fixedBottom };
+  }
+  const bottomBar = [...document.body.querySelectorAll('*')].some((el) => pinned(el) && shown(el) && rectOf(el).bottom >= vh - 4 && rectOf(el).width >= vw * 0.8 && el.querySelectorAll('a[href], button').length >= 3);
+  const burger = interactive.find((el) => /burger|menu-toggle|nav-toggle|menu-btn|toggle-menu|menu-button|navbar-toggler/i.test(`${el.className} ${el.id}`)
+    || (el.matches('button, [role=button]') && /^(menu|menú|open menu|toggle menu|navigation)$/i.test((el.getAttribute('aria-label') || '').trim()))
+    || (el.matches('button, [role=button]') && el.hasAttribute('aria-expanded') && el.closest('header, nav') && !(el.textContent || '').trim()));
+  return {
+    width: vw, tapSmall, clickSmall, medianButton, hoverOnly, smallFields,
+    overflow: { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth },
+    queries: { min: minQ, max: maxQ }, coveredPct: Math.min(100, Math.round((covered / (vw * vh)) * 100)), cta,
+    nav: { bottomBar, hamburger: !!burger, hamburgerLabeled: !!burger && /menu|menú/i.test((burger.textContent || '').trim()) },
+  };
+};
+
+// The rules of `responsive-classes.md` that apply to the window class of the width.
+export const responsiveRules = (m) => {
+  const row = (rule, value, range, pass, detail = []) => ({ rule, value, range, pass, detail });
+  const out = [];
+  if (m.width < 600) {
+    out.push(
+      row('tap targets under 44x44', m.tapSmall.length, '0', m.tapSmall.length === 0, m.tapSmall),
+      row('hover-only reveals', m.hoverOnly.length, '0', m.hoverOnly.length === 0, m.hoverOnly),
+      row('inputs under 16 px', m.smallFields.length, '0', m.smallFields.length === 0, m.smallFields),
+      row('document overflow', m.overflow.scrollWidth > m.overflow.clientWidth ? `${m.overflow.scrollWidth} > ${m.overflow.clientWidth}` : 'none', 'none', m.overflow.scrollWidth <= m.overflow.clientWidth),
+      row('media queries', `min ${m.queries.min} / max ${m.queries.max}${m.queries.max > m.queries.min ? ' · desktop-first' : ''}`, 'min >= max', m.queries.max <= m.queries.min),
+      row('fixed layers (% of viewport)', m.coveredPct, '<= 20', m.coveredPct <= 20),
+      m.cta
+        ? row('cta reach (% of height)', m.cta.pinned ? `${m.cta.topPct} (pinned)` : m.cta.topPct, '>= 50 or pinned', m.cta.pinned || m.cta.topPct >= 50, [m.cta.name])
+        : row('cta reach (% of height)', 'no button or link', 'n/a', true),
+      row('navigation, compact', m.nav.bottomBar ? 'bottom bar' : m.nav.hamburger ? (m.nav.hamburgerLabeled ? 'labeled menu' : 'bare hamburger') : 'none', 'bottom bar or labeled menu', m.nav.bottomBar || !m.nav.hamburger || m.nav.hamburgerLabeled),
+    );
+  }
+  if (m.width >= 840) out.push(row('hamburger, expanded', m.nav.hamburger ? 'yes' : 'no', 'no', !m.nav.hamburger));
+  if (m.width >= 1200) {
+    out.push(
+      row('clicks under 24x24', m.clickSmall.length, '0', m.clickSmall.length === 0, m.clickSmall),
+      row('median button height', m.medianButton ?? 'no buttons', '< 48 (all 48+ is a stretched mobile)', m.medianButton == null || m.medianButton < 48),
+    );
+  }
+  return out;
+};
+
 // Runs in the page: the WebGL renderer, or null without WebGL.
 const rendererOf = () => {
   try {
@@ -87,7 +185,7 @@ const rendererOf = () => {
 };
 
 // The rules of `excellence.md` that a measure decides: value, range and whether it passes.
-export const rulesOf = (m) => {
+export const rulesOf = (m, grainBaked = false) => {
   const row = (rule, value, range, pass) => ({ rule, value, range, pass: value == null ? false : pass });
   return [
     row('display/body ratio', m.ratio, '5-9', m.ratio >= 5 && m.ratio <= 9),
@@ -95,7 +193,7 @@ export const rulesOf = (m) => {
     row('display tracking (em)', m.displayTrackingEm, '-0.03..-0.02', m.displayTrackingEm <= -0.02 && m.displayTrackingEm >= -0.05),
     row('body tracking (em)', m.bodyTrackingEm, '-0.03..-0.01', m.bodyTrackingEm <= -0.01 && m.bodyTrackingEm >= -0.05),
     row('font sizes, first viewport', m.sizeCount, '<= 9', m.sizeCount <= 9),
-    row('grain or noise', m.grain ? 'yes' : 'no', 'yes', m.grain),
+    row('grain or noise', m.grain ? 'yes' : grainBaked ? 'baked (declared)' : 'no', 'yes or baked', m.grain || grainBaked),
   ];
 };
 
@@ -133,11 +231,12 @@ const parseArgs = (argv) => {
   const take = (name) => { const i = args.indexOf(name); return i < 0 ? undefined : args.splice(i, 2)[1]; };
   const gpu = args.includes('--gpu');
   if (gpu) args.splice(args.indexOf('--gpu'), 1);
-  const out = take('--out'); const steps = take('--steps'); const widths = take('--widths') ?? '1440x900,390x844';
+  const out = take('--out'); const steps = take('--steps'); const widths = take('--widths') ?? '1440x900,1024x768,768x1024,390x844';
+  const grainFlag = take('--grain');
   const [url, ...extra] = args;
   const viewports = widths.split(',').map((v) => { const [w, h = '900'] = v.trim().split('x'); return { width: Number(w), height: Number(h) }; });
-  if (!url || extra.length || !out || viewports.some(({ width, height }) => !(width >= 200 && width <= 3000 && height >= 200 && height <= 3000))) return { error: USAGE };
-  return { url, out: resolve(out), steps, viewports, gpu };
+  if (!url || extra.length || !out || (grainFlag !== undefined && grainFlag !== 'baked') || viewports.some(({ width, height }) => !(width >= 200 && width <= 3000 && height >= 200 && height <= 3000))) return { error: USAGE };
+  return { url, out: resolve(out), steps, viewports, gpu, grainBaked: grainFlag === 'baked' };
 };
 
 export const round = async (argv) => {
@@ -180,7 +279,8 @@ export const round = async (argv) => {
         result.software = result.renderer ? /swiftshader|llvmpipe|software/i.test(result.renderer) : null;
       }
       const m = await page.evaluate(measure);
-      result.widths[key] = { measure: m, rules: rulesOf(m) };
+      const responsive = await page.evaluate(measureResponsive);
+      result.widths[key] = { measure: m, responsive, rules: [...rulesOf(m, a.grainBaked), ...responsiveRules(responsive)] };
       const sections = await page.evaluate(() => {
         const els = [...document.querySelectorAll('section, [data-section]')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden'; });
         els.forEach((e, i) => e.setAttribute('data-design-round', String(i)));
@@ -216,7 +316,11 @@ export const round = async (argv) => {
   const lines = [`design-round · ${a.url}`, `renderer: ${result.renderer ?? 'none (no WebGL)'}${result.software ? ' · SOFTWARE: motion times do not count' : ''}`];
   for (const [key, w] of Object.entries(result.widths)) {
     lines.push(`-- ${key}`);
-    for (const r of w.rules) lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value ?? 'n/a'} (range ${r.range})`);
+    for (const r of w.rules) {
+      if (r.value === 'baked (declared)') lines.push('  pass  grain: baked (declared)');
+      else lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value ?? 'n/a'} (range ${r.range})`);
+      if (!r.pass && r.detail?.length) lines.push(...r.detail.slice(0, 8).map((d) => `        ${d}`));
+    }
   }
   lines.push('-- load');
   if (result.load) for (const r of result.load.rules) lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value} (range ${r.range})`);

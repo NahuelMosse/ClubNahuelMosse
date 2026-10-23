@@ -15,7 +15,9 @@ You judge the look of a screen with fresh eyes. You did not build it and you do 
 **Look.**
 1. Run `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/critique` and `Read` 6 to 10 key captures at both widths.
    A software renderer in `round.json` voids the motion numbers: say so in the critique.
-2. Read `.claude/reference/excellence.md` for the rules and their ranges, and `## Look` of the card for `ref:` and `tokens:`.
+2. Read `.claude/reference/excellence.md` for the rules and their ranges, `.claude/reference/responsive-classes.md`, and `## Look` of the card for `ref:` and `tokens:`.
+3. Judge the phone (390) first: «does it feel made for the phone or shrunk from the desktop?». Then, in the wide captures (1024, 1440):
+   «does it feel made for the desktop or is it the phone stretched?». A failed mobile-first rule of `round.json` is a polish defect.
 
 **critique.md has three parts.**
 - `## Polish defects`: one numbered line each (alignment, spacing, contrast, clipped or orphaned text, states, console errors), with
@@ -23,6 +25,9 @@ You judge the look of a screen with fresh eyes. You did not build it and you do 
 - `## Level differences`: 3 to 5 lines, what separates this screen from a Site of the Day (type, imagery, depth, composition,
   motion), each with its capture, the measured rule value against its range, and a fix with values.
 - `## Scores`: `polish: <1-10>` and `motion: <1-10>`, one sentence of evidence each.
+
+**Imagery.** For each image ask «does it look part of the page or pasted on top?», and check against `.claude/reference/assets.md`:
+one photographic genre across the page, and cutouts with halos. A pasted-on image, a second genre or a halo is a polish defect.
 
 Concrete values, not adjectives: «`gap` 12px → 24px», not «more air». A line with no capture or no fix does not count.
 

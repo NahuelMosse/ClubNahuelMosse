@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "606e1cb36a6886e961edc1d0bed1dcb344d21d23fee7bd5d67b1f34cf17a3736"
+    "sha256": "4ace669eb98dfb5bad2e9cbbad83f598d26c040950621923391cecb466e0ff29"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1305,7 +1305,7 @@
   },
   ".claude/tools/attack.mjs": {
     "module": "profile:backend",
-    "sha256": "f3dfee16b7220fac499298a8e36d21aea754f41e9341b8af13ffef2559337888"
+    "sha256": "ae18d2933780f15709a8b98eca8cc13b3ff8f792ee50056372477484ce2a7432"
   },
   ".claude/tools/bar.mjs": {
     "module": "core",
@@ -1369,7 +1369,7 @@
   },
   ".claude/tools/mutate.mjs": {
     "module": "core",
-    "sha256": "75dd0d0a837d4ae6fc59a5367a6510d886108393878c6d14a3e5e0bec15a0a26"
+    "sha256": "c9539f32dae94cd55dfd6a71ef3625c58b29fb1b4f5da4f74d09ea4d31e78342"
   },
   ".claude/tools/once.mjs": {
     "module": "core",
@@ -1433,7 +1433,7 @@
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "99655d9f44c1a00bb65ff823b60d705e1537e3a9c340593df273a2285905cabe"
+    "sha256": "680a2fc7ac7ec4568324141c54ed039536cee39d4fc050cd898c5fff4a134717"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1509,7 +1509,7 @@
   },
   ".claude/profiles/web.md": {
     "module": "profile:web",
-    "sha256": "f40b34d4725ce3dbf47399ae9a9bca7ac5f07cb4193ed39d4958294f28e1265b"
+    "sha256": "f7b376461485b85cd4e64fcc38d0f7c73218e743cbaf6ff129522a3e654a39e8"
   },
   ".claude/skills/motion/PROVENANCE": {
     "module": "profile:web",
@@ -1561,7 +1561,7 @@
   },
   ".claude/agents/design-critic.md": {
     "module": "profile:web",
-    "sha256": "7edca2b6d47e2c3180951452e20c1b90c32e98fa7ede7ea570d866a803ec3eaa"
+    "sha256": "cecdcc01a6902bd9a9a39174089a91902ddaf13e6d8e13b99baf9545059cada3"
   },
   ".claude/reference/excellence.md": {
     "module": "profile:web",
@@ -1569,6 +1569,18 @@
   },
   ".claude/tools/design-round.mjs": {
     "module": "profile:web",
-    "sha256": "304de7b2af33f656bc89b2c6bbbd07aee419228d5466af4e8abe3a5554bb98cd"
+    "sha256": "e17a21258ee2369248fa337ba71d742020545e28ce77e17f0231236f3f396625"
+  },
+  ".claude/reference/assets.md": {
+    "module": "profile:web",
+    "sha256": "746b9f21805922a96c6fc59da5774783204fbead52928995899e7c4de37bde13"
+  },
+  ".claude/reference/responsive-classes.md": {
+    "module": "profile:web",
+    "sha256": "6103d3f69917034769a9a54ad877f471c4e19a7294e732a07eeca4ccff66db62"
+  },
+  ".claude/tools/asset-pipeline.py": {
+    "module": "profile:web",
+    "sha256": "b2ae1d77c623430268046cb1c592bb6c0e6812fa7253a9f4267ff4337e72c4d7"
   }
 }

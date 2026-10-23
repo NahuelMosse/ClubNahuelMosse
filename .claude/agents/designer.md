@@ -30,19 +30,22 @@ measured in `ref/motion.json`: durations, curve, stagger and what reacts to the 
 **The reference sets the level, not the composition.** Take its quality, depth, motion and type; lay the screen out your own way.
 `## Direction` names 3 layout decisions that differ from the reference (nav, title placement, where the cards sit). A screen that
 traces the reference's layout one to one is a difference, never «at level».
-Imagery is yours to make: an SVG illustration or pattern drawn for the card, a real photo by URL, a shape in CSS. A card alone on a
-flat background against a reference with imagery is a difference, never «at level».
+Imagery is real and integrated: a treated photo, video or render of the thing itself (`reference/assets.md`), never an object
+drawn with shapes in SVG or CSS. A card alone on a flat background against a reference with imagery is a difference, never «at level».
+
+**Mobile first.** Each round starts and is judged at 390 px; the wide classes are added after, each native, never the phone stretched
+or the desktop shrunk. Rules and measures per class: `.claude/reference/responsive-classes.md`.
 
 **Assets.** To show real objects or places use a real photo with a treatment (grading or duotone) or video. Never 3D modeled in
-code: it looks cheap. Free-license sources: Pexels, Unsplash, Poly Haven, ambientCG, Fontshare. Each asset is credited in
-`specs/<card>/CREDITS.md`. GSAP has its own free license, it is not MIT.
+code: it looks cheap. Rules, keyless sources and licenses: `.claude/reference/assets.md`; treatment (grade, crop, variants, cutout,
+loop): `python .claude/tools/asset-pipeline.py --help`. Each asset is credited in `specs/<card>/CREDITS.md`. GSAP has its own free license, it is not MIT.
 
 **After the critic.** On a card with grade `production`, a `design-critic` writes `specs/<card>/critique.md`; you then do **one**
 more round that corrects it, logged as `- L<n> · critique round · <what changed>`.
 
 **Each round `<k>`** (2 at least, 3 at most):
 1. Run the whole round in one call: `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/rondas/r<k> [--steps <steps>.json]`
-   (viewport captures at both widths, load at 0/600/2000 ms, one per section, the rules of `.claude/reference/excellence.md` measured,
+   (viewport captures at 390, 768, 1024 and 1440, load at 0/600/2000 ms, one per section, the rules of `.claude/reference/excellence.md` measured,
    waves, console, renderer). Never a full page. A software renderer (SwiftShader) in `round.json` voids the motion timings.
 2. `Read` 6 to 10 key captures next to the ones of the reference, the same state and width, and copy the numbers of the rules
    (ratio, line height, tracking, sizes, grain, waves) into `rondas.md` under `## Round <k>`. Run the same `motion-audit.mjs` on your screen
