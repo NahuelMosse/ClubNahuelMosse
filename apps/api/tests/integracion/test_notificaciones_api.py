@@ -119,7 +119,7 @@ def test_registrar_un_dispositivo_exige_sesion_de_usuario_y_datos_validos(
     )
 
 
-def test_un_token_registrado_por_otra_cuenta_pasa_a_ella(
+def test_un_token_registrado_por_otra_cuenta_no_cambia_de_dueno(
     api: TestClient,
     motor: Engine,
     token_usuario: str,
@@ -151,7 +151,7 @@ def test_un_token_registrado_por_otra_cuenta_pasa_a_ella(
             text("SELECT usuario_id FROM dispositivo WHERE token = :t AND activo"),
             {"t": dispositivo},
         ).all()
-    assert [int(d.usuario_id) for d in duenos] == [_yo(api, motor, token_otra)]
+    assert [int(d.usuario_id) for d in duenos] == [_yo(api, motor, token_usuario)]
 
 
 def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_recibir(

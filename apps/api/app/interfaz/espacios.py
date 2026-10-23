@@ -27,6 +27,7 @@ from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.espacios import EspaciosSql
 from app.interfaz.entradas import Identificador, Texto40
+from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["espacios"])
@@ -147,16 +148,11 @@ def sugerir_nombre(
     try:
         s = nombre_sugerido(perfil, sede_id, deporte, tipo, EspaciosSql(conn))
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except NoDisponible:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"errores": {"sede_id": SEDE_NO_DISPONIBLE}},
-        )
+        return datos_invalidos({"sede_id": SEDE_NO_DISPONIBLE})
     return Sugerencia(nombre=s.nombre, numero=s.numero)
 
 
@@ -209,16 +205,11 @@ def alta_de_espacio(
     try:
         espacio = dar_de_alta_espacio(perfil, datos, pedido.numero, espacios)
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except NoDisponible:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"errores": {"sede_id": SEDE_NO_DISPONIBLE}},
-        )
+        return datos_invalidos({"sede_id": SEDE_NO_DISPONIBLE})
     except NumeroOcupado as e:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
@@ -279,13 +270,11 @@ def edicion_de_espacio(
             EspaciosSql(conn),
         )
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return no_encontrado()
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     return vista_de_espacio(espacio)
 
 
@@ -312,16 +301,11 @@ def baja_de_espacio(
     try:
         dar_de_baja_espacio(perfil, espacio_id, EspaciosSql(conn))
     except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+        return sin_permiso()
     except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        return no_encontrado()
     except ConReservasFuturas:
-        return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT,
-            content={
-                "errores": {
-                    "espacio": "No se puede dar de baja el espacio porque posee reservas futuras."
-                }
-            },
+        return conflicto(
+            {"espacio": "No se puede dar de baja el espacio porque posee reservas futuras."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

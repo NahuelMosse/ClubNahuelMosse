@@ -85,7 +85,7 @@ mutate apps/api/app/interfaz/entradas.py: cd apps/api && sh D:/Temp/w/herramient
 mutate apps/api/app/interfaz/protecciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/integracion/test_protecciones_api.py
 mutate apps/api/app/interfaz/registro_errores.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/escenarios/test_registro_de_errores.py
 mutate apps/api/app/infraestructura/correo.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
-mutate apps/api/app/infraestructura/identidad.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
+mutate apps/api/app/infraestructura/identidad.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/unit/test_identidad_ingreso.py
 mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py tests/unit
 mutate apps/api/app/main.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py
 mutate apps/api/app/config.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_seguridad_api.py

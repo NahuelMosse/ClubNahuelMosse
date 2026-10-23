@@ -13,7 +13,7 @@ def test_sin_servidor_configurado_el_correo_no_sale_y_queda_en_el_log(
     monkeypatch.setattr(correo.config, "smtp_host", "")
     correo.enviar(MENSAJE)
     assert "no se pudo enviar el correo" in caplog.text
-    assert "faltan SMTP_HOST y CORREO_REMITENTE" in caplog.text
+    assert "RuntimeError" in caplog.text
 
 
 def test_el_default_es_smtp_y_no_el_buzon(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -7,9 +7,7 @@ from app.dominio.espacios import CATALOGO
 from app.dominio.reservas import Reserva
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
-Envio = Literal[
-    "pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"
-]
+Envio = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
 
 # El club está en UTC−3, sin horario de verano.
 HORA_DEL_CLUB = timezone(timedelta(hours=-3))

@@ -16,6 +16,7 @@ from app.dominio.usuarios import Perfil
 from app.infraestructura.db import conexion
 from app.infraestructura.horarios import HorariosSql
 from app.interfaz.espacios import ListaDeEspacios, vista_de_espacio
+from app.interfaz.respuestas import datos_invalidos
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["horarios"])
@@ -79,9 +80,7 @@ def ver_horarios(
             None if reserva_id is None else (reserva_id, perfil.id),
         )
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except NoDisponible:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -142,20 +141,13 @@ def ver_disponibles(
         if hora is None
     }
     if inicio is None or fin is None:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": errores}
-        )
+        return datos_invalidos(errores)
     try:
         libres = canchas_disponibles(
             HorariosSql(conn), sede_id, deporte, tipo, fecha, inicio, fin, datetime.now(ZONA)
         )
     except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
+        return datos_invalidos(e.errores)
     except NoDisponible:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"errores": {"sede_id": SEDE_NO_DISPONIBLE}},
-        )
+        return datos_invalidos({"sede_id": SEDE_NO_DISPONIBLE})
     return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in libres])

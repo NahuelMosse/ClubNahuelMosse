@@ -35,7 +35,7 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     elegidos, descartados = [], []
     for item in items:
         doc = getattr(getattr(item, "function", None), "__doc__", "") or ""
-        if f"@{card}-H" in doc:
+        if f"@{card}-H" in doc or f"@{card}-S" in doc or f"@assumption:{card}-ASM-" in doc:
             elegidos.append(item)
         else:
             descartados.append(item)
