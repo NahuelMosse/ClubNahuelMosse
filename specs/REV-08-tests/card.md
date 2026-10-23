@@ -861,3 +861,4 @@ Reserva anulada                Error al anular
 - L49 · 2026-10-23 · kit updated 0ee6620ed68db2278b45654b0e06b0c3f30c4269 → e5818794483826acc7ac09b20b84b1c1884cb38c · kit 6.5.3: reemplazos en toda línea de tests
 - L50 · 2026-10-23 · `anular_desde_el_detalle_test.dart` vuelve a su versión congelada (916351c): c9cc234 le había quitado un import sin uso; el analizador lo excluye en `apps/mobile/analysis_options.yaml` y `flutter test` lo sigue corriendo. T1 deja de nombrar `test_requisitos_no_funcionales.py`, que no se toca: lo cubren los reemplazos de L35 y L43
 - L51 · 2026-10-23 · kit updated e5818794483826acc7ac09b20b84b1c1884cb38c → 8db1c212392869ce6fa2e66b236ddbcd0538777f · kit 6.5.4: rutas fuera de los títulos en Tasks
+- L52 · 2026-10-23 · closing: publicación sin correr — la rama, el PR y el comentario de cierre no se publican sin un pedido expreso (CLAUDE.md del repo)
