@@ -1,0 +1,1 @@
+ACT-01 · T3 · M · mutation of apps/api/tests/escenarios/test_documentacion.py missing (verify.mjs, .validation/verify.log) · close: `node .claude/tools/required.mjs` no longer names the mutation of that file · open

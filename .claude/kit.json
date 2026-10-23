@@ -68,7 +68,23 @@
       "reason": "not chosen at install: no signal found in the repo",
       "by": "person",
       "at": "2026-10-20",
-      "signalsAtDecision": []
+      "signalsAtDecision": [
+        "docs/ file: docs/technical/runbook.md",
+        "docs/ file: docs/business/accessibility.md",
+        "docs/ file: docs/"
+      ],
+      "confirmed": [
+        {
+          "at": "2026-10-21",
+          "card": "REV-07-documentacion-produccion",
+          "reason": "REV-07-ASM-04: la card escribe documentación de operación que el grado production pide (R9, D8, D9, S15, S19, S21, O13, O14, P7, P14, P15, W5, I17); el módulo docs es de documentación para usuarios del kit y sigue apagado",
+          "signals": [
+            "docs/ file: docs/technical/runbook.md",
+            "docs/ file: docs/business/accessibility.md",
+            "docs/ file: docs/"
+          ]
+        }
+      ]
     },
     "i18n": {
       "state": "off",
@@ -81,7 +97,7 @@
       "confirmed": [
         {
           "at": "2026-10-21",
-          "card": "REV-05-basquet-en-el-catalogo",
+          "card": "REV-07-documentacion-produccion",
           "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale.",
           "signals": [
             "the card asks for a language, a translation or a locale"
