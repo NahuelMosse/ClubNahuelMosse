@@ -5,7 +5,7 @@
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "6fdb7559f92fd05907c1ec6cbdbd1fef4473103a64782ef458ce1890ba70609d"
+    "sha256": "17b74b5414994e3d26258112a5fea7de7466880be1e5e1dc98f254a6a457feea"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -53,7 +53,7 @@
   },
   ".claude/hooks/context-cap.mjs": {
     "module": "core",
-    "sha256": "9cb15fa87621b5a07c17f3590e30fd4ffd3bca1169b38ffdba4443a70aa02c7a"
+    "sha256": "8d6d49bde91a864932e9f14c645eec5cee80fa0913f61063c6a508992d020035"
   },
   ".claude/hooks/delegate-code.mjs": {
     "module": "core",
@@ -93,7 +93,7 @@
   },
   ".claude/hooks/review-cap.mjs": {
     "module": "core",
-    "sha256": "326b39bf9c9431ca18cfa1ba129e49e4b2c2fed1f6e3db6e4e0149870fe339ea"
+    "sha256": "5711bee9e1896514003071f8e4fd9121da1a8e85c4c23382b65585c68bbac617"
   },
   ".claude/hooks/session-record.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "854adc9c882cc974a1679c71e38f1e3edea0e72b50034f5d18f2c8436d722821"
+    "sha256": "e364e25d7702257fe5792280bb5006c76e14d0f4f9bb5c69909dc31fa69576b1"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1305,7 +1305,7 @@
   },
   ".claude/tools/attack.mjs": {
     "module": "profile:backend",
-    "sha256": "d54aaaf27d572e103bb1ad73f1563dfa63787e52a178481ca0bb3e8c9ad6e758"
+    "sha256": "f3dfee16b7220fac499298a8e36d21aea754f41e9341b8af13ffef2559337888"
   },
   ".claude/tools/bar.mjs": {
     "module": "core",
@@ -1341,7 +1341,7 @@
   },
   ".claude/tools/hook-dispatch.mjs": {
     "module": "core",
-    "sha256": "a24db05b040ac2d593a808f4166c6ce60b86bffe252b24690ca21f6ad52b29a6"
+    "sha256": "bdc052a7dc9c9e7175e7e1999ce6c5166782f8d5b493309c2425c7f935042e20"
   },
   ".claude/tools/hook-worker.mjs": {
     "module": "core",
@@ -1433,7 +1433,7 @@
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "7a193adca50a08b5ddb1c0d3734ec4d468cd9567a642e0337a86be9e074beaef"
+    "sha256": "99655d9f44c1a00bb65ff823b60d705e1537e3a9c340593df273a2285905cabe"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1509,7 +1509,7 @@
   },
   ".claude/profiles/web.md": {
     "module": "profile:web",
-    "sha256": "bb8078a65c931f662876bda2e9f4fc27a20b9b343225d577a35e3bad11436acb"
+    "sha256": "f40b34d4725ce3dbf47399ae9a9bca7ac5f07cb4193ed39d4958294f28e1265b"
   },
   ".claude/skills/motion/PROVENANCE": {
     "module": "profile:web",
@@ -1558,5 +1558,17 @@
   ".claude/skills/motion/transition-preview/index.md": {
     "module": "profile:web",
     "sha256": "64962b3757518956e56599d31bea8f7bced604b4ab35a14e2e1cf3494aa87ace"
+  },
+  ".claude/agents/design-critic.md": {
+    "module": "profile:web",
+    "sha256": "7edca2b6d47e2c3180951452e20c1b90c32e98fa7ede7ea570d866a803ec3eaa"
+  },
+  ".claude/reference/excellence.md": {
+    "module": "profile:web",
+    "sha256": "04052077126e241dde0700e666e245135920b930b8e792a9bf50e9ee50e51e40"
+  },
+  ".claude/tools/design-round.mjs": {
+    "module": "profile:web",
+    "sha256": "304de7b2af33f656bc89b2c6bbbd07aee419228d5466af4e8abe3a5554bb98cd"
   }
 }

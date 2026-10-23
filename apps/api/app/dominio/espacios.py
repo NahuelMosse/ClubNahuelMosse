@@ -101,6 +101,7 @@ CATALOGO: tuple[Deporte, ...] = (
     Deporte("Tenis", "Tenis", (Tipo("PDL", "Polvo de ladrillo"), Tipo("CEM", "Cemento"))),
     Deporte("Padel", "Pádel", (Tipo("PAD", "Pádel"),)),
     Deporte("Voley", "Vóley", (Tipo("IND", "Indoor"), Tipo("PLA", "Vóley playa"))),
+    Deporte("Basquet", "Básquet", (Tipo("B5", "Básquet 5"), Tipo("3X3", "Básquet 3x3"))),
     Deporte("Hockey", "Hockey", (Tipo("H7", "Hockey 7"),)),
     Deporte("Golf", "Golf", (Tipo("DR", "Driving range"), Tipo("9H", "9 hoyos"))),
 )

@@ -96,6 +96,16 @@ cd apps/api
 FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import crear_app; pathlib.Path('openapi.json').write_text(json.dumps(crear_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
 ```
 
+## Catálogo de deportes
+
+El catálogo es fijo y vive en `app/dominio/espacios.py`; la app lo pide con `GET /espacios/catalogo`.
+Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
+(B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
+
+- REV-05-ASM-01: Básquet tiene dos tipos: «Básquet 5» (`B5`, cancha completa) y «Básquet 3x3» (`3X3`, media cancha).
+- REV-05-ASM-02: hasta que haya una foto de Básquet, la cancha toma la portada 1 del club, que no es de ningún otro deporte.
+- REV-05-ASM-03: Básquet va después de Vóley en el catálogo.
+
 ## Probar
 
 Con el emulador de Firebase Auth levantado y una base cuyo nombre termine en `_test` (la suite borra

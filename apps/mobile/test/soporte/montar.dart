@@ -53,6 +53,7 @@ const _catalogoJson =
     '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}, '
     '{"clave": "Padel", "nombre": "Pádel", "tipos": [{"clave": "PAD", "nombre": "Pádel"}]}, '
     '{"clave": "Voley", "nombre": "Vóley", "tipos": [{"clave": "IND", "nombre": "Indoor"}]}, '
+    '{"clave": "Basquet", "nombre": "Básquet", "tipos": [{"clave": "B5", "nombre": "Básquet 5"}]}, '
     '{"clave": "Hockey", "nombre": "Hockey", "tipos": [{"clave": "H7", "nombre": "Hockey 7"}]}, '
     '{"clave": "Golf", "nombre": "Golf", "tipos": [{"clave": "DR", "nombre": "Driving range"}]}'
     ']}';

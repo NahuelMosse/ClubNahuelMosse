@@ -1,5 +1,5 @@
 {
-  "kit": "6.3.1",
+  "kit": "6.4.0",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "1594a34f3e4027e9e7085fad559488f69ae6d96a"
+    "commit": "657ff3db69738f58a980615b84f7264952c0c979"
   },
   "modules": {
     "ui": {
@@ -81,7 +81,7 @@
       "confirmed": [
         {
           "at": "2026-10-21",
-          "card": "REV-04-interfaz-accesibilidad",
+          "card": "REV-05-basquet-en-el-catalogo",
           "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale.",
           "signals": [
             "the card asks for a language, a translation or a locale"
