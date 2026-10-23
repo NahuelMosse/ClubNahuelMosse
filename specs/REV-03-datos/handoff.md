@@ -12,6 +12,9 @@
 3. Reintentar el lint de once y `node .claude/tools/required.mjs`.
 4. Línea final al Log: `- L40 · 2026-10-23 · T1..T4 · <resultados>`.
 
+## Ronda h, cierre
+- El baseline mínimo (tests/unit/test_marcador.py) tarda 312 s por el arranque de la base con la máquina cargada por otros worktrees; mutate.mjs exige mutantes x baseline / paralelo < 10 min (baseline < 63 s para marcador.py). Reintentar con la máquina libre o declarar en Could not run. Log L40 escrito.
+
 ## Comando de mutación (una a la vez, sin carga paralela; `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702`)
 `node .claude/tools/once.mjs mutate -- node .claude/tools/mutate.mjs <archivo> --since c9625bdd3b7b67d3ab43ec66a7c29208469e6bbd~1 --equivalents specs/REV-03-datos/equivalents.md --parallel 2 -- sh D:/Temp/w/herramientas/pytest-api.sh -q -x <tests> --deselect tests/escenarios/test_datos.py::test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo --deselect tests/escenarios/test_datos.py::test_cada_migracion_va_y_vuelve_con_datos`
 Esperar con `timeout 570 sh -c 'until grep -q "END <archivo>" /tmp/mut-seq2.log; do sleep 10; done'` (wait.mjs corta en la primera línea `exit` vieja). Hay otros agentes (rev08) cargando la máquina.
