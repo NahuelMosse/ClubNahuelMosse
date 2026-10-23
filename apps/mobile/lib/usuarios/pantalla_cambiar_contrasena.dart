@@ -2,16 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
-import '../comun/boton.dart';
-import '../comun/campo_texto.dart';
-import '../comun/dialogo_error.dart';
+import '../comun/formulario_contrasena.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/resultado.dart';
-import 'reglas_contrasena.dart';
-import 'reglas_registro.dart';
+import '../comun/reglas_contrasena.dart';
+import '../comun/reglas_registro.dart';
 
 enum _Campo { actual, nueva, repetida }
 
@@ -119,13 +115,13 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
       if (mounted) setState(() => _enviando = false);
     }
     if (!mounted) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _guardar,
+    );
   }
 
   Widget _campo(
@@ -137,29 +133,21 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
     FocusNode? foco,
   }) {
     final visible = _visibles.contains(campo);
-    return CampoTexto(
+    return campoDeContrasena(
       etiqueta: etiqueta,
-      etiquetaAccesible: accesible,
+      accesible: accesible,
+      placeholder: placeholder,
       controlador: _controladores[campo.index],
       foco: foco,
-      placeholder: placeholder,
       error: _erroresDelServidor[campo] ?? error,
-      oculto: !visible,
+      visible: visible,
       habilitado: !_enviando,
-      autocompletar: [
-        campo == _Campo.actual
-            ? AutofillHints.password
-            : AutofillHints.newPassword,
-      ],
-      accion: campo == _Campo.repetida
-          ? TextInputAction.done
-          : TextInputAction.next,
+      autocompletar: campo == _Campo.actual
+          ? AutofillHints.password
+          : AutofillHints.newPassword,
       alEnviar: campo == _Campo.repetida ? (_) => _guardar() : null,
-      accionFinal: VerContrasena(
-        visible: visible,
-        alCambiar: () => setState(
-          () => visible ? _visibles.remove(campo) : _visibles.add(campo),
-        ),
+      alAlternar: () => setState(
+        () => visible ? _visibles.remove(campo) : _visibles.add(campo),
       ),
     );
   }
@@ -167,78 +155,44 @@ class _PantallaCambiarContrasenaState extends State<PantallaCambiarContrasena> {
   @override
   Widget build(BuildContext context) {
     if (_listo) {
-      return PantallaResultado(
-        icono: Icons.check_circle_outline_rounded,
-        tono: TonoResultado.exito,
-        titulo: 'Contraseña actualizada',
-        texto:
-            'Tu contraseña se cambió correctamente. Usala la próxima vez que '
-            'inicies sesión.',
+      return ContrasenaActualizada(
         principal: 'VOLVER AL PERFIL',
         alTocarPrincipal: () => Navigator.of(context).maybePop(),
       );
     }
-    final p = context.paleta;
     final nueva = _valor(_Campo.nueva);
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      appBar: const BarraSuperior(titulo: 'Cambiar contraseña'),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s12,
-            Medidas.s24,
-            Medidas.s40,
-          ),
-          children: [
-            Semantics(
-              header: true,
-              child: Text(
-                'Cambiá tu contraseña',
-                style: Textos.h1.copyWith(color: p.textPrimary),
-              ),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              'Necesitamos tu contraseña actual para confirmar que sos vos.',
-              style: Textos.cuerpo.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: Medidas.s16),
-            _campo(
-              _Campo.actual,
-              etiqueta: 'CONTRASEÑA ACTUAL',
-              accesible: 'Contraseña actual',
-              placeholder: 'Tu contraseña de hoy',
-            ),
-            const SizedBox(height: Medidas.s16),
-            _campo(
-              _Campo.nueva,
-              etiqueta: 'CONTRASEÑA NUEVA',
-              accesible: 'Contraseña nueva',
-              placeholder: 'Mínimo 8 caracteres',
-            ),
-            ReglasContrasena(contrasena: nueva),
-            const SizedBox(height: Medidas.s16),
-            _campo(
-              _Campo.repetida,
-              etiqueta: 'REPETIR CONTRASEÑA',
-              accesible: 'Repetir contraseña',
-              placeholder: 'Volvé a escribirla',
-              error: _errorRepetida,
-              foco: _focoRepetida,
-            ),
-          ],
+    return PlantillaDeContrasena(
+      barra: const BarraSuperior(titulo: 'Cambiar contraseña'),
+      titulo: 'Cambiá tu contraseña',
+      explicacion:
+          'Necesitamos tu contraseña actual para confirmar que sos vos.',
+      campos: [
+        _campo(
+          _Campo.actual,
+          etiqueta: 'CONTRASEÑA ACTUAL',
+          accesible: 'Contraseña actual',
+          placeholder: 'Tu contraseña de hoy',
         ),
-      ),
-      bottomNavigationBar: BarraDeAccion(
-        child: BotonPrimario(
-          texto: 'GUARDAR CONTRASEÑA',
-          cargando: _enviando,
-          alTocar: _completo ? _guardar : null,
+        const SizedBox(height: Medidas.s16),
+        _campo(
+          _Campo.nueva,
+          etiqueta: 'CONTRASEÑA NUEVA',
+          accesible: 'Contraseña nueva',
+          placeholder: 'Mínimo 8 caracteres',
         ),
-      ),
+        ReglasContrasena(contrasena: nueva),
+        const SizedBox(height: Medidas.s16),
+        _campo(
+          _Campo.repetida,
+          etiqueta: 'REPETIR CONTRASEÑA',
+          accesible: 'Repetir contraseña',
+          placeholder: 'Volvé a escribirla',
+          error: _errorRepetida,
+          foco: _focoRepetida,
+        ),
+      ],
+      enviando: _enviando,
+      alGuardar: _completo ? _guardar : null,
     );
   }
 }

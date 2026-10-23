@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../comun/zona_club.dart';
 import '../reservas/reservas.dart'
     show EstadoDeReserva, ReservaCambiada, ReservaRechazada;
 import '../sesion/sesion.dart';
@@ -30,7 +31,13 @@ class FiltrosDeHistorial {
       deporte != null ||
       desde != null ||
       hasta != null ||
-      (q != null && q!.trim().isNotEmpty);
+      _busqueda != null;
+
+  /// El texto buscado sin espacios en los bordes; `null` si no hay.
+  String? get _busqueda {
+    final limpio = q?.trim();
+    return limpio == null || limpio.isEmpty ? null : limpio;
+  }
 
   /// `true` si `desde` es posterior a `hasta` (FA3): no se consulta al servidor.
   bool get rangoInvalido {
@@ -62,14 +69,18 @@ class FiltrosDeHistorial {
       '${d.day.toString().padLeft(2, '0')}';
 
   String get _query {
+    final estado = this.estado;
+    final deporte = this.deporte;
+    final desde = this.desde;
+    final hasta = this.hasta;
+    final busqueda = _busqueda;
     final partes = <String>[
-      if (estado != null) 'estado=${estado!.name}',
+      if (estado != null) 'estado=${estado.name}',
       if (sedeId != null) 'sede_id=$sedeId',
-      if (deporte != null) 'deporte=${Uri.encodeQueryComponent(deporte!)}',
-      if (desde != null) 'desde=${_fecha(desde!)}',
-      if (hasta != null) 'hasta=${_fecha(hasta!)}',
-      if (q != null && q!.trim().isNotEmpty)
-        'q=${Uri.encodeQueryComponent(q!.trim())}',
+      if (deporte != null) 'deporte=${Uri.encodeQueryComponent(deporte)}',
+      if (desde != null) 'desde=${_fecha(desde)}',
+      if (hasta != null) 'hasta=${_fecha(hasta)}',
+      if (busqueda != null) 'q=${Uri.encodeQueryComponent(busqueda)}',
     ];
     return partes.join('&');
   }
@@ -163,9 +174,10 @@ class ReservaHistorial {
   final String? avisoEnvio;
   final DateTime? avisoEn;
 
-  /// El club está en UTC−3, sin horario de verano.
-  static DateTime? _enElClub(String iso) =>
-      DateTime.tryParse(iso)?.toUtc().subtract(const Duration(hours: 3));
+  static DateTime? _enElClub(String iso) {
+    final momento = DateTime.tryParse(iso);
+    return momento == null ? null : enElClub(momento);
+  }
 
   static ReservaHistorial? desdeJson(Object? json) {
     if (json case {
@@ -328,8 +340,7 @@ class HistorialDeReservas {
     final r = await _api.post('/reservas/${reserva.id}/anular', {
       'motivo': motivo,
       'espacio_id': reserva.espacioId,
-      // El horario del club está corrido tres horas del instante real.
-      'inicio': reserva.inicio.add(const Duration(hours: 3)).toIso8601String(),
+      'inicio': instanteDelClub(reserva.inicio).toIso8601String(),
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();

@@ -41,9 +41,39 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 
 [tool.mypy]
 strict = true
+files = ["app", "tests"]
+explicit_package_bases = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR:$MYPY_CONFIG_FILE_DIR/tests/escenarios"
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 # firebase-admin no publica tipos
 module = ["firebase_admin", "firebase_admin.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# PyYAML no publica tipos
+module = ["yaml"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# tests congelados de REV-01: se anotan con ignores de error, no se editan
+module = [
+  "*.test_seguridad_api",
+  "*.test_seguridad_entradas_extra",
+  "*.test_identidad_ingreso",
+  "*.test_entradas",
+  "test_seguridad_api",
+  "test_seguridad_entradas_extra",
+  "test_identidad_ingreso",
+  "test_entradas",
+]
+disable_error_code = ["var-annotated", "attr-defined", "dict-item"]
+
+[[tool.mypy.overrides]]
+# test congelado de REV-01: no se edita
+module = [
+  "*.test_repositorios_propios",
+  "test_repositorios_propios",
+]
+disable_error_code = ["var-annotated"]

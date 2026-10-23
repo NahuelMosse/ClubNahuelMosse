@@ -3,7 +3,7 @@ from collections.abc import Callable, Iterator
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
-from test_recordatorio import CanalDePrueba, Socio, manana, un_socio
+from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
 from app.infraestructura.push import canal_push
 
@@ -14,9 +14,9 @@ DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     """El servicio de notificaciones del teléfono, que anota lo que la API le pide enviar."""
     canal = CanalDePrueba()
-    api.app.dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[canal_push] = lambda: canal
     yield canal
-    api.app.dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(canal_push, None)
 
 
 def cancelar(socio: Socio, reserva_id: int) -> int:

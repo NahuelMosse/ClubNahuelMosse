@@ -1,6 +1,7 @@
 """`PUT /yo` contra la base y el emulador reales."""
 
 from collections.abc import Callable
+from typing import Any
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -23,7 +24,7 @@ def _registrar(api: TestClient, s: str, dni: str | None = None) -> tuple[str, st
     return correo, dni
 
 
-def _editar(api: TestClient, token: str | None, **datos: str) -> tuple[int, dict[str, object]]:
+def _editar(api: TestClient, token: str | None, **datos: str) -> tuple[int, dict[str, Any]]:
     r = api.put("/yo", headers={"Authorization": f"Bearer {token}"}, json=datos)
     return r.status_code, r.json()
 

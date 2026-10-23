@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
+import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';

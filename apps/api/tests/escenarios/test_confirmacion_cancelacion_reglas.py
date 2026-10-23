@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
-from test_recordatorio import CanalDePrueba, Socio, un_socio
+from test_recordatorio import CanalDePrueba, Socio, app_de, un_socio
 
 from app.aplicacion.notificaciones import despachar_pendientes
 from app.infraestructura.notificaciones import NotificacionesSql
@@ -21,9 +21,9 @@ class CanalCaido:
 @pytest.fixture
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     canal = CanalDePrueba()
-    api.app.dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[canal_push] = lambda: canal
     yield canal
-    api.app.dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(canal_push, None)
 
 
 def _cancelar(socio: Socio, reserva_id: int) -> int:
@@ -89,11 +89,11 @@ def test_si_el_servicio_push_cae_la_confirmacion_queda_en_el_centro_como_fallida
     """el envío fallido no se reintenta y la cancelación sigue hecha @supuesto:CU-24.3-SUP-01"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    api.app.dependency_overrides[canal_push] = CanalCaido
+    app_de(api).dependency_overrides[canal_push] = CanalCaido
     try:
         assert _cancelar(socio, reserva["id"]) == 200
     finally:
-        api.app.dependency_overrides.pop(canal_push, None)
+        app_de(api).dependency_overrides.pop(canal_push, None)
 
     assert _envios(socio) == ["fallida"]
     assert len(socio.centro()["notificaciones"]) == 1

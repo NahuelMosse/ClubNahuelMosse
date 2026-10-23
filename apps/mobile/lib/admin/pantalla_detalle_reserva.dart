@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
 import '../comun/formato_precio.dart';
+import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -253,56 +254,14 @@ class _TarjetaDatos extends StatelessWidget {
               style: Textos.leyenda.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: Medidas.s12),
-            Row(
-              children: [
-                Icon(Icons.person_outline, size: 16, color: p.textSecondary),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: Text(
-                    r.usuario,
-                    style: Textos.cuerpo.copyWith(color: p.textPrimary),
-                  ),
-                ),
-              ],
-            ),
+            UsuarioDeReserva(usuario: r.usuario),
             const SizedBox(height: Medidas.s8),
             Text(r.espacio, style: Textos.mono.copyWith(color: p.textMuted)),
             const SizedBox(height: Medidas.s8),
-            Wrap(
-              spacing: Medidas.s16,
-              runSpacing: Medidas.s8,
-              children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      size: 16,
-                      color: p.textSecondary,
-                    ),
-                    const SizedBox(width: Medidas.s8),
-                    Flexible(
-                      child: Text(
-                        fechaLarga(r.inicio),
-                        style: Textos.leyenda.copyWith(color: p.textSecondary),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.schedule_rounded, size: 18, color: p.accentInk),
-                    const SizedBox(width: Medidas.s8),
-                    Flexible(
-                      child: Text(
-                        horario,
-                        style: Textos.cuerpoFuerte.copyWith(color: p.accentInk),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            FechaYHorario(
+              fecha: fechaLarga(r.inicio),
+              horario: horario,
+              alineacion: WrapCrossAlignment.start,
             ),
           ],
         ),

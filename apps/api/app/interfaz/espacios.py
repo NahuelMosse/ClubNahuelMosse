@@ -22,10 +22,9 @@ from app.aplicacion.espacios import (
     espacios_activos,
     nombre_sugerido,
 )
+from app.dependencias import EspaciosSql, conexion
 from app.dominio.espacios import DatosEspacio, Espacio
 from app.dominio.usuarios import Perfil
-from app.infraestructura.db import conexion
-from app.infraestructura.espacios import EspaciosSql
 from app.interfaz.entradas import Identificador, Texto40
 from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
 from app.interfaz.sesion import SinSesion, usuario_actual

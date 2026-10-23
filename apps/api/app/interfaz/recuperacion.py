@@ -10,11 +10,8 @@ from sqlalchemy import Connection
 from app.aplicacion.errores import DatosInvalidos
 from app.aplicacion.recuperacion import EnlaceInvalido, enlace_vigente, pedir_enlace, usar_enlace
 from app.config import config
-from app.infraestructura.correo import enviar
-from app.infraestructura.db import conexion
-from app.infraestructura.enlaces import EnlacesSql
-from app.infraestructura.identidad import ProveedorFirebase
-from app.infraestructura.usuarios import UsuariosSql
+from app.dependencias import EnlacesSql, ProveedorFirebase, UsuariosSql, conexion
+from app.dependencias import enviar_correo as enviar
 from app.interfaz.entradas import Clave, Codigo, Correo
 from app.interfaz.limites import Frenado, frenar_por_origen
 

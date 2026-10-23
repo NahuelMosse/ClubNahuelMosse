@@ -139,8 +139,8 @@ def test_la_api_publica_openapi_con_todos_los_endpoints_que_usa_la_app(api: Test
 def test_la_api_guarda_los_datos_en_postgresql(motor: Engine) -> None:
     """la API guarda los datos en una base PostgreSQL @RNF-01-H05-01"""
     with motor.connect() as conn:
-        version = conn.execute(text("SELECT version()")).scalar_one()
-        tablas = conn.execute(
+        version: Any = conn.execute(text("SELECT version()")).scalar_one()
+        tablas: Any = conn.execute(
             text("SELECT count(*) FROM information_schema.tables WHERE table_name = 'reserva'")
         ).scalar_one()
 
@@ -196,7 +196,8 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     unico: Callable[[], str],
 ) -> None:
     """una operación sobre reservas actúa sobre el usuario autenticado y no sobre otro indicado en el pedido @RNF-01-H06-03"""
-    ids, sesiones = [], []
+    ids: list[Any] = []
+    sesiones: list[dict[str, str]] = []
     for nombre in ("Ana", "Beto"):
         s = unico()
         correo = f"{nombre.lower()}.{s}@correo.com"
@@ -225,7 +226,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     id_ana, id_beto = ids
     s = unico()
     with motor.begin() as conn:
-        espacio = conn.execute(
+        espacio: Any = conn.execute(
             text(
                 "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
@@ -265,7 +266,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
                 text("SELECT id, usuario_id FROM reserva WHERE espacio_id = :e"), {"e": espacio}
             )
         }
-        estado = conn.execute(
+        estado: Any = conn.execute(
             text("SELECT estado FROM reserva WHERE id = :i"), {"i": de_beto.json()["id"]}
         ).scalar_one()
     assert dueno == {de_beto.json()["id"]: id_beto, de_ana.json()["id"]: id_ana}

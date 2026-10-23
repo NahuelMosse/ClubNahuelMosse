@@ -21,7 +21,7 @@ import { delegateToRepo } from '../tools/card.mjs';
 import { riskOf } from '../tools/card-doc.mjs';
 
 const REVIEWS = new Set(['code-review', 'simplify', 'design-review', 'accessibility-audit', 'design-deslop', 'architecture-review']);
-const PINNED = new Set(['judge', 'oracle', 'planner']);
+const PINNED = new Set(['judge', 'oracle', 'planner', 'design-critic']);
 // A prompt that pastes what the agent can read costs its length once in the caller's context and again in every
 // request of the agent. Past this many characters the call is warned, not blocked.
 const LONG_PROMPT = 3000;
@@ -66,7 +66,7 @@ const live = open && !existsSync(join(open.card, 'closing.md')) ? open : null;
 
 // Measured: the visual judge and the audits went to `general-purpose`, which inherits Opus and the whole context.
 if (tool === 'Agent' && /^(general-purpose)?$/.test(agent) && live)
-  refuse('No `general-purpose` agent during a card: it inherits Opus and the whole context. Name the agent: `builder` for the code of a large card, `designer` for the look of a screen, `judge` for the review by risk, ' +
+  refuse('No `general-purpose` agent during a card: it inherits Opus and the whole context. Name the agent: `builder` for the code of a large card, `designer` for the look of a screen, `judge` for the review by risk, `design-critic` for the polish of a visual card, ' +
     '`runner` for a long log, `scout` to search, `grunt` for a decided change.');
 if (agent === 'scout' && /\.claude\//.test(prompt) && live)
   refuse('The kit\'s documents are not delegated to a `scout`: `.claude/METHOD.md` says what a card needs; a tool: `node .claude/tools/help.mjs <tool>`.');
@@ -79,7 +79,8 @@ if (tool === 'Skill') {
   if (!/^\s*PLAN\b/.test(prompt))
     refuse('The `judge` reads the plan only: its prompt starts with `PLAN`. There is no judge of the code. What a code judge found is checked by the gate: `plan.mjs` (rules over card.md), `attack.mjs` and `probe.mjs` (the card\'s limits and states) and the questions of `.claude/reference/lenses.md`, which `/card` walks before `## Specs` closes.');
   review = 'judge-plan';
-} else if (agent === 'builder' && /^\s*FIX\b/.test(prompt))
+} else if (agent === 'design-critic') review = 'design-critic';
+else if (agent === 'builder' && /^\s*FIX\b/.test(prompt))
   refuse('There is no `FIX` round. A red gate after two rounds without progress is written in the `## Log` and the close lists it in `## Could not run`. What a finding round caught is checked earlier: `plan.mjs`, the gate (`attack.mjs`, `probe.mjs`) and `.claude/reference/lenses.md`.');
 if (!review || !live) finish();
 
@@ -98,9 +99,13 @@ if (review === 'judge-plan') {
   if (!risk) refuse(`No judge without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first. The classification decides whether the card gets a judge.`);
   if (risk.review !== 'high') refuse(`risk.json of ${cardName} says review: ${risk.review}: no judge. Only high gets the plan judge; the plan rules (\`plan.mjs\`), the gate and \`.claude/reference/lenses.md\` are the whole review of this card.`);
 }
+if (review === 'design-critic') {
+  if (!risk) refuse(`No design-critic without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first.`);
+  if (!risk.lenses?.includes('visual')) refuse(`risk.json of ${cardName} has no \`visual\` lens: the design-critic runs only on a visual card.`);
+}
 const cap = 1;
 if (done >= cap) {
-  const what = review === 'judge-plan' ? `The plan judge already ran on this card (${cardName}); a card gets one` : `${review} already ran on this card (${cardName}); a card gets one lap`;
+  const what = review === 'judge-plan' ? `The plan judge already ran on this card (${cardName}); a card gets one` : review === 'design-critic' ? `The design-critic already ran on this card (${cardName}); a card gets one critique` : `${review} already ran on this card (${cardName}); a card gets one lap`;
   refuse(`${what}. Another round will not leave it spotless: it finds something else small. What is left is closed or declared in judge.md, and the PR is the review of the rest.`);
 }
 mkdirSync(dir, { recursive: true });

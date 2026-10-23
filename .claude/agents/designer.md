@@ -4,7 +4,7 @@ description: Brings the look of a screen to the level of its reference, in captu
 tools: Read, Write, Edit, Grep, Glob, Bash
 model: sonnet
 effort: medium
-maxTurns: 50
+maxTurns: 70
 experimental:
   cacheTtl: 1h
 ---
@@ -30,13 +30,22 @@ measured in `ref/motion.json`: durations, curve, stagger and what reacts to the 
 **The reference sets the level, not the composition.** Take its quality, depth, motion and type; lay the screen out your own way.
 `## Direction` names 3 layout decisions that differ from the reference (nav, title placement, where the cards sit). A screen that
 traces the reference's layout one to one is a difference, never «at level».
-Imagery is yours to make: an SVG illustration or pattern drawn for the card, a real photo by URL, a shape in CSS. A card alone on a
-flat background against a reference with imagery is a difference, never «at level».
+Imagery is real and integrated: a treated photo, video or render of the thing itself (`reference/assets.md`), never an object
+drawn with shapes in SVG or CSS. A card alone on a flat background against a reference with imagery is a difference, never «at level».
+
+**Assets.** To show real objects or places use a real photo with a treatment (grading or duotone) or video. Never 3D modeled in
+code: it looks cheap. Rules, keyless sources and licenses: `.claude/reference/assets.md`; treatment (grade, crop, variants, cutout,
+loop): `python .claude/tools/asset-pipeline.py --help`. Each asset is credited in `specs/<card>/CREDITS.md`. GSAP has its own free license, it is not MIT.
+
+**After the critic.** On a card with grade `production`, a `design-critic` writes `specs/<card>/critique.md`; you then do **one**
+more round that corrects it, logged as `- L<n> · critique round · <what changed>`.
 
 **Each round `<k>`** (2 at least, 3 at most):
-1. Capture your own screen, per named state and per section, `--widths 1440x900,390x844 --out specs/<card>/rondas/r<k>/<state>`; a step
-   `{ "scroll": "<locator>" }` captures a section. Never a full page.
-2. `Read` your capture next to the one of the reference, the same state and width. Run the same `motion-audit.mjs` on your screen
+1. Run the whole round in one call: `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/rondas/r<k> [--steps <steps>.json]`
+   (viewport captures at both widths, load at 0/600/2000 ms, one per section, the rules of `.claude/reference/excellence.md` measured,
+   waves, console, renderer). Never a full page. A software renderer (SwiftShader) in `round.json` voids the motion timings.
+2. `Read` 6 to 10 key captures next to the ones of the reference, the same state and width, and copy the numbers of the rules
+   (ratio, line height, tracking, sizes, grain, waves) into `rondas.md` under `## Round <k>`. Run the same `motion-audit.mjs` on your screen
    (`--measure --frames --click <cta> --scroll-story`, output in `specs/<card>/rondas/r<k>/motion.json`) and `node
    .claude/tools/motion-audit.mjs compare specs/<card>/ref/motion.json specs/<card>/rondas/r<k>/motion.json`.
 3. In `specs/<card>/rondas.md`, under `## Round <k>`, write 5 concrete differences, one numbered line each, in this order: character

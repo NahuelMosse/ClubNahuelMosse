@@ -2,7 +2,7 @@ import asyncio
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
-from typing import Any
+from typing import Any, cast
 
 from fastapi import FastAPI
 
@@ -94,7 +94,7 @@ def _documentar_el_400(app: FastAPI) -> None:
                     )
         return app.openapi_schema or {}
 
-    app.openapi = con_400  # type: ignore[method-assign]
+    cast(Any, app).openapi = con_400
 
 
 def crear_app() -> FastAPI:

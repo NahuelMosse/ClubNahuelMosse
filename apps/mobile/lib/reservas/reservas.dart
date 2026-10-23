@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/cliente_api.dart';
+import '../comun/zona_club.dart';
 import '../sesion/sesion.dart';
 import 'eleccion.dart';
 import 'horarios.dart';
@@ -104,10 +105,10 @@ class Reserva {
     return null;
   }
 
-  /// El club está en UTC−3, sin horario de verano: la hora se muestra así sea cual sea la
-  /// zona del teléfono.
-  static DateTime? _enElClub(String iso) =>
-      DateTime.tryParse(iso)?.toUtc().subtract(const Duration(hours: 3));
+  static DateTime? _enElClub(String iso) {
+    final momento = DateTime.tryParse(iso);
+    return momento == null ? null : enElClub(momento);
+  }
 }
 
 /// Las reservas de quien inició sesión, leídas en la API. Avisa a quien escucha cada vez

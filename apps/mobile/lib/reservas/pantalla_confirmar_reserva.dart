@@ -6,6 +6,7 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/formato_precio.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../sedes/fotos.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
@@ -14,7 +15,7 @@ import '../tema/tokens.dart';
 import 'eleccion.dart';
 import 'fechas.dart';
 import 'horarios.dart';
-import 'reserva_pendiente.dart';
+import '../comun/reserva_pendiente.dart';
 import 'reservas.dart';
 
 /// Lo que la confirmación le devuelve a los horarios al cerrarse: si el horario se ocupó,
@@ -34,7 +35,7 @@ class PantallaConfirmarReserva extends StatefulWidget {
 
   final Eleccion eleccion;
   final Reservas reservas;
-  final ReservaPendiente pendiente;
+  final ReservaPendiente<Eleccion> pendiente;
   final Sesion sesion;
 
   @override
@@ -87,12 +88,9 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
       context.go('/sedes/${e.sede.id}');
       return;
     } on ReservaRechazada catch (r) {
-      // El horario dejó de valer mientras se confirmaba (por ejemplo, ya empezó).
       if (!mounted) return;
       setState(() => _enviando = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
+      avisarReservaRechazada(context, r);
       _volver(ResultadoDeConfirmar.ocupado);
       return;
     } on SesionVencida {
@@ -116,14 +114,75 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.paleta;
     final e = widget.eleccion;
     // Mientras se guarda no se sale: la reserva podría quedar hecha sin comprobante.
+    return EsqueletoDeConfirmacion(
+      titulo: 'Confirmá tu reserva',
+      enviando: _enviando,
+      alVolver: _volver,
+      textoPrimario: 'CONFIRMAR RESERVA',
+      alPrimario: _confirmar,
+      textoSecundario: 'CANCELAR',
+      alSecundario: _volver,
+      peligro: true,
+      tarjeta: TarjetaDeEleccion(
+        eleccion: e,
+        filas: [
+          FilaDeDato(
+            dato: 'Cancha',
+            valor: 'Cancha ${e.cancha.numero} · ${e.cancha.condicion}',
+          ),
+          FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
+          FilaDeDato(dato: 'Horario', valor: e.horario, destacado: true),
+          const SizedBox(height: Medidas.s8),
+        ],
+      ),
+    );
+  }
+}
+
+/// Avisa con un snackbar que el horario dejó de valer mientras se confirmaba
+/// (por ejemplo, ya empezó).
+void avisarReservaRechazada(BuildContext context, ReservaRechazada r) {
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
+}
+
+/// La estructura común de «Confirmá…»: la barra, los pasos, la tarjeta y el pie con la
+/// acción principal y la secundaria.
+class EsqueletoDeConfirmacion extends StatelessWidget {
+  const EsqueletoDeConfirmacion({
+    super.key,
+    required this.titulo,
+    required this.enviando,
+    required this.alVolver,
+    required this.textoPrimario,
+    required this.alPrimario,
+    required this.textoSecundario,
+    required this.alSecundario,
+    required this.tarjeta,
+    this.peligro = false,
+  });
+
+  final String titulo;
+  final bool enviando;
+  final VoidCallback alVolver;
+  final String textoPrimario;
+  final VoidCallback alPrimario;
+  final String textoSecundario;
+  final VoidCallback alSecundario;
+  final bool peligro;
+  final Widget tarjeta;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
     return PopScope(
-      canPop: !_enviando,
+      canPop: !enviando,
       child: Scaffold(
         backgroundColor: p.bgBase,
-        appBar: BarraSuperior(titulo: 'Confirmá tu reserva', alVolver: _volver),
+        appBar: BarraSuperior(titulo: titulo, alVolver: alVolver),
         bottomNavigationBar: DecoratedBox(
           decoration: BoxDecoration(
             color: p.bgSurface,
@@ -138,15 +197,15 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   BotonPrimario(
-                    texto: 'CONFIRMAR RESERVA',
-                    alTocar: _confirmar,
-                    cargando: _enviando,
+                    texto: textoPrimario,
+                    alTocar: alPrimario,
+                    cargando: enviando,
                   ),
                   const SizedBox(height: Medidas.s12),
                   BotonContorno(
-                    texto: 'CANCELAR',
-                    alTocar: _enviando ? null : _volver,
-                    peligro: true,
+                    texto: textoSecundario,
+                    alTocar: enviando ? null : alSecundario,
+                    peligro: peligro,
                   ),
                 ],
               ),
@@ -163,7 +222,7 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
           children: [
             const PasosDeReserva(actual: 1),
             const SizedBox(height: Medidas.s24),
-            _TarjetaDeReserva(eleccion: e),
+            tarjeta,
           ],
         ),
       ),
@@ -171,23 +230,23 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
   }
 }
 
-class _TarjetaDeReserva extends StatelessWidget {
-  const _TarjetaDeReserva({required this.eleccion});
+/// La tarjeta de la elección: la foto con el tipo y la sede, las [filas] y el total.
+class TarjetaDeEleccion extends StatelessWidget {
+  const TarjetaDeEleccion({
+    super.key,
+    required this.eleccion,
+    required this.filas,
+  });
 
   final Eleccion eleccion;
+  final List<Widget> filas;
 
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     const foto = Paleta.oscura;
     final e = eleccion;
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
+    return MarcoDeTarjeta(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -222,13 +281,7 @@ class _TarjetaDeReserva extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                FilaDeDato(
-                  dato: 'Cancha',
-                  valor: 'Cancha ${e.cancha.numero} · ${e.cancha.condicion}',
-                ),
-                FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
-                FilaDeDato(dato: 'Horario', valor: e.horario, destacado: true),
-                const SizedBox(height: Medidas.s8),
+                ...filas,
                 Divider(height: 1, color: p.borderDefault),
                 const SizedBox(height: Medidas.s16),
                 FilaDeTotal(total: e.total),

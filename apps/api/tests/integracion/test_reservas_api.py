@@ -3,6 +3,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import date, datetime, time, timedelta
 from threading import Barrier
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -264,13 +265,13 @@ def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
     _reservar(motor, yo, espacio, hoy + timedelta(days=1), 12)
     _reservar(motor, yo, espacio, hoy + timedelta(days=2), 12, "anulada", "lluvia")
     with motor.begin() as conn:
-        ajena, mia, anulada = (
-            int(i)
-            for i in conn.execute(
+        ids_reservas: list[Any] = list(
+            conn.execute(
                 text("SELECT id FROM reserva WHERE espacio_id = :e ORDER BY inicio"),
                 {"e": espacio},
             ).scalars()
         )
+        ajena, mia, anulada = (int(i) for i in ids_reservas)
         conn.execute(
             text(
                 "UPDATE reserva SET inicio = date_trunc('hour', now()), fin ="

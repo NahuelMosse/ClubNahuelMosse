@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/configuracion.dart';
+import 'package:clubnahuelmosse/comun/configuracion.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 

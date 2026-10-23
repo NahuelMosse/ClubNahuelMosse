@@ -1,7 +1,6 @@
 import re
 from datetime import date, datetime, time
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Path, Query, status
 from fastapi.responses import JSONResponse
@@ -11,17 +10,16 @@ from sqlalchemy import Connection
 from app.aplicacion.disponibilidad import canchas_disponibles
 from app.aplicacion.errores import DatosInvalidos, NoDisponible
 from app.aplicacion.horarios import horarios_disponibles
+from app.dependencias import HorariosSql, conexion
 from app.dominio.horarios import MAX_HORAS, MIN_HORAS
 from app.dominio.usuarios import Perfil
-from app.infraestructura.db import conexion
-from app.infraestructura.horarios import HorariosSql
+from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.espacios import ListaDeEspacios, vista_de_espacio
 from app.interfaz.respuestas import datos_invalidos
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["horarios"])
 
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 NO_DISPONIBLE = "Esta cancha ya no está disponible"
 
 

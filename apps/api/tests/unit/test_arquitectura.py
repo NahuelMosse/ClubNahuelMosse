@@ -10,6 +10,7 @@ PERMITIDOS_EN_DOMINIO = {
     "enum",
     "typing",
     "collections",
+    "zoneinfo",
 }
 
 

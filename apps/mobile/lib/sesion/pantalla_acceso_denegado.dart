@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
+import '../comun/boton.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'boton.dart';
+import 'sesion.dart';
+import 'tarjeta_cuenta.dart';
 
 /// Quien pide una sección de administrador sin serlo (CU-14 FA4), por un enlace al panel o
 /// por un 403 de la API. Toda ruta bajo `/admin` sin el rol llega acá.

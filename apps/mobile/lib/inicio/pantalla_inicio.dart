@@ -5,12 +5,13 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
 import '../notificaciones/campana.dart';
 import '../notificaciones/centro.dart';
-import '../reservas/pantalla_confirmar_cambio.dart';
+import '../reservas/cancelacion.dart';
 import '../reservas/pantalla_mis_reservas.dart';
 import '../reservas/reservas.dart';
 import '../sedes/fotos.dart';
@@ -76,6 +77,13 @@ class _PantallaInicioState extends State<PantallaInicio> {
     if (_cancelando == null) _releerSinAvisar();
   }
 
+  Future<_Datos> _leer() async {
+    final catalogo = await widget.espacios.catalogo();
+    final proximas = await widget.reservas.mias(historial: false);
+    final sedes = await widget.sedes.activas();
+    return (proxima: proximas.firstOrNull, catalogo: catalogo, sedes: sedes);
+  }
+
   /// Con [deCero] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
   /// había hasta que llega lo nuevo, y se quita si la lectura falla.
   Future<void> _cargar({bool deCero = true}) async {
@@ -87,18 +95,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
     Object? fallo;
     var vencida = false;
     try {
-      final catalogo = await widget.espacios.catalogo();
-      final proximas = await widget.reservas.mias(historial: false);
-      final sedes = await widget.sedes.activas();
-      if (mounted && pedido == _pedido) {
-        setState(
-          () => _datos = (
-            proxima: proximas.firstOrNull,
-            catalogo: catalogo,
-            sedes: sedes,
-          ),
-        );
-      }
+      final datos = await _leer();
+      if (mounted && pedido == _pedido) setState(() => _datos = datos);
       return;
     } on SesionVencida {
       vencida = true;
@@ -112,32 +110,21 @@ class _PantallaInicioState extends State<PantallaInicio> {
       _datos = null;
       _fallo = true;
     });
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+    );
   }
 
   /// Vuelve a leer sin avisos: si no se puede, queda lo que había.
   Future<void> _releerSinAvisar() async {
     final pedido = ++_pedido;
     try {
-      final catalogo = await widget.espacios.catalogo();
-      final proximas = await widget.reservas.mias(historial: false);
-      final sedes = await widget.sedes.activas();
-      if (mounted && pedido == _pedido) {
-        setState(
-          () => _datos = (
-            proxima: proximas.firstOrNull,
-            catalogo: catalogo,
-            sedes: sedes,
-          ),
-        );
-      }
+      final datos = await _leer();
+      if (mounted && pedido == _pedido) setState(() => _datos = datos);
     } on Exception {
       // Sin red o con el servidor caído, lo que había sigue siendo lo mejor que hay.
     }
@@ -154,68 +141,32 @@ class _PantallaInicioState extends State<PantallaInicio> {
     if (!confirmo || !mounted) return;
     // Una lectura que venía en camino (deslizar para refrescar) ya no vale.
     _pedido++;
-    setState(() => _cancelando = r.id);
-    while (mounted) {
-      Object? fallo;
-      try {
-        await widget.reservas.cancelar(r);
-        if (!mounted) return;
-        setState(() {
-          if (_datos case final datos?) {
-            _datos = (
-              proxima: null,
-              catalogo: datos.catalogo,
-              sedes: datos.sedes,
-            );
-          }
-          _cancelando = null;
-        });
-        await mostrarCancelada(context);
-        if (mounted) await _cargar(deCero: false);
-        return;
-      } on ReservaCambiada {
-        if (!mounted) return;
-        setState(() => _cancelando = null);
-        await mostrarCambioMientrasTanto(context);
-        if (mounted) await _cargar(deCero: false);
-        return;
-      } on SesionVencida {
-        if (!mounted) return;
-        setState(() => _cancelando = null);
-        await mostrarSesionVencida(context);
-        if (mounted) await cerrarSesion(context, widget.sesion);
-        return;
-      } on SinConexion catch (e) {
-        fallo = e;
-      } on ErrorDelServidor catch (e) {
-        fallo = e;
-      }
-      if (!mounted) return;
-      setState(() => _cancelando = null);
-      final otraVez = await mostrarErrorDeRed(context, fallo);
-      if (!mounted) return;
-      if (!otraVez) {
-        // Si el corte llegó después de que el servidor la canceló, la lectura lo muestra.
-        await _releerSinAvisar();
-        return;
-      }
-      setState(() => _cancelando = r.id);
-    }
+    await cancelarConAvisos(
+      context,
+      sesion: widget.sesion,
+      reservas: widget.reservas,
+      reserva: r,
+      marcar: (id) => setState(() => _cancelando = id),
+      alCancelar: () => setState(() {
+        if (_datos case final datos?) {
+          _datos = (
+            proxima: null,
+            catalogo: datos.catalogo,
+            sedes: datos.sedes,
+          );
+        }
+        _cancelando = null;
+      }),
+      recargar: () => _cargar(deCero: false),
+      releer: _releerSinAvisar,
+    );
   }
 
   /// Abre la grilla para cambiar [r] de horario y, al volver, lee el Home de nuevo.
   Future<void> _modificar(Reserva r) async {
-    final resultado = await context.push<ResultadoDeModificar>(
-      '/reservas/${r.id}/modificar?desde=inicio',
-      extra: r,
-    );
-    if (!mounted) return;
-    if (resultado == ResultadoDeModificar.modificada) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Reserva modificada')));
+    if (await abrirModificar(context, r, ruta: '?desde=inicio')) {
+      await _releerSinAvisar();
     }
-    await _releerSinAvisar();
   }
 
   @override

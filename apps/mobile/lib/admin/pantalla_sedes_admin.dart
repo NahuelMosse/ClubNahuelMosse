@@ -3,15 +3,14 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/boton.dart';
-import '../comun/dialogo_error.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'baja_sede.dart';
+import 'listado_admin.dart';
 
 /// «Gestionar sedes» del panel: las sedes activas y el acceso a dar de alta una nueva.
 class PantallaSedesAdmin extends StatefulWidget {
@@ -67,108 +66,42 @@ class _PantallaSedesAdminState extends State<PantallaSedesAdmin> {
     if (!mounted) return;
     // Sin datos que mostrar, la pantalla deja de esperar antes del aviso.
     setState(() => _fallo = true);
-    // Tapado por otra pantalla no avisa: al volver, el listado ofrece REINTENTAR.
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (error != null) {
-      final reintentar = await mostrarErrorDeRed(context, error);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: error,
+      reintentar: _cargar,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final sedes = _sedes;
-    // Mientras una baja está en camino no se sale del listado: el resultado se perdería.
-    return AbsorbPointer(
-      absorbing: _dandoDeBaja != null,
-      child: Scaffold(
-        backgroundColor: p.bgBase,
-        bottomNavigationBar: const BarraAdmin(actual: SeccionAdmin.sedes),
-        body: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: _cargar,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s24,
-                Medidas.s24,
-                Medidas.s24,
-                Medidas.s40,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'PANEL ADMIN',
-                              style: Textos.sobretitulo.copyWith(
-                                color: p.accentInk,
-                              ),
-                            ),
-                            const SizedBox(height: Medidas.s4),
-                            Semantics(
-                              header: true,
-                              child: Text(
-                                'Sedes',
-                                style: Textos.h1.copyWith(color: p.textPrimary),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      BotonCuenta(sesion: widget.sesion),
-                    ],
-                  ),
-                  const SizedBox(height: Medidas.s16),
-                  BotonPrimario(
-                    texto: 'AGREGAR SEDE',
-                    icono: Icons.add_rounded,
-                    alTocar: () => context.go('/admin/sedes/nueva'),
-                  ),
-                  const SizedBox(height: Medidas.s16),
-                  if (sedes != null) ..._listado(sedes, p),
-                  if (sedes == null && !_fallo)
-                    const Padding(
-                      padding: EdgeInsets.all(Medidas.s40),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  if (sedes == null && _fallo)
-                    Center(
-                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    return PlantillaListadoAdmin(
+      seccion: SeccionAdmin.sedes,
+      titulo: 'Sedes',
+      sesion: widget.sesion,
+      textoAlta: 'AGREGAR SEDE',
+      rutaAlta: '/admin/sedes/nueva',
+      alRefrescar: _cargar,
+      absorbiendo: _dandoDeBaja != null,
+      hayDatos: sedes != null,
+      fallo: _fallo,
+      listado: sedes == null ? const [] : _listado(sedes, p),
     );
   }
 
   List<Widget> _listado(List<Sede> sedes, Paleta p) => [
-    Text(
-      sedes.length == 1 ? '1 SEDE ACTIVA' : '${sedes.length} SEDES ACTIVAS',
-      style: Textos.sobretitulo.copyWith(color: p.textMuted),
+    ...cabeceraDeListadoAdmin(
+      p,
+      conteo: sedes.length == 1
+          ? '1 SEDE ACTIVA'
+          : '${sedes.length} SEDES ACTIVAS',
+      vacio: sedes.isEmpty,
+      textoVacio: 'Todavía no hay sedes',
     ),
-    const SizedBox(height: Medidas.s16),
-    if (sedes.isEmpty)
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: Medidas.s40),
-        child: Text(
-          'Todavía no hay sedes',
-          textAlign: TextAlign.center,
-          style: Textos.cuerpo.copyWith(color: p.textSecondary),
-        ),
-      ),
     for (final sede in sedes) ...[
       TarjetaSedeAdmin(
         sede: sede,
@@ -217,32 +150,6 @@ class TarjetaSedeAdmin extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final canchas = sede.canchas == 1 ? '1 cancha' : '${sede.canchas} canchas';
-    // Con cualquier agrandado del texto, los botones lado a lado ya no entran en 360.
-    final grande = MediaQuery.textScalerOf(context).scale(10) > 10.5;
-    final editar = BotonContorno(
-      texto: 'Editar sede',
-      icono: Icons.edit_outlined,
-      compacto: true,
-      etiquetaAccesible: 'Editar sede ${sede.nombre}',
-      alTocar: habilitada ? () => _editar(context) : null,
-    );
-    final Widget baja = dandoDeBaja
-        ? Semantics(
-            label: 'Dando de baja ${sede.nombre}',
-            excludeSemantics: true,
-            child: const SizedBox(
-              height: Medidas.altoControl,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          )
-        : BotonContorno(
-            texto: 'Dar de baja',
-            icono: Icons.delete_outline_rounded,
-            compacto: true,
-            peligro: true,
-            etiquetaAccesible: 'Dar de baja ${sede.nombre}',
-            alTocar: habilitada ? alDarDeBaja : null,
-          );
     // Los datos se leen como uno; los botones quedan afuera, cada uno con su nombre.
     final datos = Semantics(
       container: true,
@@ -313,32 +220,16 @@ class TarjetaSedeAdmin extends StatelessWidget {
         ],
       ),
     );
-    return Container(
-      padding: const EdgeInsets.all(Medidas.s16),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          datos,
-          const SizedBox(height: Medidas.s12),
-          if (grande) ...[
-            editar,
-            const SizedBox(height: Medidas.s8),
-            baja,
-          ] else
-            Row(
-              children: [
-                Expanded(child: editar),
-                const SizedBox(width: Medidas.s8),
-                Expanded(child: baja),
-              ],
-            ),
-        ],
-      ),
+    return TarjetaAdmin(
+      datos: datos,
+      nombre: sede.nombre,
+      textoEditar: 'Editar sede',
+      etiquetaEditar: 'Editar sede ${sede.nombre}',
+      alEditar: habilitada ? () => _editar(context) : null,
+      textoBaja: 'Dar de baja',
+      etiquetaBaja: 'Dar de baja ${sede.nombre}',
+      alDarDeBaja: habilitada ? alDarDeBaja : null,
+      dandoDeBaja: dandoDeBaja,
     );
   }
 }

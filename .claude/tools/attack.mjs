@@ -20,6 +20,8 @@
 //           (fewer characters than the limit, more bytes) must be rejected.
 // --common-headers "Name1, Name2": every response of every row (the raw ones and the ones below included) carries those headers;
 //           the row of a response that lacks one fails, naming the request and the header.
+// --vary <field>: the one field each attack changes so runs do not collide on a unique value (by default the first email, else the
+//           first free text with letters); every other field goes as given.
 // --raw-headers-exempt "<why>": the raw rows are answered by the server before the app (uvicorn/h11, a proxy) and cannot carry
 //           them; their rows do not check the common headers and say so with the reason. Every other row still does.
 // --unique "<METHOD> <path> <body>": sends 8 identical requests at once; exactly one may succeed (2xx or a redirect) and the others
@@ -84,7 +86,7 @@ const args = process.argv.slice(2);
 const given = /^https?:\/\//.test(args[0] ?? '');
 const base = given ? args[0] : process.env.APP_URL;
 if (!base || !/^https?:\/\//.test(base)) {
-  console.error('usage: node attack.mjs [<base-url>] [--header "Name: value"]... [--auth-env VAR] [--write "POST /path a=1"]... [--read "/path"]... [--common-headers "A, B"] [--raw-headers-exempt "<why>"]');
+  console.error('usage: node attack.mjs [<base-url>] [--header "Name: value"]... [--auth-env VAR] [--write "POST /path a=1"]... [--read "/path"]... [--common-headers "A, B"] [--raw-headers-exempt "<why>"] [--vary <field>]');
   process.exit(2);
 }
 // Git Bash turns “/path” into a Windows path; it is also accepted without the leading slash.
@@ -93,6 +95,7 @@ const writes = [], reads = [];
 let jsonFlag = false, noAmbient = false, bodyLimit = 0, strictHost = false, faultDb = null, openapi = null;
 const commonHeaders = [], uniques = [];
 let rawHeadersExempt = '';
+let varyKey = null;
 const extra = {};
 const addHeader = (line) => {
   const at = line.indexOf(':');
@@ -102,6 +105,10 @@ const addHeader = (line) => {
 };
 for (let i = given ? 1 : 0; i < args.length; i++) {
   if (args[i] === '--json') jsonFlag = true;
+  else if (args[i] === '--vary') {
+    varyKey = (args[++i] ?? '').trim();
+    if (!varyKey) { console.error('--vary wants the name of the field that keeps runs apart (usually the unique one).'); process.exit(2); }
+  }
   else if (args[i] === '--header') addHeader(args[++i] ?? '');
   else if (args[i] === '--auth-env') {
     const name = args[++i] ?? '';
@@ -191,18 +198,25 @@ if (typeof alive !== 'number') { console.error(`The app does not respond at ${ba
 const rows = [], notes = [], infos = [];
 // The body of a write in the wire format: the form as it was given, or the same fields as a JSON object.
 const FORM = 'application/x-www-form-urlencoded';
-// Attack number n (0 is the legitimate request) varies every text field: `-a<n>` at its end, before the `@` of an email.
-const vary = (v, n) => {
-  if (typeof v === 'string') return v.includes('@') ? v.replace('@', `-a${n}@`) : `${v}-a${n}`;
-  if (Array.isArray(v)) return v.map((x) => vary(x, n));
-  return v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, vary(x, n)])) : v;
+// Attack number n (0 is the legitimate request) varies one field so that runs do not collide on a unique value: the one
+// `--vary <field>` names, else the first email, else the first free text with letters. `-a<n>` goes at its end, before the
+// `@` of an email. Every other field goes as given: a suffix on a time, a date, an address or a code would make it invalid,
+// and every attack would be refused for the format instead of for what it attacks.
+const FORMATTED = /^[^\p{L}]*$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+const free = (v) => typeof v === 'string' && !FORMATTED.test(v);
+const suffix = (v, n) => (v.includes('@') ? v.replace('@', `-a${n}@`) : `${v}-a${n}`);
+const varyEntries = (entries, n) => {
+  const pick = (varyKey && entries.some(([k, v]) => k === varyKey && typeof v === 'string') ? varyKey : null)
+    ?? entries.find(([, v]) => free(v) && v.includes('@'))?.[0] ?? entries.find(([, v]) => free(v))?.[0];
+  return entries.map(([k, v]) => [k, k === pick ? suffix(v, n) : v]);
 };
 const wire = (body, json, n = 0) => {
   const given = /^\s*[{[]/.test(body);
-  if (!json) return { text: n ? new URLSearchParams([...new URLSearchParams(body)].map(([k, v]) => [k, vary(v, n)])).toString() : body, type: FORM };
+  if (!json) return { text: n ? new URLSearchParams(varyEntries([...new URLSearchParams(body)], n)).toString() : body, type: FORM };
   let fields = given ? null : Object.fromEntries(new URLSearchParams(body));
   if (given) try { fields = JSON.parse(body); } catch { return { text: body, type: 'application/json' }; }
-  return { text: JSON.stringify(n ? vary(fields, n) : fields), type: 'application/json' };
+  const varied = n && fields && typeof fields === 'object' && !Array.isArray(fields) ? Object.fromEntries(varyEntries(Object.entries(fields), n)) : fields;
+  return { text: JSON.stringify(varied), type: 'application/json' };
 };
 const big = (json) => (json ? { text: JSON.stringify({ x: 'a'.repeat(1 << 20) }), type: 'application/json' } : { text: 'x=' + 'a'.repeat(1 << 20), type: FORM });
 const attack = async (name, method, r, headers, body, origin = false, soft = false) => {

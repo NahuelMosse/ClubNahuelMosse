@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
+import '../comun/campo_texto.dart';
+import '../comun/dialogo_error.dart';
 import '../comun/formato_precio.dart';
 import '../reservas/fechas.dart';
 import '../tema/tema.dart';
@@ -66,144 +68,95 @@ class _DialogoAnularState extends State<_DialogoAnular> {
       borderRadius: BorderRadius.circular(Medidas.radioMd),
       borderSide: BorderSide(color: color, width: ancho),
     );
-    return Dialog(
-      backgroundColor: p.bgSurfaceRaised,
-      insetPadding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        side: BorderSide(color: p.borderDefault),
-      ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 360),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Medidas.s24),
+    return MarcoDeDialogo(
+      anchoMaximo: 360,
+      hijos: [
+        CirculoDeIcono(
+          icono: Icons.warning_amber_rounded,
+          fondo: p.stateDangerMuted,
+          tinta: p.stateDangerInk,
+        ),
+        const SizedBox(height: Medidas.s12),
+        Semantics(
+          header: true,
+          child: Text(
+            '¿Anular esta reserva?',
+            textAlign: TextAlign.center,
+            style: Textos.h2.copyWith(color: p.textPrimary),
+          ),
+        ),
+        const SizedBox(height: Medidas.s16),
+        Container(
+          padding: const EdgeInsets.all(Medidas.s16),
+          decoration: BoxDecoration(
+            color: p.bgSurface,
+            borderRadius: BorderRadius.circular(Medidas.radioMd),
+          ),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: p.stateDangerMuted,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.warning_amber_rounded,
-                    size: 28,
-                    color: p.stateDangerInk,
-                  ),
-                ),
-              ),
-              const SizedBox(height: Medidas.s12),
-              Semantics(
-                header: true,
-                child: Text(
-                  '¿Anular esta reserva?',
-                  textAlign: TextAlign.center,
-                  style: Textos.h2.copyWith(color: p.textPrimary),
-                ),
-              ),
-              const SizedBox(height: Medidas.s16),
-              Container(
-                padding: const EdgeInsets.all(Medidas.s16),
-                decoration: BoxDecoration(
-                  color: p.bgSurface,
-                  borderRadius: BorderRadius.circular(Medidas.radioMd),
-                ),
-                child: Column(
-                  children: [
-                    _Dato('Usuario', r.usuario),
-                    _Dato('Sede', r.sede),
-                    _Dato('Cancha', r.espacio, tecnico: true),
-                    _Dato('Cuándo', '${fechaLarga(r.inicio)}\n$_horario'),
-                    _Dato('Importe', pesos(r.total)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: Medidas.s16),
-              ExcludeSemantics(
-                child: Text(
-                  'MOTIVO DE LA ANULACIÓN',
-                  style: Textos.sobretitulo.copyWith(color: p.textSecondary),
-                ),
-              ),
-              const SizedBox(height: Medidas.s8),
-              Semantics(
-                container: true,
-                label: 'Motivo de la anulación',
-                child: TextField(
-                  controller: _motivo,
-                  minLines: 3,
-                  maxLines: 5,
-                  maxLength: motivoMaximo,
-                  buildCounter:
-                      (
-                        context, {
-                        required currentLength,
-                        required isFocused,
-                        required maxLength,
-                      }) => null,
-                  keyboardType: TextInputType.multiline,
-                  textCapitalization: TextCapitalization.sentences,
-                  onChanged: (_) {
-                    if (_sinMotivo) setState(() => _sinMotivo = false);
-                  },
-                  style: Textos.cuerpo.copyWith(color: p.textPrimary),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: p.bgSurface,
-                    contentPadding: const EdgeInsets.all(Medidas.s16),
-                    enabledBorder: _sinMotivo
-                        ? borde(p.borderError, 1.5)
-                        : borde(p.borderControl, 1),
-                    focusedBorder: _sinMotivo
-                        ? borde(p.borderError, 1.5)
-                        : borde(p.borderFocus, 1.5),
-                    border: borde(p.borderControl, 1),
-                  ),
-                ),
-              ),
-              if (_sinMotivo) ...[
-                const SizedBox(height: Medidas.s8),
-                Semantics(
-                  liveRegion: true,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(top: 1),
-                        child: Icon(
-                          Icons.warning_amber_rounded,
-                          size: 16,
-                          color: p.stateDangerInk,
-                        ),
-                      ),
-                      const SizedBox(width: Medidas.s8),
-                      Expanded(
-                        child: Text(
-                          motivoObligatorio,
-                          style: Textos.leyenda.copyWith(
-                            color: p.stateDangerInk,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: Medidas.s16),
-              BotonPeligro(texto: 'CONFIRMAR ANULACIÓN', alTocar: _confirmar),
-              const SizedBox(height: Medidas.s8),
-              BotonContorno(
-                texto: 'VOLVER',
-                alTocar: () => Navigator.of(context).pop(),
-              ),
+              _Dato('Usuario', r.usuario),
+              _Dato('Sede', r.sede),
+              _Dato('Cancha', r.espacio, tecnico: true),
+              _Dato('Cuándo', '${fechaLarga(r.inicio)}\n$_horario'),
+              _Dato('Importe', pesos(r.total)),
             ],
           ),
         ),
-      ),
+        const SizedBox(height: Medidas.s16),
+        ExcludeSemantics(
+          child: Text(
+            'MOTIVO DE LA ANULACIÓN',
+            style: Textos.sobretitulo.copyWith(color: p.textSecondary),
+          ),
+        ),
+        const SizedBox(height: Medidas.s8),
+        Semantics(
+          container: true,
+          label: 'Motivo de la anulación',
+          child: TextField(
+            controller: _motivo,
+            minLines: 3,
+            maxLines: 5,
+            maxLength: motivoMaximo,
+            buildCounter:
+                (
+                  context, {
+                  required currentLength,
+                  required isFocused,
+                  required maxLength,
+                }) => null,
+            keyboardType: TextInputType.multiline,
+            textCapitalization: TextCapitalization.sentences,
+            onChanged: (_) {
+              if (_sinMotivo) setState(() => _sinMotivo = false);
+            },
+            style: Textos.cuerpo.copyWith(color: p.textPrimary),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: p.bgSurface,
+              contentPadding: const EdgeInsets.all(Medidas.s16),
+              enabledBorder: _sinMotivo
+                  ? borde(p.borderError, 1.5)
+                  : borde(p.borderControl, 1),
+              focusedBorder: _sinMotivo
+                  ? borde(p.borderError, 1.5)
+                  : borde(p.borderFocus, 1.5),
+              border: borde(p.borderControl, 1),
+            ),
+          ),
+        ),
+        if (_sinMotivo) ...[
+          const SizedBox(height: Medidas.s8),
+          const MensajeDeCampo(motivoObligatorio),
+        ],
+        const SizedBox(height: Medidas.s16),
+        BotonPeligro(texto: 'CONFIRMAR ANULACIÓN', alTocar: _confirmar),
+        const SizedBox(height: Medidas.s8),
+        BotonContorno(
+          texto: 'VOLVER',
+          alTocar: () => Navigator.of(context).pop(),
+        ),
+      ],
     );
   }
 }

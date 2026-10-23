@@ -4,25 +4,26 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import (
+from app.dominio.errores import (
     AgendaCambiada,
     Cambiado,
     HorarioOcupado,
     NoDisponible,
     NoEncontrada,
 )
-from app.aplicacion.reservas import Cuando
 from app.dominio.horarios import Agenda
 from app.dominio.notificaciones import mensaje_cancelacion
 from app.dominio.reservas import (
     Contadores,
+    Cuando,
     FiltrosHistorial,
     HistorialDeReservas,
     Reserva,
     ReservaHistorial,
 )
+from app.dominio.zona import NOMBRE_ZONA_CLUB
 from app.infraestructura.horarios import HorariosSql
-from app.infraestructura.notificaciones import encolar_cancelacion_forzosa
+from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
 
 _COLUMNAS = (
     "r.id, r.espacio_id, e.sede_id, e.nombre AS espacio, e.deporte, e.tipo,"
@@ -59,7 +60,7 @@ _VENTANA_DE_REINTENTO = "5 minutes"
 POR_PAGINA = 20
 
 # Los días del filtro se cortan a medianoche del club, no de la sesión de Postgres (UTC).
-_ZONA_CLUB = "'America/Argentina/Buenos_Aires'"
+_ZONA_CLUB = f"'{NOMBRE_ZONA_CLUB}'"
 
 
 def _reserva(f: Any) -> Reserva:
@@ -294,21 +295,26 @@ class ReservasSql:
             reserva = self._una(reserva_id)
             # La confirmación se encola en la misma transacción: si la cancelación no se
             # completa no queda aviso, y el índice único evita repetirlo.
-            aviso = mensaje_cancelacion(reserva)
-            self._conn.execute(
-                text(
-                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                    " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_usuario', :titulo,"
-                    " :cuerpo, :id, :inicio, 'pendiente')"
-                    " ON CONFLICT (reserva_id) WHERE tipo = 'cancelacion_usuario' DO NOTHING"
-                ),
-                datos | {"titulo": aviso.titulo, "cuerpo": aviso.cuerpo, "inicio": reserva.inicio},
+            NotificacionesSql(self._conn).encolar_cancelacion_usuario(
+                usuario_id, reserva_id, reserva.inicio, mensaje_cancelacion(reserva)
             )
             self._conn.commit()
         except BaseException:
             self._conn.rollback()
             raise
         return reserva
+
+    def cancelar_futuras_de(self, usuario_id: int) -> None:
+        """Cancela las reservas activas que todavía no empezaron de una cuenta que se da de
+        baja, dentro de la transacción de quien llama: sin commit."""
+        self._conn.execute(
+            text(
+                "UPDATE reserva SET estado = 'cancelada', cancelada_en = clock_timestamp(),"
+                " cancelada_por = :id WHERE usuario_id = :id AND estado = 'activa'"
+                " AND inicio > clock_timestamp()"
+            ),
+            {"id": usuario_id},
+        )
 
     def insertar(
         self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime, agenda: Agenda

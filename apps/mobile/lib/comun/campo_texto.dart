@@ -116,32 +116,44 @@ class CampoTexto extends StatelessWidget {
         ),
         if (mensaje != null) ...[
           const SizedBox(height: Medidas.s8),
-          // El lector de pantalla anuncia el error apenas aparece.
-          Semantics(
-            liveRegion: true,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 1),
-                  child: Icon(
-                    Icons.warning_amber_rounded,
-                    size: 16,
-                    color: p.stateDangerInk,
-                  ),
-                ),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: Text(
-                    mensaje,
-                    style: Textos.leyenda.copyWith(color: p.stateDangerInk),
-                  ),
-                ),
-              ],
+          MensajeDeCampo(mensaje),
+        ],
+      ],
+    );
+  }
+}
+
+/// El error de un campo, con ícono; el lector de pantalla lo anuncia apenas aparece.
+class MensajeDeCampo extends StatelessWidget {
+  const MensajeDeCampo(this.mensaje, {super.key});
+
+  final String mensaje;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Semantics(
+      liveRegion: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Icon(
+              Icons.warning_amber_rounded,
+              size: 16,
+              color: p.stateDangerInk,
+            ),
+          ),
+          const SizedBox(width: Medidas.s8),
+          Expanded(
+            child: Text(
+              mensaje,
+              style: Textos.leyenda.copyWith(color: p.stateDangerInk),
             ),
           ),
         ],
-      ],
+      ),
     );
   }
 }

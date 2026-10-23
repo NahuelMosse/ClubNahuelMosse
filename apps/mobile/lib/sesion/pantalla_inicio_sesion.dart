@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../reservas/reserva_pendiente.dart';
+import '../comun/reserva_pendiente.dart';
 import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
@@ -41,7 +41,7 @@ class _Formulario extends StatefulWidget {
   const _Formulario({required this.sesion, required this.pendiente});
 
   final Sesion sesion;
-  final ReservaPendiente pendiente;
+  final ReservaPendiente<Object> pendiente;
 
   @override
   State<_Formulario> createState() => _FormularioState();

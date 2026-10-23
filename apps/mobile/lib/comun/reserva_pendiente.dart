@@ -1,13 +1,11 @@
-import 'eleccion.dart';
-
 /// La reserva que se estaba por confirmar cuando la sesión venció: al volver a entrar con
 /// la misma cuenta, la app lleva de nuevo a la confirmación. Vive mientras la app está
 /// abierta.
-class ReservaPendiente {
-  Eleccion? _eleccion;
+class ReservaPendiente<T extends Object> {
+  T? _eleccion;
   String? _correo;
 
-  void guardar(Eleccion eleccion, String correo) {
+  void guardar(T eleccion, String correo) {
     _eleccion = eleccion;
     _correo = correo.trim().toLowerCase();
   }
@@ -22,7 +20,7 @@ class ReservaPendiente {
   }
 
   /// La elección pendiente, que deja de estarlo.
-  Eleccion? tomar() {
+  T? tomar() {
     final eleccion = _eleccion;
     _eleccion = null;
     _correo = null;

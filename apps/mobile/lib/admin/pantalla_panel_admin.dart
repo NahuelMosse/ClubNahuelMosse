@@ -7,9 +7,10 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
+import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -18,12 +19,12 @@ import '../reservas/reservas.dart' show EstadoDeReserva;
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'anular_reserva.dart';
 import 'estado_reserva_chip.dart';
 import 'historial_reservas.dart';
+import 'listado_admin.dart';
 import 'pantalla_filtros_reservas.dart';
 
 /// El panel de administración: el historial global de reservas (CU-14), pestaña «Reservas».
@@ -140,15 +141,14 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
     }
     if (!mounted || pedido != _pedido) return;
     setState(() => _fallo = true);
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      widget.pendientes.guardar(_filtros);
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (error != null) {
-      final reintentar = await mostrarErrorDeRed(context, error);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: error,
+      reintentar: _cargar,
+      alVencer: () => widget.pendientes.guardar(_filtros),
+    );
   }
 
   Future<void> _cargarMas() async {
@@ -271,33 +271,9 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'PANEL ADMIN',
-                                  style: Textos.sobretitulo.copyWith(
-                                    color: p.accentInk,
-                                  ),
-                                ),
-                                const SizedBox(height: Medidas.s4),
-                                Semantics(
-                                  header: true,
-                                  child: Text(
-                                    'Reservas',
-                                    style: Textos.h1.copyWith(
-                                      color: p.textPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          BotonCuenta(sesion: widget.sesion),
-                        ],
+                      EncabezadoAdmin(
+                        titulo: 'Reservas',
+                        sesion: widget.sesion,
                       ),
                       const SizedBox(height: Medidas.s16),
                       Row(
@@ -619,71 +595,18 @@ class _TarjetaReservaAdmin extends StatelessWidget {
                       style: Textos.leyenda.copyWith(color: p.textSecondary),
                     ),
                     const SizedBox(height: Medidas.s12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: p.textSecondary,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Expanded(
-                          child: Text(
-                            r.usuario,
-                            style: Textos.cuerpo.copyWith(color: p.textPrimary),
-                          ),
-                        ),
-                      ],
-                    ),
+                    UsuarioDeReserva(usuario: r.usuario),
                     const SizedBox(height: Medidas.s8),
                     Text(
                       r.espacio,
                       style: Textos.mono.copyWith(color: p.textMuted),
                     ),
                     const SizedBox(height: Medidas.s8),
-                    Wrap(
-                      spacing: Medidas.s16,
-                      runSpacing: Medidas.s4,
-                      children: [
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.calendar_today_outlined,
-                              size: 16,
-                              color: p.textSecondary,
-                            ),
-                            const SizedBox(width: Medidas.s8),
-                            Flexible(
-                              child: Text(
-                                fechaLarga(r.inicio),
-                                style: Textos.leyenda.copyWith(
-                                  color: p.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 18,
-                              color: p.accentInk,
-                            ),
-                            const SizedBox(width: Medidas.s8),
-                            Flexible(
-                              child: Text(
-                                _horario,
-                                style: Textos.cuerpoFuerte.copyWith(
-                                  color: p.accentInk,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    FechaYHorario(
+                      fecha: fechaLarga(r.inicio),
+                      horario: _horario,
+                      separacionVertical: Medidas.s4,
+                      alineacion: WrapCrossAlignment.start,
                     ),
                     if (r.espacioDeBaja) ...[
                       const SizedBox(height: Medidas.s8),

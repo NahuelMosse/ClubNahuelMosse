@@ -1,3 +1,5 @@
+import '../comun/zona_club.dart';
+
 /// Qué avisa una notificación: el recordatorio de una reserva próxima, la cancelación que
 /// hizo el club o la confirmación de la que hizo la propia persona.
 enum TipoDeNotificacion {
@@ -83,10 +85,8 @@ class Notificacion {
   }
 }
 
-/// El club está en UTC−3, sin horario de verano: los días se cuentan así sea cual sea la zona
-/// del teléfono.
-DateTime enDelClub(DateTime momento) =>
-    momento.toUtc().subtract(const Duration(hours: 3));
+/// Los días se cuentan en el club, sea cual sea la zona del teléfono.
+DateTime enDelClub(DateTime momento) => enElClub(momento);
 
 /// Las notificaciones de un mismo día, con su rótulo: HOY, AYER o `dd/mm`.
 class GrupoDeDia {

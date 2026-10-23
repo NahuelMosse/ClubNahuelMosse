@@ -62,6 +62,8 @@ export const fileMapLines = (cardDir) => {
 };
 export const pathTokens = (line) => line.split(/[\s`|,;()*]+/)
   .map((t) => t.replaceAll('\\', '/').replace(/^\.\//, '').replace(/:\d+(:\d+)?$/, '').replace(/[.:]+$/, '')).filter(Boolean);
+// The paths a Tasks line names, without its quoted test titles: a frozen title may mention a file the task does not touch.
+export const taskTokens = (line) => pathTokens(String(line).replace(/"[^"\n]*"|«[^»\n]*»/g, ' '));
 
 // The kit's own files are never the card's: they neither enter the card's diff nor make a file name
 // ambiguous.
@@ -97,7 +99,7 @@ export const namedIn = (lines, file, root = process.cwd()) => {
   };
   let unique = null;
   return lines.filter((l) => {
-    const tokens = pathTokens(l);
+    const tokens = taskTokens(l);
     if (tokens.includes(file)) return true;
     if (!tokens.includes(name)) return false;
     unique ??= byName();
@@ -442,6 +444,13 @@ const withoutDebris = (root, files, untracked, tokens) => {
   const drop = new Set(stray.filter((f) => DEBRIS.test(f) || (!f.includes('/') && !sources.some((s) => s.includes(f)))));
   return files.filter((f) => !drop.has(f));
 };
+
+// A command line handed to a tool that runs it in a shell (`once.mjs`, `mutate.mjs`) has to stay one argument when it chains
+// commands: unquoted, the caller's shell splits `cd apps/mobile && flutter test` at the `&&` and the tool gets only the `cd`.
+const SHELL_CHAIN = /&&|\|\||[;|<>]/;
+export const asOneArg = (command) => (SHELL_CHAIN.test(command) ? `"${command.replace(/"/g, '\\"')}"` : command);
+// The command a tool got after `--`: one argument is the whole command; several are re-joined keeping each one whole.
+export const shellJoin = (tokens) => (tokens.length === 1 ? tokens[0] : tokens.map((t) => (/[\s&|;<>"]/.test(t) ? `"${t.replace(/"/g, '\\"')}"` : t)).join(' '));
 
 export const keyOf = (root, command) => {
   const { all, untracked } = listing(root) ?? { all: [], untracked: new Set() };

@@ -1,6 +1,5 @@
 from datetime import datetime
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
@@ -9,15 +8,13 @@ from sqlalchemy import Connection
 
 from app.aplicacion.errores import DatosInvalidos, Duplicado
 from app.aplicacion.registro import registrar
+from app.dependencias import ProveedorFirebase, UsuariosSql, conexion
 from app.dominio.usuarios import DatosRegistro
-from app.infraestructura.db import conexion
-from app.infraestructura.identidad import ProveedorFirebase
-from app.infraestructura.usuarios import UsuariosSql
+from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.entradas import Clave, Correo, Texto40, Texto120
 from app.interfaz.limites import Frenado, frenar_por_origen
 
 router = APIRouter(tags=["usuarios"])
-ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 MENSAJE_DUPLICADO = "El usuario ya está registrado. Modificá el correo o el DNI."
 MENSAJES_CAMPO = {
     "correo": "Este correo ya está registrado",

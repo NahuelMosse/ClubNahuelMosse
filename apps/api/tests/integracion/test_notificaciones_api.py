@@ -287,7 +287,7 @@ def test_un_envio_fallido_deja_el_aviso_en_el_centro_marcado_como_fallido(
     assert _barrer(motor, usuario, Canal(), _manana_a_las(20)) == 0
 
     with motor.connect() as conn:
-        envio = conn.execute(
+        envio: Any = conn.execute(
             text("SELECT envio FROM notificacion WHERE usuario_id = :u"), {"u": usuario}
         ).scalar_one()
     assert envio == "fallida"
@@ -322,14 +322,14 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     leida = api.post(f"/notificaciones/{aviso['id']}/leer", headers=_con(token_usuario))
     assert leida.status_code == 204
     with motor.connect() as conn:
-        despues = conn.execute(
+        despues: Any = conn.execute(
             text("SELECT leida_en FROM notificacion WHERE id = :i"), {"i": aviso["id"]}
         ).scalar_one()
     assert despues is not None
     # Leerla de nuevo responde igual y no cambia cuándo se leyó.
     api.post(f"/notificaciones/{aviso['id']}/leer", headers=_con(token_usuario))
     with motor.connect() as conn:
-        igual = conn.execute(
+        igual: Any = conn.execute(
             text("SELECT leida_en FROM notificacion WHERE id = :i"), {"i": aviso["id"]}
         ).scalar_one()
     assert igual == despues

@@ -1,11 +1,12 @@
 """La cancelación y su confirmación se confirman juntas o no se confirman."""
 
 from collections.abc import Callable, Iterator
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
-from test_recordatorio import CanalDePrueba, un_socio
+from test_recordatorio import CanalDePrueba, app_de, un_socio
 
 from app.infraestructura.push import canal_push
 
@@ -13,9 +14,9 @@ from app.infraestructura.push import canal_push
 @pytest.fixture
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     canal = CanalDePrueba()
-    api.app.dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[canal_push] = lambda: canal
     yield canal
-    api.app.dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(canal_push, None)
 
 
 @pytest.fixture
@@ -61,10 +62,10 @@ def test_si_falla_el_aviso_la_reserva_sigue_activa_y_no_queda_ningun_aviso(
         assert "falla el aviso" in str(e)
 
     with motor.connect() as conn:
-        estado = conn.execute(
+        estado: Any = conn.execute(
             text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()
-        avisos = conn.execute(
+        avisos: Any = conn.execute(
             text("SELECT count(*) FROM notificacion WHERE usuario_id = :u"),
             {"u": socio.usuario_id},
         ).scalar_one()

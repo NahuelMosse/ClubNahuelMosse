@@ -6,6 +6,7 @@ Estado = Literal["activa", "completada", "cancelada", "anulada"]
 # Las cuatro pestañas del historial global (CU-14): «cancelada» no tiene pestaña propia,
 # sólo aparece dentro de «Todas».
 FiltroEstado = Literal["activa", "completada", "anulada"]
+Cuando = Literal["proximas", "historial"]
 
 
 @dataclass(frozen=True)

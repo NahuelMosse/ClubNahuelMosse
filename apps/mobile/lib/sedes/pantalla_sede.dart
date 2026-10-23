@@ -8,6 +8,7 @@ import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/etiqueta.dart';
 import '../comun/formato_precio.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -618,13 +619,7 @@ class TarjetaCancha extends StatelessWidget {
     const foto = Paleta.oscura;
     final tipo = catalogo.tipoCorto(cancha.deporte, cancha.tipo);
     final precio = pesos(cancha.precioPorHora);
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
+    return MarcoDeTarjeta(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

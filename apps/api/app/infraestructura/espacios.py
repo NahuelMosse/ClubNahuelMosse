@@ -4,7 +4,7 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import (
+from app.dominio.errores import (
     ConReservasFuturas,
     Duplicado,
     NoDisponible,
@@ -288,3 +288,15 @@ class EspaciosSql:
         except BaseException:
             self._conn.rollback()
             raise
+
+    def dar_de_baja_de_sede(self, sede_id: int, autor: int) -> None:
+        """Da de baja los espacios activos de una sede, dentro de la transacción de quien llama:
+        sin commit."""
+        self._conn.execute(
+            text(
+                "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
+                " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
+                " WHERE sede_id = :id AND activo"
+            ),
+            {"id": sede_id, "autor": autor},
+        )

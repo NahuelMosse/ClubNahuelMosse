@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
-from test_recordatorio import CanalDePrueba, Socio, manana, un_socio
+from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
 from app.aplicacion.notificaciones import despachar_pendientes
 from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
@@ -26,9 +26,9 @@ class CanalQueFalla:
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     """El servicio de notificaciones del teléfono, que anota lo que la API le pide enviar."""
     canal = CanalDePrueba()
-    api.app.dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[canal_push] = lambda: canal
     yield canal
-    api.app.dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(canal_push, None)
 
 
 @pytest.fixture
@@ -344,7 +344,7 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
     admin: dict[str, str],
 ) -> None:
     """si el push falla el aviso queda en el centro con el envío fallido @supuesto:CU-24.2-SUP-01 @supuesto:CU-24.2-SUP-07"""
-    api.app.dependency_overrides[canal_push] = lambda: CanalQueFalla()
+    app_de(api).dependency_overrides[canal_push] = lambda: CanalQueFalla()
     try:
         socio = un_socio(api, motor, iniciar_sesion, unico)
         reserva = socio.reservar("21:00")
@@ -354,4 +354,4 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
         assert [e["titulo"] for e in socio.centro()["notificaciones"]] == [TITULO]
         assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] == "fallida"
     finally:
-        api.app.dependency_overrides.pop(canal_push, None)
+        app_de(api).dependency_overrides.pop(canal_push, None)
