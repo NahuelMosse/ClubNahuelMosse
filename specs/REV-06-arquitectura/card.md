@@ -76,7 +76,7 @@ mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas
 mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/mobile/lib/usuarios/registro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/registro_servicio_test.dart
 mutate apps/mobile/lib/comun/tarjeta_reserva.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/tarjeta_reserva_test.dart
-mutate apps/mobile/lib/reservas/reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/arquitectura_test.dart
+mutate apps/mobile/lib/reservas/reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/arquitectura_test.dart test/reserva_desde_json_test.dart
 no-visual: la página de recuperacion.py sólo cambia el import de sus dependencias; ninguna pantalla cambia
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev06_test uv run --no-sync alembic upgrade head"
 mutate apps/api/app/aplicacion/errores.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_repositorios_propios.py
