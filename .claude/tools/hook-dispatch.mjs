@@ -54,7 +54,7 @@ const GUARDING = new Set(['PreToolUse', 'close']);
 // A shell command that only reads: one simple command, no redirect, pipe, substitution or second command.
 const READ_ONLY = /^\s*(?:(?:ls|cat|head|tail|pwd|wc|grep)(?:\s+[^;&|<>`$()\n\\"']*)?|sed\s+-n\s+'?\d+(?:,\d+)?p'?\s+[^\s;&|<>`$()\\"']+|node\s+\.claude\/tools\/help\.mjs(?:\s+[\w.-]+)*)\s*$/;
 // Same list as `CAPPED` in hooks/context-cap.mjs (a test keeps them equal).
-export const CAPPED = new Set(['builder', 'grunt', 'designer']);
+export const CAPPED = new Set(['builder', 'grunt', 'designer', 'design-critic']);
 
 // Whether a hook has nothing to say about this call, from what the hook itself would read first and end on
 // with exit 0 and no output. Each rule repeats the early exit of its hook; none of them changes a verdict.

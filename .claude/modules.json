@@ -1,5 +1,5 @@
 {
-  "kit": "6.3.3",
+  "kit": "6.4.0",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
@@ -12,12 +12,13 @@
       "modules": ["ui"], "modulesIfSignal": ["i18n"], "optInModules": [],
       "lenses": { "visual": "web" },
       "stacks": ["react-shadcn", "node-ts"],
-      "tools": ["probe", "app.mjs probe", "motion-audit", "motion-curves", "overflow", "axe"],
-      "agents": ["designer"],
+      "tools": ["probe", "app.mjs probe", "design-round", "motion-audit", "motion-curves", "overflow", "axe"],
+      "agents": ["designer", "design-critic"],
       "gate": ["probe <state>:", "enter-each", "type-markup", "motion:", "overflow"],
       "files": [
-        ".claude/profiles/web.md", ".claude/agents/designer.md", ".claude/reference/design-refs.md",
-        ".claude/tools/probe.mjs", ".claude/tools/motion-curves.mjs", ".claude/tools/motion-audit.mjs",
+        ".claude/profiles/web.md", ".claude/agents/designer.md", ".claude/agents/design-critic.md",
+        ".claude/reference/design-refs.md", ".claude/reference/excellence.md",
+        ".claude/tools/probe.mjs", ".claude/tools/design-round.mjs", ".claude/tools/motion-curves.mjs", ".claude/tools/motion-audit.mjs",
         ".claude/tools/overflow.mjs", ".claude/tools/showreel.mjs",
         ".claude/skills/motion/**"
       ],
