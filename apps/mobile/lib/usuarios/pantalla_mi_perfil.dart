@@ -250,7 +250,7 @@ class _Cabecera extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [p.bgHeroFrom, p.bgBase],
+          colors: [p.bgHeroFrom, p.bgHeroTo],
         ),
       ),
       child: SafeArea(
