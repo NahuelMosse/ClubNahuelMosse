@@ -9,11 +9,11 @@
     "/health": {
       "get": {
         "tags": [
-          "salud"
+          "operación"
         ],
         "summary": "Chequeo de vida de la API, sin tocar dependencias",
-        "description": "Responde 200 mientras el proceso atiende; no consulta la base ni Firebase.",
-        "operationId": "salud_health_get",
+        "description": "La API está viva; no mira la base ni Firebase.",
+        "operationId": "vivo_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -24,7 +24,91 @@
                     "type": "string"
                   },
                   "type": "object",
-                  "title": "Response Salud Health Get"
+                  "title": "Response Vivo Health Get"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "operación"
+        ],
+        "summary": "Lista",
+        "description": "La API puede atender: tiene base y el esquema está al día.",
+        "operationId": "lista_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "Sin base o sin esquema al día."
+          }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": [
+          "operación"
+        ],
+        "summary": "Metricas",
+        "description": "Las métricas por ruta y del pool; el token va como bearer y, sin él, la ruta no existe.",
+        "operationId": "metricas_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
+          "404": {
+            "description": "Sin token válido o con las métricas apagadas."
+          },
+          "400": {
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "detail": {
+                      "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -59,6 +143,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "422": {
             "description": "Unprocessable Content",
@@ -132,6 +222,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -197,6 +293,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "description": "Unauthorized",
@@ -277,6 +379,12 @@
           "204": {
             "description": "Successful Response"
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -340,6 +448,12 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "description": "Unauthorized",
@@ -415,6 +529,12 @@
           "204": {
             "description": "Successful Response"
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "410": {
             "description": "El enlace venció, ya se usó o fue reemplazado"
           },
@@ -476,6 +596,12 @@
                 "schema": {}
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "422": {
             "description": "Unprocessable Content",
@@ -542,6 +668,12 @@
           "204": {
             "description": "Successful Response"
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "410": {
             "description": "El enlace venció, ya se usó o fue reemplazado"
           },
@@ -598,6 +730,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "400": {
             "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
@@ -639,6 +777,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "description": "Unauthorized",
@@ -705,6 +849,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "description": "Unauthorized",
@@ -815,6 +965,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -911,6 +1067,12 @@
           "204": {
             "description": "Successful Response"
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -988,6 +1150,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "description": "Unauthorized",
@@ -1107,6 +1275,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -1182,6 +1356,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -1289,6 +1469,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -1383,6 +1569,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -1460,6 +1652,12 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -1604,6 +1802,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -1755,6 +1959,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -1839,6 +2049,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -1914,6 +2130,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -2008,6 +2230,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -2112,6 +2340,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -2318,6 +2552,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -2400,6 +2640,12 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {
@@ -2498,6 +2744,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "content": {
               "application/json": {
@@ -2580,6 +2832,12 @@
           "204": {
             "description": "Successful Response"
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2657,6 +2915,12 @@
           "204": {
             "description": "Successful Response"
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2725,6 +2989,12 @@
               }
             }
           },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
+          },
           "401": {
             "description": "Unauthorized",
             "content": {
@@ -2774,6 +3044,12 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "description": "Unauthorized",
@@ -2843,6 +3119,12 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "500": {
+            "description": "Error inesperado, con una referencia para soporte."
+          },
+          "503": {
+            "description": "La base de datos no respondió."
           },
           "401": {
             "content": {

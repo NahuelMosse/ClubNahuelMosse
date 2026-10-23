@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/widgets.dart';
 
+import '../comun/errores_no_manejados.dart';
 import '../sesion/sesion.dart';
 import 'notificacion.dart';
 import 'notificaciones.dart';
@@ -186,8 +187,9 @@ class CentroDeNotificaciones extends ChangeNotifier {
           permiso: ahora,
         );
       }
-    } on Exception {
+    } on Exception catch (e, pila) {
       // Sin red el registro queda para la próxima vez que cambie el permiso o se abra la app.
+      registrarError(e, pila);
     }
     _permitido = ahora;
     notifyListeners();
@@ -207,8 +209,9 @@ class CentroDeNotificaciones extends ChangeNotifier {
     if (!_activo || _liberado) return;
     try {
       await cargar();
-    } on Exception {
+    } on Exception catch (e, pila) {
       // Sin red o con la API caída el panel sólo se entera después.
+      registrarError(e, pila);
     }
   }
 
@@ -262,7 +265,8 @@ class CentroDeNotificaciones extends ChangeNotifier {
     notifyListeners();
     try {
       await _repositorio.leer(n.id);
-    } on Exception {
+    } on Exception catch (e, pila) {
+      registrarError(e, pila);
       unawaited(_sondear());
     }
   }
@@ -274,7 +278,8 @@ class CentroDeNotificaciones extends ChangeNotifier {
     notifyListeners();
     try {
       await _repositorio.leerTodas();
-    } on Exception {
+    } on Exception catch (e, pila) {
+      registrarError(e, pila);
       unawaited(_sondear());
     }
   }

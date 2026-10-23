@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "42e90fb0befdf918fb58829540cc101e4117845eec2f47c5d54e33aba0d1da99"
+    "sha256": "a3f44ec8388cf18c2f65ae05860d1c0174e20c73e42f7c241d506c87144146a4"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1305,7 +1305,7 @@
   },
   ".claude/tools/attack.mjs": {
     "module": "profile:backend",
-    "sha256": "ae18d2933780f15709a8b98eca8cc13b3ff8f792ee50056372477484ce2a7432"
+    "sha256": "f3dfee16b7220fac499298a8e36d21aea754f41e9341b8af13ffef2559337888"
   },
   ".claude/tools/bar.mjs": {
     "module": "core",
@@ -1317,11 +1317,11 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "7749e496008f9070696136e4726976a856fb2c31b358cbf9df5ac21c511a26bd"
+    "sha256": "cd60b14d01659e11ef1f6be43bc55393c9ca091c971924f6251d70d5bb98bccd"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "7f70ab1dcb1b8301e9066a3cb4ac6a618e64cc47bac6b22683b787b839c16660"
+    "sha256": "e1a2ebdae67cc3cd4f6e01f72fc5dad40067ec76ef27df7920f12bdc4e24c8bf"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
@@ -1369,7 +1369,7 @@
   },
   ".claude/tools/mutate.mjs": {
     "module": "core",
-    "sha256": "c9539f32dae94cd55dfd6a71ef3625c58b29fb1b4f5da4f74d09ea4d31e78342"
+    "sha256": "75dd0d0a837d4ae6fc59a5367a6510d886108393878c6d14a3e5e0bec15a0a26"
   },
   ".claude/tools/once.mjs": {
     "module": "core",
@@ -1433,7 +1433,7 @@
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "3f283fa1e357cda832dd53a6e7f100d86647d33505a6f1f1066e4bb873859f50"
+    "sha256": "99655d9f44c1a00bb65ff823b60d705e1537e3a9c340593df273a2285905cabe"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1509,7 +1509,7 @@
   },
   ".claude/profiles/web.md": {
     "module": "profile:web",
-    "sha256": "bffd90f9ff473363ac43dc07b0a86a3a07297923e63a81bb13e56a2889463aaf"
+    "sha256": "f40b34d4725ce3dbf47399ae9a9bca7ac5f07cb4193ed39d4958294f28e1265b"
   },
   ".claude/skills/motion/PROVENANCE": {
     "module": "profile:web",
@@ -1561,7 +1561,7 @@
   },
   ".claude/agents/design-critic.md": {
     "module": "profile:web",
-    "sha256": "185be8ffe36b0027104f15c62fe736385d4b66495c386c56bbe16d236f2d9fa1"
+    "sha256": "7edca2b6d47e2c3180951452e20c1b90c32e98fa7ede7ea570d866a803ec3eaa"
   },
   ".claude/reference/excellence.md": {
     "module": "profile:web",
@@ -1569,14 +1569,6 @@
   },
   ".claude/tools/design-round.mjs": {
     "module": "profile:web",
-    "sha256": "355edabb2df64a33144b55fbf4f650d6b0e151520d9d99d1c5f82b958fff99bb"
-  },
-  ".claude/reference/assets.md": {
-    "module": "profile:web",
-    "sha256": "746b9f21805922a96c6fc59da5774783204fbead52928995899e7c4de37bde13"
-  },
-  ".claude/tools/asset-pipeline.py": {
-    "module": "profile:web",
-    "sha256": "b2ae1d77c623430268046cb1c592bb6c0e6812fa7253a9f4267ff4337e72c4d7"
+    "sha256": "304de7b2af33f656bc89b2c6bbbd07aee419228d5466af4e8abe3a5554bb98cd"
   }
 }

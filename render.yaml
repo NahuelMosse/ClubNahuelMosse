@@ -10,8 +10,8 @@ services:
     # Con un plan pago, pasarlas a `preDeployCommand: uv run --no-sync alembic upgrade head`.
     buildCommand: uv sync --frozen --no-dev && uv run --no-sync alembic upgrade head
     startCommand: uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    # Ruta pública que no mira el Host: Render sólo acepta 2xx o 3xx.
-    healthCheckPath: /health
+    # Pública, fuera del filtro de Host y con la base: Render reinicia la API si /ready no da 2xx.
+    healthCheckPath: /ready
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.11"
@@ -25,6 +25,11 @@ services:
         fromDatabase:
           name: clubnahuelmosse-db
           property: connectionString
+      # El usuario propio de la app (sin permiso de crear tablas); sin él se usa DATABASE_URL.
+      - key: DATABASE_URL_APP
+        sync: false
+      - key: METRICAS_TOKEN
+        sync: false
       - key: FIREBASE_PROJECT_ID
         sync: false
       - key: FIREBASE_API_KEY

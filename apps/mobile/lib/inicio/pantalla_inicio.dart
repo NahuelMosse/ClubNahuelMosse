@@ -5,7 +5,7 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
-import '../sesion/fallo_de_carga.dart';
+import '../comun/errores_no_manejados.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -17,6 +17,7 @@ import '../reservas/reservas.dart';
 import '../sedes/fotos.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -125,8 +126,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
     try {
       final datos = await _leer();
       if (mounted && pedido == _pedido) setState(() => _datos = datos);
-    } on Exception {
+    } on Exception catch (e, pila) {
       // Sin red o con el servidor caído, lo que había sigue siendo lo mejor que hay.
+      registrarError(e, pila);
     }
   }
 

@@ -1,0 +1,52 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "infra"
+  ],
+  "words": [
+    "pago",
+    "migraciones",
+    "rol",
+    "token",
+    "migración",
+    "sesión",
+    "sesion",
+    "login",
+    "contraseña",
+    "permiso",
+    "permisos"
+  ],
+  "files": [
+    "apps/api/app/infraestructura/db.py",
+    "apps/api/app/interfaz/salud.py",
+    "apps/api/app/main.py",
+    "render.yaml",
+    "apps/api/app/interfaz/registro_errores.py",
+    "apps/api/app/interfaz/metricas.py",
+    "apps/api/app/config.py",
+    "apps/api/app/interfaz/barrido.py",
+    "apps/api/app/aplicacion/notificaciones.py",
+    "scripts/respaldo.py",
+    "scripts/usuario_de_la_app.py",
+    "apps/api/README.md",
+    "apps/mobile/lib/api/cliente_api.dart",
+    "apps/mobile/lib/comun/dialogo_error.dart",
+    "apps/mobile/lib/comun/errores_no_manejados.dart",
+    "apps/mobile/lib/main.dart",
+    "apps/mobile/lib/sesion/sesion.dart",
+    "apps/mobile/lib/admin/pantalla_detalle_reserva.dart",
+    "apps/mobile/lib/notificaciones/centro.dart",
+    "apps/mobile/lib/admin/pantalla_editar_espacio.dart",
+    "apps/mobile/lib/inicio/pantalla_inicio.dart"
+  ],
+  "tasks": 4
+}

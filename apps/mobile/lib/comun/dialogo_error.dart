@@ -38,10 +38,18 @@ Future<ResultadoDeError> atenderErrorDeRed(
     builder: (context) => _Modal(
       icono: sinConexion ? Icons.wifi_off_rounded : Icons.cloud_off_rounded,
       titulo: sinConexion ? 'Error de conexión' : 'Error del servidor',
-      texto: sinConexion
-          ? 'No pudimos conectarnos. Revisá tu conexión a internet y volvé a intentar.'
-          : mensaje ??
-                'No pudimos procesar la operación en este momento. Intentá más tarde.',
+      texto: switch (error) {
+        SinConexion() =>
+          'No pudimos conectarnos. Revisá tu conexión a internet y volvé a intentar.',
+        ServidorSinRespuesta() =>
+          'El servidor no responde. Probá de nuevo en unos minutos.',
+        _ when mensaje != null => mensaje,
+        ErrorDelServidor(:final referencia?) =>
+          'No pudimos procesar la operación en este momento. Intentá más tarde. '
+              'Referencia: $referencia',
+        _ =>
+          'No pudimos procesar la operación en este momento. Intentá más tarde.',
+      },
       principal: sinConexion ? 'REINTENTAR' : null,
       secundaria: sinConexion ? 'Volver' : 'ACEPTAR',
     ),

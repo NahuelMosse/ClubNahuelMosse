@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
+import '../comun/errores_no_manejados.dart';
 import '../comun/formato_precio.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
@@ -55,10 +56,10 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
     super.initState();
     widget.historial.detalle(widget.reserva.id).then((r) {
       if (mounted && r != null) setState(() => _vigente = r);
-    }).ignore();
+    }, onError: registrarError);
     widget.espacios.catalogo().then((c) {
       if (mounted) setState(() => _catalogo = c);
-    }).ignore();
+    }, onError: registrarError);
   }
 
   Future<void> _anular() async {

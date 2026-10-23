@@ -125,7 +125,6 @@ class Sesion extends ChangeNotifier {
   Sesion({
     required Credenciales credenciales,
     required ClienteApi api,
-    this.limiteAlRetomar = const Duration(seconds: 3),
   }) : _credenciales = credenciales,
        _api = api;
 
@@ -141,8 +140,6 @@ class Sesion extends ChangeNotifier {
   /// cerrarla, una cuenta que ya no vale o una baja. Si algo falla, se sigue igual.
   final alSalir = <Future<void> Function()>[];
 
-  /// Cuánto puede esperar el arranque a la API antes de mostrar el login.
-  final Duration limiteAlRetomar;
   Perfil? _perfil;
 
   Perfil? get perfil => _perfil;
@@ -168,18 +165,18 @@ class Sesion extends ChangeNotifier {
 
   /// La sesión que quedó abierta en el dispositivo, si todavía vale.
   ///
-  /// Sólo la cierra si la cuenta ya no es válida. Sin red, con la API caída o lenta, la
-  /// conserva para el próximo arranque y deja entrar por el login.
+  /// Sólo la cierra si la cuenta ya no es válida. Espera a la API lo que tarde en
+  /// despertar (hasta el límite del cliente); sin red, con la API caída o sin respuesta,
+  /// conserva la sesión y lanza [SinConexion] o [ErrorDelServidor] para que el arranque
+  /// ofrezca reintentar en vez de mandar al login.
   Future<Perfil?> retomar() async {
     if (!_credenciales.hayCuenta) return null;
     try {
-      final perfil = await _perfilPropio().timeout(limiteAlRetomar);
+      final perfil = await _perfilPropio();
       _actual = perfil;
       return perfil;
     } on CredencialesInvalidas {
       await _salir();
-      return null;
-    } on Exception {
       return null;
     }
   }

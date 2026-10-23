@@ -24,9 +24,6 @@ You judge the look of a screen with fresh eyes. You did not build it and you do 
   motion), each with its capture, the measured rule value against its range, and a fix with values.
 - `## Scores`: `polish: <1-10>` and `motion: <1-10>`, one sentence of evidence each.
 
-**Imagery.** For each image ask «does it look part of the page or pasted on top?», and check against `.claude/reference/assets.md`:
-one photographic genre across the page, and cutouts with halos. A pasted-on image, a second genre or a halo is a polish defect.
-
 Concrete values, not adjectives: «`gap` 12px → 24px», not «more air». A line with no capture or no fix does not count.
 
 **Report: 8 lines or fewer.** The path of `critique.md`, the two scores, the defects and differences counted. Your last message is

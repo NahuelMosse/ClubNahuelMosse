@@ -11,7 +11,7 @@ _SEGURIDAD = [(b"cache-control", b"no-store"), (b"x-content-type-options", b"nos
 _HOSTS_PROPIOS = {"localhost", "127.0.0.1", "10.0.2.2"}
 _DOCUMENTACION = {"/docs", "/redoc"}
 # El chequeo de Render llega con el Host que él use: queda fuera del filtro (no toca dependencias).
-RUTA_SALUD = "/health"
+RUTAS_SALUD = {"/health", "/ready"}
 
 
 def hosts_permitidos() -> set[str]:
@@ -49,7 +49,7 @@ class Protecciones:
             await self.app(scope, receive, send)
             return
 
-        if scope["path"] != RUTA_SALUD and _host(scope) not in self._hosts:
+        if scope["path"] not in RUTAS_SALUD and _host(scope) not in self._hosts:
             await _responder(send, 400, b'{"detail":"Host no permitido"}')
             return
 

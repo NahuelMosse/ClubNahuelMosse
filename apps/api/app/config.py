@@ -1,13 +1,27 @@
+import tomllib
+from pathlib import Path
 from typing import Literal
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+RAIZ_API = Path(__file__).resolve().parents[1]
+
+
+def _version_del_paquete() -> str:
+    proyecto = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))
+    return str(proyecto["project"]["version"])
+
 
 class Config(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=RAIZ_API / ".env", extra="ignore")
 
+    version: str = _version_del_paquete()
     database_url: str = "postgresql+psycopg://club:club@localhost:5432/club"
+    # El usuario propio de la app, sin permiso de crear tablas; vacío usa DATABASE_URL.
+    database_url_app: str = ""
+    # El token del endpoint /metrics; vacío lo deja apagado.
+    metricas_token: str = ""
     firebase_project_id: str = "demo-clubnahuelmosse"
     # La clave web del proyecto, para comprobar contraseñas; el emulador no la necesita.
     firebase_api_key: str = ""
