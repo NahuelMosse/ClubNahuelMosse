@@ -2,12 +2,13 @@ import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import '../mis_reservas_test.dart' show reservaJson;
 import '../soporte/montar.dart';
+import '../soporte/reloj_fijo.dart';
 import '../soporte/usuario.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.

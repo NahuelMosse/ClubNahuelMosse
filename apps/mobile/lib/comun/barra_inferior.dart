@@ -90,7 +90,10 @@ class _Barra extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.only(top: Medidas.s8, bottom: Medidas.s8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Medidas.s8,
+            vertical: Medidas.s8,
+          ),
           child: Row(
             children: [
               for (final pestana in pestanas) Expanded(child: pestana),
@@ -134,11 +137,17 @@ class _Pestana extends StatelessWidget {
             children: [
               Icon(icono, size: 24, color: color),
               const SizedBox(height: Medidas.s4),
-              Text(
-                titulo,
-                maxLines: 1,
-                overflow: TextOverflow.visible,
-                style: Textos.sobretitulo.copyWith(color: color),
+              // Con el texto grande la etiqueta se achica hasta entrar entera.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: Medidas.s4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    titulo,
+                    maxLines: 1,
+                    style: Textos.sobretitulo.copyWith(color: color),
+                  ),
+                ),
               ),
             ],
           ),

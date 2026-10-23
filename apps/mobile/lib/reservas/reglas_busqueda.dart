@@ -5,8 +5,6 @@ library;
 
 import '../sedes/sede.dart';
 
-export '../comun/zona_club.dart' show ahoraEnElClub;
-
 const minHoras = 1;
 const maxHoras = 4;
 const diasALaVista = 7;

@@ -61,7 +61,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { asOneArg, cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
 import { active } from './kit.mjs';
 import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
 import { endsWithLine } from './final-line.mjs';
@@ -308,7 +308,7 @@ export const planCommands = (plan, { base, cardDir }, heading = 'Verification') 
     return {
       name,
       file: mutate[1],
-      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${asOneArg(command)}`,
+      command: `node ${TOOLS}/mutate.mjs ${mutate[1]} --since ${base} --equivalents ${equivalents}${parallel} -- ${command}`,
       ...(timeoutMin ? { timeoutMin } : {}),
     };
   });
@@ -504,39 +504,15 @@ export const replacedFailures = (root, output) => {
   const pyBody = (file, fn) => {
     let text = '';
     try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
-    // `[ \t]`, not `\s`: with the `m` flag `\s*` crosses the blank line above the `def` and the body comes back empty.
-    const at = text.search(new RegExp(`^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${fn}[ \\t]*\\(`, 'm'));
+    const at = text.search(new RegExp(`^\\s*(?:async\\s+)?def\\s+${fn}\\s*\\(`, 'm'));
     if (at < 0) return '';
     const rest = text.slice(at).split('\n');
-    // A signature formatted over several lines (ruff, black) ends in `) -> None:` at column 0: the body starts after the line
-    // where the parentheses close and the `:` comes.
-    let depth = 0;
-    let sig = 0;
-    for (let k = 0; k < rest.length; k++) {
-      depth += (rest[k].match(/\(/g) ?? []).length - (rest[k].match(/\)/g) ?? []).length;
-      if (depth <= 0 && /:\s*(#.*)?\r?$/.test(rest[k])) { sig = k; break; }
-    }
-    const end = rest.findIndex((l, k) => k > sig && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
+    const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
     return rest.slice(0, end < 0 ? undefined : end).join('\n');
   };
   const is = (t, file, title) => {
-    // A runner started in a subfolder (`cd apps/api && pytest`) names its files from there: a path that ends the declared one counts.
-    const seenAs = fileOf(t).split('\\').join('/').replace(/^\.\//, '');
-    const declared = String(file).split('\\').join('/');
-    const sameFile = !seenAs || resolve(root, seenAs) === resolve(root, declared) || (!isAbsolute(seenAs) && declared.endsWith(`/${seenAs}`));
-    return sameFile && (t.name === title || (t.pyFunc && flat(pyBody(file, t.name)).includes(flat(title))));
-  };
-  // A docstring may break the title across lines, with the tags alone on the next one: whitespace is compared as one space.
-  const flat = (s) => String(s).replace(/\s+/g, ' ').trim();
-  // The Python function of `file` whose body carries `title`: there the tags of a two-line docstring are found.
-  const pyBlockWith = (file, title) => {
-    let text = '';
-    try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
-    for (const m of text.matchAll(/^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\(/gm)) {
-      const body = pyBody(file, m[1]);
-      if (flat(body).includes(flat(title))) return body;
-    }
-    return '';
+    const sameFile = !fileOf(t) || resolve(root, fileOf(t)) === resolve(root, file);
+    return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
   };
   const failsIn = (by, name) => failing.some((t) => is(t, by, name));
   const found = [];
@@ -544,10 +520,7 @@ export const replacedFailures = (root, output) => {
     const tags = r.name.match(SPEC_TAG) ?? [];
     let text = '';
     try { text = readFileSync(join(root, r.by), 'utf8'); } catch { return false; }
-    if (!tags.length || !flat(text).includes(flat(r.byName))) return false;
-    // In Python the replacement's tags may sit on the docstring line after its title: they count from its function's body.
-    const carries = /\.py$/.test(r.by) ? `${r.byName} ${pyBlockWith(r.by, r.byName)}` : r.byName;
-    return tags.every((g) => new RegExp(`${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).test(carries));
+    return tags.length > 0 && text.includes(r.byName) && tags.every((g) => r.byName.includes(g));
   };
   for (const t of failing) {
     // The Log is append-only: a later line corrects an earlier declaration of the same test, so the latest that holds counts.
@@ -682,9 +655,6 @@ export const design = (root, cardDir, off = new Set()) => {
   const base = cardStart(root, cardDir);
   const touched = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
-    // A Dart widget is not a web screen: its `color:` is a named argument, not CSS. Flutter's design bar is its profile's
-    // goldens and guidelines, not the design line, tokens.css and CSS transitions checked here.
-    .filter((f) => !f.endsWith('.dart'))
     .filter((f) => IS_SCREEN.test(f) || (IS_CODE.test(f) && BUILDS_SCREEN.test(readFileSync(join(root, f), 'utf8'))));
   if (!touched.length) return [];
   // The component set is checked as a whole in its gallery; the screens, for how they use it.
@@ -906,9 +876,7 @@ const run = (line, logsDir) => new Promise((done) => {
       replaced = readRecord(process.cwd(), name, command)?.replaced ?? [];
       cached = readRecord(process.cwd(), name, command)?.when ?? null;
     } else {
-      // Any test line, not only `suite`: a scenarios line that runs a frozen test the Log declares replaced counts its swap too.
-      // replacedFailures answers only when every failing test it reads has a replacement that holds.
-      const swapped = exit !== 0 && !timedOut && !/^mutate\b/i.test(name) && !MUTATOR.test(command) ? replacedFailures(process.cwd(), output) : null;
+      const swapped = exit !== 0 && !timedOut && /^suite\b/i.test(name) && !MUTATOR.test(command) ? replacedFailures(process.cwd(), output) : null;
       if (swapped) {
         exit = 0;
         replaced = swapped.map((r) => ({ test: r.name, file: r.file, by: r.by, byName: r.byName, why: r.why }));
@@ -1001,9 +969,7 @@ export const verify = async (root) => {
   if (appLine) {
     const stateFile = join(root, '.validation', 'app.json');
     const pidBefore = readState(stateFile)?.pid;
-    // app.mjs waits KIT_APP_START_TIMEOUT_S (60 s by default) for the app, then runs the seed: this cut leaves it 90 s beyond its own wait.
-    const startS = Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 60;
-    const up = spawnSync('node', [join(import.meta.dirname, 'app.mjs'), 'up'], { cwd: root, encoding: 'utf8', timeout: Math.max(150_000, (startS + 90) * 1000), maxBuffer: 1 << 26 });
+    const up = spawnSync('node', [join(import.meta.dirname, 'app.mjs'), 'up'], { cwd: root, encoding: 'utf8', timeout: 150000, maxBuffer: 1 << 26 });
     const state = readState(stateFile);
     if (up.status !== 0 || !state) return { error: `The \`app:\` line could not start the app (exit ${up.status}): ${(up.stderr || up.stdout || '').trim().split('\n').slice(-6).join(' ⏎ ')}` };
     startedApp = state.pid !== pidBefore;

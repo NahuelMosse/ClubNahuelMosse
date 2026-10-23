@@ -5,7 +5,7 @@ Screens in the browser. The base method does not name a browser; this profile br
 ## What it brings
 - Modules: `ui` (and `i18n` when its signal appears).
 - Tools: `probe`, `app.mjs probe`, `motion-audit`, `motion-curves`, `overflow`, axe.
-- Agents: `designer`, `design-critic`.
+- Agent: `designer`.
 - References and rules: `design-refs.md`, `design.md`, `interface.md`, `showcase.md`, `motion-benchmark.md`, `modern-interface.md`, `ui-patterns.md`, `components.md`, `component-techniques.md`, `accessibility.md`.
 - Stacks: `react-shadcn`, `node-ts`.
 - Extras: the `motion` skill and the `motion` MCP server (`https://mcp.motion.dev`), written to the repo's `.mcp.json`.

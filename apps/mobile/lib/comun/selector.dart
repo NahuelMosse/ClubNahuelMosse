@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
-import 'campo_texto.dart';
 import '../tema/tokens.dart';
+import 'campo_texto.dart';
 
 /// Un campo que no se escribe sino que se elige: se ve como `Input` o `Dropdown` del
 /// prototipo y al tocarlo abre las opciones.
@@ -60,6 +60,8 @@ class CampoSelector extends StatelessWidget {
           enabled: alTocar != null,
           label: etiquetaAccesible,
           value: elegido ?? '',
+          hint: mensaje,
+          liveRegion: mensaje != null,
           excludeSemantics: true,
           onTap: alTocar,
           child: Material(
@@ -104,7 +106,7 @@ class CampoSelector extends StatelessWidget {
         ),
         if (mensaje != null) ...[
           const SizedBox(height: Medidas.s8),
-          MensajeDeCampo(mensaje),
+          AvisoDeCampo(mensaje),
         ],
       ],
     );

@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
+import '../soporte/reloj_fijo.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
   setUpAll(cargarFuentes);
 
-  const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
+  const telefonos = {
+    '320': Size(320, 568),
+    '360': Size(360, 800),
+    '430': Size(430, 932),
+  };
   const modos = {'oscuro': true, 'claro': false};
   const duplicado =
       '{"errores": {"nombre": "Ya existe un espacio deportivo con ese nombre en la '
@@ -51,17 +56,19 @@ void main() {
         api: apiRutas(rutas ?? rutasDeEspacios()),
       );
 
-      testWidgets('panel de espacios $ancho $modo', (tester) async {
-        await abrir(tester, '/admin/espacios', {
-          ...rutasDeEspacios(),
-          'GET /espacios': (
-            200,
-            '{"espacios": [$espacioCastelarJson, $espacioF5Json, '
-                '$espacioTenisJson]}',
-          ),
+      if (ancho != '320') {
+        testWidgets('panel de espacios $ancho $modo', (tester) async {
+          await abrir(tester, '/admin/espacios', {
+            ...rutasDeEspacios(),
+            'GET /espacios': (
+              200,
+              '{"espacios": [$espacioCastelarJson, $espacioF5Json, '
+                  '$espacioTenisJson]}',
+            ),
+          });
+          await capturar(tester, 'admin/espacios_${ancho}_$modo.png');
         });
-        await capturar(tester, 'admin/espacios_${ancho}_$modo.png');
-      });
+      }
 
       testWidgets('alta de espacio vacía $ancho $modo', (tester) async {
         await abrir(tester, '/admin/espacios/nuevo');

@@ -7,6 +7,7 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/faltantes.dart';
 import '../comun/selector.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
@@ -88,7 +89,10 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
       (_focoDireccion, _Campo.direccion),
     ]) {
       foco.addListener(() {
-        if (!foco.hasFocus) setState(() => _tocados.add(campo));
+        // Salir de un campo vacío no marca nada: eso lo hace el intento de guardar.
+        if (!foco.hasFocus && _controlador(campo).text.trim().isNotEmpty) {
+          setState(() => _tocados.add(campo));
+        }
       });
     }
     for (final (controlador, campo) in [
@@ -147,11 +151,15 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     }
   }
 
-  String? _error(_Campo campo) =>
-      _erroresDelServidor[campo] ??
-      (_intentoGuardar || _tocados.contains(campo)
-          ? _errorDeRegla(campo)
-          : null);
+  TextEditingController _controlador(_Campo campo) =>
+      campo == _Campo.nombre ? _nombre : _direccion;
+
+  String? _error(_Campo campo) => errorAMostrar(
+    delServidor: _erroresDelServidor[campo],
+    deRegla: _errorDeRegla(campo),
+    intentado: _intentoGuardar,
+    tocado: _tocados.contains(campo),
+  );
 
   bool get _completo =>
       _Campo.values.every((c) => _errorDeRegla(c) == null) &&
@@ -172,8 +180,8 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     );
     if (!mounted) return;
     setState(() {
-      _tocados.add(campo);
       if (elegida == null) return;
+      _tocados.add(campo);
       if (esCierre) {
         _cierre = elegida;
       } else {
@@ -241,6 +249,12 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     if (_ocupado) return;
     if (!_completo || apertura == null || cierre == null) {
       setState(() => _intentoGuardar = true);
+      enfocarElPrimerFaltante([
+        (_focoNombre, _errorDeRegla(_Campo.nombre)),
+        (_focoDireccion, _errorDeRegla(_Campo.direccion)),
+        (null, _errorDeRegla(_Campo.apertura)),
+        (null, _errorDeRegla(_Campo.cierre)),
+      ]);
       return;
     }
     FocusScope.of(context).unfocus();
@@ -488,7 +502,8 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                     BotonPrimario(
                       texto: 'GUARDAR CAMBIOS',
                       cargando: _enviando,
-                      alTocar: _completo && !_dandoDeBaja ? _guardar : null,
+                      atenuado: !_completo,
+                      alTocar: _dandoDeBaja ? null : _guardar,
                     ),
                     const SizedBox(height: Medidas.s12),
                     if (_dandoDeBaja)

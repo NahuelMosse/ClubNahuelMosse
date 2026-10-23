@@ -6,6 +6,7 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
+import '../comun/reloj.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -26,7 +27,7 @@ class PantallaNotificaciones extends StatefulWidget {
     required this.centro,
     required this.sesion,
     required this.alAbrir,
-    this.ahora = _ahoraEnElClub,
+    this.ahora = ahoraEnElClub,
   });
 
   final CentroDeNotificaciones centro;
@@ -35,8 +36,6 @@ class PantallaNotificaciones extends StatefulWidget {
   /// Lo que pasa al tocar una notificación: llevarla a lo que avisa.
   final void Function(BuildContext, Notificacion) alAbrir;
   final DateTime Function() ahora;
-
-  static DateTime _ahoraEnElClub() => enDelClub(DateTime.now());
 
   @override
   State<PantallaNotificaciones> createState() => _PantallaNotificacionesState();

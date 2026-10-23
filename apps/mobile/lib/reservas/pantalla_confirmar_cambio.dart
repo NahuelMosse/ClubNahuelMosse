@@ -81,8 +81,8 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     } on ReservaRechazada catch (r) {
       if (!mounted) return;
       setState(() => _enviando = false);
-      avisarReservaRechazada(context, r);
-      _volver(ResultadoDeModificar.ocupado);
+      await mostrarHorarioRechazado(context, r.errores.values.first);
+      if (mounted) _volver(ResultadoDeModificar.ocupado);
       return;
     } on SesionVencida {
       if (!mounted) return;

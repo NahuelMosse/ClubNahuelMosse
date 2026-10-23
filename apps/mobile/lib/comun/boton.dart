@@ -40,11 +40,11 @@ class BotonPrimario extends StatelessWidget {
           onPressed: habilitado ? alTocar : null,
           style: FilledButton.styleFrom(
             // Atenuado baja sólo el fondo: el texto de un botón que se puede tocar tiene
-            // que seguir leyéndose.
+            // que seguir leyéndose, y sobre el fondo apagado el `accentOn` no llega a 4,5:1.
             backgroundColor: atenuado
                 ? p.accentBase.withValues(alpha: 0.4)
                 : p.accentBase,
-            foregroundColor: p.accentOn,
+            foregroundColor: atenuado ? p.textPrimary : p.accentOn,
             disabledBackgroundColor: p.accentBase,
             disabledForegroundColor: p.accentOn,
             shape: const StadiumBorder(),

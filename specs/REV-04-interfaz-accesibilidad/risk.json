@@ -1,0 +1,29 @@
+{
+  "size": "large",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/comun/reloj.dart",
+    "apps/mobile/lib/comun/calendario.dart",
+    "apps/mobile/lib/comun/campo_texto.dart",
+    "apps/mobile/lib/comun/selector.dart",
+    "apps/mobile/lib/comun/boton.dart",
+    "apps/mobile/lib/comun/dialogo_error.dart",
+    "apps/mobile/lib/comun/barra_inferior.dart",
+    "apps/mobile/lib/usuarios/pantalla_registro.dart",
+    "apps/mobile/lib/admin/pantalla_formulario_sede.dart",
+    "apps/mobile/lib/admin/pantalla_alta_espacio.dart",
+    "apps/mobile/lib/reservas/pantalla_confirmar_reserva.dart",
+    "apps/mobile/lib/reservas/pantalla_confirmar_cambio.dart",
+    "apps/mobile/lib/reservas/reglas_busqueda.dart",
+    "apps/mobile/lib/notificaciones/panel_avisos.dart",
+    "apps/mobile/lib/notificaciones/pantalla_notificaciones.dart",
+    "apps/mobile/pubspec.yaml",
+    "apps/mobile/test/capturas/*_capturas.dart",
+    "apps/mobile/test/capturas/**/*.png"
+  ],
+  "tasks": 4
+}

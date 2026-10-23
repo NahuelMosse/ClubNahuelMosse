@@ -5,7 +5,7 @@
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "17b74b5414994e3d26258112a5fea7de7466880be1e5e1dc98f254a6a457feea"
+    "sha256": "6fdb7559f92fd05907c1ec6cbdbd1fef4473103a64782ef458ce1890ba70609d"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -53,7 +53,7 @@
   },
   ".claude/hooks/context-cap.mjs": {
     "module": "core",
-    "sha256": "8d6d49bde91a864932e9f14c645eec5cee80fa0913f61063c6a508992d020035"
+    "sha256": "9cb15fa87621b5a07c17f3590e30fd4ffd3bca1169b38ffdba4443a70aa02c7a"
   },
   ".claude/hooks/delegate-code.mjs": {
     "module": "core",
@@ -93,7 +93,7 @@
   },
   ".claude/hooks/review-cap.mjs": {
     "module": "core",
-    "sha256": "5711bee9e1896514003071f8e4fd9121da1a8e85c4c23382b65585c68bbac617"
+    "sha256": "326b39bf9c9431ca18cfa1ba129e49e4b2c2fed1f6e3db6e4e0149870fe339ea"
   },
   ".claude/hooks/session-record.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "6d56e2336c8f246f1fcf6e6840091091b6cb40165707f0de56eef755ed923a27"
+    "sha256": "854adc9c882cc974a1679c71e38f1e3edea0e72b50034f5d18f2c8436d722821"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1305,7 +1305,7 @@
   },
   ".claude/tools/attack.mjs": {
     "module": "profile:backend",
-    "sha256": "f3dfee16b7220fac499298a8e36d21aea754f41e9341b8af13ffef2559337888"
+    "sha256": "d54aaaf27d572e103bb1ad73f1563dfa63787e52a178481ca0bb3e8c9ad6e758"
   },
   ".claude/tools/bar.mjs": {
     "module": "core",
@@ -1317,11 +1317,11 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "7749e496008f9070696136e4726976a856fb2c31b358cbf9df5ac21c511a26bd"
+    "sha256": "dcf5e336425885d9b86edccbece06afeed5ee4617d1f0996dee97bd3e28f08ed"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "7f70ab1dcb1b8301e9066a3cb4ac6a618e64cc47bac6b22683b787b839c16660"
+    "sha256": "e1a2ebdae67cc3cd4f6e01f72fc5dad40067ec76ef27df7920f12bdc4e24c8bf"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
@@ -1341,7 +1341,7 @@
   },
   ".claude/tools/hook-dispatch.mjs": {
     "module": "core",
-    "sha256": "bdc052a7dc9c9e7175e7e1999ce6c5166782f8d5b493309c2425c7f935042e20"
+    "sha256": "a24db05b040ac2d593a808f4166c6ce60b86bffe252b24690ca21f6ad52b29a6"
   },
   ".claude/tools/hook-worker.mjs": {
     "module": "core",
@@ -1369,11 +1369,11 @@
   },
   ".claude/tools/mutate.mjs": {
     "module": "core",
-    "sha256": "c9539f32dae94cd55dfd6a71ef3625c58b29fb1b4f5da4f74d09ea4d31e78342"
+    "sha256": "f62d1178c34af83a5f13a0618947be186953820aebfee4da9b9f3c96e30ff6b7"
   },
   ".claude/tools/once.mjs": {
     "module": "core",
-    "sha256": "e6f2a0829985cd0fc5e43e6468e47684e6b9a18e6e8fee9a9b9c554960f2f995"
+    "sha256": "8943c75d91c5f0fdff46d02c46d83f8a4440408c4967b0a82500adc5d49d1ccd"
   },
   ".claude/tools/out-of-scope.mjs": {
     "module": "core",
@@ -1393,7 +1393,7 @@
   },
   ".claude/tools/required.mjs": {
     "module": "core",
-    "sha256": "3afc3fbf797671e0f9dd34947e47e258d03b2d9e059a324c74496d5ab307de28"
+    "sha256": "3d35fc13e73976227ae5694171e74dc8bbd2cac9303c4995e4e881c65c2c4f10"
   },
   ".claude/tools/review-range.mjs": {
     "module": "core",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "7fdd186d42687eed3724734a80b80d7c3b939d376e948dd95a7e6770374a0779"
+    "sha256": "5115d3f0e7d093065321699f3c25565447a6d0d3068005aee24c272faf99a94a"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1433,7 +1433,7 @@
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "99655d9f44c1a00bb65ff823b60d705e1537e3a9c340593df273a2285905cabe"
+    "sha256": "7a193adca50a08b5ddb1c0d3734ec4d468cd9567a642e0337a86be9e074beaef"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1509,7 +1509,7 @@
   },
   ".claude/profiles/web.md": {
     "module": "profile:web",
-    "sha256": "f40b34d4725ce3dbf47399ae9a9bca7ac5f07cb4193ed39d4958294f28e1265b"
+    "sha256": "bb8078a65c931f662876bda2e9f4fc27a20b9b343225d577a35e3bad11436acb"
   },
   ".claude/skills/motion/PROVENANCE": {
     "module": "profile:web",
@@ -1558,17 +1558,5 @@
   ".claude/skills/motion/transition-preview/index.md": {
     "module": "profile:web",
     "sha256": "64962b3757518956e56599d31bea8f7bced604b4ab35a14e2e1cf3494aa87ace"
-  },
-  ".claude/agents/design-critic.md": {
-    "module": "profile:web",
-    "sha256": "7edca2b6d47e2c3180951452e20c1b90c32e98fa7ede7ea570d866a803ec3eaa"
-  },
-  ".claude/reference/excellence.md": {
-    "module": "profile:web",
-    "sha256": "04052077126e241dde0700e666e245135920b930b8e792a9bf50e9ee50e51e40"
-  },
-  ".claude/tools/design-round.mjs": {
-    "module": "profile:web",
-    "sha256": "304de7b2af33f656bc89b2c6bbbd07aee419228d5466af4e8abe3a5554bb98cd"
   }
 }

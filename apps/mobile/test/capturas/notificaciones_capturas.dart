@@ -2,7 +2,7 @@ import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
 import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../notificaciones_test.dart'
     show
@@ -14,6 +14,7 @@ import '../notificaciones_test.dart'
         confirmacion,
         recordatorio;
 import '../soporte/montar.dart';
+import '../soporte/reloj_fijo.dart';
 import '../soporte/usuario.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.

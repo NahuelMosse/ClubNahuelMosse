@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../comun/reloj.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'centro.dart';
@@ -18,7 +19,7 @@ class PanelDeAvisos extends StatefulWidget {
     required this.centro,
     required this.alAbrir,
     this.navegador,
-    this.ahora = _ahoraEnElClub,
+    this.ahora = ahoraEnElClub,
   });
 
   final CentroDeNotificaciones centro;
@@ -30,8 +31,6 @@ class PanelDeAvisos extends StatefulWidget {
   /// app), hace falta su llave; debajo de él, se usa el más cercano.
   final GlobalKey<NavigatorState>? navegador;
   final DateTime Function() ahora;
-
-  static DateTime _ahoraEnElClub() => enDelClub(DateTime.now());
 
   @override
   State<PanelDeAvisos> createState() => _PanelDeAvisosState();

@@ -90,8 +90,8 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
     } on ReservaRechazada catch (r) {
       if (!mounted) return;
       setState(() => _enviando = false);
-      avisarReservaRechazada(context, r);
-      _volver(ResultadoDeConfirmar.ocupado);
+      await mostrarHorarioRechazado(context, r.errores.values.first);
+      if (mounted) _volver(ResultadoDeConfirmar.ocupado);
       return;
     } on SesionVencida {
       final correo = widget.sesion.perfil?.correo;
@@ -139,14 +139,6 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
       ),
     );
   }
-}
-
-/// Avisa con un snackbar que el horario dejó de valer mientras se confirmaba
-/// (por ejemplo, ya empezó).
-void avisarReservaRechazada(BuildContext context, ReservaRechazada r) {
-  ScaffoldMessenger.of(
-    context,
-  ).showSnackBar(SnackBar(content: Text(r.errores.values.first)));
 }
 
 /// La estructura común de «Confirmá…»: la barra, los pasos, la tarjeta y el pie con la

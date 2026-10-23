@@ -16,7 +16,7 @@ import { contextTokens, onlyCommit, transcriptOf } from '../tools/transcript.mjs
 
 const WARN = 90_000;
 const STOP = 120_000;
-const CAPPED = new Set(['builder', 'grunt', 'designer', 'design-critic']);
+const CAPPED = new Set(['builder', 'grunt', 'designer']);
 
 const HANDOFF = /(^|[\\/])specs[\\/][^\\/]+[\\/]handoff[^\\/]*\.md$/;
 

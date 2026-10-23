@@ -2,9 +2,10 @@ import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
 import 'package:clubnahuelmosse/usuarios/pantalla_registro_exitoso.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/montar.dart';
+import '../soporte/reloj_fijo.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {

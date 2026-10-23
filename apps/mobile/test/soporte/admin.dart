@@ -43,6 +43,8 @@ Future<void> montarAdmin(
 
 /// Abre el selector de [campo] y toca [opcion].
 Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
+  await tester.ensureVisible(find.bySemanticsLabel(campo));
+  await tester.pumpAndSettle();
   await tester.tap(find.bySemanticsLabel(campo));
   await tester.pumpAndSettle();
   final boton = find.descendant(

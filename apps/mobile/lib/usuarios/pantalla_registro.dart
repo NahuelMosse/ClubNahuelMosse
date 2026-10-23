@@ -7,8 +7,10 @@ import '../comun/calendario.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/faltantes.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/reglas_registro.dart';
+import '../comun/reloj.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'registro.dart';
@@ -49,6 +51,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   final _textos = [for (final _ in _Campo.values) ''];
   final _tocados = <_Campo>{};
   final _erroresDelServidor = <_Campo, String>{};
+  bool _intentoCrear = false;
   String? _aviso;
 
   /// Un pedido anterior se cortó sin respuesta: la API pudo haber creado la cuenta igual.
@@ -61,14 +64,17 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
 
   late final _servicio = RegistroServicio(widget.api);
 
-  DateTime get _hoy => (widget.hoy ?? DateTime.now)();
+  DateTime get _hoy => (widget.hoy ?? ahoraEnElClub)();
 
   @override
   void initState() {
     super.initState();
     for (final campo in _Campo.values) {
       _focos[campo.index].addListener(() {
-        if (!_focos[campo.index].hasFocus) setState(() => _tocados.add(campo));
+        // Salir de un campo vacío no marca nada: eso lo hace el intento de crear la cuenta.
+        if (!_focos[campo.index].hasFocus && _valor(campo).isNotEmpty) {
+          setState(() => _tocados.add(campo));
+        }
       });
       _controladores[campo.index].addListener(() => _alCambiar(campo));
     }
@@ -117,15 +123,25 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     _Campo.contrasena => validarContrasena(_valor(campo)),
   };
 
-  String? _errorVisible(_Campo campo) =>
-      _erroresDelServidor[campo] ??
-      (_tocados.contains(campo) ? _errorDeRegla(campo) : null);
+  String? _errorVisible(_Campo campo) => errorAMostrar(
+    delServidor: _erroresDelServidor[campo],
+    deRegla: _errorDeRegla(campo),
+    intentado: _intentoCrear,
+    tocado: _tocados.contains(campo),
+  );
 
   bool get _completo => _Campo.values.every((c) => _errorDeRegla(c) == null);
 
   Future<void> _crearCuenta() async {
+    if (_enviando) return;
     final fecha = leerFecha(_valor(_Campo.fechaNacimiento));
-    if (_enviando || !_completo || fecha == null) return;
+    if (!_completo || fecha == null) {
+      setState(() => _intentoCrear = true);
+      enfocarElPrimerFaltante([
+        for (final c in _Campo.values) (_focos[c.index], _errorDeRegla(c)),
+      ]);
+      return;
+    }
     setState(() {
       _enviando = true;
       _aviso = null;
@@ -337,7 +353,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
               BotonPrimario(
                 texto: 'CREAR CUENTA',
                 cargando: _enviando,
-                alTocar: _completo ? _crearCuenta : null,
+                atenuado: !_completo,
+                alTocar: _crearCuenta,
               ),
             ],
           ),
