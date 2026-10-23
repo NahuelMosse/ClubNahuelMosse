@@ -107,7 +107,7 @@ mutate apps/api/app/interfaz/respuestas.py: sh D:/Temp/w/herramientas/pytest-api
 mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit
 mutate apps/api/app/dominio/horarios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_seguridad_api.py
 app: sh D:/Temp/w/herramientas/api-app.sh rev01_app
-attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev01_app --json --no-ambient --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
+attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev01_app --json --no-ambient --common-headers "Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
 ```
 
 ## Log
@@ -1226,3 +1226,5 @@ Componentes del Sistema de Diseño Utilizados
 - L37 · declared · K4 · apps/mobile/lib/comun/dialogo_error.dart · el marco de diálogo que repiten mi perfil y anular reserva es anterior a esta card, que sólo sumó el mensaje del 429; REV-06 lo extrae (MarcoDeDialogo) y extraerlo acá choca con su rebase
 - L38 · declared · K4 · apps/api/app/interfaz/reservas.py · el bloque de 7 líneas que comparten historial global y modificar/hacer reserva lo reorganiza REV-06 al sacar los imports de infraestructura de interfaz; extraerlo acá choca con su rebase
 - L39 · 2026-10-23 · `dominio/notificaciones.py` sólo cambió de formato (ruff format), `interfaz/horarios.py` y la nueva `interfaz/respuestas.py` llevan las respuestas de error compartidas: entran en T1 con su mutación. `attacks:` deja `--common-headers`: las respuestas a pedidos crudos inválidos las da uvicorn antes de la app y no pueden llevar CSP; S16 lo prueba sobre toda respuesta de la app
+- L40 · 2026-10-23 · kit updated 1594a34f3e4027e9e7085fad559488f69ae6d96a → 662f6063e4a27ab9180c22b1c6b076d1f0ddbf0f · kit 6.3.2: reemplazos de pytest desde apps/api y --raw-headers-exempt en attacks
+- L41 · 2026-10-23 · `attacks:` vuelve a exigir `Content-Security-Policy` en cada respuesta de la app; sólo quedan exentas, con su razón declarada, las respuestas de uvicorn a pedidos crudos mal formados (deja sin efecto lo que L39 decía de `--common-headers`)

@@ -511,7 +511,10 @@ export const replacedFailures = (root, output) => {
     return rest.slice(0, end < 0 ? undefined : end).join('\n');
   };
   const is = (t, file, title) => {
-    const sameFile = !fileOf(t) || resolve(root, fileOf(t)) === resolve(root, file);
+    // A runner started in a subfolder (`cd apps/api && pytest`) names its files from there: a path that ends the declared one counts.
+    const seenAs = fileOf(t).split('\\').join('/').replace(/^\.\//, '');
+    const declared = String(file).split('\\').join('/');
+    const sameFile = !seenAs || resolve(root, seenAs) === resolve(root, declared) || (!isAbsolute(seenAs) && declared.endsWith(`/${seenAs}`));
     return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
   };
   const failsIn = (by, name) => failing.some((t) => is(t, by, name));

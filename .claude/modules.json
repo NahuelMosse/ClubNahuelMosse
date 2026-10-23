@@ -1,5 +1,5 @@
 {
-  "kit": "6.3.1",
+  "kit": "6.3.2",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],

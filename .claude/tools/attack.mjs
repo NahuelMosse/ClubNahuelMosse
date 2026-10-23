@@ -20,6 +20,8 @@
 //           (fewer characters than the limit, more bytes) must be rejected.
 // --common-headers "Name1, Name2": every response of every row (the raw ones and the ones below included) carries those headers;
 //           the row of a response that lacks one fails, naming the request and the header.
+// --raw-headers-exempt "<why>": the raw rows are answered by the server before the app (uvicorn/h11, a proxy) and cannot carry
+//           them; their rows do not check the common headers and say so with the reason. Every other row still does.
 // --unique "<METHOD> <path> <body>": sends 8 identical requests at once; exactly one may succeed (2xx or a redirect) and the others
 //           must be 4xx (409 or 422); a 5xx or a second success fails. The body is a form or, if it starts with { or [, JSON.
 // --fault-db <sqlite file>: opens the file with `node:sqlite`, holds `BEGIN EXCLUSIVE` and sends the first `--write` as it
@@ -82,7 +84,7 @@ const args = process.argv.slice(2);
 const given = /^https?:\/\//.test(args[0] ?? '');
 const base = given ? args[0] : process.env.APP_URL;
 if (!base || !/^https?:\/\//.test(base)) {
-  console.error('usage: node attack.mjs [<base-url>] [--header "Name: value"]... [--auth-env VAR] [--write "POST /path a=1"]... [--read "/path"]...');
+  console.error('usage: node attack.mjs [<base-url>] [--header "Name: value"]... [--auth-env VAR] [--write "POST /path a=1"]... [--read "/path"]... [--common-headers "A, B"] [--raw-headers-exempt "<why>"]');
   process.exit(2);
 }
 // Git Bash turns “/path” into a Windows path; it is also accepted without the leading slash.
@@ -90,6 +92,7 @@ const toPath = (r) => '/' + r.replace(/^[A-Za-z]:[\\/].*?[\\/]Git[\\/]/, '').rep
 const writes = [], reads = [];
 let jsonFlag = false, noAmbient = false, bodyLimit = 0, strictHost = false, faultDb = null, openapi = null;
 const commonHeaders = [], uniques = [];
+let rawHeadersExempt = '';
 const extra = {};
 const addHeader = (line) => {
   const at = line.indexOf(':');
@@ -109,6 +112,10 @@ for (let i = given ? 1 : 0; i < args.length; i++) {
     const names = (args[++i] ?? '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean);
     if (!names.length) { console.error('--common-headers wants "Name1, Name2".'); process.exit(2); }
     commonHeaders.push(...names);
+  }
+  else if (args[i] === '--raw-headers-exempt') {
+    rawHeadersExempt = (args[++i] ?? '').trim();
+    if (!rawHeadersExempt) { console.error('--raw-headers-exempt wants "<why the server answers raw requests before the app>".'); process.exit(2); }
   }
   else if (args[i] === '--unique') {
     const [method, r, ...body] = (args[++i] ?? '').split(' ');
@@ -342,8 +349,9 @@ const rawRows = async () => {
     const v = await rawExchange(payload);
     const up = typeof (await ping()) === 'number';
     if (typeof v.code === 'string' && v.code.startsWith('ECONNREFUSED')) { rows.push({ name, s: '-', bad: false, invalid: true, evidence: 'the app was already down' }); continue; }
-    if (v.kind === 'status') noteMissing(`the answer ${v.s} to ${what}`, v.headers);
-    if (v.kind === 'status') rows.push({ name, s: v.s, bad: !rejected(v.s), evidence: rejected(v.s) ? '' : `expected a 4xx: answered ${v.s}` });
+    if (v.kind === 'status' && !rawHeadersExempt) noteMissing(`the answer ${v.s} to ${what}`, v.headers);
+    const exempt = v.kind === 'status' && rawHeadersExempt && commonHeaders.some((h) => v.headers[h] === undefined) ? `common headers not checked (declared): ${rawHeadersExempt}` : '';
+    if (v.kind === 'status') rows.push({ name, s: v.s, bad: !rejected(v.s), evidence: [rejected(v.s) ? '' : `expected a 4xx: answered ${v.s}`, exempt].filter(Boolean).join(' · ') });
     else if (v.kind === 'closed') rows.push({ name, s: '-', bad: false, evidence: '' });
     else if (v.kind === 'silent') rows.push({ name, s: '-', bad: true, evidence: 'no answer and no close in 3 s' });
     else rows.push({ name, s: '-', bad: true, evidence: `the answer is not an HTTP response: ${v.text}` });
@@ -511,4 +519,6 @@ for (const i of infos) console.log(`info · no Origin header · ${i.s} · ${i.na
 if (bad) console.log(`\n${bad} problem(s): an attack got through or the legitimate request did not work.`);
 if (notRun) console.log(`${bad ? '' : '\n'}${notRun} could not run: the app did not respond, or answered the body (409, 422, 400) and not the defense.`);
 if (!bad && !notRun) console.log('\nNo attack got through and the legitimate request worked.');
+const exempted = rows.filter((r) => /common headers not checked \(declared\)/.test(r.evidence ?? '')).map((r) => r.name.replace(/^raw request: /, ''));
+if (exempted.length) console.log(`Raw requests without the common headers (${exempted.join('; ')}): common headers not checked (declared): ${rawHeadersExempt}`);
 process.exit(bad ? 1 : notRun ? 2 : 0);
