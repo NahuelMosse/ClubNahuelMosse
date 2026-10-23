@@ -516,7 +516,19 @@ export const replacedFailures = (root, output) => {
     const seenAs = fileOf(t).split('\\').join('/').replace(/^\.\//, '');
     const declared = String(file).split('\\').join('/');
     const sameFile = !seenAs || resolve(root, seenAs) === resolve(root, declared) || (!isAbsolute(seenAs) && declared.endsWith(`/${seenAs}`));
-    return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
+    return sameFile && (t.name === title || (t.pyFunc && flat(pyBody(file, t.name)).includes(flat(title))));
+  };
+  // A docstring may break the title across lines, with the tags alone on the next one: whitespace is compared as one space.
+  const flat = (s) => String(s).replace(/\s+/g, ' ').trim();
+  // The Python function of `file` whose body carries `title`: there the tags of a two-line docstring are found.
+  const pyBlockWith = (file, title) => {
+    let text = '';
+    try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
+    for (const m of text.matchAll(/^[ \t]*(?:async[ \t]+)?def[ \t]+(\w+)[ \t]*\(/gm)) {
+      const body = pyBody(file, m[1]);
+      if (flat(body).includes(flat(title))) return body;
+    }
+    return '';
   };
   const failsIn = (by, name) => failing.some((t) => is(t, by, name));
   const found = [];
@@ -524,7 +536,10 @@ export const replacedFailures = (root, output) => {
     const tags = r.name.match(SPEC_TAG) ?? [];
     let text = '';
     try { text = readFileSync(join(root, r.by), 'utf8'); } catch { return false; }
-    return tags.length > 0 && text.includes(r.byName) && tags.every((g) => r.byName.includes(g));
+    if (!tags.length || !flat(text).includes(flat(r.byName))) return false;
+    // In Python the replacement's tags may sit on the docstring line after its title: they count from its function's body.
+    const carries = /\.py$/.test(r.by) ? `${r.byName} ${pyBlockWith(r.by, r.byName)}` : r.byName;
+    return tags.every((g) => new RegExp(`${g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w-])`).test(carries));
   };
   for (const t of failing) {
     // The Log is append-only: a later line corrects an earlier declaration of the same test, so the latest that holds counts.
