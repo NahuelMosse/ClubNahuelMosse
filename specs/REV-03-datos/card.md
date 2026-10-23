@@ -73,22 +73,22 @@ Cada spec cita un escenario de la card tal como está escrito. Un test lleva su 
 
 ```
 suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
-lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync ruff format --check app migraciones tests/escenarios/test_datos.py tests/escenarios/test_datos_migraciones.py tests/escenarios/test_datos_migraciones_lock.py tests/escenarios/test_datos_reemplazos.py tests/integracion/test_historial_api.py tests/unit/test_cola_de_avisos.py tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_marcador.py && uv run --no-sync mypy --strict app && cd ../mobile && dart format --output=none --set-exit-if-changed test/historial_por_tandas_test.dart test/historial_global_por_tandas_test.dart
+lint: sh -c 'cd apps/api && uv run --no-sync ruff check . && uv run --no-sync ruff format --check app migraciones tests/escenarios/test_datos.py tests/escenarios/test_datos_migraciones.py tests/escenarios/test_datos_migraciones_lock.py tests/escenarios/test_datos_migraciones_transacciones.py tests/escenarios/test_datos_tanda_justa.py tests/escenarios/test_datos_reemplazos.py tests/integracion/test_historial_api.py tests/unit/test_cola_de_avisos.py tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_marcador.py && uv run --no-sync mypy --strict app && cd ../mobile && dart format --output=none --set-exit-if-changed test/historial_por_tandas_test.dart test/historial_global_por_tandas_test.dart'
 app-suite: cd apps/mobile && flutter analyze && flutter test
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios --card REV-03
 migrate-upgrade: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_datos_migraciones.py
-mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_datos.py tests/integracion/test_historial_api.py
-mutate apps/api/app/infraestructura/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_datos.py tests/escenarios/test_historial_reservas.py tests/integracion/test_historial_api.py
-mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_datos.py tests/escenarios/test_despacho_robusto.py tests/unit/test_despacho_de_confirmaciones.py
-mutate apps/api/app/aplicacion/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_datos.py tests/unit/test_despacho_de_confirmaciones.py
-mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit
-mutate apps/api/app/interfaz/marcador.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit tests/escenarios/test_datos.py
-mutate apps/api/app/interfaz/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_datos.py tests/integracion/test_historial_api.py
-mutate apps/api/migraciones/versions/0008_indices_y_cola_recuperable.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_datos_migraciones.py tests/escenarios/test_datos_migraciones_lock.py
-mutate apps/api/migraciones/env.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_datos_migraciones.py tests/escenarios/test_datos_migraciones_lock.py
-mutate apps/mobile/lib/reservas/reservas.dart: cd apps/mobile && flutter test test/historial_por_tandas_test.dart
-mutate apps/mobile/lib/reservas/pantalla_mis_reservas.dart: cd apps/mobile && flutter test test/historial_por_tandas_test.dart
-mutate apps/mobile/lib/admin/historial_reservas.dart: cd apps/mobile && flutter test test/historial_por_tandas_test.dart
+mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/unit tests/escenarios/test_datos.py tests/integracion/test_historial_api.py --deselect tests/escenarios/test_datos.py::test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo --deselect tests/escenarios/test_datos.py::test_cada_migracion_va_y_vuelve_con_datos
+mutate apps/api/app/infraestructura/reservas.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/escenarios/test_datos.py tests/escenarios/test_datos_tanda_justa.py tests/escenarios/test_historial_reservas.py tests/integracion/test_historial_api.py --deselect tests/escenarios/test_datos.py::test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo --deselect tests/escenarios/test_datos.py::test_cada_migracion_va_y_vuelve_con_datos
+mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/escenarios/test_datos.py tests/escenarios/test_despacho_robusto.py tests/unit/test_despacho_de_confirmaciones.py --deselect tests/escenarios/test_datos.py::test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo --deselect tests/escenarios/test_datos.py::test_cada_migracion_va_y_vuelve_con_datos
+mutate apps/api/app/aplicacion/notificaciones.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/escenarios/test_datos.py tests/unit/test_despacho_de_confirmaciones.py --deselect tests/escenarios/test_datos.py::test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo --deselect tests/escenarios/test_datos.py::test_cada_migracion_va_y_vuelve_con_datos
+mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/unit
+mutate apps/api/app/interfaz/marcador.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/unit/test_marcador.py
+mutate apps/api/app/interfaz/reservas.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/escenarios/test_datos.py tests/integracion/test_historial_api.py --deselect tests/escenarios/test_datos.py::test_la_migracion_nueva_no_se_queda_esperando_un_bloqueo --deselect tests/escenarios/test_datos.py::test_cada_migracion_va_y_vuelve_con_datos
+mutate apps/api/migraciones/versions/0008_indices_y_cola_recuperable.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/escenarios/test_datos_migraciones.py tests/escenarios/test_datos_migraciones_lock.py
+mutate apps/api/migraciones/env.py: sh D:/Temp/w/herramientas/pytest-unit.sh -q -x tests/escenarios/test_datos_migraciones_transacciones.py
+mutate apps/mobile/lib/reservas/reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/historial_por_tandas_test.dart
+mutate apps/mobile/lib/reservas/pantalla_mis_reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/historial_por_tandas_test.dart
+mutate apps/mobile/lib/admin/historial_reservas.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/historial_por_tandas_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev03_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev03_app --json --no-ambient --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /reservas/todas
 ```
