@@ -1,36 +1,26 @@
-# Handoff — REV-01 · seguridad de la API
+# Handoff REV-01 · T3 y T4 (builder 2)
 
-- card: `specs/REV-01-seguridad-api/` · snapshot `proposed`
-- branch: `card/REV-01`, worktree `D:/Temp/w/rev01` · base commit: `138bc54` · plan commit: `2a31441` · tests-in-red commit: `2a31441` (evento en `c2ec37a`)
-- grade: `production` · modules: `ui, api, data, infra, observability, security-l2` · lane: `normal`
+Worktree D:/Temp/w/rev01. Entorno: ver el mensaje del coordinador (TEST_DATABASE_URL, FIREBASE_AUTH_EMULATOR_HOST, PATH de flutter).
 
-## Groups, in order (from `plan.md` `## File map`)
+## Hecho
+- RED commiteado: `apps/api/tests/escenarios/test_seguridad_entradas_extra.py` (12 tests con los títulos de la card; `test_seguridad_entradas.py` está congelado porque ya tiene el test de /health en un commit, por eso los nuevos van en un archivo aparte con las mismas etiquetas). No corridos todavía: confirmar que fallan por la razón correcta.
+- Leído, sin tocar: correo.py, identidad.py, notificaciones.py (infra), main.py, protecciones.py, limites.py, entradas.py, registro_errores.py, config.py, render.yaml, conftest.py.
 
-1. `entradas y límites` — `interfaz/entradas.py`, `interfaz/limites.py`, `interfaz/{registro,recuperacion,sesion,sedes,espacios,reservas}.py`, `aplicacion/reservas.py` — tests: `@REV-01-H05`, `@REV-01-H06`
-2. `registro, cabeceras y arranque` — `interfaz/registro_errores.py`, `interfaz/protecciones.py`, `interfaz/salud.py`, `config.py`, `main.py` — tests: `@REV-01-H09-02`, `@REV-01-H09-03`, `@REV-01-H09-04`, `@REV-01-H16`, `@REV-01-H25-01`
-3. `correo, emulador y dispositivos` — `infraestructura/correo.py`, `infraestructura/identidad.py`, `infraestructura/notificaciones.py` (y la interfaz de dispositivos si hace falta) — tests: `@REV-01-H01`, `@REV-01-H09-01`, `@REV-01-H25-02`, `@REV-01-H25-03`
-4. `dependencias, contrato y despliegue` — `uv.lock`, `apps/api/openapi.json`, `render.yaml`, `apps/api/README.md`, `tests/conftest.py` (una línea nueva) — tests: `@REV-01-H07`, `@REV-01-H16-01`
+## Falta (código)
+1. `infraestructura/correo.py`: `smtp.starttls(context=ssl.create_default_context())`; en `enviar`, no loguear la excepción con la dirección: `correo_log.error("no se pudo enviar el correo «%s»: %s", asunto, type(e).__name__)` sin `exc_info` (el traceback de SMTPRecipientsRefused y del SSLCertVerificationError lleva la dirección); el test exige `caplog.records` no vacío.
+2. `infraestructura/identidad.py` + `main.py`/`config.py`: con `FIREBASE_AUTH_EMULATOR_HOST` en el entorno, `crear_app()` lanza `RuntimeError("... emulador ...")` si `config.firebase_credenciales_json` o `GOOGLE_APPLICATION_CREDENTIALS` están definidas, o si `config.firebase_project_id` no empieza con `demo-` (ASM-10). Poner la comprobación como función pura en `config.py` (rule) o en identidad.py y llamarla al inicio de `crear_app()`.
+3. `infraestructura/notificaciones.py` `registrar_dispositivo`: el `ON CONFLICT (token) WHERE activo DO UPDATE` debe llevar `WHERE dispositivo.usuario_id = EXCLUDED.usuario_id` (un token activo ajeno no cambia de dueño; la baja ya filtra por usuario). La ruta responde 204 igual.
+4. `render.yaml`: agregar `DOCUMENTACION_INTERACTIVA` value "false" y `DETRAS_DE_PROXY` value "true"; `healthCheckPath: /health`.
+5. `apps/api/uv.lock`: certifi >= 2026.10.18 (`cd apps/api && uv lock --upgrade-package certifi`; si no hay red, declararlo en `could not run`).
+6. `apps/api/openapi.json`: generarlo con `crear_app().openapi()` (json, utf-8, indent 2, `ensure_ascii=False`, salto final); el test compara el dict. Documentar el comando en `apps/api/README.md` junto a los supuestos de operación (límites, documentación, /health, Host, proxy, emulador). Considerar un script/flag en el README, p. ej. `uv run --no-sync python -c "..."`.
+7. Contrato: el test `test_el_contrato_documenta_el_429_el_400_por_host_y_el_422` pide 400 en todas las operaciones salvo /health, 422+429 en POST /registro y /recuperacion, 429 en PUT /yo. Hoy 429 de /registro y /recuperacion ya está; falta el 400 global (agregar `responses={400: {...}}` a `FastAPI(...)` no existe: usar `app.openapi` personalizado o `responses=` en cada router `include_router(..., responses={400: {"description": "Host no permitido"}})`), y revisar el 422 (`Errores` en `ErroresDeCampo`).
+8. Regenerar `openapi.json` DESPUÉS de cualquier cambio de contrato.
 
-Todas las rutas de los grupos 1 a 3 cuelgan de `apps/api/app/`. Los escenarios están en `apps/api/tests/escenarios/test_seguridad_api.py`.
+## Falta (app)
+- `apps/mobile/test/limite_de_frecuencia_test.dart` con título `la app muestra el 429 con el mensaje del servidor en su diálogo de error @REV-01-S6 @assumption:REV-01-ASM-14`. Modelo: `errores_compartidos_test.dart` (MockClient devolviendo 429 con `{"mensaje": "Hiciste demasiados intentos. Esperá un minuto y volvé a probar."}`, `ClienteApi` en `apps/mobile/lib/api/cliente_api.dart`, líneas 85-105 convierten respuestas; `comun/dialogo_error.dart` tiene `mostrarErrorDeRed`). Commit RED, luego ajustar `cliente_api.dart`/pantalla de registro o recuperación solo si el 429 no llega al diálogo con el mensaje del servidor (sin pantalla nueva). Correr con `flutter test test/limite_de_frecuencia_test.dart` desde apps/mobile.
 
-## Decided
+## Gate (no corrido)
+`node .claude/tools/verify.mjs` en background con `VERIFY_TIMEOUT_MIN=45`; `attacks:` ahora debe bloquear el Host ajeno. Líneas lint: ruff check, `ruff format --check app tests/escenarios/test_seguridad_api.py`, `mypy --strict app`.
 
-- RFZ: none
-- ASM open: REV-01-ASM-01 a ASM-12, en `plan.md` `## Assumptions`; ASM-04 y ASM-05 son `any-answer: no` y van destacadas en el cierre (ASM-05: la documentación interactiva en la nube la decide una persona)
-- app: `cd apps/api && uv run --no-sync uvicorn app.main:app --host 127.0.0.1 --port $PORT` · seed: none
-
-## Already ran
-
-- `pytest tests/escenarios/test_seguridad_api.py` sobre `2a31441` → failed (49 fallan, 9 controles pasan) · `D:/Temp/rojo-rev01b.log`
-- RED-REVIEW → 11 hallazgos corregidos en una ronda · `specs/REV-01-seguridad-api/red-review.md`
-- `plan-check.mjs` → passed
-
-## Decisions of the main thread not written elsewhere
-
-- Entorno: Postgres compartido en `127.0.0.1:8703` (club/club), base `club_rev01_test`; emulador de Firebase Auth ya corriendo en `127.0.0.1:9099` (no se baja ni se relanza). Los comandos de test llevan `TEST_DATABASE_URL="postgresql+psycopg://club:club@127.0.0.1:8703/club_rev01_test" FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`.
-- Máquina compartida y lenta: suites y builds en background con log y `wait.mjs`; la suite entera de la API tarda 3 a 8 min, se corre una vez al final; las mutaciones usan el subconjunto de `## Verification`. Declarar con el MCP `resource-governor` (`rg_run`) lo que use CPU.
-- El emulador Android no está garantizado: los e2e de registro y recuperación (C1) corren con `sh /d/Temp/e2e-archivos.sh /d/Temp/w/rev01 rev01 integration_test/<archivo>.dart` si `adb devices` muestra `emulator-5554`; si no, «no se pudo correr».
-- No se pushea ni se abre PR: publicar queda «no se pudo correr», declarado en `closing.md`. No se mergea nada a `kit-3` ni a `main`.
-- El hook `delegate-code` clasifica `apps/api/tests/**` como código de producción (sólo reconoce `tests/` en la raíz): el implementer escribe ahí los unitarios sin problema; el hilo principal no puede editar los escenarios, que están congelados igual.
-- REV-02 parte después de esta rama y toca `main.py` y `registro_errores.py`: dejarlos con funciones chicas y sin lógica de más.
-- Matar procesos sólo por PID propio.
+## Log
+Todavía no se agregó ninguna línea de T3/T4 al `## Log` de card.md. Agregar una por tarea con la evidencia, y una `OUT` si corresponde. Anotar también que los tests nuevos están en `test_seguridad_entradas_extra.py` porque `test_seguridad_entradas.py` quedó congelado.
