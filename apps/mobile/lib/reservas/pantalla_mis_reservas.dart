@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
@@ -17,8 +16,8 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'cancelacion.dart';
 import 'fechas.dart';
-import 'pantalla_confirmar_cambio.dart';
 import 'reservas.dart';
 
 /// «Mis reservas»: las próximas y el historial de quien inició sesión.
@@ -141,72 +140,28 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       textoDeCancelacion(r, catalogo),
     );
     if (!confirmo || !mounted) return;
-    setState(() => _cancelando = r.id);
-    var huboCorte = false;
-    while (mounted) {
-      Object? fallo;
-      try {
-        try {
-          await widget.reservas.cancelar(r);
-        } on ReservaCambiada {
-          // Después de un corte, que ya esté cancelada es que el pedido cortado la cancelo.
-          if (!huboCorte) rethrow;
+    await cancelarConAvisos(
+      context,
+      sesion: widget.sesion,
+      reservas: widget.reservas,
+      reserva: r,
+      toleraCorte: true,
+      marcar: (id) => setState(() => _cancelando = id),
+      // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
+      alCancelar: () => setState(() {
+        if (_datos case (final lista, final catalogo)) {
+          _datos = ([...lista.where((x) => x.id != r.id)], catalogo);
         }
-        if (!mounted) return;
-        // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
-        setState(() {
-          if (_datos case (final lista, final catalogo)) {
-            _datos = ([...lista.where((x) => x.id != r.id)], catalogo);
-          }
-          _cancelando = null;
-        });
-        await mostrarCancelada(context);
-        if (mounted) await _cargar(deCero: false);
-        return;
-      } on ReservaCambiada {
-        if (!mounted) return;
-        setState(() => _cancelando = null);
-        await mostrarCambioMientrasTanto(context);
-        if (mounted) await _cargar(deCero: false);
-        return;
-      } on SesionVencida {
-        if (!mounted) return;
-        setState(() => _cancelando = null);
-        await mostrarSesionVencida(context);
-        if (mounted) await cerrarSesion(context, widget.sesion);
-        return;
-      } on SinConexion catch (e) {
-        huboCorte = true;
-        fallo = e;
-      } on ErrorDelServidor catch (e) {
-        fallo = e;
-      }
-      if (!mounted) return;
-      setState(() => _cancelando = null);
-      final otraVez = await mostrarErrorDeRed(context, fallo);
-      if (!mounted) return;
-      if (!otraVez) {
-        // Si el corte llegó después de que el servidor la canceló, la lista lo muestra.
-        await _releerSinAvisar();
-        return;
-      }
-      setState(() => _cancelando = r.id);
-    }
+        _cancelando = null;
+      }),
+      recargar: () => _cargar(deCero: false),
+      releer: _releerSinAvisar,
+    );
   }
 
   /// Abre la grilla para cambiar [r] de horario y, al volver, lee la lista de nuevo.
   Future<void> _modificar(Reserva r) async {
-    final resultado = await context.push<ResultadoDeModificar>(
-      '/reservas/${r.id}/modificar',
-      extra: r,
-    );
-    if (!mounted) return;
-    if (resultado == ResultadoDeModificar.modificada) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Reserva modificada')));
-    }
-    await _releerSinAvisar();
+    if (await abrirModificar(context, r)) await _releerSinAvisar();
   }
 
   /// Vuelve a leer la lista sin avisos: si no se puede, queda la que había.

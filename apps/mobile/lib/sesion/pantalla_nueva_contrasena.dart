@@ -3,11 +3,10 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
-import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/formulario_contrasena.dart';
 import '../comun/resultado.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import '../comun/reglas_contrasena.dart';
 import '../comun/reglas_registro.dart';
@@ -152,27 +151,21 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
     FocusNode? foco,
   }) {
     final visible = _visibles.contains(controlador);
-    return CampoTexto(
+    return campoDeContrasena(
       etiqueta: etiqueta,
-      etiquetaAccesible: accesible,
+      accesible: accesible,
+      placeholder: placeholder,
       controlador: controlador,
       foco: foco,
-      placeholder: placeholder,
       error: error,
-      oculto: !visible,
+      visible: visible,
       habilitado: !_enviando,
-      autocompletar: const [AutofillHints.newPassword],
-      accion: controlador == _repetida
-          ? TextInputAction.done
-          : TextInputAction.next,
+      autocompletar: AutofillHints.newPassword,
       alEnviar: controlador == _repetida ? (_) => _guardar() : null,
-      accionFinal: VerContrasena(
-        visible: visible,
-        alCambiar: () => setState(
-          () => visible
-              ? _visibles.remove(controlador)
-              : _visibles.add(controlador),
-        ),
+      alAlternar: () => setState(
+        () => visible
+            ? _visibles.remove(controlador)
+            : _visibles.add(controlador),
       ),
     );
   }
@@ -207,75 +200,42 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
           alTocarSecundaria: () => context.go('/'),
         );
       case _Estado.listo:
-        return PantallaResultado(
-          icono: Icons.check_circle_outline_rounded,
-          tono: TonoResultado.exito,
-          titulo: 'Contraseña actualizada',
-          texto:
-              'Tu contraseña se cambió correctamente. Usala la próxima vez que '
-              'inicies sesión.',
+        return ContrasenaActualizada(
           principal: 'VOLVER AL INICIO DE SESIÓN',
           alTocarPrincipal: _volverAlLogin,
         );
       case _Estado.formulario:
         break;
     }
-    return Scaffold(
-      backgroundColor: p.bgBase,
-      appBar: BarraSuperior(
+    return PlantillaDeContrasena(
+      barra: BarraSuperior(
         titulo: 'Nueva contraseña',
         alVolver: () => context.go('/'),
       ),
-      body: SafeArea(
-        top: false,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s12,
-            Medidas.s24,
-            Medidas.s40,
-          ),
-          children: [
-            Semantics(
-              header: true,
-              child: Text(
-                'Creá una contraseña nueva',
-                style: Textos.h1.copyWith(color: p.textPrimary),
-              ),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              'Tiene que tener al menos 8 caracteres, una mayúscula y un número.',
-              style: Textos.cuerpo.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: Medidas.s16),
-            _campo(
-              _nueva,
-              etiqueta: 'CONTRASEÑA NUEVA',
-              accesible: 'Contraseña nueva',
-              placeholder: 'Mínimo 8 caracteres',
-              error: _errorDelServidor,
-            ),
-            ReglasContrasena(contrasena: _nueva.text),
-            const SizedBox(height: Medidas.s16),
-            _campo(
-              _repetida,
-              etiqueta: 'REPETIR CONTRASEÑA',
-              accesible: 'Repetir contraseña',
-              placeholder: 'Volvé a escribirla',
-              error: _errorRepetida,
-              foco: _focoRepetida,
-            ),
-          ],
+      titulo: 'Creá una contraseña nueva',
+      explicacion:
+          'Tiene que tener al menos 8 caracteres, una mayúscula y un número.',
+      campos: [
+        _campo(
+          _nueva,
+          etiqueta: 'CONTRASEÑA NUEVA',
+          accesible: 'Contraseña nueva',
+          placeholder: 'Mínimo 8 caracteres',
+          error: _errorDelServidor,
         ),
-      ),
-      bottomNavigationBar: BarraDeAccion(
-        child: BotonPrimario(
-          texto: 'GUARDAR CONTRASEÑA',
-          cargando: _enviando,
-          alTocar: _completo ? _guardar : null,
+        ReglasContrasena(contrasena: _nueva.text),
+        const SizedBox(height: Medidas.s16),
+        _campo(
+          _repetida,
+          etiqueta: 'REPETIR CONTRASEÑA',
+          accesible: 'Repetir contraseña',
+          placeholder: 'Volvé a escribirla',
+          error: _errorRepetida,
+          foco: _focoRepetida,
         ),
-      ),
+      ],
+      enviando: _enviando,
+      alGuardar: _completo ? _guardar : null,
     );
   }
 }

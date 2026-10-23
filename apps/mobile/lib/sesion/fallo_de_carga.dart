@@ -18,8 +18,26 @@ Future<void> avisarFalloDeCarga(
   VoidCallback? alVencer,
 }) async {
   if (ModalRoute.of(context)?.isCurrent == false) return;
+  if (vencida) alVencer?.call();
+  await avisarFalloDeEnvio(
+    context,
+    sesion: sesion,
+    vencida: vencida,
+    error: error,
+    reintentar: reintentar,
+  );
+}
+
+/// Avisa el fallo de un pedido: la sesión vencida cierra la sesión; un error de red
+/// ofrece reintentar con [reintentar]. Sin fallo ni vencimiento no hace nada.
+Future<void> avisarFalloDeEnvio(
+  BuildContext context, {
+  required Sesion sesion,
+  required bool vencida,
+  required Object? error,
+  required Future<void> Function() reintentar,
+}) async {
   if (vencida) {
-    alVencer?.call();
     await mostrarSesionVencida(context);
     if (context.mounted) await cerrarSesion(context, sesion);
   } else if (error != null) {
