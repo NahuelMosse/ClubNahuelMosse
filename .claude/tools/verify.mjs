@@ -906,7 +906,9 @@ const run = (line, logsDir) => new Promise((done) => {
       replaced = readRecord(process.cwd(), name, command)?.replaced ?? [];
       cached = readRecord(process.cwd(), name, command)?.when ?? null;
     } else {
-      const swapped = exit !== 0 && !timedOut && /^suite\b/i.test(name) && !MUTATOR.test(command) ? replacedFailures(process.cwd(), output) : null;
+      // Any test line, not only `suite`: a scenarios line that runs a frozen test the Log declares replaced counts its swap too.
+      // replacedFailures answers only when every failing test it reads has a replacement that holds.
+      const swapped = exit !== 0 && !timedOut && !/^mutate\b/i.test(name) && !MUTATOR.test(command) ? replacedFailures(process.cwd(), output) : null;
       if (swapped) {
         exit = 0;
         replaced = swapped.map((r) => ({ test: r.name, file: r.file, by: r.by, byName: r.byName, why: r.why }));
