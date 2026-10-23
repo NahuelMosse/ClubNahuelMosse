@@ -62,18 +62,18 @@ not_read:
 ## Gate
 
 ```
-suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
+suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync mypy --strict app tests
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
+scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
 duplication-app: npx -y jscpd@4 --silent --threshold 3 --format dart apps/mobile/lib
 duplication-api: npx -y jscpd@4 --silent --threshold 3 --format python apps/api/app
-mutate apps/api/app/dependencias.py: cd apps/api && uv run --no-sync pytest -q -x tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/usuarios.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/reservas.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/sedes.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
-mutate apps/api/app/infraestructura/espacios.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/dependencias.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/usuarios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/sedes.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
+mutate apps/api/app/infraestructura/espacios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_repositorios_propios.py
 mutate apps/mobile/lib/usuarios/registro.dart: cd apps/mobile && flutter test test/registro_servicio_test.dart
 mutate apps/mobile/lib/comun/tarjeta_reserva.dart: cd apps/mobile && flutter test test/tarjeta_reserva_test.dart
 mutate apps/mobile/lib/reservas/reservas.dart: cd apps/mobile && flutter test test/arquitectura_test.dart
