@@ -1,51 +1,33 @@
 import logging
 from collections.abc import Sequence
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
 
 from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.dominio.notificaciones import (
     Aviso,
+    CanalNoConfigurado as CanalNoConfigurado,
+)
+from app.dominio.notificaciones import (
+    CanalPush as CanalPush,
+)
+from app.dominio.notificaciones import (
     Envio,
     Notificacion,
     Recordatorio,
     mensaje_recordatorio,
+)
+from app.dominio.notificaciones import (
+    Pendiente as Pendiente,
+)
+from app.dominio.notificaciones import (
+    ResultadoDeEnvio as ResultadoDeEnvio,
 )
 from app.dominio.usuarios import Perfil
 
 PLATAFORMAS = ("android", "ios")
 
 _registro = logging.getLogger(__name__)
-
-
-@dataclass(frozen=True)
-class Pendiente:
-    """Un aviso ya registrado en el centro que todavía no salió hacia el teléfono."""
-
-    notificacion_id: int
-    usuario_id: int
-    aviso: Aviso
-
-
-@dataclass(frozen=True)
-class ResultadoDeEnvio:
-    """Cuántos dispositivos aceptó el servicio y qué tokens rechazó por inválidos."""
-
-    enviados: int
-    invalidos: tuple[str, ...] = ()
-
-
-class CanalNoConfigurado(Exception):
-    """No hay un servicio de notificaciones configurado: nada salió hacia el teléfono."""
-
-
-class CanalPush(Protocol):
-    """El servicio que entrega el aviso al teléfono."""
-
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
-        """Lanza `CanalNoConfigurado` si no hay servicio al que enviarle el aviso."""
-        ...
 
 
 class Notificaciones(Protocol):

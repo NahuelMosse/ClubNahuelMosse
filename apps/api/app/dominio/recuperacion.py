@@ -2,6 +2,13 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class Mensaje:
+    para: str
+    asunto: str
+    cuerpo: str
+
+
+@dataclass(frozen=True)
 class Destinatario:
     """La cuenta activa a la que se le manda el enlace."""
 

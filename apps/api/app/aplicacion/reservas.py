@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
-from typing import Literal, Protocol
+from typing import Protocol
 
 from app.aplicacion.errores import (
     AgendaCambiada,
@@ -17,10 +17,16 @@ from app.dominio.horarios import (
     rango,
     validar_reserva,
 )
-from app.dominio.reservas import FiltrosHistorial, HistorialDeReservas, Reserva, ReservaHistorial
+from app.dominio.reservas import (
+    Cuando as Cuando,
+)
+from app.dominio.reservas import (
+    FiltrosHistorial,
+    HistorialDeReservas,
+    Reserva,
+    ReservaHistorial,
+)
 from app.dominio.usuarios import Perfil
-
-Cuando = Literal["proximas", "historial"]
 
 # Largo máximo del motivo de una anulación.
 MOTIVO_MAXIMO = 500

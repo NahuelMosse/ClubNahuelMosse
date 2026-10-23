@@ -7,11 +7,11 @@ que no existe permitiría averiguar qué direcciones están registradas.
 import hashlib
 import logging
 import secrets
-from dataclasses import dataclass
 from typing import Protocol
 
 from app.aplicacion.errores import DatosInvalidos
 from app.dominio.recuperacion import Destinatario, EnlaceReclamado
+from app.dominio.recuperacion import Mensaje as Mensaje
 from app.dominio.usuarios import correo_valido, normalizar_correo, problemas_contrasena
 
 VIGENCIA_MINUTOS = 30
@@ -21,13 +21,6 @@ recuperacion_log = logging.getLogger("clubnahuelmosse.recuperacion")
 
 class EnlaceInvalido(Exception):
     """El enlace no existe, venció, ya se usó o quedó reemplazado."""
-
-
-@dataclass(frozen=True)
-class Mensaje:
-    para: str
-    asunto: str
-    cuerpo: str
 
 
 class RepositorioEnlaces(Protocol):

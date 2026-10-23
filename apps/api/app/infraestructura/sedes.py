@@ -3,8 +3,10 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
+from app.dominio.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
 from app.dominio.sedes import Sede, SedeNueva
+from app.dominio.zona import NOMBRE_ZONA_CLUB
+from app.infraestructura.espacios import EspaciosSql
 
 _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
 
@@ -36,8 +38,8 @@ _AFUERA = (
 
 def _afuera(prefijo: str) -> str:
     return _AFUERA.format(
-        ini="r.inicio AT TIME ZONE 'America/Argentina/Buenos_Aires'",
-        fin="r.fin AT TIME ZONE 'America/Argentina/Buenos_Aires'",
+        ini=f"r.inicio AT TIME ZONE '{NOMBRE_ZONA_CLUB}'",
+        fin=f"r.fin AT TIME ZONE '{NOMBRE_ZONA_CLUB}'",
         p=prefijo,
     )
 
@@ -175,14 +177,7 @@ class SedesSql:
             ).scalar_one()
             if pendientes:
                 raise ConReservasFuturas("la sede tiene reservas que todavía no terminaron")
-            self._conn.execute(
-                text(
-                    "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
-                    " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
-                    " WHERE sede_id = :id AND activo"
-                ),
-                datos,
-            )
+            EspaciosSql(self._conn).dar_de_baja_de_sede(sede_id, autor)
             self._conn.execute(
                 text(
                     "UPDATE sede SET activa = false, dado_de_baja_en = now(),"

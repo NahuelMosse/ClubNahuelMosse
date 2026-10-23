@@ -3,11 +3,12 @@ from datetime import datetime
 
 from sqlalchemy import Connection, text
 
-from app.aplicacion.notificaciones import Pendiente
 from app.dominio.notificaciones import (
+    ANTICIPACION,
     Aviso,
     Envio,
     Notificacion,
+    Pendiente,
     Recordatorio,
     ReservaAnulada,
     datos_del_aviso,
@@ -127,6 +128,27 @@ class NotificacionesSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
+    def encolar_cancelacion_usuario(
+        self, usuario_id: int, reserva_id: int, inicio: datetime, aviso: Aviso
+    ) -> None:
+        """Deja el aviso de la cancelación que hizo la persona, dentro de la transacción de quien
+        llama: sin commit. El índice único evita repetirlo."""
+        self._conn.execute(
+            text(
+                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+                " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_usuario', :titulo,"
+                " :cuerpo, :id, :inicio, 'pendiente')"
+                " ON CONFLICT (reserva_id) WHERE tipo = 'cancelacion_usuario' DO NOTHING"
+            ),
+            {
+                "usuario": usuario_id,
+                "id": reserva_id,
+                "titulo": aviso.titulo,
+                "cuerpo": aviso.cuerpo,
+                "inicio": inicio,
+            },
+        )
+
     def vencidos(self, ahora: datetime, usuario_id: int | None) -> list[Recordatorio]:
         filas = self._conn.execute(
             text(
@@ -134,15 +156,17 @@ class NotificacionesSql:
                 " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
                 " JOIN sede s ON s.id = e.sede_id JOIN usuario u ON u.id = r.usuario_id"
                 " WHERE r.estado = 'activa' AND u.activo"
-                " AND r.inicio > :ahora AND r.inicio <= :ahora + interval '1 hour'"
-                # Una reserva hecha o movida con menos de una hora de anticipación no avisa.
-                " AND greatest(r.creado_en, r.modificado_en) <= r.inicio - interval '1 hour'"
+                " AND r.inicio > :ahora"
+                " AND r.inicio <= :ahora + CAST(:anticipacion AS interval)"
+                # Una reserva hecha o movida con menos anticipación que el aviso no avisa.
+                " AND greatest(r.creado_en, r.modificado_en)"
+                " <= r.inicio - CAST(:anticipacion AS interval)"
                 " AND (CAST(:usuario AS bigint) IS NULL OR r.usuario_id = :usuario)"
                 " AND NOT EXISTS (SELECT 1 FROM notificacion n WHERE n.reserva_id = r.id"
                 " AND n.tipo = 'recordatorio' AND n.reserva_inicio = r.inicio)"
                 " ORDER BY r.inicio, r.id"
             ),
-            {"ahora": ahora, "usuario": usuario_id},
+            {"ahora": ahora, "usuario": usuario_id, "anticipacion": ANTICIPACION},
         ).all()
         self._conn.rollback()
         return [
@@ -165,6 +189,7 @@ class NotificacionesSql:
             "cuerpo": aviso.cuerpo,
             "reserva": recordatorio.reserva_id,
             "inicio": recordatorio.inicio,
+            "anticipacion": ANTICIPACION,
         }
         try:
             # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
@@ -179,7 +204,8 @@ class NotificacionesSql:
                     text(
                         "SELECT 1 FROM reserva WHERE id = :reserva AND estado = 'activa'"
                         " AND inicio = :inicio AND inicio > now()"
-                        " AND greatest(creado_en, modificado_en) <= inicio - interval '1 hour'"
+                        " AND greatest(creado_en, modificado_en)"
+                        " <= inicio - CAST(:anticipacion AS interval)"
                         " FOR SHARE"
                     ),
                     datos,

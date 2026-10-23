@@ -9,8 +9,8 @@ from functools import cache
 import firebase_admin
 from firebase_admin import auth
 
-from app.aplicacion.errores import Demorado, Duplicado
 from app.config import config
+from app.dominio.errores import Demorado, Duplicado
 from app.infraestructura.credencial_firebase import credencial_de_servicio
 
 identidad_log = logging.getLogger("clubnahuelmosse.identidad")

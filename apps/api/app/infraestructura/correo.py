@@ -5,8 +5,8 @@ from email.message import EmailMessage
 
 from sqlalchemy import text
 
-from app.aplicacion.recuperacion import Mensaje
 from app.config import config
+from app.dominio.recuperacion import Mensaje
 from app.infraestructura.db import motor
 
 correo_log = logging.getLogger("clubnahuelmosse.correo")

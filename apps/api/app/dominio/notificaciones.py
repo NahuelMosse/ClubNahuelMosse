@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Literal
+from typing import Literal, Protocol
 
 from app.dominio.espacios import CATALOGO
 from app.dominio.reservas import Reserva
@@ -22,6 +22,35 @@ class Aviso:
     titulo: str
     cuerpo: str
     datos: dict[str, str]
+
+
+@dataclass(frozen=True)
+class Pendiente:
+    """Un aviso ya registrado en el centro que todavía no salió hacia el teléfono."""
+
+    notificacion_id: int
+    usuario_id: int
+    aviso: Aviso
+
+
+@dataclass(frozen=True)
+class ResultadoDeEnvio:
+    """Cuántos dispositivos aceptó el servicio y qué tokens rechazó por inválidos."""
+
+    enviados: int
+    invalidos: tuple[str, ...] = ()
+
+
+class CanalNoConfigurado(Exception):
+    """No hay un servicio de notificaciones configurado: nada salió hacia el teléfono."""
+
+
+class CanalPush(Protocol):
+    """El servicio que entrega el aviso al teléfono."""
+
+    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+        """Lanza `CanalNoConfigurado` si no hay servicio al que enviarle el aviso."""
+        ...
 
 
 @dataclass(frozen=True)

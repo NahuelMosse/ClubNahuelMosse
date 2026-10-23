@@ -1,8 +1,9 @@
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.aplicacion.errores import Duplicado
+from app.dominio.errores import Duplicado
 from app.dominio.usuarios import Perfil, PerfilEditado, Registro
+from app.infraestructura.reservas import ReservasSql
 
 _INDICE_A_CAMPO = {"usuario_correo_unico": "correo", "usuario_dni_unico": "dni"}
 
@@ -107,14 +108,7 @@ class UsuariosSql:
             if dada is None:
                 self._conn.rollback()
                 return False
-            self._conn.execute(
-                text(
-                    "UPDATE reserva SET estado = 'cancelada', cancelada_en = clock_timestamp(),"
-                    " cancelada_por = :id WHERE usuario_id = :id AND estado = 'activa'"
-                    " AND inicio > clock_timestamp()"
-                ),
-                {"id": id_usuario},
-            )
+            ReservasSql(self._conn).cancelar_futuras_de(id_usuario)
             self._conn.commit()
         except BaseException:
             self._conn.rollback()
