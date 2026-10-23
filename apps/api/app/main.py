@@ -73,13 +73,20 @@ def _documentar_el_400(app: FastAPI) -> None:
                     operacion["responses"].setdefault(
                         "400",
                         {
-                            "description": "Host no permitido o Content-Length inválido",
+                            "description": (
+                                "Host no permitido, Content-Length inválido o cuerpo que no es JSON"
+                            ),
                             "content": {
                                 "application/json": {
                                     "schema": {
                                         "type": "object",
-                                        "properties": {"detail": {"type": "string"}},
-                                        "required": ["detail"],
+                                        "properties": {
+                                            "detail": {"type": "string"},
+                                            "errores": {
+                                                "type": "object",
+                                                "additionalProperties": {"type": "string"},
+                                            },
+                                        },
                                     }
                                 }
                             },

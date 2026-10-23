@@ -142,13 +142,13 @@ def test_un_sustituto_suelto_responde_422_con_el_mensaje_de_caracteres(
     assert "Tiene caracteres no permitidos" in r.text
 
 
-def test_un_json_roto_responde_422_sin_repetirlo(cliente: TestClient) -> None:
+def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
     r = cliente.post(
         "/pedido", content='{"nombre": "clave-secreta', headers={"Content-Type": "application/json"}
     )
 
-    assert r.status_code == 422
-    assert r.json() == {"errores": {"cuerpo": "El cuerpo no es un JSON válido"}}
+    assert r.status_code == 400
+    assert r.json() == {"errores": {"cuerpo": "El cuerpo no es JSON válido"}}
 
 
 def test_un_cuerpo_que_falta_responde_422(cliente: TestClient) -> None:

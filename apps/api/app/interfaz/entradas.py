@@ -54,7 +54,7 @@ _MENSAJES = {
     "string_too_long": "Es demasiado largo",
     "too_long": "Tiene demasiados elementos",
     "missing": "Falta este dato",
-    "json_invalid": "El cuerpo no es un JSON válido",
+    "json_invalid": "El cuerpo no es JSON válido",
     "greater_than_equal": "Está fuera del rango permitido",
     "less_than_equal": "Está fuera del rango permitido",
 }
@@ -78,6 +78,11 @@ def errores_de_forma(e: RequestValidationError) -> dict[str, str]:
 
 async def _responder(_: Request, e: Exception) -> JSONResponse:
     assert isinstance(e, RequestValidationError)
+    if any(error["type"] == "json_invalid" for error in e.errors()):
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            content={"errores": {"cuerpo": _MENSAJES["json_invalid"]}},
+        )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"errores": errores_de_forma(e)},
@@ -85,5 +90,6 @@ async def _responder(_: Request, e: Exception) -> JSONResponse:
 
 
 def instalar(app: FastAPI) -> None:
-    """Un dato de forma inválida responde 422 con `{"errores": {campo: mensaje}}`."""
+    """Un dato de forma inválida responde 422 con `{"errores": {campo: mensaje}}`; un cuerpo que
+    no es JSON, 400."""
     app.add_exception_handler(RequestValidationError, _responder)

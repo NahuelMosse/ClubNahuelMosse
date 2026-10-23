@@ -91,7 +91,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -99,11 +99,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -140,7 +143,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -148,11 +151,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -233,7 +239,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -241,11 +247,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -282,7 +291,7 @@
             "description": "Un administrador no se da de baja desde la app"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -290,11 +299,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -353,7 +365,7 @@
             "description": "Demasiados intentos con la contraseña actual"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -361,11 +373,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -414,7 +429,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -422,11 +437,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -480,7 +498,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -488,11 +506,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -535,7 +556,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -543,11 +564,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -575,7 +599,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -583,11 +607,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -624,7 +651,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -632,11 +659,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -710,7 +740,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -718,11 +748,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -827,7 +860,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -835,11 +868,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -912,7 +948,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -920,11 +956,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -961,7 +1000,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -969,11 +1008,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1086,7 +1128,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1094,11 +1136,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1165,7 +1210,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1173,11 +1218,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1265,7 +1313,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1273,11 +1321,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1359,7 +1410,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1367,11 +1418,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1444,7 +1498,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1452,11 +1506,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1579,7 +1636,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1587,11 +1644,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1716,7 +1776,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1724,11 +1784,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1797,7 +1860,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1805,11 +1868,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1883,7 +1949,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1891,11 +1957,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -1974,7 +2043,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -1982,11 +2051,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2078,7 +2150,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2086,11 +2158,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2267,7 +2342,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2275,11 +2350,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2350,7 +2428,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2358,11 +2436,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2454,7 +2535,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2462,11 +2543,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2523,7 +2607,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2531,11 +2615,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2591,7 +2678,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2599,11 +2686,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2646,7 +2736,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2654,11 +2744,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2693,7 +2786,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2701,11 +2794,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
@@ -2772,7 +2868,7 @@
             }
           },
           "400": {
-            "description": "Host no permitido o Content-Length inválido",
+            "description": "Host no permitido, Content-Length inválido o cuerpo que no es JSON",
             "content": {
               "application/json": {
                 "schema": {
@@ -2780,11 +2876,14 @@
                   "properties": {
                     "detail": {
                       "type": "string"
+                    },
+                    "errores": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      }
                     }
-                  },
-                  "required": [
-                    "detail"
-                  ]
+                  }
                 }
               }
             }
