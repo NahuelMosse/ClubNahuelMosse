@@ -76,9 +76,9 @@ mutate apps/api/app/config.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tes
 mutate apps/api/app/interfaz/barrido.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k recordatorios
 mutate scripts/respaldo.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py
 mutate scripts/usuario_de_la_app.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py
-mutate apps/mobile/lib/api/cliente_api.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
-mutate apps/mobile/lib/comun/dialogo_error.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
-mutate apps/mobile/lib/comun/errores_no_manejados.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
+mutate apps/mobile/lib/api/cliente_api.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart
+mutate apps/mobile/lib/comun/dialogo_error.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart
+mutate apps/mobile/lib/comun/errores_no_manejados.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev02_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
 ```
