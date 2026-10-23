@@ -76,7 +76,7 @@ mutate apps/api/app/config.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tes
 mutate apps/api/app/interfaz/barrido.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py -k recordatorios
 mutate scripts/respaldo.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py
 mutate scripts/usuario_de_la_app.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/escenarios/test_operacion.py
-mutate apps/mobile/lib/api/cliente_api.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart
+mutate apps/mobile/lib/api/cliente_api.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart test/operacion_cliente_test.dart test/operacion_cliente_limite_test.dart
 mutate apps/mobile/lib/comun/dialogo_error.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart
 mutate apps/mobile/lib/comun/errores_no_manejados.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/operacion_registro_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev02_app
@@ -493,3 +493,4 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient 
 - L60 · 2026-10-23 · declared · K4 · apps/mobile/test/operacion_registro_test.dart · reemplazo de los 15 tests (L19); arma la app igual que reservar_test, inicio_test y cancelacion_forzosa_test, congelados
 - L61 · 2026-10-23 · declared · K4 · apps/mobile/test/errores_compartidos_test.dart · duplicación previa entre sus propios casos y sedes_admin_test; REV-02 sólo cambió un caso (L22)
 - L62 · 2026-10-23 · declared · K4 · apps/mobile/lib/app.dart · las rutas `reservar` de las líneas 284-295 y 368-379 son de cards anteriores; REV-02 sólo montó AvisoDespertando (línea 523)
+- L63 · 2026-10-23 · mutación de Dart · `once.mjs mutate` con flutter-mobile.sh: dialogo_error.dart 1/1, errores_no_manejados.dart 1/1, cliente_api.dart 13/14 (1 equivalente declarado en equivalents.md, línea 113); la 1.ª corrida dejó 9 vivos y los mataron operacion_cliente_test.dart y operacion_cliente_limite_test.dart (tag @REV-02-S8; la línea del gate de cliente_api.dart los suma); ninguna corrida terminó con exit 4
