@@ -65,6 +65,33 @@ FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_PROJECT_ID=demo-clubnahuelmo
 La documentación queda en `http://localhost:8000/docs`. Desde el emulador de Android la API se ve
 como `http://10.0.2.2:8000`.
 
+## Supuestos de operación
+
+- **Límites de frecuencia:** por origen (10 pedidos por minuto, sin sesión) y por cuenta (10 por
+  hora, con sesión), en la memoria de cada instancia. Pasado el cupo responde 429 con `Retry-After`
+  y `{"mensaje": ...}`.
+- **Host:** un pedido con un Host que no sea el propio, el de `URL_PUBLICA` o uno de
+  `HOSTS_PERMITIDOS` (coma) responde 400. `/health` responde siempre.
+- **Proxy:** con `DETRAS_DE_PROXY=true` el origen es el último valor de `X-Forwarded-For`, el que
+  agrega Render.
+- **Documentación:** `DOCUMENTACION_INTERACTIVA=false` apaga `/docs` y `/redoc`; `/openapi.json`
+  sigue. Render lo apaga y chequea por `/health`.
+- **Errores:** 400 por Host ajeno o `Content-Length` inválido (`{"detail": ...}`); 422 por un dato
+  inválido (`{"errores": {campo: mensaje}}`); 429 por límite.
+- **Emulador:** con `FIREBASE_AUTH_EMULATOR_HOST` definida la API no arranca si hay credenciales
+  (`FIREBASE_CREDENCIALES_JSON`, `GOOGLE_APPLICATION_CREDENTIALS`) o si el proyecto no empieza con
+  `demo-`.
+
+## Contrato
+
+`apps/api/openapi.json` es el contrato versionado y un test lo compara con la API. Se regenera
+después de cualquier cambio de rutas o modelos:
+
+```sh
+cd apps/api
+FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import crear_app; pathlib.Path('openapi.json').write_text(json.dumps(crear_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
+```
+
 ## Probar
 
 Con el emulador de Firebase Auth levantado y una base cuyo nombre termine en `_test` (la suite borra

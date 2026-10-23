@@ -296,6 +296,7 @@ class NotificacionesSql:
                     " ON CONFLICT (token) WHERE activo DO UPDATE SET"
                     " usuario_id = EXCLUDED.usuario_id, plataforma = EXCLUDED.plataforma,"
                     " permiso = EXCLUDED.permiso, actualizado_en = now()"
+                    " WHERE dispositivo.usuario_id = EXCLUDED.usuario_id"
                 ),
                 datos,
             )

@@ -1,5 +1,6 @@
 import logging
 import smtplib
+import ssl
 from email.message import EmailMessage
 
 from sqlalchemy import text
@@ -28,7 +29,7 @@ def _por_smtp(mensaje: Mensaje) -> None:
     correo["Subject"] = mensaje.asunto
     correo.set_content(mensaje.cuerpo)
     with smtplib.SMTP(config.smtp_host, config.smtp_puerto, timeout=10) as smtp:
-        smtp.starttls()
+        smtp.starttls(context=ssl.create_default_context())
         smtp.login(config.smtp_usuario, config.smtp_contrasena)
         smtp.send_message(correo)
 
@@ -38,5 +39,6 @@ def enviar(mensaje: Mensaje) -> None:
     que para un correo sin cuenta, y un error contaría que la cuenta existe."""
     try:
         (_al_buzon if config.correo_modo == "buzon" else _por_smtp)(mensaje)
-    except Exception:
-        correo_log.exception("no se pudo enviar el correo «%s»", mensaje.asunto)
+    except Exception as e:
+        # Sin traceback ni texto de la excepción: ambos pueden traer la dirección del destinatario.
+        correo_log.error("no se pudo enviar el correo «%s»: %s", mensaje.asunto, type(e).__name__)

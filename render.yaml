@@ -10,11 +10,17 @@ services:
     # Con un plan pago, pasarlas a `preDeployCommand: uv run --no-sync alembic upgrade head`.
     buildCommand: uv sync --frozen --no-dev && uv run --no-sync alembic upgrade head
     startCommand: uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    # Ruta pública: Render sólo acepta 2xx o 3xx y las demás responden 401 sin sesión.
-    healthCheckPath: /docs
+    # Ruta pública que no mira el Host: Render sólo acepta 2xx o 3xx.
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.11"
+      # /docs y /redoc apagados; el contrato sigue en /openapi.json.
+      - key: DOCUMENTACION_INTERACTIVA
+        value: "false"
+      # Detrás del proxy de Render el origen es el último valor de X-Forwarded-For.
+      - key: DETRAS_DE_PROXY
+        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: clubnahuelmosse-db

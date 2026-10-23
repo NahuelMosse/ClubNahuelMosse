@@ -2,6 +2,7 @@ import asyncio
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
+from typing import Any
 
 from fastapi import FastAPI
 
@@ -41,7 +42,56 @@ async def _ciclo_de_vida(_: FastAPI) -> AsyncIterator[None]:
                 await barrido
 
 
+def _exigir_emulador_aislado() -> None:
+    """Con el emulador de Firebase en el entorno no puede haber credenciales ni proyecto reales:
+    el emulador acepta cualquier token y sería una puerta abierta a la cuenta real."""
+    if not os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
+        return
+    if (
+        config.firebase_credenciales_json
+        or os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+        or not config.firebase_project_id.startswith("demo-")
+    ):
+        raise RuntimeError(
+            "La API no arranca con el emulador de Firebase junto a credenciales o un proyecto "
+            "reales: el emulador exige un proyecto demo-* y ninguna credencial."
+        )
+
+
+def _documentar_el_400(app: FastAPI) -> None:
+    """Todas las rutas salvo /health responden 400 ante un Host ajeno o un Content-Length
+    inválido; el contrato lo declara una sola vez acá."""
+    original = app.openapi
+
+    def con_400() -> dict[str, Any]:
+        if app.openapi_schema is None:
+            esquema = original()
+            for ruta, operaciones in esquema["paths"].items():
+                if ruta == "/health":
+                    continue
+                for operacion in operaciones.values():
+                    operacion["responses"].setdefault(
+                        "400",
+                        {
+                            "description": "Host no permitido o Content-Length inválido",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {"detail": {"type": "string"}},
+                                        "required": ["detail"],
+                                    }
+                                }
+                            },
+                        },
+                    )
+        return app.openapi_schema or {}
+
+    app.openapi = con_400  # type: ignore[method-assign]
+
+
 def crear_app() -> FastAPI:
+    _exigir_emulador_aislado()
     configurar_registro()
     app = FastAPI(
         title="ClubNahuelMosse API",
@@ -68,6 +118,7 @@ def crear_app() -> FastAPI:
     # El último que se agrega es el de afuera: el registro ve también lo que Protecciones rechaza.
     app.add_middleware(Protecciones)
     app.add_middleware(RegistroDeErrores)
+    _documentar_el_400(app)
     return app
 
 

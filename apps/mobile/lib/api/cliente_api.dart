@@ -10,8 +10,11 @@ class SinConexion implements Exception {
 
 /// La API respondió con un error propio (5xx) o con algo que no es la API.
 class ErrorDelServidor implements Exception {
-  const ErrorDelServidor(this.codigo);
+  const ErrorDelServidor(this.codigo, {this.mensaje});
   final int codigo;
+
+  /// Lo que el servidor dice a la persona: sólo viene con un 429 (demasiados intentos).
+  final String? mensaje;
 }
 
 /// Una respuesta de la API con su código y su cuerpo JSON ya leído.
@@ -97,10 +100,14 @@ class ClienteApi {
       // Respondió algo que no es la API (un proxy, un portal cautivo).
       throw ErrorDelServidor(r.statusCode);
     }
-    return Respuesta(
-      r.statusCode,
-      datos is Map<String, Object?> ? datos : const {},
-    );
+    final Map<String, Object?> cuerpo = datos is Map<String, Object?>
+        ? datos
+        : const {};
+    if (r.statusCode == 429) {
+      final mensaje = cuerpo['mensaje'];
+      throw ErrorDelServidor(429, mensaje: mensaje is String ? mensaje : null);
+    }
+    return Respuesta(r.statusCode, cuerpo);
   }
 
   void cerrar() => _cliente.close();
