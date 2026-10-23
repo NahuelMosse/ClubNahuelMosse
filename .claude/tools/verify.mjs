@@ -504,7 +504,8 @@ export const replacedFailures = (root, output) => {
   const pyBody = (file, fn) => {
     let text = '';
     try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
-    const at = text.search(new RegExp(`^\\s*(?:async\\s+)?def\\s+${fn}\\s*\\(`, 'm'));
+    // `[ \t]`, not `\s`: with the `m` flag `\s*` crosses the blank line above the `def` and the body comes back empty.
+    const at = text.search(new RegExp(`^[ \\t]*(?:async[ \\t]+)?def[ \\t]+${fn}[ \\t]*\\(`, 'm'));
     if (at < 0) return '';
     const rest = text.slice(at).split('\n');
     const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
