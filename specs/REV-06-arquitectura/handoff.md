@@ -1,40 +1,22 @@
-# Handoff · REV-06 · parte apps/mobile (T2, T3, T4, T6 Dart, T7 Dart)
+# Handoff · REV-06 · parte API (T1, T5, T8, T9, API de T6 y T7)
 
-Estado: no se escribió código ni tests; `flutter pub get` ya corrió en `apps/mobile`. PATH: `/d/projects/flutter/bin`.
-Otro builder hace apps/api en paralelo: no tocarlo; commitear sólo rutas propias.
+## Hecho
+- RED commiteado (4d2b2f6): `apps/api/tests/unit/test_capas.py` (9 tests) y `apps/api/tests/escenarios/test_repositorios_propios.py` (6 tests), con los títulos de la card en el docstring. Fallan por la razón correcta (13 rojos); pasan solos el de S11 y el de S12, que son guardas.
+- Base `club_rev06_test` creada; `uv sync --frozen --python 3.13` hecho.
+- Escrito sin commitear: `apps/api/app/dependencias.py` (reexporta conexion, motor, repositorios Sql, canal_push, ProveedorFirebase, enviar_correo) y `apps/api/app/dominio/zona.py` (NOMBRE_ZONA_CLUB, ZONA_CLUB); `aplicacion/errores.py` sigue en su lugar (el movimiento a `dominio/errores.py` se deshizo y queda por hacer).
 
-## Medición (script de grafo en /tmp/rev06-g3.mjs; si no está, rehacerlo: carpeta = primer segmento bajo lib/, archivos de la raíz = "(raiz)")
-Ciclos hoy entre carpetas:
-- (raiz)↔sesion: `sesion/firebase.dart` importa `configuracion.dart`.
-- comun↔sesion: `comun/pantalla_acceso_denegado.dart` importa sesion/sesion y sesion/tarjeta_cuenta.
-- reservas↔sesion: `sesion/pantalla_inicio_sesion.dart` importa `reservas/reserva_pendiente.dart` (que usa `Eleccion` de reservas).
-- sesion↔usuarios: `sesion/pantalla_nueva_contrasena.dart` y `pantalla_recuperar_contrasena.dart` importan `usuarios/reglas_contrasena.dart` y `reglas_registro.dart`.
-`comun` además importa `api` (dialogo_error) y `tema`: ambas carpetas no importan nada de lib. Decisión tomada (anotar en el Log como ASM de la lectura de REV-06-ASM-02): el test deja a `comun` importar sólo `api` y `tema`, que no importan nada de lib.
+## Bloqueo
+Los Edit sobre `apps/api/app/interfaz/*.py` los frena el hook: «the module i18n is off ... the card brings a language, a translation or a locale». La salida que propone el hook es `node .claude/tools/kit.mjs on i18n` o `confirm-off i18n --reason ...`, que cambia la configuración del kit: lo decide el hilo principal o una persona, no el builder.
 
-## Movimientos decididos (los tests de cards anteriores que importan estos paths NO llevan tag `@`; se les cambia el import y se anota en el Log, sin re-exports)
-- `configuracion.dart` -> `comun/configuracion.dart` (importan: main.dart, sesion/firebase.dart).
-- `comun/pantalla_acceso_denegado.dart` -> `sesion/pantalla_acceso_denegado.dart` (importan: app.dart, test/errores_compartidos_test.dart).
-- `reservas/reserva_pendiente.dart` -> `sesion/reserva_pendiente.dart`, genérica `ReservaPendiente<T extends Object>` (reservas/pantalla_confirmar_reserva usa `ReservaPendiente<Eleccion>`; sesion/pantalla_inicio_sesion usa `ReservaPendiente<Object>`; app.dart `ReservaPendiente<Eleccion>()`; tests: accesibilidad_sesion_test, pantalla_inicio_sesion_test).
-- `usuarios/reglas_registro.dart` y `usuarios/reglas_contrasena.dart` -> `comun/` (importan: sesion/*, usuarios/pantalla_*, tests perfil_test y reglas_registro_test).
-- Revisar con el script que no queden otros ciclos tras mover.
+## Falta (en este orden)
+1. Interfaz: cada módulo importa de `app.dependencias` (barrido, espacios, notificaciones, pruebas, recuperacion [`enviar_correo as enviar`], registro, reservas, sedes, sembrar_admin, sesion, horarios); `ZONA = ZoneInfo(...)` pasa a `from app.dominio.zona import ZONA_CLUB as ZONA` en horarios, registro, reservas, sembrar_admin, sesion.
+2. Infraestructura sin importar aplicacion: mover a dominio (con reexport `X as X` en aplicacion para los tests viejos) las excepciones (`dominio/errores.py`), `Cuando` (dominio/reservas.py), `Pendiente`, `ResultadoDeEnvio`, `CanalNoConfigurado`, `CanalPush` (dominio/notificaciones.py) y `Mensaje` (dominio/recuperacion.py); `Cuando` en interfaz/reservas.py se importa de dominio. Agregar `zoneinfo` a PERMITIDOS_EN_DOMINIO de `tests/unit/test_arquitectura.py` (sin etiquetas, editable).
+3. S6: `EspaciosSql.dar_de_baja_de_sede(sede_id, autor)` sin commit (SedesSql lo llama); `ReservasSql` método sin commit para cancelar futuras de un usuario (UsuariosSql.dar_de_baja lo llama); `NotificacionesSql` método sin commit para encolar `cancelacion_usuario` (ReservasSql.cancelar lo llama). Mismo `conn`, el caso de uso confirma.
+4. S9: `vencidos` y `registrar` reciben `CAST(:anticipacion AS interval)` con `ANTICIPACION` de `dominio.notificaciones` (leído en la llamada, importado en infraestructura/notificaciones.py); sin `1 hour` en ese archivo (enlaces.py es otra regla, queda).
+5. S10: la literal de la zona sólo en `dominio/zona.py`: en infraestructura/reservas.py (`_ZONA_CLUB`), sedes.py (`_afuera`) e interfaz/pruebas.py (líneas ~62, ~98) usar f-string con `NOMBRE_ZONA_CLUB`.
+6. S7/S8: sacar los 4 `type: ignore` de `tests/unit/test_espacios.py` (31, 78) y `test_sedes.py` (21, 94) arreglando el tipo (sin etiquetas: editables); `pyproject.toml` `[tool.mypy] files = ["app", "tests"]`; correr `mypy --strict app tests` y arreglar lo que salga en tests.
+7. T8: sin cambio de código (ASM-09); el test lo vigila. T9: la card ya tiene `## Changes to existing behavior`.
+8. Correr con `-k` y en background: `node .claude/tools/affected.mjs <archivos>`; luego Log (una línea por tarea) y commit con rutas explícitas.
 
-## RED (commitear antes del código) — títulos exactos, cada uno en un solo literal
-`test/arquitectura_test.dart` (escanea imports/exports de lib/, relativos y `package:clubnahuelmosse/`):
-1. "ninguna carpeta de lib forma un ciclo de imports @REV-06-S4 @assumption:REV-06-ASM-02"
-2. "los archivos de la raíz de lib cuentan como una carpeta en el test de ciclos @REV-06-S4 @assumption:REV-06-ASM-12" (función de ciclos sobre grafo sintético raiz↔a detecta ciclo + el grafo real no tiene ciclo por "(raiz)")
-3. "la app tiene un test de imports y comun no importa otras carpetas de lib @REV-06-S2 @assumption:REV-06-ASM-02" (excepto api y tema)
-4. "historial_reservas.dart no fuerza nulos con el operador ! @REV-06-S7 @assumption:REV-06-ASM-06" (hoy usa `!` en líneas ~33, 66-72: `estado!.name`, `desde!`, etc.; arreglar con variables locales/patrones)
-5. "la zona del club se define una sola vez en la app @REV-06-S10 @assumption:REV-06-ASM-07" (`Duration(hours: 3)` aparece sólo en `comun/zona_club.dart`; hoy está en historial_reservas.dart:168 y 332, notificaciones/notificacion.dart:89, reservas/reglas_busqueda.dart:15, reservas/reservas.dart:110)
-`test/registro_servicio_test.dart`:
-6. "la pantalla de registro no arma el pedido HTTP: lo hace el servicio de registro @REV-06-S3 @assumption:REV-06-ASM-03" (pantalla_registro.dart no contiene `api.post(`/`'/registro'`; no importa ClienteApi directo salvo para el servicio)
-7. "el servicio de registro manda los datos de la persona a /registro @REV-06-S3" (servicio en `lib/usuarios/registro.dart` envolviendo `ClienteApi`, como `sesion/recuperacion.dart`; hoy el post está en `pantalla_registro.dart:132`, mapea campos con `_Campo.clave` y `fechaIso`)
-`test/tarjeta_reserva_test.dart`:
-8. "el panel admin y Mis reservas muestran la reserva con la misma tarjeta @REV-06-S5 @assumption:REV-06-ASM-04" (widget `lib/comun/tarjeta_reserva.dart`; clon de 43 líneas entre `admin/pantalla_panel_admin.dart:~646` y `reservas/pantalla_mis_reservas.dart:~566`; ambos deben usarla; ojo: `comun` no puede importar espacios/reservas, así que el widget recibe datos planos, no modelos)
-
-## Código
-- Zona: `comun/zona_club.dart` (rule): `const desfaseDelClub = Duration(hours: 3)`, `DateTime aHoraDelClub(DateTime)` (toUtc().subtract) y `DateTime desdeHoraDelClub(DateTime)` (add); reemplazar los 5 usos.
-- Registro: servicio `RegistroServicio` en `usuarios/registro.dart`; la pantalla lo llama (`PantallaRegistro` hoy recibe `api`; mantener la firma para los tests de cards anteriores, creando el servicio dentro o aceptando uno opcional).
-- Conducta y pantallas sin cambios; capturas no se tocan.
-
-## Cierre
-`cd apps/mobile && flutter analyze && flutter test` en background (`/tmp/rev06-app-<n>.log`), una línea de Log por tarea en card.md (`- L<n> · <date> · T<n> · ...`), pantallas listas para el designer: ninguna (no hay lens visual en esta card).
+## Cómo correr
+`cd apps/api; export TEST_DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8703/club_rev06_test FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:8702; .venv/Scripts/python.exe -m pytest -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py`
