@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { basename, join, resolve } from 'node:path';
 import { asmsOf, cardIdOf, plannedTestsOf, rolesOf, sectionOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION } from './card.mjs';
-import { gateLinesOf, hasAttacksLine, roleFor, statesLacking } from './gate-checks.mjs';
+import { gateLinesOf, hasAttacksLine, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -129,7 +129,13 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
   if (lenses.includes('integrity') && gate.some((l) => /^app\s*:/i.test(l)) && !planned.some((t) => /reinici|restart|sobrevive/i.test(t.title)))
     out.push('integrity lens with an `app:` line and no planned test whose title says reinici, restart or sobrevive (a record survives restarting the app on the same database)');
 
-  if (lenses.includes('visual')) {
+  const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'));
+  if (lenses.includes('visual') && instruments.golden) {
+    if (!gate.some((l) => /^a11y\s*(\[[^\]]*\])?\s*:/i.test(l))) out.push('no `a11y:` line in ## Gate (visual lens, flutter): `a11y: flutter test <file>` with `kitA11y`');
+    const moving = (sectionOf(doc, 'Look') ?? '').split('\n').some((l) => /^\W*behavior:/i.test(l.trim()) && /\b(?:hover|cursor|foco|focus|press|tap|animat\w*|transition\w*|hero|fade|slide)\b/i.test(l));
+    if (moving && !gate.some((l) => /^motion\s*:/i.test(l) && /kitTrace|flutter test/i.test(l))) out.push('## Look declares movement and no `motion:` line in ## Gate runs `flutter test` with `kitTrace`');
+  }
+  if (lenses.includes('visual') && instruments.probe) {
     const steps = stepsTextOf(doc, cardDir, root ?? resolve(String(cardDir), '..', '..'));
     const enter = specs.find((s) => /\bEnter\b/.test(s.text));
     if (enter && !steps.includes('enter-each')) out.push(`${enter.id}: names Enter and no steps file of a \`probe <state>:\` line has an \`{ "enter-each": "<form>" }\` step`);
@@ -171,7 +177,11 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   const roles = rolesOf(doc);
   const unmarked = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !roleFor(roles, f));
   for (const f of unmarked) out.push(`${f}: no layer · mark it \`${f} (presentation|rule|data)\` in ## Tasks`);
-  if (lenses.includes('visual')) for (const x of statesLacking(doc)) out.push(`state ${x}: no \`probe ${x}:\` line in ## Gate (visual lens)`);
+  if (lenses.includes('visual')) {
+    const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'));
+    const kind = instruments.probe && instruments.golden ? 'probe` or `golden' : instruments.golden ? 'golden' : 'probe';
+    for (const x of statesLacking(doc, instruments)) out.push(`state ${x}: no \`${kind} ${x}:\` line in ## Gate (visual lens)`);
+  }
   if (lenses.includes('visual')) out.push(...lookProblems(doc, cardDir));
   if (lenses.includes('contract') && !hasAttacksLine(doc)) out.push('no `attacks:` line in ## Gate (contract lens), with `--body-limit` if the card sets a limit');
   if (lenses.includes('integrity') || tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)))) {

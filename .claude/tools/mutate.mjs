@@ -57,6 +57,12 @@ if (!file || command.length === 0) {
   process.exit(2);
 }
 
+// The operators are those of JavaScript and Python; a Dart file has none.
+if (/\.dart$/.test(file)) {
+  console.error(`${file}: could not run: mutate.mjs has no Dart operators`);
+  process.exit(4);
+}
+
 // A browser suite is not a mutation suite: every mutant would rerun the whole screen suite.
 // Measured: a card mutated two screen files against 370 Playwright tests and spent five hours
 // waiting. The logic of a screen goes to pure functions with unit tests, and is mutated against those.

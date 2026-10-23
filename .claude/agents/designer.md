@@ -27,6 +27,9 @@ it: what makes a reference of its level is its character. Before round 1, write 
 at most: the concept in one sentence, and the 3 traits that give the reference its level (a display type with character, a palette
 with an owner, real imagery or illustration, depth, a motion that answers each action), each with how this screen will carry it. Add one line of **motion grammar** with the values
 measured in `ref/motion.json`: durations, curve, stagger and what reacts to the cursor.
+**The reference sets the level, not the composition.** Take its quality, depth, motion and type; lay the screen out your own way.
+`## Direction` names 3 layout decisions that differ from the reference (nav, title placement, where the cards sit). A screen that
+traces the reference's layout one to one is a difference, never «at level».
 Imagery is yours to make: an SVG illustration or pattern drawn for the card, a real photo by URL, a shape in CSS. A card alone on a
 flat background against a reference with imagery is a difference, never «at level».
 
@@ -49,6 +52,19 @@ flat background against a reference with imagery is a difference, never «at lev
 if the repo lacks it, write `- L<n> · OUT · <library>` in the Log and use CSS. If the screen uses Motion and the session has the
 `motion` skill or the `motion` MCP (https://mcp.motion.dev), consult it for the current API, CSS springs with `linear()` and
 performance; if they do not exist, go on without them.
+
+## Flutter
+With the `flutter` profile on, these replace the browser tools above; the rest is common.
+- Captures are the goldens of `kitGolden(tester, widget, state: …)` (320, 390 and 1280 px) in `goldens/` next to the test; read them next to
+  `ref/`. No `app.mjs probe`.
+- Reference motion: `ref/motion.json`, from the reference app's own trace or the values the card gives.
+- Measure your motion with `kitTrace(tester, finder, action: …, role: …)`; it writes `build/kit/motion-<name>.json`. Compare with
+  `node .claude/tools/motion-audit.mjs compare specs/<card>/ref/motion.json build/kit/motion-<name>.json`.
+- Implicit (`AnimatedContainer`, `AnimatedSwitcher`, `TweenAnimationBuilder`) first; explicit (`AnimationController` with
+  `CurvedAnimation`) for sequences; `Hero` between routes; `PageRouteBuilder` or `PageTransitionsTheme` for page transitions.
+- `flutter_animate` or Rive only if the `pubspec.yaml` already has them; otherwise `- L<n> · OUT · <package>` in the Log.
+- Tokens live in `ThemeData` and a `ThemeExtension`; no loose color, size or duration in a widget.
+- Accessibility is `kitA11y(tester)`; honor `MediaQuery.disableAnimations`.
 
 **Before you return,** run the tests your files touch (`node .claude/tools/affected.mjs <files>` lists them; `timeout <s> node --test
 --test-timeout=8000 --test-force-exit <files>`). They must stay green: a change that breaks one is reverted. Tagged tests are never

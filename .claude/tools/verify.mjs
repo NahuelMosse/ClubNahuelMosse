@@ -68,7 +68,7 @@ import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
 import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
 import { CARD_FILE, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
-import { cardChecks, noVisualCheck, probeRecords, screenChecks, specsCheck } from './gate-checks.mjs';
+import { cardChecks, noVisualCheck, probeRecords, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
 import { escalate } from './risk.mjs';
 import { changedBetween, snapshot } from './tree-snapshot.mjs';
@@ -486,7 +486,8 @@ export const failingTests = (output, limit = 3) => {
 export const REPLACES = /replaces:\s*(\S+)\s+"([^"]+)"\s*·\s*(.*?)\s*·\s*by:\s*(\S+)\s+"([^"]+)"/;
 export const replacementsOf = (doc) => (String(doc).split(/^## Log\b.*$/m)[1] ?? '').split('\n')
   .map((l) => l.match(REPLACES)).filter(Boolean).map((m) => ({ file: m[1], name: m[2], why: m[3], by: m[4], byName: m[5] }));
-const SPEC_TAG = /@(?:assumption:)?[A-Z][A-Z0-9]*-\d+-(?:S|ASM-)\d+(?!\d)/g;
+// A frozen test of a card from kit 3 carries `@<ID>-H<n>[-<n>]` and `@supuesto:<ID>-SUP-<n>`: its replacement repeats them too.
+const SPEC_TAG = /@(?:assumption:|supuesto:)?[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+|SUP-\d+|H\d+(?:-\d+)?)(?!\d)/g;
 
 // When the failing tests of a suite are all declared replaced and each replacement exists, carries the same tag and is not
 // failing, they are what `passed with replaced` lists. Else null: the line stays failed.
@@ -649,6 +650,8 @@ const controls = (lines) => withoutHidden(lines).match(CONTROL)?.length ?? 0;
 // `off` are the procedures the grade leaves out (kit.mjs `exemption`): at poc there is no design line
 // and no component set to check against.
 export const design = (root, cardDir, off = new Set()) => {
+  // A card that declared `no-visual:` changes no markup (its gate check verifies the diff): it owes no design line.
+  if (riskOf(cardDir)?.declared?.some((d) => d.lens === 'visual')) return [];
   const base = cardStart(root, cardDir);
   const touched = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
@@ -1137,7 +1140,7 @@ const isScreenCard = (root, cardDir) => {
 };
 
 // The gate's own checks: every spec has a tagged test, and a screen passes axe, contrast and focus.
-export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) ? screenChecks(probeRecords(root)) : [])];
+export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root).probe ? screenChecks(probeRecords(root)) : [])];
 
 // One line per check: `<name>: passed`, `<name>: failed: <why>` or `<name>: could not run: <why>`.
 const lineOf = (name, state, detail) => `${name}: ${state === 'passed' ? 'passed' : `${state}: ${detail}`}`;

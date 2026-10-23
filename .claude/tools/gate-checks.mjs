@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf } from './card-doc.mjs';
 import { IS_CODE, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
+import { profileStates } from './kit.mjs';
 import { SCREEN_MARKUP } from './signals.mjs';
 
 
@@ -48,17 +49,34 @@ export const gateLinesOf = (doc) => (gateBlock(doc) ?? '').split('\n').map((l) =
 // `probe <state>: <command>` line in `## Gate` (the command writes to `.validation/probe/<state>/`). The same rule judges the
 // plan (risk.mjs, before the code) and the gate (after it).
 export const statesNamed = (doc) => [...new Set(specsOf(doc).flatMap((s) => (s.text.match(/\bstates?:\s*([^·]+)/i)?.[1] ?? '').split(/[,;]/).map((x) => x.trim()).filter(Boolean)))];
-export const statesLacking = (doc) => {
-  const probed = new Set(gateLinesOf(doc).map((l) => l.match(/^probe\s+([^:[]+?)\s*(?:\[[^\]]*\])?\s*:/i)?.[1]?.toLowerCase()).filter(Boolean));
-  return statesNamed(doc).filter((x) => !probed.has(x.toLowerCase()));
+// The instrument of the visual lens depends on the profiles that are on: `probe` for web (the browser probe), `golden` for flutter
+// (`kitGolden` in test/kit). Both when both profiles are on; with no kit.json to say, `probe`, as it always was.
+export const visualInstruments = (root) => {
+  let states = {};
+  try { states = root ? profileStates(root) : {}; } catch { states = {}; }
+  const flutter = states.flutter?.state === 'on';
+  const web = states.web?.state === 'on';
+  return { probe: web || !flutter, golden: flutter };
 };
-export const statesCheck = (cardDir) => {
+const instrumentList = (instruments) => [...(instruments.probe ? ['probe'] : []), ...(instruments.golden ? ['golden'] : [])];
+export const statesLacking = (doc, instruments = { probe: true, golden: false }) => {
+  const kinds = instrumentList(instruments);
+  const covered = new Set(gateLinesOf(doc).map((l) => l.match(new RegExp(`^(?:${kinds.join('|')})\\s+([^:[]+?)\\s*(?:\\[[^\\]]*\\])?\\s*:`, 'i'))?.[1]?.toLowerCase()).filter(Boolean));
+  return statesNamed(doc).filter((x) => !covered.has(x.toLowerCase()));
+};
+export const statesCheck = (cardDir, root) => {
   if (!lensesOf(cardDir).includes('visual')) return [];
   const doc = readCard(cardDir) ?? '';
   const named = statesNamed(doc);
   if (!named.length) return [];
-  const lacking = statesLacking(doc);
-  return [lacking.length ? couldNot('states', lacking.map((x) => `no probe for state ${x}`).join('; ') + ' (add `probe <state>: node .claude/tools/app.mjs probe <steps>.json --axe --contrast "…" --out .validation/probe/<state>` to ## Gate)') : ok('states', `${named.length} states, each with its probe`)];
+  const instruments = visualInstruments(root);
+  const lacking = statesLacking(doc, instruments);
+  const kind = instrumentList(instruments).join(' or ');
+  const hints = [
+    instruments.probe ? 'probe <state>: node .claude/tools/app.mjs probe <steps>.json --axe --contrast "…" --out .validation/probe/<state>' : null,
+    instruments.golden ? 'golden <state>: flutter test <file> (kitGolden)' : null,
+  ].filter(Boolean).map((h) => `\`${h}\``).join(' or ');
+  return [lacking.length ? couldNot('states', lacking.map((x) => `no ${kind} for state ${x}`).join('; ') + ` (add ${hints} to ## Gate)`) : ok('states', `${named.length} states, each with its ${kind}`)];
 };
 
 // The `contract` lens asks for the HTTP attacks: `attacks: node .claude/tools/attack.mjs <url> … --body-limit <bytes>` in `## Gate`.
@@ -180,7 +198,7 @@ export const noVisualCheck = (root, cardDir) => {
 };
 
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...(root ? [layersCheck(root, cardDir), migrationsCheck(root, cardDir), ...noVisualCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...(root ? [layersCheck(root, cardDir), migrationsCheck(root, cardDir), ...noVisualCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 

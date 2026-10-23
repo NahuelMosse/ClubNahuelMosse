@@ -10,6 +10,7 @@ repo with its own design system uses it: where this rule names a font, token or 
 
 ## Before
 - Build against the `ref:` of `## Look`: copy its system (hierarchy, density, depth, motion), not its pixels.
+- The reference sets the level (quality, depth, motion, type); the composition is yours. `## Direction` names 3 layout decisions that differ from it.
 - One visual direction in two lines (tone, density, a memorable trait). One focal point per screen.
 
 ## Tokens, in one place
