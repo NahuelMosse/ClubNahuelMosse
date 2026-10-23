@@ -6,16 +6,16 @@ from typing import Protocol
 from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.dominio.notificaciones import (
     Aviso,
-    CanalNoConfigurado as CanalNoConfigurado,
-)
-from app.dominio.notificaciones import (
-    CanalPush as CanalPush,
-)
-from app.dominio.notificaciones import (
     Envio,
     Notificacion,
     Recordatorio,
     mensaje_recordatorio,
+)
+from app.dominio.notificaciones import (
+    CanalNoConfigurado as CanalNoConfigurado,
+)
+from app.dominio.notificaciones import (
+    CanalPush as CanalPush,
 )
 from app.dominio.notificaciones import (
     Pendiente as Pendiente,

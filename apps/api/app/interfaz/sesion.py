@@ -122,8 +122,6 @@ def cambiar_contrasena_propia(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-
-
 class PedidoDeEdicion(BaseModel):
     nombre: Texto120 = ""
     apellido: Texto120 = ""
