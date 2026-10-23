@@ -79,7 +79,7 @@ mutate apps/mobile/lib/api/cliente_api.dart: cd apps/mobile && flutter test test
 mutate apps/mobile/lib/comun/dialogo_error.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
 mutate apps/mobile/lib/comun/errores_no_manejados.dart: cd apps/mobile && flutter test test/operacion_app_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev02_app
-attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient --common-headers "X-Request-ID" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
+attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
 ```
 
 ## Log
@@ -462,3 +462,4 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev02_app --json --no-ambient 
 - L30 · 2026-10-23 · replaces: apps/api/tests/escenarios/test_seguridad_api.py "test_el_despliegue_en_render_apaga_la_documentacion_interactiva" · REV-02-ASM-03 pide a Render chequear /ready · by: apps/api/tests/escenarios/test_operacion_rutas_publicas.py "test_el_despliegue_en_render_apaga_la_documentacion_interactiva"
 - L31 · 2026-10-23 · replaces: apps/api/tests/escenarios/test_seguridad_entradas_extra.py "test_el_contrato_documenta_el_429_el_400_por_host_y_el_422" · /ready queda fuera del filtro de Host igual que /health, sin 400 documentado · by: apps/api/tests/escenarios/test_operacion_rutas_publicas.py "test_el_contrato_documenta_el_429_el_400_por_host_y_el_422"
 - L32 · 2026-10-23 · replaces: apps/api/tests/integracion/test_rutas_protegidas.py "test_cada_ruta_registrada_fuera_de_las_publicas_rechaza_sin_sesion" · /ready y /metrics son públicas · by: apps/api/tests/integracion/test_rutas_protegidas_con_operacion.py "test_cada_ruta_registrada_fuera_de_las_publicas_rechaza_sin_sesion"
+- L33 · 2026-10-23 · `attacks:` exige también `Content-Security-Policy` (viene de REV-01) y deja exentas, con su razón, las respuestas de uvicorn a pedidos crudos mal formados, que no pasan por la app y no llevan `X-Request-ID`; `lint:` deja fuera de I001 y B008 a `tests/escenarios/*`, congelados en rojo
