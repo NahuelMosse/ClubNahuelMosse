@@ -1,0 +1,24 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "login",
+    "tokens",
+    "token"
+  ],
+  "files": [
+    "apps/mobile/lib/tema/tokens.dart",
+    "apps/mobile/lib/comun/boton.dart",
+    "apps/mobile/lib/comun/etiqueta.dart",
+    "apps/mobile/lib/sesion/pantalla_inicio_sesion.dart",
+    "apps/mobile/lib/sedes/pantalla_sedes.dart",
+    "apps/mobile/test/capturas/"
+  ],
+  "tasks": 3
+}
