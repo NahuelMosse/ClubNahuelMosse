@@ -18,13 +18,16 @@ from app.dominio.horarios import (
     validar_reserva,
 )
 from app.dominio.reservas import (
-    Cuando as Cuando,
-)
-from app.dominio.reservas import (
+    POR_PAGINA,
     FiltrosHistorial,
     HistorialDeReservas,
+    Marcador,
     Reserva,
     ReservaHistorial,
+    TandaDeReservas,
+)
+from app.dominio.reservas import (
+    Cuando as Cuando,
 )
 from app.dominio.usuarios import Perfil
 
@@ -33,9 +36,12 @@ MOTIVO_MAXIMO = 500
 
 
 class Reservas(Protocol):
-    def de_usuario(self, usuario_id: int, cuando: Cuando) -> list[Reserva]:
-        """Las próximas: activas que no terminaron, de la más cercana a la más lejana. El
-        historial: completadas, canceladas y anuladas, de la más reciente a la más vieja."""
+    def de_usuario(
+        self, usuario_id: int, cuando: Cuando, despues: Marcador | None, limite: int
+    ) -> TandaDeReservas:
+        """Hasta [limite] reservas que siguen a [despues] (o desde el principio). Las
+        próximas: activas que no terminaron, de la más cercana a la más lejana. El historial:
+        completadas, canceladas y anuladas, de la más reciente a la más vieja."""
         ...
 
     def agenda(self, espacio_id: int) -> Agenda | None:
@@ -146,9 +152,11 @@ def _con_la_agenda_vigente(
     raise HorarioOcupado("el horario de la sede cambió varias veces seguidas")
 
 
-def mis_reservas(reservas: Reservas, perfil: Perfil, cuando: Cuando) -> list[Reserva]:
-    """Las reservas de quien consulta y de nadie más (RF 3, RF 6)."""
-    return reservas.de_usuario(perfil.id, cuando)
+def mis_reservas(
+    reservas: Reservas, perfil: Perfil, cuando: Cuando, despues: Marcador | None = None
+) -> TandaDeReservas:
+    """Una tanda de las reservas de quien consulta y de nadie más (RF 3, RF 6)."""
+    return reservas.de_usuario(perfil.id, cuando, despues, POR_PAGINA)
 
 
 def _exigir_fecha_a_la_vista(fecha: date, ahora: datetime) -> None:

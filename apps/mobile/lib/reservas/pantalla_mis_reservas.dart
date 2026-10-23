@@ -51,6 +51,11 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   (List<Reserva>, Catalogo)? _datos;
   bool _fallo = false;
 
+  /// Lo que se manda para pedir la tanda que sigue a la que se ve; `null` si no hay más.
+  String? _siguiente;
+  bool _cargandoMas = false;
+  bool _masFallo = false;
+
   /// Sube con cada lectura: la respuesta de una pestaña que ya no se mira se descarta.
   int _pedido = 0;
 
@@ -101,9 +106,9 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
     var vencida = false;
     try {
       final catalogo = await widget.espacios.catalogo();
-      final lista = await widget.reservas.mias(historial: _historial);
+      final tanda = await widget.reservas.tanda(historial: _historial);
       if (mounted && pedido == _pedido) {
-        setState(() => _datos = (lista, catalogo));
+        setState(() => _mostrar(tanda, catalogo));
         _traerALaVista();
       }
       return;
@@ -169,13 +174,66 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
   Future<void> _releerSinAvisar() async {
     final pedido = ++_pedido;
     try {
-      final lista = await widget.reservas.mias(historial: _historial);
+      final tanda = await widget.reservas.tanda(historial: _historial);
       final catalogo = await widget.espacios.catalogo();
       if (mounted && pedido == _pedido) {
-        setState(() => _datos = (lista, catalogo));
+        setState(() => _mostrar(tanda, catalogo));
       }
     } on Exception {
       // Sin red o con el servidor caído, la lista vieja sigue siendo lo mejor que hay.
+    }
+  }
+
+  /// Deja a la vista la primera tanda leída.
+  void _mostrar(TandaDeReservas tanda, Catalogo catalogo) {
+    _datos = (tanda.reservas, catalogo);
+    _siguiente = tanda.siguiente;
+    _cargandoMas = false;
+    _masFallo = false;
+  }
+
+  /// Al llegar al final del historial trae la tanda que sigue y la suma a las que ya están,
+  /// sin repetir ninguna.
+  Future<void> _cargarMas() async {
+    final despues = _siguiente;
+    if (despues == null || _cargandoMas || _masFallo || _datos == null) return;
+    final pedido = _pedido;
+    setState(() => _cargandoMas = true);
+    var vencida = false;
+    var fallo = false;
+    try {
+      final tanda = await widget.reservas.tanda(
+        historial: _historial,
+        despues: despues,
+      );
+      if (!mounted || pedido != _pedido) return;
+      setState(() {
+        if (_datos case (final lista, final catalogo)) {
+          final vistas = {for (final r in lista) r.id};
+          _datos = (
+            [...lista, ...tanda.reservas.where((r) => vistas.add(r.id))],
+            catalogo,
+          );
+        }
+        _siguiente = tanda.siguiente;
+        _cargandoMas = false;
+      });
+      return;
+    } on SesionVencida {
+      vencida = true;
+    } on SinConexion {
+      fallo = true;
+    } on ErrorDelServidor {
+      fallo = true;
+    }
+    if (!mounted || pedido != _pedido) return;
+    setState(() {
+      _cargandoMas = false;
+      _masFallo = fallo;
+    });
+    if (vencida && ModalRoute.of(context)?.isCurrent != false) {
+      await mostrarSesionVencida(context);
+      if (mounted) await cerrarSesion(context, widget.sesion);
     }
   }
 
@@ -200,79 +258,102 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
         body: SafeArea(
           child: RefreshIndicator(
             onRefresh: () => _cargar(deCero: false),
-            // Una persona tiene pocas reservas: se construyen todas, así el lector de
-            // pantalla llega a cada una sin tener que deslizar primero.
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s24,
-                Medidas.s24,
-                Medidas.s24,
-                Medidas.s40,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Semantics(
-                          header: true,
-                          child: Text(
-                            'Mis reservas',
-                            style: Textos.h1.copyWith(color: p.textPrimary),
+            // Las tandas son de 20: se construyen todas las que ya llegaron, así el lector
+            // de pantalla llega a cada una sin tener que deslizar primero.
+            child: NotificationListener<ScrollNotification>(
+              onNotification: (n) {
+                if (n.depth == 0 && n.metrics.extentAfter < 300) {
+                  _cargarMas();
+                }
+                return false;
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  Medidas.s24,
+                  Medidas.s24,
+                  Medidas.s24,
+                  Medidas.s40,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Semantics(
+                            header: true,
+                            child: Text(
+                              'Mis reservas',
+                              style: Textos.h1.copyWith(color: p.textPrimary),
+                            ),
+                          ),
+                        ),
+                        BotonCuenta(sesion: widget.sesion),
+                      ],
+                    ),
+                    const SizedBox(height: Medidas.s16),
+                    _Pestanas(historial: _historial, alElegir: _elegir),
+                    const SizedBox(height: Medidas.s16),
+                    if (datos == null && !_fallo)
+                      const Padding(
+                        padding: EdgeInsets.all(Medidas.s40),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    if (datos == null && _fallo)
+                      Padding(
+                        padding: const EdgeInsets.all(Medidas.s24),
+                        child: Center(
+                          child: BotonTexto(
+                            texto: 'REINTENTAR',
+                            alTocar: _cargar,
                           ),
                         ),
                       ),
-                      BotonCuenta(sesion: widget.sesion),
-                    ],
-                  ),
-                  const SizedBox(height: Medidas.s16),
-                  _Pestanas(historial: _historial, alElegir: _elegir),
-                  const SizedBox(height: Medidas.s16),
-                  if (datos == null && !_fallo)
-                    const Padding(
-                      padding: EdgeInsets.all(Medidas.s40),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  if (datos == null && _fallo)
-                    Padding(
-                      padding: const EdgeInsets.all(Medidas.s24),
-                      child: Center(
+                    if (datos != null && datos.$1.isEmpty)
+                      EstadoVacio(
+                        titulo: _historial
+                            ? 'No hay reservas pasadas'
+                            : 'No hay próximas reservas',
+                        texto: _historial
+                            ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
+                            : 'No se encontraron próximas reservas asociadas a tu cuenta.',
+                      ),
+                    if (datos != null)
+                      for (final r in datos.$1) ...[
+                        TarjetaReserva(
+                          reserva: r,
+                          catalogo: datos.$2,
+                          key: r.id == widget.reservaId ? _resaltada : null,
+                          resaltada: r.id == widget.reservaId,
+                          cancelable: !_historial && r.cancelable,
+                          cancelando: _cancelando == r.id,
+                          alCancelar: _cancelando == null
+                              ? () => _cancelar(r, datos.$2)
+                              : null,
+                          alModificar: _cancelando == null
+                              ? () => _modificar(r)
+                              : null,
+                        ),
+                        const SizedBox(height: Medidas.s12),
+                      ],
+                    if (_cargandoMas)
+                      const Padding(
+                        padding: EdgeInsets.all(Medidas.s16),
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                    if (_masFallo)
+                      Center(
                         child: BotonTexto(
                           texto: 'REINTENTAR',
-                          alTocar: _cargar,
+                          alTocar: () {
+                            setState(() => _masFallo = false);
+                            _cargarMas();
+                          },
                         ),
                       ),
-                    ),
-                  if (datos != null && datos.$1.isEmpty)
-                    EstadoVacio(
-                      titulo: _historial
-                          ? 'No hay reservas pasadas'
-                          : 'No hay próximas reservas',
-                      texto: _historial
-                          ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
-                          : 'No se encontraron próximas reservas asociadas a tu cuenta.',
-                    ),
-                  if (datos != null)
-                    for (final r in datos.$1) ...[
-                      TarjetaReserva(
-                        reserva: r,
-                        catalogo: datos.$2,
-                        key: r.id == widget.reservaId ? _resaltada : null,
-                        resaltada: r.id == widget.reservaId,
-                        cancelable: !_historial && r.cancelable,
-                        cancelando: _cancelando == r.id,
-                        alCancelar: _cancelando == null
-                            ? () => _cancelar(r, datos.$2)
-                            : null,
-                        alModificar: _cancelando == null
-                            ? () => _modificar(r)
-                            : null,
-                      ),
-                      const SizedBox(height: Medidas.s12),
-                    ],
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -390,8 +471,11 @@ class TarjetaReserva extends StatelessWidget {
   String get _horario => _horarioDe(reserva);
 
   String? get _porque => switch (reserva.estado) {
-    EstadoDeReserva.cancelada =>
-      'Cancelada por vos · el horario quedó liberado',
+    EstadoDeReserva.cancelada => switch (reserva.motivo) {
+      final m? when m.trim().isNotEmpty =>
+        'Cancelada por vos · el horario quedó liberado · $m',
+      _ => 'Cancelada por vos · el horario quedó liberado',
+    },
     EstadoDeReserva.anulada => switch (reserva.motivo) {
       final m? when m.trim().isNotEmpty => 'Anulada por el administrador · $m',
       _ => 'Anulada por el administrador',

@@ -5,7 +5,11 @@ from sqlalchemy import Connection, text
 
 from app.dominio.notificaciones import (
     ANTICIPACION,
+    ESPERA_DEL_RECORDATORIO,
+    INTENTOS_MAXIMOS,
+    TOMA_VENCIDA,
     Aviso,
+    AvisoPerdido,
     Envio,
     Notificacion,
     Pendiente,
@@ -14,6 +18,7 @@ from app.dominio.notificaciones import (
     datos_del_aviso,
     mensaje_cancelacion_forzosa,
     mensaje_cancelaciones_forzosas,
+    que_hacer_con_varado,
 )
 
 # Cuántas notificaciones trae el centro: las más nuevas.
@@ -250,17 +255,77 @@ class NotificacionesSql:
         self._conn.rollback()
         return bool(hay)
 
+    def marcar_varados_fallidos(self, usuario_id: int | None) -> list[AvisoPerdido]:
+        parametros = {
+            "usuario": usuario_id,
+            "vencida": TOMA_VENCIDA,
+        }
+        try:
+            # Se bloquean para que dos barridos no den por fallido, y registren, el mismo.
+            varados = self._conn.execute(
+                text(
+                    "SELECT id, tipo, intentos FROM notificacion WHERE envio = 'enviando'"
+                    " AND reemplazada_por IS NULL"
+                    " AND coalesce(tomada_en, creada_en) < now() - CAST(:vencida AS interval)"
+                    " AND (CAST(:usuario AS bigint) IS NULL OR usuario_id = :usuario)"
+                    " ORDER BY id FOR UPDATE SKIP LOCKED"
+                ),
+                parametros,
+            ).all()
+            perdidos = [
+                AvisoPerdido(int(f.id), f.tipo)
+                for f in varados
+                if que_hacer_con_varado(f.tipo, int(f.intentos)) == "dar_por_fallido"
+            ]
+            if perdidos:
+                self._conn.execute(
+                    text("UPDATE notificacion SET envio = 'fallida' WHERE id = ANY(:ids)"),
+                    {"ids": [p.notificacion_id for p in perdidos]},
+                )
+            # Un recordatorio registrado cuyo turno ya empezó o se canceló no va a salir nunca.
+            muertos = self._conn.execute(
+                text(
+                    "UPDATE notificacion n SET envio = 'fallida' WHERE n.envio = 'pendiente'"
+                    " AND n.tipo = 'recordatorio'"
+                    " AND (CAST(:usuario AS bigint) IS NULL OR n.usuario_id = :usuario)"
+                    " AND NOT EXISTS (SELECT 1 FROM reserva r WHERE r.id = n.reserva_id"
+                    " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio"
+                    " AND r.inicio > now()) RETURNING n.id, n.tipo"
+                ),
+                {"usuario": usuario_id},
+            ).all()
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
+        return perdidos + [AvisoPerdido(int(f.id), f.tipo) for f in muertos]
+
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+        # Los que salen: los pendientes, los recordatorios sólo si siguen vigentes y ya pasó el
+        # minuto de quien los registró; y los `enviando` con la toma vencida, salvo recordatorios
+        # y agotados, que `marcar_varados_fallidos` ya dio por fallidos (la misma regla de
+        # `que_hacer_con_varado`, repetida acá por si otro barrido los toma en el medio).
         f = self._conn.execute(
             text(
-                "UPDATE notificacion SET envio = 'enviando' WHERE id = ("
-                " SELECT id FROM notificacion WHERE envio = 'pendiente'"
-                " AND tipo <> 'recordatorio' AND reemplazada_por IS NULL"
-                " AND (CAST(:usuario AS bigint) IS NULL OR usuario_id = :usuario)"
-                " ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED)"
+                "UPDATE notificacion SET envio = 'enviando', tomada_en = now(),"
+                " intentos = intentos + 1 WHERE id = ("
+                " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
+                " WHERE n.reemplazada_por IS NULL"
+                " AND (CAST(:usuario AS bigint) IS NULL OR n.usuario_id = :usuario)"
+                " AND ((n.envio = 'pendiente' AND (n.tipo <> 'recordatorio'"
+                " OR (n.creada_en < now() - CAST(:espera AS interval)"
+                " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio AND r.inicio > now())))"
+                " OR (n.envio = 'enviando' AND n.tipo <> 'recordatorio' AND n.intentos < :maximo"
+                " AND coalesce(n.tomada_en, n.creada_en) < now() - CAST(:vencida AS interval)))"
+                " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"
                 " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
             ),
-            {"usuario": usuario_id},
+            {
+                "usuario": usuario_id,
+                "espera": ESPERA_DEL_RECORDATORIO,
+                "vencida": TOMA_VENCIDA,
+                "maximo": INTENTOS_MAXIMOS,
+            },
         ).first()
         self._conn.commit()
         if f is None:

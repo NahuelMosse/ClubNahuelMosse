@@ -1,0 +1,39 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [
+    "migración",
+    "migraciones",
+    "sesión",
+    "contraseña",
+    "login",
+    "rol",
+    "permiso",
+    "permisos",
+    "token"
+  ],
+  "files": [
+    "apps/api/migraciones/versions/0008_indices_y_cola_recuperable.py",
+    "apps/api/migraciones/env.py",
+    "apps/api/app/interfaz/marcador.py",
+    "apps/api/app/infraestructura/reservas.py",
+    "apps/api/app/interfaz/reservas.py",
+    "apps/api/app/aplicacion/reservas.py",
+    "apps/api/app/dominio/notificaciones.py",
+    "apps/api/app/infraestructura/notificaciones.py",
+    "apps/api/app/aplicacion/notificaciones.py",
+    "apps/mobile/lib/reservas/reservas.dart",
+    "apps/mobile/lib/reservas/pantalla_mis_reservas.dart",
+    "apps/mobile/lib/admin/historial_reservas.dart"
+  ],
+  "tasks": 4
+}

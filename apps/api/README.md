@@ -161,6 +161,25 @@ una hora, que es lo que tarda crear una base, restaurar y cambiar `DATABASE_URL`
 base responde y el esquema está al día. Cada error 500 devuelve una referencia que es el
 `X-Request-ID` del pedido y que se busca en el log.
 
+## Decisiones de datos
+
+Lo que se asumió donde el requisito no lo dice (REV-03); cada una se cambia en un solo lugar.
+
+- REV-03-ASM-02: un aviso de cancelación que quedó `enviando` por una caída del proceso se
+  vuelve a mandar y puede llegar dos veces; un recordatorio varado queda `fallida` y no se repite
+  («se envía una sola vez», CU-24.1). Si se prefiere no repetir nunca, el aviso de cancelación
+  también pasa a `fallida` (`que_hacer_con_varado`, `app/dominio/notificaciones.py`).
+- REV-03-ASM-03: el historial propio (`GET /reservas`) trae tandas de 20, igual que el global;
+  `siguiente` es el valor de `despues` que pide la tanda que sigue y es `null` en la última. Un
+  cliente que no manda `despues` ve las 20 más recientes.
+- REV-03-ASM-04: un aviso `enviando` hace más de 5 minutos se da por varado (`TOMA_VENCIDA`).
+- REV-03-ASM-05: cada toma de un aviso suma un intento (`notificacion.intentos`, con la hora en
+  `tomada_en`); con 3 queda `fallida` y el log registra `aviso_sin_enviar` con el número y el
+  tipo, sin datos de la persona.
+- REV-03-ASM-11: `GET /reservas/todas` acepta `despues` y sigue aceptando `pagina` para las
+  apps ya instaladas; con los dos, manda `despues`. Un `despues` que no sale de un `siguiente`
+  es un 422.
+
 ## Desplegar en Render
 
 El `render.yaml` de la raíz del repo describe todo: un web service de Python para la API

@@ -14,12 +14,15 @@ from app.dominio.errores import (
 from app.dominio.horarios import Agenda
 from app.dominio.notificaciones import mensaje_cancelacion
 from app.dominio.reservas import (
+    POR_PAGINA,
     Contadores,
     Cuando,
     FiltrosHistorial,
     HistorialDeReservas,
+    Marcador,
     Reserva,
     ReservaHistorial,
+    TandaDeReservas,
 )
 from app.dominio.zona import NOMBRE_ZONA_CLUB
 from app.infraestructura.horarios import HorariosSql
@@ -45,19 +48,21 @@ _COLUMNAS_HISTORIAL = (
     " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL"
     " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creada_en END AS aviso_en"
 )
-_JOIN_HISTORIAL = (
+# Lo que los filtros del historial global miran: alcanza para contar.
+_JOIN_FILTROS = (
     " FROM reserva_con_estado r"
     " JOIN espacio e ON e.id = r.espacio_id"
     " JOIN sede s ON s.id = e.sede_id"
     " JOIN usuario u ON u.id = r.usuario_id"
+)
+_JOIN_HISTORIAL = (
+    f"{_JOIN_FILTROS}"
     " LEFT JOIN usuario administrador ON administrador.id = r.cancelada_por"
     " LEFT JOIN notificacion_reserva vinculo ON vinculo.reserva_id = r.id"
     " LEFT JOIN notificacion aviso ON aviso.id = vinculo.notificacion_id"
 )
 # Cuánto después de hecha una reserva se reconoce como el mismo pedido repetido.
 _VENTANA_DE_REINTENTO = "5 minutes"
-# Tamaño fijo de página del historial global (CU-14-SUP-01): sin tope adicional de resultados.
-POR_PAGINA = 20
 
 # Los días del filtro se cortan a medianoche del club, no de la sesión de Postgres (UTC).
 _ZONA_CLUB = f"'{NOMBRE_ZONA_CLUB}'"
@@ -119,23 +124,40 @@ class ReservasSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def de_usuario(self, usuario_id: int, cuando: Cuando) -> list[Reserva]:
+    def de_usuario(
+        self,
+        usuario_id: int,
+        cuando: Cuando,
+        despues: Marcador | None = None,
+        limite: int = POR_PAGINA,
+    ) -> TandaDeReservas:
         proximas = cuando == "proximas"
+        # Se piden `limite + 1`: la que sobra no se entrega, sólo dice que hay más.
+        parametros: dict[str, Any] = {"usuario": usuario_id, "limite": limite + 1}
+        despues_de = ""
+        if despues is not None:
+            despues_de = f" AND (r.inicio, r.id) {'>' if proximas else '<'} (:inicio, :id)"
+            parametros |= {"inicio": despues.inicio, "id": despues.id}
         filas = self._conn.execute(
             text(
                 f"SELECT {_COLUMNAS} FROM reserva_con_estado r"
                 " JOIN espacio e ON e.id = r.espacio_id JOIN sede s ON s.id = e.sede_id"
-                " WHERE r.usuario_id = :usuario"
+                f" WHERE r.usuario_id = :usuario{despues_de}"
                 + (
                     " AND r.estado_actual = 'activa' ORDER BY r.inicio, r.id"
                     if proximas
                     else " AND r.estado_actual <> 'activa' ORDER BY r.inicio DESC, r.id DESC"
                 )
+                + ("" if proximas else " LIMIT :limite")
             ),
-            {"usuario": usuario_id},
+            parametros,
         ).all()
         self._conn.rollback()
-        return [_reserva(f) for f in filas]
+        if proximas:
+            return TandaDeReservas(reservas=[_reserva(f) for f in filas], hay_mas=False)
+        return TandaDeReservas(
+            reservas=[_reserva(f) for f in filas[:limite]], hay_mas=len(filas) > limite
+        )
 
     def agenda(self, espacio_id: int) -> Agenda | None:
         return HorariosSql(self._conn).agenda(espacio_id)
@@ -490,37 +512,45 @@ class ReservasSql:
             parametros["q"] = f"%{literal}%"
         where_comun = " AND ".join(["true", *comunes])
         condiciones = list(comunes)
+        total_de = "count(*)"
         if filtros.estado is not None:
             condiciones.append("r.estado_actual = :estado")
             parametros["estado"] = filtros.estado
+            total_de = "count(*) FILTER (WHERE r.estado_actual = :estado)"
         where = " AND ".join(["true", *condiciones])
 
-        total: int = self._conn.execute(
-            text(f"SELECT count(*){_JOIN_HISTORIAL} WHERE {where}"), parametros
-        ).scalar_one()
+        # El total y los cuatro contadores salen de una sola pasada por las filas que pasan los
+        # filtros comunes, sin las uniones que sólo hacen falta para mostrar cada reserva.
         fila_contadores = self._conn.execute(
             text(
-                "SELECT count(*) AS todas,"
+                f"SELECT {total_de} AS total, count(*) AS todas,"
                 " count(*) FILTER (WHERE r.estado_actual = 'activa') AS activas,"
                 " count(*) FILTER (WHERE r.estado_actual = 'completada') AS completadas,"
                 " count(*) FILTER (WHERE r.estado_actual = 'anulada') AS anuladas"
-                f"{_JOIN_HISTORIAL} WHERE {where_comun}"
+                f"{_JOIN_FILTROS} WHERE {where_comun}"
             ),
             parametros,
         ).one()
         pagina = max(1, filtros.pagina)
+        # Con marcador, la página sigue a la última reserva vista; sin él, cuenta `pagina` (las
+        # apps ya instaladas). Se piden POR_PAGINA + 1: la que sobra sólo dice que hay más.
+        if filtros.despues is not None:
+            where += " AND (r.inicio, r.id) < (:inicio, :id)"
+            parametros |= {"inicio": filtros.despues.inicio, "id": filtros.despues.id}
+            salteadas = 0
+        else:
+            salteadas = (pagina - 1) * POR_PAGINA
         filas = self._conn.execute(
             text(
                 f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE {where}"
                 " ORDER BY r.inicio DESC, r.id DESC LIMIT :limite OFFSET :offset"
             ),
-            parametros | {"limite": POR_PAGINA, "offset": (pagina - 1) * POR_PAGINA},
+            parametros | {"limite": POR_PAGINA + 1, "offset": salteadas},
         ).all()
         self._conn.rollback()
-        total_int = int(total)
         return HistorialDeReservas(
-            reservas=[_reserva_historial(f) for f in filas],
-            total=total_int,
+            reservas=[_reserva_historial(f) for f in filas[:POR_PAGINA]],
+            total=int(fila_contadores.total),
             pagina=pagina,
             por_pagina=POR_PAGINA,
             contadores=Contadores(
@@ -529,6 +559,7 @@ class ReservasSql:
                 completadas=int(fila_contadores.completadas),
                 anuladas=int(fila_contadores.anuladas),
             ),
+            hay_mas=len(filas) > POR_PAGINA,
         )
 
     def una_de_cualquiera(self, reserva_id: int) -> ReservaHistorial | None:

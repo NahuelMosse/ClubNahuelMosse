@@ -47,6 +47,13 @@ code: it looks cheap. Free-license sources: Pexels, Unsplash, Poly Haven, ambien
 **After the critic.** On a card with grade `production`, a `design-critic` writes `specs/<card>/critique.md`; you then do **one**
 more round that corrects it, logged as `- L<n> · critique round · <what changed>`.
 
+**Assets.** To show real objects or places use a real photo with a treatment (grading or duotone) or video. Never 3D modeled in
+code: it looks cheap. Free-license sources: Pexels, Unsplash, Poly Haven, ambientCG, Fontshare. Each asset is credited in
+`specs/<card>/CREDITS.md`. GSAP has its own free license, it is not MIT.
+
+**After the critic.** On a card with grade `production`, a `design-critic` writes `specs/<card>/critique.md`; you then do **one**
+more round that corrects it, logged as `- L<n> · critique round · <what changed>`.
+
 **Each round `<k>`** (2 at least, 3 at most):
 1. Run the whole round in one call: `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/rondas/r<k> [--steps <steps>.json]`
    (viewport captures at both widths, load at 0/600/2000 ms, one per section, the rules of `.claude/reference/excellence.md` measured,

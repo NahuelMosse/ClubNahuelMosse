@@ -10,7 +10,10 @@ def correr() -> None:
     motor = create_engine(url)
     try:
         with motor.connect() as conn:
-            context.configure(connection=conn)
+            # Una transacción por migración: un `CREATE INDEX CONCURRENTLY` no corre dentro de
+            # una, y una sola para todo el upgrade mantendría tomados los locks de las primeras
+            # mientras se arma el índice de la última.
+            context.configure(connection=conn, transaction_per_migration=True)
             with context.begin_transaction():
                 context.run_migrations()
     finally:
