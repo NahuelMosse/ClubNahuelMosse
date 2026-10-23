@@ -1,0 +1,35 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "route"
+  ],
+  "words": [
+    "sesión",
+    "auth",
+    "contraseña",
+    "login",
+    "rol",
+    "permiso",
+    "permisos",
+    "token"
+  ],
+  "files": [
+    "apps/api/tests/conftest.py",
+    "apps/api/tests/escenarios/test_requisitos_no_funcionales.py",
+    "apps/api/tests/integracion/test_restricciones.py",
+    "apps/api/tests/unit/test_casos_de_uso_reservas.py",
+    "apps/mobile/lib/api/rutas.dart",
+    "apps/mobile/lib/api/cliente_api.dart",
+    "apps/mobile/test/anular_desde_el_detalle_test.dart"
+  ],
+  "tasks": 3
+}

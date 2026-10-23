@@ -1,5 +1,5 @@
 {
-  "kit": "6.4.0",
+  "kit": "6.5.4",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "657ff3db69738f58a980615b84f7264952c0c979"
+    "commit": "8db1c212392869ce6fa2e66b236ddbcd0538777f"
   },
   "modules": {
     "ui": {
@@ -68,23 +68,7 @@
       "reason": "not chosen at install: no signal found in the repo",
       "by": "person",
       "at": "2026-10-20",
-      "signalsAtDecision": [
-        "docs/ file: docs/technical/runbook.md",
-        "docs/ file: docs/business/accessibility.md",
-        "docs/ file: docs/"
-      ],
-      "confirmed": [
-        {
-          "at": "2026-10-21",
-          "card": "REV-07-documentacion-produccion",
-          "reason": "REV-07-ASM-04: la card escribe documentación de operación que el grado production pide (R9, D8, D9, S15, S19, S21, O13, O14, P7, P14, P15, W5, I17); el módulo docs es de documentación para usuarios del kit y sigue apagado",
-          "signals": [
-            "docs/ file: docs/technical/runbook.md",
-            "docs/ file: docs/business/accessibility.md",
-            "docs/ file: docs/"
-          ]
-        }
-      ]
+      "signalsAtDecision": []
     },
     "i18n": {
       "state": "off",
@@ -97,8 +81,8 @@
       "confirmed": [
         {
           "at": "2026-10-21",
-          "card": "REV-07-documentacion-produccion",
-          "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale.",
+          "card": "REV-01-seguridad-api",
+          "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale, y esta card no agrega textos en otro idioma.",
           "signals": [
             "the card asks for a language, a translation or a locale"
           ]
