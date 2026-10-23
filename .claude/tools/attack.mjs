@@ -191,9 +191,12 @@ if (typeof alive !== 'number') { console.error(`The app does not respond at ${ba
 const rows = [], notes = [], infos = [];
 // The body of a write in the wire format: the form as it was given, or the same fields as a JSON object.
 const FORM = 'application/x-www-form-urlencoded';
-// Attack number n (0 is the legitimate request) varies every text field: `-a<n>` at its end, before the `@` of an email.
+// Attack number n (0 is the legitimate request) varies every free text field: `-a<n>` at its end, before the `@` of an email.
+// A formatted value is left as given —a time, a date, a number written as text, a UUID—: a suffix would make it invalid and
+// every attack would be refused for the format instead of for what it attacks.
+const FORMATTED = /^[^\p{L}]*$|^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
 const vary = (v, n) => {
-  if (typeof v === 'string') return v.includes('@') ? v.replace('@', `-a${n}@`) : `${v}-a${n}`;
+  if (typeof v === 'string') return FORMATTED.test(v) ? v : v.includes('@') ? v.replace('@', `-a${n}@`) : `${v}-a${n}`;
   if (Array.isArray(v)) return v.map((x) => vary(x, n));
   return v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, vary(x, n)])) : v;
 };

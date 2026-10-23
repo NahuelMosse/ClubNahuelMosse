@@ -359,6 +359,9 @@ for (const v of alive) {
     : `  ALIVE  line ${v.n}: “${v.from}” → “${v.to}” — no test notices it\n` +
       `    if it changes nothing, declare: ${here}:${v.n} · “${v.from}” → “${v.to}” · “${v.before}@@${v.after}” · <why>`);
 }
-// No mutant detected is almost never a weak suite: it is a suite that ran no test.
-if (killed === 0) console.log('  No mutant detected: check that the suite command runs some test.');
-process.exit(unexplained.length === 0 && killed > 0 ? 0 : 1);
+// No mutant detected with live ones left unexplained is almost never a weak suite: it is a suite that ran no test. When every
+// mutant left alive is a declared equivalent, there is nothing a test could have caught, and the run passes.
+const equivalents = alive.length - unexplained.length;
+if (killed === 0 && unexplained.length > 0) console.log('  No mutant detected: check that the suite command runs some test.');
+if (killed === 0 && unexplained.length === 0) console.log(`  ${equivalents}/${mutants.length} equivalent, each declared with its reason`);
+process.exit(unexplained.length === 0 ? 0 : 1);
