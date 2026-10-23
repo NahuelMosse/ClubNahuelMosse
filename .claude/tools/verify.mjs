@@ -469,11 +469,15 @@ export const failingTests = (output, limit = 3) => {
     } else if ((m = line.match(/^\s*\d+:\d+ \+\d+(?: ~\d+)?(?: -\d+)?: (.+?\.dart): (.+?) \[E\]\s*$/))) {
       // flutter test: `00:05 +445 -1: <file>: <group and test name> [E]`.
       found.set(m[2], { name: m[2], file: m[1] });
+    } else if ((m = line.match(/^FAILED (\S+?\.py)::(?:\S+::)?(\w+)(?:\[[^\]]*\])?(?: - .*)?\s*$/))) {
+      // pytest's short summary: `FAILED tests/x.py::TestC::test_y - AssertionError: ...`.
+      found.set(`${m[1]}::${m[2]}`, { name: m[2], file: m[1], pyFunc: true });
     }
   }
   // flutter test counts the failures in its progress prefix (`+445 -1:`); the last one is the total.
   const flutterFailed = [...output.matchAll(/^\s*\d+:\d+ \+\d+(?: ~\d+)? -(\d+):/gm)].at(-1)?.[1];
-  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? flutterFailed ?? 0);
+  const pytestFailed = output.match(/^=+ (?:.*?, )?(\d+) failed\b.*=+\s*$/m)?.[1];
+  const total = Number(output.match(/^(?:ℹ|#) fail (\d+)/m)?.[1] ?? output.match(/^\s*(\d+) failed\b/m)?.[1] ?? flutterFailed ?? pytestFailed ?? 0);
   const tests = [...found.values()];
   return total > limit ? [] : tests;
 };
@@ -492,7 +496,24 @@ export const replacedFailures = (root, output) => {
   const card = currentCard(root);
   const doc = card && existsSync(join(card, CARD_FILE)) ? readFileSync(join(card, CARD_FILE), 'utf8') : '';
   const declared = replacementsOf(doc);
-  const names = new Set(failing.map((t) => t.name));
+  // A replacement may keep the title of the test it replaces: it is failing only if a test of that name fails in its own
+  // file. A failure whose runner does not say the file counts against any file.
+  const fileOf = (t) => (t.file ?? t.nodeFile ?? '').replace(/:\d+(?::\d+)?$/, '');
+  // pytest names a failure by its function; the title with the tags is in the function's docstring or its body.
+  const pyBody = (file, fn) => {
+    let text = '';
+    try { text = readFileSync(resolve(root, file), 'utf8'); } catch { return ''; }
+    const at = text.search(new RegExp(`^\\s*(?:async\\s+)?def\\s+${fn}\\s*\\(`, 'm'));
+    if (at < 0) return '';
+    const rest = text.slice(at).split('\n');
+    const end = rest.findIndex((l, k) => k > 0 && /^\s*(?:async\s+)?def\s|^\S/.test(l) && l.trim() !== '');
+    return rest.slice(0, end < 0 ? undefined : end).join('\n');
+  };
+  const is = (t, file, title) => {
+    const sameFile = !fileOf(t) || resolve(root, fileOf(t)) === resolve(root, file);
+    return sameFile && (t.name === title || (t.pyFunc && pyBody(file, t.name).includes(title)));
+  };
+  const failsIn = (by, name) => failing.some((t) => is(t, by, name));
   const found = [];
   const holds = (r) => {
     const tags = r.name.match(SPEC_TAG) ?? [];
@@ -502,7 +523,7 @@ export const replacedFailures = (root, output) => {
   };
   for (const t of failing) {
     // The Log is append-only: a later line corrects an earlier declaration of the same test, so the latest that holds counts.
-    const r = declared.filter((d) => d.name === t.name && !names.has(d.byName)).reverse().find(holds);
+    const r = declared.filter((d) => is(t, d.file, d.name) && !failsIn(d.by, d.byName)).reverse().find(holds);
     if (!r) return null;
     found.push(r);
   }
