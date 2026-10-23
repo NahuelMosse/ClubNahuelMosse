@@ -19,8 +19,8 @@ export const isProductionPath = (root, path) => {
   return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel) && !NOT_PRODUCTION.test(rel);
 };
 export const NOT_PRODUCTION = /^(specs|\.claude|\.specify|scripts|docs)\/|(^|\/)(e2e|tests?|__tests__)\/|\.(md|json|ya?ml|lock)$|(^|\/)[^/]*\.(test|spec)\.|(^|\/)(test_[^/]*|[^/]*_test|conftest)\.py$|_test\.go$|^\.|(^|\/)(playwright|vitest|jest|eslint|tsconfig|jsconfig)[^/]*$|(^|\/)design\/components\/(serve\.mjs|gallery\.html)$/;
-export const IS_CODE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php)$/;
-export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.py$|_test\.(py|go)$|Tests?\.(cs|java|kt)$|\.feature$/;
+export const IS_CODE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|dart)$/;
+export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.py$|_test\.(py|go|dart)$|Tests?\.(cs|java|kt)$|\.feature$/;
 
 // The configs of what gets verified: loosening them is approving without fixing.
 export const IS_VERIFICATION_CONFIG = /(^|\/)(eslint\.config\.[cm]?[jt]s|\.eslintrc(\.[a-z]+)?|playwright\.config\.[cm]?[jt]s|stryker\.conf(ig)?\.[a-z]+|\.c8rc(\.json)?|\.nycrc(\.json)?|jest\.config\.[cm]?[jt]s|vitest\.config\.[cm]?[jt]s|tsconfig[^/]*\.json|ruff\.toml|\.ruff\.toml|mypy\.ini|pytest\.ini|\.golangci\.[a-z]+|\.axerc[^/]*)$/;
@@ -325,9 +325,11 @@ export const minutesSinceSnapshot = (cwd, cardDir) => {
 // the card. If the snapshot is not committed yet, the card starts at HEAD. The parent is written
 // `<sha>~1`, not `<sha>^`: the ref ends up inside command lines that pass through cmd.exe on Windows,
 // where `^` is the escape character and is dropped.
+// The card starts at the first commit that added a file of its folder: a card migrated from an older format kept its
+// first snapshot or plan.md, and its code was committed before the card.md that replaced them.
 export const cardStart = (root, cardDir) => {
   const snapshot = relativeTo(root, frozenOf(cardDir) ?? join(cardDir, 'card.snapshot.md'));
-  const r = git(root, ['log', '--diff-filter=A', '--format=%H', '--', snapshot]);
+  const r = git(root, ['log', '--diff-filter=A', '--format=%H', '--', relativeTo(root, cardDir), snapshot]);
   const sha = r.stdout?.trim().split('\n').filter(Boolean).at(-1);
   if (!sha) return 'HEAD';
   return git(root, ['rev-parse', '--verify', '-q', `${sha}~1`]).status === 0 ? `${sha}~1` : sha;
