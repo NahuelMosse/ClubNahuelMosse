@@ -69,3 +69,11 @@ module = [
   "test_entradas",
 ]
 disable_error_code = ["var-annotated", "attr-defined", "dict-item"]
+
+[[tool.mypy.overrides]]
+# test congelado de REV-01: no se edita
+module = [
+  "*.test_repositorios_propios",
+  "test_repositorios_propios",
+]
+disable_error_code = ["var-annotated"]
