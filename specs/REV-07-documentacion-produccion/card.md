@@ -54,8 +54,8 @@ not_read: contenido de los CU: no transcripto, la card no cambia comportamiento;
 ## Gate
 
 ```
-suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
-scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_documentacion.py
+suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
+scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_documentacion.py
 lint: cd apps/api && uv run --no-sync ruff check tests/escenarios/test_documentacion.py ../../scripts/avisos_de_terceros.py && uv run --no-sync ruff format --check tests/escenarios/test_documentacion.py ../../scripts/avisos_de_terceros.py
 notices: uv run --directory apps/api --no-sync python ../../scripts/avisos_de_terceros.py --comprobar
 app: sh D:/Temp/w/herramientas/api-app.sh rev07_app
@@ -86,3 +86,5 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev07_app --json --no-ambient 
 - L20 · 2026-10-22 · el `ResourceWarning` de `test_contrasena_api.py` sale con Python 3.14 y `filterwarnings = error`; el venv del worktree se rehízo con 3.13, la del repo, y la suite se repite así
 - L21 · 2026-10-22 · declared · K4 · `_ids_registrados` (9 líneas) se repite entre `test_documentacion.py:197-205` y `test_documentacion_supuestos.py:39-47`: los dos archivos están congelados y sacar la copia es editar un test congelado
 - L22 · 2026-10-22 · suite, scenarios, lint, notices, specs y migrations pasan (verify, Python 3.13); `attacks:` dio 409 al alta legítima de «Sede Ataque» porque la base de la app guardaba la de una corrida anterior: api-app.sh recrea la base en cada arranque
+- L23 · 2026-10-22 · kit updated 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a → 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 · kit 6.1.0: no-visual for a code file with markup
+- L24 · 2026-10-23 · kit updated 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 → 7a91c9699fa944f754191f53f20a024663a607bd · kit 6.1.1: Dart tests, pytest failures, replacements by file, migrated card start
