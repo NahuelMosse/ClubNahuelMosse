@@ -720,6 +720,14 @@ const cardCode = (root, cardDir) => cardFiles(root, cardStart(root, cardDir))
 
 // K4 — measured: duplication was never measured in 3 inspections. Clones between files of the card,
 // or between them and the rest of the repo, one action each.
+// A clone that cannot be extracted —one copy is a frozen test— is declared in the Log: `declared · K4 · <file>[:<lines>] · <why>`.
+// A clone with a declared file on either side is not reported; close.mjs lists the declaration for a person.
+export const DECLARED_K4 = /declared\s*·\s*K4\s*·\s*([^\s·:]+)(?::[\d-]+)?\s*·\s*(.+?)\s*$/;
+export const declaredClones = (cardDir) => {
+  const doc = existsSync(join(cardDir, CARD_FILE)) ? readFileSync(join(cardDir, CARD_FILE), 'utf8') : '';
+  return new Map((doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').map((l) => l.match(DECLARED_K4)).filter(Boolean).map((m) => [m[1], m[2]]));
+};
+
 export const duplication = (root, cardDir, run = defaultRun) => {
   const files = cardCode(root, cardDir);
   if (!files.length) return [];
@@ -740,11 +748,13 @@ export const duplication = (root, cardDir, run = defaultRun) => {
     return [`K4 · jscpd could not run: unreadable report (${e.message}) · close: make \`npx -y jscpd@4\` run`];
   }
   const norm = (n) => (isAbsolute(n) ? relative(root, n) : n).split('\\').join('/');
+  const declared = declaredClones(cardDir);
   return (report.duplicates ?? []).flatMap((d) => {
     const a = norm(d.firstFile.name);
     const b = norm(d.secondFile.name);
     if (!files.includes(a) && !files.includes(b)) return [];
-    return [`K4 · clone of ${d.lines} lines: ${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end} · close: extract what both share into one place, or write why the two must differ`];
+    if (declared.has(a) || declared.has(b)) return [];
+    return [`K4 · clone of ${d.lines} lines: ${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end} · close: extract what both share into one place, or add to the Log \`declared · K4 · <file> · <why the two must differ>\``];
   });
 };
 
