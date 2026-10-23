@@ -51,13 +51,14 @@ export const RAW_LAYOUT = /\b(padding|margin|gap|row-gap|column-gap|border-radiu
 export const DECLARES_TOKEN = /^\s*[+]?\s*--[\w-]+\s*:/;
 
 // The lines of `## Tasks` of card.md (or of the `## File map` of a plan.md a repo still has); null when there is none.
+// A card migrated to card.md may keep its old plan.md: the `## Tasks` of card.md wins when it has one.
 export const fileMapLines = (cardDir) => {
-  const path = join(cardDir, 'plan.md');
-  // A card with no plan lists its files in the `## Tasks` of card.md.
-  const [file, heading] = existsSync(path) ? [path, 'File map'] : [join(cardDir, 'card.md'), 'Tasks'];
-  if (!existsSync(file)) return null;
-  const section = readFileSync(file, 'utf8').split(/^## /m).find((s) => s.startsWith(heading));
-  return section ? section.split('\n').slice(1) : null;
+  const sectionIn = (file, heading) => {
+    if (!existsSync(file)) return null;
+    const section = readFileSync(file, 'utf8').split(/^## /m).find((s) => s.startsWith(heading));
+    return section ? section.split('\n').slice(1) : null;
+  };
+  return sectionIn(join(cardDir, 'card.md'), 'Tasks') ?? sectionIn(join(cardDir, 'plan.md'), 'File map');
 };
 export const pathTokens = (line) => line.split(/[\s`|,;()*]+/)
   .map((t) => t.replaceAll('\\', '/').replace(/^\.\//, '').replace(/:\d+(:\d+)?$/, '').replace(/[.:]+$/, '')).filter(Boolean);

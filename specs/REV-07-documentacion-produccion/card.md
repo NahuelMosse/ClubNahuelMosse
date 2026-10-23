@@ -88,3 +88,4 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev07_app --json --no-ambient 
 - L22 · 2026-10-22 · suite, scenarios, lint, notices, specs y migrations pasan (verify, Python 3.13); `attacks:` dio 409 al alta legítima de «Sede Ataque» porque la base de la app guardaba la de una corrida anterior: api-app.sh recrea la base en cada arranque
 - L23 · 2026-10-22 · kit updated 9e4b31bfe1ca75be41e8fbcf6ec1196c5c3b545a → 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 · kit 6.1.0: no-visual for a code file with markup
 - L24 · 2026-10-23 · kit updated 7e565f2e177ab0e2a9136d1e4daeb4c62a064ac4 → 7a91c9699fa944f754191f53f20a024663a607bd · kit 6.1.1: Dart tests, pytest failures, replacements by file, migrated card start
+- L25 · 2026-10-23 · kit updated 7a91c9699fa944f754191f53f20a024663a607bd → c3b49d603591e5747683ff5c839f33e26a20502c · kit 6.1.2: Dart in close and required, replaced tests need no lint
