@@ -16,6 +16,7 @@ from app.interfaz import (
     recuperacion,
     registro,
     reservas,
+    salud,
     sedes,
     sesion,
 )
@@ -47,9 +48,12 @@ def crear_app() -> FastAPI:
         version="0.1.0",
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
         lifespan=_ciclo_de_vida,
+        docs_url="/docs" if config.documentacion_interactiva else None,
+        redoc_url="/redoc" if config.documentacion_interactiva else None,
     )
     entradas.instalar(app)
     limites.instalar(app)
+    app.include_router(salud.router)
     app.include_router(registro.router)
     app.include_router(sesion.router)
     app.include_router(recuperacion.router)
@@ -61,8 +65,9 @@ def crear_app() -> FastAPI:
     # Un segundo candado: el buzón sólo se abre contra el emulador, nunca en producción.
     if config.pruebas and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
         app.include_router(pruebas.router)
-    app.add_middleware(RegistroDeErrores)
+    # El último que se agrega es el de afuera: el registro ve también lo que Protecciones rechaza.
     app.add_middleware(Protecciones)
+    app.add_middleware(RegistroDeErrores)
     return app
 
 
