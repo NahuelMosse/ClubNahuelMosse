@@ -54,8 +54,8 @@ not_read: contenido de los CU: no transcripto, la card no cambia comportamiento;
 ## Gate
 
 ```
-suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
-scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_documentacion.py
+suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
+scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_documentacion.py
 lint: cd apps/api && uv run --no-sync ruff check tests/escenarios/test_documentacion.py ../../scripts/avisos_de_terceros.py && uv run --no-sync ruff format --check tests/escenarios/test_documentacion.py ../../scripts/avisos_de_terceros.py
 notices: uv run --directory apps/api --no-sync python ../../scripts/avisos_de_terceros.py --comprobar
 app: sh D:/Temp/w/herramientas/api-app.sh rev07_app
