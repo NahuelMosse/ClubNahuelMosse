@@ -14,7 +14,7 @@ import '../tema/tokens.dart';
 import 'eleccion.dart';
 import 'fechas.dart';
 import 'horarios.dart';
-import 'reserva_pendiente.dart';
+import '../comun/reserva_pendiente.dart';
 import 'reservas.dart';
 
 /// Lo que la confirmación le devuelve a los horarios al cerrarse: si el horario se ocupó,
@@ -34,7 +34,7 @@ class PantallaConfirmarReserva extends StatefulWidget {
 
   final Eleccion eleccion;
   final Reservas reservas;
-  final ReservaPendiente pendiente;
+  final ReservaPendiente<Eleccion> pendiente;
   final Sesion sesion;
 
   @override

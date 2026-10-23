@@ -14,7 +14,7 @@ import 'admin/pantalla_espacios_admin.dart';
 import 'admin/pantalla_panel_admin.dart';
 import 'admin/pantalla_sede_creada.dart';
 import 'admin/pantalla_sedes_admin.dart';
-import 'comun/pantalla_acceso_denegado.dart';
+import 'comun/reserva_pendiente.dart';
 import 'espacios/espacio.dart';
 import 'espacios/espacios.dart';
 import 'sedes/sede.dart';
@@ -29,7 +29,7 @@ import 'notificaciones/panel_avisos.dart';
 import 'notificaciones/pantalla_notificaciones.dart';
 import 'reservas/pantalla_mis_reservas.dart';
 import 'reservas/pantalla_reserva_confirmada.dart';
-import 'reservas/reserva_pendiente.dart';
+import 'sesion/pantalla_acceso_denegado.dart';
 import 'reservas/reservas.dart';
 import 'sesion/pantalla_inicio_sesion.dart';
 import 'sesion/pantalla_nueva_contrasena.dart';
@@ -95,7 +95,7 @@ class _AppState extends State<App> {
     api: widget.api,
     sesion: widget.sesion,
   );
-  final _pendiente = ReservaPendiente();
+  final _pendiente = ReservaPendiente<Eleccion>();
   final _filtrosPendientes = FiltrosDePanelPendientes();
 
   StreamSubscription<AvisoTocado>? _alTocarUnAviso;

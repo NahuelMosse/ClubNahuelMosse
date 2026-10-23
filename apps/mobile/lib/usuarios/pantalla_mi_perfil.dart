@@ -16,7 +16,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'reglas_registro.dart';
+import '../comun/reglas_registro.dart';
 
 /// Mi perfil: todos los datos de la cuenta, pedidos a la API cada vez que se abre, y los
 /// accesos a lo que se puede hacer con ella.

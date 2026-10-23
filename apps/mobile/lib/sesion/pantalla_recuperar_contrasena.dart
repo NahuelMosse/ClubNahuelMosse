@@ -9,7 +9,7 @@ import '../comun/dialogo_error.dart';
 import '../comun/resultado.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../usuarios/reglas_registro.dart';
+import '../comun/reglas_registro.dart';
 import 'recuperacion.dart';
 
 const avisoEnlaceEnviado =

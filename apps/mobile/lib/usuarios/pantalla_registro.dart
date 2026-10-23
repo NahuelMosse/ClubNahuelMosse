@@ -8,9 +8,10 @@ import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/formato_fecha.dart';
+import '../comun/reglas_registro.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'reglas_registro.dart';
+import 'registro.dart';
 
 /// Los campos del formulario, con el nombre que usa la API.
 enum _Campo {
@@ -57,6 +58,8 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   bool _yaExiste = false;
   bool _enviando = false;
   bool _contrasenaVisible = false;
+
+  late final _servicio = RegistroServicio(widget.api);
 
   DateTime get _hoy => (widget.hoy ?? DateTime.now)();
 
@@ -129,10 +132,16 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     });
     Object? fallo;
     try {
-      final r = await widget.api.post('/registro', {
-        for (final c in _Campo.values)
-          c.clave: c == _Campo.fechaNacimiento ? fechaIso(fecha) : _valor(c),
-      });
+      final r = await _servicio.registrar(
+        DatosDeRegistro(
+          nombre: _valor(_Campo.nombre),
+          apellido: _valor(_Campo.apellido),
+          dni: _valor(_Campo.dni),
+          fechaNacimiento: fecha,
+          correo: _valor(_Campo.correo),
+          contrasena: _valor(_Campo.contrasena),
+        ),
+      );
       if (!mounted) return;
       if (r.codigo == 201) {
         context.go('/registro/exitoso');

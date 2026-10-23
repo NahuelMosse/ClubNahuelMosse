@@ -10,8 +10,8 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import '../comun/resultado.dart';
-import 'reglas_contrasena.dart';
-import 'reglas_registro.dart';
+import '../comun/reglas_contrasena.dart';
+import '../comun/reglas_registro.dart';
 
 enum _Campo { actual, nueva, repetida }
 

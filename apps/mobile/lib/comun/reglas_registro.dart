@@ -2,9 +2,9 @@
 /// Los mensajes son idénticos a los que devuelve `POST /registro`.
 library;
 
-import '../comun/formato_fecha.dart';
+import 'formato_fecha.dart';
 
-export '../comun/formato_fecha.dart' show formatearFecha, leerFecha;
+export 'formato_fecha.dart' show formatearFecha, leerFecha;
 
 const largoMaximoNombre = 60;
 

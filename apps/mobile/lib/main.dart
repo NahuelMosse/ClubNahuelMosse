@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'api/cliente_api.dart';
 import 'app.dart';
 import 'comun/apariencia.dart';
-import 'configuracion.dart';
+import 'comun/configuracion.dart';
 import 'notificaciones/centro.dart';
 import 'notificaciones/notificaciones.dart';
 import 'notificaciones/sistema.dart';

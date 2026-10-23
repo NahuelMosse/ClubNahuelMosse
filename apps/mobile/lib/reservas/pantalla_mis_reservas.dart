@@ -7,6 +7,7 @@ import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/formato_precio.dart';
+import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -560,51 +561,7 @@ class TarjetaReserva extends StatelessWidget {
                   style: Textos.mono.copyWith(color: p.textMuted),
                 ),
                 const SizedBox(height: Medidas.s8),
-                Wrap(
-                  spacing: Medidas.s16,
-                  runSpacing: Medidas.s8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16,
-                          color: p.textSecondary,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Flexible(
-                          child: Text(
-                            fechaLarga(r.inicio),
-                            style: Textos.leyenda.copyWith(
-                              color: p.textSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 18,
-                          color: p.accentInk,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Flexible(
-                          child: Text(
-                            _horario,
-                            style: Textos.cuerpoFuerte.copyWith(
-                              color: p.accentInk,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                FechaYHorario(fecha: fechaLarga(r.inicio), horario: _horario),
                 if (porque != null) ...[
                   const SizedBox(height: Medidas.s8),
                   Row(

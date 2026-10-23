@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/configuracion.dart';
+import 'package:clubnahuelmosse/comun/configuracion.dart';
 import 'package:clubnahuelmosse/main.dart' as app;
 import 'package:clubnahuelmosse/sesion/firebase.dart';
 import 'package:flutter/material.dart';

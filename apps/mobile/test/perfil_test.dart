@@ -6,7 +6,7 @@ import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/usuarios/reglas_registro.dart';
+import 'package:clubnahuelmosse/comun/reglas_registro.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;

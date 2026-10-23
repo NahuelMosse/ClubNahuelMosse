@@ -1,5 +1,5 @@
 import 'package:clubnahuelmosse/comun/formato_fecha.dart';
-import 'package:clubnahuelmosse/usuarios/reglas_registro.dart';
+import 'package:clubnahuelmosse/comun/reglas_registro.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

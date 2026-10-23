@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/comun/pantalla_acceso_denegado.dart';
+import 'package:clubnahuelmosse/sesion/pantalla_acceso_denegado.dart';
 import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';

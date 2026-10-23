@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/comun/pantalla_acceso_denegado.dart';
+import 'package:clubnahuelmosse/sesion/pantalla_acceso_denegado.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

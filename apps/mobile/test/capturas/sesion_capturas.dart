@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/reservas/reserva_pendiente.dart';
+import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/admin/historial_reservas.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
