@@ -63,7 +63,7 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
-lint: sh D:/Temp/w/herramientas/lint-api-rev06.sh
+lint: sh D:/Temp/w/herramientas/ruff-mypy-api-rev06.sh apps/api/app apps/api/tests
 app-suite: sh D:/Temp/w/herramientas/flutter-app-rev06.sh
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/unit/test_capas.py tests/escenarios/test_repositorios_propios.py
 duplication-app: npx -y jscpd@4 --silent --threshold 3 apps/mobile/lib
@@ -243,3 +243,4 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L96 · 2026-10-23 · replaces: apps/api/tests/escenarios/test_requisitos_no_funcionales.py "una operación sobre usuarios o reservas sin usuario autenticado se rechaza @RNF-01-H06-02 @supuesto:RNF-01-SUP-01" · viene de REV-01 (su L28): `/health` es público (REV-01-ASM-07, REV-01-ASM-13) y el viejo lo cuenta como operación aceptada sin sesión · by: apps/api/tests/escenarios/test_requisitos_no_funcionales_con_salud.py "una operación sobre usuarios o reservas sin usuario autenticado se rechaza @RNF-01-H06-02 @supuesto:RNF-01-SUP-01"
 - L97 · 2026-10-23 · declared · K4 · apps/mobile/test/capturas/sesion_capturas.dart · el encabezado (fuentes, teléfonos y temas) es el de todas las tiras de capturas desde antes de esta card, que sólo le cambió imports
 - L98 · 2026-10-23 · kit updated 8db1c212392869ce6fa2e66b236ddbcd0538777f → af65b9f2e97ac6a23c91e822a08900ac6b2390fe · kit 6.5.6: sufijo de ataques fuera de valores con formato
+- L99 · 2026-10-23 · `lint:` corre por `ruff-mypy-api-rev06.sh`, que nombra lo que cubre: required.mjs sólo cuenta como linter un comando que dice ruff y las carpetas
