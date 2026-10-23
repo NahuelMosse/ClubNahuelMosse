@@ -848,3 +848,4 @@ Reserva anulada                Error al anular
 - L38 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_contrato_publicado_con_salud.py · reemplazo de test_contrato_publicado.py (congelado) y gemelo de test_requisitos_no_funcionales_con_salud.py (REV-01): cada uno repite el cuerpo del test que sustituye
 - L39 · 2026-10-23 · declared · K4 · apps/mobile/test/anular_desde_el_detalle_test.dart · tests con tag @REV-08 ya congelados (L14) que comparten montaje con cancelacion_forzosa_test.dart y editar_sede_test.dart (también congelados) y entre sus propios casos; no se pueden editar
 - L40 · 2026-10-23 · kit updated 84b012c6b61f3235df5e6d5637a5070deedf29b7 → 657ff3db69738f58a980615b84f7264952c0c979 · kit 6.4.0: design() fuera de Dart y arranque de la app
+- L41 · 2026-10-23 · kit updated 657ff3db69738f58a980615b84f7264952c0c979 → d156187c5be754b71de317ed01fe9b933cca5ad0 · kit 6.5.0: mutación de Dart

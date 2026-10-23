@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "e364e25d7702257fe5792280bb5006c76e14d0f4f9bb5c69909dc31fa69576b1"
+    "sha256": "63f8cb025144488a263eb4aeb8c65978d1f9cc6e68b216122b12fa8809ac157e"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1369,7 +1369,7 @@
   },
   ".claude/tools/mutate.mjs": {
     "module": "core",
-    "sha256": "f62d1178c34af83a5f13a0618947be186953820aebfee4da9b9f3c96e30ff6b7"
+    "sha256": "75dd0d0a837d4ae6fc59a5367a6510d886108393878c6d14a3e5e0bec15a0a26"
   },
   ".claude/tools/once.mjs": {
     "module": "core",
