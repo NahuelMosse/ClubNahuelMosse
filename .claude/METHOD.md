@@ -1,8 +1,7 @@
 # SDD method
 
 **The Jira card is the specification. Nothing is assumed in silence: what is assumed is declared, numbered (`<ID>-ASM-NN`) and tied to a test.**
-The kit is in English; the work (card, tests, commits, PR) speaks the repo's language. Headings, IDs and tags stay in English. Read nothing else of the kit.
-
+The kit is in English; the work (card, tests, commits, PR) speaks the repo's language. Headings, IDs and tags stay in English.
 ## The flow
 
 1. **`/card <ID>`.** Before `card.md`, one batch of at most 3 parallel calls, ~10k tokens (`git ls-files`, `Grep`, the files the card names); no test or whole file. Bring the whole requirement: Jira over MCP (description, comments, attachments, links; or the `archivist`),
@@ -30,7 +29,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
      failing for the right reason, **committed before any code**; then the code; then the gate.
    - **large:** one `builder` per group of `## Tasks`, prompted with only the path of `card.md`, its task IDs and `S#`, and the gate command. Wait with **one**
      call, `node .claude/tools/wait.mjs --agent <id> --max 570`, repeated only if it expires; meanwhile run nothing.
-   - Visual lens: with the tests green, one `designer` does 2-3 capture rounds against `ref/` (`rondas.md`); without them the gate fails.
+   - Visual lens: with the tests green, one `designer` does 2-3 capture rounds against `ref/` (`rondas.md`), or the gate fails.
    - An `S#` over a set («un campo», «cada», «todos») gets one planned test per member the card names.
    - Validate what comes from outside on the way in; a missing key of a closed enumeration is an error, not a default. The scope is the
      card's: an unasked control, endpoint or header is not built, it is a line `OUT · <what>` in the Log.
@@ -53,7 +52,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 - **One `Write` per file, not ten `Edit`s.** Never `sed -i` or `node -e` to change a file: the guards do not see them.
 - **One wait per agent or process** (`wait.mjs`; its last line `<tool>: exit <N> in <X> min` ends it). No polling, no `sleep`.
   Nothing over ~30 s runs in the foreground: background with a log, read with `Grep`.
-- **A subagent only from the table below.** Never `general-purpose`. What decides is never delegated to a Sonnet.
+- **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
 - **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
 - **Context caps:** `context-cap` warns a builder, grunt or designer at 90k, stops it at 120k: commit, `specs/<card>/handoff.md`, a fresh one. Never the main thread.
@@ -64,6 +63,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 |---|---|
 | Builds a group of tasks (RED, code, gate) of a large card | `builder` |
 | Capture rounds of a `(presentation)` screen against its `ref/`, after the builder | `designer` |
+| Critiques the look after the designer (`visual`, `production`) | `design-critic` (Opus) |
 | Judges the plan at high (`PLAN`, 12 turns) against the lenses of `risk.json`; writes `judge.md`, does not fix | `judge` (Opus) |
 | Fetches the requirement from Jira and freezes it | `archivist` |
 | Sweeps more than two files | `scout` |
@@ -73,9 +73,9 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 
 ## What does not depend on your good will
 
-Hooks block, and also when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (one plan judge, only at high; no code judge, no `FIX`), `require-bar` (cap, Specs, Tasks, Gate before code),
-`time-cap` (warns at 70 % of `cap:`, stops at 100 %), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`. If one stops you, read its message; do not look for a way around.
-What you open, you close, by PID.
+Hooks block, even when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (one plan judge, only at high; no code judge, no `FIX`), `require-bar` (cap, Specs, Tasks, Gate before code),
+`time-cap` (warns at 70 % of `cap:`, stops at 100 %), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`. If one stops you, read its message; do not go around it.
+What you open, you close.
 
 ## Where the scenario tests live
 
