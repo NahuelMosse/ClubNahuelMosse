@@ -1215,3 +1215,4 @@ Componentes del Sistema de Diseño Utilizados
 - L30 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_seguridad_api.py:84-94 (vs tests/integracion/conftest.py:22-32) · test congelado con tags, no se puede editar
 - L31 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_seguridad_api.py:130-139 (vs test_seguridad_entradas_extra.py:199-208) · test congelado con tags, no se puede editar
 - L32 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_requisitos_no_funcionales.py:168 (vs el reemplazo test_requisitos_no_funcionales_con_salud.py:19) · test congelado con tags, no se puede editar
+- L33 · 2026-10-23 · kit updated 720d5e70b54968dbbdd1989cc041eb6fa1089c43 → 1594a34f3e4027e9e7085fad559488f69ae6d96a · kit 6.3.1: kit 3 tags in replaces, no-visual skips design, flutter profile

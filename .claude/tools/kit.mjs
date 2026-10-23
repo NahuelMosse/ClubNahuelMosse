@@ -12,7 +12,7 @@
 //                                        a profile is a package of modules, tools, agents, references and extras
 //                                        (the skill and the MCP server of web) for one environment; on turns its
 //                                        modules on and copies its files, off turns them off and removes the files
-//                                        that are as installed; a person, no open card; flutter is planned: exit 2
+//                                        that are as installed; a person, no open card; a planned profile: exit 2
 //   kit.mjs repair                       copies what an active module lacks
 //   kit.mjs e2e <path>                   the folder of the scenario tests, in kit.json and in METHOD.md; allowed
 //                                        with a card open, because a wrong folder is found while one is
@@ -225,8 +225,17 @@ export const filesOfModule = (map, name, all) => matching(map.modules[name].file
 // The files only a profile brings (its tools, agent, references, skill, document).
 export const filesOfProfile = (map, name, all) => matching(map.profiles?.[name]?.files ?? [], all);
 
-// The profile that owns a file: none means a module or the base.
-export const profileOfFile = (map, file) => Object.keys(map?.profiles ?? {}).find((p) => filesOfProfile(map, p, [file]).length) ?? null;
+// The files a profile copies out of .claude/ into the repo: `{ from, to }`, as `copies` declares them.
+export const copiesOfProfile = (map, name) => map.profiles?.[name]?.copies ?? [];
+
+export const profileListsFile = (map, name, file) => filesOfProfile(map, name, [file]).length > 0 || copiesOfProfile(map, name).some((c) => c.to === file);
+
+// The profile that owns a file: none means a module or the base. A file two profiles list belongs to
+// the first of `prefer` (the ones that are on) that lists it.
+export const profileOfFile = (map, file, prefer = []) => {
+  const names = Object.keys(map?.profiles ?? {});
+  return [...prefer.filter((p) => names.includes(p)), ...names].find((p) => profileListsFile(map, p, file)) ?? null;
+};
 
 // Of the core's stack profiles, only the chosen one stays; the one a module owns comes with the module.
 export const forStack = (map, files, stack) => {
@@ -576,6 +585,14 @@ const turnProfile = (root, mode, name, reason) => {
     const { copied, kept } = copyFiles(source, root, files);
     manifest.files ??= {};
     for (const f of [...copied, ...files.filter((x) => !kept.includes(x) && existsSync(join(root, x)))]) manifest.files[f] = { module: `profile:${name}`, sha256: sha256(join(root, f)) };
+    for (const { from, to } of copiesOfProfile(sourceMap, name)) {
+      const dest = join(root, to);
+      if (existsSync(dest)) { if (sha256(dest) !== sha256(join(source, from))) kept.push(to); else manifest.files[to] = { module: `profile:${name}`, sha256: sha256(dest) }; continue; }
+      mkdirSync(dirname(dest), { recursive: true });
+      copyFileSync(join(source, from), dest);
+      copied.push(to);
+      manifest.files[to] = { module: `profile:${name}`, sha256: sha256(dest) };
+    }
     const mcp = mcpAdd(root, p.mcp);
     manifest.profiles[name] = { state: 'on', since: `kit.mjs profile on ${today()}`, reason, ...(Object.keys(mcp).length ? { mcp } : {}) };
     writeManifest(root, manifest);
@@ -594,6 +611,8 @@ const turnProfile = (root, mode, name, reason) => {
   for (const [f, rec] of Object.entries(manifest.files ?? {}).filter(([, r]) => r.module === `profile:${name}`)) {
     const path = join(root, f);
     if (!existsSync(path)) { delete manifest.files[f]; continue; }
+    const other = Object.keys(state.map.profiles ?? {}).find((n) => n !== name && manifest.profiles?.[n]?.state === 'on' && profileListsFile(state.map, n, f));
+    if (other) { manifest.files[f] = { ...rec, module: `profile:${other}` }; continue; }
     if (sha256(path) === rec.sha256) { removeInstalled(root, f); removed.push(f); delete manifest.files[f]; } else modified.push(f);
   }
   const mcp = mcpRemove(root, manifest.profiles?.[name]?.mcp);
@@ -640,14 +659,22 @@ const repair = (root) => {
   const source = sourceOf(root, state.manifest);
   const sourceMap = readModules(source);
   const all = listKit(source);
+  const profilesOn = Object.entries(profileStates(root)).filter(([, s]) => s.state === 'on').map(([name]) => name);
   const wanted = [
     ...coreFiles(sourceMap, all, state.manifest.stack),
     ...[...state.on].flatMap((name) => filesOfModule(sourceMap, name, all)),
-    ...Object.entries(profileStates(root)).filter(([, s]) => s.state === 'on').flatMap(([name]) => filesOfProfile(sourceMap, name, all)),
+    ...profilesOn.flatMap((name) => filesOfProfile(sourceMap, name, all)),
   ];
   const { copied, kept } = copyFiles(source, root, wanted.filter((f) => !existsSync(join(root, f))));
   state.manifest.files ??= {};
-  for (const f of copied) state.manifest.files[f] = { module: modulesOfFile(sourceMap, f, all)[0] ?? (profileOfFile(sourceMap, f) ? `profile:${profileOfFile(sourceMap, f)}` : 'core'), sha256: sha256(join(root, f)) };
+  for (const f of copied) state.manifest.files[f] = { module: modulesOfFile(sourceMap, f, all)[0] ?? (profileOfFile(sourceMap, f, profilesOn) ? `profile:${profileOfFile(sourceMap, f, profilesOn)}` : 'core'), sha256: sha256(join(root, f)) };
+  for (const { from, to } of profilesOn.flatMap((name) => copiesOfProfile(sourceMap, name))) {
+    if (existsSync(join(root, to))) continue;
+    mkdirSync(dirname(join(root, to)), { recursive: true });
+    copyFileSync(join(source, from), join(root, to));
+    copied.push(to);
+    state.manifest.files[to] = { module: `profile:${profileOfFile(sourceMap, to, profilesOn)}`, sha256: sha256(join(root, to)) };
+  }
   writeManifest(root, state.manifest);
   console.log(copied.length ? `Restored ${copied.length} missing file(s): ${copied.join(', ')}.` : 'Nothing is missing.');
   if (kept.length) console.log(`Left as they are: ${kept.join(', ')}.`);

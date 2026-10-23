@@ -8,7 +8,7 @@ import { writeSync } from 'node:fs';
 export const FINAL_LINE = /^\S+: exit (-?\d+) in \d+(?:\.\d+)? min$/;
 
 // The tools that write the line (those that call `endsWithLine`).
-const TOOLS = 'verify|mutate|attack|repeat|probe|pairs|showreel|release';
+const TOOLS = 'verify|mutate|attack|repeat|probe|pairs|showreel|release|flutter-gate';
 const TOOL_LINE = new RegExp(`^(?:${TOOLS}): exit (-?\\d+) in \\d+(?:\\.\\d+)? min$`);
 
 // The fixed line of a log, or null. The LAST occurrence anywhere counts, not only the last line of the log: callers
