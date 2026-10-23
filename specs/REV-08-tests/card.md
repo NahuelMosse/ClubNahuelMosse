@@ -67,8 +67,6 @@ lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/escena
 app-suite: cd apps/mobile && flutter analyze && flutter test
 scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_suite_confiable.py
 mutate apps/api/app/aplicacion/reservas.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_casos_de_uso_reservas.py
-mutate apps/mobile/lib/api/cliente_api.dart [timeout 90 min]: cd apps/mobile && flutter test test/rutas_de_la_api_test.dart
-mutate apps/mobile/lib/api/rutas.dart [timeout 90 min]: cd apps/mobile && flutter test test/rutas_de_la_api_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev08_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh rev08_app --json --no-ambient --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --read /reservas/todas
 ```
@@ -843,3 +841,9 @@ Reserva anulada                Error al anular
 - L31 · 2026-10-23 · kit updated 720d5e70b54968dbbdd1989cc041eb6fa1089c43 → 1594a34f3e4027e9e7085fad559488f69ae6d96a · kit 6.3.1: kit 3 tags in replaces, no-visual skips design, flutter profile
 - L32 · 2026-10-23 · replaces: apps/api/tests/escenarios/test_contrato_publicado.py "una operación sobre usuarios o reservas sin usuario autenticado se rechaza con 401 @RNF-01-H06-02" · tras el rebase sobre REV-01, /health es público (REV-01-ASM-07) y el test lo cuenta como protegida · by: apps/api/tests/escenarios/test_contrato_publicado_con_salud.py "toda operación de la API sin usuario salvo las públicas se rechaza con 401"
 - L33 · 2026-10-23 · T-rebase · rebase sobre card/REV-01 (kit 6.3.3, openapi.json de REV-01); pytest de los 3 archivos REV-08 y el reemplazo nuevo: pasan los reemplazos, fallan solo los 5 tests viejos ya reemplazados (L17-L21) y el de /health (L32)
+- L34 · 2026-10-23 · se quitan de `## Gate` los `mutate` de cliente_api.dart y rutas.dart: `mutate.mjs` sale 4 «has no Dart operators» con cualquier comando; la mutación de ambos queda en `## Could not run`
+- L35 · 2026-10-23 · replaces: apps/api/tests/escenarios/test_requisitos_no_funcionales.py "toda operación de la API sin usuario autenticado se rechaza" · /health es público (REV-01-ASM-07); ya lo reemplazó REV-01 (su L28) · by: apps/api/tests/escenarios/test_requisitos_no_funcionales_con_salud.py "toda operación de la API sin usuario autenticado se rechaza"
+- L36 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_suite_confiable_reemplazos.py · repite tramos de test_suite_confiable.py (congelado, reemplazado L17-L21); el reemplazo conserva la misma preparación del test que sustituye
+- L37 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_suite_confiable.py · sus tramos repiten test_suite_confiable_reemplazos.py, apps/api/tests/integracion/conftest.py (REV-01) y test_cancelacion_forzosa.py; los tres son tests congelados con tag y no se pueden editar
+- L38 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_contrato_publicado_con_salud.py · reemplazo de test_contrato_publicado.py (congelado) y gemelo de test_requisitos_no_funcionales_con_salud.py (REV-01): cada uno repite el cuerpo del test que sustituye
+- L39 · 2026-10-23 · declared · K4 · apps/mobile/test/anular_desde_el_detalle_test.dart · tests con tag @REV-08 ya congelados (L14) que comparten montaje con cancelacion_forzosa_test.dart y editar_sede_test.dart (también congelados) y entre sus propios casos; no se pueden editar
