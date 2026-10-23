@@ -1,30 +1,16 @@
 # Handoff · REV-06 S5 · duplicación de la app
 
-Alcance: NO tocar `apps/api/app` (lo extrae REV-01). Sólo `apps/mobile/lib` bajo 3 % y las líneas `declared · K4` del Log.
+Alcance: NO tocar `apps/api/app`. Sólo `apps/mobile/lib` bajo 3 % y las líneas del Log. PATH="/d/projects/flutter/bin:$PATH". No correr verify ni push.
 
-## Hecho (commiteado)
-- 5,64 % -> 4,75 % (837 de 17617 líneas, 71 clones). Meta: menos de ~528 líneas duplicadas (apuntar a ~480): faltan ~310.
-- `comun/campo_texto.dart`: widget `MensajeDeCampo` (usado por `selector.dart`).
-- `comun/fallo_de_carga.dart`: `avisarFalloDeCarga(context, sesion, vencida, error, reintentar, alVencer)`.
-- `admin/listado_admin.dart`: `EncabezadoAdmin`, `PlantillaListadoAdmin`, `cabeceraDeListadoAdmin`, `TarjetaAdmin`; usados por espacios_admin, sedes_admin y panel_admin (encabezado + fallo).
-- `flutter analyze lib` sin problemas; `flutter test test/admin` verde (test/comun no existe). T4 de card.md ya lista estos archivos.
+## Hecho (commiteado; 5,64 % -> 4,75 % -> 4,09 % -> 3,14 % medido antes del último commit)
+- Commit 0ecd5cc (3,4 %, analyze limpio): `reservas/cancelacion.dart` (`cancelarConAvisos`, `abrirModificar`) usado por pantalla_inicio y pantalla_mis_reservas; `comun/formulario_contrasena.dart` (`campoDeContrasena`, `ContrasenaActualizada`, `PlantillaDeContrasena`) usado por nueva_contrasena y cambiar_contrasena; `sesion/fallo_de_carga.dart` suma `avisarFalloDeEnvio` (usado en cambiar_contrasena y mi_perfil).
+- Último commit (SIN analizar ni medir): `UsuarioDeReserva` en `comun/tarjeta_reserva.dart` y `FechaYHorario` en detalle_reserva; `InsigniaDeEstado` en `comun/insignia.dart` (estado_reserva_chip y mis_reservas); `MarcoDeDialogo` + `CirculoDeIcono` públicos en `comun/dialogo_error.dart` (usados por `_Modal` y `_ConfirmarBaja` de mi_perfil). Medido 3,14 % (553 líneas) justo antes de dialogo_error/mi_perfil; falta bajar de ~530 líneas.
 
-## Hecho en la segunda tanda (4,75 % -> 4,09 %, 720 líneas; faltan ~240 para ~480)
-- `comun/marco_de_tarjeta.dart` (`MarcoDeTarjeta`), usado en pantalla_sede y reserva_confirmada.
-- confirmar_reserva.dart: `EsqueletoDeConfirmacion`, `TarjetaDeEleccion`, `avisarReservaRechazada`; confirmar_cambio los usa.
-- `fallo_de_carga.dart` pasó a `sesion/` (comun sólo puede importar api y tema); inicio y mis_reservas lo usan.
-- `flutter analyze lib` limpio; verdes: arquitectura, reservar, modificar_reserva, mis_reservas, inicio. Corrida completa sin capturas: sólo fallaban las 2 de arquitectura (ya arregladas).
-- Siguiente planeado: `MarcoDeDialogo`/`CirculoDeIcono` públicos en dialogo_error.dart para anular y `_ConfirmarBaja` (mi_perfil); `MensajeDeCampo` en dialogo_anular_reserva (170-186); luego los ítems 3-5 de abajo.
-
-## Pendiente, por ahorro (los 1 y 2 están hechos)
-1. `reservas/pantalla_confirmar_cambio.dart` vs `pantalla_confirmar_reserva.dart` (~80 líneas): extraer en confirmar_reserva.dart un `EsqueletoDeConfirmacion` (PopScope+Scaffold+BarraSuperior+pie con BotonPrimario/BotonContorno+ListView con PasosDeReserva), `TarjetaDeEleccion(eleccion, filas)` (foto + filas + Divider + FilaDeTotal) y un helper del snackbar de `ReservaRechazada`.
-2. Marco de tarjeta repetido (`Container clip antiAlias, bgSurfaceRaised, radioLg, borderDefault`, 20 usos): un `MarcoDeTarjeta` en `comun/` resuelve sede.dart:621, cambio:172, etc.
-3. `inicio/pantalla_inicio.dart` vs `reservas/pantalla_mis_reservas.dart` (26, 21, 15, 13, 11, 11, 10) y vs `usuarios/pantalla_mi_perfil.dart` (11).
-4. `sesion/pantalla_nueva_contrasena.dart` vs `usuarios/pantalla_cambiar_contrasena.dart` (20, 15) y vs `pantalla_mi_perfil.dart` (14, 10), `pantalla_recuperar_contrasena` (10).
-5. `admin/pantalla_alta_espacio.dart` / `pantalla_editar_espacio.dart` / `pantalla_formulario_sede.dart` (16, 15, 17, 11, 20, y vs sedes/notificaciones ~15 c/u), `admin/pantalla_detalle_reserva.dart` vs panel_admin/tarjeta_reserva (20, 9, 12, 21), `admin/historial_reservas.dart` vs `reservas/reservas.dart` (15, 16, 15, 7), `admin/dialogo_anular_reserva.dart` vs `dialogo_error.dart` / `pantalla_mi_perfil.dart` (24, 10), `estado_reserva_chip.dart` vs mis_reservas (18), `comun/boton.dart` vs `barra_inferior.dart` (14), `app.dart` (12), `sesion.dart` internos.
-6. Cada archivo de producción tocado va a la línea T4 de card.md con `(presentation)`.
-7. Líneas `declared · K4` en el Log, una por clon con un lado test congelado (lista: `/tmp/gate-final-rev06.log`, líneas `required: failed: K4` de `tests/`): `- L<n> · declared · K4 · <archivo>:<líneas> · test congelado con tags, no se puede editar`. No hechas.
-8. Al final: una línea de Log con porcentajes antes/después (5,64 % -> X %), `flutter test` completo incluido `test/capturas` en background (PATH="/d/projects/flutter/bin:$PATH", log `/tmp/rev06-dup2-<n>.log`). No correr verify ni push.
-
-## Medir
-`npx -y jscpd@4 --silent --reporters json --output /tmp/rev06-dup2-jm apps/mobile/lib` y `node D:/Temp/rev06-list.cjs D:/Temp/rev06-dup2-jm/jscpd-report.json` (en `D:\Temp\rev06-dup2-jm`). `--threshold` solo hace fallar con exit; con `--silent` el reporte de consola no sale en este equipo.
+## Siguiente
+1. `cd apps/mobile && flutter analyze lib` y arreglar (imports sin usar en detalle_reserva, panel_admin, mi_perfil, estado_reserva_chip: este último usa `tokens.dart` para `paleta`).
+2. `admin/dialogo_anular_reserva.dart` (SIN editar aún): reemplazar el `Dialog(...)` de `build` (líneas ~69-207) por `MarcoDeDialogo(anchoMaximo: 360, hijos: [...])` con `CirculoDeIcono(icono: Icons.warning_amber_rounded, fondo: p.stateDangerMuted, tinta: p.stateDangerInk)` y `const MensajeDeCampo(motivoObligatorio)` (de comun/campo_texto.dart) en lugar del Semantics liveRegion (170-194). Importar comun/dialogo_error.dart y campo_texto.dart.
+3. Medir: `rm -rf /d/Temp/rev06-dup3; npx -y jscpd@4 --silent --reporters json --output /d/Temp/rev06-dup3 apps/mobile/lib; node D:/Temp/rev06-list.cjs D:/Temp/rev06-dup3/jscpd-report.json` (primera línea = porcentaje; el resto, clones; `sort -rn` para ordenar). Meta < 3 % (< ~530 líneas; apuntar a ~480). Clones grandes que quedan: inicio:100-122 vs mis_reservas:109-131 (23), detalle_reserva:219-238 vs panel_admin:561-580 (20), editar_espacio:204-220 vs formulario_sede:383-399 (17), alta_espacio:279-294 vs editar_espacio:102-117 (16), historial_reservas vs reservas.dart (16, 15, 15), alta_espacio:430-444 vs editar_espacio:220-234 (15), barra_inferior:80-93 vs boton:194-207 (14), espacios_admin:69-82 vs sedes_admin:68-81 (14), cambiar_contrasena:104-117 vs mi_perfil:486-499 (14).
+4. Línea T4 de card.md: agregar cada archivo de lib tocado con `(presentation)`: reservas/cancelacion.dart, comun/formulario_contrasena.dart, comun/insignia.dart, comun/tarjeta_reserva.dart, comun/dialogo_error.dart, sesion/fallo_de_carga.dart, inicio/pantalla_inicio.dart, reservas/pantalla_mis_reservas.dart, sesion/pantalla_nueva_contrasena.dart, usuarios/pantalla_cambiar_contrasena.dart, usuarios/pantalla_mi_perfil.dart, admin/pantalla_detalle_reserva.dart, admin/pantalla_panel_admin.dart, admin/estado_reserva_chip.dart (+ los que se toquen).
+5. Log (append al final de `## Log` de card.md): líneas `- L<n> · declared · K4 · <archivo congelado>:<líneas> · test congelado con tags, no se puede editar`, una por clon `required: failed: K4` de `tests/` en `/tmp/gate-final-rev06.log`; y una línea con porcentajes 5,64 % -> X %.
+6. `flutter test` completo con `test/capturas` (goldens) en background a `/tmp/rev06-dup4-<n>.log`; esperar con `node .claude/tools/wait.mjs <log> --max 570`. Si un golden falla por cambio visual, revisar lo extraído (en particular `MarcoDeDialogo`, `PlantillaDeContrasena`).
+7. Reportar: porcentaje, tests, commits, lo que falte.

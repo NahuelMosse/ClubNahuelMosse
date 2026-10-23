@@ -7,6 +7,7 @@ import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
+import '../comun/insignia.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
@@ -654,19 +655,10 @@ class _Estado extends StatelessWidget {
       EstadoDeReserva.anulada => (p.stateDangerMuted, p.stateDangerInk),
       _ => (p.bgSurface, p.textSecondary),
     };
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Medidas.s8,
-        vertical: Medidas.s4,
-      ),
-      decoration: BoxDecoration(
-        color: fondo,
-        borderRadius: BorderRadius.circular(Medidas.radioPill),
-      ),
-      child: Text(
-        estado.name.toUpperCase(),
-        style: Textos.sobretitulo.copyWith(color: tinta),
-      ),
+    return InsigniaDeEstado(
+      texto: estado.name.toUpperCase(),
+      fondo: fondo,
+      tinta: tinta,
     );
   }
 }

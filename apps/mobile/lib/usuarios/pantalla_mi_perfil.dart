@@ -657,60 +657,37 @@ class _ConfirmarBaja extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return Dialog(
-      backgroundColor: p.bgSurfaceRaised,
-      insetPadding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        side: BorderSide(color: p.borderDefault),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(Medidas.s24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: p.stateDangerMuted,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.warning_amber_rounded,
-                  size: 28,
-                  color: p.stateDangerInk,
-                ),
-              ),
-            ),
-            const SizedBox(height: Medidas.s12),
-            Text(
-              '¿Eliminar tu cuenta?',
-              textAlign: TextAlign.center,
-              style: Textos.h2.copyWith(color: p.textPrimary),
-            ),
-            const SizedBox(height: Medidas.s12),
-            Text(
-              'Esta acción es permanente. Se eliminarán tus datos y tus reservas '
-              'vigentes.',
-              textAlign: TextAlign.center,
-              style: Textos.cuerpo.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: Medidas.s12),
-            BotonPeligro(
-              texto: 'ELIMINAR CUENTA',
-              alTocar: () => Navigator.of(context).pop(true),
-            ),
-            const SizedBox(height: Medidas.s8),
-            BotonContorno(
-              texto: 'CANCELAR',
-              alTocar: () => Navigator.of(context).pop(false),
-            ),
-          ],
+    return MarcoDeDialogo(
+      hijos: [
+        CirculoDeIcono(
+          icono: Icons.warning_amber_rounded,
+          fondo: p.stateDangerMuted,
+          tinta: p.stateDangerInk,
         ),
-      ),
+        const SizedBox(height: Medidas.s12),
+        Text(
+          '¿Eliminar tu cuenta?',
+          textAlign: TextAlign.center,
+          style: Textos.h2.copyWith(color: p.textPrimary),
+        ),
+        const SizedBox(height: Medidas.s12),
+        Text(
+          'Esta acción es permanente. Se eliminarán tus datos y tus reservas '
+          'vigentes.',
+          textAlign: TextAlign.center,
+          style: Textos.cuerpo.copyWith(color: p.textSecondary),
+        ),
+        const SizedBox(height: Medidas.s12),
+        BotonPeligro(
+          texto: 'ELIMINAR CUENTA',
+          alTocar: () => Navigator.of(context).pop(true),
+        ),
+        const SizedBox(height: Medidas.s8),
+        BotonContorno(
+          texto: 'CANCELAR',
+          alTocar: () => Navigator.of(context).pop(false),
+        ),
+      ],
     );
   }
 }

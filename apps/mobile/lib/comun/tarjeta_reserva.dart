@@ -3,6 +3,30 @@ import 'package:flutter/material.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
+/// Quién reservó, con su ícono.
+class UsuarioDeReserva extends StatelessWidget {
+  const UsuarioDeReserva({super.key, required this.usuario});
+
+  final String usuario;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    return Row(
+      children: [
+        Icon(Icons.person_outline, size: 16, color: p.textSecondary),
+        const SizedBox(width: Medidas.s8),
+        Expanded(
+          child: Text(
+            usuario,
+            style: Textos.cuerpo.copyWith(color: p.textPrimary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// El día y el horario de una reserva, con su ícono cada uno; los dos van en la misma línea
 /// y pasan a la siguiente si no entran.
 class FechaYHorario extends StatelessWidget {

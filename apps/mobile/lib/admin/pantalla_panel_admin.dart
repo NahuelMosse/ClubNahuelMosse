@@ -595,22 +595,7 @@ class _TarjetaReservaAdmin extends StatelessWidget {
                       style: Textos.leyenda.copyWith(color: p.textSecondary),
                     ),
                     const SizedBox(height: Medidas.s12),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 16,
-                          color: p.textSecondary,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Expanded(
-                          child: Text(
-                            r.usuario,
-                            style: Textos.cuerpo.copyWith(color: p.textPrimary),
-                          ),
-                        ),
-                      ],
-                    ),
+                    UsuarioDeReserva(usuario: r.usuario),
                     const SizedBox(height: Medidas.s8),
                     Text(
                       r.espacio,

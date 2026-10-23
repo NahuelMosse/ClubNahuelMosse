@@ -274,6 +274,88 @@ class _Modal extends StatelessWidget {
     final p = context.paleta;
     final accionPrincipal = principal;
     final accionSecundaria = secundaria;
+    return MarcoDeDialogo(
+      anchoMaximo: 320,
+      hijos: [
+        CirculoDeIcono(
+          icono: icono,
+          fondo: exito ? p.stateSuccessMuted : p.stateDangerMuted,
+          tinta: exito ? p.stateSuccessInk : p.stateDangerInk,
+        ),
+        const SizedBox(height: Medidas.s12),
+        Text(
+          titulo,
+          textAlign: TextAlign.center,
+          style: Textos.h2.copyWith(color: p.textPrimary),
+        ),
+        const SizedBox(height: Medidas.s12),
+        Text(
+          texto,
+          textAlign: TextAlign.center,
+          style: Textos.cuerpo.copyWith(color: p.textSecondary),
+        ),
+        const SizedBox(height: Medidas.s12),
+        if (accionPrincipal != null)
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(
+              backgroundColor: principalPeligro ? p.stateDanger : p.accentBase,
+              foregroundColor: principalPeligro
+                  ? textoSobre(p.stateDanger, p)
+                  : p.accentOn,
+              minimumSize: const Size.fromHeight(Medidas.altoControl),
+              shape: const StadiumBorder(),
+              textStyle: Textos.boton,
+            ),
+            child: Text(accionPrincipal, textAlign: TextAlign.center),
+          ),
+        if (accionPrincipal != null && accionSecundaria != null)
+          const SizedBox(height: Medidas.s8),
+        if (accionSecundaria != null && secundariaContorno)
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: p.textPrimary,
+              side: BorderSide(color: p.borderControl),
+              minimumSize: const Size.fromHeight(Medidas.altoControl),
+              shape: const StadiumBorder(),
+              textStyle: Textos.boton,
+            ),
+            child: Text(accionSecundaria),
+          )
+        else if (accionSecundaria != null)
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              foregroundColor: p.accentInk,
+              minimumSize: const Size.fromHeight(Medidas.altoControl),
+              textStyle: Textos.boton,
+            ),
+            child: Text(accionSecundaria),
+          ),
+      ],
+    );
+  }
+}
+
+/// El marco de un diálogo: la tarjeta con [hijos] apilados. Con [anchoMaximo] el contenido
+/// se acota y se desliza si no entra; sin él ocupa el ancho del diálogo.
+class MarcoDeDialogo extends StatelessWidget {
+  const MarcoDeDialogo({super.key, required this.hijos, this.anchoMaximo});
+
+  final List<Widget> hijos;
+  final double? anchoMaximo;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.paleta;
+    const relleno = EdgeInsets.all(Medidas.s24);
+    final columna = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: hijos,
+    );
+    final ancho = anchoMaximo;
     return Dialog(
       backgroundColor: p.bgSurfaceRaised,
       insetPadding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
@@ -281,86 +363,36 @@ class _Modal extends StatelessWidget {
         borderRadius: BorderRadius.circular(Medidas.radioLg),
         side: BorderSide(color: p.borderDefault),
       ),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(Medidas.s24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: exito ? p.stateSuccessMuted : p.stateDangerMuted,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icono,
-                    size: 28,
-                    color: exito ? p.stateSuccessInk : p.stateDangerInk,
-                  ),
-                ),
-              ),
-              const SizedBox(height: Medidas.s12),
-              Text(
-                titulo,
-                textAlign: TextAlign.center,
-                style: Textos.h2.copyWith(color: p.textPrimary),
-              ),
-              const SizedBox(height: Medidas.s12),
-              Text(
-                texto,
-                textAlign: TextAlign.center,
-                style: Textos.cuerpo.copyWith(color: p.textSecondary),
-              ),
-              const SizedBox(height: Medidas.s12),
-              if (accionPrincipal != null)
-                FilledButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: principalPeligro
-                        ? p.stateDanger
-                        : p.accentBase,
-                    foregroundColor: principalPeligro
-                        ? textoSobre(p.stateDanger, p)
-                        : p.accentOn,
-                    minimumSize: const Size.fromHeight(Medidas.altoControl),
-                    shape: const StadiumBorder(),
-                    textStyle: Textos.boton,
-                  ),
-                  child: Text(accionPrincipal, textAlign: TextAlign.center),
-                ),
-              if (accionPrincipal != null && accionSecundaria != null)
-                const SizedBox(height: Medidas.s8),
-              if (accionSecundaria != null && secundariaContorno)
-                OutlinedButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: p.textPrimary,
-                    side: BorderSide(color: p.borderControl),
-                    minimumSize: const Size.fromHeight(Medidas.altoControl),
-                    shape: const StadiumBorder(),
-                    textStyle: Textos.boton,
-                  ),
-                  child: Text(accionSecundaria),
-                )
-              else if (accionSecundaria != null)
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  style: TextButton.styleFrom(
-                    foregroundColor: p.accentInk,
-                    minimumSize: const Size.fromHeight(Medidas.altoControl),
-                    textStyle: Textos.boton,
-                  ),
-                  child: Text(accionSecundaria),
-                ),
-            ],
-          ),
-        ),
-      ),
+      child: ancho == null
+          ? Padding(padding: relleno, child: columna)
+          : ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: ancho),
+              child: SingleChildScrollView(padding: relleno, child: columna),
+            ),
     );
   }
+}
+
+/// El círculo de 64 con el ícono de un aviso.
+class CirculoDeIcono extends StatelessWidget {
+  const CirculoDeIcono({
+    super.key,
+    required this.icono,
+    required this.fondo,
+    required this.tinta,
+  });
+
+  final IconData icono;
+  final Color fondo;
+  final Color tinta;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(color: fondo, shape: BoxShape.circle),
+      child: Icon(icono, size: 28, color: tinta),
+    ),
+  );
 }
