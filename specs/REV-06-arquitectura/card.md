@@ -227,3 +227,4 @@ Las dudas van directo a `REV-NN-ASM-NN`. Lo que decide sólo una persona queda c
 - L80 · declared · K4 · apps/api/tests/escenarios/test_cancelacion_forzosa.py:301-309 y test_cancelacion_forzosa_reglas.py:12-21 · test congelado con tags, no se puede editar
 - L81 · declared · K4 · apps/api/tests/escenarios/test_cancelacion_forzosa.py:320-328 y test_cancelacion_forzosa_reglas.py:12-21 · test congelado con tags, no se puede editar
 - L82 · declared · K4 · apps/api/tests/escenarios/test_alta_espacio.py:15-31 y test_historial_reservas.py:12-28 · test congelado con tags, no se puede editar
+- L83 · 2026-10-23 · kit updated 720d5e70b54968dbbdd1989cc041eb6fa1089c43 → 1594a34f3e4027e9e7085fad559488f69ae6d96a · kit 6.3.1: kit 3 tags in replaces, no-visual skips design, flutter profile
