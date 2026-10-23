@@ -72,19 +72,19 @@ Cada spec cita un escenario de la card tal como está escrito. Un test lleva su 
 ## Gate
 
 ```
-suite: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider
+suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . && uv run --no-sync ruff format --check app migraciones tests/escenarios/test_datos.py && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios --card REV-03
-migrate-upgrade: uv run --directory apps/api --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_datos.py -k migracion
-mutate apps/api/app/infraestructura/reservas.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/escenarios/test_historial_reservas.py tests/integracion/test_historial_api.py
-mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/escenarios/test_despacho_robusto.py tests/unit/test_despacho_de_confirmaciones.py
-mutate apps/api/app/aplicacion/notificaciones.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/unit/test_despacho_de_confirmaciones.py
-mutate apps/api/app/dominio/notificaciones.py: cd apps/api && uv run --no-sync pytest -q -x tests/unit
-mutate apps/api/app/interfaz/marcador.py: cd apps/api && uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_datos.py
-mutate apps/api/app/interfaz/reservas.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/integracion/test_historial_api.py
-mutate apps/api/migraciones/versions/0008_indices_y_cola_recuperable.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_datos.py
-mutate apps/api/migraciones/env.py: cd apps/api && uv run --no-sync pytest -q -x tests/escenarios/test_datos.py
+scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios --card REV-03
+migrate-upgrade: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_datos.py -k migracion
+mutate apps/api/app/infraestructura/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/escenarios/test_historial_reservas.py tests/integracion/test_historial_api.py
+mutate apps/api/app/infraestructura/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/escenarios/test_despacho_robusto.py tests/unit/test_despacho_de_confirmaciones.py
+mutate apps/api/app/aplicacion/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/unit/test_despacho_de_confirmaciones.py
+mutate apps/api/app/dominio/notificaciones.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit
+mutate apps/api/app/interfaz/marcador.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit tests/escenarios/test_datos.py
+mutate apps/api/app/interfaz/reservas.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_datos.py tests/integracion/test_historial_api.py
+mutate apps/api/migraciones/versions/0008_indices_y_cola_recuperable.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_datos.py
+mutate apps/api/migraciones/env.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/escenarios/test_datos.py
 mutate apps/mobile/lib/reservas/reservas.dart: cd apps/mobile && flutter test test/historial_por_tandas_test.dart
 mutate apps/mobile/lib/reservas/pantalla_mis_reservas.dart: cd apps/mobile && flutter test test/historial_por_tandas_test.dart
 mutate apps/mobile/lib/admin/historial_reservas.dart: cd apps/mobile && flutter test test/historial_por_tandas_test.dart
