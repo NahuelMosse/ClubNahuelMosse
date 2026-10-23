@@ -23,7 +23,7 @@ import { createWriteStream, existsSync, mkdirSync, readFileSync, readdirSync, wr
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { launchesPlaywright, takeLock } from './browser-lock.mjs';
-import { keyOf } from './card.mjs';
+import { keyOf, shellJoin } from './card.mjs';
 
 export const DIR = join('.validation', 'once');
 
@@ -71,7 +71,7 @@ export const writeRecord = (root, { name, command, exit, minutes = 0, ...extra }
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const sep = process.argv.indexOf('--');
   const name = process.argv[2];
-  const command = sep > 0 ? process.argv.slice(sep + 1).join(' ') : '';
+  const command = sep > 0 ? shellJoin(process.argv.slice(sep + 1)) : '';
   if (!name || !command) {
     console.error('usage: node once.mjs <name> -- <command>');
     process.exit(2);

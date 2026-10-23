@@ -20,6 +20,9 @@
 // is `pytest <the file's tests>`: `-x` is added if the command has no `-x`, `--exitfirst` or `--maxfail`, and
 // `PYTHONDONTWRITEBYTECODE` is set. Give it the file's own tests, never the whole suite: the 10-minute budget below
 // refuses a suite that is slow times the number of mutants (`node .claude/tools/affected.mjs <file>` lists them).
+//
+// Dart: a `.dart` file gets `DART_OPERATORS`, against `flutter test <the file's tests>`. Use `--since` so only the lines the card
+// changed are mutated: each mutant reruns `flutter test`.
 import { readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
 import { copyTree } from './copy-tree.mjs';
 import { endsWithLine } from './final-line.mjs';
@@ -57,11 +60,7 @@ if (!file || command.length === 0) {
   process.exit(2);
 }
 
-// The operators are those of JavaScript and Python; a Dart file has none.
-if (/\.dart$/.test(file)) {
-  console.error(`${file}: could not run: mutate.mjs has no Dart operators`);
-  process.exit(4);
-}
+const isDart = /\.dart$/.test(file);
 
 // A browser suite is not a mutation suite: every mutant would rerun the whole screen suite.
 // Measured: a card mutated two screen files against 370 Playwright tests and spent five hours
@@ -92,6 +91,24 @@ const OPERATORS = [
   [/\.toLowerCase\(\)/, '.toUpperCase()'], [/\.toUpperCase\(\)/, '.toLowerCase()'],
   [/\.trim\(\)/, '.trimEnd()'], [/\.some\(/, '.every('], [/\.every\(/, '.some('],
   [/\bMath\.min\(/, 'Math.max('], [/\bMath\.max\(/, 'Math.min('],
+  [/(?<![\w.$])\d+(?:\.\d+)?(?![\w.])/, bumpNumber],
+];
+
+// Dart (.dart): those of JavaScript where Dart has them, with `==`/`!=` for equality, `contains`/`any`/`every` and
+// `min`/`max` of dart:math. `!` is mutated only as a prefix negation: the postfix null assertion (`x!`) would give a
+// mutant that does not compile, and a compile error would count as a detected mutant.
+const DART_OPERATORS = [
+  [/(?<![=!<>])==(?!=)/, '!='], [/!=(?!=)/, '=='],
+  [/>=/, '>'], [/<=/, '<'],
+  [/ > /, ' >= '], [/ < /, ' <= '],
+  [/&&/, '||'], [/\|\|/, '&&'],
+  [/ \+ /, ' - '], [/ - /, ' + '], [/ \* /, ' / '], [/ \/ /, ' * '],
+  [/\btrue\b/, 'false'], [/\bfalse\b/, 'true'],
+  [/(?<![\w)\]!=])!(?=[\w(])/, ''],
+  [/\.contains\(/, '.startsWith('], [/\.startsWith\(/, '.endsWith('], [/\.endsWith\(/, '.startsWith('],
+  [/\.toLowerCase\(\)/, '.toUpperCase()'], [/\.toUpperCase\(\)/, '.toLowerCase()'],
+  [/\.trim\(\)/, '.trimRight()'], [/\.any\(/, '.every('], [/\.every\(/, '.any('],
+  [/\bmin\(/, 'max('], [/\bmax\(/, 'min('],
   [/(?<![\w.$])\d+(?:\.\d+)?(?![\w.])/, bumpNumber],
 ];
 
@@ -200,7 +217,7 @@ lines.forEach((line, n) => {
   if (changed && !changed.has(n + 1)) return;
   if (isPy ? PY_NOISE.test(masked[n]) : !atStart[n] && isNoise(line)) return;
   const code = isPy ? masked[n] : line.replace(/\s\/\/.*$/, '');
-  for (const [from, to, applies] of isPy ? PY_OPERATORS : OPERATORS) {
+  for (const [from, to, applies] of isPy ? PY_OPERATORS : isDart ? DART_OPERATORS : OPERATORS) {
     for (const m of code.matchAll(new RegExp(from.source, 'g'))) {
       if (isPy ? applies && !applies(m[0]) : quoteAt(line, m.index, atStart[n])) continue;
       const replacement = typeof to === 'function' ? to(m[0]) : to;
