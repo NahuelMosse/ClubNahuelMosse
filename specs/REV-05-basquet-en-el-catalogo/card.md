@@ -34,11 +34,11 @@ Cada escenario lleva su tag en el test: `@REV-05-S1`.
 ## Gate
 
 ```
-suite: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider
+suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider
 lint: cd apps/api && uv run --no-sync ruff check . --extend-exclude tests/escenarios/test_basquet_3x3.py && uv run --no-sync ruff check --ignore I001 tests/escenarios/test_basquet_3x3.py && uv run --no-sync mypy --strict app
 app-suite: cd apps/mobile && flutter analyze && flutter test
-scenarios: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -p no:cacheprovider tests/escenarios/test_basquet.py
-mutate apps/api/app/dominio/espacios.py: cd apps/api && sh D:/Temp/w/herramientas/pytest-aislado.sh uv run --no-sync pytest -q -x tests/unit/test_espacios.py tests/escenarios/test_basquet.py
+scenarios: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:cacheprovider tests/escenarios/test_basquet.py
+mutate apps/api/app/dominio/espacios.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_espacios.py tests/escenarios/test_basquet.py
 mutate apps/mobile/lib/espacios/iconos.dart: cd apps/mobile && flutter test test/basquet_test.dart
 mutate apps/mobile/lib/sedes/fotos.dart: cd apps/mobile && flutter test test/basquet_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh rev05_app
