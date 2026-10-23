@@ -15,7 +15,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { NOT_PRODUCTION, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, pathTokens, relativeTo } from './card.mjs';
+import { NOT_PRODUCTION, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
 import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, sectionOf, specTagsIn } from './card-doc.mjs';
 import { closingCost } from './card-cost.mjs';
 import { specsCheck } from './gate-checks.mjs';
@@ -91,7 +91,7 @@ export const run = (root, { write = true } = {}) => {
     const diff = cardFiles(root, base);
     const outside = diff.filter((f) => !NOT_PRODUCTION.test(f) && !namedIn(map, f, root).length && !copiedFromKit(root, map, f)).map((f) => `${f} is in the diff, not in Tasks`);
     const kitFile = (t) => t.startsWith('.claude/') || (!t.includes('/') && existsSync(join(root, '.claude', 'tools', t)));
-    const named = [...new Set(map.flatMap(pathTokens).filter((t) => PLAN_FILE.test(t) && !kitFile(t)))];
+    const named = [...new Set(map.flatMap(taskTokens).filter((t) => PLAN_FILE.test(t) && !kitFile(t)))];
     const absent = named.filter((t) => !diff.some((f) => f === t || f.endsWith(`/${t}`))).map((t) => `${t} is in Tasks, not in the diff`);
     verdict(6, 'diff and Tasks agree', [...outside, ...absent], `${diff.length} files in the diff against ${base}`);
   }

@@ -62,6 +62,8 @@ export const fileMapLines = (cardDir) => {
 };
 export const pathTokens = (line) => line.split(/[\s`|,;()*]+/)
   .map((t) => t.replaceAll('\\', '/').replace(/^\.\//, '').replace(/:\d+(:\d+)?$/, '').replace(/[.:]+$/, '')).filter(Boolean);
+// The paths a Tasks line names, without its quoted test titles: a frozen title may mention a file the task does not touch.
+export const taskTokens = (line) => pathTokens(String(line).replace(/"[^"\n]*"|«[^»\n]*»/g, ' '));
 
 // The kit's own files are never the card's: they neither enter the card's diff nor make a file name
 // ambiguous.
@@ -97,7 +99,7 @@ export const namedIn = (lines, file, root = process.cwd()) => {
   };
   let unique = null;
   return lines.filter((l) => {
-    const tokens = pathTokens(l);
+    const tokens = taskTokens(l);
     if (tokens.includes(file)) return true;
     if (!tokens.includes(name)) return false;
     unique ??= byName();
