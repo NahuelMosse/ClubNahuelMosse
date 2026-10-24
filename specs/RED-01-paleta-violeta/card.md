@@ -47,7 +47,7 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
-lint: sh D:/Temp/w/herramientas/lint-mobile-red.sh
+lint: sh D:/Temp/w/herramientas/dart-format-analyze-red.sh apps/mobile/test/rediseno/paleta_rediseno_test.dart apps/mobile/test/rediseno/sobre_foto_test.dart
 ```
 
 ## Log
