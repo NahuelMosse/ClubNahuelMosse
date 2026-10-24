@@ -1,7 +1,6 @@
 import 'package:clubnahuelmosse/comun/dorsal.dart';
 import 'package:clubnahuelmosse/sedes/pantalla_sedes.dart';
 import 'package:clubnahuelmosse/tema/tokens.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/montar.dart';
