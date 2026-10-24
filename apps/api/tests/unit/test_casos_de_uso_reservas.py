@@ -362,9 +362,7 @@ def test_modificar_reserva_mismo_espacio_otro_horario_o_otro_espacio_mismo_horar
     assert repo.llamadas[-1][0] == "mover"
 
 
-@pytest.mark.parametrize(
-    "tipo", [None, (2, "futbol", "5"), (1, "tenis", "5"), (1, "futbol", "7")]
-)
+@pytest.mark.parametrize("tipo", [None, (2, "futbol", "5"), (1, "tenis", "5"), (1, "futbol", "7")])
 def test_modificar_reserva_a_una_cancha_de_otro_tipo_o_sede_falla(tipo) -> None:
     repo = _con_reserva()
     repo.tipo = tipo
