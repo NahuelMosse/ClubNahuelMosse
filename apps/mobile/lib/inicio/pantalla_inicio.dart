@@ -6,9 +6,10 @@ import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_no_manejados.dart';
+import '../comun/marcador.dart';
+import '../comun/tile_deporte.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../espacios/iconos.dart';
 import '../notificaciones/campana.dart';
 import '../notificaciones/centro.dart';
 import '../reservas/cancelacion.dart';
@@ -23,7 +24,13 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
-typedef _Datos = ({Reserva? proxima, Catalogo catalogo, List<Sede> sedes});
+typedef _Datos = ({
+  Reserva? proxima,
+  int cuantas,
+  bool hayMas,
+  Catalogo catalogo,
+  List<Sede> sedes,
+});
 
 /// El Home de quien inicia sesión como usuario: su próxima reserva, cuánto hay para
 /// reservar y los atajos a lo que hace todos los días.
@@ -67,6 +74,20 @@ class _PantallaInicioState extends State<PantallaInicio> {
   }
 
   @override
+  void didUpdateWidget(PantallaInicio anterior) {
+    super.didUpdateWidget(anterior);
+    if (anterior.reservas != widget.reservas) {
+      anterior.reservas.removeListener(_alCambiarLasReservas);
+      widget.reservas.addListener(_alCambiarLasReservas);
+    }
+    if (anterior.reservas != widget.reservas ||
+        anterior.espacios != widget.espacios ||
+        anterior.sedes != widget.sedes) {
+      _cargar();
+    }
+  }
+
+  @override
   void dispose() {
     widget.reservas.removeListener(_alCambiarLasReservas);
     super.dispose();
@@ -80,9 +101,15 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
   Future<_Datos> _leer() async {
     final catalogo = await widget.espacios.catalogo();
-    final proximas = await widget.reservas.mias(historial: false);
+    final proximas = await widget.reservas.tanda(historial: false);
     final sedes = await widget.sedes.activas();
-    return (proxima: proximas.firstOrNull, catalogo: catalogo, sedes: sedes);
+    return (
+      proxima: proximas.reservas.firstOrNull,
+      cuantas: proximas.reservas.length,
+      hayMas: proximas.siguiente != null,
+      catalogo: catalogo,
+      sedes: sedes,
+    );
   }
 
   /// Con [deCero] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
@@ -153,6 +180,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
         if (_datos case final datos?) {
           _datos = (
             proxima: null,
+            cuantas: datos.cuantas > 0 ? datos.cuantas - 1 : 0,
+            hayMas: datos.hayMas,
             catalogo: datos.catalogo,
             sedes: datos.sedes,
           );
@@ -195,7 +224,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 _Hero(
                   sesion: widget.sesion,
                   centro: widget.centro,
-                  resumen: datos == null ? null : _resumen(datos.sedes),
+                  celdas: datos == null ? null : _celdas(datos),
                 ),
                 if (datos == null && !_fallo)
                   const Padding(
@@ -234,88 +263,124 @@ class _PantallaInicioState extends State<PantallaInicio> {
   }
 }
 
-String _resumen(List<Sede> sedes) {
-  final canchas = sedes.fold(0, (total, s) => total + s.canchas);
-  final cuantasSedes = sedes.length == 1 ? 'sede' : 'sedes';
-  final cuantasCanchas = canchas == 1 ? 'cancha' : 'canchas';
-  return '${sedes.length} $cuantasSedes · $canchas $cuantasCanchas · '
-      'disponibilidad en tiempo real';
+List<CeldaMarcador> _celdas(_Datos datos) {
+  final canchas = datos.sedes.fold(0, (total, s) => total + s.canchas);
+  String dos(int n) => '$n'.padLeft(2, '0');
+  return [
+    CeldaMarcador(cifra: dos(datos.sedes.length), rotulo: 'SEDES'),
+    CeldaMarcador(cifra: dos(canchas), rotulo: 'CANCHAS'),
+    CeldaMarcador(
+      cifra: datos.hayMas ? '20+' : dos(datos.cuantas),
+      rotulo: 'PRÓXIMAS',
+      destacada: true,
+    ),
+  ];
 }
+
+/// El emoji de un deporte del catálogo; uno que la app no conoce lleva 🏅.
+String _emojiDeDeporte(String clave) => switch (clave) {
+  'Futbol' => '⚽',
+  'Tenis' => '🎾',
+  'Padel' => '🏓',
+  'Voley' => '🏐',
+  'Hockey' => '🏑',
+  'Basquet' => '🏀',
+  'Golf' => '⛳',
+  _ => '🏅',
+};
 
 /// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
 /// colores son los `on-media`, iguales en los dos modos.
 class _Hero extends StatelessWidget {
-  const _Hero({required this.sesion, required this.resumen, this.centro});
+  const _Hero({required this.sesion, required this.celdas, this.centro});
 
   final Sesion sesion;
 
   final CentroDeNotificaciones? centro;
 
   /// `null` mientras se lee.
-  final String? resumen;
+  final List<CeldaMarcador>? celdas;
 
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final arriba = MediaQuery.paddingOf(context).top;
-    final texto = resumen;
+    final marcador = celdas;
     return FotoConVelo(
       imagen: fotoDeDeporte('Futbol'),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          Medidas.s24,
-          arriba + Medidas.s24,
-          Medidas.s16,
-          Medidas.s24,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'BUENOS DÍAS,',
-                        style: Textos.sobretitulo.copyWith(
-                          color: p.accentOnMedia,
-                        ),
-                      ),
-                      const SizedBox(height: Medidas.s4),
-                      ListenableBuilder(
-                        listenable: sesion,
-                        builder: (context, _) => Text(
-                          sesion.perfil?.nombre ?? '',
-                          style: Textos.h1.copyWith(color: p.textOnMedia),
-                        ),
-                      ),
-                    ],
+      child: Stack(
+        children: [
+          const Positioned.fill(
+            child: ExcludeSemantics(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: [0, 0.5],
+                    colors: [Color(0x99000000), Color(0x00000000)],
                   ),
                 ),
-                if (centro case final centro?)
-                  BotonNotificaciones(centro: centro),
-                BotonCuenta(sesion: sesion),
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              Medidas.s24,
+              arriba + Medidas.s24,
+              Medidas.s16,
+              Medidas.s24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'BUENOS DÍAS,',
+                            style: Textos.sobretitulo.copyWith(
+                              color: p.accentOnMedia,
+                            ),
+                          ),
+                          const SizedBox(height: Medidas.s4),
+                          ListenableBuilder(
+                            listenable: sesion,
+                            builder: (context, _) => Text(
+                              sesion.perfil?.nombre ?? '',
+                              style: Textos.h1.copyWith(color: p.textOnMedia),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (centro case final centro?)
+                      BotonNotificaciones(centro: centro),
+                    BotonCuenta(sesion: sesion),
+                  ],
+                ),
+                const SizedBox(height: Medidas.s48),
+                Semantics(
+                  header: true,
+                  child: Text(
+                    'RESERVÁ TU CANCHA',
+                    style: Textos.display.copyWith(color: p.textOnMedia),
+                  ),
+                ),
+                if (marcador != null) ...[
+                  const SizedBox(height: Medidas.s24),
+                  Padding(
+                    padding: const EdgeInsets.only(right: Medidas.s8),
+                    child: Marcador(celdas: marcador),
+                  ),
+                ],
               ],
             ),
-            const SizedBox(height: Medidas.s48),
-            Semantics(
-              header: true,
-              child: Text(
-                'RESERVÁ TU CANCHA',
-                style: Textos.display.copyWith(color: p.textOnMedia),
-              ),
-            ),
-            if (texto != null) ...[
-              const SizedBox(height: Medidas.s8),
-              Text(
-                texto,
-                style: Textos.leyenda.copyWith(color: p.textOnMediaMuted),
-              ),
-            ],
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -379,6 +444,7 @@ class _Proxima extends StatelessWidget {
           catalogo: catalogo,
           cancelable: reserva.cancelable,
           cancelando: cancelando,
+          cuentaRegresiva: true,
           alCancelar: alCancelar,
           alModificar: alModificar,
         ),
@@ -395,7 +461,6 @@ class _Deportes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.paleta;
     return Padding(
       padding: const EdgeInsets.only(top: Medidas.s32),
       child: Column(
@@ -411,36 +476,14 @@ class _Deportes extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
             child: Row(
               children: [
-                for (final d in catalogo.deportes) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: Medidas.s16,
-                      vertical: Medidas.s12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: p.bgSurfaceRaised,
-                      borderRadius: BorderRadius.circular(Medidas.radioPill),
-                      border: Border.all(color: p.borderDefault),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          iconoDeDeporte(d.clave),
-                          size: 18,
-                          color: p.accentInk,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Text(
-                          d.nombre,
-                          style: Textos.cuerpoFuerte.copyWith(
-                            color: p.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
+                for (final (i, d) in catalogo.deportes.indexed) ...[
+                  if (i > 0) const SizedBox(width: Medidas.s12),
+                  TileDeporte(
+                    imagen: fotoDeDeporte(d.clave),
+                    emoji: _emojiDeDeporte(d.clave),
+                    nombre: d.nombre,
+                    alTocar: null,
                   ),
-                  const SizedBox(width: Medidas.s8),
                 ],
               ],
             ),

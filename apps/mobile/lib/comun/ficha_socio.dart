@@ -137,8 +137,10 @@ class FichaSocio extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
-                  Marcador(celdas: estadisticas),
+                  if (estadisticas.isNotEmpty) ...[
+                    const SizedBox(height: 18),
+                    Marcador(celdas: estadisticas),
+                  ],
                 ],
               ),
             ),

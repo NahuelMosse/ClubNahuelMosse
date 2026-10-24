@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/dorsal.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/etiqueta.dart';
 import '../espacios/espacio.dart';
@@ -212,68 +213,71 @@ class TarjetaSede extends StatelessWidget {
                 constraints: const BoxConstraints(minHeight: 158),
                 child: FotoConVelo(
                   imagen: portadaDeSede(sede.id),
-                  child: Padding(
-                    padding: const EdgeInsets.all(Medidas.s16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                sede.nombre.toUpperCase(),
-                                style: Textos.h1.copyWith(color: p.textOnMedia),
-                              ),
-                              const SizedBox(height: Medidas.s4),
-                              Text(
-                                sede.direccion,
-                                style: Textos.leyenda.copyWith(
-                                  color: p.textOnMediaMuted,
-                                ),
-                              ),
-                              Text(
-                                // El rango no se parte entre líneas.
-                                '${sede.diasLegibles} · '
-                                '${sede.apertura} a ${sede.cierre}',
-                                style: Textos.leyenda.copyWith(
-                                  fontSize: 12,
-                                  color: p.textOnMediaMuted,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: Medidas.s12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: Medidas.s12,
-                            vertical: Medidas.s4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: p.accentBase,
-                            borderRadius: BorderRadius.circular(
-                              Medidas.radioMd,
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: Medidas.s12,
+                        right: Medidas.s16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            DorsalGigante(
+                              texto: '${sede.canchas}'.padLeft(2, '0'),
+                              tamano: 92,
+                              color: p.textOnMedia,
                             ),
-                          ),
-                          child: Column(
-                            children: [
-                              Text(
-                                '${sede.canchas}',
-                                style: Textos.h2.copyWith(color: p.accentOn),
+                            Text(
+                              sede.canchas == 1 ? 'CANCHA' : 'CANCHAS',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                                letterSpacing: 11 * 0.08,
+                                color: p.textOnMedia,
                               ),
-                              Text(
-                                sede.canchas == 1 ? 'CANCHA' : 'CANCHAS',
-                                style: Textos.sobretitulo.copyWith(
-                                  color: p.accentOn,
-                                ),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(Medidas.s16),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    sede.nombre.toUpperCase(),
+                                    style: Textos.h1.copyWith(
+                                      color: p.textOnMedia,
+                                    ),
+                                  ),
+                                  const SizedBox(height: Medidas.s4),
+                                  Text(
+                                    sede.direccion,
+                                    style: Textos.leyenda.copyWith(
+                                      color: p.textOnMediaMuted,
+                                    ),
+                                  ),
+                                  Text(
+                                    // El rango no se parte entre líneas.
+                                    '${sede.diasLegibles} · '
+                                    '${sede.apertura} a ${sede.cierre}',
+                                    style: Textos.leyenda.copyWith(
+                                      fontSize: 12,
+                                      color: p.textOnMediaMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),

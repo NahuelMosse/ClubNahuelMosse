@@ -6,6 +6,7 @@ import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/isotipo.dart';
 import '../comun/snackbar.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
@@ -235,6 +236,8 @@ class _Marca extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const Isotipo(tamano: 48, decorativo: true),
+        const SizedBox(height: Medidas.s16),
         Text(
           'BIENVENIDO A',
           style: Textos.sobretitulo.copyWith(color: p.accentOnMedia),

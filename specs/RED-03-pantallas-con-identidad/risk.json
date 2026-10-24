@@ -1,0 +1,27 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "login",
+    "rol"
+  ],
+  "files": [
+    "apps/mobile/lib/inicio/pantalla_inicio.dart",
+    "apps/mobile/lib/comun/tile_deporte.dart",
+    "apps/mobile/test/inicio_test.dart",
+    "apps/mobile/lib/reservas/pantalla_mis_reservas.dart",
+    "apps/mobile/lib/usuarios/pantalla_mi_perfil.dart",
+    "apps/mobile/lib/comun/ficha_socio.dart",
+    "apps/mobile/lib/sedes/pantalla_sedes.dart",
+    "apps/mobile/lib/reservas/pantalla_horarios.dart",
+    "apps/mobile/lib/sesion/pantalla_inicio_sesion.dart",
+    "apps/mobile/test/capturas/"
+  ],
+  "tasks": 7
+}
