@@ -100,3 +100,4 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh int01_app --json --no-ambient 
 - L59 · 2026-10-23 · declared · K4 · apps/mobile/test/operacion_cliente_sin_verificar_rutas_test.dart · reemplazo de cinco tests congelados (L52-L56): repite sus cuerpos con los mismos títulos y tags; difiere sólo en `verificarRutas: false`
 - L60 · 2026-10-23 · declared · RED · los arreglos se aplicaron al resolver el merge, antes de abrir la card; los tests de INT-01 se commitearon junto con el código y no antes
 - L61 · 2026-10-23 · Docker Desktop se cayó durante el primer gate (pytest quedó sin terminar a los 20 min); se volvió a levantar y la suite de la API corre con `[timeout 60 min]`
+- L62 · 2026-10-23 · corrección de L58: los tests congelados que reemplaza test_contrato_publicado_con_operacion.py son los de L50-L51, no L47-L48
