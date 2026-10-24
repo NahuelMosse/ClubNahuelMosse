@@ -3,7 +3,7 @@ el servicio de notificaciones, la identidad, el correo y los enlaces. Las rutas 
 toman todo de acá y no conocen `infraestructura/`."""
 
 from app.infraestructura.correo import enviar as enviar_correo
-from app.infraestructura.db import conexion, motor
+from app.infraestructura.db import base_disponible, conexion, esquema_al_dia, motor, uso_del_pool
 from app.infraestructura.enlaces import EnlacesSql
 from app.infraestructura.espacios import EspaciosSql
 from app.infraestructura.horarios import HorariosSql
@@ -23,8 +23,11 @@ __all__ = [
     "ReservasSql",
     "SedesSql",
     "UsuariosSql",
+    "base_disponible",
     "canal_push",
     "conexion",
     "enviar_correo",
+    "esquema_al_dia",
     "motor",
+    "uso_del_pool",
 ]

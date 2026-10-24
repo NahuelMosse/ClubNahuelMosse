@@ -26,11 +26,13 @@ from app.aplicacion.reservas import (
 )
 from app.dominio.horarios import Agenda
 from app.dominio.reservas import (
+    POR_PAGINA,
     Contadores,
     FiltrosHistorial,
     HistorialDeReservas,
     Reserva,
     ReservaHistorial,
+    TandaDeReservas,
 )
 from app.dominio.usuarios import Perfil
 
@@ -79,9 +81,9 @@ class Memoria:
         self.llamadas: list[tuple] = []
         self.detalle: ReservaHistorial | None = None
 
-    def de_usuario(self, usuario_id, cuando):
-        self.llamadas.append(("de_usuario", usuario_id, cuando))
-        return [_reserva()]
+    def de_usuario(self, usuario_id, cuando, despues, limite):
+        self.llamadas.append(("de_usuario", usuario_id, cuando, despues, limite))
+        return TandaDeReservas([_reserva()], hay_mas=False)
 
     def agenda(self, espacio_id):
         return self.agenda_actual
@@ -143,10 +145,10 @@ def test_mis_reservas_pide_solo_las_de_quien_consulta() -> None:
 
     resultado = mis_reservas(repo, _perfil(id=7), "proximas")
 
-    assert resultado == [_reserva()]
-    assert repo.llamadas == [("de_usuario", 7, "proximas")]
+    assert resultado == TandaDeReservas([_reserva()], hay_mas=False)
+    assert repo.llamadas == [("de_usuario", 7, "proximas", None, POR_PAGINA)]
     mis_reservas(repo, _perfil(id=7), "historial")
-    assert repo.llamadas[-1] == ("de_usuario", 7, "historial")
+    assert repo.llamadas[-1] == ("de_usuario", 7, "historial", None, POR_PAGINA)
 
 
 # reservar
@@ -360,9 +362,7 @@ def test_modificar_reserva_mismo_espacio_otro_horario_o_otro_espacio_mismo_horar
     assert repo.llamadas[-1][0] == "mover"
 
 
-@pytest.mark.parametrize(
-    "tipo", [None, (2, "futbol", "5"), (1, "tenis", "5"), (1, "futbol", "7")]
-)
+@pytest.mark.parametrize("tipo", [None, (2, "futbol", "5"), (1, "tenis", "5"), (1, "futbol", "7")])
 def test_modificar_reserva_a_una_cancha_de_otro_tipo_o_sede_falla(tipo) -> None:
     repo = _con_reserva()
     repo.tipo = tipo

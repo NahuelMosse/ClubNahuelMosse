@@ -67,6 +67,7 @@ son las de la revisión; la columna dice cuál afecta a cada pantalla.
 | `pantalla_espacio_creado` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_filtros_reservas` | Partially Supports | I7 | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_detalle_reserva` | Partially Supports | I24 en la anulación de una reserva | widget tests y capturas; TalkBack `not verified` |
+| `pantalla_error_de_arranque` | Supports | sin fallas encontradas (test/pantalla_error_de_arranque_test.dart) | widget tests; TalkBack `not verified` |
 
 ## Known limitations
 
