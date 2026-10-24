@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'movimiento.dart';
 
 /// Cómo terminó el aviso de [atenderErrorDeRed].
 enum ResultadoDeError {
@@ -317,44 +318,52 @@ class _Modal extends StatelessWidget {
         ),
         const SizedBox(height: Medidas.s12),
         if (accionPrincipal != null)
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: FilledButton.styleFrom(
-              backgroundColor: principalPeligro ? p.stateDanger : p.accentBase,
-              foregroundColor: principalPeligro
-                  ? textoSobre(p.stateDanger, p)
-                  : p.accentOn,
-              minimumSize: const Size.fromHeight(Medidas.altoControl),
-              shape: const StadiumBorder(),
-              textStyle: Textos.boton,
+          Presionable(
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: principalPeligro
+                    ? p.stateDanger
+                    : p.accentBase,
+                foregroundColor: principalPeligro
+                    ? textoSobre(p.stateDanger, p)
+                    : p.accentOn,
+                minimumSize: const Size.fromHeight(Medidas.altoControl),
+                shape: const StadiumBorder(),
+                textStyle: Textos.boton,
+              ),
+              child: Text(accionPrincipal, textAlign: TextAlign.center),
             ),
-            child: Text(accionPrincipal, textAlign: TextAlign.center),
           ),
         if (accionPrincipal != null && accionSecundaria != null)
           const SizedBox(height: Medidas.s8),
         if (accionSecundaria != null && secundariaContorno)
-          OutlinedButton(
-            autofocus: enfocarSecundaria,
-            onPressed: () => Navigator.of(context).pop(false),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: p.textPrimary,
-              side: BorderSide(color: p.borderControl),
-              minimumSize: const Size.fromHeight(Medidas.altoControl),
-              shape: const StadiumBorder(),
-              textStyle: Textos.boton,
+          Presionable(
+            child: OutlinedButton(
+              autofocus: enfocarSecundaria,
+              onPressed: () => Navigator.of(context).pop(false),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: p.textPrimary,
+                side: BorderSide(color: p.borderControl),
+                minimumSize: const Size.fromHeight(Medidas.altoControl),
+                shape: const StadiumBorder(),
+                textStyle: Textos.boton,
+              ),
+              child: Text(accionSecundaria),
             ),
-            child: Text(accionSecundaria),
           )
         else if (accionSecundaria != null)
-          TextButton(
-            autofocus: enfocarSecundaria,
-            onPressed: () => Navigator.of(context).pop(false),
-            style: TextButton.styleFrom(
-              foregroundColor: p.accentInk,
-              minimumSize: const Size.fromHeight(Medidas.altoControl),
-              textStyle: Textos.boton,
+          Presionable(
+            child: TextButton(
+              autofocus: enfocarSecundaria,
+              onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                foregroundColor: p.accentInk,
+                minimumSize: const Size.fromHeight(Medidas.altoControl),
+                textStyle: Textos.boton,
+              ),
+              child: Text(accionSecundaria),
             ),
-            child: Text(accionSecundaria),
           ),
       ],
     );
@@ -379,19 +388,24 @@ class MarcoDeDialogo extends StatelessWidget {
       children: hijos,
     );
     final ancho = anchoMaximo;
-    return Dialog(
-      backgroundColor: p.bgSurfaceRaised,
-      insetPadding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        side: BorderSide(color: p.borderDefault),
+    return Aparecer(
+      escalaDesde: 0.88,
+      desdeY: 0,
+      curva: Movimiento.rapida,
+      child: Dialog(
+        backgroundColor: p.bgSurfaceRaised,
+        insetPadding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Medidas.radioLg),
+          side: BorderSide(color: p.borderDefault),
+        ),
+        child: ancho == null
+            ? Padding(padding: relleno, child: columna)
+            : ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: ancho),
+                child: SingleChildScrollView(padding: relleno, child: columna),
+              ),
       ),
-      child: ancho == null
-          ? Padding(padding: relleno, child: columna)
-          : ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: ancho),
-              child: SingleChildScrollView(padding: relleno, child: columna),
-            ),
     );
   }
 }

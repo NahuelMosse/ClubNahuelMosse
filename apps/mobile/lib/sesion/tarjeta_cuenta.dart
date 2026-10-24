@@ -5,6 +5,7 @@ import '../api/cliente_api.dart';
 import '../comun/avatar.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/insignia.dart';
+import '../comun/movimiento.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'sesion.dart';
@@ -97,92 +98,97 @@ Future<void> mostrarTarjetaCuenta(BuildContext context, Sesion sesion) {
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 300),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(Medidas.radioLg),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x8C000000),
-                      offset: Offset(0, 14),
-                      blurRadius: 34,
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: p.bgSurfaceRaised,
-                  shape: RoundedRectangleBorder(
+              child: Aparecer(
+                desdeY: -16,
+                duracion: const Duration(milliseconds: 350),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(Medidas.radioLg),
-                    side: BorderSide(color: p.borderDefault),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x8C000000),
+                        offset: Offset(0, 14),
+                        blurRadius: 34,
+                      ),
+                    ],
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  // Con el teléfono apaisado o el texto grande no entra en el alto.
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(Medidas.s16),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              AvatarIniciales(
-                                nombre: perfil.nombre,
-                                apellido: perfil.apellido,
-                              ),
-                              const SizedBox(width: Medidas.s12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${perfil.nombre} ${perfil.apellido}',
-                                      style: Textos.titulo.copyWith(
-                                        color: p.textPrimary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: Medidas.s4),
-                                    Text(
-                                      perfil.correo,
-                                      style: Textos.leyenda.copyWith(
-                                        color: p.textMuted,
-                                      ),
-                                    ),
-                                    if (esUsuario) ...[
-                                      const SizedBox(height: Medidas.s4),
-                                      const Insignia(texto: 'MIEMBRO ACTIVO'),
-                                    ],
-                                  ],
+                  child: Material(
+                    color: p.bgSurfaceRaised,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Medidas.radioLg),
+                      side: BorderSide(color: p.borderDefault),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    // Con el teléfono apaisado o el texto grande no entra en el alto.
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(Medidas.s16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AvatarIniciales(
+                                  nombre: perfil.nombre,
+                                  apellido: perfil.apellido,
                                 ),
-                              ),
-                            ],
+                                const SizedBox(width: Medidas.s12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${perfil.nombre} ${perfil.apellido}',
+                                        style: Textos.titulo.copyWith(
+                                          color: p.textPrimary,
+                                        ),
+                                      ),
+                                      const SizedBox(height: Medidas.s4),
+                                      Text(
+                                        perfil.correo,
+                                        style: Textos.leyenda.copyWith(
+                                          color: p.textMuted,
+                                        ),
+                                      ),
+                                      if (esUsuario) ...[
+                                        const SizedBox(height: Medidas.s4),
+                                        const Insignia(texto: 'MIEMBRO ACTIVO'),
+                                      ],
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        Divider(height: 1, color: p.borderDefault),
-                        const SizedBox(height: Medidas.s8),
-                        if (esUsuario) ...[
+                          Divider(height: 1, color: p.borderDefault),
+                          const SizedBox(height: Medidas.s8),
+                          if (esUsuario) ...[
+                            _Opcion(
+                              icono: Icons.person_outline_rounded,
+                              texto: 'Perfil completo',
+                              alTocar: () => ir('/perfil'),
+                            ),
+                            _Opcion(
+                              icono: Icons.calendar_today_outlined,
+                              texto: 'Mis reservas',
+                              alTocar: () => ir('/reservas'),
+                            ),
+                          ],
                           _Opcion(
-                            icono: Icons.person_outline_rounded,
-                            texto: 'Perfil completo',
-                            alTocar: () => ir('/perfil'),
+                            icono: Icons.logout_rounded,
+                            texto: 'Cerrar sesión',
+                            peligro: true,
+                            alTocar: () {
+                              Navigator.of(context).pop();
+                              cerrarSesion(origen, sesion);
+                            },
                           ),
-                          _Opcion(
-                            icono: Icons.calendar_today_outlined,
-                            texto: 'Mis reservas',
-                            alTocar: () => ir('/reservas'),
-                          ),
+                          const SizedBox(height: Medidas.s8),
                         ],
-                        _Opcion(
-                          icono: Icons.logout_rounded,
-                          texto: 'Cerrar sesión',
-                          peligro: true,
-                          alTocar: () {
-                            Navigator.of(context).pop();
-                            cerrarSesion(origen, sesion);
-                          },
-                        ),
-                        const SizedBox(height: Medidas.s8),
-                      ],
+                      ),
                     ),
                   ),
                 ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,6 +9,7 @@ import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/formato_precio.dart';
 import '../comun/linea_del_dia.dart';
+import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sedes/fotos.dart';
@@ -522,7 +525,10 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   if (_datos?.$1 case final sede?) ...[
-                    _lineaDelDia(sede, grilla, horas),
+                    Latido(
+                      disparador: _horas,
+                      child: _lineaDelDia(sede, grilla, horas),
+                    ),
                     const SizedBox(height: Medidas.s12),
                   ],
                   _DeAPares(
@@ -1008,31 +1014,77 @@ class _TarjetaFranja extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final tinta = elegida ? p.accentOn : p.textPrimary;
-    return _Elegible(
-      etiqueta: actual ? '${franja.texto} (actual)' : franja.texto,
-      elegido: elegida,
-      alTocar: alTocar,
-      atenuado: !franja.disponible,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              franja.texto,
-              style: Textos.cuerpoFuerte.copyWith(color: tinta),
-            ),
-            if (actual)
+    return _Crece(
+      activo: elegida,
+      child: _Elegible(
+        etiqueta: actual ? '${franja.texto} (actual)' : franja.texto,
+        elegido: elegida,
+        alTocar: alTocar,
+        atenuado: !franja.disponible,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
-                '(actual)',
-                style: Textos.leyenda.copyWith(
-                  color: elegida ? p.accentOn : p.textSecondary,
-                ),
+                franja.texto,
+                style: Textos.cuerpoFuerte.copyWith(color: tinta),
               ),
-          ],
+              if (actual)
+                Text(
+                  '(actual)',
+                  style: Textos.leyenda.copyWith(
+                    color: elegida ? p.accentOn : p.textSecondary,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
   }
+}
+
+/// Crece de 0,88 a 1 con rebote cada vez que [activo] pasa de falso a verdadero.
+class _Crece extends StatefulWidget {
+  const _Crece({required this.activo, required this.child});
+
+  final bool activo;
+  final Widget child;
+
+  @override
+  State<_Crece> createState() => _CreceState();
+}
+
+class _CreceState extends State<_Crece> with SingleTickerProviderStateMixin {
+  late final _controlador = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 400),
+    value: 1,
+  );
+  late final Animation<double> _escala = _controlador.drive(
+    Tween<double>(
+      begin: 0.88,
+      end: 1,
+    ).chain(CurveTween(curve: Movimiento.rebote)),
+  );
+
+  @override
+  void didUpdateWidget(_Crece anterior) {
+    super.didUpdateWidget(anterior);
+    if (!widget.activo || anterior.activo) return;
+    if (MediaQuery.disableAnimationsOf(context)) return;
+    unawaited(_controlador.forward(from: 0));
+  }
+
+  @override
+  void dispose() {
+    _controlador.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      ScaleTransition(scale: _escala, child: widget.child);
 }
 
 /// `Nota-Ocupados`: cuántos inicios de la grilla no se pueden elegir.

@@ -8,6 +8,7 @@ import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
 import '../comun/insignia.dart';
+import '../comun/movimiento.dart';
 import '../comun/reloj.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../comun/troquel.dart';
@@ -297,63 +298,80 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                     const SizedBox(height: Medidas.s16),
                     _Pestanas(historial: _historial, alElegir: _elegir),
                     const SizedBox(height: Medidas.s16),
-                    if (datos == null && !_fallo)
-                      const Padding(
-                        padding: EdgeInsets.all(Medidas.s40),
-                        child: Center(child: CircularProgressIndicator()),
+                    AnimatedSwitcher(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : Movimiento.cambioDeLista,
+                      layoutBuilder: (actual, anteriores) => Stack(
+                        alignment: Alignment.topCenter,
+                        children: [...anteriores, ?actual],
                       ),
-                    if (datos == null && _fallo)
-                      Padding(
-                        padding: const EdgeInsets.all(Medidas.s24),
-                        child: Center(
-                          child: BotonTexto(
-                            texto: 'REINTENTAR',
-                            alTocar: _cargar,
-                          ),
-                        ),
+                      child: Column(
+                        key: ValueKey((datos == null, _fallo, _historial)),
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (datos == null && !_fallo)
+                            const Padding(
+                              padding: EdgeInsets.all(Medidas.s40),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          if (datos == null && _fallo)
+                            Padding(
+                              padding: const EdgeInsets.all(Medidas.s24),
+                              child: Center(
+                                child: BotonTexto(
+                                  texto: 'REINTENTAR',
+                                  alTocar: _cargar,
+                                ),
+                              ),
+                            ),
+                          if (datos != null && datos.$1.isEmpty)
+                            EstadoVacio(
+                              titulo: _historial
+                                  ? 'No hay reservas pasadas'
+                                  : 'No hay próximas reservas',
+                              texto: _historial
+                                  ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
+                                  : 'No se encontraron próximas reservas asociadas a tu cuenta.',
+                            ),
+                          if (datos != null)
+                            for (final r in datos.$1) ...[
+                              TarjetaReserva(
+                                reserva: r,
+                                catalogo: datos.$2,
+                                key: r.id == widget.reservaId
+                                    ? _resaltada
+                                    : null,
+                                resaltada: r.id == widget.reservaId,
+                                cancelable: !_historial && r.cancelable,
+                                cancelando: _cancelando == r.id,
+                                alCancelar: _cancelando == null
+                                    ? () => _cancelar(r, datos.$2)
+                                    : null,
+                                alModificar: _cancelando == null
+                                    ? () => _modificar(r)
+                                    : null,
+                              ),
+                              const SizedBox(height: Medidas.s12),
+                            ],
+                          if (_cargandoMas)
+                            const Padding(
+                              padding: EdgeInsets.all(Medidas.s16),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          if (_masFallo)
+                            Center(
+                              child: BotonTexto(
+                                texto: 'REINTENTAR',
+                                alTocar: () {
+                                  setState(() => _masFallo = false);
+                                  _cargarMas();
+                                },
+                              ),
+                            ),
+                        ],
                       ),
-                    if (datos != null && datos.$1.isEmpty)
-                      EstadoVacio(
-                        titulo: _historial
-                            ? 'No hay reservas pasadas'
-                            : 'No hay próximas reservas',
-                        texto: _historial
-                            ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
-                            : 'No se encontraron próximas reservas asociadas a tu cuenta.',
-                      ),
-                    if (datos != null)
-                      for (final r in datos.$1) ...[
-                        TarjetaReserva(
-                          reserva: r,
-                          catalogo: datos.$2,
-                          key: r.id == widget.reservaId ? _resaltada : null,
-                          resaltada: r.id == widget.reservaId,
-                          cancelable: !_historial && r.cancelable,
-                          cancelando: _cancelando == r.id,
-                          alCancelar: _cancelando == null
-                              ? () => _cancelar(r, datos.$2)
-                              : null,
-                          alModificar: _cancelando == null
-                              ? () => _modificar(r)
-                              : null,
-                        ),
-                        const SizedBox(height: Medidas.s12),
-                      ],
-                    if (_cargandoMas)
-                      const Padding(
-                        padding: EdgeInsets.all(Medidas.s16),
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                    if (_masFallo)
-                      Center(
-                        child: BotonTexto(
-                          texto: 'REINTENTAR',
-                          alTocar: () {
-                            setState(() => _masFallo = false);
-                            _cargarMas();
-                          },
-                        ),
-                      ),
+                    ),
                   ],
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../comun/boton.dart';
 import '../comun/marco_de_tarjeta.dart';
+import '../comun/movimiento.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fechas.dart';
@@ -40,49 +41,49 @@ class PantallaReservaConfirmada extends StatelessWidget {
           children: [
             const PasosDeReserva(actual: 2),
             const SizedBox(height: Medidas.s24),
-            Center(
-              child: Container(
-                width: 96,
-                height: 96,
-                decoration: BoxDecoration(
-                  color: p.stateSuccessMuted,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 40,
-                  color: p.stateSuccessInk,
+            Festejo(
+              grito: Semantics(
+                header: true,
+                liveRegion: true,
+                child: Text(
+                  '¡Reserva confirmada!',
+                  textAlign: TextAlign.center,
+                  style: Textos.h1.copyWith(color: p.textPrimary),
                 ),
               ),
-            ),
-            const SizedBox(height: Medidas.s24),
-            Semantics(
-              header: true,
-              liveRegion: true,
-              child: Text(
-                '¡Reserva confirmada!',
-                textAlign: TextAlign.center,
-                style: Textos.h1.copyWith(color: p.textPrimary),
-              ),
-            ),
-            const SizedBox(height: Medidas.s12),
-            Text(
-              'Te esperamos. Te vamos a avisar una hora antes.',
-              textAlign: TextAlign.center,
-              style: Textos.cuerpo.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: Medidas.s24),
-            MarcoDeTarjeta(
-              padding: const EdgeInsets.all(Medidas.s16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FilaDeDato(dato: 'Espacio', valor: r.espacio, codigo: true),
-                  FilaDeDato(dato: 'Fecha', valor: fechaLarga(r.inicio)),
-                  FilaDeDato(dato: 'Horario', valor: _horario),
-                  const SizedBox(height: Medidas.s8),
-                  FilaDeTotal(total: r.total),
-                ],
+              comprobante: SizedBox(
+                width: double.infinity,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Te esperamos. Te vamos a avisar una hora antes.',
+                      textAlign: TextAlign.center,
+                      style: Textos.cuerpo.copyWith(color: p.textSecondary),
+                    ),
+                    const SizedBox(height: Medidas.s24),
+                    MarcoDeTarjeta(
+                      padding: const EdgeInsets.all(Medidas.s16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          FilaDeDato(
+                            dato: 'Espacio',
+                            valor: r.espacio,
+                            codigo: true,
+                          ),
+                          FilaDeDato(
+                            dato: 'Fecha',
+                            valor: fechaLarga(r.inicio),
+                          ),
+                          FilaDeDato(dato: 'Horario', valor: _horario),
+                          const SizedBox(height: Medidas.s8),
+                          FilaDeTotal(total: r.total),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: Medidas.s24),

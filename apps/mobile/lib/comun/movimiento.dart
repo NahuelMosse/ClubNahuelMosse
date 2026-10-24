@@ -47,6 +47,7 @@ class Aparecer extends StatefulWidget {
     this.escalaDesde = 1,
     this.giro = 0,
     this.curva = Movimiento.salida,
+    this.yaEntro = false,
   });
 
   final Widget child;
@@ -61,6 +62,10 @@ class Aparecer extends StatefulWidget {
 
   /// La curva del desplazamiento, la escala y el giro; el fundido es siempre easeOut.
   final Curve curva;
+
+  /// Nace en su estado final, sin animar: para un bloque que vuelve a armarse en una
+  /// pantalla que ya hizo su entrada.
+  final bool yaEntro;
 
   @override
   State<Aparecer> createState() => _AparecerState();
@@ -88,7 +93,11 @@ class _AparecerState extends State<Aparecer>
     super.didChangeDependencies();
     if (_arrancado) return;
     _arrancado = true;
-    _arrancar(_controlador, context);
+    if (widget.yaEntro) {
+      _controlador.value = 1;
+    } else {
+      _arrancar(_controlador, context);
+    }
   }
 
   @override

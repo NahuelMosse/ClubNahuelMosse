@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/boton.dart';
+import '../comun/movimiento.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
@@ -19,35 +20,41 @@ class PantallaRegistroExitoso extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: p.stateSuccessMuted,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check_circle_outline_rounded,
-                    size: 44,
-                    color: p.stateSuccessInk,
+                PulsoDeExito(
+                  icono: Icons.check_circle_outline_rounded,
+                  fondo: p.stateSuccessMuted,
+                  tinta: p.stateSuccessInk,
+                  diametro: 100,
+                  tamanoIcono: 44,
+                ),
+                const SizedBox(height: Medidas.s20),
+                Aparecer(
+                  retraso: const Duration(milliseconds: 370),
+                  desdeY: 14,
+                  child: Text(
+                    '¡Cuenta creada!',
+                    textAlign: TextAlign.center,
+                    style: Textos.h1.copyWith(color: p.textPrimary),
                   ),
                 ),
                 const SizedBox(height: Medidas.s20),
-                Text(
-                  '¡Cuenta creada!',
-                  textAlign: TextAlign.center,
-                  style: Textos.h1.copyWith(color: p.textPrimary),
-                ),
-                const SizedBox(height: Medidas.s20),
-                Text(
-                  'Tu cuenta se registró con éxito. Ya podés iniciar sesión con tu correo y contraseña.',
-                  textAlign: TextAlign.center,
-                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
+                Aparecer(
+                  retraso: const Duration(milliseconds: 460),
+                  desdeY: 14,
+                  child: Text(
+                    'Tu cuenta se registró con éxito. Ya podés iniciar sesión con tu correo y contraseña.',
+                    textAlign: TextAlign.center,
+                    style: Textos.cuerpo.copyWith(color: p.textSecondary),
+                  ),
                 ),
                 const SizedBox(height: Medidas.s20 + Medidas.s16),
-                BotonPrimario(
-                  texto: 'VOLVER AL INICIO DE SESIÓN',
-                  alTocar: () => context.go('/'),
+                Aparecer(
+                  retraso: const Duration(milliseconds: 550),
+                  desdeY: 14,
+                  child: BotonPrimario(
+                    texto: 'VOLVER AL INICIO DE SESIÓN',
+                    alTocar: () => context.go('/'),
+                  ),
                 ),
               ],
             ),

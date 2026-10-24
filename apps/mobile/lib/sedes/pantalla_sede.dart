@@ -9,6 +9,7 @@ import '../comun/estado_vacio.dart';
 import '../comun/etiqueta.dart';
 import '../comun/formato_precio.dart';
 import '../comun/marco_de_tarjeta.dart';
+import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -241,6 +242,7 @@ class _PantallaSedeState extends State<PantallaSede> {
               tipo: _tipo,
               tiposDelDeporte: _tiposDelDeporte,
               habilitado: !_filtrando && !_cargando,
+              filtrando: _filtrando,
               // Tocar el deporte elegido lo quita; «Todos» quita el tipo.
               alElegirDeporte: (d) =>
                   _filtrar(deporte: d == _deporte ? null : d, tipo: null),
@@ -260,6 +262,7 @@ class _Contenido extends StatelessWidget {
     required this.tipo,
     required this.tiposDelDeporte,
     required this.habilitado,
+    required this.filtrando,
     required this.alElegirDeporte,
     required this.alElegirTipo,
   });
@@ -274,6 +277,9 @@ class _Contenido extends StatelessWidget {
   final String? tipo;
   final List<String> tiposDelDeporte;
   final bool habilitado;
+
+  /// Mientras llega la lista filtrada, en su lugar se ve la carga.
+  final bool filtrando;
   final ValueChanged<String> alElegirDeporte;
   final ValueChanged<String?> alElegirTipo;
 
@@ -429,26 +435,49 @@ class _Contenido extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Medidas.s12),
-                if (todas.isEmpty)
-                  const EstadoVacio(
-                    titulo: 'Todavía no hay canchas',
-                    texto:
-                        'Esta sede no tiene canchas disponibles por el momento.',
-                  )
-                else if (canchas.isEmpty)
-                  const EstadoVacio(
-                    titulo: 'No hay canchas con este filtro',
-                    texto: 'Probá con otro deporte o con otro tipo.',
+                AnimatedSwitcher(
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : Movimiento.cambioDeLista,
+                  layoutBuilder: (actual, anteriores) => Stack(
+                    alignment: Alignment.topCenter,
+                    children: [...anteriores, ?actual],
                   ),
-                for (final cancha in canchas) ...[
-                  TarjetaCancha(
-                    cancha: cancha,
-                    catalogo: catalogo,
-                    alReservar: () =>
-                        context.go('/sedes/${sede.id}/canchas/${cancha.id}'),
-                  ),
-                  const SizedBox(height: Medidas.s16),
-                ],
+                  child: filtrando
+                      ? const Padding(
+                          key: ValueKey('carga'),
+                          padding: EdgeInsets.all(Medidas.s40),
+                          child: Center(child: CircularProgressIndicator()),
+                        )
+                      : Column(
+                          key: ValueKey((deporte, tipo)),
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            if (todas.isEmpty)
+                              const EstadoVacio(
+                                titulo: 'Todavía no hay canchas',
+                                texto:
+                                    'Esta sede no tiene canchas disponibles por el momento.',
+                              )
+                            else if (canchas.isEmpty)
+                              const EstadoVacio(
+                                titulo: 'No hay canchas con este filtro',
+                                texto:
+                                    'Probá con otro deporte o con otro tipo.',
+                              ),
+                            for (final cancha in canchas) ...[
+                              TarjetaCancha(
+                                cancha: cancha,
+                                catalogo: catalogo,
+                                alReservar: () => context.go(
+                                  '/sedes/${sede.id}/canchas/${cancha.id}',
+                                ),
+                              ),
+                              const SizedBox(height: Medidas.s16),
+                            ],
+                          ],
+                        ),
+                ),
               ],
             ),
           ),

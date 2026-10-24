@@ -7,6 +7,7 @@ import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_no_manejados.dart';
 import '../comun/marcador.dart';
+import '../comun/movimiento.dart';
 import '../comun/tile_deporte.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
@@ -65,6 +66,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
   /// La reserva que se está cancelando: su botón muestra que espera.
   int? _cancelando;
+
+  /// Ya se vieron los bloques con datos: los que se vuelven a armar al recargar nacen
+  /// terminados, sin repetir la entrada.
+  bool _yaEntro = false;
 
   @override
   void initState() {
@@ -205,6 +210,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
     final p = context.paleta;
     final datos = _datos;
     final proxima = datos?.proxima;
+    final yaEntro = _yaEntro;
+    if (datos != null) _yaEntro = true;
     return PopScope(
       canPop: _cancelando == null,
       child: Scaffold(
@@ -217,44 +224,60 @@ class _PantallaInicioState extends State<PantallaInicio> {
           absorbing: _cancelando != null,
           child: RefreshIndicator(
             onRefresh: () => _cargar(deCero: false),
-            child: ListView(
+            child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              children: [
-                _Hero(
-                  sesion: widget.sesion,
-                  centro: widget.centro,
-                  celdas: datos == null ? null : _celdas(datos),
-                ),
-                if (datos == null && !_fallo)
-                  const Padding(
-                    padding: EdgeInsets.all(Medidas.s40),
-                    child: Center(child: CircularProgressIndicator()),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _Hero(
+                    sesion: widget.sesion,
+                    centro: widget.centro,
+                    celdas: datos == null ? null : _celdas(datos),
+                    yaEntro: yaEntro,
                   ),
-                if (datos == null && _fallo)
-                  Padding(
-                    padding: const EdgeInsets.all(Medidas.s24),
-                    child: Center(
-                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                  if (datos == null && !_fallo)
+                    const Padding(
+                      padding: EdgeInsets.all(Medidas.s40),
+                      child: Center(child: CircularProgressIndicator()),
                     ),
-                  ),
-                if (datos != null) ...[
-                  if (proxima != null)
-                    _Proxima(
-                      reserva: proxima,
-                      catalogo: datos.catalogo,
-                      cancelando: _cancelando == proxima.id,
-                      alCancelar: _cancelando == null
-                          ? () => _cancelar(proxima, datos.catalogo)
-                          : null,
-                      alModificar: _cancelando == null
-                          ? () => _modificar(proxima)
-                          : null,
+                  if (datos == null && _fallo)
+                    Padding(
+                      padding: const EdgeInsets.all(Medidas.s24),
+                      child: Center(
+                        child: BotonTexto(
+                          texto: 'REINTENTAR',
+                          alTocar: _cargar,
+                        ),
+                      ),
                     ),
-                  _Deportes(catalogo: datos.catalogo),
-                  const _Accesos(),
+                  if (datos != null) ...[
+                    if (proxima != null)
+                      Aparecer(
+                        retraso: const Duration(milliseconds: 450),
+                        desdeY: 26,
+                        yaEntro: yaEntro,
+                        child: _Proxima(
+                          reserva: proxima,
+                          catalogo: datos.catalogo,
+                          cancelando: _cancelando == proxima.id,
+                          alCancelar: _cancelando == null
+                              ? () => _cancelar(proxima, datos.catalogo)
+                              : null,
+                          alModificar: _cancelando == null
+                              ? () => _modificar(proxima)
+                              : null,
+                        ),
+                      ),
+                    _Deportes(catalogo: datos.catalogo, yaEntro: yaEntro),
+                    _Accesos(
+                      primero:
+                          _entradaDeTiles +
+                          _pasoDeTiles * datos.catalogo.deportes.length,
+                      yaEntro: yaEntro,
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ),
@@ -262,6 +285,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
     );
   }
 }
+
+/// Cuándo entra el primer tile de deporte y cuánto después entra cada uno de los que siguen.
+const _entradaDeTiles = Duration(milliseconds: 700);
+const _pasoDeTiles = Duration(milliseconds: 90);
 
 List<CeldaMarcador> _celdas(_Datos datos) {
   final canchas = datos.sedes.fold(0, (total, s) => total + s.canchas);
@@ -292,9 +319,15 @@ String _emojiDeDeporte(String clave) => switch (clave) {
 /// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
 /// colores son los `on-media`, iguales en los dos modos.
 class _Hero extends StatelessWidget {
-  const _Hero({required this.sesion, required this.celdas, this.centro});
+  const _Hero({
+    required this.sesion,
+    required this.celdas,
+    required this.yaEntro,
+    this.centro,
+  });
 
   final Sesion sesion;
+  final bool yaEntro;
 
   final CentroDeNotificaciones? centro;
 
@@ -337,24 +370,27 @@ class _Hero extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'BUENOS DÍAS,',
-                            style: Textos.sobretitulo.copyWith(
-                              color: p.accentOnMedia,
+                      child: Aparecer(
+                        retraso: const Duration(milliseconds: 50),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'BUENOS DÍAS,',
+                              style: Textos.sobretitulo.copyWith(
+                                color: p.accentOnMedia,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: Medidas.s4),
-                          ListenableBuilder(
-                            listenable: sesion,
-                            builder: (context, _) => Text(
-                              sesion.perfil?.nombre ?? '',
-                              style: Textos.h1.copyWith(color: p.textOnMedia),
+                            const SizedBox(height: Medidas.s4),
+                            ListenableBuilder(
+                              listenable: sesion,
+                              builder: (context, _) => Text(
+                                sesion.perfil?.nombre ?? '',
+                                style: Textos.h1.copyWith(color: p.textOnMedia),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                     if (centro case final centro?)
@@ -374,7 +410,15 @@ class _Hero extends StatelessWidget {
                   const SizedBox(height: Medidas.s24),
                   Padding(
                     padding: const EdgeInsets.only(right: Medidas.s8),
-                    child: Marcador(celdas: marcador),
+                    child: Aparecer(
+                      retraso: const Duration(milliseconds: 250),
+                      duracion: const Duration(milliseconds: 500),
+                      desdeY: 0,
+                      escalaDesde: 0.85,
+                      curva: Movimiento.rapida,
+                      yaEntro: yaEntro,
+                      child: Marcador(celdas: marcador),
+                    ),
                   ),
                 ],
               ],
@@ -455,9 +499,10 @@ class _Proxima extends StatelessWidget {
 
 /// Los deportes del club. Informan; no llevan a ningún lado.
 class _Deportes extends StatelessWidget {
-  const _Deportes({required this.catalogo});
+  const _Deportes({required this.catalogo, required this.yaEntro});
 
   final Catalogo catalogo;
+  final bool yaEntro;
 
   @override
   Widget build(BuildContext context) {
@@ -478,11 +523,20 @@ class _Deportes extends StatelessWidget {
               children: [
                 for (final (i, d) in catalogo.deportes.indexed) ...[
                   if (i > 0) const SizedBox(width: Medidas.s12),
-                  TileDeporte(
-                    imagen: fotoDeDeporte(d.clave),
-                    emoji: _emojiDeDeporte(d.clave),
-                    nombre: d.nombre,
-                    alTocar: null,
+                  Aparecer(
+                    retraso: _entradaDeTiles + _pasoDeTiles * i,
+                    duracion: const Duration(milliseconds: 550),
+                    desdeX: 120,
+                    desdeY: 0,
+                    giro: -8 / 360,
+                    curva: Movimiento.rebote,
+                    yaEntro: yaEntro,
+                    child: TileDeporte(
+                      imagen: fotoDeDeporte(d.clave),
+                      emoji: _emojiDeDeporte(d.clave),
+                      nombre: d.nombre,
+                      alTocar: null,
+                    ),
                   ),
                 ],
               ],
@@ -496,7 +550,11 @@ class _Deportes extends StatelessWidget {
 
 /// ACCESOS RÁPIDOS: buscar una cancha o recorrer las sedes.
 class _Accesos extends StatelessWidget {
-  const _Accesos();
+  const _Accesos({required this.primero, required this.yaEntro});
+
+  /// Cuándo entra el primer acceso; el otro, un paso después.
+  final Duration primero;
+  final bool yaEntro;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -516,20 +574,28 @@ class _Accesos extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: _Acceso(
-                  icono: Icons.search_rounded,
-                  titulo: 'Buscar cancha',
-                  texto: 'Por sede, fecha y horario',
-                  alTocar: () => context.go('/inicio/buscar'),
+                child: Aparecer(
+                  retraso: primero,
+                  yaEntro: yaEntro,
+                  child: _Acceso(
+                    icono: Icons.search_rounded,
+                    titulo: 'Buscar cancha',
+                    texto: 'Por sede, fecha y horario',
+                    alTocar: () => context.go('/inicio/buscar'),
+                  ),
                 ),
               ),
               const SizedBox(width: Medidas.s12),
               Expanded(
-                child: _Acceso(
-                  icono: Icons.location_on_outlined,
-                  titulo: 'Ver sedes',
-                  texto: 'Horarios y canchas de cada una',
-                  alTocar: () => context.go('/sedes'),
+                child: Aparecer(
+                  retraso: primero + _pasoDeTiles,
+                  yaEntro: yaEntro,
+                  child: _Acceso(
+                    icono: Icons.location_on_outlined,
+                    titulo: 'Ver sedes',
+                    texto: 'Horarios y canchas de cada una',
+                    alTocar: () => context.go('/sedes'),
+                  ),
                 ),
               ),
             ],
