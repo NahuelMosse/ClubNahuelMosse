@@ -30,7 +30,7 @@ not_read:
 - RED-03-ASM-11 · el lector anuncia la cuenta regresiva al final de la etiqueta de la tarjeta («… faltan 2 días») · S2
 - RED-03-ASM-12 · el emoji del tile sale de la clave del deporte en la pantalla del inicio (Futbol ⚽, Tenis 🎾, Padel 🏓, Voley 🏐, Hockey 🏑, Basquet 🏀, Golf ⛳); un deporte que la app no conoce lleva 🏅, igual que lleva el ícono y la foto genéricos · S1
 - RED-03-ASM-13 · si la primera tanda de próximas trae más (la API corta en 20), PRÓXIMAS dice «20+» · S1
-- RED-03-ASM-14 · la tarjeta de sede sigue ref/sedes.png: la cantidad de canchas es el dorsal gigante en `textOnMedia` arriba a la derecha con el rótulo «CANCHAS» debajo, y no el bloque violeta del componente Card-Sede (deja sin efecto RED-01-ASM-04) · S4
+- RED-03-ASM-14 · la tarjeta de sede sigue ref/sedes.png: la cantidad de canchas es el dorsal gigante en `textOnMedia` arriba a la derecha con el rótulo «CANCHAS» debajo, y no el bloque violeta del componente Card-Sede (deja sin efecto el supuesto de la card de la paleta sobre ese contador) · S4
 - RED-03-ASM-06 · la cuenta regresiva cuenta días calendario del club entre hoy (`ahoraEnElClub`) y el día de inicio, sin mirar la hora · S2
 
 ## Tasks
