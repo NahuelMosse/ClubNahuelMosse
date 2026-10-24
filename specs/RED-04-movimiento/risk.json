@@ -1,0 +1,38 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "login",
+    "contraseña",
+    "sesión"
+  ],
+  "files": [
+    "apps/mobile/lib/comun/movimiento.dart",
+    "apps/mobile/lib/comun/transiciones.dart",
+    "apps/mobile/lib/app.dart",
+    "apps/mobile/lib/admin/pantalla_filtros_reservas.dart",
+    "apps/mobile/lib/reservas/pantalla_mis_reservas.dart",
+    "apps/mobile/lib/sedes/pantalla_sede.dart",
+    "apps/mobile/lib/sesion/pantalla_inicio_sesion.dart",
+    "apps/mobile/lib/inicio/pantalla_inicio.dart",
+    "apps/mobile/lib/usuarios/pantalla_mi_perfil.dart",
+    "apps/mobile/lib/comun/campo_texto.dart",
+    "apps/mobile/lib/comun/selector.dart",
+    "apps/mobile/lib/comun/resultado.dart",
+    "apps/mobile/lib/usuarios/pantalla_registro_exitoso.dart",
+    "apps/mobile/lib/reservas/pantalla_reserva_confirmada.dart",
+    "apps/mobile/lib/reservas/pantalla_horarios.dart",
+    "apps/mobile/lib/notificaciones/panel_avisos.dart",
+    "apps/mobile/lib/comun/boton.dart",
+    "apps/mobile/lib/comun/dialogo_error.dart",
+    "apps/mobile/lib/sesion/tarjeta_cuenta.dart",
+    "apps/mobile/test/capturas/"
+  ],
+  "tasks": 6
+}
