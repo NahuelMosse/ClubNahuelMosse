@@ -458,11 +458,17 @@ class _PresionableState extends State<Presionable>
   );
 }
 
-/// El festejo de la reserva confirmada: aros que giran, chispas, el [grito] que crece y,
-/// después, el [comprobante]. Corre una vez.
+/// El festejo de la reserva confirmada: un aro punteado que gira y chispas alrededor del
+/// [centro], el [grito] que crece debajo y, después, el [comprobante]. Corre una vez.
 class Festejo extends StatefulWidget {
-  const Festejo({super.key, required this.grito, required this.comprobante});
+  const Festejo({
+    super.key,
+    required this.centro,
+    required this.grito,
+    required this.comprobante,
+  });
 
+  final Widget centro;
   final Widget grito;
   final Widget comprobante;
 
@@ -478,7 +484,8 @@ class _FestejoState extends State<Festejo> with SingleTickerProviderStateMixin {
   static const _duracionGrito = Duration(milliseconds: 500);
   static const _inicioComprobante = Duration(milliseconds: 870);
   static const _duracionComprobante = Duration(milliseconds: 700);
-  static const _lado = 280.0;
+  static const _lado = 240.0;
+  static const _radio = 108.0;
 
   late final _controlador = AnimationController(vsync: this, duration: _total);
   bool _arrancado = false;
@@ -548,7 +555,6 @@ class _FestejoState extends State<Festejo> with SingleTickerProviderStateMixin {
         ),
       ),
     );
-    final colores = [p.accentBase, p.stateSuccess];
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -558,39 +564,46 @@ class _FestejoState extends State<Festejo> with SingleTickerProviderStateMixin {
           child: Stack(
             alignment: Alignment.center,
             children: [
-              RotationTransition(
-                turns: giro,
-                child: CustomPaint(
-                  size: const Size.square(_lado),
-                  painter: _Aros(p.accentBase, p.accentMuted),
+              ExcludeSemantics(
+                child: RotationTransition(
+                  turns: giro,
+                  child: CustomPaint(
+                    size: const Size.square(_lado),
+                    painter: _Aro(p.accentBase, _radio),
+                  ),
                 ),
               ),
               for (var i = 0; i < 8; i++)
-                Transform.translate(
-                  offset: Offset.fromDirection(
-                    i * math.pi / 4 + math.pi / 8,
-                    118,
-                  ),
-                  child: ScaleTransition(
-                    scale: chispa,
-                    child: Container(
-                      width: i.isEven ? 10 : 7,
-                      height: i.isEven ? 10 : 7,
-                      decoration: BoxDecoration(
-                        color: colores[i % colores.length],
-                        shape: BoxShape.circle,
+                ExcludeSemantics(
+                  child: Transform.translate(
+                    offset: Offset.fromDirection(
+                      i * math.pi / 4 + math.pi / 8,
+                      _radio + (i.isEven ? 6 : -2),
+                    ),
+                    child: ScaleTransition(
+                      scale: chispa,
+                      child: Container(
+                        width: i.isEven ? 8 : 5,
+                        height: i.isEven ? 8 : 5,
+                        decoration: BoxDecoration(
+                          color: p.accentBase,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              FadeTransition(
-                opacity: gritoOpacidad,
-                alwaysIncludeSemantics: true,
-                child: ScaleTransition(scale: gritoEscala, child: widget.grito),
-              ),
+              widget.centro,
             ],
           ),
         ),
+        const SizedBox(height: Medidas.s8),
+        FadeTransition(
+          opacity: gritoOpacidad,
+          alwaysIncludeSemantics: true,
+          child: ScaleTransition(scale: gritoEscala, child: widget.grito),
+        ),
+        const SizedBox(height: Medidas.s12),
         Aparecer(
           retraso: _inicioComprobante,
           duracion: _duracionComprobante,
@@ -602,36 +615,34 @@ class _FestejoState extends State<Festejo> with SingleTickerProviderStateMixin {
   }
 }
 
-/// Tres aros concéntricos, cada uno con una marca para que se note que giran.
-class _Aros extends CustomPainter {
-  _Aros(this.trazo, this.marca);
+/// Un aro de rayitas alrededor del centro.
+class _Aro extends CustomPainter {
+  _Aro(this.trazo, this.radio);
 
   final Color trazo;
-  final Color marca;
+  final double radio;
 
   @override
   void paint(Canvas canvas, Size size) {
     final centro = size.center(Offset.zero);
     final linea = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    final punto = Paint()..color = trazo;
-    for (var i = 0; i < 3; i++) {
-      final radio = 62.0 + 34 * i;
-      canvas.drawCircle(
-        centro,
-        radio,
-        linea..color = Color.lerp(trazo, marca, i / 3)!.withValues(alpha: 0.55),
-      );
-      canvas.drawCircle(
-        centro + Offset.fromDirection(math.pi * (0.4 + 0.7 * i), radio),
-        4,
-        punto,
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round
+      ..color = trazo;
+    const rayas = 48;
+    for (var i = 0; i < rayas; i++) {
+      canvas.drawArc(
+        Rect.fromCircle(center: centro, radius: radio),
+        i * 2 * math.pi / rayas,
+        math.pi / rayas,
+        false,
+        linea,
       );
     }
   }
 
   @override
-  bool shouldRepaint(_Aros anterior) =>
-      anterior.trazo != trazo || anterior.marca != marca;
+  bool shouldRepaint(_Aro anterior) =>
+      anterior.trazo != trazo || anterior.radio != radio;
 }
