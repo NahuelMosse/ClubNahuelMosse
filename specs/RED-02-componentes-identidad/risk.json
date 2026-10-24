@@ -1,0 +1,18 @@
+{
+  "size": "large",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/comun/isotipo.dart",
+    "apps/mobile/lib/comun/marcador.dart",
+    "apps/mobile/lib/comun/tile_deporte.dart",
+    "apps/mobile/lib/comun/ficha_socio.dart",
+    "apps/mobile/lib/comun/linea_del_dia.dart",
+    "apps/mobile/lib/comun/dorsal.dart",
+    "apps/mobile/lib/comun/troquel.dart"
+  ],
+  "tasks": 6
+}
