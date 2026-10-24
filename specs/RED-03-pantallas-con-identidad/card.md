@@ -1,0 +1,68 @@
+# RED-03 · pantallas con los componentes de identidad
+
+card: RED-03
+status: proposed
+cap: 6 h
+sources:
+  - "pedido (texto) · mensaje del usuario en la sesión, 2026-10-23: «con este dise;o actualicemos la app real»"
+  - "Figma · https://www.figma.com/design/zCsUSxyy2QjwEJ7AyR6XWt (copia del usuario) · pantallas de la página `03 · App · Prototipo` (1:4): CU-01 Home · Usuario (llegada) 2300:7373, CU-01 Login · Vacío 29:27, CU-05 Mi perfil · Lectura 39:356, CU-08 Mis reservas · Próximas 49:434, CU-12 Horarios · Grilla 45:359, CU-16 Todas las sedes 53:319; capturas en specs/RED-03-pantallas-con-identidad/ref/*.png y componentes en ref/figma-spec.md"
+not_read:
+  - "Jira: no hay ticket; el pedido llegó como texto"
+  - "las pantallas del Figma de admin, búsqueda y contraseñas (admin-reservas.png está en ref/ pero no tiene componentes de identidad): quedan con la paleta de RED-01 y sin componentes nuevos"
+
+## Specs
+
+- S1 · "Home (llegada): claim … Marcador … sección «Tu próxima reserva» … tiles de deporte" (ref/home-llegada.png) · acceptance: el hero del inicio lleva un `Marcador` con las sedes, las canchas y las reservas próximas del socio, y la sección DEPORTES muestra un `TileDeporte` por deporte del catálogo con su foto, su emoji y su nombre
+- S2 · "Card-Reserva (pase troquelado) … **troquel** … cuenta regresiva («FALTAN 2 DÍAS» …) … **borde lima** de 4 a la izquierda (`accent/base`) en las activas" · acceptance: la tarjeta de reserva, en el inicio y en Mis reservas, separa el encabezado del detalle con un `Troquel`; una reserva activa lleva el borde izquierdo de 4 en `accentBase`; la cuenta regresiva dice «HOY» si es hoy en el club, «MAÑANA» si es mañana y «FALTAN N DÍAS» si faltan más; las reservas que no están activas no llevan ni borde ni cuenta
+- S3 · "Ficha-Socio 345×261 (perfil)" (ref/perfil.png) · acceptance: la cabecera de Mi perfil es una `FichaSocio` con las iniciales, el nombre y el apellido, el correo y el rótulo «MIEMBRO ACTIVO»
+- S4 · "Card-Sede … dorsal gigante con el número de canchas" (ref/sedes.png) · acceptance: la portada de cada tarjeta de sede lleva un `DorsalGigante` con su cantidad de canchas en dos dígitos
+- S5 · "Linea-Del-Dia 345 (horarios)" (ref/horarios-grilla.png) · acceptance: arriba de la grilla de horarios va una `LineaDelDia` con una celda por franja del día: libre, ocupada o la elegida
+- S6 · "Marca/Isotipo … Se usa en Login" (ref/login.png) · acceptance: la marca del login lleva el `Isotipo` arriba de «BIENVENIDO A», decorativo para el lector (la marca ya se anuncia como «Club Nahuel Mosse»)
+- RED-03-ASM-01 · el Marcador del inicio muestra SEDES, CANCHAS y PRÓXIMAS (las reservas activas por venir del socio, que la pantalla ya lee) en lugar de LIBRES HOY: la API no da los horarios libres de todas las canchas en una consulta; la celda destacada es PRÓXIMAS · S1
+- RED-03-ASM-02 · el Marcador reemplaza la línea «N sedes · N canchas · disponibilidad en tiempo real» del inicio; las cifras van con dos dígitos («04») como en el Figma · S1
+- RED-03-ASM-03 · los tiles de deporte usan las fotos que ya tiene la app (`fotoDeDeporte`, cuatro fotos compartidas) y no llevan a ningún lado, como los chips que reemplazan: sin `alTocar` el tile se anuncia sólo por su nombre, sin rol de botón, y ninguno está elegido · S1
+- RED-03-ASM-04 · la ficha de socio no muestra número de socio ni fecha de alta ni estadísticas: la API no los da; en el lugar del número va «MIEMBRO ACTIVO» y la `FichaSocio` sin estadísticas no muestra el Marcador · S3
+- RED-03-ASM-05 · Mis reservas no suma el Marcador del Figma (PRÓXIMAS · JUGADAS · CANCELADAS): pediría leer el historial además de las próximas · S2
+- RED-03-ASM-07 · la ficha de socio lleva la foto de fútbol de la app (`fotoDeDeporte('Futbol')`) en los dos modos, como ref/perfil-claro.png: su texto va sobre la foto oscurecida y nunca sobre `bgSurfaceRaised` claro · S3
+- RED-03-ASM-08 · la Línea del día tiene una celda por hora desde la apertura de la sede hasta la última hora antes del cierre; una hora es libre si alguna franja libre de la grilla la cubre (inicio ≤ hora < inicio + duración), elegida si la cubre la franja elegida y ocupada si no; la línea va sólo cuando la grilla tiene horarios, no con el aviso de «No hay horarios disponibles» · S5
+- RED-03-ASM-09 · la cuenta regresiva va sólo en la tarjeta de la próxima reserva del inicio, como ref/home-llegada.png; en Mis reservas la tarjeta lleva troquel y borde sin cuenta, como ref/mis-reservas-proximas.png · S2
+- RED-03-ASM-10 · una reserva activa y resaltada (llegó desde un aviso) conserva su contorno de foco y suma el borde izquierdo del acento · S2
+- RED-03-ASM-11 · el lector anuncia la cuenta regresiva al final de la etiqueta de la tarjeta («… faltan 2 días») · S2
+- RED-03-ASM-12 · el emoji del tile sale de la clave del deporte en la pantalla del inicio (Futbol ⚽, Tenis 🎾, Padel 🏓, Voley 🏐, Hockey 🏑, Basquet 🏀, Golf ⛳); un deporte que la app no conoce lleva 🏅, igual que lleva el ícono y la foto genéricos · S1
+- RED-03-ASM-13 · si la primera tanda de próximas trae más (la API corta en 20), PRÓXIMAS dice «20+» · S1
+- RED-03-ASM-06 · la cuenta regresiva cuenta días calendario del club entre hoy (`ahoraEnElClub`) y el día de inicio, sin mirar la hora · S2
+
+## Tasks
+
+- T1 · S1,RED-03-ASM-01,RED-03-ASM-02,RED-03-ASM-03,RED-03-ASM-12,RED-03-ASM-13 · apps/mobile/lib/inicio/pantalla_inicio.dart (presentation), apps/mobile/lib/comun/tile_deporte.dart (presentation), apps/mobile/test/inicio_test.dart · tests: apps/mobile/test/rediseno/pantallas_test.dart "el hero del inicio lleva el marcador con sedes, canchas y próximas @RED-03-S1"; apps/mobile/test/rediseno/pantallas_test.dart "la sección deportes muestra un tile por deporte del catálogo @RED-03-S1"; apps/mobile/test/rediseno/pantallas_test.dart "la celda destacada del marcador es PRÓXIMAS y cuenta las reservas activas por venir @RED-03-ASM-01"; apps/mobile/test/rediseno/pantallas_test.dart "el marcador reemplaza «N sedes · N canchas · disponibilidad en tiempo real» y pone las cifras con dos dígitos, 04 @RED-03-ASM-02"; apps/mobile/test/rediseno/pantallas_test.dart "los tiles usan las fotos de la app, no navegan y se anuncian sólo por su nombre @RED-03-ASM-03"; apps/mobile/test/rediseno/pantallas_test.dart "un deporte desconocido lleva el emoji 🏅 y el de fútbol ⚽ @RED-03-ASM-12"; apps/mobile/test/rediseno/pantallas_test.dart "con más de una tanda de próximas el marcador dice 20+ @RED-03-ASM-13"
+- T2 · S2,RED-03-ASM-05,RED-03-ASM-06,RED-03-ASM-09,RED-03-ASM-10,RED-03-ASM-11 · apps/mobile/lib/reservas/pantalla_mis_reservas.dart (presentation), apps/mobile/lib/inicio/pantalla_inicio.dart (presentation) · tests: apps/mobile/test/rediseno/pantallas_test.dart "la tarjeta de reserva separa encabezado y detalle con el troquel @RED-03-S2"; apps/mobile/test/rediseno/pantallas_test.dart "una reserva activa lleva el borde del acento y la cuenta regresiva @RED-03-S2"; apps/mobile/test/rediseno/pantallas_test.dart "la cuenta dice HOY, MAÑANA o FALTAN N DÍAS @RED-03-S2"; apps/mobile/test/rediseno/pantallas_test.dart "una reserva cancelada no lleva borde ni cuenta @RED-03-S2"; apps/mobile/test/rediseno/pantallas_test.dart "mis reservas no suma un marcador @RED-03-ASM-05"; apps/mobile/test/rediseno/pantallas_test.dart "la cuenta mira el día del club y no la hora @RED-03-ASM-06"; apps/mobile/test/rediseno/pantallas_test.dart "la cuenta va en la próxima del inicio y no en Mis reservas @RED-03-ASM-09"; apps/mobile/test/rediseno/pantallas_test.dart "una reserva activa resaltada conserva el contorno de foco y suma el borde @RED-03-ASM-10"; apps/mobile/test/rediseno/pantallas_test.dart "el lector anuncia la cuenta al final de la tarjeta, «… faltan 2 días» @RED-03-ASM-11"
+- T3 · S3,RED-03-ASM-04,RED-03-ASM-07 · apps/mobile/lib/usuarios/pantalla_mi_perfil.dart (presentation), apps/mobile/lib/comun/ficha_socio.dart (presentation) · tests: apps/mobile/test/rediseno/pantallas_test.dart "la cabecera de mi perfil es la ficha de socio @RED-03-S3"; apps/mobile/test/rediseno/pantallas_test.dart "la ficha de mi perfil dice MIEMBRO ACTIVO y no muestra marcador @RED-03-ASM-04"; apps/mobile/test/rediseno/pantallas_test.dart "la ficha de mi perfil lleva la foto en los dos modos @RED-03-ASM-07"
+- T4 · S4 · apps/mobile/lib/sedes/pantalla_sedes.dart (presentation) · tests: apps/mobile/test/rediseno/pantallas_test.dart "cada tarjeta de sede lleva el dorsal con sus canchas @RED-03-S4"
+- T5 · S5,RED-03-ASM-08 · apps/mobile/lib/reservas/pantalla_horarios.dart (presentation) · tests: apps/mobile/test/rediseno/pantallas_test.dart "arriba de la grilla va la línea del día con el estado de cada franja @RED-03-S5"; apps/mobile/test/rediseno/pantallas_test.dart "con dos horas cada hora es libre si una franja libre la cubre y la elegida marca sus dos horas @RED-03-ASM-08"; apps/mobile/test/rediseno/pantallas_test.dart "con «No hay horarios disponibles» no va la línea del día @RED-03-ASM-08"
+- T6 · S6 · apps/mobile/lib/sesion/pantalla_inicio_sesion.dart (presentation) · tests: apps/mobile/test/rediseno/pantallas_test.dart "la marca del login lleva el isotipo decorativo @RED-03-S6"
+- T7 · S1,S2,S3,S4,S5,S6 · apps/mobile/test/capturas/ · tests: apps/mobile/test/rediseno/pantallas_test.dart "el hero del inicio lleva el marcador con sedes, canchas y próximas @RED-03-S1"
+
+## Changes to existing behavior
+
+- Inicio: la tarjeta de la próxima reserva suma troquel, borde y cuenta regresiva; la línea «N sedes · N canchas · disponibilidad en tiempo real» pasa a un Marcador; los chips de deporte pasan a tiles con foto (inicio_test.dart, sin tags, se actualiza)
+- La tarjeta de reserva suma troquel, borde y cuenta regresiva; Mi perfil cambia la cabecera por la ficha de socio; sedes, horarios y login suman dorsal, línea del día e isotipo
+- Las capturas de `test/capturas/` se regeneran (commit propio)
+
+## Look
+
+- ref: specs/RED-03-pantallas-con-identidad/ref/home-llegada.png · specs/RED-03-pantallas-con-identidad/ref/mis-reservas-proximas.png · specs/RED-03-pantallas-con-identidad/ref/perfil.png · specs/RED-03-pantallas-con-identidad/ref/sedes.png · specs/RED-03-pantallas-con-identidad/ref/horarios-grilla.png · specs/RED-03-pantallas-con-identidad/ref/login.png
+- behavior: load · sin movimiento nuevo (es de RED-04)
+- tokens: `Paleta` (RED-01) y los componentes de `lib/comun/` (RED-02)
+
+## Gate
+
+```
+suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
+lint: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib/inicio/pantalla_inicio.dart apps/mobile/lib/reservas/pantalla_mis_reservas.dart apps/mobile/lib/usuarios/pantalla_mi_perfil.dart apps/mobile/lib/comun/ficha_socio.dart apps/mobile/lib/sedes/pantalla_sedes.dart apps/mobile/lib/reservas/pantalla_horarios.dart apps/mobile/lib/sesion/pantalla_inicio_sesion.dart apps/mobile/test/rediseno/pantallas_test.dart apps/mobile/test/inicio_test.dart && D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+```
+
+## Log
+
+- L1 · con este dise;o actualicemos la app real (el diseño es el rediseño «Camiseta del club» del Figma https://www.figma.com/design/zCsUSxyy2QjwEJ7AyR6XWt; esta card lleva a las pantallas los componentes de identidad de RED-02: marcador y tiles en el inicio, pase troquelado en la tarjeta de reserva, ficha de socio en el perfil, dorsal en las sedes, línea del día en horarios e isotipo en el login; el movimiento va en RED-04)
+- L2 · 2026-10-24 · declared · S4 · los textos entre comillas que risk.mjs cuenta como miembros son de otras specs; «cada tarjeta de sede» la recorre un solo test sobre todas las sedes de la lista
+- L3 · 2026-10-24 · plan judge (oracle en el rol de judge, el agente judge no está en la sesión): ACT-01..08 cerrados con RED-03-ASM-07..13 y sus tests; ver judge.md
