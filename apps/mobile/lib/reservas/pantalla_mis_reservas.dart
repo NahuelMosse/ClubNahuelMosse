@@ -8,7 +8,9 @@ import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
 import '../comun/insignia.dart';
+import '../comun/reloj.dart';
 import '../comun/tarjeta_reserva.dart';
+import '../comun/troquel.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
@@ -446,12 +448,16 @@ class TarjetaReserva extends StatelessWidget {
     this.resaltada = false,
     this.cancelable = false,
     this.cancelando = false,
+    this.cuentaRegresiva = false,
     this.alCancelar,
     this.alModificar,
   });
 
   final Reserva reserva;
   final Catalogo catalogo;
+
+  /// Suma «HOY», «MAÑANA» o «FALTAN N DÍAS» a una reserva activa.
+  final bool cuentaRegresiva;
 
   /// Viene de un aviso: se marca con el borde de acento.
   final bool resaltada;
@@ -483,11 +489,32 @@ class TarjetaReserva extends StatelessWidget {
     _ => null,
   };
 
+  /// Los días de calendario del club que faltan para el inicio, sin mirar la hora.
+  String? get _cuenta {
+    if (!cuentaRegresiva || reserva.estado != EstadoDeReserva.activa) {
+      return null;
+    }
+    final hoy = ahoraEnElClub();
+    final i = reserva.inicio;
+    final dias = DateTime(
+      i.year,
+      i.month,
+      i.day,
+    ).difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    return switch (dias) {
+      <= 0 => 'HOY',
+      1 => 'MAÑANA',
+      _ => 'FALTAN $dias DÍAS',
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final r = reserva;
     final porque = _porque;
+    final cuenta = _cuenta;
+    final activa = r.estado == EstadoDeReserva.activa;
     final anulada = r.estado == EstadoDeReserva.anulada;
     final grande = MediaQuery.textScalerOf(context).scale(10) > 13;
     final precioYEstado = Column(
@@ -523,6 +550,7 @@ class TarjetaReserva extends StatelessWidget {
         '${pesos(r.total).replaceFirst('\$\u00A0', '')} pesos',
         r.espacio,
         ?porque,
+        ?cuenta?.toLowerCase(),
       ].join(', '),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -590,12 +618,25 @@ class TarjetaReserva extends StatelessWidget {
               ),
               child: precioYEstado,
             ),
-          Divider(height: 1, color: p.borderDefault),
+          Troquel(fondo: p.bgBase),
           Padding(
             padding: const EdgeInsets.all(Medidas.s16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                if (cuenta != null) ...[
+                  Text(
+                    cuenta,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                      letterSpacing: 11 * 0.08,
+                      color: p.accentInk,
+                    ),
+                  ),
+                  const SizedBox(height: Medidas.s4),
+                ],
                 Text(
                   r.espacio,
                   style: Textos.mono.copyWith(color: p.textMuted),
@@ -630,68 +671,90 @@ class TarjetaReserva extends StatelessWidget {
         ],
       ),
     );
+    final borde = resaltada ? 2.0 : 1.0;
     return Container(
       decoration: BoxDecoration(
         color: p.bgSurfaceRaised,
         borderRadius: BorderRadius.circular(Medidas.radioLg),
         border: Border.all(
           color: resaltada ? p.borderFocus : p.borderDefault,
-          width: resaltada ? 2 : 1,
+          width: borde,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          datos,
-          if (cancelable)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s16,
-                0,
-                Medidas.s16,
-                Medidas.s16,
-              ),
-              child: cancelando
-                  ? Semantics(
-                      label: 'Cancelando la reserva',
-                      excludeSemantics: true,
-                      child: const SizedBox(
-                        height: Medidas.altoControl,
-                        child: Center(child: CircularProgressIndicator()),
-                      ),
-                    )
-                  : Flex(
-                      direction: grande ? Axis.vertical : Axis.horizontal,
-                      crossAxisAlignment: grande
-                          ? CrossAxisAlignment.stretch
-                          : CrossAxisAlignment.center,
-                      children: [
-                        _Accion(
-                          expandir: !grande,
-                          etiqueta: 'Modificar la reserva de $deQue',
-                          alTocar: modificar,
-                          child: BotonContorno(
-                            texto: 'MODIFICAR',
-                            alTocar: modificar,
-                            compacto: true,
-                          ),
-                        ),
-                        const SizedBox(width: Medidas.s8, height: Medidas.s8),
-                        _Accion(
-                          expandir: !grande,
-                          etiqueta: 'Cancelar la reserva de $deQue',
-                          alTocar: cancelar,
-                          child: BotonContorno(
-                            texto: 'CANCELAR',
-                            alTocar: cancelar,
-                            peligro: true,
-                            compacto: true,
-                          ),
-                        ),
-                      ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(Medidas.radioLg - borde),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                datos,
+                if (cancelable)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      Medidas.s16,
+                      0,
+                      Medidas.s16,
+                      Medidas.s16,
                     ),
+                    child: cancelando
+                        ? Semantics(
+                            label: 'Cancelando la reserva',
+                            excludeSemantics: true,
+                            child: const SizedBox(
+                              height: Medidas.altoControl,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          )
+                        : Flex(
+                            direction: grande ? Axis.vertical : Axis.horizontal,
+                            crossAxisAlignment: grande
+                                ? CrossAxisAlignment.stretch
+                                : CrossAxisAlignment.center,
+                            children: [
+                              _Accion(
+                                expandir: !grande,
+                                etiqueta: 'Modificar la reserva de $deQue',
+                                alTocar: modificar,
+                                child: BotonContorno(
+                                  texto: 'MODIFICAR',
+                                  alTocar: modificar,
+                                  compacto: true,
+                                ),
+                              ),
+                              const SizedBox(
+                                width: Medidas.s8,
+                                height: Medidas.s8,
+                              ),
+                              _Accion(
+                                expandir: !grande,
+                                etiqueta: 'Cancelar la reserva de $deQue',
+                                alTocar: cancelar,
+                                child: BotonContorno(
+                                  texto: 'CANCELAR',
+                                  alTocar: cancelar,
+                                  peligro: true,
+                                  compacto: true,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+              ],
             ),
-        ],
+            if (activa)
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: 4,
+                child: ColoredBox(
+                  key: const ValueKey('borde-reserva-activa'),
+                  color: p.accentBase,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

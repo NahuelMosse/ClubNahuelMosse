@@ -18,7 +18,7 @@ class LineaDelDia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    final marca = Textos.mono.copyWith(fontSize: 11, color: p.textMuted);
+    final marca = Textos.mono.copyWith(fontSize: 11, color: p.textPrimary);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -29,7 +29,11 @@ class LineaDelDia extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 4,
             children: [
               Text(
                 'TU DÍA EN LA CANCHA',
@@ -39,18 +43,9 @@ class LineaDelDia extends StatelessWidget {
                   color: p.textSecondary,
                 ),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Wrap(
-                  alignment: WrapAlignment.end,
-                  spacing: 10,
-                  children: [
-                    _Leyenda(color: p.accentMuted, texto: 'Libre'),
-                    _Leyenda(color: p.stateDisabled, texto: 'Ocupado'),
-                    _Leyenda(color: p.accentBase, texto: 'Elegido'),
-                  ],
-                ),
-              ),
+              _Leyenda(color: p.accentMuted, texto: 'Libre'),
+              _Leyenda(color: p.stateDisabled, texto: 'Ocupado'),
+              _Leyenda(color: p.accentBase, texto: 'Elegido'),
             ],
           ),
           const SizedBox(height: 8),
@@ -138,7 +133,7 @@ class _Leyenda extends StatelessWidget {
           style: Textos.leyenda.copyWith(
             fontSize: 11,
             height: 14 / 11,
-            color: p.textMuted,
+            color: p.textPrimary,
           ),
         ),
       ],

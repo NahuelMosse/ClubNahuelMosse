@@ -10,8 +10,9 @@ import '../comun/boton.dart';
 import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/ficha_socio.dart';
 import '../comun/formato_fecha.dart';
-import '../comun/insignia.dart';
+import '../sedes/fotos.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
@@ -258,35 +259,20 @@ class _Cabecera extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             Medidas.s24,
-            Medidas.s48,
+            Medidas.s24,
             Medidas.s24,
             Medidas.s24,
           ),
-          child: Column(
-            children: [
-              AvatarIniciales(
-                nombre: perfil.nombre,
-                apellido: perfil.apellido,
-                tamano: TamanoAvatar.grande,
-              ),
-              const SizedBox(height: Medidas.s8),
-              Semantics(
-                header: true,
-                child: Text(
-                  '${perfil.nombre} ${perfil.apellido}',
-                  textAlign: TextAlign.center,
-                  style: Textos.h1.copyWith(color: p.textPrimary),
-                ),
-              ),
-              const SizedBox(height: Medidas.s8),
-              Text(
-                perfil.correo,
-                textAlign: TextAlign.center,
-                style: Textos.leyenda.copyWith(color: p.textSecondary),
-              ),
-              const SizedBox(height: Medidas.s8),
-              const Insignia(texto: 'MIEMBRO ACTIVO'),
-            ],
+          child: FichaSocio(
+            iniciales: AvatarIniciales.iniciales(
+              perfil.nombre,
+              perfil.apellido,
+            ),
+            nombre: '${perfil.nombre} ${perfil.apellido}',
+            correo: perfil.correo,
+            numero: 'MIEMBRO ACTIVO',
+            estadisticas: const [],
+            imagen: fotoDeDeporte('Futbol'),
           ),
         ),
       ),

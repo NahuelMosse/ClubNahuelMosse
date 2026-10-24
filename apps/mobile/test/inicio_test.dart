@@ -1,3 +1,4 @@
+import 'package:clubnahuelmosse/comun/marcador.dart';
 import 'package:clubnahuelmosse/espacios/espacios.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
 import 'package:clubnahuelmosse/reservas/reservas.dart';
@@ -7,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/montar.dart';
+
+Finder _enElMarcador(String texto) =>
+    find.descendant(of: find.byType(Marcador), matching: find.text(texto));
 
 void main() {
   setUpAll(cargarFuentes);
@@ -22,15 +26,21 @@ void main() {
 
     expect(find.text('BUENOS DÍAS,'), findsOneWidget);
     expect(find.text('Nahuel'), findsOneWidget);
-    expect(
-      find.text('4 sedes · 17 canchas · disponibilidad en tiempo real'),
-      findsOneWidget,
-    );
+    expect(_enElMarcador('04'), findsOneWidget);
+    expect(_enElMarcador('SEDES'), findsOneWidget);
+    expect(_enElMarcador('17'), findsOneWidget);
+    expect(_enElMarcador('CANCHAS'), findsOneWidget);
+    expect(_enElMarcador('PRÓXIMAS'), findsOneWidget);
     expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
     expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
     expect(find.text('MODIFICAR'), findsOneWidget);
     expect(find.text('CANCELAR'), findsOneWidget);
     expect(find.text('Fútbol'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Buscar cancha'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Buscar cancha'), findsOneWidget);
   });
 
@@ -48,7 +58,7 @@ void main() {
     expect(find.text('VER TODAS →'), findsNothing);
   });
 
-  testWidgets('con una sola sede y una cancha el conteo va en singular', (
+  testWidgets('con una sola sede y una cancha el marcador cuenta 01 y 01', (
     tester,
   ) async {
     await montar(
@@ -57,10 +67,9 @@ void main() {
       tema: temaOscuro,
     );
 
-    expect(
-      find.text('1 sede · 1 cancha · disponibilidad en tiempo real'),
-      findsOneWidget,
-    );
+    expect(_enElMarcador('01'), findsNWidgets(3));
+    expect(_enElMarcador('SEDES'), findsOneWidget);
+    expect(_enElMarcador('CANCHAS'), findsOneWidget);
   });
 
   testWidgets(

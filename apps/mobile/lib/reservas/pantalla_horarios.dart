@@ -6,6 +6,7 @@ import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/formato_precio.dart';
+import '../comun/linea_del_dia.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sedes/fotos.dart';
@@ -520,6 +521,10 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (_datos?.$1 case final sede?) ...[
+                    _lineaDelDia(sede, grilla, horas),
+                    const SizedBox(height: Medidas.s12),
+                  ],
                   _DeAPares(
                     alto: Medidas.altoControl,
                     hijos: [
@@ -547,6 +552,33 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                 ],
               ),
       ),
+    );
+  }
+
+  /// Una celda por hora, de la apertura a la última antes del cierre: libre si alguna
+  /// franja libre la cubre, elegida si la cubre la franja elegida.
+  Widget _lineaDelDia(Sede sede, Grilla grilla, int horas) {
+    int hora(String hhmm) => int.parse(hhmm.split(':').first);
+    final desde = hora(sede.apertura);
+    final cierre = hora(sede.cierre);
+    final hasta = cierre == 0 ? 24 : cierre;
+    bool cubre(Franja f, int h) {
+      final inicio = hora(f.inicio);
+      return inicio <= h && h < inicio + horas;
+    }
+
+    final elegida = grilla.franjas.where((f) => f.inicio == _inicio);
+    return LineaDelDia(
+      desde: desde,
+      franjas: [
+        for (var h = desde; h < hasta; h++)
+          if (elegida.any((f) => cubre(f, h)))
+            EstadoFranja.elegida
+          else if (grilla.franjas.any((f) => f.disponible && cubre(f, h)))
+            EstadoFranja.libre
+          else
+            EstadoFranja.ocupada,
+      ],
     );
   }
 

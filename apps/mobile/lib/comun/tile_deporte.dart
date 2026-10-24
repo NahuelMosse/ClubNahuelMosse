@@ -25,11 +25,11 @@ class TileDeporte extends StatelessWidget {
     final p = context.paleta;
     final radio = BorderRadius.circular(20);
     return Semantics(
-      button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      focusable: alTocar != null,
       label: nombre,
+      button: alTocar != null ? true : null,
+      selected: alTocar != null || elegido ? elegido : null,
+      enabled: alTocar != null ? true : null,
+      focusable: alTocar != null ? true : null,
       onTap: alTocar,
       child: ExcludeSemantics(
         child: SizedBox(
@@ -97,12 +97,13 @@ class TileDeporte extends StatelessWidget {
                         ),
                       ),
                     ),
-                  Positioned.fill(
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: InkWell(onTap: alTocar),
+                  if (alTocar != null)
+                    Positioned.fill(
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: InkWell(onTap: alTocar),
+                      ),
                     ),
-                  ),
                 ],
               ),
             ),
