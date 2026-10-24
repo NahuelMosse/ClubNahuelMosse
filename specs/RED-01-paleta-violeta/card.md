@@ -47,7 +47,7 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
-lint: sh D:/Temp/w/herramientas/dart-format-analyze-red.sh apps/mobile/test/rediseno/paleta_rediseno_test.dart apps/mobile/test/rediseno/sobre_foto_test.dart
+lint: sh D:/Temp/w/herramientas/dart-format-analyze-red.sh apps/mobile/lib/comun/boton.dart apps/mobile/lib/comun/etiqueta.dart apps/mobile/lib/inicio/pantalla_inicio.dart apps/mobile/lib/reservas/pantalla_confirmar_reserva.dart apps/mobile/lib/reservas/pantalla_horarios.dart apps/mobile/lib/sedes/pantalla_sede.dart apps/mobile/lib/sedes/pantalla_sedes.dart apps/mobile/lib/sesion/pantalla_inicio_sesion.dart apps/mobile/lib/tema/tokens.dart apps/mobile/lib/usuarios/pantalla_mi_perfil.dart apps/mobile/test/rediseno/paleta_rediseno_test.dart apps/mobile/test/rediseno/sobre_foto_test.dart
 ```
 
 ## Log
