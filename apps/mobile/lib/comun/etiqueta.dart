@@ -21,7 +21,7 @@ class Etiqueta extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final (fondo, tinta) = sobreFoto
-        ? (Paleta.oscura.accentBase, Paleta.oscura.accentOn)
+        ? (p.accentBase, p.accentOn)
         : (p.bgSurfaceRaised, p.textSecondary);
     final simbolo = icono;
     return Container(

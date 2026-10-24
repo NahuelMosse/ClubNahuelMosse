@@ -94,7 +94,7 @@ class BotonTexto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    final color = sobreFoto ? Paleta.oscura.accentBase : p.accentInk;
+    final color = sobreFoto ? p.accentOnMedia : p.accentInk;
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: Medidas.altoControl),
       child: TextButton(
@@ -219,8 +219,7 @@ class BarraDeAccion extends StatelessWidget {
 
 /// `Btn/Type=Danger`: pill rojo para confirmar algo que no se deshace.
 ///
-/// El rojo es el del modo claro en los dos modos: con el del modo oscuro el texto blanco no
-/// llega al contraste mínimo.
+/// Usa `state/danger-strong`: con `state/danger` el texto blanco no llega al contraste mínimo.
 class BotonPeligro extends StatelessWidget {
   const BotonPeligro({super.key, required this.texto, required this.alTocar});
 
@@ -229,6 +228,7 @@ class BotonPeligro extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.paleta;
     return ConstrainedBox(
       constraints: const BoxConstraints(
         minHeight: Medidas.altoControl,
@@ -237,7 +237,7 @@ class BotonPeligro extends StatelessWidget {
       child: FilledButton(
         onPressed: alTocar,
         style: FilledButton.styleFrom(
-          backgroundColor: Paleta.clara.stateDanger,
+          backgroundColor: p.stateDangerStrong,
           foregroundColor: Colors.white,
           shape: const StadiumBorder(),
           textStyle: Textos.boton,

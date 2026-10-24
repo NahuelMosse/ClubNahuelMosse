@@ -190,7 +190,7 @@ class _FormularioState extends State<_Formulario> {
                       Text(
                         '¿No tenés cuenta?',
                         style: Textos.leyenda.copyWith(
-                          color: _Fondo.textoSecundario,
+                          color: p.textOnMediaMuted,
                         ),
                       ),
                       BotonTexto(
@@ -231,11 +231,14 @@ class _Marca extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lima = Paleta.oscura.accentBase;
+    final p = context.paleta;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('BIENVENIDO A', style: Textos.sobretitulo.copyWith(color: lima)),
+        Text(
+          'BIENVENIDO A',
+          style: Textos.sobretitulo.copyWith(color: p.accentOnMedia),
+        ),
         const SizedBox(height: Medidas.s8),
         Semantics(
           header: true,
@@ -248,13 +251,13 @@ class _Marca extends StatelessWidget {
               child: Text.rich(
                 TextSpan(
                   children: [
-                    const TextSpan(
+                    TextSpan(
                       text: 'CLUB ',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: p.textOnMedia),
                     ),
                     TextSpan(
                       text: 'NAHUELMOSSE',
-                      style: TextStyle(color: lima),
+                      style: TextStyle(color: p.accentOnMedia),
                     ),
                   ],
                 ),
@@ -266,7 +269,7 @@ class _Marca extends StatelessWidget {
         const SizedBox(height: Medidas.s8),
         Text(
           'Gestión de espacios deportivos',
-          style: Textos.cuerpo.copyWith(color: _Fondo.textoSecundario),
+          style: Textos.cuerpo.copyWith(color: p.textOnMediaMuted),
         ),
       ],
     );
@@ -276,9 +279,6 @@ class _Marca extends StatelessWidget {
 /// La foto del club con el degradé del prototipo, que asegura el contraste del texto.
 class _Fondo extends StatelessWidget {
   const _Fondo();
-
-  /// `text/on-media-muted`: el gris claro que se lee sobre la foto oscurecida.
-  static const textoSecundario = Color(0xFFD4D4D8);
 
   @override
   Widget build(BuildContext context) {

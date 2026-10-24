@@ -580,7 +580,7 @@ class _Portada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const foto = Paleta.oscura;
+    final p = context.paleta;
     return FotoConVelo(
       imagen: fotoDeDeporte(deporte),
       child: SafeArea(
@@ -598,7 +598,7 @@ class _Portada extends StatelessWidget {
               TextButton.icon(
                 onPressed: alVolver,
                 style: TextButton.styleFrom(
-                  foregroundColor: foto.textPrimary,
+                  foregroundColor: p.textOnMedia,
                   minimumSize: const Size(0, Medidas.tactil),
                   textStyle: Textos.leyenda,
                 ),
@@ -614,7 +614,7 @@ class _Portada extends StatelessWidget {
                     Text(
                       tipo,
                       style: Textos.sobretitulo.copyWith(
-                        color: foto.accentBase,
+                        color: p.accentOnMedia,
                       ),
                     ),
                     const SizedBox(height: Medidas.s4),
@@ -622,7 +622,7 @@ class _Portada extends StatelessWidget {
                       header: true,
                       child: Text(
                         sede.nombre.toUpperCase(),
-                        style: Textos.display.copyWith(color: foto.textPrimary),
+                        style: Textos.display.copyWith(color: p.textOnMedia),
                       ),
                     ),
                   ],

@@ -243,7 +243,7 @@ String _resumen(List<Sede> sedes) {
 }
 
 /// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
-/// colores son los del modo oscuro en los dos modos.
+/// colores son los `on-media`, iguales en los dos modos.
 class _Hero extends StatelessWidget {
   const _Hero({required this.sesion, required this.resumen, this.centro});
 
@@ -256,7 +256,7 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const tinta = Paleta.oscura;
+    final p = context.paleta;
     final arriba = MediaQuery.paddingOf(context).top;
     final texto = resumen;
     return FotoConVelo(
@@ -280,7 +280,7 @@ class _Hero extends StatelessWidget {
                       Text(
                         'BUENOS DÍAS,',
                         style: Textos.sobretitulo.copyWith(
-                          color: tinta.accentBase,
+                          color: p.accentOnMedia,
                         ),
                       ),
                       const SizedBox(height: Medidas.s4),
@@ -288,7 +288,7 @@ class _Hero extends StatelessWidget {
                         listenable: sesion,
                         builder: (context, _) => Text(
                           sesion.perfil?.nombre ?? '',
-                          style: Textos.h1.copyWith(color: tinta.textPrimary),
+                          style: Textos.h1.copyWith(color: p.textOnMedia),
                         ),
                       ),
                     ],
@@ -304,14 +304,14 @@ class _Hero extends StatelessWidget {
               header: true,
               child: Text(
                 'RESERVÁ TU CANCHA',
-                style: Textos.display.copyWith(color: tinta.textPrimary),
+                style: Textos.display.copyWith(color: p.textOnMedia),
               ),
             ),
             if (texto != null) ...[
               const SizedBox(height: Medidas.s8),
               Text(
                 texto,
-                style: Textos.leyenda.copyWith(color: tinta.textSecondary),
+                style: Textos.leyenda.copyWith(color: p.textOnMediaMuted),
               ),
             ],
           ],

@@ -236,7 +236,6 @@ class TarjetaDeEleccion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    const foto = Paleta.oscura;
     final e = eleccion;
     return MarcoDeTarjeta(
       child: Column(
@@ -256,12 +255,12 @@ class TarjetaDeEleccion extends StatelessWidget {
                     Text(
                       e.tipo,
                       style: Textos.sobretitulo.copyWith(
-                        color: foto.accentBase,
+                        color: p.accentOnMedia,
                       ),
                     ),
                     Text(
                       e.sede.nombre.toUpperCase(),
-                      style: Textos.h2.copyWith(color: foto.textPrimary),
+                      style: Textos.h2.copyWith(color: p.textOnMedia),
                     ),
                   ],
                 ),

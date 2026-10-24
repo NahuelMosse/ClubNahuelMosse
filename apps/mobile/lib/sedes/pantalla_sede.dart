@@ -339,7 +339,6 @@ class _Contenido extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    const foto = Paleta.oscura;
     final deportes = deportesDe(sede, catalogo);
     return SingleChildScrollView(
       child: Column(
@@ -362,7 +361,7 @@ class _Contenido extends StatelessWidget {
                     TextButton.icon(
                       onPressed: () => context.go('/sedes'),
                       style: TextButton.styleFrom(
-                        foregroundColor: foto.textPrimary,
+                        foregroundColor: p.textOnMedia,
                         minimumSize: const Size(0, Medidas.tactil),
                         textStyle: Textos.leyenda,
                       ),
@@ -379,7 +378,7 @@ class _Contenido extends StatelessWidget {
                             '${sede.direccion} · ${sede.apertura} a ${sede.cierre}'
                                 .toUpperCase(),
                             style: Textos.sobretitulo.copyWith(
-                              color: foto.accentBase,
+                              color: p.accentOnMedia,
                             ),
                           ),
                           const SizedBox(height: Medidas.s4),
@@ -388,7 +387,7 @@ class _Contenido extends StatelessWidget {
                             child: Text(
                               sede.nombre.toUpperCase(),
                               style: Textos.display.copyWith(
-                                color: foto.textPrimary,
+                                color: p.textOnMedia,
                               ),
                             ),
                           ),
@@ -580,6 +579,7 @@ class _EtiquetaClara extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final p = context.paleta;
     return Container(
       constraints: const BoxConstraints(minHeight: 26),
       padding: const EdgeInsets.symmetric(
@@ -591,10 +591,7 @@ class _EtiquetaClara extends StatelessWidget {
         borderRadius: BorderRadius.circular(Medidas.radioPill),
         border: Border.all(color: const Color(0x66FFFFFF)),
       ),
-      child: Text(
-        texto,
-        style: Textos.leyenda.copyWith(color: Paleta.oscura.textPrimary),
-      ),
+      child: Text(texto, style: Textos.leyenda.copyWith(color: p.textOnMedia)),
     );
   }
 }
@@ -616,7 +613,6 @@ class TarjetaCancha extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    const foto = Paleta.oscura;
     final tipo = catalogo.tipoCorto(cancha.deporte, cancha.tipo);
     final precio = pesos(cancha.precioPorHora);
     return MarcoDeTarjeta(
@@ -648,7 +644,7 @@ class TarjetaCancha extends StatelessWidget {
                             cancha.nombre,
                             style: Textos.mono.copyWith(
                               fontSize: 12,
-                              color: foto.textPrimary,
+                              color: p.textOnMedia,
                             ),
                           ),
                         ],

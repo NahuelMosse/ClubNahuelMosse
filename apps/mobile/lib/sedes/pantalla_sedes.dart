@@ -188,7 +188,6 @@ class TarjetaSede extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    const foto = Paleta.oscura;
     final canchas = cantidadDeCanchas(sede.canchas);
     return Semantics(
       container: true,
@@ -225,15 +224,13 @@ class TarjetaSede extends StatelessWidget {
                             children: [
                               Text(
                                 sede.nombre.toUpperCase(),
-                                style: Textos.h1.copyWith(
-                                  color: foto.textPrimary,
-                                ),
+                                style: Textos.h1.copyWith(color: p.textOnMedia),
                               ),
                               const SizedBox(height: Medidas.s4),
                               Text(
                                 sede.direccion,
                                 style: Textos.leyenda.copyWith(
-                                  color: const Color(0xFFD4D4D8),
+                                  color: p.textOnMediaMuted,
                                 ),
                               ),
                               Text(
@@ -242,7 +239,7 @@ class TarjetaSede extends StatelessWidget {
                                 '${sede.apertura} a ${sede.cierre}',
                                 style: Textos.leyenda.copyWith(
                                   fontSize: 12,
-                                  color: const Color(0xFFD4D4D8),
+                                  color: p.textOnMediaMuted,
                                 ),
                               ),
                             ],
@@ -255,7 +252,7 @@ class TarjetaSede extends StatelessWidget {
                             vertical: Medidas.s4,
                           ),
                           decoration: BoxDecoration(
-                            color: foto.accentBase,
+                            color: p.accentBase,
                             borderRadius: BorderRadius.circular(
                               Medidas.radioMd,
                             ),
@@ -264,12 +261,12 @@ class TarjetaSede extends StatelessWidget {
                             children: [
                               Text(
                                 '${sede.canchas}',
-                                style: Textos.h2.copyWith(color: foto.accentOn),
+                                style: Textos.h2.copyWith(color: p.accentOn),
                               ),
                               Text(
                                 sede.canchas == 1 ? 'CANCHA' : 'CANCHAS',
                                 style: Textos.sobretitulo.copyWith(
-                                  color: foto.accentOn,
+                                  color: p.accentOn,
                                 ),
                               ),
                             ],
