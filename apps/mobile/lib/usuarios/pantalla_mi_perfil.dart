@@ -12,6 +12,7 @@ import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/ficha_socio.dart';
 import '../comun/formato_fecha.dart';
+import '../comun/movimiento.dart';
 import '../sedes/fotos.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
@@ -175,58 +176,76 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _Tarjeta(
-                          titulo: 'DATOS PERSONALES',
-                          accion: _editando
-                              ? null
-                              : _BotonChico(
-                                  texto: 'Editar',
-                                  icono: Icons.edit_outlined,
-                                  alTocar: () =>
-                                      setState(() => _editando = true),
-                                ),
-                          child: _editando
-                              ? _Edicion(
-                                  perfil: perfil,
-                                  sesion: widget.sesion,
-                                  alGuardar: (nuevo) {
-                                    if (!mounted) return;
-                                    setState(() {
-                                      _perfil = nuevo;
-                                      _editando = false;
-                                    });
-                                  },
-                                )
-                              : _Datos(perfil: perfil),
-                        ),
-                        const SizedBox(height: Medidas.s16),
-                        _Tarjeta(
-                          titulo: 'SEGURIDAD',
-                          child: _Fila(
-                            icono: Icons.lock_outline_rounded,
-                            texto: 'Cambiar contraseña',
-                            alTocar: () => context.push('/perfil/contrasena'),
+                        Aparecer(
+                          retraso: const Duration(milliseconds: 100),
+                          child: _Tarjeta(
+                            titulo: 'DATOS PERSONALES',
+                            accion: _editando
+                                ? null
+                                : _BotonChico(
+                                    texto: 'Editar',
+                                    icono: Icons.edit_outlined,
+                                    alTocar: () =>
+                                        setState(() => _editando = true),
+                                  ),
+                            child: _editando
+                                ? _Edicion(
+                                    perfil: perfil,
+                                    sesion: widget.sesion,
+                                    alGuardar: (nuevo) {
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _perfil = nuevo;
+                                        _editando = false;
+                                      });
+                                    },
+                                  )
+                                : _Datos(perfil: perfil),
                           ),
                         ),
                         const SizedBox(height: Medidas.s16),
-                        _Tarjeta(
-                          titulo: 'APARIENCIA',
-                          child: _ModoOscuro(apariencia: widget.apariencia),
+                        Aparecer(
+                          retraso: const Duration(milliseconds: 180),
+                          child: _Tarjeta(
+                            titulo: 'SEGURIDAD',
+                            child: _Fila(
+                              icono: Icons.lock_outline_rounded,
+                              texto: 'Cambiar contraseña',
+                              alTocar: () => context.push('/perfil/contrasena'),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Medidas.s16),
+                        Aparecer(
+                          retraso: const Duration(milliseconds: 260),
+                          child: _Tarjeta(
+                            titulo: 'APARIENCIA',
+                            child: _ModoOscuro(apariencia: widget.apariencia),
+                          ),
                         ),
                         const SizedBox(height: Medidas.s20),
-                        BotonContorno(
-                          texto: 'CERRAR SESIÓN',
-                          alTocar: _dandoDeBaja
-                              ? null
-                              : () => cerrarSesion(context, widget.sesion),
-                        ),
-                        const SizedBox(height: Medidas.s8),
-                        BotonContorno(
-                          texto: _dandoDeBaja
-                              ? 'ELIMINANDO TU CUENTA…'
-                              : 'ELIMINAR CUENTA',
-                          peligro: true,
-                          alTocar: _dandoDeBaja ? null : _confirmarBaja,
+                        Aparecer(
+                          retraso: const Duration(milliseconds: 340),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              BotonContorno(
+                                texto: 'CERRAR SESIÓN',
+                                alTocar: _dandoDeBaja
+                                    ? null
+                                    : () =>
+                                          cerrarSesion(context, widget.sesion),
+                              ),
+                              const SizedBox(height: Medidas.s8),
+                              BotonContorno(
+                                texto: _dandoDeBaja
+                                    ? 'ELIMINANDO TU CUENTA…'
+                                    : 'ELIMINAR CUENTA',
+                                peligro: true,
+                                alTocar: _dandoDeBaja ? null : _confirmarBaja,
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -263,16 +282,22 @@ class _Cabecera extends StatelessWidget {
             Medidas.s24,
             Medidas.s24,
           ),
-          child: FichaSocio(
-            iniciales: AvatarIniciales.iniciales(
-              perfil.nombre,
-              perfil.apellido,
+          child: Aparecer(
+            duracion: const Duration(milliseconds: 550),
+            desdeY: -24,
+            giro: -3 / 360,
+            curva: Movimiento.suave,
+            child: FichaSocio(
+              iniciales: AvatarIniciales.iniciales(
+                perfil.nombre,
+                perfil.apellido,
+              ),
+              nombre: '${perfil.nombre} ${perfil.apellido}',
+              correo: perfil.correo,
+              numero: 'MIEMBRO ACTIVO',
+              estadisticas: const [],
+              imagen: fotoDeDeporte('Futbol'),
             ),
-            nombre: '${perfil.nombre} ${perfil.apellido}',
-            correo: perfil.correo,
-            numero: 'MIEMBRO ACTIVO',
-            estadisticas: const [],
-            imagen: fotoDeDeporte('Futbol'),
           ),
         ),
       ),

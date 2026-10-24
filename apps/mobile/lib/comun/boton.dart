@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'movimiento.dart';
 
 /// `Btn/Type=Primary`: pill lima de 52 de alto. Deshabilitado baja al 40 % de opacidad.
 class BotonPrimario extends StatelessWidget {
@@ -28,48 +29,50 @@ class BotonPrimario extends StatelessWidget {
     final p = context.paleta;
     final habilitado = alTocar != null && !cargando;
     final simbolo = icono;
-    return Opacity(
-      opacity: habilitado || cargando ? 1 : 0.4,
-      // Alto mínimo y no fijo: con el texto agrandado, el botón crece en vez de cortarlo.
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: Medidas.altoControl,
-          minWidth: double.infinity,
-        ),
-        child: FilledButton(
-          onPressed: habilitado ? alTocar : null,
-          style: FilledButton.styleFrom(
-            // Atenuado baja sólo el fondo: el texto de un botón que se puede tocar tiene
-            // que seguir leyéndose, y sobre el fondo apagado el `accentOn` no llega a 4,5:1.
-            backgroundColor: atenuado
-                ? p.accentBase.withValues(alpha: 0.4)
-                : p.accentBase,
-            foregroundColor: atenuado ? p.textPrimary : p.accentOn,
-            disabledBackgroundColor: p.accentBase,
-            disabledForegroundColor: p.accentOn,
-            shape: const StadiumBorder(),
-            side: BorderSide(color: p.accentEdge),
-            textStyle: Textos.boton,
-            padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+    return Presionable(
+      child: Opacity(
+        opacity: habilitado || cargando ? 1 : 0.4,
+        // Alto mínimo y no fijo: con el texto agrandado, el botón crece en vez de cortarlo.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minHeight: Medidas.altoControl,
+            minWidth: double.infinity,
           ),
-          child: cargando
-              ? SizedBox.square(
-                  dimension: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    color: p.accentOn,
+          child: FilledButton(
+            onPressed: habilitado ? alTocar : null,
+            style: FilledButton.styleFrom(
+              // Atenuado baja sólo el fondo: el texto de un botón que se puede tocar tiene
+              // que seguir leyéndose, y sobre el fondo apagado el `accentOn` no llega a 4,5:1.
+              backgroundColor: atenuado
+                  ? p.accentBase.withValues(alpha: 0.4)
+                  : p.accentBase,
+              foregroundColor: atenuado ? p.textPrimary : p.accentOn,
+              disabledBackgroundColor: p.accentBase,
+              disabledForegroundColor: p.accentOn,
+              shape: const StadiumBorder(),
+              side: BorderSide(color: p.accentEdge),
+              textStyle: Textos.boton,
+              padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+            ),
+            child: cargando
+                ? SizedBox.square(
+                    dimension: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: p.accentOn,
+                    ),
+                  )
+                : simbolo == null
+                ? Text(texto)
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(simbolo, size: 20),
+                      const SizedBox(width: Medidas.s8),
+                      Flexible(child: Text(texto, textAlign: TextAlign.center)),
+                    ],
                   ),
-                )
-              : simbolo == null
-              ? Text(texto)
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(simbolo, size: 20),
-                    const SizedBox(width: Medidas.s8),
-                    Flexible(child: Text(texto, textAlign: TextAlign.center)),
-                  ],
-                ),
+          ),
         ),
       ),
     );
@@ -95,25 +98,27 @@ class BotonTexto extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final color = sobreFoto ? p.accentOnMedia : p.accentInk;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: Medidas.altoControl),
-      child: TextButton(
-        onPressed: alTocar,
-        style: TextButton.styleFrom(
-          foregroundColor: color,
-          textStyle: Textos.boton,
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(child: Text(texto, textAlign: TextAlign.center)),
-            if (icono != null) ...[
-              const SizedBox(width: Medidas.s8),
-              Icon(icono, size: 18),
+    return Presionable(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: Medidas.altoControl),
+        child: TextButton(
+          onPressed: alTocar,
+          style: TextButton.styleFrom(
+            foregroundColor: color,
+            textStyle: Textos.boton,
+            shape: const StadiumBorder(),
+            padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: Text(texto, textAlign: TextAlign.center)),
+              if (icono != null) ...[
+                const SizedBox(width: Medidas.s8),
+                Icon(icono, size: 18),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -154,34 +159,36 @@ class BotonContorno extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final simbolo = icono;
-    return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: Medidas.altoControl,
-        minWidth: expandir ? double.infinity : 0,
-      ),
-      child: OutlinedButton.icon(
-        onPressed: alTocar,
-        icon: simbolo == null ? null : Icon(simbolo, size: 18),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: peligro ? p.stateDangerInk : p.textPrimary,
-          side: BorderSide(
-            color: peligro ? p.stateDanger : p.borderControl,
-            width: 1.5,
-          ),
-          shape: const StadiumBorder(),
-          textStyle: Textos.boton,
-          padding: EdgeInsets.symmetric(
-            horizontal: compacto ? Medidas.s8 : Medidas.s24,
-          ),
+    return Presionable(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          minHeight: Medidas.altoControl,
+          minWidth: expandir ? double.infinity : 0,
         ),
-        label: switch (etiquetaAccesible) {
-          final etiqueta? => Semantics(
-            label: etiqueta,
-            excludeSemantics: true,
-            child: Text(texto, textAlign: TextAlign.center),
+        child: OutlinedButton.icon(
+          onPressed: alTocar,
+          icon: simbolo == null ? null : Icon(simbolo, size: 18),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: peligro ? p.stateDangerInk : p.textPrimary,
+            side: BorderSide(
+              color: peligro ? p.stateDanger : p.borderControl,
+              width: 1.5,
+            ),
+            shape: const StadiumBorder(),
+            textStyle: Textos.boton,
+            padding: EdgeInsets.symmetric(
+              horizontal: compacto ? Medidas.s8 : Medidas.s24,
+            ),
           ),
-          null => Text(texto, textAlign: TextAlign.center),
-        },
+          label: switch (etiquetaAccesible) {
+            final etiqueta? => Semantics(
+              label: etiqueta,
+              excludeSemantics: true,
+              child: Text(texto, textAlign: TextAlign.center),
+            ),
+            null => Text(texto, textAlign: TextAlign.center),
+          },
+        ),
       ),
     );
   }
@@ -229,21 +236,23 @@ class BotonPeligro extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        minHeight: Medidas.altoControl,
-        minWidth: double.infinity,
-      ),
-      child: FilledButton(
-        onPressed: alTocar,
-        style: FilledButton.styleFrom(
-          backgroundColor: p.stateDangerStrong,
-          foregroundColor: Colors.white,
-          shape: const StadiumBorder(),
-          textStyle: Textos.boton,
-          padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+    return Presionable(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: Medidas.altoControl,
+          minWidth: double.infinity,
         ),
-        child: Text(texto, textAlign: TextAlign.center),
+        child: FilledButton(
+          onPressed: alTocar,
+          style: FilledButton.styleFrom(
+            backgroundColor: p.stateDangerStrong,
+            foregroundColor: Colors.white,
+            shape: const StadiumBorder(),
+            textStyle: Textos.boton,
+            padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
+          ),
+          child: Text(texto, textAlign: TextAlign.center),
+        ),
       ),
     );
   }

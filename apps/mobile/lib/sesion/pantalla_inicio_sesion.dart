@@ -7,6 +7,7 @@ import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/isotipo.dart';
+import '../comun/movimiento.dart';
 import '../comun/snackbar.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
@@ -57,6 +58,9 @@ class _FormularioState extends State<_Formulario> {
   String? _errorContrasena;
   String? _aviso;
 
+  /// Sube cada vez que aparece el aviso, para que tiemble aunque sea el mismo.
+  int _avisos = 0;
+
   @override
   void initState() {
     super.initState();
@@ -101,7 +105,12 @@ class _FormularioState extends State<_Formulario> {
       }
       return;
     } on CredencialesInvalidas {
-      if (mounted) setState(() => _aviso = mensajeCredencialesInvalidas);
+      if (mounted) {
+        setState(() {
+          _aviso = mensajeCredencialesInvalidas;
+          _avisos++;
+        });
+      }
     } on SinConexion catch (e) {
       fallo = e;
     } on ErrorDelServidor catch (e) {
@@ -138,89 +147,107 @@ class _FormularioState extends State<_Formulario> {
                 children: [
                   const _Marca(),
                   const SizedBox(height: Medidas.s24),
-                  CampoTexto(
-                    etiquetaAccesible: 'Correo',
-                    placeholder: 'Correo',
-                    controlador: _correo,
-                    error: _errorCorreo,
-                    teclado: TextInputType.emailAddress,
-                    autocompletar: const [AutofillHints.email],
-                    accion: TextInputAction.next,
-                    habilitado: !_enviando,
-                  ),
-                  const SizedBox(height: Medidas.s12),
-                  CampoTexto(
-                    etiquetaAccesible: 'Contraseña',
-                    placeholder: 'Contraseña',
-                    controlador: _contrasena,
-                    error: _errorContrasena,
-                    oculto: !_contrasenaVisible,
-                    autocompletar: const [AutofillHints.password],
-                    accion: TextInputAction.done,
-                    alEnviar: (_) => _ingresar(),
-                    habilitado: !_enviando,
-                    accionFinal: VerContrasena(
-                      visible: _contrasenaVisible,
-                      alCambiar: () => setState(
-                        () => _contrasenaVisible = !_contrasenaVisible,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: Medidas.s12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: BotonTexto(
-                      texto: '¿Olvidaste tu contraseña?',
-                      sobreFoto: true,
-                      alTocar: _enviando
-                          ? null
-                          : () => context.go('/recuperar-contrasena'),
-                    ),
-                  ),
-                  const SizedBox(height: Medidas.s24),
-                  BotonPrimario(
-                    texto: 'INICIAR SESIÓN',
-                    cargando: _enviando,
-                    alTocar: _ingresar,
-                  ),
-                  const SizedBox(height: Medidas.s24),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    crossAxisAlignment: WrapCrossAlignment.center,
-                    children: [
-                      Text(
-                        '¿No tenés cuenta?',
-                        style: Textos.leyenda.copyWith(
-                          color: p.textOnMediaMuted,
+                  Aparecer(
+                    retraso: const Duration(milliseconds: 460),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        CampoTexto(
+                          etiquetaAccesible: 'Correo',
+                          placeholder: 'Correo',
+                          controlador: _correo,
+                          error: _errorCorreo,
+                          teclado: TextInputType.emailAddress,
+                          autocompletar: const [AutofillHints.email],
+                          accion: TextInputAction.next,
+                          habilitado: !_enviando,
                         ),
-                      ),
-                      BotonTexto(
-                        texto: 'COMENZAR',
-                        icono: Icons.arrow_forward_rounded,
-                        sobreFoto: true,
-                        alTocar: _enviando
-                            ? null
-                            : () => context.go('/registro'),
-                      ),
-                    ],
+                        const SizedBox(height: Medidas.s12),
+                        CampoTexto(
+                          etiquetaAccesible: 'Contraseña',
+                          placeholder: 'Contraseña',
+                          controlador: _contrasena,
+                          error: _errorContrasena,
+                          oculto: !_contrasenaVisible,
+                          autocompletar: const [AutofillHints.password],
+                          accion: TextInputAction.done,
+                          alEnviar: (_) => _ingresar(),
+                          habilitado: !_enviando,
+                          accionFinal: VerContrasena(
+                            visible: _contrasenaVisible,
+                            alCambiar: () => setState(
+                              () => _contrasenaVisible = !_contrasenaVisible,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: Medidas.s12),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: BotonTexto(
+                            texto: '¿Olvidaste tu contraseña?',
+                            sobreFoto: true,
+                            alTocar: _enviando
+                                ? null
+                                : () => context.go('/recuperar-contrasena'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: Medidas.s24),
+                  Aparecer(
+                    retraso: const Duration(milliseconds: 540),
+                    child: BotonPrimario(
+                      texto: 'INICIAR SESIÓN',
+                      cargando: _enviando,
+                      alTocar: _ingresar,
+                    ),
+                  ),
+                  const SizedBox(height: Medidas.s24),
+                  Aparecer(
+                    retraso: const Duration(milliseconds: 620),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          '¿No tenés cuenta?',
+                          style: Textos.leyenda.copyWith(
+                            color: p.textOnMediaMuted,
+                          ),
+                        ),
+                        BotonTexto(
+                          texto: 'COMENZAR',
+                          icono: Icons.arrow_forward_rounded,
+                          sobreFoto: true,
+                          alTocar: _enviando
+                              ? null
+                              : () => context.go('/registro'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          if (aviso != null)
-            Positioned(
-              left: Medidas.s24,
-              right: Medidas.s24,
-              bottom: Medidas.s24,
-              child: SafeArea(
-                top: false,
-                child: SnackbarError(
-                  texto: aviso,
-                  alCerrar: () => setState(() => _aviso = null),
-                ),
+          Positioned(
+            left: Medidas.s24,
+            right: Medidas.s24,
+            bottom: Medidas.s24,
+            child: SafeArea(
+              top: false,
+              child: Temblor(
+                disparador: _avisos,
+                child: aviso == null
+                    ? const SizedBox.shrink()
+                    : SnackbarError(
+                        texto: aviso,
+                        alCerrar: () => setState(() => _aviso = null),
+                      ),
               ),
             ),
+          ),
         ],
       ),
     );
@@ -236,7 +263,13 @@ class _Marca extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Isotipo(tamano: 48, decorativo: true),
+        const Aparecer(
+          duracion: Duration(milliseconds: 700),
+          desdeY: -70,
+          giro: 25 / 360,
+          curva: Movimiento.rebote,
+          child: Isotipo(tamano: 48, decorativo: true),
+        ),
         const SizedBox(height: Medidas.s16),
         Text(
           'BIENVENIDO A',

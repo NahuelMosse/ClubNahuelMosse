@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/formato_fecha.dart';
+import '../comun/transiciones.dart';
 import '../espacios/espacio.dart';
 import '../reservas/reservas.dart';
 import '../sedes/sede.dart';
@@ -18,8 +19,8 @@ Future<FiltrosDeHistorial?> abrirFiltrosDeReservas(
   required List<Sede> sedes,
   required Catalogo catalogo,
 }) => Navigator.of(context).push<FiltrosDeHistorial>(
-  MaterialPageRoute(
-    fullscreenDialog: true,
+  rutaQueSube<FiltrosDeHistorial>(
+    context,
     builder: (context) =>
         _PanelDeFiltros(filtros: filtros, sedes: sedes, catalogo: catalogo),
   ),

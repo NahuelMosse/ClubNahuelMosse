@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'campo_texto.dart';
+import 'movimiento.dart';
 
 /// Un campo que no se escribe sino que se elige: se ve como `Input` o `Dropdown` del
 /// prototipo y al tocarlo abre las opciones.
@@ -64,40 +65,47 @@ class CampoSelector extends StatelessWidget {
           liveRegion: mensaje != null,
           excludeSemantics: true,
           onTap: alTocar,
-          child: Material(
-            color: soloLectura ? Colors.transparent : p.bgSurface,
-            shape: forma,
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(
-              onTap: alTocar,
-              child: SizedBox(
-                height: Medidas.altoControl,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Medidas.s20),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          elegido ?? placeholder,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Textos.cuerpo.copyWith(
-                            // Apagado, pero el dato se tiene que poder leer.
-                            color: soloLectura
-                                ? p.textSecondary
-                                : elegido == null
-                                ? p.textMuted
-                                : p.textPrimary,
+          child: Temblor(
+            disparador: mensaje,
+            child: Material(
+              color: soloLectura ? Colors.transparent : p.bgSurface,
+              shape: forma,
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: alTocar,
+                child: SizedBox(
+                  height: Medidas.altoControl,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Medidas.s20,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            elegido ?? placeholder,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Textos.cuerpo.copyWith(
+                              // Apagado, pero el dato se tiene que poder leer.
+                              color: soloLectura
+                                  ? p.textSecondary
+                                  : elegido == null
+                                  ? p.textMuted
+                                  : p.textPrimary,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: Medidas.s12),
-                      Icon(
-                        icono,
-                        size: 24,
-                        color: soloLectura ? p.stateDisabled : p.textSecondary,
-                      ),
-                    ],
+                        const SizedBox(width: Medidas.s12),
+                        Icon(
+                          icono,
+                          size: 24,
+                          color: soloLectura
+                              ? p.stateDisabled
+                              : p.textSecondary,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -125,71 +133,76 @@ Future<T?> elegirOpcion<T>(
     context: context,
     builder: (context) {
       final p = context.paleta;
-      return Dialog(
-        backgroundColor: p.bgSurfaceRaised,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          side: BorderSide(color: p.borderDefault),
-        ),
-        insetPadding: const EdgeInsets.symmetric(
-          horizontal: Medidas.s24,
-          vertical: Medidas.s48,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s24,
-                Medidas.s20,
-                Medidas.s24,
-                Medidas.s8,
-              ),
-              child: Semantics(
-                header: true,
-                child: Text(
-                  titulo,
-                  style: Textos.titulo.copyWith(color: p.textPrimary),
-                ),
-              ),
-            ),
-            // Todas las opciones se construyen de una, en [columnas] columnas: son pocas y
-            // así se llega a cualquiera sin que la lista las vaya descartando.
-            Flexible(
-              child: SingleChildScrollView(
+      return Aparecer(
+        escalaDesde: 0.88,
+        desdeY: 0,
+        curva: Movimiento.rapida,
+        child: Dialog(
+          backgroundColor: p.bgSurfaceRaised,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Medidas.radioLg),
+            side: BorderSide(color: p.borderDefault),
+          ),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: Medidas.s24,
+            vertical: Medidas.s48,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
                 padding: const EdgeInsets.fromLTRB(
-                  Medidas.s12,
-                  0,
-                  Medidas.s12,
-                  Medidas.s12,
+                  Medidas.s24,
+                  Medidas.s20,
+                  Medidas.s24,
+                  Medidas.s8,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < opciones.length; i += columnas)
-                      Row(
-                        children: [
-                          for (var j = i; j < i + columnas; j++)
-                            Expanded(
-                              child: j < opciones.length
-                                  ? _Opcion(
-                                      texto: opciones[j].$2,
-                                      elegida: opciones[j].$1 == elegida,
-                                      centrada: columnas > 1,
-                                      alTocar: () => Navigator.of(
-                                        context,
-                                      ).pop(opciones[j].$1),
-                                    )
-                                  : const SizedBox.shrink(),
-                            ),
-                        ],
-                      ),
-                  ],
+                child: Semantics(
+                  header: true,
+                  child: Text(
+                    titulo,
+                    style: Textos.titulo.copyWith(color: p.textPrimary),
+                  ),
                 ),
               ),
-            ),
-          ],
+              // Todas las opciones se construyen de una, en [columnas] columnas: son pocas y
+              // así se llega a cualquiera sin que la lista las vaya descartando.
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(
+                    Medidas.s12,
+                    0,
+                    Medidas.s12,
+                    Medidas.s12,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < opciones.length; i += columnas)
+                        Row(
+                          children: [
+                            for (var j = i; j < i + columnas; j++)
+                              Expanded(
+                                child: j < opciones.length
+                                    ? _Opcion(
+                                        texto: opciones[j].$2,
+                                        elegida: opciones[j].$1 == elegida,
+                                        centrada: columnas > 1,
+                                        alTocar: () => Navigator.of(
+                                          context,
+                                        ).pop(opciones[j].$1),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     },

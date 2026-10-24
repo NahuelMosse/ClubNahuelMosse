@@ -16,6 +16,7 @@ import 'admin/pantalla_panel_admin.dart';
 import 'admin/pantalla_sede_creada.dart';
 import 'admin/pantalla_sedes_admin.dart';
 import 'comun/reserva_pendiente.dart';
+import 'comun/transiciones.dart';
 import 'espacios/espacio.dart';
 import 'espacios/espacios.dart';
 import 'sedes/sede.dart';
@@ -160,120 +161,167 @@ class _AppState extends State<App> {
     routes: [
       GoRoute(
         path: '/',
-        builder: (context, _) =>
-            PantallaInicioSesion(sesion: widget.sesion, pendiente: _pendiente),
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaInicioSesion(sesion: widget.sesion, pendiente: _pendiente),
+        ),
         routes: [
           GoRoute(
             path: 'registro',
-            builder: (context, _) => PantallaRegistro(api: widget.api),
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaRegistro(api: widget.api),
+            ),
           ),
           GoRoute(
             path: 'registro/exitoso',
-            builder: (context, _) => const PantallaRegistroExitoso(),
+            pageBuilder: (context, estado) => paginaDeResultado(
+              context,
+              estado,
+              const PantallaRegistroExitoso(),
+            ),
           ),
           GoRoute(
             path: 'recuperar-contrasena',
-            builder: (context, _) =>
-                PantallaRecuperarContrasena(recuperacion: _recuperacion),
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaRecuperarContrasena(recuperacion: _recuperacion),
+            ),
           ),
         ],
       ),
       // Adonde abre el enlace del correo: clubnahuelmosse://app/recuperar?codigo=…
       GoRoute(
         path: '/recuperar',
-        builder: (context, estado) {
+        pageBuilder: (context, estado) {
           final codigo = estado.uri.queryParameters['codigo'] ?? '';
           // Un enlace nuevo con la pantalla ya abierta es otra pantalla, no la misma.
-          return PantallaNuevaContrasena(
-            key: ValueKey(codigo),
-            recuperacion: _recuperacion,
-            sesion: widget.sesion,
-            codigo: codigo,
+          return paginaQueAvanza(
+            context,
+            estado,
+            PantallaNuevaContrasena(
+              key: ValueKey(codigo),
+              recuperacion: _recuperacion,
+              sesion: widget.sesion,
+              codigo: codigo,
+            ),
           );
         },
       ),
       GoRoute(
         path: '/inicio',
-        builder: (context, _) => PantallaInicio(
-          sesion: widget.sesion,
-          reservas: _reservas,
-          espacios: _espacios,
-          sedes: _sedes,
-          centro: widget.centro,
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaInicio(
+            sesion: widget.sesion,
+            reservas: _reservas,
+            espacios: _espacios,
+            sedes: _sedes,
+            centro: widget.centro,
+          ),
         ),
         routes: [
           GoRoute(
             path: 'buscar',
-            builder: (context, _) => PantallaBuscarCancha(
-              sedes: _sedes,
-              espacios: _espacios,
-              horarios: _horarios,
-              sesion: widget.sesion,
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaBuscarCancha(
+                sedes: _sedes,
+                espacios: _espacios,
+                horarios: _horarios,
+                sesion: widget.sesion,
+              ),
             ),
           ),
         ],
       ),
       GoRoute(
         path: '/notificaciones',
-        builder: (context, _) => switch (widget.centro) {
-          final CentroDeNotificaciones centro => PantallaNotificaciones(
-            centro: centro,
-            sesion: widget.sesion,
-            alAbrir: (context, n) =>
-                context.go(rutaDelAviso(n.tipo, n.reservaId)),
-          ),
-          null => const SizedBox.shrink(),
-        },
+        pageBuilder: (context, estado) =>
+            paginaQueAvanza(context, estado, switch (widget.centro) {
+              final CentroDeNotificaciones centro => PantallaNotificaciones(
+                centro: centro,
+                sesion: widget.sesion,
+                alAbrir: (context, n) =>
+                    context.go(rutaDelAviso(n.tipo, n.reservaId)),
+              ),
+              null => const SizedBox.shrink(),
+            }),
       ),
       GoRoute(
         path: '/perfil',
-        builder: (context, _) => PantallaMiPerfil(
-          sesion: widget.sesion,
-          apariencia: widget.apariencia,
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaMiPerfil(
+            sesion: widget.sesion,
+            apariencia: widget.apariencia,
+          ),
         ),
         routes: [
           GoRoute(
             path: 'contrasena',
-            builder: (context, _) =>
-                PantallaCambiarContrasena(sesion: widget.sesion),
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaCambiarContrasena(sesion: widget.sesion),
+            ),
           ),
         ],
       ),
       GoRoute(
         path: '/sedes',
-        builder: (context, _) => PantallaSedes(
-          sedes: _sedes,
-          espacios: _espacios,
-          sesion: widget.sesion,
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaSedes(
+            sedes: _sedes,
+            espacios: _espacios,
+            sesion: widget.sesion,
+          ),
         ),
         routes: [
           GoRoute(
             path: ':sede',
-            builder: (context, estado) => PantallaSede(
-              key: ValueKey(estado.pathParameters['sede']),
-              sedeId: int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
-              sedes: _sedes,
-              espacios: _espacios,
-              sesion: widget.sesion,
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaSede(
+                key: ValueKey(estado.pathParameters['sede']),
+                sedeId: int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
+                sedes: _sedes,
+                espacios: _espacios,
+                sesion: widget.sesion,
+              ),
             ),
             routes: [
               GoRoute(
                 path: 'canchas/:cancha',
-                builder: (context, estado) => PantallaHorarios(
-                  key: ValueKey(estado.pathParameters['cancha']),
-                  sedeId:
-                      int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
-                  espacioId:
-                      int.tryParse(estado.pathParameters['cancha'] ?? '') ?? 0,
-                  sedes: _sedes,
-                  espacios: _espacios,
-                  horarios: _horarios,
-                  sesion: widget.sesion,
-                  fecha: _dia(estado.uri.queryParameters['fecha']),
-                  horas: int.tryParse(
-                    estado.uri.queryParameters['horas'] ?? '',
+                pageBuilder: (context, estado) => paginaQueAvanza(
+                  context,
+                  estado,
+                  PantallaHorarios(
+                    key: ValueKey(estado.pathParameters['cancha']),
+                    sedeId:
+                        int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
+                    espacioId:
+                        int.tryParse(estado.pathParameters['cancha'] ?? '') ??
+                        0,
+                    sedes: _sedes,
+                    espacios: _espacios,
+                    horarios: _horarios,
+                    sesion: widget.sesion,
+                    fecha: _dia(estado.uri.queryParameters['fecha']),
+                    horas: int.tryParse(
+                      estado.uri.queryParameters['horas'] ?? '',
+                    ),
+                    inicio: estado.uri.queryParameters['inicio'],
                   ),
-                  inicio: estado.uri.queryParameters['inicio'],
                 ),
                 routes: [
                   GoRoute(
@@ -282,15 +330,16 @@ class _AppState extends State<App> {
                         ? null
                         : '/sedes/${estado.pathParameters['sede']}'
                               '/canchas/${estado.pathParameters['cancha']}',
-                    builder: (context, estado) => switch (estado.extra) {
-                      final Eleccion eleccion => PantallaConfirmarReserva(
-                        eleccion: eleccion,
-                        reservas: _reservas,
-                        pendiente: _pendiente,
-                        sesion: widget.sesion,
-                      ),
-                      _ => const SizedBox.shrink(),
-                    },
+                    pageBuilder: (context, estado) =>
+                        paginaQueAvanza(context, estado, switch (estado.extra) {
+                          final Eleccion eleccion => PantallaConfirmarReserva(
+                            eleccion: eleccion,
+                            reservas: _reservas,
+                            pendiente: _pendiente,
+                            sesion: widget.sesion,
+                          ),
+                          _ => const SizedBox.shrink(),
+                        }),
                   ),
                 ],
               ),
@@ -300,12 +349,18 @@ class _AppState extends State<App> {
       ),
       GoRoute(
         path: '/reservas',
-        builder: (context, estado) => PantallaMisReservas(
-          reservas: _reservas,
-          espacios: _espacios,
-          sesion: widget.sesion,
-          reservaId: int.tryParse(estado.uri.queryParameters['reserva'] ?? ''),
-          enHistorial: estado.uri.queryParameters['historial'] == '1',
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaMisReservas(
+            reservas: _reservas,
+            espacios: _espacios,
+            sesion: widget.sesion,
+            reservaId: int.tryParse(
+              estado.uri.queryParameters['reserva'] ?? '',
+            ),
+            enHistorial: estado.uri.queryParameters['historial'] == '1',
+          ),
         ),
         routes: [
           GoRoute(
@@ -315,36 +370,38 @@ class _AppState extends State<App> {
               Reserva() || (Reserva(), Eleccion()) => null,
               _ => '/reservas',
             },
-            builder: (context, estado) => switch (estado.extra) {
-              final Reserva reserva => PantallaHorarios(
-                sedeId: reserva.sedeId,
-                espacioId: reserva.espacioId,
-                sedes: _sedes,
-                espacios: _espacios,
-                horarios: _horarios,
-                sesion: widget.sesion,
-                modificando: reserva,
-                volverA: estado.uri.queryParameters['desde'] == 'inicio'
-                    ? 'Inicio'
-                    : 'Mis reservas',
-              ),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaQueAvanza(context, estado, switch (estado.extra) {
+                  final Reserva reserva => PantallaHorarios(
+                    sedeId: reserva.sedeId,
+                    espacioId: reserva.espacioId,
+                    sedes: _sedes,
+                    espacios: _espacios,
+                    horarios: _horarios,
+                    sesion: widget.sesion,
+                    modificando: reserva,
+                    volverA: estado.uri.queryParameters['desde'] == 'inicio'
+                        ? 'Inicio'
+                        : 'Mis reservas',
+                  ),
+                  _ => const SizedBox.shrink(),
+                }),
             routes: [
               GoRoute(
                 path: 'confirmar',
                 redirect: (context, estado) =>
                     estado.extra is (Reserva, Eleccion) ? null : '/reservas',
-                builder: (context, estado) => switch (estado.extra) {
-                  (final Reserva reserva, final Eleccion eleccion) =>
-                    PantallaConfirmarCambio(
-                      reserva: reserva,
-                      eleccion: eleccion,
-                      reservas: _reservas,
-                      sesion: widget.sesion,
-                    ),
-                  _ => const SizedBox.shrink(),
-                },
+                pageBuilder: (context, estado) =>
+                    paginaQueAvanza(context, estado, switch (estado.extra) {
+                      (final Reserva reserva, final Eleccion eleccion) =>
+                        PantallaConfirmarCambio(
+                          reserva: reserva,
+                          eleccion: eleccion,
+                          reservas: _reservas,
+                          sesion: widget.sesion,
+                        ),
+                      _ => const SizedBox.shrink(),
+                    }),
               ),
             ],
           ),
@@ -352,12 +409,13 @@ class _AppState extends State<App> {
             path: 'confirmada',
             redirect: (context, estado) =>
                 estado.extra is Reserva ? null : '/reservas',
-            builder: (context, estado) => switch (estado.extra) {
-              final Reserva reserva => PantallaReservaConfirmada(
-                reserva: reserva,
-              ),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaDeResultado(context, estado, switch (estado.extra) {
+                  final Reserva reserva => PantallaReservaConfirmada(
+                    reserva: reserva,
+                  ),
+                  _ => const SizedBox.shrink(),
+                }),
           ),
         ],
       ),
@@ -366,24 +424,29 @@ class _AppState extends State<App> {
         path: '/reservar',
         redirect: (context, estado) =>
             estado.extra is Eleccion ? null : '/inicio',
-        builder: (context, estado) => switch (estado.extra) {
-          final Eleccion eleccion => PantallaConfirmarReserva(
-            eleccion: eleccion,
-            reservas: _reservas,
-            pendiente: _pendiente,
-            sesion: widget.sesion,
-          ),
-          _ => const SizedBox.shrink(),
-        },
+        pageBuilder: (context, estado) =>
+            paginaQueAvanza(context, estado, switch (estado.extra) {
+              final Eleccion eleccion => PantallaConfirmarReserva(
+                eleccion: eleccion,
+                reservas: _reservas,
+                pendiente: _pendiente,
+                sesion: widget.sesion,
+              ),
+              _ => const SizedBox.shrink(),
+            }),
       ),
       GoRoute(
         path: '/admin',
-        builder: (context, _) => PantallaPanelAdmin(
-          historial: _historialAdmin,
-          sedes: _sedes,
-          espacios: _espacios,
-          sesion: widget.sesion,
-          pendientes: _filtrosPendientes,
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaPanelAdmin(
+            historial: _historialAdmin,
+            sedes: _sedes,
+            espacios: _espacios,
+            sesion: widget.sesion,
+            pendientes: _filtrosPendientes,
+          ),
         ),
         routes: [
           GoRoute(
@@ -394,34 +457,45 @@ class _AppState extends State<App> {
                 estado.extra is (ReservaHistorial, FiltrosDeHistorial)
                 ? null
                 : '/admin',
-            builder: (context, estado) => switch (estado.extra) {
-              final (ReservaHistorial, FiltrosDeHistorial) e =>
-                PantallaDetalleReserva(
-                  reserva: e.$1,
-                  filtros: e.$2,
-                  historial: _historialAdmin,
-                  sesion: widget.sesion,
-                  espacios: _espacios,
-                  pendientes: _filtrosPendientes,
-                ),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaQueAvanza(context, estado, switch (estado.extra) {
+                  final (ReservaHistorial, FiltrosDeHistorial) e =>
+                    PantallaDetalleReserva(
+                      reserva: e.$1,
+                      filtros: e.$2,
+                      historial: _historialAdmin,
+                      sesion: widget.sesion,
+                      espacios: _espacios,
+                      pendientes: _filtrosPendientes,
+                    ),
+                  _ => const SizedBox.shrink(),
+                }),
           ),
         ],
       ),
       GoRoute(
         path: '/admin/acceso-denegado',
-        builder: (context, _) => PantallaAccesoDenegado(sesion: widget.sesion),
+        pageBuilder: (context, estado) => paginaQueAvanza(
+          context,
+          estado,
+          PantallaAccesoDenegado(sesion: widget.sesion),
+        ),
       ),
       GoRoute(
         path: '/admin/sedes',
-        builder: (context, _) =>
-            PantallaSedesAdmin(sedes: _sedes, sesion: widget.sesion),
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaSedesAdmin(sedes: _sedes, sesion: widget.sesion),
+        ),
         routes: [
           GoRoute(
             path: 'nueva',
-            builder: (context, _) =>
-                PantallaFormularioSede(sedes: _sedes, sesion: widget.sesion),
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaFormularioSede(sedes: _sedes, sesion: widget.sesion),
+            ),
           ),
           GoRoute(
             path: ':sede/editar',
@@ -429,14 +503,15 @@ class _AppState extends State<App> {
             // listado.
             redirect: (context, estado) =>
                 estado.extra is Sede ? null : '/admin/sedes',
-            builder: (context, estado) => switch (estado.extra) {
-              final Sede sede => PantallaFormularioSede(
-                sedes: _sedes,
-                sesion: widget.sesion,
-                editando: sede,
-              ),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaQueAvanza(context, estado, switch (estado.extra) {
+                  final Sede sede => PantallaFormularioSede(
+                    sedes: _sedes,
+                    sesion: widget.sesion,
+                    editando: sede,
+                  ),
+                  _ => const SizedBox.shrink(),
+                }),
           ),
           GoRoute(
             path: 'creada',
@@ -444,17 +519,21 @@ class _AppState extends State<App> {
             // mostrar: va al listado, donde está.
             redirect: (context, estado) =>
                 estado.extra is Sede ? null : '/admin/sedes',
-            builder: (context, estado) => switch (estado.extra) {
-              final Sede sede => PantallaSedeCreada(sede: sede),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaDeResultado(context, estado, switch (estado.extra) {
+                  final Sede sede => PantallaSedeCreada(sede: sede),
+                  _ => const SizedBox.shrink(),
+                }),
           ),
         ],
       ),
       GoRoute(
         path: '/admin/espacios',
-        builder: (context, _) =>
-            PantallaEspaciosAdmin(espacios: _espacios, sesion: widget.sesion),
+        pageBuilder: (context, estado) => paginaDeRaiz(
+          context,
+          estado,
+          PantallaEspaciosAdmin(espacios: _espacios, sesion: widget.sesion),
+        ),
         routes: [
           GoRoute(
             path: ':espacio/editar',
@@ -462,21 +541,26 @@ class _AppState extends State<App> {
             // al listado.
             redirect: (context, estado) =>
                 estado.extra is Espacio ? null : '/admin/espacios',
-            builder: (context, estado) => switch (estado.extra) {
-              final Espacio espacio => PantallaEditarEspacio(
-                espacio: espacio,
-                espacios: _espacios,
-                sesion: widget.sesion,
-              ),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaQueAvanza(context, estado, switch (estado.extra) {
+                  final Espacio espacio => PantallaEditarEspacio(
+                    espacio: espacio,
+                    espacios: _espacios,
+                    sesion: widget.sesion,
+                  ),
+                  _ => const SizedBox.shrink(),
+                }),
           ),
           GoRoute(
             path: 'nuevo',
-            builder: (context, _) => PantallaAltaEspacio(
-              espacios: _espacios,
-              sedes: _sedes,
-              sesion: widget.sesion,
+            pageBuilder: (context, estado) => paginaQueAvanza(
+              context,
+              estado,
+              PantallaAltaEspacio(
+                espacios: _espacios,
+                sedes: _sedes,
+                sesion: widget.sesion,
+              ),
             ),
           ),
           GoRoute(
@@ -484,10 +568,13 @@ class _AppState extends State<App> {
             // Sin el espacio recién guardado no hay éxito que mostrar: va al listado.
             redirect: (context, estado) =>
                 estado.extra is Espacio ? null : '/admin/espacios',
-            builder: (context, estado) => switch (estado.extra) {
-              final Espacio espacio => PantallaEspacioCreado(espacio: espacio),
-              _ => const SizedBox.shrink(),
-            },
+            pageBuilder: (context, estado) =>
+                paginaDeResultado(context, estado, switch (estado.extra) {
+                  final Espacio espacio => PantallaEspacioCreado(
+                    espacio: espacio,
+                  ),
+                  _ => const SizedBox.shrink(),
+                }),
           ),
         ],
       ),
