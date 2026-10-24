@@ -68,7 +68,19 @@
       "reason": "not chosen at install: no signal found in the repo",
       "by": "person",
       "at": "2026-10-20",
-      "signalsAtDecision": []
+      "signalsAtDecision": [
+        "docs/ file: docs/business/accessibility.md"
+      ],
+      "confirmed": [
+        {
+          "at": "2026-10-24",
+          "card": "INT-01-integracion-rev",
+          "reason": "el módulo docs lo apagó una persona; INT-01 sólo suma una fila a la declaración de accesibilidad que REV-07 ya mantiene a mano",
+          "signals": [
+            "docs/ file: docs/business/accessibility.md"
+          ]
+        }
+      ]
     },
     "i18n": {
       "state": "off",

@@ -30,7 +30,7 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:randomly
+suite [timeout 60 min]: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:randomly
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
 lint: sh D:/Temp/w/herramientas/lint-api-int01.sh
 app: sh D:/Temp/w/herramientas/api-app.sh int01_app
@@ -96,3 +96,7 @@ attacks: sh D:/Temp/w/herramientas/api-attacks.sh int01_app --json --no-ambient 
 - L55 · 2026-10-23 · replaces: apps/mobile/test/operacion_cliente_test.dart "despertando sigue encendido mientras quede un pedido lento @REV-02-S8 @assumption:REV-02-ASM-11" · pide rutas de prueba (/lento, /a, /b, /rapido) y REV-08 hace fallar en debug toda ruta que la app no declara · by: apps/mobile/test/operacion_cliente_sin_verificar_rutas_test.dart "despertando sigue encendido mientras quede un pedido lento @REV-02-S8 @assumption:REV-02-ASM-11 @INT-01-ASM-01"
 - L56 · 2026-10-23 · replaces: apps/mobile/test/operacion_cliente_test.dart "un pedido rápido no cuenta como lento para despertando @REV-02-S8 @assumption:REV-02-ASM-11" · pide rutas de prueba (/lento, /a, /b, /rapido) y REV-08 hace fallar en debug toda ruta que la app no declara · by: apps/mobile/test/operacion_cliente_sin_verificar_rutas_test.dart "un pedido rápido no cuenta como lento para despertando @REV-02-S8 @assumption:REV-02-ASM-11 @INT-01-ASM-01"
 - L57 · 2026-10-23 · declared · fault-db · la base es Postgres y `--fault-db` sólo daña un archivo SQLite; la base caída la cubre REV-02 (`/ready`)
+- L58 · 2026-10-23 · declared · K4 · apps/api/tests/escenarios/test_contrato_publicado_con_operacion.py · reemplazo de dos tests congelados (L47-L48): el método pide repetir el cuerpo con el mismo título y tags; difiere sólo en las rutas públicas
+- L59 · 2026-10-23 · declared · K4 · apps/mobile/test/operacion_cliente_sin_verificar_rutas_test.dart · reemplazo de cinco tests congelados (L52-L56): repite sus cuerpos con los mismos títulos y tags; difiere sólo en `verificarRutas: false`
+- L60 · 2026-10-23 · declared · RED · los arreglos se aplicaron al resolver el merge, antes de abrir la card; los tests de INT-01 se commitearon junto con el código y no antes
+- L61 · 2026-10-23 · Docker Desktop se cayó durante el primer gate (pytest quedó sin terminar a los 20 min); se volvió a levantar y la suite de la API corre con `[timeout 60 min]`
