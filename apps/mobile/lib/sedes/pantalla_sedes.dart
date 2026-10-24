@@ -190,25 +190,6 @@ class TarjetaSede extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final canchas = cantidadDeCanchas(sede.canchas);
-    final contador = Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Medidas.s12,
-        vertical: Medidas.s4,
-      ),
-      decoration: BoxDecoration(
-        color: p.accentBase,
-        borderRadius: BorderRadius.circular(Medidas.radioMd),
-      ),
-      child: Column(
-        children: [
-          Text('${sede.canchas}', style: Textos.h2.copyWith(color: p.accentOn)),
-          Text(
-            sede.canchas == 1 ? 'CANCHA' : 'CANCHAS',
-            style: Textos.sobretitulo.copyWith(color: p.accentOn),
-          ),
-        ],
-      ),
-    );
     return Semantics(
       container: true,
       button: true,
@@ -235,12 +216,27 @@ class TarjetaSede extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned(
-                        top: Medidas.s4,
-                        right: Medidas.s12,
-                        child: DorsalGigante(
-                          texto: '${sede.canchas}'.padLeft(2, '0'),
-                          tamano: 92,
-                          color: p.textOnMedia.withValues(alpha: 0.45),
+                        top: Medidas.s12,
+                        right: Medidas.s16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            DorsalGigante(
+                              texto: '${sede.canchas}'.padLeft(2, '0'),
+                              tamano: 92,
+                              color: p.textOnMedia,
+                            ),
+                            Text(
+                              sede.canchas == 1 ? 'CANCHA' : 'CANCHAS',
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 11,
+                                letterSpacing: 11 * 0.08,
+                                color: p.textOnMedia,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       Padding(
@@ -278,8 +274,6 @@ class TarjetaSede extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const SizedBox(width: Medidas.s12),
-                            contador,
                           ],
                         ),
                       ),
