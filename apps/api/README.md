@@ -79,7 +79,7 @@ como `http://10.0.2.2:8000`.
 - **Proxy:** con `DETRAS_DE_PROXY=true` el origen es el último valor de `X-Forwarded-For`, el que
   agrega Render.
 - **Documentación:** `DOCUMENTACION_INTERACTIVA=false` apaga `/docs` y `/redoc`; `/openapi.json`
-  sigue. Render lo apaga y chequea por `/health`.
+  sigue. Render lo apaga y chequea por `/ready`.
 - **Errores:** 400 por Host ajeno o `Content-Length` inválido (`{"detail": ...}`); 422 por un dato
   inválido (`{"errores": {campo: mensaje}}`); 429 por límite.
 - **Emulador:** con `FIREBASE_AUTH_EMULATOR_HOST` definida la API no arranca si hay credenciales
@@ -199,7 +199,8 @@ Lo que se asumió donde el requisito no lo dice (REV-03); cada una se cambia en 
 El `render.yaml` de la raíz del repo describe todo: un web service de Python para la API
 (`apps/api`) y una base Postgres gestionada, ambos en el plan `free`. Render instala con `uv sync`
 (detecta `uv.lock`), migra con `alembic upgrade head` dentro del build, arranca `uvicorn` en el
-`$PORT` que asigna y consulta `/docs` como health check.
+`$PORT` que asigna y consulta `/ready` como health check: responde 200 si la base contesta y el
+esquema está en la última migración.
 
 1. **Cuenta de Render.** Crear la cuenta en <https://render.com> y autorizar el acceso a GitHub.
 2. **Proyecto de Firebase.** En <https://console.firebase.google.com> crear un proyecto
@@ -221,6 +222,8 @@ El `render.yaml` de la raíz del repo describe todo: un web service de Python pa
    | `FIREBASE_CREDENCIALES_JSON` | el **contenido completo** del `.json` de la cuenta de servicio |
    | `URL_PUBLICA` | `https://<nombre del servicio>.onrender.com`, la dirección que Render muestra para `clubnahuelmosse-api` |
    | `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | los de la cuenta de correo saliente (`SMTP_PUERTO` ya está en 587) |
+   | `DATABASE_URL_APP` | la URL de la base con el usuario `club_app` (ver «Usuario de la API» en «Operar»); vacía, la API usa el dueño |
+   | `METRICAS_TOKEN` | un valor largo al azar para leer `/metrics`; vacía, la ruta no existe |
 
    Render pide estos valores sólo al crear el Blueprint; para cambiarlos después, se editan en
    *Environment* del servicio. `DATABASE_URL` sale de la base: `config.py` le agrega el driver
@@ -244,7 +247,8 @@ Límites del plan `free`:
 - El servicio se duerme tras 15 minutos sin tráfico y el primer pedido después tarda alrededor
   de un minuto: conviene despertarlo antes de una demostración. Mientras duerme, el barrido de
   recordatorios no corre.
-- La base gratuita vence a los 30 días de creada, sin backups, y hay una por workspace.
+- La base gratuita vence a los 30 días de creada, sin backups automáticos (ver «Respaldo y vuelta
+  atrás»), y hay una por workspace.
 - `preDeployCommand` no existe en el plan gratuito; por eso las migraciones corren en el build.
   Con un plan pago, se mueve esa parte a `preDeployCommand` en el `render.yaml`.
 

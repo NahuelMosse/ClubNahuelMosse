@@ -104,8 +104,9 @@ El archivo queda en `build/app/outputs/flutter-apk/`. Se instala con
 `android/app/build.gradle.kts`.
 
 La API gratuita de Render se duerme tras 15 minutos sin tráfico: el primer inicio de sesión del día
-puede tardar alrededor de un minuto, más que los 15 segundos que la app espera por pedido. Conviene
-abrir `<URL>/docs` en el navegador antes de usar la app.
+puede tardar alrededor de un minuto. La app espera hasta 60 segundos por pedido y, pasados 5, avisa
+que el servidor se está despertando. Antes de una demostración conviene abrir `<URL>/health` en el
+navegador.
 
 ## Supuestos que limitan lo que muestra la app
 

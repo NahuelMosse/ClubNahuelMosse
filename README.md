@@ -27,8 +27,12 @@ emulador de Firebase Auth (después de `npm ci`).
 
 ## Documentación
 
-- [Diseño del sistema](docs/technical/system-design.md): arquitectura, modelo de datos, entornos, dependencias externas,
-  amenazas, secretos, datos personales y presupuesto de rendimiento.
+- [Arquitectura](docs/technical/arquitectura.md): las piezas, las capas de la API y de la app, los flujos principales
+  (reservar, avisos, cuentas) y las decisiones que explican la forma del código. **Empezá por acá.**
+- [Mapa del código](docs/technical/mapa-del-codigo.md): dónde está cada cosa, archivo por archivo, con las rutas de la API
+  y de la app, la configuración, los tests y los scripts.
+- [Diseño del sistema](docs/technical/system-design.md): modelo de datos columna por columna, entornos, observabilidad,
+  errores, dependencias externas, amenazas, secretos, datos personales y presupuesto de rendimiento.
 - [Decisiones de arquitectura](docs/adr): el stack ([0001](docs/adr/0001-stack.md)) y el hosting
   ([0002](docs/adr/0002-hosting-en-render.md)).
 - [Runbook](docs/technical/runbook.md): despliegue, vuelta atrás, diagnóstico, incidentes y rotación de secretos.
@@ -49,8 +53,8 @@ Los supuestos que cambian lo que ve quien usa la app o lo que hace quien la oper
 - REV-07-ASM-03: el modelo de datos lleva columnas, claves, índices y triggers de cada tabla.
 - REV-07-ASM-04: estos documentos se escriben aunque el módulo de documentación del método esté apagado, porque los pide el
   grado de producción.
-- REV-07-ASM-05: los documentos describen la rama `kit-3`; al integrar las otras correcciones se actualizan las filas y las
-  secciones que cambian.
+- REV-07-ASM-05: los documentos describen `main`; los números de hallazgo que citan remiten a la revisión de la rama
+  `kit-3`.
 - REV-07-ASM-06: las filas de la matriz ASVS que hoy fallan quedan `fails` con el hallazgo y la card que las corrige; los
   plazos de remediación (V15.1.1) los decide una persona.
 - REV-07-ASM-07: los avisos de terceros cubren las dependencias de producción, directas y transitivas, que el script lee de los
@@ -62,5 +66,6 @@ Los supuestos que cambian lo que ve quien usa la app o lo que hace quien la oper
 
 ## Estado
 
-La revisión general de la rama `kit-3` (`specs/REVISION-kit3.md`) lista lo que hoy falla y lo que corrigen las cards
-siguientes; los documentos de arriba describen la app como está en esa rama.
+La revisión general de `main` está en [`specs/REVISION-main.md`](specs/REVISION-main.md): qué corrió, qué falla y qué
+conviene hacer después. La anterior, de la rama `kit-3`, sigue en `specs/REVISION-kit3.md`; las cards `REV-01` a `REV-08`
+corrigieron lo que encontró.
