@@ -32,7 +32,7 @@ not_read:
 ```
 suite [timeout 60 min]: sh D:/Temp/w/herramientas/pytest-api.sh -q -p no:randomly
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
-lint: sh D:/Temp/w/herramientas/lint-api-int01.sh
+lint: sh D:/Temp/w/herramientas/lint-api-int01.sh apps/api/tests/escenarios/test_contrato_publicado_con_operacion.py apps/api/tests/escenarios/test_datos_plan_reemplazo.py apps/api/tests/unit/test_capas_integracion.py apps/api/tests/unit/test_casos_de_uso_reservas.py apps/mobile/test/operacion_cliente_sin_verificar_rutas_test.dart apps/mobile/test/pantalla_error_de_arranque_test.dart
 app: sh D:/Temp/w/herramientas/api-app.sh int01_app
 attacks: sh D:/Temp/w/herramientas/api-attacks.sh int01_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
 ```
