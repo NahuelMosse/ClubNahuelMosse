@@ -27,8 +27,10 @@ emulador de Firebase Auth (después de `npm ci`).
 
 ## Documentación
 
+- [Guía básica](docs/guia-basica.md): qué es cada tecnología, cómo viaja un pedido y dónde tocar para cambiar algo,
+  para quien no conoce Flutter, FastAPI, Firebase ni Render. **Si nunca viste el repo, empezá por acá.**
 - [Arquitectura](docs/technical/arquitectura.md): las piezas, las capas de la API y de la app, los flujos principales
-  (reservar, avisos, cuentas) y las decisiones que explican la forma del código. **Empezá por acá.**
+  (reservar, avisos, cuentas) y las decisiones que explican la forma del código.
 - [Mapa del código](docs/technical/mapa-del-codigo.md): dónde está cada cosa, archivo por archivo, con las rutas de la API
   y de la app, la configuración, los tests y los scripts.
 - [Diseño del sistema](docs/technical/system-design.md): modelo de datos columna por columna, entornos, observabilidad,
