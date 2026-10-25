@@ -497,7 +497,7 @@ class _Proxima extends StatelessWidget {
   );
 }
 
-/// Los deportes del club. Informan; no llevan a ningún lado.
+/// Los deportes del club. Cada uno abre «Buscar cancha» con ese deporte elegido.
 class _Deportes extends StatelessWidget {
   const _Deportes({required this.catalogo, required this.yaEntro});
 
@@ -535,7 +535,12 @@ class _Deportes extends StatelessWidget {
                       imagen: fotoDeDeporte(d.clave),
                       emoji: _emojiDeDeporte(d.clave),
                       nombre: d.nombre,
-                      alTocar: null,
+                      alTocar: () => context.go(
+                        Uri(
+                          path: '/inicio/buscar',
+                          queryParameters: {'deporte': d.clave},
+                        ).toString(),
+                      ),
                     ),
                   ),
                 ],

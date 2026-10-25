@@ -33,12 +33,16 @@ class PantallaBuscarCancha extends StatefulWidget {
     required this.espacios,
     required this.horarios,
     required this.sesion,
+    this.deporte,
   });
 
   final Sedes sedes;
   final Espacios espacios;
   final Horarios horarios;
   final Sesion sesion;
+
+  /// El deporte con el que abre el formulario, el que se tocó en el inicio.
+  final String? deporte;
 
   @override
   State<PantallaBuscarCancha> createState() => _PantallaBuscarCanchaState();
@@ -81,6 +85,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
   @override
   void initState() {
     super.initState();
+    _deporte = widget.deporte;
     _fecha.addListener(_alEscribirFecha);
     _cargar();
   }

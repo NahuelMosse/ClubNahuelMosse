@@ -235,6 +235,7 @@ class _AppState extends State<App> {
                 espacios: _espacios,
                 horarios: _horarios,
                 sesion: widget.sesion,
+                deporte: estado.uri.queryParameters['deporte'],
               ),
             ),
           ),
