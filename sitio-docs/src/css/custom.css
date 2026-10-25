@@ -25,11 +25,9 @@
 }
 
 
-/* Swagger UI no tiene modo oscuro: va en su marco claro, a todo el alto debajo de la barra. */
-.swagger-marco {
+/* Swagger UI va en un marco que toma el ancho del contenido y el alto de lo que muestra. */
+.swagger-incrustado {
   display: block;
   width: 100%;
-  height: calc(100vh - var(--ifm-navbar-height));
   border: 0;
-  background: #ffffff;
 }
