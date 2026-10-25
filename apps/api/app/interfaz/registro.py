@@ -4,11 +4,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.errores import DatosInvalidos, Duplicado
 from app.aplicacion.registro import registrar
-from app.dependencias import ProveedorFirebase, UsuariosSql, conexion
+from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
 from app.dominio.usuarios import DatosRegistro
 from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.entradas import Clave, Correo, Texto40, Texto120
@@ -58,14 +57,16 @@ class UsuarioRepetido(BaseModel):
     dependencies=[Depends(frenar_por_origen("registro"))],
 )
 def registrar_usuario(
-    pedido: PedidoRegistro, conn: Annotated[Connection, Depends(conexion, scope="function")]
+    pedido: PedidoRegistro,
+    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
+    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
 ) -> RegistroCreado | JSONResponse:
     try:
         nuevo = registrar(
             DatosRegistro(**pedido.model_dump()),
             hoy=datetime.now(ZONA).date(),
-            identidad=ProveedorFirebase(),
-            usuarios=UsuariosSql(conn),
+            identidad=proveedor,
+            usuarios=usuarios,
         )
     except DatosInvalidos as e:
         return JSONResponse(

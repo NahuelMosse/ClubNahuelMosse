@@ -5,7 +5,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
-from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
     ConReservasFuturas,
@@ -16,7 +15,7 @@ from app.aplicacion.errores import (
     ReservasAfuera,
 )
 from app.aplicacion.sedes import dar_de_alta_sede, dar_de_baja_sede, editar_sede, sedes_activas
-from app.dependencias import SedesSql, conexion
+from app.dependencias import SedesSql, repositorio_sedes
 from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
 from app.interfaz.entradas import Texto40, Texto120
@@ -70,9 +69,9 @@ def _vista(sede: Sede) -> SedeVista:
 )
 def listar_sedes(
     _: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
 ) -> Sedes:
-    return Sedes(sedes=[_vista(s) for s in sedes_activas(SedesSql(conn))])
+    return Sedes(sedes=[_vista(s) for s in sedes_activas(sedes)])
 
 
 class PedidoDeSede(BaseModel):
@@ -123,10 +122,10 @@ def _datos(pedido: PedidoDeSede) -> DatosSede:
 def alta_de_sede(
     pedido: PedidoDeSede,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
 ) -> SedeVista | Response:
     try:
-        sede = dar_de_alta_sede(perfil, _datos(pedido), SedesSql(conn))
+        sede = dar_de_alta_sede(perfil, _datos(pedido), sedes)
     except Prohibido:
         return sin_permiso()
     except DatosInvalidos as e:
@@ -168,11 +167,11 @@ class ReservasFueraDelHorario(BaseModel):
 def edicion_de_sede(
     pedido: PedidoDeEdicion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
     sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> SedeVista | Response:
     try:
-        sede = editar_sede(perfil, sede_id, _datos(pedido), pedido.confirmar, SedesSql(conn))
+        sede = editar_sede(perfil, sede_id, _datos(pedido), pedido.confirmar, sedes)
     except Prohibido:
         return sin_permiso()
     except NoEncontrada:
@@ -205,11 +204,11 @@ def edicion_de_sede(
 )
 def baja_de_sede(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
     sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> Response:
     try:
-        dar_de_baja_sede(perfil, sede_id, SedesSql(conn))
+        dar_de_baja_sede(perfil, sede_id, sedes)
     except Prohibido:
         return sin_permiso()
     except NoEncontrada:

@@ -4,7 +4,6 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.aplicacion.notificaciones import (
@@ -14,7 +13,7 @@ from app.aplicacion.notificaciones import (
     mis_notificaciones,
     registrar_dispositivo,
 )
-from app.dependencias import NotificacionesSql, conexion
+from app.dependencias import NotificacionesSql, repositorio_notificaciones
 from app.dominio.notificaciones import Notificacion, TipoDeAviso
 from app.dominio.usuarios import Perfil
 from app.interfaz.entradas import TokenDeDispositivo
@@ -53,11 +52,11 @@ class BajaDeDispositivo(BaseModel):
 def registrar(
     pedido: PedidoDeDispositivo,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Response:
     try:
         registrar_dispositivo(
-            NotificacionesSql(conn), perfil, pedido.token, pedido.plataforma, pedido.permiso
+            notificaciones, perfil, pedido.token, pedido.plataforma, pedido.permiso
         )
     except Prohibido:
         return Response(status_code=status.HTTP_403_FORBIDDEN)
@@ -80,9 +79,9 @@ def registrar(
 def baja(
     pedido: BajaDeDispositivo,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Response:
-    dar_de_baja_dispositivo(NotificacionesSql(conn), perfil, pedido.token)
+    dar_de_baja_dispositivo(notificaciones, perfil, pedido.token)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -124,9 +123,9 @@ def _vista(n: Notificacion) -> NotificacionVista:
 )
 def centro(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Centro:
-    lista, sin_leer = mis_notificaciones(NotificacionesSql(conn), perfil)
+    lista, sin_leer = mis_notificaciones(notificaciones, perfil)
     return Centro(notificaciones=[_vista(n) for n in lista], no_leidas=sin_leer)
 
 
@@ -138,9 +137,9 @@ def centro(
 )
 def leer_todas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Response:
-    marcar_todas(NotificacionesSql(conn), perfil)
+    marcar_todas(notificaciones, perfil)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -156,11 +155,11 @@ def leer_todas(
 )
 def leer(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
     notificacion_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> Response:
     try:
-        marcar_leida(NotificacionesSql(conn), perfil, notificacion_id)
+        marcar_leida(notificaciones, perfil, notificacion_id)
     except NoEncontrada:
         return Response(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

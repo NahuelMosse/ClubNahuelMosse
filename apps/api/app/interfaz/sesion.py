@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.baja import dar_de_baja
 from app.aplicacion.contrasena import cambiar_contrasena
@@ -18,7 +17,7 @@ from app.aplicacion.errores import (
 )
 from app.aplicacion.perfil import editar_perfil
 from app.aplicacion.sesion import perfil_autenticado
-from app.dependencias import ProveedorFirebase, UsuariosSql, conexion
+from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
 from app.dominio.usuarios import DatosPersonales, Perfil, Rol
 from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.entradas import Clave, Texto40, Texto120
@@ -35,14 +34,15 @@ class SinSesion(BaseModel):
 def usuario_actual(
     peticion: Request,
     credencial: Annotated[HTTPAuthorizationCredentials | None, Depends(_portador)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
+    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
 ) -> Perfil:
     """Quién hace el pedido, según el token de Firebase de la cabecera `Authorization`."""
     try:
         perfil = perfil_autenticado(
             credencial.credentials if credencial else None,
-            identidad=ProveedorFirebase(),
-            usuarios=UsuariosSql(conn),
+            identidad=proveedor,
+            usuarios=usuarios,
         )
         peticion.state.usuario_id = perfil.id
         return perfil
@@ -103,15 +103,16 @@ class ErroresDeContrasena(BaseModel):
 def cambiar_contrasena_propia(
     pedido: PedidoCambioDeContrasena,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
+    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
 ) -> Response:
     try:
         cambiar_contrasena(
             perfil,
             pedido.actual,
             pedido.nueva,
-            identidad=ProveedorFirebase(),
-            usuarios=UsuariosSql(conn),
+            identidad=proveedor,
+            usuarios=usuarios,
         )
     except DatosInvalidos as e:
         return JSONResponse(
@@ -151,9 +152,8 @@ def _frenar_edicion(peticion: Request, perfil: Annotated[Perfil, Depends(usuario
 def editar_perfil_propio(
     pedido: PedidoDeEdicion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
 ) -> PerfilPropio | JSONResponse:
-    usuarios = UsuariosSql(conn)
     try:
         editar_perfil(
             perfil,
@@ -195,10 +195,11 @@ def editar_perfil_propio(
 )
 def dar_de_baja_propia(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
+    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
 ) -> Response:
     try:
-        dar_de_baja(perfil, UsuariosSql(conn), ProveedorFirebase())
+        dar_de_baja(perfil, usuarios, proveedor)
     except Prohibido:
         return Response(status_code=status.HTTP_403_FORBIDDEN)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

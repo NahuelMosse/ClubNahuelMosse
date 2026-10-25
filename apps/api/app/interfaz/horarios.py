@@ -5,12 +5,11 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.disponibilidad import canchas_disponibles
 from app.aplicacion.errores import DatosInvalidos, NoDisponible
 from app.aplicacion.horarios import horarios_disponibles
-from app.dependencias import HorariosSql, conexion
+from app.dependencias import HorariosSql, repositorio_horarios
 from app.dominio.horarios import MAX_HORAS, MIN_HORAS
 from app.dominio.usuarios import Perfil
 from app.dominio.zona import ZONA_CLUB as ZONA
@@ -62,7 +61,7 @@ def _hora(momento: datetime) -> str:
 )
 def ver_horarios(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
     espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
     fecha: Annotated[date | None, Query()] = None,
     horas: Annotated[int, Query(ge=MIN_HORAS, le=MAX_HORAS)] = MIN_HORAS,
@@ -70,7 +69,7 @@ def ver_horarios(
 ) -> GrillaVista | JSONResponse:
     try:
         g = horarios_disponibles(
-            HorariosSql(conn),
+            horarios,
             espacio_id,
             fecha,
             horas,
@@ -124,7 +123,7 @@ def _leer_hora(valor: str) -> time | None:
 )
 def ver_disponibles(
     _: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
     sede_id: Annotated[int, Query(ge=1, le=2**63 - 1)],
     deporte: Annotated[str, Query(min_length=1, max_length=40)],
     fecha: Annotated[date, Query()],
@@ -142,7 +141,7 @@ def ver_disponibles(
         return datos_invalidos(errores)
     try:
         libres = canchas_disponibles(
-            HorariosSql(conn), sede_id, deporte, tipo, fecha, inicio, fin, datetime.now(ZONA)
+            horarios, sede_id, deporte, tipo, fecha, inicio, fin, datetime.now(ZONA)
         )
     except DatosInvalidos as e:
         return datos_invalidos(e.errores)
