@@ -21,13 +21,15 @@ not_read:
 
 ## Changes to existing behavior
 
-- `app/dependencias.py` expone un proveedor por repositorio y servicio (`repositorio_reservas`, `repositorio_sedes`, …, `identidad`); las rutas de `app/interfaz/` los reciben con `Depends` en vez de construir `…Sql(conn)` · ningún contrato HTTP cambia
+- `app/dependencias.py` expone un proveedor por repositorio y servicio (`repositorio_reservas`, `repositorio_sedes`, …, `identidad`); las rutas de `app/interfaz/` los reciben con `Depends` en vez de construir `…Sql(conn)` · las respuestas de la API no cambian
 
 ## Gate
 
 ```
 suite: sh D:/Temp/w/herramientas/pytest-api.sh
-lint: sh D:/Temp/w/herramientas/ruff-mypy-api-rev06.sh
+lint: sh D:/Temp/w/herramientas/ruff-mypy-api-rev06.sh apps/api/app apps/api/tests
+mutate apps/api/app/dependencias.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_repositorios_inyectados.py
+no-visual: recuperacion.py arma una página HTML, pero la card sólo cambia cómo recibe sus repositorios; ninguna pantalla cambia
 ```
 
 ## Log
