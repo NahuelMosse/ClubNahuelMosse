@@ -38,11 +38,7 @@ export default {
     colorMode: { defaultMode: 'dark', respectPrefersColorScheme: true },
     navbar: {
       title: 'ClubNahuelMosse',
-      items: [
-        { to: '/swagger', label: 'API (Swagger)', position: 'left' },
-        { to: '/codigo/interfaz', label: 'Referencia del código', position: 'left' },
-        { href: 'https://github.com/NahuelMosse/ClubNahuelMosse', label: 'GitHub', position: 'right' },
-      ],
+      items: [],
     },
     prism: {
       theme: prismThemes.github,

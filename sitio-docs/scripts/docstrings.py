@@ -78,7 +78,7 @@ def main() -> int:
             encoding="utf-8",
         )
     (DESTINO / "_category_.json").write_text(
-        json.dumps({"label": "Referencia del código (API)", "position": 6}, ensure_ascii=False, indent=2),
+        json.dumps({"label": "Referencia del código (API)", "position": 7}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     print(f"{len(CAPAS)} páginas en {DESTINO.relative_to(SITIO.parent)}")

@@ -65,6 +65,25 @@ for (const [origen, dest, posicion] of paginas) {
     `custom_edit_url: ${github}${origen}\n---\n\n`;
   writeFileSync(archivo, cabecera + texto);
 }
+// La página de la API, con Swagger UI dentro de la documentación.
+writeFileSync(
+  join(destino, 'api.mdx'),
+  `---
+sidebar_position: 6
+sidebar_label: API (Swagger)
+hide_table_of_contents: true
+---
+
+import Swagger from '@site/src/components/Swagger';
+
+# API
+
+Cada ruta de la API, con sus parámetros, sus respuestas y sus errores. Sale de \`apps/api/openapi.json\`, el contrato
+que un test compara con la API. «Try it out» manda el pedido desde el navegador al servidor elegido arriba.
+
+<Swagger />
+`,
+);
 for (const [carpeta, [etiqueta, posicion]] of Object.entries(secciones)) {
   writeFileSync(
     join(destino, carpeta, '_category_.json'),
@@ -93,10 +112,27 @@ writeFileSync(
   `<!doctype html>
 <html lang="es">
 <head><meta charset="utf-8"><title>API · ClubNahuelMosse</title>
-<link rel="stylesheet" href="/swagger-ui/swagger-ui.css"><style>body{margin:0}</style></head>
+<link rel="stylesheet" href="/swagger-ui/swagger-ui.css">
+<style>
+  body { margin: 0; background: transparent; }
+  /* El título y la descripción ya están en la página de la documentación. */
+  .swagger-ui .info { display: none; }
+  .swagger-ui .scheme-container { padding: 0 0 16px; box-shadow: none; background: transparent; }
+  .swagger-ui .wrapper { padding: 0; }
+  /* Swagger UI no trae modo oscuro: con el tema oscuro del sitio se invierte, sin tocar los colores de los métodos. */
+  body.oscuro { background: #0a0a0b; }
+  body.oscuro .swagger-ui { filter: invert(0.92) hue-rotate(180deg); }
+</style></head>
 <body><div id="swagger"></div>
 <script src="/swagger-ui/swagger-ui-bundle.js"></script>
-<script>SwaggerUIBundle({ url: '/openapi.json', dom_id: '#swagger', deepLinking: true, docExpansion: 'list' });</script>
+<script>
+  SwaggerUIBundle({ url: '/openapi.json', dom_id: '#swagger', deepLinking: false, docExpansion: 'list' });
+  // Sigue el tema claro u oscuro de la página que lo contiene.
+  const raiz = window.parent.document.documentElement;
+  const tema = () => document.body.classList.toggle('oscuro', raiz.dataset.theme === 'dark');
+  tema();
+  new MutationObserver(tema).observe(raiz, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
 </body></html>
 `,
 );
