@@ -13,6 +13,7 @@ const github = 'https://github.com/NahuelMosse/ClubNahuelMosse/blob/main/';
 // [origen en el repo, destino en docs/, posición en su sección]
 const paginas = [
   ['README.md', 'intro.md', 1],
+  ['docs/guia-basica.md', 'guia-basica.md', 2],
   ['docs/technical/arquitectura.md', 'tecnica/arquitectura.md', 1],
   ['docs/technical/mapa-del-codigo.md', 'tecnica/mapa-del-codigo.md', 2],
   ['docs/technical/system-design.md', 'tecnica/system-design.md', 3],

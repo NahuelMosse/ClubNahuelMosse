@@ -254,8 +254,8 @@ en `/reservar`.
 
 ### El diseño
 
-- **Tokens.** `tema/tokens.dart` define la `Paleta` (violeta `#7C4DFF` de acento, lima `#D4FF3D` de tinta, roles para
-  fondos, textos, bordes y estados) en oscuro y claro; ninguna pantalla escribe un color a mano. Hay tokens propios para
+- **Tokens.** `tema/tokens.dart` define la `Paleta` (verde eléctrico `#D4FF3D` de acento sobre negros neutros, roles
+  para fondos, textos, bordes y estados) en oscuro y claro; ninguna pantalla escribe un color a mano. Hay tokens propios para
   texto sobre fotos (`textOnMedia`, `accentOnMedia`).
 - **Componentes de marca** en `comun/`: isotipo, marcador, tile de deporte, ficha de socio, línea del día, dorsal y
   troquel. Su relación con el Figma del rediseño está en `specs/RED-02-componentes-identidad/`.
@@ -297,7 +297,7 @@ flowchart LR
 | Correo | `CORREO_MODO=buzon` (tabla `correo_saliente`) | SMTP |
 | Documentación interactiva | `/docs` | apagada (`DOCUMENTACION_INTERACTIVA=false`); `/openapi.json` sigue público |
 
-No hay staging. El despliegue en Render no se hizo todavía: necesita las cuentas y los secretos (ver el runbook).
+No hay staging. La API y la base corren en Render; las cuentas, los secretos y el primer despliegue están en el runbook.
 
 **Limitaciones del plan gratuito que condicionan el diseño:** el servicio se duerme a los 15 minutos sin tráfico (de ahí
 el aviso «despertando» de la app y el corte de 60 s), el barrido de recordatorios no corre mientras duerme (por eso
