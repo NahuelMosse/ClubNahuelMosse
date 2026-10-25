@@ -2,7 +2,7 @@
 // y el sitio sólo la muestra. Los enlaces a otro documento incluido apuntan a su página; los que
 // apuntan a otro archivo del repo, a GitHub.
 import { spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -72,6 +72,34 @@ for (const [carpeta, [etiqueta, posicion]] of Object.entries(secciones)) {
   );
 }
 console.log(`${paginas.length} páginas en ${relative(repo, destino)}`);
+
+// El contrato de la API para Swagger UI, con las direcciones contra las que se prueba.
+const contrato = JSON.parse(readFileSync(join(repo, 'apps', 'api', 'openapi.json'), 'utf8'));
+contrato.servers = [
+  { url: 'https://clubnahuelmosse-api.onrender.com', description: 'Render' },
+  { url: 'http://localhost:8000', description: 'Local' },
+];
+mkdirSync(join(sitio, 'static'), { recursive: true });
+writeFileSync(join(sitio, 'static', 'openapi.json'), JSON.stringify(contrato));
+
+// Swagger UI ya armado (swagger-ui-dist), servido tal cual: empaquetarlo pide módulos de Node.
+const swagger = join(sitio, 'static', 'swagger-ui');
+mkdirSync(swagger, { recursive: true });
+for (const archivo of ['swagger-ui.css', 'swagger-ui-bundle.js']) {
+  copyFileSync(join(sitio, 'node_modules', 'swagger-ui-dist', archivo), join(swagger, archivo));
+}
+writeFileSync(
+  join(swagger, 'index.html'),
+  `<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><title>API · ClubNahuelMosse</title>
+<link rel="stylesheet" href="/swagger-ui/swagger-ui.css"><style>body{margin:0}</style></head>
+<body><div id="swagger"></div>
+<script src="/swagger-ui/swagger-ui-bundle.js"></script>
+<script>SwaggerUIBundle({ url: '/openapi.json', dom_id: '#swagger', deepLinking: true, docExpansion: 'list' });</script>
+</body></html>
+`,
+);
 
 // La referencia del código sale de los docstrings de la API (scripts/docstrings.py).
 const python = ['python3', 'python'].find((p) => spawnSync(p, ['--version']).status === 0);

@@ -44,7 +44,7 @@ emulador de Firebase Auth (después de `npm ci`).
 - [Licencias de terceros](THIRD_PARTY_NOTICES.md), generadas con `python scripts/avisos_de_terceros.py`.
 
 La misma documentación se lee como sitio web con Docusaurus. `sitio-docs/` no guarda copias: al construir, toma los `.md`
-de `docs/`, de los README y de `specs/`, arma la referencia de la API desde `apps/api/openapi.json` (lo mismo que Swagger) y
+de `docs/`, de los README y de `specs/`, muestra Swagger UI con `apps/api/openapi.json` y
 la referencia del código desde los docstrings de `apps/api/app/`. Hacen falta Node 20 y Python 3.
 
 ```sh

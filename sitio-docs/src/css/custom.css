@@ -24,23 +24,12 @@
   --ifm-footer-background-color: #141416;
 }
 
-/* Redoc en modo oscuro: su tema oscuro deja el texto gris sobre negro y el menú en blanco. */
-[data-theme='dark'] .redocusaurus .api-content,
-[data-theme='dark'] .redocusaurus .api-content p,
-[data-theme='dark'] .redocusaurus .api-content h1,
-[data-theme='dark'] .redocusaurus .api-content h2,
-[data-theme='dark'] .redocusaurus .api-content td,
-[data-theme='dark'] .redocusaurus .api-content th {
-  color: #e4e4e7;
-}
 
-[data-theme='dark'] .redocusaurus .menu-content {
-  background: #141416;
-}
-
-[data-theme='dark'] .redocusaurus .menu-content label,
-[data-theme='dark'] .redocusaurus .menu-content li,
-[data-theme='dark'] .redocusaurus .menu-content input {
-  color: #e4e4e7;
-  background: transparent;
+/* Swagger UI no tiene modo oscuro: va en su marco claro, a todo el alto debajo de la barra. */
+.swagger-marco {
+  display: block;
+  width: 100%;
+  height: calc(100vh - var(--ifm-navbar-height));
+  border: 0;
+  background: #ffffff;
 }
