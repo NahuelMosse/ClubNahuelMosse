@@ -39,10 +39,13 @@ class BotonPrimario extends StatelessWidget {
         child: FilledButton(
           onPressed: habilitado ? alTocar : null,
           style: FilledButton.styleFrom(
-            // Deshabilitado y atenuado van en gris con `textSecondary`; cargando conserva el
-            // lima con el spinner.
-            backgroundColor: atenuado ? p.stateDisabled : p.accentBase,
-            foregroundColor: atenuado ? p.textSecondary : p.accentOn,
+            // Atenuado baja sólo el fondo y deja el texto en `textPrimary`: se puede tocar y
+            // tiene que llegar a 4,5:1. Deshabilitado va en gris con `textSecondary`;
+            // cargando conserva el lima.
+            backgroundColor: atenuado
+                ? p.accentBase.withValues(alpha: 0.4)
+                : p.accentBase,
+            foregroundColor: atenuado ? p.textPrimary : p.accentOn,
             disabledBackgroundColor: cargando ? p.accentBase : p.stateDisabled,
             disabledForegroundColor: cargando ? p.accentOn : p.textSecondary,
             shape: const StadiumBorder(),
