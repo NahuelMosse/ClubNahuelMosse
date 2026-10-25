@@ -41,6 +41,16 @@ emulador de Firebase Auth (después de `npm ci`).
 - [Matriz de seguridad ASVS](specs/asvs.md), nivel 2.
 - [Licencias de terceros](THIRD_PARTY_NOTICES.md), generadas con `python scripts/avisos_de_terceros.py`.
 
+La misma documentación se lee como sitio web con Docusaurus. `sitio-docs/` no guarda copias: al construir, toma los `.md`
+de `docs/`, de los README y de `specs/`.
+
+```sh
+cd sitio-docs
+npm install
+npm start          # en vivo, en http://localhost:3000
+npm run build      # sitio estático en sitio-docs/build/, se sirve con `npm run serve`
+```
+
 Los supuestos que cambian lo que ve quien usa la app o lo que hace quien la opera están en los README de `apps/api` y
 `apps/mobile`; el registro completo de cada caso de uso, en `specs/<caso>/ambiguedades.md`.
 
