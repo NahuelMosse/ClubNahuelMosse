@@ -268,7 +268,7 @@ class _Marca extends StatelessWidget {
           desdeY: -70,
           giro: 25 / 360,
           curva: Movimiento.rebote,
-          child: Isotipo(tamano: 48, decorativo: true),
+          child: Isotipo(tamano: 40, decorativo: true),
         ),
         const SizedBox(height: Medidas.s16),
         Text(

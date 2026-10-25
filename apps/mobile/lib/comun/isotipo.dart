@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../tema/tokens.dart';
 
-/// Isotipo del club: un escudo con una cancha estilizada adentro, en el color de acento.
+/// Isotipo del club: una cancha vista desde arriba con la N del club y la pelota, en el color de
+/// acento.
 class Isotipo extends StatelessWidget {
   const Isotipo({super.key, this.tamano = 64, this.decorativo = false});
 
@@ -24,7 +25,8 @@ class Isotipo extends StatelessWidget {
   }
 }
 
-/// Dibuja el escudo y la pelota del [Isotipo] escalados al tamaño disponible.
+/// Dibuja la cancha, la N y la pelota del [Isotipo] sobre una grilla de 64 escalada al tamaño
+/// disponible, con las medidas del componente `Marca/Isotipo` del Figma.
 class PintorIsotipo extends CustomPainter {
   const PintorIsotipo({required this.color});
 
@@ -33,30 +35,35 @@ class PintorIsotipo extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final e = size.width / 64;
-    final trazo = Paint()
+    final fino = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5 * e
-      ..strokeJoin = StrokeJoin.round
+      ..color = color;
+    final grueso = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5 * e
       ..strokeCap = StrokeCap.round
       ..color = color;
-    final relleno = Paint()..color = color;
 
-    final escudo = Path()
-      ..moveTo(32 * e, 4 * e)
-      ..lineTo(56 * e, 12 * e)
-      ..lineTo(56 * e, 32 * e)
-      ..quadraticBezierTo(56 * e, 50 * e, 32 * e, 60 * e)
-      ..quadraticBezierTo(8 * e, 50 * e, 8 * e, 32 * e)
-      ..lineTo(8 * e, 12 * e)
-      ..close();
-    canvas.drawPath(escudo, trazo);
+    final cancha = RRect.fromLTRBR(
+      3 * e,
+      3 * e,
+      61 * e,
+      61 * e,
+      Radius.circular(14 * e),
+    );
+    canvas.drawRRect(cancha, fino);
+    canvas.drawLine(Offset(3 * e, 32 * e), Offset(12 * e, 32 * e), fino);
+    canvas.drawLine(Offset(52 * e, 32 * e), Offset(61 * e, 32 * e), fino);
 
-    final centro = Offset(32 * e, 32 * e);
-    canvas.drawCircle(centro, 14 * e, trazo);
-    canvas.drawLine(Offset(18 * e, 32 * e), Offset(46 * e, 32 * e), trazo);
-    canvas.drawLine(Offset(32 * e, 18 * e), Offset(32 * e, 24 * e), trazo);
-    canvas.drawLine(Offset(32 * e, 40 * e), Offset(32 * e, 46 * e), trazo);
-    canvas.drawCircle(centro, 3 * e, relleno);
+    final ene = Path()
+      ..moveTo(18 * e, 46 * e)
+      ..lineTo(18 * e, 18 * e)
+      ..lineTo(46 * e, 46 * e)
+      ..lineTo(46 * e, 24 * e);
+    canvas.drawPath(ene, grueso..strokeJoin = StrokeJoin.round);
+
+    canvas.drawCircle(Offset(46 * e, 14 * e), 5 * e, Paint()..color = color);
   }
 
   @override
