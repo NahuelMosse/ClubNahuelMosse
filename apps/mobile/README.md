@@ -98,6 +98,14 @@ flutter build apk --release   --dart-define=API_URL=https://<servicio>.onrender.
 `flutter build apk --debug` lleva las mismas `--dart-define`. Sin `API_URL` la app no arranca; sin
 las cuatro de Firebase ni `AUTH_EMULADOR`, tampoco.
 
+Para no repetirlas, se copian a un archivo local que git ignora y se pasan de una vez:
+
+```sh
+cd apps/mobile
+cp definiciones.example.json definiciones.json   # y se completan los cinco valores
+flutter build apk --release --dart-define-from-file=definiciones.json
+```
+
 El archivo queda en `build/app/outputs/flutter-apk/`. Se instala con
 `adb install -r build/app/outputs/flutter-apk/app-release.apk` (o `app-debug.apk`). La versión
 `release` queda firmada con la clave de depuración mientras no se configure una propia en

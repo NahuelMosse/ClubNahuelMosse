@@ -1,0 +1,7 @@
+{
+  "API_URL": "https://<servicio>.onrender.com",
+  "FIREBASE_API_KEY": "<clave de API>",
+  "FIREBASE_APP_ID": "<ID de la app Android, 1:...:android:...>",
+  "FIREBASE_SENDER_ID": "<número del proyecto>",
+  "FIREBASE_PROJECT_ID": "<ID del proyecto>"
+}
