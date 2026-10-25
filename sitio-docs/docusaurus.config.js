@@ -26,6 +26,14 @@ export default {
         theme: { customCss: './src/css/custom.css' },
       },
     ],
+    [
+      'redocusaurus',
+      {
+        // El contrato versionado de la API, el mismo que publica /openapi.json.
+        specs: [{ id: 'api', spec: '../apps/api/openapi.json', route: '/referencia-api/' }],
+        theme: { primaryColor: '#4d6600', primaryColorDark: '#d4ff3d' },
+      },
+    ],
   ],
   themes: [
     '@docusaurus/theme-mermaid',
@@ -39,6 +47,8 @@ export default {
     navbar: {
       title: 'ClubNahuelMosse',
       items: [
+        { to: '/referencia-api/', label: 'Referencia de la API', position: 'left' },
+        { to: '/codigo/interfaz', label: 'Referencia del código', position: 'left' },
         { href: 'https://github.com/NahuelMosse/ClubNahuelMosse', label: 'GitHub', position: 'right' },
       ],
     },
