@@ -1,0 +1,25 @@
+/* La paleta de la app: lima #D4FF3D sobre negro neutro; en modo claro, la tinta oliva del acento. */
+:root {
+  --ifm-color-primary: #4d6600;
+  --ifm-color-primary-dark: #455c00;
+  --ifm-color-primary-darker: #415700;
+  --ifm-color-primary-darkest: #354700;
+  --ifm-color-primary-light: #557000;
+  --ifm-color-primary-lighter: #597500;
+  --ifm-color-primary-lightest: #658500;
+  --ifm-code-font-size: 92%;
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #d4ff3d;
+  --ifm-color-primary-dark: #ccff1a;
+  --ifm-color-primary-darker: #c8ff08;
+  --ifm-color-primary-darkest: #a8d900;
+  --ifm-color-primary-light: #dcff60;
+  --ifm-color-primary-lighter: #e0ff72;
+  --ifm-color-primary-lightest: #eaffa6;
+  --ifm-background-color: #0a0a0b;
+  --ifm-background-surface-color: #141416;
+  --ifm-navbar-background-color: #141416;
+  --ifm-footer-background-color: #141416;
+}
