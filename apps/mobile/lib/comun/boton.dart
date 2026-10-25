@@ -4,7 +4,7 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'movimiento.dart';
 
-/// `Btn/Type=Primary`: pill lima de 52 de alto. Deshabilitado baja al 40 % de opacidad.
+/// `Btn/Type=Primary`: pill lima de 52 de alto. Deshabilitado se pone gris.
 class BotonPrimario extends StatelessWidget {
   const BotonPrimario({
     super.key,
@@ -30,49 +30,47 @@ class BotonPrimario extends StatelessWidget {
     final habilitado = alTocar != null && !cargando;
     final simbolo = icono;
     return Presionable(
-      child: Opacity(
-        opacity: habilitado || cargando ? 1 : 0.4,
-        // Alto mínimo y no fijo: con el texto agrandado, el botón crece en vez de cortarlo.
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            minHeight: Medidas.altoControl,
-            minWidth: double.infinity,
+      // Alto mínimo y no fijo: con el texto agrandado, el botón crece en vez de cortarlo.
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          minHeight: Medidas.altoControl,
+          minWidth: double.infinity,
+        ),
+        child: FilledButton(
+          onPressed: habilitado ? alTocar : null,
+          style: FilledButton.styleFrom(
+            // Atenuado baja sólo el fondo y deja el texto en `textPrimary`: se puede tocar y
+            // tiene que llegar a 4,5:1. Deshabilitado va en gris con `textSecondary`;
+            // cargando conserva el lima.
+            backgroundColor: atenuado
+                ? p.accentBase.withValues(alpha: 0.4)
+                : p.accentBase,
+            foregroundColor: atenuado ? p.textPrimary : p.accentOn,
+            disabledBackgroundColor: cargando ? p.accentBase : p.stateDisabled,
+            disabledForegroundColor: cargando ? p.accentOn : p.textSecondary,
+            shape: const StadiumBorder(),
+            side: BorderSide(color: p.accentEdge),
+            textStyle: Textos.boton,
+            padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
           ),
-          child: FilledButton(
-            onPressed: habilitado ? alTocar : null,
-            style: FilledButton.styleFrom(
-              // Atenuado baja sólo el fondo: el texto de un botón que se puede tocar tiene
-              // que seguir leyéndose, y sobre el fondo apagado el `accentOn` no llega a 4,5:1.
-              backgroundColor: atenuado
-                  ? p.accentBase.withValues(alpha: 0.4)
-                  : p.accentBase,
-              foregroundColor: atenuado ? p.textPrimary : p.accentOn,
-              disabledBackgroundColor: p.accentBase,
-              disabledForegroundColor: p.accentOn,
-              shape: const StadiumBorder(),
-              side: BorderSide(color: p.accentEdge),
-              textStyle: Textos.boton,
-              padding: const EdgeInsets.symmetric(horizontal: Medidas.s24),
-            ),
-            child: cargando
-                ? SizedBox.square(
-                    dimension: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: p.accentOn,
-                    ),
-                  )
-                : simbolo == null
-                ? Text(texto)
-                : Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(simbolo, size: 20),
-                      const SizedBox(width: Medidas.s8),
-                      Flexible(child: Text(texto, textAlign: TextAlign.center)),
-                    ],
+          child: cargando
+              ? SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    color: p.accentOn,
                   ),
-          ),
+                )
+              : simbolo == null
+              ? Text(texto)
+              : Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(simbolo, size: 20),
+                    const SizedBox(width: Medidas.s8),
+                    Flexible(child: Text(texto, textAlign: TextAlign.center)),
+                  ],
+                ),
         ),
       ),
     );

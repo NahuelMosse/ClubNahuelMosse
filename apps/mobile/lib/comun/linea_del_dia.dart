@@ -43,9 +43,9 @@ class LineaDelDia extends StatelessWidget {
                   color: p.textSecondary,
                 ),
               ),
-              _Leyenda(color: p.accentMuted, texto: 'Libre'),
+              _Leyenda(color: p.accentLibre, texto: 'Libre'),
               _Leyenda(color: p.stateDisabled, texto: 'Ocupado'),
-              _Leyenda(color: p.accentBase, texto: 'Elegido'),
+              _Leyenda(color: p.accentInk, texto: 'Elegido'),
             ],
           ),
           const SizedBox(height: 8),
@@ -64,9 +64,9 @@ class LineaDelDia extends StatelessWidget {
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               color: switch (franjas[i]) {
-                                EstadoFranja.libre => p.accentMuted,
+                                EstadoFranja.libre => p.accentLibre,
                                 EstadoFranja.ocupada => p.stateDisabled,
-                                EstadoFranja.elegida => p.accentBase,
+                                EstadoFranja.elegida => p.accentInk,
                               },
                               borderRadius: BorderRadius.circular(4),
                             ),

@@ -1,0 +1,15 @@
+{
+  "size": "large",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/tema/tokens.dart",
+    "apps/mobile/lib/comun/linea_del_dia.dart",
+    "apps/mobile/lib/comun/boton.dart",
+    "apps/mobile/test/capturas/"
+  ],
+  "tasks": 4
+}
