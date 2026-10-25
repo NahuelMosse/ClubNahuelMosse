@@ -2,3 +2,5 @@ node_modules/
 build/
 .docusaurus/
 docs/
+static/openapi.json
+static/swagger-ui/
