@@ -26,12 +26,15 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/pytest-api.sh
-lint: sh D:/Temp/w/herramientas/ruff-mypy-api-rev06.sh apps/api/app apps/api/tests
-mutate apps/api/app/dependencias.py: sh D:/Temp/w/herramientas/pytest-api.sh -q -x tests/unit/test_repositorios_inyectados.py
+suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider
+lint: sh D:/Temp/w/herramientas/arq01-lint.sh apps/api/app apps/api/tests
+app: sh D:/Temp/w/herramientas/arq01-app.sh arq01_app
+attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh arq01_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
+mutate apps/api/app/dependencias.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_repositorios_inyectados.py
 no-visual: recuperacion.py arma una página HTML, pero la card sólo cambia cómo recibe sus repositorios; ninguna pantalla cambia
 ```
 
 ## Log
 
 - L1 · por que no se uso inyeccion de dependencias para manejar la clean architecture? · (sobre la propuesta: A. Proveedores con `Depends`: `dependencias.py` expone `def repo_reservas(conn) -> Reservas`, y la ruta recibe un `Reservas` en vez de construir `ReservasSql`) hace los cambios A y B
+- L3 · 2026-10-25 · declared · mutate · apps/api/app/interfaz/reservas.py · la card sólo cambia de dónde salen sus repositorios; lo que la ruta hace lo cubren los escenarios de CU-09, CU-10, CU-11, CU-14 y CU-15 de la suite

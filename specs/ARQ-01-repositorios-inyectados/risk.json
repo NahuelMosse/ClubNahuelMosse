@@ -1,0 +1,37 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "route",
+    "screen"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/dependencias.py",
+    "apps/api/app/interfaz/reservas.py",
+    "apps/api/app/interfaz/notificaciones.py",
+    "apps/api/app/interfaz/espacios.py",
+    "apps/api/app/interfaz/sesion.py",
+    "apps/api/app/interfaz/sedes.py",
+    "apps/api/app/interfaz/recuperacion.py",
+    "apps/api/app/interfaz/horarios.py",
+    "apps/api/app/interfaz/registro.py",
+    "apps/api/app/interfaz/pruebas.py"
+  ],
+  "tasks": 1,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "recuperacion.py arma una página HTML, pero la card sólo cambia cómo recibe sus repositorios; ninguna pantalla cambia",
+      "files": [
+        "apps/api/app/interfaz/recuperacion.py"
+      ]
+    }
+  ]
+}
