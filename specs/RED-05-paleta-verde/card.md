@@ -16,7 +16,7 @@ not_read:
 - S3 · "pasa eso a la aplicacion" · acceptance: el botón principal deshabilitado es gris como la variante deshabilitada de `Btn` del Figma: fondo `state/disabled`, texto `text/secondary`, sin opacidad
 - RED-05-ASM-01 · el `text/muted` oscuro del Figma (#85858C) se toma tal cual, porque llega a 4,5:1 sobre las tres superficies oscuras ; el #8C86A4 de la paleta violeta era su corrección · S1
 - RED-05-ASM-02 · el lima de `accent/base` queda igual en los dos modos, como en el Figma: en modo claro el acento como texto o borde fino usa `accent/ink`, y el lima va de fondo con `accent/on` encima · S1
-- RED-05-ASM-03 · el botón atenuado (que se ve deshabilitado pero acepta el toque) no es el gris del deshabilitado: baja sólo el fondo del lima al 40 % y deja el texto en `text/primary`, porque se puede tocar y su texto tiene que llegar a 4,5:1 (REV-04-ASM-07); el gris con `text/secondary` da 4,4:1 en modo oscuro · S3
+- RED-05-ASM-03 · el botón atenuado (que se ve deshabilitado pero acepta el toque) no es el gris del deshabilitado: baja sólo el fondo del lima al 40 % y deja el texto en `text/primary`, porque se puede tocar y su texto tiene que llegar a 4,5:1, como ya pide el supuesto del botón atenuado de REV-04; el gris con `text/secondary` da 4,4:1 en modo oscuro · S3
 
 ## Tasks
 
@@ -68,3 +68,4 @@ lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 - L19 · 2026-10-25 · declared · K4 · apps/mobile/test/rediseno/paleta_verde_test.dart · reemplazo de tests congelados de paleta_rediseno_test.dart: repite su cálculo de contraste y su tabla porque el congelado no se puede editar para compartirlos
 - L20 · 2026-10-25 · declared · K4 · apps/mobile/test/rediseno/boton_atenuado_verde_test.dart · test congelado de reemplazo: repite el cálculo de contraste de paleta_verde_test.dart, también congelado
 - L21 · 2026-10-25 · declared · K4 · apps/mobile/lib/comun/boton.dart · los clones con barra_inferior.dart y pantalla_buscar_cancha.dart (líneas 199-216) son anteriores a esta card; RED-05 sólo cambió los colores de BotonPrimario
+- L22 · 2026-10-25 · closing: publicación sin correr — la rama, el PR y el comentario de cierre no se publican sin un pedido expreso (CLAUDE.md del repo); la card se integra a main en local
