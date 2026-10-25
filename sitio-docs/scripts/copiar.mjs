@@ -1,6 +1,7 @@
 // Arma sitio-docs/docs/ con los .md del repo: la documentación vive en docs/, los README y specs/,
 // y el sitio sólo la muestra. Los enlaces a otro documento incluido apuntan a su página; los que
 // apuntan a otro archivo del repo, a GitHub.
+import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -71,3 +72,9 @@ for (const [carpeta, [etiqueta, posicion]] of Object.entries(secciones)) {
   );
 }
 console.log(`${paginas.length} páginas en ${relative(repo, destino)}`);
+
+// La referencia del código sale de los docstrings de la API (scripts/docstrings.py).
+const python = ['python3', 'python'].find((p) => spawnSync(p, ['--version']).status === 0);
+if (!python) throw new Error('hace falta Python 3 para generar la referencia del código');
+const generado = spawnSync(python, [join(sitio, 'scripts', 'docstrings.py')], { stdio: 'inherit' });
+if (generado.status !== 0) process.exit(generado.status ?? 1);
