@@ -45,9 +45,6 @@ Future<ResultadoDeError> atenderErrorDeRed(
         ServidorSinRespuesta() =>
           'El servidor no responde. Probá de nuevo en unos minutos.',
         _ when mensaje != null => mensaje,
-        ErrorDelServidor(:final referencia?) =>
-          'No pudimos procesar la operación en este momento. Intentá más tarde. '
-              'Referencia: $referencia',
         _ =>
           'No pudimos procesar la operación en este momento. Intentá más tarde.',
       },
