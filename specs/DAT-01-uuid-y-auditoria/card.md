@@ -59,3 +59,13 @@ attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh dat01_app --json --body-limi
 - L2 · 2026-10-26 · orden: T1 (base) y T3 (app) arrancan ya; T2 (API) espera a que ARQ-04 se integre, porque mueve esos archivos
 - L3 · 2026-10-26 · declared · fault-db · la base es Postgres, no un archivo; la suite de integración la usa como siempre
 - L4 · 2026-10-26 · plan judge: ACT-01..06 cerrados con las 9 tablas y 17 referencias nombradas en S1/S2 y sus tests, los casos 422/404 de S3, DAT-01-ASM-05..08 con sus tests y la app vieja en «Changes to existing behavior»; ver judge.md
+- L5 · 2026-10-26 · replaces: test/ids_uuid_test.dart (sus tests) · no compilaba: usa catalogoJson sin importar soporte/admin.dart · by: test/ids_uuid_app_test.dart (mismos títulos y tags)
+- L6 · 2026-10-26 · replaces: test/anular_desde_el_detalle_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/anular_desde_el_detalle_uuid_test.dart (mismos títulos y tags)
+- L7 · 2026-10-26 · replaces: test/interfaz_accesible_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/interfaz_accesible_uuid_test.dart (mismos títulos y tags)
+- L8 · 2026-10-26 · replaces: test/interfaz_accesible_supuestos_test.dart (sus tests) · ids pasan a UUID en los datos de prueba (importaba el anterior) · by: test/interfaz_accesible_supuestos_uuid_test.dart (mismos títulos y tags)
+- L9 · 2026-10-26 · replaces: test/rediseno/movimiento_pantallas_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/rediseno/movimiento_pantallas_uuid_test.dart (mismos títulos y tags)
+- L10 · 2026-10-26 · replaces: test/rediseno/pantallas_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/rediseno/pantallas_uuid_test.dart (mismos títulos y tags)
+- L11 · 2026-10-26 · replaces: test/rediseno/transiciones_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/rediseno/transiciones_uuid_test.dart (mismos títulos y tags)
+- L12 · 2026-10-26 · replaces: test/rutas_de_la_api_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/rutas_de_la_api_uuid_test.dart (mismos títulos y tags)
+- L13 · 2026-10-26 · replaces: test/sin_sobreingenieria_a11y_test.dart (sus tests) · ids pasan a UUID en los datos de prueba · by: test/sin_sobreingenieria_a11y_uuid_test.dart (mismos títulos y tags)
+- L14 · 2026-10-26 · T3 · app lee ids como texto UUID: flutter analyze, flutter test completo y capturas verdes (salidas en el reporte del builder)

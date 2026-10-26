@@ -9,6 +9,7 @@ import 'package:clubnahuelmosse/sedes/sede.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
+import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
 
