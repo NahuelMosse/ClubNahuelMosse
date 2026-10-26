@@ -15,15 +15,17 @@ not_read:
 - S2 · "Sí, en una card nueva" (la corrección del permiso) · acceptance: si la persona ya contestó (concedió o negó), la app no vuelve a preguntar al entrar; el botón «Activar» de la pantalla de notificaciones sigue pidiéndolo como hoy
 - NOT-01-ASM-01 · se pregunta al entrar con el rol de usuario, no a un administrador (los administradores no reciben avisos de reservas); es el mismo momento en que hoy arranca el centro de notificaciones · S1
 - NOT-01-ASM-02 · «todavía no le preguntó» es el estado `notDetermined` de Firebase Messaging; en el sistema simulado de los tests y escenarios es la ausencia de una respuesta guardada · S1
+- NOT-01-ASM-03 · el sistema simulado guarda la respuesta que se le fija (concedido o negado) y, sin respuesta guardada, dice «todavía no preguntó»; pedirle el permiso devuelve y guarda la respuesta fijada para la próxima pregunta, concedido si no se fijó otra. Los escenarios que hoy arrancan con el permiso concedido lo siguen teniendo después de la pregunta al entrar · S1,S2
 
 ## Tasks
 
-- T1 · S1,S2,NOT-01-ASM-01,NOT-01-ASM-02 · apps/mobile/lib/notificaciones/sistema.dart (data), apps/mobile/lib/notificaciones/sistema_fcm.dart (data), apps/mobile/lib/notificaciones/centro.dart (rule) · tests: apps/mobile/test/permiso_al_entrar_test.dart "al entrar, si el sistema todavía no le preguntó, la app pide el permiso y registra el teléfono con la respuesta @NOT-01-S1 @assumption:NOT-01-ASM-02"; apps/mobile/test/permiso_al_entrar_test.dart "si ya contestó, al entrar no vuelve a preguntar @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "un administrador no recibe la pregunta al entrar @assumption:NOT-01-ASM-01"; apps/mobile/test/permiso_al_entrar_test.dart "Activar sigue pidiendo el permiso @NOT-01-S2"
+- T1 · S1,S2,NOT-01-ASM-01,NOT-01-ASM-02 · apps/mobile/lib/notificaciones/sistema.dart (data), apps/mobile/lib/notificaciones/sistema_fcm.dart (data), apps/mobile/lib/notificaciones/centro.dart (rule) · tests: apps/mobile/test/permiso_al_entrar_test.dart "al entrar, si el sistema todavía no le preguntó, la app pide el permiso y registra el teléfono con la respuesta @NOT-01-S1 @assumption:NOT-01-ASM-02"; apps/mobile/test/permiso_al_entrar_test.dart "si ya contestó, al entrar no vuelve a preguntar @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "un administrador no recibe la pregunta al entrar @assumption:NOT-01-ASM-01"; apps/mobile/test/permiso_al_entrar_test.dart "Activar sigue pidiendo el permiso @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "si al entrar niega el permiso, el teléfono se registra sin permiso y no se vuelve a preguntar @NOT-01-S1 @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "el sistema simulado sin respuesta guardada dice que todavía no preguntó y pedirle el permiso concedido o negado lo guarda @assumption:NOT-01-ASM-03"
   reuses: apps/mobile/lib/notificaciones/sistema.dart SistemaDeNotificaciones.solicitarPermiso; apps/mobile/lib/notificaciones/centro.dart _revisarPermiso
 
 ## Changes to existing behavior
 
 - al entrar como usuario por primera vez, el sistema operativo muestra su pregunta de notificaciones; antes sólo aparecía al tocar «Activar»
+- el sistema simulado de los tests distingue «todavía no preguntó» de «concedido» (NOT-01-ASM-03); antes arrancaba concedido
 
 ## Gate
 
@@ -35,3 +37,4 @@ lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 ## Log
 
 - L1 · en otro hilo, te podes fijar si las notificaciones funcionan, es critico · (ante el hallazgo del permiso en Android 13+) Sí, en una card nueva
+- L2 · 2026-10-26 · plan judge: ACT-01 y ACT-02 cerrados con NOT-01-ASM-03 y dos tests nuevos en T1; ver judge.md
