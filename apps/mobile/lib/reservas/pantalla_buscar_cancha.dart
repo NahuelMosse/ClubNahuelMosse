@@ -109,9 +109,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted) return;
@@ -232,9 +230,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      _falla = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       _falla = e;
     }
     if (!mounted) return;

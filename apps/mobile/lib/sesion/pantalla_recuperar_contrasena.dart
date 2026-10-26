@@ -67,9 +67,7 @@ class _PantallaRecuperarContrasenaState
       if (mounted) setState(() => _enviado = true);
     } on CorreoRechazado catch (e) {
       if (mounted) setState(() => _errorDelServidor = e.mensaje);
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);

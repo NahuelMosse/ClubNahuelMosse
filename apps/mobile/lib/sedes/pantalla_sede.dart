@@ -114,9 +114,7 @@ class _PantallaSedeState extends State<PantallaSede> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted || pedido != _pedido) return;
@@ -190,9 +188,7 @@ class _PantallaSedeState extends State<PantallaSede> {
       });
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _filtrando = false);

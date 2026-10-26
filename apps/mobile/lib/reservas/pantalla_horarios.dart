@@ -165,9 +165,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     await _avisar(vencida: vencida, fallo: fallo, reintentar: _cargar);
@@ -216,9 +214,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted || pedido != _pedido) return;

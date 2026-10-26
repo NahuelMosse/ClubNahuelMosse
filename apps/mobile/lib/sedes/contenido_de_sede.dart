@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import '../comun/carga_de_lista.dart';
 import 'package:go_router/go_router.dart';
 import '../comun/estado_vacio.dart';
-import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/iconos.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fotos.dart';
+import 'portada_con_titulo.dart';
 import 'sede.dart';
 import 'etiqueta_clara.dart';
 import 'filtro_de_canchas.dart';
@@ -112,71 +113,24 @@ class ContenidoDeSede extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          FotoConVelo(
+          PortadaConTitulo(
             imagen: portadaDeSede(sede.id),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s12,
-                  Medidas.s8,
-                  Medidas.s24,
-                  Medidas.s24,
+            volverA: 'Todas las sedes',
+            alVolver: () => context.go('/sedes'),
+            separacion: Medidas.s40,
+            sobretitulo: '${sede.direccion} · ${sede.apertura} a ${sede.cierre}'
+                .toUpperCase(),
+            nombre: sede.nombre,
+            extra: [
+              if (deportes.isNotEmpty) ...[
+                const SizedBox(height: Medidas.s8),
+                Wrap(
+                  spacing: Medidas.s4,
+                  runSpacing: Medidas.s4,
+                  children: [for (final d in deportes) EtiquetaClara(texto: d)],
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => context.go('/sedes'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: p.textOnMedia,
-                        minimumSize: const Size(0, Medidas.tactil),
-                        textStyle: Textos.leyenda,
-                      ),
-                      icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                      label: const Text('Todas las sedes'),
-                    ),
-                    const SizedBox(height: Medidas.s40),
-                    Padding(
-                      padding: const EdgeInsets.only(left: Medidas.s12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${sede.direccion} · ${sede.apertura} a ${sede.cierre}'
-                                .toUpperCase(),
-                            style: Textos.sobretitulo.copyWith(
-                              color: p.accentOnMedia,
-                            ),
-                          ),
-                          const SizedBox(height: Medidas.s4),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              sede.nombre.toUpperCase(),
-                              style: Textos.display.copyWith(
-                                color: p.textOnMedia,
-                              ),
-                            ),
-                          ),
-                          if (deportes.isNotEmpty) ...[
-                            const SizedBox(height: Medidas.s8),
-                            Wrap(
-                              spacing: Medidas.s4,
-                              runSpacing: Medidas.s4,
-                              children: [
-                                for (final d in deportes)
-                                  EtiquetaClara(texto: d),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+              ],
+            ],
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
@@ -197,20 +151,9 @@ class ContenidoDeSede extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: Medidas.s12),
-                AnimatedSwitcher(
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : Movimiento.cambioDeLista,
-                  layoutBuilder: (actual, anteriores) => Stack(
-                    alignment: Alignment.topCenter,
-                    children: [...anteriores, ?actual],
-                  ),
+                CambioDeLista(
                   child: filtrando
-                      ? const Padding(
-                          key: ValueKey('carga'),
-                          padding: EdgeInsets.all(Medidas.s40),
-                          child: Center(child: CircularProgressIndicator()),
-                        )
+                      ? const EsperaDeLista(key: ValueKey('carga'))
                       : Column(
                           key: ValueKey((deporte, tipo)),
                           crossAxisAlignment: CrossAxisAlignment.stretch,

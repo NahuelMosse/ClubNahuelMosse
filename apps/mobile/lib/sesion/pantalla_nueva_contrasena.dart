@@ -79,9 +79,7 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
           () => _estado = vigente ? _Estado.formulario : _Estado.invalido,
         );
       }
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (fallo != null && mounted) {
@@ -120,9 +118,7 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
       if (mounted) setState(() => _estado = _Estado.invalido);
     } on ContrasenaRechazada catch (e) {
       if (mounted) setState(() => _errorDelServidor = e.errores['nueva']);
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);

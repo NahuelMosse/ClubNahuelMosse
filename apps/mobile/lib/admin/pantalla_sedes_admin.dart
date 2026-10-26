@@ -57,9 +57,7 @@ class _PantallaSedesAdminState extends State<PantallaSedesAdmin> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      error = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       error = e;
     }
     if (!mounted) return;

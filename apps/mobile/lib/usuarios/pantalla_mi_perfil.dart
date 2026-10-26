@@ -74,9 +74,7 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
       setState(() => _cargando = false);
       await avisarSesionVencida(context, widget.sesion);
       return;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted) return;
@@ -114,9 +112,7 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _dandoDeBaja = false);

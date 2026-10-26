@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../comun/carga_de_lista.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/barra_inferior.dart';
@@ -111,11 +112,7 @@ class PlantillaListadoAdmin extends StatelessWidget {
                   ),
                   const SizedBox(height: Medidas.s16),
                   ...listado,
-                  if (!hayDatos && !fallo)
-                    const Padding(
-                      padding: EdgeInsets.all(Medidas.s40),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
+                  if (!hayDatos && !fallo) const EsperaDeLista(),
                   if (!hayDatos && fallo)
                     Center(
                       child: BotonTexto(

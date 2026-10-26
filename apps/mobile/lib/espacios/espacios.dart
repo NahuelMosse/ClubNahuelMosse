@@ -77,12 +77,8 @@ class Espacios extends ChangeNotifier {
       queryParameters: filtros.isEmpty ? null : filtros,
     );
     final r = await _get(consulta.toString());
-    if (r.codigo == 200) {
-      if (r.cuerpo case {'espacios': final List<Object?> lista}) {
-        final leidos = [for (final e in lista) Espacio.desdeJson(e)];
-        if (!leidos.contains(null)) return [...leidos.nonNulls];
-      }
-    }
+    final leidos = r.codigo == 200 ? Espacio.listaDesdeCuerpo(r.cuerpo) : null;
+    if (leidos != null) return leidos;
     throw ErrorDelServidor(r.codigo);
   }
 

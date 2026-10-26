@@ -43,9 +43,7 @@ Future<void> darDeBaja(
       resultado = await pedir();
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       enviando(false);

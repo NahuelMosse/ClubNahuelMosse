@@ -212,13 +212,7 @@ class Sesion extends ChangeNotifier {
     required String dni,
     required String fechaNacimiento,
   }) async {
-    final String? token;
-    try {
-      token = await _credenciales.token();
-    } on CredencialesInvalidas {
-      throw const SesionVencida();
-    }
-    if (token == null) throw const SesionVencida();
+    final token = await this.token();
     final antes = _perfil;
     final r = await _api.put('/yo', {
       'nombre': nombre,
@@ -244,14 +238,8 @@ class Sesion extends ChangeNotifier {
   /// Lanza [ContrasenaRechazada], [SesionVencida], [SinConexion] o [ErrorDelServidor].
   Future<void> cambiarContrasena(String actual, String nueva) async {
     final perfil = _perfil;
-    final String? token;
-    try {
-      token = await _credenciales.token();
-    } on CredencialesInvalidas {
-      // Firebase ya no refresca la sesión: la cuenta cambió en otro lado.
-      throw const SesionVencida();
-    }
-    if (perfil == null || token == null) throw const SesionVencida();
+    final token = await this.token();
+    if (perfil == null) throw const SesionVencida();
     final r = await _api.put('/yo/contrasena', {
       'actual': actual,
       'nueva': nueva,
@@ -281,13 +269,7 @@ class Sesion extends ChangeNotifier {
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor]; en esos casos la cuenta
   /// sigue igual.
   Future<void> darDeBaja() async {
-    final String? token;
-    try {
-      token = await _credenciales.token();
-    } on CredencialesInvalidas {
-      throw const SesionVencida();
-    }
-    if (token == null) throw const SesionVencida();
+    final token = await this.token();
     final antes = _perfil;
     final r = await _api.delete('/yo', token: token);
     if (r.codigo == 401) throw const SesionVencida();

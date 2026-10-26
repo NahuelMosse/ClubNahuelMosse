@@ -58,9 +58,7 @@ class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      error = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       error = e;
     }
     if (!mounted) return;

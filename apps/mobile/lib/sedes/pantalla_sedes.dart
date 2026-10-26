@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../comun/carga_de_lista.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
@@ -69,9 +70,7 @@ class _PantallaSedesState extends State<PantallaSedes> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted) return;
@@ -142,11 +141,7 @@ class _PantallaSedesState extends State<PantallaSedes> {
                     const SizedBox(height: Medidas.s16),
                   ],
                 ],
-                if (datos == null && _cargando)
-                  const Padding(
-                    padding: EdgeInsets.all(Medidas.s40),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
+                if (datos == null && _cargando) const EsperaDeLista(),
                 if (datos == null && !_cargando)
                   EstadoVacio(
                     titulo: 'No pudimos mostrar las sedes',

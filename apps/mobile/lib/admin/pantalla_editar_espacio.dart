@@ -143,9 +143,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
       }
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);

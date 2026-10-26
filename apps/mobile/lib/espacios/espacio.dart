@@ -128,4 +128,13 @@ class Espacio {
     }
     return null;
   }
+
+  /// Los espacios de un cuerpo `{'espacios': [...]}`, o `null` si alguno no se puede leer.
+  static List<Espacio>? listaDesdeCuerpo(Map<String, Object?> cuerpo) {
+    if (cuerpo case {'espacios': final List<Object?> lista}) {
+      final leidos = [for (final e in lista) Espacio.desdeJson(e)];
+      if (!leidos.contains(null)) return [...leidos.nonNulls];
+    }
+    return null;
+  }
 }

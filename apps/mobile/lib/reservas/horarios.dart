@@ -106,6 +106,13 @@ class Horarios {
   final ClienteApi _api;
   final Sesion _sesion;
 
+  /// Lee [consulta] con el token de la sesión; un 401 es sesión vencida.
+  Future<Respuesta> _pedir(Uri consulta) async {
+    final r = await _api.get(consulta.toString(), token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    return r;
+  }
+
   /// La grilla de la cancha [espacioId] para [fecha] (hoy si no viene) con franjas de
   /// [horas].
   ///
@@ -128,8 +135,7 @@ class Horarios {
         if (dia != null) 'fecha': fechaIso(dia),
       },
     );
-    final r = await _api.get(consulta.toString(), token: await _sesion.token());
-    if (r.codigo == 401) throw const SesionVencida();
+    final r = await _pedir(consulta);
     final errores = erroresDeCampo(r.cuerpo);
     if (r.codigo == 404 && errores.containsKey('espacio_id')) {
       throw const CanchaNoDisponible();
@@ -165,16 +171,11 @@ class Horarios {
         'hasta': hasta,
       },
     );
-    final r = await _api.get(consulta.toString(), token: await _sesion.token());
-    if (r.codigo == 401) throw const SesionVencida();
+    final r = await _pedir(consulta);
     final errores = erroresDeCampo(r.cuerpo);
     if (r.codigo == 422 && errores.isNotEmpty) throw RangoRechazado(errores);
-    if (r.codigo == 200) {
-      if (r.cuerpo case {'espacios': final List<Object?> lista}) {
-        final leidos = [for (final e in lista) Espacio.desdeJson(e)];
-        if (!leidos.contains(null)) return [...leidos.nonNulls];
-      }
-    }
+    final leidos = r.codigo == 200 ? Espacio.listaDesdeCuerpo(r.cuerpo) : null;
+    if (leidos != null) return leidos;
     throw ErrorDelServidor(r.codigo);
   }
 }

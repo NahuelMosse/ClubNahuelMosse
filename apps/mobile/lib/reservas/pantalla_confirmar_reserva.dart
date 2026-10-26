@@ -97,9 +97,7 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
       setState(() => _enviando = false);
       await avisarSesionVencida(context, widget.sesion);
       return;
-    } on SinConexion catch (x) {
-      fallo = x;
-    } on ErrorDelServidor catch (x) {
+    } on FalloDeRed catch (x) {
       fallo = x;
     }
     if (!mounted) return;

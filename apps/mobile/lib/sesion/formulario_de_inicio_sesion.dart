@@ -93,9 +93,7 @@ class _FormularioDeInicioSesionState extends State<FormularioDeInicioSesion> {
           _avisos++;
         });
       }
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);

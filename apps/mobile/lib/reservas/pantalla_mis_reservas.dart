@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../comun/carga_de_lista.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
@@ -7,7 +8,6 @@ import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
-import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/sesion.dart';
@@ -115,9 +115,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted || pedido != _pedido) return;
@@ -222,9 +220,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion {
-      fallo = true;
-    } on ErrorDelServidor {
+    } on FalloDeRed {
       fallo = true;
     }
     if (!mounted || pedido != _pedido) return;
@@ -298,33 +294,14 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                       alElegir: _elegir,
                     ),
                     const SizedBox(height: Medidas.s16),
-                    AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : Movimiento.cambioDeLista,
-                      layoutBuilder: (actual, anteriores) => Stack(
-                        alignment: Alignment.topCenter,
-                        children: [...anteriores, ?actual],
-                      ),
+                    CambioDeLista(
                       child: Column(
                         key: ValueKey((datos == null, _fallo, _historial)),
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (datos == null && !_fallo)
-                            const Padding(
-                              padding: EdgeInsets.all(Medidas.s40),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
+                          if (datos == null && !_fallo) const EsperaDeLista(),
                           if (datos == null && _fallo)
-                            Padding(
-                              padding: const EdgeInsets.all(Medidas.s24),
-                              child: Center(
-                                child: BotonTexto(
-                                  texto: 'REINTENTAR',
-                                  alTocar: _cargar,
-                                ),
-                              ),
-                            ),
+                            ReintentoDeLista(alTocar: _cargar),
                           if (datos != null && datos.$1.isEmpty)
                             EstadoVacio(
                               titulo: _historial

@@ -91,9 +91,7 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
       setState(() => _enviando = false);
       await avisarSesionVencida(context, widget.sesion);
       return;
-    } on SinConexion catch (x) {
-      fallo = x;
-    } on ErrorDelServidor catch (x) {
+    } on FalloDeRed catch (x) {
       fallo = x;
     }
     if (!mounted) return;

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import '../comun/carga_de_lista.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_no_manejados.dart';
 import '../comun/fechas.dart';
@@ -133,9 +133,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted || pedido != _pedido) return;
@@ -235,21 +233,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     celdas: datos == null ? null : _celdas(datos),
                     yaEntro: yaEntro,
                   ),
-                  if (datos == null && !_fallo)
-                    const Padding(
-                      padding: EdgeInsets.all(Medidas.s40),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
+                  if (datos == null && !_fallo) const EsperaDeLista(),
                   if (datos == null && _fallo)
-                    Padding(
-                      padding: const EdgeInsets.all(Medidas.s24),
-                      child: Center(
-                        child: BotonTexto(
-                          texto: 'REINTENTAR',
-                          alTocar: _cargar,
-                        ),
-                      ),
-                    ),
+                    ReintentoDeLista(alTocar: _cargar),
                   if (datos != null) ...[
                     if (proxima != null)
                       Aparecer(
