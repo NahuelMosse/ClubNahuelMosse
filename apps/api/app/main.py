@@ -14,6 +14,7 @@ from app.config import config
 from app.infraestructura.db import base_disponible, esquema_al_dia
 from app.interfaz import (
     entradas,
+    errores_http,
     espacios,
     horarios,
     limites,
@@ -144,6 +145,7 @@ def crear_app() -> FastAPI:
     for error in (OperationalError, InterfaceError, SATimeoutError):
         app.add_exception_handler(error, _sin_base)
     entradas.instalar(app)
+    errores_http.instalar(app)
     limites.instalar(app)
     app.include_router(salud.router)
     app.include_router(metricas.router)

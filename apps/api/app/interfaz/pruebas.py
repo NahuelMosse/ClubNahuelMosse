@@ -5,15 +5,15 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel
-from sqlalchemy import Connection, text
+from sqlalchemy import text
 
+from app.aplicacion.errores import NoEncontrada
 from app.aplicacion.notificaciones import enviar_recordatorios
 from app.aplicacion.recuperacion import hash_de
-from app.dependencias import NotificacionesSql, canal_push, conexion, repositorio_notificaciones
+from app.dependencias import Conexion, NotificacionesSql, canal_push, repositorio_notificaciones
 from app.dominio.zona import NOMBRE_ZONA_CLUB
 
 router = APIRouter(prefix="/_pruebas", include_in_schema=False)
-Conexion = Annotated[Connection, Depends(conexion, scope="function")]
 
 
 class Correo(BaseModel):
@@ -70,7 +70,7 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
     ).rowcount
     conn.commit()
     if insertadas != 1:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        raise NoEncontrada()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

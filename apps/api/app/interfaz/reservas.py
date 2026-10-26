@@ -1,18 +1,10 @@
-import re
-from datetime import date, datetime, time
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
 
-from app.aplicacion.errores import (
-    Cambiado,
-    DatosInvalidos,
-    HorarioOcupado,
-    NoDisponible,
-    NoEncontrada,
-    Prohibido,
-)
+from app.aplicacion.errores import Cambiado, DatosInvalidos, HorarioOcupado, NoDisponible
 from app.aplicacion.notificaciones import CanalPush
 from app.aplicacion.reservas import (
     Cuando,
@@ -29,9 +21,9 @@ from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva
 from app.dominio.usuarios import Perfil
 from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.barrido import despachar_de
-from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40
+from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40, leer_hora
 from app.interfaz.marcador import leer, siguiente
-from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
+from app.interfaz.respuestas import conflicto
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["reservas"])
@@ -41,7 +33,6 @@ PAGINA_MAXIMA = 10_000
 
 OCUPADO = "Ese horario se ocupó"
 NO_DISPONIBLE = "Esta cancha ya no está disponible"
-_HORA = re.compile(r"\d{2}:\d{2}")
 
 
 class _CamposDeReserva(BaseModel):
@@ -97,11 +88,8 @@ def listar_reservas(
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     cuando: Annotated[Cuando, Query()] = "proximas",
     despues: Annotated[str | None, Query()] = None,
-) -> ListaDeReservas | Response:
-    try:
-        marcador = None if despues is None else leer(despues)
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
+) -> ListaDeReservas:
+    marcador = None if despues is None else leer(despues)
     tanda = mis_reservas(reservas, perfil, cuando, marcador)
     return ListaDeReservas(
         reservas=[_vista(r) for r in tanda.reservas],
@@ -115,16 +103,6 @@ class PedidoDeReserva(BaseModel):
     desde: Texto40
     # Sin cota acá: el caso de uso rechaza una duración fuera de rango antes de calcular nada.
     horas: int
-
-
-def _leer_hora(valor: str) -> time | None:
-    """`HH:MM` y nada más."""
-    if not _HORA.fullmatch(valor):
-        return None
-    try:
-        return time.fromisoformat(valor)
-    except ValueError:
-        return None
 
 
 @router.post(
@@ -156,30 +134,18 @@ def hacer_reserva(
             perfil,
             pedido.espacio_id,
             pedido.fecha,
-            _leer_hora(pedido.desde),
+            leer_hora(pedido.desde),
             pedido.horas,
             datetime.now(ZONA),
         )
-    except Prohibido:
-        return sin_permiso()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except NoDisponible:
-        return datos_invalidos({"espacio_id": NO_DISPONIBLE})
+        raise DatosInvalidos({"espacio_id": NO_DISPONIBLE}) from None
     except HorarioOcupado:
         return conflicto({"horario": OCUPADO})
     return _vista(reserva)
 
 
 CAMBIO = "Esto cambió mientras tanto"
-
-
-def _rechazo(e: Prohibido | NoEncontrada | DatosInvalidos) -> Response:
-    if isinstance(e, Prohibido):
-        return sin_permiso()
-    if isinstance(e, NoEncontrada):
-        return no_encontrado()
-    return datos_invalidos(e.errores)
 
 
 @router.post(
@@ -200,14 +166,12 @@ def _rechazo(e: Prohibido | NoEncontrada | DatosInvalidos) -> Response:
 def cancelar(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    reserva_id: Annotated[Identificador, Path()],
     despues: BackgroundTasks,
     canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaVista | Response:
     try:
         reserva = cancelar_reserva(reservas, perfil, reserva_id)
-    except NoEncontrada:
-        return no_encontrado()
     except Cambiado:
         return conflicto({"reserva": CAMBIO})
     despues.add_task(despachar_de, perfil.id, canal)
@@ -246,7 +210,7 @@ def modificar(
     pedido: PedidoDeCambio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    reserva_id: Annotated[Identificador, Path()],
 ) -> ReservaVista | Response:
     try:
         reserva = modificar_reserva(
@@ -255,13 +219,11 @@ def modificar(
             reserva_id,
             pedido.espacio_id,
             pedido.fecha,
-            _leer_hora(pedido.desde),
+            leer_hora(pedido.desde),
             datetime.now(ZONA),
         )
-    except (Prohibido, NoEncontrada, DatosInvalidos) as e:
-        return _rechazo(e)
     except NoDisponible:
-        return datos_invalidos({"espacio_id": NO_DISPONIBLE})
+        raise DatosInvalidos({"espacio_id": NO_DISPONIBLE}) from None
     except Cambiado:
         return conflicto({"reserva": CAMBIO})
     except HorarioOcupado:
@@ -332,37 +294,27 @@ def listar_todas(
     q: Annotated[Busqueda | None, Query()] = None,
     pagina: Annotated[int, Query(ge=1, le=PAGINA_MAXIMA)] = 1,
     despues: Annotated[str | None, Query()] = None,
-) -> HistorialVista | Response:
-    try:
-        historial = historial_global(
-            reservas,
-            perfil,
-            FiltrosHistorial(
-                estado=estado,
-                sede_id=sede_id,
-                deporte=deporte,
-                desde=desde,
-                hasta=hasta,
-                q=q,
-                pagina=pagina,
-                despues=None if despues is None else leer(despues),
-            ),
-        )
-    except Prohibido:
-        return sin_permiso()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
+) -> HistorialVista:
+    historial = historial_global(
+        reservas,
+        perfil,
+        FiltrosHistorial(
+            estado=estado,
+            sede_id=sede_id,
+            deporte=deporte,
+            desde=desde,
+            hasta=hasta,
+            q=q,
+            pagina=pagina,
+            despues=None if despues is None else leer(despues),
+        ),
+    )
     return HistorialVista(
         reservas=[_vista_admin(r) for r in historial.reservas],
         total=historial.total,
         pagina=historial.pagina,
         por_pagina=historial.por_pagina,
-        contadores=ContadoresVista(
-            todas=historial.contadores.todas,
-            activas=historial.contadores.activas,
-            completadas=historial.contadores.completadas,
-            anuladas=historial.contadores.anuladas,
-        ),
+        contadores=ContadoresVista.model_validate(historial.contadores, from_attributes=True),
         siguiente=siguiente(historial.reservas, historial.hay_mas),
     )
 
@@ -380,14 +332,9 @@ def listar_todas(
 def detalle(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
-) -> ReservaHistorialVista | Response:
-    try:
-        return _vista_admin(detalle_admin(reservas, perfil, reserva_id))
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
+    reserva_id: Annotated[Identificador, Path()],
+) -> ReservaHistorialVista:
+    return _vista_admin(detalle_admin(reservas, perfil, reserva_id))
 
 
 class PedidoDeAnulacion(BaseModel):
@@ -419,7 +366,7 @@ def anular(
     pedido: PedidoDeAnulacion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    reserva_id: Annotated[Identificador, Path()],
     despues: BackgroundTasks,
     canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaHistorialVista | Response:
@@ -432,8 +379,6 @@ def anular(
             pedido.espacio_id,
             pedido.inicio,
         )
-    except (Prohibido, NoEncontrada, DatosInvalidos) as e:
-        return _rechazo(e)
     except Cambiado:
         return conflicto({"reserva": CAMBIO})
     # El aviso a quien reservó sale recién con la anulación confirmada y la respuesta enviada.

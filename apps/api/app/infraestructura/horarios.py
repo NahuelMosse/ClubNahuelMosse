@@ -1,10 +1,16 @@
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import Connection, text
 
 from app.dominio.espacios import Espacio
 from app.dominio.horarios import Agenda
 from app.infraestructura.espacios import COLUMNAS_DE_ESPACIO, espacio_de_fila
+
+
+def agenda_de_fila(fila: Any) -> Agenda:
+    """Los días van en tupla: la agenda se compara con `!=` contra otra para saber si cambió."""
+    return Agenda(apertura=fila.apertura, cierre=fila.cierre, dias=tuple(int(d) for d in fila.dias))
 
 
 class HorariosSql:
@@ -21,13 +27,7 @@ class HorariosSql:
             {"id": espacio_id},
         ).one_or_none()
         self._conn.rollback()
-        if fila is None:
-            return None
-        return Agenda(
-            apertura=fila.apertura,
-            cierre=fila.cierre,
-            dias=tuple(int(d) for d in fila.dias),
-        )
+        return None if fila is None else agenda_de_fila(fila)
 
     def agenda_de_sede(self, sede_id: int) -> Agenda | None:
         fila = self._conn.execute(
@@ -35,13 +35,7 @@ class HorariosSql:
             {"id": sede_id},
         ).one_or_none()
         self._conn.rollback()
-        if fila is None:
-            return None
-        return Agenda(
-            apertura=fila.apertura,
-            cierre=fila.cierre,
-            dias=tuple(int(d) for d in fila.dias),
-        )
+        return None if fila is None else agenda_de_fila(fila)
 
     def libres(
         self, sede_id: int, deporte: str, tipo: str | None, inicio: datetime, fin: datetime

@@ -9,11 +9,9 @@ from pydantic import BaseModel
 from app.aplicacion.baja import dar_de_baja
 from app.aplicacion.contrasena import cambiar_contrasena
 from app.aplicacion.errores import (
-    DatosInvalidos,
     Demorado,
     Duplicado,
     NoAutenticado,
-    Prohibido,
 )
 from app.aplicacion.perfil import editar_perfil
 from app.aplicacion.sesion import perfil_autenticado
@@ -70,14 +68,7 @@ class PerfilPropio(BaseModel):
     summary="El perfil y el rol de quien inició sesión",
 )
 def perfil_propio(perfil: Annotated[Perfil, Depends(usuario_actual)]) -> PerfilPropio:
-    return PerfilPropio(
-        nombre=perfil.nombre,
-        apellido=perfil.apellido,
-        correo=perfil.correo,
-        rol=perfil.rol,
-        dni=perfil.dni,
-        fecha_nacimiento=perfil.fecha_nacimiento,
-    )
+    return PerfilPropio.model_validate(perfil, from_attributes=True)
 
 
 class PedidoCambioDeContrasena(BaseModel):
@@ -113,10 +104,6 @@ def cambiar_contrasena_propia(
             pedido.nueva,
             identidad=proveedor,
             usuarios=usuarios,
-        )
-    except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
         )
     except Demorado:
         return Response(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
@@ -161,10 +148,6 @@ def editar_perfil_propio(
             hoy=datetime.now(ZONA).date(),
             usuarios=usuarios,
         )
-    except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
     except Duplicado:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
@@ -198,8 +181,5 @@ def dar_de_baja_propia(
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
     proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
 ) -> Response:
-    try:
-        dar_de_baja(perfil, usuarios, proveedor)
-    except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
+    dar_de_baja(perfil, usuarios, proveedor)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

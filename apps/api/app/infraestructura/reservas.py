@@ -25,7 +25,8 @@ from app.dominio.reservas import (
     TandaDeReservas,
 )
 from app.dominio.zona import NOMBRE_ZONA_CLUB
-from app.infraestructura.horarios import HorariosSql
+from app.infraestructura.db import VENTANA_DE_REINTENTO, en_transaccion
+from app.infraestructura.horarios import HorariosSql, agenda_de_fila
 from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
 
 _COLUMNAS = (
@@ -61,63 +62,9 @@ _JOIN_HISTORIAL = (
     " LEFT JOIN notificacion_reserva vinculo ON vinculo.reserva_id = r.id"
     " LEFT JOIN notificacion aviso ON aviso.id = vinculo.notificacion_id"
 )
-# Cuánto después de hecha una reserva se reconoce como el mismo pedido repetido.
-_VENTANA_DE_REINTENTO = "5 minutes"
 
 # Los días del filtro se cortan a medianoche del club, no de la sesión de Postgres (UTC).
 _ZONA_CLUB = f"'{NOMBRE_ZONA_CLUB}'"
-
-
-def _reserva(f: Any) -> Reserva:
-    return Reserva(
-        id=int(f.id),
-        espacio_id=int(f.espacio_id),
-        sede_id=int(f.sede_id),
-        espacio=f.espacio,
-        deporte=f.deporte,
-        tipo=f.tipo,
-        sede=f.sede,
-        direccion=f.direccion,
-        inicio=f.inicio,
-        fin=f.fin,
-        precio_por_hora=int(f.precio_por_hora),
-        total=int(f.total),
-        estado=f.estado,
-        motivo=f.motivo,
-        cancelable=bool(f.cancelable),
-    )
-
-
-def _reserva_historial(f: Any) -> ReservaHistorial:
-    return ReservaHistorial(
-        id=int(f.id),
-        espacio_id=int(f.espacio_id),
-        sede_id=int(f.sede_id),
-        espacio=f.espacio,
-        deporte=f.deporte,
-        tipo=f.tipo,
-        sede=f.sede,
-        direccion=f.direccion,
-        inicio=f.inicio,
-        fin=f.fin,
-        precio_por_hora=int(f.precio_por_hora),
-        total=int(f.total),
-        estado=f.estado,
-        motivo=f.motivo,
-        usuario_id=int(f.usuario_id),
-        usuario=f.usuario,
-        creado_en=f.creado_en,
-        cancelada_en=f.cancelada_en,
-        cancelada_por_nombre=f.cancelada_por_nombre,
-        espacio_de_baja=bool(f.espacio_de_baja),
-        anulable=bool(f.anulable),
-        aviso_envio=f.aviso_envio,
-        aviso_en=f.aviso_en,
-    )
-
-
-def _agenda(fila: Any) -> Agenda:
-    return Agenda(apertura=fila.apertura, cierre=fila.cierre, dias=tuple(int(d) for d in fila.dias))
 
 
 class ReservasSql:
@@ -154,27 +101,34 @@ class ReservasSql:
         ).all()
         self._conn.rollback()
         if proximas:
-            return TandaDeReservas(reservas=[_reserva(f) for f in filas], hay_mas=False)
+            return TandaDeReservas(reservas=[Reserva(**f._mapping) for f in filas], hay_mas=False)
         return TandaDeReservas(
-            reservas=[_reserva(f) for f in filas[:limite]], hay_mas=len(filas) > limite
+            reservas=[Reserva(**f._mapping) for f in filas[:limite]], hay_mas=len(filas) > limite
         )
 
     def agenda(self, espacio_id: int) -> Agenda | None:
         return HorariosSql(self._conn).agenda(espacio_id)
 
-    def repetida(
-        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
-    ) -> Reserva | None:
+    def _id_repetida(self, datos: dict[str, Any]) -> int | None:
+        """La reserva activa que el mismo pedido ya hizo hace un momento, si la hay."""
         fila = self._conn.execute(
             text(
                 "SELECT id FROM reserva WHERE usuario_id = :usuario"
                 " AND espacio_id = :espacio AND inicio = :inicio AND fin = :fin"
                 " AND estado = 'activa'"
-                f" AND creado_en > now() - interval '{_VENTANA_DE_REINTENTO}'"
+                f" AND creado_en > now() - interval '{VENTANA_DE_REINTENTO}'"
             ),
-            {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin},
+            datos,
         ).first()
-        reserva = None if fila is None else self._una(int(fila.id))
+        return None if fila is None else int(fila.id)
+
+    def repetida(
+        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
+    ) -> Reserva | None:
+        id_repetida = self._id_repetida(
+            {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
+        )
+        reserva = None if id_repetida is None else self._una(id_repetida)
         self._conn.rollback()
         return reserva
 
@@ -186,7 +140,7 @@ class ReservasSql:
             ),
             {"id": reserva_id},
         ).one()
-        return _reserva(fila)
+        return Reserva(**fila._mapping)
 
     def propia(self, usuario_id: int, reserva_id: int) -> Reserva | None:
         fila = self._conn.execute(
@@ -198,7 +152,7 @@ class ReservasSql:
             {"id": reserva_id, "usuario": usuario_id},
         ).first()
         self._conn.rollback()
-        return None if fila is None else _reserva(fila)
+        return None if fila is None else Reserva(**fila._mapping)
 
     def tipo_de_espacio(self, espacio_id: int) -> tuple[int, str, str] | None:
         fila = self._conn.execute(
@@ -228,63 +182,59 @@ class ReservasSql:
             "fin": fin,
         }
         try:
-            # El mismo orden que al reservar, la sede compartida y después los espacios
-            # exclusivos, y recién entonces la reserva. Los dos espacios van por número: dos
-            # cambios cruzados entre las mismas canchas se esperan en vez de trabarse.
-            sede = self._conn.execute(
-                text(
-                    "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
-                    " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
-                ),
-                datos,
-            ).first()
-            if sede is not None and _agenda(sede) != agenda:
-                raise AgendaCambiada("la sede cambió de horario")
-            espacios = {
-                e.id: e
-                for e in self._conn.execute(
+            with en_transaccion(self._conn):
+                # El mismo orden que al reservar, la sede compartida y después los espacios
+                # exclusivos, y recién entonces la reserva. Los dos espacios van por número: dos
+                # cambios cruzados entre las mismas canchas se esperan en vez de trabarse.
+                sede = self._conn.execute(
                     text(
-                        "SELECT id, precio_por_hora, activo FROM espacio"
-                        " WHERE id IN (:antes, :espacio) ORDER BY id FOR NO KEY UPDATE"
+                        "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
+                        " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
                     ),
                     datos,
+                ).first()
+                if sede is not None and agenda_de_fila(sede) != agenda:
+                    raise AgendaCambiada("la sede cambió de horario")
+                espacios = {
+                    e.id: e
+                    for e in self._conn.execute(
+                        text(
+                            "SELECT id, precio_por_hora, activo FROM espacio"
+                            " WHERE id IN (:antes, :espacio) ORDER BY id FOR NO KEY UPDATE"
+                        ),
+                        datos,
+                    )
+                }
+                fila = self._conn.execute(
+                    text(
+                        "SELECT estado, inicio <= now() AS empezo,"
+                        " espacio_id = :antes AND inicio = :desde_antes AS donde_estaba"
+                        " FROM reserva WHERE id = :id AND usuario_id = :usuario FOR UPDATE"
+                    ),
+                    datos,
+                ).first()
+                if fila is None:
+                    raise NoEncontrada("no hay una reserva suya con ese número")
+                if fila.estado != "activa" or fila.empezo or not fila.donde_estaba:
+                    raise Cambiado("la reserva ya no está activa, ya empezó o ya se movió")
+                espacio = espacios.get(espacio_id)
+                if sede is None or espacio is None or not espacio.activo:
+                    raise NoDisponible("el espacio nuevo ya no está activo")
+                # El horario anterior se libera en la misma transacción que toma el nuevo: si el
+                # nuevo choca con otra reserva, no cambia nada.
+                self._conn.execute(
+                    text(
+                        "UPDATE reserva SET espacio_id = :espacio, inicio = :inicio, fin = :fin,"
+                        " precio_por_hora = :precio,"
+                        " total = :precio * (extract(epoch FROM CAST(:fin AS timestamptz)"
+                        " - CAST(:inicio AS timestamptz))::integer / 3600)"
+                        " WHERE id = :id"
+                    ),
+                    datos | {"precio": int(espacio.precio_por_hora)},
                 )
-            }
-            fila = self._conn.execute(
-                text(
-                    "SELECT estado, inicio <= now() AS empezo,"
-                    " espacio_id = :antes AND inicio = :desde_antes AS donde_estaba"
-                    " FROM reserva WHERE id = :id AND usuario_id = :usuario FOR UPDATE"
-                ),
-                datos,
-            ).first()
-            if fila is None:
-                raise NoEncontrada("no hay una reserva suya con ese número")
-            if fila.estado != "activa" or fila.empezo or not fila.donde_estaba:
-                raise Cambiado("la reserva ya no está activa, ya empezó o ya se movió")
-            espacio = espacios.get(espacio_id)
-            if sede is None or espacio is None or not espacio.activo:
-                raise NoDisponible("el espacio nuevo ya no está activo")
-            # El horario anterior se libera en la misma transacción que toma el nuevo: si el
-            # nuevo choca con otra reserva, no cambia nada.
-            self._conn.execute(
-                text(
-                    "UPDATE reserva SET espacio_id = :espacio, inicio = :inicio, fin = :fin,"
-                    " precio_por_hora = :precio,"
-                    " total = :precio * (extract(epoch FROM CAST(:fin AS timestamptz)"
-                    " - CAST(:inicio AS timestamptz))::integer / 3600)"
-                    " WHERE id = :id"
-                ),
-                datos | {"precio": int(espacio.precio_por_hora)},
-            )
-            self._conn.commit()
         except IntegrityError as e:
-            self._conn.rollback()
             if getattr(e.orig, "sqlstate", None) == "23P01":
                 raise HorarioOcupado("otra reserva activa pisa ese horario") from e
-            raise
-        except BaseException:
-            self._conn.rollback()
             raise
         reserva = self._una(reserva_id)
         self._conn.rollback()
@@ -292,7 +242,7 @@ class ReservasSql:
 
     def cancelar(self, usuario_id: int, reserva_id: int) -> Reserva:
         datos = {"usuario": usuario_id, "id": reserva_id}
-        try:
+        with en_transaccion(self._conn):
             fila = self._conn.execute(
                 text(
                     "SELECT estado, cancelada_por, inicio <= now() AS empezo FROM reserva"
@@ -320,10 +270,6 @@ class ReservasSql:
             NotificacionesSql(self._conn).encolar_cancelacion_usuario(
                 usuario_id, reserva_id, reserva.inicio, mensaje_cancelacion(reserva)
             )
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return reserva
 
     def cancelar_futuras_de(self, usuario_id: int) -> None:
@@ -343,63 +289,51 @@ class ReservasSql:
     ) -> Reserva:
         datos = {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
         try:
-            # La cuenta y la sede se toman compartidas, para que ninguna se dé de baja en el
-            # medio; el espacio, exclusivo: dos reservas del mismo espacio pasan de a una. Sin
-            # eso, cada una ve en el índice de la exclusión la fila sin confirmar de la otra
-            # y la base aborta a una por bloqueo mutuo en vez de rechazarla por
-            # superposición. La sede va antes que el espacio, el orden de una baja de sede.
-            cuenta = self._conn.execute(
-                text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
-            ).first()
-            # La sede compartida también fija su horario: si cambió desde que se validó la
-            # reserva, se vuelve a validar con el nuevo.
-            sede = self._conn.execute(
-                text(
-                    "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
-                    " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
-                ),
-                datos,
-            ).first()
-            if sede is not None and _agenda(sede) != agenda:
-                raise AgendaCambiada("la sede cambió de horario")
-            espacio = self._conn.execute(
-                text(
-                    "SELECT precio_por_hora FROM espacio WHERE id = :espacio AND activo"
-                    " FOR NO KEY UPDATE"
-                ),
-                datos,
-            ).first()
-            if cuenta is None or sede is None or espacio is None:
-                raise NoDisponible("la cuenta o el espacio ya no están activos")
-            repetida = self._conn.execute(
-                text(
-                    "SELECT id FROM reserva WHERE usuario_id = :usuario"
-                    " AND espacio_id = :espacio AND inicio = :inicio AND fin = :fin"
-                    " AND estado = 'activa'"
-                    f" AND creado_en > now() - interval '{_VENTANA_DE_REINTENTO}'"
-                ),
-                datos,
-            ).first()
-            if repetida is not None:
-                self._conn.rollback()
-                return self._una(int(repetida.id))
-            nueva: int = self._conn.execute(
-                text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total) VALUES (:usuario, :espacio, :inicio, :fin, :precio,"
-                    " :precio * (extract(epoch FROM CAST(:fin AS timestamptz)"
-                    " - CAST(:inicio AS timestamptz))::integer / 3600)) RETURNING id"
-                ),
-                datos | {"precio": int(espacio.precio_por_hora)},
-            ).scalar_one()
-            self._conn.commit()
+            with en_transaccion(self._conn):
+                # La cuenta y la sede se toman compartidas, para que ninguna se dé de baja en el
+                # medio; el espacio, exclusivo: dos reservas del mismo espacio pasan de a una. Sin
+                # eso, cada una ve en el índice de la exclusión la fila sin confirmar de la otra
+                # y la base aborta a una por bloqueo mutuo en vez de rechazarla por
+                # superposición. La sede va antes que el espacio, el orden de una baja de sede.
+                cuenta = self._conn.execute(
+                    text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
+                ).first()
+                # La sede compartida también fija su horario: si cambió desde que se validó la
+                # reserva, se vuelve a validar con el nuevo.
+                sede = self._conn.execute(
+                    text(
+                        "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
+                        " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
+                    ),
+                    datos,
+                ).first()
+                if sede is not None and agenda_de_fila(sede) != agenda:
+                    raise AgendaCambiada("la sede cambió de horario")
+                espacio = self._conn.execute(
+                    text(
+                        "SELECT precio_por_hora FROM espacio WHERE id = :espacio AND activo"
+                        " FOR NO KEY UPDATE"
+                    ),
+                    datos,
+                ).first()
+                if cuenta is None or sede is None or espacio is None:
+                    raise NoDisponible("la cuenta o el espacio ya no están activos")
+                repetida = self._id_repetida(datos)
+                if repetida is not None:
+                    self._conn.rollback()
+                    return self._una(repetida)
+                nueva: int = self._conn.execute(
+                    text(
+                        "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
+                        " total) VALUES (:usuario, :espacio, :inicio, :fin, :precio,"
+                        " :precio * (extract(epoch FROM CAST(:fin AS timestamptz)"
+                        " - CAST(:inicio AS timestamptz))::integer / 3600)) RETURNING id"
+                    ),
+                    datos | {"precio": int(espacio.precio_por_hora)},
+                ).scalar_one()
         except IntegrityError as e:
-            self._conn.rollback()
             if getattr(e.orig, "sqlstate", None) == "23P01":
                 raise HorarioOcupado("otra reserva activa pisa ese horario") from e
-            raise
-        except BaseException:
-            self._conn.rollback()
             raise
         reserva = self._una(int(nueva))
         self._conn.rollback()
@@ -415,7 +349,7 @@ class ReservasSql:
             "espacio": espacio_id,
             "inicio": inicio,
         }
-        try:
+        with en_transaccion(self._conn):
             # Se mira sin bloquear a quién pertenece la reserva para tomar los bloqueos en el
             # orden de siempre: la cuenta y la sede compartidas, el espacio exclusivo y recién
             # entonces la reserva. Si la reserva se movió de espacio en el medio, el espacio
@@ -468,10 +402,6 @@ class ReservasSql:
             )
             # El aviso se encola en la misma transacción, después de los bloqueos de siempre.
             encolar_cancelacion_forzosa(self._conn, int(previa.usuario_id), [reserva_id])
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return self._detalle(reserva_id)
 
     def _detalle(self, reserva_id: int) -> ReservaHistorial:
@@ -480,7 +410,7 @@ class ReservasSql:
             {"id": reserva_id},
         ).one()
         self._conn.rollback()
-        return _reserva_historial(fila)
+        return ReservaHistorial(**fila._mapping)
 
     def historial(self, filtros: FiltrosHistorial) -> HistorialDeReservas:
         comunes: list[str] = []
@@ -549,7 +479,7 @@ class ReservasSql:
         ).all()
         self._conn.rollback()
         return HistorialDeReservas(
-            reservas=[_reserva_historial(f) for f in filas[:POR_PAGINA]],
+            reservas=[ReservaHistorial(**f._mapping) for f in filas[:POR_PAGINA]],
             total=int(fila_contadores.total),
             pagina=pagina,
             por_pagina=POR_PAGINA,
@@ -568,4 +498,4 @@ class ReservasSql:
             {"id": reserva_id},
         ).first()
         self._conn.rollback()
-        return None if fila is None else _reserva_historial(fila)
+        return None if fila is None else ReservaHistorial(**fila._mapping)

@@ -8,10 +8,9 @@ from typing import Protocol
 
 from app.aplicacion.errores import DatosInvalidos
 from app.dominio.reservas import Marcador
+from app.interfaz.entradas import ID_MAXIMO
 
 INVALIDO = "El marcador de página no es válido"
-# El número de una reserva es un bigint de la base.
-_ID_MAXIMO = 2**63 - 1
 
 
 class _ConClave(Protocol):
@@ -46,7 +45,7 @@ def _decodificar(valor: str) -> Marcador | None:
     valido = (
         not resto
         and marcador.inicio.tzinfo is not None
-        and 0 < marcador.id <= _ID_MAXIMO
+        and 0 < marcador.id <= ID_MAXIMO
         and codificar(marcador) == valor
     )
     return marcador if valido else None

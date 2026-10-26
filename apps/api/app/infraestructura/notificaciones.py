@@ -20,6 +20,7 @@ from app.dominio.notificaciones import (
     mensaje_cancelaciones_forzosas,
     que_hacer_con_varado,
 )
+from app.infraestructura.db import en_transaccion
 
 # Cuántas notificaciones trae el centro: las más nuevas.
 LIMITE_DEL_CENTRO = 100
@@ -196,7 +197,7 @@ class NotificacionesSql:
             "inicio": recordatorio.inicio,
             "anticipacion": ANTICIPACION,
         }
-        try:
+        with en_transaccion(self._conn):
             # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
             # la cuenta darse de baja. Se vuelve a mirar con la cuenta y la reserva compartidas,
             # en el orden de las reservas, así ninguna de las dos cambia hasta el commit.
@@ -228,10 +229,6 @@ class NotificacionesSql:
                 ),
                 datos,
             ).first()
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return None if fila is None else int(fila.id)
 
     def tokens_con_permiso(self, usuario_id: int) -> list[str]:
@@ -260,7 +257,7 @@ class NotificacionesSql:
             "usuario": usuario_id,
             "vencida": TOMA_VENCIDA,
         }
-        try:
+        with en_transaccion(self._conn):
             # Se bloquean para que dos barridos no den por fallido, y registren, el mismo.
             varados = self._conn.execute(
                 text(
@@ -294,10 +291,6 @@ class NotificacionesSql:
                 ),
                 {"usuario": usuario_id},
             ).all()
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return perdidos + [AvisoPerdido(int(f.id), f.tipo) for f in muertos]
 
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
@@ -372,7 +365,7 @@ class NotificacionesSql:
             "plataforma": plataforma,
             "permiso": permiso,
         }
-        try:
+        with en_transaccion(self._conn):
             # La cuenta se toma compartida, como al reservar: no se da de baja en el medio.
             cuenta = self._conn.execute(
                 text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
@@ -391,10 +384,6 @@ class NotificacionesSql:
                 ),
                 datos,
             )
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return True
 
     def baja_dispositivo(self, usuario_id: int, token: str) -> None:

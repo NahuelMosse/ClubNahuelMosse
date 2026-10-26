@@ -1,6 +1,7 @@
 from sqlalchemy import Connection, text
 
 from app.dominio.recuperacion import Destinatario, EnlaceReclamado
+from app.infraestructura.db import en_transaccion
 
 # Un enlace vale si no se usó ni se reemplazó, no venció, la cuenta sigue activa y la
 # contraseña no cambió después de emitirlo.
@@ -28,7 +29,7 @@ class EnlacesSql:
     def emitir(
         self, usuario_id: int, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
     ) -> bool:
-        try:
+        with en_transaccion(self._conn):
             # El candado ordena los pedidos simultáneos de la misma cuenta: el segundo cuenta
             # e invalida recién cuando el primero terminó.
             self._conn.execute(text("SELECT pg_advisory_xact_lock(:u)"), {"u": usuario_id})
@@ -58,10 +59,6 @@ class EnlacesSql:
                 ),
                 {"u": usuario_id, "h": codigo_hash, "m": vigencia_minutos},
             )
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return True
 
     def vigente(self, codigo_hash: str) -> bool:
@@ -76,7 +73,7 @@ class EnlacesSql:
         return fila is not None
 
     def reclamar(self, codigo_hash: str) -> EnlaceReclamado | None:
-        try:
+        with en_transaccion(self._conn):
             fila = self._conn.execute(
                 text(
                     "UPDATE enlace_recuperacion e SET usado_en = clock_timestamp()"
@@ -86,10 +83,6 @@ class EnlacesSql:
                 ),
                 {"h": codigo_hash},
             ).first()
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         if fila is None:
             return None
         return EnlaceReclamado(fila.id, fila.usuario_id, fila.firebase_uid)

@@ -2,7 +2,9 @@
 respuesta a un dato de forma inválida. Un solo lugar para los largos y para la regla de
 caracteres."""
 
+import re
 import unicodedata
+from datetime import time
 from typing import Annotated
 
 from fastapi import FastAPI, Request, status
@@ -45,7 +47,21 @@ TokenDeDispositivo = Annotated[str, StringConstraints(max_length=4096), AfterVal
 Parrafo = Annotated[str, StringConstraints(max_length=1000), AfterValidator(_parrafo)]
 
 # Un número de fila de la base: cabe en un bigint.
-Identificador = Annotated[int, Field(ge=1, le=2**63 - 1)]
+ID_MAXIMO = 2**63 - 1
+Identificador = Annotated[int, Field(ge=1, le=ID_MAXIMO)]
+
+_HORA = re.compile(r"\d{2}:\d{2}", re.ASCII)
+
+
+def leer_hora(valor: str) -> time | None:
+    """`HH:MM` y nada más: `fromisoformat` también acepta zonas y formatos que no van."""
+    if not _HORA.fullmatch(valor):
+        return None
+    try:
+        return time.fromisoformat(valor)
+    except ValueError:
+        return None
+
 
 _MENSAJES = {
     CARACTERES_NO_PERMITIDOS: "Tiene caracteres no permitidos",
