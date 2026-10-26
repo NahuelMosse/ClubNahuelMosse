@@ -108,10 +108,10 @@
     }
   },
   "grade": {
-    "level": "production",
-    "reason": "the app goes to production with login, sessions and personal data",
+    "level": "mvp",
+    "reason": "the app is an university project",
     "by": "person",
-    "at": "2026-10-20",
+    "at": "2026-10-26",
     "history": []
   },
   "profiles": {
