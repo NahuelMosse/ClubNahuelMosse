@@ -44,7 +44,7 @@ class _PanelDeFiltros extends StatefulWidget {
 }
 
 class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
-  late int? _sedeId = widget.filtros.sedeId;
+  late String? _sedeId = widget.filtros.sedeId;
   late String? _deporte = widget.filtros.deporte;
   late EstadoDeReserva? _estado = widget.filtros.estado;
   late String? _q = widget.filtros.q;

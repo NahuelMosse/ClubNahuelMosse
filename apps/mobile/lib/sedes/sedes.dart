@@ -80,7 +80,7 @@ class Sedes extends ChangeNotifier {
   /// Lanza [ReservasAfuera], [SedeNoDisponible], [SedeRechazada], [SesionVencida],
   /// [SinConexion] o [ErrorDelServidor].
   Future<Sede> editar(
-    int id, {
+    String id, {
     required String nombre,
     required String direccion,
     required String apertura,
@@ -109,7 +109,7 @@ class Sedes extends ChangeNotifier {
   ///
   /// Lanza [SedeNoDisponible], [SedeConReservas], [SesionVencida], [SinConexion] o
   /// [ErrorDelServidor].
-  Future<void> darDeBaja(int id) async {
+  Future<void> darDeBaja(String id) async {
     final r = await _api.delete('/sedes/$id', token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404) throw const SedeNoDisponible();

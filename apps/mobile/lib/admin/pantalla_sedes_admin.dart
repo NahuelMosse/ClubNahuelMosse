@@ -31,7 +31,7 @@ class _PantallaSedesAdminState extends State<PantallaSedesAdmin> {
   bool _fallo = false;
 
   /// La sede que se está dando de baja: mientras tanto no se toca ninguna tarjeta.
-  int? _dandoDeBaja;
+  String? _dandoDeBaja;
 
   @override
   void initState() {

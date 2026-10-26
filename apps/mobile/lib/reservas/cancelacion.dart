@@ -21,7 +21,7 @@ Future<void> cancelarConAvisos(
   required Sesion sesion,
   required Reservas reservas,
   required Reserva reserva,
-  required void Function(int? id) marcar,
+  required void Function(String? id) marcar,
   required void Function() alCancelar,
   required Future<void> Function() recargar,
   required Future<void> Function() releer,

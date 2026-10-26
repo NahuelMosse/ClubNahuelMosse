@@ -63,12 +63,12 @@ class Espacios extends ChangeNotifier {
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
   Future<List<Espacio>> activos({
-    int? sedeId,
+    String? sedeId,
     String? deporte,
     String? tipo,
   }) async {
     final filtros = {
-      'sede_id': ?sedeId?.toString(),
+      'sede_id': ?sedeId,
       'deporte': ?deporte,
       'tipo': ?tipo,
     };
@@ -86,13 +86,13 @@ class Espacios extends ChangeNotifier {
   ///
   /// Lanza [EspacioRechazado], [SesionVencida], [SinConexion] o [ErrorDelServidor].
   Future<(String, int)> nombreSugerido({
-    required int sedeId,
+    required String sedeId,
     required String deporte,
     required String tipo,
   }) async {
     final consulta = Uri(
       path: '/espacios/nombre',
-      queryParameters: {'sede_id': '$sedeId', 'deporte': deporte, 'tipo': tipo},
+      queryParameters: {'sede_id': sedeId, 'deporte': deporte, 'tipo': tipo},
     );
     final r = await _get(consulta.toString());
     if (r.codigo == 422) throw EspacioRechazado(erroresDeCampo(r.cuerpo));
@@ -110,7 +110,7 @@ class Espacios extends ChangeNotifier {
   /// Lanza [NombreOcupado], [EspacioRechazado], [SesionVencida], [SinConexion] o
   /// [ErrorDelServidor].
   Future<Espacio> darDeAlta({
-    required int sedeId,
+    required String sedeId,
     required String deporte,
     required String tipo,
     required bool techada,
@@ -153,7 +153,7 @@ class Espacios extends ChangeNotifier {
   /// Lanza [EspacioNoDisponible], [EspacioRechazado], [SesionVencida], [SinConexion] o
   /// [ErrorDelServidor].
   Future<Espacio> editar(
-    int id, {
+    String id, {
     bool? techada,
     bool? iluminada,
     int? precioPorHora,
@@ -180,7 +180,7 @@ class Espacios extends ChangeNotifier {
   ///
   /// Lanza [EspacioNoDisponible], [EspacioConReservas], [SesionVencida], [SinConexion] o
   /// [ErrorDelServidor].
-  Future<void> darDeBaja(int id) async {
+  Future<void> darDeBaja(String id) async {
     final r = await _api.delete('/espacios/$id', token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404) throw const EspacioNoDisponible();

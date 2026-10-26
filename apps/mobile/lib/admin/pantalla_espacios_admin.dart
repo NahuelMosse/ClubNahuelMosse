@@ -31,7 +31,7 @@ class _PantallaEspaciosAdminState extends State<PantallaEspaciosAdmin> {
   bool _fallo = false;
 
   /// El espacio que se está dando de baja: mientras tanto no se toca ninguna tarjeta.
-  int? _dandoDeBaja;
+  String? _dandoDeBaja;
 
   @override
   void initState() {

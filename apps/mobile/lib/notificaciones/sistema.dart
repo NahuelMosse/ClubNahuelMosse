@@ -5,10 +5,31 @@ import 'notificacion.dart';
 /// Qué avisó el aviso que la persona tocó en la bandeja del sistema: lo que hace falta para
 /// abrir la pantalla que corresponde.
 class AvisoTocado {
-  const AvisoTocado({this.tipo, this.reservaId});
+  const AvisoTocado({this.tipo, this.reservaId, this.antiguo = false});
+
+  /// Lee los datos del mensaje push. Un `reserva_id` que no es un UUID (un aviso numérico
+  /// anterior a los UUID) marca el aviso como [antiguo]: no se puede resaltar esa reserva.
+  factory AvisoTocado.desdeDatos(Map<String, Object?> datos) {
+    final id = datos['reserva_id']?.toString() ?? '';
+    final esUuid = _uuid.hasMatch(id);
+    return AvisoTocado(
+      tipo: TipoDeNotificacion.de(datos['tipo']?.toString() ?? ''),
+      reservaId: esUuid ? id : null,
+      antiguo: id.isNotEmpty && !esUuid,
+    );
+  }
+
+  static final _uuid = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
 
   final TipoDeNotificacion? tipo;
-  final int? reservaId;
+  final String? reservaId;
+  final bool antiguo;
+
+  /// A dónde abre tocarlo: el centro de notificaciones si es un aviso antiguo.
+  String get ruta =>
+      antiguo ? '/notificaciones' : rutaDelAviso(tipo, reservaId);
 }
 
 /// El sistema de notificaciones del teléfono: el permiso, el token del dispositivo y lo que
