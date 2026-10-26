@@ -6,6 +6,7 @@ import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_no_manejados.dart';
+import '../comun/fechas.dart';
 import '../comun/marcador.dart';
 import '../comun/movimiento.dart';
 import '../comun/tile_deporte.dart';
@@ -292,12 +293,11 @@ const _pasoDeTiles = Duration(milliseconds: 90);
 
 List<CeldaMarcador> _celdas(_Datos datos) {
   final canchas = datos.sedes.fold(0, (total, s) => total + s.canchas);
-  String dos(int n) => '$n'.padLeft(2, '0');
   return [
-    CeldaMarcador(cifra: dos(datos.sedes.length), rotulo: 'SEDES'),
-    CeldaMarcador(cifra: dos(canchas), rotulo: 'CANCHAS'),
+    CeldaMarcador(cifra: dosCifras(datos.sedes.length), rotulo: 'SEDES'),
+    CeldaMarcador(cifra: dosCifras(canchas), rotulo: 'CANCHAS'),
     CeldaMarcador(
-      cifra: datos.hayMas ? '20+' : dos(datos.cuantas),
+      cifra: datos.hayMas ? '20+' : dosCifras(datos.cuantas),
       rotulo: 'PRÓXIMAS',
       destacada: true,
     ),

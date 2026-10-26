@@ -20,7 +20,7 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
-import 'fechas.dart';
+import '../comun/fechas.dart';
 import 'horarios.dart';
 import 'pantalla_confirmar_cambio.dart';
 import 'pantalla_confirmar_reserva.dart';
@@ -94,7 +94,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   /// consulta siguiente falle.
   DateTime? _hoy;
   late String? _inicio = switch (widget.modificando) {
-    final r? => _hhmm(r.inicio),
+    final r? => horaCorta(r.inicio),
     null => widget.inicio,
   };
   bool _consultando = false;
@@ -120,7 +120,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     final r? =>
       r.espacioId == _elegida &&
           _fecha == _diaDe(r.inicio) &&
-          inicio == _hhmm(r.inicio),
+          inicio == horaCorta(r.inicio),
     null => false,
   };
 
@@ -394,8 +394,8 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                           _Nota(
                             texto:
                                 'Estás modificando tu reserva del '
-                                '${fechaLarga(modificando.inicio).split(' de ').first}, '
-                                '${_hhmm(modificando.inicio)} – ${_hhmm(modificando.fin)}. '
+                                '${diaCorto(modificando.inicio)}, '
+                                '${rangoDeHoras(modificando.inicio, modificando.fin)}. '
                                 'Mantenés la misma duración de ${duracion(_horas)} '
                                 'y el horario anterior se libera al guardar.',
                           ),
@@ -1253,8 +1253,3 @@ class _BarraAccion extends StatelessWidget {
 /// El día de [momento], en la hora del club.
 DateTime _diaDe(DateTime momento) =>
     DateTime.utc(momento.year, momento.month, momento.day);
-
-/// «21:00».
-String _hhmm(DateTime momento) =>
-    '${momento.hour.toString().padLeft(2, '0')}:'
-    '${momento.minute.toString().padLeft(2, '0')}';

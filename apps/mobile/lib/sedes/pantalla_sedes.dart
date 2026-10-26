@@ -7,6 +7,7 @@ import '../comun/dialogo_error.dart';
 import '../comun/dorsal.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/etiqueta.dart';
+import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/sesion.dart';
@@ -222,7 +223,7 @@ class TarjetaSede extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             DorsalGigante(
-                              texto: '${sede.canchas}'.padLeft(2, '0'),
+                              texto: dosCifras(sede.canchas),
                               tamano: 92,
                               color: p.textOnMedia,
                             ),

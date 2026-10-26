@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/cliente_api.dart';
+import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 import '../sesion/sesion.dart';
 import 'eleccion.dart';
@@ -173,12 +174,9 @@ class Reservas extends ChangeNotifier {
   /// Lanza [HorarioOcupado], [CanchaNoDisponible], [ReservaRechazada], [SesionVencida],
   /// [SinConexion] o [ErrorDelServidor].
   Future<Reserva> reservar(Eleccion eleccion) async {
-    final f = eleccion.fecha;
     final r = await _api.post('/reservas', {
       'espacio_id': eleccion.cancha.id,
-      'fecha':
-          '${f.year}-${f.month.toString().padLeft(2, '0')}-'
-          '${f.day.toString().padLeft(2, '0')}',
+      'fecha': fechaIso(eleccion.fecha),
       'desde': eleccion.inicio,
       'horas': eleccion.horas,
     }, token: await _sesion.token());
@@ -221,12 +219,9 @@ class Reservas extends ChangeNotifier {
   /// Lanza [HorarioOcupado], [ReservaCambiada], [CanchaNoDisponible], [ReservaRechazada],
   /// [SesionVencida], [SinConexion] o [ErrorDelServidor].
   Future<Reserva> modificar(Reserva reserva, Eleccion nueva) async {
-    final f = nueva.fecha;
     final r = await _api.post('/reservas/${reserva.id}/modificar', {
       'espacio_id': nueva.cancha.id,
-      'fecha':
-          '${f.year}-${f.month.toString().padLeft(2, '0')}-'
-          '${f.day.toString().padLeft(2, '0')}',
+      'fecha': fechaIso(nueva.fecha),
       'desde': nueva.inicio,
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();

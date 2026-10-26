@@ -1,3 +1,4 @@
+import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 
 /// Qué avisa una notificación: el recordatorio de una reserva próxima, la cancelación que
@@ -95,11 +96,7 @@ class GrupoDeDia {
   final List<Notificacion> notificaciones;
 }
 
-String _dos(int n) => n.toString().padLeft(2, '0');
-
 DateTime _dia(DateTime d) => DateTime.utc(d.year, d.month, d.day);
-
-String _diaDeCalendario(DateTime d) => '${_dos(d.day)}/${_dos(d.month)}';
 
 /// HOY, AYER o `dd/mm`, según [ahora] en la hora del club.
 String rotuloDeDia(DateTime creada, DateTime ahora) {
@@ -107,7 +104,7 @@ String rotuloDeDia(DateTime creada, DateTime ahora) {
   return switch (dias) {
     0 => 'HOY',
     1 => 'AYER',
-    _ => _diaDeCalendario(creada),
+    _ => diaYMes(creada),
   };
 }
 

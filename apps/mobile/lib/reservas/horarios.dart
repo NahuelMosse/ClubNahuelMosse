@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../sesion/sesion.dart';
 
@@ -123,10 +124,7 @@ class Horarios {
       queryParameters: {
         'horas': '$horas',
         'reserva_id': ?reservaId?.toString(),
-        if (dia != null)
-          'fecha':
-              '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
-              '${dia.day.toString().padLeft(2, '0')}',
+        if (dia != null) 'fecha': fechaIso(dia),
       },
     );
     final r = await _api.get(consulta.toString(), token: await _sesion.token());
@@ -162,9 +160,7 @@ class Horarios {
         'sede_id': '$sedeId',
         'deporte': deporte,
         'tipo': ?tipo,
-        'fecha':
-            '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-'
-            '${fecha.day.toString().padLeft(2, '0')}',
+        'fecha': fechaIso(fecha),
         'desde': desde,
         'hasta': hasta,
       },

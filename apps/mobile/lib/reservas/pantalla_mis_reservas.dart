@@ -21,7 +21,7 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'cancelacion.dart';
-import 'fechas.dart';
+import '../comun/fechas.dart';
 import 'reservas.dart';
 
 /// «Mis reservas»: las próximas y el historial de quien inició sesión.
@@ -386,15 +386,11 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
 /// Lo que se le pide confirmar a quien va a cancelar [r].
 String textoDeCancelacion(Reserva r, Catalogo catalogo) =>
     '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
-    '${fechaLarga(r.inicio).split(' de ').first}, ${_horarioDe(r)} · '
+    '${diaCorto(r.inicio)}, ${_horarioDe(r)} · '
     '${pesos(r.total)}. El horario vuelve a quedar libre.';
 
 /// «21:00 – 22:00».
-String _horarioDe(Reserva r) {
-  String dos(int n) => n.toString().padLeft(2, '0');
-  return '${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-      '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
-}
+String _horarioDe(Reserva r) => rangoDeHoras(r.inicio, r.fin);
 
 /// `Segmented-Tab`: Próximas o Historial.
 class _Pestanas extends StatelessWidget {
@@ -552,7 +548,7 @@ class TarjetaReserva extends StatelessWidget {
     final modificar = alModificar;
     final deQue =
         '${catalogo.tipoCorto(r.deporte, r.tipo)}, '
-        '${fechaLarga(r.inicio).split(' de ').first}, $_horario';
+        '${diaCorto(r.inicio)}, $_horario';
     // La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
     // botones propios.
     final datos = Semantics(

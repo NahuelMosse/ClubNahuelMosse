@@ -13,7 +13,7 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
-import 'fechas.dart';
+import '../comun/fechas.dart';
 import 'horarios.dart';
 import '../comun/reserva_pendiente.dart';
 import 'reservas.dart';
@@ -75,7 +75,7 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
       await mostrarHorarioOcupado(
         context,
         'Mientras confirmabas, otra persona reservó Cancha ${e.cancha.numero} · '
-        '${fechaLarga(e.fecha).split(' de ').first}, ${e.inicio} – ${e.fin}. '
+        '${diaCorto(e.fecha)}, ${e.inicio} – ${e.fin}. '
         'Elegí otro horario disponible.',
       );
       if (mounted) _volver(ResultadoDeConfirmar.ocupado);

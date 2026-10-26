@@ -8,13 +8,13 @@ import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/estado_vacio.dart';
+import '../comun/fechas.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
-import '../reservas/fechas.dart';
 import '../reservas/reservas.dart' show EstadoDeReserva;
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
@@ -508,11 +508,7 @@ class _TarjetaReservaAdmin extends StatelessWidget {
   /// `null` deshabilita ANULAR RESERVA (hay otra anulación en camino).
   final VoidCallback? alAnular;
 
-  String get _horario {
-    String dos(int n) => n.toString().padLeft(2, '0');
-    return '${dos(reserva.inicio.hour)}:${dos(reserva.inicio.minute)} – '
-        '${dos(reserva.fin.hour)}:${dos(reserva.fin.minute)}';
-  }
+  String get _horario => rangoDeHoras(reserva.inicio, reserva.fin);
 
   // Con cualquier agrandado del texto, precio y estado ya no entran junto al nombre en 360.
   bool _grande(BuildContext context) =>

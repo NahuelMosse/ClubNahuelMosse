@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
 import '../comun/errores_no_manejados.dart';
+import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
-import '../reservas/fechas.dart';
 import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
@@ -80,11 +80,7 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
     }
   }
 
-  String get _horario {
-    String dos(int n) => n.toString().padLeft(2, '0');
-    return '${dos(reserva.inicio.hour)}:${dos(reserva.inicio.minute)} – '
-        '${dos(reserva.fin.hour)}:${dos(reserva.fin.minute)}';
-  }
+  String get _horario => rangoDeHoras(reserva.inicio, reserva.fin);
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +434,4 @@ class _Paso extends StatelessWidget {
   }
 }
 
-String _fechaHora(DateTime d) {
-  String dos(int n) => n.toString().padLeft(2, '0');
-  return '${dos(d.day)}/${dos(d.month)}/${d.year} ${dos(d.hour)}:${dos(d.minute)}';
-}
+String _fechaHora(DateTime d) => '${fechaLegible(d)} ${horaCorta(d)}';

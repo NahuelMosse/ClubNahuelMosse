@@ -8,7 +8,7 @@ import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
-import 'fechas.dart';
+import '../comun/fechas.dart';
 import 'horarios.dart';
 import 'pantalla_confirmar_reserva.dart';
 import 'reservas.dart';
@@ -111,12 +111,8 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     final p = context.paleta;
     final r = widget.reserva;
     final e = widget.eleccion;
-    String dia(DateTime d) => fechaLarga(d).split(' de ').first;
-    String dos(int n) => n.toString().padLeft(2, '0');
-    final antes =
-        '${dia(r.inicio)} · ${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-        '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
-    final ahora = '${dia(e.fecha)} · ${e.inicio} – ${e.fin}';
+    final antes = '${diaCorto(r.inicio)} · ${rangoDeHoras(r.inicio, r.fin)}';
+    final ahora = '${diaCorto(e.fecha)} · ${e.inicio} – ${e.fin}';
     // Mientras se guarda no se sale: el cambio podría quedar hecho sin que se vea.
     return EsqueletoDeConfirmacion(
       titulo: 'Confirmá el cambio',

@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 import '../reservas/reservas.dart'
     show EstadoDeReserva, ReservaCambiada, ReservaRechazada;
@@ -64,10 +65,6 @@ class FiltrosDeHistorial {
     q: nueva,
   );
 
-  static String _fecha(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
-
   String get _query {
     final estado = this.estado;
     final deporte = this.deporte;
@@ -78,8 +75,8 @@ class FiltrosDeHistorial {
       if (estado != null) 'estado=${estado.name}',
       if (sedeId != null) 'sede_id=$sedeId',
       if (deporte != null) 'deporte=${Uri.encodeQueryComponent(deporte)}',
-      if (desde != null) 'desde=${_fecha(desde)}',
-      if (hasta != null) 'hasta=${_fecha(hasta)}',
+      if (desde != null) 'desde=${fechaIso(desde)}',
+      if (hasta != null) 'hasta=${fechaIso(hasta)}',
       if (busqueda != null) 'q=${Uri.encodeQueryComponent(busqueda)}',
     ];
     return partes.join('&');

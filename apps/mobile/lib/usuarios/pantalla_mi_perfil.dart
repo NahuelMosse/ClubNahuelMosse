@@ -13,6 +13,7 @@ import '../comun/dialogo_error.dart';
 import '../comun/ficha_socio.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/movimiento.dart';
+import '../comun/reloj.dart';
 import '../sedes/fotos.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
@@ -452,7 +453,7 @@ class _EdicionState extends State<_Edicion> {
   /// Los campos que no pasan las reglas del registro. El prototipo los marca todos con el
   /// mismo mensaje.
   Set<_Campo> _invalidos() {
-    final hoy = DateTime.now();
+    final hoy = ahoraEnElClub();
     return {
       for (final campo in [_Campo.nombre, _Campo.apellido])
         if (validarNombre(_valor(campo), obligatorio: _invalido) != null) campo,

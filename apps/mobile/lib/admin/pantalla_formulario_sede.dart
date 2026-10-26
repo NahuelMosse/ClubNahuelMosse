@@ -8,6 +8,7 @@ import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/faltantes.dart';
+import '../comun/fechas.dart';
 import '../comun/selector.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
@@ -22,8 +23,6 @@ enum _Campo { nombre, direccion, apertura, cierre, dias }
 const _largoNombre = 60;
 const _largoDireccion = 80;
 final _calleYAltura = RegExp(r'^.*\S\s+(\d{1,6})$');
-
-String _hora(int h) => '${h.toString().padLeft(2, '0')}:00';
 
 /// `HH:MM` a la hora; `null` si no es una hora en punto.
 int? _deHora(String hhmm) => switch (hhmm.split(':')) {
@@ -174,7 +173,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     final elegida = await elegirOpcion<int>(
       context,
       titulo: esCierre ? 'Horario de cierre' : 'Horario de apertura',
-      opciones: [for (final h in horas) (h, _hora(h))],
+      opciones: [for (final h in horas) (h, horaCerrada(h))],
       columnas: 4,
       elegida: esCierre ? _cierre : _apertura,
     );
@@ -217,16 +216,16 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
         ? widget.sedes.darDeAlta(
             nombre: nombre,
             direccion: direccion,
-            apertura: _hora(apertura),
-            cierre: _hora(cierre),
+            apertura: horaCerrada(apertura),
+            cierre: horaCerrada(cierre),
             dias: _dias,
           )
         : widget.sedes.editar(
             sede.id,
             nombre: nombre,
             direccion: direccion,
-            apertura: _hora(apertura),
-            cierre: _hora(cierre),
+            apertura: horaCerrada(apertura),
+            cierre: horaCerrada(cierre),
             dias: _dias,
             confirmar: confirmar,
           );
@@ -331,9 +330,9 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     };
     final motivos = [
       if (antesApertura != null && apertura > antesApertura)
-        '${una ? 'empieza' : 'empiezan'} antes de las ${_hora(apertura)}',
+        '${una ? 'empieza' : 'empiezan'} antes de las ${horaCerrada(apertura)}',
       if (antesCierre != null && hasta < antesCierre)
-        '${una ? 'termina' : 'terminan'} después de las ${_hora(cierre)}',
+        '${una ? 'termina' : 'terminan'} después de las ${horaCerrada(cierre)}',
       if (antes != null && antes.dias.any((d) => !_dias.contains(d)))
         '${una ? 'cae' : 'caen'} en un día que la sede deja de abrir',
     ];
@@ -371,8 +370,8 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
             (s) =>
                 normal(s.nombre) == normal(_nombre.text) &&
                 normal(s.direccion) == normal(_direccion.text) &&
-                s.apertura == _hora(apertura) &&
-                s.cierre == _hora(cierre) &&
+                s.apertura == horaCerrada(apertura) &&
+                s.cierre == horaCerrada(cierre) &&
                 diasDeLaSemana(s.dias) == diasDeLaSemana(_dias),
           )
           .firstOrNull;
@@ -455,7 +454,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                 CampoSelector(
                   etiqueta: 'HORARIO DE APERTURA',
                   etiquetaAccesible: 'Horario de apertura',
-                  valor: apertura == null ? null : _hora(apertura),
+                  valor: apertura == null ? null : horaCerrada(apertura),
                   placeholder: '08:00',
                   icono: Icons.schedule_rounded,
                   error: _error(_Campo.apertura),
@@ -467,7 +466,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                 CampoSelector(
                   etiqueta: 'HORARIO DE CIERRE',
                   etiquetaAccesible: 'Horario de cierre',
-                  valor: cierre == null ? null : _hora(cierre),
+                  valor: cierre == null ? null : horaCerrada(cierre),
                   placeholder: '23:00',
                   icono: Icons.schedule_rounded,
                   error: _error(_Campo.cierre),

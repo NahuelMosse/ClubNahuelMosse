@@ -19,7 +19,7 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fechas.dart';
+import '../comun/fechas.dart';
 import 'horarios.dart';
 import '../comun/reloj.dart';
 import 'reglas_busqueda.dart';
@@ -428,9 +428,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       return 'Elegí sede, deporte y rango horario. Solo horas completas, de '
           '$minHoras a $maxHoras horas.';
     }
-    final dia = fechaLarga(c.fecha).split(' de ');
-    final mes = dia.length > 1 ? ' ${dia[1].substring(0, 3)}' : '';
-    return '${c.sede.nombre} · ${_queSeBusco(c, catalogo)} · ${dia.first}$mes · '
+    return '${c.sede.nombre} · ${_queSeBusco(c, catalogo)} · ${fechaCorta(c.fecha)} · '
         '${hhmm(c.desde)} a ${hhmm(c.hasta)}';
   }
 
@@ -610,14 +608,11 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
   }
 
   void _aLosHorarios(_Consulta consulta, Espacio cancha) {
-    final f = consulta.fecha;
     final fin = consulta.hasta == 0 ? 24 : consulta.hasta;
     final ruta = Uri(
       path: '/sedes/${consulta.sede.id}/canchas/${cancha.id}',
       queryParameters: {
-        'fecha':
-            '${f.year}-${f.month.toString().padLeft(2, '0')}-'
-            '${f.day.toString().padLeft(2, '0')}',
+        'fecha': fechaIso(consulta.fecha),
         'horas': '${fin - consulta.desde}',
         'inicio': hhmm(consulta.desde),
       },
