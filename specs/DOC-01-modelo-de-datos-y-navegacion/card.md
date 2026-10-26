@@ -17,8 +17,8 @@ not_read:
 
 ## Tasks
 
-- T1 · S1,S3,DOC-01-ASM-01 · docs/technical/modelo-de-datos.md, docs/technical/system-design.md · tests: apps/api/tests/unit/test_documentacion_del_modelo.py "cada tabla y columna que nombra la página del modelo de datos existe en las migraciones @DOC-01-S1"; apps/api/tests/unit/test_documentacion_del_modelo.py "la sección Data de system-design remite a la página del modelo de datos sin repetir sus columnas @DOC-01-S3 @assumption:DOC-01-ASM-01"
-- T2 · S2 · docs/technical/navegacion-de-la-app.md · tests: apps/api/tests/unit/test_documentacion_del_modelo.py "cada ruta que nombra la página de navegación existe en app.dart @DOC-01-S2"
+- T1 · S1,S3,DOC-01-ASM-01 · docs/technical/modelo-de-datos.md, docs/technical/system-design.md · tests: apps/api/tests/unit/test_documentacion_del_modelo.py "cada tabla y columna que nombra la página del modelo de datos existe en las migraciones @DOC-01-S1"; apps/api/tests/unit/test_documentacion_del_modelo.py "la página del modelo de datos explica cada tabla de las migraciones @DOC-01-S1"; apps/api/tests/unit/test_documentacion_del_modelo.py "los estados de reserva y de aviso de la página son los que admiten las migraciones, todos @DOC-01-S1"; apps/api/tests/unit/test_documentacion_del_modelo.py "la sección Data de system-design remite a la página del modelo de datos sin repetir sus columnas @DOC-01-S3 @assumption:DOC-01-ASM-01"
+- T2 · S2 · docs/technical/navegacion-de-la-app.md · tests: apps/api/tests/unit/test_documentacion_del_modelo.py "cada ruta que nombra la página de navegación existe en app.dart @DOC-01-S2"; apps/api/tests/unit/test_documentacion_del_modelo.py "la página de navegación lista cada ruta de app.dart @DOC-01-S2"; apps/mobile/test/navegacion_documentada_test.dart "quién puede entrar a cada ruta es lo que dice la página de navegación @DOC-01-S2"
 - T3 · S3 · sitio-docs/scripts/copiar.mjs (data) · tests: apps/api/tests/unit/test_documentacion_del_modelo.py "el sitio de documentación incluye el modelo de datos y la navegación en Técnica @DOC-01-S3"
   reuses: sitio-docs/scripts/copiar.mjs la lista `paginas`
 
