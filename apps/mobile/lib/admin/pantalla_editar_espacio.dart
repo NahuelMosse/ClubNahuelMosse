@@ -18,7 +18,8 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'baja_espacio.dart';
 import 'formulario_espacio.dart';
-import 'pantalla_alta_espacio.dart';
+import 'nombre_generado.dart';
+import 'par_de_campos.dart';
 
 /// «Editar espacio deportivo»: condición, iluminación y precio. La sede, el deporte, el
 /// tipo y el nombre compuesto se ven pero no cambian.

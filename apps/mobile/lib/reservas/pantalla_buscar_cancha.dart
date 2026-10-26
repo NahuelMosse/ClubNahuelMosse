@@ -12,7 +12,6 @@ import '../comun/formato_fecha.dart';
 import '../comun/selector.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../sedes/pantalla_sede.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/fallo_de_carga.dart';
@@ -23,6 +22,9 @@ import '../comun/fechas.dart';
 import 'horarios.dart';
 import '../comun/reloj.dart';
 import 'reglas_busqueda.dart';
+import 'tarjeta_error_de_busqueda.dart';
+import 'barra_de_busqueda.dart';
+import '../sedes/tarjeta_cancha.dart';
 
 /// «Consultar canchas»: las canchas de una sede y un deporte libres en todo un rango de un
 /// día. Consultar no reserva nada; cada cancha lleva a sus horarios con el rango elegido.
@@ -357,7 +359,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       ),
       bottomNavigationBar: opciones == null
           ? null
-          : _BarraAccion(
+          : BarraDeBusqueda(
               alLimpiar: _consultando ? null : _limpiar,
               alConsultar: _completo && !_consultando ? _consultar : null,
               consultando: _consultando,
@@ -392,7 +394,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
                   ),
                   if (_falla case final falla?) ...[
                     const SizedBox(height: Medidas.s16),
-                    _TarjetaError(
+                    TarjetaErrorDeBusqueda(
                       sinConexion: falla is SinConexion,
                       alVolver: () => setState(() {
                         _falla = null;
@@ -619,116 +621,5 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
     );
     // Encima de la búsqueda: al volver, los filtros y el resultado siguen ahí.
     context.push(ruta.toString());
-  }
-}
-
-/// `Card-Error` del prototipo: la consulta falló y los filtros siguen cargados.
-class _TarjetaError extends StatelessWidget {
-  const _TarjetaError({
-    required this.sinConexion,
-    required this.alVolver,
-    required this.alReintentar,
-  });
-
-  final bool sinConexion;
-  final VoidCallback alVolver;
-  final VoidCallback alReintentar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.stateDangerMuted,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.stateDanger),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'NO SE PUDO CONSULTAR',
-              style: Textos.sobretitulo.copyWith(color: p.stateDangerInk),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              'No se pudo consultar la disponibilidad',
-              style: Textos.titulo.copyWith(color: p.textPrimary),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              '${sinConexion ? 'Revisá tu conexión e intentá nuevamente.' : 'El servidor no respondió. Intentá más tarde.'}'
-              ' Los filtros que cargaste se mantienen.',
-              style: Textos.cuerpo.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: Medidas.s12),
-            Row(
-              children: [
-                BotonTexto(texto: 'VOLVER', alTocar: alVolver),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: BotonContorno(
-                    texto: 'REINTENTAR',
-                    alTocar: alReintentar,
-                    peligro: true,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarraAccion extends StatelessWidget {
-  const _BarraAccion({
-    required this.alLimpiar,
-    required this.alConsultar,
-    required this.consultando,
-  });
-
-  final VoidCallback? alLimpiar;
-  final VoidCallback? alConsultar;
-  final bool consultando;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.bgSurface,
-        border: Border(top: BorderSide(color: p.borderDefault)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s16,
-            Medidas.s24,
-            Medidas.s16,
-          ),
-          child: Row(
-            children: [
-              BotonTexto(texto: 'LIMPIAR', alTocar: alLimpiar),
-              const SizedBox(width: Medidas.s12),
-              Expanded(
-                child: BotonPrimario(
-                  texto: 'CONSULTAR',
-                  alTocar: alConsultar,
-                  cargando: consultando,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

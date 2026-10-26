@@ -18,6 +18,8 @@ import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'formulario_espacio.dart';
+import 'par_de_campos.dart';
+import 'nombre_generado.dart';
 
 enum _Campo {
   sede('sede_id'),
@@ -538,112 +540,6 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
                     ],
                   ),
                 ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Dos campos lado a lado, como el prototipo; en un teléfono chico no entran sus valores
-/// («Al aire libre», «Sin iluminación») y van uno debajo del otro.
-class ParDeCampos extends StatelessWidget {
-  const ParDeCampos({
-    super.key,
-    required this.izquierda,
-    required this.derecha,
-  });
-
-  final Widget izquierda;
-  final Widget derecha;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, limites) => limites.maxWidth < 340
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              izquierda,
-              const SizedBox(height: Medidas.s12),
-              derecha,
-            ],
-          )
-        : Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: izquierda),
-              const SizedBox(width: Medidas.s12),
-              Expanded(child: derecha),
-            ],
-          ),
-  );
-}
-
-/// `Card-PreviewNombre`: el nombre que va a tener el espacio, o lo que falta para armarlo.
-class NombreGenerado extends StatelessWidget {
-  const NombreGenerado({
-    super.key,
-    required this.nombre,
-    this.calculando = false,
-    this.falta = '',
-    this.alReintentar,
-  });
-
-  final String? nombre;
-  final bool calculando;
-  final String falta;
-
-  /// Si no se pudo calcular el nombre, la acción para volver a pedirlo.
-  final VoidCallback? alReintentar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final listo = nombre;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Medidas.s16,
-          vertical: Medidas.s16,
-        ),
-        decoration: BoxDecoration(
-          color: p.bgSurface,
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-          border: Border.all(
-            color: listo == null ? p.borderControl : p.accentInk,
-            width: listo == null ? 1 : 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              'NOMBRE GENERADO AUTOMÁTICAMENTE',
-              textAlign: TextAlign.center,
-              style: Textos.sobretitulo.copyWith(color: p.accentInk),
-            ),
-            const SizedBox(height: Medidas.s8),
-            if (calculando)
-              const SizedBox.square(
-                dimension: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else if (alReintentar case final reintentar?) ...[
-              Text(
-                'No se pudo calcular el nombre',
-                textAlign: TextAlign.center,
-                style: Textos.leyenda.copyWith(color: p.stateDangerInk),
-              ),
-              BotonTexto(texto: 'REINTENTAR', alTocar: reintentar),
-            ] else
-              Text(
-                listo ?? falta,
-                textAlign: TextAlign.center,
-                style: listo == null
-                    ? Textos.leyenda.copyWith(color: p.textMuted)
-                    : Textos.mono.copyWith(color: p.textPrimary),
-              ),
-          ],
         ),
       ),
     );

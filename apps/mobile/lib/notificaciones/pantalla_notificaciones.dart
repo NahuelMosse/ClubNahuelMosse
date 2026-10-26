@@ -13,10 +13,7 @@ import '../tema/tokens.dart';
 import 'centro.dart';
 import 'notificacion.dart';
 import 'tarjeta_aviso.dart';
-
-const _tituloDesactivadas = 'Notificaciones desactivadas';
-const _textoDesactivadas =
-    'Activá los avisos para que te recordemos tus reservas una hora antes.';
+import 'notificaciones_desactivadas.dart';
 
 /// `Centro de notificaciones`: las notificaciones agrupadas por día, con las sin leer
 /// marcadas. Sin permiso del sistema, dice «Notificaciones desactivadas» y ofrece activarlas.
@@ -145,8 +142,8 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
               )
             : const EstadoVacio(
                 icono: Icons.notifications_none_rounded,
-                titulo: _tituloDesactivadas,
-                texto: _textoDesactivadas,
+                titulo: tituloDesactivadas,
+                texto: textoDesactivadas,
               ),
       );
     }
@@ -162,7 +159,7 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       ),
       children: [
         if (!centro.permitido) ...[
-          _Desactivadas(alActivar: centro.activar),
+          NotificacionesDesactivadas(alActivar: centro.activar),
           const SizedBox(height: Medidas.s16),
         ],
         for (final grupo in grupos) ...[
@@ -192,42 +189,6 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
           ],
         ],
       ],
-    );
-  }
-}
-
-/// La franja de arriba cuando hay avisos pero el sistema no deja mostrarlos.
-class _Desactivadas extends StatelessWidget {
-  const _Desactivadas({required this.alActivar});
-
-  final Future<bool> Function() alActivar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Container(
-      padding: const EdgeInsets.all(Medidas.s16),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _tituloDesactivadas,
-            style: Textos.titulo.copyWith(color: p.textPrimary),
-          ),
-          const SizedBox(height: Medidas.s4),
-          Text(
-            _textoDesactivadas,
-            style: Textos.leyenda.copyWith(color: p.textSecondary),
-          ),
-          const SizedBox(height: Medidas.s16),
-          BotonPrimario(texto: 'ACTIVAR NOTIFICACIONES', alTocar: alActivar),
-        ],
-      ),
     );
   }
 }

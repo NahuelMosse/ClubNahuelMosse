@@ -7,12 +7,10 @@ import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
-import '../comun/formato_precio.dart';
 import '../comun/linea_del_dia.dart';
 import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../sedes/fotos.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/fallo_de_carga.dart';
@@ -24,9 +22,18 @@ import '../comun/fechas.dart';
 import 'horarios.dart';
 import 'pantalla_confirmar_cambio.dart';
 import 'pantalla_confirmar_reserva.dart';
-import 'marco_elegible.dart';
 import 'reglas_busqueda.dart';
 import 'reservas.dart';
+import 'portada_de_horarios.dart';
+import 'seccion_de_horarios.dart';
+import 'grilla_de_a_pares.dart';
+import 'tarjeta_cancha_de_horarios.dart';
+import 'franja_de_fechas.dart';
+import 'selector_de_duracion.dart';
+import 'tarjeta_franja.dart';
+import 'nota_de_horarios.dart';
+import 'resumen_de_reserva.dart';
+import 'barra_de_accion_horarios.dart';
 
 /// «Horarios disponibles» de una cancha: elige cancha de ese tipo, fecha y duración, y la
 /// franja que después se confirma. Consultar no reserva nada.
@@ -342,7 +349,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
       backgroundColor: p.bgBase,
       bottomNavigationBar: datos == null
           ? null
-          : _BarraAccion(
+          : BarraDeAccionHorarios(
               texto: modificando == null
                   ? 'CONTINUAR'
                   : 'CONTINUAR CON EL CAMBIO',
@@ -362,7 +369,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Portada(
+                  PortadaDeHorarios(
                     sede: datos.$1,
                     tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
                     deporte: cancha.deporte,
@@ -388,7 +395,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (modificando != null) ...[
-                          _Nota(
+                          NotaDeHorarios(
                             texto:
                                 'Estás modificando tu reserva del '
                                 '${diaCorto(modificando.inicio)}, '
@@ -398,12 +405,12 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                           ),
                           const SizedBox(height: Medidas.s24),
                         ],
-                        _Seccion(
+                        SeccionDeHorarios(
                           titulo: 'SELECCIONÁ CANCHA',
-                          child: _DeAPares(
+                          child: GrillaDeAPares(
                             hijos: [
                               for (final c in datos.$2)
-                                _TarjetaCancha(
+                                TarjetaCanchaDeHorarios(
                                   cancha: c,
                                   elegida: c.id == _elegida,
                                   alTocar: () => _elegirCancha(c.id),
@@ -412,21 +419,21 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                           ),
                         ),
                         if (_hoy case final hoy?) ...[
-                          _Seccion(
+                          SeccionDeHorarios(
                             titulo: 'FECHA',
-                            child: _Fechas(
+                            child: FranjaDeFechas(
                               hoy: hoy,
                               elegida: _fecha,
                               alElegir: _elegirFecha,
                             ),
                           ),
                           if (modificando == null)
-                            _Seccion(
+                            SeccionDeHorarios(
                               titulo: 'DURACIÓN',
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  _Duracion(
+                                  SelectorDeDuracion(
                                     horas: _horas,
                                     alCambiar: _cambiarHoras,
                                   ),
@@ -448,7 +455,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                           (final id, final horas)?,
                         )) ...[
                           const SizedBox(height: Medidas.s8),
-                          _Resumen(
+                          ResumenDeReserva(
                             tipo: datos.$3.tipoCorto(
                               cancha.deporte,
                               cancha.tipo,
@@ -490,7 +497,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
         ),
       );
     }
-    return _Seccion(
+    return SeccionDeHorarios(
       titulo: 'HORARIO DISPONIBLE',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -528,11 +535,11 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                     ),
                     const SizedBox(height: Medidas.s12),
                   ],
-                  _DeAPares(
+                  GrillaDeAPares(
                     alto: Medidas.altoControl,
                     hijos: [
                       for (final f in grilla.franjas)
-                        _TarjetaFranja(
+                        TarjetaFranja(
                           franja: f,
                           actual: _esLaActual(f.inicio),
                           elegida: f.inicio == _inicio,
@@ -544,7 +551,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                   ),
                   if (grilla.noDisponibles > 0) ...[
                     const SizedBox(height: Medidas.s12),
-                    _Nota(
+                    NotaDeHorarios(
                       texto: horas == 1
                           ? 'Algunos horarios ya están ocupados · '
                                 '${grilla.noDisponibles} no disponibles'
@@ -592,609 +599,6 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
           'cierre. Probá con una duración menor, otra fecha u otra cancha.';
     }
     return 'Ya no quedan turnos libres ese día. Probá con otra fecha u otra cancha.';
-  }
-}
-
-/// La foto del deporte con el camino de vuelta, el tipo y la sede.
-class _Portada extends StatelessWidget {
-  const _Portada({
-    required this.sede,
-    required this.tipo,
-    required this.deporte,
-    required this.volverA,
-    required this.alVolver,
-  });
-
-  final Sede sede;
-  final String tipo;
-  final String deporte;
-
-  /// El nombre de la pantalla a la que se vuelve.
-  final String volverA;
-  final VoidCallback alVolver;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return FotoConVelo(
-      imagen: fotoDeDeporte(deporte),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s12,
-            Medidas.s8,
-            Medidas.s24,
-            Medidas.s24,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextButton.icon(
-                onPressed: alVolver,
-                style: TextButton.styleFrom(
-                  foregroundColor: p.textOnMedia,
-                  minimumSize: const Size(0, Medidas.tactil),
-                  textStyle: Textos.leyenda,
-                ),
-                icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                label: Text(volverA),
-              ),
-              const SizedBox(height: Medidas.s32),
-              Padding(
-                padding: const EdgeInsets.only(left: Medidas.s12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      tipo,
-                      style: Textos.sobretitulo.copyWith(
-                        color: p.accentOnMedia,
-                      ),
-                    ),
-                    const SizedBox(height: Medidas.s4),
-                    Semantics(
-                      header: true,
-                      child: Text(
-                        sede.nombre.toUpperCase(),
-                        style: Textos.display.copyWith(color: p.textOnMedia),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Seccion extends StatelessWidget {
-  const _Seccion({required this.titulo, required this.child});
-
-  final String titulo;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Medidas.s24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Semantics(
-            header: true,
-            child: Text(
-              titulo,
-              style: Textos.sobretitulo.copyWith(color: p.textMuted),
-            ),
-          ),
-          const SizedBox(height: Medidas.s8),
-          child,
-        ],
-      ),
-    );
-  }
-}
-
-/// Dos columnas iguales, como las grillas del prototipo.
-class _DeAPares extends StatelessWidget {
-  const _DeAPares({required this.hijos, this.alto});
-
-  final List<Widget> hijos;
-  final double? alto;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var i = 0; i < hijos.length; i += 2) ...[
-          if (i > 0) const SizedBox(height: Medidas.s8),
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(child: _alto(hijos[i])),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: i + 1 < hijos.length
-                      ? _alto(hijos[i + 1])
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _alto(Widget hijo) {
-    final a = alto;
-    return a == null
-        ? hijo
-        : ConstrainedBox(
-            constraints: BoxConstraints(minHeight: a),
-            child: hijo,
-          );
-  }
-}
-
-class _TarjetaCancha extends StatelessWidget {
-  const _TarjetaCancha({
-    required this.cancha,
-    required this.elegida,
-    required this.alTocar,
-  });
-
-  final Espacio cancha;
-  final bool elegida;
-  final VoidCallback alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return MarcoElegible(
-      etiqueta: 'Cancha ${cancha.numero}, ${cancha.condicion}',
-      elegido: elegida,
-      alTocar: alTocar,
-      child: Padding(
-        padding: const EdgeInsets.all(Medidas.s16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Cancha ${cancha.numero}',
-              style: Textos.cuerpoFuerte.copyWith(
-                color: elegida ? p.accentOn : p.textPrimary,
-              ),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              cancha.condicion,
-              style: Textos.leyenda.copyWith(
-                color: elegida ? p.accentOn : p.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Los próximos siete días desde hoy, en una fila que se desliza.
-class _Fechas extends StatelessWidget {
-  const _Fechas({
-    required this.hoy,
-    required this.elegida,
-    required this.alElegir,
-  });
-
-  final DateTime hoy;
-  final DateTime? elegida;
-  final ValueChanged<DateTime> alElegir;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      clipBehavior: Clip.none,
-      child: Row(
-        children: [
-          for (var i = 0; i < diasALaVista; i++) ...[
-            if (i > 0) const SizedBox(width: Medidas.s8),
-            Builder(
-              builder: (context) {
-                final dia = DateTime.utc(hoy.year, hoy.month, hoy.day + i);
-                final esta = dia == elegida;
-                final tinta = esta ? p.accentOn : p.textPrimary;
-                return ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 56,
-                    minHeight: 64,
-                  ),
-                  child: MarcoElegible(
-                    etiqueta: '${diaDeLaSemana(dia)} ${dia.day}',
-                    elegido: esta,
-                    alTocar: () => alElegir(dia),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Medidas.s8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            diaAbreviado(dia),
-                            style: Textos.sobretitulo.copyWith(
-                              color: esta ? p.accentOn : p.textMuted,
-                            ),
-                          ),
-                          Text(
-                            '${dia.day}',
-                            style: Textos.h2.copyWith(color: tinta),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// `Stepper-Duracion`: una hora menos, la duración y una hora más.
-class _Duracion extends StatelessWidget {
-  const _Duracion({required this.horas, required this.alCambiar});
-
-  final int horas;
-  final ValueChanged<int> alCambiar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Container(
-      height: Medidas.altoControl,
-      padding: const EdgeInsets.all(2),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioPill),
-      ),
-      child: Row(
-        children: [
-          _BotonRedondo(
-            icono: Icons.remove_rounded,
-            etiqueta: 'Una hora menos',
-            alTocar: horas > minHoras ? () => alCambiar(horas - 1) : null,
-          ),
-          Expanded(
-            child: Semantics(
-              liveRegion: true,
-              child: Text(
-                duracion(horas),
-                textAlign: TextAlign.center,
-                style: Textos.cuerpoFuerte.copyWith(color: p.textPrimary),
-              ),
-            ),
-          ),
-          _BotonRedondo(
-            icono: Icons.add_rounded,
-            etiqueta: 'Una hora más',
-            alTocar: horas < maxHoras ? () => alCambiar(horas + 1) : null,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BotonRedondo extends StatelessWidget {
-  const _BotonRedondo({
-    required this.icono,
-    required this.etiqueta,
-    required this.alTocar,
-  });
-
-  final IconData icono;
-  final String etiqueta;
-  final VoidCallback? alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final activo = alTocar != null;
-    return Semantics(
-      container: true,
-      button: true,
-      enabled: activo,
-      label: etiqueta,
-      excludeSemantics: true,
-      onTap: alTocar,
-      child: SizedBox(
-        width: Medidas.s48,
-        height: Medidas.s48,
-        child: Material(
-          color: activo ? p.bgSurface : Colors.transparent,
-          shape: CircleBorder(
-            side: BorderSide(
-              color: activo ? p.borderControl : Colors.transparent,
-            ),
-          ),
-          child: InkWell(
-            onTap: alTocar,
-            customBorder: const CircleBorder(),
-            child: Icon(
-              icono,
-              size: 22,
-              color: activo ? p.textPrimary : p.stateDisabled,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TarjetaFranja extends StatelessWidget {
-  const _TarjetaFranja({
-    required this.franja,
-    required this.elegida,
-    required this.alTocar,
-    this.actual = false,
-  });
-
-  final Franja franja;
-  final bool elegida;
-  final VoidCallback? alTocar;
-
-  /// Es el horario de la reserva que se modifica.
-  final bool actual;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final tinta = elegida ? p.accentOn : p.textPrimary;
-    return _Crece(
-      activo: elegida,
-      child: MarcoElegible(
-        etiqueta: actual ? '${franja.texto} (actual)' : franja.texto,
-        elegido: elegida,
-        alTocar: alTocar,
-        atenuado: !franja.disponible,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                franja.texto,
-                style: Textos.cuerpoFuerte.copyWith(color: tinta),
-              ),
-              if (actual)
-                Text(
-                  '(actual)',
-                  style: Textos.leyenda.copyWith(
-                    color: elegida ? p.accentOn : p.textSecondary,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Crece de 0,88 a 1 con rebote cada vez que [activo] pasa de falso a verdadero.
-class _Crece extends StatefulWidget {
-  const _Crece({required this.activo, required this.child});
-
-  final bool activo;
-  final Widget child;
-
-  @override
-  State<_Crece> createState() => _CreceState();
-}
-
-class _CreceState extends State<_Crece> with SingleTickerProviderStateMixin {
-  late final _controlador = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 400),
-    value: 1,
-  );
-  late final Animation<double> _escala = _controlador.drive(
-    Tween<double>(
-      begin: 0.88,
-      end: 1,
-    ).chain(CurveTween(curve: Movimiento.rebote)),
-  );
-
-  @override
-  void didUpdateWidget(_Crece anterior) {
-    super.didUpdateWidget(anterior);
-    if (!widget.activo || anterior.activo) return;
-    if (MediaQuery.disableAnimationsOf(context)) return;
-    unawaited(_controlador.forward(from: 0));
-  }
-
-  @override
-  void dispose() {
-    _controlador.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) =>
-      ScaleTransition(scale: _escala, child: widget.child);
-}
-
-/// `Nota-Ocupados`: cuántos inicios de la grilla no se pueden elegir.
-class _Nota extends StatelessWidget {
-  const _Nota({required this.texto});
-
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Container(
-      padding: const EdgeInsets.all(Medidas.s12),
-      decoration: BoxDecoration(
-        color: p.bgSurface,
-        borderRadius: BorderRadius.circular(Medidas.radioMd),
-        border: Border.all(color: p.borderDefault),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, size: 18, color: p.textSecondary),
-          const SizedBox(width: Medidas.s8),
-          Expanded(
-            child: Text(
-              texto,
-              style: Textos.leyenda.copyWith(color: p.textSecondary),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// La tarjeta de resumen: el precio, y el total con el horario y la fecha elegidos.
-class _Resumen extends StatelessWidget {
-  const _Resumen({
-    required this.tipo,
-    required this.precio,
-    required this.horas,
-    required this.franja,
-    required this.fecha,
-  });
-
-  final String tipo;
-  final int precio;
-  final int horas;
-  final Franja? franja;
-  final DateTime? fecha;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final elegida = franja;
-    final dia = fecha;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.borderDefault),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Con el texto grande, cada dato baja a su propia línea en vez de cortarse.
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: Medidas.s8,
-              runSpacing: Medidas.s4,
-              children: [
-                Text(
-                  tipo,
-                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                ),
-                Text(
-                  elegida == null
-                      ? '${pesos(precio)} por hora'
-                      : '${pesos(precio)} × $horas',
-                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                ),
-              ],
-            ),
-            const SizedBox(height: Medidas.s12),
-            Divider(height: 1, color: p.borderDefault),
-            const SizedBox(height: Medidas.s12),
-            Wrap(
-              alignment: WrapAlignment.spaceBetween,
-              spacing: Medidas.s8,
-              runSpacing: Medidas.s8,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'TOTAL',
-                      style: Textos.sobretitulo.copyWith(color: p.textMuted),
-                    ),
-                    const SizedBox(height: Medidas.s4),
-                    Text(
-                      elegida == null ? '—' : pesos(precio * horas),
-                      style: Textos.h1.copyWith(color: p.accentInk),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      elegida?.texto ?? 'Sin horario elegido',
-                      style: Textos.cuerpoFuerte.copyWith(
-                        color: elegida == null
-                            ? p.textSecondary
-                            : p.textPrimary,
-                      ),
-                    ),
-                    if (dia != null)
-                      Text(
-                        fechaLarga(dia),
-                        style: Textos.leyenda.copyWith(color: p.textMuted),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarraAccion extends StatelessWidget {
-  const _BarraAccion({required this.texto, required this.alContinuar});
-
-  final String texto;
-  final VoidCallback? alContinuar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.bgSurface,
-        border: Border(top: BorderSide(color: p.borderDefault)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s16,
-            Medidas.s24,
-            Medidas.s16,
-          ),
-          child: BotonPrimario(texto: texto, alTocar: alContinuar),
-        ),
-      ),
-    );
   }
 }
 

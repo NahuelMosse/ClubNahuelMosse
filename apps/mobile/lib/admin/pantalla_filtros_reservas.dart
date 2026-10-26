@@ -11,6 +11,7 @@ import '../sedes/sede.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'historial_reservas.dart';
+import 'titulo_de_filtro.dart';
 
 /// El panel de Filtros del historial global (CU-14, paso 5): sede, deporte, estado y rango
 /// de fechas, más el buscador. Abre con lo ya aplicado y sólo devuelve algo al confirmar.
@@ -172,7 +173,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                   Medidas.s24,
                 ),
                 children: [
-                  _Titulo('SEDE'),
+                  TituloDeFiltro('SEDE'),
                   const SizedBox(height: Medidas.s8),
                   Wrap(
                     spacing: Medidas.s8,
@@ -189,7 +190,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     ],
                   ),
                   const SizedBox(height: Medidas.s20),
-                  _Titulo('DEPORTE'),
+                  TituloDeFiltro('DEPORTE'),
                   const SizedBox(height: Medidas.s8),
                   Wrap(
                     spacing: Medidas.s8,
@@ -208,7 +209,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     ],
                   ),
                   const SizedBox(height: Medidas.s20),
-                  _Titulo('ESTADO'),
+                  TituloDeFiltro('ESTADO'),
                   const SizedBox(height: Medidas.s8),
                   Wrap(
                     spacing: Medidas.s8,
@@ -237,7 +238,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     ],
                   ),
                   const SizedBox(height: Medidas.s20),
-                  _Titulo('RANGO DE FECHAS'),
+                  TituloDeFiltro('RANGO DE FECHAS'),
                   const SizedBox(height: Medidas.s8),
                   // En un teléfono chico dos campos lado a lado no dejan ver la fecha
                   // entera; se apilan.
@@ -333,15 +334,4 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
       ),
     );
   }
-}
-
-class _Titulo extends StatelessWidget {
-  const _Titulo(this.texto);
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    texto,
-    style: Textos.sobretitulo.copyWith(color: context.paleta.textMuted),
-  );
 }

@@ -9,8 +9,10 @@ import '../sedes/fotos.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import '../comun/fechas.dart';
-import 'pantalla_confirmar_reserva.dart';
 import 'reservas.dart';
+import 'pasos_de_reserva.dart';
+import 'fila_de_dato.dart';
+import 'fila_de_total.dart';
 
 /// El comprobante: la reserva quedó hecha. Espera a que la persona elija adónde ir.
 class PantallaReservaConfirmada extends StatelessWidget {

@@ -15,6 +15,7 @@ import '../comun/reloj.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'registro.dart';
+import 'aviso_de_registro.dart';
 
 /// Los campos del formulario, con el nombre que usa la API.
 enum _Campo {
@@ -260,7 +261,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_yaExiste) ...[
-                const _Aviso(
+                const AvisoDeRegistro(
                   texto:
                       'Tu cuenta ya existe: el registro se completó antes del corte. '
                       'Iniciá sesión con tu correo y tu contraseña.',
@@ -271,7 +272,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 ),
                 const SizedBox(height: Medidas.s16),
               ] else if (aviso != null) ...[
-                _Aviso(texto: aviso),
+                AvisoDeRegistro(texto: aviso),
                 const SizedBox(height: Medidas.s16),
               ],
               Text(
@@ -357,44 +358,6 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Aviso extends StatelessWidget {
-  const _Aviso({required this.texto});
-
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.stateDangerMuted,
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 20,
-              color: p.stateDangerInk,
-            ),
-            const SizedBox(width: Medidas.s12),
-            Expanded(
-              child: Text(
-                texto,
-                style: Textos.cuerpoFuerte.copyWith(color: p.stateDangerInk),
-              ),
-            ),
-          ],
         ),
       ),
     );

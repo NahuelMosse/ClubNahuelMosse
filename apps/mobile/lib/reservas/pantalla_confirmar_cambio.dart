@@ -5,13 +5,15 @@ import '../api/cliente_api.dart';
 import '../comun/dialogo_error.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
 import '../comun/fechas.dart';
 import 'horarios.dart';
-import 'pantalla_confirmar_reserva.dart';
 import 'reservas.dart';
+import 'horario_de_cambio.dart';
+import 'esqueleto_de_confirmacion.dart';
+import 'fila_de_dato.dart';
+import 'tarjeta_de_eleccion.dart';
 
 /// Cómo terminó la modificación, para los horarios y Mis reservas, que quedan debajo.
 enum ResultadoDeModificar {
@@ -129,8 +131,8 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
       tarjeta: TarjetaDeEleccion(
         eleccion: e,
         filas: [
-          _Horario(titulo: 'ANTES', valor: antes, nuevo: false),
-          _Horario(titulo: 'AHORA', valor: ahora, nuevo: true),
+          HorarioDeCambio(titulo: 'ANTES', valor: antes, nuevo: false),
+          HorarioDeCambio(titulo: 'AHORA', valor: ahora, nuevo: true),
           Divider(height: Medidas.s16, color: p.borderDefault),
           FilaDeDato(
             dato: 'Cancha',
@@ -139,57 +141,6 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
           FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
           const SizedBox(height: Medidas.s8),
         ],
-      ),
-    );
-  }
-}
-
-/// El horario de antes, con una cruz, o el de ahora, con un tilde y en lima.
-class _Horario extends StatelessWidget {
-  const _Horario({
-    required this.titulo,
-    required this.valor,
-    required this.nuevo,
-  });
-
-  final String titulo;
-  final String valor;
-  final bool nuevo;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      label: '$titulo: $valor',
-      excludeSemantics: true,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: Medidas.s8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              nuevo ? Icons.check_rounded : Icons.close_rounded,
-              size: 18,
-              color: nuevo ? p.stateSuccessInk : p.stateDangerInk,
-            ),
-            const SizedBox(width: Medidas.s8),
-            Text(
-              titulo,
-              style: Textos.sobretitulo.copyWith(color: p.textMuted),
-            ),
-            const SizedBox(width: Medidas.s16),
-            Expanded(
-              child: Text(
-                valor,
-                textAlign: TextAlign.end,
-                style: nuevo
-                    ? Textos.cuerpoFuerte.copyWith(color: p.accentInk)
-                    : Textos.cuerpo.copyWith(color: p.textSecondary),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
