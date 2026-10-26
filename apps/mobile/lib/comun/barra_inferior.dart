@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'barra_fija.dart';
 
 enum Seccion {
   inicio('INICIO', Icons.home_outlined, '/inicio'),
@@ -82,24 +83,14 @@ class _Barra extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        border: Border(top: BorderSide(color: p.borderDefault)),
+    return BarraFija(
+      color: p.bgSurfaceRaised,
+      padding: const EdgeInsets.symmetric(
+        horizontal: Medidas.s8,
+        vertical: Medidas.s8,
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Medidas.s8,
-            vertical: Medidas.s8,
-          ),
-          child: Row(
-            children: [
-              for (final pestana in pestanas) Expanded(child: pestana),
-            ],
-          ),
-        ),
+      child: Row(
+        children: [for (final pestana in pestanas) Expanded(child: pestana)],
       ),
     );
   }

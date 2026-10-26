@@ -14,7 +14,6 @@ import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'baja_espacio.dart';
 import 'formulario_espacio.dart';
@@ -199,29 +198,11 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s12,
-              Medidas.s24,
-              Medidas.s40,
-            ),
+            padding: Medidas.paginaDeFormulario,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Semantics(
-                  header: true,
-                  child: Text(
-                    'Editar espacio deportivo',
-                    style: Textos.h1.copyWith(color: p.textPrimary),
-                  ),
-                ),
-                const SizedBox(height: Medidas.s4),
-                Text(
-                  'El nombre se arma solo con la sede, la dirección, el deporte, '
-                  'el tipo y el número.',
-                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                ),
-                const SizedBox(height: Medidas.s16),
+                ...encabezadoDeEspacio(context, 'Editar espacio deportivo'),
                 CampoSelector(
                   etiqueta: 'SEDE',
                   etiquetaAccesible: 'Sede',

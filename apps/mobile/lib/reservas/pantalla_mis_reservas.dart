@@ -265,12 +265,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s24,
-                  Medidas.s24,
-                  Medidas.s24,
-                  Medidas.s40,
-                ),
+                padding: Medidas.paginaDeLista,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [

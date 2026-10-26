@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../comun/tarjeta_reserva.dart';
 import '../espacios/iconos.dart';
 import '../tema/tema.dart';
@@ -31,13 +32,9 @@ class TarjetaDatosDeReserva extends StatelessWidget {
           '$nombreDeporte, sede ${r.sede}, ${r.direccion}, ${pesos(r.total)}, '
           '${r.estado.name}, usuario ${r.usuario}, ${r.espacio}, '
           '${fechaLarga(r.inicio)}, $horario',
-      child: Container(
+      child: MarcoDeTarjeta(
+        recorte: Clip.none,
         padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.borderDefault),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

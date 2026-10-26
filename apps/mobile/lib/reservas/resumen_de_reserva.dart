@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../comun/formato_precio.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import '../comun/fechas.dart';
@@ -30,13 +31,9 @@ class ResumenDeReserva extends StatelessWidget {
     return Semantics(
       container: true,
       liveRegion: true,
-      child: Container(
+      child: MarcoDeTarjeta(
+        recorte: Clip.none,
         padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.bgSurfaceRaised,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.borderDefault),
-        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

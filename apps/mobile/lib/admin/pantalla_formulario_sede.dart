@@ -400,12 +400,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s12,
-              Medidas.s24,
-              Medidas.s40,
-            ),
+            padding: Medidas.paginaDeFormulario,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

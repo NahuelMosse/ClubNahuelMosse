@@ -4,6 +4,7 @@ import '../tema/tokens.dart';
 import 'historial_reservas.dart';
 import 'paso_de_trazabilidad.dart';
 import '../comun/fechas.dart';
+import '../comun/marco_de_tarjeta.dart';
 
 class Trazabilidad extends StatelessWidget {
   const Trazabilidad({super.key, required this.reserva});
@@ -49,13 +50,9 @@ class Trazabilidad extends StatelessWidget {
       ),
       _ => null,
     };
-    return Container(
+    return MarcoDeTarjeta(
+      recorte: Clip.none,
       padding: const EdgeInsets.all(Medidas.s16),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

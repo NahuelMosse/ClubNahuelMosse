@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../comun/boton.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 
@@ -16,13 +17,9 @@ class NotificacionesDesactivadas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return Container(
+    return MarcoDeTarjeta(
+      recorte: Clip.none,
       padding: const EdgeInsets.all(Medidas.s16),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../comun/barra_fija.dart';
 import '../comun/boton.dart';
 import '../tema/tokens.dart';
 
@@ -17,34 +18,20 @@ class BarraDeBusqueda extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.bgSurface,
-        border: Border(top: BorderSide(color: p.borderDefault)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s16,
-            Medidas.s24,
-            Medidas.s16,
+    return BarraFija(
+      color: p.bgSurface,
+      child: Row(
+        children: [
+          BotonTexto(texto: 'LIMPIAR', alTocar: alLimpiar),
+          const SizedBox(width: Medidas.s12),
+          Expanded(
+            child: BotonPrimario(
+              texto: 'CONSULTAR',
+              alTocar: alConsultar,
+              cargando: consultando,
+            ),
           ),
-          child: Row(
-            children: [
-              BotonTexto(texto: 'LIMPIAR', alTocar: alLimpiar),
-              const SizedBox(width: Medidas.s12),
-              Expanded(
-                child: BotonPrimario(
-                  texto: 'CONSULTAR',
-                  alTocar: alConsultar,
-                  cargando: consultando,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

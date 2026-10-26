@@ -15,7 +15,6 @@ import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'formulario_espacio.dart';
 import 'par_de_campos.dart';
@@ -399,12 +398,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
           child: _cargando && sedes == null
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    Medidas.s24,
-                    Medidas.s12,
-                    Medidas.s24,
-                    Medidas.s40,
-                  ),
+                  padding: Medidas.paginaDeFormulario,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -416,20 +410,10 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
                         ),
                         const SizedBox(height: Medidas.s16),
                       ],
-                      Semantics(
-                        header: true,
-                        child: Text(
-                          'Nuevo espacio deportivo',
-                          style: Textos.h1.copyWith(color: p.textPrimary),
-                        ),
+                      ...encabezadoDeEspacio(
+                        context,
+                        'Nuevo espacio deportivo',
                       ),
-                      const SizedBox(height: Medidas.s4),
-                      Text(
-                        'El nombre se arma solo con la sede, la dirección, el deporte, '
-                        'el tipo y el número.',
-                        style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                      ),
-                      const SizedBox(height: Medidas.s16),
                       CampoSelector(
                         etiqueta: 'SEDE',
                         etiquetaAccesible: 'Sede',
