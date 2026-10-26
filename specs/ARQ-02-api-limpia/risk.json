@@ -1,0 +1,58 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "integrity"
+  ],
+  "modules": [
+    "api",
+    "data"
+  ],
+  "signals": [
+    "data-dependency",
+    "http-dependency",
+    "route",
+    "screen"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/main.py",
+    "apps/api/app/interfaz/errores_http.py",
+    "apps/api/app/interfaz/respuestas.py",
+    "apps/api/app/interfaz/reservas.py",
+    "apps/api/app/interfaz/sedes.py",
+    "apps/api/app/interfaz/espacios.py",
+    "apps/api/app/interfaz/horarios.py",
+    "apps/api/app/interfaz/notificaciones.py",
+    "apps/api/app/interfaz/sesion.py",
+    "apps/api/app/interfaz/registro.py",
+    "apps/api/app/interfaz/recuperacion.py",
+    "apps/api/app/interfaz/entradas.py",
+    "apps/api/app/interfaz/pruebas.py",
+    "apps/api/app/infraestructura/db.py",
+    "apps/api/app/infraestructura/reservas.py",
+    "apps/api/app/infraestructura/sedes.py",
+    "apps/api/app/infraestructura/espacios.py",
+    "apps/api/app/infraestructura/usuarios.py",
+    "apps/api/app/infraestructura/notificaciones.py",
+    "apps/api/app/infraestructura/enlaces.py",
+    "apps/api/app/infraestructura/horarios.py",
+    "apps/api/app/dominio/notificaciones.py",
+    "apps/api/app/dominio/horarios.py",
+    "apps/api/app/dominio/sedes.py",
+    "apps/api/app/interfaz/metricas.py",
+    "apps/api/pyproject.toml",
+    "apps/api/uv.lock"
+  ],
+  "tasks": 5,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "recuperacion.py arma una página HTML, pero la card sólo cambia cómo responde sus errores; ninguna pantalla cambia",
+      "files": [
+        "apps/api/app/interfaz/recuperacion.py"
+      ]
+    }
+  ]
+}
