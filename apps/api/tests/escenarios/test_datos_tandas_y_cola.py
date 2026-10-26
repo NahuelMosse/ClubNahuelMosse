@@ -7,7 +7,6 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
-import pytest
 from alembic import command
 from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
@@ -27,7 +26,7 @@ from test_datos import (  # noqa: F401 — los fixtures se importan para que pyt
     socio,
     token_admin,
 )
-from test_recordatorio import CanalDePrueba, Socio
+from test_recordatorio import Socio
 
 
 def _ids_del_socio(socio: Socio) -> set[int]:
@@ -47,20 +46,6 @@ def _historial(socio: Socio, **params: str) -> dict[str, Any]:
     return cuerpo
 
 
-def test_con_el_mismo_inicio_el_historial_global_pone_primero_el_id_mas_alto(
-    api: TestClient, socio: Socio, token_admin: str
-) -> None:
-    """con el mismo inicio va primero el id más alto @REV-03-S3 @assumption:REV-03-ASM-07"""
-    _pasadas(socio, 20)
-    _empate(socio)
-    admin = {"Authorization": f"Bearer {token_admin}"}
-
-    r = api.get("/reservas/todas", headers=admin, params={"q": socio.sede}).json()["reservas"]
-
-    claves = [(x["inicio"], x["id"]) for x in r]
-    assert len(claves) == 21
-    assert claves == sorted(claves, reverse=True)
-    assert len({inicio for inicio, _ in claves}) == 20
 
 
 def _capturar_sql(accion: Callable[[], None]) -> list[tuple[str, Any]]:
@@ -163,141 +148,11 @@ def test_la_migracion_0008_corta_por_lock_timeout_y_se_puede_volver_a_correr(
     command.upgrade(alembic, "0008")
 
 
-def test_de_cada_intento_quedan_tomada_en_e_intentos_y_el_error_va_al_log(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """de cada intento quedan tomada_en e intentos y el error va al log, no a la base
-    @REV-03-S5 @assumption:REV-03-ASM-09
-    """
-    _cancelar(socio, "20:00")
-    with socio.motor.begin() as conn:
-        conn.execute(
-            text("UPDATE notificacion SET envio = 'pendiente' WHERE usuario_id = :u"),
-            {"u": socio.usuario_id},
-        )
-
-    _despachar(socio, canal)
-
-    with socio.motor.connect() as conn:
-        [(tomada_en, intentos)] = conn.execute(
-            text("SELECT tomada_en, intentos FROM notificacion WHERE usuario_id = :u"),
-            {"u": socio.usuario_id},
-        ).all()
-        columnas = {
-            str(f.column_name)
-            for f in conn.execute(
-                text(
-                    "SELECT column_name FROM information_schema.columns"
-                    " WHERE table_name = 'notificacion'"
-                )
-            )
-        }
-    assert tomada_en is not None
-    assert intentos == 1
-    assert not {c for c in columnas if "error" in c}
 
 
-def test_la_linea_aviso_sin_enviar_no_lleva_token_correo_ni_cuerpo(
-    socio: Socio, canal: CanalDePrueba, caplog: pytest.LogCaptureFixture
-) -> None:
-    """la línea aviso_sin_enviar no lleva el token, el correo ni el cuerpo del aviso
-    @REV-03-S5 @assumption:REV-03-ASM-09
-    """
-    _cancelar(socio, "20:00")
-    _varar(socio, "10 minutes", intentos=3)
-    with socio.motor.connect() as conn:
-        cuerpo = str(
-            conn.execute(
-                text("SELECT cuerpo FROM notificacion WHERE usuario_id = :u"),
-                {"u": socio.usuario_id},
-            ).scalar_one()
-        )
-        correo = str(
-            conn.execute(
-                text("SELECT correo FROM usuario WHERE id = :u"), {"u": socio.usuario_id}
-            ).scalar_one()
-        )
-        tokens = [
-            str(f.token)
-            for f in conn.execute(
-                text("SELECT token FROM dispositivo WHERE usuario_id = :u"),
-                {"u": socio.usuario_id},
-            )
-        ]
-
-    with caplog.at_level("ERROR"):
-        _despachar(socio, canal)
-
-    lineas = [r.getMessage() for r in caplog.records if "aviso_sin_enviar" in r.getMessage()]
-    assert len(lineas) == 1
-    for secreto in [cuerpo, correo, *tokens]:
-        assert secreto not in lineas[0]
 
 
-def test_el_recordatorio_de_una_reserva_que_ya_empezo_no_se_reintenta(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """el recordatorio de una reserva que ya empezó no se reintenta y queda fallido
-    @REV-03-S6 @assumption:REV-03-ASM-14
-    """
-    _recordatorio(socio, "pendiente", "10 minutes")
-    with socio.motor.begin() as conn:
-        conn.execute(
-            text(
-                "UPDATE reserva SET inicio = now() - interval '30 minutes',"
-                " fin = now() + interval '30 minutes' WHERE id = :r"
-            ),
-            {"r": socio.reservas[-1]["id"]},
-        )
-        conn.execute(
-            text(
-                "UPDATE notificacion SET reserva_inicio = now() - interval '30 minutes'"
-                " WHERE usuario_id = :u"
-            ),
-            {"u": socio.usuario_id},
-        )
-    canal.enviados.clear()
-
-    _barrer(socio, canal)
-
-    assert _envios(socio) == ["fallida"]
-    assert canal.enviados == []
 
 
-def test_una_confirmacion_de_cancelacion_que_quedo_enviando_se_vuelve_a_enviar(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """una confirmación de cancelación que quedó enviando se vuelve a enviar
-    @REV-03-S5 @assumption:REV-03-ASM-04
-    """
-    _cancelar(socio, "20:00")
-    with socio.motor.begin() as conn:
-        conn.execute(
-            text(
-                "UPDATE notificacion SET envio = 'enviando', enviada_en = NULL, tomada_en = NULL,"
-                " creada_en = now() - interval '10 minutes' WHERE usuario_id = :u"
-            ),
-            {"u": socio.usuario_id},
-        )
-    canal.enviados.clear()
-
-    _despachar(socio, canal)
-
-    assert _envios(socio) == ["enviada"]
-    assert len(canal.enviados) == 1
 
 
-def test_la_trazabilidad_del_admin_muestra_el_aviso_fallido_como_fallido(
-    api: TestClient, socio: Socio, token_admin: str, canal: CanalDePrueba
-) -> None:
-    """la trazabilidad del admin muestra el aviso fallido como fallido, no como pendiente
-    @REV-03-S5 @assumption:REV-03-ASM-17
-    """
-    _cancelar(socio, "20:00")
-    _varar(socio, "10 minutes", intentos=3)
-    _despachar(socio, canal)
-    admin = {"Authorization": f"Bearer {token_admin}"}
-
-    r = api.get("/reservas/todas", headers=admin, params={"q": socio.sede}).json()["reservas"]
-
-    assert [x["aviso_envio"] for x in r if x["id"] == socio.reservas[-1]["id"]] == ["fallida"]

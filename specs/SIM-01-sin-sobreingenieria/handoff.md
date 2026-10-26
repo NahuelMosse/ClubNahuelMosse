@@ -1,5 +1,9 @@
 # Handoff SIM-01 (API)
 
+## Estado actual (el resto del archivo es histórico)
+- Hecho: T1-T5 y todos los tests de lista A por L2 (Log L20-L26). Suite API: 19 failed antes de los últimos ajustes; tras ellos quedan 15: 8 previas ARQ-02 L23/L24 y 3 de T6 (`test_documentacion_supuestos` matriz ASVS, `test_mapa_por_funcionalidad`, `test_sin_sobreingenieria` scripts/THIRD_PARTY_NOTICES/docs). ruff y mypy estricto de la API verdes; flutter analyze no corrido.
+- Falta: T6 (borrar scripts/respaldo.py, usuario_de_la_app.py, avisos_de_terceros.py, THIRD_PARTY_NOTICES.md; quitar de README/docs/mapa-del-codigo lo retirado: /metrics, METRICAS_TOKEN, DATABASE_URL_APP, DETRAS_DE_PROXY, /ready; matriz ASVS sin rutas inexistentes), T7/T8 (app, otro builder).
+
 ## Hecho
 - RED (9faf496), T1-T4 en código, tests de entradas/reservas/tandas adaptados (b54363b). Log L10-L14.
 - Esta tanda (lado tests, L2: archivo nuevo con lo que sigue, `git rm` del viejo): `escenarios/test_operacion.py` (ahora sólo recordatorios, aviso sin enviar, versión, config), `integracion/test_rutas_protegidas.py` (sin /ready ni /metrics; absorbe `test_rutas_protegidas_con_operacion.py`, borrado), `escenarios/test_contrato_publicado_con_operacion.py`, `escenarios/test_operacion_rutas_publicas.py` (sólo el test de 401; se fueron render/429/400 por Host), `unit/test_api_limpia.py` (sin métricas), `unit/test_api_limpia_plan.py` (sin métricas ni avisos de terceros), `unit/test_capas_integracion.py` (sólo salud.py).

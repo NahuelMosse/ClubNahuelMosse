@@ -1,6 +1,7 @@
 """SIM-01 contra la base y el emulador reales: historial sin marcador, avisos sin reintentos."""
 
 import os
+from collections.abc import Sequence
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
@@ -10,6 +11,7 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
+from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 URL_PRUEBAS = os.environ["DATABASE_URL"]
@@ -100,7 +102,7 @@ def test_una_reserva_sobrevive_a_reiniciar_la_api(
 class _CanalQueFalla:
     llamadas = 0
 
-    def enviar(self, tokens: list[str], aviso: object) -> object:
+    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
         type(self).llamadas += 1
         raise ConnectionError("FCM no responde")
 
@@ -111,7 +113,7 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
     from app.infraestructura.notificaciones import NotificacionesSql
 
     with motor.begin() as conn:
-        id_ = conn.execute(
+        id_: int = conn.execute(
             text(
                 "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio)"
                 " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'pendiente'"
@@ -132,7 +134,7 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
         tras_el_primero = _CanalQueFalla.llamadas
         despachar_pendientes(NotificacionesSql(conn), canal)
     with motor.connect() as conn:
-        envio = conn.execute(
+        envio: str = conn.execute(
             text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
         ).scalar_one()
     assert envio == "fallida"
@@ -161,7 +163,7 @@ def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(motor: En
     command.downgrade(alembic, "0008")
     try:
         with motor.begin() as conn:
-            id_ = conn.execute(
+            id_: int = conn.execute(
                 text(
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio, tomada_en)"
                     " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'enviando', now()"
@@ -171,7 +173,7 @@ def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(motor: En
     finally:
         command.upgrade(alembic, "head")
     with motor.connect() as conn:
-        envio = conn.execute(
+        envio: str = conn.execute(
             text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
         ).scalar_one()
     assert envio == "fallida"

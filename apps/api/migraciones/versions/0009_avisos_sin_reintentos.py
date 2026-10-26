@@ -16,7 +16,9 @@ depends_on = None
 
 def upgrade() -> None:
     op.execute("UPDATE notificacion SET envio = 'fallida' WHERE envio = 'enviando'")
-    op.execute("ALTER TABLE notificacion DROP COLUMN IF EXISTS intentos, DROP COLUMN IF EXISTS tomada_en")
+    op.execute(
+        "ALTER TABLE notificacion DROP COLUMN IF EXISTS intentos, DROP COLUMN IF EXISTS tomada_en"
+    )
 
 
 def downgrade() -> None:

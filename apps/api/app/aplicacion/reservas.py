@@ -18,13 +18,13 @@ from app.dominio.horarios import (
     validar_reserva,
 )
 from app.dominio.reservas import (
+    Cuando as Cuando,
+)
+from app.dominio.reservas import (
     FiltrosHistorial,
     HistorialDeReservas,
     Reserva,
     ReservaHistorial,
-)
-from app.dominio.reservas import (
-    Cuando as Cuando,
 )
 from app.dominio.usuarios import Perfil
 

@@ -2,7 +2,6 @@ import ast
 import re
 from pathlib import Path
 
-
 API = Path(__file__).resolve().parents[2]
 RAIZ = API.parents[1]
 INFRA = API / "app" / "infraestructura"

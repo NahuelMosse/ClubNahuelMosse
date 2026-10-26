@@ -1,8 +1,6 @@
 """Documentación de producción: lo que necesita quien opera, audita o mantiene la app."""
 
 import re
-import subprocess
-import sys
 import tomllib
 from pathlib import Path
 
@@ -102,22 +100,6 @@ def _fila(texto: str, nombre: str) -> str:
     return hallada.group(0) if hallada else ""
 
 
-def test_las_licencias_de_terceros_estan_declaradas() -> None:
-    """las licencias de terceros están declaradas @REV-07-S4"""
-    avisos = _texto(AVISOS)
-
-    sin_licencia = [d for d in _dependencias_directas() if not LICENCIA.search(_fila(avisos, d))]
-    assert sin_licencia == []
-    assert _fila(avisos, "certifi")
-    assert _fila(avisos, "starlette")
-    regenerado = subprocess.run(
-        [sys.executable, str(RAIZ / "scripts" / "avisos_de_terceros.py"), "--comprobar"],
-        cwd=API,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    assert regenerado.returncode == 0, regenerado.stdout + regenerado.stderr
 
 
 def test_el_costo_de_operar_la_app_esta_calculado() -> None:

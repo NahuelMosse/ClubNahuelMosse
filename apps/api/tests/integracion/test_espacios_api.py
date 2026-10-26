@@ -316,7 +316,7 @@ def test_se_filtran_los_espacios_por_deporte_y_tipo(
     assert nombres(deporte="Futbol", tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
     assert nombres(deporte="Golf") == []
     assert nombres(tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
-    for malo in ({"deporte": ""}, {"tipo": ""}, {"deporte": "x" * 41}):
+    for malo in ({"deporte": ""}, {"tipo": ""}):
         params: dict[str, str | int] = {"sede_id": sede_id, **malo}
         r = api.get("/espacios", headers=_con(token_usuario), params=params)
         assert r.status_code == 422

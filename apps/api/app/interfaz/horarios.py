@@ -111,11 +111,11 @@ def ver_disponibles(
     _: Annotated[Perfil, Depends(usuario_actual)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
     sede_id: Annotated[Identificador, Query()],
-    deporte: Annotated[str, Query(min_length=1, max_length=40)],
+    deporte: Annotated[str, Query(min_length=1)],
     fecha: Annotated[date, Query()],
-    desde: Annotated[str, Query(max_length=5)],
-    hasta: Annotated[str, Query(max_length=5)],
-    tipo: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
+    desde: Annotated[str, Query()],
+    hasta: Annotated[str, Query()],
+    tipo: Annotated[str | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
     inicio, fin = leer_hora(desde), leer_hora(hasta)
     errores = {
