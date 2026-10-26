@@ -45,7 +45,7 @@ lint: sh D:/Temp/w/herramientas/ruff-mypy-api-arq02.sh apps/api/app apps/api/tes
 app: sh D:/Temp/w/herramientas/arq01-app.sh arq02_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh arq02_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8701/club_arq02_migra uv run --no-sync alembic upgrade head"
-mutate apps/api/app/infraestructura/db.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_api_limpia.py tests/integracion/test_reservas_api.py
+mutate apps/api/app/infraestructura/db.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_api_limpia.py tests/integracion/test_api_limpia_persistencia.py
 mutate apps/api/app/dominio/horarios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit
 no-visual: recuperacion.py arma una página HTML, pero la card sólo cambia cómo responde sus errores; ninguna pantalla cambia
 ```
@@ -65,3 +65,12 @@ no-visual: recuperacion.py arma una página HTML, pero la card sólo cambia cóm
 - L11 · 2026-10-26 · replaces: apps/api/tests/unit/test_api_limpia_plan.py "las métricas no publican _created y el histograma conserva sus cortes @ARQ-02-S1 @assumption:ARQ-02-ASM-02" · llama `.group` sobre un `re.search` que puede ser `None` (mypy estricto lo rechaza) y no fija el orden de las etiquetas del histograma · by: apps/api/tests/unit/test_api_limpia_metricas.py "las métricas no publican _created y el histograma conserva sus cortes @ARQ-02-S1 @assumption:ARQ-02-ASM-02"
 - L12 · 2026-10-26 · declared · K4 · apps/api/app/interfaz/reservas.py · cancelar y anular declaran los mismos parámetros (perfil, repositorio, id, tareas, canal): FastAPI lee las dependencias de la firma de cada ruta
 - L13 · 2026-10-26 · declared · K4 · apps/api/tests/unit/test_api_limpia_metricas.py · reemplazo del test congelado de test_api_limpia_plan.py (L11): repite su cuerpo con el mismo título y tags y cambia sólo la lectura de los cortes; el congelado no se puede editar
+- L14 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/enlaces.py, espacios.py, horarios.py, notificaciones.py, reservas.py, sedes.py, usuarios.py · sus consultas no cambian: el commit y el rollback de cada método pasan a `en_transaccion`, que se muta en db.py; lo que cada consulta hace lo cubren los escenarios de la suite
+- L15 · 2026-10-26 · declared · mutate · apps/api/app/dominio/notificaciones.py · sólo cambia de dónde sale la zona del club (`ZONA_CLUB`); la hora de los avisos la cubren los tests de notificaciones de la suite
+- L16 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/enlaces.py · lo de L14, archivo por archivo
+- L17 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/espacios.py · lo de L14, archivo por archivo
+- L18 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/horarios.py · lo de L14, archivo por archivo; además la agenda se arma en una sola función, que cubren los escenarios de horarios
+- L19 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/notificaciones.py · lo de L14, archivo por archivo
+- L20 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/reservas.py · lo de L14, archivo por archivo; la consulta repetida se comparte y la cubren los escenarios de CU-09 a CU-15
+- L21 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/sedes.py · lo de L14, archivo por archivo
+- L22 · 2026-10-26 · declared · mutate · apps/api/app/infraestructura/usuarios.py · lo de L14, archivo por archivo
