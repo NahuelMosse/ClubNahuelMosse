@@ -5,6 +5,7 @@ from sqlalchemy import Connection, text
 
 from app.dominio.notificaciones import (
     ANTICIPACION,
+    ESPERA_DEL_ENVIO,
     ESPERA_DEL_RECORDATORIO,
     Aviso,
     AvisoPerdido,
@@ -263,14 +264,24 @@ class NotificacionesSql:
                 ),
                 {"usuario": usuario_id},
             ).all()
-        return [AvisoPerdido(int(f.id), f.tipo) for f in muertos]
+            # Uno que lleva demasiado `enviando` quedó a mitad del envío: no se vuelve a mandar.
+            atascados = self._conn.execute(
+                text(
+                    "UPDATE notificacion SET envio = 'fallida' WHERE envio = 'enviando'"
+                    " AND enviando_desde < now() - CAST(:espera AS interval)"
+                    " AND (CAST(:usuario AS bigint) IS NULL OR usuario_id = :usuario)"
+                    " RETURNING id, tipo"
+                ),
+                {"usuario": usuario_id, "espera": ESPERA_DEL_ENVIO},
+            ).all()
+        return [AvisoPerdido(int(f.id), f.tipo) for f in [*muertos, *atascados]]
 
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
         # Los que salen: los pendientes, y los recordatorios sólo si siguen vigentes y ya pasó el
         # minuto de quien los registró. `enviando` es la toma: evita mandarlo dos veces.
         f = self._conn.execute(
             text(
-                "UPDATE notificacion SET envio = 'enviando' WHERE id = ("
+                "UPDATE notificacion SET envio = 'enviando', enviando_desde = now() WHERE id = ("
                 " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
                 " WHERE n.reemplazada_por IS NULL"
                 " AND (CAST(:usuario AS bigint) IS NULL OR n.usuario_id = :usuario)"

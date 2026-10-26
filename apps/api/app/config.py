@@ -8,15 +8,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 RAIZ_API = Path(__file__).resolve().parents[1]
 
 
-def _version_del_paquete() -> str:
-    proyecto = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))
-    return str(proyecto["project"]["version"])
+_PROYECTO = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=RAIZ_API / ".env", extra="ignore")
 
-    version: str = _version_del_paquete()
+    version: str = str(_PROYECTO["project"]["version"])
     database_url: str = "postgresql+psycopg://club:club@localhost:5432/club"
     firebase_project_id: str = "demo-clubnahuelmosse"
     # La clave web del proyecto, para comprobar contraseñas; el emulador no la necesita.

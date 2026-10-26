@@ -27,6 +27,10 @@ Cómo saber que terminó: el estado del servicio en el panel de Render pasa a «
 despliegue), `GET /health` devuelve la versión desplegada. Comprobación mínima de la API:
 `GET /sedes` sin sesión responde 401. Con el plan free el primer pedido después de dormir tarda alrededor de un minuto.
 
+La API en el plan free de Render se duerme tras 15 minutos sin tráfico. Un monitor de UptimeRobot llama a `/health` cada
+5 minutos para mantenerla despierta, y eso es lo que permite que el barrido dentro del proceso mande los recordatorios;
+el monitor tiene que apuntar a `/health`.
+
 ## Roll back
 
 **Código.** No hay un comando propio: se vuelve a desplegar el commit anterior. Dos caminos, en este orden de preferencia:

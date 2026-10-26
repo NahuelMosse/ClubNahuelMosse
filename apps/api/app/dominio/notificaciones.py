@@ -1,3 +1,4 @@
+# kit-shape: son los tipos del aviso y las funciones que arman sus textos, un solo concepto
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -96,6 +97,8 @@ LIMITE_DEL_MOTIVO = 200
 # Un recordatorio recién registrado lo está enviando quien lo registró: el despacho lo toma
 # sólo si pasó más que esto sin salir.
 ESPERA_DEL_RECORDATORIO = timedelta(minutes=1)
+# Pasado este tiempo un aviso `enviando` se da por perdido: la API se cayó a mitad del envío.
+ESPERA_DEL_ENVIO = timedelta(minutes=10)
 
 
 

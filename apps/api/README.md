@@ -139,8 +139,9 @@ notificación y el tipo del error, sin el token.
 
 Lo que se asumió donde el requisito no lo dice (REV-03); cada una se cambia en un solo lugar.
 
-- REV-03-ASM-02: un aviso que quedó `enviando` por una caída del proceso pasa a `fallida` y no se
-  repite («se envía una sola vez», CU-24.1).
+- REV-03-ASM-02: un aviso que lleva más de 10 minutos en `enviando` (la API se cayó a mitad del
+  envío) pasa a `fallida` en el siguiente barrido y no se repite («se envía una sola vez»,
+  CU-24.1); SIM-01-ASM-10.
 - REV-03-ASM-03: el historial propio (`GET /reservas`) trae todas las reservas de una vez, igual
   que el global; no hay cursor ni tandas.
 

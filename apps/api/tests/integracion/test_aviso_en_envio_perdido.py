@@ -41,7 +41,7 @@ def _envio(motor: Engine, id_: int) -> str:
 
 
 def test_un_aviso_con_mas_de_10_minutos_en_enviando_pasa_a_fallida_y_no_se_reenvia(
-    motor: Engine,
+    motor: Engine, token_usuario: str
 ) -> None:
     """un aviso con más de 10 minutos en enviando pasa a fallida en el barrido y no se reenvía @SIM-01-S2 @assumption:SIM-01-ASM-10"""
     viejo = _enviando(motor, 11)

@@ -69,7 +69,7 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/sim01-suite.sh
-lint: sh D:/Temp/w/herramientas/sim01-lint.sh apps/api/app apps/api/tests apps/mobile
+lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app apps/api/tests apps/mobile
 app: sh D:/Temp/w/herramientas/arq01-app.sh sim01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh sim01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 captures: sh D:/Temp/w/herramientas/arq03-capturas.sh
@@ -78,7 +78,7 @@ migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:cl
 mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_casos_de_uso_reservas.py tests/unit/test_despacho_de_confirmaciones.py tests/integracion/test_sin_sobreingenieria_api.py
 mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_mensaje_cancelacion_forzosa.py tests/unit/test_recordatorios.py
 mutate apps/api/app/aplicacion/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_recordatorios.py tests/unit/test_mensaje_cancelacion_forzosa.py
-mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_sin_sobreingenieria_api.py tests/integracion/test_notificaciones_api.py
+mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_sin_sobreingenieria_api.py tests/integracion/test_aviso_en_envio_perdido.py tests/integracion/test_notificaciones_api.py
 mutate apps/api/migraciones/versions/0009_avisos_sin_reintentos.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_sin_sobreingenieria_api.py
 ```
 

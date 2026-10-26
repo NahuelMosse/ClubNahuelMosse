@@ -70,12 +70,13 @@ def despachar_pendientes(
     notificaciones: Notificaciones, canal: CanalPush, usuario_id: int | None = None
 ) -> int:
     """Manda los avisos que se registraron junto con el hecho que avisan, como la confirmación
-    de una cancelación, y devuelve cuántos salieron a despacho. Retoma los que quedaron
-    `enviando` por un proceso caído y los recordatorios registrados que no salieron.
+    de una cancelación, y devuelve cuántos salieron a despacho.
 
     Toma de a uno: lo que no se intentó sigue `pendiente`, y un aviso que falla por cualquier
     motivo queda `fallida` sin cortar los que siguen. Antes de tomar, los que no van a salir
-    quedan `fallida` y se avisan en el log como `aviso_sin_enviar`.
+    (un recordatorio que ya no corresponde, o un aviso con más de 10 minutos en `enviando`
+    porque la API se cayó a mitad del envío) quedan `fallida`, no se reenvían y se avisan en el
+    log como `aviso_sin_enviar`.
     """
     for perdido in notificaciones.marcar_varados_fallidos(usuario_id):
         # Sólo el número y el tipo: nada de la persona ni del texto del aviso.
