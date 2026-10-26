@@ -6,8 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'notificaciones_test.dart'
     show ApiFalsa, SistemaFalso, centroDe, cuerpoDe;
-import 'soporte/admin.dart';
-import 'soporte/usuario.dart';
+import 'soporte/montar.dart';
 
 /// Un sistema que arranca sin haber preguntado y contesta lo que se le fije al preguntar.
 class SistemaSinPreguntar extends SistemaFalso {

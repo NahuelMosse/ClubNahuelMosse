@@ -19,6 +19,9 @@ abstract interface class SistemaDeNotificaciones {
 
   Future<bool> permitido();
 
+  /// Si el sistema operativo ya le preguntó a la persona por las notificaciones.
+  Future<bool> preguntado();
+
   /// Pide el permiso al sistema operativo y dice si quedó concedido.
   Future<bool> solicitarPermiso();
 
@@ -40,8 +43,9 @@ abstract interface class SistemaDeNotificaciones {
 
 /// El sistema de un dispositivo de prueba, sin Firebase Cloud Messaging.
 ///
-/// El permiso lo guarda la app en el dispositivo (los escenarios lo fijan) y arranca
-/// concedido; pedirlo lo concede. Nada llega por acá: con la app abierta la lista se entera
+/// La respuesta al permiso la guarda la app en el dispositivo (los escenarios la fijan); sin
+/// respuesta guardada, todavía no preguntó. Pedirlo guarda y devuelve la respuesta fijada,
+/// concedido si no hay otra. Nada llega por acá: con la app abierta la lista se entera
 /// consultando la API.
 class SistemaSimulado implements SistemaDeNotificaciones {
   static const _clavePermiso = 'permiso_notificaciones_simulado';
@@ -52,16 +56,19 @@ class SistemaSimulado implements SistemaDeNotificaciones {
 
   @override
   Future<bool> permitido() async =>
-      (await SharedPreferences.getInstance()).getString(_clavePermiso) !=
-      'denegado';
+      (await SharedPreferences.getInstance()).getString(_clavePermiso) ==
+      'concedido';
+
+  @override
+  Future<bool> preguntado() async =>
+      (await SharedPreferences.getInstance()).getString(_clavePermiso) != null;
 
   @override
   Future<bool> solicitarPermiso() async {
-    await (await SharedPreferences.getInstance()).setString(
-      _clavePermiso,
-      'concedido',
-    );
-    return true;
+    final prefs = await SharedPreferences.getInstance();
+    final respuesta = prefs.getString(_clavePermiso) ?? 'concedido';
+    await prefs.setString(_clavePermiso, respuesta);
+    return respuesta == 'concedido';
   }
 
   @override

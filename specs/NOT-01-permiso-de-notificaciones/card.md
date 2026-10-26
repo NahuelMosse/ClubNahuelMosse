@@ -38,3 +38,5 @@ lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 
 - L1 · en otro hilo, te podes fijar si las notificaciones funcionan, es critico · (ante el hallazgo del permiso en Android 13+) Sí, en una card nueva
 - L2 · 2026-10-26 · plan judge: ACT-01 y ACT-02 cerrados con NOT-01-ASM-03 y dos tests nuevos en T1; ver judge.md
+- L3 · 2026-10-26 · replaces: apps/mobile/test/permiso_al_entrar_test.dart (los 6 tests) · importaba soporte/admin.dart y soporte/usuario.dart, que no tienen SesionFalsa ni los perfiles (están en soporte/montar.dart) y no compilaba · by: apps/mobile/test/permiso_al_entrar_notificaciones_test.dart (mismos títulos y tags)
+- L4 · 2026-10-26 · T1 · flutter analyze: No issues; flutter test de los 3 archivos: All tests passed (66); SistemaFalso de notificaciones_test.dart ganó preguntado()=true
