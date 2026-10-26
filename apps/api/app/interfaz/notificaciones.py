@@ -1,3 +1,4 @@
+# kit-shape: las rutas de notificaciones y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import datetime
 from typing import Annotated, Literal
 

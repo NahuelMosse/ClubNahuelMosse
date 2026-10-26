@@ -1,3 +1,4 @@
+# kit-shape: las rutas de recuperación y los modelos de sus pedidos y respuestas se leen juntos
 import base64
 import hashlib
 from typing import Annotated
