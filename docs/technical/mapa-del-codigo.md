@@ -255,7 +255,7 @@ por archivo), `ADMIN_CONTRASENA` (sólo `sembrar_admin`) y `TEST_DATABASE_URL` (
 | 0006 | estados de envío y un aviso de cancelación por reserva |
 | 0007 | `notificacion_reserva` (avisos agrupados), `cantidad` y `reemplazada_por` |
 | 0008 | índices de historial creados con `CONCURRENTLY`, e `intentos` y `tomada_en` para retomar avisos varados |
-| 0009 | quita `intentos` y `tomada_en`: los avisos no se reintentan, y los que estaban `enviando` pasan a `fallida` |
+| 0009 | quita `intentos` y `tomada_en` (los avisos no se reintentan), agrega `enviando_desde` y los que estaban `enviando` pasan a `fallida` |
 
 Se corren con `uv run alembic upgrade head` desde `apps/api`. Una migración que ya está en `main` no se edita: se agrega
 otra.
