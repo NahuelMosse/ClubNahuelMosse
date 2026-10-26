@@ -73,7 +73,7 @@ app: sh D:/Temp/w/herramientas/arq01-app.sh sim01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh sim01_app --json --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 captures: sh D:/Temp/w/herramientas/arq03-capturas.sh
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8701/club_sim01_migra uv run --no-sync alembic upgrade head"
-mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit
+mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_casos_de_uso_reservas.py tests/unit/test_despacho_de_confirmaciones.py tests/integracion/test_sin_sobreingenieria_api.py
 mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_mensaje_cancelacion_forzosa.py tests/unit/test_recordatorios.py
 ```
 
