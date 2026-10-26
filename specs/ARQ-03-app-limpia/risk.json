@@ -1,0 +1,43 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "sesión",
+    "sesion"
+  ],
+  "files": [
+    "apps/mobile/lib/comun/fechas.dart",
+    "apps/mobile/lib/reservas/fechas.dart",
+    "apps/mobile/lib/comun/formato_fecha.dart",
+    "apps/mobile/lib/comun/reglas_registro.dart",
+    "apps/mobile/lib/comun/linea_del_dia.dart",
+    "apps/mobile/lib/notificaciones/notificacion.dart",
+    "apps/mobile/lib/reservas/horarios.dart",
+    "apps/mobile/lib/reservas/reservas.dart",
+    "apps/mobile/lib/reservas/reglas_busqueda.dart",
+    "apps/mobile/lib/admin/historial_reservas.dart",
+    "apps/mobile/lib/sesion/fallo_de_carga.dart",
+    "apps/mobile/lib/comun/chip_elegible.dart",
+    "apps/mobile/lib/comun/en_curso.dart",
+    "apps/mobile/lib/comun/errores_de_campo.dart",
+    "apps/mobile/lib/usuarios/pantalla_registro_exitoso.dart",
+    "apps/mobile/lib/espacios/espacios.dart",
+    "apps/mobile/lib/sedes/sedes.dart",
+    "apps/mobile/lib/sesion/sesion.dart",
+    "apps/mobile/lib/sesion/recuperacion.dart",
+    "apps/mobile/lib/admin/",
+    "apps/mobile/lib/reservas/",
+    "apps/mobile/lib/sedes/",
+    "apps/mobile/lib/usuarios/",
+    "apps/mobile/lib/sesion/",
+    "apps/mobile/lib/inicio/",
+    "apps/mobile/lib/notificaciones/"
+  ],
+  "tasks": 3
+}
