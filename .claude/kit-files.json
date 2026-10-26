@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "748e80be58110becf93a5d124b45aad55855f87ff8a4705b45d758170731655e"
+    "sha256": "1eeb4d4e9b08bac654ec84e4f964636cb8bf9b6a4b96d28389a42073bce5e7ce"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1349,7 +1349,7 @@
   },
   ".claude/tools/install.mjs": {
     "module": "core",
-    "sha256": "d14852f2be0e21740d05bbf0b9cbb5304c7979bbe750acad4dd106e3057754df"
+    "sha256": "8752ed9ff06471fea328ee3925e54e8303781a4fec68175448f486d431be7519"
   },
   ".claude/tools/judge-context.mjs": {
     "module": "core",
@@ -1357,14 +1357,14 @@
   },
   ".claude/tools/kit.mjs": {
     "module": "core",
-    "sha256": "150b585d4ad90f596a302b82bda99c4dac777ba89e5cf54ac71c82d4980bec1f"
+    "sha256": "a6abe278d94c621424fef49f59010050546574fcc0a6ea30b4ec15b6a9b4e5ec"
   },
   ".claude/tools/migrations.mjs": {
     "module": "core",
     "sha256": "f5d02bfedadc1a538b4de5015b517e3d60c63fdbe06f934f2d76d20ad483ad26"
   },
   ".claude/tools/motion-audit.mjs": {
-    "module": "profile:flutter",
+    "module": "profile:web",
     "sha256": "d40a2107b16f814996b3e1e375160bd601d6b67bed063a31486120c2457f6a4f"
   },
   ".claude/tools/mutate.mjs": {
@@ -1432,7 +1432,7 @@
     "sha256": "6d3c1a80ba2bff4bc66864d67cf56255989656b0b13bdf6e66ab5449c08b3c1a"
   },
   ".claude/agents/designer.md": {
-    "module": "profile:flutter",
+    "module": "profile:web",
     "sha256": "fcaafac9c5c9af435ebb30e014359303d7b4a6d5c58bcd1227fdfd7e6c423d15"
   },
   ".claude/agents/judge.md": {
@@ -1488,7 +1488,7 @@
     "sha256": "f8119b58d0ac8cf0fd5bb8358cd12289cbb5685504217a15e05c1024ca9f10cf"
   },
   ".claude/tools/motion-curves.mjs": {
-    "module": "profile:flutter",
+    "module": "profile:web",
     "sha256": "23dbb83121e78e1c13413a186bf0141f2aecab385554e9e290a34f0dc150649d"
   },
   ".claude/tools/plan.mjs": {
@@ -1869,7 +1869,7 @@
   },
   ".claude/profiles/flutter.md": {
     "module": "profile:flutter",
-    "sha256": "cda5800d8f8e59870f93a747a0a26e4cf62be0d3f873ba17bbacb6bf0da0713b"
+    "sha256": "71dfdace8bcc85006864e322c3bbea22c5903a2d221c5df66ad104b52ad22278"
   },
   ".claude/profiles/flutter/test-kit/example-motion.json": {
     "module": "profile:flutter",
@@ -1906,5 +1906,17 @@
   "test/kit/kit_motion.dart": {
     "module": "profile:flutter",
     "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
+  },
+  "apps/mobile/test/kit/kit_a11y.dart": {
+    "module": "profile:flutter",
+    "sha256": "3fdfe3bbc9a125a628810b170f9c0d711b9a803843c76499ebbf1baff3fc79a5"
+  },
+  "apps/mobile/test/kit/kit_motion.dart": {
+    "module": "profile:flutter",
+    "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
+  },
+  "apps/mobile/test/kit/kit_states.dart": {
+    "module": "profile:flutter",
+    "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
   }
 }

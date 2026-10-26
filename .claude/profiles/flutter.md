@@ -3,7 +3,7 @@
 Mobile screens in Flutter. The base method does not name a framework; this profile brings the instruments.
 
 ## What it brings
-- Dart helpers copied to `test/kit/` of the repo: `kit_states.dart` (`kitGolden`), `kit_a11y.dart` (`kitA11y`), `kit_motion.dart` (`kitTrace`).
+- Dart helpers copied to `test/kit/` of the Flutter package (the folder of the `pubspec.yaml` with `flutter:`: the repo root, or the shallowest one such as `apps/mobile/`): `kit_states.dart` (`kitGolden`), `kit_a11y.dart` (`kitA11y`), `kit_motion.dart` (`kitTrace`).
 - Tools: `flutter-gate.mjs` (`flutter analyze` and `flutter test`; `--accept` adds `--update-goldens`), `motion-audit.mjs compare`, `motion-curves.mjs`.
 - Agent: `designer` (its `## Flutter` section). Reference: `design-refs-mobile.md`.
 - The SDK is looked up in the `PATH` and in `FLUTTER_ROOT`; without it the gate says `could not run: flutter is not in the PATH`.

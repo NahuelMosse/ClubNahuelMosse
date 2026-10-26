@@ -226,9 +226,25 @@ export const filesOfModule = (map, name, all) => matching(map.modules[name].file
 export const filesOfProfile = (map, name, all) => matching(map.profiles?.[name]?.files ?? [], all);
 
 // The files a profile copies out of .claude/ into the repo: `{ from, to }`, as `copies` declares them.
-export const copiesOfProfile = (map, name) => map.profiles?.[name]?.copies ?? [];
+// A copy with `"package": "<file>"` goes into the package that file marks (`pubspec.yaml` with `flutter:` for the Dart helpers):
+// the repo root when it has one, else the shallowest folder that does (`apps/mobile/`), so the package's tests can import it.
+const SKIP_DIRS = new Set(['node_modules', '.git', 'build', '.dart_tool', 'ios', 'android', '.claude', 'specs']);
+export const packageDirOf = (root, marker) => {
+  const marks = (dir) => { try { const f = join(root, dir, marker); return existsSync(f) && (marker !== 'pubspec.yaml' || /^flutter:/m.test(readFileSync(f, 'utf8'))); } catch { return false; } };
+  let level = [''];
+  for (let depth = 0; depth <= 3 && level.length; depth++) {
+    const hit = level.filter(marks).sort()[0];
+    if (hit !== undefined) return hit;
+    level = level.flatMap((d) => { try { return readdirSync(join(root, d), { withFileTypes: true }).filter((e) => e.isDirectory() && !SKIP_DIRS.has(e.name)).map((e) => (d ? `${d}/${e.name}` : e.name)); } catch { return []; } });
+  }
+  return '';
+};
+export const copiesOfProfile = (map, name, root = null) => (map.profiles?.[name]?.copies ?? []).map((c) => {
+  const dir = root && c.package ? packageDirOf(root, c.package) : '';
+  return dir ? { ...c, to: `${dir}/${c.to}` } : c;
+});
 
-export const profileListsFile = (map, name, file) => filesOfProfile(map, name, [file]).length > 0 || copiesOfProfile(map, name).some((c) => c.to === file);
+export const profileListsFile = (map, name, file) => filesOfProfile(map, name, [file]).length > 0 || copiesOfProfile(map, name).some((c) => c.to === file || (c.package && file.endsWith(`/${c.to}`)));
 
 // The profile that owns a file: none means a module or the base. A file two profiles list belongs to
 // the first of `prefer` (the ones that are on) that lists it.
@@ -590,7 +606,7 @@ const turnProfile = (root, mode, name, reason, cardOpen = '') => {
     const { copied, kept } = copyFiles(source, root, files);
     manifest.files ??= {};
     for (const f of [...copied, ...files.filter((x) => !kept.includes(x) && existsSync(join(root, x)))]) manifest.files[f] = { module: `profile:${name}`, sha256: sha256(join(root, f)) };
-    for (const { from, to } of copiesOfProfile(sourceMap, name)) {
+    for (const { from, to } of copiesOfProfile(sourceMap, name, root)) {
       const dest = join(root, to);
       if (existsSync(dest)) { if (sha256(dest) !== sha256(join(source, from))) kept.push(to); else manifest.files[to] = { module: `profile:${name}`, sha256: sha256(dest) }; continue; }
       mkdirSync(dirname(dest), { recursive: true });
@@ -679,7 +695,7 @@ const repair = (root) => {
   const { copied, kept } = copyFiles(source, root, wanted.filter((f) => !existsSync(join(root, f))));
   state.manifest.files ??= {};
   for (const f of copied) state.manifest.files[f] = { module: modulesOfFile(sourceMap, f, all)[0] ?? (profileOfFile(sourceMap, f, profilesOn) ? `profile:${profileOfFile(sourceMap, f, profilesOn)}` : 'core'), sha256: sha256(join(root, f)) };
-  for (const { from, to } of profilesOn.flatMap((name) => copiesOfProfile(sourceMap, name))) {
+  for (const { from, to } of profilesOn.flatMap((name) => copiesOfProfile(sourceMap, name, root))) {
     if (existsSync(join(root, to))) continue;
     mkdirSync(dirname(join(root, to)), { recursive: true });
     copyFileSync(join(source, from), join(root, to));

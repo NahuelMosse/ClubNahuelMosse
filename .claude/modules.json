@@ -1,5 +1,5 @@
 {
-  "kit": "6.17.0",
+  "kit": "6.17.1",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
@@ -49,9 +49,9 @@
         ".claude/reference/design-refs-mobile.md"
       ],
       "copies": [
-        { "from": ".claude/profiles/flutter/test-kit/kit_states.dart", "to": "test/kit/kit_states.dart" },
-        { "from": ".claude/profiles/flutter/test-kit/kit_a11y.dart", "to": "test/kit/kit_a11y.dart" },
-        { "from": ".claude/profiles/flutter/test-kit/kit_motion.dart", "to": "test/kit/kit_motion.dart" }
+        { "from": ".claude/profiles/flutter/test-kit/kit_states.dart", "to": "test/kit/kit_states.dart", "package": "pubspec.yaml" },
+        { "from": ".claude/profiles/flutter/test-kit/kit_a11y.dart", "to": "test/kit/kit_a11y.dart", "package": "pubspec.yaml" },
+        { "from": ".claude/profiles/flutter/test-kit/kit_motion.dart", "to": "test/kit/kit_motion.dart", "package": "pubspec.yaml" }
       ],
       "mcp": {}
     }
