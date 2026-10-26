@@ -47,6 +47,14 @@ attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh arq02_app --json --no-ambien
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8701/club_arq02_migra uv run --no-sync alembic upgrade head"
 mutate apps/api/app/infraestructura/db.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_api_limpia.py tests/integracion/test_api_limpia_persistencia.py
 mutate apps/api/app/dominio/horarios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit
+mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit
+mutate apps/api/app/infraestructura/enlaces.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_recuperacion_api.py
+mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_espacios_api.py
+mutate apps/api/app/infraestructura/horarios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_reservas_api.py tests/integracion/test_espacios_api.py
+mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_notificaciones_api.py
+mutate apps/api/app/infraestructura/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_reservas_api.py tests/integracion/test_anular_reserva_api.py tests/integracion/test_historial_api.py
+mutate apps/api/app/infraestructura/sedes.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_sedes_api.py
+mutate apps/api/app/infraestructura/usuarios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_registro_api.py tests/integracion/test_perfil_api.py tests/integracion/test_baja_api.py tests/integracion/test_sesion_api.py
 no-visual: recuperacion.py arma una página HTML, pero la card sólo cambia cómo responde sus errores; ninguna pantalla cambia
 ```
 
