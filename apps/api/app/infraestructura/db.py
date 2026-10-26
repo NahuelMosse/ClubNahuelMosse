@@ -1,3 +1,4 @@
+# kit-shape: el motor y sus funciones de conexión van juntos
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import cache

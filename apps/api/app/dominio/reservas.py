@@ -1,3 +1,4 @@
+# kit-shape: los tipos de una reserva se leen juntos
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Literal
