@@ -27,7 +27,7 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider
-lint: sh D:/Temp/w/herramientas/arq01-lint.sh apps/api/app apps/api/tests
+lint: sh D:/Temp/w/herramientas/ruff-mypy-api-arq01.sh apps/api/app apps/api/tests
 app: sh D:/Temp/w/herramientas/arq01-app.sh arq01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh arq01_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo
 mutate apps/api/app/dependencias.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_repositorios_inyectados.py
