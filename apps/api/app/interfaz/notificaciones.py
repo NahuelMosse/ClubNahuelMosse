@@ -2,10 +2,9 @@ from datetime import datetime
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Path, Response, status
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
+from app.aplicacion.errores import NoDisponible
 from app.aplicacion.notificaciones import (
     dar_de_baja_dispositivo,
     marcar_leida,
@@ -16,7 +15,7 @@ from app.aplicacion.notificaciones import (
 from app.dependencias import NotificacionesSql, repositorio_notificaciones
 from app.dominio.notificaciones import Notificacion, TipoDeAviso
 from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import TokenDeDispositivo
+from app.interfaz.entradas import Identificador, TokenDeDispositivo
 from app.interfaz.reservas import Errores
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -58,12 +57,6 @@ def registrar(
         registrar_dispositivo(
             notificaciones, perfil, pedido.token, pedido.plataforma, pedido.permiso
         )
-    except Prohibido:
-        return Response(status_code=status.HTTP_403_FORBIDDEN)
-    except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-        )
     except NoDisponible:
         return Response(status_code=status.HTTP_409_CONFLICT)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -101,15 +94,7 @@ class Centro(BaseModel):
 
 
 def _vista(n: Notificacion) -> NotificacionVista:
-    return NotificacionVista(
-        id=n.id,
-        tipo=n.tipo,
-        titulo=n.titulo,
-        cuerpo=n.cuerpo,
-        reserva_id=n.reserva_id,
-        creada_en=n.creada_en,
-        leida=n.leida,
-    )
+    return NotificacionVista.model_validate(n, from_attributes=True)
 
 
 @router.get(
@@ -156,10 +141,7 @@ def leer_todas(
 def leer(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
-    notificacion_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    notificacion_id: Annotated[Identificador, Path()],
 ) -> Response:
-    try:
-        marcar_leida(notificaciones, perfil, notificacion_id)
-    except NoEncontrada:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+    marcar_leida(notificaciones, perfil, notificacion_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

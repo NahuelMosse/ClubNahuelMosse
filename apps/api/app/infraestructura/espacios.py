@@ -18,6 +18,7 @@ from app.dominio.espacios import (
     NombreSugerido,
     SedeDelEspacio,
 )
+from app.infraestructura.db import VENTANA_DE_REINTENTO, en_transaccion, restriccion_violada
 
 COLUMNAS_DE_ESPACIO = (
     "e.id, e.nombre, e.sede_id, s.nombre AS sede, e.deporte, e.tipo, e.numero, e.techada,"
@@ -26,8 +27,6 @@ COLUMNAS_DE_ESPACIO = (
 # Primer argumento de los candados de esta tabla: separa su espacio de claves del de otros
 # candados de la base.
 _CANDADO_NUMERACION = 21
-# Cuánto después de su alta un espacio se reconoce como el mismo pedido repetido.
-_VENTANA_DE_REINTENTO = "5 minutes"
 
 
 def espacio_de_fila(fila: Any) -> Espacio:
@@ -125,7 +124,7 @@ class EspaciosSql:
                 " AND e.numero = :numero AND e.activo AND e.creado_por = :autor"
                 " AND e.techada = :techada AND e.iluminada = :iluminada"
                 " AND e.precio_por_hora = :precio"
-                f" AND e.creado_en > now() - interval '{_VENTANA_DE_REINTENTO}'"
+                f" AND e.creado_en > now() - interval '{VENTANA_DE_REINTENTO}'"
             ),
             {
                 "sede": nuevo.sede_id,
@@ -148,57 +147,54 @@ class EspaciosSql:
         autor: int,
     ) -> Espacio:
         try:
-            # La sede se toma compartida para que no se dé de baja en el medio, y la
-            # numeración de ese tipo en esa sede, exclusiva: dos altas a la vez no calculan
-            # el mismo número.
-            sede = self._sede(nuevo.sede_id, bloquear=True)
-            if sede is None:
-                raise NoDisponible("la sede no está activa")
-            self._conn.execute(
-                text("SELECT pg_advisory_xact_lock(:espacio, hashtext(:c))"),
-                {
-                    "espacio": _CANDADO_NUMERACION,
-                    "c": f"{nuevo.sede_id}:{nuevo.deporte}:{nuevo.tipo}",
-                },
-            )
-            siguiente = self._calcular(nuevo.sede_id, sede, nuevo.deporte, nuevo.tipo, nombre)
-            if numero is not None and numero != siguiente.numero:
-                repetido = self._repetido(nuevo, numero, autor)
-                self._conn.rollback()
-                if repetido is not None:
-                    return repetido
-                raise NumeroOcupado(siguiente.numero, siguiente.nombre)
-            fila = self._conn.execute(
-                text(
-                    "WITH nuevo AS ("
-                    " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                    " iluminada, precio_por_hora, creado_por, modificado_por)"
-                    " VALUES (:sede, :deporte, :tipo, :numero, :nombre, :techada, :iluminada,"
-                    " :precio, :autor, :autor) RETURNING *)"
-                    f" SELECT {COLUMNAS_DE_ESPACIO} FROM nuevo e JOIN sede s ON s.id = e.sede_id"
-                ),
-                {
-                    "sede": nuevo.sede_id,
-                    "deporte": nuevo.deporte,
-                    "tipo": nuevo.tipo,
-                    "numero": siguiente.numero,
-                    "nombre": siguiente.nombre,
-                    "techada": nuevo.techada,
-                    "iluminada": nuevo.iluminada,
-                    "precio": nuevo.precio_por_hora,
-                    "autor": autor,
-                },
-            ).one()
-            self._conn.commit()
+            with en_transaccion(self._conn):
+                # La sede se toma compartida para que no se dé de baja en el medio, y la
+                # numeración de ese tipo en esa sede, exclusiva: dos altas a la vez no calculan
+                # el mismo número.
+                sede = self._sede(nuevo.sede_id, bloquear=True)
+                if sede is None:
+                    raise NoDisponible("la sede no está activa")
+                self._conn.execute(
+                    text("SELECT pg_advisory_xact_lock(:espacio, hashtext(:c))"),
+                    {
+                        "espacio": _CANDADO_NUMERACION,
+                        "c": f"{nuevo.sede_id}:{nuevo.deporte}:{nuevo.tipo}",
+                    },
+                )
+                siguiente = self._calcular(nuevo.sede_id, sede, nuevo.deporte, nuevo.tipo, nombre)
+                if numero is not None and numero != siguiente.numero:
+                    repetido = self._repetido(nuevo, numero, autor)
+                    self._conn.rollback()
+                    if repetido is not None:
+                        return repetido
+                    raise NumeroOcupado(siguiente.numero, siguiente.nombre)
+                fila = self._conn.execute(
+                    text(
+                        "WITH nuevo AS ("
+                        " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
+                        " iluminada, precio_por_hora, creado_por, modificado_por)"
+                        " VALUES (:sede, :deporte, :tipo, :numero, :nombre, :techada, :iluminada,"
+                        " :precio, :autor, :autor) RETURNING *)"
+                        f" SELECT {COLUMNAS_DE_ESPACIO} FROM nuevo e"
+                        " JOIN sede s ON s.id = e.sede_id"
+                    ),
+                    {
+                        "sede": nuevo.sede_id,
+                        "deporte": nuevo.deporte,
+                        "tipo": nuevo.tipo,
+                        "numero": siguiente.numero,
+                        "nombre": siguiente.nombre,
+                        "techada": nuevo.techada,
+                        "iluminada": nuevo.iluminada,
+                        "precio": nuevo.precio_por_hora,
+                        "autor": autor,
+                    },
+                ).one()
         except IntegrityError as e:
-            self._conn.rollback()
-            indice = getattr(getattr(e.orig, "diag", None), "constraint_name", None)
+            indice = restriccion_violada(e)
             # Un alta de otra sede tomó el mismo nombre entre el cálculo y el INSERT.
             if indice == "espacio_nombre_key":
                 raise Duplicado(["nombre"]) from e
-            raise
-        except BaseException:
-            self._conn.rollback()
             raise
         return espacio_de_fila(fila)
 
@@ -210,7 +206,7 @@ class EspaciosSql:
             "precio": cambio.precio_por_hora,
             "autor": autor,
         }
-        try:
+        with en_transaccion(self._conn):
             # La sede compartida y después la fila del espacio, el orden de una reserva: la
             # que se está guardando toma el precio de antes o el de ahora, entero.
             sede = self._conn.execute(
@@ -246,15 +242,11 @@ class EspaciosSql:
                 ),
                 datos,
             ).one()
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
         return espacio_de_fila(fila)
 
     def dar_de_baja(self, espacio_id: int, autor: int) -> None:
         datos = {"id": espacio_id, "autor": autor}
-        try:
+        with en_transaccion(self._conn):
             # La sede compartida y después el espacio exclusivo, el orden de una reserva: la
             # que se está haciendo termina antes y acá se la ve, o espera y encuentra el
             # espacio dado de baja.
@@ -284,10 +276,6 @@ class EspaciosSql:
                 ),
                 datos,
             )
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise
 
     def dar_de_baja_de_sede(self, sede_id: int, autor: int) -> None:
         """Da de baja los espacios activos de una sede, dentro de la transacción de quien llama:

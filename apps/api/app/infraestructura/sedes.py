@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from app.dominio.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
 from app.dominio.sedes import Sede, SedeNueva
 from app.dominio.zona import NOMBRE_ZONA_CLUB
+from app.infraestructura.db import en_transaccion, restriccion_violada
 from app.infraestructura.espacios import EspaciosSql
 
 _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
@@ -63,33 +64,29 @@ class SedesSql:
 
     def insertar(self, nueva: SedeNueva, autor: int) -> Sede:
         try:
-            fila = self._conn.execute(
-                text(
-                    "INSERT INTO sede AS s (nombre, calle, altura, apertura, cierre, dias,"
-                    " creado_por, modificado_por)"
-                    " VALUES (:nombre, :calle, :altura, :apertura, :cierre,"
-                    " CAST(:dias AS smallint[]), :autor, :autor)"
-                    f" RETURNING {_COLUMNAS}"
-                ),
-                {
-                    "nombre": nueva.nombre,
-                    "calle": nueva.calle,
-                    "altura": nueva.altura,
-                    "apertura": nueva.apertura,
-                    "cierre": nueva.cierre,
-                    "dias": list(nueva.dias),
-                    "autor": autor,
-                },
-            ).one()
-            self._conn.commit()
+            with en_transaccion(self._conn):
+                fila = self._conn.execute(
+                    text(
+                        "INSERT INTO sede AS s (nombre, calle, altura, apertura, cierre, dias,"
+                        " creado_por, modificado_por)"
+                        " VALUES (:nombre, :calle, :altura, :apertura, :cierre,"
+                        " CAST(:dias AS smallint[]), :autor, :autor)"
+                        f" RETURNING {_COLUMNAS}"
+                    ),
+                    {
+                        "nombre": nueva.nombre,
+                        "calle": nueva.calle,
+                        "altura": nueva.altura,
+                        "apertura": nueva.apertura,
+                        "cierre": nueva.cierre,
+                        "dias": list(nueva.dias),
+                        "autor": autor,
+                    },
+                ).one()
         except IntegrityError as e:
-            self._conn.rollback()
-            indice = getattr(getattr(e.orig, "diag", None), "constraint_name", None)
+            indice = restriccion_violada(e)
             if indice == "sede_nombre_activa_unico":
                 raise Duplicado(["nombre"]) from e
-            raise
-        except BaseException:
-            self._conn.rollback()
             raise
         return _sede(fila, canchas=0)
 
@@ -105,51 +102,50 @@ class SedesSql:
             "autor": autor,
         }
         try:
-            # Exclusiva: una reserva que se está haciendo en la sede termina antes, o espera
-            # al horario nuevo y se vuelve a validar con él.
-            antes = self._conn.execute(
-                text(
-                    "SELECT apertura, cierre, dias FROM sede WHERE id = :id AND activa FOR UPDATE"
-                ),
-                valores,
-            ).first()
-            if antes is None:
-                raise NoEncontrada("la sede ya no está activa")
-            if not confirmar:
-                afuera = int(
-                    self._conn.execute(
-                        text(
-                            "SELECT count(*) FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
-                            " WHERE e.sede_id = :id AND r.estado = 'activa' AND r.inicio > now()"
-                            f" AND {_afuera('')} AND NOT {_afuera('antes_')}"
-                        ),
-                        valores
-                        | {
-                            "antes_apertura": antes.apertura,
-                            "antes_cierre": antes.cierre,
-                            "antes_dias": list(antes.dias),
-                        },
-                    ).scalar_one()
+            with en_transaccion(self._conn):
+                # Exclusiva: una reserva que se está haciendo en la sede termina antes, o espera
+                # al horario nuevo y se vuelve a validar con él.
+                antes = self._conn.execute(
+                    text(
+                        "SELECT apertura, cierre, dias FROM sede"
+                        " WHERE id = :id AND activa FOR UPDATE"
+                    ),
+                    valores,
+                ).first()
+                if antes is None:
+                    raise NoEncontrada("la sede ya no está activa")
+                if not confirmar:
+                    afuera = int(
+                        self._conn.execute(
+                            text(
+                                "SELECT count(*) FROM reserva r"
+                                " JOIN espacio e ON e.id = r.espacio_id"
+                                " WHERE e.sede_id = :id AND r.estado = 'activa'"
+                                " AND r.inicio > now()"
+                                f" AND {_afuera('')} AND NOT {_afuera('antes_')}"
+                            ),
+                            valores
+                            | {
+                                "antes_apertura": antes.apertura,
+                                "antes_cierre": antes.cierre,
+                                "antes_dias": list(antes.dias),
+                            },
+                        ).scalar_one()
+                    )
+                    if afuera:
+                        raise ReservasAfuera(afuera)
+                self._conn.execute(
+                    text(
+                        "UPDATE sede SET nombre = :nombre, calle = :calle, altura = :altura,"
+                        " apertura = :apertura, cierre = :cierre, dias = CAST(:dias AS smallint[]),"
+                        " modificado_por = :autor, modificado_en = now() WHERE id = :id"
+                    ),
+                    valores,
                 )
-                if afuera:
-                    raise ReservasAfuera(afuera)
-            self._conn.execute(
-                text(
-                    "UPDATE sede SET nombre = :nombre, calle = :calle, altura = :altura,"
-                    " apertura = :apertura, cierre = :cierre, dias = CAST(:dias AS smallint[]),"
-                    " modificado_por = :autor, modificado_en = now() WHERE id = :id"
-                ),
-                valores,
-            )
-            self._conn.commit()
         except IntegrityError as e:
-            self._conn.rollback()
-            indice = getattr(getattr(e.orig, "diag", None), "constraint_name", None)
+            indice = restriccion_violada(e)
             if indice == "sede_nombre_activa_unico":
                 raise Duplicado(["nombre"]) from e
-            raise
-        except BaseException:
-            self._conn.rollback()
             raise
         guardada = next((s for s in self.activas() if s.id == sede_id), None)
         if guardada is None:
@@ -158,7 +154,7 @@ class SedesSql:
 
     def dar_de_baja(self, sede_id: int, autor: int) -> None:
         datos = {"id": sede_id, "autor": autor}
-        try:
+        with en_transaccion(self._conn):
             # Exclusiva: una reserva que se está haciendo en la sede termina antes y acá se la
             # ve, o espera y encuentra la sede dada de baja.
             if (
@@ -186,7 +182,3 @@ class SedesSql:
                 ),
                 datos,
             )
-            self._conn.commit()
-        except BaseException:
-            self._conn.rollback()
-            raise

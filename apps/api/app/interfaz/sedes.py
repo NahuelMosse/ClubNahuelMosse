@@ -1,4 +1,3 @@
-import re
 from datetime import time
 from typing import Annotated
 
@@ -6,20 +5,13 @@ from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from app.aplicacion.errores import (
-    ConReservasFuturas,
-    DatosInvalidos,
-    Duplicado,
-    NoEncontrada,
-    Prohibido,
-    ReservasAfuera,
-)
+from app.aplicacion.errores import ConReservasFuturas, Duplicado, ReservasAfuera
 from app.aplicacion.sedes import dar_de_alta_sede, dar_de_baja_sede, editar_sede, sedes_activas
 from app.dependencias import SedesSql, repositorio_sedes
 from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Texto40, Texto120
-from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
+from app.interfaz.entradas import Identificador, Texto40, Texto120, leer_hora
+from app.interfaz.respuestas import conflicto
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["sedes"])
@@ -83,25 +75,12 @@ class PedidoDeSede(BaseModel):
     dias: Annotated[list[int], Field(max_length=7)] = []
 
 
-_HORA = re.compile(r"\d{2}:\d{2}", re.ASCII)
-
-
-def _leer_hora(valor: str) -> time | None:
-    """`HH:MM` y nada más: `fromisoformat` también acepta zonas y formatos que no van."""
-    if not _HORA.fullmatch(valor):
-        return None
-    try:
-        return time.fromisoformat(valor)
-    except ValueError:
-        return None
-
-
 def _datos(pedido: PedidoDeSede) -> DatosSede:
     return DatosSede(
         nombre=pedido.nombre,
         direccion=pedido.direccion,
-        apertura=_leer_hora(pedido.apertura),
-        cierre=_leer_hora(pedido.cierre),
+        apertura=leer_hora(pedido.apertura),
+        cierre=leer_hora(pedido.cierre),
         dias=tuple(pedido.dias),
     )
 
@@ -126,10 +105,6 @@ def alta_de_sede(
 ) -> SedeVista | Response:
     try:
         sede = dar_de_alta_sede(perfil, _datos(pedido), sedes)
-    except Prohibido:
-        return sin_permiso()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except Duplicado:
         return conflicto({"nombre": "Ya existe una sede con ese nombre"})
     return _vista(sede)
@@ -168,16 +143,10 @@ def edicion_de_sede(
     pedido: PedidoDeEdicion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
-    sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    sede_id: Annotated[Identificador, Path()],
 ) -> SedeVista | Response:
     try:
         sede = editar_sede(perfil, sede_id, _datos(pedido), pedido.confirmar, sedes)
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except Duplicado:
         return conflicto({"nombre": "Ya existe una sede con ese nombre"})
     except ReservasAfuera as e:
@@ -205,14 +174,10 @@ def edicion_de_sede(
 def baja_de_sede(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
-    sede_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    sede_id: Annotated[Identificador, Path()],
 ) -> Response:
     try:
         dar_de_baja_sede(perfil, sede_id, sedes)
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
     except ConReservasFuturas:
         return conflicto(
             {"sede": "No se puede dar de baja la sede porque posee reservas futuras asociadas."}

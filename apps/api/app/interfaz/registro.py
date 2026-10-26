@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.errores import DatosInvalidos, Duplicado
+from app.aplicacion.errores import Duplicado
 from app.aplicacion.registro import registrar
 from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
 from app.dominio.usuarios import DatosRegistro
@@ -67,10 +67,6 @@ def registrar_usuario(
             hoy=datetime.now(ZONA).date(),
             identidad=proveedor,
             usuarios=usuarios,
-        )
-    except DatosInvalidos as e:
-        return JSONResponse(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
         )
     except Duplicado as e:
         return JSONResponse(

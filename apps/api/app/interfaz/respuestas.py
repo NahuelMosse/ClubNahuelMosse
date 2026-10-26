@@ -1,21 +1,8 @@
-"""Las respuestas de error que comparten todos los endpoints."""
+"""Las respuestas de error que comparten varios endpoints y que cada ruta elige. Las que toda la
+API responde igual las convierte `errores_http`."""
 
-from fastapi import Response, status
+from fastapi import status
 from fastapi.responses import JSONResponse
-
-
-def sin_permiso() -> Response:
-    return Response(status_code=status.HTTP_403_FORBIDDEN)
-
-
-def no_encontrado() -> Response:
-    return Response(status_code=status.HTTP_404_NOT_FOUND)
-
-
-def datos_invalidos(errores: dict[str, str]) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": errores}
-    )
 
 
 def conflicto(errores: dict[str, str]) -> JSONResponse:

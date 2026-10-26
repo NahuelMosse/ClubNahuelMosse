@@ -18,8 +18,6 @@ Dependencias de producción, directas y transitivas, instaladas en el entorno do
 | charset-normalizer | 3.5.1 | MIT | Ahmed R. TAHRI |
 | click | 8.5.0 | BSD-3-Clause | Pallets (https://github.com/pallets/click/) |
 | cryptography | 50.0.1 | Apache-2.0 OR BSD-3-Clause | The Python Cryptographic Authority and individual contributors (https://github.com/pyca/cryptography) |
-| dnspython | 2.8.0 | ISC | Bob Halley (https://www.dnspython.org) |
-| email-validator | 2.3.0 | Unlicense | Joshua Tauberer (https://github.com/JoshData/python-email-validator) |
 | fastapi | 0.141.1 | MIT | Sebastián Ramírez (https://github.com/fastapi/fastapi) |
 | firebase-admin | 7.7.0 | Apache-2.0 | Firebase (https://firebase.google.com/docs/admin/setup/) |
 | google-api-core | 2.39.0 | Apache-2.0 | Google LLC (https://github.com/googleapis/google-cloud-python/tree/main/packages/google-api-core) |
@@ -44,6 +42,7 @@ Dependencias de producción, directas y transitivas, instaladas en el entorno do
 | markupsafe | 3.0.3 | BSD-3-Clause | Pallets (https://github.com/pallets/markupsafe/) |
 | msgpack | 1.2.2 | Apache-2.0 | Inada Naoki (https://msgpack.org/) |
 | opentelemetry-api | 1.45.0 | Apache-2.0 | OpenTelemetry Authors (https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-api) |
+| prometheus-client | 0.26.0 | Apache-2.0 AND BSD-2-Clause | The Prometheus Authors (https://github.com/prometheus/client_python) |
 | proto-plus | 1.28.4 | Apache-2.0 | Google LLC (https://github.com/googleapis/google-cloud-python) |
 | protobuf | 7.36.2 | BSD-3-Clause | protobuf@googlegroups.com (https://developers.google.com/protocol-buffers/) |
 | psycopg | 3.3.6 | LGPL-3.0-only | Daniele Varrazzo (https://psycopg.org/) |

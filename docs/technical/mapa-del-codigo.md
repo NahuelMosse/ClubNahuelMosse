@@ -108,7 +108,7 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 | Cuentas y perfil | `registro.py`, `sesion.py`, `sembrar_admin.py` | `registro.py`, `sesion.py`, `perfil.py`, `baja.py`, `contrasena.py`, `administradores.py` | `usuarios.py` | `usuarios.py`, `identidad.py`, `credencial_firebase.py` | `sesion/`, `usuarios/` |
 | Recuperar la contraseña | `recuperacion.py` | `recuperacion.py` | `recuperacion.py` | `enlaces.py`, `correo.py` | `sesion/` |
 | Avisos y notificaciones | `notificaciones.py`, `barrido.py` | `notificaciones.py` | `notificaciones.py` | `notificaciones.py`, `push.py` | `notificaciones/` |
-| Transversal | `protecciones.py`, `limites.py`, `entradas.py`, `respuestas.py`, `registro_errores.py`, `metricas.py`, `salud.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
+| Transversal | `protecciones.py`, `limites.py`, `entradas.py`, `errores_http.py`, `respuestas.py`, `registro_errores.py`, `metricas.py`, `salud.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
 
 ### Archivo por archivo
 
@@ -179,8 +179,9 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 | `registro.py`, `sesion.py`, `recuperacion.py` | cuentas, perfil y contraseña; `sesion.py` define `usuario_actual`, la dependencia de autenticación |
 | `sedes.py`, `espacios.py`, `horarios.py`, `reservas.py`, `notificaciones.py` | las rutas de cada recurso |
 | `pruebas.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
-| `entradas.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identificador`…) y el handler de 422 y 400 |
-| `respuestas.py` | `sin_permiso`, `no_encontrado`, `datos_invalidos`, `conflicto` |
+| `entradas.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identificador`…), `leer_hora` y el handler de 422 y 400 |
+| `errores_http.py` | handlers de `DatosInvalidos` (422 con `errores`), `Prohibido` (403) y `NoEncontrada` (404), los tres iguales en toda la API |
+| `respuestas.py` | `conflicto`: el 409 con `errores` que cada ruta elige |
 | `marcador.py` | codifica y decodifica el cursor de las páginas del historial |
 | `limites.py` | límite de pedidos en memoria: `frenar_por_origen`, `frenar_por_cuenta`, 429 con `Retry-After` |
 | `protecciones.py` | middleware: Host permitido, tamaño del cuerpo (64 KB), cabeceras de seguridad |

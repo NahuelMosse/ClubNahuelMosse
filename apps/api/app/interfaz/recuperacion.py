@@ -3,10 +3,9 @@ import hashlib
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.aplicacion.errores import DatosInvalidos
 from app.aplicacion.recuperacion import EnlaceInvalido, enlace_vigente, pedir_enlace, usar_enlace
 from app.config import config
 from app.dependencias import (
@@ -44,12 +43,6 @@ class ErroresDeCampo(BaseModel):
     errores: dict[str, str]
 
 
-def _invalidos(e: DatosInvalidos) -> JSONResponse:
-    return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, content={"errores": e.errores}
-    )
-
-
 @router.post(
     "/recuperacion",
     status_code=status.HTTP_202_ACCEPTED,
@@ -63,10 +56,7 @@ def pedir(
     tareas: BackgroundTasks,
     enlaces: Annotated[EnlacesSql, Depends(repositorio_enlaces)],
 ) -> Response:
-    try:
-        mensaje = pedir_enlace(pedido.correo, config.url_publica, enlaces)
-    except DatosInvalidos as e:
-        return _invalidos(e)
+    mensaje = pedir_enlace(pedido.correo, config.url_publica, enlaces)
     if mensaje is not None:
         if config.correo_modo == "buzon":
             # En desarrollo y escenarios el buzón se llena antes de responder, así el
@@ -116,8 +106,6 @@ def usar(
             identidad=proveedor,
             usuarios=usuarios,
         )
-    except DatosInvalidos as e:
-        return _invalidos(e)
     except EnlaceInvalido:
         return Response(status_code=status.HTTP_410_GONE)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

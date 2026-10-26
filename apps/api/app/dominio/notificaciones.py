@@ -1,16 +1,15 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Literal, Protocol
 
 from app.dominio.espacios import CATALOGO
 from app.dominio.reservas import Reserva
+from app.dominio.zona import ZONA_CLUB
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
 Envio = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
 
-# El club está tres horas detrás de UTC, sin horario de verano.
-HORA_DEL_CLUB = timezone(timedelta(hours=-3))
 ANTICIPACION = timedelta(hours=1)
 DIAS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
 
@@ -134,7 +133,7 @@ def tipo_corto(deporte: str, tipo: str) -> str:
 
 
 def _hora(momento: datetime) -> str:
-    return momento.astimezone(HORA_DEL_CLUB).strftime("%H:%M")
+    return momento.astimezone(ZONA_CLUB).strftime("%H:%M")
 
 
 def mensaje_recordatorio(r: Recordatorio) -> Aviso:
@@ -153,7 +152,7 @@ def datos_del_aviso(tipo: TipoDeAviso, reserva_id: int | None) -> dict[str, str]
 
 def _cuando(momento: datetime) -> str:
     """«Mié 11, 20:00», en la hora del club."""
-    local = momento.astimezone(HORA_DEL_CLUB)
+    local = momento.astimezone(ZONA_CLUB)
     return f"{DIAS[local.weekday()]} {local.day}, {_hora(local)}"
 
 

@@ -9,9 +9,7 @@ from app.aplicacion.errores import (
     DatosInvalidos,
     Duplicado,
     NoDisponible,
-    NoEncontrada,
     NumeroOcupado,
-    Prohibido,
 )
 from app.aplicacion.espacios import (
     catalogo,
@@ -25,7 +23,7 @@ from app.dependencias import EspaciosSql, repositorio_espacios
 from app.dominio.espacios import DatosEspacio, Espacio
 from app.dominio.usuarios import Perfil
 from app.interfaz.entradas import Identificador, Texto40
-from app.interfaz.respuestas import conflicto, datos_invalidos, no_encontrado, sin_permiso
+from app.interfaz.respuestas import conflicto
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["espacios"])
@@ -57,14 +55,7 @@ class Catalogo(BaseModel):
 )
 def ver_catalogo(_: Annotated[Perfil, Depends(usuario_actual)]) -> Catalogo:
     return Catalogo(
-        deportes=[
-            DeporteVista(
-                clave=d.clave,
-                nombre=d.nombre,
-                tipos=[TipoVista(clave=t.clave, nombre=t.nombre) for t in d.tipos],
-            )
-            for d in catalogo()
-        ]
+        deportes=[DeporteVista.model_validate(d, from_attributes=True) for d in catalogo()]
     )
 
 
@@ -86,18 +77,7 @@ class ListaDeEspacios(BaseModel):
 
 
 def vista_de_espacio(e: Espacio) -> EspacioVista:
-    return EspacioVista(
-        id=e.id,
-        nombre=e.nombre,
-        sede_id=e.sede_id,
-        sede=e.sede,
-        deporte=e.deporte,
-        tipo=e.tipo,
-        numero=e.numero,
-        techada=e.techada,
-        iluminada=e.iluminada,
-        precio_por_hora=e.precio_por_hora,
-    )
+    return EspacioVista.model_validate(e, from_attributes=True)
 
 
 @router.get(
@@ -109,7 +89,7 @@ def vista_de_espacio(e: Espacio) -> EspacioVista:
 def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    sede_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
+    sede_id: Annotated[Identificador | None, Query()] = None,
     deporte: Annotated[Texto40 | None, Query(min_length=1)] = None,
     tipo: Annotated[Texto40 | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
@@ -142,16 +122,12 @@ def sugerir_nombre(
     sede_id: Annotated[Identificador, Query()],
     deporte: Annotated[Texto40, Query()],
     tipo: Annotated[Texto40, Query()],
-) -> Sugerencia | Response:
+) -> Sugerencia:
     try:
         s = nombre_sugerido(perfil, sede_id, deporte, tipo, espacios)
-    except Prohibido:
-        return sin_permiso()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except NoDisponible:
-        return datos_invalidos({"sede_id": SEDE_NO_DISPONIBLE})
-    return Sugerencia(nombre=s.nombre, numero=s.numero)
+        raise DatosInvalidos({"sede_id": SEDE_NO_DISPONIBLE}) from None
+    return Sugerencia.model_validate(s, from_attributes=True)
 
 
 class PedidoDeEspacio(BaseModel):
@@ -201,12 +177,8 @@ def alta_de_espacio(
     )
     try:
         espacio = dar_de_alta_espacio(perfil, datos, pedido.numero, espacios)
-    except Prohibido:
-        return sin_permiso()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except NoDisponible:
-        return datos_invalidos({"sede_id": SEDE_NO_DISPONIBLE})
+        raise DatosInvalidos({"sede_id": SEDE_NO_DISPONIBLE}) from None
     except NumeroOcupado as e:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
@@ -254,24 +226,17 @@ def edicion_de_espacio(
     pedido: PedidoDeCambio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
-) -> EspacioVista | Response:
-    try:
-        espacio = editar_espacio(
-            perfil,
-            espacio_id,
-            pedido.techada,
-            pedido.iluminada,
-            pedido.precio_por_hora,
-            frozenset(pedido.model_fields_set),
-            espacios,
-        )
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
+    espacio_id: Annotated[Identificador, Path()],
+) -> EspacioVista:
+    espacio = editar_espacio(
+        perfil,
+        espacio_id,
+        pedido.techada,
+        pedido.iluminada,
+        pedido.precio_por_hora,
+        frozenset(pedido.model_fields_set),
+        espacios,
+    )
     return vista_de_espacio(espacio)
 
 
@@ -293,14 +258,10 @@ def edicion_de_espacio(
 def baja_de_espacio(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    espacio_id: Annotated[Identificador, Path()],
 ) -> Response:
     try:
         dar_de_baja_espacio(perfil, espacio_id, espacios)
-    except Prohibido:
-        return sin_permiso()
-    except NoEncontrada:
-        return no_encontrado()
     except ConReservasFuturas:
         return conflicto(
             {"espacio": "No se puede dar de baja el espacio porque posee reservas futuras."}

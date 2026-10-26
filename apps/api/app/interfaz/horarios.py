@@ -1,5 +1,4 @@
-import re
-from datetime import date, datetime, time
+from datetime import date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, status
@@ -13,8 +12,8 @@ from app.dependencias import HorariosSql, repositorio_horarios
 from app.dominio.horarios import MAX_HORAS, MIN_HORAS
 from app.dominio.usuarios import Perfil
 from app.dominio.zona import ZONA_CLUB as ZONA
+from app.interfaz.entradas import Identificador, leer_hora
 from app.interfaz.espacios import ListaDeEspacios, vista_de_espacio
-from app.interfaz.respuestas import datos_invalidos
 from app.interfaz.sesion import SinSesion, usuario_actual
 
 router = APIRouter(tags=["horarios"])
@@ -62,10 +61,10 @@ def _hora(momento: datetime) -> str:
 def ver_horarios(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
-    espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
+    espacio_id: Annotated[Identificador, Path()],
     fecha: Annotated[date | None, Query()] = None,
     horas: Annotated[int, Query(ge=MIN_HORAS, le=MAX_HORAS)] = MIN_HORAS,
-    reserva_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
+    reserva_id: Annotated[Identificador | None, Query()] = None,
 ) -> GrillaVista | JSONResponse:
     try:
         g = horarios_disponibles(
@@ -76,8 +75,6 @@ def ver_horarios(
             datetime.now(ZONA),
             None if reserva_id is None else (reserva_id, perfil.id),
         )
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except NoDisponible:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -96,17 +93,6 @@ def ver_horarios(
 
 
 SEDE_NO_DISPONIBLE = "La sede ya no está disponible"
-_HORA = re.compile(r"\d{2}:\d{2}")
-
-
-def _leer_hora(valor: str) -> time | None:
-    """`HH:MM` y nada más."""
-    if not _HORA.fullmatch(valor):
-        return None
-    try:
-        return time.fromisoformat(valor)
-    except ValueError:
-        return None
 
 
 @router.get(
@@ -124,27 +110,25 @@ def _leer_hora(valor: str) -> time | None:
 def ver_disponibles(
     _: Annotated[Perfil, Depends(usuario_actual)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
-    sede_id: Annotated[int, Query(ge=1, le=2**63 - 1)],
+    sede_id: Annotated[Identificador, Query()],
     deporte: Annotated[str, Query(min_length=1, max_length=40)],
     fecha: Annotated[date, Query()],
     desde: Annotated[str, Query(max_length=5)],
     hasta: Annotated[str, Query(max_length=5)],
     tipo: Annotated[str | None, Query(min_length=1, max_length=40)] = None,
-) -> ListaDeEspacios | JSONResponse:
-    inicio, fin = _leer_hora(desde), _leer_hora(hasta)
+) -> ListaDeEspacios:
+    inicio, fin = leer_hora(desde), leer_hora(hasta)
     errores = {
         campo: "Elegí una hora en punto"
         for campo, hora in (("desde", inicio), ("hasta", fin))
         if hora is None
     }
     if inicio is None or fin is None:
-        return datos_invalidos(errores)
+        raise DatosInvalidos(errores)
     try:
         libres = canchas_disponibles(
             horarios, sede_id, deporte, tipo, fecha, inicio, fin, datetime.now(ZONA)
         )
-    except DatosInvalidos as e:
-        return datos_invalidos(e.errores)
     except NoDisponible:
-        return datos_invalidos({"sede_id": SEDE_NO_DISPONIBLE})
+        raise DatosInvalidos({"sede_id": SEDE_NO_DISPONIBLE}) from None
     return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in libres])

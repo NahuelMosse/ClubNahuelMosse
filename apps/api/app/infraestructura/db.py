@@ -1,10 +1,12 @@
 from collections.abc import Iterator
+from contextlib import contextmanager
 from functools import cache
 from pathlib import Path
 
 from alembic.config import Config as AlembicConfig
 from alembic.script import ScriptDirectory
 from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.pool import QueuePool
 
 from app.config import RAIZ_API, config
@@ -15,6 +17,8 @@ POOL_MAXIMO = POOL_BASE + POOL_EXTRA
 # Una base que no responde tiene que fallar rápido y no colgar los pedidos.
 _ESPERA_CONEXION_S = 5
 _OPCIONES = "-c statement_timeout=10000 -c lock_timeout=5000"
+# Cuánto después de su alta una fila se reconoce como el mismo pedido repetido.
+VENTANA_DE_REINTENTO = "5 minutes"
 
 
 @cache
@@ -52,6 +56,22 @@ def conexion() -> Iterator[Connection]:
     se confirmó se descarta al cerrar."""
     with motor().connect() as conn:
         yield conn
+
+
+@contextmanager
+def en_transaccion(conn: Connection) -> Iterator[None]:
+    """Confirma lo que hace el bloque; ante cualquier error lo deshace y relanza el original."""
+    try:
+        yield
+        conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
+
+
+def restriccion_violada(e: IntegrityError) -> str | None:
+    """El nombre de la restricción que rechazó la escritura, si el motor la informa."""
+    return getattr(getattr(e.orig, "diag", None), "constraint_name", None)
 
 
 def base_disponible() -> bool:
