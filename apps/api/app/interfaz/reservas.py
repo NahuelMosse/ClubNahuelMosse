@@ -4,7 +4,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
     Cambiado,
@@ -25,7 +24,7 @@ from app.aplicacion.reservas import (
     modificar_reserva,
     reservar,
 )
-from app.dependencias import ReservasSql, canal_push, conexion
+from app.dependencias import ReservasSql, canal_push, repositorio_reservas
 from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva, ReservaHistorial
 from app.dominio.usuarios import Perfil
 from app.dominio.zona import ZONA_CLUB as ZONA
@@ -95,7 +94,7 @@ def _vista(r: Reserva) -> ReservaVista:
 )
 def listar_reservas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     cuando: Annotated[Cuando, Query()] = "proximas",
     despues: Annotated[str | None, Query()] = None,
 ) -> ListaDeReservas | Response:
@@ -103,7 +102,7 @@ def listar_reservas(
         marcador = None if despues is None else leer(despues)
     except DatosInvalidos as e:
         return datos_invalidos(e.errores)
-    tanda = mis_reservas(ReservasSql(conn), perfil, cuando, marcador)
+    tanda = mis_reservas(reservas, perfil, cuando, marcador)
     return ListaDeReservas(
         reservas=[_vista(r) for r in tanda.reservas],
         siguiente=siguiente(tanda.reservas, tanda.hay_mas),
@@ -149,11 +148,11 @@ def _leer_hora(valor: str) -> time | None:
 def hacer_reserva(
     pedido: PedidoDeReserva,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
 ) -> ReservaVista | Response:
     try:
         reserva = reservar(
-            ReservasSql(conn),
+            reservas,
             perfil,
             pedido.espacio_id,
             pedido.fecha,
@@ -200,13 +199,13 @@ def _rechazo(e: Prohibido | NoEncontrada | DatosInvalidos) -> Response:
 )
 def cancelar(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
     despues: BackgroundTasks,
     canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaVista | Response:
     try:
-        reserva = cancelar_reserva(ReservasSql(conn), perfil, reserva_id)
+        reserva = cancelar_reserva(reservas, perfil, reserva_id)
     except NoEncontrada:
         return no_encontrado()
     except Cambiado:
@@ -246,12 +245,12 @@ class PedidoDeCambio(BaseModel):
 def modificar(
     pedido: PedidoDeCambio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> ReservaVista | Response:
     try:
         reserva = modificar_reserva(
-            ReservasSql(conn),
+            reservas,
             perfil,
             reserva_id,
             pedido.espacio_id,
@@ -324,7 +323,7 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
 )
 def listar_todas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     estado: Annotated[FiltroEstado | None, Query()] = None,
     sede_id: Annotated[Identificador | None, Query()] = None,
     deporte: Annotated[Texto40 | None, Query()] = None,
@@ -336,7 +335,7 @@ def listar_todas(
 ) -> HistorialVista | Response:
     try:
         historial = historial_global(
-            ReservasSql(conn),
+            reservas,
             perfil,
             FiltrosHistorial(
                 estado=estado,
@@ -380,11 +379,11 @@ def listar_todas(
 )
 def detalle(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> ReservaHistorialVista | Response:
     try:
-        return _vista_admin(detalle_admin(ReservasSql(conn), perfil, reserva_id))
+        return _vista_admin(detalle_admin(reservas, perfil, reserva_id))
     except Prohibido:
         return sin_permiso()
     except NoEncontrada:
@@ -419,14 +418,14 @@ class PedidoDeAnulacion(BaseModel):
 def anular(
     pedido: PedidoDeAnulacion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
     despues: BackgroundTasks,
     canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaHistorialVista | Response:
     try:
         reserva = anular_reserva(
-            ReservasSql(conn),
+            reservas,
             perfil,
             reserva_id,
             pedido.motivo,

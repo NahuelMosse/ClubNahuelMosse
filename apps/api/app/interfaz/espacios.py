@@ -3,7 +3,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.errores import (
     ConReservasFuturas,
@@ -22,7 +21,7 @@ from app.aplicacion.espacios import (
     espacios_activos,
     nombre_sugerido,
 )
-from app.dependencias import EspaciosSql, conexion
+from app.dependencias import EspaciosSql, repositorio_espacios
 from app.dominio.espacios import DatosEspacio, Espacio
 from app.dominio.usuarios import Perfil
 from app.interfaz.entradas import Identificador, Texto40
@@ -109,13 +108,13 @@ def vista_de_espacio(e: Espacio) -> EspacioVista:
 )
 def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     sede_id: Annotated[int | None, Query(ge=1, le=2**63 - 1)] = None,
     deporte: Annotated[Texto40 | None, Query(min_length=1)] = None,
     tipo: Annotated[Texto40 | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
-    espacios = espacios_activos(EspaciosSql(conn), sede_id, deporte, tipo)
-    return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in espacios])
+    activos = espacios_activos(espacios, sede_id, deporte, tipo)
+    return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in activos])
 
 
 class Sugerencia(BaseModel):
@@ -139,13 +138,13 @@ class Errores(BaseModel):
 )
 def sugerir_nombre(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     sede_id: Annotated[Identificador, Query()],
     deporte: Annotated[Texto40, Query()],
     tipo: Annotated[Texto40, Query()],
 ) -> Sugerencia | Response:
     try:
-        s = nombre_sugerido(perfil, sede_id, deporte, tipo, EspaciosSql(conn))
+        s = nombre_sugerido(perfil, sede_id, deporte, tipo, espacios)
     except Prohibido:
         return sin_permiso()
     except DatosInvalidos as e:
@@ -190,7 +189,7 @@ class PedidoDeEspacio(BaseModel):
 def alta_de_espacio(
     pedido: PedidoDeEspacio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
 ) -> EspacioVista | Response:
     datos = DatosEspacio(
         sede_id=pedido.sede_id,
@@ -200,7 +199,6 @@ def alta_de_espacio(
         iluminada=pedido.iluminada,
         precio_por_hora=pedido.precio_por_hora,
     )
-    espacios = EspaciosSql(conn)
     try:
         espacio = dar_de_alta_espacio(perfil, datos, pedido.numero, espacios)
     except Prohibido:
@@ -255,7 +253,7 @@ class PedidoDeCambio(BaseModel):
 def edicion_de_espacio(
     pedido: PedidoDeCambio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> EspacioVista | Response:
     try:
@@ -266,7 +264,7 @@ def edicion_de_espacio(
             pedido.iluminada,
             pedido.precio_por_hora,
             frozenset(pedido.model_fields_set),
-            EspaciosSql(conn),
+            espacios,
         )
     except Prohibido:
         return sin_permiso()
@@ -294,11 +292,11 @@ def edicion_de_espacio(
 )
 def baja_de_espacio(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
-    conn: Annotated[Connection, Depends(conexion, scope="function")],
+    espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     espacio_id: Annotated[int, Path(ge=1, le=2**63 - 1)],
 ) -> Response:
     try:
-        dar_de_baja_espacio(perfil, espacio_id, EspaciosSql(conn))
+        dar_de_baja_espacio(perfil, espacio_id, espacios)
     except Prohibido:
         return sin_permiso()
     except NoEncontrada:

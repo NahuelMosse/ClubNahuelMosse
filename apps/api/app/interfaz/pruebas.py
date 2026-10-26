@@ -9,7 +9,7 @@ from sqlalchemy import Connection, text
 
 from app.aplicacion.notificaciones import enviar_recordatorios
 from app.aplicacion.recuperacion import hash_de
-from app.dependencias import NotificacionesSql, canal_push, conexion
+from app.dependencias import NotificacionesSql, canal_push, conexion, repositorio_notificaciones
 from app.dominio.zona import NOMBRE_ZONA_CLUB
 
 router = APIRouter(prefix="/_pruebas", include_in_schema=False)
@@ -181,7 +181,11 @@ class Registrados(BaseModel):
 
 
 @router.post("/recordatorios")
-def barrer(pedido: Barrido, conn: Conexion) -> Registrados:
+def barrer(
+    pedido: Barrido,
+    conn: Conexion,
+    notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
+) -> Registrados:
     """El barrido de recordatorios corriendo a la hora [ahora], como si el reloj del servidor
     fuera ésa."""
     usuario = None
@@ -195,7 +199,7 @@ def barrer(pedido: Barrido, conn: Conexion) -> Registrados:
             return Registrados(registrados=0)
     ahora = pedido.ahora or datetime.now().astimezone()
     return Registrados(
-        registrados=enviar_recordatorios(NotificacionesSql(conn), canal_push(), ahora, usuario)
+        registrados=enviar_recordatorios(notificaciones, canal_push(), ahora, usuario)
     )
 
 

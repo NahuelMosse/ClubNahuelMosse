@@ -5,18 +5,23 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
-from sqlalchemy import Connection
 
 from app.aplicacion.errores import DatosInvalidos
 from app.aplicacion.recuperacion import EnlaceInvalido, enlace_vigente, pedir_enlace, usar_enlace
 from app.config import config
-from app.dependencias import EnlacesSql, ProveedorFirebase, UsuariosSql, conexion
+from app.dependencias import (
+    EnlacesSql,
+    ProveedorFirebase,
+    UsuariosSql,
+    identidad,
+    repositorio_enlaces,
+    repositorio_usuarios,
+)
 from app.dependencias import enviar_correo as enviar
 from app.interfaz.entradas import Clave, Codigo, Correo
 from app.interfaz.limites import Frenado, frenar_por_origen
 
 router = APIRouter(tags=["recuperación de contraseña"])
-Conexion = Annotated[Connection, Depends(conexion, scope="function")]
 
 # El paquete de la app en Android: el enlace del correo la abre con este intent.
 PAQUETE_ANDROID = "ar.edu.unimoron.clubnahuelmosse"
@@ -53,9 +58,13 @@ def _invalidos(e: DatosInvalidos) -> JSONResponse:
     description="Responde lo mismo exista o no una cuenta con ese correo.",
     dependencies=[Depends(frenar_por_origen("recuperacion"))],
 )
-def pedir(pedido: PedidoDeEnlace, tareas: BackgroundTasks, conn: Conexion) -> Response:
+def pedir(
+    pedido: PedidoDeEnlace,
+    tareas: BackgroundTasks,
+    enlaces: Annotated[EnlacesSql, Depends(repositorio_enlaces)],
+) -> Response:
     try:
-        mensaje = pedir_enlace(pedido.correo, config.url_publica, EnlacesSql(conn))
+        mensaje = pedir_enlace(pedido.correo, config.url_publica, enlaces)
     except DatosInvalidos as e:
         return _invalidos(e)
     if mensaje is not None:
@@ -76,8 +85,10 @@ def pedir(pedido: PedidoDeEnlace, tareas: BackgroundTasks, conn: Conexion) -> Re
     responses={410: {"description": "El enlace venció, ya se usó o fue reemplazado"}},
     summary="Saber si un enlace de recuperación sigue sirviendo",
 )
-def consultar(consulta: ConsultaDeEnlace, conn: Conexion) -> Response:
-    vigente = bool(consulta.codigo) and enlace_vigente(consulta.codigo, EnlacesSql(conn))
+def consultar(
+    consulta: ConsultaDeEnlace, enlaces: Annotated[EnlacesSql, Depends(repositorio_enlaces)]
+) -> Response:
+    vigente = bool(consulta.codigo) and enlace_vigente(consulta.codigo, enlaces)
     return Response(status_code=status.HTTP_204_NO_CONTENT if vigente else status.HTTP_410_GONE)
 
 
@@ -91,14 +102,19 @@ def consultar(consulta: ConsultaDeEnlace, conn: Conexion) -> Response:
     summary="Crear la contraseña nueva con el enlace",
     description="El enlace deja de servir y se invalidan todas las sesiones de la cuenta.",
 )
-def usar(pedido: ContrasenaNueva, conn: Conexion) -> Response:
+def usar(
+    pedido: ContrasenaNueva,
+    enlaces: Annotated[EnlacesSql, Depends(repositorio_enlaces)],
+    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
+    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
+) -> Response:
     try:
         usar_enlace(
             pedido.codigo,
             pedido.nueva,
-            EnlacesSql(conn),
-            identidad=ProveedorFirebase(),
-            usuarios=UsuariosSql(conn),
+            enlaces,
+            identidad=proveedor,
+            usuarios=usuarios,
         )
     except DatosInvalidos as e:
         return _invalidos(e)

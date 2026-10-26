@@ -83,12 +83,32 @@ interfaz  ──►  aplicacion  ──►  dominio
   infraestructura ni interfaz.
 - **`infraestructura/`**: SQL con `text()` sobre una `Connection` de SQLAlchemy (no hay ORM ni modelos), Firebase y
   correo. Cada repositorio escribe sólo sus tablas.
-- **`interfaz/`**: rutas FastAPI, middleware y comandos. Toma lo de infraestructura únicamente a través de
-  `app/dependencias.py`.
+- **`interfaz/`**: rutas FastAPI, middleware y comandos. Las rutas reciben cada repositorio y servicio con `Depends`
+  desde los proveedores de `app/dependencias.py` (`repositorio_reservas`, `repositorio_sedes`, …, `identidad`) y no
+  construyen nada de infraestructura; un test los reemplaza con `app.dependency_overrides`. Los comandos de consola
+  (`barrido.py`, `sembrar_admin.py`) no tienen pedido HTTP y arman sus piezas ellos mismos.
 
-Los tests de `tests/unit/test_arquitectura.py`, `test_capas.py` y `test_capas_integracion.py` hacen cumplir estas
-reglas: qué importa cada capa, qué tablas escribe cada repositorio (`TABLAS_PROPIAS`), que no haya `type: ignore`, que la
-zona del club se defina una sola vez y que `ANTICIPACION` salga del dominio.
+Los tests de `tests/unit/test_arquitectura.py`, `test_capas.py`, `test_capas_integracion.py` y
+`test_repositorios_inyectados.py` hacen cumplir estas reglas: qué importa cada capa, qué tablas escribe cada repositorio
+(`TABLAS_PROPIAS`), que ninguna ruta construya infraestructura, que no haya `type: ignore`, que la zona del club se defina
+una sola vez y que `ANTICIPACION` salga del dominio.
+
+### Por funcionalidad
+
+El código se agrupa por capa y no por funcionalidad: las reglas de dependencia se comprueban por carpeta, y cada
+funcionalidad tiene un archivo con el mismo nombre en cada capa. Para trabajar sobre una funcionalidad, estos son sus
+archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/lib/`):
+
+| Funcionalidad | `interfaz/` | `aplicacion/` | `dominio/` | `infraestructura/` | App |
+|---|---|---|---|---|---|
+| Reservas | `reservas.py`, `marcador.py` | `reservas.py` | `reservas.py` | `reservas.py` | `reservas/` |
+| Horarios y canchas libres | `horarios.py` | `horarios.py`, `disponibilidad.py` | `horarios.py` | `horarios.py` | `reservas/` |
+| Sedes | `sedes.py` | `sedes.py` | `sedes.py` | `sedes.py` | `sedes/`, `admin/` |
+| Espacios (canchas) | `espacios.py` | `espacios.py` | `espacios.py` | `espacios.py` | `espacios/`, `admin/` |
+| Cuentas y perfil | `registro.py`, `sesion.py`, `sembrar_admin.py` | `registro.py`, `sesion.py`, `perfil.py`, `baja.py`, `contrasena.py`, `administradores.py` | `usuarios.py` | `usuarios.py`, `identidad.py`, `credencial_firebase.py` | `sesion/`, `usuarios/` |
+| Recuperar la contraseña | `recuperacion.py` | `recuperacion.py` | `recuperacion.py` | `enlaces.py`, `correo.py` | `sesion/` |
+| Avisos y notificaciones | `notificaciones.py`, `barrido.py` | `notificaciones.py` | `notificaciones.py` | `notificaciones.py`, `push.py` | `notificaciones/` |
+| Transversal | `protecciones.py`, `limites.py`, `entradas.py`, `respuestas.py`, `registro_errores.py`, `metricas.py`, `salud.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
 
 ### Archivo por archivo
 
