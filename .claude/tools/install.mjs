@@ -366,6 +366,8 @@ const update = (o, target, source, map) => {
   for (const [rel, rec] of Object.entries(manifest.files ?? {}).filter(([r, x]) => !wanted.has(r) && state.modules[x.module]?.state !== 'off')) {
     const path = join(target, rel);
     if (existsSync(path) && sha(readFileSync(path)) === rec.sha256) { rmSync(path); removed.push(rel); delete state.files[rel]; }
+    // A record of a file the kit no longer places there, and that is not on disk, is only a stale line of the manifest.
+    else if (!existsSync(path)) delete state.files[rel];
   }
   // A source of another version that changes nothing is not an update: it is a stale or wrong source.
   if (map.kit !== manifest.kit && !replaced.length && !removed.length)

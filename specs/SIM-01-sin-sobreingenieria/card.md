@@ -136,3 +136,4 @@ mutate apps/api/migraciones/versions/0009_avisos_sin_reintentos.py: sh D:/Temp/w
 - L50 · 2026-10-26 · declared · K4 · apps/api/tests/unit/test_documentacion_supuestos_vigente.py · test congelado; los congelados no se editan ni se importan entre sí (vs test_documentacion_vigente.py)
 - L51 · 2026-10-26 · declared · K4 · apps/mobile/test/sin_sobreingenieria_a11y_test.dart · armado de pantalla del test congelado; los congelados no se editan ni se importan entre sí (vs pantalla_panel_admin_test.dart, reintento_tras_corte_test.dart, anular_reserva_test.dart)
 - L52 · 2026-10-26 · shape · `# kit-shape:` en dominio/reservas.py (los tipos de una reserva se leen juntos) y infraestructura/db.py (el motor y sus funciones de conexión van juntos); almacen_de_avisos.py y almacen_de_reservas.py agregados a T5 y T4
+- L53 · 2026-10-26 · kit updated c1c38b3a7493f40c5342e0e3d13519b01723ce3b → 440e63628bf1cf2dc2867520e033d628b18457c9 · SIM-01 remove-only pedía línea de diseño

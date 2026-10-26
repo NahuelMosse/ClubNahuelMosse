@@ -105,7 +105,7 @@
   },
   ".claude/hooks/time-cap.mjs": {
     "module": "core",
-    "sha256": "cca3b3416ce2732ccab27c3a5b10b8201760557094b2d22e2d845193ea057906"
+    "sha256": "27ea27dfdc167011a44da9a6642ae7f51f52e9bed0b979acba3455f670dc6609"
   },
   ".claude/hooks/trim-output.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "1eeb4d4e9b08bac654ec84e4f964636cb8bf9b6a4b96d28389a42073bce5e7ce"
+    "sha256": "7a30138b43e5fd0168fb9247ab1d59effe0470454e5596e6cb0d673129e2ddbb"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1349,7 +1349,7 @@
   },
   ".claude/tools/install.mjs": {
     "module": "core",
-    "sha256": "8752ed9ff06471fea328ee3925e54e8303781a4fec68175448f486d431be7519"
+    "sha256": "b85393b2bf96ff24b0bcc9e111bb26709a0c5395bedbcb6eabf8c84f2dde6809"
   },
   ".claude/tools/judge-context.mjs": {
     "module": "core",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "675236901aef8ed89a99aef815cd7068f83a9650547cf26da6924599ecbf45e6"
+    "sha256": "d74af8a3dcfea2943cb0261dcb8c2fe56dad7e416e1b4a3611efe0f29b56ca8b"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1894,18 +1894,6 @@
   ".claude/tools/flutter-gate.mjs": {
     "module": "profile:flutter",
     "sha256": "d0bde5d25f97130572fd30b7d37398931de492bcceb806f919d6a0ed917c4ced"
-  },
-  "test/kit/kit_states.dart": {
-    "module": "profile:flutter",
-    "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
-  },
-  "test/kit/kit_a11y.dart": {
-    "module": "profile:flutter",
-    "sha256": "3fdfe3bbc9a125a628810b170f9c0d711b9a803843c76499ebbf1baff3fc79a5"
-  },
-  "test/kit/kit_motion.dart": {
-    "module": "profile:flutter",
-    "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
   },
   "apps/mobile/test/kit/kit_a11y.dart": {
     "module": "profile:flutter",
