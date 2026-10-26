@@ -78,6 +78,7 @@ migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:cl
 mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_casos_de_uso_reservas.py tests/unit/test_despacho_de_confirmaciones.py tests/integracion/test_sin_sobreingenieria_api.py
 mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_mensaje_cancelacion_forzosa.py tests/unit/test_recordatorios.py
 mutate apps/api/app/aplicacion/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_recordatorios.py tests/unit/test_mensaje_cancelacion_forzosa.py
+mutate apps/api/app/aplicacion/almacen_de_avisos.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py
 mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_sin_sobreingenieria_api.py tests/integracion/test_aviso_en_envio_perdido.py tests/integracion/test_notificaciones_api.py
 mutate apps/api/migraciones/versions/0009_avisos_sin_reintentos.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_sin_sobreingenieria_api.py
 ```
@@ -137,3 +138,5 @@ mutate apps/api/migraciones/versions/0009_avisos_sin_reintentos.py: sh D:/Temp/w
 - L51 · 2026-10-26 · declared · K4 · apps/mobile/test/sin_sobreingenieria_a11y_test.dart · armado de pantalla del test congelado; los congelados no se editan ni se importan entre sí (vs pantalla_panel_admin_test.dart, reintento_tras_corte_test.dart, anular_reserva_test.dart)
 - L52 · 2026-10-26 · shape · `# kit-shape:` en dominio/reservas.py (los tipos de una reserva se leen juntos) y infraestructura/db.py (el motor y sus funciones de conexión van juntos); almacen_de_avisos.py y almacen_de_reservas.py agregados a T5 y T4
 - L53 · 2026-10-26 · kit updated c1c38b3a7493f40c5342e0e3d13519b01723ce3b → 440e63628bf1cf2dc2867520e033d628b18457c9 · SIM-01 remove-only pedía línea de diseño
+- L54 · 2026-10-26 · declared · K4 · apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py · test congelado; los congelados no se editan ni se importan entre sí (vs test_documentacion_vigente.py); L50 nombró el archivo bajo tests/unit
+- L55 · 2026-10-26 · shape: las rutas de espacios y horarios y el repositorio de avisos llevan `kit-shape:`; se reparten por funcionalidad en ARQ-04
