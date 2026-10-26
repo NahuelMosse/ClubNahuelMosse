@@ -6,6 +6,12 @@
 - Suite completa corrida (la suite ya no cuelga): `90 failed, 638 passed, 1 skipped in 357 s` (log /tmp/sim01-api.log, puede haberse perdido: reproducir con `sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider > /tmp/sim01-api.log 2>&1` en background + wait.mjs).
 - No corrido tras los cambios de arriba: lint `sh D:/Temp/w/herramientas/sim01-lint.sh`.
 
+## Tanda 3 (T5 hecho)
+- T5 en código y verde (L17/L18): migración 0009, sin reintentos ni recuperación de `enviando`. `test_cola_de_avisos.py` reescrito por L2.
+- Corrida completa previa a T5: 89 failed (conteo por archivo abajo en «Falta»; mismas fallas que antes, T5 no la tocó). Ya no existen `intentos`/`tomada_en`: los tests que los usan (a quitar/adaptar por L2) son `escenarios/test_datos.py` (`_varar`, líneas ~236-350), `test_datos_reemplazos.py::test_de_cada_intento…`, `test_datos_tandas_y_cola.py` («de_cada_intento…», «quedo_enviando_se_vuelve_a_enviar», «trazabilidad…fallido», `_varar(..., intentos=3)` ~l.207), `test_seguridad_api.py` (usa intentos), `unit/test_identidad_ingreso.py` (mirar).
+- Sin hacer aún: ningún test de la lista A de abajo (L2), «mirar con -v» (espacios, notificaciones, test_operacion, texto largo T3), T6, lint `sim01-lint.sh`, commit de esto va hecho.
+- Nota: la migración 0009 tiene una línea ALTER larga: revisar con el lint.
+
 ## Falta: fallas restantes y su clasificación (de la corrida de 90)
 A. Prueban lo retirado (de esta card): quitar por L2 (archivo nuevo sin esos tests, `git rm` del viejo, línea en el Log)
 - `escenarios/test_seguridad_api.py` (28): caracter nulo (sin sesión/socio/admin/búsqueda), ráfagas 429 (recuperaciones, origen inventado, registros, dni ajenos, correos ajenos), log de accesos del admin, documentación interactiva por config, blueprint Render sin docs, CSP anti-incrustación, Host ajeno (2), emulador (3: credenciales reales, archivo, proyecto real). Siguen: certificado SMTP, horas fuera de rango, páginas, log sin direcciones, secretos, token de otro dueño, etc.

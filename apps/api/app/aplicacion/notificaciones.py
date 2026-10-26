@@ -48,15 +48,13 @@ class Notificaciones(Protocol):
         ...
 
     def marcar_varados_fallidos(self, usuario_id: int | None) -> list[AvisoPerdido]:
-        """Pasa a `fallida`, y devuelve, los avisos de [usuario_id] o de todos que no van a
-        salir: los `enviando` con la toma vencida que `que_hacer_con_varado` da por fallidos y
-        los recordatorios registrados cuyo turno ya empezó o se canceló."""
+        """Pasa a `fallida`, y devuelve, los recordatorios registrados de [usuario_id] o de
+        todos cuyo turno ya empezó o se canceló: no van a salir."""
         ...
 
     def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
         """Reserva para quien llama el aviso más viejo de [usuario_id] o de todos que está
-        sin enviar —un recordatorio sólo si sigue vigente— o que quedó `enviando` con la toma
-        vencida y se puede reintentar: pasa a `enviando` con un intento más, así dos despachos
+        sin enviar —un recordatorio sólo si sigue vigente—: pasa a `enviando`, así dos despachos
         al mismo tiempo no mandan el mismo dos veces. `None` si no queda ninguno."""
         ...
 
