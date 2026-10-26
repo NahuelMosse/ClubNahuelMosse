@@ -6,20 +6,19 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/en_curso.dart';
 import '../comun/errores_no_manejados.dart';
 import '../comun/formato_precio.dart';
 import '../comun/selector.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'baja_espacio.dart';
-import 'pantalla_alta_espacio.dart';
-
-const _obligatorio = 'Este campo es obligatorio';
-const _precioMaximo = 9999999;
+import 'formulario_espacio.dart';
+import 'nombre_generado.dart';
+import 'par_de_campos.dart';
 
 /// «Editar espacio deportivo»: condición, iluminación y precio. La sede, el deporte, el
 /// tipo y el nombre compuesto se ven pero no cambian.
@@ -81,14 +80,6 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
     }
   }
 
-  String? get _errorDePrecio {
-    final precio = leerPrecio(_precio.text);
-    if (precio == null) return _obligatorio;
-    return precio < 1 || precio > _precioMaximo
-        ? 'Ingresá un precio entre \$ 1 y \$ 9.999.999'
-        : null;
-  }
-
   bool get _cambio {
     final e = widget.espacio;
     return _techada != e.techada ||
@@ -97,15 +88,14 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
   }
 
   bool get _sePuedeGuardar =>
-      _cambio && _errorDePrecio == null && _errorDelServidor == null;
+      _cambio &&
+      errorDePrecio(_precio.text) == null &&
+      _errorDelServidor == null;
 
   Future<void> _elegirSiNo({required bool condicion}) async {
-    final elegido = await elegirOpcion<bool>(
+    final elegido = await elegirSiNo(
       context,
-      titulo: condicion ? 'Condición' : 'Iluminación',
-      opciones: condicion
-          ? const [(false, 'Al aire libre'), (true, 'Techada')]
-          : const [(true, 'Iluminada'), (false, 'Sin iluminación')],
+      condicion: condicion,
       elegida: condicion ? _techada : _iluminada,
     );
     if (elegido == null || !mounted) return;
@@ -152,9 +142,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
       }
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);
@@ -164,12 +152,14 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
       await mostrarCambioMientrasTanto(context);
       widget.espacios.avisarCambio();
       if (mounted) context.go('/admin/espacios');
-    } else if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
+    } else {
+      await avisarFalloDeEnvio(
+        context,
+        sesion: widget.sesion,
+        vencida: vencida,
+        error: fallo,
+        reintentar: _guardar,
+      );
     }
   }
 
@@ -194,9 +184,11 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
     final deporte = catalogo?.deporte(e.deporte)?.nombre ?? e.deporte;
     final tipo = catalogo?.tipoCorto(e.deporte, e.tipo) ?? e.tipo;
     // El precio cargado vale: el error se ve recién cuando se lo cambia.
-    final errorDePrecio =
+    final errorDelPrecio =
         _errorDelServidor ??
-        (leerPrecio(_precio.text) == e.precioPorHora ? null : _errorDePrecio);
+        (leerPrecio(_precio.text) == e.precioPorHora
+            ? null
+            : errorDePrecio(_precio.text));
     return PopScope(
       // Mientras se guarda no se sale: el cambio quedaría hecho sin que se viera.
       canPop: !_ocupado,
@@ -206,29 +198,11 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s12,
-              Medidas.s24,
-              Medidas.s40,
-            ),
+            padding: Medidas.paginaDeFormulario,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Semantics(
-                  header: true,
-                  child: Text(
-                    'Editar espacio deportivo',
-                    style: Textos.h1.copyWith(color: p.textPrimary),
-                  ),
-                ),
-                const SizedBox(height: Medidas.s4),
-                Text(
-                  'El nombre se arma solo con la sede, la dirección, el deporte, '
-                  'el tipo y el número.',
-                  style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                ),
-                const SizedBox(height: Medidas.s16),
+                ...encabezadoDeEspacio(context, 'Editar espacio deportivo'),
                 CampoSelector(
                   etiqueta: 'SEDE',
                   etiquetaAccesible: 'Sede',
@@ -287,7 +261,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                   etiquetaAccesible: 'Precio por hora',
                   controlador: _precio,
                   placeholder: '\$ 0',
-                  error: errorDePrecio,
+                  error: errorDelPrecio,
                   habilitado: !_ocupado,
                   teclado: TextInputType.number,
                   accion: TextInputAction.done,
@@ -310,14 +284,7 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                 ),
                 const SizedBox(height: Medidas.s12),
                 if (_dandoDeBaja)
-                  Semantics(
-                    label: 'Dando de baja el espacio',
-                    excludeSemantics: true,
-                    child: const SizedBox(
-                      height: Medidas.altoControl,
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
-                  )
+                  const EnCurso('Dando de baja el espacio')
                 else
                   BotonContorno(
                     texto: 'DAR DE BAJA EL ESPACIO',

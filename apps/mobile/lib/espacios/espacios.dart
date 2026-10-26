@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 import '../sesion/sesion.dart';
 import 'espacio.dart';
 
@@ -76,12 +77,8 @@ class Espacios extends ChangeNotifier {
       queryParameters: filtros.isEmpty ? null : filtros,
     );
     final r = await _get(consulta.toString());
-    if (r.codigo == 200) {
-      if (r.cuerpo case {'espacios': final List<Object?> lista}) {
-        final leidos = [for (final e in lista) Espacio.desdeJson(e)];
-        if (!leidos.contains(null)) return [...leidos.nonNulls];
-      }
-    }
+    final leidos = r.codigo == 200 ? Espacio.listaDesdeCuerpo(r.cuerpo) : null;
+    if (leidos != null) return leidos;
     throw ErrorDelServidor(r.codigo);
   }
 
@@ -98,7 +95,7 @@ class Espacios extends ChangeNotifier {
       queryParameters: {'sede_id': '$sedeId', 'deporte': deporte, 'tipo': tipo},
     );
     final r = await _get(consulta.toString());
-    if (r.codigo == 422) throw EspacioRechazado(_errores(r));
+    if (r.codigo == 422) throw EspacioRechazado(erroresDeCampo(r.cuerpo));
     if (r.cuerpo case {
       'nombre': final String n,
       'numero': final int numero,
@@ -133,15 +130,16 @@ class Espacios extends ChangeNotifier {
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 409) {
       if (r.cuerpo case {
-        'errores': {'nombre': final String mensaje},
         'nombre': final String nombre,
         'numero': final int siguiente,
       }) {
-        throw NombreOcupado(mensaje, nombre, siguiente);
+        if (erroresDeCampo(r.cuerpo)['nombre'] case final mensaje?) {
+          throw NombreOcupado(mensaje, nombre, siguiente);
+        }
       }
     }
     if (r.codigo == 422) {
-      final errores = _errores(r);
+      final errores = erroresDeCampo(r.cuerpo);
       if (errores.isNotEmpty) throw EspacioRechazado(errores);
     }
     final espacio = r.codigo == 201 ? Espacio.desdeJson(r.cuerpo) : null;
@@ -169,7 +167,7 @@ class Espacios extends ChangeNotifier {
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404) throw const EspacioNoDisponible();
     if (r.codigo == 422) {
-      final errores = _errores(r);
+      final errores = erroresDeCampo(r.cuerpo);
       if (errores.isNotEmpty) throw EspacioRechazado(errores);
     }
     final espacio = r.codigo == 200 ? Espacio.desdeJson(r.cuerpo) : null;
@@ -194,13 +192,4 @@ class Espacios extends ChangeNotifier {
   /// Avisa que lo que se vio de los espacios ya no vale (por ejemplo, uno que se dio de
   /// baja): quien los muestra los vuelve a pedir.
   void avisarCambio() => notifyListeners();
-
-  static Map<String, String> _errores(Respuesta r) =>
-      switch (r.cuerpo['errores']) {
-        final Map<String, Object?> mapa => {
-          for (final MapEntry(:key, :value) in mapa.entries)
-            if (value is String) key: value,
-        },
-        _ => const <String, String>{},
-      };
 }

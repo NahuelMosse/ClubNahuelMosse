@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../comun/carga_de_lista.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
@@ -7,22 +8,19 @@ import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
-import '../comun/insignia.dart';
-import '../comun/movimiento.dart';
-import '../comun/reloj.dart';
-import '../comun/tarjeta_reserva.dart';
-import '../comun/troquel.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../espacios/iconos.dart';
-import '../sedes/fotos.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'cancelacion.dart';
-import 'fechas.dart';
+import '../comun/fechas.dart';
 import 'reservas.dart';
+import 'barra_de_pestanas_reservas.dart';
+import 'tarjeta_reserva.dart';
+
+export 'tarjeta_reserva.dart' show TarjetaReserva;
 
 /// «Mis reservas»: las próximas y el historial de quien inició sesión.
 class PantallaMisReservas extends StatefulWidget {
@@ -117,9 +115,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted || pedido != _pedido) return;
@@ -224,9 +220,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion {
-      fallo = true;
-    } on ErrorDelServidor {
+    } on FalloDeRed {
       fallo = true;
     }
     if (!mounted || pedido != _pedido) return;
@@ -235,8 +229,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       _masFallo = fallo;
     });
     if (vencida && ModalRoute.of(context)?.isCurrent != false) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     }
   }
 
@@ -272,12 +265,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
               },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s24,
-                  Medidas.s24,
-                  Medidas.s24,
-                  Medidas.s40,
-                ),
+                padding: Medidas.paginaDeLista,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -296,35 +284,19 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                       ],
                     ),
                     const SizedBox(height: Medidas.s16),
-                    _Pestanas(historial: _historial, alElegir: _elegir),
+                    BarraDePestanasReservas(
+                      historial: _historial,
+                      alElegir: _elegir,
+                    ),
                     const SizedBox(height: Medidas.s16),
-                    AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : Movimiento.cambioDeLista,
-                      layoutBuilder: (actual, anteriores) => Stack(
-                        alignment: Alignment.topCenter,
-                        children: [...anteriores, ?actual],
-                      ),
+                    CambioDeLista(
                       child: Column(
                         key: ValueKey((datos == null, _fallo, _historial)),
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          if (datos == null && !_fallo)
-                            const Padding(
-                              padding: EdgeInsets.all(Medidas.s40),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
+                          if (datos == null && !_fallo) const EsperaDeLista(),
                           if (datos == null && _fallo)
-                            Padding(
-                              padding: const EdgeInsets.all(Medidas.s24),
-                              child: Center(
-                                child: BotonTexto(
-                                  texto: 'REINTENTAR',
-                                  alTocar: _cargar,
-                                ),
-                              ),
-                            ),
+                            ReintentoDeLista(alTocar: _cargar),
                           if (datos != null && datos.$1.isEmpty)
                             EstadoVacio(
                               titulo: _historial
@@ -386,444 +358,5 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
 /// Lo que se le pide confirmar a quien va a cancelar [r].
 String textoDeCancelacion(Reserva r, Catalogo catalogo) =>
     '${catalogo.tipoCorto(r.deporte, r.tipo)} · ${r.sede} · '
-    '${fechaLarga(r.inicio).split(' de ').first}, ${_horarioDe(r)} · '
+    '${diaCorto(r.inicio)}, ${horarioDe(r)} · '
     '${pesos(r.total)}. El horario vuelve a quedar libre.';
-
-/// «21:00 – 22:00».
-String _horarioDe(Reserva r) {
-  String dos(int n) => n.toString().padLeft(2, '0');
-  return '${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-      '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
-}
-
-/// `Segmented-Tab`: Próximas o Historial.
-class _Pestanas extends StatelessWidget {
-  const _Pestanas({required this.historial, required this.alElegir});
-
-  final bool historial;
-  final ValueChanged<bool> alElegir;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    Widget pestana(String texto, bool esHistorial) {
-      final elegida = historial == esHistorial;
-      return Expanded(
-        child: Semantics(
-          container: true,
-          button: true,
-          selected: elegida,
-          label: texto,
-          excludeSemantics: true,
-          onTap: () => alElegir(esHistorial),
-          child: Material(
-            color: elegida ? p.accentBase : Colors.transparent,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              onTap: () => alElegir(esHistorial),
-              customBorder: const StadiumBorder(),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: Medidas.s48),
-                child: Center(
-                  child: Text(
-                    texto,
-                    style: Textos.cuerpoFuerte.copyWith(
-                      color: elegida ? p.accentOn : p.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(Medidas.s4),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioPill),
-      ),
-      child: Row(
-        children: [
-          pestana('Próximas', false),
-          const SizedBox(width: Medidas.s4),
-          pestana('Historial', true),
-        ],
-      ),
-    );
-  }
-}
-
-/// `Card-Reserva`: deporte, sede y dirección, precio y estado arriba; el espacio, la fecha
-/// y el horario abajo, con el porqué si se canceló o se anuló.
-class TarjetaReserva extends StatelessWidget {
-  const TarjetaReserva({
-    super.key,
-    required this.reserva,
-    required this.catalogo,
-    this.resaltada = false,
-    this.cancelable = false,
-    this.cancelando = false,
-    this.cuentaRegresiva = false,
-    this.alCancelar,
-    this.alModificar,
-  });
-
-  final Reserva reserva;
-  final Catalogo catalogo;
-
-  /// Suma «HOY», «MAÑANA» o «FALTAN N DÍAS» a una reserva activa.
-  final bool cuentaRegresiva;
-
-  /// Viene de un aviso: se marca con el borde de acento.
-  final bool resaltada;
-
-  /// Muestra CANCELAR: una próxima que todavía no empezó.
-  final bool cancelable;
-
-  /// La cancelación de esta reserva está en camino.
-  final bool cancelando;
-
-  /// `null` deshabilita CANCELAR (hay otra cancelación en camino).
-  final VoidCallback? alCancelar;
-
-  /// `null` deshabilita MODIFICAR.
-  final VoidCallback? alModificar;
-
-  String get _horario => _horarioDe(reserva);
-
-  String? get _porque => switch (reserva.estado) {
-    EstadoDeReserva.cancelada => switch (reserva.motivo) {
-      final m? when m.trim().isNotEmpty =>
-        'Cancelada por vos · el horario quedó liberado · $m',
-      _ => 'Cancelada por vos · el horario quedó liberado',
-    },
-    EstadoDeReserva.anulada => switch (reserva.motivo) {
-      final m? when m.trim().isNotEmpty => 'Anulada por el administrador · $m',
-      _ => 'Anulada por el administrador',
-    },
-    _ => null,
-  };
-
-  /// Los días de calendario del club que faltan para el inicio, sin mirar la hora.
-  String? get _cuenta {
-    if (!cuentaRegresiva || reserva.estado != EstadoDeReserva.activa) {
-      return null;
-    }
-    final hoy = ahoraEnElClub();
-    final i = reserva.inicio;
-    final dias = DateTime(
-      i.year,
-      i.month,
-      i.day,
-    ).difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
-    return switch (dias) {
-      <= 0 => 'HOY',
-      1 => 'MAÑANA',
-      _ => 'FALTAN $dias DÍAS',
-    };
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final r = reserva;
-    final porque = _porque;
-    final cuenta = _cuenta;
-    final activa = r.estado == EstadoDeReserva.activa;
-    final anulada = r.estado == EstadoDeReserva.anulada;
-    final grande = MediaQuery.textScalerOf(context).scale(10) > 13;
-    final precioYEstado = Column(
-      crossAxisAlignment: grande
-          ? CrossAxisAlignment.start
-          : CrossAxisAlignment.end,
-      children: [
-        Text(
-          pesos(r.total),
-          style: Textos.cuerpoFuerte.copyWith(color: p.accentInk),
-        ),
-        const SizedBox(height: Medidas.s8),
-        _Estado(estado: r.estado),
-      ],
-    );
-    final cancelar = alCancelar;
-    final modificar = alModificar;
-    final deQue =
-        '${catalogo.tipoCorto(r.deporte, r.tipo)}, '
-        '${fechaLarga(r.inicio).split(' de ').first}, $_horario';
-    // La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
-    // botones propios.
-    final datos = Semantics(
-      container: true,
-      selected: resaltada,
-      excludeSemantics: true,
-      label: [
-        catalogo.tipoCorto(r.deporte, r.tipo),
-        '${r.sede}, ${r.direccion}',
-        r.estado.name,
-        fechaLarga(r.inicio),
-        _horario,
-        '${pesos(r.total).replaceFirst('\$\u00A0', '')} pesos',
-        r.espacio,
-        ?porque,
-        ?cuenta?.toLowerCase(),
-      ].join(', '),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(Medidas.s16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(Medidas.radioMd),
-                  child: Image(
-                    image: fotoDeDeporte(r.deporte),
-                    width: 56,
-                    height: 56,
-                    fit: BoxFit.cover,
-                    excludeFromSemantics: true,
-                  ),
-                ),
-                const SizedBox(width: Medidas.s12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            iconoDeDeporte(r.deporte),
-                            size: 16,
-                            color: p.textSecondary,
-                          ),
-                          const SizedBox(width: Medidas.s4),
-                          Flexible(
-                            child: Text(
-                              catalogo.tipoCorto(r.deporte, r.tipo),
-                              style: Textos.titulo.copyWith(
-                                color: p.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: Medidas.s4),
-                      Text(
-                        '${r.sede} · ${r.direccion}',
-                        style: Textos.leyenda.copyWith(color: p.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                if (!grande) ...[
-                  const SizedBox(width: Medidas.s8),
-                  precioYEstado,
-                ],
-              ],
-            ),
-          ),
-          if (grande)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s16,
-                0,
-                Medidas.s16,
-                Medidas.s16,
-              ),
-              child: precioYEstado,
-            ),
-          Troquel(fondo: p.bgBase),
-          Padding(
-            padding: const EdgeInsets.all(Medidas.s16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (cuenta != null) ...[
-                  Text(
-                    cuenta,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                      letterSpacing: 11 * 0.08,
-                      color: p.accentInk,
-                    ),
-                  ),
-                  const SizedBox(height: Medidas.s4),
-                ],
-                Text(
-                  r.espacio,
-                  style: Textos.mono.copyWith(color: p.textMuted),
-                ),
-                const SizedBox(height: Medidas.s8),
-                FechaYHorario(fecha: fechaLarga(r.inicio), horario: _horario),
-                if (porque != null) ...[
-                  const SizedBox(height: Medidas.s8),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.error_outline_rounded,
-                        size: 16,
-                        color: anulada ? p.stateDangerInk : p.textSecondary,
-                      ),
-                      const SizedBox(width: Medidas.s8),
-                      Expanded(
-                        child: Text(
-                          porque,
-                          style: Textos.leyenda.copyWith(
-                            color: anulada ? p.stateDangerInk : p.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-    final borde = resaltada ? 2.0 : 1.0;
-    return Container(
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(
-          color: resaltada ? p.borderFocus : p.borderDefault,
-          width: borde,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(Medidas.radioLg - borde),
-        child: Stack(
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                datos,
-                if (cancelable)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      Medidas.s16,
-                      0,
-                      Medidas.s16,
-                      Medidas.s16,
-                    ),
-                    child: cancelando
-                        ? Semantics(
-                            label: 'Cancelando la reserva',
-                            excludeSemantics: true,
-                            child: const SizedBox(
-                              height: Medidas.altoControl,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                          )
-                        : Flex(
-                            direction: grande ? Axis.vertical : Axis.horizontal,
-                            crossAxisAlignment: grande
-                                ? CrossAxisAlignment.stretch
-                                : CrossAxisAlignment.center,
-                            children: [
-                              _Accion(
-                                expandir: !grande,
-                                etiqueta: 'Modificar la reserva de $deQue',
-                                alTocar: modificar,
-                                child: BotonContorno(
-                                  texto: 'MODIFICAR',
-                                  alTocar: modificar,
-                                  compacto: true,
-                                ),
-                              ),
-                              const SizedBox(
-                                width: Medidas.s8,
-                                height: Medidas.s8,
-                              ),
-                              _Accion(
-                                expandir: !grande,
-                                etiqueta: 'Cancelar la reserva de $deQue',
-                                alTocar: cancelar,
-                                child: BotonContorno(
-                                  texto: 'CANCELAR',
-                                  alTocar: cancelar,
-                                  peligro: true,
-                                  compacto: true,
-                                ),
-                              ),
-                            ],
-                          ),
-                  ),
-              ],
-            ),
-            if (activa)
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: 4,
-                child: ColoredBox(
-                  key: const ValueKey('borde-reserva-activa'),
-                  color: p.accentBase,
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Un botón de la tarjeta, que dice de qué reserva es.
-class _Accion extends StatelessWidget {
-  const _Accion({
-    required this.expandir,
-    required this.etiqueta,
-    required this.alTocar,
-    required this.child,
-  });
-
-  final bool expandir;
-  final String etiqueta;
-  final VoidCallback? alTocar;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    final boton = Semantics(
-      label: etiqueta,
-      excludeSemantics: true,
-      button: true,
-      enabled: alTocar != null,
-      onTap: alTocar,
-      child: child,
-    );
-    return expandir ? Expanded(child: boton) : boton;
-  }
-}
-
-/// `Badge-Estado`.
-class _Estado extends StatelessWidget {
-  const _Estado({required this.estado});
-
-  final EstadoDeReserva estado;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final (fondo, tinta) = switch (estado) {
-      EstadoDeReserva.activa => (p.bgSurface, p.stateSuccessInk),
-      EstadoDeReserva.anulada => (p.stateDangerMuted, p.stateDangerInk),
-      _ => (p.bgSurface, p.textSecondary),
-    };
-    return InsigniaDeEstado(
-      texto: estado.name.toUpperCase(),
-      fondo: fondo,
-      tinta: tinta,
-    );
-  }
-}

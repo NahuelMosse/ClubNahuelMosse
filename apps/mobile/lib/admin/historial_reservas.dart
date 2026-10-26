@@ -1,4 +1,6 @@
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
+import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 import '../reservas/reservas.dart'
     show EstadoDeReserva, ReservaCambiada, ReservaRechazada;
@@ -64,10 +66,6 @@ class FiltrosDeHistorial {
     q: nueva,
   );
 
-  static String _fecha(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
-
   String get _query {
     final estado = this.estado;
     final deporte = this.deporte;
@@ -78,8 +76,8 @@ class FiltrosDeHistorial {
       if (estado != null) 'estado=${estado.name}',
       if (sedeId != null) 'sede_id=$sedeId',
       if (deporte != null) 'deporte=${Uri.encodeQueryComponent(deporte)}',
-      if (desde != null) 'desde=${_fecha(desde)}',
-      if (hasta != null) 'hasta=${_fecha(hasta)}',
+      if (desde != null) 'desde=${fechaIso(desde)}',
+      if (hasta != null) 'hasta=${fechaIso(hasta)}',
       if (busqueda != null) 'q=${Uri.encodeQueryComponent(busqueda)}',
     ];
     return partes.join('&');
@@ -354,14 +352,8 @@ class HistorialDeReservas {
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();
-    if (r.cuerpo case {
-      'errores': final Map<String, Object?> errores,
-    } when r.codigo == 422) {
-      throw ReservaRechazada({
-        for (final MapEntry(:key, :value) in errores.entries)
-          if (value is String) key: value,
-      });
-    }
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 422 && errores.isNotEmpty) throw ReservaRechazada(errores);
     final anulada = r.codigo == 200
         ? ReservaHistorial.desdeJson(r.cuerpo)
         : null;

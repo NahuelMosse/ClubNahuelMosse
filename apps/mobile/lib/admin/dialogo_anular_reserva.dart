@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
-import '../reservas/fechas.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'historial_reservas.dart';
@@ -53,12 +53,8 @@ class _DialogoAnularState extends State<_DialogoAnular> {
     Navigator.of(context).pop(motivo);
   }
 
-  String get _horario {
-    String dos(int n) => n.toString().padLeft(2, '0');
-    final r = widget.reserva;
-    return '${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-        '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
-  }
+  String get _horario =>
+      rangoDeHoras(widget.reserva.inicio, widget.reserva.fin);
 
   @override
   Widget build(BuildContext context) {

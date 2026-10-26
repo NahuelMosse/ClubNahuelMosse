@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
+import 'fechas.dart';
 import '../tema/tokens.dart';
 
 /// Estado de una hora en la [LineaDelDia].
@@ -12,8 +13,6 @@ class LineaDelDia extends StatelessWidget {
 
   final List<EstadoFranja> franjas;
   final int desde;
-
-  static String _hora(int h) => h.toString().padLeft(2, '0');
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +54,9 @@ class LineaDelDia extends StatelessWidget {
                 if (i > 0) const SizedBox(width: 3),
                 Expanded(
                   child: KeyedSubtree(
-                    key: ValueKey('franja-${_hora(desde + i)}'),
+                    key: ValueKey('franja-${dosCifras(desde + i)}'),
                     child: Semantics(
-                      label: '${_hora(desde + i)} h ${franjas[i].name}',
+                      label: '${dosCifras(desde + i)} h ${franjas[i].name}',
                       child: ExcludeSemantics(
                         child: AspectRatio(
                           aspectRatio: 1,
@@ -90,7 +89,7 @@ class LineaDelDia extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: i % 4 == 0
                           ? Text(
-                              _hora(desde + i),
+                              dosCifras(desde + i),
                               style: marca,
                               softWrap: false,
                               overflow: TextOverflow.visible,

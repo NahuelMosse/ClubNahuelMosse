@@ -3,24 +3,15 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
-import '../comun/estado_vacio.dart';
-import '../comun/etiqueta.dart';
-import '../comun/formato_precio.dart';
-import '../comun/marco_de_tarjeta.dart';
-import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../espacios/iconos.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fotos.dart';
-import 'pantalla_sedes.dart';
 import 'sede.dart';
 import 'sedes.dart';
+import 'contenido_de_sede.dart';
 
 /// Una sede con todas sus canchas, cada una con sus datos y el paso a los horarios.
 class PantallaSede extends StatefulWidget {
@@ -123,9 +114,7 @@ class _PantallaSedeState extends State<PantallaSede> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted || pedido != _pedido) return;
@@ -136,8 +125,7 @@ class _PantallaSedeState extends State<PantallaSede> {
     });
     if (ModalRoute.of(context)?.isCurrent == false) return;
     if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     } else if (fallo != null) {
       final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
@@ -200,21 +188,19 @@ class _PantallaSedeState extends State<PantallaSede> {
       });
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _filtrando = false);
     }
     if (!mounted || pedido != _pedido) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _filtrar(deporte: deporte, tipo: tipo);
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: () => _filtrar(deporte: deporte, tipo: tipo),
+    );
   }
 
   @override
@@ -233,7 +219,7 @@ class _PantallaSedeState extends State<PantallaSede> {
                   ? const CircularProgressIndicator()
                   : const SizedBox.shrink(),
             )
-          : _Contenido(
+          : ContenidoDeSede(
               sede: datos.$1,
               canchas: _filtradas ?? datos.$2,
               todas: datos.$2,
@@ -248,536 +234,6 @@ class _PantallaSedeState extends State<PantallaSede> {
                   _filtrar(deporte: d == _deporte ? null : d, tipo: null),
               alElegirTipo: (t) => _filtrar(deporte: _deporte, tipo: t),
             ),
-    );
-  }
-}
-
-class _Contenido extends StatelessWidget {
-  const _Contenido({
-    required this.sede,
-    required this.canchas,
-    required this.todas,
-    required this.catalogo,
-    required this.deporte,
-    required this.tipo,
-    required this.tiposDelDeporte,
-    required this.habilitado,
-    required this.filtrando,
-    required this.alElegirDeporte,
-    required this.alElegirTipo,
-  });
-
-  final Sede sede;
-
-  /// Las que pasan el filtro; [todas] son las de la sede, de donde salen los deportes.
-  final List<Espacio> canchas;
-  final List<Espacio> todas;
-  final Catalogo catalogo;
-  final String? deporte;
-  final String? tipo;
-  final List<String> tiposDelDeporte;
-  final bool habilitado;
-
-  /// Mientras llega la lista filtrada, en su lugar se ve la carga.
-  final bool filtrando;
-  final ValueChanged<String> alElegirDeporte;
-  final ValueChanged<String?> alElegirTipo;
-
-  String _nombreDelTipo(String clave) =>
-      catalogo
-          .deporte(deporte ?? '')
-          ?.tipos
-          .where((x) => x.clave == clave)
-          .firstOrNull
-          ?.nombre ??
-      clave;
-
-  /// «4 CANCHAS · FÚTBOL · TODOS LOS TIPOS», como el prototipo.
-  String _contador() {
-    final cantidad = cantidadDeCanchas(canchas.length);
-    final d = deporte;
-    final t = tipo;
-    if (todas.isEmpty) return cantidad.toUpperCase();
-    if (d == null) return '$cantidad · todos los deportes'.toUpperCase();
-    if (t != null) return '$cantidad · ${_nombreDelTipo(t)}'.toUpperCase();
-    final nombreDeporte = catalogo.deporte(d)?.nombre ?? d;
-    if (tiposDelDeporte.length > 1) {
-      return '$cantidad · $nombreDeporte · todos los tipos'.toUpperCase();
-    }
-    return '$cantidad · $nombreDeporte'.toUpperCase();
-  }
-
-  Widget _filtros() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _Filtro(
-        titulo: 'DEPORTE',
-        opciones: [
-          for (final d in catalogo.deportes)
-            if (todas.any((c) => c.deporte == d.clave))
-              (d.clave, d.nombre, iconoDeDeporte(d.clave)),
-        ],
-        elegida: deporte,
-        habilitado: habilitado,
-        prefijo: 'Deporte',
-        alElegir: (clave) {
-          if (clave != null) alElegirDeporte(clave);
-        },
-      ),
-      if (deporte != null && tiposDelDeporte.length > 1) ...[
-        const SizedBox(height: Medidas.s16),
-        _Filtro(
-          titulo: 'TIPO DE CANCHA',
-          opciones: [
-            (null, 'Todos', null),
-            for (final t in tiposDelDeporte) (t, _nombreDelTipo(t), null),
-          ],
-          elegida: tipo,
-          habilitado: habilitado,
-          prefijo: 'Tipo',
-          alElegir: alElegirTipo,
-        ),
-      ],
-      const SizedBox(height: Medidas.s24),
-    ],
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final deportes = deportesDe(sede, catalogo);
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FotoConVelo(
-            imagen: portadaDeSede(sede.id),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s12,
-                  Medidas.s8,
-                  Medidas.s24,
-                  Medidas.s24,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => context.go('/sedes'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: p.textOnMedia,
-                        minimumSize: const Size(0, Medidas.tactil),
-                        textStyle: Textos.leyenda,
-                      ),
-                      icon: const Icon(Icons.chevron_left_rounded, size: 20),
-                      label: const Text('Todas las sedes'),
-                    ),
-                    const SizedBox(height: Medidas.s40),
-                    Padding(
-                      padding: const EdgeInsets.only(left: Medidas.s12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${sede.direccion} · ${sede.apertura} a ${sede.cierre}'
-                                .toUpperCase(),
-                            style: Textos.sobretitulo.copyWith(
-                              color: p.accentOnMedia,
-                            ),
-                          ),
-                          const SizedBox(height: Medidas.s4),
-                          Semantics(
-                            header: true,
-                            child: Text(
-                              sede.nombre.toUpperCase(),
-                              style: Textos.display.copyWith(
-                                color: p.textOnMedia,
-                              ),
-                            ),
-                          ),
-                          if (deportes.isNotEmpty) ...[
-                            const SizedBox(height: Medidas.s8),
-                            Wrap(
-                              spacing: Medidas.s4,
-                              runSpacing: Medidas.s4,
-                              children: [
-                                for (final d in deportes)
-                                  _EtiquetaClara(texto: d),
-                              ],
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s24,
-              Medidas.s40,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                if (todas.isNotEmpty) _filtros(),
-                Semantics(
-                  liveRegion: true,
-                  child: Text(
-                    _contador(),
-                    style: Textos.sobretitulo.copyWith(color: p.accentInk),
-                  ),
-                ),
-                const SizedBox(height: Medidas.s12),
-                AnimatedSwitcher(
-                  duration: MediaQuery.disableAnimationsOf(context)
-                      ? Duration.zero
-                      : Movimiento.cambioDeLista,
-                  layoutBuilder: (actual, anteriores) => Stack(
-                    alignment: Alignment.topCenter,
-                    children: [...anteriores, ?actual],
-                  ),
-                  child: filtrando
-                      ? const Padding(
-                          key: ValueKey('carga'),
-                          padding: EdgeInsets.all(Medidas.s40),
-                          child: Center(child: CircularProgressIndicator()),
-                        )
-                      : Column(
-                          key: ValueKey((deporte, tipo)),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (todas.isEmpty)
-                              const EstadoVacio(
-                                titulo: 'Todavía no hay canchas',
-                                texto:
-                                    'Esta sede no tiene canchas disponibles por el momento.',
-                              )
-                            else if (canchas.isEmpty)
-                              const EstadoVacio(
-                                titulo: 'No hay canchas con este filtro',
-                                texto:
-                                    'Probá con otro deporte o con otro tipo.',
-                              ),
-                            for (final cancha in canchas) ...[
-                              TarjetaCancha(
-                                cancha: cancha,
-                                catalogo: catalogo,
-                                alReservar: () => context.go(
-                                  '/sedes/${sede.id}/canchas/${cancha.id}',
-                                ),
-                              ),
-                              const SizedBox(height: Medidas.s16),
-                            ],
-                          ],
-                        ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Una fila de chips para elegir una opción: la elegida en lima. [prefijo] va en la
-/// etiqueta accesible de cada chip («Deporte Fútbol»), porque el mismo nombre aparece en
-/// la portada y en las tarjetas.
-class _Filtro extends StatelessWidget {
-  const _Filtro({
-    required this.titulo,
-    required this.opciones,
-    required this.elegida,
-    required this.habilitado,
-    required this.prefijo,
-    required this.alElegir,
-  });
-
-  final String titulo;
-  final List<(String?, String, IconData?)> opciones;
-  final String? elegida;
-  final bool habilitado;
-  final String prefijo;
-  final ValueChanged<String?> alElegir;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ExcludeSemantics(
-          child: Text(
-            titulo,
-            style: Textos.sobretitulo.copyWith(color: p.textMuted),
-          ),
-        ),
-        const SizedBox(height: Medidas.s8),
-        Wrap(
-          spacing: Medidas.s8,
-          runSpacing: Medidas.s8,
-          children: [
-            for (final (clave, texto, icono) in opciones)
-              _Chip(
-                texto: texto,
-                icono: icono,
-                etiqueta: '$prefijo $texto',
-                elegido: clave == elegida,
-                alTocar: habilitado ? () => alElegir(clave) : null,
-              ),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.texto,
-    required this.icono,
-    required this.etiqueta,
-    required this.elegido,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final IconData? icono;
-  final String etiqueta;
-  final bool elegido;
-  final VoidCallback? alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final tinta = elegido ? p.accentOn : p.textPrimary;
-    final simbolo = icono;
-    return Semantics(
-      container: true,
-      button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      label: etiqueta,
-      excludeSemantics: true,
-      onTap: alTocar,
-      child: Material(
-        color: elegido ? p.accentBase : p.bgSurfaceRaised,
-        shape: StadiumBorder(
-          side: BorderSide(color: elegido ? p.accentEdge : p.borderControl),
-        ),
-        child: InkWell(
-          onTap: alTocar,
-          customBorder: const StadiumBorder(),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: Medidas.tactil + 4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Medidas.s16),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (simbolo != null) ...[
-                    Icon(simbolo, size: 18, color: tinta),
-                    const SizedBox(width: Medidas.s8),
-                  ],
-                  Text(
-                    texto,
-                    style: Textos.cuerpoFuerte.copyWith(color: tinta),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// La etiqueta de deporte sobre la portada: borde claro sobre la foto.
-class _EtiquetaClara extends StatelessWidget {
-  const _EtiquetaClara({required this.texto});
-
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Container(
-      constraints: const BoxConstraints(minHeight: 26),
-      padding: const EdgeInsets.symmetric(
-        horizontal: Medidas.s8,
-        vertical: Medidas.s4,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0x99000000),
-        borderRadius: BorderRadius.circular(Medidas.radioPill),
-        border: Border.all(color: const Color(0x66FFFFFF)),
-      ),
-      child: Text(texto, style: Textos.leyenda.copyWith(color: p.textOnMedia)),
-    );
-  }
-}
-
-/// `Card-Cancha`: la foto de su deporte con el tipo y el nombre, sus datos, el precio y
-/// «VER HORARIOS / RESERVAR».
-class TarjetaCancha extends StatelessWidget {
-  const TarjetaCancha({
-    super.key,
-    required this.cancha,
-    required this.catalogo,
-    required this.alReservar,
-  });
-
-  final Espacio cancha;
-  final Catalogo catalogo;
-  final VoidCallback alReservar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final tipo = catalogo.tipoCorto(cancha.deporte, cancha.tipo);
-    final precio = pesos(cancha.precioPorHora);
-    return MarcoDeTarjeta(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Semantics(
-            container: true,
-            excludeSemantics: true,
-            label:
-                '$tipo, ${cancha.nombre}, ${cancha.condicion}, '
-                '${cancha.iluminacion}, '
-                '${precio.replaceFirst('\$ ', '')} pesos por hora',
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  height: 180,
-                  child: FotoConVelo(
-                    imagen: fotoDeDeporte(cancha.deporte),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Medidas.s12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Etiqueta(texto: tipo, sobreFoto: true),
-                          Text(
-                            cancha.nombre,
-                            style: Textos.mono.copyWith(
-                              fontSize: 12,
-                              color: p.textOnMedia,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Medidas.s16,
-                    Medidas.s16,
-                    Medidas.s16,
-                    0,
-                  ),
-                  child: _EtiquetasYPrecio(cancha: cancha, precio: precio),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    Medidas.s16,
-                    Medidas.s12,
-                    Medidas.s16,
-                    0,
-                  ),
-                  child: Text(
-                    '${catalogo.tipoLegible(cancha.deporte, cancha.tipo)} · '
-                    '${cancha.condicion} · '
-                    '${cancha.iluminada ? 'con iluminación' : 'sin iluminación'}',
-                    style: Textos.leyenda.copyWith(color: p.textSecondary),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(Medidas.s16),
-            // Sin esto, el lector de pantalla oye el mismo botón en cada cancha.
-            child: Semantics(
-              label: '$tipo, cancha ${cancha.numero}',
-              child: BotonPrimario(
-                texto: 'VER HORARIOS / RESERVAR',
-                icono: Icons.bolt_rounded,
-                alTocar: alReservar,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Condición e iluminación a la izquierda y el precio a la derecha; con el texto grande el
-/// precio baja debajo de las etiquetas en vez de cortarse.
-class _EtiquetasYPrecio extends StatelessWidget {
-  const _EtiquetasYPrecio({required this.cancha, required this.precio});
-
-  final Espacio cancha;
-  final String precio;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final etiquetas = Wrap(
-      spacing: Medidas.s4,
-      runSpacing: Medidas.s4,
-      children: [
-        Etiqueta(
-          texto: cancha.condicion,
-          icono: cancha.techada
-              ? Icons.roofing_rounded
-              : Icons.wb_sunny_outlined,
-        ),
-        Etiqueta(
-          texto: cancha.iluminacion,
-          icono: cancha.iluminada
-              ? Icons.lightbulb_outline_rounded
-              : Icons.nightlight_outlined,
-        ),
-      ],
-    );
-    final monto = Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(precio, style: Textos.h2.copyWith(color: p.accentInk)),
-        Text('/ HORA', style: Textos.sobretitulo.copyWith(color: p.textMuted)),
-      ],
-    );
-    if (MediaQuery.textScalerOf(context).scale(10) > 13) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          etiquetas,
-          const SizedBox(height: Medidas.s8),
-          Align(alignment: Alignment.centerRight, child: monto),
-        ],
-      );
-    }
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: etiquetas),
-        const SizedBox(width: Medidas.s8),
-        monto,
-      ],
     );
   }
 }

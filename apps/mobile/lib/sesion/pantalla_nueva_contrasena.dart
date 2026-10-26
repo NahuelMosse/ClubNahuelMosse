@@ -11,6 +11,7 @@ import '../tema/tokens.dart';
 import '../comun/reglas_contrasena.dart';
 import '../comun/reglas_registro.dart';
 import 'recuperacion.dart';
+import 'fallo_de_carga.dart';
 import 'sesion.dart';
 import 'tarjeta_cuenta.dart';
 
@@ -78,9 +79,7 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
           () => _estado = vigente ? _Estado.formulario : _Estado.invalido,
         );
       }
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (fallo != null && mounted) {
@@ -119,9 +118,7 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
       if (mounted) setState(() => _estado = _Estado.invalido);
     } on ContrasenaRechazada catch (e) {
       if (mounted) setState(() => _errorDelServidor = e.errores['nueva']);
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);
@@ -129,7 +126,7 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
     if (fallo != null && mounted) {
       // El servidor pudo haber cambiado la contraseña antes de que se cortara la red.
       _huboFalloDeRed = true;
-      final reintentar = await mostrarErrorDeRed(context, fallo);
+      final reintentar = await preguntarReintento(context, fallo);
       if (reintentar && mounted) await _guardar();
     }
   }

@@ -13,10 +13,12 @@ import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'formulario_espacio.dart';
+import 'par_de_campos.dart';
+import 'nombre_generado.dart';
 
 enum _Campo {
   sede('sede_id'),
@@ -31,9 +33,6 @@ enum _Campo {
   /// El nombre del campo en la API.
   final String clave;
 }
-
-const _obligatorio = 'Este campo es obligatorio';
-const _precioMaximo = 9999999;
 
 /// Alta de espacio deportivo: sede, deporte, tipo, condición, iluminación y precio, con el
 /// nombre compuesto que calcula la API a la vista.
@@ -114,16 +113,13 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted) return;
     setState(() => _cargando = false);
     if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     } else if (fallo != null) {
       final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
@@ -176,8 +172,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       }
     }
     if (vencida && mounted && pedido == _pedidoDeNombre) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     }
   }
 
@@ -193,21 +188,17 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
   String? _errorDeRegla(_Campo campo) {
     switch (campo) {
       case _Campo.sede:
-        return _sede == null ? _obligatorio : null;
+        return _sede == null ? obligatorio : null;
       case _Campo.deporte:
-        return _deporte == null ? _obligatorio : null;
+        return _deporte == null ? obligatorio : null;
       case _Campo.tipo:
-        return _tipo == null ? _obligatorio : null;
+        return _tipo == null ? obligatorio : null;
       case _Campo.condicion:
-        return _techada == null ? _obligatorio : null;
+        return _techada == null ? obligatorio : null;
       case _Campo.iluminacion:
-        return _iluminada == null ? _obligatorio : null;
+        return _iluminada == null ? obligatorio : null;
       case _Campo.precio:
-        final precio = leerPrecio(_precio.text);
-        if (precio == null) return _obligatorio;
-        return precio < 1 || precio > _precioMaximo
-            ? 'Ingresá un precio entre \$ 1 y \$ 9.999.999'
-            : null;
+        return errorDePrecio(_precio.text);
     }
   }
 
@@ -276,12 +267,9 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
 
   Future<void> _elegirSiNo(_Campo campo) async {
     final condicion = campo == _Campo.condicion;
-    final elegido = await elegirOpcion<bool>(
+    final elegido = await elegirSiNo(
       context,
-      titulo: condicion ? 'Condición' : 'Iluminación',
-      opciones: condicion
-          ? const [(false, 'Al aire libre'), (true, 'Techada')]
-          : const [(true, 'Iluminada'), (false, 'Sin iluminación')],
+      condicion: condicion,
       elegida: condicion ? _techada : _iluminada,
     );
     if (elegido == null || !mounted) return;
@@ -305,8 +293,13 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       if (!mounted) return;
       final fallo = _falloDelNombre;
       if (fallo != null) {
-        final reintentar = await mostrarErrorDeRed(context, fallo);
-        if (reintentar && mounted) await _guardar();
+        await avisarFalloDeEnvio(
+          context,
+          sesion: widget.sesion,
+          vencida: false,
+          error: fallo,
+          reintentar: _guardar,
+        );
         return;
       }
     }
@@ -364,21 +357,19 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       if (mounted) _mostrarErrores(e.errores);
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);
     }
     if (!mounted) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _guardar,
+    );
   }
 
   String get _faltaParaElNombre {
@@ -407,12 +398,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
           child: _cargando && sedes == null
               ? const Center(child: CircularProgressIndicator())
               : SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    Medidas.s24,
-                    Medidas.s12,
-                    Medidas.s24,
-                    Medidas.s40,
-                  ),
+                  padding: Medidas.paginaDeFormulario,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -424,20 +410,10 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
                         ),
                         const SizedBox(height: Medidas.s16),
                       ],
-                      Semantics(
-                        header: true,
-                        child: Text(
-                          'Nuevo espacio deportivo',
-                          style: Textos.h1.copyWith(color: p.textPrimary),
-                        ),
+                      ...encabezadoDeEspacio(
+                        context,
+                        'Nuevo espacio deportivo',
                       ),
-                      const SizedBox(height: Medidas.s4),
-                      Text(
-                        'El nombre se arma solo con la sede, la dirección, el deporte, '
-                        'el tipo y el número.',
-                        style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                      ),
-                      const SizedBox(height: Medidas.s16),
                       CampoSelector(
                         etiqueta: 'SEDE',
                         etiquetaAccesible: 'Sede',
@@ -544,112 +520,6 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
                     ],
                   ),
                 ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Dos campos lado a lado, como el prototipo; en un teléfono chico no entran sus valores
-/// («Al aire libre», «Sin iluminación») y van uno debajo del otro.
-class ParDeCampos extends StatelessWidget {
-  const ParDeCampos({
-    super.key,
-    required this.izquierda,
-    required this.derecha,
-  });
-
-  final Widget izquierda;
-  final Widget derecha;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, limites) => limites.maxWidth < 340
-        ? Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              izquierda,
-              const SizedBox(height: Medidas.s12),
-              derecha,
-            ],
-          )
-        : Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: izquierda),
-              const SizedBox(width: Medidas.s12),
-              Expanded(child: derecha),
-            ],
-          ),
-  );
-}
-
-/// `Card-PreviewNombre`: el nombre que va a tener el espacio, o lo que falta para armarlo.
-class NombreGenerado extends StatelessWidget {
-  const NombreGenerado({
-    super.key,
-    required this.nombre,
-    this.calculando = false,
-    this.falta = '',
-    this.alReintentar,
-  });
-
-  final String? nombre;
-  final bool calculando;
-  final String falta;
-
-  /// Si no se pudo calcular el nombre, la acción para volver a pedirlo.
-  final VoidCallback? alReintentar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final listo = nombre;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Medidas.s16,
-          vertical: Medidas.s16,
-        ),
-        decoration: BoxDecoration(
-          color: p.bgSurface,
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-          border: Border.all(
-            color: listo == null ? p.borderControl : p.accentInk,
-            width: listo == null ? 1 : 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Text(
-              'NOMBRE GENERADO AUTOMÁTICAMENTE',
-              textAlign: TextAlign.center,
-              style: Textos.sobretitulo.copyWith(color: p.accentInk),
-            ),
-            const SizedBox(height: Medidas.s8),
-            if (calculando)
-              const SizedBox.square(
-                dimension: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            else if (alReintentar case final reintentar?) ...[
-              Text(
-                'No se pudo calcular el nombre',
-                textAlign: TextAlign.center,
-                style: Textos.leyenda.copyWith(color: p.stateDangerInk),
-              ),
-              BotonTexto(texto: 'REINTENTAR', alTocar: reintentar),
-            ] else
-              Text(
-                listo ?? falta,
-                textAlign: TextAlign.center,
-                style: listo == null
-                    ? Textos.leyenda.copyWith(color: p.textMuted)
-                    : Textos.mono.copyWith(color: p.textPrimary),
-              ),
-          ],
         ),
       ),
     );

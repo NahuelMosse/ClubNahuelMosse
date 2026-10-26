@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'api/cliente_api.dart';
 import 'app.dart';
@@ -24,6 +25,7 @@ void main() => correrProtegido(() => arrancar(Configuracion.desdeEntorno()));
 Future<void> arrancar(Configuracion configuracion) async {
   WidgetsFlutterBinding.ensureInitialized();
   instalarCapturaDeErrores();
+  await initializeDateFormatting('es');
   final auth = await iniciarFirebase(configuracion);
   final api = ClienteApi(configuracion.apiUrl);
   final sesion = Sesion(credenciales: CredencialesFirebase(auth), api: api);

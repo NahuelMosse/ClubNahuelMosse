@@ -6,13 +6,17 @@ import 'package:http/http.dart' as http;
 
 import 'rutas.dart';
 
+/// Un pedido a la API que falló sin que la persona tenga la culpa: [SinConexion] o
+/// [ErrorDelServidor]. Se atrapa con `on FalloDeRed` donde ambos se tratan igual.
+abstract interface class FalloDeRed implements Exception {}
+
 /// No se llegó a la API: sin red, o la API no responde a tiempo.
-class SinConexion implements Exception {
+class SinConexion implements FalloDeRed {
   const SinConexion();
 }
 
 /// La API respondió con un error propio (5xx) o con algo que no es la API.
-class ErrorDelServidor implements Exception {
+class ErrorDelServidor implements FalloDeRed {
   const ErrorDelServidor(this.codigo, {this.mensaje, this.referencia});
   final int codigo;
 
@@ -55,7 +59,9 @@ class ClienteApi {
 
   void _declarada(String metodo, String ruta) {
     if (verificarRutas && !rutaDeclarada(metodo, ruta)) {
-      throw AssertionError('La app no declara pedir $metodo $ruta (lib/api/rutas.dart)');
+      throw AssertionError(
+        'La app no declara pedir $metodo $ruta (lib/api/rutas.dart)',
+      );
     }
   }
 

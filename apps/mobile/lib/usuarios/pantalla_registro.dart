@@ -7,6 +7,7 @@ import '../comun/calendario.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/errores_de_campo.dart';
 import '../comun/faltantes.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/reglas_registro.dart';
@@ -14,6 +15,7 @@ import '../comun/reloj.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'registro.dart';
+import 'aviso_de_registro.dart';
 
 /// Los campos del formulario, con el nombre que usa la API.
 enum _Campo {
@@ -167,17 +169,15 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         setState(() => _yaExiste = true);
         return;
       }
-      final errores = r.cuerpo['errores'];
+      final errores = erroresDeCampo(r.cuerpo);
       final mensaje = r.cuerpo['mensaje'];
-      if (errores is! Map<String, Object?> || errores.isEmpty) {
+      if (errores.isEmpty) {
         fallo = ErrorDelServidor(r.codigo);
       } else {
         setState(() {
           for (final MapEntry(:key, :value) in errores.entries) {
             final campo = _Campo.deLaApi(key);
-            if (campo != null && value is String) {
-              _erroresDelServidor[campo] = value;
-            }
+            if (campo != null) _erroresDelServidor[campo] = value;
           }
           _aviso = r.codigo == 409 && mensaje is String ? mensaje : null;
         });
@@ -261,7 +261,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               if (_yaExiste) ...[
-                const _Aviso(
+                const AvisoDeRegistro(
                   texto:
                       'Tu cuenta ya existe: el registro se completó antes del corte. '
                       'Iniciá sesión con tu correo y tu contraseña.',
@@ -272,7 +272,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
                 ),
                 const SizedBox(height: Medidas.s16),
               ] else if (aviso != null) ...[
-                _Aviso(texto: aviso),
+                AvisoDeRegistro(texto: aviso),
                 const SizedBox(height: Medidas.s16),
               ],
               Text(
@@ -358,44 +358,6 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _Aviso extends StatelessWidget {
-  const _Aviso({required this.texto});
-
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.stateDangerMuted,
-          borderRadius: BorderRadius.circular(Medidas.radioMd),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 20,
-              color: p.stateDangerInk,
-            ),
-            const SizedBox(width: Medidas.s12),
-            Expanded(
-              child: Text(
-                texto,
-                style: Textos.cuerpoFuerte.copyWith(color: p.stateDangerInk),
-              ),
-            ),
-          ],
         ),
       ),
     );

@@ -4,20 +4,16 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/reloj.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'centro.dart';
 import 'notificacion.dart';
 import 'tarjeta_aviso.dart';
-
-const _tituloDesactivadas = 'Notificaciones desactivadas';
-const _textoDesactivadas =
-    'Activá los avisos para que te recordemos tus reservas una hora antes.';
+import 'notificaciones_desactivadas.dart';
 
 /// `Centro de notificaciones`: las notificaciones agrupadas por día, con las sin leer
 /// marcadas. Sin permiso del sistema, dice «Notificaciones desactivadas» y ofrece activarlas.
@@ -74,24 +70,19 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted) return;
     setState(() => _cargando = false);
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) {
-        await _cargar();
-      } else if (mounted) {
-        setState(() => _fallo = true);
-      }
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+      alNoReintentar: () => setState(() => _fallo = true),
+    );
   }
 
   @override
@@ -149,8 +140,8 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
               )
             : const EstadoVacio(
                 icono: Icons.notifications_none_rounded,
-                titulo: _tituloDesactivadas,
-                texto: _textoDesactivadas,
+                titulo: tituloDesactivadas,
+                texto: textoDesactivadas,
               ),
       );
     }
@@ -166,7 +157,7 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       ),
       children: [
         if (!centro.permitido) ...[
-          _Desactivadas(alActivar: centro.activar),
+          NotificacionesDesactivadas(alActivar: centro.activar),
           const SizedBox(height: Medidas.s16),
         ],
         for (final grupo in grupos) ...[
@@ -196,42 +187,6 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
           ],
         ],
       ],
-    );
-  }
-}
-
-/// La franja de arriba cuando hay avisos pero el sistema no deja mostrarlos.
-class _Desactivadas extends StatelessWidget {
-  const _Desactivadas({required this.alActivar});
-
-  final Future<bool> Function() alActivar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Container(
-      padding: const EdgeInsets.all(Medidas.s16),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _tituloDesactivadas,
-            style: Textos.titulo.copyWith(color: p.textPrimary),
-          ),
-          const SizedBox(height: Medidas.s4),
-          Text(
-            _textoDesactivadas,
-            style: Textos.leyenda.copyWith(color: p.textSecondary),
-          ),
-          const SizedBox(height: Medidas.s16),
-          BotonPrimario(texto: 'ACTIVAR NOTIFICACIONES', alTocar: alActivar),
-        ],
-      ),
     );
   }
 }

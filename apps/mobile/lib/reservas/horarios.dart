@@ -1,4 +1,6 @@
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
+import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../sesion/sesion.dart';
 
@@ -104,6 +106,13 @@ class Horarios {
   final ClienteApi _api;
   final Sesion _sesion;
 
+  /// Lee [consulta] con el token de la sesión; un 401 es sesión vencida.
+  Future<Respuesta> _pedir(Uri consulta) async {
+    final r = await _api.get(consulta.toString(), token: await _sesion.token());
+    if (r.codigo == 401) throw const SesionVencida();
+    return r;
+  }
+
   /// La grilla de la cancha [espacioId] para [fecha] (hoy si no viene) con franjas de
   /// [horas].
   ///
@@ -123,20 +132,15 @@ class Horarios {
       queryParameters: {
         'horas': '$horas',
         'reserva_id': ?reservaId?.toString(),
-        if (dia != null)
-          'fecha':
-              '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
-              '${dia.day.toString().padLeft(2, '0')}',
+        if (dia != null) 'fecha': fechaIso(dia),
       },
     );
-    final r = await _api.get(consulta.toString(), token: await _sesion.token());
-    if (r.codigo == 401) throw const SesionVencida();
-    if (r.cuerpo case {
-      'errores': {'espacio_id': String _},
-    } when r.codigo == 404) {
+    final r = await _pedir(consulta);
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 404 && errores.containsKey('espacio_id')) {
       throw const CanchaNoDisponible();
     }
-    if (r.cuerpo case {'errores': {'fecha': String _}} when r.codigo == 422) {
+    if (r.codigo == 422 && errores.containsKey('fecha')) {
       throw const FechaVencida();
     }
     final grilla = r.codigo == 200 ? Grilla.desdeJson(r.cuerpo) : null;
@@ -162,29 +166,16 @@ class Horarios {
         'sede_id': '$sedeId',
         'deporte': deporte,
         'tipo': ?tipo,
-        'fecha':
-            '${fecha.year}-${fecha.month.toString().padLeft(2, '0')}-'
-            '${fecha.day.toString().padLeft(2, '0')}',
+        'fecha': fechaIso(fecha),
         'desde': desde,
         'hasta': hasta,
       },
     );
-    final r = await _api.get(consulta.toString(), token: await _sesion.token());
-    if (r.codigo == 401) throw const SesionVencida();
-    if (r.cuerpo case {
-      'errores': final Map<String, Object?> errores,
-    } when r.codigo == 422) {
-      throw RangoRechazado({
-        for (final MapEntry(:key, :value) in errores.entries)
-          if (value is String) key: value,
-      });
-    }
-    if (r.codigo == 200) {
-      if (r.cuerpo case {'espacios': final List<Object?> lista}) {
-        final leidos = [for (final e in lista) Espacio.desdeJson(e)];
-        if (!leidos.contains(null)) return [...leidos.nonNulls];
-      }
-    }
+    final r = await _pedir(consulta);
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 422 && errores.isNotEmpty) throw RangoRechazado(errores);
+    final leidos = r.codigo == 200 ? Espacio.listaDesdeCuerpo(r.cuerpo) : null;
+    if (leidos != null) return leidos;
     throw ErrorDelServidor(r.codigo);
   }
 }

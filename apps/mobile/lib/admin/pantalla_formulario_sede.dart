@@ -7,12 +7,14 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/en_curso.dart';
 import '../comun/faltantes.dart';
+import '../comun/fechas.dart';
 import '../comun/selector.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'baja_sede.dart';
@@ -22,8 +24,6 @@ enum _Campo { nombre, direccion, apertura, cierre, dias }
 const _largoNombre = 60;
 const _largoDireccion = 80;
 final _calleYAltura = RegExp(r'^.*\S\s+(\d{1,6})$');
-
-String _hora(int h) => '${h.toString().padLeft(2, '0')}:00';
 
 /// `HH:MM` a la hora; `null` si no es una hora en punto.
 int? _deHora(String hhmm) => switch (hhmm.split(':')) {
@@ -174,7 +174,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     final elegida = await elegirOpcion<int>(
       context,
       titulo: esCierre ? 'Horario de cierre' : 'Horario de apertura',
-      opciones: [for (final h in horas) (h, _hora(h))],
+      opciones: [for (final h in horas) (h, horaCerrada(h))],
       columnas: 4,
       elegida: esCierre ? _cierre : _apertura,
     );
@@ -217,16 +217,16 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
         ? widget.sedes.darDeAlta(
             nombre: nombre,
             direccion: direccion,
-            apertura: _hora(apertura),
-            cierre: _hora(cierre),
+            apertura: horaCerrada(apertura),
+            cierre: horaCerrada(cierre),
             dias: _dias,
           )
         : widget.sedes.editar(
             sede.id,
             nombre: nombre,
             direccion: direccion,
-            apertura: _hora(apertura),
-            cierre: _hora(cierre),
+            apertura: horaCerrada(apertura),
+            cierre: horaCerrada(cierre),
             dias: _dias,
             confirmar: confirmar,
           );
@@ -308,12 +308,14 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
       await mostrarCambioMientrasTanto(context);
       widget.sedes.avisarCambio();
       if (mounted) context.go('/admin/sedes');
-    } else if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar(confirmar: confirmar);
+    } else {
+      await avisarFalloDeEnvio(
+        context,
+        sesion: widget.sesion,
+        vencida: vencida,
+        error: fallo,
+        reintentar: () => _guardar(confirmar: confirmar),
+      );
     }
   }
 
@@ -331,9 +333,9 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
     };
     final motivos = [
       if (antesApertura != null && apertura > antesApertura)
-        '${una ? 'empieza' : 'empiezan'} antes de las ${_hora(apertura)}',
+        '${una ? 'empieza' : 'empiezan'} antes de las ${horaCerrada(apertura)}',
       if (antesCierre != null && hasta < antesCierre)
-        '${una ? 'termina' : 'terminan'} después de las ${_hora(cierre)}',
+        '${una ? 'termina' : 'terminan'} después de las ${horaCerrada(cierre)}',
       if (antes != null && antes.dias.any((d) => !_dias.contains(d)))
         '${una ? 'cae' : 'caen'} en un día que la sede deja de abrir',
     ];
@@ -371,8 +373,8 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
             (s) =>
                 normal(s.nombre) == normal(_nombre.text) &&
                 normal(s.direccion) == normal(_direccion.text) &&
-                s.apertura == _hora(apertura) &&
-                s.cierre == _hora(cierre) &&
+                s.apertura == horaCerrada(apertura) &&
+                s.cierre == horaCerrada(cierre) &&
                 diasDeLaSemana(s.dias) == diasDeLaSemana(_dias),
           )
           .firstOrNull;
@@ -398,12 +400,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(
-              Medidas.s24,
-              Medidas.s12,
-              Medidas.s24,
-              Medidas.s40,
-            ),
+            padding: Medidas.paginaDeFormulario,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -455,7 +452,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                 CampoSelector(
                   etiqueta: 'HORARIO DE APERTURA',
                   etiquetaAccesible: 'Horario de apertura',
-                  valor: apertura == null ? null : _hora(apertura),
+                  valor: apertura == null ? null : horaCerrada(apertura),
                   placeholder: '08:00',
                   icono: Icons.schedule_rounded,
                   error: _error(_Campo.apertura),
@@ -467,7 +464,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                 CampoSelector(
                   etiqueta: 'HORARIO DE CIERRE',
                   etiquetaAccesible: 'Horario de cierre',
-                  valor: cierre == null ? null : _hora(cierre),
+                  valor: cierre == null ? null : horaCerrada(cierre),
                   placeholder: '23:00',
                   icono: Icons.schedule_rounded,
                   error: _error(_Campo.cierre),
@@ -507,14 +504,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                     ),
                     const SizedBox(height: Medidas.s12),
                     if (_dandoDeBaja)
-                      Semantics(
-                        label: 'Dando de baja la sede',
-                        excludeSemantics: true,
-                        child: const SizedBox(
-                          height: Medidas.altoControl,
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                      )
+                      const EnCurso('Dando de baja la sede')
                     else
                       BotonContorno(
                         texto: 'DAR DE BAJA LA SEDE',

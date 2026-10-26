@@ -8,9 +8,11 @@ import '../comun/troquel.dart';
 import '../sedes/fotos.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fechas.dart';
-import 'pantalla_confirmar_reserva.dart';
+import '../comun/fechas.dart';
 import 'reservas.dart';
+import 'pasos_de_reserva.dart';
+import 'fila_de_dato.dart';
+import 'fila_de_total.dart';
 
 /// El comprobante: la reserva quedó hecha. Espera a que la persona elija adónde ir.
 class PantallaReservaConfirmada extends StatelessWidget {
@@ -19,11 +21,9 @@ class PantallaReservaConfirmada extends StatelessWidget {
   final Reserva reserva;
 
   String get _horario {
-    String dos(int n) => n.toString().padLeft(2, '0');
     final r = reserva;
     final horas = r.fin.difference(r.inicio).inHours;
-    return '${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-        '${dos(r.fin.hour)}:${dos(r.fin.minute)} · ${duracion(horas)}';
+    return '${rangoDeHoras(r.inicio, r.fin)} · ${duracion(horas)}';
   }
 
   @override

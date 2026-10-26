@@ -9,12 +9,8 @@ import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
-import '../comun/formato_precio.dart';
-import '../comun/tarjeta_reserva.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../espacios/iconos.dart';
-import '../reservas/fechas.dart';
 import '../reservas/reservas.dart' show EstadoDeReserva;
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
@@ -22,10 +18,11 @@ import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'anular_reserva.dart';
-import 'estado_reserva_chip.dart';
 import 'historial_reservas.dart';
 import 'listado_admin.dart';
 import 'pantalla_filtros_reservas.dart';
+import 'barra_de_pestanas_admin.dart';
+import 'tarjeta_reserva_admin.dart';
 
 /// El panel de administración: el historial global de reservas (CU-14), pestaña «Reservas».
 class PantallaPanelAdmin extends StatefulWidget {
@@ -134,9 +131,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      error = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       error = e;
     }
     if (!mounted || pedido != _pedido) return;
@@ -307,7 +302,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                         ],
                       ),
                       const SizedBox(height: Medidas.s16),
-                      _Pestanas(
+                      BarraDePestanasAdmin(
                         elegido: _filtros.estado,
                         contadores: resultado?.contadores,
                         alElegir: _elegirEstado,
@@ -405,7 +400,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                       final r = _reservas[i];
                       return Padding(
                         padding: const EdgeInsets.only(bottom: Medidas.s12),
-                        child: _TarjetaReservaAdmin(
+                        child: TarjetaReservaAdmin(
                           reserva: r,
                           catalogo: catalogo,
                           alTocar: () => _abrirDetalle(r),
@@ -425,233 +420,6 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _Pestanas extends StatelessWidget {
-  const _Pestanas({
-    required this.elegido,
-    required this.contadores,
-    required this.alElegir,
-  });
-
-  final EstadoDeReserva? elegido;
-  final Contadores? contadores;
-  final ValueChanged<EstadoDeReserva?> alElegir;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = contadores;
-    Widget pestana(String texto, EstadoDeReserva? valor, int? cuenta) {
-      final activa = elegido == valor;
-      final etiqueta = cuenta == null ? texto : '$texto ($cuenta)';
-      final p = context.paleta;
-      return Padding(
-        padding: const EdgeInsets.only(right: Medidas.s8),
-        child: Semantics(
-          button: true,
-          selected: activa,
-          excludeSemantics: true,
-          label: etiqueta,
-          child: Material(
-            color: activa ? p.accentBase : p.bgSurfaceRaised,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              onTap: () => alElegir(valor),
-              customBorder: const StadiumBorder(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Medidas.s16,
-                  vertical: Medidas.s12,
-                ),
-                child: Text(
-                  etiqueta,
-                  style: Textos.cuerpoFuerte.copyWith(
-                    color: activa ? p.accentOn : p.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          pestana('Todas', null, c?.todas),
-          pestana('Activas', EstadoDeReserva.activa, c?.activas),
-          pestana('Completadas', EstadoDeReserva.completada, c?.completadas),
-          pestana('Anuladas', EstadoDeReserva.anulada, c?.anuladas),
-        ],
-      ),
-    );
-  }
-}
-
-class _TarjetaReservaAdmin extends StatelessWidget {
-  const _TarjetaReservaAdmin({
-    required this.reserva,
-    required this.catalogo,
-    required this.alTocar,
-    required this.alAnular,
-  });
-
-  final ReservaHistorial reserva;
-  final Catalogo? catalogo;
-  final VoidCallback alTocar;
-
-  /// `null` deshabilita ANULAR RESERVA (hay otra anulación en camino).
-  final VoidCallback? alAnular;
-
-  String get _horario {
-    String dos(int n) => n.toString().padLeft(2, '0');
-    return '${dos(reserva.inicio.hour)}:${dos(reserva.inicio.minute)} – '
-        '${dos(reserva.fin.hour)}:${dos(reserva.fin.minute)}';
-  }
-
-  // Con cualquier agrandado del texto, precio y estado ya no entran junto al nombre en 360.
-  bool _grande(BuildContext context) =>
-      MediaQuery.textScalerOf(context).scale(10) > 13;
-
-  Widget _precioYEstado(Paleta p) => Column(
-    crossAxisAlignment: CrossAxisAlignment.end,
-    children: [
-      Text(
-        pesos(reserva.total),
-        style: Textos.cuerpoFuerte.copyWith(color: p.accentInk),
-      ),
-      const SizedBox(height: Medidas.s4),
-      EstadoReservaChip(estado: reserva.estado),
-    ],
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final r = reserva;
-    final nombreDeporte = catalogo?.deporte(r.deporte)?.nombre ?? r.deporte;
-    final semantica =
-        '$nombreDeporte, ${r.sede}, ${r.usuario}, '
-        '${fechaLarga(r.inicio)}, $_horario, ${pesos(r.total)}, '
-        '${r.estado.name}'
-        '${r.espacioDeBaja ? ', baja del espacio deportivo' : ''}';
-    final anular = alAnular;
-    return Material(
-      color: p.bgSurfaceRaised,
-      clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        side: BorderSide(color: p.borderDefault),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Semantics(
-            button: true,
-            label: semantica,
-            excludeSemantics: true,
-            child: InkWell(
-              onTap: alTocar,
-              child: Padding(
-                padding: const EdgeInsets.all(Medidas.s16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          iconoDeDeporte(r.deporte),
-                          size: 20,
-                          color: p.textSecondary,
-                        ),
-                        const SizedBox(width: Medidas.s8),
-                        Expanded(
-                          child: Text(
-                            nombreDeporte,
-                            style: Textos.titulo.copyWith(color: p.textPrimary),
-                          ),
-                        ),
-                        // Con el texto muy agrandado, precio y estado bajan debajo del
-                        // nombre en vez de disputarle el ancho.
-                        if (!_grande(context)) ...[
-                          const SizedBox(width: Medidas.s8),
-                          _precioYEstado(p),
-                        ],
-                      ],
-                    ),
-                    if (_grande(context)) ...[
-                      const SizedBox(height: Medidas.s8),
-                      _precioYEstado(p),
-                    ],
-                    const SizedBox(height: Medidas.s4),
-                    Text(
-                      '${r.sede} · ${r.direccion}',
-                      style: Textos.leyenda.copyWith(color: p.textSecondary),
-                    ),
-                    const SizedBox(height: Medidas.s12),
-                    UsuarioDeReserva(usuario: r.usuario),
-                    const SizedBox(height: Medidas.s8),
-                    Text(
-                      r.espacio,
-                      style: Textos.mono.copyWith(color: p.textMuted),
-                    ),
-                    const SizedBox(height: Medidas.s8),
-                    FechaYHorario(
-                      fecha: fechaLarga(r.inicio),
-                      horario: _horario,
-                      separacionVertical: Medidas.s4,
-                      alineacion: WrapCrossAlignment.start,
-                    ),
-                    if (r.espacioDeBaja) ...[
-                      const SizedBox(height: Medidas.s8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline_rounded,
-                            size: 14,
-                            color: p.textMuted,
-                          ),
-                          const SizedBox(width: Medidas.s4),
-                          Flexible(
-                            child: Text(
-                              'Baja del espacio deportivo',
-                              style: Textos.leyenda.copyWith(
-                                color: p.textMuted,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-          ),
-          if (r.anulable)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s16,
-                0,
-                Medidas.s16,
-                Medidas.s16,
-              ),
-              child: BotonContorno(
-                texto: 'ANULAR RESERVA',
-                peligro: true,
-                etiquetaAccesible:
-                    'Anular la reserva de ${r.usuario}, $nombreDeporte, '
-                    '${fechaLarga(r.inicio)}, $_horario',
-                alTocar: anular,
-              ),
-            ),
-        ],
       ),
     );
   }
