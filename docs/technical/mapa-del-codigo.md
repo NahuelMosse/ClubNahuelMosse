@@ -97,14 +97,14 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 
 | Funcionalidad | `interfaz/` | `aplicacion/` | `dominio/` | `infraestructura/` | App |
 |---|---|---|---|---|---|
-| Reservas | `reservas.py` | `reservas.py` | `reservas.py` | `reservas.py` | `reservas/` |
+| Reservas | `reservas.py` | `reservas.py`, `almacen_de_reservas.py` | `reservas.py` | `reservas.py` | `reservas/` |
 | Horarios y canchas libres | `horarios.py` | `horarios.py`, `disponibilidad.py` | `horarios.py` | `horarios.py` | `reservas/` |
 | Sedes | `sedes.py` | `sedes.py` | `sedes.py` | `sedes.py` | `sedes/`, `admin/` |
 | Espacios (canchas) | `espacios.py` | `espacios.py` | `espacios.py` | `espacios.py` | `espacios/`, `admin/` |
 | Cuentas y perfil | `registro.py`, `sesion.py`, `sembrar_admin.py` | `registro.py`, `sesion.py`, `perfil.py`, `baja.py`, `contrasena.py`, `administradores.py` | `usuarios.py` | `usuarios.py`, `identidad.py`, `credencial_firebase.py` | `sesion/`, `usuarios/` |
 | Recuperar la contraseña | `recuperacion.py` | `recuperacion.py` | `recuperacion.py` | `enlaces.py`, `correo.py` | `sesion/` |
-| Avisos y notificaciones | `notificaciones.py`, `barrido.py` | `notificaciones.py` | `notificaciones.py` | `notificaciones.py`, `push.py` | `notificaciones/` |
-| Transversal | `entradas.py`, `errores_http.py`, `respuestas.py`, `salud.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
+| Avisos y notificaciones | `notificaciones.py`, `barrido.py` | `notificaciones.py`, `almacen_de_avisos.py` | `notificaciones.py` | `notificaciones.py`, `push.py` | `notificaciones/` |
+| Transversal | `entradas.py`, `errores_http.py`, `respuestas.py`, `salud.py`, `cuerpo.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
 
 ### Archivo por archivo
 

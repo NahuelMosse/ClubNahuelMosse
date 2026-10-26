@@ -21,6 +21,7 @@ from app.interfaz import (
     sesion,
 )
 from app.interfaz.barrido import barrer_cada
+from app.interfaz.cuerpo import CuerpoAcotado
 
 
 @asynccontextmanager
@@ -46,6 +47,7 @@ def crear_app() -> FastAPI:
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
         lifespan=_ciclo_de_vida,
     )
+    app.add_middleware(CuerpoAcotado)
     entradas.instalar(app)
     errores_http.instalar(app)
     app.include_router(salud.router)
