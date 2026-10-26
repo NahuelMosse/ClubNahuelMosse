@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de avisos y la función que arma su fila van juntos
 from collections.abc import Sequence
 from datetime import datetime
 

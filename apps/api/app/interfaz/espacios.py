@@ -1,3 +1,4 @@
+# kit-shape: las rutas de espacios y los modelos de sus pedidos y respuestas se leen juntos
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Response, status

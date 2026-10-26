@@ -1,3 +1,4 @@
+# kit-shape: las rutas de horarios y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import date, datetime
 from typing import Annotated
 
