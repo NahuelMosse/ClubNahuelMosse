@@ -41,7 +41,6 @@ emulador de Firebase Auth (después de `npm ci`).
 - [Costo de la infraestructura](docs/technical/infra-cost.md).
 - [Declaración de accesibilidad](docs/business/accessibility.md) y el registro por pantalla.
 - [Matriz de seguridad ASVS](specs/asvs.md), nivel 2.
-- [Licencias de terceros](THIRD_PARTY_NOTICES.md), generadas con `python scripts/avisos_de_terceros.py`.
 
 La misma documentación se lee como sitio web con Docusaurus. `sitio-docs/` no guarda copias: al construir, toma los `.md`
 de `docs/`, de los README y de `specs/`, muestra Swagger UI con `apps/api/openapi.json` y
@@ -70,8 +69,6 @@ Los supuestos que cambian lo que ve quien usa la app o lo que hace quien la oper
   `kit-3`.
 - REV-07-ASM-06: las filas de la matriz ASVS que hoy fallan quedan `fails` con el hallazgo y la card que las corrige; los
   plazos de remediación (V15.1.1) los decide una persona.
-- REV-07-ASM-07: los avisos de terceros cubren las dependencias de producción, directas y transitivas, que el script lee de los
-  paquetes instalados y de `pubspec.lock`; en Dart entran también las transitivas de las herramientas de desarrollo.
 - REV-07-ASM-08: los precios salen de https://render.com/pricing.md consultado el 2026-10-20; la página no dice si la base
   free tiene backups.
 - REV-07-ASM-09: la política de claves con su ciclo de vida, el inventario criptográfico completo y el documento de las vías

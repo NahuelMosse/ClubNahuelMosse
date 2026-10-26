@@ -12,7 +12,7 @@ Dueño: pendiente de una persona · Última revisión: pendiente de una persona 
 
 La fuente de la configuración es `render.yaml`, en la raíz del repo. Render lo lee como Blueprint y crea el web service
 `clubnahuelmosse-api` y la base `clubnahuelmosse-db`. Los pasos de la primera vez (cuenta, proyecto de Firebase, Blueprint,
-usuario `club_app`, sembrar al administrador) están en «Desplegar en Render» de `apps/api/README.md`.
+sembrar al administrador) están en «Desplegar en Render» de `apps/api/README.md`.
 
 Cada commit a la rama enlazada despliega solo. En cada despliegue Render corre, en `apps/api`:
 
@@ -21,15 +21,11 @@ Cada commit a la rama enlazada despliega solo. En cada despliegue Render corre, 
    versión anterior. Cada migración corre en su transacción y las que crean índices sobre tablas con datos lo hacen con
    `CONCURRENTLY` y `lock_timeout`, así que no bloquean a la versión que atiende.
 2. Arranque: `uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-3. Health check: `GET /ready`. Responde 200 si la base contesta y el esquema está en la última migración; si no, 503 y
-   Render no da el despliegue por sano.
+3. Health check: `GET /health`, que responde 200 mientras el proceso está vivo.
 
 Cómo saber que terminó: el estado del servicio en el panel de Render pasa a «Live» (`not verified`: no se hizo un
-despliegue), `GET /ready` responde 200 y `GET /health` devuelve la versión desplegada. Comprobación mínima de la API:
+despliegue), `GET /health` devuelve la versión desplegada. Comprobación mínima de la API:
 `GET /sedes` sin sesión responde 401. Con el plan free el primer pedido después de dormir tarda alrededor de un minuto.
-
-**Antes de un despliegue con migraciones**, guardar un respaldo:
-`python scripts/respaldo.py guardar --url <External Database URL> --archivo club-<fecha>.dump`.
 
 ## Roll back
 
@@ -38,11 +34,8 @@ despliegue), `GET /ready` responde 200 y `GET /health` devuelve la versión desp
 1. `git revert <commit malo>` y push a la rama enlazada: Render despliega el revert con el mismo build de arriba.
 2. En el panel del servicio, desplegar a mano un commit anterior (`not verified`: no se usó el panel).
 
-**Datos.** Se restaura el último respaldo de `scripts/respaldo.py` en una base vacía, se comparan las filas y se apunta
-`DATABASE_URL` (y `DATABASE_URL_APP`) a esa base:
-`python scripts/respaldo.py restaurar --url <URL de una base vacía> --archivo club-<fecha>.dump`. Nunca se restaura sobre la
-base de producción. Se pierde lo escrito después del respaldo. La base `free` no tiene copias automáticas, vence a los 30
-días y se borra 14 días después: sin un respaldo propio, no hay vuelta atrás de datos.
+**Datos.** La base `free` no tiene copias automáticas, vence a los 30 días y se borra 14 días después: no hay vuelta atrás de
+datos.
 
 **Migraciones.** El build corre `alembic upgrade head`, pero no hay un comando de vuelta atrás en el despliegue. Si el commit
 anterior no trae la última migración, Alembic se queja de una revisión que no conoce y el build falla (comportamiento
@@ -50,7 +43,7 @@ conocido de Alembic, no ensayado contra Render: `not verified`). La vuelta atrá
 **External Database URL** de la base, desde `apps/api`: `DATABASE_URL=<External Database URL> uv run alembic downgrade -1`.
 Tres bajadas borran tablas con datos y no se deben correr sobre una base con uso real: la 0003 (`correo_saliente`,
 `enlace_recuperacion`), la 0005 (`notificacion`, `dispositivo`) y la 0007 (`notificacion_reserva` y las columnas `cantidad` y
-`reemplazada_por`). La 0008 baja sin perder reservas: saca índices y las columnas `intentos` y `tomada_en`.
+`reemplazada_por`). La 0008 y la 0009 bajan sin perder reservas.
 
 Cómo confirmar que sirve la versión anterior: el estado del despliegue en el panel, `GET /health` con la versión anterior y
 el comportamiento que se había roto.
@@ -61,45 +54,28 @@ Primer vistazo, en este orden:
 
 1. `GET https://<servicio>.onrender.com/health`: si responde, el proceso web está vivo; trae la versión. Si tarda cerca
    de un minuto, estaba dormido (plan free).
-2. `GET /ready`: 200 si la base contesta y el esquema está al día; 503 si no. Es la diferencia entre «la API anda» y
-   «la API anda pero la base no».
-3. `GET /sedes` sin sesión: 401 es lo normal.
-4. El log del servicio en el panel de Render (`not verified`). Es una línea JSON por evento, con `nivel`, `evento`,
-   `referencia` y `version`. La `referencia` es el `X-Request-ID` del pedido: es el código que la app muestra a la persona
-   en un error 500, así que con él se encuentra la línea exacta.
-5. `GET /metrics` con `Authorization: Bearer <METRICAS_TOKEN>`: pedidos por ruta y código, duraciones y uso del pool.
-6. La base: `psql "<External Database URL>" -c "select 1"` (`not verified`: `psql` no se probó contra Render).
+2. `GET /sedes` sin sesión: 401 es lo normal.
+3. El log del servicio en el panel de Render (`not verified`).
+4. La base: `psql "<External Database URL>" -c "select 1"` (`not verified`: `psql` no se probó contra Render).
 
 ## Alerts, by symptom
 
-No hay alertas definidas ni `runbook_url`: nadie consulta `/metrics` todavía. Lo que sigue es por síntoma, para quien lo ve en
-la app o en el log.
+No hay alertas definidas ni `runbook_url`. Lo que sigue es por síntoma, para quien lo ve en la app o en el log.
 
-### despertando: la app dice que el servidor se está despertando
-
-- **What the user sees:** a los 5 s sin respuesta, el aviso «despertando»; la app espera hasta 60 s antes de dar el error
-  de red.
-- **Confirm:** abrir `/health` en el navegador; si tarda cerca de un minuto, es el servicio dormido del plan free.
-- **Mitigate:** esperar a que despierte. Antes de una demostración, abrir `/health`.
-- **Verify:** la app inicia sesión sin el aviso.
-- **Escalate:** si pasa un minuto y `/health` no responde, mirar el estado del servicio en Render.
-
-### base-caida: la app dice que no se pudo conectar y `/ready` da 503
+### base-caida: la app dice que no se pudo conectar
 
 - **What the user sees:** el aviso de error de red con reintento.
-- **Confirm:** `/health` responde y `/ready` da 503; el log trae `arranque_sin_base` o errores de `OperationalError`. La API
-  corta en 5 s por conexión: no se cuelga.
+- **Confirm:** `/health` responde pero las pantallas fallan; el log trae errores de `OperationalError`.
 - **Mitigate:** comprobar que la base no venció (30 días en el plan free) y su estado en el panel de Render.
-- **Verify:** `/ready` responde 200.
-- **Escalate:** si la base venció, sus datos se pierden a los 14 días de gracia: restaurar el último respaldo en una base nueva
-  (ver «Roll back»).
+- **Verify:** `GET /sedes` con sesión responde 200.
+- **Escalate:** si la base venció, sus datos se pierden a los 14 días de gracia: crear una base nueva y migrarla.
 
-### esquema-viejo: `/ready` da 503 con la base en pie
+### esquema-viejo: errores en pantallas que usan tablas o columnas nuevas
 
 - **What the user sees:** errores en las pantallas que usan tablas o columnas nuevas.
-- **Confirm:** el log trae `arranque_sin_esquema`: la base no está en la última migración.
+- **Confirm:** la base no está en la última migración (`alembic current` contra la base).
 - **Mitigate:** correr `DATABASE_URL=<External Database URL> uv run alembic upgrade head` desde `apps/api`, o redesplegar.
-- **Verify:** `/ready` responde 200.
+- **Verify:** las pantallas responden.
 - **Escalate:** si la migración falla, a quien escribió la migración, con el error.
 
 ### sin-recordatorios: no llegan los avisos de una hora antes
@@ -127,28 +103,24 @@ la app o en el log.
 - **Verify:** pedir la recuperación con una cuenta de prueba y recibir el correo.
 - **Escalate:** a quien administra la cuenta de correo saliente.
 
-### demasiados-pedidos: la API responde 429
+### demasiados-pedidos: el ingreso responde 429
 
 - **What the user sees:** pide esperar antes de reintentar.
-- **Confirm:** si viene de Firebase, el ingreso respondió `TOO_MANY_ATTEMPTS`; si viene de la API, es el límite de
-  registro o recuperación (10 por minuto por origen) o de edición del perfil (10 por hora por cuenta), con `Retry-After`.
-  El límite vive en la memoria del proceso: se reinicia con el servicio.
-- **Mitigate:** esperar lo que dice `Retry-After`.
-- **Verify:** el pedido vuelve a funcionar.
-- **Escalate:** si muchas personas legítimas comparten un origen, revisar que `DETRAS_DE_PROXY=true` esté en
-  `render.yaml`: sin él, todas parecen venir del proxy de Render.
+- **Confirm:** el ingreso respondió `TOO_MANY_ATTEMPTS`: lo corta Firebase, la API no limita pedidos.
+- **Mitigate:** esperar.
+- **Verify:** el ingreso vuelve a funcionar.
+- **Escalate:** si persiste, revisar el estado de Firebase Authentication.
 
 ## Support view
 
-Cada error 500 que ve la persona trae una referencia; quien opera la busca en el log de Render y encuentra la línea del
-pedido con su ruta, código y el `id` numérico del usuario, sin datos personales. Pendiente de una persona: niveles de
-soporte, quién tiene acceso al log y auditoría de esos accesos.
+Quien opera busca en el log de Render la línea del error. Pendiente de una persona: niveles de soporte, quién tiene acceso al
+log y auditoría de esos accesos.
 
 ## Escalation matrix
 
 | Severity | Support level | Who | Channel | In how long | Data package passed |
 |---|---|---|---|---|---|
-| todas | pendiente de una persona | pendiente de una persona | pendiente de una persona | pendiente de una persona | hora UTC, referencia del error si la hay, ruta, qué se esperaba, qué pasó, pasos para repetirlo |
+| todas | pendiente de una persona | pendiente de una persona | pendiente de una persona | pendiente de una persona | hora UTC, ruta, qué se esperaba, qué pasó, pasos para repetirlo |
 
 ## Incidents
 
@@ -178,8 +150,6 @@ rotación: pendientes de una persona.
 | `SMTP_CONTRASENA` | Cambiarla en el proveedor de correo y después en la variable; desplegar | pedir la recuperación de una cuenta de prueba y recibir el correo; el proveedor rechaza la contraseña vieja |
 | `FIREBASE_API_KEY` | Crear una clave nueva en Google Cloud (credenciales del proyecto), cambiar la variable de la API y construir de nuevo el APK con la `--dart-define=FIREBASE_API_KEY` nueva: la clave viaja dentro de la app | la app nueva inicia sesión; borrar la clave vieja deja sin servicio a las instalaciones viejas |
 | `DATABASE_URL` | La entrega la base por `fromDatabase` en `render.yaml`. Cómo cambiar su contraseña: `not verified`, no se consultó el procedimiento de Render | las migraciones corren con la nueva y la vieja falla en `psql` |
-| `DATABASE_URL_APP` | `python scripts/usuario_de_la_app.py --url <DATABASE_URL del dueño> --clave <clave nueva>`; cambiar la variable; desplegar | `/ready` responde 200 con la nueva; la vieja falla en `psql` |
-| `METRICAS_TOKEN` | Generar un valor nuevo al azar, cambiar la variable y desplegar; actualizar a quien consulte `/metrics` | `/metrics` con el valor viejo responde 404, igual que sin token |
 | `ADMIN_CONTRASENA` | Sólo siembra la cuenta. Para cambiarla, la persona administradora usa «Recuperar contraseña» (CU-04-SUP-02) | iniciar sesión con la contraseña nueva; la vieja da error |
 
 Ante una fuga, en este orden: revocar todo lo expuesto en la misma operación, emitir el reemplazo, desplegar, comprobar que el
@@ -195,7 +165,7 @@ No hay un escáner de secretos como pre-commit ni un gestor de secretos por ambi
 ## Security incident response
 
 Fases: detectar, contener, erradicar, recuperar y postmortem. **Detectar:** hoy no hay alertas; se detecta por un reporte, por
-el log de Render o por `/metrics`. **Contener:** rotar lo expuesto con la sección anterior y, si hace falta, apagar el servicio
+el log de Render. **Contener:** rotar lo expuesto con la sección anterior y, si hace falta, apagar el servicio
 desde el panel de Render. **Erradicar y recuperar:** corregir la causa, desplegar y comprobar. Quién decide si hubo datos
 personales involucrados (DNI, fecha de nacimiento, correo, token de dispositivo: `## Personal data` del diseño del sistema) y
 si hay que avisar a las personas o a la autoridad por la Ley 25.326, se decide antes de que ocurra: pendiente de una persona;
