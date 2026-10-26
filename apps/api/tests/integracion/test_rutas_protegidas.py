@@ -20,8 +20,6 @@ PUBLICAS = {
     ("PUT", "/recuperacion"),
     ("GET", "/enlace/recuperar"),
     ("GET", "/health"),
-    ("GET", "/ready"),
-    ("GET", "/metrics"),
 }
 PROTEGIDAS = 28
 
@@ -43,6 +41,7 @@ def _rutas(app: FastAPI) -> Iterator[tuple[str, str]]:
 
 
 def test_cada_ruta_registrada_fuera_de_las_publicas_rechaza_sin_sesion() -> None:
+    """@REV-02-ASM-03"""
     app = crear_app()
     operaciones = sorted(op for op in _rutas(app) if op not in PUBLICAS)
     aceptadas = []

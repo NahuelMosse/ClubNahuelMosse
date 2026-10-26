@@ -13,8 +13,6 @@ PUBLICAS = {
     ("put", "/recuperacion"),
     ("get", "/enlace/recuperar"),
     ("get", "/health"),
-    ("get", "/ready"),
-    ("get", "/metrics"),
 }
 
 
