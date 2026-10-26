@@ -32,6 +32,10 @@ not_read:
 ```
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+mutate apps/mobile/lib/notificaciones/centro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
+mutate apps/mobile/lib/notificaciones/sistema.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
+mutate apps/mobile/lib/notificaciones/sistema_simulado.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
+mutate apps/mobile/lib/notificaciones/sistema_fcm.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
 ```
 
 ## Log
