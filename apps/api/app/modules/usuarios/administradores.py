@@ -1,8 +1,8 @@
 from datetime import date
 from typing import Protocol
 
-from app.aplicacion.registro import ProveedorIdentidad, RepositorioUsuarios, registrar
-from app.dominio.usuarios import DatosRegistro, normalizar_correo
+from app.modules.usuarios.registro import ProveedorIdentidad, RepositorioUsuarios, registrar
+from app.modules.usuarios.reglas import DatosRegistro, normalizar_correo
 from app.shared.errores import CuentaExistente
 
 

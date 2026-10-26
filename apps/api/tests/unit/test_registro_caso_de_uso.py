@@ -2,8 +2,8 @@ from datetime import date
 
 import pytest
 
-from app.aplicacion.registro import registrar
-from app.dominio.usuarios import DatosRegistro, Registro
+from app.modules.usuarios.registro import registrar
+from app.modules.usuarios.reglas import DatosRegistro, Registro
 from app.shared.errores import Duplicado
 
 DATOS = DatosRegistro("Ana", "Pérez", "12345678", "2000-03-14", "ana@correo.com", "ClubNahuel1")

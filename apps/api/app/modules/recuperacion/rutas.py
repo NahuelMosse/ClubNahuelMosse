@@ -6,9 +6,15 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.aplicacion.recuperacion import EnlaceInvalido, enlace_vigente, pedir_enlace, usar_enlace
-from app.dependencias import EnlacesSql, UsuariosSql, repositorio_enlaces, repositorio_usuarios
-from app.dependencias import enviar_correo as enviar
+from app.modules.recuperacion.casos_de_uso import (
+    EnlaceInvalido,
+    enlace_vigente,
+    pedir_enlace,
+    usar_enlace,
+)
+from app.modules.recuperacion.correo import enviar
+from app.modules.recuperacion.repositorio import EnlacesSql, repositorio_enlaces
+from app.modules.usuarios import UsuariosSql, repositorio_usuarios
 from app.shared.config import config
 from app.shared.identidad import ProveedorFirebase, identidad
 

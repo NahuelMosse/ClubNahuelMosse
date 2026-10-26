@@ -196,7 +196,7 @@ def alta_de_espacio(
     return vista_de_espacio(espacio)
 
 
-class PedidoDeCambio(BaseModel):
+class PedidoDeCambioDeEspacio(BaseModel):
     # El deporte y el tipo no cambian: se aceptan y se ignoran, para que un cliente que reenvía
     # el espacio entero siga andando, pero tienen que ser texto válido.
     deporte: str | None = None
@@ -223,7 +223,7 @@ class PedidoDeCambio(BaseModel):
     ),
 )
 def edicion_de_espacio(
-    pedido: PedidoDeCambio,
+    pedido: PedidoDeCambioDeEspacio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     espacio_id: Annotated[Identificador, Path()],

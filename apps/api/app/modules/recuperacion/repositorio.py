@@ -1,7 +1,7 @@
 from sqlalchemy import Connection, text
 
-from app.dominio.recuperacion import Destinatario, EnlaceReclamado
-from app.shared.db import en_transaccion
+from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
+from app.shared.db import Conexion, en_transaccion
 
 # Un enlace vale si no se usó ni se reemplazó, no venció, la cuenta sigue activa y la
 # contraseña no cambió después de emitirlo.
@@ -92,3 +92,7 @@ class EnlacesSql:
             text("UPDATE enlace_recuperacion SET usado_en = NULL WHERE id = :id"), {"id": enlace_id}
         )
         self._conn.commit()
+
+
+def repositorio_enlaces(conn: Conexion) -> EnlacesSql:
+    return EnlacesSql(conn)

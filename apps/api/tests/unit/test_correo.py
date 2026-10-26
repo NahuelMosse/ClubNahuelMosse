@@ -1,6 +1,6 @@
 import pytest
 
-from app.aplicacion.recuperacion import Mensaje
+from app.modules.recuperacion.casos_de_uso import Mensaje
 from app.infraestructura import correo
 from app.shared.config import config
 

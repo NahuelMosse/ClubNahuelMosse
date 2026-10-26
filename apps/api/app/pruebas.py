@@ -7,13 +7,13 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel
 from sqlalchemy import text
 
-from app.aplicacion.recuperacion import hash_de
 from app.modules.notificaciones import (
     NotificacionesSql,
     canal_push,
     enviar_recordatorios,
     repositorio_notificaciones,
 )
+from app.modules.recuperacion import hash_de
 from app.shared.db import Conexion
 from app.shared.errores import NoEncontrada
 from app.shared.zona import NOMBRE_ZONA_CLUB

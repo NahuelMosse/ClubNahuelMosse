@@ -5,14 +5,8 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 
-from app.interfaz import (
-    pruebas,
-    recuperacion,
-    registro,
-    salud,
-    sesion,
-)
-from app.modules import espacios, horarios, notificaciones, reservas, sedes
+from app import pruebas, salud
+from app.modules import espacios, horarios, notificaciones, recuperacion, reservas, sedes, usuarios
 from app.modules.notificaciones import barrer_cada
 from app.shared import entradas, errores_http
 from app.shared.config import config
@@ -46,8 +40,7 @@ def crear_app() -> FastAPI:
     entradas.instalar(app)
     errores_http.instalar(app)
     app.include_router(salud.router)
-    app.include_router(registro.router)
-    app.include_router(sesion.router)
+    app.include_router(usuarios.router)
     app.include_router(recuperacion.router)
     app.include_router(sedes.router)
     app.include_router(espacios.router)

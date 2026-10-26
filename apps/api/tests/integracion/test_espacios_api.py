@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 DUPLICADO = "Ya existe un espacio deportivo con ese nombre en la sede seleccionada."

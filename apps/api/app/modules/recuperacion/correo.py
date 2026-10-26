@@ -5,7 +5,7 @@ from email.message import EmailMessage
 
 from sqlalchemy import text
 
-from app.dominio.recuperacion import Mensaje
+from app.modules.recuperacion.reglas import Mensaje
 from app.shared.config import config
 from app.shared.db import motor
 

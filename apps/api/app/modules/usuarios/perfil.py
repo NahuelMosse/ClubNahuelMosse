@@ -1,8 +1,8 @@
 from datetime import date
 from typing import Protocol
 
-from app.dominio.usuarios import DatosPersonales, PerfilEditado, validar_edicion
 from app.modules.sesion import Perfil
+from app.modules.usuarios.reglas import DatosPersonales, PerfilEditado, validar_edicion
 from app.shared.errores import DatosInvalidos
 
 

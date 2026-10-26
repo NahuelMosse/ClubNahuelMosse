@@ -1,6 +1,6 @@
 """Crea la primera cuenta de administrador, o promueve una existente.
 
-    ADMIN_CONTRASENA=... uv run python -m app.interfaz.sembrar_admin \\
+    ADMIN_CONTRASENA=... uv run python -m app.modules.usuarios.sembrar_admin \\
         --correo admin@club.com --nombre Ana --apellido Díaz --dni 30111222 --nacimiento 1985-06-01
 
 La contraseña llega por variable de entorno para que no quede en el historial de la terminal.
@@ -12,9 +12,9 @@ import os
 import sys
 from datetime import datetime
 
-from app.aplicacion.administradores import sembrar_admin
-from app.dependencias import UsuariosSql
-from app.dominio.usuarios import DatosRegistro
+from app.modules.usuarios.administradores import sembrar_admin
+from app.modules.usuarios.reglas import DatosRegistro
+from app.modules.usuarios.repositorio import UsuariosSql
 from app.shared.db import motor
 from app.shared.errores import CuentaExistente, DatosInvalidos, Duplicado
 from app.shared.identidad import ProveedorFirebase

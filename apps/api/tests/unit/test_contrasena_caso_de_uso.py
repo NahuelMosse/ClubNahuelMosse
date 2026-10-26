@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.aplicacion.contrasena import NO_COINCIDE, cambiar_contrasena
+from app.modules.usuarios.contrasena import NO_COINCIDE, cambiar_contrasena
 from app.modules.sesion.perfil import Perfil
 from app.shared.errores import DatosInvalidos
 

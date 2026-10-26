@@ -1,8 +1,8 @@
 import logging
 from typing import Protocol
 
-from app.dominio.usuarios import problemas_contrasena
 from app.modules.sesion import Perfil
+from app.modules.usuarios.reglas import problemas_contrasena
 from app.shared.errores import DatosInvalidos
 
 NO_COINCIDE = "La contraseña actual no coincide"

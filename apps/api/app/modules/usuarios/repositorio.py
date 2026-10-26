@@ -1,9 +1,9 @@
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.dominio.usuarios import PerfilEditado, Registro
 from app.modules.reservas import ReservasSql
-from app.shared.db import en_transaccion, restriccion_violada
+from app.modules.usuarios.reglas import PerfilEditado, Registro
+from app.shared.db import Conexion, en_transaccion, restriccion_violada
 from app.shared.errores import Duplicado
 
 _INDICE_A_CAMPO = {"usuario_correo_unico": "correo", "usuario_dni_unico": "dni"}
@@ -120,3 +120,8 @@ class UsuariosSql:
                 raise Duplicado([_INDICE_A_CAMPO[indice]]) from e
             raise
         return nuevo
+
+
+# Un repositorio por pedido: arma sobre la conexión que FastAPI resuelve una vez.
+def repositorio_usuarios(conn: Conexion) -> UsuariosSql:
+    return UsuariosSql(conn)

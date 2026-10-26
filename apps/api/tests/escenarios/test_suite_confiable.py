@@ -16,7 +16,7 @@ from sqlalchemy import Connection, Engine, event, text
 from sqlalchemy.exc import IntegrityError
 
 from app.shared.db import motor as motor_de_la_app
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")

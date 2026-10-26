@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.aplicacion.recuperacion import Mensaje
+from app.modules.recuperacion.casos_de_uso import Mensaje
 from app.shared.config import config
 from app.infraestructura import correo
 

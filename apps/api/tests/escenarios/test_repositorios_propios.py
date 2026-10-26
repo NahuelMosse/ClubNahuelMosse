@@ -9,7 +9,7 @@ from app.modules.espacios.repositorio import EspaciosSql
 from app.modules.notificaciones.repositorio import NotificacionesSql
 from app.modules.reservas.repositorio import ReservasSql
 from app.modules.sedes.repositorio import SedesSql
-from app.infraestructura.usuarios import UsuariosSql
+from app.modules.usuarios.repositorio import UsuariosSql
 
 
 def _hora(dias: int = 0, minutos: int = 0) -> datetime:

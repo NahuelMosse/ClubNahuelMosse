@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.registro import registrar
-from app.dependencias import UsuariosSql, repositorio_usuarios
-from app.dominio.usuarios import DatosRegistro
+from app.modules.usuarios.registro import registrar
+from app.modules.usuarios.reglas import DatosRegistro
+from app.modules.usuarios.repositorio import UsuariosSql, repositorio_usuarios
 from app.shared.errores import Duplicado
 from app.shared.identidad import ProveedorFirebase, identidad
 from app.shared.zona import ZONA_CLUB as ZONA

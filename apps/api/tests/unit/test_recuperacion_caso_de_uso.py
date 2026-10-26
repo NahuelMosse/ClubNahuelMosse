@@ -1,14 +1,7 @@
 import pytest
 
-from app.aplicacion.recuperacion import (
-    MAXIMO_POR_HORA,
-    VIGENCIA_MINUTOS,
-    EnlaceInvalido,
-    hash_de,
-    pedir_enlace,
-    usar_enlace,
-)
-from app.dominio.recuperacion import Destinatario, EnlaceReclamado
+from app.modules.recuperacion.casos_de_uso import MAXIMO_POR_HORA, VIGENCIA_MINUTOS, EnlaceInvalido, hash_de, pedir_enlace, usar_enlace
+from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
 from app.shared.errores import DatosInvalidos
 
 LUCIA = Destinatario(7, "Lucía", "lucia@correo.com")

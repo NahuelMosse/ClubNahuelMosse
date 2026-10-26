@@ -5,12 +5,12 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.baja import dar_de_baja
-from app.aplicacion.contrasena import cambiar_contrasena
-from app.aplicacion.perfil import editar_perfil
-from app.dependencias import UsuariosSql, repositorio_usuarios
-from app.dominio.usuarios import DatosPersonales
 from app.modules.sesion import Perfil, Perfiles, Rol, SinSesion, usuario_actual
+from app.modules.usuarios.baja import dar_de_baja
+from app.modules.usuarios.contrasena import cambiar_contrasena
+from app.modules.usuarios.perfil import editar_perfil
+from app.modules.usuarios.reglas import DatosPersonales
+from app.modules.usuarios.repositorio import UsuariosSql, repositorio_usuarios
 from app.shared.errores import Demorado, Duplicado
 from app.shared.identidad import ProveedorFirebase, identidad
 from app.shared.zona import ZONA_CLUB as ZONA
@@ -76,7 +76,7 @@ def cambiar_contrasena_propia(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-class PedidoDeEdicion(BaseModel):
+class PedidoDeEdicionDePerfil(BaseModel):
     nombre: str = ""
     apellido: str = ""
     dni: str = ""
@@ -95,7 +95,7 @@ class PedidoDeEdicion(BaseModel):
     description="Todo menos el correo, que no se puede cambiar.",
 )
 def editar_perfil_propio(
-    pedido: PedidoDeEdicion,
+    pedido: PedidoDeEdicionDePerfil,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
     perfiles: Perfiles,

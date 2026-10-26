@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.aplicacion.baja import dar_de_baja
+from app.modules.usuarios.baja import dar_de_baja
 from app.modules.sesion.perfil import Perfil, Rol
 from app.shared.errores import Prohibido
 

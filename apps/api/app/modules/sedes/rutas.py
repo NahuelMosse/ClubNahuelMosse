@@ -114,7 +114,7 @@ def alta_de_sede(
     return _vista(sede)
 
 
-class PedidoDeEdicion(PedidoDeSede):
+class PedidoDeEdicionDeSede(PedidoDeSede):
     # Guardar igual un horario que deja reservas futuras afuera.
     confirmar: bool = False
 
@@ -144,7 +144,7 @@ class ReservasFueraDelHorario(BaseModel):
     ),
 )
 def edicion_de_sede(
-    pedido: PedidoDeEdicion,
+    pedido: PedidoDeEdicionDeSede,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
     sede_id: Annotated[Identificador, Path()],

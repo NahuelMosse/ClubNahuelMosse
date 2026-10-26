@@ -171,7 +171,7 @@ def cancelar(
     return _vista(reserva)
 
 
-class PedidoDeCambio(BaseModel):
+class PedidoDeCambioDeReserva(BaseModel):
     espacio_id: Identificador
     fecha: date
     desde: str
@@ -200,7 +200,7 @@ class PedidoDeCambio(BaseModel):
     ),
 )
 def modificar(
-    pedido: PedidoDeCambio,
+    pedido: PedidoDeCambioDeReserva,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identificador, Path()],
