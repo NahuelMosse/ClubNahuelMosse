@@ -1,8 +1,9 @@
 import logging
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos
-from app.dominio.usuarios import Perfil, problemas_contrasena
+from app.dominio.usuarios import problemas_contrasena
+from app.modules.sesion import Perfil
+from app.shared.errores import DatosInvalidos
 
 NO_COINCIDE = "La contraseña actual no coincide"
 contrasena_log = logging.getLogger("clubnahuelmosse.contrasena")

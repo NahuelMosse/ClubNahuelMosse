@@ -1,9 +1,9 @@
 from datetime import date, datetime, time
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible
-from app.dominio.espacios import Espacio
-from app.dominio.horarios import Agenda, rango, validar_rango
+from app.modules.espacios import Espacio
+from app.modules.horarios.reglas import Agenda, rango, validar_rango
+from app.shared.errores import DatosInvalidos, NoDisponible
 
 
 class Disponibilidad(Protocol):

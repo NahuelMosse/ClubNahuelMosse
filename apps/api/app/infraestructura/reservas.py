@@ -4,14 +4,6 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.dominio.errores import (
-    AgendaCambiada,
-    Cambiado,
-    HorarioOcupado,
-    NoDisponible,
-    NoEncontrada,
-)
-from app.dominio.horarios import Agenda
 from app.dominio.notificaciones import mensaje_cancelacion
 from app.dominio.reservas import (
     POR_PAGINA,
@@ -22,10 +14,11 @@ from app.dominio.reservas import (
     Reserva,
     ReservaHistorial,
 )
-from app.dominio.zona import NOMBRE_ZONA_CLUB
-from app.infraestructura.db import VENTANA_DE_REINTENTO, en_transaccion
-from app.infraestructura.horarios import HorariosSql, agenda_de_fila
 from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
+from app.modules.horarios import Agenda, HorariosSql, agenda_de_fila
+from app.shared.db import VENTANA_DE_REINTENTO, en_transaccion
+from app.shared.errores import AgendaCambiada, Cambiado, HorarioOcupado, NoDisponible, NoEncontrada
+from app.shared.zona import NOMBRE_ZONA_CLUB
 
 _COLUMNAS = (
     "r.id, r.espacio_id, e.sede_id, e.nombre AS espacio, e.deporte, e.tipo,"

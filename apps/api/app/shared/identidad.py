@@ -9,9 +9,9 @@ from functools import cache
 import firebase_admin
 from firebase_admin import auth
 
-from app.config import config
-from app.dominio.errores import Demorado, Duplicado
-from app.infraestructura.credencial_firebase import credencial_de_servicio
+from app.shared.config import config
+from app.shared.credencial_firebase import credencial_de_servicio
+from app.shared.errores import Demorado, Duplicado
 
 identidad_log = logging.getLogger("clubnahuelmosse.identidad")
 
@@ -105,3 +105,7 @@ class ProveedorFirebase:
             auth.revoke_refresh_tokens(uid, app=_app_firebase())
         except Exception:
             identidad_log.exception("no se pudieron revocar las sesiones de %s", uid)
+
+
+def identidad() -> ProveedorFirebase:
+    return ProveedorFirebase()

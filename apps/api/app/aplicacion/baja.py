@@ -1,8 +1,8 @@
 import logging
 from typing import Protocol
 
-from app.aplicacion.errores import Prohibido
-from app.dominio.usuarios import Perfil
+from app.modules.sesion import Perfil
+from app.shared.errores import Prohibido
 
 baja_log = logging.getLogger("clubnahuelmosse.baja")
 

@@ -5,11 +5,12 @@ from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.errores import Duplicado
 from app.aplicacion.registro import registrar
-from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
+from app.dependencias import UsuariosSql, repositorio_usuarios
 from app.dominio.usuarios import DatosRegistro
-from app.dominio.zona import ZONA_CLUB as ZONA
+from app.shared.errores import Duplicado
+from app.shared.identidad import ProveedorFirebase, identidad
+from app.shared.zona import ZONA_CLUB as ZONA
 
 router = APIRouter(tags=["usuarios"])
 MENSAJE_DUPLICADO = "El usuario ya está registrado. Modificá el correo o el DNI."

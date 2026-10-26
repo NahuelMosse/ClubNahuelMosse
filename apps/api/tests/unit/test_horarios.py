@@ -3,9 +3,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible
-from app.aplicacion.horarios import horarios_disponibles
-from app.dominio.horarios import (
+from app.modules.horarios.casos_de_uso import horarios_disponibles
+from app.modules.horarios.reglas import (
     Agenda,
     Grilla,
     error_de_duracion,
@@ -14,6 +13,7 @@ from app.dominio.horarios import (
     validar_rango,
     validar_reserva,
 )
+from app.shared.errores import DatosInvalidos, NoDisponible
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 TODOS = (1, 2, 3, 4, 5, 6, 7)

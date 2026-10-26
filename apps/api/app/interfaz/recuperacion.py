@@ -7,16 +7,10 @@ from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
 from app.aplicacion.recuperacion import EnlaceInvalido, enlace_vigente, pedir_enlace, usar_enlace
-from app.config import config
-from app.dependencias import (
-    EnlacesSql,
-    ProveedorFirebase,
-    UsuariosSql,
-    identidad,
-    repositorio_enlaces,
-    repositorio_usuarios,
-)
+from app.dependencias import EnlacesSql, UsuariosSql, repositorio_enlaces, repositorio_usuarios
 from app.dependencias import enviar_correo as enviar
+from app.shared.config import config
+from app.shared.identidad import ProveedorFirebase, identidad
 
 router = APIRouter(tags=["recuperación de contraseña"])
 

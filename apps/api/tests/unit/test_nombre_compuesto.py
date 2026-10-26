@@ -1,6 +1,6 @@
 import pytest
 
-from app.dominio.espacios import nombre_compuesto
+from app.modules.espacios.reglas import nombre_compuesto
 
 
 @pytest.mark.parametrize(

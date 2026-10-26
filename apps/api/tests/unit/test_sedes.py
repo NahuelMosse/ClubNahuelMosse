@@ -4,10 +4,10 @@ from typing import Any
 
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos, Prohibido
-from app.aplicacion.sedes import dar_de_alta_sede
-from app.dominio.sedes import DatosSede, Sede, SedeNueva, validar_sede
-from app.dominio.usuarios import Perfil, Rol
+from app.modules.sedes.casos_de_uso import dar_de_alta_sede
+from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
+from app.modules.sesion.perfil import Perfil, Rol
+from app.shared.errores import DatosInvalidos, Prohibido
 
 VALIDOS = DatosSede(
     nombre="Sede Haedo",

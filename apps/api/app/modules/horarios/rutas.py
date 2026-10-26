@@ -6,16 +6,15 @@ from fastapi import APIRouter, Depends, Path, Query, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.disponibilidad import canchas_disponibles
-from app.aplicacion.errores import DatosInvalidos, NoDisponible
-from app.aplicacion.horarios import horarios_disponibles
-from app.dependencias import HorariosSql, repositorio_horarios
-from app.dominio.horarios import MAX_HORAS, MIN_HORAS
-from app.dominio.usuarios import Perfil
-from app.dominio.zona import ZONA_CLUB as ZONA
-from app.interfaz.entradas import Identificador, leer_hora
-from app.interfaz.espacios import ListaDeEspacios, vista_de_espacio
-from app.interfaz.sesion import SinSesion, usuario_actual
+from app.modules.espacios import ListaDeEspacios, vista_de_espacio
+from app.modules.horarios.casos_de_uso import horarios_disponibles
+from app.modules.horarios.disponibilidad import canchas_disponibles
+from app.modules.horarios.reglas import MAX_HORAS, MIN_HORAS
+from app.modules.horarios.repositorio import HorariosSql, repositorio_horarios
+from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.entradas import Identificador, leer_hora
+from app.shared.errores import DatosInvalidos, NoDisponible
+from app.shared.zona import ZONA_CLUB as ZONA
 
 router = APIRouter(tags=["horarios"])
 

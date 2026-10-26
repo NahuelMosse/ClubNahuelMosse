@@ -5,10 +5,10 @@ from typing import Any
 import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 
-from app.infraestructura.espacios import EspaciosSql
+from app.modules.espacios.repositorio import EspaciosSql
 from app.infraestructura.notificaciones import NotificacionesSql
 from app.infraestructura.reservas import ReservasSql
-from app.infraestructura.sedes import SedesSql
+from app.modules.sedes.repositorio import SedesSql
 from app.infraestructura.usuarios import UsuariosSql
 
 

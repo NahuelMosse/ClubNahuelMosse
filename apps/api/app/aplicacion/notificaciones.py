@@ -2,7 +2,6 @@ import logging
 from datetime import datetime
 
 from app.aplicacion.almacen_de_avisos import Notificaciones
-from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.dominio.notificaciones import (
     Aviso,
     Notificacion,
@@ -20,7 +19,8 @@ from app.dominio.notificaciones import (
 from app.dominio.notificaciones import (
     ResultadoDeEnvio as ResultadoDeEnvio,
 )
-from app.dominio.usuarios import Perfil
+from app.modules.sesion import Perfil
+from app.shared.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 
 PLATAFORMAS = ("android", "ios")
 

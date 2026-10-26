@@ -2,11 +2,13 @@
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import cache
+from typing import Annotated
 
+from fastapi import Depends
 from sqlalchemy import Connection, Engine, create_engine
 from sqlalchemy.exc import IntegrityError
 
-from app.config import config
+from app.shared.config import config
 
 # Cuánto después de su alta una fila se reconoce como el mismo pedido repetido.
 VENTANA_DE_REINTENTO = "5 minutes"
@@ -39,6 +41,9 @@ def conexion() -> Iterator[Connection]:
     se confirmó se descarta al cerrar."""
     with motor().connect() as conn:
         yield conn
+
+
+Conexion = Annotated[Connection, Depends(conexion, scope="function")]
 
 
 @contextmanager

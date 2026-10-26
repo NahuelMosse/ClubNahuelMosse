@@ -1,8 +1,9 @@
 from datetime import date
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos
-from app.dominio.usuarios import DatosPersonales, Perfil, PerfilEditado, validar_edicion
+from app.dominio.usuarios import DatosPersonales, PerfilEditado, validar_edicion
+from app.modules.sesion import Perfil
+from app.shared.errores import DatosInvalidos
 
 
 class PerfilesEditables(Protocol):

@@ -1,6 +1,6 @@
 import pytest
 
-from app.config import Config
+from app.shared.config import Config
 
 
 @pytest.mark.parametrize("esquema", ["postgres", "postgresql"])

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal, Protocol
 
-from app.dominio.espacios import CATALOGO
 from app.dominio.reservas import Reserva
-from app.dominio.zona import ZONA_CLUB
+from app.modules.espacios import CATALOGO
+from app.shared.zona import ZONA_CLUB
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
 Envio = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
@@ -99,7 +99,6 @@ LIMITE_DEL_MOTIVO = 200
 ESPERA_DEL_RECORDATORIO = timedelta(minutes=1)
 # Pasado este tiempo un aviso `enviando` se da por perdido: la API se cayó a mitad del envío.
 ESPERA_DEL_ENVIO = timedelta(minutes=10)
-
 
 
 @dataclass(frozen=True)

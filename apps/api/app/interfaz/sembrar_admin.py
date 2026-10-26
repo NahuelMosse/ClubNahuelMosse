@@ -13,10 +13,12 @@ import sys
 from datetime import datetime
 
 from app.aplicacion.administradores import sembrar_admin
-from app.aplicacion.errores import CuentaExistente, DatosInvalidos, Duplicado
-from app.dependencias import ProveedorFirebase, UsuariosSql, motor
+from app.dependencias import UsuariosSql
 from app.dominio.usuarios import DatosRegistro
-from app.dominio.zona import ZONA_CLUB as ZONA
+from app.shared.db import motor
+from app.shared.errores import CuentaExistente, DatosInvalidos, Duplicado
+from app.shared.identidad import ProveedorFirebase
+from app.shared.zona import ZONA_CLUB as ZONA
 
 
 def main(argumentos: list[str] | None = None) -> int:

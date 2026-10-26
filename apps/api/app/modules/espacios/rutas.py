@@ -5,14 +5,7 @@ from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.aplicacion.errores import (
-    ConReservasFuturas,
-    DatosInvalidos,
-    Duplicado,
-    NoDisponible,
-    NumeroOcupado,
-)
-from app.aplicacion.espacios import (
+from app.modules.espacios.casos_de_uso import (
     catalogo,
     dar_de_alta_espacio,
     dar_de_baja_espacio,
@@ -20,12 +13,18 @@ from app.aplicacion.espacios import (
     espacios_activos,
     nombre_sugerido,
 )
-from app.dependencias import EspaciosSql, repositorio_espacios
-from app.dominio.espacios import DatosEspacio, Espacio
-from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Identificador
-from app.interfaz.respuestas import conflicto
-from app.interfaz.sesion import SinSesion, usuario_actual
+from app.modules.espacios.reglas import DatosEspacio, Espacio
+from app.modules.espacios.repositorio import EspaciosSql, repositorio_espacios
+from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.entradas import Identificador
+from app.shared.errores import (
+    ConReservasFuturas,
+    DatosInvalidos,
+    Duplicado,
+    NoDisponible,
+    NumeroOcupado,
+)
+from app.shared.respuestas import conflicto
 
 router = APIRouter(tags=["espacios"])
 

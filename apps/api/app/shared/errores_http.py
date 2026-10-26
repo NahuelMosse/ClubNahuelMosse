@@ -5,7 +5,7 @@ otra cosa para alguno de ellos lo atrapa ella."""
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 
-from app.aplicacion.errores import DatosInvalidos, NoEncontrada, Prohibido
+from app.shared.errores import DatosInvalidos, NoEncontrada, Prohibido
 
 
 async def _responder_422(_: Request, e: Exception) -> Response:

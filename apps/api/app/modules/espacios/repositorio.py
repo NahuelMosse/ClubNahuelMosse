@@ -4,21 +4,21 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.dominio.errores import (
-    ConReservasFuturas,
-    Duplicado,
-    NoDisponible,
-    NoEncontrada,
-    NumeroOcupado,
-)
-from app.dominio.espacios import (
+from app.modules.espacios.reglas import (
     CambioDeEspacio,
     Espacio,
     EspacioNuevo,
     NombreSugerido,
     SedeDelEspacio,
 )
-from app.infraestructura.db import VENTANA_DE_REINTENTO, en_transaccion, restriccion_violada
+from app.shared.db import VENTANA_DE_REINTENTO, Conexion, en_transaccion, restriccion_violada
+from app.shared.errores import (
+    ConReservasFuturas,
+    Duplicado,
+    NoDisponible,
+    NoEncontrada,
+    NumeroOcupado,
+)
 
 COLUMNAS_DE_ESPACIO = (
     "e.id, e.nombre, e.sede_id, s.nombre AS sede, e.deporte, e.tipo, e.numero, e.techada,"
@@ -288,3 +288,7 @@ class EspaciosSql:
             ),
             {"id": sede_id, "autor": autor},
         )
+
+
+def repositorio_espacios(conn: Conexion) -> EspaciosSql:
+    return EspaciosSql(conn)

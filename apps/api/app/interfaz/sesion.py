@@ -1,53 +1,21 @@
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from app.aplicacion.baja import dar_de_baja
 from app.aplicacion.contrasena import cambiar_contrasena
-from app.aplicacion.errores import (
-    Demorado,
-    Duplicado,
-    NoAutenticado,
-)
 from app.aplicacion.perfil import editar_perfil
-from app.aplicacion.sesion import perfil_autenticado
-from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
-from app.dominio.usuarios import DatosPersonales, Perfil, Rol
-from app.dominio.zona import ZONA_CLUB as ZONA
+from app.dependencias import UsuariosSql, repositorio_usuarios
+from app.dominio.usuarios import DatosPersonales
+from app.modules.sesion import Perfil, Perfiles, Rol, SinSesion, usuario_actual
+from app.shared.errores import Demorado, Duplicado
+from app.shared.identidad import ProveedorFirebase, identidad
+from app.shared.zona import ZONA_CLUB as ZONA
 
 router = APIRouter(tags=["sesión"])
-_portador = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
-
-
-class SinSesion(BaseModel):
-    detail: str
-
-
-def usuario_actual(
-    peticion: Request,
-    credencial: Annotated[HTTPAuthorizationCredentials | None, Depends(_portador)],
-    usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
-    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
-) -> Perfil:
-    """Quién hace el pedido, según el token de Firebase de la cabecera `Authorization`."""
-    try:
-        perfil = perfil_autenticado(
-            credencial.credentials if credencial else None,
-            identidad=proveedor,
-            usuarios=usuarios,
-        )
-        peticion.state.usuario_id = perfil.id
-        return perfil
-    except NoAutenticado as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sesión inválida o vencida",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
 
 
 class PerfilPropio(BaseModel):
@@ -130,6 +98,7 @@ def editar_perfil_propio(
     pedido: PedidoDeEdicion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
+    perfiles: Perfiles,
 ) -> PerfilPropio | JSONResponse:
     try:
         editar_perfil(
@@ -143,7 +112,7 @@ def editar_perfil_propio(
             status_code=status.HTTP_409_CONFLICT,
             content={"errores": {"dni": "Este DNI ya está registrado"}},
         )
-    actualizado = usuarios.perfil_activo(perfil.uid)
+    actualizado = perfiles.perfil_activo(perfil.uid)
     if actualizado is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -5,15 +5,6 @@ from datetime import date, datetime, time, timedelta, timezone
 
 import pytest
 
-from app.aplicacion.errores import (
-    AgendaCambiada,
-    Cambiado,
-    DatosInvalidos,
-    HorarioOcupado,
-    NoDisponible,
-    NoEncontrada,
-    Prohibido,
-)
 from app.aplicacion.reservas import (
     MOTIVO_MAXIMO,
     anular_reserva,
@@ -24,7 +15,6 @@ from app.aplicacion.reservas import (
     modificar_reserva,
     reservar,
 )
-from app.dominio.horarios import Agenda
 from app.dominio.reservas import (
     Contadores,
     FiltrosHistorial,
@@ -32,7 +22,17 @@ from app.dominio.reservas import (
     Reserva,
     ReservaHistorial,
 )
-from app.dominio.usuarios import Perfil
+from app.modules.horarios.reglas import Agenda
+from app.modules.sesion.perfil import Perfil
+from app.shared.errores import (
+    AgendaCambiada,
+    Cambiado,
+    DatosInvalidos,
+    HorarioOcupado,
+    NoDisponible,
+    NoEncontrada,
+    Prohibido,
+)
 
 ZONA = timezone(timedelta(hours=-3))
 AHORA = datetime(2026, 3, 2, 10, 0, tzinfo=ZONA)  # lunes

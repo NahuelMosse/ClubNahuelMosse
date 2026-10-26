@@ -2,21 +2,6 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 
 from app.aplicacion.almacen_de_reservas import Reservas
-from app.aplicacion.errores import (
-    AgendaCambiada,
-    DatosInvalidos,
-    HorarioOcupado,
-    NoDisponible,
-    NoEncontrada,
-    Prohibido,
-)
-from app.dominio.horarios import (
-    DIAS_A_LA_VISTA,
-    Agenda,
-    error_de_duracion,
-    rango,
-    validar_reserva,
-)
 from app.dominio.reservas import (
     Cuando as Cuando,
 )
@@ -26,7 +11,16 @@ from app.dominio.reservas import (
     Reserva,
     ReservaHistorial,
 )
-from app.dominio.usuarios import Perfil
+from app.modules.horarios import DIAS_A_LA_VISTA, Agenda, error_de_duracion, rango, validar_reserva
+from app.modules.sesion import Perfil
+from app.shared.errores import (
+    AgendaCambiada,
+    DatosInvalidos,
+    HorarioOcupado,
+    NoDisponible,
+    NoEncontrada,
+    Prohibido,
+)
 
 # Largo máximo del motivo de una anulación.
 MOTIVO_MAXIMO = 500

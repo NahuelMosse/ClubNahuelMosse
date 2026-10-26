@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-RAIZ_API = Path(__file__).resolve().parents[1]
+RAIZ_API = Path(__file__).resolve().parents[2]
 
 
 _PROYECTO = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))

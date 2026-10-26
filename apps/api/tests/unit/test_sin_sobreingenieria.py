@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import config
 from app.main import crear_app
+from app.shared.config import config
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 RAIZ_REPO = RAIZ_API.parents[1]
@@ -52,14 +52,14 @@ def test_no_hay_tiempos_de_espera_chequeo_de_emulador_host_ni_logs_json(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """la API no tiene tiempos de espera de la base, chequeo del emulador, filtro de Host ni logs en JSON @SIM-01-S1"""
-    from app.infraestructura import db
+    from app.shared import db
 
     for nombre in ("base_disponible", "esquema_al_dia", "uso_del_pool", "POOL_MAXIMO"):
         assert not hasattr(db, nombre)
     for opcion in ("database_url_app", "metricas_token", "detras_de_proxy", "hosts_permitidos"):
         assert not hasattr(config, opcion)
     for modulo in _RETIRADOS:
-        assert importlib.util.find_spec(f"app.interfaz.{modulo}") is None
+        assert importlib.util.find_spec(f"app.shared.{modulo}") is None
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.setattr(config, "firebase_credenciales_json", "{}")
     monkeypatch.setattr(config, "firebase_project_id", "proyecto-real")
@@ -97,9 +97,9 @@ def test_docs_y_openapi_responden_con_la_configuracion_de_render() -> None:
 
 def test_un_texto_largo_o_con_control_ya_no_se_rechaza_y_las_horas_siguen_de_1_a_4() -> None:
     """un texto largo o con caracteres de control ya no se rechaza y las horas siguen siendo de 1 a 4 @SIM-01-S1 @assumption:SIM-01-ASM-05"""
-    from app.dominio.horarios import error_de_duracion
-    from app.interfaz.entradas import leer_hora
-    from app.interfaz.sedes import PedidoDeSede
+    from app.modules.horarios.reglas import error_de_duracion
+    from app.modules.sedes.rutas import PedidoDeSede
+    from app.shared.entradas import leer_hora
 
     pedido = PedidoDeSede(nombre="x" * 500 + "\x00", direccion="y" * 500, apertura="08:00")
     assert len(pedido.nombre) == 501

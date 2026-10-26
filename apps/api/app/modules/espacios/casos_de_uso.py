@@ -1,8 +1,7 @@
 from collections.abc import Callable
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible, Prohibido
-from app.dominio.espacios import (
+from app.modules.espacios.reglas import (
     CATALOGO,
     CambioDeEspacio,
     DatosEspacio,
@@ -16,7 +15,8 @@ from app.dominio.espacios import (
     validar_cambio,
     validar_espacio,
 )
-from app.dominio.usuarios import Perfil
+from app.modules.sesion import Perfil
+from app.shared.errores import DatosInvalidos, NoDisponible, Prohibido
 
 
 class Espacios(Protocol):

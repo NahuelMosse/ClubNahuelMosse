@@ -3,9 +3,9 @@ from typing import Any
 
 from sqlalchemy import Connection, text
 
-from app.dominio.espacios import Espacio
-from app.dominio.horarios import Agenda
-from app.infraestructura.espacios import COLUMNAS_DE_ESPACIO, espacio_de_fila
+from app.modules.espacios import COLUMNAS_DE_ESPACIO, Espacio, espacio_de_fila
+from app.modules.horarios.reglas import Agenda
+from app.shared.db import Conexion
 
 
 def agenda_de_fila(fila: Any) -> Agenda:
@@ -80,3 +80,7 @@ class HorariosSql:
         ).all()
         self._conn.rollback()
         return [(f.inicio, f.fin) for f in filas]
+
+
+def repositorio_horarios(conn: Conexion) -> HorariosSql:
+    return HorariosSql(conn)

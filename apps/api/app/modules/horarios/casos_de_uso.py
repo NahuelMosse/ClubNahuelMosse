@@ -1,8 +1,8 @@
 from datetime import date, datetime, timedelta
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible
-from app.dominio.horarios import Agenda, Grilla, grilla, validar_consulta
+from app.modules.horarios.reglas import Agenda, Grilla, grilla, validar_consulta
+from app.shared.errores import DatosInvalidos, NoDisponible
 
 
 class Horarios(Protocol):

@@ -15,7 +15,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, event, text
 from sqlalchemy.exc import IntegrityError
 
-from app.infraestructura.db import motor as motor_de_la_app
+from app.shared.db import motor as motor_de_la_app
 from app.interfaz.sembrar_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]

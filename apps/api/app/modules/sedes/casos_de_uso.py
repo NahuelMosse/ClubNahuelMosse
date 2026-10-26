@@ -1,8 +1,8 @@
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos, Prohibido
-from app.dominio.sedes import DatosSede, Sede, SedeNueva, validar_sede
-from app.dominio.usuarios import Perfil
+from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
+from app.modules.sesion import Perfil
+from app.shared.errores import DatosInvalidos, Prohibido
 
 
 class Sedes(Protocol):

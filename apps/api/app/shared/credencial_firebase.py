@@ -2,7 +2,7 @@ import json
 
 from firebase_admin import credentials
 
-from app.config import config
+from app.shared.config import config
 
 
 def credencial_de_servicio(contenido: str | None = None) -> credentials.Base | None:

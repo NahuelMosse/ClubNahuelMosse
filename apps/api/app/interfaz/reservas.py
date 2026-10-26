@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
 
-from app.aplicacion.errores import Cambiado, DatosInvalidos, HorarioOcupado, NoDisponible
 from app.aplicacion.notificaciones import CanalPush
 from app.aplicacion.reservas import (
     Cuando,
@@ -18,12 +17,12 @@ from app.aplicacion.reservas import (
 )
 from app.dependencias import ReservasSql, canal_push, repositorio_reservas
 from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva, ReservaHistorial
-from app.dominio.usuarios import Perfil
-from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.barrido import despachar_de
-from app.interfaz.entradas import Identificador, leer_hora
-from app.interfaz.respuestas import conflicto
-from app.interfaz.sesion import SinSesion, usuario_actual
+from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.entradas import Identificador, leer_hora
+from app.shared.errores import Cambiado, DatosInvalidos, HorarioOcupado, NoDisponible
+from app.shared.respuestas import conflicto
+from app.shared.zona import ZONA_CLUB as ZONA
 
 router = APIRouter(tags=["reservas"])
 

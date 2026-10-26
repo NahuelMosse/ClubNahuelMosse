@@ -2,8 +2,8 @@ import logging
 from datetime import date
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos, Duplicado
 from app.dominio.usuarios import DatosRegistro, Registro, validar_registro
+from app.shared.errores import DatosInvalidos, Duplicado
 
 registro_log = logging.getLogger("clubnahuelmosse.registro")
 

@@ -19,7 +19,7 @@ from app.dominio.notificaciones import (
     mensaje_cancelacion_forzosa,
     mensaje_cancelaciones_forzosas,
 )
-from app.infraestructura.db import en_transaccion
+from app.shared.db import en_transaccion
 
 # Cuántas notificaciones trae el centro: las más nuevas.
 LIMITE_DEL_CENTRO = 100

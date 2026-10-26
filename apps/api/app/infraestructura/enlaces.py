@@ -1,7 +1,7 @@
 from sqlalchemy import Connection, text
 
 from app.dominio.recuperacion import Destinatario, EnlaceReclamado
-from app.infraestructura.db import en_transaccion
+from app.shared.db import en_transaccion
 
 # Un enlace vale si no se usó ni se reemplazó, no venció, la cuenta sigue activa y la
 # contraseña no cambió después de emitirlo.

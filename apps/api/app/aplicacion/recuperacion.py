@@ -9,10 +9,10 @@ import logging
 import secrets
 from typing import Protocol
 
-from app.aplicacion.errores import DatosInvalidos
 from app.dominio.recuperacion import Destinatario, EnlaceReclamado
 from app.dominio.recuperacion import Mensaje as Mensaje
 from app.dominio.usuarios import correo_valido, normalizar_correo, problemas_contrasena
+from app.shared.errores import DatosInvalidos
 
 VIGENCIA_MINUTOS = 30
 MAXIMO_POR_HORA = 3

@@ -5,14 +5,18 @@ from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from app.aplicacion.errores import ConReservasFuturas, Duplicado, ReservasAfuera
-from app.aplicacion.sedes import dar_de_alta_sede, dar_de_baja_sede, editar_sede, sedes_activas
-from app.dependencias import SedesSql, repositorio_sedes
-from app.dominio.sedes import DatosSede, Sede
-from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Identificador, leer_hora
-from app.interfaz.respuestas import conflicto
-from app.interfaz.sesion import SinSesion, usuario_actual
+from app.modules.sedes.casos_de_uso import (
+    dar_de_alta_sede,
+    dar_de_baja_sede,
+    editar_sede,
+    sedes_activas,
+)
+from app.modules.sedes.reglas import DatosSede, Sede
+from app.modules.sedes.repositorio import SedesSql, repositorio_sedes
+from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.entradas import Identificador, leer_hora
+from app.shared.errores import ConReservasFuturas, Duplicado, ReservasAfuera
+from app.shared.respuestas import conflicto
 
 router = APIRouter(tags=["sedes"])
 

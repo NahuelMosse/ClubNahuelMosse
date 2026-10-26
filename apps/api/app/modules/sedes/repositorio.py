@@ -3,11 +3,11 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.dominio.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
-from app.dominio.sedes import Sede, SedeNueva
-from app.dominio.zona import NOMBRE_ZONA_CLUB
-from app.infraestructura.db import en_transaccion, restriccion_violada
-from app.infraestructura.espacios import EspaciosSql
+from app.modules.espacios import EspaciosSql
+from app.modules.sedes.reglas import Sede, SedeNueva
+from app.shared.db import Conexion, en_transaccion, restriccion_violada
+from app.shared.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
+from app.shared.zona import NOMBRE_ZONA_CLUB
 
 _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
 
@@ -182,3 +182,7 @@ class SedesSql:
                 ),
                 datos,
             )
+
+
+def repositorio_sedes(conn: Conexion) -> SedesSql:
+    return SedesSql(conn)

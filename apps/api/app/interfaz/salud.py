@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.config import config
+from app.shared.config import config
 
 router = APIRouter(tags=["operación"])
 

@@ -1,7 +1,7 @@
 from alembic import context
 from sqlalchemy import create_engine
 
-from app.config import config as config_app
+from app.shared.config import config as config_app
 
 url = context.config.get_main_option("sqlalchemy.url") or config_app.database_url
 

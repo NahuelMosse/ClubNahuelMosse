@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.aplicacion.errores import DatosInvalidos, NoEncontrada, Prohibido
 from app.main import crear_app
+from app.shared.errores import DatosInvalidos, NoEncontrada, Prohibido
 
 API = Path(__file__).resolve().parents[2]
 APP = API / "app"

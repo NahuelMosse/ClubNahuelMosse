@@ -1,9 +1,9 @@
 from datetime import date
 from typing import Protocol
 
-from app.aplicacion.errores import CuentaExistente
 from app.aplicacion.registro import ProveedorIdentidad, RepositorioUsuarios, registrar
 from app.dominio.usuarios import DatosRegistro, normalizar_correo
+from app.shared.errores import CuentaExistente
 
 
 class RepositorioAdministradores(RepositorioUsuarios, Protocol):

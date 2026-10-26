@@ -4,7 +4,6 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Path, Response, status
 from pydantic import BaseModel
 
-from app.aplicacion.errores import NoDisponible
 from app.aplicacion.notificaciones import (
     dar_de_baja_dispositivo,
     marcar_leida,
@@ -14,10 +13,10 @@ from app.aplicacion.notificaciones import (
 )
 from app.dependencias import NotificacionesSql, repositorio_notificaciones
 from app.dominio.notificaciones import Notificacion, TipoDeAviso
-from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Identificador
 from app.interfaz.reservas import Errores
-from app.interfaz.sesion import SinSesion, usuario_actual
+from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.entradas import Identificador
+from app.shared.errores import NoDisponible
 
 router = APIRouter(tags=["notificaciones"])
 

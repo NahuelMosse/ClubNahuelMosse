@@ -7,9 +7,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.dominio.errores import AgendaCambiada, Cambiado, NoDisponible
-from app.dominio.horarios import Agenda
 from app.infraestructura.reservas import ReservasSql
+from app.modules.horarios.reglas import Agenda
+from app.shared.errores import AgendaCambiada, Cambiado, NoDisponible
 
 CLUB = ZoneInfo("America/Argentina/Buenos_Aires")
 

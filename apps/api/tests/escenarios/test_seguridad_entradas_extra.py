@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 from app.aplicacion.recuperacion import Mensaje
-from app.config import config
+from app.shared.config import config
 from app.infraestructura import correo
 
 RAIZ_REPO = Path(__file__).resolve().parents[4]

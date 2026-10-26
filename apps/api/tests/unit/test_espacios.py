@@ -5,9 +5,8 @@ from typing import Any
 
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos, NoDisponible, Prohibido
-from app.aplicacion.espacios import dar_de_alta_espacio, nombre_sugerido
-from app.dominio.espacios import (
+from app.modules.espacios.casos_de_uso import dar_de_alta_espacio, nombre_sugerido
+from app.modules.espacios.reglas import (
     CATALOGO,
     CambioDeEspacio,
     DatosEspacio,
@@ -17,7 +16,8 @@ from app.dominio.espacios import (
     SedeDelEspacio,
     validar_espacio,
 )
-from app.dominio.usuarios import Perfil, Rol
+from app.modules.sesion.perfil import Perfil, Rol
+from app.shared.errores import DatosInvalidos, NoDisponible, Prohibido
 
 VALIDOS = DatosEspacio(
     sede_id=3,

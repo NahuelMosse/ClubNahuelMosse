@@ -10,8 +10,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.aplicacion.errores import AgendaCambiada, HorarioOcupado
 from app.infraestructura.reservas import ReservasSql
+from app.shared.errores import AgendaCambiada, HorarioOcupado
 
 
 def _con(token: str) -> dict[str, str]:

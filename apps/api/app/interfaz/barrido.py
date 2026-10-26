@@ -7,7 +7,8 @@ import sys
 from datetime import UTC, datetime
 
 from app.aplicacion.notificaciones import CanalPush, despachar_pendientes, enviar_recordatorios
-from app.dependencias import NotificacionesSql, canal_push, motor
+from app.dependencias import NotificacionesSql, canal_push
+from app.shared.db import motor
 
 _registro = logging.getLogger(__name__)
 

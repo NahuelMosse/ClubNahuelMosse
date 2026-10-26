@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from app.aplicacion.errores import NoAutenticado
-from app.dominio.usuarios import Perfil
+from app.modules.sesion.perfil import Perfil
+from app.shared.errores import NoAutenticado
 
 
 class VerificadorDeTokens(Protocol):

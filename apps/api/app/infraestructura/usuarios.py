@@ -1,10 +1,10 @@
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.dominio.errores import Duplicado
-from app.dominio.usuarios import Perfil, PerfilEditado, Registro
-from app.infraestructura.db import en_transaccion, restriccion_violada
+from app.dominio.usuarios import PerfilEditado, Registro
 from app.infraestructura.reservas import ReservasSql
+from app.shared.db import en_transaccion, restriccion_violada
+from app.shared.errores import Duplicado
 
 _INDICE_A_CAMPO = {"usuario_correo_unico": "correo", "usuario_dni_unico": "dni"}
 
@@ -30,29 +30,6 @@ class UsuariosSql:
         ).first()
         self._conn.rollback()
         return activo is not None
-
-    def perfil_activo(self, uid: str) -> Perfil | None:
-        fila = self._conn.execute(
-            text(
-                "SELECT id, firebase_uid, nombre, apellido, correo, rol, dni, fecha_nacimiento"
-                " FROM usuario"
-                " WHERE firebase_uid = :uid AND activo"
-            ),
-            {"uid": uid},
-        ).first()
-        self._conn.rollback()
-        if fila is None:
-            return None
-        return Perfil(
-            id=fila.id,
-            uid=fila.firebase_uid,
-            nombre=fila.nombre,
-            apellido=fila.apellido,
-            correo=fila.correo,
-            rol=fila.rol,
-            dni=fila.dni,
-            fecha_nacimiento=fila.fecha_nacimiento,
-        )
 
     def id_activo_por_correo(self, correo: str) -> int | None:
         id_usuario = self._conn.execute(

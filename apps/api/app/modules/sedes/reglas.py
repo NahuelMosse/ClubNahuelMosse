@@ -2,7 +2,7 @@ import re
 from dataclasses import dataclass
 from datetime import time
 
-from app.dominio.espacios import parte_de_calle, parte_de_sede
+from app.modules.espacios import parte_de_calle, parte_de_sede
 
 LARGO_NOMBRE = 60
 LARGO_DIRECCION = 80
