@@ -72,6 +72,7 @@ lint: sh D:/Temp/w/herramientas/sim01-lint.sh apps/api/app apps/api/tests apps/m
 app: sh D:/Temp/w/herramientas/arq01-app.sh sim01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh sim01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 captures: sh D:/Temp/w/herramientas/arq03-capturas.sh
+a11y: sh D:/Temp/w/herramientas/flutter-mobile.sh test/sin_sobreingenieria_a11y_test.dart
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8701/club_sim01_migra uv run --no-sync alembic upgrade head"
 mutate apps/api/app/dominio/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_casos_de_uso_reservas.py tests/unit/test_despacho_de_confirmaciones.py tests/integracion/test_sin_sobreingenieria_api.py
 mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_mensaje_cancelacion_forzosa.py tests/unit/test_recordatorios.py
@@ -119,3 +120,5 @@ mutate apps/api/migraciones/versions/0009_avisos_sin_reintentos.py: sh D:/Temp/w
 - L35 · 2026-10-26 · T9 · interfaz/cuerpo.py (middleware ASGI, 413 por Content-Length o al pasar 1 MB, 408 a los 5 s) cableado en main.py; FastAPI vuelve 400 toda excepción al leer el cuerpo, así que responde él mismo y le da `http.disconnect` a la app; pytest test_cuerpo_acotado.py: 2 passed
 - L36 · 2026-10-26 · gate · `lint:` nombra lo que cubre; tres `mutate` nuevos (aplicacion/notificaciones.py, infraestructura/notificaciones.py, migración 0009) con tests unitarios/de integración rápidos; Protocols de aplicacion/notificaciones.py y reservas.py movidos a almacen_de_avisos.py y almacen_de_reservas.py (shape), sin cambio de comportamiento; pyproject: E501 exento para test_cuerpo_acotado.py
 - L37 · 2026-10-26 · kit updated 40001f0ea5f273b38d96671595c03b9ca0ef3998 → 00b3863935752ff3c3793e6e9a2105d85c3f8f6d · SIM-01 necesita el perfil flutter y remove-only para verificar la parte de la app
+- L38 · 2026-10-26 · kit updated 00b3863935752ff3c3793e6e9a2105d85c3f8f6d → e27cd00c6467e6f2aea1db20e98b900ce4effbcb · SIM-01 necesita el perfil flutter para cerrar
+- L39 · 2026-10-26 · profile flutter on with the card open · SIM-01 verifica pantallas Dart: goldens y kitA11y, sin navegador

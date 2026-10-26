@@ -4,6 +4,8 @@ analyzer:
   # Test congelado en rojo con un import que quedó sin uso: no se puede editar y `flutter test` lo sigue corriendo.
   exclude:
     - test/anular_desde_el_detalle_test.dart
+    # Ayudantes del kit, copiados tal cual por el perfil flutter.
+    - test/kit/**
   language:
     strict-casts: true
     strict-inference: true

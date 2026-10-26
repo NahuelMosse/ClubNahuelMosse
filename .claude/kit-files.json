@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "d1517e126882fb489539f6fdd98719d667cdbf25e0c5c1dfae55932a4869f9b3"
+    "sha256": "748e80be58110becf93a5d124b45aad55855f87ff8a4705b45d758170731655e"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1357,14 +1357,14 @@
   },
   ".claude/tools/kit.mjs": {
     "module": "core",
-    "sha256": "6ddd3fd98ced40d2b490de557a048fe396463e6c36b1ecb618f4704ee0d30d23"
+    "sha256": "150b585d4ad90f596a302b82bda99c4dac777ba89e5cf54ac71c82d4980bec1f"
   },
   ".claude/tools/migrations.mjs": {
     "module": "core",
     "sha256": "f5d02bfedadc1a538b4de5015b517e3d60c63fdbe06f934f2d76d20ad483ad26"
   },
   ".claude/tools/motion-audit.mjs": {
-    "module": "profile:web",
+    "module": "profile:flutter",
     "sha256": "d40a2107b16f814996b3e1e375160bd601d6b67bed063a31486120c2457f6a4f"
   },
   ".claude/tools/mutate.mjs": {
@@ -1432,7 +1432,7 @@
     "sha256": "6d3c1a80ba2bff4bc66864d67cf56255989656b0b13bdf6e66ab5449c08b3c1a"
   },
   ".claude/agents/designer.md": {
-    "module": "profile:web",
+    "module": "profile:flutter",
     "sha256": "fcaafac9c5c9af435ebb30e014359303d7b4a6d5c58bcd1227fdfd7e6c423d15"
   },
   ".claude/agents/judge.md": {
@@ -1488,7 +1488,7 @@
     "sha256": "f8119b58d0ac8cf0fd5bb8358cd12289cbb5685504217a15e05c1024ca9f10cf"
   },
   ".claude/tools/motion-curves.mjs": {
-    "module": "profile:web",
+    "module": "profile:flutter",
     "sha256": "23dbb83121e78e1c13413a186bf0141f2aecab385554e9e290a34f0dc150649d"
   },
   ".claude/tools/plan.mjs": {
@@ -1866,5 +1866,45 @@
   ".claude/tools/overdesign.mjs": {
     "module": "core",
     "sha256": "90cebfadddf3604524f8739c294ebcf84c5cd7eb78fb3df41ff88b1df0856db1"
+  },
+  ".claude/profiles/flutter.md": {
+    "module": "profile:flutter",
+    "sha256": "cda5800d8f8e59870f93a747a0a26e4cf62be0d3f873ba17bbacb6bf0da0713b"
+  },
+  ".claude/profiles/flutter/test-kit/example-motion.json": {
+    "module": "profile:flutter",
+    "sha256": "0fee6e4c84817be2a65aa98f648571595baf82df48c4bb9fc708dc7741f00147"
+  },
+  ".claude/profiles/flutter/test-kit/kit_a11y.dart": {
+    "module": "profile:flutter",
+    "sha256": "3fdfe3bbc9a125a628810b170f9c0d711b9a803843c76499ebbf1baff3fc79a5"
+  },
+  ".claude/profiles/flutter/test-kit/kit_motion.dart": {
+    "module": "profile:flutter",
+    "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
+  },
+  ".claude/profiles/flutter/test-kit/kit_states.dart": {
+    "module": "profile:flutter",
+    "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
+  },
+  ".claude/reference/design-refs-mobile.md": {
+    "module": "profile:flutter",
+    "sha256": "b980a1c68a31482e227b7f00615e351baefb1efad8a7819538eaf515b3cc72cb"
+  },
+  ".claude/tools/flutter-gate.mjs": {
+    "module": "profile:flutter",
+    "sha256": "d0bde5d25f97130572fd30b7d37398931de492bcceb806f919d6a0ed917c4ced"
+  },
+  "test/kit/kit_states.dart": {
+    "module": "profile:flutter",
+    "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
+  },
+  "test/kit/kit_a11y.dart": {
+    "module": "profile:flutter",
+    "sha256": "3fdfe3bbc9a125a628810b170f9c0d711b9a803843c76499ebbf1baff3fc79a5"
+  },
+  "test/kit/kit_motion.dart": {
+    "module": "profile:flutter",
+    "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
   }
 }

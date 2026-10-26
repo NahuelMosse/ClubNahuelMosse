@@ -8,7 +8,7 @@
 //                                        a signal that appeared after the decision does not change it
 //   kit.mjs grade <poc|mvp|production> --reason "…"
 //                                        how much the bar asks; it only goes up; a person, no open card
-//   kit.mjs profile <on|off> <web|backend|flutter> --reason "…"
+//   kit.mjs profile <on|off> <web|backend|flutter> --reason "…" [--card-open "…" (on only, recorded in the card's Log)]
 //                                        a profile is a package of modules, tools, agents, references and extras
 //                                        (the skill and the MCP server of web) for one environment; on turns its
 //                                        modules on and copies its files, off turns them off and removes the files
@@ -564,14 +564,19 @@ const recordProfiles = (root, manifest) => {
     .map(([n, s]) => [n, s.state === 'on' ? { state: 'on', since: 'recorded from its modules' } : { state: 'off', reason: s.reason, by: 'derived', at: today() }]));
 };
 
-const turnProfile = (root, mode, name, reason) => {
+// `--card-open "<why>"` turns a profile on with a card open, when the card needs that profile's instruments to close (a Flutter
+// screen in a repo with only web on). Only `on`: it adds instruments, it never lowers the bar. The card's Log records it.
+const turnProfile = (root, mode, name, reason, cardOpen = '') => {
   const state = requireManifest(root);
   if (!['on', 'off'].includes(mode)) fail('kit.mjs profile <on|off> <web|backend|flutter> --reason "…"');
   const installed = profileArg(state.map, name);
   if (installed.status === 'planned') fail(`Profile ${name} is planned, not available: it is declared in modules.json and has no files yet. Nothing changed.`);
   if (mode === 'off' && process.env.SDD_UNATTENDED === '1') fail('Unattended nobody turns a profile off: that decision is a person\'s. `kit.mjs profile on <profile>` is the way to resolve it.');
   if (!reason) fail(`Turning a profile ${mode} needs its reason: \`kit.mjs profile ${mode} ${name} --reason "<why>"\`. It is written in the manifest and repeated in every closing.`);
-  if (openCard(root)) fail('There is a card open: a profile changes between cards, so the bar the card was planned with does not change under it. Close the card first.');
+  const open = openCard(root);
+  const why = String(cardOpen ?? '').trim();
+  if (open && !(mode === 'on' && why))
+    fail(`There is a card open: a profile changes between cards, so the bar the card was planned with does not change under it. Close the card first.${mode === 'on' ? '\nIf the card needs this profile\'s instruments to close, run again with --card-open "<why>"; it is recorded in the card\'s Log.' : ''}`);
   const source = sourceOf(root, state.manifest);
   const sourceMap = readModules(source);
   const p = (mode === 'on' ? sourceMap : state.map).profiles?.[name] ?? installed;
@@ -596,6 +601,12 @@ const turnProfile = (root, mode, name, reason) => {
     const mcp = mcpAdd(root, p.mcp);
     manifest.profiles[name] = { state: 'on', since: `kit.mjs profile on ${today()}`, reason, ...(Object.keys(mcp).length ? { mcp } : {}) };
     writeManifest(root, manifest);
+    if (open) {
+      const doc = join(open, 'card.md');
+      const text = existsSync(doc) ? readFileSync(doc, 'utf8') : '';
+      const n = (text.match(/^\s*[-*]\s*L\d+\b/gm) ?? []).length + 1;
+      if (existsSync(doc)) appendFileSync(doc, `${text.endsWith('\n') ? '' : '\n'}- L${n} · ${today()} · profile ${name} on with the card open · ${why}\n`);
+    }
     console.log(`Profile ${name} is on: ${copied.length} file(s) copied${kept.length ? `; ${kept.length} already there with local changes, left as they are: ${kept.join(', ')}` : ''}${Object.keys(mcp).length ? `; ${MCP_JSON}: ${Object.keys(mcp).join(', ')} added` : ''}.`);
     return;
   }
@@ -689,7 +700,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     else if (command === 'off') turnOff(root, name, flag(rest, '--reason'));
     else if (command === 'confirm-off') confirmOff(root, name, flag(rest, '--reason'));
     else if (command === 'grade') turnGrade(root, name, flag(rest, '--reason'));
-    else if (command === 'profile') turnProfile(root, name, rest[0], flag(rest, '--reason'));
+    else if (command === 'profile') turnProfile(root, name, rest[0], flag(rest, '--reason'), flag(rest, '--card-open'));
     else if (command === 'repair') repair(root);
     else if (command === 'e2e') setE2e(root, name);
     else fail('kit.mjs status | on <module> | off <module> --reason "…" | confirm-off <module> --reason "…" | grade <poc|mvp|production> --reason "…" | profile <on|off> <web|backend|flutter> --reason "…" | repair | e2e <path>');
