@@ -61,3 +61,4 @@ no-visual: recuperacion.py arma una página HTML, pero la card sólo cambia cóm
 - L7 · 2026-10-25 · declared · ARQ-02-ASM-03 · el 429 de esta suposición es el que ya responde el límite de pedidos, que la card no toca; lo cubren los escenarios de REV-01 (`demasiados-pedidos`) de la suite
 - L8 · 2026-10-25 · declared · ARQ-02-ASM-01 · 20, 14 y 9 son las rutas que hoy atrapan cada error; el test estático de S2 comprueba que ninguna lo siga haciendo
 - L9 · 2026-10-25 · plan judge (oracle en el rol de judge, el agente judge no está en la sesión): ACT-01..04 cerrados con ARQ-02-ASM-02, ASM-05, ASM-06, T4 y T6; ver judge.md
+- L10 · 2026-10-25 · declared · ARQ-02-ASM-02 · los valores literales los comprueban los cuerpos de los tests de T4 (registro propio con `CollectorRegistry(`, series `solicitudes_total` con `metodo`, `ruta` y `codigo` en ese orden, los nueve cortes de `le` y la ausencia de `_created`); `# HELP` y `1.0` son lo que la librería agrega y se acepta
