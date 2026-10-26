@@ -10,7 +10,7 @@ from app.aplicacion.sedes import dar_de_alta_sede, dar_de_baja_sede, editar_sede
 from app.dependencias import SedesSql, repositorio_sedes
 from app.dominio.sedes import DatosSede, Sede
 from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Identificador, Texto40, Texto120, leer_hora
+from app.interfaz.entradas import Identificador, leer_hora
 from app.interfaz.respuestas import conflicto
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -67,10 +67,10 @@ def listar_sedes(
 
 
 class PedidoDeSede(BaseModel):
-    nombre: Texto120 = ""
-    direccion: Texto120 = ""
-    apertura: Texto40 = ""
-    cierre: Texto40 = ""
+    nombre: str = ""
+    direccion: str = ""
+    apertura: str = ""
+    cierre: str = ""
     # Los días de la semana van de 1 a 7: más de siete no tiene sentido.
     dias: Annotated[list[int], Field(max_length=7)] = []
 

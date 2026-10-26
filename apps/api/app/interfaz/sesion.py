@@ -18,7 +18,6 @@ from app.aplicacion.sesion import perfil_autenticado
 from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
 from app.dominio.usuarios import DatosPersonales, Perfil, Rol
 from app.dominio.zona import ZONA_CLUB as ZONA
-from app.interfaz.entradas import Clave, Texto40, Texto120
 
 router = APIRouter(tags=["sesión"])
 _portador = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
@@ -71,8 +70,8 @@ def perfil_propio(perfil: Annotated[Perfil, Depends(usuario_actual)]) -> PerfilP
 
 
 class PedidoCambioDeContrasena(BaseModel):
-    actual: Clave = ""
-    nueva: Clave = ""
+    actual: str = ""
+    nueva: str = ""
 
 
 class ErroresDeContrasena(BaseModel):
@@ -110,10 +109,10 @@ def cambiar_contrasena_propia(
 
 
 class PedidoDeEdicion(BaseModel):
-    nombre: Texto120 = ""
-    apellido: Texto120 = ""
-    dni: Texto40 = ""
-    fecha_nacimiento: Texto40 = ""
+    nombre: str = ""
+    apellido: str = ""
+    dni: str = ""
+    fecha_nacimiento: str = ""
 
 
 @router.put(

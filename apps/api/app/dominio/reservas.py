@@ -9,17 +9,8 @@ FiltroEstado = Literal["activa", "completada", "anulada"]
 Cuando = Literal["proximas", "historial"]
 
 
-# Cuántas reservas trae cada tanda de un historial.
+# Cuántas reservas trae cada página del historial global.
 POR_PAGINA = 20
-
-
-@dataclass(frozen=True)
-class Marcador:
-    """Dónde quedó quien recorre un historial: el inicio y el número de la última reserva que
-    vio. Con el número se desempatan dos reservas que empiezan a la misma hora."""
-
-    inicio: datetime
-    id: int
 
 
 @dataclass(frozen=True)
@@ -47,14 +38,6 @@ class Reserva:
 
 
 @dataclass(frozen=True)
-class TandaDeReservas:
-    """Una tanda de reservas de quien consulta y si después de ella hay más."""
-
-    reservas: list[Reserva]
-    hay_mas: bool
-
-
-@dataclass(frozen=True)
 class FiltrosHistorial:
     """Lo que un administrador eligió para acotar el historial global (CU-14). `None` en
     cualquier campo significa que ese filtro no se aplica."""
@@ -66,8 +49,6 @@ class FiltrosHistorial:
     hasta: date | None = None
     q: str | None = None
     pagina: int = 1
-    # Si viene, la página empieza después de esa reserva y [pagina] no cuenta.
-    despues: Marcador | None = None
 
 
 @dataclass(frozen=True)
@@ -124,5 +105,3 @@ class HistorialDeReservas:
     pagina: int
     por_pagina: int
     contadores: Contadores
-    # Hay una reserva más después de la última de esta página.
-    hay_mas: bool = False

@@ -17,7 +17,6 @@ from app.dependencias import (
     repositorio_usuarios,
 )
 from app.dependencias import enviar_correo as enviar
-from app.interfaz.entradas import Clave, Codigo, Correo
 
 router = APIRouter(tags=["recuperación de contraseña"])
 
@@ -26,16 +25,16 @@ PAQUETE_ANDROID = "ar.edu.unimoron.clubnahuelmosse"
 
 
 class PedidoDeEnlace(BaseModel):
-    correo: Correo = ""
+    correo: str = ""
 
 
 class ConsultaDeEnlace(BaseModel):
-    codigo: Codigo = ""
+    codigo: str = ""
 
 
 class ContrasenaNueva(BaseModel):
-    codigo: Codigo = ""
-    nueva: Clave = ""
+    codigo: str = ""
+    nueva: str = ""
 
 
 class ErroresDeCampo(BaseModel):

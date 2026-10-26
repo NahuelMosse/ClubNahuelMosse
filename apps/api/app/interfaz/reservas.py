@@ -21,8 +21,7 @@ from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva
 from app.dominio.usuarios import Perfil
 from app.dominio.zona import ZONA_CLUB as ZONA
 from app.interfaz.barrido import despachar_de
-from app.interfaz.entradas import Busqueda, Identificador, Parrafo, Texto40, leer_hora
-from app.interfaz.marcador import leer, siguiente
+from app.interfaz.entradas import Identificador, leer_hora
 from app.interfaz.respuestas import conflicto
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -62,8 +61,6 @@ class Errores(BaseModel):
 
 class ListaDeReservas(BaseModel):
     reservas: list[ReservaVista]
-    # El `despues` de la tanda que sigue; `null` si esta es la última.
-    siguiente: str | None
 
 
 def _vista(r: Reserva) -> ReservaVista:
@@ -78,29 +75,21 @@ def _vista(r: Reserva) -> ReservaVista:
     description=(
         "`proximas`: las activas que no terminaron, de la más cercana a la más lejana. "
         "`historial`: las completadas, canceladas y anuladas, de la más reciente a la más "
-        "vieja. El total es el que se guardó al reservar. Trae 20 por tanda: si hay más, "
-        "`siguiente` es el valor de `despues` que pide la tanda que sigue; sin `despues` "
-        "trae las primeras 20. Un `despues` que no sale de un `siguiente` es un 422."
+        "vieja. El total es el que se guardó al reservar."
     ),
 )
 def listar_reservas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     cuando: Annotated[Cuando, Query()] = "proximas",
-    despues: Annotated[str | None, Query()] = None,
 ) -> ListaDeReservas:
-    marcador = None if despues is None else leer(despues)
-    tanda = mis_reservas(reservas, perfil, cuando, marcador)
-    return ListaDeReservas(
-        reservas=[_vista(r) for r in tanda.reservas],
-        siguiente=siguiente(tanda.reservas, tanda.hay_mas),
-    )
+    return ListaDeReservas(reservas=[_vista(r) for r in mis_reservas(reservas, perfil, cuando)])
 
 
 class PedidoDeReserva(BaseModel):
     espacio_id: Identificador
     fecha: date
-    desde: Texto40
+    desde: str
     # Sin cota acá: el caso de uso rechaza una duración fuera de rango antes de calcular nada.
     horas: int
 
@@ -181,7 +170,7 @@ def cancelar(
 class PedidoDeCambio(BaseModel):
     espacio_id: Identificador
     fecha: date
-    desde: Texto40
+    desde: str
 
 
 @router.post(
@@ -256,8 +245,6 @@ class HistorialVista(BaseModel):
     pagina: int
     por_pagina: int
     contadores: ContadoresVista
-    # El `despues` de la página que sigue; `null` si esta es la última.
-    siguiente: str | None
 
 
 def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
@@ -276,11 +263,8 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
     description=(
         "Todos los usuarios, todas las sedes. Filtra por estado (`activa`, `completada` o"
         " `anulada`; sin filtro trae también las canceladas por su usuario), sede, deporte,"
-        " rango de fechas y texto (usuario, sede o espacio); pagina de a 20, de la más"
-        " reciente a la más antigua: `siguiente` es el valor de `despues` que pide la página"
-        " que sigue, y un `despues` que no sale de un `siguiente` es un 422. `pagina` sigue"
-        " valiendo para las apps ya instaladas; con `despues`, `pagina` no cuenta. No"
-        " modifica nada."
+        " rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `pagina`, de la"
+        " más reciente a la más antigua. No modifica nada."
     ),
 )
 def listar_todas(
@@ -288,12 +272,11 @@ def listar_todas(
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     estado: Annotated[FiltroEstado | None, Query()] = None,
     sede_id: Annotated[Identificador | None, Query()] = None,
-    deporte: Annotated[Texto40 | None, Query()] = None,
+    deporte: Annotated[str | None, Query()] = None,
     desde: Annotated[date | None, Query()] = None,
     hasta: Annotated[date | None, Query()] = None,
-    q: Annotated[Busqueda | None, Query()] = None,
+    q: Annotated[str | None, Query()] = None,
     pagina: Annotated[int, Query(ge=1, le=PAGINA_MAXIMA)] = 1,
-    despues: Annotated[str | None, Query()] = None,
 ) -> HistorialVista:
     historial = historial_global(
         reservas,
@@ -306,7 +289,6 @@ def listar_todas(
             hasta=hasta,
             q=q,
             pagina=pagina,
-            despues=None if despues is None else leer(despues),
         ),
     )
     return HistorialVista(
@@ -315,7 +297,6 @@ def listar_todas(
         pagina=historial.pagina,
         por_pagina=historial.por_pagina,
         contadores=ContadoresVista.model_validate(historial.contadores, from_attributes=True),
-        siguiente=siguiente(historial.reservas, historial.hay_mas),
     )
 
 
@@ -338,7 +319,7 @@ def detalle(
 
 
 class PedidoDeAnulacion(BaseModel):
-    motivo: Parrafo
+    motivo: str
     espacio_id: Identificador
     inicio: AwareDatetime
 
