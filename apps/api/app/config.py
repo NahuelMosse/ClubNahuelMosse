@@ -18,10 +18,6 @@ class Config(BaseSettings):
 
     version: str = _version_del_paquete()
     database_url: str = "postgresql+psycopg://club:club@localhost:5432/club"
-    # El usuario propio de la app, sin permiso de crear tablas; vacío usa DATABASE_URL.
-    database_url_app: str = ""
-    # El token del endpoint /metrics; vacío lo deja apagado.
-    metricas_token: str = ""
     firebase_project_id: str = "demo-clubnahuelmosse"
     # La clave web del proyecto, para comprobar contraseñas; el emulador no la necesita.
     firebase_api_key: str = ""
@@ -42,12 +38,6 @@ class Config(BaseSettings):
     pruebas: bool = False
     # Cada cuántos segundos el barrido manda los recordatorios que ya les toca; 0 lo apaga.
     recordatorios_cada: int = 30
-    # Detrás del proxy de Render el origen de un pedido es el último valor de X-Forwarded-For.
-    detras_de_proxy: bool = False
-    # /docs y /redoc; en producción se apagan, el contrato sigue en /openapi.json.
-    documentacion_interactiva: bool = True
-    # Host que acepta la API además de los propios y el de url_publica, separados por coma.
-    hosts_permitidos: str = ""
 
     @field_validator("database_url")
     @classmethod

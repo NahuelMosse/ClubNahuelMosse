@@ -11,7 +11,6 @@ dependencies = [
     "alembic>=1.13",
     "pydantic-settings>=2.4",
     "firebase-admin>=6.5",
-    "prometheus-client>=0.20",
 ]
 
 [dependency-groups]

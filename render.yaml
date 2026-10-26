@@ -10,26 +10,14 @@ services:
     # Con un plan pago, pasarlas a `preDeployCommand: uv run --no-sync alembic upgrade head`.
     buildCommand: uv sync --frozen --no-dev && uv run --no-sync alembic upgrade head
     startCommand: uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    # Pública, fuera del filtro de Host y con la base: Render reinicia la API si /ready no da 2xx.
-    healthCheckPath: /ready
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.11"
-      # /docs y /redoc apagados; el contrato sigue en /openapi.json.
-      - key: DOCUMENTACION_INTERACTIVA
-        value: "false"
-      # Detrás del proxy de Render el origen es el último valor de X-Forwarded-For.
-      - key: DETRAS_DE_PROXY
-        value: "true"
       - key: DATABASE_URL
         fromDatabase:
           name: clubnahuelmosse-db
           property: connectionString
-      # El usuario propio de la app (sin permiso de crear tablas); sin él se usa DATABASE_URL.
-      - key: DATABASE_URL_APP
-        sync: false
-      - key: METRICAS_TOKEN
-        sync: false
       - key: FIREBASE_PROJECT_ID
         sync: false
       - key: FIREBASE_API_KEY
