@@ -46,7 +46,7 @@ Las razones del stack están en [ADR-0001](../adr/0001-stack.md) y las del hosti
 4. **El reloj y la zona del club son explícitos.** Toda fecha de negocio se calcula en `America/Argentina/Buenos_Aires`
    (`dominio/zona.py` en la API, `comun/zona_club.dart` en la app), y el reloj se inyecta para poder fijarlo en los tests.
 5. **Nada se pierde en silencio.** Los avisos se encolan en la misma transacción que el cambio que los origina y un
-   despachador los entrega después; si el proceso cae a mitad de camino, el aviso queda en la cola y se retoma.
+   despachador los entrega después; si el proceso cae a mitad de camino, el aviso queda en la cola.
 
 ## La API
 
@@ -56,7 +56,6 @@ Las razones del stack están en [ADR-0001](../adr/0001-stack.md) y las del hosti
 flowchart TB
   subgraph interfaz["interfaz/ — HTTP"]
     rutas["rutas FastAPI"]
-    mw["middleware: registro de errores, protecciones"]
     cmd["comandos: barrido, sembrar_admin"]
   end
   dep["dependencias.py"]
@@ -99,15 +98,12 @@ estas flechas.
 ```mermaid
 sequenceDiagram
   participant App
-  participant MW as RegistroDeErrores + Protecciones
   participant Ruta as interfaz/reservas.py
   participant Auth as usuario_actual
   participant CU as aplicacion/reservas.py
   participant Repo as ReservasSql
   participant PG as PostgreSQL
-  App->>MW: POST /reservas (Bearer token)
-  MW->>MW: X-Request-ID, Host permitido, cuerpo ≤ 64 KB
-  MW->>Ruta: pedido
+  App->>Ruta: POST /reservas (Bearer token)
   Ruta->>Auth: token
   Auth->>Auth: Firebase verifica firma y revocación
   Auth-->>Ruta: Perfil (id, rol)
@@ -121,7 +117,6 @@ sequenceDiagram
   Repo-->>CU: Reserva, o HorarioOcupado
   CU-->>Ruta: Reserva
   Ruta-->>App: 201, o 409 / 422 / 403
-  MW->>MW: una línea de log JSON con método, ruta, código, usuario y request id
 ```
 
 Detalles que importan:
@@ -142,15 +137,10 @@ Detalles que importan:
 |---|---|---|
 | Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `usuario` | `interfaz/sesion.py` (`usuario_actual`), `infraestructura/identidad.py` |
 | Autorización | por rol, dentro de cada caso de uso (`perfil.rol`); por dueño en las consultas (`WHERE usuario_id = …`): una reserva ajena da 404 | `aplicacion/*.py` |
-| Validación de entrada | tipos acotados de pydantic (longitud, rango, sin caracteres de control); un cuerpo que no es JSON da 400 sin repetirlo | `interfaz/entradas.py` |
-| Límite de pedidos | ventana deslizante en memoria: registro y recuperación por origen, edición de perfil por cuenta; 429 con `Retry-After` | `interfaz/limites.py` |
-| Cabeceras y tamaño | Host permitido, cuerpo hasta 64 KB, `Cache-Control: no-store`, `nosniff`, CSP que impide incrustar | `interfaz/protecciones.py` |
-| Errores | errores del dominio → 4xx con `{"errores": …}`; base caída o pool agotado → 503; cualquier otra excepción → 500 con la referencia del pedido | `main.py`, `interfaz/respuestas.py`, `interfaz/registro_errores.py` |
-| Log | una línea JSON por evento, a la salida estándar, con `X-Request-ID`; sin correo, DNI, query string ni tokens; rutas escapadas | `interfaz/registro_errores.py` |
-| Métricas | `/metrics` (formato Prometheus, con token): pedidos y duración por ruta, uso del pool | `interfaz/metricas.py` |
-| Salud | `/health` dice que el proceso vive; `/ready` comprueba la base y que el esquema esté en la última migración | `interfaz/salud.py` |
-| Base | pool de 5 + 5, espera por conexión 5 s, conexión 5 s, `statement_timeout` 10 s, `lock_timeout` 5 s | `infraestructura/db.py` |
-| Usuarios de la base | el dueño migra (`DATABASE_URL`); la API atiende con `club_app`, sin DDL (`DATABASE_URL_APP`) | `scripts/usuario_de_la_app.py` |
+| Validación de entrada | tipos de pydantic; un cuerpo que no es JSON da 400 sin repetirlo | `interfaz/entradas.py` |
+| Errores | errores del dominio → 403, 404, 409 y 422 con `{"errores": …}` | `main.py`, `interfaz/errores_http.py`, `interfaz/respuestas.py` |
+| Salud | `/health` dice que el proceso vive | `interfaz/salud.py` |
+| Base | pool de conexiones de SQLAlchemy con `pool_pre_ping` | `infraestructura/db.py` |
 | Hora | `ZONA_CLUB` y `datetime.now(ZONA_CLUB)`; las columnas son `timestamptz` | `dominio/zona.py` |
 
 ## Los avisos
@@ -163,13 +153,11 @@ pasan por la tabla `notificacion`, que es a la vez la cola de envío y el centro
 ```mermaid
 stateDiagram-v2
   [*] --> pendiente: se encola junto con el cambio
-  pendiente --> enviando: el despachador lo toma (SKIP LOCKED, intentos + 1)
+  pendiente --> enviando: el despachador lo toma (SKIP LOCKED)
   enviando --> enviada: FCM lo aceptó
   enviando --> sin_permiso: la persona no tiene un teléfono con permiso
   enviando --> sin_canal: la API no tiene credenciales de FCM
   enviando --> fallida: FCM falló
-  enviando --> enviando: varado más de 5 min, con intentos: se retoma
-  enviando --> fallida: varado sin intentos (3), o es un recordatorio
 ```
 
 - **Cancelación y anulación.** `ReservasSql.cancelar` y `ReservasSql.anular` cambian la reserva y encolan el aviso en la
@@ -177,9 +165,6 @@ stateDiagram-v2
   persona. Si a una persona le anulan otra reserva mientras tiene un aviso de anulación sin leer, se abre un aviso nuevo
   con la cantidad total y el anterior queda reemplazado (`reemplazada_por`); `notificacion_reserva` liga cada reserva
   con el aviso que se la informó.
-- **Varados.** Un aviso que quedó `enviando` porque el proceso cayó a mitad del envío se retoma a los 5 minutos, hasta
-  3 intentos: la persona puede recibirlo dos veces, pero no perdérselo. Un recordatorio varado no se repite, porque el
-  caso de uso fija que sale una sola vez.
 - **Recordatorios.** El barrido (`interfaz/barrido.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
   segundos: primero despacha los pendientes y después busca las reservas activas que empiezan dentro de la próxima hora
   y no tienen recordatorio. El índice único `notificacion_recordatorio_unico` impide el duplicado aunque dos barridos se
@@ -225,7 +210,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-  main["main.dart<br/>arranque y reintento"] --> app["app.dart<br/>rutas, redirect por rol, repositorios"]
+  main["main.dart<br/>arranque"] --> app["app.dart<br/>rutas, redirect por rol, repositorios"]
   app --> pantallas["pantallas por dominio<br/>sesion · usuarios · inicio · sedes · reservas · notificaciones · admin"]
   pantallas --> repos["repositorios<br/>Sedes · Espacios · Horarios · Reservas · HistorialDeReservas · Recuperacion"]
   pantallas --> comun["comun/ y tema/<br/>componentes, movimiento, diálogos, paleta"]
@@ -241,14 +226,11 @@ flowchart TB
   `Sesion` para redirigir cuando se cierra.
 - **Navegación.** Todo está en `app.dart`. El `redirect` global decide por rol; las rutas que necesitan datos en `extra`
   (confirmar una reserva, el detalle de admin) vuelven a su listado si se abren sin ellos.
-- **Errores de red.** `ClienteApi` corta cada pedido a los 60 s. A los 5 s sin respuesta enciende `despertando` y la
-  app muestra «el servidor se está despertando», que es lo que pasa cuando el plan gratuito de Render durmió la API.
-  Las pantallas usan `atenderErrorDeRed` para mostrar el diálogo que corresponde (sin conexión, sesión vencida, error
+- **Errores de red.** `ClienteApi` corta cada pedido a los 30 s. Las pantallas usan `atenderErrorDeRed` para mostrar el diálogo que corresponde (sin conexión, sesión vencida, error
   del servidor con su referencia) y ofrecer reintentar. Si la sesión vence en medio de una reserva, la elección queda
   guardada en memoria (`ReservaPendiente`) y, si la persona vuelve a entrar con la misma cuenta sin cerrar la app, sigue
 en `/reservar`.
 - **Errores no previstos.** `errores_no_manejados.dart` engancha `FlutterError.onError` y `PlatformDispatcher.onError`.
-  Si el arranque falla, se ve `PantallaErrorDeArranque` con reintento.
 - **Lista de rutas permitidas.** `api/rutas.dart` declara las rutas de la API que la app puede pedir. En modo debug (y
   en los tests) un pedido a una ruta no declarada falla antes de salir; en `release` no se comprueba.
 
@@ -280,7 +262,7 @@ flowchart LR
     uv --> fbe
   end
   subgraph render["Render (render.yaml)"]
-    web["Web service clubnahuelmosse-api<br/>health check /ready"]
+    web["Web service clubnahuelmosse-api<br/>health check /health"]
     pgr[("Postgres clubnahuelmosse-db")]
     web --> pgr
   end
@@ -295,14 +277,12 @@ flowchart LR
 | Base | Postgres en la máquina o en Docker | Postgres de Render, plan free |
 | Firebase | emulador de Auth, push simulado | proyecto real, con cuenta de servicio |
 | Correo | `CORREO_MODO=buzon` (tabla `correo_saliente`) | SMTP |
-| Documentación interactiva | `/docs` | apagada (`DOCUMENTACION_INTERACTIVA=false`); `/openapi.json` sigue público |
 
 No hay staging. La API y la base corren en Render; las cuentas, los secretos y el primer despliegue están en el runbook.
 
 **Limitaciones del plan gratuito que condicionan el diseño:** el servicio se duerme a los 15 minutos sin tráfico (de ahí
-el aviso «despertando» de la app y el corte de 60 s), el barrido de recordatorios no corre mientras duerme (por eso
-existe el comando de una pasada para un cron), y la base vence a los 30 días y no tiene copias automáticas (por eso
-`scripts/respaldo.py`).
+el corte de 30 s de la app), el barrido de recordatorios no corre mientras duerme (por eso existe el comando de una
+pasada para un cron), y la base vence a los 30 días.
 
 ## Cómo se prueba
 

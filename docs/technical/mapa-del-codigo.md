@@ -19,11 +19,8 @@ nombre, no por línea: buscalos con el buscador del editor.
 | Los avisos de cancelación | se encolan en la misma transacción que cancela (`ReservasSql.cancelar` y `ReservasSql.anular`) y salen con `despachar_pendientes` |
 | El correo de recuperación de contraseña | `aplicacion/recuperacion.py` (código, vigencia, tope por hora) e `infraestructura/correo.py` (SMTP o buzón) |
 | Las variables de entorno de la API | `apps/api/app/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
-| El pool y los timeouts de la base | `apps/api/app/infraestructura/db.py` |
-| El log, el `X-Request-ID` y las métricas | `apps/api/app/interfaz/registro_errores.py` y `interfaz/metricas.py` |
-| El límite de pedidos por minuto | `apps/api/app/interfaz/limites.py` |
-| El tamaño máximo del cuerpo, los Host permitidos, la CSP | `apps/api/app/interfaz/protecciones.py` |
-| El esquema de la base | `apps/api/migraciones/versions/0001` a `0008`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
+| El motor de la base y la conexión por pedido | `apps/api/app/infraestructura/db.py` |
+| El esquema de la base | `apps/api/migraciones/versions/0001` a `0009`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
 | Una pantalla de la app | `apps/mobile/lib/<dominio>/pantalla_*.dart`; la tabla completa está en [Rutas de la app](#rutas-de-la-app) |
 | Los colores, las fuentes y el tema | `apps/mobile/lib/tema/tokens.dart` (`Paleta.oscura`, `Paleta.clara`) y `tema/tema.dart` |
 | Las animaciones y transiciones | `apps/mobile/lib/comun/movimiento.dart` y `comun/transiciones.dart` |
@@ -43,7 +40,7 @@ app-tp/
 ├── apps/
 │   ├── api/                 API REST: FastAPI + SQL a mano sobre PostgreSQL
 │   │   ├── app/             código (dominio, aplicacion, infraestructura, interfaz)
-│   │   ├── migraciones/     Alembic, 0001 a 0008
+│   │   ├── migraciones/     Alembic, 0001 a 0009
 │   │   ├── tests/           unit, integracion, escenarios
 │   │   ├── openapi.json     el contrato publicado, versionado (un test lo compara con la API)
 │   │   ├── pyproject.toml   dependencias (uv), ruff y mypy
@@ -60,11 +57,10 @@ app-tp/
 │   ├── adr/                 decisiones: stack (0001) y hosting en Render (0002)
 │   └── business/            declaración de accesibilidad
 ├── specs/                   una carpeta por card: requisito, supuestos, tests y cierre
-├── scripts/                 test.sh, e2e.sh, respaldo, usuario de la app, avisos de terceros
+├── scripts/                 test.sh, e2e.sh
 ├── render.yaml              blueprint de Render: la API y su base
 ├── firebase.json            emulador de Firebase Auth (puerto 9099)
 ├── package.json             sólo para `npm run emuladores` (firebase-tools)
-├── THIRD_PARTY_NOTICES.md   licencias, generadas por scripts/avisos_de_terceros.py
 └── .claude/                 el kit de método (SDD): reglas, agentes, hooks y herramientas
 ```
 
@@ -101,14 +97,14 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 
 | Funcionalidad | `interfaz/` | `aplicacion/` | `dominio/` | `infraestructura/` | App |
 |---|---|---|---|---|---|
-| Reservas | `reservas.py`, `marcador.py` | `reservas.py` | `reservas.py` | `reservas.py` | `reservas/` |
+| Reservas | `reservas.py` | `reservas.py` | `reservas.py` | `reservas.py` | `reservas/` |
 | Horarios y canchas libres | `horarios.py` | `horarios.py`, `disponibilidad.py` | `horarios.py` | `horarios.py` | `reservas/` |
 | Sedes | `sedes.py` | `sedes.py` | `sedes.py` | `sedes.py` | `sedes/`, `admin/` |
 | Espacios (canchas) | `espacios.py` | `espacios.py` | `espacios.py` | `espacios.py` | `espacios/`, `admin/` |
 | Cuentas y perfil | `registro.py`, `sesion.py`, `sembrar_admin.py` | `registro.py`, `sesion.py`, `perfil.py`, `baja.py`, `contrasena.py`, `administradores.py` | `usuarios.py` | `usuarios.py`, `identidad.py`, `credencial_firebase.py` | `sesion/`, `usuarios/` |
 | Recuperar la contraseña | `recuperacion.py` | `recuperacion.py` | `recuperacion.py` | `enlaces.py`, `correo.py` | `sesion/` |
 | Avisos y notificaciones | `notificaciones.py`, `barrido.py` | `notificaciones.py` | `notificaciones.py` | `notificaciones.py`, `push.py` | `notificaciones/` |
-| Transversal | `protecciones.py`, `limites.py`, `entradas.py`, `errores_http.py`, `respuestas.py`, `registro_errores.py`, `metricas.py`, `salud.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
+| Transversal | `entradas.py`, `errores_http.py`, `respuestas.py`, `salud.py` | `errores.py` | `errores.py`, `zona.py` | `db.py` | `api/`, `comun/`, `tema/` |
 
 ### Archivo por archivo
 
@@ -116,9 +112,9 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 
 | Archivo | Qué tiene |
 |---|---|
-| `main.py` | `crear_app()`: arma la app, los handlers de error, los routers y el middleware; `_ciclo_de_vida` (chequeo de la base al arrancar y el barrido en segundo plano); `_exigir_emulador_aislado` |
+| `main.py` | `crear_app()`: arma la app, los handlers de error y los routers; `_ciclo_de_vida` (el barrido en segundo plano) |
 | `config.py` | `Config` (pydantic-settings), lee el entorno y `apps/api/.env` |
-| `dependencias.py` | el único paso de `interfaz` a `infraestructura`: reexporta repositorios, `conexion`, `motor`, `canal_push`, `enviar_correo` y los chequeos de salud |
+| `dependencias.py` | el único paso de `interfaz` a `infraestructura`: reexporta repositorios, `conexion`, `motor`, `canal_push` y `enviar_correo` |
 
 **`dominio/`**
 
@@ -127,11 +123,11 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 | `errores.py` | las excepciones del negocio: `DatosInvalidos`, `Duplicado`, `NoAutenticado`, `Demorado`, `CuentaExistente`, `Prohibido`, `NoDisponible`, `NumeroOcupado`, `HorarioOcupado`, `NoEncontrada`, `Cambiado`, `ReservasAfuera`, `AgendaCambiada`, `ConReservasFuturas` |
 | `zona.py` | `ZONA_CLUB`, la única definición de `America/Argentina/Buenos_Aires` |
 | `horarios.py` | `Agenda`, `Franja`, `Grilla`, `grilla`, `rango`, `validar_rango`, `error_de_duracion`, `validar_reserva`; `MIN_HORAS`, `MAX_HORAS`, `DIAS_A_LA_VISTA` |
-| `reservas.py` | `Reserva`, `ReservaHistorial`, `Marcador` (cursor de página), `TandaDeReservas`, `FiltrosHistorial`, `Contadores`, `HistorialDeReservas`, `POR_PAGINA` |
+| `reservas.py` | `Reserva`, `ReservaHistorial`, `TandaDeReservas`, `FiltrosHistorial`, `Contadores`, `HistorialDeReservas`, `POR_PAGINA` |
 | `sedes.py` | `DatosSede`, `SedeNueva`, `Sede`, `validar_sede` |
 | `espacios.py` | el catálogo fijo de deportes y tipos (`Deporte`, `Tipo`), `nombre_compuesto`, `validar_espacio`, `validar_cambio`, `PRECIO_MAXIMO` |
 | `usuarios.py` | `DatosRegistro`, `Registro`, `Perfil`, `validar_registro`, `validar_edicion`, `normalizar_correo`, `normalizar_dni`, `problemas_contrasena` |
-| `notificaciones.py` | `ANTICIPACION` (1 h), `TOMA_VENCIDA` (5 min), `INTENTOS_MAXIMOS` (3), `Aviso`, `Pendiente`, `Recordatorio`, el protocolo `CanalPush`, `que_hacer_con_varado` y los textos de cada aviso |
+| `notificaciones.py` | `ANTICIPACION` (1 h), `Aviso`, `Pendiente`, `Recordatorio`, el protocolo `CanalPush` y los textos de cada aviso |
 | `recuperacion.py` | `Mensaje`, `Destinatario`, `EnlaceReclamado` |
 
 **`aplicacion/`** (un módulo por caso de uso o grupo)
@@ -157,7 +153,7 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 
 | Archivo | Qué tiene | Tablas que escribe |
 |---|---|---|
-| `db.py` | el motor y el pool, `conexion()` (una conexión por pedido), `base_disponible`, `esquema_al_dia`, `uso_del_pool` | — |
+| `db.py` | el motor, `conexion()` (una conexión por pedido), `en_transaccion`, `restriccion_violada` | — |
 | `usuarios.py` | `UsuariosSql` | `usuario` |
 | `sedes.py` | `SedesSql` | `sede` |
 | `espacios.py` | `EspaciosSql`, `espacio_de_fila` | `espacio` |
@@ -174,18 +170,13 @@ archivos (todos bajo `apps/api/app/`, y la carpeta de la app bajo `apps/mobile/l
 
 | Archivo | Qué tiene |
 |---|---|
-| `salud.py` | `/health` (el proceso vive) y `/ready` (base y esquema al día) |
-| `metricas.py` | `/metrics` en formato Prometheus, con token |
+| `salud.py` | `/health` (el proceso vive) |
 | `registro.py`, `sesion.py`, `recuperacion.py` | cuentas, perfil y contraseña; `sesion.py` define `usuario_actual`, la dependencia de autenticación |
 | `sedes.py`, `espacios.py`, `horarios.py`, `reservas.py`, `notificaciones.py` | las rutas de cada recurso |
 | `pruebas.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
 | `entradas.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identificador`…), `leer_hora` y el handler de 422 y 400 |
 | `errores_http.py` | handlers de `DatosInvalidos` (422 con `errores`), `Prohibido` (403) y `NoEncontrada` (404), los tres iguales en toda la API |
 | `respuestas.py` | `conflicto`: el 409 con `errores` que cada ruta elige |
-| `marcador.py` | codifica y decodifica el cursor de las páginas del historial |
-| `limites.py` | límite de pedidos en memoria: `frenar_por_origen`, `frenar_por_cuenta`, 429 con `Retry-After` |
-| `protecciones.py` | middleware: Host permitido, tamaño del cuerpo (64 KB), cabeceras de seguridad |
-| `registro_errores.py` | middleware: log JSON por línea, `X-Request-ID`, métricas por ruta, sin datos personales |
 | `barrido.py` | el barrido de recordatorios y avisos: en proceso (`barrer_cada`) o una pasada (`--una-vez`) |
 | `sembrar_admin.py` | comando para crear o promover el primer administrador |
 
@@ -197,16 +188,14 @@ si el rol no es `admin`.
 | Método y ruta | Archivo | Caso de uso | Quién |
 |---|---|---|---|
 | GET `/health` | `salud.py` | — | cualquiera |
-| GET `/ready` | `salud.py` | `base_disponible`, `esquema_al_dia` | cualquiera |
-| GET `/metrics` | `metricas.py` | — | token `METRICAS_TOKEN`; sin token válido, 404 |
-| GET `/openapi.json` | FastAPI | — | cualquiera (`/docs` y `/redoc` sólo con `DOCUMENTACION_INTERACTIVA`) |
-| POST `/registro` | `registro.py` | `registrar` | cualquiera, con límite por origen |
-| POST `/recuperacion` | `recuperacion.py` | `pedir_enlace` | cualquiera, con límite por origen |
+| GET `/openapi.json` | FastAPI | — | cualquiera (también `/docs` y `/redoc`) |
+| POST `/registro` | `registro.py` | `registrar` | cualquiera |
+| POST `/recuperacion` | `recuperacion.py` | `pedir_enlace` | cualquiera |
 | POST `/recuperacion/consulta` | `recuperacion.py` | `enlace_vigente` | cualquiera |
 | PUT `/recuperacion` | `recuperacion.py` | `usar_enlace` | cualquiera |
 | GET `/enlace/recuperar` | `recuperacion.py` | página que abre la app desde el correo | cualquiera |
 | GET `/yo` | `sesion.py` | — | sesión |
-| PUT `/yo` | `sesion.py` | `editar_perfil` | sesión, con límite por cuenta |
+| PUT `/yo` | `sesion.py` | `editar_perfil` | sesión |
 | PUT `/yo/contrasena` | `sesion.py` | `cambiar_contrasena` | sesión |
 | DELETE `/yo` | `sesion.py` | `dar_de_baja` | sesión |
 | GET `/sedes` | `sedes.py` | `sedes_activas` | sesión |
@@ -240,19 +229,14 @@ si el rol no es `admin`.
 
 | Variable | Por defecto | Para qué |
 |---|---|---|
-| `DATABASE_URL` | `postgresql+psycopg://club:club@localhost:5432/club` | la base, con el usuario dueño; la usan las migraciones |
-| `DATABASE_URL_APP` | vacío (usa `DATABASE_URL`) | la base con `club_app`, sin permiso de DDL; la usa la API |
+| `DATABASE_URL` | `postgresql+psycopg://club:club@localhost:5432/club` | la base; la usan la API y las migraciones |
 | `FIREBASE_PROJECT_ID` | `demo-clubnahuelmosse` | el proyecto que emite los tokens |
 | `FIREBASE_API_KEY` | vacío | comprobar contraseñas por REST (el emulador no la necesita) |
 | `FIREBASE_CREDENCIALES_JSON` | vacío | la cuenta de servicio; sin ella el push queda en el canal nulo |
-| `URL_PUBLICA` | `http://localhost:8000` | el host de los enlaces del correo y un Host permitido |
-| `HOSTS_PERMITIDOS` | vacío | otros Host permitidos, separados por coma |
+| `URL_PUBLICA` | `http://localhost:8000` | el host de los enlaces del correo |
 | `CORREO_MODO` | `smtp` | `buzon` guarda los correos en la tabla `correo_saliente` (sólo desarrollo) |
 | `SMTP_HOST`, `SMTP_PUERTO` (587), `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | vacíos | el correo saliente |
 | `RECORDATORIOS_CADA` | 30 | segundos entre barridos; 0 apaga el barrido en proceso |
-| `METRICAS_TOKEN` | vacío | el token de `/metrics`; vacío deja la ruta en 404 |
-| `DETRAS_DE_PROXY` | false | tomar el origen del último `X-Forwarded-For` (Render) |
-| `DOCUMENTACION_INTERACTIVA` | true | publicar `/docs` y `/redoc` |
 | `PRUEBAS` | false | montar `/_pruebas` (sólo junto al emulador) |
 | `VERSION` | la del `pyproject.toml` | lo que informan `/health` y el log |
 
@@ -271,6 +255,7 @@ por archivo), `ADMIN_CONTRASENA` (sólo `sembrar_admin`) y `TEST_DATABASE_URL` (
 | 0006 | estados de envío y un aviso de cancelación por reserva |
 | 0007 | `notificacion_reserva` (avisos agrupados), `cantidad` y `reemplazada_por` |
 | 0008 | índices de historial creados con `CONCURRENTLY`, e `intentos` y `tomada_en` para retomar avisos varados |
+| 0009 | quita `intentos` y `tomada_en`: los avisos no se reintentan, y los que estaban `enviando` pasan a `fallida` |
 
 Se corren con `uv run alembic upgrade head` desde `apps/api`. Una migración que ya está en `main` no se edita: se agrega
 otra.
@@ -312,7 +297,7 @@ cada test en una transacción que se descarta. Para correr sólo una card: `uv r
 
 | Archivo | Qué tiene |
 |---|---|
-| `cliente_api.dart` | `ClienteApi` (get, post, put, delete), `Respuesta` y los errores `SinConexion`, `ErrorDelServidor`, `ServidorSinRespuesta`; el corte por pedido y la señal `despertando` |
+| `cliente_api.dart` | `ClienteApi` (get, post, put, delete), `Respuesta` y los errores `SinConexion`, `ErrorDelServidor`, `ServidorSinRespuesta`; el corte por pedido |
 | `rutas.dart` | la lista de rutas de la API que la app puede pedir; en debug, un pedido a una ruta no declarada falla |
 
 **`sesion/`**
@@ -395,7 +380,7 @@ errores) e `iconos.dart`.
 
 | Grupo | Archivos |
 |---|---|
-| Arranque y errores | `configuracion.dart` (`--dart-define`), `errores_no_manejados.dart`, `pantalla_error_de_arranque.dart`, `aviso_despertando.dart`, `dialogo_error.dart`, `snackbar.dart`, `apariencia.dart` |
+| Arranque y errores | `configuracion.dart` (`--dart-define`), `errores_no_manejados.dart`, `dialogo_error.dart`, `snackbar.dart`, `apariencia.dart` |
 | Navegación y movimiento | `barra_inferior.dart`, `barra_superior.dart`, `transiciones.dart`, `movimiento.dart` |
 | Formularios | `boton.dart`, `campo_texto.dart`, `selector.dart`, `calendario.dart`, `faltantes.dart`, `formulario_contrasena.dart`, `reglas_contrasena.dart`, `reglas_registro.dart`, `formato_fecha.dart`, `formato_precio.dart` |
 | Marca | `isotipo.dart`, `marcador.dart`, `tile_deporte.dart`, `ficha_socio.dart`, `linea_del_dia.dart`, `dorsal.dart`, `troquel.dart` |
@@ -501,9 +486,6 @@ tiene una API intermedia para simular cortes.
 |---|---|
 | `test.sh` | ruff, mypy y pytest de la API; `flutter analyze`, `dart format` y `flutter test` de la app |
 | `e2e.sh` | levanta el emulador de Auth y la API sobre una base `*_test` propia, migra, siembra un admin y corre `integration_test` en el emulador Android |
-| `respaldo.py` | `guardar` y `restaurar` la base con `pg_dump` y `pg_restore` |
-| `usuario_de_la_app.py` | crea o actualiza el usuario `club_app` de la base, sin permiso de DDL |
-| `avisos_de_terceros.py` | genera `THIRD_PARTY_NOTICES.md`; con `--comprobar` falla si quedó viejo |
 
 Comandos de la API: `python -m app.interfaz.sembrar_admin` (crear o promover el primer administrador) y
 `python -m app.interfaz.barrido --una-vez` (una pasada de recordatorios y avisos).
