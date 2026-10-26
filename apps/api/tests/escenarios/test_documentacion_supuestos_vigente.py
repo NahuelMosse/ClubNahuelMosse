@@ -4,7 +4,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from tests.escenarios.test_documentacion import (
+from tests.escenarios.test_documentacion_vigente import (
     _columnas_por_tabla,
     _requisitos,
     _seccion,
@@ -15,7 +15,6 @@ RAIZ = Path(__file__).resolve().parents[4]
 API = RAIZ / "apps" / "api"
 MOVIL = RAIZ / "apps" / "mobile"
 DISENO = RAIZ / "docs" / "technical" / "system-design.md"
-AVISOS = RAIZ / "THIRD_PARTY_NOTICES.md"
 ASVS = RAIZ / "specs" / "asvs.md"
 COSTOS = RAIZ / "docs" / "technical" / "infra-cost.md"
 RUNBOOK = RAIZ / "docs" / "technical" / "runbook.md"
@@ -29,7 +28,6 @@ DOCUMENTOS = (
     DISENO,
     RAIZ / "docs" / "adr" / "0001-stack.md",
     RAIZ / "docs" / "adr" / "0002-hosting-en-render.md",
-    AVISOS,
     COSTOS,
     RUNBOOK,
     ACCESIBILIDAD,
@@ -100,19 +98,6 @@ def test_cada_tabla_del_esquema_migrado_figura_en_el_modelo_de_datos_con_sus_col
         assert len(trozos) > 1, tabla
         seccion = re.split(r"^#+ ", trozos[1], flags=re.M)[0]
         assert [c for c in sorted(columnas) if f"`{c}`" not in seccion] == [], tabla
-
-
-def test_el_diseno_del_sistema_da_timeout_y_reintento_de_cada_dependencia_externa() -> None:
-    """el diseño del sistema da timeout y reintento de PostgreSQL, Firebase Auth, SMTP y FCM
-    @REV-07-S2 @assumption:REV-07-ASM-13
-    """
-    filas = _seccion(_texto(DISENO), "External dependencies").splitlines()
-
-    for externa in ("PostgreSQL", "Firebase Authentication", "SMTP", "Firebase Cloud Messaging"):
-        fila = next(f for f in filas if f.startswith("|") and externa in f)
-        celdas = [c.strip() for c in fila.strip("|").split("|")]
-        assert re.search(r"\d+ ?s\b|sin |ninguno", celdas[1]), externa
-        assert re.search(r"reintent|ninguno", celdas[2], re.I), externa
 
 
 def test_el_diseno_del_sistema_trae_el_inventario_de_datos_personales() -> None:

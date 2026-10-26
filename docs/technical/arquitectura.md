@@ -93,6 +93,8 @@ flowchart TB
 Los tests `tests/unit/test_arquitectura.py`, `test_capas.py` y `test_capas_integracion.py` fallan si alguien rompe
 estas flechas.
 
+FastAPI publica siempre `/docs`, `/redoc` y `/openapi.json`.
+
 ### Un pedido de punta a punta
 
 ```mermaid
