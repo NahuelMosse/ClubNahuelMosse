@@ -1,0 +1,39 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [
+    "migración"
+  ],
+  "files": [
+    "apps/api/migraciones/versions/0010_identificadores_uuid_y_auditoria.py",
+    "apps/api/app",
+    "(los",
+    "repositorios",
+    "casos",
+    "de",
+    "uso",
+    "y",
+    "rutas",
+    "que",
+    "usan",
+    "ids",
+    "después",
+    "ARQ-04)",
+    "apps/api/openapi.json",
+    "apps/mobile/lib/espacios/espacio.dart",
+    "apps/mobile/lib/sedes/sede.dart",
+    "apps/mobile/lib/sedes/fotos.dart",
+    "apps/mobile/lib/reservas/reservas.dart",
+    "apps/mobile/lib/admin/historial_reservas.dart",
+    "apps/mobile/lib/notificaciones/notificacion.dart",
+    "apps/mobile/lib/app.dart"
+  ],
+  "tasks": 3
+}
