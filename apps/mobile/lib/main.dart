@@ -36,7 +36,7 @@ Future<void> arrancar(Configuracion configuracion) async {
   );
   // La sesión queda abierta en el dispositivo: si todavía vale, se entra directo.
   final apariencia = await Apariencia.cargar();
-  final perfil = await _retomar(sesion);
+  final perfil = await retomarConReintento(sesion);
   // Una key nueva por arranque: la app se arma de cero aunque runApp se llame otra vez.
   runApp(
     App(
@@ -52,7 +52,7 @@ Future<void> arrancar(Configuracion configuracion) async {
 
 /// Retoma la sesión guardada. Si no se puede saber si la sesión vale (sin conexión o la
 /// API no responde), muestra el diálogo de error con «Reintentar» en vez de mandar al login.
-Future<Perfil?> _retomar(Sesion sesion) async {
+Future<Perfil?> retomarConReintento(Sesion sesion) async {
   final navegador = GlobalKey<NavigatorState>();
   runApp(_Espera(navegador: navegador));
   while (true) {

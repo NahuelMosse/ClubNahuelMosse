@@ -269,10 +269,6 @@ class HistorialDeReservas {
   final ClienteApi _api;
   final Sesion _sesion;
 
-  /// El `siguiente` que trajo cada página ya leída, por filtros y número de página: la que
-  /// sigue lo manda como `despues`, y el servidor no recorre las anteriores.
-  final Map<String, String> _marcadores = {};
-
   /// La página [pagina] (empieza en 1) que cumple [filtros].
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
@@ -280,12 +276,9 @@ class HistorialDeReservas {
     FiltrosDeHistorial filtros, {
     int pagina = 1,
   }) async {
-    if (pagina == 1) _marcadores.clear();
-    final despues = _marcadores['${filtros._query}|${pagina - 1}'];
     final query = [
       filtros._query,
       'pagina=$pagina',
-      if (despues != null) 'despues=${Uri.encodeQueryComponent(despues)}',
     ].where((s) => s.isNotEmpty).join('&');
     final r = await _api.get(
       '/reservas/todas?$query',
@@ -303,9 +296,6 @@ class HistorialDeReservas {
         final leidas = [for (final e in lista) ReservaHistorial.desdeJson(e)];
         final contadores = Contadores.desdeJson(contadoresJson);
         if (!leidas.contains(null) && contadores != null) {
-          if (r.cuerpo case {'siguiente': final String marcador}) {
-            _marcadores['${filtros._query}|$p'] = marcador;
-          }
           return PaginaDeHistorial(
             reservas: [...leidas.nonNulls],
             total: total,

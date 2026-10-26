@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 
 void main() {
   testWidgets(
-    'el límite por defecto se agota justo a los 60 s, no un segundo después @REV-02-S8 @assumption:REV-02-ASM-06',
+    'a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04',
     (tester) async {
       Object? error;
       ClienteApi(
@@ -17,13 +17,19 @@ void main() {
             () => http.Response('{}', 200),
           ),
         ),
-      ).get('/lento').then((_) {}, onError: (Object e) { error = e; });
+      ).get('/espacios').then(
+        (_) {},
+        onError: (Object e) {
+          error = e;
+        },
+      );
 
-      await tester.pump(const Duration(milliseconds: 59500));
+      await tester.pump(const Duration(milliseconds: 29500));
       expect(error, isNull);
-      await tester.pump(const Duration(milliseconds: 1000));
+      await tester.pump(const Duration(seconds: 1));
       expect(error, isA<ServidorSinRespuesta>());
-      await tester.pump(const Duration(seconds: 40));
+      expect((error! as ServidorSinRespuesta).codigo, 0);
+      await tester.pump(const Duration(seconds: 90));
     },
   );
 }

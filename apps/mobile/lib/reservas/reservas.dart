@@ -113,14 +113,6 @@ class Reserva {
   }
 }
 
-/// Una tanda de reservas y, si hay más después de ella, lo que se manda para pedirlas.
-class TandaDeReservas {
-  const TandaDeReservas(this.reservas, this.siguiente);
-
-  final List<Reserva> reservas;
-  final String? siguiente;
-}
-
 /// Las reservas de quien inició sesión, leídas en la API. Avisa a quien escucha cada vez
 /// que se reserva, se cancela o se modifica una.
 class Reservas extends ChangeNotifier {
@@ -131,40 +123,20 @@ class Reservas extends ChangeNotifier {
   final ClienteApi _api;
   final Sesion _sesion;
 
-  /// Las primeras próximas (de la más cercana) o las primeras del historial (de la más
-  /// reciente).
+  /// Todas las próximas (de la más cercana) o todo el historial (de la más reciente).
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<List<Reserva>> mias({required bool historial}) async =>
-      (await tanda(historial: historial)).reservas;
-
-  /// Una tanda de las próximas o del historial: la primera, o la que sigue a la que trajo
-  /// [despues] como `siguiente`.
-  ///
-  /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<TandaDeReservas> tanda({
-    required bool historial,
-    String? despues,
-  }) async {
+  Future<List<Reserva>> mias({required bool historial}) async {
     final cuando = historial ? 'historial' : 'proximas';
     final r = await _api.get(
-      '/reservas?cuando=$cuando'
-      '${despues == null ? '' : '&despues=${Uri.encodeQueryComponent(despues)}'}',
+      '/reservas?cuando=$cuando',
       token: await _sesion.token(),
     );
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 200) {
       if (r.cuerpo case {'reservas': final List<Object?> lista}) {
         final leidas = [for (final e in lista) Reserva.desdeJson(e)];
-        if (!leidas.contains(null)) {
-          return TandaDeReservas(
-            [...leidas.nonNulls],
-            switch (r.cuerpo) {
-              {'siguiente': final String marcador} => marcador,
-              _ => null,
-            },
-          );
-        }
+        if (!leidas.contains(null)) return [...leidas.nonNulls];
       }
     }
     throw ErrorDelServidor(r.codigo);

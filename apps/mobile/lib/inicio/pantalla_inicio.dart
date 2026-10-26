@@ -28,7 +28,6 @@ import 'animacion_de_tiles.dart';
 typedef _Datos = ({
   Reserva? proxima,
   int cuantas,
-  bool hayMas,
   Catalogo catalogo,
   List<Sede> sedes,
 });
@@ -106,12 +105,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
   Future<_Datos> _leer() async {
     final catalogo = await widget.espacios.catalogo();
-    final proximas = await widget.reservas.tanda(historial: false);
+    final proximas = await widget.reservas.mias(historial: false);
     final sedes = await widget.sedes.activas();
     return (
-      proxima: proximas.reservas.firstOrNull,
-      cuantas: proximas.reservas.length,
-      hayMas: proximas.siguiente != null,
+      proxima: proximas.firstOrNull,
+      cuantas: proximas.length,
       catalogo: catalogo,
       sedes: sedes,
     );
@@ -184,7 +182,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
           _datos = (
             proxima: null,
             cuantas: datos.cuantas > 0 ? datos.cuantas - 1 : 0,
-            hayMas: datos.hayMas,
             catalogo: datos.catalogo,
             sedes: datos.sedes,
           );
@@ -281,7 +278,7 @@ List<CeldaMarcador> _celdas(_Datos datos) {
     CeldaMarcador(cifra: dosCifras(datos.sedes.length), rotulo: 'SEDES'),
     CeldaMarcador(cifra: dosCifras(canchas), rotulo: 'CANCHAS'),
     CeldaMarcador(
-      cifra: datos.hayMas ? '20+' : dosCifras(datos.cuantas),
+      cifra: dosCifras(datos.cuantas),
       rotulo: 'PRÓXIMAS',
       destacada: true,
     ),

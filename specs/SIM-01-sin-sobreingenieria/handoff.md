@@ -1,23 +1,16 @@
-# Handoff SIM-01 (API)
+# Handoff SIM-01 app (T8 hecho en lib y tests)
 
-## Hecho
-- RED (9faf496), T1-T4 en código, tests de entradas/reservas/tandas adaptados (b54363b). Log L10-L14.
-- Esta tanda (lado tests, L2: archivo nuevo con lo que sigue, `git rm` del viejo): `escenarios/test_operacion.py` (ahora sólo recordatorios, aviso sin enviar, versión, config), `integracion/test_rutas_protegidas.py` (sin /ready ni /metrics; absorbe `test_rutas_protegidas_con_operacion.py`, borrado), `escenarios/test_contrato_publicado_con_operacion.py`, `escenarios/test_operacion_rutas_publicas.py` (sólo el test de 401; se fueron render/429/400 por Host), `unit/test_api_limpia.py` (sin métricas), `unit/test_api_limpia_plan.py` (sin métricas ni avisos de terceros), `unit/test_capas_integracion.py` (sólo salud.py).
-- Suite completa corrida (la suite ya no cuelga): `90 failed, 638 passed, 1 skipped in 357 s` (log /tmp/sim01-api.log, puede haberse perdido: reproducir con `sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider > /tmp/sim01-api.log 2>&1` en background + wait.mjs).
-- No corrido tras los cambios de arriba: lint `sh D:/Temp/w/herramientas/sim01-lint.sh`.
+Worktree rama `worktree-agent-ae2dd4c7a05e957e7`. Flutter: `export PATH="$PATH:/d/projects/flutter/bin"`, desde `apps/mobile`.
 
-## Falta: fallas restantes y su clasificación (de la corrida de 90)
-A. Prueban lo retirado (de esta card): quitar por L2 (archivo nuevo sin esos tests, `git rm` del viejo, línea en el Log)
-- `escenarios/test_seguridad_api.py` (28): caracter nulo (sin sesión/socio/admin/búsqueda), ráfagas 429 (recuperaciones, origen inventado, registros, dni ajenos, correos ajenos), log de accesos del admin, documentación interactiva por config, blueprint Render sin docs, CSP anti-incrustación, Host ajeno (2), emulador (3: credenciales reales, archivo, proyecto real). Siguen: certificado SMTP, horas fuera de rango, páginas, log sin direcciones, secretos, token de otro dueño, etc.
-- `escenarios/test_seguridad_entradas_extra.py` (9): nulos, texto largo, control, proxy, blueprint proxy, 429/Host en el registro, contrato 429/400/422. `escenarios/test_seguridad_entradas.py::test_health_responde_aunque_el_host_no_este_en_la_lista`.
-- `escenarios/test_registro_de_errores.py` (3), `escenarios/test_operacion_render.py` (1), `integracion/test_protecciones_api.py` (4: 413, content-length, cache, por partes).
-- `escenarios/test_datos.py` (13: marcador/tandas/páginas por número), `test_datos_tanda_justa.py`, `test_datos_tanda_justa_propia.py`, `test_datos_reemplazos.py`, `test_datos_plan_reemplazo.py`, `test_datos_tandas_y_cola.py::test_con_el_mismo_inicio_el_historial_global_pone_primero_el_id_mas_alto` (despues/siguiente/tandas; revisar cada uno: si el test conserva valor sin marcador, adaptarlo).
-- `integracion/test_api_limpia_reservas.py::test_el_historial_dice_que_hay_mas_solo_si_sobra_una_fila`, `integracion/test_historial_api.py::test_las_proximas_del_socio_llegan_enteras_y_sin_siguiente`, `integracion/test_espacios_api.py::test_se_filtran_los_espacios_por_deporte_y_tipo` y `integracion/test_notificaciones_api.py` (2): ver el motivo con `-v`; probablemente topes/cursores/`siguiente`.
-- `unit/test_entradas.py::test_un_sustituto_suelto_...` (topes de T3), `escenarios/test_documentacion.py::test_las_licencias_de_terceros_estan_declaradas`, `test_documentacion_supuestos.py::test_cada_ruta_de_evidencia_de_la_matriz_asvs_existe_en_el_repo`, `unit/test_mapa_por_funcionalidad.py` (mapa menciona archivos borrados: ajustar con T6 o quitar el archivo si no queda nada), `test_operacion.py` (2 tests propios del archivo nuevo: ver por qué fallan; pueden depender de la hora o del barrido).
-B. De esta card pero esperan otra tarea: `test_sin_sobreingenieria_api.py` (2, T5 migración 0009), `test_datos_tandas_y_cola.py` «de_cada_intento…», «recordatorio… ya empezó no se reintenta», «trazabilidad… fallido» (reintentos: T5), `unit/test_sin_sobreingenieria.py::test_no_quedan_scripts_avisos_de_terceros_ni_documentacion…` (T6) y `::test_un_texto_largo_o_con_control_ya_no_se_rechaza_y_las_horas_siguen_de_1_a_4` (T3: revisar, puede ser bug real).
-C. Previas (ARQ-02 L23/L24, no tocar): `test_contrato_publicado.py::..._401`, `test_requisitos_no_funcionales.py` (401 sin usuario y README), `test_suite_confiable.py` (4), `unit/test_capas.py::test_no_queda_una_supresion_de_tipos`, `test_datos_plan_reemplazo` «página avanzada» (L24). Ojo: el README y el respaldo pg_dump son previos.
-- T5 (migración 0009), T6 (scripts, README, docs), T7/T8 (app) sin hacer. No tocar `apps/mobile`.
+## Hecho (commiteado)
+- T8 en lib: `reservas.dart` (`mias` pide `/reservas?cuando=` y lee `reservas`; sin `TandaDeReservas`/`tanda`/`despues`), `pantalla_mis_reservas.dart` (sin carga de más), `inicio/pantalla_inicio.dart` (sin `hayMas`, marcador PRÓXIMAS = cantidad), `admin/historial_reservas.dart` (sin marcadores `despues`/`siguiente`, queda `pagina`).
+- `main.dart`: `_retomar` pasó a `retomarConReintento` (pública, para el test de ASM-08).
+- Tests nuevos: `test/arranque_sin_conexion_test.dart` (ASM-08 widget), `test/mensaje_sin_red_test.dart`, `test/limite_de_espera_test.dart` (30 s; reemplaza el RED `sin_sobreingenieria_test.dart` "a los 30 s…" que falla por un bug del test: `onError` devuelve Object).
+- git rm: `operacion_cliente_test`, `operacion_cliente_sin_verificar_rutas_test`, `operacion_registro_test`, `operacion_cliente_limite_test`, `historial_por_tandas_test`, `historial_global_por_tandas_test`.
+- `flutter analyze --no-pub`: 0 issues. Suite completa antes de los últimos cambios: +596 -27; las fallas ajenas (rediseno/*, limpieza*, interfaz_accesible, tarjeta_reserva, horarios/tiles de pantallas_test) están sustituidas en ARQ-03 (L2-L19 de esa card).
 
-## Cómo
-- Para quitar tests de un archivo congelado: `git rm` + archivo nuevo con el mismo nombre, mismos nombres y tags de los que siguen; registrar `- L<n> · fecha · replaces: <archivo> "<tests>" · <motivo> · by: <archivo>` al final de `## Log`.
-- Tests propios: `tests/unit/test_sin_sobreingenieria.py tests/integracion/test_sin_sobreingenieria_api.py`.
+## Falta
+1. Log de la card (Edit al final de `## Log`, hoy el último es L16): líneas `replaces:` para cada archivo git rm de arriba, `sin_sobreingenieria_test.dart "a los 30 s…"` por `limite_de_espera_test.dart`, y `rediseno/pantallas_test.dart "inicio con más de una tanda de próximas el marcador dice 20+ @RED-03-ASM-13"` (ya no aplica; el archivo es mixto frozen: reemplazo sin ese test), más una línea de evidencia de T8.
+2. Capturas: `flutter test --no-pub test/capturas/*_capturas.dart` sin --update-goldens (no llegó a correr); no hay captura de error de arranque en `test/capturas`.
+3. Re-correr `flutter test --no-pub` completo en background (`node .claude/tools/wait.mjs <log> --until 'All tests passed|Some tests failed' --max 560`) y reportar fallas.
+4. `integration_test/**` menciona tandas/referencia en 4 archivos (alta_espacio, notificaciones, consultar_horarios, soporte/acciones): revisar con grep si dependen de `despues`/`siguiente`/`referencia`.
