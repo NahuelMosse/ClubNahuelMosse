@@ -6,9 +6,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
-from app.aplicacion.notificaciones import despachar_pendientes
-from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
-from app.infraestructura.push import canal_push
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
+from app.modules.notificaciones.push import canal_push
 from app.interfaz.sembrar_admin import main as sembrar
 
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]

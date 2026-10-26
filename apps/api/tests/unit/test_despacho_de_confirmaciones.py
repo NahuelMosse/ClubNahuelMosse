@@ -3,16 +3,9 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.aplicacion.notificaciones import Pendiente, ResultadoDeEnvio, despachar_pendientes
-from app.dominio.notificaciones import (
-    Aviso,
-    AvisoPerdido,
-    Envio,
-    Notificacion,
-    Recordatorio,
-    mensaje_cancelacion,
-)
-from app.dominio.reservas import Reserva
+from app.modules.notificaciones.casos_de_uso import Pendiente, ResultadoDeEnvio, despachar_pendientes
+from app.modules.notificaciones.reglas import Aviso, AvisoPerdido, Envio, Notificacion, Recordatorio, mensaje_cancelacion
+from app.modules.reservas.reglas import Reserva
 
 
 def _reserva(inicio: datetime) -> Reserva:

@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
-from app.dominio.notificaciones import (
+from app.modules.notificaciones.reglas import (
     Aviso,
     AvisoPerdido,
     Envio,

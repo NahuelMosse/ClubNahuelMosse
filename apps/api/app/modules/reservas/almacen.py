@@ -1,14 +1,14 @@
 from datetime import datetime
 from typing import Protocol
 
-from app.dominio.reservas import (
+from app.modules.horarios import Agenda
+from app.modules.reservas.reglas import (
     Cuando,
     FiltrosHistorial,
     HistorialDeReservas,
     Reserva,
     ReservaHistorial,
 )
-from app.modules.horarios import Agenda
 
 
 class Reservas(Protocol):

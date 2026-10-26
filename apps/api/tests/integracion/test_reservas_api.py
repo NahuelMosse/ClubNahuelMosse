@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.infraestructura.reservas import ReservasSql
+from app.modules.reservas.repositorio import ReservasSql
 from app.shared.errores import AgendaCambiada, HorarioOcupado
 
 

@@ -6,8 +6,8 @@ import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 
 from app.modules.espacios.repositorio import EspaciosSql
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.reservas import ReservasSql
+from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.reservas.repositorio import ReservasSql
 from app.modules.sedes.repositorio import SedesSql
 from app.infraestructura.usuarios import UsuariosSql
 
@@ -160,6 +160,6 @@ def test_el_recordatorio_sale_una_hora_antes(motor: Engine, monkeypatch: pytest.
 
     with motor.connect() as conn:
         assert ids(conn) == [cerca]
-    monkeypatch.setattr("app.infraestructura.notificaciones.ANTICIPACION", timedelta(hours=2))
+    monkeypatch.setattr("app.modules.notificaciones.repositorio.ANTICIPACION", timedelta(hours=2))
     with motor.connect() as conn:
         assert ids(conn) == [cerca, lejos]

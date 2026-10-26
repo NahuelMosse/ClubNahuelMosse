@@ -14,9 +14,9 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import OperationalError
 from test_recordatorio import CanalDePrueba, Socio, a_las, un_socio
 
-from app.aplicacion.notificaciones import despachar_pendientes, enviar_recordatorios
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.push import canal_push
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes, enviar_recordatorios
+from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notificaciones.push import canal_push
 from app.interfaz.sembrar_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]

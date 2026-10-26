@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal, Protocol
 
-from app.dominio.reservas import Reserva
 from app.modules.espacios import CATALOGO
 from app.shared.zona import ZONA_CLUB
 
@@ -142,7 +141,18 @@ def _cuando(momento: datetime) -> str:
     return f"{DIAS[local.weekday()]} {local.day}, {_hora(local)}"
 
 
-def mensaje_cancelacion(r: Reserva) -> Aviso:
+@dataclass(frozen=True)
+class DatosDeReserva:
+    """Lo que el aviso de cancelación necesita saber de la reserva cancelada."""
+
+    id: int
+    deporte: str
+    tipo: str
+    sede: str
+    inicio: datetime
+
+
+def mensaje_cancelacion(r: DatosDeReserva) -> Aviso:
     """«Reserva cancelada» con «Fútbol 5 · Sede Morón · Mié 11, 20:00. El horario quedó
     liberado.», en la hora del club."""
     return Aviso(

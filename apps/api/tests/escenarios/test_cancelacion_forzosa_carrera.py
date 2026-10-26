@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine
 from test_recordatorio import CanalDePrueba, app_de, un_socio
 
-from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
-from app.infraestructura.push import canal_push
+from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
+from app.modules.notificaciones.push import canal_push
 
 admin = base.admin
 

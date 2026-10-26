@@ -66,7 +66,7 @@ def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
     admin: dict[str, str],
 ) -> None:
     """encolar dos veces la misma reserva deja un solo aviso @supuesto:CU-24.2-SUP-08"""
-    from app.infraestructura.notificaciones import encolar_cancelacion_forzosa
+    from app.modules.notificaciones.repositorio import encolar_cancelacion_forzosa
 
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")

@@ -1,7 +1,7 @@
 import pytest
 
-from app.dominio.notificaciones import Aviso
-from app.infraestructura.push import armar_mensaje
+from app.modules.notificaciones.reglas import Aviso
+from app.modules.notificaciones.push import armar_mensaje
 
 # firebase_admin avisa que `tokens` está deprecado en favor de `fids`; el canal real lo usa igual.
 pytestmark = pytest.mark.filterwarnings("ignore:MulticastMessage.tokens:DeprecationWarning")

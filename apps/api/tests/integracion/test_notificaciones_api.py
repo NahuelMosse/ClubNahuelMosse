@@ -8,9 +8,9 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.aplicacion.notificaciones import ResultadoDeEnvio, enviar_recordatorios
-from app.dominio.notificaciones import Aviso, Recordatorio
-from app.infraestructura.notificaciones import NotificacionesSql
+from app.modules.notificaciones.casos_de_uso import ResultadoDeEnvio, enviar_recordatorios
+from app.modules.notificaciones.reglas import Aviso, Recordatorio
+from app.modules.notificaciones.repositorio import NotificacionesSql
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 

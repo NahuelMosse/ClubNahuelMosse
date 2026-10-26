@@ -6,7 +6,7 @@ from functools import cache
 import firebase_admin
 from firebase_admin import credentials, exceptions, messaging
 
-from app.dominio.notificaciones import Aviso, CanalNoConfigurado, CanalPush, ResultadoDeEnvio
+from app.modules.notificaciones.reglas import Aviso, CanalNoConfigurado, CanalPush, ResultadoDeEnvio
 from app.shared.config import config
 from app.shared.credencial_firebase import credencial_de_servicio
 

@@ -1,6 +1,6 @@
 from datetime import UTC, datetime
 
-from app.dominio.notificaciones import ReservaAnulada, mensaje_cancelacion_forzosa
+from app.modules.notificaciones.reglas import ReservaAnulada, mensaje_cancelacion_forzosa
 
 
 def _anulada(reserva_id: int = 7, motivo: str = "mantenimiento de la cancha") -> ReservaAnulada:

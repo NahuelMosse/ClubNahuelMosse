@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, un_socio
 
-from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
+from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
 
 admin = base.admin
 canal = base.canal

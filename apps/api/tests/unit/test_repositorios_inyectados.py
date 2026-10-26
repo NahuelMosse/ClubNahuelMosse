@@ -79,12 +79,8 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     from fastapi import Depends, FastAPI
 
-    from app.dependencias import (
-        NotificacionesSql,
-        ReservasSql,
-        repositorio_notificaciones,
-        repositorio_reservas,
-    )
+    from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
+    from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
     from app.shared.db import conexion
 
     app = FastAPI()

@@ -20,8 +20,8 @@ def test_un_aviso_que_no_salio_queda_a_la_vista(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """un recordatorio que no salió queda a la vista de quien opera @REV-02-S4"""
-    from app.aplicacion.notificaciones import despachar_pendientes
-    from app.infraestructura.notificaciones import NotificacionesSql
+    from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+    from app.modules.notificaciones.repositorio import NotificacionesSql
 
     s = unico()
     api.post(

@@ -4,16 +4,15 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Depends, Path, Response, status
 from pydantic import BaseModel
 
-from app.aplicacion.notificaciones import (
+from app.modules.notificaciones.casos_de_uso import (
     dar_de_baja_dispositivo,
     marcar_leida,
     marcar_todas,
     mis_notificaciones,
     registrar_dispositivo,
 )
-from app.dependencias import NotificacionesSql, repositorio_notificaciones
-from app.dominio.notificaciones import Notificacion, TipoDeAviso
-from app.interfaz.reservas import Errores
+from app.modules.notificaciones.reglas import Notificacion, TipoDeAviso
+from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
 from app.shared.entradas import Identificador
 from app.shared.errores import NoDisponible
@@ -29,6 +28,10 @@ class PedidoDeDispositivo(BaseModel):
 
 class BajaDeDispositivo(BaseModel):
     token: str
+
+
+class Errores(BaseModel):
+    errores: dict[str, str]
 
 
 @router.put(

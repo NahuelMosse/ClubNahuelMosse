@@ -1,24 +1,12 @@
 import logging
 from datetime import datetime
 
-from app.aplicacion.almacen_de_avisos import Notificaciones
-from app.dominio.notificaciones import (
-    Aviso,
-    Notificacion,
-    mensaje_recordatorio,
-)
-from app.dominio.notificaciones import (
-    CanalNoConfigurado as CanalNoConfigurado,
-)
-from app.dominio.notificaciones import (
-    CanalPush as CanalPush,
-)
-from app.dominio.notificaciones import (
-    Pendiente as Pendiente,
-)
-from app.dominio.notificaciones import (
-    ResultadoDeEnvio as ResultadoDeEnvio,
-)
+from app.modules.notificaciones.almacen import Notificaciones
+from app.modules.notificaciones.reglas import Aviso, Notificacion, mensaje_recordatorio
+from app.modules.notificaciones.reglas import CanalNoConfigurado as CanalNoConfigurado
+from app.modules.notificaciones.reglas import CanalPush as CanalPush
+from app.modules.notificaciones.reglas import Pendiente as Pendiente
+from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
 from app.modules.sesion import Perfil
 from app.shared.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 

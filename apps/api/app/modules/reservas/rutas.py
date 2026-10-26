@@ -4,8 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
 
-from app.aplicacion.notificaciones import CanalPush
-from app.aplicacion.reservas import (
+from app.modules.notificaciones import CanalPush, canal_push, despachar_de
+from app.modules.reservas.casos_de_uso import (
     Cuando,
     anular_reserva,
     cancelar_reserva,
@@ -15,9 +15,14 @@ from app.aplicacion.reservas import (
     modificar_reserva,
     reservar,
 )
-from app.dependencias import ReservasSql, canal_push, repositorio_reservas
-from app.dominio.reservas import Estado, FiltroEstado, FiltrosHistorial, Reserva, ReservaHistorial
-from app.interfaz.barrido import despachar_de
+from app.modules.reservas.reglas import (
+    Estado,
+    FiltroEstado,
+    FiltrosHistorial,
+    Reserva,
+    ReservaHistorial,
+)
+from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
 from app.shared.entradas import Identificador, leer_hora
 from app.shared.errores import Cambiado, DatosInvalidos, HorarioOcupado, NoDisponible

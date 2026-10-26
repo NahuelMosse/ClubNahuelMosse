@@ -2,7 +2,7 @@ from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
 from app.dominio.usuarios import PerfilEditado, Registro
-from app.infraestructura.reservas import ReservasSql
+from app.modules.reservas import ReservasSql
 from app.shared.db import en_transaccion, restriccion_violada
 from app.shared.errores import Duplicado
 

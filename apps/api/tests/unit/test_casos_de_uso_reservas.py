@@ -5,23 +5,8 @@ from datetime import date, datetime, time, timedelta, timezone
 
 import pytest
 
-from app.aplicacion.reservas import (
-    MOTIVO_MAXIMO,
-    anular_reserva,
-    cancelar_reserva,
-    detalle_admin,
-    historial_global,
-    mis_reservas,
-    modificar_reserva,
-    reservar,
-)
-from app.dominio.reservas import (
-    Contadores,
-    FiltrosHistorial,
-    HistorialDeReservas,
-    Reserva,
-    ReservaHistorial,
-)
+from app.modules.reservas.casos_de_uso import MOTIVO_MAXIMO, anular_reserva, cancelar_reserva, detalle_admin, historial_global, mis_reservas, modificar_reserva, reservar
+from app.modules.reservas.reglas import Contadores, FiltrosHistorial, HistorialDeReservas, Reserva, ReservaHistorial
 from app.modules.horarios.reglas import Agenda
 from app.modules.sesion.perfil import Perfil
 from app.shared.errores import (

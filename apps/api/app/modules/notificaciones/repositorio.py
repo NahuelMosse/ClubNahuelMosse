@@ -4,7 +4,7 @@ from datetime import datetime
 
 from sqlalchemy import Connection, text
 
-from app.dominio.notificaciones import (
+from app.modules.notificaciones.reglas import (
     ANTICIPACION,
     ESPERA_DEL_ENVIO,
     ESPERA_DEL_RECORDATORIO,
@@ -19,7 +19,7 @@ from app.dominio.notificaciones import (
     mensaje_cancelacion_forzosa,
     mensaje_cancelaciones_forzosas,
 )
-from app.shared.db import en_transaccion
+from app.shared.db import Conexion, en_transaccion
 
 # Cuántas notificaciones trae el centro: las más nuevas.
 LIMITE_DEL_CENTRO = 100
@@ -424,3 +424,7 @@ class NotificacionesSql:
             {"usuario": usuario_id},
         )
         self._conn.commit()
+
+
+def repositorio_notificaciones(conn: Conexion) -> NotificacionesSql:
+    return NotificacionesSql(conn)

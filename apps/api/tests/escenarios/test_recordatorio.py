@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
+from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 CONTRASENA = "ClubNahuel1"
@@ -60,8 +60,8 @@ class Socio:
 
     def barrer(self, canal: CanalDePrueba, ahora: datetime) -> int:
         """El barrido de recordatorios corriendo a la hora [ahora] del club, para este socio."""
-        from app.aplicacion.notificaciones import enviar_recordatorios
-        from app.infraestructura.notificaciones import NotificacionesSql
+        from app.modules.notificaciones.casos_de_uso import enviar_recordatorios
+        from app.modules.notificaciones.repositorio import NotificacionesSql
 
         with self.motor.connect() as conn:
             return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, self.usuario_id)

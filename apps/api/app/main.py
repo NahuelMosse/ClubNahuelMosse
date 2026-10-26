@@ -6,16 +6,14 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI
 
 from app.interfaz import (
-    notificaciones,
     pruebas,
     recuperacion,
     registro,
-    reservas,
     salud,
     sesion,
 )
-from app.interfaz.barrido import barrer_cada
-from app.modules import espacios, horarios, sedes
+from app.modules import espacios, horarios, notificaciones, reservas, sedes
+from app.modules.notificaciones import barrer_cada
 from app.shared import entradas, errores_http
 from app.shared.config import config
 from app.shared.cuerpo import CuerpoAcotado

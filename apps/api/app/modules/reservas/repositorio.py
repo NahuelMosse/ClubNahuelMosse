@@ -4,8 +4,14 @@ from typing import Any
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.dominio.notificaciones import mensaje_cancelacion
-from app.dominio.reservas import (
+from app.modules.horarios import Agenda, HorariosSql, agenda_de_fila
+from app.modules.notificaciones import (
+    DatosDeReserva,
+    NotificacionesSql,
+    encolar_cancelacion_forzosa,
+    mensaje_cancelacion,
+)
+from app.modules.reservas.reglas import (
     POR_PAGINA,
     Contadores,
     Cuando,
@@ -14,9 +20,7 @@ from app.dominio.reservas import (
     Reserva,
     ReservaHistorial,
 )
-from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
-from app.modules.horarios import Agenda, HorariosSql, agenda_de_fila
-from app.shared.db import VENTANA_DE_REINTENTO, en_transaccion
+from app.shared.db import VENTANA_DE_REINTENTO, Conexion, en_transaccion
 from app.shared.errores import AgendaCambiada, Cambiado, HorarioOcupado, NoDisponible, NoEncontrada
 from app.shared.zona import NOMBRE_ZONA_CLUB
 
@@ -240,8 +244,11 @@ class ReservasSql:
             reserva = self._una(reserva_id)
             # La confirmación se encola en la misma transacción: si la cancelación no se
             # completa no queda aviso, y el índice único evita repetirlo.
+            datos_de_reserva = DatosDeReserva(
+                reserva.id, reserva.deporte, reserva.tipo, reserva.sede, reserva.inicio
+            )
             NotificacionesSql(self._conn).encolar_cancelacion_usuario(
-                usuario_id, reserva_id, reserva.inicio, mensaje_cancelacion(reserva)
+                usuario_id, reserva_id, reserva.inicio, mensaje_cancelacion(datos_de_reserva)
             )
         return reserva
 
@@ -463,3 +470,7 @@ class ReservasSql:
         ).first()
         self._conn.rollback()
         return None if fila is None else ReservaHistorial(**fila._mapping)
+
+
+def repositorio_reservas(conn: Conexion) -> ReservasSql:
+    return ReservasSql(conn)
