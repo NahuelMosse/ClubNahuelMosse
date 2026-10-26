@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from app.interfaz import entradas
+from app.shared import entradas
 from app.shared.entradas import Identificador
 
 
