@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 import '../reservas/reservas.dart'
@@ -351,14 +352,8 @@ class HistorialDeReservas {
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();
-    if (r.cuerpo case {
-      'errores': final Map<String, Object?> errores,
-    } when r.codigo == 422) {
-      throw ReservaRechazada({
-        for (final MapEntry(:key, :value) in errores.entries)
-          if (value is String) key: value,
-      });
-    }
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 422 && errores.isNotEmpty) throw ReservaRechazada(errores);
     final anulada = r.codigo == 200
         ? ReservaHistorial.desdeJson(r.cuerpo)
         : null;

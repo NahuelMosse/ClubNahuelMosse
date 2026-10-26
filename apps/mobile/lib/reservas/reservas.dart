@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 import '../sesion/sesion.dart';
@@ -182,14 +183,10 @@ class Reservas extends ChangeNotifier {
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 409) throw const HorarioOcupado();
-    if (r.cuerpo case {
-      'errores': final Map<String, Object?> errores,
-    } when r.codigo == 422) {
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 422 && errores.isNotEmpty) {
       if (errores.containsKey('espacio_id')) throw const CanchaNoDisponible();
-      throw ReservaRechazada({
-        for (final MapEntry(:key, :value) in errores.entries)
-          if (value is String) key: value,
-      });
+      throw ReservaRechazada(errores);
     }
     final reserva = r.codigo == 201 ? Reserva.desdeJson(r.cuerpo) : null;
     if (reserva == null) throw ErrorDelServidor(r.codigo);
@@ -226,7 +223,8 @@ class Reservas extends ChangeNotifier {
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404) throw const ReservaCambiada();
-    if (r.cuerpo case {'errores': final Map<String, Object?> errores}) {
+    final errores = erroresDeCampo(r.cuerpo);
+    if (errores.isNotEmpty) {
       if (r.codigo == 409) {
         throw errores.containsKey('horario')
             ? const HorarioOcupado()
@@ -234,10 +232,7 @@ class Reservas extends ChangeNotifier {
       }
       if (r.codigo == 422) {
         if (errores.containsKey('espacio_id')) throw const CanchaNoDisponible();
-        throw ReservaRechazada({
-          for (final MapEntry(:key, :value) in errores.entries)
-            if (value is String) key: value,
-        });
+        throw ReservaRechazada(errores);
       }
     }
     final modificada = r.codigo == 200 ? Reserva.desdeJson(r.cuerpo) : null;

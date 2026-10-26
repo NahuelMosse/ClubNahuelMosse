@@ -6,7 +6,7 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
-import '../comun/dialogo_error.dart';
+import '../comun/chip_elegible.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/selector.dart';
@@ -15,8 +15,8 @@ import '../espacios/espacios.dart';
 import '../sedes/pantalla_sede.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import '../comun/fechas.dart';
@@ -114,13 +114,13 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
     }
     if (!mounted) return;
     setState(() => _falloAlCargar = true);
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+    );
   }
 
   void _alEscribirFecha() {
@@ -240,10 +240,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       _consultando = false;
       _consulta = consulta;
     });
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    }
+    if (vencida) await avisarSesionVencida(context, widget.sesion);
   }
 
   void _limpiar() {
@@ -560,7 +557,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
                 (false, aireLibre),
                 (true, resultado.length - aireLibre),
               ]) ...[
-                _ChipCondicion(
+                ChipElegible(
                   texto:
                       '${switch (valor) {
                         null => 'Todas',
@@ -571,6 +568,9 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
                   alTocar: cuantas == 0
                       ? null
                       : () => setState(() => _techada = valor),
+                  alto: Medidas.s48,
+                  conBorde: true,
+                  tintaSinTocar: p.textMuted,
                 ),
                 const SizedBox(width: Medidas.s8),
               ],
@@ -619,61 +619,6 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
     );
     // Encima de la búsqueda: al volver, los filtros y el resultado siguen ahí.
     context.push(ruta.toString());
-  }
-}
-
-class _ChipCondicion extends StatelessWidget {
-  const _ChipCondicion({
-    required this.texto,
-    required this.elegido,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final bool elegido;
-  final VoidCallback? alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      label: texto,
-      excludeSemantics: true,
-      onTap: alTocar,
-      child: Material(
-        color: elegido ? p.accentBase : p.bgSurfaceRaised,
-        shape: StadiumBorder(
-          side: BorderSide(color: elegido ? p.accentEdge : p.borderControl),
-        ),
-        child: InkWell(
-          onTap: alTocar,
-          customBorder: const StadiumBorder(),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: Medidas.s48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Medidas.s16),
-              child: Center(
-                widthFactor: 1,
-                child: Text(
-                  texto,
-                  style: Textos.cuerpoFuerte.copyWith(
-                    color: elegido
-                        ? p.accentOn
-                        : alTocar == null
-                        ? p.textMuted
-                        : p.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
 

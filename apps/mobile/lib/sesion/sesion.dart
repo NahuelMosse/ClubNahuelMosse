@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 
 enum Rol { usuario, admin }
 
@@ -122,11 +123,9 @@ class CredencialesFirebase implements Credenciales {
 
 /// La sesión de la app: inicia, retoma la que quedó guardada y la cierra.
 class Sesion extends ChangeNotifier {
-  Sesion({
-    required Credenciales credenciales,
-    required ClienteApi api,
-  }) : _credenciales = credenciales,
-       _api = api;
+  Sesion({required Credenciales credenciales, required ClienteApi api})
+    : _credenciales = credenciales,
+      _api = api;
 
   final Credenciales _credenciales;
   final ClienteApi _api;
@@ -229,13 +228,7 @@ class Sesion extends ChangeNotifier {
     }, token: token);
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 409 || r.codigo == 422) {
-      final errores = switch (r.cuerpo['errores']) {
-        final Map<String, Object?> mapa => {
-          for (final MapEntry(:key, :value) in mapa.entries)
-            if (value is String) key: value,
-        },
-        _ => const <String, String>{},
-      };
+      final errores = erroresDeCampo(r.cuerpo);
       if (errores.isNotEmpty) {
         throw DatosRechazados(errores, repetido: r.codigo == 409);
       }
@@ -274,13 +267,7 @@ class Sesion extends ChangeNotifier {
       case 401:
         throw const SesionVencida();
       case 422:
-        final errores = switch (r.cuerpo['errores']) {
-          final Map<String, Object?> mapa => {
-            for (final MapEntry(:key, :value) in mapa.entries)
-              if (value is String) key: value,
-          },
-          _ => const <String, String>{},
-        };
+        final errores = erroresDeCampo(r.cuerpo);
         if (errores.isEmpty) throw ErrorDelServidor(r.codigo);
         throw ContrasenaRechazada(errores);
       default:

@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../sesion/sesion.dart';
@@ -129,12 +130,11 @@ class Horarios {
     );
     final r = await _api.get(consulta.toString(), token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
-    if (r.cuerpo case {
-      'errores': {'espacio_id': String _},
-    } when r.codigo == 404) {
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 404 && errores.containsKey('espacio_id')) {
       throw const CanchaNoDisponible();
     }
-    if (r.cuerpo case {'errores': {'fecha': String _}} when r.codigo == 422) {
+    if (r.codigo == 422 && errores.containsKey('fecha')) {
       throw const FechaVencida();
     }
     final grilla = r.codigo == 200 ? Grilla.desdeJson(r.cuerpo) : null;
@@ -167,14 +167,8 @@ class Horarios {
     );
     final r = await _api.get(consulta.toString(), token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
-    if (r.cuerpo case {
-      'errores': final Map<String, Object?> errores,
-    } when r.codigo == 422) {
-      throw RangoRechazado({
-        for (final MapEntry(:key, :value) in errores.entries)
-          if (value is String) key: value,
-      });
-    }
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 422 && errores.isNotEmpty) throw RangoRechazado(errores);
     if (r.codigo == 200) {
       if (r.cuerpo case {'espacios': final List<Object?> lista}) {
         final leidos = [for (final e in lista) Espacio.desdeJson(e)];

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
+import '../comun/en_curso.dart';
 import '../comun/errores_no_manejados.dart';
 import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
@@ -148,16 +149,7 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
                       const SizedBox(height: Medidas.s24),
                       if (r.anulable) ...[
                         _anulando
-                            ? Semantics(
-                                label: 'Anulando la reserva',
-                                excludeSemantics: true,
-                                child: const SizedBox(
-                                  height: Medidas.altoControl,
-                                  child: Center(
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                ),
-                              )
+                            ? const EnCurso('Anulando la reserva')
                             : BotonContorno(
                                 texto: 'ANULAR RESERVA',
                                 peligro: true,

@@ -7,13 +7,14 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/en_curso.dart';
 import '../comun/faltantes.dart';
 import '../comun/fechas.dart';
 import '../comun/selector.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'baja_sede.dart';
@@ -307,12 +308,14 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
       await mostrarCambioMientrasTanto(context);
       widget.sedes.avisarCambio();
       if (mounted) context.go('/admin/sedes');
-    } else if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar(confirmar: confirmar);
+    } else {
+      await avisarFalloDeEnvio(
+        context,
+        sesion: widget.sesion,
+        vencida: vencida,
+        error: fallo,
+        reintentar: () => _guardar(confirmar: confirmar),
+      );
     }
   }
 
@@ -506,14 +509,7 @@ class _PantallaFormularioSedeState extends State<PantallaFormularioSede> {
                     ),
                     const SizedBox(height: Medidas.s12),
                     if (_dandoDeBaja)
-                      Semantics(
-                        label: 'Dando de baja la sede',
-                        excludeSemantics: true,
-                        child: const SizedBox(
-                          height: Medidas.altoControl,
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                      )
+                      const EnCurso('Dando de baja la sede')
                     else
                       BotonContorno(
                         texto: 'DAR DE BAJA LA SEDE',

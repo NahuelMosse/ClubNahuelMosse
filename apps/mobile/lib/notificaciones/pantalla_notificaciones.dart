@@ -4,11 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/reloj.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'centro.dart';
@@ -81,17 +80,14 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
     }
     if (!mounted) return;
     setState(() => _cargando = false);
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) {
-        await _cargar();
-      } else if (mounted) {
-        setState(() => _fallo = true);
-      }
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+      alNoReintentar: () => setState(() => _fallo = true),
+    );
   }
 
   @override

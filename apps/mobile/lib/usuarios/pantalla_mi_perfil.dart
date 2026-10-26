@@ -74,8 +74,7 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
         return;
       }
       setState(() => _cargando = false);
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
       return;
     } on SinConexion catch (e) {
       fallo = e;

@@ -11,6 +11,7 @@ import '../tema/tokens.dart';
 import '../comun/reglas_contrasena.dart';
 import '../comun/reglas_registro.dart';
 import 'recuperacion.dart';
+import 'fallo_de_carga.dart';
 import 'sesion.dart';
 import 'tarjeta_cuenta.dart';
 
@@ -129,7 +130,7 @@ class _PantallaNuevaContrasenaState extends State<PantallaNuevaContrasena> {
     if (fallo != null && mounted) {
       // El servidor pudo haber cambiado la contraseña antes de que se cortara la red.
       _huboFalloDeRed = true;
-      final reintentar = await mostrarErrorDeRed(context, fallo);
+      final reintentar = await preguntarReintento(context, fallo);
       if (reintentar && mounted) await _guardar();
     }
   }

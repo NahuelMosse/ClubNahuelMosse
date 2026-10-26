@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
+import '../comun/chip_elegible.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/transiciones.dart';
 import '../espacios/espacio.dart';
@@ -118,6 +119,18 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
+    Widget chip(String texto, bool elegido, VoidCallback alTocar) =>
+        ChipElegible(
+          texto: texto,
+          elegido: elegido,
+          alTocar: alTocar,
+          estilo: Textos.cuerpo,
+          relleno: const EdgeInsets.symmetric(
+            horizontal: Medidas.s16,
+            vertical: Medidas.s8,
+          ),
+          fondoApagado: p.bgSurface,
+        );
     return Scaffold(
       backgroundColor: p.bgSurfaceRaised,
       body: SafeArea(
@@ -166,10 +179,10 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     runSpacing: Medidas.s8,
                     children: [
                       for (final sede in widget.sedes)
-                        _Chip(
-                          texto: sede.nombre,
-                          elegido: _sedeId == sede.id,
-                          alTocar: () => setState(
+                        chip(
+                          sede.nombre,
+                          _sedeId == sede.id,
+                          () => setState(
                             () => _sedeId = _sedeId == sede.id ? null : sede.id,
                           ),
                         ),
@@ -183,10 +196,10 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     runSpacing: Medidas.s8,
                     children: [
                       for (final deporte in widget.catalogo.deportes)
-                        _Chip(
-                          texto: deporte.nombre,
-                          elegido: _deporte == deporte.clave,
-                          alTocar: () => setState(
+                        chip(
+                          deporte.nombre,
+                          _deporte == deporte.clave,
+                          () => setState(
                             () => _deporte = _deporte == deporte.clave
                                 ? null
                                 : deporte.clave,
@@ -201,24 +214,24 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     spacing: Medidas.s8,
                     runSpacing: Medidas.s8,
                     children: [
-                      _Chip(
-                        texto: 'Todas',
-                        elegido: _estado == null,
-                        alTocar: () => setState(() => _estado = null),
+                      chip(
+                        'Todas',
+                        _estado == null,
+                        () => setState(() => _estado = null),
                       ),
                       for (final e in const [
                         EstadoDeReserva.activa,
                         EstadoDeReserva.completada,
                         EstadoDeReserva.anulada,
                       ])
-                        _Chip(
-                          texto: switch (e) {
+                        chip(
+                          switch (e) {
                             EstadoDeReserva.activa => 'Activas',
                             EstadoDeReserva.completada => 'Completadas',
                             _ => 'Anuladas',
                           },
-                          elegido: _estado == e,
-                          alTocar: () =>
+                          _estado == e,
+                          () =>
                               setState(() => _estado = _estado == e ? null : e),
                         ),
                     ],
@@ -331,47 +344,4 @@ class _Titulo extends StatelessWidget {
     texto,
     style: Textos.sobretitulo.copyWith(color: context.paleta.textMuted),
   );
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.texto,
-    required this.elegido,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final bool elegido;
-  final VoidCallback alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      button: true,
-      selected: elegido,
-      excludeSemantics: true,
-      label: texto,
-      child: Material(
-        color: elegido ? p.accentBase : p.bgSurface,
-        shape: const StadiumBorder(),
-        child: InkWell(
-          onTap: alTocar,
-          customBorder: const StadiumBorder(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Medidas.s16,
-              vertical: Medidas.s8,
-            ),
-            child: Text(
-              texto,
-              style: Textos.cuerpo.copyWith(
-                color: elegido ? p.accentOn : p.textPrimary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

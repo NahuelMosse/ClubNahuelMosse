@@ -35,6 +35,7 @@ not_read:
 - Mi perfil valida la fecha de nacimiento con el reloj del club
 - El chip de los filtros del panel y las pestañas del panel se anuncian como los demás chips: botón, seleccionado y habilitado
 - El título del registro exitoso se anuncia como encabezado y región viva, como el de las demás pantallas de resultado
+- Una respuesta de error con la lista `errores` vacía o sin textos se trata como error del servidor (antes, como un rechazo sin campos); el servidor hoy no la manda
 
 ## Look
 

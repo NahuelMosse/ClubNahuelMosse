@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/dialogo_error.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
@@ -87,8 +87,7 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     } on SesionVencida {
       if (!mounted) return;
       setState(() => _enviando = false);
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
       return;
     } on SinConexion catch (x) {
       fallo = x;
@@ -98,8 +97,13 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     if (!mounted) return;
     setState(() => _enviando = false);
     if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
+      await avisarFalloDeEnvio(
+        context,
+        sesion: widget.sesion,
+        vencida: false,
+        error: fallo,
+        reintentar: _guardar,
+      );
       return;
     }
     await mostrarCambioMientrasTanto(context);

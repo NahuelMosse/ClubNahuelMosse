@@ -15,8 +15,8 @@ import '../espacios/espacios.dart';
 import '../sedes/fotos.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
@@ -24,11 +24,9 @@ import '../comun/fechas.dart';
 import 'horarios.dart';
 import 'pantalla_confirmar_cambio.dart';
 import 'pantalla_confirmar_reserva.dart';
+import 'marco_elegible.dart';
+import 'reglas_busqueda.dart';
 import 'reservas.dart';
-
-const _minHoras = 1;
-const _maxHoras = 4;
-const _diasALaVista = 7;
 
 /// «Horarios disponibles» de una cancha: elige cancha de ese tipo, fecha y duración, y la
 /// franja que después se confirma. Consultar no reserva nada.
@@ -81,8 +79,8 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   };
   late int _horas = switch ((widget.modificando, widget.horas)) {
     (final r?, _) => r.fin.difference(r.inicio).inHours,
-    (_, final h?) when h >= _minHoras && h <= _maxHoras => h,
-    _ => _minHoras,
+    (_, final h?) when h >= minHoras && h <= maxHoras => h,
+    _ => minHoras,
   };
   Grilla? _grilla;
 
@@ -235,14 +233,13 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
   }) async {
     if (!mounted) return;
     setState(() => _fallo = true);
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final otraVez = await mostrarErrorDeRed(context, fallo);
-      if (otraVez && mounted) await reintentar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: reintentar,
+    );
   }
 
   Future<void> _yaNoEsta(bool laSede) async {
@@ -435,7 +432,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                                   ),
                                   const SizedBox(height: Medidas.s8),
                                   Text(
-                                    'Horas completas, de $_minHoras a $_maxHoras h. '
+                                    'Horas completas, de $minHoras a $maxHoras h. '
                                     'La sede cierra a las ${datos.$1.cierre}.',
                                     style: Textos.leyenda.copyWith(
                                       color: p.textSecondary,
@@ -746,55 +743,6 @@ class _DeAPares extends StatelessWidget {
   }
 }
 
-/// Un control que se elige, con el estilo de los del prototipo: lima el elegido.
-class _Elegible extends StatelessWidget {
-  const _Elegible({
-    required this.etiqueta,
-    required this.elegido,
-    required this.alTocar,
-    required this.child,
-    this.atenuado = false,
-  });
-
-  final String etiqueta;
-  final bool elegido;
-  final VoidCallback? alTocar;
-  final Widget child;
-  final bool atenuado;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final forma = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(Medidas.radioMd),
-      side: BorderSide(
-        color: elegido
-            ? p.accentEdge
-            : atenuado
-            ? p.borderDefault
-            : p.borderControl,
-      ),
-    );
-    return Semantics(
-      container: true,
-      button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      label: etiqueta,
-      excludeSemantics: true,
-      onTap: alTocar,
-      child: Opacity(
-        opacity: atenuado ? 0.45 : 1,
-        child: Material(
-          color: elegido ? p.accentBase : p.bgSurfaceRaised,
-          shape: forma,
-          child: InkWell(onTap: alTocar, customBorder: forma, child: child),
-        ),
-      ),
-    );
-  }
-}
-
 class _TarjetaCancha extends StatelessWidget {
   const _TarjetaCancha({
     required this.cancha,
@@ -809,7 +757,7 @@ class _TarjetaCancha extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return _Elegible(
+    return MarcoElegible(
       etiqueta: 'Cancha ${cancha.numero}, ${cancha.condicion}',
       elegido: elegida,
       alTocar: alTocar,
@@ -858,7 +806,7 @@ class _Fechas extends StatelessWidget {
       clipBehavior: Clip.none,
       child: Row(
         children: [
-          for (var i = 0; i < _diasALaVista; i++) ...[
+          for (var i = 0; i < diasALaVista; i++) ...[
             if (i > 0) const SizedBox(width: Medidas.s8),
             Builder(
               builder: (context) {
@@ -870,7 +818,7 @@ class _Fechas extends StatelessWidget {
                     minWidth: 56,
                     minHeight: 64,
                   ),
-                  child: _Elegible(
+                  child: MarcoElegible(
                     etiqueta: '${diaDeLaSemana(dia)} ${dia.day}',
                     elegido: esta,
                     alTocar: () => alElegir(dia),
@@ -925,7 +873,7 @@ class _Duracion extends StatelessWidget {
           _BotonRedondo(
             icono: Icons.remove_rounded,
             etiqueta: 'Una hora menos',
-            alTocar: horas > _minHoras ? () => alCambiar(horas - 1) : null,
+            alTocar: horas > minHoras ? () => alCambiar(horas - 1) : null,
           ),
           Expanded(
             child: Semantics(
@@ -940,7 +888,7 @@ class _Duracion extends StatelessWidget {
           _BotonRedondo(
             icono: Icons.add_rounded,
             etiqueta: 'Una hora más',
-            alTocar: horas < _maxHoras ? () => alCambiar(horas + 1) : null,
+            alTocar: horas < maxHoras ? () => alCambiar(horas + 1) : null,
           ),
         ],
       ),
@@ -1016,7 +964,7 @@ class _TarjetaFranja extends StatelessWidget {
     final tinta = elegida ? p.accentOn : p.textPrimary;
     return _Crece(
       activo: elegida,
-      child: _Elegible(
+      child: MarcoElegible(
         etiqueta: actual ? '${franja.texto} (actual)' : franja.texto,
         elegido: elegida,
         alTocar: alTocar,

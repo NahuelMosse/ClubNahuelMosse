@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../api/cliente_api.dart';
 import '../comun/dialogo_error.dart';
 import '../reservas/reservas.dart' show ReservaCambiada, ReservaRechazada;
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import 'dialogo_anular_reserva.dart';
 import 'historial_reservas.dart';
 
@@ -64,9 +64,11 @@ Future<ResultadoDeAnulacion> anularReserva(
       return ResultadoDeAnulacion.cambio;
     }
     if (vencida) {
-      pendientes.guardar(filtros);
-      await mostrarSesionVencida(context);
-      if (context.mounted) await cerrarSesion(context, sesion);
+      await avisarSesionVencida(
+        context,
+        sesion,
+        antes: () => pendientes.guardar(filtros),
+      );
       return ResultadoDeAnulacion.nada;
     }
     final error = fallo;
@@ -74,7 +76,7 @@ Future<ResultadoDeAnulacion> anularReserva(
       await mostrarReservaAnulada(context);
       return ResultadoDeAnulacion.anulada;
     }
-    final reintentar = await mostrarErrorDeRed(context, error);
+    final reintentar = await preguntarReintento(context, error);
     if (!reintentar || !context.mounted) return ResultadoDeAnulacion.nada;
   }
 }

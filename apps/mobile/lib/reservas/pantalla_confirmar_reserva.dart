@@ -8,8 +8,8 @@ import '../comun/dialogo_error.dart';
 import '../comun/formato_precio.dart';
 import '../comun/marco_de_tarjeta.dart';
 import '../sedes/fotos.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
@@ -98,8 +98,7 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
       if (correo != null) widget.pendiente.guardar(e, correo);
       if (!mounted) return;
       setState(() => _enviando = false);
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
       return;
     } on SinConexion catch (x) {
       fallo = x;
@@ -108,8 +107,13 @@ class _PantallaConfirmarReservaState extends State<PantallaConfirmarReserva> {
     }
     if (!mounted) return;
     setState(() => _enviando = false);
-    final reintentar = await mostrarErrorDeRed(context, fallo);
-    if (reintentar && mounted) await _confirmar();
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: false,
+      error: fallo,
+      reintentar: _confirmar,
+    );
   }
 
   @override

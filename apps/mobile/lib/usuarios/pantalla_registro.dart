@@ -7,6 +7,7 @@ import '../comun/calendario.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/errores_de_campo.dart';
 import '../comun/faltantes.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/reglas_registro.dart';
@@ -167,17 +168,15 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
         setState(() => _yaExiste = true);
         return;
       }
-      final errores = r.cuerpo['errores'];
+      final errores = erroresDeCampo(r.cuerpo);
       final mensaje = r.cuerpo['mensaje'];
-      if (errores is! Map<String, Object?> || errores.isEmpty) {
+      if (errores.isEmpty) {
         fallo = ErrorDelServidor(r.codigo);
       } else {
         setState(() {
           for (final MapEntry(:key, :value) in errores.entries) {
             final campo = _Campo.deLaApi(key);
-            if (campo != null && value is String) {
-              _erroresDelServidor[campo] = value;
-            }
+            if (campo != null) _erroresDelServidor[campo] = value;
           }
           _aviso = r.codigo == 409 && mensaje is String ? mensaje : null;
         });

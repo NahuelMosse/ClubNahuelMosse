@@ -3,15 +3,14 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/dorsal.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/etiqueta.dart';
 import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fotos.dart';
@@ -90,14 +89,13 @@ class _PantallaSedesState extends State<PantallaSedes> {
       _cargando = false;
     });
     // Tapado por la sede o los horarios no avisa: la pantalla de arriba ya avisa lo suyo.
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeCarga(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+    );
   }
 
   @override

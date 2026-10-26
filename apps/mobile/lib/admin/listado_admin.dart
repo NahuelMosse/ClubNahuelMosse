@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
+import '../comun/en_curso.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -10,7 +11,11 @@ import '../tema/tokens.dart';
 
 /// «PANEL ADMIN» y el título de la sección, con el botón de la cuenta a la derecha.
 class EncabezadoAdmin extends StatelessWidget {
-  const EncabezadoAdmin({super.key, required this.titulo, required this.sesion});
+  const EncabezadoAdmin({
+    super.key,
+    required this.titulo,
+    required this.sesion,
+  });
 
   final String titulo;
   final Sesion sesion;
@@ -191,14 +196,7 @@ class TarjetaAdmin extends StatelessWidget {
       alTocar: alEditar,
     );
     final Widget baja = dandoDeBaja
-        ? Semantics(
-            label: 'Dando de baja $nombre',
-            excludeSemantics: true,
-            child: const SizedBox(
-              height: Medidas.altoControl,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          )
+        ? EnCurso('Dando de baja $nombre')
         : BotonContorno(
             texto: textoBaja,
             icono: Icons.delete_outline_rounded,

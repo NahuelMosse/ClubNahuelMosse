@@ -13,10 +13,11 @@ import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'formulario_espacio.dart';
 
 enum _Campo {
   sede('sede_id'),
@@ -31,9 +32,6 @@ enum _Campo {
   /// El nombre del campo en la API.
   final String clave;
 }
-
-const _obligatorio = 'Este campo es obligatorio';
-const _precioMaximo = 9999999;
 
 /// Alta de espacio deportivo: sede, deporte, tipo, condición, iluminación y precio, con el
 /// nombre compuesto que calcula la API a la vista.
@@ -122,8 +120,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
     if (!mounted) return;
     setState(() => _cargando = false);
     if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     } else if (fallo != null) {
       final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
@@ -176,8 +173,7 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       }
     }
     if (vencida && mounted && pedido == _pedidoDeNombre) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     }
   }
 
@@ -193,21 +189,17 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
   String? _errorDeRegla(_Campo campo) {
     switch (campo) {
       case _Campo.sede:
-        return _sede == null ? _obligatorio : null;
+        return _sede == null ? obligatorio : null;
       case _Campo.deporte:
-        return _deporte == null ? _obligatorio : null;
+        return _deporte == null ? obligatorio : null;
       case _Campo.tipo:
-        return _tipo == null ? _obligatorio : null;
+        return _tipo == null ? obligatorio : null;
       case _Campo.condicion:
-        return _techada == null ? _obligatorio : null;
+        return _techada == null ? obligatorio : null;
       case _Campo.iluminacion:
-        return _iluminada == null ? _obligatorio : null;
+        return _iluminada == null ? obligatorio : null;
       case _Campo.precio:
-        final precio = leerPrecio(_precio.text);
-        if (precio == null) return _obligatorio;
-        return precio < 1 || precio > _precioMaximo
-            ? 'Ingresá un precio entre \$ 1 y \$ 9.999.999'
-            : null;
+        return errorDePrecio(_precio.text);
     }
   }
 
@@ -276,12 +268,9 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
 
   Future<void> _elegirSiNo(_Campo campo) async {
     final condicion = campo == _Campo.condicion;
-    final elegido = await elegirOpcion<bool>(
+    final elegido = await elegirSiNo(
       context,
-      titulo: condicion ? 'Condición' : 'Iluminación',
-      opciones: condicion
-          ? const [(false, 'Al aire libre'), (true, 'Techada')]
-          : const [(true, 'Iluminada'), (false, 'Sin iluminación')],
+      condicion: condicion,
       elegida: condicion ? _techada : _iluminada,
     );
     if (elegido == null || !mounted) return;
@@ -305,8 +294,13 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       if (!mounted) return;
       final fallo = _falloDelNombre;
       if (fallo != null) {
-        final reintentar = await mostrarErrorDeRed(context, fallo);
-        if (reintentar && mounted) await _guardar();
+        await avisarFalloDeEnvio(
+          context,
+          sesion: widget.sesion,
+          vencida: false,
+          error: fallo,
+          reintentar: _guardar,
+        );
         return;
       }
     }
@@ -372,13 +366,13 @@ class _PantallaAltaEspacioState extends State<PantallaAltaEspacio> {
       if (mounted) setState(() => _enviando = false);
     }
     if (!mounted) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _guardar,
+    );
   }
 
   String get _faltaParaElNombre {

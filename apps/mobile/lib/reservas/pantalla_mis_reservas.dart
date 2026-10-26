@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
+import '../comun/chip_elegible.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/en_curso.dart';
 import '../comun/estado_vacio.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../comun/formato_precio.dart';
@@ -235,8 +237,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
       _masFallo = fallo;
     });
     if (vencida && ModalRoute.of(context)?.isCurrent != false) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     }
   }
 
@@ -296,7 +297,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                       ],
                     ),
                     const SizedBox(height: Medidas.s16),
-                    _Pestanas(historial: _historial, alElegir: _elegir),
+                    _BarraDePestanas(historial: _historial, alElegir: _elegir),
                     const SizedBox(height: Medidas.s16),
                     AnimatedSwitcher(
                       duration: MediaQuery.disableAnimationsOf(context)
@@ -393,8 +394,8 @@ String textoDeCancelacion(Reserva r, Catalogo catalogo) =>
 String _horarioDe(Reserva r) => rangoDeHoras(r.inicio, r.fin);
 
 /// `Segmented-Tab`: Próximas o Historial.
-class _Pestanas extends StatelessWidget {
-  const _Pestanas({required this.historial, required this.alElegir});
+class _BarraDePestanas extends StatelessWidget {
+  const _BarraDePestanas({required this.historial, required this.alElegir});
 
   final bool historial;
   final ValueChanged<bool> alElegir;
@@ -405,32 +406,14 @@ class _Pestanas extends StatelessWidget {
     Widget pestana(String texto, bool esHistorial) {
       final elegida = historial == esHistorial;
       return Expanded(
-        child: Semantics(
-          container: true,
-          button: true,
-          selected: elegida,
-          label: texto,
-          excludeSemantics: true,
-          onTap: () => alElegir(esHistorial),
-          child: Material(
-            color: elegida ? p.accentBase : Colors.transparent,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              onTap: () => alElegir(esHistorial),
-              customBorder: const StadiumBorder(),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(minHeight: Medidas.s48),
-                child: Center(
-                  child: Text(
-                    texto,
-                    style: Textos.cuerpoFuerte.copyWith(
-                      color: elegida ? p.accentOn : p.textSecondary,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
+        child: ChipElegible(
+          texto: texto,
+          elegido: elegida,
+          alTocar: () => alElegir(esHistorial),
+          alto: Medidas.s48,
+          relleno: EdgeInsets.zero,
+          fondoApagado: Colors.transparent,
+          tintaApagada: p.textSecondary,
         ),
       );
     }
@@ -712,14 +695,7 @@ class TarjetaReserva extends StatelessWidget {
                       Medidas.s16,
                     ),
                     child: cancelando
-                        ? Semantics(
-                            label: 'Cancelando la reserva',
-                            excludeSemantics: true,
-                            child: const SizedBox(
-                              height: Medidas.altoControl,
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                          )
+                        ? const EnCurso('Cancelando la reserva')
                         : Flex(
                             direction: grande ? Axis.vertical : Axis.horizontal,
                             crossAxisAlignment: grande

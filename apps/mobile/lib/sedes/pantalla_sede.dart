@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
+import '../comun/chip_elegible.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/etiqueta.dart';
@@ -13,8 +14,8 @@ import '../comun/movimiento.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../espacios/iconos.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fotos.dart';
@@ -136,8 +137,7 @@ class _PantallaSedeState extends State<PantallaSede> {
     });
     if (ModalRoute.of(context)?.isCurrent == false) return;
     if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
     } else if (fallo != null) {
       final resultado = await atenderErrorDeRed(context, fallo);
       if (!mounted) return;
@@ -208,13 +208,13 @@ class _PantallaSedeState extends State<PantallaSede> {
       if (mounted) setState(() => _filtrando = false);
     }
     if (!mounted || pedido != _pedido) return;
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _filtrar(deporte: deporte, tipo: tipo);
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: () => _filtrar(deporte: deporte, tipo: tipo),
+    );
   }
 
   @override
@@ -525,77 +525,18 @@ class _Filtro extends StatelessWidget {
           runSpacing: Medidas.s8,
           children: [
             for (final (clave, texto, icono) in opciones)
-              _Chip(
+              ChipElegible(
                 texto: texto,
                 icono: icono,
                 etiqueta: '$prefijo $texto',
                 elegido: clave == elegida,
                 alTocar: habilitado ? () => alElegir(clave) : null,
+                alto: Medidas.tactil + 4,
+                conBorde: true,
               ),
           ],
         ),
       ],
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.texto,
-    required this.icono,
-    required this.etiqueta,
-    required this.elegido,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final IconData? icono;
-  final String etiqueta;
-  final bool elegido;
-  final VoidCallback? alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final tinta = elegido ? p.accentOn : p.textPrimary;
-    final simbolo = icono;
-    return Semantics(
-      container: true,
-      button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      label: etiqueta,
-      excludeSemantics: true,
-      onTap: alTocar,
-      child: Material(
-        color: elegido ? p.accentBase : p.bgSurfaceRaised,
-        shape: StadiumBorder(
-          side: BorderSide(color: elegido ? p.accentEdge : p.borderControl),
-        ),
-        child: InkWell(
-          onTap: alTocar,
-          customBorder: const StadiumBorder(),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: Medidas.tactil + 4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Medidas.s16),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (simbolo != null) ...[
-                    Icon(simbolo, size: 18, color: tinta),
-                    const SizedBox(width: Medidas.s8),
-                  ],
-                  Text(
-                    texto,
-                    style: Textos.cuerpoFuerte.copyWith(color: tinta),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

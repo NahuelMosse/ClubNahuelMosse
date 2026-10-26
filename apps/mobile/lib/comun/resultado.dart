@@ -22,10 +22,23 @@ class PantallaResultado extends StatelessWidget {
     this.alTocarSecundaria,
     this.cargandoSecundaria = false,
     this.detalle,
+    this.diametro = 96,
+    this.tamanoIcono = 40,
+    this.separacionIcono = Medidas.s24,
+    this.separacionTitulo = Medidas.s12,
+    this.separacionAcciones = Medidas.s32,
   });
 
   /// El dato que se acaba de guardar, en un recuadro lima debajo del texto.
   final String? detalle;
+
+  /// El tamaño del círculo y de su ícono, y lo que separa el círculo del título, el
+  /// título del texto y el texto de las acciones.
+  final double diametro;
+  final double tamanoIcono;
+  final double separacionIcono;
+  final double separacionTitulo;
+  final double separacionAcciones;
 
   final IconData icono;
   final TonoResultado tono;
@@ -57,9 +70,15 @@ class PantallaResultado extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: PulsoDeExito(icono: icono, fondo: fondo, tinta: tinta),
+                  child: PulsoDeExito(
+                    icono: icono,
+                    fondo: fondo,
+                    tinta: tinta,
+                    diametro: diametro,
+                    tamanoIcono: tamanoIcono,
+                  ),
                 ),
-                const SizedBox(height: Medidas.s24),
+                SizedBox(height: separacionIcono),
                 Aparecer(
                   retraso: const Duration(milliseconds: 370),
                   desdeY: 14,
@@ -73,7 +92,7 @@ class PantallaResultado extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: Medidas.s12),
+                SizedBox(height: separacionTitulo),
                 Aparecer(
                   retraso: const Duration(milliseconds: 460),
                   desdeY: 14,
@@ -116,7 +135,7 @@ class PantallaResultado extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: Medidas.s32),
+                SizedBox(height: separacionAcciones),
                 Aparecer(
                   retraso: const Duration(milliseconds: 550),
                   desdeY: 14,

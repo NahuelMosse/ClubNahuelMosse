@@ -5,12 +5,12 @@ import '../comun/reserva_pendiente.dart';
 import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/isotipo.dart';
 import '../comun/movimiento.dart';
 import '../comun/snackbar.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'fallo_de_carga.dart';
 import 'sesion.dart';
 
 const mensajeCredencialesInvalidas =
@@ -119,7 +119,7 @@ class _FormularioState extends State<_Formulario> {
       if (mounted) setState(() => _enviando = false);
     }
     if (fallo != null && mounted) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
+      final reintentar = await preguntarReintento(context, fallo);
       if (reintentar && mounted) await _ingresar();
     }
   }

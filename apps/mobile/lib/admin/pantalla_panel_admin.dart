@@ -7,6 +7,7 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
+import '../comun/chip_elegible.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/fechas.dart';
 import '../sesion/fallo_de_carga.dart';
@@ -307,7 +308,7 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
                         ],
                       ),
                       const SizedBox(height: Medidas.s16),
-                      _Pestanas(
+                      _BarraDePestanas(
                         elegido: _filtros.estado,
                         contadores: resultado?.contadores,
                         alElegir: _elegirEstado,
@@ -430,8 +431,8 @@ class _PantallaPanelAdminState extends State<PantallaPanelAdmin> {
   }
 }
 
-class _Pestanas extends StatelessWidget {
-  const _Pestanas({
+class _BarraDePestanas extends StatelessWidget {
+  const _BarraDePestanas({
     required this.elegido,
     required this.contadores,
     required this.alElegir,
@@ -450,31 +451,15 @@ class _Pestanas extends StatelessWidget {
       final p = context.paleta;
       return Padding(
         padding: const EdgeInsets.only(right: Medidas.s8),
-        child: Semantics(
-          button: true,
-          selected: activa,
-          excludeSemantics: true,
-          label: etiqueta,
-          child: Material(
-            color: activa ? p.accentBase : p.bgSurfaceRaised,
-            shape: const StadiumBorder(),
-            child: InkWell(
-              onTap: () => alElegir(valor),
-              customBorder: const StadiumBorder(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Medidas.s16,
-                  vertical: Medidas.s12,
-                ),
-                child: Text(
-                  etiqueta,
-                  style: Textos.cuerpoFuerte.copyWith(
-                    color: activa ? p.accentOn : p.textSecondary,
-                  ),
-                ),
-              ),
-            ),
+        child: ChipElegible(
+          texto: etiqueta,
+          elegido: activa,
+          alTocar: () => alElegir(valor),
+          relleno: const EdgeInsets.symmetric(
+            horizontal: Medidas.s16,
+            vertical: Medidas.s12,
           ),
+          tintaApagada: p.textSecondary,
         ),
       );
     }
