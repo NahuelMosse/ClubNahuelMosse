@@ -15,15 +15,17 @@ import 'package:http/testing.dart';
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
 
+String _uuid(int n) => '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
+
 void main() {
   setUpAll(cargarFuentes);
 
   const reservaJson =
-      '{"id": 1, "espacio_id": 9, "sede_id": 1, "espacio":'
+      '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
       ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
       ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
       ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-      ' "estado": "activa", "motivo": null, "usuario_id": 1, "usuario": "Nahuel Mosse",'
+      ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
       ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
       ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
@@ -116,7 +118,7 @@ void main() {
   );
 
   String reservaN(int id) => reservaJson
-      .replaceFirst('"id": 1,', '"id": $id,')
+      .replaceFirst('"id": "00000000-0000-7000-8000-000000000001",', '"id": "${_uuid(id)}",')
       .replaceFirst('Nahuel Mosse', 'Socio $id');
 
   String pagina(Iterable<int> ids, int numero) =>

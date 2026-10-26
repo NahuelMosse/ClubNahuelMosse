@@ -154,7 +154,7 @@ void main() {
       api: ClienteApi(
         'http://api.falsa',
         cliente: _conCorte(
-          '/reservas/1/cancelar',
+          '/reservas/00000000-0000-7000-8000-000000000001/cancelar',
           [
             null,
             (409, '{"errores": {"reserva": "Esto cambió mientras tanto"}}'),
@@ -191,7 +191,7 @@ void main() {
     final api = ClienteApi(
       'http://api.falsa',
       cliente: _conCorte(
-        '/reservas/1/anular',
+        '/reservas/00000000-0000-7000-8000-000000000001/anular',
         [null, (409, '{"errores": {"reserva": "Esto cambió mientras tanto"}}')],
         (pedido) => switch (pedido.url.path) {
           '/reservas/todas' => (200, anular.listado(anular.reservaJson())),

@@ -47,7 +47,7 @@ void main() {
         throwsA(isA<AssertionError>()),
       );
       await expectLater(
-        () => api.post('/sedes/1/anular', {}),
+        () => api.post('/sedes/00000000-0000-7000-8000-000000000001/anular', {}),
         throwsA(isA<AssertionError>()),
       );
       await expectLater(api.get('/sedes', token: 'token'), completes);
@@ -80,15 +80,15 @@ void main() {
     'el manifiesto se compara por método y por plantilla de ruta @REV-08-S4 '
     '@assumption:REV-08-ASM-12',
     () {
-      expect(rutaDeclarada('GET', '/reservas/todas/7'), isTrue);
-      expect(rutaDeclarada('POST', '/reservas/7/anular'), isTrue);
+      expect(rutaDeclarada('GET', '/reservas/todas/00000000-0000-7000-8000-000000000007'), isTrue);
+      expect(rutaDeclarada('POST', '/reservas/00000000-0000-7000-8000-000000000007/anular'), isTrue);
       expect(rutaDeclarada('GET', '/reservas?cuando=historial'), isTrue);
       // El método cuenta: la ruta existe pero con otro método.
       expect(rutaDeclarada('DELETE', '/reservas'), isFalse);
-      expect(rutaDeclarada('GET', '/reservas/7/anular'), isFalse);
+      expect(rutaDeclarada('GET', '/reservas/00000000-0000-7000-8000-000000000007/anular'), isFalse);
       // La plantilla cuenta: un segmento de más o de menos no coincide.
-      expect(rutaDeclarada('POST', '/reservas/7/8/anular'), isFalse);
-      expect(rutaDeclarada('GET', '/reservas/todas/7/x'), isFalse);
+      expect(rutaDeclarada('POST', '/reservas/00000000-0000-7000-8000-000000000007/8/anular'), isFalse);
+      expect(rutaDeclarada('GET', '/reservas/todas/00000000-0000-7000-8000-000000000007/x'), isFalse);
       expect(rutaDeclarada('GET', '/ruta-inventada'), isFalse);
     },
   );

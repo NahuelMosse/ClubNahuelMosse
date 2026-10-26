@@ -14,7 +14,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
-ClienteApi apiFalsa({int codigo = 201, String cuerpo = '{"id": 1}'}) =>
+ClienteApi apiFalsa({int codigo = 201, String cuerpo = '{"id": "00000000-0000-7000-8000-000000000001"}'}) =>
     ClienteApi(
       'http://api.falsa',
       cliente: MockClient(
@@ -58,13 +58,13 @@ const _catalogoJson =
     '{"clave": "Golf", "nombre": "Golf", "tipos": [{"clave": "DR", "nombre": "Driving range"}]}'
     ']}';
 
-String _sedeJson(int id, String nombre, String direccion, int canchas) =>
-    '{"id": $id, "nombre": "$nombre", "direccion": "$direccion", '
+String _sedeJson(String id, String nombre, String direccion, int canchas) =>
+    '{"id": "$id", "nombre": "$nombre", "direccion": "$direccion", '
     '"apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7], '
     '"canchas": $canchas, "deportes": ["Futbol", "Tenis"]}';
 
 const _proximaJson =
-    '{"id": 1, "espacio_id": 3, "sede_id": 2, '
+    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000003", "sede_id": "00000000-0000-7000-8000-000000000002", '
     '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
     '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
     '"inicio": "2026-11-13T00:00:00Z", "fin": "2026-11-13T01:00:00Z", '
@@ -81,11 +81,11 @@ ClienteApi apiInicio({
   'GET /sedes': (
     200,
     unaSede
-        ? '{"sedes": [${_sedeJson(1, 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
-        : '{"sedes": [${_sedeJson(1, 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
-              '${_sedeJson(2, 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
-              '${_sedeJson(3, 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
-              '${_sedeJson(4, 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
+        ? '{"sedes": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
+        : '{"sedes": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+              '${_sedeJson('00000000-0000-7000-8000-000000000002', 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
+              '${_sedeJson('00000000-0000-7000-8000-000000000003', 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
+              '${_sedeJson('00000000-0000-7000-8000-000000000004', 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
   ),
 });
 

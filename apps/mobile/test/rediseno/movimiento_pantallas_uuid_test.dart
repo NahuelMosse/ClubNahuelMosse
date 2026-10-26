@@ -231,7 +231,7 @@ ClienteApi _apiMisReservas(Completer<void>? esperaHistorial) {
       final (codigo, cuerpo) = pedido.url.path == '/reservas'
           ? (
               200,
-              '{"reservas": [${historial ? reservaJson(id: 2, estado: 'completada') : reservaJson()}]}',
+              '{"reservas": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completada') : reservaJson()}]}',
             )
           : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
@@ -379,7 +379,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final espera = Completer<void>();
-      await montarUsuario(tester, api: _apiSede(espera), inicio: '/sedes/1');
+      await montarUsuario(tester, api: _apiSede(espera), inicio: '/sedes/00000000-0000-7000-8000-000000000001');
       const tenis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
       const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
       final titulo = tester.element(find.text('SEDE MORÓN'));
@@ -922,7 +922,7 @@ void main() {
       await montarUsuario(
         tester,
         api: apiRutas(rutasDeSedes()),
-        inicio: '/sedes/1/canchas/9',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
       final linea = find.byType(LineaDelDia);
       expect(

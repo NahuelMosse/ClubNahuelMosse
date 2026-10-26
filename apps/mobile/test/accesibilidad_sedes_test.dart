@@ -86,7 +86,7 @@ void main() {
       await montarUsuario(
         tester,
         oscuro: oscuro,
-        inicio: '/sedes/1',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: apiRutas(rutasDeSedes()),
       );
       await conFotos(tester);
@@ -101,7 +101,7 @@ void main() {
       await montarUsuario(
         tester,
         oscuro: oscuro,
-        inicio: '/sedes/1/canchas/9',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
         api: apiRutas(rutasDeSedes()),
       );
       await cumpleLasGuias(tester);

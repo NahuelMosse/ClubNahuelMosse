@@ -134,7 +134,7 @@ void main() {
       final pedidos = <http.Request>[];
       final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
       final (nombre, numero) = await e.nombreSugerido(
-        sedeId: 1,
+        sedeId: '00000000-0000-7000-8000-000000000001',
         deporte: 'Futbol',
         tipo: 'F5',
       );
@@ -147,7 +147,7 @@ void main() {
     });
 
     Future<Espacio> alta(Espacios e) => e.darDeAlta(
-      sedeId: 1,
+      sedeId: '00000000-0000-7000-8000-000000000001',
       deporte: 'Futbol',
       tipo: 'F5',
       techada: false,
@@ -162,7 +162,7 @@ void main() {
       final espacio = await alta(e);
       expect(espacio.nombre, 'Moron_Rivadavia_19850_Futbol_F5_1');
       expect(jsonDecode(pedidos.single.body), {
-        'sede_id': 1,
+        'sede_id': '00000000-0000-7000-8000-000000000001',
         'deporte': 'Futbol',
         'tipo': 'F5',
         'techada': false,

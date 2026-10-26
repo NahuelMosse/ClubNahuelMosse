@@ -7,7 +7,7 @@ import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'interfaz_accesible_test.dart' show contraste;
+import 'interfaz_accesible_uuid_test.dart' show contraste;
 import 'soporte/montar.dart';
 import 'soporte/reloj_fijo.dart' show relojDeLasCapturas;
 

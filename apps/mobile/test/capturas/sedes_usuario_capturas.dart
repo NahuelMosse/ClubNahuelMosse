@@ -15,7 +15,7 @@ void main() {
   const modos = {'oscuro': true, 'claro': false};
   const sedes =
       '[$sedeMoronConDeportes, '
-      '{"id": 2, "nombre": "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", '
+      '{"id": "00000000-0000-7000-8000-000000000002", "nombre": "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", '
       '"apertura": "09:00", "cierre": "22:00", "dias": [1,2,3,4,5,6], '
       '"canchas": 2, "deportes": ["Hockey", "Voley"]}, '
       '$sedeHaedoSinCanchas]';
@@ -71,13 +71,13 @@ void main() {
       });
 
       testWidgets('sede con canchas $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes/1');
+        await abrir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
         await capturar(tester, 'sedes/sede_${ancho}_$modo.png');
       });
 
       testWidgets('sede filtrada por deporte $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await abrir(tester, '/sedes/1');
+        await abrir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
         await tester.tap(find.bySemanticsLabel('Deporte Fútbol'));
         await tester.pumpAndSettle();
         await capturar(tester, 'sedes/sede_filtrada_${ancho}_$modo.png');
@@ -85,18 +85,18 @@ void main() {
       });
 
       testWidgets('sede sin canchas $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes/5', espacios: '[]');
+        await abrir(tester, '/sedes/00000000-0000-7000-8000-000000000005', espacios: '[]');
         await capturar(tester, 'sedes/sede_vacia_${ancho}_$modo.png');
       });
 
       testWidgets('horarios $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes/1/canchas/9');
+        await abrir(tester, '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009');
         await capturar(tester, 'sedes/horarios_${ancho}_$modo.png');
       });
 
       testWidgets('horarios con franja elegida $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await abrir(tester, '/sedes/1/canchas/9');
+        await abrir(tester, '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009');
         final franja = find.bySemanticsLabel('18:00 – 19:00');
         await tester.ensureVisible(franja);
         await tester.pumpAndSettle();
@@ -117,7 +117,7 @@ void main() {
           tester,
           oscuro: oscuro,
           tamano: tamano,
-          inicio: '/sedes/1/canchas/9',
+          inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
           api: apiRutas({
             ...rutasDeSedes(sedes: sedes, grilla: grillaJson(abre: false)),
             'GET /espacios/catalogo': (200, catalogoCompleto),

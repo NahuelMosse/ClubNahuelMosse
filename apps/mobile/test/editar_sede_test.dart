@@ -24,7 +24,7 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('PUT', '/sedes/1') =>
+            ('PUT', '/sedes/00000000-0000-7000-8000-000000000001') =>
               respuestas.isEmpty
                   ? (200, sedeMoronJson)
                   : respuestas.removeAt(0),
