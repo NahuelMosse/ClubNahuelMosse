@@ -45,11 +45,11 @@ lint: sh D:/Temp/w/herramientas/ruff-mypy-api-arq02.sh apps/api/app apps/api/tes
 app: sh D:/Temp/w/herramientas/arq01-app.sh arq02_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh arq02_app --json --no-ambient --common-headers "X-Request-ID, Content-Security-Policy" --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8701/club_arq02_migra uv run --no-sync alembic upgrade head"
-mutate apps/api/app/infraestructura/db.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_api_limpia.py tests/integracion/test_api_limpia_persistencia.py
+mutate apps/api/app/infraestructura/db.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_api_limpia.py tests/integracion/test_api_limpia_persistencia.py tests/integracion/test_registro_api.py tests/integracion/test_sedes_api.py
 mutate apps/api/app/dominio/horarios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit
-mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit
+mutate apps/api/app/dominio/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/unit/test_cola_de_avisos.py tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_mensaje_cancelacion_forzosa.py tests/unit/test_recordatorios.py
 mutate apps/api/app/infraestructura/enlaces.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_recuperacion_api.py
-mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_espacios_api.py
+mutate apps/api/app/infraestructura/espacios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_espacios_api.py tests/integracion/test_api_limpia_bloqueos.py
 mutate apps/api/app/infraestructura/horarios.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_reservas_api.py tests/integracion/test_espacios_api.py
 mutate apps/api/app/infraestructura/notificaciones.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_notificaciones_api.py
 mutate apps/api/app/infraestructura/reservas.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -x tests/integracion/test_reservas_api.py tests/integracion/test_anular_reserva_api.py tests/integracion/test_historial_api.py
