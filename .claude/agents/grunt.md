@@ -16,6 +16,10 @@ means the pattern was not the one you thought.
 `file:line` and why it does not fit. A case forced so the count adds up is worse than a declared
 pending case: the pending one is visible, the forced one is not.
 
+**New code is searched first.** If the change makes you write a function, component or block that did not exist (not a rename or a signature
+migration), `Grep` the module and `shared/` for it by intent words, names and a snippet of its logic before writing it, and use what exists. If the task in `card.md`
+has a `reuses:` or `new:` line, follow it. The same logic twice in two places is a K4 failure at the gate, not a style point.
+
 **Do not change behavior along the way.** If while renaming you see a bug, an `any`, or something
 that could be simplified: **do not touch it**, note it in the report. A mechanical diff that also
 has two judgment fixes is a diff nobody can review at a glance.

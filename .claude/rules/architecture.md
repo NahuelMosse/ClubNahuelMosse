@@ -19,6 +19,26 @@ test was written anyway by the runs where this rule was not loaded, because the 
 in the gate and the `judge`, which always run. **What rests on a single door is lost when that door does
 not open.**
 
+## Simplest structure that works
+
+**This section wins over every other one.** The kit's first duty is to avoid overengineering: structure grows with the problem,
+and a layer, folder, interface or pattern exists only where today's code needs it. Every later section says *where things go
+when they exist*, never *that they must exist*.
+
+- **A CRUD feature** is one module: a route or controller, a repository on the stack's ORM and a schema. No `domain/` or
+  `application/` folder, no use-case class that only forwards to the repository.
+- **Layers appear inside a module when it has business rules worth isolating** (calculations, state transitions, invariants a
+  test should reach without a database). The card says which rule in `why-layer:` under its task; without one the layer is dropped.
+- **Dependency injection** is the framework's DI or plain constructor parameters. A container (awilix, tsyringe) only when the
+  app wires many services and the framework has none; never a hand-rolled container or service locator.
+- **No** interface with a single implementation (unless a test needs the fake), generic repository, event bus with one consumer,
+  factory, strategy or adapter without a second variant, or config for a value that never changes.
+- Extracting duplicated logic (see «Duplicated logic») is not abstraction; a **new layer or pattern** is, and it is justified or removed.
+
+The gate checks it: `overdesign` fails a pass-through method, an interface or abstract class with one implementation, a folder with one
+tiny file and an empty layer folder that the card added, and reports the ones already in the repo; `plan.mjs` asks `why-layer:` for a
+new `domain/` or `application/` folder and for a factory, strategy, adapter, bus or `I<Name>` interface file.
+
 ## The five that matter
 
 They are the ones that cost the most and that no generic linter catches.
@@ -49,28 +69,121 @@ They are the ones that cost the most and that no generic linter catches.
 5. **A service does one thing.** If to explain what it does you use “and” more than twice, they are
    two services. It is not a line rule: it is about reasons to change it.
 
+## Structure: vertical slices, clean-architecture layers inside
+
+The code is cut by **functionality first**: each feature is a vertical slice, a folder
+`src/modules/<feature>/` (or the stack's equivalent: a Nest module, a .NET project or namespace per
+feature, a Python package, a Flutter `features/<feature>/`) that holds everything the feature needs, from
+the route to the table. A developer reads one folder to understand one feature, and a large project grows
+by adding slices, not by thickening four shared layers. **The clean-architecture layers live inside each
+slice**: as files in a small slice (`customers.controller.ts` is the interface, `customers.repository.ts`
+the infrastructure) and as folders (`domain/`, `application/`, `infrastructure/`, `interface/`) when the
+slice has rules worth isolating, each only if it holds something. At the top there is only a small `shared/` kernel (config,
+logging, the base error types, a few pure utilities) and the composition root.
+
+```
+src/
+  modules/
+    customers/  { customers.controller.ts customers.repository.ts customers.schema.ts index.ts }   a CRUD
+    orders/     { domain/ infrastructure/ interface/ index.ts }   pricing rules isolated in domain/
+  shared/
+```
+
+**A top-level `domain/`, `application/` or `infrastructure/` folder that spans features is a failure**:
+adding a feature touches four distant folders, nothing says which tables or rules belong together, and the
+module boundaries below cannot be asserted. `plan.mjs` refuses a `## Tasks` file placed there. A CRUD of a
+single entity is one module with the files it needs, not four folders.
+
+**A slice grows one step at a time, each only on its signal**: flat files → a layer folder (`why-layer:`) → a folder per
+use case (past ~5) → named sub-slices, one level → a workspace package (own build, owner or publication). Two slices that
+import each other both ways are one. In the front end, `features/<feature>/` the same way, split by screen, never by kind; a
+full-stack feature keeps its name in every root and shares only the contract. Trees, names, tests and what `shared/` may
+hold: `.claude/reference/structure.md`.
+
+## APIs: REST over resources, not over tables
+
+An API is REST, and REST exposes **resources**, not the database. A resource is what the client works with
+(an order with its lines, totals and status; a customer with its open requests), and it may join several
+tables, compute fields or hide others; that assembly happens behind the route, in the slice.
+
+- The response is the resource's own shape, written in the slice (a schema or a mapper at the edge). An
+  ORM entity, a table row or its internal columns (foreign keys, audit fields, soft-delete flags) never go
+  out as is, and a request body never maps straight onto a table.
+- Routes are nouns of the domain (`/orders/{id}`, `/orders/{id}/cancel` for an action that is not an
+  edit), not one CRUD per table. A table with no meaning for the client gets no route.
+- The resource shape is the contract (OpenAPI where the repo has it): changing the database does not
+  change it, and changing it is a versioned decision.
+- Simplest first still holds: when the resource and the table really coincide, the mapping is one small
+  schema, not a layer.
+- **REST by default; GraphQL when the case asks for it** (several clients that need different shapes of the
+  same data, deep nested reads a screen would otherwise stitch from many calls), decided in the card or
+  `system-design.md`, or the repo's existing choice. The same rule holds: the schema describes resources,
+  not tables; resolvers assemble them behind (batched, no N+1), with depth and cost limits.
+
+## Readable files
+
+- **One file, one responsibility.** A file exports one concept (a use case, an entity, a repository adapter, a controller, a
+  component). Validation, persistence, formatting and HTTP in one file is a failure; the layers are separate files.
+- **One paradigm per file and per layer**, chosen per stack in `.claude/stacks/<stack>.md`: in an OO stack (Nest, .NET, Spring)
+  use cases, services, repositories and controllers are classes, one per file, and pure helpers live in their own module file,
+  never as loose functions next to a class; in a functional stack (Express, plain TS, React) a file is a set of related functions
+  or one class, never both. A class file holds the class and at most its private types. The gate's `shape` check flags a file with
+  a class and a top-level function, more than one class, or a name like `utils`, `helpers` or `manager`.
+- **Measured limits, enforced by the stack's linter** in the `lint:` line: about 250 lines per file, 40 per function, cyclomatic
+  complexity 10, nesting depth 3, 4 parameters. Going over needs an inline reason (`eslint-disable-next-line <rule> -- <why>`).
+  Config per stack: `.claude/stacks/<stack>.md`, "Readability limits"; for ESLint, `.claude/templates/eslint-readability.mjs`.
+- Names say intent, early returns replace nested branches, and the libraries of the previous section keep hand-written plumbing out of the reading.
+
 ## Dependency direction
+
+Inside each module, for the layers it has:
 
 ```
 interface (controllers, pages) → application (use cases) → domain (entities, rules)
-infrastructure (Sequelize, HTTP, queues) → domain
+infrastructure (ORM, HTTP, queues) → domain
 ```
 
-The arrows point inward and **never the other way round**. The domain knows nobody.
+The arrows point inward and **never the other way round**. The domain knows nobody. Between modules the
+only door is the public index (next section).
 
 ## Module boundaries
 
 You import another module's public index, never its inside:
 `import { X } from '../clients'` yes; `import { X } from '../clients/infrastructure/client.model'` no.
-The index exports types and interfaces.
+The index lists what is public by name, never `export *`; a slice that became a package exposes it in `exports`.
+
+- **Direction:** the composition root (`app`, routes) → slices → `shared/`. `shared/` imports no slice and holds no
+  domain; a slice's piece moves there at its third use across slices. Front-end features do not import each other;
+  the routes compose them.
+- The gate's `boundaries` check holds this on the card's files: `shared/` importing a slice, a reach inside another
+  slice, `export *` in an index, a grab-bag folder (`common/`, `core/`, `utils/`). `kit-boundary: <reason>` declares one.
 
 - **Each module owns its tables**; nobody else reads or writes them.
 - **Cross effects** go through the other module's interface or through an event. In the front end, through
   props, events or a public API: never a `querySelector` inside another component, nor its internal state.
 - **A non-trivial library** (ORM, HTTP client, payments, mail, PDF, queues) is used behind an adapter
-  module in infrastructure, with names from the domain; domain and application do not import it. The
+  module in infrastructure (or beside the repository when the module has no layers), with names from the domain; domain and application do not import it. The
   exceptions are the standard library, the web framework in the interface layer and the pure utilities
-  declared in `system-design.md`.
+  declared in `system-design.md`. *Behind an adapter* is where the library lives, not a reason to
+  replace it with hand-written code: see the next section.
+
+## Solved problems use the stack's library
+
+Persistence, dependency injection, validation, authentication, dates, the HTTP client, queues and
+migrations are solved problems. Each uses the stack's standard library, named per category in
+`.claude/stacks/<stack>.md`; **the repo's existing choice always wins**, and a new repo takes the
+profile's default.
+
+- **Persistence:** an ORM or query builder **with migrations**, never hand-written SQL strings and a
+  home-made mapper. It lives in the module's `infrastructure/`; the domain keeps its own entities.
+- **Dependency injection:** the framework's DI (Nest, ASP.NET, Spring, FastAPI `Depends`) or plain constructor
+  parameters; a container (awilix, tsyringe, dependency-injector, get_it) only when the app wires many services and
+  the framework has none, in the composition root. Not a hand-rolled container, registry, service locator or
+  module-level singleton.
+- **Validation:** a schema library (zod, valibot, pydantic, FluentValidation) at the edge.
+
+Hand-rolling one of these is allowed only with an `<ID>-ASM-NN` that says why (no library fits, a
+constraint of the repo) and a test tied to it; without it the plan names the library.
 
 The rules with their sources and checks are in `.claude/reference/architecture.md`; when a pattern
 is in doubt, `.claude/reference/code-patterns.md`.
@@ -78,15 +191,21 @@ is in doubt, `.claude/reference/code-patterns.md`.
 ## Before writing a new piece, in this order
 
 1. **Does it already exist in the repo?** It is reused. Two implementations of the same thing is
-   the copied rule that later diverges.
+   the copied rule that later diverges. *Search before writing, not after:* `Grep` the module and
+   `shared/` by what the piece does (intent words: `format`, `price`, `validate`), by the names
+   and signatures it would have, and for a snippet of the logic itself. The result goes in the card:
+   `reuses: <file> <symbol>` or `new: <why nothing fits>` under the task, which `plan.mjs` checks.
+   A piece that is close but not equal is extended or parameterised, not copied with a change.
 2. **Does the standard library bring it?** `node:crypto` for a token, `URL` to parse, `Intl` to
    format. Writing it by hand is maintaining what others already maintain.
 3. **Does the platform do it?** `required` and `type="email"` before a JavaScript validation;
    `<details>` before an accordion; a uniqueness constraint in the database before a check in the
    code. **The native comes with accessibility and with edge cases you will not remember to
    write.**
-4. **Does a dependency that is already there cover it?** Adding a new one for one function is
-   adding a tree.
+4. **Is it one of the solved problems above** (persistence, DI, validation, auth, dates, HTTP client,
+   queues)? The stack's library, even if it is a new dependency: it is the product's foundation, not
+   one function. Otherwise, **does a dependency that is already there cover it?** Adding a new one for a
+   small utility (one function) is adding a tree; this step is for those, not for the categories above.
 5. Only then, **the minimum that works.**
 
 *The ladder is Ponytail's, validated by others —10% less cost with the same success rate over 80
@@ -109,8 +228,30 @@ undo than that of underdesigning.
   receiver.
 - **Do not make a generic repository** if a domain repository expresses the intent better.
   `findByTaxId()` says something; `findOne(criteria)` does not.
-- **Do not introduce an abstraction until you have a concrete reason.** Two uses are not a pattern.
+- **Do not introduce an abstraction until you have a concrete reason.** Two uses are not a pattern
+  *of design*: no interface, base class, generic repository or configuration layer for them. That is
+  not permission to copy logic (next section).
 - **Do not turn a CRUD into hexagonal.** If the card is a CRUD, deliver a CRUD.
+- **Do not add a layer, folder or pattern the card does not need today.** «Simplest structure that works» decides; the
+  rest of this file is where things go if they exist.
+
+## Duplicated logic is not a premature abstraction
+
+Two different things. An **abstraction** is a new shape (interface, hierarchy, framework) that guesses
+how the code will vary; waiting for evidence is right. **Duplicated logic** is the same rule written
+twice, and it is already evidence: the two copies diverge, and one bug is fixed in one of them.
+It is extracted as a plain function, with the names of the domain, no new layers:
+
+- **Second use inside a module:** extract it there (its own file, named for the concept).
+- **Second use in another module:** the module that owns the concept exports it through its public
+  index and the other imports it; nothing is copied. **Third use across modules:** it moves to
+  `shared/`, the small kernel, because it no longer belongs to any one of them.
+- **Same shape, different rule** (two validators that look alike but change for different reasons)
+  is not duplication: leave both, and say it in the Log as `declared · K4 · <file> · <why the two must differ>`.
+
+`verify.mjs` runs K4 (`jscpd`, 5 lines or 50 tokens) in every grade: a clone with a side in lines the
+card wrote fails the gate; one already in the repo is only reported. It finds exact copies; a copy
+with renamed variables passes it, which is why the search before writing matters more than the check.
 
 ## How it is reviewed
 
@@ -122,10 +263,15 @@ there is nobody to notice it. The test is ten lines and needs no dependency: it 
 of each layer and fails if they point outward.
 
 ```
-domain/       imports nothing from outside domain/
-application/  does not import from infra/ or interface/
-interface/    does not import from infra/
+modules/<x>/domain/**          imports nothing from outside its own domain/ (and shared/)
+modules/<x>/application/**     does not import from infrastructure/ or interface/
+modules/<x>/interface/**       does not import from infrastructure/
+modules/<x>/**                 imports another module only through modules/<y>/index
 ```
+
+The test runs the three arrows per module (`**/domain/**` inside each `modules/<x>/`), so a new module
+is covered without editing it, and it fails any production file under a top-level `domain/`,
+`application/` or `infrastructure/` folder outside `modules/<x>/` and `shared/`.
 
 Measured: a run complied with the three by discipline and **nothing forced it** — the application
 layer imported the store's concrete class and the views queried the raw data. Both things passed

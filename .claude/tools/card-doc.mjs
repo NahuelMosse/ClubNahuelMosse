@@ -55,6 +55,34 @@ export const plannedTestsOf = (text) => (sectionOf(text, 'Tasks') ?? '').split('
   return [...line.slice(at).matchAll(/([^\s"“;:]+)\s+["“]([^"”]+)["”]/g)].map((m) => ({ task: id, file: m[1].replace(/^`|`$/g, '').replaceAll('\\', '/'), title: m[2] }));
 });
 
+// What each task says about the code that already exists: an indented line under its T line, `reuses: <piece it uses or extends>`
+// or `new: <why nothing in the repo fits>` → [{ id, files, kind: 'reuses'|'new'|null, text }].
+export const reuseOf = (text) => {
+  const tasks = tasksOf(text);
+  const out = [];
+  let current = null;
+  for (const line of (sectionOf(text, 'Tasks') ?? '').split('\n')) {
+    const id = line.match(/^\s*(?:[-*]\s*)?(T\d+)\s*·/)?.[1];
+    if (id) { current = { id, files: tasks.find((t) => t.id === id)?.files ?? [], kind: null, text: '' }; out.push(current); continue; }
+    const m = current && !current.kind && line.match(/^\s+(?:[-*]\s*)?(reuses|new):\s*(.*?)\s*$/i);
+    if (m) { current.kind = m[1].toLowerCase(); current.text = m[2]; }
+  }
+  return out;
+};
+
+// The justification of a new layer or pattern, indented under its T line: `why-layer: <the rule it isolates or the second variant>` → Map(T id → text).
+export const whyLayerOf = (text) => {
+  const out = new Map();
+  let current = null;
+  for (const line of (sectionOf(text, 'Tasks') ?? '').split('\n')) {
+    const id = line.match(/^\s*(?:[-*]\s*)?(T\d+)\s*·/)?.[1];
+    if (id) { current = id; continue; }
+    const m = current && line.match(/^\s+(?:[-*]\s*)?why-layer:\s*(.*?)\s*$/i);
+    if (m) out.set(current, m[1]);
+  }
+  return out;
+};
+
 // The assumptions `## Specs` declares: `<ID>-ASM-NN · <reading> · S<n>`.
 export const asmsOf = (text) => [...new Set((sectionOf(text, 'Specs') ?? '').match(/[A-Z][A-Z0-9]*-\d+[A-Za-z0-9]*-ASM-\d+/g) ?? [])];
 
@@ -71,6 +99,32 @@ const AUTH_PAYMENT = `auth(?:entic${L}*|oriz${L}*|n|z)?|login|log-in|contrase[n�
 const EDGE = (words) => `(?<![\\p{L}\\d])(${words})(?![\\p{L}\\d])`;
 export const RISK_WORDS = new RegExp(EDGE(`${AUTH_PAYMENT}|migraci[oó]n${L}*|migration${L}*|permiso${L}*|permission${L}*|(?:rol|roles|role)(?!\\s*=)`), 'giu');
 export const AUTH_OR_PAYMENT = new RegExp(EDGE(AUTH_PAYMENT), 'iu');
+
+// A `token` is risk only beside an auth word (a design token is not); a payment or secret term after a negation
+// within four words of the same clause («sin servicios pagos», «no paid», «nada de contraseñas») is not risk.
+const TOKEN_WORD = /^token/i;
+const GATED = /^(?:token|pago|payment|password|contrase[nñ]a)/i;
+const AUTH_CONTEXT = /(?<![\p{L}\d])(?:acceso|access|sesi[oó]n|sesiones|session\p{L}*|jwt|api|bearer|refresh|auth\p{L}*|login|log-in|oauth|credencial\p{L}*|credential\p{L}*|password|contrase[nñ]a\p{L}*)(?![\p{L}\d])/iu;
+const NEGATION = /(?<![\p{L}\d])(?:sin|no|ni|nada|without|never|nunca|neither|nor)(?![\p{L}\d])/iu;
+export const riskWordsIn = (text) => {
+  const src = String(text);
+  const out = [];
+  for (const m of src.matchAll(RISK_WORDS)) {
+    const word = m[0];
+    if (GATED.test(word)) {
+      const before = src.slice(0, m.index).split(/[.;:!?\n]/).pop().split(/\s+/).filter(Boolean).slice(-4).join(' ');
+      if (NEGATION.test(before)) continue;
+    }
+    if (TOKEN_WORD.test(word)) {
+      const near = (s) => s.split(/\s+/).filter(Boolean);
+      const before = near(src.slice(0, m.index).split(/[.;\n]/).pop()).slice(-6).join(' ');
+      const after = near(src.slice(m.index + word.length).split(/[.;\n]/)[0]).slice(0, 6).join(' ');
+      if (!AUTH_CONTEXT.test(`${before} ${after}`)) continue;
+    }
+    out.push(word);
+  }
+  return out;
+};
 
 // `L1 · <verbatim requirement>` of `## Log`, the last section: everything after its heading, so a `## ` inside the
 // verbatim text does not cut it. The lines that continue L1 are part of it, up to the next `L<n> ·`.

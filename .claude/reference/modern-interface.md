@@ -24,7 +24,7 @@ spatial continuity → delight**: the typical mistake is to start with delight.
 1. **One thing leads per screen.** Hierarchy by contrast, not only by size: primary text, secondary,
    metadata, actions and states each have a deliberate level. Dimmer navigation, small icons.
 2. **Fewer surfaces.** Not everything is a card: eighteen rounded rectangles separated by gaps look
-   like a generated dashboard. Group by space and alignment; a surface is earned.
+   like a generated dashboard. Group by space and alignment; a surface is earned. Measured on product screens by `product: card in card` and `product: row as card` (`design-round.mjs --kind product`).
 3. **Figure first.** In an indicator, the value on top, the change beside it, the chart below.
 4. **Neutrals of 12 steps with fixed roles and one or two accents**, in OKLCH or LCH (Linear moved
    from HSL to LCH and from 98 theme variables to 3: base, accent, contrast).
@@ -32,11 +32,11 @@ spatial continuity → delight**: the typical mistake is to start with delight.
    inner radius is the outer minus the padding—. Optical alignment: ±1 px when it looks better.
 6. **Few weights (400, 500, 600), negative tracking as size grows, `tabular-nums` on every number.**
 7. **Density is deliberate.** A tool used all day shows more at once than a landing, with enough
-   hierarchy so it is not noise.
+   hierarchy so it is not noise. Measured by `product: content span` (85 % of the width at 1440) and the rows in the first viewport.
 8. **Design states, not components**: a button is rest → hover → focus → pressed → loading →
    success/error → disabled; an input, empty → focus → typing → valid/invalid → saving → saved.
 9. **Gradient, glass and blur only when they say something**: depth, a light source, the navigation
-   layer, focus. Never as wallpaper.
+   layer, focus. Never as wallpaper. Measured by `product: backdrop-filter` and `product: background gradients`: 0 unless `## Look` declares `brand-chrome:`.
 10. **No SaaS kit**: identical cards with the same shadow, uppercase headings with wide tracking,
     the same entrance on everything.
 

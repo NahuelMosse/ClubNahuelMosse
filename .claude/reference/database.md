@@ -172,7 +172,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 ## 6. Security
 
-**DB-SEC-01** — Always use parameterized queries (or the query builder/ORM without interpolation); never concatenate or interpolate input into SQL. · How C+T · criterion S3 · Check: `rg -n -e "(query|execute|raw|sql)\s*\(\s*[\`'\"].*\$\{" -e "f\"(SELECT|INSERT|UPDATE|DELETE)" -e "\+\s*req\.(query|body|params)" src/` and review each line; a test with the payload `' OR '1'='1` over each endpoint with filters; `semgrep --config p/sql-injection` [NV ruleset name] · Source B18, B3.
+**DB-SEC-01** — Always use parameterized queries (or the query builder/ORM without interpolation); never concatenate or interpolate input into SQL. · How C+T · criterion S3 · Check: `rg -n -e "(query|execute|raw|sql)\s*\(\s*[\`'\"].*\$\{" -e "f\"(SELECT|INSERT|UPDATE|DELETE)" -e "\+\s*req\.(query|body|params)" src/` and review each line; a test with the payload `' OR '1'='1` over each endpoint with filters; the kit's Semgrep rule `sdd-db-sec-01-sql-concat` (DB-SEC-01) in `.claude/rules/semgrep/sdd.yml` · Source B18, B3.
 
 **DB-SEC-02** — For what cannot be parameterized (sort column, direction, table), use an allow-list against fixed values. · How T+C · criterion S3 · Check: a test: `?sort=name;DROP` gives 400; `rg -n "ORDER BY \$\{|ORDER BY \" ?\+" src/` · Source B18.
 

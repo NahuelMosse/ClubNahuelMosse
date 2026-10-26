@@ -1,5 +1,5 @@
 {
-  "kit": "6.7.0",
+  "kit": "6.15.0",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
@@ -17,8 +17,8 @@
       "gate": ["probe <state>:", "enter-each", "type-markup", "motion:", "overflow"],
       "files": [
         ".claude/profiles/web.md", ".claude/agents/designer.md", ".claude/agents/design-critic.md",
-        ".claude/reference/design-refs.md", ".claude/reference/excellence.md", ".claude/reference/assets.md", ".claude/reference/responsive-classes.md",
-        ".claude/tools/asset-pipeline.py", ".claude/tools/probe.mjs", ".claude/tools/design-round.mjs", ".claude/tools/motion-curves.mjs", ".claude/tools/motion-audit.mjs",
+        ".claude/reference/design-refs.md", ".claude/reference/excellence.md", ".claude/reference/assets.md", ".claude/reference/3d.md", ".claude/reference/scroll-3d.md", ".claude/reference/responsive-classes.md", ".claude/reference/composition.md", ".claude/reference/cta.md", ".claude/reference/copy.md",".claude/reference/brand.md", ".claude/reference/styles.md", ".claude/reference/color.md",
+        ".claude/tools/asset-pipeline.py", ".claude/tools/bot-wall.mjs", ".claude/tools/probe.mjs", ".claude/tools/design-round.mjs", ".claude/tools/design-checks.mjs", ".claude/tools/copy-lint.mjs", ".claude/tools/copy-lint.json", ".claude/tools/motion-curves.mjs", ".claude/tools/motion-audit.mjs",
         ".claude/tools/overflow.mjs", ".claude/tools/showreel.mjs",
         ".claude/skills/motion/**"
       ],
@@ -84,7 +84,7 @@
     "byGrade": {
       "mvp": {
         "performance-budgets": { "reason": "budgets, load and front vitals are measured once the concept has proven itself", "criteria": ["R9", "O10", "O15", "O22"] },
-        "architecture-depth": { "reason": "layer tests, cycles, static-analysis rules, ADRs and adapters wait for production", "criteria": ["D2", "D3", "D4", "D9", "D11", "D12", "D13", "D14", "D15", "K2", "K3", "K4", "K5", "O16"] },
+        "architecture-depth": { "reason": "layer tests, cycles, static-analysis rules, ADRs and adapters wait for production", "criteria": ["D2", "D3", "D4", "D9", "D11", "D12", "D13", "D14", "D15", "K2", "K3", "K5", "O16"] },
         "reliability-depth": { "reason": "idempotency, typed errors, retries and graceful shutdown wait for production", "criteria": ["E4", "E7", "E9", "E10", "E11", "E12", "E16", "O4", "O9"] },
         "security-depth": { "reason": "the threat model, ASVS rows, dynamic scan, notices and runtime hardening wait for production", "criteria": ["S6", "S7", "S12", "S14", "S15", "S16", "S17", "S18", "S19", "S20", "S21", "S22", "S23", "S24", "P2", "P15"] },
         "data-depth": { "reason": "expand-migrate-contract, retention, keyset pagination and the data model document wait for production", "criteria": ["P4", "P7", "P10", "P11", "P12", "P13", "P14"] },

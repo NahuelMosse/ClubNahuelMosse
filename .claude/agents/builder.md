@@ -17,6 +17,11 @@ path of `specs/<card>/card.md`, your task IDs with their `S#`, and the gate comm
 2. **RED.** The tests the `tests:` of each task plans (one per `S#`), tagged `@<ID>-S<n>` in its title (`@<ID>-S1`); an assumption its `ASM` names is tagged
    `@<ID>-ASM-NN`. Add the attack or edge a task names, no matrices, no case repeated at every layer. Run them: they fail
    for the right reason. **Commit them before any code**: once committed, a guard refuses any edit of them.
+   **Search before writing.** For each task that writes production code, before its first line: `Grep` the task's module and `shared/` for what
+   it needs, by intent words (what the piece does), by the names and signatures it would have, and for a snippet of the logic itself. Fill the task's
+   `reuses: <file> <symbol>` (it uses or extends what exists; a close one is parameterised, never copied with a change) or `new: <why nothing fits>`
+   in `card.md` (a layout line under the T line, like the layers); `plan.mjs` refuses a production task with neither. The same logic twice
+   is extracted at the second use inside a module and imported from its owner across modules (`rules/architecture.md`); K4 fails the gate on a new clone.
 3. **Code**, file by file, against the tests. Validate what comes from outside on the way in; a key of a closed enumeration that
    is missing is an error, not a default; what the interface shows of a member of an enumeration comes from its position, not its name.
 4. **Gate**: `node .claude/tools/verify.mjs` (or the command you were given). Fix until green, or until two laps pass without
@@ -50,6 +55,10 @@ nothing is declared in `specs/<card>/equivalents.md`. Same survivors after two r
 on the Tasks line is a layout of yours, not a decision). SQL and db access live only in `(data)` files; validation and calculations are
 pure functions in a `(rule)` file (no `fetch`, `fs`, `process.env`, `console`, `document`, clock or random); the HTTP handler or the screen
 only calls them. The gate's `layers` line fails otherwise.
+
+**Structure and libraries.** Files go where the plan puts them: one folder per feature (`src/modules/<feature>/`, the stack's equivalent), never a top-level `domain/`, `application/` or `infrastructure/`; another module is imported only through its public index. **The simplest structure that works** (`rules/architecture.md`): no layer folder, interface, factory, strategy, adapter, bus or container the card's `why-layer:` does not justify; no method that only forwards to another with the same arguments. The `overdesign` check of the gate fails them. Persistence, dependency injection, validation, auth, dates, the HTTP client and queues use the library the plan names for each (the repo's own first, else `.claude/stacks/<stack>.md`, «Default libraries by category»): no hand-written SQL mapper, registry or validator. If the plan names none, or you would hand-roll one, stop and report it: it needs an `ASM`.
+
+**Readable files.** One file, one concept; one paradigm per file (a class alone, or related functions, never both); no `utils`/`helpers`/`manager` files; early returns; within the linter's limits (250 lines per file, 40 per function, complexity 10, depth 3, 4 params) or an inline reason. The `shape` check of the gate flags the mix. **Slices:** a new file goes in its feature's folder; another slice is entered by its index; `shared/` imports no slice; no `common/`, `core/` or `utils/` folder (the `boundaries` check).
 
 **Capture rounds are not yours.** A task with a `(presentation)` file under the lens `visual` ends, for you, with its tests green: the `designer` brings the look to the level of `ref:` afterwards, in its own rounds (`rondas.md`, `ref/`). Return saying which presentation files are ready for it.
 

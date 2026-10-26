@@ -5,7 +5,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { basename, join, resolve } from 'node:path';
-import { asmsOf, cardIdOf, plannedTestsOf, rolesOf, sectionOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
+import { asmsOf, cardIdOf, plannedTestsOf, reuseOf, rolesOf, sectionOf, specTagsIn, specsOf, tasksOf, whyLayerOf } from './card-doc.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION } from './card.mjs';
 import { gateLinesOf, hasAttacksLine, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
@@ -18,7 +18,7 @@ export const LOOK_MAX_LINES = 15;
 // `behavior:` (one line per moment) and `tokens:`; short, so that it is read.
 export const lookProblems = (doc, cardDir) => {
   const section = sectionOf(doc, 'Look');
-  if (section === null) return ['no `## Look` section (visual lens): add `ref:`, `behavior:` and `tokens:` (template: .claude/templates/card.md)'];
+  if (section === null) return ['no `## Look` section (visual lens): add `ref:`, `behavior:`, `tokens:` and `copy:` (template: .claude/templates/card.md)'];
   const lines = section.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('<!--'));
   const field = (name) => lines.flatMap((l) => { const m = l.match(new RegExp(`^(?:[-*]\\s*)?${name}:\\s*(.*)$`, 'i')); return m && m[1].trim() ? [m[1].trim()] : []; });
   const out = [];
@@ -28,8 +28,10 @@ export const lookProblems = (doc, cardDir) => {
   for (const r of refs) {
     if (!/^https?:\/\//i.test(r) && !existsSync(join(cardDir, 'ref', basename(r)))) out.push(`## Look ref ${r}: not a URL and not a file in specs/${basename(String(cardDir))}/ref/`);
   }
+  for (const i of field('intent')) if (!['collage', 'statement', 'grid', 'pinned-media'].includes(i.toLowerCase())) out.push(`## Look \`intent: ${i}\` is not one of collage, statement, grid, pinned-media`);
   if (!field('behavior').length) out.push('## Look has no `behavior:` line (load, cursor and hover, entering the view, each action or state of the card)');
-  if (!field('tokens').length) out.push('## Look has no `tokens:` (fonts, palette, spacing and easing, or "the repo\'s: <path>")');
+  if (!field('copy').length) out.push('## Look has no `copy:` (the concrete number of the offer and who speaks, or "no number · <who speaks>"; reference/copy.md)');
+  if (!field('tokens').length) out.push('## Look has no `tokens:` (mood or genre, spacing and easing; fonts and palette only when the brand or the requester gives them; or "the repo\'s: <path>")');
   for (const t of field('tokens')) {
     if (/los del repo|the repo'?s|design system/i.test(t)) continue;
     const names = t.split(/[·;|]/)[0].replace(/^\s*(?:fonts?|fuentes?)\b:?\s*/i, '').split(/[,+/]|\band\b|\by\b/i).map((n) => n.replace(/^["'\s]+|["'\s]+$/g, '').toLowerCase()).filter(Boolean);
@@ -160,6 +162,65 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
   return out;
 };
 
+// Feature first: a production file under a top-level `domain|application|infrastructure` folder (directly under the repo, `src/`, `app/`,
+// `lib/` or a workspace's `src/`) spans every feature; it belongs in `modules/<feature>/<layer>/` or `shared/`.
+export const LAYER_FIRST = /^(?:(?:src|app|lib|apps\/[^/]+(?:\/src)?|packages\/[^/]+(?:\/src)?)\/)?(domain|application|infrastructure)\//;
+const posix = (f) => f.split('\\').join('/').replace(/^\.\//, '');
+export const layerFirstProblems = (doc) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
+  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && LAYER_FIRST.test(posix(f)))
+  .map((f) => { const layer = posix(f).match(LAYER_FIRST)[1]; return `${f}: a top-level \`${layer}/\` folder spans every feature · place it in \`src/modules/<feature>/${layer}/\` (or \`shared/\` for the kernel)`; });
+
+export const GRAB_BAG_NAME = /(^|\/)(utils?|helpers?|managers?|misc|common)(\.[a-z]+)*\.[a-z]+$/i;
+export const grabBagProblems = (doc) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
+  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && GRAB_BAG_NAME.test(posix(f)))
+  .map((f) => `${f}: a grab-bag file name · name the file for the one concept it holds (a use case, an entity, an adapter)`);
+
+// A task that writes production code says what already exists that it uses or extends (`reuses:`), or why nothing fits (`new:`):
+// the plan is where the repo is searched, before the code repeats a piece. A path in `reuses:` must exist, or be a file the card itself writes.
+const NO_REASON = /^(?:n\/?a|none|nothing|-+|tbd|todo)\.?$/i;
+export const reuseProblems = (doc, root) => {
+  const tasks = tasksOf(doc);
+  const own = new Set(tasks.flatMap((t) => t.files));
+  return reuseOf(doc).flatMap((t) => {
+    if (!t.files.some((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f))) return [];
+    if (!t.kind) return [`${t.id}: no \`reuses:\` or \`new:\` line · search the module and \`shared/\` for what this task needs (Grep by intent words, names, signatures), then add under its T line \`  reuses: <file> <symbol it uses or extends>\` or \`  new: <why nothing in the repo fits>\``];
+    if (!t.text || NO_REASON.test(t.text) || (t.kind === 'new' && t.text.split(/\s+/).length < 3))
+      return [`${t.id}: \`${t.kind}:\` says nothing · ${t.kind === 'new' ? 'name what you searched and why it does not fit' : 'name the file and the symbol it uses or extends'}`];
+    if (t.kind === 'new' || !root) return [];
+    return [...t.text.matchAll(/[\w.@-]+(?:\/[\w.@-]+)+\.\w+/g)].map((m) => m[0])
+      .filter((f) => !own.has(f) && !existsSync(join(root, f)))
+      .map((f) => `${t.id}: \`reuses:\` names ${f}, which is not in the repo and no task of the card writes it · name what exists, or use \`new:\``);
+  });
+};
+
+// The simplest structure that works: a task that adds a `domain/` or `application/` folder to a module, or a factory, strategy, adapter,
+// builder, bus, mediator, container, registry, locator or `I<Name>` interface file, says in `why-layer:` which business rule it isolates or
+// which second variant it serves; without it the layer or pattern is dropped. Checked against the repo, so it needs `root`.
+export const NEW_LAYER = /^(.*?(?:^|\/)modules\/[^/]+\/(?:domain|application))\//;
+export const isPatternFile = (file) => {
+  const name = file.split('/').pop();
+  return /(?:^|[-_.])(?:factory|strategy|adapter|builder|bus|mediator|container|registry|locator)(?:[-_.]|$)/i.test(name)
+    || /[a-z0-9](?:Factory|Strategy|Adapter|Builder|Bus|Mediator|Container|Registry|Locator)(?:[-_.]|$)/.test(name)
+    || /^I[A-Z]\w*\.(?:ts|cs|java|dart)$/.test(name) || /\.(?:port|interface)\.[a-z]+$/.test(name);
+};
+export const whyLayerProblems = (doc, root) => {
+  if (!root) return [];
+  const why = whyLayerOf(doc);
+  const inRepo = (path) => (spawnSync('git', ['ls-files', '--', path], { cwd: root, encoding: 'utf8' }).stdout ?? '').trim() !== '';
+  return tasksOf(doc).flatMap((t) => {
+    const files = t.files.map(posix).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f));
+    const layer = files.find((f) => { const dir = f.match(NEW_LAYER)?.[1]; return dir && !inRepo(dir); });
+    const pattern = files.find((f) => isPatternFile(f) && !existsSync(join(root, f)));
+    const found = layer ?? pattern;
+    if (!found) return [];
+    const text = why.get(t.id);
+    const kind = layer ? 'adds a `domain/` or `application/` folder to a module' : 'adds a factory, strategy, adapter, builder, bus, mediator, container, registry or interface file';
+    if (text === undefined) return [`${t.id}: ${found} ${kind} and has no \`why-layer:\` · under its T line write \`  why-layer: <the business rule it isolates, or the second variant it serves>\`, or drop it and keep the code in the module's own files`];
+    if (!text || NO_REASON.test(text) || text.split(/\s+/).length < 3) return [`${t.id}: \`why-layer:\` says nothing · name the business rule the layer isolates or the second variant the pattern serves`];
+    return [];
+  });
+};
+
 // What is missing from the plan, one line each; an empty list is a complete plan.
 export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   const id = cardIdOf(cardDir);
@@ -177,6 +238,10 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   const roles = rolesOf(doc);
   const unmarked = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !roleFor(roles, f));
   for (const f of unmarked) out.push(`${f}: no layer · mark it \`${f} (presentation|rule|data)\` in ## Tasks`);
+  out.push(...layerFirstProblems(doc));
+  out.push(...grabBagProblems(doc));
+  out.push(...reuseProblems(doc, root));
+  out.push(...whyLayerProblems(doc, root));
   if (lenses.includes('visual')) {
     const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'));
     const kind = instruments.probe && instruments.golden ? 'probe` or `golden' : instruments.golden ? 'golden' : 'probe';

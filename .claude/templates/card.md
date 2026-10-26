@@ -19,10 +19,14 @@ Each spec quotes a sentence or criterion of the card verbatim. A test carries it
 ## Tasks
 
 `T<n> · <specs> · <files> · tests: <file> "<title with its tag>"`: one line per group of files; several tests are separated with `;`. Every `S#` and every `ASM-NN` has its planned test in some T line (risk.mjs refuses a plan without it, and does not write risk.json).
-A file carries its layer in parentheses: `(rule)` domain, no I/O (validation and calculations are pure and live here), `(data)` the only place with SQL or db access, `(presentation)` a screen. The gate's `layers` check reads them.
+Paths are feature-first: `src/modules/<feature>/…`, a small `shared/` kernel; `risk.mjs` refuses a file under a top-level `domain/`, `application/` or `infrastructure/`. The simplest structure that works: a CRUD is a controller, a repository and a schema in the module, with no layer folders; a task that adds a `domain/` or `application/` folder, or a factory, strategy, adapter, bus or `I<Name>` interface file, carries `why-layer: <the business rule it isolates, or the second variant it serves>` and `risk.mjs` refuses it without one: otherwise drop it. Where the card adds persistence, dependency injection, validation, auth, a client or a queue, the plan names the library per category (the repo's own, else the stack's default in `.claude/stacks/`); hand-rolling one is an `ASM`. A file carries its layer in parentheses: `(rule)` domain, no I/O (validation and calculations are pure and live here), `(data)` the only place with SQL or db access, `(presentation)` a screen. The gate's `layers` check reads them.
+Every task that writes production code carries, indented under its T line, what it found when it searched the module and `shared/` before writing: `reuses: <file> <symbol it uses or extends>`, or `new: <what you searched and why nothing fits>`; `risk.mjs` refuses it without one of the two.
 
-- T1 · S1 · src/search.mjs (rule), test/search.test.mjs · tests: test/search.test.mjs "search by partial name @GST-208-S1"; test/search.test.mjs "search by prefix @GST-208-ASM-01"
-- T2 · S2 · src/api/customers.mjs, src/db/customers.mjs (data), test/customers.test.mjs · tests: test/customers.test.mjs "results show tax ID and status @GST-208-S2"
+- T1 · S1 · src/modules/customers/domain/search.mjs (rule), test/search.test.mjs · tests: test/search.test.mjs "search by partial name @GST-208-S1"; test/search.test.mjs "search by prefix @GST-208-ASM-01"
+  new: no search over a name exists (Grep search|match|filter in customers and shared/)
+  why-layer: the search normalizes and ranks names, a rule worth testing without the database
+- T2 · S2 · src/modules/customers/interface/customers.mjs, src/modules/customers/infrastructure/customers.mjs (data), test/customers.test.mjs · tests: test/customers.test.mjs "results show tax ID and status @GST-208-S2"
+  reuses: src/shared/format.mjs formatTaxId
 
 ## Changes to existing behavior
 
@@ -32,14 +36,15 @@ A route, screen or file of main that this card changes, one line each, with the 
 
 ## Look
 
-Only with the lens `visual`, 15 lines or fewer; plan.mjs refuses the plan without the three keys. `ref:` is the design the card brings (Figma, a capture) saved in `specs/<card>/ref/`, or a URL; if the card brings none, it comes from the repo's design system or `.claude/reference/design-refs.md` (profile web; a product of that level, never «the simplest» or «the cheapest to undo») and is declared as an `ASM`.
+Only with the lens `visual`, 15 lines or fewer; plan.mjs refuses the plan without the four keys. `ref:` is the design the card brings (Figma, a capture) saved in `specs/<card>/ref/`, or a URL; if the card brings none, it comes from the repo's design system or `.claude/reference/design-refs.md` (profile web; a product of that level, never «the simplest» or «the cheapest to undo») and is declared as an `ASM`. One reference of the same field gives the structure; one or two lateral ones from other fields (`### Lateral` of that gallery) give the trait of excellence. A product screen (a dashboard, a list, a tool) declares `ref-kind: product`: its references are real product UI (`reference/design-refs.md`), the capture refuses a login or marketing page, `design-round --kind` measures it with the `product:` rows, and `brand-chrome: glass, gradient` lists the surfaces the brand itself asks for. A landing also declares `ref-genre: <genre>` (see the gallery) and its `ref:` is of that genre. An optional `intent: collage|statement|grid|pinned-media` says what a section family is on purpose; under it the focal, competing, axes and elements measures of `design-round` are reported, never flagged (`reference/composition.md`). `tokens:` states mood and genre, spacing and easing; it fixes font families or a palette only when the brand or the requester gives them: the designer chooses them after looking at the references, in `## Direction` of `rondas.md`, and departs from the genre's cliché. `copy:` is the concrete number of the offer and who speaks (`reference/copy.md`); template phrases fail the copy lint.
 
 - ref: specs/GST-208/ref/search.png · https://linear.app/issues
 - behavior: load · the rows enter in a 60 ms stagger, once
 - behavior: cursor · a row lifts 2 px on hover; the buttons answer to press and focus
 - behavior: view · the table enters once, on first sight
 - behavior: loading, empty · skeleton with the shape of a row; the empty state offers the action
-- tokens: fonts Fraunces + Instrument Sans · ink #1b1a17, accent #d4552b · spacing 4 8 12 16 24 32 · easing out cubic-bezier(.22,1,.36,1) 200 ms (or: the repo's, in <path>)
+- tokens: mood warm, artisanal · genre drink-food · spacing 4 8 12 16 24 32 · easing out cubic-bezier(.22,1,.36,1) 200 ms (or: the repo's, in <path>)
+- copy: 1,884 events in 13 days · the brand speaks in first person, one quote from a named attendee
 
 ## Gate
 
@@ -51,7 +56,7 @@ The steps of a `probe` can press Enter from each control and type markup: `[{ "e
 ```
 suite: npm test
 lint: npx eslint src test
-mutate src/search.mjs: node --test test/search.test.mjs
+mutate src/modules/customers/domain/search.mjs: node --test test/search.test.mjs
 app: node src/main.mjs
 probe loading: node .claude/tools/app.mjs probe steps/loading.json --axe --contrast "[role=status]" --route "GET /api/customers=hold" --out .validation/probe/loading
 probe empty: node .claude/tools/app.mjs probe steps/empty.json --axe --contrast "[role=status]" --out .validation/probe/empty

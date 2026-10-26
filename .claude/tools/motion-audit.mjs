@@ -33,6 +33,7 @@ import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
+import { wallOf, wallMessage } from './bot-wall.mjs';
 import { tracer, analyzeRecording, stagger, continuity, scrollStory, buildRoles, grammar, compare, primaryMove } from './motion-curves.mjs';
 
 const VISIBLE_PROPS = ['transform', 'opacity', 'background-color', 'background-image', 'color', 'box-shadow', 'border-color', 'outline-style', 'outline-width', 'outline-color', 'text-decoration-color', 'filter', 'scale', 'translate'];
@@ -331,8 +332,10 @@ export const audit = async () => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, deviceScaleFactor: 1 });
   await context.addInitScript(tracer);
   const page = await context.newPage();
-  await page.goto(url, { waitUntil: 'load', timeout: 45000 });
+  const response = await page.goto(url, { waitUntil: 'load', timeout: 45000 });
   await page.waitForTimeout(1500);
+  const wall = await wallOf(page, response, url);
+  if (wall) { await browser.close(); return { error: wallMessage(url, wall) }; }
   // The load trace runs by itself for 4000 ms from the start of the document.
   await page.waitForFunction(() => !window.__mt?.active('load'), null, { timeout: 8000 }).catch(() => {});
   const loadRec = await page.evaluate(() => window.__mt?.end('load') ?? null).catch(() => null);

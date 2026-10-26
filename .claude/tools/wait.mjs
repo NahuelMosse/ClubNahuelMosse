@@ -29,10 +29,17 @@
 // --all      end when EVERY one is done, and print one line for each; a log that matched --fail is exit 1.
 // --max      seconds to wait, at most 570 (10 minutes, one turn); default 570. An agent without a one-hour cache
 //            (no `cacheTtl: 1h` in its frontmatter) waits at most 270: wait.mjs cannot tell, guard-shell enforces it.
+//            A finished agent can leave work running that it launched in the background (nohup, a render writing a log):
+//            then the line is `agent <id> finished after N s, background work still running: <pid cmd>; ...`. It sees live
+//            processes whose command line holds a path or file name from a background command (run_in_background, nohup,
+//            Start-Process, a trailing `&`) in the agent's transcript, `agent-<id>.jsonl`. It cannot see: a remote job or a
+//            container, a process whose command line shares nothing with the command that launched it, and anything the
+//            agent started without the Bash or PowerShell tool. No such line is not proof that nothing runs.
 // Exit 0: --until matched, or the agent(s) finished; 1: --fail matched; 2: --max seconds passed with neither;
 // 3: wrong usage, a log that did not appear or an agent output file empty for 15 s, or an agent with no meta.json.
 // It prints the line that decided, or the last lines of the log when time ran out.
 import { existsSync, openSync, readSync, closeSync, statSync, readFileSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { finalLineOf } from './final-line.mjs';
@@ -93,6 +100,43 @@ const metaOf = (id) => {
   } catch { /* no projects folder: no meta */ }
   return found;
 };
+// Live processes of this machine: [{ pid, cmd }].
+const liveProcesses = () => {
+  try {
+    if (process.platform === 'win32') {
+      const r = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', 'Get-CimInstance Win32_Process | ForEach-Object { "$($_.ProcessId)`t$($_.CommandLine)" }'], { encoding: 'utf8', timeout: 20000 });
+      return (r.stdout || '').split(/\r?\n/).map((l) => l.split('\t')).filter((x) => /^\d+$/.test(x[0]) && x[1]).map(([pid, ...c]) => ({ pid: Number(pid), cmd: c.join(' ').trim() }));
+    }
+    const r = spawnSync('ps', ['-eo', 'pid=,args='], { encoding: 'utf8', timeout: 20000 });
+    return (r.stdout || '').split('\n').map((l) => /^\s*(\d+)\s+(.*)$/.exec(l)).filter(Boolean).map((m) => ({ pid: Number(m[1]), cmd: m[2] }));
+  } catch { return []; }
+};
+const slashed = (s) => s.replaceAll('\\', '/').toLowerCase();
+// Paths and file names inside the commands the agent launched in the background, from its transcript.
+const backgroundNeedles = (metaFile) => {
+  let text = '';
+  try { text = readFileSync(metaFile.replace(/\.meta\.json$/, '.jsonl'), 'utf8'); } catch { return []; }
+  const needles = new Set();
+  for (const line of text.split('\n')) {
+    if (!line.includes('"Bash"') && !line.includes('"PowerShell"')) continue;
+    let entry; try { entry = JSON.parse(line); } catch { continue; }
+    for (const part of Array.isArray(entry?.message?.content) ? entry.message.content : []) {
+      const cmd = part?.input?.command;
+      if (part?.type !== 'tool_use' || typeof cmd !== 'string') continue;
+      if (!(part.input.run_in_background === true || /\bnohup\b|\bstart\s+\/b\b|\bStart-Process\b|\s&\s*(\)|$)/m.test(cmd))) continue;
+      for (const t of slashed(cmd).match(/[\w.:~@%+-]*\/[\w.:~@%+\/-]{3,}|[\w-]{3,}\.(?:py|mjs|js|cjs|sh|ps1|blend|exe|log)\b/g) ?? []) {
+        if (t.length >= 8 && t !== '/dev/null') needles.add(t);
+      }
+    }
+  }
+  return [...needles];
+};
+const backgroundWork = (metaFile) => {
+  const needles = backgroundNeedles(metaFile);
+  if (!needles.length) return [];
+  const mine = new Set([process.pid, process.ppid]);
+  return liveProcesses().filter((p) => !mine.has(p.pid) && needles.some((n) => slashed(p.cmd).includes(n)));
+};
 const finished = (file) => {
   try { return JSON.parse(readFileSync(file, 'utf8')).finished === true; } catch { return false; }
 };
@@ -111,7 +155,15 @@ for (const raw of agents) {
         console.error(`no meta.json for agent ${id} under ${join(home, 'projects')}: the id is not a background subagent of this machine (check the agentId its launch returned)`);
         process.exit(3);
       }
-      return finished(file) ? { code: 0, line: `agent ${id} finished after ${elapsed()} s` } : null;
+      if (!finished(file)) return null;
+      const work = backgroundWork(file);
+      if (!work.length) return { code: 0, line: `agent ${id} finished after ${elapsed()} s` };
+      const brief = (cmd) => {
+        const short = cmd.replace(/^"?[^"]*[\\/]([^\\/"]+)"?(\s|$)/, '$1$2');
+        return short.length > 120 ? `${short.slice(0, 40)}...${short.slice(-75)}` : short;
+      };
+      const shown = work.slice(0, 5).map((p) => `${p.pid} ${brief(p.cmd)}`).join('; ');
+      return { code: 0, line: `agent ${id} finished after ${elapsed()} s, background work still running: ${shown}${work.length > 5 ? `; and ${work.length - 5} more` : ''} (matched by the paths of its background commands; remote jobs, containers and children that share nothing with their launcher are not visible)` };
     },
     over: () => `agent ${id} has not finished`,
   });

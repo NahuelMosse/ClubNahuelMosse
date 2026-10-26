@@ -16,7 +16,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { NOT_PRODUCTION, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
-import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, sectionOf, specTagsIn } from './card-doc.mjs';
+import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, rolesOf, sectionOf, specTagsIn } from './card-doc.mjs';
 import { closingCost } from './card-cost.mjs';
 import { specsCheck } from './gate-checks.mjs';
 import { active } from './kit.mjs';
@@ -37,6 +37,18 @@ const taggedFiles = (root, id, rev = null) => {
   const found = git(root, ['grep', '-l', '-I', '-E', `@(assumption:)?${id}-(S|ASM-)[0-9]+`, ...(rev ? [rev] : []), '--', ':(exclude)specs', ':(exclude).claude']);
   if (found.status !== 0) return [];
   return found.stdout.split('\n').filter(Boolean).map((l) => (rev ? l.slice(rev.length + 1) : l)).filter((f) => TEST_SOURCE.test(f));
+};
+
+// What critique.md says: the lowest score it gives (`polish:`, `motion:`, the number after `→` in `Total:`) and its open blockers
+// (`Blocker: <text>` lines that are not «none» and do not say closed or resolved).
+export const critiqueOf = (text) => {
+  const scores = [
+    ...[...text.matchAll(/^\W*(?:polish|motion)\W*:\s*(\d+(?:[.,]\d+)?)/gim)].map((m) => Number(m[1].replace(',', '.'))),
+    ...[...text.matchAll(/^\W*Total\b[^\n]*?→\s*(\d+(?:[.,]\d+)?)/gim)].map((m) => Number(m[1].replace(',', '.'))),
+  ];
+  const blockers = [...text.matchAll(/^\W*Blockers?\W*:[ \t*_]*(.+)$/gim)].map((m) => m[1].trim())
+    .filter((b) => !/^(?:none|ninguno|ninguna|no|-|—|n\/a)\b/i.test(b) && !/\b(?:closed|resolved|cerrado|resuelto)\b/i.test(b));
+  return { score: scores.length ? Math.min(...scores) : null, blockers };
 };
 
 export const run = (root, { write = true } = {}) => {
@@ -127,7 +139,29 @@ export const run = (root, { write = true } = {}) => {
   // 9. what the diff makes necessary
   try { verdict(9, 'required.mjs', missing(root, { closing: false }) ?? [], 'mutation, linter and scope ran and passed on this code'); } catch (e) { add(9, 'required.mjs', 'could not run', e.message); }
 
-  const result = { cardDir, checks, wrote, closing: null };
+  // 10. the critic of the look, when the card has a critique.md: a score under 7, an open blocker or a critique older than the screen is not a pass
+  if (existsSync(join(cardDir, 'critique.md'))) {
+    const { score, blockers } = critiqueOf(textOf(join(cardDir, 'critique.md')));
+    const bad = [];
+    if (score === null) bad.push(`${rel('critique.md')} gives no score (\`polish: N\`)`);
+    else if (score < 7) bad.push(`score ${score} is under 7`);
+    for (const b of blockers) bad.push(`open blocker: ${b.length > 160 ? `${b.slice(0, 160)}…` : b}`);
+    const at = git(root, ['log', '-1', '--format=%H', '--', rel('critique.md')]).stdout?.trim();
+    const screens = [...rolesOf(doc)].filter(([, role]) => role === 'presentation').map(([f]) => f);
+    let note = '';
+    if (!at) note = ' (critique.md is not committed: its age against the screen is not known)';
+    else if (screens.length) {
+      const after = git(root, ['log', '--format=%h', `${at}..HEAD`, '--', ...screens.map((f) => `:(literal)${f}`)]).stdout?.split('\n').filter(Boolean) ?? [];
+      const dirty = git(root, ['status', '--porcelain', '--', ...screens.map((f) => `:(literal)${f}`)]).stdout?.trim();
+      if (after.length || dirty) bad.push(`the critique is stale: presentation files changed after ${at.slice(0, 9)} (${after.length ? `${after.length} commit${after.length === 1 ? '' : 's'}` : 'uncommitted changes'}); it cannot pass the card on that critique`);
+    }
+    verdict(10, 'critique', bad, `score ${score}, no open blocker, no presentation change after ${at ? at.slice(0, 9) : 'it'}${note}`);
+  } else if (risk?.lenses?.includes('visual') && grade === 'production' && !exempt.without?.has('design-critic')) {
+    // Nothing else launches the critic: a visual card at production without its critique.md is a look nobody judged.
+    add(10, 'critique', 'could not run', `no ${rel('critique.md')}: the design-critic never looked at this screen; launch it with the path of card.md and the URL of the app before the close`);
+  }
+
+  const result = { cardDir, checks, wrote, closing: null, off: [...off].map(([name, o]) => ({ name, reason: o.reason })) };
   if (write) result.closing = writeClosing(root, cardDir, { card, doc, risk, acts, asms, untagged, base, off, grade, manifest, checks });
   return result;
 };
@@ -182,6 +216,8 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
   return parts.join('\n');
 };
 
+const resultLine = (bad) => `Result: ${bad.length ? `not passed — ${bad.map((c) => `${c.label} (${c.state})`).join(', ')}` : 'passed'}`;
+
 const writeClosing = (root, cardDir, ctx) => {
   const path = join(cardDir, 'closing.md');
   const block = blockOf(root, cardDir, ctx);
@@ -191,10 +227,11 @@ const writeClosing = (root, cardDir, ctx) => {
     const from = text.indexOf(BEGIN);
     const to = text.indexOf(END);
     if (from < 0 || to < from) return 'kept';
-    writeFileSync(path, `${text.slice(0, from)}${block}${text.slice(to + END.length)}`);
+    const head = text.slice(0, from).replace(/^Result: .*$/m, resultLine(bad));
+    writeFileSync(path, `${head}${block}${text.slice(to + END.length)}`);
     return 'regenerated';
   }
-  writeFileSync(path, `# ${ctx.card} — closing\n\nResult: ${bad.length ? `not passed — ${bad.map((c) => `${c.label} (${c.state})`).join(', ')}` : 'passed'}\n\n${block}\n`);
+  writeFileSync(path, `# ${ctx.card} — closing\n\n${resultLine(bad)}\n\n${block}\n`);
   return 'written';
 };
 
@@ -206,11 +243,12 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(2);
   }
   for (const c of result.checks) console.log(`${c.n} · ${c.label} · ${c.state}${c.detail ? ` — ${c.detail}` : ''}`);
+  for (const o of result.off) console.log(`module ${o.name} off by decision: ${o.reason}`);
   for (const f of new Set(result.wrote)) console.log(`${f}: line added`);
   const closing = relativeTo(process.cwd(), join(result.cardDir, 'closing.md'));
   if (result.closing === 'kept') console.log(`${closing} exists and has no close.mjs block: not overwritten.`);
   else if (result.closing) console.log(`${closing} ${result.closing}.`);
   const bad = result.checks.filter((c) => !['passed', 'skipped'].includes(c.state));
-  console.log(bad.length ? `Not passed: ${bad.map((c) => `${c.n} ${c.state}`).join(', ')}.` : 'All 9 checks passed.');
+  console.log(bad.length ? `Not passed: ${bad.map((c) => `${c.n} ${c.state}`).join(', ')}.` : `All ${result.checks.length} checks passed.`);
   process.exit(bad.length ? 1 : 0);
 }

@@ -109,7 +109,7 @@ research could not read in the source is marked “unverified”.
 | K1 | Strict-mode types and no compiler or linter suppressions without a written reason | C | mvp | command (stack profile) | SSDF PW.6 |
 | K2 | No new problems from Sonar's quality rules in the diff, tests included | T | production | command (stack profile) | ISO 5055 · study of 302,600 agent commits |
 | K3 | Cognitive complexity of every new function under the rule's threshold | T | production | command (stack profile) | ISO 5055 maintainability |
-| K4 | Duplication in the new code under threshold, measured | T | production | command (stack profile) | GitClear: copy-paste from 8.3% to 12.3% |
+| K4 | Duplication in the new code under threshold, measured | T | poc | command (stack profile) | GitClear: copy-paste from 8.3% to 12.3% |
 | K5 | No dead code: new symbols with no use, unreachable branches | T | production | command (stack profile) | agent symbols removed within 3 days |
 | K6 | Names that say what the thing is in the domain | J | mvp | prose | Google review: naming |
 | K7 | Comments explain why, do not repeat the code or narrate the change | J | mvp | prose | Google review · Ousterhout |
@@ -380,7 +380,7 @@ Criteria required at each grade (cumulative), by area:
 |---|---|---|---|---|
 | R · Requirements and scope | 10 | 7 | 9 | 10 |
 | D · Design | 15 | 2 | 6 | 15 |
-| K · Code | 11 | 0 | 7 | 11 |
+| K · Code | 11 | 1 | 8 | 11 |
 | E · Errors and reliability | 16 | 0 | 8 | 16 |
 | T · Tests | 14 | 4 | 13 | 14 |
 | S · Security | 24 | 1 | 10 | 24 |
@@ -391,7 +391,7 @@ Criteria required at each grade (cumulative), by area:
 | A · Agent failures | 9 | 6 | 8 | 9 |
 | V · Process and evidence | 7 | 5 | 7 | 7 |
 | W · Documentation | 11 | 0 | 5 | 11 |
-| **Total** | **207** | **32** | **115** | **207** |
+| **Total** | **207** | **33** | **116** | **207** |
 
 ## What this list says about the method today
 

@@ -47,9 +47,10 @@ the brand blue (the default accent, #355DF4), indigo or mono.
 | **React Aria** (`@react-aria`) | Apache-2.0 | interactions and accessibility of anything custom: `usePress`, `useHover`, `useFocusRing`, drag and drop, collections |
 | **Magic UI** (`@magicui`) | MIT | effects, animated text, figures, backgrounds, devices |
 | **Aceternity** (`@aceternity`) | MIT core; **Pro items are not used** (magnetic-button, notch, 3d-globe, terminal, gooey-input, the shaders) | showcase backgrounds, cards, scroll storytelling, navigation |
-| **Motion Primitives** (`https://motion-primitives.com/c/<name>.json`) | MIT | motion primitives with continuity: morphing dialog, transition panel, sliding number |
+| **Motion Primitives** (`https://motion-primitives.com/c/<name>.json`) | MIT | motion primitives with continuity: morphing dialog, transition panel, sliding number; text effects (scramble, roll, shimmer) and border or light effects (border-trail, glow) |
 | **Animate UI** (`@animate-ui`) | MIT + Commons Clause: use it in projects, never resell the components as such | animated Radix/Base/Headless primitives, animated tabs, avatar group, animated icons |
 | **Kokonut UI** (`@kokonutui`) | MIT (the free components; `kokonutui.pro` templates are paid) | liquid glass, spotlight cards, smooth tabs and drawer, text effects |
+| **Watermelon UI** (`ui.watermelon.sh`, repos `WatermelonCorp/watermelon-platform` and `watermellon-registry`) | MIT (repo `LICENSE` read 2026-10-25; the provenance of each contributed component is not guaranteed) | a large catalog of blocks and animated components; a component is ported only after its file and credit are read, never those that imitate a brand UI (`family-*`, `aave-*`) |
 
 ## The register of each row
 

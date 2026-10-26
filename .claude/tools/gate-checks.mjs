@@ -6,8 +6,15 @@ import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf } from './card-doc.mjs';
 import { IS_CODE, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
+import { overdesignFindings } from './overdesign.mjs';
 import { profileStates } from './kit.mjs';
 import { SCREEN_MARKUP } from './signals.mjs';
+import { sectionOf } from './card-doc.mjs';
+
+// bot-wall.mjs and copy-lint.mjs come with the web profile: the base alone installs without them, and their checks only run on visual cards.
+const optional = async (file) => { try { return await import(file); } catch { return null; } };
+const botWall = await optional('./bot-wall.mjs');
+const copyLint = await optional('./copy-lint.mjs');
 
 
 const ok = (name, detail = '') => ({ name, state: 'passed', detail });
@@ -124,6 +131,61 @@ export const roundsCheck = (cardDir) => {
   return [problems.length ? failed('rounds', `visual rounds: ${problems.join('; ')}`) : ok('rounds', `${blocks.length} rounds, the reference in ref/ and the captures of ${last} are there`)];
 };
 
+// `ref-genre: <genre>` in `## Look` declares the field of the reference. `ref/` then holds its captures, named
+// `<genre>-<site>-<width>-<NN>.png`, 8 or more per width (390 and 1440), none a bot wall or an error page: the capture tool writes
+// `ref/captures.json` (`[{ "file", "status", "title", "text" }]`) and bot-wall.mjs reads each entry. No declaration, no check.
+export const REF_FRAMES = 8;
+export const REF_WIDTHS = [390, 1440];
+export const refGenreOf = (doc) => sectionOf(doc, 'Look')?.match(/^\s*(?:[-*]\s*)?ref-genre:\s*(\S.*)$/im)?.[1].trim() ?? null;
+export const refGenreCheck = (cardDir) => {
+  if (!lensesOf(cardDir).includes('visual')) return [];
+  const genre = refGenreOf(readCard(cardDir) ?? '');
+  if (!genre) return [];
+  const slug = genre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const dir = join(cardDir, 'ref');
+  const files = existsSync(dir) ? readdirSync(dir).filter((f) => f.startsWith(`${slug}-`) && IMAGE.test(f)) : [];
+  const per = (w) => files.filter((f) => new RegExp(`-${w}-\\d+\\.\\w+$`).test(f)).length;
+  const short = REF_WIDTHS.filter((w) => per(w) < REF_FRAMES).map((w) => `${w} px has ${per(w)} captures of ${genre} (${REF_FRAMES} at least, named ${slug}-<site>-${w}-<NN>.png)`);
+  if (short.length) return [failed('ref', short.join('; '))];
+  let manifest = null;
+  try { manifest = JSON.parse(readFileSync(join(dir, 'captures.json'), 'utf8')); } catch { /* absent */ }
+  if (!Array.isArray(manifest)) return [couldNot('ref', `${files.length} captures of ${genre}, but ref/captures.json is missing: no way to tell a bot wall or an error page`)];
+  if (!botWall) return [couldNot('ref', 'bot-wall.mjs is not installed (web profile off): no way to tell a bot wall or an error page')];
+  const walls = manifest.flatMap((c) => { const why = botWall.reasonOf({ status: Number(c.status ?? 0), title: String(c.title ?? ''), text: String(c.text ?? ''), html: '' }); return why ? [`${c.file}: ${why}`] : []; });
+  const unlisted = files.filter((f) => !manifest.some((c) => c.file === f));
+  if (walls.length) return [failed('ref', `bot wall or error page in ref/: ${walls.slice(0, 5).join('; ')}`)];
+  if (unlisted.length) return [couldNot('ref', `${unlisted.length} captures not in ref/captures.json (${unlisted.slice(0, 3).join(', ')}): not checked for a bot wall`)];
+  return [ok('ref', `${files.length} captures of ${genre}, ${REF_FRAMES}+ at each of ${REF_WIDTHS.join(' and ')} px, none a bot wall`)];
+};
+
+// What design-round.mjs measured (`specs/<card>/rondas/r<k>/round.json`, the last round): the dead-click sweep fails on one
+// dead control, the copy lint on any finding. No round.json is a check that could not run, never a pass.
+export const lastRound = (cardDir) => {
+  const dir = join(cardDir, 'rondas');
+  const folders = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && /^r\d+$/.test(e.name)).map((e) => e.name).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))) : [];
+  try { return folders.length ? { name: folders.at(-1), round: JSON.parse(readFileSync(join(dir, folders.at(-1), 'round.json'), 'utf8')) } : null; } catch { return null; }
+};
+export const designRoundChecks = (cardDir) => {
+  if (!lensesOf(cardDir).includes('visual')) return [];
+  const last = lastRound(cardDir);
+  const none = 'no rondas/r<k>/round.json: run `node .claude/tools/design-round.mjs <url> --out specs/<card>/rondas/r<k>`';
+  if (!last) return [couldNot('dead-clicks', none), couldNot('copy', none)];
+  const out = [];
+  const sweeps = Object.entries(last.round.widths ?? {}).filter(([, w]) => w.sweep);
+  if (!sweeps.length) out.push(couldNot('dead-clicks', `${last.name}/round.json has no sweep (widths 390 touch and 1440)`));
+  else {
+    const dead = sweeps.flatMap(([key, w]) => w.sweep.dead.map((d) => `${d.selector} (${key}, ${d.reason}, ${d.capture})`));
+    out.push(dead.length ? failed('dead-clicks', `${dead.length} dead controls: ${dead.slice(0, 5).join('; ')}`) : ok('dead-clicks', `${sweeps.map(([key, w]) => `${key}: ${w.sweep.checked}`).join(', ')} controls, each with an effect`));
+  }
+  if (!last.round.copy) out.push(couldNot('copy', `${last.name}/round.json has no copy`));
+  else if (!copyLint) out.push(couldNot('copy', 'copy-lint.mjs is not installed (web profile off)'));
+  else {
+    const found = copyLint.lintCopy(last.round.copy);
+    out.push(found.length ? failed('copy', found.slice(0, 5).map((c) => `${c.rule}: ${c.detail}`).join('; ')) : ok('copy', 'copy lint: 0 findings'));
+  }
+  return out;
+};
+
 // The layers: a `rule` file (domain) does no I/O, SQL lives only in `data` files, a `presentation` file has no db access.
 // The roles come from `## Tasks` (`src/db.mjs (data)`); the files looked at are the card's production files in the diff.
 const NO_IO = [
@@ -166,6 +228,73 @@ export const layersCheck = (root, cardDir) => {
   return found.length ? failed('layers', found.slice(0, 5).join('; ')) : ok('layers', `${files.length} production files, the layers hold`);
 };
 
+// Readability: a file is one concept. A production file that has a top-level class and a top-level function, more than one class, or
+// a name of a grab-bag (utils, helpers, manager, misc, common) fails; `kit-shape: <reason>` anywhere in the file declares it.
+const GRAB_BAG = /(^|\/)(utils?|helpers?|managers?|misc|common)(\.[a-z]+)*\.[a-z]+$/i;
+const TOP_CLASS = /^(?:export\s+)?(?:default\s+)?(?:abstract\s+)?class\s+\w+/;
+const TOP_FN = /^(?:export\s+)?(?:default\s+)?(?:async\s+)?function\b|^export\s+const\s+\w+\s*=\s*(?:async\s*)?(?:\([^)]*\)|\w+)\s*(?::[^=]+)?=>|^(?:async\s+)?def\s+\w+/;
+export const shapeProblems = (file, text) => {
+  if (/kit-shape:\s*\S/.test(text)) return [];
+  const lines = blankComments(text).split('\n');
+  const classes = lines.filter((l) => TOP_CLASS.test(l)).length;
+  const fns = lines.filter((l) => TOP_FN.test(l)).length;
+  const out = [];
+  if (GRAB_BAG.test(file)) out.push(`${file}: a grab-bag file name (utils, helpers, manager, misc, common) · name the file for the one concept it holds`);
+  if (classes && fns) out.push(`${file}: a class and ${fns} top-level function(s) in one file · the class alone, the functions in their own module file`);
+  if (classes > 1) out.push(`${file}: ${classes} classes in one file · one class per file`);
+  return out;
+};
+export const shapeCheck = (root, cardDir) => {
+  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
+  const found = files.flatMap((f) => { try { return shapeProblems(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
+  return found.length ? failed('shape', found.slice(0, 5).join('; ')) : ok('shape', `${files.length} production files, one concept each`);
+};
+
+// Boundaries between slices (rules/architecture.md, "Module boundaries"): `shared/` imports no slice, a slice enters another
+// only by its public index, a slice's index lists what it exports (no `export *`), and no folder is a grab-bag. It reads only
+// the card's files, so what the repo already had is not this card's failure. `kit-boundary: <reason>` in the file declares it.
+const SLICE = /(?:^|\/)(modules|features)\/([^/]+)(?:\/(.*))?$/;
+const IN_SHARED = /(?:^|\/)shared\//;
+const GRAB_DIR = /(?:^|\/)(common|core|utils?|helpers?|misc|managers?)\//i;
+const SPECIFIERS = /\bfrom\s*['"]([^'"]+)['"]|\bimport\s*\(\s*['"]([^'"]+)['"]\s*\)|\brequire\s*\(\s*['"]([^'"]+)['"]\s*\)|^\s*import\s+['"]([^'"]+)['"]/gm;
+const resolveSpecifier = (file, spec) => {
+  if (!spec.startsWith('.')) return spec;
+  const parts = file.split('/').slice(0, -1);
+  for (const p of spec.split('/')) { if (p === '..') parts.pop(); else if (p !== '.') parts.push(p); }
+  return parts.join('/');
+};
+const isIndex = (rest) => !rest || /^index(\.[a-z]+)?$/i.test(rest);
+export const boundaryProblems = (file, text) => {
+  if (/kit-boundary:\s*\S/.test(text)) return [];
+  const code = blankComments(text);
+  const out = [];
+  const own = file.match(SLICE);
+  const grab = file.match(GRAB_DIR);
+  if (grab) out.push(`${file}: a grab-bag folder (${grab[1]}/) · name the folder for the concept it holds (shared/money/, shared/errors/)`);
+  if (own && isIndex(own[3]) && /^\s*export\s*\*\s*from\b/m.test(code)) out.push(`${file}: \`export *\` in a slice's public index · list what is public by name`);
+  for (const m of code.matchAll(SPECIFIERS)) {
+    const target = resolveSpecifier(file, m[1] ?? m[2] ?? m[3] ?? m[4]).match(SLICE);
+    if (!target) continue;
+    if (IN_SHARED.test(file) && !own) out.push(`${file}: shared/ imports the slice ${target[2]} · shared knows no slice; move the piece into it or pass it as a parameter`);
+    else if (own && own[2] !== target[2] && !isIndex(target[3])) out.push(`${file}: reaches inside the slice ${target[2]} (${target[3]}) · import its public index`);
+  }
+  return [...new Set(out)];
+};
+export const boundariesCheck = (root, cardDir) => {
+  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
+  const found = files.flatMap((f) => { try { return boundaryProblems(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
+  return found.length ? failed('boundaries', found.slice(0, 5).join('; ')) : ok('boundaries', `${files.length} production files, each slice entered by its index`);
+};
+
+// Overdesign (overdesign.mjs): a pass-through method, an interface with one implementation, a folder with one tiny file or an empty layer
+// folder fails when the card added it; the same already in the repo is a note, printed by verify.mjs.
+export const overdesignCheck = (root, cardDir) => {
+  let found;
+  try { found = overdesignFindings(root, cardDir); } catch (e) { return couldNot('overdesign', e.message); }
+  const result = found.blocking.length ? failed('overdesign', found.blocking.slice(0, 5).join('; ')) : ok('overdesign');
+  return { ...result, notes: found.notes.map((n) => `note: overdesign · already in the repo, not from this card: ${n}`) };
+};
+
 // A fresh migration with more than one statement runs inside a transaction: `BEGIN`/`COMMIT` in the file, or a runner in
 // the card's production code that wraps each migration in one.
 const statementsIn = (sql) => sql.replace(/--[^\n]*|\/\*[\s\S]*?\*\//g, '').split(';').filter((s) => s.trim()).length;
@@ -198,7 +327,7 @@ export const noVisualCheck = (root, cardDir) => {
 };
 
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...(root ? [layersCheck(root, cardDir), migrationsCheck(root, cardDir), ...noVisualCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...noVisualCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 
