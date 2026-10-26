@@ -61,3 +61,4 @@ captures-main: git diff --quiet 0ea8e52 -- apps/mobile/test/capturas
 - L6 · 2026-10-26 · declared · ARQ-03-ASM-02 · «cerrado» nombra la salida de `atenderErrorDeRed`, que la card deja como está; no hay comportamiento nuevo que probar
 - L7 · 2026-10-26 · declared · ARQ-03-ASM-07 · «Jueves», «Jue 12 de noviembre» y «SÁB» los comprueba el cuerpo del test de días y meses de limpieza_plan_test.dart, y las capturas los fijan en cada pantalla
 - L8 · 2026-10-26 · declared · ARQ-03-ASM-08 · 100, 44, 20 y 36 los comprueba el cuerpo del test del registro exitoso de limpieza_plan_test.dart, y las capturas registro/exitoso_* los fijan en píxeles
+- L9 · 2026-10-26 · declared · S3 · los textos entre comillas que risk.mjs cuenta como miembros son de los supuestos, no de S3; S3 recorre cada pantalla_*.dart en un test y cada captura en la compuerta
