@@ -62,10 +62,7 @@ not_read:
 
 ## Look
 
-- ref: specs/SIM-01-sin-sobreingenieria/ref/app-actual.png
-- behavior: none · se sacan el aviso «despertando» y la pantalla de error de arranque; el resto de las pantallas se ve igual
-- tokens: los de la app, en apps/mobile/lib/tema/tokens.dart
-- copy: los textos actuales de la app
+- remove-only: el aviso «despertando», la pantalla de error de arranque y el «cargar más» del historial; el resto de las pantallas se ve igual
 
 ## Gate
 
@@ -121,3 +118,4 @@ mutate apps/api/migraciones/versions/0009_avisos_sin_reintentos.py: sh D:/Temp/w
 - L34 · 2026-10-26 · T6 · suite API (arq01-pytest): 8 failed, 616 passed, 1 skipped antes de borrar test_datos_plan_reemplazo; quedan 7, de las categorías de ARQ-02 L23 (401 sin usuario con /health público x2, README de la app, test_suite_confiable x3, test_capas type: ignore); tests de documentación pasan; sim01-lint.sh verde (ruff, mypy, flutter analyze)
 - L35 · 2026-10-26 · T9 · interfaz/cuerpo.py (middleware ASGI, 413 por Content-Length o al pasar 1 MB, 408 a los 5 s) cableado en main.py; FastAPI vuelve 400 toda excepción al leer el cuerpo, así que responde él mismo y le da `http.disconnect` a la app; pytest test_cuerpo_acotado.py: 2 passed
 - L36 · 2026-10-26 · gate · `lint:` nombra lo que cubre; tres `mutate` nuevos (aplicacion/notificaciones.py, infraestructura/notificaciones.py, migración 0009) con tests unitarios/de integración rápidos; Protocols de aplicacion/notificaciones.py y reservas.py movidos a almacen_de_avisos.py y almacen_de_reservas.py (shape), sin cambio de comportamiento; pyproject: E501 exento para test_cuerpo_acotado.py
+- L37 · 2026-10-26 · kit updated 40001f0ea5f273b38d96671595c03b9ca0ef3998 → 00b3863935752ff3c3793e6e9a2105d85c3f8f6d · SIM-01 necesita el perfil flutter y remove-only para verificar la parte de la app

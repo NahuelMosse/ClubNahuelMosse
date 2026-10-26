@@ -3,12 +3,12 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf } from './card-doc.mjs';
+import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
 import { IS_CODE, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { overdesignFindings } from './overdesign.mjs';
 import { profileStates } from './kit.mjs';
-import { SCREEN_MARKUP } from './signals.mjs';
+import { IS_SCREEN, SCREEN_MARKUP } from './signals.mjs';
 import { sectionOf } from './card-doc.mjs';
 
 // bot-wall.mjs and copy-lint.mjs come with the web profile: the base alone installs without them, and their checks only run on visual cards.
@@ -57,13 +57,32 @@ export const gateLinesOf = (doc) => (gateBlock(doc) ?? '').split('\n').map((l) =
 // plan (risk.mjs, before the code) and the gate (after it).
 export const statesNamed = (doc) => [...new Set(specsOf(doc).flatMap((s) => (s.text.match(/\bstates?:\s*([^·]+)/i)?.[1] ?? '').split(/[,;]/).map((x) => x.trim()).filter(Boolean)))];
 // The instrument of the visual lens depends on the profiles that are on: `probe` for web (the browser probe), `golden` for flutter
-// (`kitGolden` in test/kit). Both when both profiles are on; with no kit.json to say, `probe`, as it always was.
-export const visualInstruments = (root) => {
+// (`kitGolden` in test/kit). Both when both profiles are on; with no kit.json to say, `probe`, as it always was. Given the card,
+// one whose task files have Dart and no web screen is a Flutter screen even with web on: goldens and kitA11y, no browser.
+export const visualInstruments = (root, doc = null) => {
   let states = {};
   try { states = root ? profileStates(root) : {}; } catch { states = {}; }
   const flutter = states.flutter?.state === 'on';
   const web = states.web?.state === 'on';
+  const files = doc ? tasksOf(doc).flatMap((t) => t.files) : [];
+  if (flutter && web && files.some((f) => f.endsWith('.dart')) && !files.some((f) => IS_SCREEN.test(f))) return { probe: false, golden: true };
   return { probe: web || !flutter, golden: flutter };
+};
+
+// `remove-only: <what goes>` in `## Look`: the card only takes something off a screen (a notice, an error screen). There is no new
+// look to bring to a reference, so no `ref:`, no design rounds and no round.json; the states, a11y and screen checks still run on
+// what remains. This check holds it against the diff: the card's presentation files lose more lines than they gain.
+export const removeOnlyOf = (doc) => sectionOf(doc ?? '', 'Look')?.match(/^\s*(?:[-*]\s*)?remove-only:\s*(\S.*)$/im)?.[1].trim() ?? null;
+export const removeOnlyCheck = (root, cardDir) => {
+  const doc = readCard(cardDir) ?? '';
+  if (!removeOnlyOf(doc)) return [];
+  const roles = rolesOf(doc);
+  const files = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => roleFor(roles, f) === 'presentation' || IS_SCREEN.test(f) || f.endsWith('.dart'));
+  if (!files.length) return [failed('remove-only', 'no presentation file in ## Tasks to take something off')];
+  const diff = spawnSync('git', ['diff', '--numstat', `${cardStart(root, cardDir)}..HEAD`, '--', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  if (diff.status !== 0) return [couldNot('remove-only', `git diff failed: ${(diff.stderr ?? '').trim().split('\n')[0]}`)];
+  const [added, removed] = diff.stdout.split('\n').filter(Boolean).reduce(([a, r], l) => { const [x, y] = l.split('\t'); return [a + (Number(x) || 0), r + (Number(y) || 0)]; }, [0, 0]);
+  return [removed > added ? ok('remove-only', `the presentation files lose ${removed} lines and gain ${added}`) : failed('remove-only', `the presentation files gain ${added} lines and lose ${removed}: the card adds look, so it needs ## Look with ref: and the rounds`)];
 };
 const instrumentList = (instruments) => [...(instruments.probe ? ['probe'] : []), ...(instruments.golden ? ['golden'] : [])];
 export const statesLacking = (doc, instruments = { probe: true, golden: false }) => {
@@ -76,7 +95,7 @@ export const statesCheck = (cardDir, root) => {
   const doc = readCard(cardDir) ?? '';
   const named = statesNamed(doc);
   if (!named.length) return [];
-  const instruments = visualInstruments(root);
+  const instruments = visualInstruments(root, doc);
   const lacking = statesLacking(doc, instruments);
   const kind = instrumentList(instruments).join(' or ');
   const hints = [
@@ -109,7 +128,7 @@ export const atLevelEvidence = (line) => {
   return Boolean(m) && /\bref\/\S+\.(?:png|jpe?g|webp)/i.test(m[1]) && ASPECTS.filter((a) => a.test(m[1])).length >= 3;
 };
 export const roundsCheck = (cardDir) => {
-  if (!lensesOf(cardDir).includes('visual')) return [];
+  if (!lensesOf(cardDir).includes('visual') || removeOnlyOf(readCard(cardDir))) return [];
   const dir = join(cardDir, 'rondas');
   const folders = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && /^r\d+$/.test(e.name)).map((e) => e.name).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))) : [];
   const last = folders.at(-1);
@@ -165,8 +184,10 @@ export const lastRound = (cardDir) => {
   const folders = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && /^r\d+$/.test(e.name)).map((e) => e.name).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))) : [];
   try { return folders.length ? { name: folders.at(-1), round: JSON.parse(readFileSync(join(dir, folders.at(-1), 'round.json'), 'utf8')) } : null; } catch { return null; }
 };
-export const designRoundChecks = (cardDir) => {
-  if (!lensesOf(cardDir).includes('visual')) return [];
+// The sweep and the copy lint read a page in a browser: a Flutter screen or a remove-only card has no round.json.
+export const designRoundChecks = (cardDir, root) => {
+  const doc = readCard(cardDir);
+  if (!lensesOf(cardDir).includes('visual') || removeOnlyOf(doc) || !visualInstruments(root, doc).probe) return [];
   const last = lastRound(cardDir);
   const none = 'no rondas/r<k>/round.json: run `node .claude/tools/design-round.mjs <url> --out specs/<card>/rondas/r<k>`';
   if (!last) return [couldNot('dead-clicks', none), couldNot('copy', none)];
@@ -327,7 +348,7 @@ export const noVisualCheck = (root, cardDir) => {
 };
 
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...noVisualCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 

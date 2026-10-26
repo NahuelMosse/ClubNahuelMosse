@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "3f98f61e8f5d0b1c42b6e904bff129b4dc1580f0546cd727573bf9be939b84f7"
+    "sha256": "d1517e126882fb489539f6fdd98719d667cdbf25e0c5c1dfae55932a4869f9b3"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "78431819e315ac8cbbb7296acea6c5c88bd15a54ff0941f4494fbfe5a6928913"
+    "sha256": "675236901aef8ed89a99aef815cd7068f83a9650547cf26da6924599ecbf45e6"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1461,7 +1461,7 @@
   },
   ".claude/templates/card.md": {
     "module": "core",
-    "sha256": "583294d3511fdfd1420def495799dfebbd4fdcae8807b39624f2797394606ae5"
+    "sha256": "57bb7643b74f4d771265274fdd3275f45fd6ed5697251e0c4f7bd40d9dceac96"
   },
   ".claude/templates/components/motion/test-results/.last-run.json": {
     "module": "ui",
@@ -1481,7 +1481,7 @@
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "780dcc85aae3b0bbcc7a98ca1738e665f564c3214cd7e0e35beb436285578daf"
+    "sha256": "447e30071f0af39c307073def0d8d7fbe07bbb438e059c90c9db4fa111e5e4dd"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1493,7 +1493,7 @@
   },
   ".claude/tools/plan.mjs": {
     "module": "core",
-    "sha256": "9c26898bf5a9756d6630b738cecd9ff79e07682ee6920ad680b89985a2ad3692"
+    "sha256": "021daa023045e43a166008bed5c1f41447956e8c67aa1764fc78bc3584ea3b3b"
   },
   ".claude/tools/risk.mjs": {
     "module": "core",
