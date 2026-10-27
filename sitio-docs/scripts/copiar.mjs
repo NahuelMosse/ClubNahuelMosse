@@ -22,6 +22,7 @@ const todas = [
   ['docs/technical/system-design.md', 'tecnica/system-design.md', 5],
   ['docs/technical/runbook.md', 'tecnica/runbook.md', 6],
   ['docs/technical/infra-cost.md', 'tecnica/infra-cost.md', 7],
+  ['docs/technical/integraciones.md', 'tecnica/integraciones.md', 8],
   ['apps/api/README.md', 'guias/api.md', 1],
   ['apps/mobile/README.md', 'guias/app.md', 2],
   ['docs/adr/0001-stack.md', 'decisiones/0001-stack.md', 1],
