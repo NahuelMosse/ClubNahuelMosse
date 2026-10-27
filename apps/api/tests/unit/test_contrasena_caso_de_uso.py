@@ -3,19 +3,20 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.sesion.perfil import Perfil
-from app.modules.usuarios.contrasena import NO_COINCIDE, cambiar_contrasena
+from app.modules.session.profile import Profile
+from app.modules.users.password import DOES_NOT_MATCH as NO_COINCIDE
+from app.modules.users.password import change_password as cambiar_contrasena
 from app.shared.errors import InvalidData
 
-PERFIL = Perfil(
+PERFIL = Profile(
     id=UUID(int=7),
     uid="u7",
-    nombre="Lucía",
-    apellido="Gómez",
-    correo="lucia@correo.com",
-    rol="usuario",
+    first_name="Lucía",
+    last_name="Gómez",
+    email="lucia@correo.com",
+    role="usuario",
     dni="30111222",
-    fecha_nacimiento=date(1998, 11, 2),
+    birth_date=date(1998, 11, 2),
 )
 
 
@@ -25,7 +26,7 @@ class Identidad:
         self.cambios: list[tuple[str, str]] = []
 
     def password_matches(self, email: str, password: str) -> bool:
-        return email == PERFIL.correo and password == self.contrasena
+        return email == PERFIL.email and password == self.contrasena
 
     def change_password(self, uid: str, new_password: str) -> None:
         self.cambios.append((uid, new_password))
@@ -35,7 +36,7 @@ class Rastro:
     def __init__(self) -> None:
         self.marcados: list[UUID] = []
 
-    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
+    def mark_password_changed(self, id_usuario: UUID) -> None:
         self.marcados.append(id_usuario)
 
 
@@ -79,7 +80,7 @@ def test_una_nueva_igual_a_la_actual_se_acepta() -> None:
 
 
 class RastroQueFalla:
-    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
+    def mark_password_changed(self, id_usuario: UUID) -> None:
         raise RuntimeError("la base no contesta")
 
 

@@ -1,10 +1,10 @@
 import pytest
 
-from app.modules.recuperacion import correo
-from app.modules.recuperacion.casos_de_uso import Mensaje
+from app.modules.password_recovery import email as correo
+from app.modules.password_recovery.rules import Message as Mensaje
 from app.shared.config import config
 
-MENSAJE = Mensaje(para="lucia@correo.com", asunto="Asunto", cuerpo="Cuerpo")
+MENSAJE = Mensaje(recipient="lucia@correo.com", subject="Asunto", body="Cuerpo")
 
 
 def test_sin_servidor_configurado_el_correo_no_sale_y_queda_en_el_log(
@@ -12,7 +12,7 @@ def test_sin_servidor_configurado_el_correo_no_sale_y_queda_en_el_log(
 ) -> None:
     monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "")
-    correo.enviar(MENSAJE)
+    correo.send(MENSAJE)
     assert "no se pudo enviar el correo" in caplog.text
     assert "RuntimeError" in caplog.text
 

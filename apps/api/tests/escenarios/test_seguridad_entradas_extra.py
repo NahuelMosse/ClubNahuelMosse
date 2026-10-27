@@ -10,9 +10,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.recuperacion.casos_de_uso import Mensaje
+from app.modules.password_recovery.rules import Message as Mensaje
 from app.shared.config import config
-from app.modules.recuperacion import correo
+from app.modules.password_recovery import email as correo
 
 RAIZ_REPO = Path(__file__).resolve().parents[4]
 CONTRASENA = "ClubNahuel1"
@@ -107,7 +107,7 @@ def test_un_fallo_de_tls_del_correo_no_deja_la_direccion_en_el_log(
     monkeypatch.setattr(config, "email_sender", "club@ejemplo.com")
 
     with caplog.at_level(logging.DEBUG):
-        correo.enviar(Mensaje(para="ana.rios@ejemplo.com", asunto="Tu enlace", cuerpo="Hola"))
+        correo.send(Mensaje(recipient="ana.rios@ejemplo.com", subject="Tu enlace", body="Hola"))
 
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text

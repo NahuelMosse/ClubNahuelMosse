@@ -12,30 +12,32 @@ MODULOS = APP / "modules"
 SHARED = APP / "shared"
 
 CON_CUATRO = {"rutas", "casos_de_uso", "reglas", "repositorio"}
+CON_CUATRO_EN_INGLES = {"routes", "use_cases", "rules", "repository"}
 ARCHIVOS_DE_CADA_UNA = {
-    "sedes": CON_CUATRO,
+    "venues": CON_CUATRO_EN_INGLES,
     "espacios": CON_CUATRO,
     "horarios": CON_CUATRO,
     "reservas": CON_CUATRO,
     "notificaciones": CON_CUATRO,
-    "recuperacion": CON_CUATRO,
-    "usuarios": {
-        "rutas_cuenta",
-        "rutas_registro",
-        "registro",
-        "perfil",
-        "contrasena",
-        "baja",
-        "administradores",
-        "reglas",
-        "repositorio",
+    "password_recovery": CON_CUATRO_EN_INGLES,
+    "users": {
+        "account_routes",
+        "registration_routes",
+        "registration",
+        "profile",
+        "password",
+        "deactivation",
+        "admins",
+        "rules",
+        "repository",
     },
-    "sesion": {"perfil", "casos_de_uso", "usuario_actual", "repositorio"},
+    "session": {"profile", "use_cases", "current_user", "repository"},
 }
 FUNCIONALIDADES = set(ARCHIVOS_DE_CADA_UNA)
 CASOS_DE_USO = [
-    *(f"{f}/casos_de_uso.py" for f in sorted(FUNCIONALIDADES - {"usuarios"})),
-    *(f"usuarios/{c}.py" for c in ("registro", "perfil", "contrasena", "baja", "administradores")),
+    *(f"{f}/casos_de_uso.py" for f in ("espacios", "horarios", "reservas", "notificaciones")),
+    *(f"{f}/use_cases.py" for f in ("venues", "password_recovery", "session")),
+    *(f"users/{c}.py" for c in ("registration", "profile", "password", "deactivation", "admins")),
 ]
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
 BASE_DE_DATOS_Y_WEB = ("sqlalchemy", "fastapi", "psycopg")
@@ -45,8 +47,8 @@ BASE = "612d445fe18ee945ab3c3f8da31d133b11452d23"
 RENOMBRADOS = {
     "app__interfaz__reservas__PedidoDeCambio": "PedidoDeCambioDeReserva",
     "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
-    "app__interfaz__sedes__PedidoDeEdicion": "PedidoDeEdicionDeSede",
-    "app__interfaz__sesion__PedidoDeEdicion": "PedidoDeEdicionDePerfil",
+    "app__interfaz__sedes__PedidoDeEdicion": "VenueEditRequest",
+    "app__interfaz__sesion__PedidoDeEdicion": "ProfileEditRequest",
 }
 
 
@@ -156,8 +158,8 @@ def test_shared_no_importa_funcionalidades_y_reglas_no_importa_base_de_datos_ni_
     for archivo in fuentes_de_shared:
         propios = [n for n in _importados(archivo) if n.startswith("app.modules")]
         assert propios == [], f"{archivo.relative_to(APP)} importa {propios}"
-    reglas = [p for p in _de_funcionalidades() if p.name == "reglas.py"]
-    assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"sesion"}
+    reglas = [p for p in _de_funcionalidades() if p.name in {"reglas.py", "rules.py"}]
+    assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"session"}
     for archivo in reglas:
         for nombre in _importados(archivo):
             assert nombre.split(".")[0] not in BASE_DE_DATOS_Y_WEB, f"{archivo}: {nombre}"
@@ -172,9 +174,12 @@ def test_los_casos_de_uso_no_importan_repositorio_ni_rutas() -> None:
         for nombre in _importados(archivo):
             ultimo = nombre.split(".")[-1]
             es_de_la_app = nombre.startswith("app.modules.")
-            assert not (es_de_la_app and (ultimo == "repositorio" or ultimo.startswith("rutas"))), (
-                f"{ruta} importa {nombre}"
+            es_capa_de_arriba = (
+                ultimo in {"repositorio", "repository"}
+                or ultimo.startswith("rutas")
+                or ultimo.endswith("routes")
             )
+            assert not (es_de_la_app and es_capa_de_arriba), f"{ruta} importa {nombre}"
 
 
 def _sin_titulos(documento: object) -> object:
@@ -281,7 +286,7 @@ def test_ningun_test_importa_las_rutas_viejas_de_capas() -> None:
 def test_sesion_lee_la_tabla_usuario_sin_escribirla() -> None:
     """sesion lee la tabla usuario sin escribirla
     @ARQ-04-S2 @assumption:ARQ-04-ASM-03"""
-    repositorio = MODULOS / "sesion" / "repositorio.py"
+    repositorio = MODULOS / "session" / "repository.py"
     assert repositorio.is_file()
     texto = repositorio.read_text(encoding="utf-8")
     assert re.findall(r"\b(?:insert|update|delete)\(|\.(?:add|commit|merge|flush)\(", texto) == []

@@ -10,7 +10,7 @@ from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 from app.modules.notificaciones.casos_de_uso import despachar_pendientes
 from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
 from app.modules.notificaciones.push import canal_push
-from app.modules.usuarios.sembrar_admin import main as sembrar
+from app.modules.users.seed_admin import main as sembrar
 
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 CONTRASENA = "ClubNahuel1"

@@ -6,10 +6,10 @@ from uuid import UUID
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from app.modules.sedes.reglas import Sede
-from app.modules.sedes.repositorio import repositorio_sedes
-from app.modules.sesion.perfil import Perfil
-from app.modules.sesion.usuario_actual import usuario_actual
+from app.modules.session.current_user import current_user as usuario_actual
+from app.modules.session.profile import Profile as Perfil
+from app.modules.venues.repository import venue_repository as repositorio_sedes
+from app.modules.venues.rules import Venue as Sede
 
 INTERFAZ = Path(__file__).resolve().parents[2] / "app" / "interfaz"
 # Los comandos de consola no tienen pedido HTTP: arman sus piezas ellos mismos.
@@ -37,18 +37,18 @@ def test_ninguna_ruta_construye_un_repositorio_ni_un_servicio_de_infraestructura
 
 
 class _SedesDePrueba:
-    def activas(self) -> list[Sede]:
+    def active(self) -> list[Sede]:
         return [
             Sede(
                 id=UUID(int=7),
-                nombre="Sede de prueba",
-                calle="Calle",
-                altura=123,
-                apertura=time(8),
-                cierre=time(22),
-                dias=(1, 2, 3, 4, 5),
-                canchas=2,
-                deportes=("futbol",),
+                name="Sede de prueba",
+                street="Calle",
+                street_number=123,
+                opens_at=time(8),
+                closes_at=time(22),
+                open_days=(1, 2, 3, 4, 5),
+                space_count=2,
+                sports=("futbol",),
             )
         ]
 
@@ -59,12 +59,12 @@ def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza()
     app.dependency_overrides[usuario_actual] = lambda: Perfil(
         id=UUID(int=1),
         uid="uid-prueba",
-        nombre="Ana",
-        apellido="Díaz",
-        correo="ana@club.test",
-        rol="usuario",
+        first_name="Ana",
+        last_name="Díaz",
+        email="ana@club.test",
+        role="usuario",
         dni="30111222",
-        fecha_nacimiento=date(1990, 1, 1),
+        birth_date=date(1990, 1, 1),
     )
     app.dependency_overrides[repositorio_sedes] = _SedesDePrueba
 

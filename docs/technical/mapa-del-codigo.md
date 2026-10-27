@@ -13,11 +13,11 @@ nombre, no por línea: buscalos con el buscador del editor.
 | El caso de uso «reservar» | `apps/api/app/modules/reservas/casos_de_uso.py` (`reservar`) |
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
 | Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
-| Cómo se valida el token de Firebase | `apps/api/app/modules/sesion/usuario_actual.py` (`usuario_actual`) → `sesion/casos_de_uso.py` (`perfil_autenticado`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
+| Cómo se valida el token de Firebase | `apps/api/app/modules/session/current_user.py` (`current_user`) → `session/use_cases.py` (`authenticated_profile`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
 | La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
 | Los recordatorios de una hora antes | `apps/api/app/modules/notificaciones/barrido.py` (el reloj) → `casos_de_uso.py` (`enviar_recordatorios`, `entregar`) → `push.py` (FCM) |
 | Los avisos de cancelación | se encolan en la misma transacción que cancela (`ReservasSql.cancelar` y `ReservasSql.anular`) y salen con `despachar_pendientes` |
-| El correo de recuperación de contraseña | `apps/api/app/modules/recuperacion/casos_de_uso.py` (código, vigencia, tope por hora) y `correo.py` (SMTP o buzón) |
+| El correo de recuperación de contraseña | `apps/api/app/modules/password_recovery/use_cases.py` (código, vigencia, tope por hora) y `email.py` (SMTP o buzón) |
 | Las variables de entorno de la API | `apps/api/app/shared/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
 | El motor de la base y la conexión por pedido | `apps/api/app/shared/db.py` |
 | El esquema de la base | `apps/api/migraciones/versions/0001` a `0009`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
@@ -93,11 +93,11 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 |---|---|---|
 | `reservas` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py` | `reservas/` |
 | `horarios` | `rutas.py`, `casos_de_uso.py`, `disponibilidad.py`, `reglas.py`, `repositorio.py` | `reservas/` |
-| `sedes` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `sedes/`, `admin/` |
+| `venues` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sedes/`, `admin/` |
 | `espacios` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `espacios/`, `admin/` |
-| `usuarios` | `rutas_registro.py`, `rutas_cuenta.py`, `registro.py`, `perfil.py`, `contrasena.py`, `baja.py`, `administradores.py`, `sembrar_admin.py`, `reglas.py`, `repositorio.py` | `usuarios/` |
-| `sesion` | `casos_de_uso.py`, `perfil.py`, `usuario_actual.py`, `repositorio.py` | `sesion/` |
-| `recuperacion` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py`, `correo.py` | `sesion/` |
+| `users` | `registration_routes.py`, `account_routes.py`, `registration.py`, `profile.py`, `password.py`, `deactivation.py`, `admins.py`, `seed_admin.py`, `rules.py`, `repository.py` | `usuarios/` |
+| `session` | `use_cases.py`, `profile.py`, `current_user.py`, `repository.py` | `sesion/` |
+| `password_recovery` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py`, `email.py` | `sesion/` |
 | `notificaciones` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py`, `barrido.py`, `push.py` | `notificaciones/` |
 
 Compartido en `app/shared/`: `config.py`, `db.py` (`engine`, `connection()`, `in_transaction`), `errors.py` (todos los
@@ -133,14 +133,14 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 
 | Funcionalidad | Qué tiene | Tablas que escribe |
 |---|---|---|
-| `sesion` | `Perfil`, `perfil_autenticado` (del token al `Perfil`), `usuario_actual` (la dependencia de autenticación), `PerfilesSql` | — (lee `usuario`) |
-| `usuarios` | `registrar`, `editar_perfil`, `cambiar_contrasena`, `dar_de_baja` (la cuenta), `sembrar_admin` (y su comando), reglas de registro y perfil, `UsuariosSql` | `usuario` |
-| `sedes` | `sedes_activas`, `dar_de_alta_sede`, `editar_sede`, `dar_de_baja_sede`, `validar_sede`, `SedesSql` | `sede` |
+| `session` | `Profile`, `authenticated_profile` (del token al `Profile`), `current_user` (la dependencia de autenticación), `ProfilesSql` | — (lee `usuario`) |
+| `users` | `register`, `update_profile`, `change_password`, `deactivate` (la cuenta), `seed_admin` (y su comando), reglas de registro y perfil, `UsersSql` | `usuario` |
+| `venues` | `active_venues`, `create_venue`, `update_venue`, `deactivate_venue`, `validate_venue`, `VenuesSql` | `sede` |
 | `espacios` | el catálogo fijo (`Deporte`, `Tipo`), `nombre_sugerido`, alta, edición y baja de espacios, `EspaciosSql` | `espacio` |
 | `horarios` | `Agenda`, `grilla`, `validar_reserva`, `horarios_disponibles`, `canchas_disponibles` (`disponibilidad.py`), `HorariosSql` (lecturas) | — |
 | `reservas` | `reservar`, `mis_reservas`, `cancelar_reserva`, `modificar_reserva`, `historial_global`, `detalle_admin`, `anular_reserva`, `ReservasSql` (historial paginado por cursor) | `reserva` |
 | `notificaciones` | `ANTICIPACION` (1 h), `enviar_recordatorios`, `despachar_pendientes`, dispositivos y centro de avisos, `NotificacionesSql`, `canal_push` (`push.py`: `CanalFcm`, `CanalNulo`), `barrido.py` (en proceso con `barrer_cada` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
-| `recuperacion` | `pedir_enlace`, `enlace_vigente`, `usar_enlace`, `hash_de`, `EnlacesSql`, `correo.py` (`enviar`: SMTP con STARTTLS verificado, o el buzón de desarrollo) | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
+| `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql`, `email.py` (`send`: SMTP con STARTTLS verificado, o el buzón de desarrollo) | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
 
 ### Rutas de la API
 
@@ -151,19 +151,19 @@ si el rol no es `admin`.
 |---|---|---|---|
 | GET `/health` | `health.py` | — | cualquiera |
 | GET `/openapi.json` | FastAPI | — | cualquiera (también `/docs` y `/redoc`) |
-| POST `/registro` | `usuarios/rutas_registro.py` | `registrar` | cualquiera |
-| POST `/recuperacion` | `recuperacion/rutas.py` | `pedir_enlace` | cualquiera |
-| POST `/recuperacion/consulta` | `recuperacion/rutas.py` | `enlace_vigente` | cualquiera |
-| PUT `/recuperacion` | `recuperacion/rutas.py` | `usar_enlace` | cualquiera |
-| GET `/enlace/recuperar` | `recuperacion/rutas.py` | página que abre la app desde el correo | cualquiera |
-| GET `/yo` | `usuarios/rutas_cuenta.py` | — | sesión |
-| PUT `/yo` | `usuarios/rutas_cuenta.py` | `editar_perfil` | sesión |
-| PUT `/yo/contrasena` | `usuarios/rutas_cuenta.py` | `cambiar_contrasena` | sesión |
-| DELETE `/yo` | `usuarios/rutas_cuenta.py` | `dar_de_baja` | sesión |
-| GET `/sedes` | `sedes/rutas.py` | `sedes_activas` | sesión |
-| POST `/sedes` | `sedes/rutas.py` | `dar_de_alta_sede` | admin |
-| PUT `/sedes/{sede_id}` | `sedes/rutas.py` | `editar_sede` | admin |
-| DELETE `/sedes/{sede_id}` | `sedes/rutas.py` | `dar_de_baja_sede` | admin |
+| POST `/registro` | `users/registration_routes.py` | `register` | cualquiera |
+| POST `/recuperacion` | `password_recovery/routes.py` | `request_link` | cualquiera |
+| POST `/recuperacion/consulta` | `password_recovery/routes.py` | `link_is_valid` | cualquiera |
+| PUT `/recuperacion` | `password_recovery/routes.py` | `use_link` | cualquiera |
+| GET `/enlace/recuperar` | `password_recovery/routes.py` | página que abre la app desde el correo | cualquiera |
+| GET `/yo` | `users/account_routes.py` | — | sesión |
+| PUT `/yo` | `users/account_routes.py` | `update_profile` | sesión |
+| PUT `/yo/contrasena` | `users/account_routes.py` | `change_password` | sesión |
+| DELETE `/yo` | `users/account_routes.py` | `deactivate` | sesión |
+| GET `/sedes` | `venues/routes.py` | `active_venues` | sesión |
+| POST `/sedes` | `venues/routes.py` | `create_venue` | admin |
+| PUT `/sedes/{sede_id}` | `venues/routes.py` | `update_venue` | admin |
+| DELETE `/sedes/{sede_id}` | `venues/routes.py` | `deactivate_venue` | admin |
 | GET `/espacios/catalogo` | `espacios/rutas.py` | `catalogo` | sesión |
 | GET `/espacios` | `espacios/rutas.py` | `espacios_activos` | sesión |
 | GET `/espacios/nombre` | `espacios/rutas.py` | `nombre_sugerido` | admin |
@@ -451,7 +451,7 @@ tiene una API intermedia para simular cortes.
 | `test.sh` | ruff, mypy y pytest de la API; `flutter analyze`, `dart format` y `flutter test` de la app |
 | `e2e.sh` | levanta el emulador de Auth y la API sobre una base `*_test` propia, migra, siembra un admin y corre `integration_test` en el emulador Android |
 
-Comandos de la API: `python -m app.modules.usuarios.sembrar_admin` (crear o promover el primer administrador) y
+Comandos de la API: `python -m app.modules.users.seed_admin` (crear o promover el primer administrador) y
 `python -m app.modules.notificaciones.barrido --una-vez` (una pasada de recordatorios y avisos).
 
 ## `specs/` y el método de trabajo

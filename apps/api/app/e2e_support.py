@@ -15,7 +15,7 @@ from app.modules.notificaciones import (
     enviar_recordatorios,
     repositorio_notificaciones,
 )
-from app.modules.recuperacion import hash_de
+from app.modules.password_recovery import hash_of
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection
 from app.shared.errors import NotFound
@@ -174,7 +174,7 @@ def expire(code: str, conn: DbConnection) -> Response:
             "UPDATE enlace_recuperacion SET creado_en = clock_timestamp() - interval '1 hour',"
             " vence_en = clock_timestamp() - interval '30 minutes' WHERE codigo_hash = :h"
         ),
-        {"h": hash_de(code)},
+        {"h": hash_of(code)},
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -11,7 +11,7 @@ from app.modules.horarios.casos_de_uso import horarios_disponibles
 from app.modules.horarios.disponibilidad import canchas_disponibles
 from app.modules.horarios.reglas import MAX_HORAS, MIN_HORAS
 from app.modules.horarios.repositorio import HorariosSql, repositorio_horarios
-from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.modules.session import NoSession, Profile, current_user
 from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
 from app.shared.errors import InvalidData, Unavailable
 from app.shared.input_validation import Identifier, parse_time
@@ -47,7 +47,7 @@ def _hora(momento: datetime) -> str:
     "/espacios/{espacio_id}/horarios",
     response_model=GrillaVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         404: {"model": Errores, "description": "El espacio o su sede ya no están activos"},
         422: {"model": Errores},
     },
@@ -59,7 +59,7 @@ def _hora(momento: datetime) -> str:
     ),
 )
 def ver_horarios(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
     espacio_id: Annotated[Identifier, Path()],
     fecha: Annotated[date | None, Query()] = None,
@@ -98,7 +98,7 @@ SEDE_NO_DISPONIBLE = "La sede ya no está disponible"
 @router.get(
     "/espacios/disponibles",
     response_model=ListaDeEspacios,
-    responses={401: {"model": SinSesion}, 422: {"model": Errores}},
+    responses={401: {"model": NoSession}, 422: {"model": Errores}},
     summary="Las canchas de una sede libres en todo un rango",
     description=(
         "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas "
@@ -108,7 +108,7 @@ SEDE_NO_DISPONIBLE = "La sede ya no está disponible"
     ),
 )
 def ver_disponibles(
-    _: Annotated[Perfil, Depends(usuario_actual)],
+    _: Annotated[Profile, Depends(current_user)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
     sede_id: Annotated[Identifier, Query()],
     deporte: Annotated[str, Query(min_length=1)],

@@ -1,14 +1,14 @@
-# kit-shape: el repositorio de enlaces y la función que lo entrega a las rutas van juntos
+# kit-shape: the link repository and the function that hands it to the routes go together
 from uuid import UUID
 
 from sqlalchemy import Connection, text
 
-from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
+from app.modules.password_recovery.rules import ClaimedLink, Recipient
 from app.shared.db import DbConnection, in_transaction
 
-# Un enlace vale si no se usó ni se reemplazó, no venció, la cuenta sigue activa y la
-# contraseña no cambió después de emitirlo.
-_VIGENTE = """
+# A link is valid if it was not used or replaced, has not expired, the account is still active
+# and the password did not change after it was issued.
+_VALID = """
     e.usado_en IS NULL
     AND e.invalidado_en IS NULL
     AND e.vence_en > clock_timestamp()
@@ -17,88 +17,88 @@ _VIGENTE = """
 """
 
 
-class EnlacesSql:
+class LinksSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def destinatario(self, correo: str) -> Destinatario | None:
-        fila = self._conn.execute(
+    def recipient(self, email: str) -> Recipient | None:
+        row = self._conn.execute(
             text("SELECT id, nombre, correo FROM usuario WHERE lower(correo) = :c AND activo"),
-            {"c": correo},
+            {"c": email},
         ).first()
         self._conn.rollback()
-        return None if fila is None else Destinatario(fila.id, fila.nombre, fila.correo)
+        return None if row is None else Recipient(row.id, row.nombre, row.correo)
 
-    def emitir(
-        self, usuario_id: UUID, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
+    def issue(
+        self, user_id: UUID, code_hash: str, validity_minutes: int, max_per_hour: int
     ) -> bool:
         with in_transaction(self._conn):
-            # El candado ordena los pedidos simultáneos de la misma cuenta: el segundo cuenta
-            # e invalida recién cuando el primero terminó.
+            # The lock orders simultaneous requests of the same account: the second one counts
+            # and invalidates only once the first one is done.
             self._conn.execute(
                 text("SELECT pg_advisory_xact_lock(hashtextextended(CAST(:u AS text), 0))"),
-                {"u": usuario_id},
+                {"u": user_id},
             )
-            emitidos: int = self._conn.execute(
+            issued: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM enlace_recuperacion WHERE usuario_id = :u"
                     " AND creado_en > clock_timestamp() - interval '1 hour'"
                 ),
-                {"u": usuario_id},
+                {"u": user_id},
             ).scalar_one()
-            if emitidos >= maximo_por_hora:
+            if issued >= max_per_hour:
                 self._conn.rollback()
                 return False
-            # También el que está en uso: si el cambio falla y se libera, ya no vale.
+            # Also the one in use: if the change fails and it is released, it is no longer valid.
             self._conn.execute(
                 text(
                     "UPDATE enlace_recuperacion SET invalidado_en = clock_timestamp()"
                     " WHERE usuario_id = :u AND invalidado_en IS NULL"
                 ),
-                {"u": usuario_id},
+                {"u": user_id},
             )
-            # El vencimiento sale del reloj de la base, el mismo con el que se compara.
+            # The expiry comes from the database clock, the same one it is compared with.
             self._conn.execute(
                 text(
                     "INSERT INTO enlace_recuperacion (usuario_id, codigo_hash, vence_en)"
                     " VALUES (:u, :h, clock_timestamp() + make_interval(mins => :m))"
                 ),
-                {"u": usuario_id, "h": codigo_hash, "m": vigencia_minutos},
+                {"u": user_id, "h": code_hash, "m": validity_minutes},
             )
         return True
 
-    def vigente(self, codigo_hash: str) -> bool:
-        fila = self._conn.execute(
+    def valid(self, code_hash: str) -> bool:
+        row = self._conn.execute(
             text(
                 "SELECT 1 FROM enlace_recuperacion e JOIN usuario u ON u.id = e.usuario_id"
-                f" WHERE e.codigo_hash = :h AND {_VIGENTE}"
+                f" WHERE e.codigo_hash = :h AND {_VALID}"
             ),
-            {"h": codigo_hash},
+            {"h": code_hash},
         ).first()
         self._conn.rollback()
-        return fila is not None
+        return row is not None
 
-    def reclamar(self, codigo_hash: str) -> EnlaceReclamado | None:
+    def claim(self, code_hash: str) -> ClaimedLink | None:
         with in_transaction(self._conn):
-            fila = self._conn.execute(
+            row = self._conn.execute(
                 text(
                     "UPDATE enlace_recuperacion e SET usado_en = clock_timestamp()"
                     " FROM usuario u WHERE u.id = e.usuario_id AND e.codigo_hash = :h"
-                    f" AND {_VIGENTE}"
+                    f" AND {_VALID}"
                     " RETURNING e.id, u.id AS usuario_id, u.firebase_uid"
                 ),
-                {"h": codigo_hash},
+                {"h": code_hash},
             ).first()
-        if fila is None:
+        if row is None:
             return None
-        return EnlaceReclamado(fila.id, fila.usuario_id, fila.firebase_uid)
+        return ClaimedLink(row.id, row.usuario_id, row.firebase_uid)
 
-    def liberar(self, enlace_id: UUID) -> None:
+    def release(self, link_id: UUID) -> None:
         self._conn.execute(
-            text("UPDATE enlace_recuperacion SET usado_en = NULL WHERE id = :id"), {"id": enlace_id}
+            text("UPDATE enlace_recuperacion SET usado_en = NULL WHERE id = :id"), {"id": link_id}
         )
         self._conn.commit()
 
 
-def repositorio_enlaces(conn: DbConnection) -> EnlacesSql:
-    return EnlacesSql(conn)
+def link_repository(conn: DbConnection) -> LinksSql:
+    return LinksSql(conn)

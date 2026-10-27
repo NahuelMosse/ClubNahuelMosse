@@ -24,7 +24,7 @@ from app.modules.reservas.reglas import (
     Reserva,
     ReservaHistorial,
 )
-from app.modules.sesion.perfil import Perfil
+from app.modules.session.profile import Profile as Perfil
 from app.shared.errors import (
     ConcurrentChange,
     Forbidden,
@@ -47,8 +47,8 @@ def _id(numero: int) -> UUID:
 
 def _perfil(id: int = 1, rol: str = "usuario") -> Perfil:
     return Perfil(
-        id=_id(id), uid=f"u{id}", nombre="Ana", apellido="Paz", correo="a@b.c", rol=rol,
-        dni="1", fecha_nacimiento=date(2000, 1, 1),
+        id=_id(id), uid=f"u{id}", first_name="Ana", last_name="Paz", email="a@b.c", role=rol,
+        dni="1", birth_date=date(2000, 1, 1),
     )  # fmt: skip
 
 

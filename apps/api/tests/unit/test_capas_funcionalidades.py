@@ -11,13 +11,13 @@ RAIZ = API.parents[1]
 
 # Cada archivo de acceso a datos escribe sólo las tablas que son suyas.
 TABLAS_PROPIAS = {
-    "usuarios/repositorio.py": {"usuario"},
+    "users/repository.py": {"usuario"},
     "reservas/repositorio.py": {"reserva"},
-    "sedes/repositorio.py": {"sede"},
+    "venues/repository.py": {"sede"},
     "notificaciones/repositorio.py": {"notificacion", "notificacion_reserva", "dispositivo"},
     "espacios/repositorio.py": {"espacio"},
-    "recuperacion/repositorio.py": {"enlace_recuperacion"},
-    "recuperacion/correo.py": {"correo_saliente"},
+    "password_recovery/repository.py": {"enlace_recuperacion"},
+    "password_recovery/email.py": {"correo_saliente"},
 }
 ESCRITURA = re.compile(
     r"(?:INSERT\s+INTO|(?<!FOR\s)(?<!DO\s)UPDATE|DELETE\s+FROM)\s+(\w+)", re.IGNORECASE
@@ -60,7 +60,7 @@ def test_ninguna_funcionalidad_importa_el_repositorio_de_otra() -> None:
         propia = archivo.relative_to(MODULOS).parts[0]
         for nombre in _modulos(archivo):
             partes = nombre.split(".")
-            if partes[:2] == ["app", "modules"] and len(partes) > 3 and partes[3] == "repositorio":
+            if partes[:2] == ["app", "modules"] and len(partes) > 3 and partes[3] in {"repositorio", "repository"}:
                 assert partes[2] == propia, f"{_nombre(archivo)} importa {nombre}"
 
 

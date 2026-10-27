@@ -79,16 +79,16 @@ def test_con_email_mode_outbox_o_correo_modo_buzon_el_correo_de_recuperacion_va_
     monkeypatch: pytest.MonkeyPatch, variable: str, valor: str
 ) -> None:
     """con EMAIL_MODE=outbox o CORREO_MODO=buzon el correo de recuperación va al buzón y no a SMTP @assumption:ENG-01-ASM-01"""
-    from app.modules.recuperacion import correo
+    from app.modules.password_recovery import email as correo
 
     monkeypatch.setenv(variable, valor)
     modo = Settings(_env_file=None).email_mode
     llamadas: list[str] = []
     monkeypatch.setattr(config, "email_mode", modo)
-    monkeypatch.setattr(correo, "_al_buzon", lambda _m: llamadas.append("buzon"))
-    monkeypatch.setattr(correo, "_por_smtp", lambda _m: llamadas.append("smtp"))
+    monkeypatch.setattr(correo, "_to_outbox", lambda _m: llamadas.append("buzon"))
+    monkeypatch.setattr(correo, "_by_smtp", lambda _m: llamadas.append("smtp"))
 
-    correo.enviar(SimpleNamespace(para="a@b.test", asunto="x", cuerpo="y"))  # type: ignore[arg-type]
+    correo.send(SimpleNamespace(recipient="a@b.test", subject="x", body="y"))  # type: ignore[arg-type]
 
     assert modo == "outbox"
     assert llamadas == ["buzon"]

@@ -11,7 +11,7 @@ from app.modules.reservas.reglas import (
     Reserva,
     ReservaHistorial,
 )
-from app.modules.sesion import Perfil
+from app.modules.session import Profile
 from app.shared.errors import (
     Forbidden,
     InvalidData,
@@ -50,7 +50,7 @@ def _con_la_agenda_vigente(
     raise SlotTaken("el horario de la sede cambió varias veces seguidas")
 
 
-def mis_reservas(reservas: Reservas, perfil: Perfil, cuando: Cuando) -> list[Reserva]:
+def mis_reservas(reservas: Reservas, perfil: Profile, cuando: Cuando) -> list[Reserva]:
     """Las reservas de quien consulta y de nadie más (RF 3, RF 6)."""
     return reservas.de_usuario(perfil.id, cuando)
 
@@ -70,7 +70,7 @@ def _exigir_mismo_tipo(reservas: Reservas, actual: Reserva, espacio_id: UUID) ->
 
 def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     reservas: Reservas,
-    perfil: Perfil,
+    perfil: Profile,
     espacio_id: UUID,
     fecha: date,
     desde: time | None,
@@ -83,7 +83,7 @@ def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamado
     Lanza `Forbidden` si quien pide es administrador, `InvalidData` si el horario no se
     puede reservar, `Unavailable` y `SlotTaken` como `Reservas.insertar`.
     """
-    if perfil.rol != "usuario":
+    if perfil.role != "usuario":
         raise Forbidden("sólo un usuario reserva")
     if desde is None:
         raise InvalidData({"desde": "Elegí una hora en punto"})
@@ -106,7 +106,7 @@ def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamado
     )
 
 
-def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> Reserva:
+def cancelar_reserva(reservas: Reservas, perfil: Profile, reserva_id: UUID) -> Reserva:
     """Cancela una reserva propia que todavía no empezó (CU-10, decisión 13: hasta el
     inicio, sin anticipación mínima)."""
     return reservas.cancelar(perfil.id, reserva_id)
@@ -114,7 +114,7 @@ def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> Re
 
 def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     reservas: Reservas,
-    perfil: Perfil,
+    perfil: Profile,
     reserva_id: UUID,
     espacio_id: UUID,
     fecha: date,
@@ -128,7 +128,7 @@ def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por su
     suya, `InvalidData` si el horario nuevo no vale, y `Unavailable`, `ConcurrentChange` y
     `SlotTaken` como `Reservas.mover`.
     """
-    if perfil.rol != "usuario":
+    if perfil.role != "usuario":
         raise Forbidden("sólo un usuario reserva")
     if desde is None:
         raise InvalidData({"desde": "Elegí una hora en punto"})
@@ -154,7 +154,7 @@ def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por su
 
 
 def historial_global(
-    reservas: Reservas, perfil: Perfil, filtros: FiltrosHistorial
+    reservas: Reservas, perfil: Profile, filtros: FiltrosHistorial
 ) -> HistorialDeReservas:
     """El historial completo de reservas de todos los usuarios y todas las sedes (CU-14, RF
     6): sólo lo consulta un administrador. No modifica nada (la consulta es de sólo lectura).
@@ -162,20 +162,20 @@ def historial_global(
     Lanza `Forbidden` si quien pide no es administrador y `InvalidData` si el rango de
     fechas tiene `desde` posterior a `hasta`.
     """
-    if perfil.rol != "admin":
+    if perfil.role != "admin":
         raise Forbidden("sólo un administrador consulta el historial global")
     if filtros.desde is not None and filtros.hasta is not None and filtros.desde > filtros.hasta:
         raise InvalidData({"fechas": "Desde no puede ser posterior a Hasta"})
     return reservas.historial(filtros)
 
 
-def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> ReservaHistorial:
+def detalle_admin(reservas: Reservas, perfil: Profile, reserva_id: UUID) -> ReservaHistorial:
     """El detalle de cualquier reserva del sistema, para un administrador (CU-14).
 
     Lanza `Forbidden` si quien pide no es administrador y `NotFound` si no hay ninguna
     reserva con ese número.
     """
-    if perfil.rol != "admin":
+    if perfil.role != "admin":
         raise Forbidden("sólo un administrador consulta el detalle de cualquier reserva")
     detalle = reservas.una_de_cualquiera(reserva_id)
     if detalle is None:
@@ -185,7 +185,7 @@ def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> Reser
 
 def anular_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     reservas: Reservas,
-    perfil: Perfil,
+    perfil: Profile,
     reserva_id: UUID,
     motivo: str,
     espacio_id: UUID,
@@ -197,7 +197,7 @@ def anular_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus l
     Lanza `Forbidden` si quien pide no es administrador, `InvalidData` si el motivo está
     vacío o es demasiado largo, y `NotFound` y `ConcurrentChange` como `Reservas.anular`.
     """
-    if perfil.rol != "admin":
+    if perfil.role != "admin":
         raise Forbidden("sólo un administrador anula una reserva")
     limpio = motivo.strip()
     if not limpio:

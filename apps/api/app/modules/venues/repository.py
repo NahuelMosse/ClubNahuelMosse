@@ -1,4 +1,4 @@
-# kit-shape: el repositorio de sedes y las funciones que arman su entidad van juntos
+# kit-shape: the venue repository and the functions that build its entity go together
 from typing import Any
 from uuid import UUID
 
@@ -6,32 +6,31 @@ from sqlalchemy import Connection, Row, text
 from sqlalchemy.exc import IntegrityError
 
 from app.modules.espacios import EspaciosSql
-from app.modules.sedes.reglas import Sede, SedeNueva
+from app.modules.venues.rules import NewVenue, Venue
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection, in_transaction, violated_constraint
 from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings, NotFound
 
-_COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
+_COLUMNS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
 
 
-def _sede(fila: Any, canchas: int, deportes: tuple[str, ...] = ()) -> Sede:
-    return Sede(
-        id=fila.id,
-        nombre=fila.nombre,
-        calle=fila.calle,
-        altura=int(fila.altura),
-        apertura=fila.apertura,
-        cierre=fila.cierre,
-        dias=tuple(int(d) for d in fila.dias),
-        canchas=canchas,
-        deportes=deportes,
+def _venue(row: Any, space_count: int, sports: tuple[str, ...] = ()) -> Venue:
+    return Venue(
+        id=row.id,
+        name=row.nombre,
+        street=row.calle,
+        street_number=int(row.altura),
+        opens_at=row.apertura,
+        closes_at=row.cierre,
+        open_days=tuple(int(d) for d in row.dias),
+        space_count=space_count,
+        sports=sports,
     )
 
 
-# Una reserva queda afuera de un horario si empieza antes de la apertura, termina después
-# del cierre (a las 00:00 es la medianoche) o cae en un día que la sede no abre, contado en
-# la hora del club.
-_AFUERA = (
+# A booking falls outside a schedule if it starts before opening, ends after closing (at
+# 00:00 it is midnight) or falls on a day the venue is closed, counted in the club's time.
+_OUTSIDE = (
     "(({ini})::time < CAST(:{p}apertura AS time)"
     " OR ({fin}) - date_trunc('day', {ini}) > CASE WHEN CAST(:{p}cierre AS time) = '00:00'"
     " THEN interval '24 hours' ELSE CAST(:{p}cierre AS time) - time '00:00' END"
@@ -39,22 +38,22 @@ _AFUERA = (
 )
 
 
-def _afuera(prefijo: str) -> str:
-    return _AFUERA.format(
+def _outside(prefix: str) -> str:
+    return _OUTSIDE.format(
         ini=f"r.inicio AT TIME ZONE '{CLUB_TIMEZONE_NAME}'",
         fin=f"r.fin AT TIME ZONE '{CLUB_TIMEZONE_NAME}'",
-        p=prefijo,
+        p=prefix,
     )
 
 
-class SedesSql:
+class VenuesSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def activas(self) -> list[Sede]:
-        filas = self._conn.execute(
+    def active(self) -> list[Venue]:
+        rows = self._conn.execute(
             text(
-                f"SELECT {_COLUMNAS}, count(e.id) AS canchas,"
+                f"SELECT {_COLUMNS}, count(e.id) AS canchas,"
                 " coalesce(array_agg(DISTINCT e.deporte ORDER BY e.deporte)"
                 " FILTER (WHERE e.id IS NOT NULL), '{}') AS deportes FROM sede s"
                 " LEFT JOIN espacio e ON e.sede_id = s.id AND e.activo"
@@ -62,135 +61,135 @@ class SedesSql:
             )
         ).all()
         self._conn.rollback()
-        return [_sede(f, int(f.canchas), tuple(f.deportes)) for f in filas]
+        return [_venue(r, int(r.canchas), tuple(r.deportes)) for r in rows]
 
-    def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
+    def insert(self, new: NewVenue, author: UUID) -> Venue:
         try:
             with in_transaction(self._conn):
-                fila = self._conn.execute(
+                row = self._conn.execute(
                     text(
                         "INSERT INTO sede AS s (nombre, calle, altura, apertura, cierre, dias,"
                         " creado_por, modificado_por)"
                         " VALUES (:nombre, :calle, :altura, :apertura, :cierre,"
                         " CAST(:dias AS smallint[]), :autor, :autor)"
-                        f" RETURNING {_COLUMNAS}"
+                        f" RETURNING {_COLUMNS}"
                     ),
                     {
-                        "nombre": nueva.nombre,
-                        "calle": nueva.calle,
-                        "altura": nueva.altura,
-                        "apertura": nueva.apertura,
-                        "cierre": nueva.cierre,
-                        "dias": list(nueva.dias),
-                        "autor": autor,
+                        "nombre": new.name,
+                        "calle": new.street,
+                        "altura": new.street_number,
+                        "apertura": new.opens_at,
+                        "cierre": new.closes_at,
+                        "dias": list(new.open_days),
+                        "autor": author,
                     },
                 ).one()
         except IntegrityError as e:
-            indice = violated_constraint(e)
-            if indice == "sede_nombre_activa_unico":
+            constraint = violated_constraint(e)
+            if constraint == "sede_nombre_activa_unico":
                 raise Duplicate(["nombre"]) from e
             raise
-        return _sede(fila, canchas=0)
+        return _venue(row, space_count=0)
 
-    def _verificar_reservas(self, valores: dict[str, Any], antes: Row[Any]) -> None:
-        afuera = int(
+    def _check_bookings(self, values: dict[str, Any], before: Row[Any]) -> None:
+        outside = int(
             self._conn.execute(
                 text(
                     "SELECT count(*) FROM reserva r"
                     " JOIN espacio e ON e.id = r.espacio_id"
                     " WHERE e.sede_id = :id AND r.estado = 'activa'"
                     " AND r.inicio > now()"
-                    f" AND {_afuera('')} AND NOT {_afuera('antes_')}"
+                    f" AND {_outside('')} AND NOT {_outside('antes_')}"
                 ),
-                valores
+                values
                 | {
-                    "antes_apertura": antes.apertura,
-                    "antes_cierre": antes.cierre,
-                    "antes_dias": list(antes.dias),
+                    "antes_apertura": before.apertura,
+                    "antes_cierre": before.cierre,
+                    "antes_dias": list(before.dias),
                 },
             ).scalar_one()
         )
-        if afuera:
-            raise BookingsOutsideHours(afuera)
+        if outside:
+            raise BookingsOutsideHours(outside)
 
-    def _guardar(self, valores: dict[str, Any]) -> None:
+    def _save(self, values: dict[str, Any]) -> None:
         self._conn.execute(
             text(
                 "UPDATE sede SET nombre = :nombre, calle = :calle, altura = :altura,"
                 " apertura = :apertura, cierre = :cierre, dias = CAST(:dias AS smallint[]),"
                 " modificado_por = :autor, modificado_en = now() WHERE id = :id"
             ),
-            valores,
+            values,
         )
 
-    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, *, confirmar: bool) -> Sede:
-        valores = {
-            "id": sede_id,
-            "nombre": datos.nombre,
-            "calle": datos.calle,
-            "altura": datos.altura,
-            "apertura": datos.apertura,
-            "cierre": datos.cierre,
-            "dias": list(datos.dias),
-            "autor": autor,
+    def update(self, venue_id: UUID, data: NewVenue, author: UUID, *, confirm: bool) -> Venue:
+        values = {
+            "id": venue_id,
+            "nombre": data.name,
+            "calle": data.street,
+            "altura": data.street_number,
+            "apertura": data.opens_at,
+            "cierre": data.closes_at,
+            "dias": list(data.open_days),
+            "autor": author,
         }
         try:
             with in_transaction(self._conn):
-                # Exclusiva: una reserva que se está haciendo en la sede termina antes, o espera
-                # al horario nuevo y se vuelve a validar con él.
-                antes = self._conn.execute(
+                # Exclusive: a booking being made at the venue finishes first, or waits for the
+                # new schedule and is validated again with it.
+                before = self._conn.execute(
                     text(
                         "SELECT apertura, cierre, dias FROM sede"
                         " WHERE id = :id AND activa FOR UPDATE"
                     ),
-                    valores,
+                    values,
                 ).first()
-                if antes is None:
+                if before is None:
                     raise NotFound("la sede ya no está activa")
-                if not confirmar:
-                    self._verificar_reservas(valores, antes)
-                self._guardar(valores)
+                if not confirm:
+                    self._check_bookings(values, before)
+                self._save(values)
         except IntegrityError as e:
-            indice = violated_constraint(e)
-            if indice == "sede_nombre_activa_unico":
+            constraint = violated_constraint(e)
+            if constraint == "sede_nombre_activa_unico":
                 raise Duplicate(["nombre"]) from e
             raise
-        guardada = next((s for s in self.activas() if s.id == sede_id), None)
-        if guardada is None:
+        saved = next((s for s in self.active() if s.id == venue_id), None)
+        if saved is None:
             raise NotFound("la sede se dio de baja apenas se guardó")
-        return guardada
+        return saved
 
-    def dar_de_baja(self, sede_id: UUID, autor: UUID) -> None:
-        datos = {"id": sede_id, "autor": autor}
+    def deactivate(self, venue_id: UUID, author: UUID) -> None:
+        params = {"id": venue_id, "autor": author}
         with in_transaction(self._conn):
-            # Exclusiva: una reserva que se está haciendo en la sede termina antes y acá se la
-            # ve, o espera y encuentra la sede dada de baja.
+            # Exclusive: a booking being made at the venue finishes first and is seen here, or
+            # waits and finds the venue deactivated.
             if (
                 self._conn.execute(
-                    text("SELECT 1 FROM sede WHERE id = :id AND activa FOR UPDATE"), datos
+                    text("SELECT 1 FROM sede WHERE id = :id AND activa FOR UPDATE"), params
                 ).first()
                 is None
             ):
                 raise NotFound("la sede ya no está activa")
-            pendientes: int = self._conn.execute(
+            pending: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
                     " WHERE e.sede_id = :id AND r.estado = 'activa' AND r.fin > now()"
                 ),
-                datos,
+                params,
             ).scalar_one()
-            if pendientes:
+            if pending:
                 raise HasFutureBookings("la sede tiene reservas que todavía no terminaron")
-            EspaciosSql(self._conn).dar_de_baja_de_sede(sede_id, autor)
+            EspaciosSql(self._conn).dar_de_baja_de_sede(venue_id, author)
             self._conn.execute(
                 text(
                     "UPDATE sede SET activa = false, dado_de_baja_en = now(),"
                     " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
                     " WHERE id = :id"
                 ),
-                datos,
+                params,
             )
 
 
-def repositorio_sedes(conn: DbConnection) -> SedesSql:
-    return SedesSql(conn)
+def venue_repository(conn: DbConnection) -> VenuesSql:
+    return VenuesSql(conn)

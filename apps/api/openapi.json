@@ -43,7 +43,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoRegistro"
+                "$ref": "#/components/schemas/RegistrationRequest"
               }
             }
           },
@@ -55,7 +55,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RegistroCreado"
+                  "$ref": "#/components/schemas/RegistrationCreated"
                 }
               }
             }
@@ -65,7 +65,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeCampo"
+                  "$ref": "#/components/schemas/FieldErrors"
                 }
               }
             }
@@ -75,7 +75,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UsuarioRepetido"
+                  "$ref": "#/components/schemas/DuplicateUser"
                 }
               }
             }
@@ -96,7 +96,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PerfilPropio"
+                  "$ref": "#/components/schemas/OwnProfile"
                 }
               }
             }
@@ -106,7 +106,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -129,7 +129,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeEdicionDePerfil"
+                "$ref": "#/components/schemas/ProfileEditRequest"
               }
             }
           },
@@ -141,7 +141,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PerfilPropio"
+                  "$ref": "#/components/schemas/OwnProfile"
                 }
               }
             }
@@ -151,7 +151,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -161,7 +161,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeContrasena"
+                  "$ref": "#/components/schemas/PasswordErrors"
                 }
               }
             }
@@ -171,7 +171,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeContrasena"
+                  "$ref": "#/components/schemas/PasswordErrors"
                 }
               }
             }
@@ -199,7 +199,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -227,7 +227,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoCambioDeContrasena"
+                "$ref": "#/components/schemas/PasswordChangeRequest"
               }
             }
           },
@@ -242,7 +242,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -252,7 +252,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeContrasena"
+                  "$ref": "#/components/schemas/PasswordErrors"
                 }
               }
             }
@@ -280,7 +280,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContrasenaNueva"
+                "$ref": "#/components/schemas/NewPassword"
               }
             }
           },
@@ -298,7 +298,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeCampo"
+                  "$ref": "#/components/schemas/FieldErrors"
                 }
               }
             }
@@ -316,7 +316,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeEnlace"
+                "$ref": "#/components/schemas/LinkRequest"
               }
             }
           },
@@ -336,7 +336,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeCampo"
+                  "$ref": "#/components/schemas/FieldErrors"
                 }
               }
             }
@@ -355,7 +355,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ConsultaDeEnlace"
+                "$ref": "#/components/schemas/LinkCheck"
               }
             }
           },
@@ -416,7 +416,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Sedes"
+                  "$ref": "#/components/schemas/VenueList"
                 }
               }
             }
@@ -426,7 +426,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -449,7 +449,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeSede"
+                "$ref": "#/components/schemas/VenueRequest"
               }
             }
           },
@@ -461,7 +461,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SedeVista"
+                  "$ref": "#/components/schemas/VenueView"
                 }
               }
             }
@@ -471,7 +471,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -484,7 +484,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeSede"
+                  "$ref": "#/components/schemas/VenueErrors"
                 }
               }
             }
@@ -494,7 +494,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeSede"
+                  "$ref": "#/components/schemas/VenueErrors"
                 }
               }
             }
@@ -537,7 +537,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeEdicionDeSede"
+                "$ref": "#/components/schemas/VenueEditRequest"
               }
             }
           }
@@ -548,7 +548,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SedeVista"
+                  "$ref": "#/components/schemas/VenueView"
                 }
               }
             }
@@ -557,7 +557,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -576,10 +576,10 @@
                 "schema": {
                   "anyOf": [
                     {
-                      "$ref": "#/components/schemas/ErroresDeSede"
+                      "$ref": "#/components/schemas/VenueErrors"
                     },
                     {
-                      "$ref": "#/components/schemas/ReservasFueraDelHorario"
+                      "$ref": "#/components/schemas/BookingsOutside"
                     }
                   ],
                   "title": "Response 409 Edicion De Sede Sedes  Sede Id  Put"
@@ -591,7 +591,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeSede"
+                  "$ref": "#/components/schemas/VenueErrors"
                 }
               }
             },
@@ -631,7 +631,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -648,7 +648,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErroresDeSede"
+                  "$ref": "#/components/schemas/VenueErrors"
                 }
               }
             }
@@ -689,7 +689,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -782,7 +782,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -837,7 +837,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -919,7 +919,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -991,7 +991,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1047,7 +1047,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1168,7 +1168,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1292,7 +1292,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1355,7 +1355,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1410,7 +1410,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1482,7 +1482,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1564,7 +1564,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1745,7 +1745,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1806,7 +1806,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1881,7 +1881,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -1943,7 +1943,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -1999,7 +1999,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -2046,7 +2046,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -2075,7 +2075,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             }
@@ -2121,7 +2121,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SinSesion"
+                  "$ref": "#/components/schemas/NoSession"
                 }
               }
             },
@@ -2158,6 +2158,19 @@
           "token"
         ],
         "title": "BajaDeDispositivo"
+      },
+      "BookingsOutside": {
+        "properties": {
+          "reservas_afuera": {
+            "type": "integer",
+            "title": "Reservas Afuera"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reservas_afuera"
+        ],
+        "title": "BookingsOutside"
       },
       "Catalogo": {
         "properties": {
@@ -2196,17 +2209,6 @@
         ],
         "title": "Centro"
       },
-      "ConsultaDeEnlace": {
-        "properties": {
-          "codigo": {
-            "type": "string",
-            "title": "Codigo",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "ConsultaDeEnlace"
-      },
       "ContadoresVista": {
         "properties": {
           "todas": {
@@ -2235,22 +2237,6 @@
         ],
         "title": "ContadoresVista"
       },
-      "ContrasenaNueva": {
-        "properties": {
-          "codigo": {
-            "type": "string",
-            "title": "Codigo",
-            "default": ""
-          },
-          "nueva": {
-            "type": "string",
-            "title": "Nueva",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "ContrasenaNueva"
-      },
       "DeporteVista": {
         "properties": {
           "clave": {
@@ -2277,6 +2263,35 @@
         ],
         "title": "DeporteVista"
       },
+      "DuplicateUser": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "campos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Campos"
+          },
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "campos",
+          "errores"
+        ],
+        "title": "DuplicateUser"
+      },
       "Errores": {
         "properties": {
           "errores": {
@@ -2292,54 +2307,6 @@
           "errores"
         ],
         "title": "Errores"
-      },
-      "ErroresDeCampo": {
-        "properties": {
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "errores"
-        ],
-        "title": "ErroresDeCampo"
-      },
-      "ErroresDeContrasena": {
-        "properties": {
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "errores"
-        ],
-        "title": "ErroresDeContrasena"
-      },
-      "ErroresDeSede": {
-        "properties": {
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "errores"
-        ],
-        "title": "ErroresDeSede"
       },
       "EspacioVista": {
         "properties": {
@@ -2400,6 +2367,22 @@
           "precio_por_hora"
         ],
         "title": "EspacioVista"
+      },
+      "FieldErrors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "FieldErrors"
       },
       "FranjaVista": {
         "properties": {
@@ -2510,6 +2493,28 @@
         ],
         "title": "HistorialVista"
       },
+      "LinkCheck": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "LinkCheck"
+      },
+      "LinkRequest": {
+        "properties": {
+          "correo": {
+            "type": "string",
+            "title": "Correo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "LinkRequest"
+      },
       "ListaDeEspacios": {
         "properties": {
           "espacios": {
@@ -2541,6 +2546,35 @@
           "reservas"
         ],
         "title": "ListaDeReservas"
+      },
+      "NewPassword": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo",
+            "default": ""
+          },
+          "nueva": {
+            "type": "string",
+            "title": "Nueva",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "NewPassword"
+      },
+      "NoSession": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "NoSession"
       },
       "NotificacionVista": {
         "properties": {
@@ -2600,7 +2634,50 @@
         ],
         "title": "NotificacionVista"
       },
-      "PedidoCambioDeContrasena": {
+      "OwnProfile": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "apellido": {
+            "type": "string",
+            "title": "Apellido"
+          },
+          "correo": {
+            "type": "string",
+            "title": "Correo"
+          },
+          "rol": {
+            "type": "string",
+            "enum": [
+              "usuario",
+              "admin"
+            ],
+            "title": "Rol"
+          },
+          "dni": {
+            "type": "string",
+            "title": "Dni"
+          },
+          "fecha_nacimiento": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Nacimiento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "apellido",
+          "correo",
+          "rol",
+          "dni",
+          "fecha_nacimiento"
+        ],
+        "title": "OwnProfile"
+      },
+      "PasswordChangeRequest": {
         "properties": {
           "actual": {
             "type": "string",
@@ -2614,7 +2691,23 @@
           }
         },
         "type": "object",
-        "title": "PedidoCambioDeContrasena"
+        "title": "PasswordChangeRequest"
+      },
+      "PasswordErrors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "PasswordErrors"
       },
       "PedidoDeAnulacion": {
         "properties": {
@@ -2754,83 +2847,6 @@
         ],
         "title": "PedidoDeDispositivo"
       },
-      "PedidoDeEdicionDePerfil": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre",
-            "default": ""
-          },
-          "apellido": {
-            "type": "string",
-            "title": "Apellido",
-            "default": ""
-          },
-          "dni": {
-            "type": "string",
-            "title": "Dni",
-            "default": ""
-          },
-          "fecha_nacimiento": {
-            "type": "string",
-            "title": "Fecha Nacimiento",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEdicionDePerfil"
-      },
-      "PedidoDeEdicionDeSede": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre",
-            "default": ""
-          },
-          "direccion": {
-            "type": "string",
-            "title": "Direccion",
-            "default": ""
-          },
-          "apertura": {
-            "type": "string",
-            "title": "Apertura",
-            "default": ""
-          },
-          "cierre": {
-            "type": "string",
-            "title": "Cierre",
-            "default": ""
-          },
-          "dias": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "maxItems": 7,
-            "title": "Dias",
-            "default": []
-          },
-          "confirmar": {
-            "type": "boolean",
-            "title": "Confirmar",
-            "default": false
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEdicionDeSede"
-      },
-      "PedidoDeEnlace": {
-        "properties": {
-          "correo": {
-            "type": "string",
-            "title": "Correo",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEnlace"
-      },
       "PedidoDeEspacio": {
         "properties": {
           "sede_id": {
@@ -2933,42 +2949,47 @@
         ],
         "title": "PedidoDeReserva"
       },
-      "PedidoDeSede": {
+      "ProfileEditRequest": {
         "properties": {
           "nombre": {
             "type": "string",
             "title": "Nombre",
             "default": ""
           },
-          "direccion": {
+          "apellido": {
             "type": "string",
-            "title": "Direccion",
+            "title": "Apellido",
             "default": ""
           },
-          "apertura": {
+          "dni": {
             "type": "string",
-            "title": "Apertura",
+            "title": "Dni",
             "default": ""
           },
-          "cierre": {
+          "fecha_nacimiento": {
             "type": "string",
-            "title": "Cierre",
+            "title": "Fecha Nacimiento",
             "default": ""
-          },
-          "dias": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "maxItems": 7,
-            "title": "Dias",
-            "default": []
           }
         },
         "type": "object",
-        "title": "PedidoDeSede"
+        "title": "ProfileEditRequest"
       },
-      "PedidoRegistro": {
+      "RegistrationCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "RegistrationCreated"
+      },
+      "RegistrationRequest": {
         "properties": {
           "nombre": {
             "type": "string",
@@ -3002,64 +3023,7 @@
           }
         },
         "type": "object",
-        "title": "PedidoRegistro"
-      },
-      "PerfilPropio": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "apellido": {
-            "type": "string",
-            "title": "Apellido"
-          },
-          "correo": {
-            "type": "string",
-            "title": "Correo"
-          },
-          "rol": {
-            "type": "string",
-            "enum": [
-              "usuario",
-              "admin"
-            ],
-            "title": "Rol"
-          },
-          "dni": {
-            "type": "string",
-            "title": "Dni"
-          },
-          "fecha_nacimiento": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha Nacimiento"
-          }
-        },
-        "type": "object",
-        "required": [
-          "nombre",
-          "apellido",
-          "correo",
-          "rol",
-          "dni",
-          "fecha_nacimiento"
-        ],
-        "title": "PerfilPropio"
-      },
-      "RegistroCreado": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id"
-        ],
-        "title": "RegistroCreado"
+        "title": "RegistrationRequest"
       },
       "ReservaHistorialVista": {
         "properties": {
@@ -3335,20 +3299,190 @@
         ],
         "title": "ReservaVista"
       },
-      "ReservasFueraDelHorario": {
+      "Sugerencia": {
         "properties": {
-          "reservas_afuera": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "numero": {
             "type": "integer",
-            "title": "Reservas Afuera"
+            "title": "Numero"
           }
         },
         "type": "object",
         "required": [
-          "reservas_afuera"
+          "nombre",
+          "numero"
         ],
-        "title": "ReservasFueraDelHorario"
+        "title": "Sugerencia"
       },
-      "SedeVista": {
+      "TipoVista": {
+        "properties": {
+          "clave": {
+            "type": "string",
+            "title": "Clave"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clave",
+          "nombre"
+        ],
+        "title": "TipoVista"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VenueEditRequest": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "default": ""
+          },
+          "direccion": {
+            "type": "string",
+            "title": "Direccion",
+            "default": ""
+          },
+          "apertura": {
+            "type": "string",
+            "title": "Apertura",
+            "default": ""
+          },
+          "cierre": {
+            "type": "string",
+            "title": "Cierre",
+            "default": ""
+          },
+          "dias": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 7,
+            "title": "Dias",
+            "default": []
+          },
+          "confirmar": {
+            "type": "boolean",
+            "title": "Confirmar",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "VenueEditRequest"
+      },
+      "VenueErrors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "VenueErrors"
+      },
+      "VenueList": {
+        "properties": {
+          "sedes": {
+            "items": {
+              "$ref": "#/components/schemas/VenueView"
+            },
+            "type": "array",
+            "title": "Sedes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sedes"
+        ],
+        "title": "VenueList"
+      },
+      "VenueRequest": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "default": ""
+          },
+          "direccion": {
+            "type": "string",
+            "title": "Direccion",
+            "default": ""
+          },
+          "apertura": {
+            "type": "string",
+            "title": "Apertura",
+            "default": ""
+          },
+          "cierre": {
+            "type": "string",
+            "title": "Cierre",
+            "default": ""
+          },
+          "dias": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 7,
+            "title": "Dias",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "VenueRequest"
+      },
+      "VenueView": {
         "properties": {
           "id": {
             "type": "string",
@@ -3401,141 +3535,7 @@
           "canchas",
           "deportes"
         ],
-        "title": "SedeVista"
-      },
-      "Sedes": {
-        "properties": {
-          "sedes": {
-            "items": {
-              "$ref": "#/components/schemas/SedeVista"
-            },
-            "type": "array",
-            "title": "Sedes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "sedes"
-        ],
-        "title": "Sedes"
-      },
-      "SinSesion": {
-        "properties": {
-          "detail": {
-            "type": "string",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "required": [
-          "detail"
-        ],
-        "title": "SinSesion"
-      },
-      "Sugerencia": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "numero": {
-            "type": "integer",
-            "title": "Numero"
-          }
-        },
-        "type": "object",
-        "required": [
-          "nombre",
-          "numero"
-        ],
-        "title": "Sugerencia"
-      },
-      "TipoVista": {
-        "properties": {
-          "clave": {
-            "type": "string",
-            "title": "Clave"
-          },
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          }
-        },
-        "type": "object",
-        "required": [
-          "clave",
-          "nombre"
-        ],
-        "title": "TipoVista"
-      },
-      "UsuarioRepetido": {
-        "properties": {
-          "mensaje": {
-            "type": "string",
-            "title": "Mensaje"
-          },
-          "campos": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Campos"
-          },
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "mensaje",
-          "campos",
-          "errores"
-        ],
-        "title": "UsuarioRepetido"
-      },
-      "ValidationError": {
-        "properties": {
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "type": "array",
-            "title": "Location"
-          },
-          "msg": {
-            "type": "string",
-            "title": "Message"
-          },
-          "type": {
-            "type": "string",
-            "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
-          }
-        },
-        "type": "object",
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationError"
+        "title": "VenueView"
       }
     },
     "securitySchemes": {

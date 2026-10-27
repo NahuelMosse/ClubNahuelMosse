@@ -17,7 +17,8 @@ from app.modules.espacios.reglas import (
     SedeDelEspacio,
     validar_espacio,
 )
-from app.modules.sesion.perfil import Perfil, Rol
+from app.modules.session.profile import Profile as Perfil
+from app.modules.session.profile import Role as Rol
 from app.shared.errors import Forbidden, InvalidData, Unavailable
 
 VALIDOS = DatosEspacio(
@@ -75,12 +76,12 @@ def _perfil(rol: Rol) -> Perfil:
     return Perfil(
         id=UUID(int=7),
         uid="uid",
-        nombre="Ana",
-        apellido="Díaz",
-        correo="ana@club.com",
-        rol=rol,
+        first_name="Ana",
+        last_name="Díaz",
+        email="ana@club.com",
+        role=rol,
         dni="20000001",
-        fecha_nacimiento=date(1985, 6, 1),
+        birth_date=date(1985, 6, 1),
     )
 
 

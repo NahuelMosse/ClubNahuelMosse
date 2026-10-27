@@ -3,16 +3,16 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-Rol = Literal["usuario", "admin"]
+Role = Literal["usuario", "admin"]
 
 
 @dataclass(frozen=True)
-class Perfil:
+class Profile:
     id: UUID
     uid: str
-    nombre: str
-    apellido: str
-    correo: str
-    rol: Rol
+    first_name: str
+    last_name: str
+    email: str
+    role: Role
     dni: str
-    fecha_nacimiento: date
+    birth_date: date

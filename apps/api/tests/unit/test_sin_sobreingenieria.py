@@ -98,10 +98,10 @@ def test_docs_y_openapi_responden_con_la_configuracion_de_render() -> None:
 def test_un_texto_largo_o_con_control_ya_no_se_rechaza_y_las_horas_siguen_de_1_a_4() -> None:
     """un texto largo o con caracteres de control ya no se rechaza y las horas siguen siendo de 1 a 4 @SIM-01-S1 @assumption:SIM-01-ASM-05"""
     from app.modules.horarios.reglas import error_de_duracion
-    from app.modules.sedes.rutas import PedidoDeSede
+    from app.modules.venues.routes import VenueRequest
     from app.shared.input_validation import parse_time
 
-    pedido = PedidoDeSede(nombre="x" * 500 + "\x00", direccion="y" * 500, apertura="08:00")
+    pedido = VenueRequest(nombre="x" * 500 + "\x00", direccion="y" * 500, apertura="08:00")
     assert len(pedido.nombre) == 501
     assert "maxLength" not in str(create_app().openapi())
     assert parse_time("08:00") is not None and parse_time("8:00") is None

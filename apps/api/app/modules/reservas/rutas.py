@@ -25,7 +25,7 @@ from app.modules.reservas.reglas import (
     ReservaHistorial,
 )
 from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
-from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.modules.session import NoSession, Profile, current_user
 from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
 from app.shared.errors import ConcurrentChange, InvalidData, SlotTaken, Unavailable
 from app.shared.input_validation import Identifier, parse_time
@@ -76,7 +76,7 @@ def _vista(r: Reserva) -> ReservaVista:
 @router.get(
     "/reservas",
     response_model=ListaDeReservas,
-    responses={401: {"model": SinSesion}, 422: {"model": Errores}},
+    responses={401: {"model": NoSession}, 422: {"model": Errores}},
     summary="Las reservas de quien consulta",
     description=(
         "`proximas`: las activas que no terminaron, de la más cercana a la más lejana. "
@@ -85,7 +85,7 @@ def _vista(r: Reserva) -> ReservaVista:
     ),
 )
 def listar_reservas(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     cuando: Annotated[Cuando, Query()] = "proximas",
 ) -> ListaDeReservas:
@@ -105,7 +105,7 @@ class PedidoDeReserva(BaseModel):
     status_code=status.HTTP_201_CREATED,
     response_model=ReservaVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "El administrador no reserva"},
         409: {"model": Errores, "description": "Otra reserva activa pisa ese horario"},
         422: {"model": Errores},
@@ -120,7 +120,7 @@ class PedidoDeReserva(BaseModel):
 )
 def hacer_reserva(
     pedido: PedidoDeReserva,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
 ) -> ReservaVista | Response:
     try:
@@ -147,7 +147,7 @@ CAMBIO = "Esto cambió mientras tanto"
     "/reservas/{reserva_id}/cancelar",
     response_model=ReservaVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         404: {"description": "No hay una reserva de quien pide con ese número"},
         409: {"model": Errores, "description": "La reserva ya no está activa o ya empezó"},
     },
@@ -159,7 +159,7 @@ CAMBIO = "Esto cambió mientras tanto"
     ),
 )
 def cancelar(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identifier, Path()],
     despues: BackgroundTasks,
@@ -183,7 +183,7 @@ class PedidoDeCambioDeReserva(BaseModel):
     "/reservas/{reserva_id}/modificar",
     response_model=ReservaVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Un administrador no reserva"},
         404: {"description": "No hay una reserva de quien pide con ese número"},
         409: {
@@ -203,7 +203,7 @@ class PedidoDeCambioDeReserva(BaseModel):
 )
 def modificar(
     pedido: PedidoDeCambioDeReserva,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identifier, Path()],
 ) -> ReservaVista | Response:
@@ -261,7 +261,7 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
     "/reservas/todas",
     response_model=HistorialVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador consulta el historial global"},
         422: {"model": Errores},
     },
@@ -274,7 +274,7 @@ def _vista_admin(r: ReservaHistorial) -> ReservaHistorialVista:
     ),
 )
 def listar_todas(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     estado: Annotated[FiltroEstado | None, Query()] = None,
     sede_id: Annotated[Identifier | None, Query()] = None,
@@ -310,14 +310,14 @@ def listar_todas(
     "/reservas/todas/{reserva_id}",
     response_model=ReservaHistorialVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador consulta el detalle de cualquier reserva"},
         404: {"description": "No hay una reserva con ese número"},
     },
     summary="El detalle de cualquier reserva (CU-14)",
 )
 def detalle(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identifier, Path()],
 ) -> ReservaHistorialVista:
@@ -334,7 +334,7 @@ class PedidoDeAnulacion(BaseModel):
     "/reservas/{reserva_id}/anular",
     response_model=ReservaHistorialVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador anula una reserva"},
         404: {"description": "No hay una reserva con ese número"},
         409: {"model": Errores, "description": "La reserva ya no está activa, ya empezó o cambió"},
@@ -351,7 +351,7 @@ class PedidoDeAnulacion(BaseModel):
 )
 def anular(
     pedido: PedidoDeAnulacion,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identifier, Path()],
     despues: BackgroundTasks,

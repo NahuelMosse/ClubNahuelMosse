@@ -8,7 +8,7 @@ from app.modules.notificaciones.reglas import CanalNoConfigurado as CanalNoConfi
 from app.modules.notificaciones.reglas import CanalPush as CanalPush
 from app.modules.notificaciones.reglas import Pendiente as Pendiente
 from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
-from app.modules.sesion import Perfil
+from app.modules.session import Profile
 from app.shared.errors import Forbidden, InvalidData, NotFound, Unavailable
 
 PLATAFORMAS = ("android", "ios")
@@ -114,7 +114,7 @@ def enviar_recordatorios(
 
 def registrar_dispositivo(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     notificaciones: Notificaciones,
-    perfil: Perfil,
+    perfil: Profile,
     token: str,
     plataforma: str,
     permiso: bool,  # noqa: FBT001
@@ -124,7 +124,7 @@ def registrar_dispositivo(  # noqa: PLR0913, PLR0917 -- firma pública fijada po
     Lanza `Forbidden` si es administrador, `InvalidData` si falta el token o la plataforma
     no existe y `Unavailable` si la cuenta ya no está activa.
     """
-    if perfil.rol != "usuario":
+    if perfil.role != "usuario":
         raise Forbidden("sólo un usuario recibe avisos")
     errores: dict[str, str] = {}
     if not token.strip():
@@ -137,22 +137,22 @@ def registrar_dispositivo(  # noqa: PLR0913, PLR0917 -- firma pública fijada po
         raise Unavailable("la cuenta ya no está activa")
 
 
-def dar_de_baja_dispositivo(notificaciones: Notificaciones, perfil: Perfil, token: str) -> None:
+def dar_de_baja_dispositivo(notificaciones: Notificaciones, perfil: Profile, token: str) -> None:
     """Al cerrar la sesión, el teléfono deja de recibir los avisos de esta cuenta."""
     notificaciones.baja_dispositivo(perfil.id, token.strip())
 
 
 def mis_notificaciones(
-    notificaciones: Notificaciones, perfil: Perfil
+    notificaciones: Notificaciones, perfil: Profile
 ) -> tuple[list[Notificacion], int]:
     return notificaciones.de_usuario(perfil.id)
 
 
-def marcar_leida(notificaciones: Notificaciones, perfil: Perfil, notificacion_id: UUID) -> None:
+def marcar_leida(notificaciones: Notificaciones, perfil: Profile, notificacion_id: UUID) -> None:
     """Lanza `NotFound` si la notificación no es de quien pide."""
     if not notificaciones.leer(perfil.id, notificacion_id):
         raise NotFound("no hay una notificación suya con ese número")
 
 
-def marcar_todas(notificaciones: Notificaciones, perfil: Perfil) -> None:
+def marcar_todas(notificaciones: Notificaciones, perfil: Profile) -> None:
     notificaciones.leer_todas(perfil.id)

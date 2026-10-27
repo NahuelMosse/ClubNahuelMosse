@@ -16,7 +16,7 @@ from app.modules.espacios.casos_de_uso import (
 )
 from app.modules.espacios.reglas import DatosEspacio, Espacio
 from app.modules.espacios.repositorio import EspaciosSql, repositorio_espacios
-from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.modules.session import NoSession, Profile, current_user
 from app.shared.errors import (
     Duplicate,
     HasFutureBookings,
@@ -51,10 +51,10 @@ class Catalogo(BaseModel):
 @router.get(
     "/espacios/catalogo",
     response_model=Catalogo,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="Los deportes y sus tipos de cancha",
 )
-def ver_catalogo(_: Annotated[Perfil, Depends(usuario_actual)]) -> Catalogo:
+def ver_catalogo(_: Annotated[Profile, Depends(current_user)]) -> Catalogo:
     return Catalogo(
         deportes=[DeporteVista.model_validate(d, from_attributes=True) for d in catalogo()]
     )
@@ -84,11 +84,11 @@ def vista_de_espacio(e: Espacio) -> EspacioVista:
 @router.get(
     "/espacios",
     response_model=ListaDeEspacios,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="Los espacios activos de las sedes activas, por sede, deporte, tipo y número",
 )
 def listar_espacios(
-    _: Annotated[Perfil, Depends(usuario_actual)],
+    _: Annotated[Profile, Depends(current_user)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     sede_id: Annotated[Identifier | None, Query()] = None,
     deporte: Annotated[str | None, Query(min_length=1)] = None,
@@ -111,14 +111,14 @@ class Errores(BaseModel):
     "/espacios/nombre",
     response_model=Sugerencia,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador da de alta espacios"},
         422: {"model": Errores},
     },
     summary="El nombre que tendría el próximo espacio de ese tipo en esa sede",
 )
 def sugerir_nombre(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     sede_id: Annotated[Identifier, Query()],
     deporte: Annotated[str, Query()],
@@ -146,7 +146,7 @@ class PedidoDeEspacio(BaseModel):
     status_code=status.HTTP_201_CREATED,
     response_model=EspacioVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador da de alta espacios"},
         409: {
             "description": (
@@ -165,7 +165,7 @@ class PedidoDeEspacio(BaseModel):
 )
 def alta_de_espacio(
     pedido: PedidoDeEspacio,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
 ) -> EspacioVista | Response:
     datos = DatosEspacio(
@@ -211,7 +211,7 @@ class PedidoDeCambioDeEspacio(BaseModel):
     "/espacios/{espacio_id}",
     response_model=EspacioVista,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador edita espacios"},
         404: {"description": "El espacio o su sede ya no están activos"},
         422: {"model": Errores},
@@ -225,7 +225,7 @@ class PedidoDeCambioDeEspacio(BaseModel):
 )
 def edicion_de_espacio(
     pedido: PedidoDeCambioDeEspacio,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     espacio_id: Annotated[Identifier, Path()],
 ) -> EspacioVista:
@@ -245,7 +245,7 @@ def edicion_de_espacio(
     "/espacios/{espacio_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador da de baja espacios"},
         404: {"description": "El espacio ya no está activo"},
         409: {"model": Errores, "description": "El espacio tiene reservas que no terminaron"},
@@ -257,7 +257,7 @@ def edicion_de_espacio(
     ),
 )
 def baja_de_espacio(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     espacio_id: Annotated[Identifier, Path()],
 ) -> Response:
