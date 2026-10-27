@@ -1,6 +1,6 @@
 import pytest
 
-from app.modules.espacios.reglas import nombre_compuesto
+from app.modules.spaces.rules import composite_name
 
 
 @pytest.mark.parametrize(
@@ -48,21 +48,21 @@ from app.modules.espacios.reglas import nombre_compuesto
 def test_nombre_compuesto(
     sede: str, calle: str, altura: int, deporte: str, tipo: str, numero: int, esperado: str
 ) -> None:
-    assert nombre_compuesto(sede, calle, altura, deporte, tipo, numero) == esperado
+    assert composite_name(sede, calle, altura, deporte, tipo, numero) == esperado
 
 
 @pytest.mark.parametrize(("altura", "numero"), [(0, 1), (19850, 0), (-1, 1), (True, 1), (1, True)])
 def test_altura_y_numero_positivos(altura: int, numero: int) -> None:
     with pytest.raises(ValueError):
-        nombre_compuesto("Sede Morón", "Av. Rivadavia", altura, "Fútbol", "F5", numero)
+        composite_name("Sede Morón", "Av. Rivadavia", altura, "Fútbol", "F5", numero)
 
 
 @pytest.mark.parametrize("vacio", ["", "   ", "Sede ", "Sede", "¡!"])
 def test_partes_vacias(vacio: str) -> None:
     with pytest.raises(ValueError):
-        nombre_compuesto(vacio, "Av. Rivadavia", 19850, "Fútbol", "F5", 1)
+        composite_name(vacio, "Av. Rivadavia", 19850, "Fútbol", "F5", 1)
 
 
 def test_tipo_sin_letras_se_rechaza() -> None:
     with pytest.raises(ValueError):
-        nombre_compuesto("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "¡!", 1)
+        composite_name("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "¡!", 1)

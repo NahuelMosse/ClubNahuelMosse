@@ -6,7 +6,7 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.horarios.reglas import Agenda
+from app.modules.availability.rules import OpeningHours
 from app.modules.reservas.casos_de_uso import (
     MOTIVO_MAXIMO,
     anular_reserva,
@@ -38,7 +38,7 @@ from app.shared.errors import (
 ZONA = timezone(timedelta(hours=-3))
 AHORA = datetime(2026, 3, 2, 10, 0, tzinfo=ZONA)  # lunes
 MANANA = date(2026, 3, 3)
-AGENDA = Agenda(apertura=time(8, 0), cierre=time(23, 0), dias=(1, 2, 3, 4, 5, 6, 7))
+AGENDA = OpeningHours(opens_at=time(8, 0), closes_at=time(23, 0), open_days=(1, 2, 3, 4, 5, 6, 7))
 
 
 def _id(numero: int) -> UUID:
@@ -77,7 +77,7 @@ def _historial(**cambios: object) -> ReservaHistorial:
 
 class Memoria:
     def __init__(self) -> None:
-        self.agenda_actual: Agenda | None = AGENDA
+        self.agenda_actual: OpeningHours | None = AGENDA
         self.repetida_hecha: Reserva | None = None
         self.propia_de: Reserva | None = None
         self.tipo: tuple[UUID, str, str] | None = (_id(1), "futbol", "5")

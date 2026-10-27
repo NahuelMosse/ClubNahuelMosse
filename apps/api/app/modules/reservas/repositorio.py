@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Row, text
 from sqlalchemy.exc import IntegrityError
 
-from app.modules.horarios import Agenda, HorariosSql, agenda_de_fila
+from app.modules.availability import AvailabilitySql, OpeningHours, opening_hours_of_row
 from app.modules.notificaciones import (
     DatosDeReserva,
     NotificacionesSql,
@@ -141,8 +141,8 @@ class ReservasSql:
         self._conn.rollback()
         return [Reserva(**f._mapping) for f in filas]
 
-    def agenda(self, espacio_id: UUID) -> Agenda | None:
-        return HorariosSql(self._conn).agenda(espacio_id)
+    def agenda(self, espacio_id: UUID) -> OpeningHours | None:
+        return AvailabilitySql(self._conn).opening_hours(espacio_id)
 
     def _id_repetida(self, datos: dict[str, Any]) -> UUID | None:
         """La reserva activa que el mismo pedido ya hizo hace un momento, si la hay."""
@@ -189,11 +189,11 @@ class ReservasSql:
         self._conn.rollback()
         return None if fila is None else (fila.sede_id, fila.deporte, fila.tipo)
 
-    def _sede_vigente(self, datos: dict[str, Any], agenda: Agenda) -> Row[Any] | None:
+    def _sede_vigente(self, datos: dict[str, Any], agenda: OpeningHours) -> Row[Any] | None:
         """Toma compartida la sede del espacio, que así fija su horario: si cambió desde que se
         validó la reserva, se vuelve a validar con el nuevo."""
         sede = self._conn.execute(text(_SEDE_COMPARTIDA), datos).first()
-        if sede is not None and agenda_de_fila(sede) != agenda:
+        if sede is not None and opening_hours_of_row(sede) != agenda:
             raise OpeningHoursChanged("la sede cambió de horario")
         return sede
 
@@ -205,7 +205,7 @@ class ReservasSql:
         espacio_id: UUID,
         inicio: datetime,
         fin: datetime,
-        agenda: Agenda,
+        agenda: OpeningHours,
     ) -> Reserva:
         datos = {
             "usuario": usuario_id,
@@ -309,7 +309,7 @@ class ReservasSql:
             {"id": usuario_id},
         )
 
-    def _bloquear_para_alta(self, datos: dict[str, Any], agenda: Agenda) -> Row[Any]:
+    def _bloquear_para_alta(self, datos: dict[str, Any], agenda: OpeningHours) -> Row[Any]:
         """La cuenta y la sede se toman compartidas, para que ninguna se dé de baja en el
         medio; el espacio, exclusivo: dos reservas del mismo espacio pasan de a una. Sin eso,
         cada una ve en el índice de la exclusión la fila sin confirmar de la otra y la base
@@ -331,7 +331,12 @@ class ReservasSql:
         return espacio
 
     def insertar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
-        self, usuario_id: UUID, espacio_id: UUID, inicio: datetime, fin: datetime, agenda: Agenda
+        self,
+        usuario_id: UUID,
+        espacio_id: UUID,
+        inicio: datetime,
+        fin: datetime,
+        agenda: OpeningHours,
     ) -> Reserva:
         datos = {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
         with _horario_ocupado(), in_transaction(self._conn):

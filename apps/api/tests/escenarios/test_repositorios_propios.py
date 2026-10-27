@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 
-from app.modules.espacios.repositorio import EspaciosSql
+from app.modules.spaces.repository import SpacesSql
 from app.modules.notificaciones.repositorio import NotificacionesSql
 from app.modules.reservas.repositorio import ReservasSql
 from app.modules.users.repository import UsersSql
@@ -132,13 +132,13 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
 ) -> None:
     """si la baja de una sede falla a mitad de camino no queda ni la sede dada de baja ni sus espacios @REV-06-S6 @assumption:REV-06-ASM-11"""
     mundo = _mundo(motor)
-    original = EspaciosSql.dar_de_baja_de_sede
+    original = SpacesSql.deactivate_venue_spaces
 
-    def escribe_y_cae(self: EspaciosSql, sede_id: UUID, autor: UUID) -> None:
-        original(self, sede_id, autor)
+    def escribe_y_cae(self: SpacesSql, venue_id: UUID, author: UUID) -> None:
+        original(self, venue_id, author)
         raise RuntimeError("falla después de escribir los espacios")
 
-    monkeypatch.setattr(EspaciosSql, "dar_de_baja_de_sede", escribe_y_cae)
+    monkeypatch.setattr(SpacesSql, "deactivate_venue_spaces", escribe_y_cae)
     with motor.connect() as conn, pytest.raises(RuntimeError):
         VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
     assert _uno(motor, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])

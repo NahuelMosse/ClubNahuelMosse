@@ -7,11 +7,11 @@ from fastapi import FastAPI
 
 from app import e2e_support, health
 from app.modules import (
-    espacios,
-    horarios,
+    availability,
     notificaciones,
     password_recovery,
     reservas,
+    spaces,
     users,
     venues,
 )
@@ -51,8 +51,8 @@ def create_app() -> FastAPI:
     app.include_router(users.router)
     app.include_router(password_recovery.router)
     app.include_router(venues.router)
-    app.include_router(espacios.router)
-    app.include_router(horarios.router)
+    app.include_router(spaces.router)
+    app.include_router(availability.router)
     app.include_router(reservas.router)
     app.include_router(notificaciones.router)
     # The outbox only opens against the emulator, never in production.

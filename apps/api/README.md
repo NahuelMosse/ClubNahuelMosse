@@ -82,7 +82,7 @@ FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; f
 
 ## Catálogo de deportes
 
-El catálogo es fijo y vive en `app/modules/espacios/reglas.py`; la app lo pide con `GET /espacios/catalogo`.
+El catálogo es fijo y vive en `app/modules/spaces/rules.py`; la app lo pide con `GET /espacios/catalogo`.
 Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
 (B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
 

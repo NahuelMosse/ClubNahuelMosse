@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Literal, Protocol
 from uuid import UUID
 
-from app.modules.espacios import CATALOGO
+from app.modules.spaces import CATALOG
 from app.shared.club_timezone import CLUB_TIMEZONE
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
@@ -111,11 +111,11 @@ class AvisoPerdido:
 
 def tipo_corto(deporte: str, tipo: str) -> str:
     """«Fútbol 5»; sólo «Tenis» si el tipo no nombra al deporte («Polvo de ladrillo»)."""
-    d = next((d for d in CATALOGO if d.clave == deporte), None)
-    t = None if d is None else next((t for t in d.tipos if t.clave == tipo), None)
+    d = next((d for d in CATALOG if d.key == deporte), None)
+    t = None if d is None else next((t for t in d.kinds if t.key == tipo), None)
     if d is None or t is None:
         return deporte
-    return t.nombre if t.nombre.startswith(d.nombre) else d.nombre
+    return t.name if t.name.startswith(d.name) else d.name
 
 
 def _hora(momento: datetime) -> str:

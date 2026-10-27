@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import time
 from uuid import UUID
 
-from app.modules.espacios import parte_de_calle, parte_de_sede
+from app.modules.spaces import street_part, venue_part
 
 NAME_MAX_LENGTH = 60
 ADDRESS_MAX_LENGTH = 80
@@ -81,7 +81,7 @@ def validate_venue(data: VenueData) -> tuple[NewVenue | None, dict[str, str]]:
         errors["nombre"] = "El nombre es obligatorio"
     elif len(name) > NAME_MAX_LENGTH:
         errors["nombre"] = f"Usá hasta {NAME_MAX_LENGTH} caracteres"
-    elif not parte_de_sede(name):
+    elif not venue_part(name):
         # Without it the venue's spaces would have no composite name (RF 5).
         errors["nombre"] = "Escribí el nombre de la sede"
 
@@ -91,7 +91,7 @@ def validate_venue(data: VenueData) -> tuple[NewVenue | None, dict[str, str]]:
         errors["direccion"] = "La dirección es obligatoria"
     elif len(address) > ADDRESS_MAX_LENGTH:
         errors["direccion"] = f"Usá hasta {ADDRESS_MAX_LENGTH} caracteres"
-    elif parts is None or int(parts["number"]) == 0 or not parte_de_calle(parts["street"]):
+    elif parts is None or int(parts["number"]) == 0 or not street_part(parts["street"]):
         errors["direccion"] = "Escribí la calle y la altura"
 
     errors |= _hours_errors(data.opens_at, data.closes_at)

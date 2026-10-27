@@ -8,7 +8,7 @@ nombre, no por línea: buscalos con el buscador del editor.
 
 | Busco | Está en |
 |---|---|
-| Las reglas de una reserva (1 a 4 horas, 7 días a la vista, horario de la sede) | `apps/api/app/modules/horarios/reglas.py` (`validar_reserva`, `error_de_duracion`, `MIN_HORAS`, `MAX_HORAS`, `DIAS_A_LA_VISTA`) |
+| Las reglas de una reserva (1 a 4 horas, 7 días a la vista, horario de la sede) | `apps/api/app/modules/availability/rules.py` (`validate_booking`, `duration_error`, `MIN_HOURS`, `MAX_HOURS`, `DAYS_IN_VIEW`) |
 | Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `ReservasSql.insertar` en `apps/api/app/modules/reservas/repositorio.py`, que traduce el error `23P01` a `HorarioOcupado` |
 | El caso de uso «reservar» | `apps/api/app/modules/reservas/casos_de_uso.py` (`reservar`) |
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
@@ -92,9 +92,9 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 | Funcionalidad | Archivos | App |
 |---|---|---|
 | `reservas` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py` | `reservas/` |
-| `horarios` | `rutas.py`, `casos_de_uso.py`, `disponibilidad.py`, `reglas.py`, `repositorio.py` | `reservas/` |
+| `availability` | `routes.py`, `use_cases.py`, `slots.py`, `rules.py`, `repository.py` | `reservas/` |
 | `venues` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sedes/`, `admin/` |
-| `espacios` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `espacios/`, `admin/` |
+| `spaces` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `espacios/`, `admin/` |
 | `users` | `registration_routes.py`, `account_routes.py`, `registration.py`, `profile.py`, `password.py`, `deactivation.py`, `admins.py`, `seed_admin.py`, `rules.py`, `repository.py` | `usuarios/` |
 | `session` | `use_cases.py`, `profile.py`, `current_user.py`, `repository.py` | `sesion/` |
 | `password_recovery` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py`, `email.py` | `sesion/` |
@@ -136,8 +136,8 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 | `session` | `Profile`, `authenticated_profile` (del token al `Profile`), `current_user` (la dependencia de autenticación), `ProfilesSql` | — (lee `usuario`) |
 | `users` | `register`, `update_profile`, `change_password`, `deactivate` (la cuenta), `seed_admin` (y su comando), reglas de registro y perfil, `UsersSql` | `usuario` |
 | `venues` | `active_venues`, `create_venue`, `update_venue`, `deactivate_venue`, `validate_venue`, `VenuesSql` | `sede` |
-| `espacios` | el catálogo fijo (`Deporte`, `Tipo`), `nombre_sugerido`, alta, edición y baja de espacios, `EspaciosSql` | `espacio` |
-| `horarios` | `Agenda`, `grilla`, `validar_reserva`, `horarios_disponibles`, `canchas_disponibles` (`disponibilidad.py`), `HorariosSql` (lecturas) | — |
+| `spaces` | el catálogo fijo (`Sport`, `Kind`), `suggested_name`, alta, edición y baja de espacios, `SpacesSql` | `espacio` |
+| `availability` | `OpeningHours`, `slot_grid`, `validate_booking`, `available_slots`, `available_spaces` (`slots.py`), `AvailabilitySql` (lecturas) | — |
 | `reservas` | `reservar`, `mis_reservas`, `cancelar_reserva`, `modificar_reserva`, `historial_global`, `detalle_admin`, `anular_reserva`, `ReservasSql` (historial paginado por cursor) | `reserva` |
 | `notificaciones` | `ANTICIPACION` (1 h), `enviar_recordatorios`, `despachar_pendientes`, dispositivos y centro de avisos, `NotificacionesSql`, `canal_push` (`push.py`: `CanalFcm`, `CanalNulo`), `barrido.py` (en proceso con `barrer_cada` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
 | `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql`, `email.py` (`send`: SMTP con STARTTLS verificado, o el buzón de desarrollo) | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
@@ -164,14 +164,14 @@ si el rol no es `admin`.
 | POST `/sedes` | `venues/routes.py` | `create_venue` | admin |
 | PUT `/sedes/{sede_id}` | `venues/routes.py` | `update_venue` | admin |
 | DELETE `/sedes/{sede_id}` | `venues/routes.py` | `deactivate_venue` | admin |
-| GET `/espacios/catalogo` | `espacios/rutas.py` | `catalogo` | sesión |
-| GET `/espacios` | `espacios/rutas.py` | `espacios_activos` | sesión |
-| GET `/espacios/nombre` | `espacios/rutas.py` | `nombre_sugerido` | admin |
-| POST `/espacios` | `espacios/rutas.py` | `dar_de_alta_espacio` | admin |
-| PUT `/espacios/{espacio_id}` | `espacios/rutas.py` | `editar_espacio` | admin |
-| DELETE `/espacios/{espacio_id}` | `espacios/rutas.py` | `dar_de_baja_espacio` | admin |
-| GET `/espacios/{espacio_id}/horarios` | `horarios/rutas.py` | `horarios_disponibles` | sesión |
-| GET `/espacios/disponibles` | `horarios/rutas.py` | `canchas_disponibles` | sesión |
+| GET `/espacios/catalogo` | `spaces/routes.py` | `catalog` | sesión |
+| GET `/espacios` | `spaces/routes.py` | `active_spaces` | sesión |
+| GET `/espacios/nombre` | `spaces/routes.py` | `suggested_name` | admin |
+| POST `/espacios` | `spaces/routes.py` | `create_space` | admin |
+| PUT `/espacios/{espacio_id}` | `spaces/routes.py` | `update_space` | admin |
+| DELETE `/espacios/{espacio_id}` | `spaces/routes.py` | `deactivate_space` | admin |
+| GET `/espacios/{espacio_id}/horarios` | `availability/routes.py` | `available_slots` | sesión |
+| GET `/espacios/disponibles` | `availability/routes.py` | `available_spaces` | sesión |
 | GET `/reservas` | `reservas/rutas.py` | `mis_reservas` | sesión |
 | POST `/reservas` | `reservas/rutas.py` | `reservar` | usuario (admin: 403) |
 | POST `/reservas/{id}/cancelar` | `reservas/rutas.py` | `cancelar_reserva`, después despacha el aviso | usuario, sólo sus reservas (una ajena da 404) |

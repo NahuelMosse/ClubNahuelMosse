@@ -127,15 +127,15 @@ def test_el_espacio_pertenece_a_una_sede_y_tiene_nombre_compuesto(db: Connection
     número, sin tildes ni espacios, como en el prototipo; y no hay dos espacios con el mismo número
     del mismo tipo en una sede. Si falla, dos canchas se confunden en una reserva.
     """
-    from app.modules.espacios.reglas import nombre_compuesto
+    from app.modules.spaces.rules import composite_name
 
-    assert nombre_compuesto("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "F5", 1) == (
+    assert composite_name("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "F5", 1) == (
         "Moron_Rivadavia_19850_Futbol_F5_1"
     )
-    assert nombre_compuesto("Sede Ramos Mejía", "Calle Belgrano", 1240, "Hockey", "H7", 1) == (
+    assert composite_name("Sede Ramos Mejía", "Calle Belgrano", 1240, "Hockey", "H7", 1) == (
         "RamosMejia_Belgrano_1240_Hockey_H7_1"
     )
-    assert nombre_compuesto("Sede San Justo", "Av. Casanova", 320, "Golf", "CORTO", 2) == (
+    assert composite_name("Sede San Justo", "Av. Casanova", 320, "Golf", "CORTO", 2) == (
         "SanJusto_Casanova_320_Golf_CORTO_2"
     )
 

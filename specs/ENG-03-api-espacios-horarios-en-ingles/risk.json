@@ -1,0 +1,45 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/spaces/__init__.py",
+    "apps/api/app/modules/spaces/use_cases.py",
+    "apps/api/app/modules/spaces/rules.py",
+    "apps/api/app/modules/spaces/repository.py",
+    "apps/api/app/modules/spaces/routes.py",
+    "apps/api/app/modules/availability/__init__.py",
+    "apps/api/app/modules/availability/use_cases.py",
+    "apps/api/app/modules/availability/slots.py",
+    "apps/api/app/modules/availability/rules.py",
+    "apps/api/app/modules/availability/repository.py",
+    "apps/api/app/modules/availability/routes.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract"
+    ],
+    "why": [
+      "apps/api/app/main.py is shared code (imported by apps/api/tests/conftest.py) and `## Tasks` does not name it",
+      "apps/api/app/modules/notificaciones/reglas.py is shared code (imported by apps/api/app/modules/notificaciones/__init__.py, apps/api/app/modules/notificaciones/almacen.py, apps/api/app/modules/notificaciones/casos_de_uso.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/reservas/almacen.py is shared code (imported by apps/api/app/modules/notificaciones/casos_de_uso.py, apps/api/app/modules/reservas/casos_de_uso.py) and `## Tasks` does not name it",
+      "apps/api/app/modules/reservas/casos_de_uso.py is shared code (imported by apps/api/app/modules/notificaciones/__init__.py, apps/api/app/modules/notificaciones/barrido.py, apps/api/app/modules/notificaciones/rutas.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/reservas/repositorio.py is shared code (imported by apps/api/app/modules/notificaciones/__init__.py, apps/api/app/modules/notificaciones/barrido.py, apps/api/app/modules/notificaciones/rutas.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/sedes/reglas.py is shared code (imported by apps/api/app/modules/notificaciones/__init__.py, apps/api/app/modules/notificaciones/almacen.py, apps/api/app/modules/notificaciones/casos_de_uso.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/sedes/repositorio.py is shared code (imported by apps/api/app/modules/notificaciones/__init__.py, apps/api/app/modules/notificaciones/barrido.py, apps/api/app/modules/notificaciones/rutas.py, …) and `## Tasks` does not name it"
+    ]
+  }
+}

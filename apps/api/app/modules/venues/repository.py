@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Row, text
 from sqlalchemy.exc import IntegrityError
 
-from app.modules.espacios import EspaciosSql
+from app.modules.spaces import SpacesSql
 from app.modules.venues.rules import NewVenue, Venue
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection, in_transaction, violated_constraint
@@ -180,7 +180,7 @@ class VenuesSql:
             ).scalar_one()
             if pending:
                 raise HasFutureBookings("la sede tiene reservas que todavía no terminaron")
-            EspaciosSql(self._conn).dar_de_baja_de_sede(venue_id, author)
+            SpacesSql(self._conn).deactivate_venue_spaces(venue_id, author)
             self._conn.execute(
                 text(
                     "UPDATE sede SET activa = false, dado_de_baja_en = now(),"

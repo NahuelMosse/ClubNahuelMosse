@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.horarios.reglas import Agenda
+from app.modules.availability.rules import OpeningHours
 from app.modules.reservas.repositorio import ReservasSql
 from app.shared.errors import ConcurrentChange, OpeningHoursChanged, Unavailable
 
@@ -37,7 +37,7 @@ def _a_las(dias: int, hora: int) -> datetime:
     return datetime.combine(date.today() + timedelta(days=dias), time(hora), tzinfo=CLUB)
 
 
-def _agenda(motor: Engine, espacio: UUID) -> Agenda:
+def _agenda(motor: Engine, espacio: UUID) -> OpeningHours:
     with motor.connect() as conn:
         agenda = ReservasSql(conn).agenda(espacio)
     assert agenda is not None
