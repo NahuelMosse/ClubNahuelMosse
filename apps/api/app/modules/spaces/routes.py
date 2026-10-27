@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.modules.session import NoSession, Profile, current_user
 from app.modules.spaces.repository import SpacesSql, spaces_repository
 from app.modules.spaces.rules import Space, SpaceData
 from app.modules.spaces.use_cases import (
@@ -55,11 +55,11 @@ class CatalogView(BaseModel):
 @router.get(
     "/espacios/catalogo",
     response_model=CatalogView,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="Los deportes y sus tipos de cancha",
     operation_id="ver_catalogo_espacios_catalogo_get",
 )
-def show_catalog(_: Annotated[Perfil, Depends(usuario_actual)]) -> CatalogView:
+def show_catalog(_: Annotated[Profile, Depends(current_user)]) -> CatalogView:
     return CatalogView(
         deportes=[
             SportView(
@@ -107,12 +107,12 @@ def space_view(space: Space) -> SpaceView:
 @router.get(
     "/espacios",
     response_model=SpaceList,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="Los espacios activos de las sedes activas, por sede, deporte, tipo y número",
     operation_id="listar_espacios_espacios_get",
 )
 def list_spaces(
-    _: Annotated[Perfil, Depends(usuario_actual)],
+    _: Annotated[Profile, Depends(current_user)],
     spaces: Annotated[SpacesSql, Depends(spaces_repository)],
     venue_id: Annotated[Identifier | None, Query(alias="sede_id")] = None,
     sport: Annotated[str | None, Query(alias="deporte", min_length=1)] = None,
@@ -135,7 +135,7 @@ class ErrorBody(BaseModel):
     "/espacios/nombre",
     response_model=Suggestion,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador da de alta espacios"},
         422: {"model": ErrorBody},
     },
@@ -143,7 +143,7 @@ class ErrorBody(BaseModel):
     operation_id="sugerir_nombre_espacios_nombre_get",
 )
 def suggest_name(  # noqa: PLR0913, PLR0917 -- one parameter per query field of the route
-    profile: Annotated[Perfil, Depends(usuario_actual)],
+    profile: Annotated[Profile, Depends(current_user)],
     spaces: Annotated[SpacesSql, Depends(spaces_repository)],
     venue_id: Annotated[Identifier, Query(alias="sede_id")],
     sport: Annotated[str, Query(alias="deporte")],
@@ -171,7 +171,7 @@ class SpaceRequest(BaseModel):
     status_code=status.HTTP_201_CREATED,
     response_model=SpaceView,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador da de alta espacios"},
         409: {
             "description": (
@@ -191,7 +191,7 @@ class SpaceRequest(BaseModel):
 )
 def create_space_route(
     request: SpaceRequest,
-    profile: Annotated[Perfil, Depends(usuario_actual)],
+    profile: Annotated[Profile, Depends(current_user)],
     spaces: Annotated[SpacesSql, Depends(spaces_repository)],
 ) -> SpaceView | Response:
     data = SpaceData(
@@ -237,7 +237,7 @@ class SpaceChangeRequest(BaseModel):
     "/espacios/{espacio_id}",
     response_model=SpaceView,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador edita espacios"},
         404: {"description": "El espacio o su sede ya no están activos"},
         422: {"model": ErrorBody},
@@ -252,7 +252,7 @@ class SpaceChangeRequest(BaseModel):
 )
 def update_space_route(
     request: SpaceChangeRequest,
-    profile: Annotated[Perfil, Depends(usuario_actual)],
+    profile: Annotated[Profile, Depends(current_user)],
     spaces: Annotated[SpacesSql, Depends(spaces_repository)],
     space_id: Annotated[Identifier, Path(alias="espacio_id")],
 ) -> SpaceView:
@@ -272,7 +272,7 @@ def update_space_route(
     "/espacios/{espacio_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "Sólo un administrador da de baja espacios"},
         404: {"description": "El espacio ya no está activo"},
         409: {"model": ErrorBody, "description": "El espacio tiene reservas que no terminaron"},
@@ -285,7 +285,7 @@ def update_space_route(
     operation_id="baja_de_espacio_espacios__espacio_id__delete",
 )
 def deactivate_space_route(
-    profile: Annotated[Perfil, Depends(usuario_actual)],
+    profile: Annotated[Profile, Depends(current_user)],
     spaces: Annotated[SpacesSql, Depends(spaces_repository)],
     space_id: Annotated[Identifier, Path(alias="espacio_id")],
 ) -> Response:

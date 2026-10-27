@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import Protocol
 from uuid import UUID
 
-from app.modules.sesion import Perfil
+from app.modules.session import Profile
 from app.modules.spaces.rules import (
     CATALOG,
     NewSpace,
@@ -74,8 +74,8 @@ class Spaces(Protocol):
         ...
 
 
-def _admin_only(profile: Perfil) -> None:
-    if profile.rol != "admin":
+def _admin_only(profile: Profile) -> None:
+    if profile.role != "admin":
         raise Forbidden("sólo un administrador gestiona espacios")
 
 
@@ -90,7 +90,7 @@ def _name(sport: str, kind: str) -> Callable[[SpaceVenue, int], str]:
 
 
 def suggested_name(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
-    profile: Perfil, venue_id: UUID, sport: str, kind: str, spaces: Spaces
+    profile: Profile, venue_id: UUID, sport: str, kind: str, spaces: Spaces
 ) -> SuggestedName:
     """The name the next space of that kind in that venue would have."""
     _admin_only(profile)
@@ -102,7 +102,7 @@ def suggested_name(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
     return suggested
 
 
-def create_space(profile: Perfil, data: SpaceData, number: int | None, spaces: Spaces) -> Space:
+def create_space(profile: Profile, data: SpaceData, number: int | None, spaces: Spaces) -> Space:
     """Registers an active space with the composite name of the assignment (RF 5).
 
     [number] is the one the administrator saw: if another creation took it in the meantime,
@@ -127,7 +127,7 @@ def active_spaces(
 
 
 def update_space(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
-    profile: Perfil,
+    profile: Profile,
     space_id: UUID,
     covered: bool | None,  # noqa: FBT001
     lit: bool | None,  # noqa: FBT001
@@ -144,7 +144,7 @@ def update_space(  # noqa: PLR0913, PLR0917 -- public signature fixed by its cal
     return spaces.update(space_id, change, profile.id)
 
 
-def deactivate_space(profile: Perfil, space_id: UUID, spaces: Spaces) -> None:
+def deactivate_space(profile: Profile, space_id: UUID, spaces: Spaces) -> None:
     """Withdraws a space (CU-23): it stops being shown and bookable. Not allowed with
     pending bookings (decision 5): forced cancellation belongs to CU-15."""
     _admin_only(profile)

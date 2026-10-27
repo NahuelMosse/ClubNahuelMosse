@@ -14,7 +14,7 @@ from app.modules.availability.repository import AvailabilitySql, availability_re
 from app.modules.availability.rules import MAX_HOURS, MIN_HOURS
 from app.modules.availability.slots import available_spaces
 from app.modules.availability.use_cases import available_slots
-from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.modules.session import NoSession, Profile, current_user
 from app.modules.spaces import SpaceList, space_view
 from app.shared.club_timezone import CLUB_TIMEZONE as ZONE
 from app.shared.errors import InvalidData, Unavailable
@@ -51,7 +51,7 @@ def _hour(moment: datetime) -> str:
     "/espacios/{espacio_id}/horarios",
     response_model=SlotGridView,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         404: {"model": ErrorBody, "description": "El espacio o su sede ya no están activos"},
         422: {"model": ErrorBody},
     },
@@ -64,7 +64,7 @@ def _hour(moment: datetime) -> str:
     operation_id="ver_horarios_espacios__espacio_id__horarios_get",
 )
 def show_slots(  # noqa: PLR0913, PLR0917 -- one parameter per query/path field of the route
-    profile: Annotated[Perfil, Depends(usuario_actual)],
+    profile: Annotated[Profile, Depends(current_user)],
     availability: Annotated[AvailabilitySql, Depends(availability_repository)],
     space_id: Annotated[Identifier, Path(alias="espacio_id")],
     day: Annotated[date | None, Query(alias="fecha")] = None,
@@ -103,7 +103,7 @@ VENUE_UNAVAILABLE = "La sede ya no está disponible"
 @router.get(
     "/espacios/disponibles",
     response_model=SpaceList,
-    responses={401: {"model": SinSesion}, 422: {"model": ErrorBody}},
+    responses={401: {"model": NoSession}, 422: {"model": ErrorBody}},
     summary="Las canchas de una sede libres en todo un rango",
     description=(
         "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas "
@@ -114,7 +114,7 @@ VENUE_UNAVAILABLE = "La sede ya no está disponible"
     operation_id="ver_disponibles_espacios_disponibles_get",
 )
 def show_available(  # noqa: PLR0913, PLR0917 -- one parameter per query field of the route
-    _: Annotated[Perfil, Depends(usuario_actual)],
+    _: Annotated[Profile, Depends(current_user)],
     availability: Annotated[AvailabilitySql, Depends(availability_repository)],
     venue_id: Annotated[Identifier, Query(alias="sede_id")],
     sport: Annotated[str, Query(alias="deporte", min_length=1)],
