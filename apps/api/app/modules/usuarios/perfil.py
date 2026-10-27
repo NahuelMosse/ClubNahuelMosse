@@ -1,3 +1,4 @@
+# kit-shape: el contrato del repositorio de perfiles y el caso de uso que lo usa se leen juntos
 from datetime import date
 from typing import Protocol
 

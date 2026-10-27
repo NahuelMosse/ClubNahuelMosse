@@ -1,3 +1,4 @@
+# kit-shape: el modelo de la respuesta sin sesión y la dependencia del usuario actual van juntos
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status

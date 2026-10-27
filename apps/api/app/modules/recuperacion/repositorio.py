@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de enlaces y la función que lo entrega a las rutas van juntos
 from sqlalchemy import Connection, text
 
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado

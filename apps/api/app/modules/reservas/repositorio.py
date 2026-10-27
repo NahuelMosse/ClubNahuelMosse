@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de reservas y la función que lo entrega a las rutas van juntos
 from datetime import datetime
 from typing import Any
 

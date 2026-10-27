@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de perfiles y la función que lo entrega a las rutas van juntos
 from typing import Annotated
 
 from fastapi import Depends
