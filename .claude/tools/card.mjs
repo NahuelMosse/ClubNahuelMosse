@@ -82,14 +82,14 @@ const starts = new Map();
 let rounds = 0;
 export const oneRound = (fn) => {
   rounds++;
-  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); } }
+  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); renames.clear(); } }
 };
 const remembered = (cache, key, compute) => {
   if (!rounds) return compute();
   if (!cache.has(key)) cache.set(key, compute());
   return cache.get(key);
 };
-export const resetFileCache = () => { listings.clear(); hashed.clear(); changedFiles.clear(); starts.clear(); };
+export const resetFileCache = () => { listings.clear(); hashed.clear(); changedFiles.clear(); starts.clear(); renames.clear(); };
 const listing = (root) => {
   if (!listings.has(root)) {
     const r = spawnSync('git', ['ls-files', '-co', '-t', '--exclude-standard', '-z'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
@@ -364,8 +364,34 @@ export const existedAt = (root, ref, rel) => git(root, ['cat-file', '-e', `${ref
 // What the card touched: the diff since its start plus whatever has not entered git yet. The kit is
 // not part of the card: measured, in a repo where the kit arrived unversioned, it asked to lint its
 // own tests.
+// The folder a command runs in, from its leading `cd <dir> &&`: its paths are relative to it, not to the repo root.
+export const commandDir = (command) => String(command).match(/^\s*cd\s+(?:"([^"]+)"|'([^']+)'|([^\s&;|]+))\s*&&/)?.slice(1).find(Boolean)?.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '') ?? '';
+
+// Where the card's own changes start: its first commit's parent, or, when main was merged into the card after that, the
+// merge-base with main. Otherwise a merge of main makes every file of other cards look like this card's.
+const ownBase = (root, base) => {
+  for (const ref of ['main', 'origin/main', 'master']) {
+    const mb = git(root, ['merge-base', 'HEAD', ref]).stdout?.trim();
+    if (!mb) continue;
+    const baseSha = git(root, ['rev-parse', '--verify', '-q', base]).stdout?.trim();
+    const head = git(root, ['rev-parse', 'HEAD']).stdout?.trim();
+    // A card on main itself (one branch) has HEAD as its merge-base: its start stays the base.
+    if (mb !== head && mb !== baseSha && git(root, ['merge-base', '--is-ancestor', base, mb]).status === 0) return mb;
+    return base;
+  }
+  return base;
+};
+
+// A file the card only moved (git sees a rename at 80 % similarity or more) is judged against where it came from: its old
+// classes, clones and interfaces are the repo's, not the card's. `originOf` is that path at the card's start, or null.
+const renames = new Map();
+export const renamesOf = (root, base) => remembered(renames, `${root}\0${base}`, () => new Map(
+  (git(root, ['diff', '--name-status', '-M80%', '--diff-filter=R', ownBase(root, base)]).stdout ?? '').split('\n')
+    .map((l) => l.split('\t')).filter((p) => p.length === 3 && /^R\d+/.test(p[0])).map(([, from, to]) => [to, from])));
+export const originOf = (root, base, file) => renamesOf(root, base).get(file) ?? null;
+
 export const cardFiles = (root, base) => [...remembered(changedFiles, `${root}\0${base}`, () => {
-  const changed = git(root, ['diff', '--name-only', '--diff-filter=d', base]).stdout ?? '';
+  const changed = git(root, ['diff', '--name-only', '--diff-filter=d', ownBase(root, base)]).stdout ?? '';
   const added = git(root, ['ls-files', '--others', '--exclude-standard']).stdout ?? '';
   return [...new Set([...changed.split('\n'), ...added.split('\n')].map((f) => f.trim()).filter((f) => f && !IS_KIT.test(f)))];
 })];

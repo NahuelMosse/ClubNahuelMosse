@@ -4,7 +4,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
-import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
+import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, originOf } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { overdesignFindings } from './overdesign.mjs';
 import { active, profileStates } from './kit.mjs';
@@ -270,7 +270,8 @@ export const shapeProblems = (file, text) => {
 export const shapeCheck = (root, cardDir) => {
   const base = cardStart(root, cardDir);
   const files = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
-  const before = (f) => { const r = spawnSync('git', ['show', `${base}:${f}`], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }); return r.status === 0 ? r.stdout : null; };
+  // A moved file is compared with where it came from (originOf).
+  const before = (f) => { const r = spawnSync('git', ['show', `${base}:${originOf(root, base, f) ?? f}`], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }); return r.status === 0 ? r.stdout : null; };
   const found = files.flatMap((f) => {
     try {
       const now = shapeProblems(f, readFileSync(join(root, f), 'utf8'));

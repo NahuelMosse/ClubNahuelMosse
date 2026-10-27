@@ -1,5 +1,5 @@
 {
-  "kit": "6.21.0",
+  "kit": "6.21.2",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "e45948620a2f8e62478f1d23195903b94197a97f"
+    "commit": "cb07a2b53635c38c871c3815c8414c707d77b9af"
   },
   "modules": {
     "ui": {

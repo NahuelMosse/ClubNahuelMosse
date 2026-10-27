@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "fd3ea37fce34a4e3a638dafd3fc1e6a3e387ad23b68e81a66035d0843dc8cd6a"
+    "sha256": "bfbba2f3f08f1fb9bf5b3e34806573c132e2bdcc3920169b3257b67347890d4a"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1317,7 +1317,7 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "d52083d55210097ba05e57d2d4a9e06d72e6597f3cb38f522b676597e3162857"
+    "sha256": "cbd33c7c4875cabe407eccb6141e89312b977e618c5ac84d87330bc8efe589d2"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
@@ -1357,7 +1357,7 @@
   },
   ".claude/tools/kit.mjs": {
     "module": "core",
-    "sha256": "a6abe278d94c621424fef49f59010050546574fcc0a6ea30b4ec15b6a9b4e5ec"
+    "sha256": "ff6cb46c8170fb5b3a8ae7957182911985a8874b99ba794e0674a76620f3eedd"
   },
   ".claude/tools/migrations.mjs": {
     "module": "core",
@@ -1393,7 +1393,7 @@
   },
   ".claude/tools/required.mjs": {
     "module": "core",
-    "sha256": "fc5d0b7d3c575b0ec27e079589c7c69af804949d7e2e2e6143369127faa9eee3"
+    "sha256": "140b273f2a0e4f8c4b457ff4e7ce63ca604bc717a31f73773eae838461fecd38"
   },
   ".claude/tools/review-range.mjs": {
     "module": "core",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "faa61d1c766a4ac78996ca73ec7abe2a9b8141f30b17f796bb3bf2baba94e736"
+    "sha256": "25da5d4bda1ad8c2aec4c3044aadb3635a5d177f143faf1a1299290f4a788912"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1481,7 +1481,7 @@
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "a1e02ff222cbe1b78f0907dbb5398a03513e8e0e78a59a5d79cdbcaf0d2beeff"
+    "sha256": "f0661fd236e4aad453ec961451331aea4ad081d905dda626969fbf8da1c7bc58"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1865,7 +1865,7 @@
   },
   ".claude/tools/overdesign.mjs": {
     "module": "core",
-    "sha256": "90cebfadddf3604524f8739c294ebcf84c5cd7eb78fb3df41ff88b1df0856db1"
+    "sha256": "5d3abe59421f44d4ee129a096db535edfbf8eeb476dc5b06eb12748cf424d574"
   },
   ".claude/profiles/flutter.md": {
     "module": "profile:flutter",

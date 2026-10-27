@@ -102,3 +102,4 @@ migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:cl
 - L43 · 2026-10-27 · declared · K4 · apps/api/tests/escenarios/test_despacho_robusto.py · encabezado de imports igual al de test_confirmacion_cancelacion_reglas.py; ambos congelados
 - L44 · 2026-10-27 · declared · K4 · apps/api/tests/escenarios/test_basquet.py · encabezado de imports igual al de tests/integracion/conftest.py; un escenario no importa la conftest de integración
 - L45 · 2026-10-27 · declared · K4 · apps/api/app/modules/reservas/rutas.py · las líneas 160-165 y 352-357 ya estaban repetidas en interfaz/reservas.py (nota K4 de SIM-01); esta card sólo mueve el archivo
+- L46 · 2026-10-27 · kit updated e45948620a2f8e62478f1d23195903b94197a97f → cb07a2b53635c38c871c3815c8414c707d77b9af · ARQ-04: los archivos movidos se juzgaban como nuevos

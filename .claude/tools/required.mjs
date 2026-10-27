@@ -17,7 +17,7 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
+  IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, commandDir, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
 } from './card.mjs';
 import { actHold, actsOf, gateBlock, readCard, riskOf } from './card-doc.mjs';
 import { active, lateSignals, LATE_ADVICE } from './kit.mjs';
@@ -84,8 +84,12 @@ const tokens = (command) => command.split(/\s+/)
   .filter(Boolean);
 
 // A file is covered by the command if it names it, names a folder that contains it, or runs over the whole repo.
-const covers = (command, file, { folders }) => tokens(command).some((t) =>
-  t === file || (folders && (t === '.' || file.startsWith(`${t}/`))));
+// A command that starts with `cd <dir> &&` names its paths from that folder.
+const covers = (command, file, { folders }) => {
+  const dir = commandDir(command);
+  return tokens(command).flatMap((t) => (dir ? [t, t === '.' ? dir : `${dir}/${t}`] : [t])).some((t) =>
+    t === file || (folders && (t === '.' || file.startsWith(`${t}/`))));
+};
 
 // A screen is not mutated: a view file has no logic and needs a browser per mutant. Its logic lives in .ts/.js modules, which are.
 const IS_UI = /\.(tsx|jsx|vue|svelte|html)$/;
