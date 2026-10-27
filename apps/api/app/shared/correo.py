@@ -3,26 +3,18 @@ import logging
 import smtplib
 import ssl
 import urllib.request
-from dataclasses import dataclass
 from email.message import EmailMessage
 
 from sqlalchemy import text
 
 from app.shared.config import config
 from app.shared.db import motor
+from app.shared.mensaje import Mensaje
 
 correo_log = logging.getLogger("clubnahuelmosse.correo")
 
 BREVO_URL = "https://api.brevo.com/v3/smtp/email"
 REMITENTE_NOMBRE = "Club Nahuel Mosse"
-
-
-@dataclass(frozen=True)
-class Mensaje:
-    para: str
-    asunto: str
-    cuerpo: str
-    html: str | None = None
 
 
 def _al_buzon(mensaje: Mensaje) -> None:

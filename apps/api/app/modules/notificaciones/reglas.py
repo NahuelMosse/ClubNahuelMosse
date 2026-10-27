@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 from uuid import UUID
 
 from app.modules.espacios import CATALOGO
-from app.shared.correo import Mensaje
+from app.shared.mensaje import Mensaje
 from app.shared.plantilla_correo import html_de_correo
 from app.shared.zona import ZONA_CLUB
 

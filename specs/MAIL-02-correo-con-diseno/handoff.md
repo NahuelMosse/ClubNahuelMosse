@@ -1,16 +1,13 @@
 # Handoff MAIL-02
 
-## Hecho (commit RED c3d3bcc + commit WIP)
-- Tests: apps/api/tests/unit/test_correos_con_diseno.py (commit c3d3bcc).
-- Código escrito: shared/plantilla_correo.py (`html_de_correo(titulo, parrafos, boton, pie, detalles)`), `Mensaje.html`, Brevo/SMTP con html opcional, `pedir_enlace` con HTML, recuperacion/__init__ exporta `enviar` y `Mensaje`, reservas/correo.py (`correo_de_reserva`), reservas/rutas.py (`hacer_reserva` con `despues: BackgroundTasks` y `add_task(enviar, ...)`), notificaciones: `Recordatorio.correo/nombre`, `vencidos` con `u.correo, u.nombre AS nombre_usuario`, `correo_recordatorio` en reglas, `_avisar_por_correo` en casos_de_uso, `tipo_corto` exportado en __init__.
-
-## Bloqueo (decisión estructural que la card no vio)
-`notificaciones -> recuperacion` y `reservas -> recuperacion` cierran un ciclo: recuperacion -> usuarios -> reservas -> notificaciones. Falla el import (ImportError circular) y `test_una_funcionalidad_importa_otra_solo_por_su_init_y_no_hay_ciclos`.
-Salida propuesta: mover `Mensaje` y el envío (`enviar`, `_al_buzon`, `_por_smtp`, `_por_brevo`, `_ENVIADORES`) a `apps/api/app/shared/correo.py`; `recuperacion/reglas.py` y `recuperacion/correo.py` los re-exportan (los tests viejos usan `correo.enviar`, `correo._por_brevo`, `Mensaje` desde recuperacion.reglas); notificaciones y reservas importan `enviar`/`Mensaje` de `app.shared.correo`, y se sacan los imports a `app.modules.recuperacion` de notificaciones/reglas.py, notificaciones/casos_de_uso.py, reservas/correo.py, reservas/rutas.py y el `enviar`/`Mensaje` de recuperacion/__init__.py.
-Ojo: el test del buzón (RED, no editable) parchea `correo.motor` en `recuperacion.correo`; con el envío en shared hay que parchear `app.shared.correo.motor` -> test de reemplazo en archivo nuevo con el mismo tag `@assumption:MAIL-02-ASM-01` + línea `replaces:` en el Log. Alternativa: dejar `_al_buzon` y `motor` en recuperacion/correo.py.
+## Hecho
+- Ciclo de imports resuelto: `Mensaje` en app/shared/mensaje.py; envío en app/shared/correo.py; `recuperacion/correo.py` borrado; `recuperacion/__init__` exporta `correo` (= `app.shared.correo`), `enviar`, `Mensaje` (los tests viejos `from app.modules.recuperacion import correo` siguen valiendo, incluido el parche de `correo.motor`: no hace falta test de reemplazo). reservas y notificaciones importan de app.shared.
+- ruff check, ruff format y mypy --strict de `app`: limpios. pyproject: E501 ignorado para test_correos_con_diseno.py.
+- card.md: Tasks, reuses/new y Log L7..L10 listos.
+- Commits: c3d3bcc RED, 6d69aec WIP, 4d7779f ciclo. Falta commitear: shared/mensaje.py, ajustes de imports, pyproject, card, handoff.
 
 ## Falta
-- Resolver lo anterior, correr: `export UV_PROJECT_ENVIRONMENT="D:/desktop folders/estudio/Universidad de moron/Electiva general/app-tp/apps/api/.venv"; sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_correos_con_diseno.py tests/unit/test_correo.py tests/unit/test_correo_brevo.py tests/unit/test_recordatorios.py tests/unit/test_arquitectura_funcionalidades.py`
-- Fakes de `vencidos` en tests existentes usan `Recordatorio` posicional: los campos nuevos tienen defecto, deberían andar.
-- Gate completo (`node .claude/tools/verify.mjs`), formato (ruff), Log en card.md (una línea por tarea, con Edit), `reuses:`/`new:` en T1..T3 de la card.
-- Revisar el test de S2 (usa MonkeyPatch inline; funciona pero es feo).
+1. Levantar el emulador de Firebase Auth: el de herramientas (puerto 8702) ya no existe (8702 hoy es el Postgres de otro agente). Sin él fallan/erroran todos los tests con sesión (integracion, test_correo_brevo 202). Levantarlo en un puerto libre con el firebase.json de D:/Temp/w/herramientas/emulador (cambiar el puerto), y exportar `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:<puerto>`; `firebase` no está en el PATH (probar `npx firebase-tools emulators:start --only auth --project demo-clubnahuelmosse`).
+2. Correr la suite del Gate con ese emulador y `node .claude/tools/verify.mjs`.
+3. Del último verify (antes de los arreglos de shape/Tasks/E501): quedan `rounds`/`dead-clicks`/`copy`/`axe`/`contrast`/`focus` (la card no tiene pantalla: el verify escaló a visual porque lee plantilla_correo.py como pantalla; declarar en el Log `declared · …` si no hay otra salida), `required`: mutación de los 6 archivos (comandos `once.mjs mutate` en la salida del verify; correrlos en background con wait.mjs), K4 en el test (declarar en el Log), I-tokens (colores hex en plantilla_correo.py: un correo no puede usar var(--x); declarar en el Log), notificaciones/__init__ y recuperacion/rutas ya figuran en T1 (probar que `required` lo acepta).
+4. Aviso de K4 viejo en reservas/rutas.py 358-363 y 166-171: no es de la card.
