@@ -125,3 +125,4 @@ refactor-tests: los ids pasan de int a UUID en toda la API: los tests que arman 
 - L69 · 2026-10-27 · declared · K4 · apps/mobile/test/interfaz_accesible_registro_test.dart · duplicación entre tests congelados que ya estaba en main; esta card sólo cambió el tipo de los ids en esas líneas (refactor-tests)
 - L70 · 2026-10-27 · declared · K4 · apps/mobile/test/rediseno/marcador_proximas_reemplazo_test.dart · reemplazo congelado del marcador «20+» (SIM-01): repite el armado del inicio de los tests que reemplaza
 - L71 · 2026-10-27 · declared · K4 · apps/mobile/test/sedes_usuario_test.dart · duplicación entre tests congelados que ya estaba en main; esta card sólo cambió el tipo de los ids en esas líneas (refactor-tests)
+- L72 · 2026-10-27 · kit updated cb07a2b53635c38c871c3815c8414c707d77b9af → 1013a50fa7803b47e455fb6e186a0899bfae88b2 · DAT-01: comparar contra main tras el merge

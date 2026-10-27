@@ -6,8 +6,9 @@
 // What the card added fails; what was already in the repo is only reported. `kit-overdesign: <reason>` anywhere in a file declares it.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, existedAt, git, originOf } from './card.mjs';
+import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, existedAt, git, originOf, ownBase } from './card.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
+import { readCard } from './card-doc.mjs';
 
 export const TINY_LINES = 20;
 const LAYER_DIRS = /^(?:domain|application|infrastructure|interfaces?|services|use-?cases|repositories|ports|adapters|entities|dtos|mappers|factories|handlers|core)$/;
@@ -154,6 +155,14 @@ export const emptyLayerDirs = (root) => {
   return out;
 };
 
+// `declared · overdesign · <file> · <why>` in the Log: the card keeps a finding on purpose (a Protocol the layer rule asks for, say);
+// it stays a note and the close lists it for a person.
+export const DECLARED_OVERDESIGN = /declared\s*·\s*overdesign\s*·\s*([^\s·:]+)\s*·\s*(.+?)\s*$/;
+export const declaredOverdesign = (cardDir) => {
+  const doc = readCard(cardDir) ?? '';
+  return new Map((doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').map((l) => l.match(DECLARED_OVERDESIGN)).filter(Boolean).map((m) => [m[1].replaceAll('\\', '/'), m[2]]));
+};
+
 const read = (root, f) => { try { return readFileSync(join(root, f), 'utf8'); } catch { return null; } };
 
 // `{ blocking, notes }`: what the card added, and what was already there.
@@ -161,19 +170,20 @@ export const overdesignFindings = (root, cardDir) => {
   const base = cardStart(root, cardDir);
   const mine = cardFiles(root, base).map(posix);
   // A file the card only moved is not created: what it carried was already in the repo.
-  const created = new Set(mine.filter((f) => existsSync(join(root, f)) && !existedAt(root, base, f) && !originOf(root, base, f)));
+  const created = new Set(mine.filter((f) => existsSync(join(root, f)) && !existedAt(root, ownBase(root, base), f) && !originOf(root, base, f)));
   const repo = (git(root, ['ls-files', '-co', '--exclude-standard']).stdout ?? '').split(/\r?\n/).map(posix).filter(Boolean);
   const code = repo.filter((f) => IS_CODE.test(f) && !/^(?:specs|\.claude)\//.test(f));
   const texts = code.map((file) => ({ file, text: read(root, file) ?? '' }));
+  const declared = declaredOverdesign(cardDir);
   const blocking = [];
   const notes = [];
-  const put = (file, message, touched = created.has(file)) => (touched ? blocking : notes).push(`${file}: ${message}`);
+  const put = (file, message, touched = created.has(file)) => (touched && !declared.has(file) ? blocking : notes).push(`${file}: ${message}`);
   const production = texts.filter((x) => isProduction(x.file));
 
   for (const { file, text } of production) {
     for (const p of passThroughs(file, text)) put(file, `line ${p.line}: \`${p.name}\` only forwards to another \`${p.name}\` with the same arguments · call the callee from where \`${p.name}\` is called and delete it`, created.has(file));
   }
-  for (const s of singleImplementations(production.map((x) => x.file), texts)) put(s.file, `\`${s.name}\` has one implementation (${s.by}) and no test fake · export the concrete one; the interface is born with the second implementation or the fake`);
+  for (const s of singleImplementations(production.map((x) => x.file), texts)) put(s.file, `\`${s.name}\` has one implementation (${s.by}) and no test fake · export the concrete one; the interface is born with the second implementation or the fake; if a rule of the repo asks for it, add to the Log \`declared · overdesign · <file> · <the rule>\``);
   for (const t of tinyFolders(repo, (f) => read(root, f))) put(t.file, `the only file of \`${t.dir}/\`, a wrapper under ${TINY_LINES} lines · keep it in the parent folder; a folder is born with its second file`);
   for (const dir of emptyLayerDirs(root)) put(dir, 'a layer folder of a module with no file in it · delete it; a layer appears when the module has something for it', mine.some((f) => f.startsWith(`${dir.split('/').slice(0, -1).join('/')}/`)));
   return { blocking, notes };

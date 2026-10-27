@@ -4,7 +4,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
-import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, originOf } from './card.mjs';
+import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, originOf, ownBase } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { overdesignFindings } from './overdesign.mjs';
 import { active, profileStates } from './kit.mjs';
@@ -79,7 +79,7 @@ export const removeOnlyCheck = (root, cardDir) => {
   const roles = rolesOf(doc);
   const files = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => roleFor(roles, f) === 'presentation' || IS_SCREEN.test(f) || f.endsWith('.dart'));
   if (!files.length) return [failed('remove-only', 'no presentation file in ## Tasks to take something off')];
-  const diff = spawnSync('git', ['diff', '--numstat', `${cardStart(root, cardDir)}..HEAD`, '--', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const diff = spawnSync('git', ['diff', '--numstat', `${ownBase(root, cardStart(root, cardDir))}..HEAD`, '--', ...files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
   if (diff.status !== 0) return [couldNot('remove-only', `git diff failed: ${(diff.stderr ?? '').trim().split('\n')[0]}`)];
   const [added, removed] = diff.stdout.split('\n').filter(Boolean).reduce(([a, r], l) => { const [x, y] = l.split('\t'); return [a + (Number(x) || 0), r + (Number(y) || 0)]; }, [0, 0]);
   return [removed > added ? ok('remove-only', `the presentation files lose ${removed} lines and gain ${added}`) : failed('remove-only', `the presentation files gain ${added} lines and lose ${removed}: the card adds look, so it needs ## Look with ref: and the rounds`)];
@@ -271,7 +271,7 @@ export const shapeCheck = (root, cardDir) => {
   const base = cardStart(root, cardDir);
   const files = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
   // A moved file is compared with where it came from (originOf).
-  const before = (f) => { const r = spawnSync('git', ['show', `${base}:${originOf(root, base, f) ?? f}`], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }); return r.status === 0 ? r.stdout : null; };
+  const before = (f) => { const r = spawnSync('git', ['show', `${ownBase(root, base)}:${originOf(root, base, f) ?? f}`], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }); return r.status === 0 ? r.stdout : null; };
   const found = files.flatMap((f) => {
     try {
       const now = shapeProblems(f, readFileSync(join(root, f), 'utf8'));
@@ -438,7 +438,7 @@ const declaredVisual = (cardDir) => riskOf(cardDir)?.declared?.find((d) => d.len
 export const noVisualCheck = (root, cardDir) => {
   const declared = declaredVisual(cardDir);
   if (!declared) return [];
-  const diff = spawnSync('git', ['diff', '-U0', '--no-color', `${cardStart(root, cardDir)}..HEAD`, '--', ...declared.files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const diff = spawnSync('git', ['diff', '-U0', '--no-color', `${ownBase(root, cardStart(root, cardDir))}..HEAD`, '--', ...declared.files], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
   if (diff.status !== 0) return [couldNot('no-visual', `git diff failed: ${(diff.stderr ?? '').trim().split('\n')[0]}`)];
   let file = '';
   for (const l of diff.stdout.split('\n')) {

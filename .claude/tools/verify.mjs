@@ -61,7 +61,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { asOneArg, cardFiles, commandDir, oneRound, originOf, currentCard, cardStart, existedAt, fileMapLines, git, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { asOneArg, cardFiles, commandDir, oneRound, originOf, ownBase, currentCard, cardStart, existedAt, fileMapLines, git, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
 import { active, addedOf } from './kit.mjs';
 import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
 import { endsWithLine } from './final-line.mjs';
@@ -792,8 +792,9 @@ export const declaredClones = (cardDir) => {
 const addedLines = (root, base, files) => {
   // A moved file diffs against where it came from: only what changed in the move is the card's.
   const origins = files.map((f) => originOf(root, base, f)).filter(Boolean);
-  const out = new Map(files.map((f) => [f, existedAt(root, base, f) || originOf(root, base, f) ? [] : null]));
-  const diff = git(root, ['diff', '-U0', '--no-color', '-M80%', base, '--', ...files, ...origins]).stdout ?? '';
+  const from = ownBase(root, base);
+  const out = new Map(files.map((f) => [f, existedAt(root, from, f) || originOf(root, base, f) ? [] : null]));
+  const diff = git(root, ['diff', '-U0', '--no-color', '-M80%', from, '--', ...files, ...origins]).stdout ?? '';
   let file = null;
   for (const l of diff.split(/\r?\n/)) {
     if (l.startsWith('+++ ')) { file = l.slice(4).replace(/^b\//, ''); continue; }
