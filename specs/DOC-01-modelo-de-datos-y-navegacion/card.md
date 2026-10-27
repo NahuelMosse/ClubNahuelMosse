@@ -34,6 +34,7 @@ not_read:
 ```
 suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_documentacion_del_modelo.py tests/escenarios/test_documentacion_vigente.py tests/unit/test_mapa_por_funcionalidad.py
 lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_documentacion_del_modelo.py
+refactor-tests: los tests del RED leían mal las migraciones (cadenas de Python contiguas, constantes de módulo) y las rutas anidadas de app.dart; se corrigen en su lugar y se borran las copias corregidas (Log L5-L12)
 no-visual: la card escribe documentación sobre la app y su navegación; no cambia ninguna pantalla
 ```
 
