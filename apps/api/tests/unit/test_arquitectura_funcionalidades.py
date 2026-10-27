@@ -17,7 +17,7 @@ ARCHIVOS_DE_CADA_UNA = {
     "espacios": CON_CUATRO,
     "horarios": CON_CUATRO,
     "reservas": CON_CUATRO,
-    "notificaciones": CON_CUATRO,
+    "notifications": CON_CUATRO,
     "recuperacion": CON_CUATRO,
     "usuarios": {
         "rutas_cuenta",
@@ -305,7 +305,7 @@ def test_los_errores_comunes_viven_en_shared_errores() -> None:
 def test_notificaciones_no_importa_reservas_el_aviso_recibe_los_datos_que_necesita() -> None:
     """notificaciones no importa reservas: el aviso recibe los datos que necesita
     @ARQ-04-S2 @assumption:ARQ-04-ASM-04"""
-    archivos = _fuentes(MODULOS / "notificaciones")
+    archivos = _fuentes(MODULOS / "notifications")
     assert archivos
     for archivo in archivos:
         for nombre in _importados(archivo):

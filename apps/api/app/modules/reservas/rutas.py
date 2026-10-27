@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
 
-from app.modules.notificaciones import CanalPush, canal_push, despachar_de
+from app.modules.notifications import PushChannel, dispatch_for, push_channel
 from app.modules.reservas.casos_de_uso import (
     Cuando,
     anular_reserva,
@@ -163,13 +163,13 @@ def cancelar(
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identifier, Path()],
     despues: BackgroundTasks,
-    canal: Annotated[CanalPush, Depends(canal_push)],
+    canal: Annotated[PushChannel, Depends(push_channel)],
 ) -> ReservaVista | Response:
     try:
         reserva = cancelar_reserva(reservas, perfil, reserva_id)
     except ConcurrentChange:
         return conflict({"reserva": CAMBIO})
-    despues.add_task(despachar_de, perfil.id, canal)
+    despues.add_task(dispatch_for, perfil.id, canal)
     return _vista(reserva)
 
 
@@ -355,7 +355,7 @@ def anular(
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     reserva_id: Annotated[Identifier, Path()],
     despues: BackgroundTasks,
-    canal: Annotated[CanalPush, Depends(canal_push)],
+    canal: Annotated[PushChannel, Depends(push_channel)],
 ) -> ReservaHistorialVista | Response:
     try:
         reserva = anular_reserva(
@@ -369,5 +369,5 @@ def anular(
     except ConcurrentChange:
         return conflict({"reserva": CAMBIO})
     # El aviso a quien reservó sale recién con la anulación confirmada y la respuesta enviada.
-    despues.add_task(despachar_de, reserva.usuario_id, canal)
+    despues.add_task(dispatch_for, reserva.usuario_id, canal)
     return _vista_admin(reserva)

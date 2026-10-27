@@ -15,7 +15,7 @@ nombre, no por línea: buscalos con el buscador del editor.
 | Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
 | Cómo se valida el token de Firebase | `apps/api/app/modules/sesion/usuario_actual.py` (`usuario_actual`) → `sesion/casos_de_uso.py` (`perfil_autenticado`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
 | La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
-| Los recordatorios de una hora antes | `apps/api/app/modules/notificaciones/barrido.py` (el reloj) → `casos_de_uso.py` (`enviar_recordatorios`, `entregar`) → `push.py` (FCM) |
+| Los recordatorios de una hora antes | `apps/api/app/modules/notifications/sweep.py` (el reloj) → `use_cases.py` (`send_reminders`, `deliver`) → `push.py` (FCM) |
 | Los avisos de cancelación | se encolan en la misma transacción que cancela (`ReservasSql.cancelar` y `ReservasSql.anular`) y salen con `despachar_pendientes` |
 | El correo de recuperación de contraseña | `apps/api/app/modules/recuperacion/casos_de_uso.py` (código, vigencia, tope por hora) y `correo.py` (SMTP o buzón) |
 | Las variables de entorno de la API | `apps/api/app/shared/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
@@ -98,7 +98,7 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 | `usuarios` | `rutas_registro.py`, `rutas_cuenta.py`, `registro.py`, `perfil.py`, `contrasena.py`, `baja.py`, `administradores.py`, `sembrar_admin.py`, `reglas.py`, `repositorio.py` | `usuarios/` |
 | `sesion` | `casos_de_uso.py`, `perfil.py`, `usuario_actual.py`, `repositorio.py` | `sesion/` |
 | `recuperacion` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py`, `correo.py` | `sesion/` |
-| `notificaciones` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py`, `barrido.py`, `push.py` | `notificaciones/` |
+| `notifications` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `sweep.py`, `push.py` | `notifications/` |
 
 Compartido en `app/shared/`: `config.py`, `db.py` (`engine`, `connection()`, `in_transaction`), `errors.py` (todos los
 errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `body_limit.py`, `club_timezone.py` (`CLUB_TIMEZONE`),
@@ -179,11 +179,11 @@ si el rol no es `admin`.
 | GET `/reservas/todas` | `reservas/rutas.py` | `historial_global` | admin |
 | GET `/reservas/todas/{id}` | `reservas/rutas.py` | `detalle_admin` | admin |
 | POST `/reservas/{id}/anular` | `reservas/rutas.py` | `anular_reserva`, después despacha el aviso | admin |
-| PUT `/dispositivos` | `notificaciones/rutas.py` | `registrar_dispositivo` | usuario |
-| POST `/dispositivos/baja` | `notificaciones/rutas.py` | `dar_de_baja_dispositivo` | sesión |
-| GET `/notificaciones` | `notificaciones/rutas.py` | `mis_notificaciones` | sesión |
-| POST `/notificaciones/leer-todas` | `notificaciones/rutas.py` | `marcar_todas` | sesión |
-| POST `/notificaciones/{id}/leer` | `notificaciones/rutas.py` | `marcar_leida` | sesión |
+| PUT `/dispositivos` | `notifications/routes.py` | `register_device` | usuario |
+| POST `/dispositivos/baja` | `notifications/routes.py` | `deactivate_device` | sesión |
+| GET `/notificaciones` | `notifications/routes.py` | `my_notifications` | sesión |
+| POST `/notificaciones/leer-todas` | `notifications/routes.py` | `mark_all_read` | sesión |
+| POST `/notificaciones/{id}/leer` | `notifications/routes.py` | `mark_read` | sesión |
 
 ### Configuración de la API
 
@@ -452,7 +452,7 @@ tiene una API intermedia para simular cortes.
 | `e2e.sh` | levanta el emulador de Auth y la API sobre una base `*_test` propia, migra, siembra un admin y corre `integration_test` en el emulador Android |
 
 Comandos de la API: `python -m app.modules.usuarios.sembrar_admin` (crear o promover el primer administrador) y
-`python -m app.modules.notificaciones.barrido --una-vez` (una pasada de recordatorios y avisos).
+`python -m app.modules.notifications.sweep --una-vez` (una pasada de recordatorios y avisos).
 
 ## `specs/` y el método de trabajo
 

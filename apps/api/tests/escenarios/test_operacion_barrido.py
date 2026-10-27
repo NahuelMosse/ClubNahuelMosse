@@ -56,7 +56,7 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
     reserva = _reserva_en_la_proxima_hora(motor, f"socio.{s}@correo.com", s)
 
     corrida = subprocess.run(
-        [sys.executable, "-m", "app.modules.notificaciones.barrido", "--una-vez"],
+        [sys.executable, "-m", "app.modules.notifications.sweep", "--una-vez"],
         cwd=RAIZ_API, env={**os.environ, "PYTHONUTF8": "1"},
         capture_output=True, text=True, timeout=120, check=False,
     )  # fmt: skip

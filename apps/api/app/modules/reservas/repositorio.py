@@ -9,11 +9,11 @@ from sqlalchemy import Connection, Row, text
 from sqlalchemy.exc import IntegrityError
 
 from app.modules.horarios import Agenda, HorariosSql, agenda_de_fila
-from app.modules.notificaciones import (
-    DatosDeReserva,
-    NotificacionesSql,
-    encolar_cancelacion_forzosa,
-    mensaje_cancelacion,
+from app.modules.notifications import (
+    BookingData,
+    NotificationsSql,
+    cancellation_message,
+    enqueue_forced_cancellation,
 )
 from app.modules.reservas.reglas import (
     POR_PAGINA,
@@ -289,11 +289,11 @@ class ReservasSql:
             reserva = self._una(reserva_id)
             # La confirmación se encola en la misma transacción: si la cancelación no se
             # completa no queda aviso, y el índice único evita repetirlo.
-            datos_de_reserva = DatosDeReserva(
+            datos_de_reserva = BookingData(
                 reserva.id, reserva.deporte, reserva.tipo, reserva.sede, reserva.inicio
             )
-            NotificacionesSql(self._conn).encolar_cancelacion_usuario(
-                usuario_id, reserva_id, reserva.inicio, mensaje_cancelacion(datos_de_reserva)
+            NotificationsSql(self._conn).enqueue_user_cancellation(
+                usuario_id, reserva_id, reserva.inicio, cancellation_message(datos_de_reserva)
             )
         return reserva
 
@@ -423,7 +423,7 @@ class ReservasSql:
                 datos,
             )
             # El aviso se encola en la misma transacción, después de los bloqueos de siempre.
-            encolar_cancelacion_forzosa(self._conn, previa.usuario_id, [reserva_id])
+            enqueue_forced_cancellation(self._conn, previa.usuario_id, [reserva_id])
         return self._detalle(reserva_id)
 
     def _detalle(self, reserva_id: UUID) -> ReservaHistorial:

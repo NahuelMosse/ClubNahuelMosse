@@ -7,7 +7,7 @@ import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 
 from app.modules.espacios.repositorio import EspaciosSql
-from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notifications.repository import NotificationsSql
 from app.modules.reservas.repositorio import ReservasSql
 from app.modules.sedes.repositorio import SedesSql
 from app.modules.usuarios.repositorio import UsuariosSql
@@ -157,10 +157,10 @@ def test_el_recordatorio_sale_una_hora_antes(
     lejos = _reserva(motor, mundo, base + timedelta(hours=1), creada=creada)
 
     def ids(conn: Connection) -> list[UUID]:
-        return [r.reserva_id for r in NotificacionesSql(conn).vencidos(ahora, mundo["usuario"])]
+        return [r.reserva_id for r in NotificationsSql(conn).due(ahora, mundo["usuario"])]
 
     with motor.connect() as conn:
         assert ids(conn) == [cerca]
-    monkeypatch.setattr("app.modules.notificaciones.repositorio.ANTICIPACION", timedelta(hours=2))
+    monkeypatch.setattr("app.modules.notifications.repository.LEAD_TIME", timedelta(hours=2))
     with motor.connect() as conn:
         assert ids(conn) == [cerca, lejos]

@@ -7,9 +7,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
-from app.modules.notificaciones.casos_de_uso import despachar_pendientes
-from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.use_cases import dispatch_pending
+from app.modules.notifications.repository import NotificationsSql, enqueue_forced_cancellation
+from app.modules.notifications.push import push_channel
 from app.modules.usuarios.sembrar_admin import main as sembrar
 
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
@@ -19,7 +19,7 @@ TITULO = "El club anuló tu reserva"
 
 
 class CanalQueFalla:
-    def enviar(self, tokens: Sequence[str], aviso: Any) -> Any:
+    def send(self, tokens: Sequence[str], aviso: Any) -> Any:
         raise ConnectionError("el servicio no contesta")
 
 
@@ -27,9 +27,9 @@ class CanalQueFalla:
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     """El servicio de notificaciones del teléfono, que anota lo que la API le pide enviar."""
     canal = CanalDePrueba()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
 @pytest.fixture
@@ -178,10 +178,10 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
                 ),
                 {"u": socio.usuario_id, "id": reserva["id"]},
             )
-            encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reserva["id"])])
+            enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(reserva["id"])])
     with motor.connect() as conn:
         for socio in (uno, otro):
-            despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
+            dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
 
     # Verifica: cada persona recibe un solo aviso, con los datos de su propia reserva.
     assert [(t, a.cuerpo) for t, a in canal.enviados] == [
@@ -348,7 +348,7 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
     admin: dict[str, str],
 ) -> None:
     """si el push falla el aviso queda en el centro con el envío fallido @supuesto:CU-24.2-SUP-01 @supuesto:CU-24.2-SUP-07"""
-    app_de(api).dependency_overrides[canal_push] = lambda: CanalQueFalla()
+    app_de(api).dependency_overrides[push_channel] = lambda: CanalQueFalla()
     try:
         socio = un_socio(api, motor, iniciar_sesion, unico)
         reserva = socio.reservar("21:00")
@@ -358,4 +358,4 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
         assert [e["titulo"] for e in socio.centro()["notificaciones"]] == [TITULO]
         assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] == "fallida"
     finally:
-        app_de(api).dependency_overrides.pop(canal_push, None)
+        app_de(api).dependency_overrides.pop(push_channel, None)

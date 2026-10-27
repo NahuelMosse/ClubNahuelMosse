@@ -163,10 +163,10 @@ stateDiagram-v2
   persona. Si a una persona le anulan otra reserva mientras tiene un aviso de anulación sin leer, se abre un aviso nuevo
   con la cantidad total y el anterior queda reemplazado (`reemplazada_por`); `notificacion_reserva` liga cada reserva
   con el aviso que se la informó.
-- **Recordatorios.** El barrido (`modules/notificaciones/barrido.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
+- **Recordatorios.** El barrido (`modules/notifications/sweep.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
   segundos: primero despacha los pendientes y después busca las reservas activas que empiezan dentro de la próxima hora
   y no tienen recordatorio. El índice único `notificacion_recordatorio_unico` impide el duplicado aunque dos barridos se
-  crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notificaciones.barrido --una-vez`) para un cron.
+  crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notifications.sweep --una-vez`) para un cron.
 - **En el teléfono.** `CentroDeNotificaciones` registra el token de FCM con `PUT /dispositivos` al iniciar sesión, lo da
   de baja al cerrarla, consulta `GET /notificaciones` cada 20 s mientras la app está abierta y en primer plano, y lleva
   a la reserva cuando se toca un aviso (`rutaDelAviso`). Con la app cerrada, el aviso lo muestra la bandeja del sistema.

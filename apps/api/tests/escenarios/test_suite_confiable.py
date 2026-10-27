@@ -61,32 +61,28 @@ def test_un_token_invalido_cuenta_como_sin_sesion(api: TestClient) -> None:
 
 
 def _usuario(conn: Connection, correo: str, dni: str) -> UUID:
-    return (
-        conn.execute(
-            text(
-                "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
-                " fecha_nacimiento) VALUES (:uid, :c, 'Ana', 'Rios', :d, '1990-01-01')"
-                " RETURNING id"
-            ),
-            {"uid": f"uid-{correo}-{dni}", "c": correo, "d": dni},
-        ).scalar_one()
-    )
+    return conn.execute(
+        text(
+            "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
+            " fecha_nacimiento) VALUES (:uid, :c, 'Ana', 'Rios', :d, '1990-01-01')"
+            " RETURNING id"
+        ),
+        {"uid": f"uid-{correo}-{dni}", "c": correo, "d": dni},
+    ).scalar_one()
 
 
 def _espacio(conn: Connection, s: str) -> UUID:
-    return (
-        conn.execute(
-            text(
-                "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
-                " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
-                " RETURNING id)"
-                " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
-                " 38000 FROM s RETURNING id"
-            ),
-            {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
-        ).scalar_one()
-    )
+    return conn.execute(
+        text(
+            "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+            " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
+            " RETURNING id)"
+            " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
+            " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
+            " 38000 FROM s RETURNING id"
+        ),
+        {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
+    ).scalar_one()
 
 
 def _reserva(conn: Connection, usuario: UUID, espacio: UUID, horas: int) -> None:
@@ -116,7 +112,12 @@ def test_la_base_acepta_reservas_de_una_a_cuatro_horas(
 
     _reserva(db, usuario, _espacio(db, s), horas)
 
-    assert db.execute(text("SELECT count(*) FROM reserva WHERE usuario_id = :u"), {"u": usuario}).scalar_one() == 1
+    assert (
+        db.execute(
+            text("SELECT count(*) FROM reserva WHERE usuario_id = :u"), {"u": usuario}
+        ).scalar_one()
+        == 1
+    )
 
 
 @pytest.mark.parametrize("horas", [0, 5])
@@ -182,7 +183,9 @@ def test_restricciones_ya_no_trae_los_dos_tests_enganosos() -> None:
     assert "def test_la_baja_libera_el_correo_y_el_dni(" not in fuente
 
 
-def _correr(*argumentos: str, quitar: tuple[str, ...] = (), poner: dict[str, str] | None = None) -> "subprocess.CompletedProcess[str]":
+def _correr(
+    *argumentos: str, quitar: tuple[str, ...] = (), poner: dict[str, str] | None = None
+) -> "subprocess.CompletedProcess[str]":
     entorno = {k: v for k, v in os.environ.items() if k not in quitar} | (poner or {})
     return subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *argumentos],

@@ -53,7 +53,7 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
     for archivo, metodo in [
         ("reservas/repositorio.py", "cancelar_futuras_de"),
         ("espacios/repositorio.py", "dar_de_baja_de_sede"),
-        ("notificaciones/repositorio.py", "encolar_cancelacion_usuario"),
+        ("notifications/repository.py", "enqueue_user_cancellation"),
     ]:
         cuerpo = _metodo(archivo, metodo)
         assert "in_transaction" not in cuerpo, metodo

@@ -8,22 +8,22 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, un_socio
 
-from app.modules.notificaciones.casos_de_uso import despachar_pendientes
-from app.modules.notificaciones.repositorio import NotificacionesSql
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.use_cases import dispatch_pending
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.push import push_channel
 
 
 class CanalCaido:
-    def enviar(self, tokens: list[str], aviso: Any) -> Any:
+    def send(self, tokens: list[str], aviso: Any) -> Any:
         raise ConnectionError("el servicio no contesta")
 
 
 @pytest.fixture
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     canal = CanalDePrueba()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
 def _cancelar(socio: Socio, reserva_id: str) -> int:
@@ -89,11 +89,11 @@ def test_si_el_servicio_push_cae_la_confirmacion_queda_en_el_centro_como_fallida
     """el envío fallido no se reintenta y la cancelación sigue hecha @supuesto:CU-24.3-SUP-01"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    app_de(api).dependency_overrides[canal_push] = CanalCaido
+    app_de(api).dependency_overrides[push_channel] = CanalCaido
     try:
         assert _cancelar(socio, reserva["id"]) == 200
     finally:
-        app_de(api).dependency_overrides.pop(canal_push, None)
+        app_de(api).dependency_overrides.pop(push_channel, None)
 
     assert _envios(socio) == ["fallida"]
     assert len(socio.centro()["notificaciones"]) == 1
@@ -119,9 +119,9 @@ def test_lo_que_quedo_pendiente_se_despacha_una_sola_vez(
         )
 
     with motor.connect() as conn:
-        primero = despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
+        primero = dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
     with motor.connect() as conn:
-        segundo = despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
+        segundo = dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
 
     assert (primero, segundo) == (1, 0)
     assert len(canal.enviados) == 1

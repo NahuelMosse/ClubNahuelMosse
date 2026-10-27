@@ -116,7 +116,7 @@ def test_la_anticipacion_sale_de_las_reglas_y_no_esta_en_el_sql() -> None:
     archivo = MODULOS / "notificaciones" / "repositorio.py"
     arbol = ast.parse(archivo.read_text(encoding="utf-8"))
     nombres = {n.id for n in ast.walk(arbol) if isinstance(n, ast.Name)}
-    assert "ANTICIPACION" in nombres
+    assert "LEAD_TIME" in nombres
     assert not any("1 hour" in t for t in _textos(archivo))
 
 

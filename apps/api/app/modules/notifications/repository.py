@@ -1,4 +1,4 @@
-# kit-shape: el repositorio de avisos y la función que arma su fila van juntos
+# kit-shape: the notice repository and the function that builds its row go together
 from collections.abc import Sequence
 from datetime import datetime
 from typing import Any
@@ -6,78 +6,78 @@ from uuid import UUID
 
 from sqlalchemy import Connection, Row, text
 
-from app.modules.notificaciones.reglas import (
-    ANTICIPACION,
-    ESPERA_DEL_ENVIO,
-    ESPERA_DEL_RECORDATORIO,
-    Aviso,
-    AvisoPerdido,
-    Envio,
-    Notificacion,
-    Pendiente,
-    Recordatorio,
-    ReservaAnulada,
-    datos_del_aviso,
-    mensaje_cancelacion_forzosa,
-    mensaje_cancelaciones_forzosas,
+from app.modules.notifications.rules import (
+    LEAD_TIME,
+    REMINDER_GRACE,
+    SENDING_TIMEOUT,
+    Delivery,
+    LostNotice,
+    Notice,
+    Notification,
+    PendingNotice,
+    Reminder,
+    VoidedBooking,
+    forced_cancellation_message,
+    forced_cancellations_message,
+    notice_data,
 )
 from app.shared.db import DbConnection, in_transaction
 
-# Cuántas notificaciones trae el centro: las más nuevas.
-LIMITE_DEL_CENTRO = 100
+# How many notifications the center brings: the newest ones.
+CENTER_LIMIT = 100
 
 
-# Primer número del par de `pg_advisory_xact_lock` con que se serializa, por persona, el
-# agrupado de avisos de anulación.
-_BLOQUEO_DE_ANULACIONES = 2402
+# First number of the `pg_advisory_xact_lock` pair used to serialize, per person, the grouping
+# of voiding notices.
+_VOIDING_LOCK = 2402
 
 
-def encolar_cancelacion_forzosa(
-    conn: Connection, usuario_id: UUID, reserva_ids: Sequence[UUID]
+def enqueue_forced_cancellation(
+    conn: Connection, user_id: UUID, booking_ids: Sequence[UUID]
 ) -> None:
-    """Registra en el centro de [usuario_id] el aviso de las reservas que el club canceló, con
-    el envío pendiente, dentro de la transacción de quien llama: sin commit, así que si la
-    cancelación no se completa no queda aviso.
+    """Registers in the center of [user_id] the notice of the bookings the club cancelled, with
+    the delivery pending, inside the caller's transaction: no commit, so if the cancellation
+    does not complete there is no notice.
 
-    Una reserva que ya tiene aviso se salta. Si la persona tiene un aviso de anulación sin leer,
-    se abre un aviso nuevo con la cantidad total y el anterior queda reemplazado, esté o no
-    saliendo en este momento: cada reserva sigue ligada al aviso que se lo informó. Si el
-    anterior no había salido, sus reservas pasan al nuevo.
+    A booking that already has a notice is skipped. If the person has an unread voiding
+    notice, a new one opens with the total count and the previous one is replaced, whether or
+    not it is going out right now: each booking stays linked to the notice that informed it. If
+    the previous one had not gone out, its bookings move to the new one.
     """
-    _bloquear_anulaciones(conn, usuario_id)
-    nuevas = _anuladas_sin_aviso(conn, usuario_id, reserva_ids)
-    if not nuevas:
+    _lock_voidings(conn, user_id)
+    fresh = _voided_without_notice(conn, user_id, booking_ids)
+    if not fresh:
         return
-    previo = _aviso_sin_leer(conn, usuario_id)
-    # Uno que está saliendo también se reemplaza: sale igual y su push lo pisa el del nuevo en
-    # la bandeja, pero el centro tiene que mostrar uno solo.
-    total = len(nuevas) + (0 if previo is None else int(previo.cantidad))
-    notificacion_id = _abrir_aviso(conn, usuario_id, nuevas, total)
-    if previo is not None:
-        _reemplazar_aviso(conn, previo, notificacion_id)
-    for r in nuevas:
+    previous = _unread_notice(conn, user_id)
+    # One that is going out is also replaced: it goes out anyway and its push is overwritten by
+    # the new one in the tray, but the center has to show only one.
+    total = len(fresh) + (0 if previous is None else int(previous.cantidad))
+    notification_id = _open_notice(conn, user_id, fresh, total)
+    if previous is not None:
+        _replace_notice(conn, previous, notification_id)
+    for r in fresh:
         conn.execute(
             text(
                 "INSERT INTO notificacion_reserva (notificacion_id, reserva_id)"
                 " VALUES (:notificacion, :reserva)"
             ),
-            {"notificacion": notificacion_id, "reserva": r.reserva_id},
+            {"notificacion": notification_id, "reserva": r.booking_id},
         )
 
 
-def _bloquear_anulaciones(conn: Connection, usuario_id: UUID) -> None:
-    # Es el último bloqueo de la transacción: las anulaciones simultáneas de una misma persona
-    # se esperan acá, después de los bloqueos de la cuenta, la sede, el espacio y la reserva.
+def _lock_voidings(conn: Connection, user_id: UUID) -> None:
+    # It is the last lock of the transaction: simultaneous voidings of the same person wait
+    # here, after the locks of the account, the venue, the space and the booking.
     conn.execute(
         text("SELECT pg_advisory_xact_lock(:ns, hashtext(CAST(:usuario AS text)))"),
-        {"ns": _BLOQUEO_DE_ANULACIONES, "usuario": usuario_id},
+        {"ns": _VOIDING_LOCK, "usuario": user_id},
     )
 
 
-def _anuladas_sin_aviso(
-    conn: Connection, usuario_id: UUID, reserva_ids: Sequence[UUID]
-) -> list[ReservaAnulada]:
-    filas = conn.execute(
+def _voided_without_notice(
+    conn: Connection, user_id: UUID, booking_ids: Sequence[UUID]
+) -> list[VoidedBooking]:
+    rows = conn.execute(
         text(
             "SELECT r.id, r.inicio, e.deporte, e.tipo, s.nombre AS sede, r.motivo"
             " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
@@ -86,22 +86,22 @@ def _anuladas_sin_aviso(
             " AND NOT EXISTS (SELECT 1 FROM notificacion_reserva nr WHERE nr.reserva_id = r.id)"
             " ORDER BY r.inicio, r.id"
         ),
-        {"ids": list(reserva_ids), "usuario": usuario_id},
+        {"ids": list(booking_ids), "usuario": user_id},
     ).all()
     return [
-        ReservaAnulada(
-            reserva_id=f.id,
-            inicio=f.inicio,
-            deporte=f.deporte,
-            tipo=f.tipo,
-            sede=f.sede,
-            motivo=f.motivo or "",
+        VoidedBooking(
+            booking_id=row.id,
+            starts_at=row.inicio,
+            sport=row.deporte,
+            kind=row.tipo,
+            venue=row.sede,
+            reason=row.motivo or "",
         )
-        for f in filas
+        for row in rows
     ]
 
 
-def _aviso_sin_leer(conn: Connection, usuario_id: UUID) -> Row[Any] | None:
+def _unread_notice(conn: Connection, user_id: UUID) -> Row[Any] | None:
     return conn.execute(
         text(
             "SELECT n.id, n.envio, coalesce(n.cantidad, 1) AS cantidad FROM notificacion n"
@@ -109,59 +109,57 @@ def _aviso_sin_leer(conn: Connection, usuario_id: UUID) -> Row[Any] | None:
             " AND n.leida_en IS NULL AND n.reemplazada_por IS NULL"
             " ORDER BY n.id DESC LIMIT 1 FOR UPDATE"
         ),
-        {"usuario": usuario_id},
+        {"usuario": user_id},
     ).first()
 
 
-def _abrir_aviso(
-    conn: Connection, usuario_id: UUID, nuevas: list[ReservaAnulada], total: int
-) -> UUID:
-    aviso = (
-        mensaje_cancelaciones_forzosas(total) if total > 1 else mensaje_cancelacion_forzosa(nuevas)
+def _open_notice(conn: Connection, user_id: UUID, fresh: list[VoidedBooking], total: int) -> UUID:
+    notice = (
+        forced_cancellations_message(total) if total > 1 else forced_cancellation_message(fresh)
     )
-    unica = nuevas[0] if total == 1 else None
-    notificacion_id: UUID = conn.execute(
+    single = fresh[0] if total == 1 else None
+    notification_id: UUID = conn.execute(
         text(
             "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
             " reserva_inicio, envio, cantidad) VALUES (:usuario, 'cancelacion_forzosa',"
             " :titulo, :cuerpo, :reserva, :inicio, 'pendiente', :cantidad) RETURNING id"
         ),
         {
-            "usuario": usuario_id,
-            "titulo": aviso.titulo,
-            "cuerpo": aviso.cuerpo,
-            "reserva": None if unica is None else unica.reserva_id,
-            "inicio": None if unica is None else unica.inicio,
+            "usuario": user_id,
+            "titulo": notice.title,
+            "cuerpo": notice.body,
+            "reserva": None if single is None else single.booking_id,
+            "inicio": None if single is None else single.starts_at,
             "cantidad": total,
         },
     ).scalar_one()
-    return notificacion_id
+    return notification_id
 
 
-def _reemplazar_aviso(conn: Connection, previo: Row[Any], notificacion_id: UUID) -> None:
+def _replace_notice(conn: Connection, previous: Row[Any], notification_id: UUID) -> None:
     conn.execute(
         text("UPDATE notificacion SET reemplazada_por = :nuevo WHERE id = :id"),
-        {"nuevo": notificacion_id, "id": previo.id},
+        {"nuevo": notification_id, "id": previous.id},
     )
-    if previo.envio == "pendiente":
+    if previous.envio == "pendiente":
         conn.execute(
             text(
                 "UPDATE notificacion_reserva SET notificacion_id = :nuevo"
                 " WHERE notificacion_id = :id"
             ),
-            {"nuevo": notificacion_id, "id": previo.id},
+            {"nuevo": notification_id, "id": previous.id},
         )
 
 
-class NotificacionesSql:
+class NotificationsSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def encolar_cancelacion_usuario(
-        self, usuario_id: UUID, reserva_id: UUID, inicio: datetime, aviso: Aviso
+    def enqueue_user_cancellation(
+        self, user_id: UUID, booking_id: UUID, starts_at: datetime, notice: Notice
     ) -> None:
-        """Deja el aviso de la cancelación que hizo la persona, dentro de la transacción de quien
-        llama: sin commit. El índice único evita repetirlo."""
+        """Leaves the notice of the cancellation the person made, inside the caller's
+        transaction: no commit. The unique index avoids repeating it."""
         self._conn.execute(
             text(
                 "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
@@ -170,16 +168,16 @@ class NotificacionesSql:
                 " ON CONFLICT (reserva_id) WHERE tipo = 'cancelacion_usuario' DO NOTHING"
             ),
             {
-                "usuario": usuario_id,
-                "id": reserva_id,
-                "titulo": aviso.titulo,
-                "cuerpo": aviso.cuerpo,
-                "inicio": inicio,
+                "usuario": user_id,
+                "id": booking_id,
+                "titulo": notice.title,
+                "cuerpo": notice.body,
+                "inicio": starts_at,
             },
         )
 
-    def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
-        filas = self._conn.execute(
+    def due(self, now: datetime, user_id: UUID | None) -> list[Reminder]:
+        rows = self._conn.execute(
             text(
                 "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede"
                 " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
@@ -187,7 +185,7 @@ class NotificacionesSql:
                 " WHERE r.estado = 'activa' AND u.activo"
                 " AND r.inicio > :ahora"
                 " AND r.inicio <= :ahora + CAST(:anticipacion AS interval)"
-                # Una reserva hecha o movida con menos anticipación que el aviso no avisa.
+                # A booking made or moved with less lead time than the notice gets no notice.
                 " AND greatest(r.creado_en, r.modificado_en)"
                 " <= r.inicio - CAST(:anticipacion AS interval)"
                 " AND (CAST(:usuario AS uuid) IS NULL OR r.usuario_id = :usuario)"
@@ -195,39 +193,39 @@ class NotificacionesSql:
                 " AND n.tipo = 'recordatorio' AND n.reserva_inicio = r.inicio)"
                 " ORDER BY r.inicio, r.id"
             ),
-            {"ahora": ahora, "usuario": usuario_id, "anticipacion": ANTICIPACION},
+            {"ahora": now, "usuario": user_id, "anticipacion": LEAD_TIME},
         ).all()
         self._conn.rollback()
         return [
-            Recordatorio(
-                reserva_id=f.id,
-                usuario_id=f.usuario_id,
-                inicio=f.inicio,
-                fin=f.fin,
-                deporte=f.deporte,
-                tipo=f.tipo,
-                sede=f.sede,
+            Reminder(
+                booking_id=row.id,
+                user_id=row.usuario_id,
+                starts_at=row.inicio,
+                ends_at=row.fin,
+                sport=row.deporte,
+                kind=row.tipo,
+                venue=row.sede,
             )
-            for f in filas
+            for row in rows
         ]
 
-    def registrar(self, recordatorio: Recordatorio, aviso: Aviso) -> UUID | None:
-        datos = {
-            "usuario": recordatorio.usuario_id,
-            "titulo": aviso.titulo,
-            "cuerpo": aviso.cuerpo,
-            "reserva": recordatorio.reserva_id,
-            "inicio": recordatorio.inicio,
-            "anticipacion": ANTICIPACION,
+    def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
+        params = {
+            "usuario": reminder.user_id,
+            "titulo": notice.title,
+            "cuerpo": notice.body,
+            "reserva": reminder.booking_id,
+            "inicio": reminder.starts_at,
+            "anticipacion": LEAD_TIME,
         }
         with in_transaction(self._conn):
-            # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
-            # la cuenta darse de baja. Se vuelve a mirar con la cuenta y la reserva compartidas,
-            # en el orden de las reservas, así ninguna de las dos cambia hasta el commit.
-            if not self._sigue_vigente(datos):
+            # Between `due` looking and here, the booking may have been cancelled, voided or
+            # moved, or the account closed. It is looked at again with the account and the
+            # booking shared, in the order of the bookings, so neither changes until commit.
+            if not self._still_current(params):
                 self._conn.rollback()
                 return None
-            fila = self._conn.execute(
+            row = self._conn.execute(
                 text(
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
                     " reserva_inicio, envio) VALUES (:usuario, 'recordatorio', :titulo, :cuerpo,"
@@ -235,17 +233,17 @@ class NotificacionesSql:
                     " ON CONFLICT (reserva_id, reserva_inicio) WHERE tipo = 'recordatorio'"
                     " DO NOTHING RETURNING id"
                 ),
-                datos,
+                params,
             ).first()
-        return None if fila is None else fila.id
+        return None if row is None else row.id
 
-    def _sigue_vigente(self, datos: dict[str, Any]) -> bool:
-        cuenta = self._conn.execute(
-            text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
+    def _still_current(self, params: dict[str, Any]) -> bool:
+        account = self._conn.execute(
+            text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), params
         ).first()
-        if cuenta is None:
+        if account is None:
             return False
-        vigente = self._conn.execute(
+        current = self._conn.execute(
             text(
                 "SELECT 1 FROM reserva WHERE id = :reserva AND estado = 'activa'"
                 " AND inicio = :inicio AND inicio > now()"
@@ -253,35 +251,35 @@ class NotificacionesSql:
                 " <= inicio - CAST(:anticipacion AS interval)"
                 " FOR SHARE"
             ),
-            datos,
+            params,
         ).first()
-        return vigente is not None
+        return current is not None
 
-    def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
-        filas = self._conn.execute(
+    def tokens_with_permission(self, user_id: UUID) -> list[str]:
+        rows = self._conn.execute(
             text(
                 "SELECT token FROM dispositivo WHERE usuario_id = :usuario AND activo"
                 " AND permiso ORDER BY id"
             ),
-            {"usuario": usuario_id},
+            {"usuario": user_id},
         ).all()
         self._conn.rollback()
-        return [f.token for f in filas]
+        return [row.token for row in rows]
 
-    def tiene_dispositivos(self, usuario_id: UUID) -> bool:
-        hay: bool = self._conn.execute(
+    def has_devices(self, user_id: UUID) -> bool:
+        exists: bool = self._conn.execute(
             text(
                 "SELECT EXISTS (SELECT 1 FROM dispositivo WHERE usuario_id = :usuario AND activo)"
             ),
-            {"usuario": usuario_id},
+            {"usuario": user_id},
         ).scalar_one()
         self._conn.rollback()
-        return bool(hay)
+        return bool(exists)
 
-    def marcar_varados_fallidos(self, usuario_id: UUID | None) -> list[AvisoPerdido]:
+    def fail_stranded(self, user_id: UUID | None) -> list[LostNotice]:
         with in_transaction(self._conn):
-            # Un recordatorio registrado cuyo turno ya empezó o se canceló no va a salir nunca.
-            muertos = self._conn.execute(
+            # A registered reminder whose slot already started or was cancelled never goes out.
+            dead = self._conn.execute(
                 text(
                     "UPDATE notificacion n SET envio = 'fallida' WHERE n.envio = 'pendiente'"
                     " AND n.tipo = 'recordatorio'"
@@ -290,24 +288,25 @@ class NotificacionesSql:
                     " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio"
                     " AND r.inicio > now()) RETURNING n.id, n.tipo"
                 ),
-                {"usuario": usuario_id},
+                {"usuario": user_id},
             ).all()
-            # Uno que lleva demasiado `enviando` quedó a mitad del envío: no se vuelve a mandar.
-            atascados = self._conn.execute(
+            # One that stays `enviando` too long was left mid-send: it is not sent again.
+            stuck = self._conn.execute(
                 text(
                     "UPDATE notificacion SET envio = 'fallida' WHERE envio = 'enviando'"
                     " AND enviando_desde < now() - CAST(:espera AS interval)"
                     " AND (CAST(:usuario AS uuid) IS NULL OR usuario_id = :usuario)"
                     " RETURNING id, tipo"
                 ),
-                {"usuario": usuario_id, "espera": ESPERA_DEL_ENVIO},
+                {"usuario": user_id, "espera": SENDING_TIMEOUT},
             ).all()
-        return [AvisoPerdido(f.id, f.tipo) for f in [*muertos, *atascados]]
+        return [LostNotice(row.id, row.tipo) for row in [*dead, *stuck]]
 
-    def tomar_siguiente(self, usuario_id: UUID | None) -> Pendiente | None:
-        # Los que salen: los pendientes, y los recordatorios sólo si siguen vigentes y ya pasó el
-        # minuto de quien los registró. `enviando` es la toma: evita mandarlo dos veces.
-        f = self._conn.execute(
+    def take_next(self, user_id: UUID | None) -> PendingNotice | None:
+        # The ones that go out: the pending ones, and reminders only if still current and the
+        # minute of whoever registered them has passed. `enviando` is the claim: it avoids
+        # sending it twice.
+        row = self._conn.execute(
             text(
                 "UPDATE notificacion SET envio = 'enviando', enviando_desde = now() WHERE id = ("
                 " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
@@ -319,33 +318,33 @@ class NotificacionesSql:
                 " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"
                 " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
             ),
-            {"usuario": usuario_id, "espera": ESPERA_DEL_RECORDATORIO},
+            {"usuario": user_id, "espera": REMINDER_GRACE},
         ).first()
         self._conn.commit()
-        if f is None:
+        if row is None:
             return None
-        return Pendiente(
-            notificacion_id=f.id,
-            usuario_id=f.usuario_id,
-            aviso=Aviso(
-                titulo=f.titulo,
-                cuerpo=f.cuerpo,
-                datos=datos_del_aviso(f.tipo, None if f.reserva_id is None else f.reserva_id),
+        return PendingNotice(
+            notification_id=row.id,
+            user_id=row.usuario_id,
+            notice=Notice(
+                title=row.titulo,
+                body=row.cuerpo,
+                data=notice_data(row.tipo, None if row.reserva_id is None else row.reserva_id),
             ),
         )
 
-    def marcar_envio(self, notificacion_id: UUID, envio: Envio) -> None:
+    def mark_delivery(self, notification_id: UUID, delivery: Delivery) -> None:
         self._conn.execute(
             text(
                 "UPDATE notificacion SET envio = CAST(:envio AS text),"
                 " enviada_en = CASE WHEN CAST(:envio AS text) = 'enviada' THEN now() END"
                 " WHERE id = :id"
             ),
-            {"envio": envio, "id": notificacion_id},
+            {"envio": delivery, "id": notification_id},
         )
         self._conn.commit()
 
-    def dar_de_baja_tokens(self, tokens: Sequence[str]) -> None:
+    def deactivate_tokens(self, tokens: Sequence[str]) -> None:
         if not tokens:
             return
         self._conn.execute(
@@ -357,25 +356,25 @@ class NotificacionesSql:
         )
         self._conn.commit()
 
-    def registrar_dispositivo(
+    def register_device(
         self,
-        usuario_id: UUID,
+        user_id: UUID,
         token: str,
-        plataforma: str,
-        permiso: bool,  # noqa: FBT001
+        platform: str,
+        permission: bool,  # noqa: FBT001
     ) -> bool:
-        datos = {
-            "usuario": usuario_id,
+        params = {
+            "usuario": user_id,
             "token": token,
-            "plataforma": plataforma,
-            "permiso": permiso,
+            "plataforma": platform,
+            "permiso": permission,
         }
         with in_transaction(self._conn):
-            # La cuenta se toma compartida, como al reservar: no se da de baja en el medio.
-            cuenta = self._conn.execute(
-                text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
+            # The account is taken shared, as when booking: it is not closed in between.
+            account = self._conn.execute(
+                text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), params
             ).first()
-            if cuenta is None:
+            if account is None:
                 self._conn.rollback()
                 return False
             self._conn.execute(
@@ -387,75 +386,75 @@ class NotificacionesSql:
                     " permiso = EXCLUDED.permiso, modificado_en = now()"
                     " WHERE dispositivo.usuario_id = EXCLUDED.usuario_id"
                 ),
-                datos,
+                params,
             )
         return True
 
-    def baja_dispositivo(self, usuario_id: UUID, token: str) -> None:
+    def unregister_device(self, user_id: UUID, token: str) -> None:
         self._conn.execute(
             text(
                 "UPDATE dispositivo SET activo = false, dado_de_baja_en = now()"
                 " WHERE usuario_id = :usuario AND token = :token AND activo"
             ),
-            {"usuario": usuario_id, "token": token},
+            {"usuario": user_id, "token": token},
         )
         self._conn.commit()
 
-    def de_usuario(self, usuario_id: UUID) -> tuple[list[Notificacion], int]:
-        filas = self._conn.execute(
+    def of_user(self, user_id: UUID) -> tuple[list[Notification], int]:
+        rows = self._conn.execute(
             text(
                 "SELECT id, tipo, titulo, cuerpo, reserva_id, creado_en AS creada_en,"
                 " leida_en IS NOT NULL AS leida FROM notificacion WHERE usuario_id = :usuario"
                 " AND reemplazada_por IS NULL"
-                f" ORDER BY creado_en DESC, id DESC LIMIT {LIMITE_DEL_CENTRO}"
+                f" ORDER BY creado_en DESC, id DESC LIMIT {CENTER_LIMIT}"
             ),
-            {"usuario": usuario_id},
+            {"usuario": user_id},
         ).all()
-        sin_leer: int = self._conn.execute(
+        unread: int = self._conn.execute(
             text(
                 "SELECT count(*) FROM notificacion WHERE usuario_id = :usuario AND leida_en IS NULL"
                 " AND reemplazada_por IS NULL"
             ),
-            {"usuario": usuario_id},
+            {"usuario": user_id},
         ).scalar_one()
         self._conn.rollback()
         return (
             [
-                Notificacion(
-                    id=f.id,
-                    tipo=f.tipo,
-                    titulo=f.titulo,
-                    cuerpo=f.cuerpo,
-                    reserva_id=None if f.reserva_id is None else f.reserva_id,
-                    creada_en=f.creada_en,
-                    leida=bool(f.leida),
+                Notification(
+                    id=row.id,
+                    kind=row.tipo,
+                    title=row.titulo,
+                    body=row.cuerpo,
+                    booking_id=None if row.reserva_id is None else row.reserva_id,
+                    created_at=row.creada_en,
+                    read=bool(row.leida),
                 )
-                for f in filas
+                for row in rows
             ],
-            int(sin_leer),
+            int(unread),
         )
 
-    def leer(self, usuario_id: UUID, notificacion_id: UUID) -> bool:
-        fila = self._conn.execute(
+    def read(self, user_id: UUID, notification_id: UUID) -> bool:
+        row = self._conn.execute(
             text(
                 "UPDATE notificacion SET leida_en = coalesce(leida_en, now())"
                 " WHERE id = :id AND usuario_id = :usuario RETURNING id"
             ),
-            {"id": notificacion_id, "usuario": usuario_id},
+            {"id": notification_id, "usuario": user_id},
         ).first()
         self._conn.commit()
-        return fila is not None
+        return row is not None
 
-    def leer_todas(self, usuario_id: UUID) -> None:
+    def read_all(self, user_id: UUID) -> None:
         self._conn.execute(
             text(
                 "UPDATE notificacion SET leida_en = now()"
                 " WHERE usuario_id = :usuario AND leida_en IS NULL"
             ),
-            {"usuario": usuario_id},
+            {"usuario": user_id},
         )
         self._conn.commit()
 
 
-def repositorio_notificaciones(conn: DbConnection) -> NotificacionesSql:
-    return NotificacionesSql(conn)
+def notifications_repository(conn: DbConnection) -> NotificationsSql:
+    return NotificationsSql(conn)

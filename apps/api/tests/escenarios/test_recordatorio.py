@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
+from app.modules.notifications.rules import Notice, DeliveryResult
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 CONTRASENA = "ClubNahuel1"
@@ -24,11 +24,11 @@ class CanalDePrueba:
     """El servicio de notificaciones del teléfono, que anota lo que se le pide enviar."""
 
     def __init__(self) -> None:
-        self.enviados: list[tuple[list[str], Aviso]] = []
+        self.enviados: list[tuple[list[str], Notice]] = []
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         self.enviados.append((list(tokens), aviso))
-        return ResultadoDeEnvio(enviados=len(tokens), invalidos=())
+        return DeliveryResult(enviados=len(tokens), invalidos=())
 
 
 @dataclass
@@ -61,11 +61,11 @@ class Socio:
 
     def barrer(self, canal: CanalDePrueba, ahora: datetime) -> int:
         """El barrido de recordatorios corriendo a la hora [ahora] del club, para este socio."""
-        from app.modules.notificaciones.casos_de_uso import enviar_recordatorios
-        from app.modules.notificaciones.repositorio import NotificacionesSql
+        from app.modules.notifications.use_cases import send_reminders
+        from app.modules.notifications.repository import NotificationsSql
 
         with self.motor.connect() as conn:
-            return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, self.usuario_id)
+            return send_reminders(NotificationsSql(conn), canal, ahora, self.usuario_id)
 
     def centro(self) -> dict[str, Any]:
         r = self.api.get("/notificaciones", headers=self.sesion)

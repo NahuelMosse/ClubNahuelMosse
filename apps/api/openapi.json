@@ -1928,7 +1928,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeDispositivo"
+                "$ref": "#/components/schemas/DeviceRequest"
               }
             }
           },
@@ -1959,7 +1959,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1984,7 +1984,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BajaDeDispositivo"
+                "$ref": "#/components/schemas/DeviceUnregistration"
               }
             }
           },
@@ -2036,7 +2036,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Centro"
+                  "$ref": "#/components/schemas/Center"
                 }
               }
             }
@@ -2146,19 +2146,6 @@
   },
   "components": {
     "schemas": {
-      "BajaDeDispositivo": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token"
-        ],
-        "title": "BajaDeDispositivo"
-      },
       "Catalogo": {
         "properties": {
           "deportes": {
@@ -2175,11 +2162,11 @@
         ],
         "title": "Catalogo"
       },
-      "Centro": {
+      "Center": {
         "properties": {
           "notificaciones": {
             "items": {
-              "$ref": "#/components/schemas/NotificacionVista"
+              "$ref": "#/components/schemas/NotificationView"
             },
             "type": "array",
             "title": "Notificaciones"
@@ -2194,7 +2181,7 @@
           "notificaciones",
           "no_leidas"
         ],
-        "title": "Centro"
+        "title": "Center"
       },
       "ConsultaDeEnlace": {
         "properties": {
@@ -2277,6 +2264,46 @@
         ],
         "title": "DeporteVista"
       },
+      "DeviceRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "plataforma": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios"
+            ],
+            "title": "Plataforma"
+          },
+          "permiso": {
+            "type": "boolean",
+            "title": "Permiso"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "plataforma",
+          "permiso"
+        ],
+        "title": "DeviceRequest"
+      },
+      "DeviceUnregistration": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "DeviceUnregistration"
+      },
       "Errores": {
         "properties": {
           "errores": {
@@ -2340,6 +2367,22 @@
           "errores"
         ],
         "title": "ErroresDeSede"
+      },
+      "Errors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "Errors"
       },
       "EspacioVista": {
         "properties": {
@@ -2542,7 +2585,7 @@
         ],
         "title": "ListaDeReservas"
       },
-      "NotificacionVista": {
+      "NotificationView": {
         "properties": {
           "id": {
             "type": "string",
@@ -2598,7 +2641,7 @@
           "creada_en",
           "leida"
         ],
-        "title": "NotificacionVista"
+        "title": "NotificationView"
       },
       "PedidoCambioDeContrasena": {
         "properties": {
@@ -2726,33 +2769,6 @@
           "desde"
         ],
         "title": "PedidoDeCambioDeReserva"
-      },
-      "PedidoDeDispositivo": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          },
-          "plataforma": {
-            "type": "string",
-            "enum": [
-              "android",
-              "ios"
-            ],
-            "title": "Plataforma"
-          },
-          "permiso": {
-            "type": "boolean",
-            "title": "Permiso"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token",
-          "plataforma",
-          "permiso"
-        ],
-        "title": "PedidoDeDispositivo"
       },
       "PedidoDeEdicionDePerfil": {
         "properties": {
