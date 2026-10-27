@@ -1,19 +1,9 @@
-# Handoff VIS-02 T1
+# Handoff VIS-02 T1 (2)
 
-Hecho: RED commiteado (`apps/mobile/test/esqueletos_de_carga_test.dart`, falla porque `comun/esqueleto.dart` no existe).
+Hecho y commiteado: `comun/esqueleto.dart` (Esqueleto, ZonaDeEsqueletos, FormaDeEsqueleto, EsqueletoDeLista con SingleChildScrollView sin scroll para no desbordar), `EsperaDeLista` borrada, los 5 llamadores y los 8 spinners de pantalla reemplazados, imports ordenados, `flutter analyze` limpio, `refactor-tests:` en el Gate, tests de `pantalla_panel_admin_test.dart` y `movimiento_pantallas_test.dart` (3 asserts) cambiados a `Esqueleto`. `tarjeta_aviso.dart` solo reformateado por `dart format`.
 
-## Falta (todo el código)
-
-API que el test espera en `apps/mobile/lib/comun/esqueleto.dart`:
-- `Esqueleto({width, double alto, radio})` bloque redondeado (campo público `alto`); color: oscuro `bgSurfaceRaised`, claro `bgSurface` (por Theme.brightness; en claro raised == bgBase).
-- `ZonaDeEsqueletos({child})`: un AnimationController por zona, `repeat()` solo si `!MediaQuery.disableAnimationsOf(context)` (si se activa, detenerlo); brillo con ShaderMask srcATop + LinearGradient deslizante; `Semantics(label:'Cargando', container:true)` + `ExcludeSemantics` sobre los bloques.
-- `enum FormaDeEsqueleto { sede, cancha, reserva, aviso, grilla }` y `EsqueletoDeLista({key, forma, cantidad = 3})` (incluye la zona). Medidas estimadas: sede alto 220 radioLg; cancha 96; reserva 112; aviso 76 con cuadro 40x40 radioMd; grilla pares de 52 radioMd, separación 8 (como `GrillaDeAPares`, Medidas.altoControl).
-- Borrar `EsperaDeLista` de `comun/carga_de_lista.dart` y cambiar llamadores: `sedes/contenido_de_sede.dart:156` (cancha, conservar `key: ValueKey('carga')`), `inicio/pantalla_inicio.dart:233` (reserva, con Padding horizontal s24), `reservas/pantalla_mis_reservas.dart:218` (reserva), `sedes/pantalla_sedes.dart:144` (sede), `admin/listado_admin.dart:111` (sede/espacio, según listado).
-- Spinners de pantalla a reemplazar: `notificaciones/pantalla_notificaciones.dart:137` (aviso, con padding), `sedes/pantalla_sede.dart:219` (cancha), `reservas/pantalla_horarios.dart:361` y `:476` (grilla), `reservas/pantalla_buscar_cancha.dart:368` y `:408` (cancha/grilla), `admin/cuerpo_del_panel_admin.dart:52` (reserva, sliver).
-- Dejar: botones, `admin/nombre_generado.dart`, `comun/pantalla_de_carga.dart`, `sesion/pantalla_nueva_contrasena.dart`, `usuarios/pantalla_mi_perfil.dart`, `comun/acciones_de_resultado.dart`, `comun/en_curso.dart`, `admin/pantalla_alta_espacio.dart`.
-
-Tests existentes a actualizar (asertan el spinner): `test/rediseno/movimiento_pantallas_test.dart` líneas ~360, 462, 470 (cambiar por `find.byType(Esqueleto)`); `test/admin/pantalla_panel_admin_test.dart` líneas ~170 y 179 (cargandoMas; el nuevo bloque es `Esqueleto`). Anotar en `## Log` la línea `refactor-tests` (Edit solo en card.md).
-
-Layers: marcar en `## Tasks` lo ya marcado (presentation). Completar `reuses:/new:` ya está (`new:`).
-Luego: `dart format`, `flutter analyze --no-pub apps/mobile`, gate `sh D:/Temp/w/herramientas/flutter-mobile.sh`, Log por tarea, `close.mjs`. No push.
-Flutter: D:/projects/flutter/bin. Tests con `montar`/`montarUsuario` hacen pumpAndSettle: con shimmer repetido cuelga en estado de carga; los tests nuevos usan `App` directo con `pump`.
+## Falta
+1. `test/esqueletos_de_carga_test.dart`: 8 de 12 pasan; fallan los 4 `cada pantalla que carga ... /sedes /reservas /inicio /admin/sedes` con "A Timer is still pending after the widget tree was disposed" (el `.timeout(limite)` de `ClienteApi._enviar` con la API colgada; no es del código nuevo). El test commiteado no se puede editar: crear un archivo nuevo con el mismo tag `@VIS-02-S1 @assumption:VIS-02-ASM-02` que al final haga `pumpWidget(SizedBox())` y `pump(Duration(minutes: 2))` (o espere el límite), y anotar en `## Log`: `- L<n> · <date> · replaces: apps/mobile/test/esqueletos_de_carga_test.dart "cada pantalla que carga ... <ruta>" · deja un Timer pendiente de ClienteApi · by: <nuevo>`. Verificar que el original sigue fallando por eso y decidir con el main thread si se retira.
+2. `movimiento_pantallas_test.dart` falla `@RED-04-S14 ... festejo, aviso y entrada ... primer cuadro` (línea ~1071): comprobar si fallaba antes en main (`git stash`/worktree de main) o si lo causa el brillo (`tester.hasRunningAnimations`/pumpAndSettle).
+3. Gate completo en background: `sh D:/Temp/w/herramientas/flutter-mobile.sh > /tmp/vis02.log 2>&1`, luego `node .claude/tools/verify.mjs`, Log `- L<n> · <date> · T1 · <evidencia>`, `node .claude/tools/close.mjs`. No push.
+Nota: `dart format` sobre `apps/mobile/test` reformatea tests ajenos; formatear solo `apps/mobile/lib` y el test propio.

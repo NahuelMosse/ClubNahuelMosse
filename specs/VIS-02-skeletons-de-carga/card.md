@@ -17,7 +17,7 @@ not_read:
 
 ## Tasks
 
-- T1 · S1,S2,VIS-02-ASM-01,VIS-02-ASM-02 · apps/mobile/lib/comun/esqueleto.dart (presentation), apps/mobile/lib/comun/carga_de_lista.dart (presentation), apps/mobile/lib/inicio/pantalla_inicio.dart (presentation), apps/mobile/lib/reservas/pantalla_mis_reservas.dart (presentation), apps/mobile/lib/sedes/pantalla_sedes.dart (presentation), apps/mobile/lib/sedes/pantalla_sede.dart (presentation), apps/mobile/lib/reservas/pantalla_horarios.dart (presentation), apps/mobile/lib/reservas/pantalla_buscar_cancha.dart (presentation), apps/mobile/lib/notificaciones/pantalla_notificaciones.dart (presentation), apps/mobile/lib/admin/listado_admin.dart (presentation), apps/mobile/lib/admin/cuerpo_del_panel_admin.dart (presentation) · tests: apps/mobile/test/esqueletos_de_carga_test.dart "cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02"; apps/mobile/test/esqueletos_de_carga_test.dart "el brillo se detiene con reducir movimiento y el lector anuncia Cargando una vez @VIS-02-S2"; apps/mobile/test/esqueletos_de_carga_test.dart "los spinners de botones y la espera de arranque siguen igual @assumption:VIS-02-ASM-01"
+- T1 · S1,S2,VIS-02-ASM-01,VIS-02-ASM-02 · apps/mobile/lib/comun/esqueleto.dart (presentation), apps/mobile/lib/comun/carga_de_lista.dart (presentation), apps/mobile/lib/inicio/pantalla_inicio.dart (presentation), apps/mobile/lib/reservas/pantalla_mis_reservas.dart (presentation), apps/mobile/lib/sedes/pantalla_sedes.dart (presentation), apps/mobile/lib/sedes/pantalla_sede.dart (presentation), apps/mobile/lib/reservas/pantalla_horarios.dart (presentation), apps/mobile/lib/reservas/pantalla_buscar_cancha.dart (presentation), apps/mobile/lib/notificaciones/pantalla_notificaciones.dart (presentation), apps/mobile/lib/admin/listado_admin.dart (presentation), apps/mobile/lib/admin/cuerpo_del_panel_admin.dart (presentation), apps/mobile/lib/comun/zona_de_esqueletos.dart (presentation), apps/mobile/lib/comun/esqueleto_de_lista.dart (presentation), apps/mobile/lib/notificaciones/tarjeta_aviso.dart (presentation: solo reformateado por dart format), apps/mobile/lib/sedes/contenido_de_sede.dart (presentation: el spinner de carga de la sede pasa a skeleton) · tests: apps/mobile/test/esqueletos_de_carga_pantallas_test.dart "cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02"; apps/mobile/test/esqueletos_de_carga_test.dart "cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02"; apps/mobile/test/esqueletos_de_carga_test.dart "el brillo se detiene con reducir movimiento y el lector anuncia Cargando una vez @VIS-02-S2"; apps/mobile/test/esqueletos_de_carga_test.dart "los spinners de botones y la espera de arranque siguen igual @assumption:VIS-02-ASM-01"
   new: apps/mobile/lib/comun/esqueleto.dart: no había un componente de skeleton
 
 ## Changes to existing behavior
@@ -28,7 +28,7 @@ not_read:
 
 ```
 suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
-fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/esqueletos_de_carga_test.dart
+fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/esqueletos_de_carga_test.dart apps/mobile/test/esqueletos_de_carga_pantallas_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 refactor-tests: la espera de lista deja de ser un spinner y pasa a ser bloques `Esqueleto`; los tests que buscaban `CircularProgressIndicator` buscan `Esqueleto`
 ```
@@ -38,3 +38,6 @@ refactor-tests: la espera de lista deja de ser un spinner y pasa a ser bloques `
 - L1 · y otra cosa, a las pantallas de carga le podes poner skeletons?
 - L2 · 2026-10-27 · declared · fault-db · la card no toca la base
 - L3 · 2026-10-27 · declared · attacks · la card no toca la API
+- L4 · 2026-10-27 · replaces: apps/mobile/test/esqueletos_de_carga_test.dart "cada pantalla que carga muestra skeletons ... /sedes, /reservas, /inicio, /admin/sedes" · deja un Timer pendiente del .timeout de ClienteApi con la API colgada · by: apps/mobile/test/esqueletos_de_carga_pantallas_test.dart "cada pantalla que carga muestra skeletons ..."
+- L5 · 2026-10-27 · T1 · esqueletos_de_carga_pantallas_test.dart 4/4 verde; movimiento_pantallas_test "@RED-04-S14 festejo, aviso y entrada ... primer cuadro" falla igual en main (lo reemplaza movimiento_reducido_reemplazo_test, verde)
+- L6 · 2026-10-27 · declared · K4 · apps/mobile/test/esqueletos_de_carga_pantallas_test.dart · repite el montaje con API colgada del test commiteado esqueletos_de_carga_test.dart, que no se puede editar; el nuevo lo reemplaza (L4)
