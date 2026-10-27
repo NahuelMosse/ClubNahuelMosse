@@ -19,7 +19,7 @@ not_read:
 ## Tasks
 
 - T1 · S1,NOT-05-ASM-01,NOT-05-ASM-02,NOT-05-ASM-03 · apps/api/migraciones/versions/0011_recordatorio_cinco_minutos.py (data), apps/api/app/modules/notificaciones/reglas.py (rule), apps/api/app/modules/notificaciones/repositorio.py (data), apps/api/pyproject.toml (los tests nuevos en el per-file-ignores de E501) · tests: apps/api/tests/unit/test_recordatorio_cinco.py "a 5 minutos de la reserva sale un aviso por push y por correo, una sola vez @NOT-05-S1"; apps/api/tests/unit/test_recordatorio_cinco.py "una reserva que ya empezó, o creada dentro de los 5 minutos, no recibe el aviso de 5 minutos @assumption:NOT-05-ASM-02"; apps/api/tests/integracion/test_recordatorio_cinco_base.py "un aviso de 5 minutos de una reserva cancelada antes de despacharlo no sale y queda fallida @assumption:NOT-05-ASM-03"; apps/api/tests/integracion/test_recordatorio_cinco_base.py "la base acepta el tipo recordatorio_cinco y no deja dos para la misma reserva y horario @assumption:NOT-05-ASM-01"
-  reuses: apps/api/app/modules/notificaciones/casos_de_uso.py `enviar_recordatorios`, `entregar` (push y correo); repositorio.py `vencidos`, `registrar`
+  reuses: `enviar_recordatorios` y `entregar` de los casos de uso (push y correo, sin cambios); repositorio.py `vencidos`, `registrar`
 - T2 · S2 · apps/mobile/lib/notificaciones/notificacion.dart (presentation), apps/mobile/lib/notificaciones/tarjeta_aviso.dart (presentation: el `switch` del ícono es exhaustivo y el tipo nuevo usa el del recordatorio) · tests: apps/mobile/test/aviso_cinco_minutos_test.dart "el aviso de 5 minutos se muestra con el ícono del recordatorio y abre la reserva @NOT-05-S2"
   reuses: apps/mobile/lib/notificaciones/notificacion.dart `TipoDeNotificacion`
 
