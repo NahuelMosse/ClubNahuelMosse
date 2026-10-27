@@ -21,14 +21,18 @@ from app.shared.identidad import ProveedorFirebase
 from app.shared.zona import ZONA_CLUB as ZONA
 
 
-def main(argumentos: list[str] | None = None) -> int:
+def _leer(argumentos: list[str] | None) -> argparse.Namespace:
     lector = argparse.ArgumentParser(description=__doc__.splitlines()[0] if __doc__ else None)
     for campo in ("correo", "nombre", "apellido", "dni", "nacimiento"):
         lector.add_argument(f"--{campo}", required=True)
     lector.add_argument(
         "--promover", action="store_true", help="ascender la cuenta que ya tenga ese correo"
     )
-    datos = lector.parse_args(argumentos)
+    return lector.parse_args(argumentos)
+
+
+def main(argumentos: list[str] | None = None) -> int:
+    datos = _leer(argumentos)
     contrasena = os.environ.get("ADMIN_CONTRASENA", "")
     if not contrasena:
         print("Falta la variable de entorno ADMIN_CONTRASENA", file=sys.stderr)

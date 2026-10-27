@@ -39,7 +39,7 @@ class HorariosSql:
         self._conn.rollback()
         return None if fila is None else agenda_de_fila(fila)
 
-    def libres(
+    def libres(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
         self, sede_id: UUID, deporte: str, tipo: str | None, inicio: datetime, fin: datetime
     ) -> list[Espacio]:
         filas = self._conn.execute(

@@ -93,7 +93,7 @@ def enlace_vigente(codigo: str, enlaces: RepositorioEnlaces) -> bool:
     return enlaces.vigente(hash_de(codigo))
 
 
-def usar_enlace(
+def usar_enlace(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     codigo: str,
     nueva: str,
     enlaces: RepositorioEnlaces,

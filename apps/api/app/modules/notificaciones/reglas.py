@@ -41,7 +41,7 @@ class ResultadoDeEnvio:
     invalidos: tuple[str, ...] = ()
 
 
-class CanalNoConfigurado(Exception):  # noqa: N818 -- nombre público fijado por sus llamadores
+class CanalNoConfigurado(Exception):
     """No hay un servicio de notificaciones configurado: nada salió hacia el teléfono."""
 
 

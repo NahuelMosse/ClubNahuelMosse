@@ -13,7 +13,7 @@ class Disponibilidad(Protocol):
         """El horario de la sede, o `None` si no está activa."""
         ...
 
-    def libres(
+    def libres(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
         self, sede_id: UUID, deporte: str, tipo: str | None, inicio: datetime, fin: datetime
     ) -> list[Espacio]:
         """Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas
@@ -21,7 +21,7 @@ class Disponibilidad(Protocol):
         ...
 
 
-def canchas_disponibles(
+def canchas_disponibles(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     disponibilidad: Disponibilidad,
     sede_id: UUID,
     deporte: str,

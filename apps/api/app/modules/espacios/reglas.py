@@ -40,7 +40,7 @@ def parte_de_calle(calle: str) -> str:
     return _parte(_PREFIJO_CALLE.sub("", _ascii(calle).strip()))
 
 
-def nombre_compuesto(
+def nombre_compuesto(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     sede: str, calle: str, altura: int, deporte: str, tipo: str, numero: int
 ) -> str:
     """Nombre del espacio que pide el enunciado: sede, dirección, tipo y número.
@@ -175,8 +175,8 @@ def _error_de_precio(precio: int | None) -> str | None:
 
 
 def validar_cambio(
-    techada: bool | None,
-    iluminada: bool | None,
+    techada: bool | None,  # noqa: FBT001
+    iluminada: bool | None,  # noqa: FBT001
     precio_por_hora: int | None,
     *,
     dados: frozenset[str],

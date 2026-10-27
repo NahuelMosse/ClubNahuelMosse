@@ -44,6 +44,8 @@ max-complexity = 10
 max-args = 4
 
 [tool.ruff.lint.per-file-ignores]
+# Con `--select` el `ignore` global no rige: las excepciones del dominio siguen sin sufijo `Error`.
+"app/**/*.py" = ["N818"]
 # Cada `Depends` de una ruta de FastAPI cuenta como parámetro y es la forma de inyectar del framework.
 "app/modules/*/rutas*.py" = ["PLR0913", "PLR0917"]
 # Docstrings con las tags de la spec.
