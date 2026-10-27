@@ -13,10 +13,11 @@ not_read:
 - S1 · "la imagen de fondo del login al abrir el teclado se mueve el fondo" · acceptance: con el teclado abierto, la foto de fondo del inicio de sesión ocupa la misma área que con el teclado cerrado (no se achica ni se re-encuadra)
 - S2 · "no tiene sentido" · acceptance: con el teclado abierto, el formulario se puede desplazar hasta el botón de ingresar, que queda por encima del teclado
 - SES-01-ASM-01 · el arreglo es sólo para la pantalla de inicio de sesión, la única con foto de fondo · S1
+- SES-01-ASM-02 · con el teclado abierto, el aviso de credenciales inválidas sube y queda por encima del teclado · S1
 
 ## Tasks
 
-- T1 · S1,S2,SES-01-ASM-01 · apps/mobile/lib/sesion/formulario_de_inicio_sesion.dart (presentation) · tests: apps/mobile/test/fondo_del_login_test.dart "con el teclado abierto la foto del inicio de sesión ocupa la misma área @SES-01-S1 @assumption:SES-01-ASM-01"; apps/mobile/test/fondo_del_login_test.dart "con el teclado abierto el botón de ingresar se alcanza desplazando @SES-01-S2"
+- T1 · S1,S2,SES-01-ASM-01,SES-01-ASM-02 · apps/mobile/lib/sesion/formulario_de_inicio_sesion.dart (presentation) · tests: apps/mobile/test/fondo_del_login_test.dart "con el teclado abierto la foto del inicio de sesión ocupa la misma área @SES-01-S1 @assumption:SES-01-ASM-01"; apps/mobile/test/fondo_del_login_test.dart "con el teclado abierto el botón de ingresar se alcanza desplazando @SES-01-S2"; apps/mobile/test/fondo_del_login_test.dart "con el teclado abierto el aviso de credenciales inválidas queda por encima del teclado @assumption:SES-01-ASM-02"
   reuses: apps/mobile/lib/sesion/fondo_de_inicio_sesion.dart `FondoDeInicioSesion`
 
 ## Changes to existing behavior
