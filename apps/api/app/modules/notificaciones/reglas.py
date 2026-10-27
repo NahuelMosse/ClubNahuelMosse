@@ -27,6 +27,14 @@ class Aviso:
 
 
 @dataclass(frozen=True)
+class Destinatario:
+    """A quién le llega el aviso por correo."""
+
+    correo: str
+    nombre: str
+
+
+@dataclass(frozen=True)
 class Pendiente:
     """Un aviso ya registrado en el centro que todavía no salió hacia el teléfono."""
 

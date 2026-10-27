@@ -1,0 +1,28 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/notificaciones/casos_de_uso.py",
+    "apps/api/app/modules/notificaciones/correo.py",
+    "apps/api/app/modules/notificaciones/repositorio.py"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract"
+    ],
+    "why": [
+      "apps/api/app/modules/notificaciones/almacen.py is shared code (imported by apps/api/app/modules/notificaciones/casos_de_uso.py, apps/api/app/modules/reservas/casos_de_uso.py) and `## Tasks` does not name it",
+      "apps/api/app/modules/notificaciones/reglas.py is shared code (imported by apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/espacios/casos_de_uso.py, apps/api/app/modules/espacios/repositorio.py, …) and `## Tasks` does not name it"
+    ]
+  }
+}
