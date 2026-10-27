@@ -5,10 +5,18 @@ import '../tema/tokens.dart';
 /// Isotipo del club: una cancha vista desde arriba con la N del club y la pelota, en el color de
 /// acento.
 class Isotipo extends StatelessWidget {
-  const Isotipo({super.key, this.tamano = 64, this.decorativo = false});
+  const Isotipo({
+    super.key,
+    this.tamano = 64,
+    this.decorativo = false,
+    this.color,
+  });
 
   final double tamano;
   final bool decorativo;
+
+  /// Color del dibujo; sin él usa el acento de la paleta.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +25,9 @@ class Isotipo extends StatelessWidget {
       child: SizedBox(
         width: tamano,
         height: tamano,
-        child: CustomPaint(painter: PintorIsotipo(color: p.accentBase)),
+        child: CustomPaint(
+          painter: PintorIsotipo(color: color ?? p.accentBase),
+        ),
       ),
     );
     if (decorativo) return dibujo;
