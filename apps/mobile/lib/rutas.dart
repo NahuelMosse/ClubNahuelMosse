@@ -49,10 +49,10 @@ import 'usuarios/pantalla_registro_exitoso.dart';
 /// Las rutas de la app, con lo que cada pantalla recibe.
 class Rutas {
   const Rutas({
-    required this.api,
-    required this.sesion,
-    required this.apariencia,
-    required this.centro,
+    required ValueGetter<ClienteApi> api,
+    required ValueGetter<Sesion> sesion,
+    required ValueGetter<Apariencia> apariencia,
+    required ValueGetter<CentroDeNotificaciones?> centro,
     required this.recuperacion,
     required this.sedes,
     required this.espacios,
@@ -61,12 +61,17 @@ class Rutas {
     required this.historialAdmin,
     required this.pendiente,
     required this.filtrosPendientes,
-  });
+  }) : _api = api,
+       _sesion = sesion,
+       _apariencia = apariencia,
+       _centro = centro;
 
-  final ClienteApi api;
-  final Sesion sesion;
-  final Apariencia apariencia;
-  final CentroDeNotificaciones? centro;
+  // Se leen de la app en cada uso: si el widget se reemplaza con la misma `State`,
+  // las rutas siguen con lo que trae el widget nuevo.
+  final ValueGetter<ClienteApi> _api;
+  final ValueGetter<Sesion> _sesion;
+  final ValueGetter<Apariencia> _apariencia;
+  final ValueGetter<CentroDeNotificaciones?> _centro;
   final Recuperacion recuperacion;
   final Sedes sedes;
   final Espacios espacios;
@@ -75,6 +80,11 @@ class Rutas {
   final HistorialDeReservas historialAdmin;
   final ReservaPendiente<Eleccion> pendiente;
   final FiltrosDePanelPendientes filtrosPendientes;
+
+  ClienteApi get api => _api();
+  Sesion get sesion => _sesion();
+  Apariencia get apariencia => _apariencia();
+  CentroDeNotificaciones? get centro => _centro();
 
   /// El router de la app: arranca en [inicio] y, al iniciar o cerrar la sesión, vuelve a
   /// evaluar a quién deja pasar adónde.

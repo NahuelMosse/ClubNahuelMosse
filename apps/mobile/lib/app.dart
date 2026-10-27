@@ -85,10 +85,10 @@ class _AppState extends State<App> {
   }
 
   late final GoRouter _rutas = Rutas(
-    api: widget.api,
-    sesion: widget.sesion,
-    apariencia: widget.apariencia,
-    centro: widget.centro,
+    api: () => widget.api,
+    sesion: () => widget.sesion,
+    apariencia: () => widget.apariencia,
+    centro: () => widget.centro,
     recuperacion: _recuperacion,
     sedes: _sedes,
     espacios: _espacios,
