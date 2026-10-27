@@ -12,8 +12,8 @@ not_read:
 
 - S1 · "no me gusta nada que todo el codigo este en español" · acceptance: docs/technical/glosario-ingles.md da, para cada módulo de la API, cada tabla de la base y cada ruta de la API que existen hoy, su nombre en inglés, y ningún término castellano tiene dos traducciones
 - ENG-00-ASM-01 · `reserva` es `booking`, `sede` es `venue`, `espacio` es `space`, `tipo` es `kind` y la tabla `usuario` es `app_user` (por qué, en el glosario) · S1
-- ENG-00-ASM-02 · los títulos de los tests con tag y sus nombres de archivo quedan en castellano: 281 líneas `replaces:` los nombran por título exacto; traducirlos es una card aparte · S1
-- ENG-00-ASM-03 · queda en castellano lo que ve el usuario, los contenidos guardados (avisos, correos), las claves del catálogo, `dni`, las migraciones 0001–0010 y los registros de `specs/` · S1
+- ENG-00-ASM-02 · los títulos de los tests con tag y sus nombres de archivo quedan en castellano: las líneas `replaces:` de las cards los nombran por título exacto; traducirlos es una card aparte · S1
+- ENG-00-ASM-03 · queda en castellano lo que ve el usuario, los contenidos guardados (avisos, correos), las claves del catálogo, `dni`, las migraciones ya aplicadas y los registros de `specs/` · S1
 
 ## Tasks
 
