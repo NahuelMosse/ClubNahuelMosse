@@ -1,0 +1,17 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "permiso",
+    "rol"
+  ],
+  "files": [
+    "apps/mobile/lib/notificaciones/sistema.dart",
+    "apps/mobile/lib/notificaciones/sistema_fcm.dart",
+    "apps/mobile/lib/notificaciones/centro.dart"
+  ],
+  "tasks": 1
+}

@@ -478,7 +478,9 @@ export const keyOf = (root, command) => {
       const path = join(root, f);
       if (!existsSync(path)) continue;
       hash.update(f);
-      hash.update(readFileSync(path));
+      // A text file hashes with LF: the same code checked out with CRLF (autocrlf on Windows) is the same code.
+      const bytes = readFileSync(path);
+      hash.update(bytes.subarray(0, 8000).includes(0) ? bytes : bytes.toString('utf8').replace(/\r\n/g, '\n'));
     }
     hashed.set(id, hash);
   }

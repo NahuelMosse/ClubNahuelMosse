@@ -10,5 +10,7 @@ export const readability = [{
     'max-depth': ['error', 3],
     'max-params': ['error', 4],
     'max-classes-per-file': ['error', 1],
+    // Fast by construction (rules/speed.md): independent awaits run together, not one per iteration.
+    'no-await-in-loop': 'error',
   },
 }];

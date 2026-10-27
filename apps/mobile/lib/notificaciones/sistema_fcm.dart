@@ -26,6 +26,11 @@ class SistemaFcm implements SistemaDeNotificaciones {
   );
 
   @override
+  Future<bool> preguntado() async =>
+      (await _mensajeria.getNotificationSettings()).authorizationStatus !=
+      AuthorizationStatus.notDetermined;
+
+  @override
   Future<bool> solicitarPermiso() async =>
       _concedido((await _mensajeria.requestPermission()).authorizationStatus);
 
