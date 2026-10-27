@@ -6,6 +6,7 @@ Los helpers y los fixtures son los de test_datos.py.
 import threading
 from collections.abc import Callable
 from typing import Any
+from uuid import UUID
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
@@ -29,10 +30,10 @@ from test_datos import (  # noqa: F401 — los fixtures se importan para que pyt
 from test_recordatorio import Socio
 
 
-def _ids_del_socio(socio: Socio) -> set[int]:
+def _ids_del_socio(socio: Socio) -> set[UUID]:
     with socio.motor.connect() as conn:
         return {
-            int(f.id)
+            f.id
             for f in conn.execute(
                 text("SELECT id FROM reserva WHERE usuario_id = :u"), {"u": socio.usuario_id}
             )

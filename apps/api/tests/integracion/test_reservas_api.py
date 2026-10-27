@@ -99,7 +99,7 @@ def test_las_reservas_se_piden_con_sesion(api: TestClient) -> None:
     assert api.get("/reservas").status_code == 401
 
 
-def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
+def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
         "/espacios",
         headers=_con(token_admin),
@@ -112,7 +112,7 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
             "precio_por_hora": 38000,
         },
     )
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
 def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(

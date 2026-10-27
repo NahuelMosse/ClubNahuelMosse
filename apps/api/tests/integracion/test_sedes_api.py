@@ -198,7 +198,7 @@ def _alta(api: TestClient, token_admin: str, nombre: str) -> int:
         "/sedes", headers=_con(token_admin), json=_sede(nombre, dias=[1, 2, 3, 4, 5, 6, 7])
     )
     assert r.status_code == 201
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
 def test_editar_guarda_los_datos_nuevos_con_su_rastro(

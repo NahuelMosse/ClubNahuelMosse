@@ -41,7 +41,7 @@ def _yo(api: TestClient, motor: Engine, token: str) -> int:
         )
 
 
-def _espacio(api: TestClient, token_admin: str, sede_id: int) -> int:
+def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
         "/espacios",
         headers=_con(token_admin),
@@ -55,7 +55,7 @@ def _espacio(api: TestClient, token_admin: str, sede_id: int) -> int:
         },
     )
     assert r.status_code == 201
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
 def _barrer(motor: Engine, usuario: int, canal: Canal, ahora: datetime) -> int:

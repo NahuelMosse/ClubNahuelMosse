@@ -11,7 +11,7 @@ def _con(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
+def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
         "/espacios",
         headers=_con(token_admin),
@@ -24,7 +24,7 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
             "precio_por_hora": 38000,
         },
     )
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
 def _reservar(api: TestClient, token_usuario: str, espacio: int, dia: int) -> dict[str, Any]:

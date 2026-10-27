@@ -14,7 +14,7 @@ def _unico() -> str:
     return uuid.uuid4().hex[:8]
 
 
-def _usuario(db: Connection, sufijo: str) -> int:
+def _usuario(db: Connection, sufijo: str) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni, fecha_nacimiento)"
@@ -24,7 +24,7 @@ def _usuario(db: Connection, sufijo: str) -> int:
     ).scalar_one()
 
 
-def _sede(db: Connection, sufijo: str) -> int:
+def _sede(db: Connection, sufijo: str) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
@@ -34,7 +34,7 @@ def _sede(db: Connection, sufijo: str) -> int:
     ).scalar_one()
 
 
-def _espacio(db: Connection, sede_id: int, sufijo: str, numero: int = 1) -> int:
+def _espacio(db: Connection, sede_id: uuid.UUID, sufijo: str, numero: int = 1) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada, iluminada, precio_por_hora)"
@@ -44,7 +44,7 @@ def _espacio(db: Connection, sede_id: int, sufijo: str, numero: int = 1) -> int:
     ).scalar_one()
 
 
-def _reserva(db: Connection, usuario_id: int, espacio_id: int, inicio: datetime, horas: int = 1) -> int:
+def _reserva(db: Connection, usuario_id: uuid.UUID, espacio_id: uuid.UUID, inicio: datetime, horas: int = 1) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"

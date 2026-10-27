@@ -21,14 +21,14 @@ def _usuario(api: TestClient, motor: Engine, token: str) -> int:
         return int(fila.scalar_one())
 
 
-def _cancha(api: TestClient, token_admin: str, sede_id: int) -> int:
+def _cancha(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
         "/espacios",
         headers={"Authorization": f"Bearer {token_admin}"},
         json={"sede_id": sede_id, "deporte": "Futbol", "tipo": "F5", "techada": False,
               "iluminada": True, "precio_por_hora": 38000},
     )  # fmt: skip
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
 def _a_las(dias: int, hora: int) -> datetime:

@@ -6,7 +6,7 @@ from test_basquet import _cancha, _con, sede, token_admin, token_usuario  # noqa
 
 
 def test_el_administrador_da_de_alta_una_cancha_de_basquet_3x3(
-    api: TestClient, token_admin: str, sede: int  # noqa: F811
+    api: TestClient, token_admin: str, sede: str  # noqa: F811
 ) -> None:
     """el administrador da de alta una cancha de Básquet 3x3 con su nombre compuesto
     @REV-05-S2 @assumption:REV-05-ASM-01
@@ -19,7 +19,7 @@ def test_el_administrador_da_de_alta_una_cancha_de_basquet_3x3(
 
 
 def test_el_socio_filtra_las_canchas_de_basquet_3x3_y_no_ve_las_de_basquet_5(
-    api: TestClient, token_admin: str, token_usuario: str, sede: int  # noqa: F811
+    api: TestClient, token_admin: str, token_usuario: str, sede: str  # noqa: F811
 ) -> None:
     """el socio filtra las canchas de Básquet 3x3 y no ve las de Básquet 5
     @REV-05-S3 @assumption:REV-05-ASM-01

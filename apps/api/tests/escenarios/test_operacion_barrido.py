@@ -5,6 +5,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from uuid import UUID
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -12,9 +13,9 @@ from sqlalchemy import Engine, text
 RAIZ_API = Path(__file__).resolve().parents[2]
 
 
-def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> int:
+def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> UUID:
     with motor.begin() as conn:
-        return int(
+        return (
             conn.execute(
                 text(
                     "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"

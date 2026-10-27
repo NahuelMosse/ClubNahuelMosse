@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from uuid import UUID
 
 import test_cancelacion_forzosa as base
 from fastapi.testclient import TestClient
@@ -73,6 +74,6 @@ def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
     assert base.anular(socio, admin, reserva) == 200
 
     with motor.begin() as conn:
-        encolar_cancelacion_forzosa(conn, socio.usuario_id, [reserva["id"]])
+        encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reserva["id"])])
 
     assert len(socio.centro()["notificaciones"]) == 1

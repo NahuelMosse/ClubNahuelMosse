@@ -19,7 +19,7 @@ def _con(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio(sede_id: int, **cambios: object) -> dict[str, object]:
+def _espacio(sede_id: str, **cambios: object) -> dict[str, object]:
     return {
         "sede_id": sede_id,
         "deporte": "Futbol",
@@ -440,7 +440,8 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
     r = api.get(
         "/espacios/disponibles",
         headers=_con(token_usuario),
-        params=base | {"sede_id": "00000000-0000-7000-8000-000000000000", "desde": "10:00", "hasta": "11:00"},
+        params=base
+        | {"sede_id": "00000000-0000-7000-8000-000000000000", "desde": "10:00", "hasta": "11:00"},
     )
     assert r.json()["errores"] == {"sede_id": "La sede ya no está disponible"}
     assert api.get("/espacios/disponibles", params=base).status_code in (401, 422)

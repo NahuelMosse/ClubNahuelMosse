@@ -94,7 +94,7 @@ def token_admin(
 
 
 @pytest.fixture
-def cancha(api: TestClient, motor: Engine, unico: Callable[[], str]) -> int:
+def cancha(api: TestClient, motor: Engine, unico: Callable[[], str]) -> str:
     """Un Fútbol 5 en una sede abierta de 08:00 a 23:00 todos los días."""
     s = unico()
     with motor.begin() as conn:
@@ -109,7 +109,7 @@ def cancha(api: TestClient, motor: Engine, unico: Callable[[], str]) -> int:
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
         ).scalar_one()
-    return int(espacio)
+    return str(espacio)
 
 
 class _SmtpFalso:
@@ -209,7 +209,7 @@ def test_la_recuperacion_responde_igual_aunque_el_correo_no_salga(
 
 @pytest.mark.parametrize("horas", [10**12, 5, 0, -1, None, "x"])
 def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
-    api: TestClient, token_usuario: str, cancha: int, horas: object
+    api: TestClient, token_usuario: str, cancha: str, horas: object
 ) -> None:
     """una reserva con horas desmesuradas se rechaza como dato inválido @REV-01-S2"""
     r = api.post(
@@ -228,7 +228,7 @@ def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
 
 
 def test_una_reserva_de_cuatro_horas_se_acepta(
-    api: TestClient, token_usuario: str, cancha: int
+    api: TestClient, token_usuario: str, cancha: str
 ) -> None:
     """el borde de cuatro horas sigue aceptándose @REV-01-S2"""
     r = api.post(
@@ -242,7 +242,7 @@ def test_una_reserva_de_cuatro_horas_se_acepta(
 
 @pytest.mark.parametrize(("desde", "horas"), [("23:00", 4), ("23:00", 1), ("10:00", 1)])
 def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
-    api: TestClient, token_usuario: str, cancha: int, desde: str, horas: int
+    api: TestClient, token_usuario: str, cancha: str, desde: str, horas: int
 ) -> None:
     """una reserva que termina después del último día representable es inválida @REV-01-S3"""
     r = api.post(

@@ -1,6 +1,7 @@
 """Un aviso que falla al despacharse no traba a los otros ni corta el barrido."""
 
 from collections.abc import Callable, Iterator
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -26,7 +27,7 @@ class FallaLaPrimeraVez(NotificacionesSql):
 
     llamadas = 0
 
-    def tokens_con_permiso(self, usuario_id: int) -> list[str]:
+    def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
         FallaLaPrimeraVez.llamadas += 1
         if FallaLaPrimeraVez.llamadas == 1:
             raise OSError("la base no contesta")

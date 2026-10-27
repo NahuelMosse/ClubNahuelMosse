@@ -1,5 +1,6 @@
 from collections.abc import Callable, Iterator, Sequence
 from typing import Any
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -65,7 +66,7 @@ def cuerpo_esperado(sede: str, hora: str, motivo: str = MOTIVO) -> str:
     return f"Fútbol 5 · {sede} · {DIAS[dia.weekday()]} {dia.day}, {hora}. Motivo: {motivo}."
 
 
-def para_el_admin(socio: Socio, admin: dict[str, str], reserva_id: int) -> dict[str, Any]:
+def para_el_admin(socio: Socio, admin: dict[str, str], reserva_id: str) -> dict[str, Any]:
     """La reserva como la ve el administrador en el historial global."""
     r = socio.api.get(f"/reservas/todas?q={socio.sede}", headers=admin)
     assert r.status_code == 200
@@ -177,7 +178,7 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
                 ),
                 {"u": socio.usuario_id, "id": reserva["id"]},
             )
-            encolar_cancelacion_forzosa(conn, socio.usuario_id, [reserva["id"]])
+            encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reserva["id"])])
     with motor.connect() as conn:
         for socio in (uno, otro):
             despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
