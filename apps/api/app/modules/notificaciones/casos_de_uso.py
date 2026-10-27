@@ -3,12 +3,19 @@ from datetime import datetime
 from uuid import UUID
 
 from app.modules.notificaciones.almacen import Notificaciones
-from app.modules.notificaciones.reglas import Aviso, Notificacion, mensaje_recordatorio
+from app.modules.notificaciones.reglas import (
+    Aviso,
+    Notificacion,
+    Recordatorio,
+    correo_recordatorio,
+    mensaje_recordatorio,
+)
 from app.modules.notificaciones.reglas import CanalNoConfigurado as CanalNoConfigurado
 from app.modules.notificaciones.reglas import CanalPush as CanalPush
 from app.modules.notificaciones.reglas import Pendiente as Pendiente
 from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
 from app.modules.sesion import Perfil
+from app.shared.correo import enviar
 from app.shared.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 
 PLATAFORMAS = ("android", "ios")
@@ -85,6 +92,16 @@ def despachar_pendientes(
     return despachados
 
 
+def _avisar_por_correo(recordatorio: Recordatorio) -> None:
+    """El correo no frena nada: el push ya salió y el log no lleva la dirección."""
+    if not recordatorio.correo:
+        return
+    try:
+        enviar(correo_recordatorio(recordatorio))
+    except Exception as e:
+        _registro.warning("el correo del recordatorio falló: %s", type(e).__name__)
+
+
 def enviar_recordatorios(
     notificaciones: Notificaciones,
     canal: CanalPush,
@@ -106,6 +123,7 @@ def enviar_recordatorios(
                 continue
             registrados += 1
             entregar(notificaciones, canal, nuevo, recordatorio.usuario_id, aviso)
+            _avisar_por_correo(recordatorio)
         except Exception as e:
             # El recordatorio de una persona no corta el de las demás.
             _registro.warning("el recordatorio falló: %s", type(e).__name__)

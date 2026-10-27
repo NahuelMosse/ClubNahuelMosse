@@ -6,6 +6,8 @@ from typing import Literal, Protocol
 from uuid import UUID
 
 from app.modules.espacios import CATALOGO
+from app.shared.mensaje import Mensaje
+from app.shared.plantilla_correo import html_de_correo
 from app.shared.zona import ZONA_CLUB
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
@@ -77,6 +79,8 @@ class Recordatorio:
     deporte: str
     tipo: str
     sede: str
+    correo: str = ""
+    nombre: str = ""
 
 
 @dataclass(frozen=True)
@@ -128,6 +132,22 @@ def mensaje_recordatorio(r: Recordatorio) -> Aviso:
         titulo="Tu reserva es en 1 hora",
         cuerpo=f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {_hora(r.inicio)} – {_hora(r.fin)}",
         datos=datos_del_aviso("recordatorio", r.reserva_id),
+    )
+
+
+def correo_recordatorio(r: Recordatorio) -> Mensaje:
+    """El mismo aviso de una hora antes, por correo con el diseño de la app."""
+    detalles = [
+        ("Cancha", tipo_corto(r.deporte, r.tipo)),
+        ("Sede", r.sede),
+        ("Horario", f"{_hora(r.inicio)} a {_hora(r.fin)}"),
+    ]
+    saludo = f"Hola {r.nombre}: tu turno empieza en 1 hora."
+    return Mensaje(
+        para=r.correo,
+        asunto="Tu reserva es en 1 hora",
+        cuerpo="\n".join([saludo, "", *(f"{nombre}: {valor}" for nombre, valor in detalles)]),
+        html=html_de_correo("Tu reserva es en 1 hora", [saludo], detalles=detalles),
     )
 
 

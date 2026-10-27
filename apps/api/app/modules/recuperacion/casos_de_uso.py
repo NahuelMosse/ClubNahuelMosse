@@ -15,6 +15,7 @@ from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
 from app.modules.recuperacion.reglas import Mensaje as Mensaje
 from app.modules.usuarios import correo_valido, normalizar_correo, problemas_contrasena
 from app.shared.errores import DatosInvalidos
+from app.shared.plantilla_correo import html_de_correo
 
 VIGENCIA_MINUTOS = 30
 MAXIMO_POR_HORA = 3
@@ -76,6 +77,8 @@ def pedir_enlace(correo: str, url_publica: str, enlaces: RepositorioEnlaces) -> 
     # El código va después del «#»: el navegador no lo manda al servidor, así no queda en
     # ningún registro de pedidos.
     enlace = f"{url_publica.rstrip('/')}/enlace/recuperar#codigo={codigo}"
+    vencimiento = f"El enlace vence en {VIGENCIA_MINUTOS} minutos y sirve una sola vez."
+    descarte = "Si no lo pediste, ignorá este correo: tu contraseña no cambia."
     return Mensaje(
         para=destinatario.correo,
         asunto="Creá una contraseña nueva",
@@ -83,8 +86,17 @@ def pedir_enlace(correo: str, url_publica: str, enlaces: RepositorioEnlaces) -> 
             f"Hola {destinatario.nombre}:\n\n"
             "Para crear una contraseña nueva, abrí este enlace desde tu teléfono:\n"
             f"{enlace}\n\n"
-            f"El enlace vence en {VIGENCIA_MINUTOS} minutos y sirve una sola vez. Si no lo "
-            "pediste, ignorá este correo: tu contraseña no cambia."
+            f"{vencimiento} {descarte}"
+        ),
+        html=html_de_correo(
+            "Creá una contraseña nueva",
+            [
+                f"Hola {destinatario.nombre}:",
+                "Para crear una contraseña nueva, tocá el botón desde tu teléfono.",
+                vencimiento,
+            ],
+            boton=("Crear contraseña nueva", enlace),
+            pie=descarte,
         ),
     )
 

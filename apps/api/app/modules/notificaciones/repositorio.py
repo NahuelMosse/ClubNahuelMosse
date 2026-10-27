@@ -181,7 +181,8 @@ class NotificacionesSql:
     def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
         filas = self._conn.execute(
             text(
-                "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede"
+                "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede,"
+                " u.correo, u.nombre AS nombre_usuario"
                 " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
                 " JOIN sede s ON s.id = e.sede_id JOIN usuario u ON u.id = r.usuario_id"
                 " WHERE r.estado = 'activa' AND u.activo"
@@ -207,6 +208,8 @@ class NotificacionesSql:
                 deporte=f.deporte,
                 tipo=f.tipo,
                 sede=f.sede,
+                correo=f.correo,
+                nombre=f.nombre_usuario,
             )
             for f in filas
         ]

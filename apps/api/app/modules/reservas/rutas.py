@@ -17,6 +17,7 @@ from app.modules.reservas.casos_de_uso import (
     modificar_reserva,
     reservar,
 )
+from app.modules.reservas.correo import correo_de_reserva
 from app.modules.reservas.reglas import (
     Estado,
     FiltroEstado,
@@ -26,6 +27,7 @@ from app.modules.reservas.reglas import (
 )
 from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.correo import enviar
 from app.shared.entradas import Identificador, leer_hora
 from app.shared.errores import Cambiado, DatosInvalidos, HorarioOcupado, NoDisponible
 from app.shared.respuestas import conflicto
@@ -122,6 +124,7 @@ def hacer_reserva(
     pedido: PedidoDeReserva,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
+    despues: BackgroundTasks,
 ) -> ReservaVista | Response:
     try:
         reserva = reservar(
@@ -137,6 +140,7 @@ def hacer_reserva(
         raise DatosInvalidos({"espacio_id": NO_DISPONIBLE}) from None
     except HorarioOcupado:
         return conflicto({"horario": OCUPADO})
+    despues.add_task(enviar, correo_de_reserva(perfil, reserva))
     return _vista(reserva)
 
 

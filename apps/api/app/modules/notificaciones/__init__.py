@@ -1,7 +1,12 @@
 from app.modules.notificaciones.barrido import barrer_cada, despachar_de
 from app.modules.notificaciones.casos_de_uso import enviar_recordatorios
 from app.modules.notificaciones.push import canal_push
-from app.modules.notificaciones.reglas import CanalPush, DatosDeReserva, mensaje_cancelacion
+from app.modules.notificaciones.reglas import (
+    CanalPush,
+    DatosDeReserva,
+    mensaje_cancelacion,
+    tipo_corto,
+)
 from app.modules.notificaciones.repositorio import (
     NotificacionesSql,
     encolar_cancelacion_forzosa,
@@ -21,4 +26,5 @@ __all__ = [
     "mensaje_cancelacion",
     "repositorio_notificaciones",
     "router",
+    "tipo_corto",
 ]

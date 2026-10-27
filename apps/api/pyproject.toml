@@ -67,6 +67,7 @@ max-args = 4
 # Tests congelados con literales largos.
 "tests/unit/test_capas.py" = ["E501"]
 "tests/unit/test_sin_supresiones.py" = ["E501"]
+"tests/unit/test_correos_con_diseno.py" = ["E501"]
 
 [tool.mypy]
 strict = true
