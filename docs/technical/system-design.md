@@ -6,7 +6,7 @@ lo que no se verificó dice `not verified`. Los números de hallazgo remiten a l
 (`specs/REVISION-kit3.md`); las cards `REV-01` a `REV-08` los corrigieron y lo que sigue abierto lo dice cada fila. La
 arquitectura y los flujos están en [`arquitectura.md`](arquitectura.md), dónde está cada archivo en
 [`mapa-del-codigo.md`](mapa-del-codigo.md), las decisiones en `docs/adr/`, los precios en
-[`infra-cost.md`](infra-cost.md) y los pasos operativos en el [runbook](runbook.md).
+[`infra-cost.md`](infra-cost.md) y los pasos operativos en el [runbook](runbook.md). Cada servicio externo y dónde se integra: [`integraciones.md`](integraciones.md).
 
 ## Context and containers (C4)
 
