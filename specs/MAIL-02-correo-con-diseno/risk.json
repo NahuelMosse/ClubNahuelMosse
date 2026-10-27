@@ -1,0 +1,22 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [
+    "contraseña"
+  ],
+  "files": [
+    "apps/api/app/modules/recuperacion/reglas.py",
+    "apps/api/app/modules/recuperacion/casos_de_uso.py",
+    "apps/api/app/modules/recuperacion/correo.py"
+  ],
+  "tasks": 1
+}
