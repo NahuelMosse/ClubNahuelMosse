@@ -1,5 +1,6 @@
 """Documentación de producción: lo que necesita quien opera, audita o mantiene la app."""
 
+import ast
 import re
 import tomllib
 from pathlib import Path
@@ -138,7 +139,25 @@ def _columnas_por_tabla() -> dict[str, set[str]]:
         rf"ALTER TABLE (\w+)\s+ADD COLUMN (\w+) (?:{TIPOS})", migraciones
     ):
         tablas.setdefault(tabla, set()).add(columna)
+    for migracion in sorted((API / "migraciones" / "versions").glob("*.py")):
+        for tabla, vieja, nueva in re.findall(
+            r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", _subida(migracion)
+        ):
+            tablas.setdefault(tabla, set()).discard(vieja)
+            tablas[tabla].add(nueva)
     return tablas
+
+
+def _subida(migracion: Path) -> str:
+    """`upgrade()` y las funciones del módulo que llama: lo que deja la base al subir."""
+    fuente = _texto(migracion)
+    funciones = {
+        n.name: ast.get_source_segment(fuente, n) or ""
+        for n in ast.parse(fuente).body
+        if isinstance(n, ast.FunctionDef)
+    }
+    subir = funciones.get("upgrade", "")
+    return "\n".join([subir, *(funciones.get(f, "") for f in re.findall(r"\b(_\w+)\(\)", subir))])
 
 
 def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:
