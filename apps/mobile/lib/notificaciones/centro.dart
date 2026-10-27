@@ -274,6 +274,18 @@ class CentroDeNotificaciones extends ChangeNotifier {
     }
   }
 
+  /// La persona tocó un aviso de la bandeja: quedan leídas las sin leer del mismo tipo y reserva.
+  /// Antes se vuelve a leer el centro, porque el aviso pudo llegar con la app cerrada.
+  Future<void> marcarLasDelAviso(AvisoTocado aviso) async {
+    if (aviso.tipo == null || aviso.reservaId == null) return;
+    await _sondear();
+    final delAviso = [
+      for (final n in sinLeer)
+        if (n.tipo == aviso.tipo && n.reservaId == aviso.reservaId) n,
+    ];
+    await Future.wait(delAviso.map(marcarLeida));
+  }
+
   Future<void> marcarTodas() async {
     _lista = [for (final n in _lista) n.comoLeida()];
     _noLeidas = 0;

@@ -4,7 +4,6 @@ import 'package:clubnahuelmosse/notificaciones/centro.dart';
 import 'package:clubnahuelmosse/notificaciones/notificacion.dart';
 import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
 import 'package:clubnahuelmosse/notificaciones/sistema.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -46,6 +45,26 @@ Future<(ApiFalsa, CentroDeNotificaciones)> _abrirCentro(
     tema: temaOscuro,
   );
   return (api, centro);
+}
+
+/// La app entera con [avisos] sin leer y un sistema donde el test toca los avisos.
+Future<(ApiFalsa, SistemaConToques, CentroDeNotificaciones)> _montarApp(
+  WidgetTester tester,
+  List<String> avisos,
+) async {
+  final api = ApiFalsa()
+    ..avisos = avisos
+    ..noLeidas = avisos.length;
+  final sistema = SistemaConToques();
+  addTearDown(sistema.toques.close);
+  late CentroDeNotificaciones centro;
+  await montarUsuario(
+    tester,
+    inicio: '/inicio',
+    api: api.cliente,
+    centro: (sesion) => centro = centroDe(api, sesion, sistema: sistema),
+  );
+  return (api, sistema, centro);
 }
 
 Future<void> _salir(WidgetTester tester) async {
@@ -126,19 +145,11 @@ void main() {
           tipo: 'cancelacion_usuario',
           titulo: 'Reserva cancelada',
         );
-        final api = ApiFalsa()
-          ..avisos = [recordatorio, otraReserva, otroTipo]
-          ..noLeidas = 3;
-        final sistema = SistemaConToques();
-        addTearDown(sistema.toques.close);
-        late CentroDeNotificaciones centro;
-        await montarUsuario(
-          tester,
-          inicio: '/inicio',
-          api: api.cliente,
-          centro: (sesion) =>
-              centro = centroDe(api, sesion, sistema: sistema),
-        );
+        final (api, sistema, centro) = await _montarApp(tester, [
+          recordatorio,
+          otraReserva,
+          otroTipo,
+        ]);
 
         sistema.toques.add(
           AvisoTocado(
@@ -148,8 +159,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final leidas = api
-            .pedidos
+        final leidas = api.pedidos
             .where((p) => p.method == 'POST' && p.url.path.endsWith('/leer'))
             .map((p) => p.url.path)
             .toList();
@@ -162,22 +172,13 @@ void main() {
     testWidgets(
       'un push que no se toca sigue sin leer @assumption:NOT-03-ASM-01',
       (tester) async {
-        final api = ApiFalsa()
-          ..avisos = [recordatorio]
-          ..noLeidas = 1;
-        final sistema = SistemaConToques();
-        addTearDown(sistema.toques.close);
-        late CentroDeNotificaciones centro;
-        await montarUsuario(
-          tester,
-          inicio: '/inicio',
-          api: api.cliente,
-          centro: (sesion) =>
-              centro = centroDe(api, sesion, sistema: sistema),
-        );
+        final (api, _, centro) = await _montarApp(tester, [recordatorio]);
 
         expect(centro.noLeidas, 1);
-        expect(api.de('POST', '/notificaciones/$_idRecordatorio/leer'), isEmpty);
+        expect(
+          api.de('POST', '/notificaciones/$_idRecordatorio/leer'),
+          isEmpty,
+        );
         expect(api.de('POST', '/notificaciones/leer-todas'), isEmpty);
       },
     );

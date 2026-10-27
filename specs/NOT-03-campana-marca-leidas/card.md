@@ -34,6 +34,7 @@ suite: sh D:/Temp/w/herramientas/flutter-mobile.sh test/campana_marca_leidas_tes
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/campana_marca_leidas_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 no-docs: cuándo una notificación queda leída; el contrato y el modelo de datos no cambian
+refactor-tests: sacar un import sin uso y extraer el montaje repetido de los dos tests de push (lint y K4); no cambia lo que verifican
 no-visual: la pantalla se ve igual; cambia cuándo se marcan leídas
 ```
 
@@ -42,3 +43,6 @@ no-visual: la pantalla se ve igual; cambia cuándo se marcan leídas
 - L1 · al abrir las notificaciones no se marcan las notificaciones como leidas · digo en la app, si tocas la campanita y la cerras, las notificaciones no se marcan como leidas, la notificaciones push si hay que tocarlas
 - L2 · 2026-10-27 · declared · fault-db · la card no toca la base: sólo la app
 - L3 · 2026-10-27 · declared · attacks · la card no cambia la API: usa `leer-todas` y `leer` como hoy
+- L4 · 2026-10-27 · T1 · `node .claude/tools/verify.mjs` exit 0; los 3 tests de campana_marca_leidas_test.dart (S1, ASM-02) pasan; `dispose` de PantallaNotificaciones llama `marcarTodas` en un microtask
+- L5 · 2026-10-27 · T2 · mismo gate; `marcarLasDelAviso` en centro.dart, llamado desde los dos caminos de app.dart; tests S2 y ASM-01 pasan
+- L6 · 2026-10-27 · refactor-tests · campana_marca_leidas_test.dart · un import sin uso y el montaje repetido (lint y K4) · declarado en `## Gate`
