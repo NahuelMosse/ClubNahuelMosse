@@ -13,7 +13,9 @@ const _res = 'android/app/src/main/res';
 String _leer(String ruta) => File(ruta).readAsStringSync();
 
 /// Decodifica un PNG a pixeles RGBA.
-Future<({int ancho, int alto, ByteData datos})> _decodificar(String ruta) async {
+Future<({int ancho, int alto, ByteData datos})> _decodificar(
+  String ruta,
+) async {
   final codec = await ui.instantiateImageCodec(File(ruta).readAsBytesSync());
   final imagen = (await codec.getNextFrame()).image;
   final datos = (await imagen.toByteData())!;
@@ -81,7 +83,10 @@ void main() {
         expect(_hayOscuros(primerPlano), isTrue);
       });
       expect(_leer('$_res/values/colors.xml'), contains('#D4FF3D'));
-      expect(_leer('pubspec.yaml'), contains('adaptive_icon_background: "#D4FF3D"'));
+      expect(
+        _leer('pubspec.yaml'),
+        contains('adaptive_icon_background: "#D4FF3D"'),
+      );
     },
   );
 
@@ -99,8 +104,14 @@ void main() {
         contains('com.google.firebase.messaging.default_notification_color'),
       );
       expect(manifiesto, contains('@color/verde_electrico'));
-      expect(_leer('$_res/drawable/ic_notificacion.xml'), contains('#FFFFFFFF'));
-      expect(_leer('pubspec.yaml'), isNot(contains('flutter_local_notifications')));
+      expect(
+        _leer('$_res/drawable/ic_notificacion.xml'),
+        contains('#FFFFFFFF'),
+      );
+      expect(
+        _leer('pubspec.yaml'),
+        isNot(contains('flutter_local_notifications')),
+      );
     },
   );
 
