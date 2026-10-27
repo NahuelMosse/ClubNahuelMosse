@@ -15,7 +15,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { NOT_PRODUCTION, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
+import { NOT_PRODUCTION, cardFiles, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
 import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, rolesOf, sectionOf, specTagsIn } from './card-doc.mjs';
 import { closingCost } from './card-cost.mjs';
 import { specsCheck } from './gate-checks.mjs';
@@ -51,7 +51,7 @@ export const critiqueOf = (text) => {
   return { score: scores.length ? Math.min(...scores) : null, blockers };
 };
 
-export const run = (root, { write = true } = {}) => {
+const runOnce = (root, { write = true } = {}) => {
   const cardDir = currentCard(root);
   if (!cardDir) return null;
   const id = cardIdOf(cardDir);
@@ -91,7 +91,11 @@ export const run = (root, { write = true } = {}) => {
   else {
     const atRed = taggedFiles(root, id, red);
     const diff = git(root, ['diff', '--name-only', '--diff-filter=MDRT', `${red}..HEAD`, '--', ...atRed.map((f) => `:(literal)${f}`)]);
+    const refactor = gateBlock(readCard(cardDir) ?? '')?.match(/^\s*refactor-tests\s*:\s*(\S.*)$/m)?.[1]?.trim();
+    const touched = diff.status === 0 ? diff.stdout.split('\n').filter(Boolean) : [];
     if (diff.status !== 0) add(5, 'no tagged test touched since RED', 'could not run', `git diff ${red.slice(0, 9)}..HEAD failed: ${diff.stderr?.trim()}`);
+    // A declared refactor edits frozen tests in place: it passes, and every touched file goes to a person (## Needs a person).
+    else if (refactor) add(5, 'no tagged test touched since RED', 'passed', `declared refactor-tests: ${refactor}; ${touched.length} tagged file${touched.length === 1 ? '' : 's'} edited, listed for review`);
     else verdict(5, 'no tagged test touched since RED', diff.stdout.split('\n').filter(Boolean).map((f) => `${f} changed since ${red.slice(0, 9)}`), `none of ${atRed.length} tagged file${atRed.length === 1 ? '' : 's'} since ${red.slice(0, 9)}`);
   }
 
@@ -165,6 +169,8 @@ export const run = (root, { write = true } = {}) => {
   if (write) result.closing = writeClosing(root, cardDir, { card, doc, risk, acts, asms, untagged, base, off, grade, manifest, checks });
   return result;
 };
+// One round: every check of the close shares one listing of the card's files and one start (card.mjs, `oneRound`).
+export const run = (root, options = {}) => oneRound(() => runOnce(root, options));
 
 const bullets = (checks, state) => {
   const lines = checks.filter((c) => (state === 'passed' ? ['passed', 'skipped'] : [state]).includes(c.state))
@@ -189,9 +195,14 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
   if (notes.length) parts.push('', '## Notes', ...notes);
   const swaps = replacementsOf(doc);
   const clones = [...declaredClones(cardDir)];
-  if (swaps.length || clones.length) parts.push('', '## Needs a person',
+  // With `refactor-tests:`, every frozen test the card edited in place: it existed before the card and carries a spec tag.
+  const refactor = gateBlock(doc)?.match(/^\s*refactor-tests\s*:\s*(\S.*)$/m)?.[1]?.trim();
+  const edited = refactor ? git(root, ['diff', '--numstat', `${base}..HEAD`]).stdout.split('\n').filter(Boolean).map((l) => l.split('\t'))
+    .filter(([, , f]) => f && git(root, ['cat-file', '-e', `${base}:${f}`]).status === 0 && /@[A-Z][A-Z0-9]*-\d+-S\d+(?!\d)/.test(git(root, ['show', `${base}:${f}`]).stdout ?? '')) : [];
+  if (swaps.length || clones.length || edited.length) parts.push('', '## Needs a person',
     ...swaps.map((r) => `- replaced test: ${r.file} "${r.name}" by ${r.by} "${r.byName}" — ${r.why}; confirm the old test was wrong and the new one is not looser`),
-    ...clones.map(([file, why]) => `- duplication left in place (K4): ${file} — ${why}; confirm the two copies must differ`));
+    ...clones.map(([file, why]) => `- duplication left in place (K4): ${file} — ${why}; confirm the two copies must differ`),
+    ...edited.map(([plus, minus, f]) => `- frozen test edited by the refactor (${refactor}): ${f} (+${plus} −${minus}); confirm no assertion was loosened: \`git diff ${base.slice(0, 9)}..HEAD -- ${f}\``));
   const decisions = [...off].map(([name, o]) => `- module ${name} off by decision: ${o.reason}`);
   if (grade !== 'production') decisions.push(`- grade: ${grade} — ${manifest?.grade?.reason ?? ''}`);
   if (decisions.length) parts.push('', '## Decisions of the repo', ...decisions);

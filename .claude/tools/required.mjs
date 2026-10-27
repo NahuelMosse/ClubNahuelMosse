@@ -17,7 +17,7 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import {
-  IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
+  IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
 } from './card.mjs';
 import { actHold, actsOf, gateBlock, readCard, riskOf } from './card-doc.mjs';
 import { active, lateSignals, LATE_ADVICE } from './kit.mjs';
@@ -125,7 +125,7 @@ const migrationLines = (root, touched, recorded, current) => {
 };
 
 // `closing: false` leaves out what is about the text of closing.md: whoever is writing it cannot be asked for what it is about to say.
-export const missing = (root, { closing = true } = {}) => {
+const missingOnce = (root, { closing = true } = {}) => {
   if (!existsSync(join(root, 'specs'))) return null;
   const cardDir = currentCard(root);
   if (!cardDir) return null;
@@ -178,6 +178,8 @@ export const missing = (root, { closing = true } = {}) => {
   }
   return out;
 };
+// One round: its checks share one listing of the card's files and one start (card.mjs, `oneRound`).
+export const missing = (root, options = {}) => oneRound(() => missingOnce(root, options));
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const lacking = missing(process.cwd());

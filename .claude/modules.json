@@ -1,5 +1,5 @@
 {
-  "kit": "6.17.4",
+  "kit": "6.21.0",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
@@ -150,7 +150,7 @@
       "version": "1.0.0", "core": "^4", "requires": [], "with": ["infra"], "signals": ["schema", "data-dependency"],
       "does": "stored data: migrations, indexes, integrity, least-privilege user, restore",
       "files": [".claude/reference/database.md"],
-      "criteria": ["P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13", "P14", "P16", "S20", "D11"],
+      "criteria": ["P4", "P5", "P6", "P7", "P8", "P9", "P10", "P11", "P12", "P13", "P14", "P16", "P17", "S20", "D11"],
       "cost": { "tokensPerCard": "3000-5000", "minutesPerCard": "5-15", "idleTokens": 200, "measured": false }
     },
     "infra": {

@@ -8,7 +8,8 @@ export const CARD_FILE = 'card.md';
 
 export const readCard = (cardDir) => {
   const path = join(cardDir, CARD_FILE);
-  return existsSync(path) ? readFileSync(path, 'utf8') : null;
+  // A worktree on Windows with autocrlf checks card.md out with CRLF; every parser reads lines that end in `\n`.
+  return existsSync(path) ? readFileSync(path, 'utf8').replace(/\r\n?/g, '\n') : null;
 };
 
 // The lines of a `## <name>` section, up to the next `## ` heading. Null when the section is missing.

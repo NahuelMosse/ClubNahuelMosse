@@ -48,13 +48,14 @@ Only with the lens `visual`, 15 lines or fewer; plan.mjs refuses the plan withou
 
 ## Gate
 
-One command per line, as verify.mjs runs them: `suite:`, `lint:`, `mutate <file>: <suite>`, `app:`, `probe:`, `attacks:`. With `app:`, verify.mjs starts the app once and brings it down at the end; every line gets `APP_URL`, `PORT` and `DATA_DIR` in its environment (`$APP_URL`, `${APP_URL}` and `%APP_URL%` also work in the text, in any shell), and `attack.mjs`, `overflow.mjs`, `motion-audit.mjs` and `app.mjs probe` take the URL from `APP_URL` when none is given.
-`no-visual: <why>` declares that the card touches code files that build markup (an HTML string in a `.py`) without changing what a screen shows: the `visual` lens stays off while no `## Tasks` file is a view, and the gate fails if the card's diff changes a markup line of those files.
+One command per line, as verify.mjs runs them: `suite:`, `lint:`, `mutate <file>: <suite>`, `app:`, `probe:`, `attacks:`. `suite:` runs the tests the card can break, `{affected}` standing for them (`node --test {affected}`, `npx vitest run {affected}`, `pytest {affected}`, `flutter test {affected}`); the whole suite runs once in the CI of the PR, which `/close` waits for. `refactor-tests: <why>` lets a mechanical change edit frozen tests in place; the close lists each for a person. With `app:`, verify.mjs starts the app once and brings it down at the end; every line gets `APP_URL`, `PORT` and `DATA_DIR` in its environment (`$APP_URL`, `${APP_URL}` and `%APP_URL%` also work in the text, in any shell), and `attack.mjs`, `overflow.mjs`, `motion-audit.mjs` and `app.mjs probe` take the URL from `APP_URL` when none is given.
+`no-visual: <why>` declares that the card touches code files that build markup (an HTML string in a `.py`) without changing what a screen shows: the `visual` lens stays off while no `## Tasks` file is a view, and the gate fails if the card's diff changes a markup line of those files. `no-docs: <why>` declares a card that changes no behavior: without it, from mvp the `docs` check wants the feature page, the contract and the data model the card touched (`templates/docs.md`, module docs).
 Planned here, before the code, so the gate and the judge find them done: a screen (lens `visual`) has one `probe <state>:` line for each state a spec names (`state: …`), the transient ones with the route held (`--route "GET /api/x=hold"`). An API (lens `contract`) must have the `attacks:` line; `--body-limit` is the limit the card sets, in bytes; `--common-headers` the headers every response carries, `--unique` the write that must answer a duplicate, `--fault-db` the database file to damage, `--openapi` the contract to compare.
 The steps of a `probe` can press Enter from each control and type markup: `[{ "enter-each": "form" }, { "type-markup": "input[name=q]" }]`; `--enter-skip` lists the controls where Enter does not submit.
 
 ```
-suite: npm test
+suite: node --test {affected}
+fmt: npx prettier --check .
 lint: npx eslint src test
 mutate src/modules/customers/domain/search.mjs: node --test test/search.test.mjs
 app: node src/main.mjs

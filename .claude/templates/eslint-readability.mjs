@@ -10,5 +10,13 @@ export const readability = [{
     'max-depth': ['error', 3],
     'max-params': ['error', 4],
     'max-classes-per-file': ['error', 1],
+    // Fast by construction (rules/speed.md): independent awaits run together, not one per iteration.
+    'no-await-in-loop': 'error',
+    // Readable code (rules/architecture.md): the main path is not nested, a rule's literal has a name.
+    'no-nested-ternary': 'error',
+    'no-else-return': ['error', { allowElseIf: false }],
+    'no-lonely-if': 'error',
+    curly: ['error', 'all'],
+    'no-magic-numbers': ['error', { ignore: [-1, 0, 1, 2], ignoreArrayIndexes: true, ignoreDefaultValues: true, enforceConst: true }],
   },
 }];

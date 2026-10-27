@@ -74,7 +74,22 @@ const IS_KIT = /^(\.claude|\.specify)\/|^CLAUDE\.md$/;
 // go stale; `resetFileCache` is for whoever changes the repo and asks again in the same process.
 const listings = new Map();
 const hashed = new Map();
-export const resetFileCache = () => { listings.clear(); hashed.clear(); };
+// The card's files and its start are asked by every gate and close check: each answer is two git processes, seconds on a slow
+// disk, and a close asked them more than twenty times for the same answer. They are kept only inside `oneRound`: one run of
+// the checks over a repo that does not change meanwhile.
+const changedFiles = new Map();
+const starts = new Map();
+let rounds = 0;
+export const oneRound = (fn) => {
+  rounds++;
+  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); } }
+};
+const remembered = (cache, key, compute) => {
+  if (!rounds) return compute();
+  if (!cache.has(key)) cache.set(key, compute());
+  return cache.get(key);
+};
+export const resetFileCache = () => { listings.clear(); hashed.clear(); changedFiles.clear(); starts.clear(); };
 const listing = (root) => {
   if (!listings.has(root)) {
     const r = spawnSync('git', ['ls-files', '-co', '-t', '--exclude-standard', '-z'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
@@ -329,13 +344,13 @@ export const minutesSinceSnapshot = (cwd, cardDir) => {
 // where `^` is the escape character and is dropped.
 // The card starts at the first commit that added a file of its folder: a card migrated from an older format kept its
 // first snapshot or plan.md, and its code was committed before the card.md that replaced them.
-export const cardStart = (root, cardDir) => {
+export const cardStart = (root, cardDir) => remembered(starts, `${root}\0${cardDir}`, () => {
   const snapshot = relativeTo(root, frozenOf(cardDir) ?? join(cardDir, 'card.snapshot.md'));
   const r = git(root, ['log', '--diff-filter=A', '--format=%H', '--', relativeTo(root, cardDir), snapshot]);
   const sha = r.stdout?.trim().split('\n').filter(Boolean).at(-1);
   if (!sha) return 'HEAD';
   return git(root, ['rev-parse', '--verify', '-q', `${sha}~1`]).status === 0 ? `${sha}~1` : sha;
-};
+});
 
 // Whether a commit already holds tests tagged for the card (`@<ID>-S<n>`): the RED that comes before the code.
 export const redCommitted = (root, cardDir) => {
@@ -349,11 +364,11 @@ export const existedAt = (root, ref, rel) => git(root, ['cat-file', '-e', `${ref
 // What the card touched: the diff since its start plus whatever has not entered git yet. The kit is
 // not part of the card: measured, in a repo where the kit arrived unversioned, it asked to lint its
 // own tests.
-export const cardFiles = (root, base) => {
+export const cardFiles = (root, base) => [...remembered(changedFiles, `${root}\0${base}`, () => {
   const changed = git(root, ['diff', '--name-only', '--diff-filter=d', base]).stdout ?? '';
   const added = git(root, ['ls-files', '--others', '--exclude-standard']).stdout ?? '';
   return [...new Set([...changed.split('\n'), ...added.split('\n')].map((f) => f.trim()).filter((f) => f && !IS_KIT.test(f)))];
-};
+})];
 
 // Cuts a shell line at ; & | and line breaks that are not inside quotes: `grep -E "a|gh pr"` is one command.
 export const splitShell = (text) => {
@@ -478,7 +493,9 @@ export const keyOf = (root, command) => {
       const path = join(root, f);
       if (!existsSync(path)) continue;
       hash.update(f);
-      hash.update(readFileSync(path));
+      // A text file hashes with LF: the same code checked out with CRLF (autocrlf on Windows) is the same code.
+      const bytes = readFileSync(path);
+      hash.update(bytes.subarray(0, 8000).includes(0) ? bytes : bytes.toString('utf8').replace(/\r\n/g, '\n'));
     }
     hashed.set(id, hash);
   }
