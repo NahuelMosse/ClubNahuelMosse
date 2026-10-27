@@ -13,12 +13,12 @@ from app.modules.reservas.reglas import (
 )
 from app.modules.sesion import Perfil
 from app.shared.errors import (
-    OpeningHoursChanged,
+    Forbidden,
     InvalidData,
+    NotFound,
+    OpeningHoursChanged,
     SlotTaken,
     Unavailable,
-    NotFound,
-    Forbidden,
 )
 
 # Largo máximo del motivo de una anulación.

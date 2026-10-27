@@ -1,70 +1,70 @@
-class DatosInvalidos(Exception):
-    def __init__(self, errores: dict[str, str]) -> None:
+class InvalidData(Exception):
+    def __init__(self, errors: dict[str, str]) -> None:
         super().__init__("datos inválidos")
-        self.errores = errores
+        self.errors = errors
 
 
-class Duplicado(Exception):
-    """Ya existe una cuenta activa con alguno de estos campos."""
+class Duplicate(Exception):
+    """An active account already exists with one of these fields."""
 
-    def __init__(self, campos: list[str]) -> None:
-        super().__init__(f"duplicado: {', '.join(campos)}")
-        self.campos = campos
-
-
-class NoAutenticado(Exception):
-    """El pedido no trae un token válido de una cuenta con perfil activo."""
+    def __init__(self, fields: list[str]) -> None:
+        super().__init__(f"duplicado: {', '.join(fields)}")
+        self.fields = fields
 
 
-class Demorado(Exception):
-    """El proveedor de identidad frena por demasiados intentos seguidos."""
+class NotAuthenticated(Exception):
+    """The request carries no valid token of an account with an active profile."""
 
 
-class CuentaExistente(Exception):
-    """Ya hay una cuenta activa con ese correo y no se pidió ascenderla."""
+class RateLimited(Exception):
+    """The identity provider is throttling after too many attempts in a row."""
 
 
-class Prohibido(Exception):
-    """Quien pide la operación no puede hacerla."""
+class AccountExists(Exception):
+    """An active account already has that email and promoting it was not requested."""
 
 
-class NoDisponible(Exception):
-    """Lo que se pidió ya no existe o está dado de baja."""
+class Forbidden(Exception):
+    """Whoever asks for the operation cannot perform it."""
 
 
-class NumeroOcupado(Exception):
-    """Otro alta ya tomó el número de espacio que se estaba mostrando."""
-
-    def __init__(self, siguiente: int, nombre: str) -> None:
-        super().__init__(f"número ocupado; el siguiente es {siguiente} ({nombre})")
-        self.siguiente = siguiente
-        self.nombre = nombre
+class Unavailable(Exception):
+    """What was requested no longer exists or was deactivated."""
 
 
-class HorarioOcupado(Exception):
-    """Otra reserva activa del mismo espacio se superpone con el horario pedido."""
+class NumberTaken(Exception):
+    """Another creation already took the space number that was being shown."""
+
+    def __init__(self, next_number: int, name: str) -> None:
+        super().__init__(f"número ocupado; el siguiente es {next_number} ({name})")
+        self.next_number = next_number
+        self.name = name
 
 
-class NoEncontrada(Exception):
-    """No hay nada con ese número que sea de quien lo pide."""
+class SlotTaken(Exception):
+    """Another active booking of the same space overlaps the requested time."""
 
 
-class Cambiado(Exception):
-    """Lo que se quería cambiar ya no está como se lo veía (otra persona o el tiempo lo
-    cambiaron)."""
+class NotFound(Exception):
+    """Nothing with that number belongs to whoever asks for it."""
 
 
-class ReservasAfuera(Exception):
-    """El horario nuevo deja afuera reservas futuras: hace falta confirmarlo."""
-
-    def __init__(self, cantidad: int) -> None:
-        super().__init__(f"{cantidad} reservas futuras quedan fuera del horario nuevo")
-        self.cantidad = cantidad
+class ConcurrentChange(Exception):
+    """What was meant to change is no longer as it was seen (another person or time changed
+    it)."""
 
 
-class AgendaCambiada(Exception):
-    """El horario de la sede cambió entre que se validó una reserva y que se guardó."""
+class BookingsOutsideHours(Exception):
+    """The new opening hours leave future bookings outside: it must be confirmed."""
+
+    def __init__(self, count: int) -> None:
+        super().__init__(f"{count} reservas futuras quedan fuera del horario nuevo")
+        self.count = count
 
 
-class ConReservasFuturas(Exception):
-    """La sede o el espacio tienen reservas activas que todavía no terminaron."""
+class OpeningHoursChanged(Exception):
+    """The branch opening hours changed between validating a booking and saving it."""
+
+
+class HasFutureBookings(Exception):
+    """The branch or the space has active bookings that have not ended yet."""

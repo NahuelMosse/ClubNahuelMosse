@@ -46,8 +46,6 @@ def _historial(socio: Socio, **params: str) -> dict[str, Any]:
     return cuerpo
 
 
-
-
 def _capturar_sql(accion: Callable[[], None]) -> list[tuple[str, Any]]:
     """Las sentencias que la base recibe mientras corre [accion]."""
     vistas: list[tuple[str, Any]] = []
@@ -146,13 +144,3 @@ def test_la_migracion_0008_corta_por_lock_timeout_y_se_puede_volver_a_correr(
         version = conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
     assert version == "0007"
     command.upgrade(alembic, "0008")
-
-
-
-
-
-
-
-
-
-

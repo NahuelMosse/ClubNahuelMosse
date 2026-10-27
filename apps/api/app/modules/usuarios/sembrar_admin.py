@@ -15,10 +15,10 @@ from datetime import datetime
 from app.modules.usuarios.administradores import sembrar_admin
 from app.modules.usuarios.reglas import DatosRegistro
 from app.modules.usuarios.repositorio import UsuariosSql
-from app.shared.db import motor
-from app.shared.errors import AccountExists, InvalidData, Duplicate
-from app.shared.identity import FirebaseProvider
 from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
+from app.shared.db import engine
+from app.shared.errors import AccountExists, Duplicate, InvalidData
+from app.shared.identity import FirebaseProvider
 
 
 def _leer(argumentos: list[str] | None) -> argparse.Namespace:
@@ -38,7 +38,7 @@ def main(argumentos: list[str] | None = None) -> int:
         print("Falta la variable de entorno ADMIN_CONTRASENA", file=sys.stderr)
         return 2
 
-    with motor().connect() as conn:
+    with engine().connect() as conn:
         try:
             sembrar_admin(
                 DatosRegistro(
@@ -61,11 +61,11 @@ def main(argumentos: list[str] | None = None) -> int:
             )
             return 1
         except InvalidData as e:
-            for campo, mensaje in e.errores.items():
+            for campo, mensaje in e.errors.items():
                 print(f"{campo}: {mensaje}", file=sys.stderr)
             return 1
         except Duplicate as e:
-            print(f"ya hay otra cuenta activa con ese {' y '.join(e.campos)}", file=sys.stderr)
+            print(f"ya hay otra cuenta activa con ese {' y '.join(e.fields)}", file=sys.stderr)
             return 1
     print(f"administrador listo: {datos.correo}")
     return 0

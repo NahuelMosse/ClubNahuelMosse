@@ -52,8 +52,6 @@ def test_un_dato_de_otro_tipo_tiene_un_mensaje_general(cliente: TestClient) -> N
     assert r.json() == {"errores": {"nombre": "El dato no es válido"}}
 
 
-
-
 def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
     r = cliente.post(
         "/pedido", content='{"nombre": "clave-secreta', headers={"Content-Type": "application/json"}

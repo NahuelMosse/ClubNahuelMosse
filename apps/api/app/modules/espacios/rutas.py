@@ -17,14 +17,14 @@ from app.modules.espacios.casos_de_uso import (
 from app.modules.espacios.reglas import DatosEspacio, Espacio
 from app.modules.espacios.repositorio import EspaciosSql, repositorio_espacios
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.input_validation import Identifier
 from app.shared.errors import (
+    Duplicate,
     HasFutureBookings,
     InvalidData,
-    Duplicate,
-    Unavailable,
     NumberTaken,
+    Unavailable,
 )
+from app.shared.input_validation import Identifier
 from app.shared.responses import conflict
 
 router = APIRouter(tags=["espacios"])
@@ -183,7 +183,7 @@ def alta_de_espacio(
     except NumberTaken as e:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            content={"errores": {"nombre": DUPLICADO}, "nombre": e.nombre, "numero": e.siguiente},
+            content={"errores": {"nombre": DUPLICADO}, "nombre": e.name, "numero": e.next_number},
         )
     except Duplicate:
         contenido: dict[str, object] = {"errores": {"nombre": DUPLICADO}}

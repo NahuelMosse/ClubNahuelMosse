@@ -16,8 +16,8 @@ from app.modules.notificaciones.casos_de_uso import (
 from app.modules.notificaciones.reglas import Notificacion, TipoDeAviso
 from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.input_validation import Identifier
 from app.shared.errors import Unavailable
+from app.shared.input_validation import Identifier
 
 router = APIRouter(tags=["notificaciones"])
 

@@ -278,25 +278,13 @@ def test_la_ultima_pagina_permitida_del_historial_global_responde(
 
 NULO = "Ana\x00Rios"
 SEDE = {"direccion": "Av. Vergara 1850", "apertura": "08:00", "cierre": "23:00", "dias": [1]}
-ESPACIO = {"sede_id": "00000000-0000-7000-8000-000000000001", "tipo": "F5", "techada": False, "iluminada": True, "precio_por_hora": 1}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ESPACIO = {
+    "sede_id": "00000000-0000-7000-8000-000000000001",
+    "tipo": "F5",
+    "techada": False,
+    "iluminada": True,
+    "precio_por_hora": 1,
+}
 
 
 def test_la_api_no_usa_un_certifi_con_vulnerabilidad_conocida() -> None:
@@ -356,8 +344,6 @@ def servidor(api: TestClient, tmp_path: Path) -> Iterator[tuple[str, Path]]:
         proceso.wait(timeout=30)
 
 
-
-
 @pytest.mark.parametrize("salto", ["%0a", "%0d"])
 def test_una_ruta_con_saltos_de_linea_no_falsifica_el_log(
     api: TestClient, caplog: pytest.LogCaptureFixture, salto: str
@@ -400,27 +386,11 @@ def test_los_secretos_no_llegan_al_log_ni_a_las_respuestas(
     assert "token-secreto-9Z" not in textos
 
 
-
-
-
-
 def test_el_contrato_versionado_coincide_con_la_api() -> None:
     """el contrato OpenAPI versionado coincide con lo que la API publica @REV-01-S15"""
     versionado = json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
 
     assert versionado == create_app().openapi()
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 def test_la_api_arranca_con_el_emulador_y_un_proyecto_de_demo(

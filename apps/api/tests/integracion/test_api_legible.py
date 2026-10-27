@@ -48,9 +48,7 @@ def test_una_reserva_hecha_y_movida_sobrevive_a_reiniciar_la_api(
     creada = r.json()["id"]
     nuevo = _pedido(espacio, 2, 11)
     nuevo.pop("horas")
-    movida = api.post(
-        f"/reservas/{creada}/modificar", headers=_con(token_usuario), json=nuevo
-    )
+    movida = api.post(f"/reservas/{creada}/modificar", headers=_con(token_usuario), json=nuevo)
     assert movida.status_code == 200, movida.text
 
     with TestClient(create_app()) as otra:

@@ -10,9 +10,9 @@ from pydantic import BaseModel
 from app.modules.usuarios.registro import registrar
 from app.modules.usuarios.reglas import DatosRegistro
 from app.modules.usuarios.repositorio import UsuariosSql, repositorio_usuarios
-from app.shared.errors import Duplicate
-from app.shared.identity import FirebaseProvider, identidad
 from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
+from app.shared.errors import Duplicate
+from app.shared.identity import FirebaseProvider, identity
 
 router = APIRouter(tags=["usuarios"])
 MENSAJE_DUPLICADO = "El usuario ya está registrado. Modificá el correo o el DNI."
@@ -58,7 +58,7 @@ class UsuarioRepetido(BaseModel):
 def registrar_usuario(
     pedido: PedidoRegistro,
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
-    proveedor: Annotated[FirebaseProvider, Depends(identidad)],
+    proveedor: Annotated[FirebaseProvider, Depends(identity)],
 ) -> RegistroCreado | JSONResponse:
     try:
         nuevo = registrar(
@@ -72,8 +72,8 @@ def registrar_usuario(
             status_code=status.HTTP_409_CONFLICT,
             content={
                 "mensaje": MENSAJE_DUPLICADO,
-                "campos": e.campos,
-                "errores": {c: MENSAJES_CAMPO[c] for c in e.campos},
+                "campos": e.fields,
+                "errores": {c: MENSAJES_CAMPO[c] for c in e.fields},
             },
         )
     return RegistroCreado(id=nuevo)

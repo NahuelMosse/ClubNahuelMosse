@@ -9,7 +9,7 @@ from app.modules.notificaciones.reglas import CanalPush as CanalPush
 from app.modules.notificaciones.reglas import Pendiente as Pendiente
 from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
 from app.modules.sesion import Perfil
-from app.shared.errors import InvalidData, Unavailable, NotFound, Forbidden
+from app.shared.errors import Forbidden, InvalidData, NotFound, Unavailable
 
 PLATAFORMAS = ("android", "ios")
 

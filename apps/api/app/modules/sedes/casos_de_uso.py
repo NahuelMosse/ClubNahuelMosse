@@ -4,7 +4,7 @@ from uuid import UUID
 
 from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
 from app.modules.sesion import Perfil
-from app.shared.errors import InvalidData, Forbidden
+from app.shared.errors import Forbidden, InvalidData
 
 
 class Sedes(Protocol):

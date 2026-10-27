@@ -11,102 +11,102 @@ import firebase_admin
 from firebase_admin import auth
 
 from app.shared.config import config
-from app.shared.credencial_firebase import credencial_de_servicio
-from app.shared.errores import Demorado, Duplicado
+from app.shared.errors import Duplicate, RateLimited
+from app.shared.firebase_credential import service_credential
 
-identidad_log = logging.getLogger("clubnahuelmosse.identidad")
+identity_log = logging.getLogger("clubnahuelmosse.identidad")
 
 
 @cache
-def _app_firebase() -> firebase_admin.App:
-    # Con FIREBASE_AUTH_EMULATOR_HOST definido, firebase-admin habla con el emulador.
+def _firebase_app() -> firebase_admin.App:
+    # With FIREBASE_AUTH_EMULATOR_HOST set, firebase-admin talks to the emulator.
     return firebase_admin.initialize_app(
-        credential=credencial_de_servicio(),
-        options={"projectId": config.firebase_project_id, "httpTimeout": _ESPERA_S},
+        credential=service_credential(),
+        options={"projectId": config.firebase_project_id, "httpTimeout": _TIMEOUT_S},
     )
 
 
-# Firebase no deja comprobar una contraseña desde el SDK de administración: se pregunta
-# por la API REST de Identity Toolkit, igual que al iniciar sesión.
-_RECHAZOS = {
+# Firebase does not allow checking a password from the admin SDK: it is asked through
+# the Identity Toolkit REST API, just like at sign-in.
+_REJECTIONS = {
     "INVALID_LOGIN_CREDENTIALS",
     "INVALID_PASSWORD",
     "MISSING_PASSWORD",
     "EMAIL_NOT_FOUND",
     "USER_DISABLED",
 }
-# Menos que los 15 s que espera la app: el servidor contesta antes de que ella se rinda.
-_ESPERA_S = 4
+# Less than the 15 s the app waits: the server answers before the app gives up.
+_TIMEOUT_S = 4
 
 
-def _url_de_ingreso() -> str:
-    ruta = "identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
-    if emulador := os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
-        return f"http://{emulador}/{ruta}?key=clave-del-emulador"
+def _sign_in_url() -> str:
+    path = "identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
+    if emulator := os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
+        return f"http://{emulator}/{path}?key=clave-del-emulador"
     if not config.firebase_api_key:
         raise RuntimeError("falta FIREBASE_API_KEY para comprobar contraseñas")
-    return f"https://{ruta}?key={config.firebase_api_key}"
+    return f"https://{path}?key={config.firebase_api_key}"
 
 
-class ProveedorFirebase:
-    def crear_cuenta(self, correo: str, contrasena: str) -> str:
+class FirebaseProvider:
+    def create_account(self, email: str, password: str) -> str:
         try:
-            usuario = auth.create_user(email=correo, password=contrasena, app=_app_firebase())
+            user = auth.create_user(email=email, password=password, app=_firebase_app())
         except auth.EmailAlreadyExistsError as e:
-            raise Duplicado(["correo"]) from e
-        return str(usuario.uid)
+            raise Duplicate(["correo"]) from e
+        return str(user.uid)
 
-    def uid_de(self, correo: str) -> str | None:
+    def uid_of(self, email: str) -> str | None:
         try:
-            return str(auth.get_user_by_email(correo, app=_app_firebase()).uid)
+            return str(auth.get_user_by_email(email, app=_firebase_app()).uid)
         except auth.UserNotFoundError:
             return None
 
-    def borrar_cuenta(self, uid: str) -> None:
-        # Si ya no estaba, otro pedido la borró antes, que es lo que se quería.
+    def delete_account(self, uid: str) -> None:
+        # If it was already gone, another request deleted it first, which is what was wanted.
         with contextlib.suppress(auth.UserNotFoundError):
-            auth.delete_user(uid, app=_app_firebase())
+            auth.delete_user(uid, app=_firebase_app())
 
-    def uid_del_token(self, token: str) -> str | None:
+    def uid_from_token(self, token: str) -> str | None:
         try:
-            # check_revoked además rechaza cuentas deshabilitadas o borradas en Firebase.
-            datos = auth.verify_id_token(token, app=_app_firebase(), check_revoked=True)
+            # check_revoked also rejects accounts disabled or deleted in Firebase.
+            claims = auth.verify_id_token(token, app=_firebase_app(), check_revoked=True)
         except (auth.InvalidIdTokenError, auth.UserDisabledError, auth.UserNotFoundError):
             return None
-        uid = datos.get("uid")
+        uid = claims.get("uid")
         return str(uid) if uid else None
 
-    def contrasena_correcta(self, correo: str, contrasena: str) -> bool:
-        pedido = urllib.request.Request(
-            _url_de_ingreso(),
-            data=json.dumps({"email": correo, "password": contrasena}).encode(),
+    def password_matches(self, email: str, password: str) -> bool:
+        request = urllib.request.Request(
+            _sign_in_url(),
+            data=json.dumps({"email": email, "password": password}).encode(),
             headers={"content-type": "application/json"},
             method="POST",
         )
         try:
-            with urllib.request.urlopen(pedido, timeout=_ESPERA_S):
+            with urllib.request.urlopen(request, timeout=_TIMEOUT_S):
                 return True
         except urllib.error.HTTPError as e:
-            # La respuesta de error es un recurso abierto: se cierra pase lo que pase.
+            # The error response is an open resource: it is closed no matter what.
             with e:
                 if e.code != HTTPStatus.BAD_REQUEST:
                     raise
-                mensaje = str(json.loads(e.read()).get("error", {}).get("message", ""))
-                if mensaje.startswith("TOO_MANY_ATTEMPTS"):
-                    raise Demorado from e
-                if mensaje.split(" ")[0] in _RECHAZOS:
+                message = str(json.loads(e.read()).get("error", {}).get("message", ""))
+                if message.startswith("TOO_MANY_ATTEMPTS"):
+                    raise RateLimited from e
+                if message.split(" ")[0] in _REJECTIONS:
                     return False
                 raise
 
-    def cambiar_contrasena(self, uid: str, nueva: str) -> None:
-        auth.update_user(uid, password=nueva, app=_app_firebase())
-        # Firebase ya invalida las sesiones al cambiar la contraseña; revocar explícitamente
-        # lo asegura, pero si falla el cambio ya está hecho y no se informa como error.
+    def change_password(self, uid: str, new_password: str) -> None:
+        auth.update_user(uid, password=new_password, app=_firebase_app())
+        # Firebase already invalidates sessions when the password changes; revoking explicitly
+        # makes sure of it, but if it fails the change is done and it is not reported as an error.
         try:
-            auth.revoke_refresh_tokens(uid, app=_app_firebase())
+            auth.revoke_refresh_tokens(uid, app=_firebase_app())
         except Exception:
-            identidad_log.exception("no se pudieron revocar las sesiones de %s", uid)
+            identity_log.exception("no se pudieron revocar las sesiones de %s", uid)
 
 
-def identidad() -> ProveedorFirebase:
-    return ProveedorFirebase()
+def identity() -> FirebaseProvider:
+    return FirebaseProvider()

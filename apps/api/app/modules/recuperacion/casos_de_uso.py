@@ -48,7 +48,7 @@ class RepositorioEnlaces(Protocol):
 
 
 class CambioDeContrasena(Protocol):
-    def cambiar_contrasena(self, uid: str, nueva: str) -> None: ...
+    def change_password(self, uid: str, new_password: str) -> None: ...
 
 
 class RastroDeContrasena(Protocol):
@@ -107,7 +107,7 @@ def usar_enlace(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llam
     if reclamado is None:
         raise EnlaceInvalido
     try:
-        identidad.cambiar_contrasena(reclamado.uid, nueva)
+        identidad.change_password(reclamado.uid, nueva)
     except BaseException:
         # La contraseña no cambió: el enlace vuelve a servir para reintentar, salvo que lo
         # haya reemplazado un reenvío mientras tanto.

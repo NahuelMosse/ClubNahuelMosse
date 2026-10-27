@@ -18,7 +18,7 @@ from app.modules.espacios.reglas import (
     validar_espacio,
 )
 from app.modules.sesion import Perfil
-from app.shared.errors import InvalidData, Unavailable, Forbidden
+from app.shared.errors import Forbidden, InvalidData, Unavailable
 
 
 class Espacios(Protocol):

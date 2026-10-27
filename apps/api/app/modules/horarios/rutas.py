@@ -12,9 +12,9 @@ from app.modules.horarios.disponibilidad import canchas_disponibles
 from app.modules.horarios.reglas import MAX_HORAS, MIN_HORAS
 from app.modules.horarios.repositorio import HorariosSql, repositorio_horarios
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.input_validation import Identifier, parse_time
-from app.shared.errors import InvalidData, Unavailable
 from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
+from app.shared.errors import InvalidData, Unavailable
+from app.shared.input_validation import Identifier, parse_time
 
 router = APIRouter(tags=["horarios"])
 

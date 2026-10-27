@@ -51,12 +51,8 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
     assert rol == "usuario"
 
 
-
-
 def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:
     r = api.post("/registro", content=b"{roto", headers={"content-type": "application/json"})
     texto = r.text.lower()
     for fuga in ("traceback", "sqlalchemy", "psycopg", "firebase", 'file "'):
         assert fuga not in texto
-
-

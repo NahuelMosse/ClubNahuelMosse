@@ -5,17 +5,17 @@ from typing import Protocol
 from uuid import UUID
 
 from app.modules.usuarios.reglas import DatosRegistro, Registro, validar_registro
-from app.shared.errors import InvalidData, Duplicate
+from app.shared.errors import Duplicate, InvalidData
 
 registro_log = logging.getLogger("clubnahuelmosse.registro")
 
 
 class ProveedorIdentidad(Protocol):
-    def create_account(self, correo: str, contrasena: str) -> str:
+    def create_account(self, email: str, password: str) -> str:
         """Crea la cuenta y devuelve su uid. Lanza `Duplicate(["correo"])` si el correo existe."""
         ...
 
-    def uid_of(self, correo: str) -> str | None: ...
+    def uid_of(self, email: str) -> str | None: ...
 
     def delete_account(self, uid: str) -> None: ...
 

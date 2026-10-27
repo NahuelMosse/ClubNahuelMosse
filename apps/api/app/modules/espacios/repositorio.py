@@ -15,11 +15,11 @@ from app.modules.espacios.reglas import (
 )
 from app.shared.db import RETRY_WINDOW, DbConnection, in_transaction, violated_constraint
 from app.shared.errors import (
-    HasFutureBookings,
     Duplicate,
-    Unavailable,
+    HasFutureBookings,
     NotFound,
     NumberTaken,
+    Unavailable,
 )
 
 COLUMNAS_DE_ESPACIO = (

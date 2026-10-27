@@ -1,4 +1,4 @@
-# kit-shape: el motor y sus funciones de conexión van juntos
+# kit-shape: the engine and its connection functions go together
 from collections.abc import Iterator
 from contextlib import contextmanager
 from functools import cache
@@ -10,45 +10,45 @@ from sqlalchemy.exc import IntegrityError
 
 from app.shared.config import config
 
-# Cuánto después de su alta una fila se reconoce como el mismo pedido repetido.
-VENTANA_DE_REINTENTO = "5 minutes"
+# How long after its creation a row is recognised as the same repeated request.
+RETRY_WINDOW = "5 minutes"
 
 
 @cache
-def _crear_motor() -> Engine:
-    # Sin los parámetros en los mensajes de error: llevan DNI, correo y nombre y terminan en el log.
+def _create_engine() -> Engine:
+    # No parameters in error messages: they carry ID number, email and name and end up in the log.
     return create_engine(config.database_url, pool_pre_ping=True, hide_parameters=True)
 
 
-class _Motor:
-    """El motor de la API, uno por proceso. Descartarlo cierra sus conexiones: una que
-    queda abierta sin dueño se cierra sola más tarde, fuera de quien la abrió."""
+class _Engine:
+    """The API engine, one per process. Discarding it closes its connections: one left
+    open without an owner closes itself later, outside whoever opened it."""
 
     def __call__(self) -> Engine:
-        return _crear_motor()
+        return _create_engine()
 
     def cache_clear(self) -> None:
-        if _crear_motor.cache_info().currsize:
-            _crear_motor().dispose()
-        _crear_motor.cache_clear()
+        if _create_engine.cache_info().currsize:
+            _create_engine().dispose()
+        _create_engine.cache_clear()
 
 
-motor = _Motor()
+engine = _Engine()
 
 
-def conexion() -> Iterator[Connection]:
-    """Una conexión por pedido. Confirma el caso de uso, antes de responder; lo que no
-    se confirmó se descarta al cerrar."""
-    with motor().connect() as conn:
+def connection() -> Iterator[Connection]:
+    """One connection per request. The use case commits before responding; whatever
+    was not committed is discarded on close."""
+    with engine().connect() as conn:
         yield conn
 
 
-Conexion = Annotated[Connection, Depends(conexion, scope="function")]
+DbConnection = Annotated[Connection, Depends(connection, scope="function")]
 
 
 @contextmanager
-def en_transaccion(conn: Connection) -> Iterator[None]:
-    """Confirma lo que hace el bloque; ante cualquier error lo deshace y relanza el original."""
+def in_transaction(conn: Connection) -> Iterator[None]:
+    """Commits what the block does; on any error it rolls back and re-raises the original."""
     try:
         yield
         conn.commit()
@@ -57,6 +57,6 @@ def en_transaccion(conn: Connection) -> Iterator[None]:
         raise
 
 
-def restriccion_violada(e: IntegrityError) -> str | None:
-    """El nombre de la restricción que rechazó la escritura, si el motor la informa."""
+def violated_constraint(e: IntegrityError) -> str | None:
+    """The name of the constraint that rejected the write, if the engine reports it."""
     return getattr(getattr(e.orig, "diag", None), "constraint_name", None)

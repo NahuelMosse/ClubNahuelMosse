@@ -5,16 +5,16 @@ from firebase_admin import credentials
 from app.shared.config import config
 
 
-def credencial_de_servicio(contenido: str | None = None) -> credentials.Base | None:
-    """La cuenta de servicio de `FIREBASE_CREDENCIALES_JSON`; sin ella, `None` y firebase-admin
-    usa las credenciales por defecto del entorno (`GOOGLE_APPLICATION_CREDENTIALS`)."""
-    contenido = config.firebase_credenciales_json if contenido is None else contenido
-    if not contenido:
+def service_credential(content: str | None = None) -> credentials.Base | None:
+    """The service account in `FIREBASE_CREDENTIALS_JSON`; without it, `None` and firebase-admin
+    uses the environment default credentials (`GOOGLE_APPLICATION_CREDENTIALS`)."""
+    content = config.firebase_credentials_json if content is None else content
+    if not content:
         return None
     try:
-        return credentials.Certificate(json.loads(contenido))
+        return credentials.Certificate(json.loads(content))
     except ValueError as error:
-        # Sin el texto de la causa: podría traer pedazos de la clave.
+        # Without the cause text: it could carry pieces of the key.
         raise RuntimeError(
             "FIREBASE_CREDENCIALES_JSON no es el JSON de una cuenta de servicio válida"
         ) from error

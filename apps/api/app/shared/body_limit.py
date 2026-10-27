@@ -3,15 +3,15 @@ import time
 
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-LIMITE_BYTES = 1024 * 1024
-PLAZO_SEGUNDOS = 5
+LIMIT_BYTES = 1024 * 1024
+TIMEOUT_SECONDS = 5
 
 
-class CuerpoAcotado:
-    """Corta con 413 un cuerpo de más de 1 MB y con 408 uno que no llega entero en 5 s.
+class BodyLimit:
+    """Cuts a body over 1 MB with 413 and one that does not arrive whole in 5 s with 408.
 
-    Al pasarse responde él mismo y le avisa a la app que el cliente se fue: FastAPI convierte
-    cualquier excepción al leer el cuerpo en un 400, así que no se puede cortar con una.
+    When over the limit it answers itself and tells the app the client left: FastAPI turns
+    any exception while reading the body into a 400, so it cannot be cut with one.
     """
 
     def __init__(self, app: ASGIApp) -> None:
@@ -21,44 +21,44 @@ class CuerpoAcotado:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
-        declarado = dict(scope["headers"]).get(b"content-length", b"")
-        if declarado.isdigit() and int(declarado) > LIMITE_BYTES:
-            await self._responder(send, 413)
+        declared = dict(scope["headers"]).get(b"content-length", b"")
+        if declared.isdigit() and int(declared) > LIMIT_BYTES:
+            await self._respond(send, 413)
             return
 
-        limite = time.monotonic() + PLAZO_SEGUNDOS
-        recibidos = 0
-        cortado = False
+        deadline = time.monotonic() + TIMEOUT_SECONDS
+        received = 0
+        cut = False
 
-        async def recibir() -> Message:
-            nonlocal recibidos, cortado
-            if cortado:
+        async def receive_limited() -> Message:
+            nonlocal received, cut
+            if cut:
                 return {"type": "http.disconnect"}
             try:
-                mensaje = await asyncio.wait_for(receive(), limite - time.monotonic())
+                message = await asyncio.wait_for(receive(), deadline - time.monotonic())
             except TimeoutError:
-                estado = 408
+                status = 408
             else:
-                recibidos += len(mensaje.get("body", b""))
-                if recibidos <= LIMITE_BYTES:
-                    return mensaje
-                estado = 413
-            cortado = True
-            await self._responder(send, estado)
+                received += len(message.get("body", b""))
+                if received <= LIMIT_BYTES:
+                    return message
+                status = 413
+            cut = True
+            await self._respond(send, status)
             return {"type": "http.disconnect"}
 
-        async def enviar(mensaje: Message) -> None:
-            if not cortado:
-                await send(mensaje)
+        async def send_unless_cut(message: Message) -> None:
+            if not cut:
+                await send(message)
 
-        await self.app(scope, recibir, enviar)
+        await self.app(scope, receive_limited, send_unless_cut)
 
     @staticmethod
-    async def _responder(send: Send, estado: int) -> None:
+    async def _respond(send: Send, status: int) -> None:
         await send(
             {
                 "type": "http.response.start",
-                "status": estado,
+                "status": status,
                 "headers": [(b"content-length", b"0"), (b"connection", b"close")],
             }
         )

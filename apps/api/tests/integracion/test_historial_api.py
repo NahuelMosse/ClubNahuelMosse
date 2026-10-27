@@ -94,5 +94,3 @@ def test_la_busqueda_toma_los_comodines_como_texto(
     assert _ids(api, token_admin, f"q={nombre[:5]}%25") == set()
     assert _ids(api, token_admin, f"q={nombre[:4]}_{nombre[5:]}") == set()
     assert _ids(api, token_admin, "q=%5C") == set()
-
-

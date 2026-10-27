@@ -9,7 +9,7 @@ from app.modules.sesion.casos_de_uso import perfil_autenticado
 from app.modules.sesion.perfil import Perfil
 from app.modules.sesion.repositorio import Perfiles
 from app.shared.errors import NotAuthenticated
-from app.shared.identity import FirebaseProvider, identidad
+from app.shared.identity import FirebaseProvider, identity
 
 _portador = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
 
@@ -22,7 +22,7 @@ def usuario_actual(
     peticion: Request,
     credencial: Annotated[HTTPAuthorizationCredentials | None, Depends(_portador)],
     perfiles: Perfiles,
-    proveedor: Annotated[FirebaseProvider, Depends(identidad)],
+    proveedor: Annotated[FirebaseProvider, Depends(identity)],
 ) -> Perfil:
     """Quién hace el pedido, según el token de Firebase de la cabecera `Authorization`."""
     try:

@@ -7,13 +7,13 @@ from sqlalchemy import text
 
 from app.modules.recuperacion.reglas import Mensaje
 from app.shared.config import config
-from app.shared.db import motor
+from app.shared.db import engine
 
 correo_log = logging.getLogger("clubnahuelmosse.correo")
 
 
 def _al_buzon(mensaje: Mensaje) -> None:
-    with motor().begin() as conn:
+    with engine().begin() as conn:
         conn.execute(
             text("INSERT INTO correo_saliente (para, asunto, cuerpo) VALUES (:p, :a, :c)"),
             {"p": mensaje.para, "a": mensaje.asunto, "c": mensaje.cuerpo},
@@ -38,7 +38,7 @@ def enviar(mensaje: Mensaje) -> None:
     """Se corre después de responder. Si falla queda en el log: la respuesta ya fue la misma
     que para un correo sin cuenta, y un error contaría que la cuenta existe."""
     try:
-        (_al_buzon if config.email_mode == "buzon" else _por_smtp)(mensaje)
+        (_al_buzon if config.email_mode == "outbox" else _por_smtp)(mensaje)
     except Exception as e:
         # Sin traceback ni texto de la excepción: ambos pueden traer la dirección del destinatario.
         correo_log.error("no se pudo enviar el correo «%s»: %s", mensaje.asunto, type(e).__name__)

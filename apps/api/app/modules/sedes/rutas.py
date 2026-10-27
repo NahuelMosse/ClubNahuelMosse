@@ -16,8 +16,8 @@ from app.modules.sedes.casos_de_uso import (
 from app.modules.sedes.reglas import DatosSede, Sede
 from app.modules.sedes.repositorio import SedesSql, repositorio_sedes
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings
 from app.shared.input_validation import Identifier, parse_time
-from app.shared.errors import HasFutureBookings, Duplicate, BookingsOutsideHours
 from app.shared.responses import conflict
 
 router = APIRouter(tags=["sedes"])
@@ -157,7 +157,7 @@ def edicion_de_sede(
         return conflict({"nombre": "Ya existe una sede con ese nombre"})
     except BookingsOutsideHours as e:
         return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.cantidad}
+            status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.count}
         )
     return _vista(sede)
 

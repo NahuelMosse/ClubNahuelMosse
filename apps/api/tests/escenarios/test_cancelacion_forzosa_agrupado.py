@@ -156,7 +156,9 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
     if con_aviso_previo:
         _anular_en_la_base(motor, socio, simultaneas)
 
-    _en_paralelo(motor, socio.usuario_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]])
+    _en_paralelo(
+        motor, socio.usuario_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]]
+    )
 
     [visible] = socio.centro()["notificaciones"]
     assert visible["titulo"] == f"El club anuló {total} de tus reservas"

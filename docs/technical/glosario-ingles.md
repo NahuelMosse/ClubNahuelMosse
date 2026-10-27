@@ -66,6 +66,13 @@ autogenerados (`_pkey`, `_fkey`, `_check`, `_key`, `_excl`): el nombre que Postg
 `app_user.role`: `usuario`→`user`, `admin` igual. `device.platform` igual. Parámetro `cuando`: `proximas`→`upcoming`, `historial`→`history`.
 Config `correo_modo`: `buzon`→`outbox`, `smtp` igual.
 
+## Base de la API (nombres de código)
+`Config`→`Settings` (`firebase_credenciales_json`→`firebase_credentials_json`, `url_publica`→`public_url`, `correo_modo`→`email_mode`, `smtp_puerto`→`smtp_port`, `smtp_usuario`→`smtp_user`, `smtp_contrasena`→`smtp_password`, `correo_remitente`→`email_sender`, `pruebas`→`e2e_testing`, `recordatorios_cada`→`reminders_every`; las variables de entorno aceptan el nombre en inglés y el de hoy, gana el inglés);
+`DatosInvalidos`→`InvalidData`, `Duplicado`→`Duplicate`, `NoAutenticado`→`NotAuthenticated`, `Demorado`→`RateLimited`, `CuentaExistente`→`AccountExists`, `Prohibido`→`Forbidden`, `NoDisponible`→`Unavailable`, `NumeroOcupado`→`NumberTaken`, `HorarioOcupado`→`SlotTaken`, `NoEncontrada`→`NotFound`, `Cambiado`→`ConcurrentChange`, `ReservasAfuera`→`BookingsOutsideHours`, `AgendaCambiada`→`OpeningHoursChanged`, `ConReservasFuturas`→`HasFutureBookings`;
+`motor`→`engine`, `conexion`→`connection`, `Conexion`→`DbConnection`, `en_transaccion`→`in_transaction`, `restriccion_violada`→`violated_constraint`, `VENTANA_DE_REINTENTO`→`RETRY_WINDOW`;
+`CuerpoAcotado`→`BodyLimit`, `Identificador`→`Identifier`, `leer_hora`→`parse_time`, `errores_de_forma`→`shape_errors`, `conflicto`→`conflict`, `credencial_de_servicio`→`service_credential`, `ZONA_CLUB`→`CLUB_TIMEZONE`, `crear_app`→`create_app`;
+`ProveedorFirebase`→`FirebaseProvider` (`crear_cuenta`→`create_account`, `uid_de`→`uid_of`, `borrar_cuenta`→`delete_account`, `uid_del_token`→`uid_from_token`, `contrasena_correcta`→`password_matches`, `cambiar_contrasena`→`change_password`), `identidad`→`identity`.
+
 ## Rutas de la API
 `POST /registro`→`/register`; `/yo`→`/me`, `/yo/contrasena`→`/me/password`; `/recuperacion`→`/password-recovery`,
 `/recuperacion/consulta`→`/password-recovery/check`; `/enlace/recuperar`→`/link/recover`; `/sedes[/{sede_id}]`→`/venues[/{venue_id}]`;

@@ -54,22 +54,6 @@ def _registro(**cambios: str) -> dict[str, str]:
     return {**base, **cambios}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_la_baja_de_un_token_ajeno_no_hace_nada_y_responde_204(
     api: TestClient,
     motor: Engine,
@@ -127,5 +111,3 @@ def test_un_fallo_de_tls_del_correo_no_deja_la_direccion_en_el_log(
 
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text
-
-

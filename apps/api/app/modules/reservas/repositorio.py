@@ -24,9 +24,15 @@ from app.modules.reservas.reglas import (
     Reserva,
     ReservaHistorial,
 )
-from app.shared.db import RETRY_WINDOW, DbConnection, in_transaction
-from app.shared.errors import OpeningHoursChanged, ConcurrentChange, SlotTaken, Unavailable, NotFound
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
+from app.shared.db import RETRY_WINDOW, DbConnection, in_transaction
+from app.shared.errors import (
+    ConcurrentChange,
+    NotFound,
+    OpeningHoursChanged,
+    SlotTaken,
+    Unavailable,
+)
 
 # SQLSTATE de la restricción de exclusión: otra reserva activa pisa el horario.
 EXCLUSION_VIOLATION = "23P01"
