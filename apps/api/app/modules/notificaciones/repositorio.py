@@ -253,8 +253,9 @@ class NotificacionesSql:
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
                     " reserva_inicio, envio) VALUES (:usuario, :clase, :titulo, :cuerpo,"
                     " :reserva, :inicio, 'pendiente')"
-                    " ON CONFLICT (reserva_id, reserva_inicio)"
-                    " WHERE tipo = CAST(:clase AS text) DO NOTHING RETURNING id"
+                    # Sin objetivo: cada clase tiene su índice único parcial, y el de un predicado
+                    # con parámetro no se puede inferir.
+                    " ON CONFLICT DO NOTHING RETURNING id"
                 ),
                 datos,
             ).first()
