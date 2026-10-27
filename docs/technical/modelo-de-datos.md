@@ -34,6 +34,8 @@ erDiagram
         text dni
         text rol
         boolean activo
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     sede {
         uuid id PK
@@ -43,6 +45,8 @@ erDiagram
         smallint[] dias
         boolean activa
         uuid creado_por FK
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     espacio {
         uuid id PK
@@ -50,6 +54,8 @@ erDiagram
         text nombre UK
         integer precio_por_hora
         boolean activo
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     reserva {
         uuid id PK
@@ -60,17 +66,23 @@ erDiagram
         integer total
         text estado
         uuid cancelada_por FK
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     enlace_recuperacion {
         uuid id PK
         uuid usuario_id FK
         text codigo_hash UK
         timestamptz vence_en
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     correo_saliente {
         uuid id PK
         text para
         text asunto
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     dispositivo {
         uuid id PK
@@ -78,6 +90,8 @@ erDiagram
         text token
         boolean permiso
         boolean activo
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     notificacion {
         uuid id PK
@@ -86,10 +100,14 @@ erDiagram
         uuid reemplazada_por FK
         text tipo
         text envio
+        timestamptz creado_en
+        timestamptz modificado_en
     }
     notificacion_reserva {
         uuid notificacion_id PK, FK
         uuid reserva_id PK, FK
+        timestamptz creado_en
+        timestamptz modificado_en
     }
 ```
 
@@ -98,8 +116,9 @@ está `activa` y su `fin` ya pasó; en los demás casos repite `estado`. `correo
 
 ## Entidades
 
-Las nueve tablas tienen `creado_en` y `modificado_en` (timestamptz, no nulos). Los triggers `<tabla>_modificado`, uno por
-tabla, conservan `creado_en` y actualizan `modificado_en` en cada cambio.
+Las nueve tablas tienen `creado_en` y `modificado_en` (timestamptz, no nulos): cuándo se creó la fila y cuándo cambió por
+última vez. Los triggers `<tabla>_modificado`, uno por tabla, conservan `creado_en` y actualizan `modificado_en` en cada
+cambio.
 
 ### usuario
 
@@ -108,6 +127,7 @@ Una persona con cuenta: socio o administrador. La contraseña vive en Firebase; 
 - `firebase_uid` text, único. `correo` text. `nombre`, `apellido` text, no vacíos. `dni` text. `fecha_nacimiento` date.
 - `rol` text: `usuario` (por defecto) o `admin`.
 - `activo` boolean y `dado_de_baja_en` timestamptz. `contrasena_cambiada_en` timestamptz: cuándo cambió la contraseña.
+- `creado_en`: cuándo se registró la cuenta. `modificado_en`: el último cambio de la fila (perfil, rol, baja).
 
 Reglas de la base: el DNI tiene 7 u 8 dígitos. Correo (sin distinguir mayúsculas) y DNI son únicos **sólo entre cuentas
 activas**: una cuenta dada de baja libera ambos. El correo no se puede modificar (trigger `usuario_correo_inmutable`).
@@ -119,6 +139,7 @@ Un local del club con su horario.
 - `nombre`, `calle` text, no vacíos. `altura` integer.
 - `apertura`, `cierre` time. `dias` smallint[]: días de la semana abiertos, 1 a 7.
 - `activa`, `dado_de_baja_en`, `creado_por`, `modificado_por`, `dado_de_baja_por` (los tres últimos apuntan a `usuario`).
+- `creado_en`: cuándo se dio de alta la sede. `modificado_en`: su última edición o su baja.
 
 Reglas: el nombre es único entre sedes activas (sin distinguir mayúsculas); `altura` mayor que 0; apertura y cierre en horas
 completas, con `apertura < cierre` o `cierre = 00:00` (medianoche); `dias` tiene de 1 a 7 valores entre 1 y 7.
@@ -130,6 +151,7 @@ Una cancha o sala reservable dentro de una sede.
 - `sede_id` FK a `sede`. `deporte`, `tipo` text, no vacíos. `numero` integer. `nombre` text.
 - `techada`, `iluminada` boolean. `precio_por_hora` integer.
 - `activo`, `dado_de_baja_en` y los campos de auditoría (`creado_por`, `modificado_por`, `dado_de_baja_por`).
+- `creado_en`: cuándo se dio de alta el espacio. `modificado_en`: su última edición o su baja.
 
 Reglas: `nombre` único en toda la tabla; `(sede_id, deporte, tipo, numero)` único; `numero` y `precio_por_hora` mayores que
 0. La identidad del espacio (`nombre`, `sede_id`, `deporte`, `tipo`, `numero`) no cambia nunca (trigger
@@ -143,6 +165,7 @@ El turno que un socio toma sobre un espacio.
 - `precio_por_hora` integer: copia del precio al reservar. `total` integer.
 - `estado` text: `activa` (por defecto), `cancelada` o `anulada`.
 - `cancelada_en`, `cancelada_por` (FK a `usuario`), `motivo` text.
+- `creado_en`: cuándo se hizo la reserva. `modificado_en`: su último cambio (modificación, cancelación o anulación).
 
 Reglas de la base:
 
@@ -158,7 +181,8 @@ Reglas de la base:
 Un pedido de recuperar la contraseña.
 
 - `usuario_id` FK. `codigo_hash` text, único: se guarda sólo el hash, nunca el código.
-- `creado_en` (por defecto `clock_timestamp()`), `vence_en`, `usado_en`, `invalidado_en`.
+- `creado_en` (por defecto `clock_timestamp()`): cuándo se pidió. `vence_en`, `usado_en`, `invalidado_en`.
+- `modificado_en`: cuándo se usó o se invalidó por última vez.
 
 Regla: `vence_en > creado_en`.
 
@@ -183,7 +207,8 @@ Un aviso que ve la persona en el centro de avisos y que, si puede, también lleg
 
 - `usuario_id` FK. `tipo` text: `recordatorio`, `cancelacion_forzosa` o `cancelacion_usuario`.
 - `titulo`, `cuerpo` text, no vacíos. `reserva_id` FK a `reserva`; `reserva_inicio` timestamptz (el horario al que refiere).
-- `envio` text: estado del envío (ver más abajo). `creado_en`, `enviada_en`, `leida_en`.
+- `envio` text: estado del envío (ver más abajo). `creado_en`: cuándo se generó el aviso. `enviada_en`, `leida_en`.
+- `modificado_en`: el último cambio del aviso (envío, lectura o reemplazo).
 - `enviando_desde` timestamptz: cuándo se tomó el aviso para enviarlo.
 - `reemplazada_por` FK a `notificacion`; `cantidad` integer mayor que 0: cuántas reservas cubre un aviso agrupado.
 

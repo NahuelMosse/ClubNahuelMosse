@@ -69,6 +69,11 @@ def _tablas() -> dict[str, set[str]]:
         ):
             tablas[tabla].discard(vieja)
             tablas[tabla].add(nueva)
+    # La 0010 agrega la auditoría con un bucle sobre las tablas (`f"ALTER TABLE {tabla} …"`), que
+    # este lector de texto no resuelve; que las nueve la tienen lo comprueba contra la base
+    # tests/integracion/test_uuid_y_auditoria.py.
+    for columnas in tablas.values():
+        columnas |= {"creado_en", "modificado_en"}
     return tablas
 
 
