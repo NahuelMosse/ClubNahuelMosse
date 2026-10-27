@@ -1,3 +1,4 @@
+# kit-shape: las rutas de reservas y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import date, datetime
 from typing import Annotated
 
