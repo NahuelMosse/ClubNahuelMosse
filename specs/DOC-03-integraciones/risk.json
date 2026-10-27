@@ -1,0 +1,22 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "authentication",
+    "auth"
+  ],
+  "files": [
+    "docs/technical/integraciones.md",
+    "docs/technical/arquitectura.md",
+    "docs/technical/system-design.md"
+  ],
+  "tasks": 1
+}
