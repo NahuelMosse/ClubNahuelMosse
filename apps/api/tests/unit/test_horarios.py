@@ -119,9 +119,12 @@ def test_un_espacio_que_no_esta_activo_no_se_consulta() -> None:
 def test_una_fecha_fuera_de_la_semana_se_rechaza() -> None:
     with pytest.raises(InvalidData):
         available_slots(
-            _Horarios(OpeningHours(time(8), time(23), TODOS)), UUID(int=1), JUEVES + timedelta(8), 1,
+            _Horarios(OpeningHours(time(8), time(23), TODOS)),
+            UUID(int=1),
+            JUEVES + timedelta(8),
+            1,
             _a(JUEVES, 9),
-        )  # fmt: skip
+        )
 
 
 @pytest.mark.parametrize(

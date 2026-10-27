@@ -1,10 +1,10 @@
 import pytest
 
-from app.modules.password_recovery import email as correo
-from app.modules.password_recovery.rules import Message as Mensaje
+from app.shared import email as correo
 from app.shared.config import config
+from app.shared.message import Message
 
-MENSAJE = Mensaje(recipient="lucia@correo.com", subject="Asunto", body="Cuerpo")
+MENSAJE = Message(recipient="lucia@correo.com", subject="Asunto", body="Cuerpo")
 
 
 def test_sin_servidor_configurado_el_correo_no_sale_y_queda_en_el_log(
