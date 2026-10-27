@@ -111,7 +111,7 @@ datos push `tipo`→`kind`, `reserva_id`→`booking_id`; enlace `clubnahuelmosse
 `CATALOGO`→`CATALOG`; `Agenda`→`OpeningHours`, `Franja`→`Slot`, `Grilla`→`SlotGrid`, `Horarios`→`Availability`;
 `DatosEspacio`→`SpaceData`, `Espacios`→`Spaces`, `EspaciosSql`→`SpacesSql`, `HorariosSql`→`AvailabilitySql`, `Disponibilidad`→`SlotSearch`,
 `ListaDeEspacios`→`SpaceList`, `EspacioVista`→`SpaceView`, `TipoVista`→`KindView`, `DeporteVista`→`SportView`, la vista del catálogo `CatalogView` (en Python `Catalogo` pasa a `CatalogView`, no a `Catalog`),
-`Sugerencia`→`Suggestion`, `Errores`→`ErrorBody`, `PedidoDeEspacio`→`SpaceRequest`, `PedidoDeCambioDeEspacio`→`SpaceChangeRequest`;
+`Sugerencia`→`Suggestion`, `Errores` (espacios y horarios) → `ErrorBody`, `PedidoDeEspacio`→`SpaceRequest`, `PedidoDeCambioDeEspacio`→`SpaceChangeRequest`;
 `catalogo`→`catalog`, `nombre_sugerido`→`suggested_name`, `espacios_activos`→`active_spaces`, `tipo_del_catalogo`→`catalog_kind`,
 `parte_de_sede`→`venue_part`, `parte_de_calle`→`street_part`, `espacio_de_fila`→`space_of_row`, `agenda_de_fila`→`opening_hours_of_row`,
 `repositorio_espacios`→`spaces_repository`, `repositorio_horarios`→`availability_repository`, `vista_de_espacio`→`space_view`,

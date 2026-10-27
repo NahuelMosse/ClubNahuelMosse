@@ -2,12 +2,12 @@
 
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
 from app.shared.config import Settings, config
+from app.shared.message import Message
 
 RAIZ = Path(__file__).resolve().parents[4]
 VARIABLES_DE_ENTORNO = [
@@ -79,16 +79,16 @@ def test_con_email_mode_outbox_o_correo_modo_buzon_el_correo_de_recuperacion_va_
     monkeypatch: pytest.MonkeyPatch, variable: str, valor: str
 ) -> None:
     """con EMAIL_MODE=outbox o CORREO_MODO=buzon el correo de recuperación va al buzón y no a SMTP @assumption:ENG-01-ASM-01"""
-    from app.modules.password_recovery import email as correo
+    from app.shared import email as correo
 
     monkeypatch.setenv(variable, valor)
     modo = Settings(_env_file=None).email_mode
     llamadas: list[str] = []
     monkeypatch.setattr(config, "email_mode", modo)
-    monkeypatch.setattr(correo, "_to_outbox", lambda _m: llamadas.append("buzon"))
-    monkeypatch.setattr(correo, "_by_smtp", lambda _m: llamadas.append("smtp"))
+    monkeypatch.setitem(correo._SENDERS, "outbox", lambda _m: llamadas.append("buzon"))
+    monkeypatch.setitem(correo._SENDERS, "smtp", lambda _m: llamadas.append("smtp"))
 
-    correo.send(SimpleNamespace(recipient="a@b.test", subject="x", body="y"))  # type: ignore[arg-type]
+    correo.send(Message(recipient="a@b.test", subject="x", body="y"))
 
     assert modo == "outbox"
     assert llamadas == ["buzon"]

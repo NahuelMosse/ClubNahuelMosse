@@ -54,7 +54,8 @@ def _nombres_exentos(arbol: ast.AST) -> set[str]:
         if isinstance(nodo, ast.FunctionDef) and any(
             isinstance(d, ast.Call)
             and isinstance(d.func, ast.Attribute)
-            and d.func.value.id == "router"  # type: ignore[attr-defined]
+            and isinstance(d.func.value, ast.Name)
+            and d.func.value.id == "router"
             for d in nodo.decorator_list
         ):
             exentos |= {a.arg for a in nodo.args.args}

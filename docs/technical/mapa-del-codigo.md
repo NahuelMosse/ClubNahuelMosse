@@ -17,7 +17,7 @@ nombre, no por línea: buscalos con el buscador del editor.
 | La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
 | Los recordatorios de una hora antes | `apps/api/app/modules/notifications/sweep.py` (el reloj) → `use_cases.py` (`send_reminders`, `deliver`) → `push.py` (FCM) |
 | Los avisos de cancelación | se encolan en la misma transacción que cancela (`BookingsSql.cancel` y `BookingsSql.void`) y salen con `dispatch_pending` |
-| El correo de recuperación de contraseña | `apps/api/app/modules/password_recovery/use_cases.py` (código, vigencia, tope por hora) y `email.py` (SMTP o buzón) |
+| El correo de recuperación de contraseña | `apps/api/app/modules/password_recovery/use_cases.py` (código, vigencia, tope por hora); el envío (SMTP, Brevo o buzón) está en `shared/email.py` |
 | Las variables de entorno de la API | `apps/api/app/shared/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
 | El motor de la base y la conexión por pedido | `apps/api/app/shared/db.py` |
 | El esquema de la base | `apps/api/migraciones/versions/0001` a `0009`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
@@ -91,18 +91,18 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 
 | Funcionalidad | Archivos | App |
 |---|---|---|
-| `bookings` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py` | `reservas/` |
+| `bookings` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `email.py` | `reservas/` |
 | `availability` | `routes.py`, `use_cases.py`, `slots.py`, `rules.py`, `repository.py` | `reservas/` |
 | `venues` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sedes/`, `admin/` |
 | `spaces` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `espacios/`, `admin/` |
 | `users` | `registration_routes.py`, `account_routes.py`, `registration.py`, `profile.py`, `password.py`, `deactivation.py`, `admins.py`, `seed_admin.py`, `rules.py`, `repository.py` | `usuarios/` |
 | `session` | `use_cases.py`, `profile.py`, `current_user.py`, `repository.py` | `sesion/` |
-| `password_recovery` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py`, `email.py` | `sesion/` |
+| `password_recovery` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sesion/` |
 | `notifications` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `sweep.py`, `push.py` | `notifications/` |
 
 Compartido en `app/shared/`: `config.py`, `db.py` (`engine`, `connection()`, `in_transaction`), `errors.py` (todos los
 errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `body_limit.py`, `club_timezone.py` (`CLUB_TIMEZONE`),
-`identity.py` (`FirebaseProvider`) y `firebase_credential.py`.
+`identity.py` (`FirebaseProvider`), `firebase_credential.py`, `email.py`, `message.py` y `email_template.py`.
 
 ### Archivo por archivo
 
@@ -128,6 +128,9 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 | `club_timezone.py` | `CLUB_TIMEZONE`, la única definición de `America/Argentina/Buenos_Aires` |
 | `identity.py` | `FirebaseProvider`: verificar tokens, comprobar contraseñas, crear y borrar cuentas |
 | `firebase_credential.py` | `service_credential`: la cuenta de servicio desde el JSON o el archivo |
+| `email.py` | `send`: SMTP con STARTTLS verificado, Brevo, o el buzón de desarrollo |
+| `message.py` | `Message`: destinatario, asunto y cuerpo |
+| `email_template.py` | `html_email`: la plantilla HTML de los correos |
 
 **`modules/`** (cada archivo `rutas*.py` lleva las rutas HTTP; `repositorio.py` el SQL y su proveedor `repositorio_*`)
 
@@ -140,7 +143,7 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 | `availability` | `OpeningHours`, `slot_grid`, `validate_booking`, `available_slots`, `available_spaces` (`slots.py`), `AvailabilitySql` (lecturas) | — |
 | `bookings` | `book`, `my_bookings`, `cancel_booking`, `modify_booking`, `global_history`, `admin_detail`, `void_booking`, `BookingsSql` (historial paginado por cursor) | `reserva` |
 | `notifications` | `LEAD_TIME` (1 h), `send_reminders`, `dispatch_pending`, dispositivos y centro de avisos, `NotificationsSql`, `push_channel` (`push.py`: `FcmChannel`, `NullChannel`), `sweep.py` (en proceso con `sweep_every` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
-| `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql`, `email.py` (`send`: SMTP con STARTTLS verificado, o el buzón de desarrollo) | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
+| `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql` | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
 
 ### Rutas de la API
 

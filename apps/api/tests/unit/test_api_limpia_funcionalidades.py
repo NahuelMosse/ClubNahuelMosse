@@ -38,7 +38,7 @@ def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api()
         r"|HTTP_403_FORBIDDEN\)|HTTP_404_NOT_FOUND\)"
         r'|HTTP_422_UNPROCESSABLE_CONTENT,\s*content=\{"errores": e\.errors\}'
     )
-    rutas = [a for a in _fuentes(MODULOS) if a.name.startswith("rutas")]
+    rutas = [a for a in _fuentes(MODULOS) if a.name.startswith("routes")]
     assert rutas
     encontrados = [
         f"{nombre}: {m.group(0)}"

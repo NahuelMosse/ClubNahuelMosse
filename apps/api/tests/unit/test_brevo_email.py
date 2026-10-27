@@ -7,9 +7,9 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from app.modules.password_recovery.rules import Message
 from app.shared import email
 from app.shared.config import Settings, config
+from app.shared.message import Message
 
 MESSAGE = Message(
     recipient="lucia+club@correo.com", subject="Creá una contraseña nueva", body="Hola"
@@ -62,11 +62,13 @@ def test_con_modo_brevo_el_correo_sale_por_la_api_con_clave_remitente_y_texto(
         "textContent": "Hola",
     }
 
+NO_HEADERS: Any = None
+
 
 @pytest.mark.parametrize(
     "failure",
     [
-        urllib.error.HTTPError("https://x", 401, "no", None, None),  # type: ignore[arg-type]
+        urllib.error.HTTPError("https://x", 401, "no", NO_HEADERS, None),
         TimeoutError("agotado"),
     ],
 )
