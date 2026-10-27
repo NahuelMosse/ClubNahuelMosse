@@ -4,8 +4,10 @@ La base es PostgreSQL (con la extensión `btree_gist`). Tiene nueve tablas y una
 estado «completada» a las reservas. Las cuentas, sedes, espacios y reservas no se borran: sus bajas son lógicas y un
 trigger impide cualquier `DELETE` en ellas. Las reglas del negocio que pueden romper los datos las hace cumplir la propia base, no sólo la API.
 
-Todas las claves primarias son `id bigint` autogenerado. Las fechas son `timestamptz`; la zona del club es
-`America/Argentina/Buenos_Aires`.
+Todas las claves primarias son `id uuid` con valor por defecto `uuid_v7()`, una función de la base. Un UUIDv7 lleva en sus
+primeros bits la hora de creación en milisegundos, así que los identificadores nuevos salen ordenados por tiempo. La
+excepción es `notificacion_reserva`, que conserva su clave primaria compuesta. Las referencias entre tablas (17 en total)
+son `uuid`. Las fechas son `timestamptz`; la zona del club es `America/Argentina/Buenos_Aires`.
 
 ## Diagrama
 
@@ -26,7 +28,7 @@ erDiagram
     reserva |o--o| notificacion_reserva : "informada en"
 
     usuario {
-        bigint id PK
+        uuid id PK
         text firebase_uid UK
         text correo
         text dni
@@ -34,60 +36,60 @@ erDiagram
         boolean activo
     }
     sede {
-        bigint id PK
+        uuid id PK
         text nombre
         time apertura
         time cierre
         smallint[] dias
         boolean activa
-        bigint creado_por FK
+        uuid creado_por FK
     }
     espacio {
-        bigint id PK
-        bigint sede_id FK
+        uuid id PK
+        uuid sede_id FK
         text nombre UK
         integer precio_por_hora
         boolean activo
     }
     reserva {
-        bigint id PK
-        bigint usuario_id FK
-        bigint espacio_id FK
+        uuid id PK
+        uuid usuario_id FK
+        uuid espacio_id FK
         timestamptz inicio
         timestamptz fin
         integer total
         text estado
-        bigint cancelada_por FK
+        uuid cancelada_por FK
     }
     enlace_recuperacion {
-        bigint id PK
-        bigint usuario_id FK
+        uuid id PK
+        uuid usuario_id FK
         text codigo_hash UK
         timestamptz vence_en
     }
     correo_saliente {
-        bigint id PK
+        uuid id PK
         text para
         text asunto
     }
     dispositivo {
-        bigint id PK
-        bigint usuario_id FK
+        uuid id PK
+        uuid usuario_id FK
         text token
         boolean permiso
         boolean activo
     }
     notificacion {
-        bigint id PK
-        bigint usuario_id FK
-        bigint reserva_id FK
-        bigint reemplazada_por FK
+        uuid id PK
+        uuid usuario_id FK
+        uuid reserva_id FK
+        uuid reemplazada_por FK
         text tipo
         text envio
     }
     notificacion_reserva {
-        bigint notificacion_id PK, FK
-        bigint reserva_id PK, FK
+        uuid notificacion_id PK, FK
+        uuid reserva_id PK, FK
     }
 ```
 
@@ -96,8 +98,8 @@ está `activa` y su `fin` ya pasó; en los demás casos repite `estado`. `correo
 
 ## Entidades
 
-Los triggers `<tabla>_modificado` (en `usuario`, `sede`, `espacio` y `reserva`) conservan `creado_en` y actualizan
-`modificado_en` en cada cambio.
+Las nueve tablas tienen `creado_en` y `modificado_en` (timestamptz, no nulos). Los triggers `<tabla>_modificado`, uno por
+tabla, conservan `creado_en` y actualizan `modificado_en` en cada cambio.
 
 ### usuario
 
@@ -156,14 +158,14 @@ Reglas de la base:
 Un pedido de recuperar la contraseña.
 
 - `usuario_id` FK. `codigo_hash` text, único: se guarda sólo el hash, nunca el código.
-- `emitido_en` (por defecto `clock_timestamp()`), `vence_en`, `usado_en`, `invalidado_en`.
+- `creado_en` (por defecto `clock_timestamp()`), `vence_en`, `usado_en`, `invalidado_en`.
 
-Regla: `vence_en > emitido_en`.
+Regla: `vence_en > creado_en`.
 
 ### correo_saliente
 
 Buzón de correos para desarrollo y pruebas (`CORREO_MODO=buzon`); en producción el correo sale por SMTP y la tabla queda
-vacía. Columnas: `para`, `asunto`, `cuerpo` (text, no nulos) y `creado_en`. Sin relaciones.
+vacía. Columnas: `para`, `asunto`, `cuerpo` (text, no nulos), `creado_en` y `modificado_en`. Sin relaciones.
 
 ### dispositivo
 
@@ -171,7 +173,7 @@ Un teléfono con la app instalada, para enviarle avisos push.
 
 - `usuario_id` FK. `token` text (token de FCM), no vacío. `plataforma` text: `android` o `ios`.
 - `permiso` boolean: lo que el sistema operativo contestó sobre las notificaciones.
-- `activo`, `registrado_en`, `actualizado_en`, `dado_de_baja_en`.
+- `activo`, `creado_en`, `modificado_en`, `dado_de_baja_en`.
 
 Regla: un `token` activo pertenece a una sola cuenta; si otra inicia sesión en ese teléfono, el registro pasa a ella.
 
@@ -181,7 +183,7 @@ Un aviso que ve la persona en el centro de avisos y que, si puede, también lleg
 
 - `usuario_id` FK. `tipo` text: `recordatorio`, `cancelacion_forzosa` o `cancelacion_usuario`.
 - `titulo`, `cuerpo` text, no vacíos. `reserva_id` FK a `reserva`; `reserva_inicio` timestamptz (el horario al que refiere).
-- `envio` text: estado del envío (ver más abajo). `creada_en`, `enviada_en`, `leida_en`.
+- `envio` text: estado del envío (ver más abajo). `creado_en`, `enviada_en`, `leida_en`.
 - `enviando_desde` timestamptz: cuándo se tomó el aviso para enviarlo.
 - `reemplazada_por` FK a `notificacion`; `cantidad` integer mayor que 0: cuántas reservas cubre un aviso agrupado.
 
@@ -192,8 +194,9 @@ conserva cómo salió.
 
 ### notificacion_reserva
 
-Une un aviso agrupado de anulación con las reservas que informa. Columnas `notificacion_id` y `reserva_id`, ambas FK, y
-clave primaria compuesta por las dos; `reserva_id` es único: una reserva tiene a lo sumo un aviso.
+Une un aviso agrupado de anulación con las reservas que informa. Columnas `notificacion_id` y `reserva_id`, ambas FK `uuid`,
+más `creado_en` y `modificado_en`. No tiene `id` propio: su clave primaria es compuesta por las dos FK; `reserva_id` es
+único: una reserva tiene a lo sumo un aviso.
 
 ## Estados
 
@@ -235,7 +238,8 @@ cuya reserva se canceló, se movió o ya empezó pasa a `fallida` sin enviarse.
 - **Baja = bandera + fecha.** `activo` (o `activa`) y `dado_de_baja_en` van siempre juntos: un `CHECK` obliga a que la
   bandera sea verdadera si y sólo si `dado_de_baja_en` es nulo. Lo mismo vale para `dispositivo`.
 - **Quién hizo qué.** `sede` y `espacio` guardan `creado_por`, `modificado_por` y `dado_de_baja_por` (FK a `usuario`);
-  `reserva` guarda `cancelada_por`. Cuándo: `creado_en`, `modificado_en` (mantenido por trigger) y `dado_de_baja_en`.
+  `reserva` guarda `cancelada_por`. Cuándo: `creado_en` y `modificado_en` en las nueve tablas (el segundo, mantenido por el
+  trigger `<tabla>_modificado`) y `dado_de_baja_en` donde hay baja.
 - **Las bajas liberan.** Como los únicos de correo, DNI y nombre de sede valen sólo entre activos, un registro dado de baja
   deja libre su correo, DNI o nombre.
 - Los enlaces de recuperación, correos y avisos no se borran ni tienen vencimiento automático.
@@ -259,7 +263,7 @@ del resto de las consultas no se midió.
 
 ## Migraciones, retención y respaldo
 
-- **Migraciones:** Alembic (`apps/api/alembic.ini`, `migraciones/`), nueve revisiones lineales, 0001 a 0009. Corren dentro del
+- **Migraciones:** Alembic (`apps/api/alembic.ini`, `migraciones/`), diez revisiones lineales, 0001 a 0010. Corren dentro del
   build de Render (`render.yaml`, `buildCommand`), cada una en su transacción. `tests/escenarios/test_datos*.py` vigila la
   ida y vuelta.
 - **Retención:** no hay política. Ningún `DELETE` pasa en las tablas principales y los avisos, enlaces y correos no vencen.
