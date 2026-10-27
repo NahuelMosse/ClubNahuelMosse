@@ -11,15 +11,15 @@ Criterios: `reserva`→`booking` (no reservation); `sede`→`venue`; `espacio`�
 | Español | Inglés |
 |---|---|
 | `apps/api/migraciones/` | `migrations/` (0001–0010 se mueven sin tocar contenido) |
-| `modules/{espacios,horarios,notificaciones,recuperacion}` | `{spaces,availability,notifications,password_recovery}` |
-| `modules/{reservas,sedes,sesion,usuarios}` | `{bookings,venues,session,users}` |
+| `app/modules/` | `espacios`→`spaces`, `horarios`→`availability`, `notificaciones`→`notifications`, `recuperacion`→`password_recovery` |
+| `app/modules/` | `reservas`→`bookings`, `sedes`→`venues`, `sesion`→`session`, `usuarios`→`users` |
 | `casos_de_uso.py` / `reglas.py` / `repositorio.py` / `rutas.py` | `use_cases.py` / `rules.py` / `repository.py` / `routes.py` |
 | `almacen.py` / `barrido.py` / `correo.py` / `disponibilidad.py` | `store.py` / `sweep.py` / `email.py` / `slots.py` |
 | `perfil.py` / `usuario_actual.py` / `administradores.py` / `baja.py` | `profile.py` / `current_user.py` / `admins.py` / `deactivation.py` |
 | `contrasena.py` / `registro.py` / `rutas_cuenta.py` / `rutas_registro.py` / `sembrar_admin.py` | `password.py` / `registration.py` / `account_routes.py` / `registration_routes.py` / `seed_admin.py` |
 | `salud.py` / `pruebas.py` | `health.py` / `e2e_support.py` |
 | `shared/{credencial_firebase,cuerpo,entradas,errores,errores_http,identidad,respuestas,zona}.py` | `{firebase_credential,body_limit,input_validation,errors,http_errors,identity,responses,club_timezone}.py` |
-| `lib/{comun,tema,inicio,espacios,sedes,reservas,sesion,usuarios,notificaciones}` | `lib/{common,theme,home,spaces,venues,bookings,session,users,notifications}` (`admin`, `api` igual) |
+| `apps/mobile/lib/` | `comun`→`common`, `tema`→`theme`, `inicio`→`home`, `espacios`→`spaces`, `sedes`→`venues`, `reservas`→`bookings`, `sesion`→`session`, `usuarios`→`users`, `notificaciones`→`notifications` (`admin`, `api` igual) |
 | `lib/rutas.dart` / `lib/api/rutas.dart` / `lib/redireccion.dart` | `router.dart` / `api/api_routes.dart` / `redirect.dart` |
 | `pantalla_X` / `tarjeta_X` / `dialogo_X` / `cabecera_X` | `X_screen` / `X_card` / `X_dialog` / `X_header` |
 
@@ -89,7 +89,7 @@ Query: `sede_id`→`venue_id`, `deporte`→`sport`, `tipo`→`kind`, `fecha`→`
 `estado`→`status`, `motivo`→`reason`, `anulable`→`voidable`; `total`, `cancelable` igual; `usuario_id`→`user_id`, `usuario`→`user`,
 `creado_en`→`created_at`, `cancelada_en`→`canceled_at`, `cancelada_por_nombre`→`canceled_by_name`; `espacio_de_baja`→`space_deactivated`,
 `aviso_envio`→`notice_delivery`, `aviso_en`→`notice_at`; `reservas`→`bookings`, `pagina`→`page`, `por_pagina`→`per_page`,
-`contadores{todas,activas,completadas,anuladas}`→`counters{all,active,completed,voided}`; `espacios`→`spaces`, `sedes`→`venues`,
+`contadores`→`counters` (`todas`→`all`, `activas`→`active`, `completadas`→`completed`, `anuladas`→`voided`); `espacios`→`spaces`, `sedes`→`venues`,
 `reservas_afuera`→`bookings_outside`; `notificaciones`→`notifications`, `no_leidas`→`unread`, `titulo`→`title`, `cuerpo`→`body`,
 `creada_en`→`created_at`, `leida`→`read`; `plataforma`→`platform`, `permiso`→`permission_granted`, `mensaje`→`message`, `campos`→`fields`;
 datos push `tipo`→`kind`, `reserva_id`→`booking_id`; enlace `clubnahuelmosse://app/recuperar#codigo=`→`app/recover#code=`.
