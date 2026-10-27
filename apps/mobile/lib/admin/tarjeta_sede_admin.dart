@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../sedes/sede.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'encabezado_de_sede.dart';
 import 'listado_admin.dart';
 
 /// `Card-Sede-Admin`: nombre, dirección, cantidad de canchas y días con horario, con
@@ -42,50 +43,7 @@ class TarjetaSedeAdmin extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                width: Medidas.tactil,
-                height: Medidas.tactil,
-                decoration: BoxDecoration(
-                  color: p.accentMuted,
-                  borderRadius: BorderRadius.circular(Medidas.radioMd),
-                ),
-                child: Icon(Icons.place_outlined, size: 20, color: p.accentInk),
-              ),
-              const SizedBox(width: Medidas.s12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      sede.nombre,
-                      style: Textos.titulo.copyWith(color: p.textPrimary),
-                    ),
-                    const SizedBox(height: Medidas.s4),
-                    Text(
-                      sede.direccion,
-                      style: Textos.leyenda.copyWith(color: p.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: Medidas.s12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${sede.canchas}',
-                    style: Textos.h2.copyWith(color: p.accentInk),
-                  ),
-                  Text(
-                    sede.canchas == 1 ? 'CANCHA' : 'CANCHAS',
-                    style: Textos.sobretitulo.copyWith(color: p.textMuted),
-                  ),
-                ],
-              ),
-            ],
-          ),
+          EncabezadoDeSede(sede: sede),
           const SizedBox(height: Medidas.s12),
           Row(
             children: [

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'entrada_de_campo.dart';
 import 'movimiento.dart';
 
 /// El componente `Input` del prototipo: etiqueta arriba si la hay, campo pill y error abajo.
@@ -47,11 +48,6 @@ class CampoTexto extends StatelessWidget {
     final ayuda = placeholder;
     final titulo = etiqueta;
     final conError = mensaje != null;
-    OutlineInputBorder borde(Color color, double ancho) => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(Medidas.radioPill),
-      borderSide: BorderSide(color: color, width: ancho),
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -76,49 +72,19 @@ class CampoTexto extends StatelessWidget {
               height: Medidas.altoControl,
               child: Material(
                 type: MaterialType.transparency,
-                child: TextField(
-                  controller: controlador,
-                  enabled: habilitado,
-                  focusNode: foco,
-                  obscureText: oculto,
-                  keyboardType: teclado,
-                  inputFormatters: formateadores,
-                  textInputAction: accion,
-                  onSubmitted: alEnviar,
-                  autofillHints: autocompletar,
-                  style: Textos.cuerpo.copyWith(color: p.textPrimary),
-                  decoration: InputDecoration(
-                    // El placeholder se anuncia como ayuda del campo, no como su etiqueta.
-                    hint: ayuda == null
-                        ? null
-                        : ExcludeSemantics(
-                            child: Text(
-                              ayuda,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Textos.cuerpo.copyWith(color: p.textMuted),
-                            ),
-                          ),
-                    filled: true,
-                    fillColor: p.bgSurface,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: Medidas.s20,
-                    ),
-                    suffixIcon: accionFinal == null
-                        ? null
-                        : Padding(
-                            padding: const EdgeInsets.only(right: Medidas.s8),
-                            child: accionFinal,
-                          ),
-                    enabledBorder: conError
-                        ? borde(p.borderError, 1.5)
-                        : borde(p.borderControl, 1),
-                    focusedBorder: conError
-                        ? borde(p.borderError, 1.5)
-                        : borde(p.borderFocus, 1.5),
-                    disabledBorder: borde(p.borderControl, 1),
-                    border: borde(p.borderControl, 1),
-                  ),
+                child: EntradaDeCampo(
+                  controlador: controlador,
+                  habilitado: habilitado,
+                  foco: foco,
+                  oculto: oculto,
+                  teclado: teclado,
+                  formateadores: formateadores,
+                  accion: accion,
+                  alEnviar: alEnviar,
+                  autocompletar: autocompletar,
+                  ayuda: ayuda,
+                  accionFinal: accionFinal,
+                  conError: conError,
                 ),
               ),
             ),

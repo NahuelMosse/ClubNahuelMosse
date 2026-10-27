@@ -10,12 +10,11 @@ import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'barra_de_pestanas_reservas.dart';
 import 'cancelacion.dart';
 import 'confirmar_cancelacion.dart';
+import 'encabezado_de_mis_reservas.dart';
 import 'reservas.dart';
 import 'tarjeta_reserva.dart';
 
@@ -204,20 +203,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Semantics(
-                          header: true,
-                          child: Text(
-                            'Mis reservas',
-                            style: Textos.h1.copyWith(color: p.textPrimary),
-                          ),
-                        ),
-                      ),
-                      BotonCuenta(sesion: widget.sesion),
-                    ],
-                  ),
+                  EncabezadoDeMisReservas(sesion: widget.sesion),
                   const SizedBox(height: Medidas.s16),
                   BarraDePestanasReservas(
                     historial: _historial,

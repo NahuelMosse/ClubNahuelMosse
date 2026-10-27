@@ -6,7 +6,6 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
-import '../comun/chip_elegible.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/fechas.dart';
 import '../comun/formato_fecha.dart';
@@ -22,7 +21,9 @@ import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'barra_de_busqueda.dart';
+import 'filtro_de_techada.dart';
 import 'horarios.dart';
+import 'rango_horario_de_busqueda.dart';
 import 'reglas_busqueda.dart';
 import 'tarjeta_error_de_busqueda.dart';
 
@@ -492,33 +493,13 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
         ),
       ),
       const SizedBox(height: Medidas.s12),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: CampoSelector(
-              etiqueta: 'DESDE',
-              etiquetaAccesible: 'Desde',
-              valor: hhmm(_desde),
-              placeholder: '',
-              icono: Icons.expand_more_rounded,
-              alTocar: _consultando ? null : () => _elegirHora(inicio: true),
-              error: errores['desde'],
-            ),
-          ),
-          const SizedBox(width: Medidas.s12),
-          Expanded(
-            child: CampoSelector(
-              etiqueta: 'HASTA',
-              etiquetaAccesible: 'Hasta',
-              valor: hhmm(_hasta),
-              placeholder: '',
-              icono: Icons.expand_more_rounded,
-              alTocar: _consultando ? null : () => _elegirHora(inicio: false),
-              error: errores['hasta'],
-            ),
-          ),
-        ],
+      RangoHorarioDeBusqueda(
+        desde: _desde,
+        hasta: _hasta,
+        errorDesde: errores['desde'],
+        errorHasta: errores['hasta'],
+        alElegirDesde: _consultando ? null : () => _elegirHora(inicio: true),
+        alElegirHasta: _consultando ? null : () => _elegirHora(inicio: false),
       ),
     ];
   }
@@ -545,35 +526,11 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
     return [
       const SizedBox(height: Medidas.s24),
       if (resultado.isNotEmpty) ...[
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          child: Row(
-            children: [
-              for (final (valor, cuantas) in [
-                (null, resultado.length),
-                (false, aireLibre),
-                (true, resultado.length - aireLibre),
-              ]) ...[
-                ChipElegible(
-                  texto:
-                      '${switch (valor) {
-                        null => 'Todas',
-                        false => 'Al aire libre',
-                        true => 'Techada',
-                      }} ($cuantas)',
-                  elegido: techada == valor,
-                  alTocar: cuantas == 0
-                      ? null
-                      : () => setState(() => _techada = valor),
-                  alto: Medidas.s48,
-                  conBorde: true,
-                  tintaSinTocar: p.textMuted,
-                ),
-                const SizedBox(width: Medidas.s8),
-              ],
-            ],
-          ),
+        FiltroDeTechada(
+          total: resultado.length,
+          aireLibre: aireLibre,
+          elegida: techada,
+          alElegir: (valor) => setState(() => _techada = valor),
         ),
         const SizedBox(height: Medidas.s12),
       ],

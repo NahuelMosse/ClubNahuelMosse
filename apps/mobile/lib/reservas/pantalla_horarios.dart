@@ -16,7 +16,6 @@ import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'barra_de_accion_horarios.dart';
 import 'eleccion.dart';
@@ -24,15 +23,16 @@ import 'franja_de_fechas.dart';
 import 'grilla_de_a_pares.dart';
 import 'horarios.dart';
 import 'nota_de_horarios.dart';
+import 'nota_de_modificacion.dart';
 import 'pantalla_confirmar_cambio.dart';
 import 'pantalla_confirmar_reserva.dart';
 import 'portada_de_horarios.dart';
 import 'reglas_busqueda.dart';
 import 'reservas.dart';
 import 'resumen_de_reserva.dart';
+import 'seccion_de_duracion.dart';
 import 'seccion_de_horarios.dart';
-import 'selector_de_duracion.dart';
-import 'tarjeta_cancha_de_horarios.dart';
+import 'seleccion_de_cancha.dart';
 import 'tarjeta_franja.dart';
 
 /// «Horarios disponibles» de una cancha: elige cancha de ese tipo, fecha y duración, y la
@@ -365,21 +365,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  PortadaDeHorarios(
-                    sede: datos.$1,
-                    tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
-                    deporte: cancha.deporte,
-                    volverA: modificando != null
-                        ? widget.volverA
-                        : widget.fecha == null
-                        ? 'Sedes'
-                        : 'Buscar cancha',
-                    alVolver: modificando != null
-                        ? _salir
-                        : () => context.canPop()
-                              ? context.pop()
-                              : context.go('/sedes/${widget.sedeId}'),
-                  ),
+                  _portada(datos, cancha),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       Medidas.s24,
@@ -389,92 +375,91 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (modificando != null) ...[
-                          NotaDeHorarios(
-                            texto:
-                                'Estás modificando tu reserva del '
-                                '${diaCorto(modificando.inicio)}, '
-                                '${rangoDeHoras(modificando.inicio, modificando.fin)}. '
-                                'Mantenés la misma duración de ${duracion(_horas)} '
-                                'y el horario anterior se libera al guardar.',
-                          ),
-                          const SizedBox(height: Medidas.s24),
-                        ],
-                        SeccionDeHorarios(
-                          titulo: 'SELECCIONÁ CANCHA',
-                          child: GrillaDeAPares(
-                            hijos: [
-                              for (final c in datos.$2)
-                                TarjetaCanchaDeHorarios(
-                                  cancha: c,
-                                  elegida: c.id == _elegida,
-                                  alTocar: () => _elegirCancha(c.id),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (_hoy case final hoy?) ...[
-                          SeccionDeHorarios(
-                            titulo: 'FECHA',
-                            child: FranjaDeFechas(
-                              hoy: hoy,
-                              elegida: _fecha,
-                              alElegir: _elegirFecha,
-                            ),
-                          ),
-                          if (modificando == null)
-                            SeccionDeHorarios(
-                              titulo: 'DURACIÓN',
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  SelectorDeDuracion(
-                                    horas: _horas,
-                                    alCambiar: _cambiarHoras,
-                                  ),
-                                  const SizedBox(height: Medidas.s8),
-                                  Text(
-                                    'Horas completas, de $minHoras a $maxHoras h. '
-                                    'La sede cierra a las ${datos.$1.cierre}.',
-                                    style: Textos.leyenda.copyWith(
-                                      color: p.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                        _grillaOAviso(p),
-                        if ((_grilla, _deLaGrilla) case (
-                          final grilla?,
-                          (final id, final horas)?,
-                        )) ...[
-                          const SizedBox(height: Medidas.s8),
-                          ResumenDeReserva(
-                            tipo: datos.$3.tipoCorto(
-                              cancha.deporte,
-                              cancha.tipo,
-                            ),
-                            precio:
-                                (datos.$2
-                                            .where((c) => c.id == id)
-                                            .firstOrNull ??
-                                        cancha)
-                                    .precioPorHora,
-                            horas: horas,
-                            franja: grilla.franjas
-                                .where((f) => f.inicio == _inicio)
-                                .firstOrNull,
-                            fecha: grilla.fecha,
-                          ),
-                        ],
-                      ],
+                      children: _secciones(datos, cancha, p),
                     ),
                   ),
                 ],
               ),
             ),
+    );
+  }
+
+  List<Widget> _secciones(
+    (Sede, List<Espacio>, Catalogo) datos,
+    Espacio cancha,
+    Paleta p,
+  ) {
+    final modificando = widget.modificando;
+    return [
+      if (modificando != null) ...[
+        NotaDeModificacion(reserva: modificando, horas: _horas),
+        const SizedBox(height: Medidas.s24),
+      ],
+      SeleccionDeCancha(
+        canchas: datos.$2,
+        elegida: _elegida,
+        alElegir: _elegirCancha,
+      ),
+      if (_hoy case final hoy?) ...[
+        SeccionDeHorarios(
+          titulo: 'FECHA',
+          child: FranjaDeFechas(
+            hoy: hoy,
+            elegida: _fecha,
+            alElegir: _elegirFecha,
+          ),
+        ),
+        if (modificando == null)
+          SeccionDeDuracion(
+            horas: _horas,
+            cierre: datos.$1.cierre,
+            alCambiar: _cambiarHoras,
+          ),
+      ],
+      _grillaOAviso(p),
+      if ((_grilla, _deLaGrilla) case (
+        final grilla?,
+        (final id, final horas)?,
+      )) ...[
+        const SizedBox(height: Medidas.s8),
+        _resumen(datos, cancha, grilla, id, horas),
+      ],
+    ];
+  }
+
+  Widget _portada((Sede, List<Espacio>, Catalogo) datos, Espacio cancha) {
+    final modificando = widget.modificando;
+    return PortadaDeHorarios(
+      sede: datos.$1,
+      tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
+      deporte: cancha.deporte,
+      volverA: modificando != null
+          ? widget.volverA
+          : widget.fecha == null
+          ? 'Sedes'
+          : 'Buscar cancha',
+      alVolver: modificando != null
+          ? _salir
+          : () => context.canPop()
+                ? context.pop()
+                : context.go('/sedes/${widget.sedeId}'),
+    );
+  }
+
+  Widget _resumen(
+    (Sede, List<Espacio>, Catalogo) datos,
+    Espacio cancha,
+    Grilla grilla,
+    String id,
+    int horas,
+  ) {
+    return ResumenDeReserva(
+      tipo: datos.$3.tipoCorto(cancha.deporte, cancha.tipo),
+      precio: (datos.$2.where((c) => c.id == id).firstOrNull ?? cancha)
+          .precioPorHora,
+      horas: horas,
+      franja: grilla.franjas.where((f) => f.inicio == _inicio).firstOrNull,
+      fecha: grilla.fecha,
     );
   }
 

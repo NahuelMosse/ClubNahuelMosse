@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'insignia_elegido.dart';
+import 'pie_de_tile.dart';
 
 /// Tarjeta de deporte de 124×148 con foto de fondo, emoji y nombre; [elegido] la marca con el acento.
 class TileDeporte extends StatelessWidget {
@@ -62,40 +63,13 @@ class TileDeporte extends StatelessWidget {
                     left: 12,
                     right: 12,
                     bottom: 12,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(emoji, style: const TextStyle(fontSize: 16)),
-                        Text(
-                          nombre,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Textos.titulo.copyWith(color: p.textOnMedia),
-                        ),
-                      ],
-                    ),
+                    child: PieDeTile(emoji: emoji, nombre: nombre),
                   ),
                   if (elegido)
-                    Positioned(
+                    const Positioned(
                       left: 10,
                       top: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: p.accentBase,
-                          borderRadius: BorderRadius.circular(
-                            Medidas.radioPill,
-                          ),
-                        ),
-                        child: Text(
-                          'ELEGIDO',
-                          style: Textos.sobretitulo.copyWith(color: p.accentOn),
-                        ),
-                      ),
+                      child: InsigniaElegido(),
                     ),
                   if (alTocar != null)
                     Positioned.fill(

@@ -4,6 +4,8 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'campo_texto.dart';
 import 'movimiento.dart';
+import 'rejilla_de_opciones.dart';
+import 'valor_del_selector.dart';
 
 /// Un campo que no se escribe sino que se elige: se ve como `Input` o `Dropdown` del
 /// prototipo y al tocarlo abre las opciones.
@@ -79,32 +81,11 @@ class CampoSelector extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                       horizontal: Medidas.s20,
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            elegido ?? placeholder,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Textos.cuerpo.copyWith(
-                              // Apagado, pero el dato se tiene que poder leer.
-                              color: soloLectura
-                                  ? p.textSecondary
-                                  : elegido == null
-                                  ? p.textMuted
-                                  : p.textPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: Medidas.s12),
-                        Icon(
-                          icono,
-                          size: 24,
-                          color: soloLectura
-                              ? p.stateDisabled
-                              : p.textSecondary,
-                        ),
-                      ],
+                    child: ValorDelSelector(
+                      valor: elegido,
+                      placeholder: placeholder,
+                      icono: icono,
+                      soloLectura: soloLectura,
                     ),
                   ),
                 ),
@@ -166,39 +147,12 @@ Future<T?> elegirOpcion<T>(
                   ),
                 ),
               ),
-              // Todas las opciones se construyen de una, en [columnas] columnas: son pocas y
-              // así se llega a cualquiera sin que la lista las vaya descartando.
               Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(
-                    Medidas.s12,
-                    0,
-                    Medidas.s12,
-                    Medidas.s12,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (var i = 0; i < opciones.length; i += columnas)
-                        Row(
-                          children: [
-                            for (var j = i; j < i + columnas; j++)
-                              Expanded(
-                                child: j < opciones.length
-                                    ? _Opcion(
-                                        texto: opciones[j].$2,
-                                        elegida: opciones[j].$1 == elegida,
-                                        centrada: columnas > 1,
-                                        alTocar: () => Navigator.of(
-                                          context,
-                                        ).pop(opciones[j].$1),
-                                      )
-                                    : const SizedBox.shrink(),
-                              ),
-                          ],
-                        ),
-                    ],
-                  ),
+                child: RejillaDeOpciones<T>(
+                  opciones: opciones,
+                  columnas: columnas,
+                  elegida: elegida,
+                  alElegir: (valor) => Navigator.of(context).pop(valor),
                 ),
               ),
             ],
@@ -207,59 +161,4 @@ Future<T?> elegirOpcion<T>(
       );
     },
   );
-}
-
-class _Opcion extends StatelessWidget {
-  const _Opcion({
-    required this.texto,
-    required this.elegida,
-    required this.centrada,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final bool elegida;
-  final bool centrada;
-  final VoidCallback alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      button: true,
-      selected: elegida,
-      child: Material(
-        color: elegida ? p.accentMuted : Colors.transparent,
-        shape: const StadiumBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: alTocar,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: Medidas.tactil + 4),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Medidas.s12),
-              child: Row(
-                mainAxisAlignment: centrada
-                    ? MainAxisAlignment.center
-                    : MainAxisAlignment.start,
-                children: [
-                  Flexible(
-                    child: Text(
-                      texto,
-                      style: (elegida ? Textos.cuerpoFuerte : Textos.cuerpo)
-                          .copyWith(color: p.textPrimary),
-                    ),
-                  ),
-                  if (elegida && !centrada) ...[
-                    const Spacer(),
-                    Icon(Icons.check_rounded, size: 20, color: p.accentInk),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

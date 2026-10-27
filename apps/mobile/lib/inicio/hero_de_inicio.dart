@@ -8,6 +8,8 @@ import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'saludo_de_inicio.dart';
+import 'velo_de_hero.dart';
 
 /// La portada: el saludo, la cuenta y el pedido del día. Va sobre una foto, así que sus
 /// colores son los `on-media`, iguales en los dos modos.
@@ -37,20 +39,7 @@ class HeroDeInicio extends StatelessWidget {
       imagen: fotoDeDeporte('Futbol'),
       child: Stack(
         children: [
-          const Positioned.fill(
-            child: ExcludeSemantics(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0, 0.5],
-                    colors: [Color(0x99000000), Color(0x00000000)],
-                  ),
-                ),
-              ),
-            ),
-          ),
+          const Positioned.fill(child: VeloDeHero()),
           Padding(
             padding: EdgeInsets.fromLTRB(
               Medidas.s24,
@@ -66,25 +55,7 @@ class HeroDeInicio extends StatelessWidget {
                     Expanded(
                       child: Aparecer(
                         retraso: const Duration(milliseconds: 50),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'BUENOS DÍAS,',
-                              style: Textos.sobretitulo.copyWith(
-                                color: p.accentOnMedia,
-                              ),
-                            ),
-                            const SizedBox(height: Medidas.s4),
-                            ListenableBuilder(
-                              listenable: sesion,
-                              builder: (context, _) => Text(
-                                sesion.perfil?.nombre ?? '',
-                                style: Textos.h1.copyWith(color: p.textOnMedia),
-                              ),
-                            ),
-                          ],
-                        ),
+                        child: SaludoDeInicio(sesion: sesion),
                       ),
                     ),
                     if (centro case final centro?)
