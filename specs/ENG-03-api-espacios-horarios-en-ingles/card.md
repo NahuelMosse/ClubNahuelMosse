@@ -17,6 +17,12 @@ not_read:
 - ENG-03-ASM-02 · los demás módulos y `app/main.py` cambian sólo las líneas que importan estos módulos · S1
 - ENG-03-ASM-03 · los tests cambian sólo lo que el renombre obliga con `refactor-tests:`; títulos y nombres de archivo de test quedan en castellano · S1
 - ENG-03-ASM-04 · un nombre que el glosario no tiene se traduce con el mismo criterio y se agrega al glosario · S2
+- ENG-03-ASM-05 · los campos de las clases Pydantic quedan en castellano (son claves JSON y el `loc` de la validación), los nombres de clase pasan a inglés y no hay alias · S3
+- ENG-03-ASM-06 · `scripts/e2e.sh` y `app/e2e_support.py` cambian sólo las rutas de módulo que importan · S1
+- ENG-03-ASM-07 · el test de S3 compara también parámetros y `security` de cada operación · S3
+- ENG-03-ASM-08 · los docs que nombran las rutas de archivo (`docs/technical/mapa-del-codigo.md`, `apps/api/README.md`, lo que lea un test de docs) se actualizan · S1
+- ENG-03-ASM-09 · cada ruta lleva `operation_id` explícito con el valor actual de main, así los `operationId` no cambian al renombrar las funciones · S3
+- ENG-03-ASM-10 · los otros módulos y tests que usan símbolos renombrados de espacios y horarios (campos del catálogo, `OpeningHours`, métodos) renombran esos usos también · S1
 
 ## Tasks
 
