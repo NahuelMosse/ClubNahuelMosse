@@ -1,0 +1,53 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "session",
+    "password_recovery",
+    "password",
+    "sesion"
+  ],
+  "files": [
+    "apps/api/app/modules/venues/__init__.py",
+    "apps/api/app/modules/venues/use_cases.py",
+    "apps/api/app/modules/venues/rules.py",
+    "apps/api/app/modules/venues/repository.py",
+    "apps/api/app/modules/venues/routes.py",
+    "apps/api/app/modules/users/__init__.py",
+    "apps/api/app/modules/users/admins.py",
+    "apps/api/app/modules/users/deactivation.py",
+    "apps/api/app/modules/users/password.py",
+    "apps/api/app/modules/users/profile.py",
+    "apps/api/app/modules/users/registration.py",
+    "apps/api/app/modules/users/rules.py",
+    "apps/api/app/modules/users/repository.py",
+    "apps/api/app/modules/users/account_routes.py",
+    "apps/api/app/modules/users/registration_routes.py",
+    "apps/api/app/modules/users/seed_admin.py",
+    "apps/api/app/modules/session/__init__.py",
+    "apps/api/app/modules/session/use_cases.py",
+    "apps/api/app/modules/session/profile.py",
+    "apps/api/app/modules/session/repository.py",
+    "apps/api/app/modules/session/current_user.py",
+    "apps/api/app/modules/password_recovery/__init__.py",
+    "apps/api/app/modules/password_recovery/use_cases.py",
+    "apps/api/app/modules/password_recovery/email.py",
+    "apps/api/app/modules/password_recovery/rules.py",
+    "apps/api/app/modules/password_recovery/repository.py",
+    "apps/api/app/modules/password_recovery/routes.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1
+}
