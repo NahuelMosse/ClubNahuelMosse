@@ -1,0 +1,27 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/notifications/__init__.py",
+    "apps/api/app/modules/notifications/use_cases.py",
+    "apps/api/app/modules/notifications/rules.py",
+    "apps/api/app/modules/notifications/store.py",
+    "apps/api/app/modules/notifications/repository.py",
+    "apps/api/app/modules/notifications/sweep.py",
+    "apps/api/app/modules/notifications/push.py",
+    "apps/api/app/modules/notifications/routes.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1
+}
