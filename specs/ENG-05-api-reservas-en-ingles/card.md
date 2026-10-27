@@ -17,6 +17,12 @@ not_read:
 - ENG-05-ASM-02 · los demás módulos y `app/main.py` cambian sólo las líneas que importan este módulo · S1
 - ENG-05-ASM-03 · los tests cambian sólo lo que el renombre obliga con `refactor-tests:`; títulos y nombres de archivo de test quedan en castellano · S1
 - ENG-05-ASM-04 · un nombre que el glosario no tiene se traduce con el mismo criterio y se agrega al glosario · S2
+- ENG-05-ASM-05 · los campos de los modelos Pydantic y los parámetros de query/path de los manejadores siguen en castellano (son las claves JSON y el `loc` de validación); las clases en inglés, sin alias; los campos de las dataclasses de reglas pasan a inglés y las vistas los copian de forma explícita · S2 (test: el de S2 exime esos nombres; el de S3 compara campos y parámetros)
+- ENG-05-ASM-06 · los valores de estado (`activa`, `cancelada`, `anulada`, `completada`) y las etiquetas de `tags` no cambian · S3
+- ENG-05-ASM-07 · `scripts/e2e.sh` y `app/e2e_support.py` cambian sólo las rutas de módulo que importan · S1
+- ENG-05-ASM-08 · el test de S3 compara además `parameters` y `security` por operación contra el contrato de main; cada ruta lleva `operation_id` explícito con el valor de hoy · S3
+- ENG-05-ASM-09 · los docs que nombran las rutas del módulo (`docs/technical/mapa-del-codigo.md`, `docs/technical/arquitectura.md`, `docs/guia-basica.md`, `apps/api/README.md`) cambian sólo esos nombres · S1
+- ENG-05-ASM-10 · los alias de columna del SQL (`AS estado`) pasan al nombre inglés del campo de la dataclass; tablas y columnas no cambian · S2
 
 ## Tasks
 
