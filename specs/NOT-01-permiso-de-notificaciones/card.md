@@ -30,7 +30,7 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
+suite: sh D:/Temp/w/herramientas/flutter-mobile.sh {affected}
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 mutate apps/mobile/lib/notificaciones/centro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
 mutate apps/mobile/lib/notificaciones/sistema.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
@@ -72,3 +72,4 @@ mutate apps/mobile/lib/notificaciones/sistema_fcm.dart: sh D:/Temp/w/herramienta
 - L30 · 2026-10-26 · replaces: apps/mobile/test/rediseno/pantallas_test.dart "inicio con más de una tanda de próximas el marcador dice 20+ @RED-03-ASM-13" · SIM-01 sacó la paginación por tandas: el marcador muestra la cantidad · by: apps/mobile/test/rediseno/marcador_de_proximas_test.dart "inicio el marcador de próximas muestra la cantidad de reservas próximas @RED-03-ASM-13"
 - L31 · 2026-10-26 · declared · K4 · apps/mobile/test/reloj_del_token_test.dart · reemplazo del test congelado de piezas_de_pantalla_test.dart: repite su ayudante de lectura de lib/; el congelado no se edita ni se importa
 - L32 · 2026-10-26 · replaces: apps/mobile/test/sin_sobreingenieria_test.dart "a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04" · falla por un bug propio (`onError` devuelve Object); la declaración anterior nombraba el reemplazo sin sus tags · by: apps/mobile/test/limite_de_espera_test.dart "a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04" (copiada de SIM-01 L79: la compuerta sólo lee el Log de la card en curso)
+- L33 · 2026-10-27 · kit updated 440e63628bf1cf2dc2867520e033d628b18457c9 → 6e0cf032840cd6d397bc89e595efb8851b7ffb45 · actualización a 6.20 pedida por la persona

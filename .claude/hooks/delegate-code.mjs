@@ -35,6 +35,10 @@ try {
   if (card.actsAsMain(input)) {
     const risk = (await import('../tools/card-doc.mjs')).riskOf(cardDir);
     if (risk?.size === 'small' && card.redCommitted(root, cardDir)) process.exit(0);
+    // Past the card's time cap no builder starts (time-cap): the main thread finishes what is left, after the RED, or nobody can.
+    const cap = card.cardCap(cardDir);
+    const elapsed = card.minutesSinceSnapshot(root, cardDir);
+    if (cap !== null && elapsed !== null && elapsed >= cap && card.redCommitted(root, cardDir)) process.exit(0);
     const why = !risk ? 'there is no risk.json yet: `node .claude/tools/risk.mjs specs/<card>` classifies the card'
       : risk.size === 'small' ? 'the card is small, and no commit holds its tests yet (`@<ID>-S<n>`): write them, run them red and commit them first'
         : 'the card is large';

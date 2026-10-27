@@ -4,10 +4,10 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
-import { IS_CODE, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
+import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { overdesignFindings } from './overdesign.mjs';
-import { profileStates } from './kit.mjs';
+import { active, profileStates } from './kit.mjs';
 import { IS_SCREEN, SCREEN_MARKUP } from './signals.mjs';
 import { sectionOf } from './card-doc.mjs';
 
@@ -265,9 +265,22 @@ export const shapeProblems = (file, text) => {
   if (classes > 1) out.push(`${file}: ${classes} classes in one file · one class per file`);
   return out;
 };
+// Only what the card made worse: a file that already had two classes before the card is the repo's, not the card's, and asking a
+// card to annotate it cost a whole suite run per round (the annotation changes the code's key).
 export const shapeCheck = (root, cardDir) => {
-  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
-  const found = files.flatMap((f) => { try { return shapeProblems(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
+  const base = cardStart(root, cardDir);
+  const files = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
+  const before = (f) => { const r = spawnSync('git', ['show', `${base}:${f}`], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 26 }); return r.status === 0 ? r.stdout : null; };
+  const found = files.flatMap((f) => {
+    try {
+      const now = shapeProblems(f, readFileSync(join(root, f), 'utf8'));
+      const old = before(f);
+      // Compared by kind, not by count: one more function in a file that already mixed them is not a new problem.
+      const kind = (p) => p.replace(/\d+/g, 'N');
+      const had = new Set(old === null ? [] : shapeProblems(f, old).map(kind));
+      return now.filter((p) => !had.has(kind(p)));
+    } catch { return []; }
+  });
   return found.length ? failed('shape', found.slice(0, 5).join('; ')) : ok('shape', `${files.length} production files, one concept each`);
 };
 
@@ -305,6 +318,94 @@ export const boundariesCheck = (root, cardDir) => {
   const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
   const found = files.flatMap((f) => { try { return boundaryProblems(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
   return found.length ? failed('boundaries', found.slice(0, 5).join('; ')) : ok('boundaries', `${files.length} production files, each slice entered by its index`);
+};
+
+// The docs are a product built with the product (templates/docs.md): with the docs module on (mvp and up), a card that changes
+// production code updates, in its own diff, the feature page that tells it (`docs/features/<feature>.md`, whose `tests:` names the
+// card's tagged test files and whose body has its rules and edge cases), the API contract when it touches a route, and
+// `docs/data-model.md` when it touches the schema. `no-docs: <why>` in `## Gate` declares a card that changes no behavior.
+const FEATURE_PAGE = /^docs\/features\/.+\.md$/;
+const CONTRACT = /(^|\/)(openapi|asyncapi|swagger)[^/]*\.(ya?ml|json)$|(^|\/)schema\.graphql$|^docs\/api\//i;
+const DATA_MODEL = /^docs\/data-model\.md$/;
+const API_FILE = /(^|\/)(api|routes?|controllers?|handlers?|endpoints?|resolvers?)\/|\.(controller|routes?|resolver)\.[a-z]+$/i;
+const DATA_FILE = /(^|\/)(migrations?|schema|models?|entities)\/|\.(entity|model)\.[a-z]+$|(^|\/)schema\.prisma$|\.sql$/i;
+export const noDocsOf = (doc) => gateLinesOf(doc).map((l) => l.match(/^no-docs\s*:\s*(\S.*)$/i)?.[1]?.trim()).find(Boolean) ?? null;
+const frontList = (text, key) => (text.match(new RegExp(`^${key}:\\s*\\[([^\\]]*)\\]`, 'm'))?.[1] ?? '').split(',').map((s) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean);
+export const docsProblems = ({ files, read, id, roles = new Map() }) => {
+  const code = files.filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f));
+  const touchesData = files.some((f) => !IS_TEST.test(f) && (DATA_FILE.test(f) || roles.get(f) === 'data'));
+  if (!code.length && !touchesData) return [];
+  const out = [];
+  const pages = files.filter((f) => FEATURE_PAGE.test(f));
+  const tagged = files.filter((f) => IS_TEST.test(f) && id && read(f).includes(`@${id}-S`));
+  if (code.length && !pages.length) out.push(`the card changes production code and no docs/features/<feature>.md in its diff · update the page of the feature it changes (template: .claude/templates/docs.md), or \`no-docs: <why>\` in ## Gate when no behavior changes`);
+  for (const p of pages) {
+    const text = read(p);
+    if (!/^##\s+(Rules|Reglas)/im.test(text) || !/^##\s+(Edge cases|Casos borde)/im.test(text)) out.push(`${p}: no \`## Rules\` and \`## Edge cases\` sections`);
+  }
+  const listed = new Set(pages.flatMap((p) => frontList(read(p), 'tests')));
+  const missing = tagged.filter((t) => !listed.has(t));
+  if (pages.length && missing.length) out.push(`the feature page's \`tests:\` does not name ${missing.join(', ')}, the card's tests · list them, and close each edge case with \`Tested: <test>\`, \`No test.\` or \`To decide: <AMB/ASM>\``);
+  if (code.some((f) => API_FILE.test(f)) && !files.some((f) => CONTRACT.test(f))) out.push('the card touches a route and the API contract (openapi.yaml under docs/api/, or the repo\'s spec) is not in its diff · update the contract');
+  if (touchesData && !files.some((f) => DATA_MODEL.test(f))) out.push('the card touches the schema or a data file and docs/data-model.md is not in its diff · update the entity, its relations and its diagram');
+  return out;
+};
+export const docsCheck = (root, cardDir) => {
+  let on;
+  try { ({ on } = active(root)); } catch { return []; }
+  if (!on?.has('docs')) return [];
+  const doc = readCard(cardDir) ?? '';
+  const declared = noDocsOf(doc);
+  if (declared) return [ok('docs', `declared: ${declared}`)];
+  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => existsSync(join(root, f)));
+  const read = (f) => { try { return readFileSync(join(root, f), 'utf8'); } catch { return ''; } };
+  const found = docsProblems({ files, read, id: cardIdOf(cardDir), roles: rolesOf(doc) });
+  return [found.length ? failed('docs', found.slice(0, 5).join('; ')) : ok('docs', 'the feature page, the contract and the data model follow the code')];
+};
+
+// The table baseline (DB-MOD-03, DB-MOD-14, P17) over the `CREATE TABLE` of the card's SQL migrations, which Prisma, Drizzle and
+// TypeORM also write: a primary key per the repo's id decision (`ids: bigint` in docs/data-model.md allows an identity bigint;
+// otherwise a UUID), never serial or an int, and `created_at`/`updated_at` with time zone. `-- kit-table: append-only` above the
+// statement leaves only `created_at`; the migrations' own history table is not the app's.
+const CREATE_TABLE = /(--\s*kit-table:\s*append-only\s*\n\s*)?CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([`"\w.]+)\s*\(/gi;
+const HISTORY_TABLE = /^[`"]?(_prisma_migrations|schema_migrations|knex_migrations|__drizzle_migrations|flyway_schema_history|alembic_version|__efmigrationshistory|django_migrations|typeorm_migrations|migrations)[`"]?$/i;
+const bodyAt = (sql, from) => { let depth = 1; let i = from; for (; i < sql.length && depth; i++) { if (sql[i] === '(') depth++; else if (sql[i] === ')') depth--; } return sql.slice(from, i - 1); };
+const columnsOf = (body) => { const out = []; let depth = 0; let cur = ''; for (const c of body) { if (c === '(') depth++; if (c === ')') depth--; if (c === ',' && !depth) { out.push(cur.trim()); cur = ''; } else cur += c; } if (cur.trim()) out.push(cur.trim()); return out; };
+const nameOf = (col) => col.match(/^[`"]?(\w+)[`"]?\s/)?.[1]?.toLowerCase() ?? '';
+export const tableShapeProblems = (file, sql, { bigintIds = false } = {}) => {
+  const out = [];
+  for (const m of sql.matchAll(CREATE_TABLE)) {
+    const table = m[2].split('.').pop();
+    if (HISTORY_TABLE.test(table)) continue;
+    const cols = columnsOf(bodyAt(sql, m.index + m[0].length));
+    const plain = table.replace(/[`"]/g, '');
+    const at = `${file}: table ${plain}`;
+    const pkLine = cols.find((c) => /\bPRIMARY\s+KEY\b/i.test(c) && !/^(CONSTRAINT|PRIMARY)\b/i.test(c));
+    const pkConstraint = cols.find((c) => /^(CONSTRAINT\s+\S+\s+)?PRIMARY\s+KEY\s*\(/i.test(c));
+    const pkCols = pkLine ? [pkLine] : (pkConstraint?.match(/PRIMARY\s+KEY\s*\(([^)]*)\)/i)?.[1] ?? '').split(',').map((n) => n.trim().replace(/[`"]/g, '').toLowerCase()).filter(Boolean).map((n) => cols.find((c) => nameOf(c) === n) ?? '');
+    if (!pkCols.length) out.push(`${at} has no primary key (DB-MOD-03)`);
+    for (const pk of pkCols.length === 1 ? pkCols : []) {
+      if (/\b(small|big)?serial\b|\bAUTO_?INCREMENT\b/i.test(pk)) out.push(`${at}: the primary key is serial or auto-increment · use UUIDv7, or \`bigint GENERATED ALWAYS AS IDENTITY\` with \`ids: bigint\` in docs/data-model.md (DB-MOD-03)`);
+      else if (/^\S+\s+(int|integer|int4|smallint|mediumint)\b/i.test(pk)) out.push(`${at}: the primary key is an int · use UUIDv7 (DB-MOD-03)`);
+      else if (/^\S+\s+(bigint|int8)\b/i.test(pk) && !bigintIds) out.push(`${at}: the primary key is a bigint and docs/data-model.md does not say \`ids: bigint\` · UUIDv7 is the default (DB-MOD-03)`);
+    }
+    const appendOnly = Boolean(m[1]);
+    for (const name of appendOnly ? ['created_at'] : ['created_at', 'updated_at']) {
+      const col = cols.find((c) => [name, name.replace(/_(\w)/, (_, x) => x.toUpperCase())].includes(nameOf(c)) || nameOf(c) === name.replace('_', '').toLowerCase());
+      if (!col) out.push(`${at} has no ${name} · \`${name} timestamptz NOT NULL DEFAULT now()\` (DB-MOD-14), or \`-- kit-table: append-only\` above an append-only table`);
+      else if (/^\S+\s+timestamp\b(?!\s*(\(\d\))?\s*with\s+time\s+zone)/i.test(col)) out.push(`${at}: ${name} is a timestamp without time zone · \`timestamptz\` (Prisma: \`@db.Timestamptz(3)\`) (DB-MOD-14)`);
+      else if (!/\bNOT\s+NULL\b/i.test(col)) out.push(`${at}: ${name} may be null · NOT NULL (DB-MOD-14)`);
+    }
+  }
+  return out;
+};
+export const tableShapeCheck = (root, cardDir) => {
+  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_MIGRATION.test(f) && /\.sql$/i.test(f) && existsSync(join(root, f)));
+  if (!files.length) return [];
+  const read = (f) => { try { return readFileSync(join(root, f), 'utf8'); } catch { return ''; } };
+  const bigintIds = /^\s*(?:[-*]\s*)?ids:\s*bigint\b/im.test(read('docs/data-model.md'));
+  const found = files.flatMap((f) => tableShapeProblems(f, read(f), { bigintIds }));
+  return [found.length ? failed('table-shape', found.slice(0, 6).join('; ')) : ok('table-shape', `${files.length} migrations, every new table with its key and its timestamps`)];
 };
 
 // Overdesign (overdesign.mjs): a pass-through method, an interface with one implementation, a folder with one tiny file or an empty layer
@@ -348,7 +449,7 @@ export const noVisualCheck = (root, cardDir) => {
 };
 
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir), ...docsCheck(root, cardDir), ...tableShapeCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 
