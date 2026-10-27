@@ -118,8 +118,8 @@ class _SedesEnMemoria:
     def active(self) -> list[Sede]:
         return []
 
-    def insert(self, nueva: SedeNueva, autor: UUID) -> Sede:
-        self.guardadas.append((nueva, autor))
+    def insert(self, nueva: SedeNueva, author: UUID) -> Sede:
+        self.guardadas.append((nueva, author))
         return Sede(UUID(int=1), nueva.name, nueva.street, nueva.street_number, nueva.opens_at,
                     nueva.closes_at, nueva.open_days, 0)  # fmt: skip
 
