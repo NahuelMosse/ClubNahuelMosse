@@ -48,7 +48,7 @@ uv run alembic upgrade head
 La cuenta de administrador no se registra desde la app; se siembra:
 
 ```sh
-ADMIN_CONTRASENA=<contraseña> uv run python -m app.modules.usuarios.sembrar_admin \
+ADMIN_CONTRASENA=<contraseña> uv run python -m app.modules.users.seed_admin \
   --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
 ```
 
@@ -181,7 +181,7 @@ El `render.yaml` de la raíz del repo describe todo: un web service de Python pa
    base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.modules.usuarios.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.modules.users.seed_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
    ```
 
 6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y

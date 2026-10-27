@@ -5,7 +5,7 @@ from collections.abc import Callable
 import pytest
 from fastapi.testclient import TestClient
 
-from app.modules.usuarios.sembrar_admin import main as sembrar
+from app.modules.users.seed_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 

@@ -2,9 +2,19 @@ from datetime import date
 
 import pytest
 
-from app.modules.usuarios.reglas import DatosRegistro, problemas_contrasena, validar_registro
+from app.modules.users.rules import RegistrationData as DatosRegistro
+from app.modules.users.rules import password_problems as problemas_contrasena
+from app.modules.users.rules import validate_registration as validar_registro
 
 HOY = date(2026, 11, 12)
+
+_CAMPOS = {
+    "nombre": "first_name",
+    "apellido": "last_name",
+    "fecha_nacimiento": "birth_date",
+    "correo": "email",
+    "contrasena": "password",
+}
 
 
 def _datos(**cambios: str) -> DatosRegistro:
@@ -17,16 +27,16 @@ def _datos(**cambios: str) -> DatosRegistro:
         "contrasena": "ClubNahuel1",
     }
     base.update(cambios)
-    return DatosRegistro(**base)
+    return DatosRegistro(**{_CAMPOS.get(k, k): v for k, v in base.items()})
 
 
 def test_normaliza_correo_y_dni() -> None:
     registro, errores = validar_registro(_datos(), HOY)
     assert errores == {}
     assert registro is not None
-    assert registro.correo == "nmosse@unimoron.edu.ar"
+    assert registro.email == "nmosse@unimoron.edu.ar"
     assert registro.dni == "42118507"
-    assert registro.fecha_nacimiento == date(2000, 3, 14)
+    assert registro.birth_date == date(2000, 3, 14)
 
 
 @pytest.mark.parametrize(

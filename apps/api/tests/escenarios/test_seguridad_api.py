@@ -22,10 +22,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.recuperacion.casos_de_uso import Mensaje
+from app.modules.password_recovery.rules import Message as Mensaje
 from app.shared.config import config
-from app.modules.recuperacion import correo
-from app.modules.usuarios.sembrar_admin import main as sembrar
+from app.modules.password_recovery import email as correo
+from app.modules.users.seed_admin import main as sembrar
 from app.main import create_app
 
 RAIZ_API = Path(__file__).resolve().parents[2]
@@ -163,14 +163,14 @@ def smtp_falso(monkeypatch: pytest.MonkeyPatch) -> type[_SmtpFalso]:
 
 
 def _mensaje() -> Mensaje:
-    return Mensaje(para="ana.rios@ejemplo.com", asunto="Tu enlace", cuerpo="Entrá al enlace")
+    return Mensaje(recipient="ana.rios@ejemplo.com", subject="Tu enlace", body="Entrá al enlace")
 
 
 def test_el_correo_exige_un_certificado_valido_para_el_nombre_del_servidor(
     smtp_falso: type[_SmtpFalso],
 ) -> None:
     """el envío de correo pide un TLS que verifica certificado y nombre @REV-01-S1"""
-    correo.enviar(_mensaje())
+    correo.send(_mensaje())
 
     contexto = smtp_falso.contextos[0]
     assert isinstance(contexto, ssl.SSLContext)
@@ -187,7 +187,7 @@ def test_con_un_certificado_invalido_no_se_mandan_las_credenciales(
     smtp_falso.certificado_invalido = True
 
     with caplog.at_level(logging.DEBUG):
-        correo.enviar(_mensaje())
+        correo.send(_mensaje())
 
     assert smtp_falso.logins == []
     assert caplog.records
@@ -304,7 +304,7 @@ def test_un_rechazo_del_servidor_de_correo_no_deja_la_direccion_en_el_log(
     smtp_falso.rechazar = True
 
     with caplog.at_level(logging.DEBUG):
-        correo.enviar(_mensaje())
+        correo.send(_mensaje())
 
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text

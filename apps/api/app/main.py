@@ -6,7 +6,15 @@ from contextlib import asynccontextmanager, suppress
 from fastapi import FastAPI
 
 from app import e2e_support, health
-from app.modules import espacios, horarios, notificaciones, recuperacion, reservas, sedes, usuarios
+from app.modules import (
+    espacios,
+    horarios,
+    notificaciones,
+    password_recovery,
+    reservas,
+    users,
+    venues,
+)
 from app.modules.notificaciones import barrer_cada
 from app.shared import http_errors, input_validation
 from app.shared.body_limit import BodyLimit
@@ -40,9 +48,9 @@ def create_app() -> FastAPI:
     input_validation.install(app)
     http_errors.install(app)
     app.include_router(health.router)
-    app.include_router(usuarios.router)
-    app.include_router(recuperacion.router)
-    app.include_router(sedes.router)
+    app.include_router(users.router)
+    app.include_router(password_recovery.router)
+    app.include_router(venues.router)
     app.include_router(espacios.router)
     app.include_router(horarios.router)
     app.include_router(reservas.router)

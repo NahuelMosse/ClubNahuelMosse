@@ -3,8 +3,9 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.usuarios.registro import registrar
-from app.modules.usuarios.reglas import DatosRegistro, Registro
+from app.modules.users.registration import register as registrar
+from app.modules.users.rules import Registration as Registro
+from app.modules.users.rules import RegistrationData as DatosRegistro
 from app.shared.errors import Duplicate
 
 DATOS = DatosRegistro("Ana", "Pérez", "12345678", "2000-03-14", "ana@correo.com", "ClubNahuel1")
@@ -39,13 +40,13 @@ class Usuarios:
         self.falla = falla
         self.insertados: list[str] = []
 
-    def duplicados(self, correo: str, dni: str) -> list[str]:
+    def duplicates(self, correo: str, dni: str) -> list[str]:
         return []
 
-    def uid_activo(self, uid: str) -> bool:
+    def uid_is_active(self, uid: str) -> bool:
         return uid in self.activos
 
-    def insertar(self, uid: str, registro: Registro) -> UUID:
+    def insert(self, uid: str, registro: Registro) -> UUID:
         if self.falla is not None:
             raise self.falla
         self.insertados.append(uid)

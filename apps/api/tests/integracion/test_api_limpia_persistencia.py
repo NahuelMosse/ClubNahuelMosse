@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 from app.main import create_app
-from app.modules.usuarios.sembrar_admin import main as sembrar
+from app.modules.users.seed_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 

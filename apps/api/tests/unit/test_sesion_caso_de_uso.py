@@ -3,19 +3,19 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.sesion.casos_de_uso import perfil_autenticado
-from app.modules.sesion.perfil import Perfil
+from app.modules.session.profile import Profile
+from app.modules.session.use_cases import authenticated_profile as perfil_autenticado
 from app.shared.errors import NotAuthenticated
 
-PERFIL = Perfil(
+PERFIL = Profile(
     id=UUID(int=7),
     uid="u",
-    nombre="Lucía",
-    apellido="Gómez",
-    correo="lucia@correo.com",
-    rol="usuario",
+    first_name="Lucía",
+    last_name="Gómez",
+    email="lucia@correo.com",
+    role="usuario",
     dni="30111222",
-    fecha_nacimiento=date(1998, 11, 2),
+    birth_date=date(1998, 11, 2),
 )
 
 
@@ -30,10 +30,10 @@ class Tokens:
 
 
 class Perfiles:
-    def __init__(self, activos: dict[str, Perfil]) -> None:
+    def __init__(self, activos: dict[str, Profile]) -> None:
         self.activos = activos
 
-    def perfil_activo(self, uid: str) -> Perfil | None:
+    def active_profile(self, uid: str) -> Profile | None:
         return self.activos.get(uid)
 
 

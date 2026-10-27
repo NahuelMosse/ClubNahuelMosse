@@ -2,15 +2,26 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.recuperacion.casos_de_uso import (
-    MAXIMO_POR_HORA,
-    VIGENCIA_MINUTOS,
-    EnlaceInvalido,
-    hash_de,
-    pedir_enlace,
-    usar_enlace,
+from app.modules.password_recovery.rules import ClaimedLink as EnlaceReclamado
+from app.modules.password_recovery.rules import Recipient as Destinatario
+from app.modules.password_recovery.use_cases import (
+    MAX_PER_HOUR as MAXIMO_POR_HORA,
 )
-from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
+from app.modules.password_recovery.use_cases import (
+    VALIDITY_MINUTES as VIGENCIA_MINUTOS,
+)
+from app.modules.password_recovery.use_cases import (
+    InvalidLink as EnlaceInvalido,
+)
+from app.modules.password_recovery.use_cases import (
+    hash_of as hash_de,
+)
+from app.modules.password_recovery.use_cases import (
+    request_link as pedir_enlace,
+)
+from app.modules.password_recovery.use_cases import (
+    use_link as usar_enlace,
+)
 from app.shared.errors import InvalidData
 
 LUCIA = Destinatario(UUID(int=7), "Lucía", "lucia@correo.com")
@@ -24,27 +35,27 @@ class Enlaces:
         self.vigentes = vigentes or set()
         self.liberados: list[UUID] = []
 
-    def destinatario(self, correo: str) -> Destinatario | None:
-        return LUCIA if correo == LUCIA.correo else None
+    def recipient(self, correo: str) -> Destinatario | None:
+        return LUCIA if correo == LUCIA.email else None
 
-    def emitir(
-        self, usuario_id: UUID, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
+    def issue(
+        self, user_id: UUID, code_hash: str, validity_minutes: int, max_per_hour: int
     ) -> bool:
-        if self.emitidos >= maximo_por_hora:
+        if self.emitidos >= max_per_hour:
             return False
-        self.emisiones.append((usuario_id, codigo_hash, vigencia_minutos))
+        self.emisiones.append((user_id, code_hash, validity_minutes))
         return True
 
-    def vigente(self, codigo_hash: str) -> bool:
+    def valid(self, codigo_hash: str) -> bool:
         return codigo_hash in self.vigentes
 
-    def reclamar(self, codigo_hash: str) -> EnlaceReclamado | None:
+    def claim(self, codigo_hash: str) -> EnlaceReclamado | None:
         if codigo_hash not in self.vigentes:
             return None
         self.vigentes.discard(codigo_hash)
-        return EnlaceReclamado(id=UUID(int=3), usuario_id=UUID(int=7), uid="u7")
+        return EnlaceReclamado(id=UUID(int=3), user_id=UUID(int=7), uid="u7")
 
-    def liberar(self, enlace_id: UUID) -> None:
+    def release(self, enlace_id: UUID) -> None:
         self.liberados.append(enlace_id)
 
 
@@ -63,7 +74,7 @@ class Rastro:
     def __init__(self) -> None:
         self.marcados: list[UUID] = []
 
-    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
+    def mark_password_changed(self, id_usuario: UUID) -> None:
         self.marcados.append(id_usuario)
 
 
@@ -73,9 +84,9 @@ def test_a_una_cuenta_activa_le_toca_un_enlace_https_que_vence_en_media_hora() -
     assert mensaje is not None
     ((usuario, codigo_hash, vigencia),) = enlaces.emisiones
     assert (usuario, vigencia) == (UUID(int=7), VIGENCIA_MINUTOS)
-    assert mensaje.para == "lucia@correo.com"
-    assert "https://api.club.com/enlace/recuperar#codigo=" in mensaje.cuerpo
-    codigo = mensaje.cuerpo.split("#codigo=")[1].split()[0]
+    assert mensaje.recipient == "lucia@correo.com"
+    assert "https://api.club.com/enlace/recuperar#codigo=" in mensaje.body
+    codigo = mensaje.body.split("#codigo=")[1].split()[0]
     # El correo lleva el código y la base guarda sólo su hash.
     assert hash_de(codigo) == codigo_hash and codigo != codigo_hash
 
@@ -89,7 +100,7 @@ def test_un_correo_sin_cuenta_no_recibe_nada_y_no_da_error() -> None:
 def test_despues_del_tope_por_hora_no_se_envian_mas() -> None:
     """Verifica CU-04b-SUP-02."""
     enlaces = Enlaces(emitidos=MAXIMO_POR_HORA)
-    assert pedir_enlace(LUCIA.correo, URL, enlaces) is None
+    assert pedir_enlace(LUCIA.email, URL, enlaces) is None
     assert enlaces.emisiones == []
 
 

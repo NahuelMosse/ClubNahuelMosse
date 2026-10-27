@@ -9,8 +9,8 @@ from sqlalchemy import Connection, Engine, create_engine, text
 from app.modules.espacios.repositorio import EspaciosSql
 from app.modules.notificaciones.repositorio import NotificacionesSql
 from app.modules.reservas.repositorio import ReservasSql
-from app.modules.sedes.repositorio import SedesSql
-from app.modules.usuarios.repositorio import UsuariosSql
+from app.modules.users.repository import UsersSql
+from app.modules.venues.repository import VenuesSql
 
 
 def _hora(dias: int = 0, minutos: int = 0) -> datetime:
@@ -83,7 +83,7 @@ def test_baja_de_cuenta_cancela_reservas_futuras(motor: Engine) -> None:
     mundo = _mundo(motor)
     reserva = _reserva(motor, mundo, _hora(dias=3))
     with motor.connect() as conn:
-        assert UsuariosSql(conn).dar_de_baja(mundo["usuario"]) is True
+        assert UsersSql(conn).deactivate(mundo["usuario"]) is True
     assert _uno(motor, "SELECT estado FROM reserva WHERE id = :i", i=reserva) == "cancelada"
     assert not _uno(motor, "SELECT activo FROM usuario WHERE id = :i", i=mundo["usuario"])
 
@@ -109,7 +109,7 @@ def test_baja_de_sede_da_de_baja_sus_espacios(motor: Engine) -> None:
     """dar de baja una sede sigue dando de baja sus espacios @REV-06-S6 @assumption:REV-06-ASM-05"""
     mundo = _mundo(motor)
     with motor.connect() as conn:
-        SedesSql(conn).dar_de_baja(mundo["sede"], mundo["usuario"])
+        VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
     assert not _uno(motor, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
     assert not _uno(motor, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
 
@@ -118,7 +118,7 @@ def test_la_baja_de_sede_sobrevive_al_reinicio(motor: Engine) -> None:
     """la baja de una sede y de sus espacios sobrevive al reinicio de la app sobre la misma base @REV-06-S6 @assumption:REV-06-ASM-05"""
     mundo = _mundo(motor)
     with motor.connect() as conn:
-        SedesSql(conn).dar_de_baja(mundo["sede"], mundo["usuario"])
+        VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
     nuevo = create_engine(motor.url)
     try:
         assert not _uno(nuevo, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
@@ -140,7 +140,7 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
 
     monkeypatch.setattr(EspaciosSql, "dar_de_baja_de_sede", escribe_y_cae)
     with motor.connect() as conn, pytest.raises(RuntimeError):
-        SedesSql(conn).dar_de_baja(mundo["sede"], mundo["usuario"])
+        VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
     assert _uno(motor, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
     assert _uno(motor, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
 

@@ -5,36 +5,48 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.sedes.casos_de_uso import dar_de_alta_sede
-from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
-from app.modules.sesion.perfil import Perfil, Rol
+from app.modules.session.profile import Profile as Perfil
+from app.modules.session.profile import Role as Rol
+from app.modules.venues.rules import NewVenue as SedeNueva
+from app.modules.venues.rules import Venue as Sede
+from app.modules.venues.rules import VenueData as DatosSede
+from app.modules.venues.rules import validate_venue as validar_sede
+from app.modules.venues.use_cases import create_venue as dar_de_alta_sede
 from app.shared.errors import Forbidden, InvalidData
 
 VALIDOS = DatosSede(
-    nombre="Sede Haedo",
-    direccion="Av. Vergara 1850",
-    apertura=time(8),
-    cierre=time(23),
-    dias=(1, 2, 3, 4, 5, 6, 7),
+    name="Sede Haedo",
+    address="Av. Vergara 1850",
+    opens_at=time(8),
+    closes_at=time(23),
+    open_days=(1, 2, 3, 4, 5, 6, 7),
 )
+
+_CAMPOS = {
+    "nombre": "name",
+    "direccion": "address",
+    "apertura": "opens_at",
+    "cierre": "closes_at",
+    "dias": "open_days",
+}
 
 
 def _errores(**cambios: Any) -> dict[str, str]:
-    sede, errores = validar_sede(replace(VALIDOS, **cambios))
+    sede, errores = validar_sede(replace(VALIDOS, **{_CAMPOS[k]: v for k, v in cambios.items()}))
     assert sede is None
     return errores
 
 
 def test_una_sede_completa_separa_calle_y_altura() -> None:
-    sede, errores = validar_sede(replace(VALIDOS, nombre="  Sede   Haedo ", dias=(7, 1, 1)))
+    sede, errores = validar_sede(replace(VALIDOS, name="  Sede   Haedo ", open_days=(7, 1, 1)))
     assert errores == {}
     assert sede == SedeNueva(
-        nombre="Sede Haedo",
-        calle="Av. Vergara",
-        altura=1850,
-        apertura=time(8),
-        cierre=time(23),
-        dias=(1, 7),
+        name="Sede Haedo",
+        street="Av. Vergara",
+        street_number=1850,
+        opens_at=time(8),
+        closes_at=time(23),
+        open_days=(1, 7),
     )
 
 
@@ -58,7 +70,7 @@ def test_los_largos_tienen_tope() -> None:
         "nombre": "Usá hasta 60 caracteres",
         "direccion": "Usá hasta 80 caracteres",
     }
-    sede, _ = validar_sede(replace(VALIDOS, nombre="x" * 60, direccion="y" * 75 + " 1850"))
+    sede, _ = validar_sede(replace(VALIDOS, name="x" * 60, address="y" * 75 + " 1850"))
     assert sede is not None
 
 
@@ -69,7 +81,7 @@ def test_el_cierre_va_despues_de_la_apertura() -> None:
 
 
 def test_cerrar_a_las_00_es_la_medianoche() -> None:
-    sede, errores = validar_sede(replace(VALIDOS, apertura=time(18), cierre=time(0)))
+    sede, errores = validar_sede(replace(VALIDOS, opens_at=time(18), closes_at=time(0)))
     assert errores == {}
     assert sede is not None
 
@@ -90,12 +102,12 @@ def _perfil(rol: Rol) -> Perfil:
     return Perfil(
         id=UUID(int=7),
         uid="uid",
-        nombre="Ana",
-        apellido="Díaz",
-        correo="ana@club.com",
-        rol=rol,
+        first_name="Ana",
+        last_name="Díaz",
+        email="ana@club.com",
+        role=rol,
         dni="20000001",
-        fecha_nacimiento=date(1985, 6, 1),
+        birth_date=date(1985, 6, 1),
     )
 
 
@@ -103,25 +115,25 @@ class _SedesEnMemoria:
     def __init__(self) -> None:
         self.guardadas: list[tuple[SedeNueva, UUID]] = []
 
-    def activas(self) -> list[Sede]:
+    def active(self) -> list[Sede]:
         return []
 
-    def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
-        self.guardadas.append((nueva, autor))
-        return Sede(UUID(int=1), nueva.nombre, nueva.calle, nueva.altura, nueva.apertura,
-                    nueva.cierre, nueva.dias, 0)  # fmt: skip
+    def insert(self, nueva: SedeNueva, author: UUID) -> Sede:
+        self.guardadas.append((nueva, author))
+        return Sede(UUID(int=1), nueva.name, nueva.street, nueva.street_number, nueva.opens_at,
+                    nueva.closes_at, nueva.open_days, 0)  # fmt: skip
 
-    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, confirmar: bool) -> Sede:
+    def update(self, venue_id: UUID, data: SedeNueva, author: UUID, *, confirm: bool) -> Sede:
         raise NotImplementedError
 
-    def dar_de_baja(self, sede_id: UUID, autor: UUID) -> None:
+    def deactivate(self, venue_id: UUID, author: UUID) -> None:
         raise NotImplementedError
 
 
 def test_el_alta_queda_a_nombre_del_administrador() -> None:
     sedes = _SedesEnMemoria()
     sede = dar_de_alta_sede(_perfil("admin"), VALIDOS, sedes)
-    assert sede.nombre == "Sede Haedo"
+    assert sede.name == "Sede Haedo"
     assert [autor for _, autor in sedes.guardadas] == [UUID(int=7)]
 
 
@@ -135,7 +147,7 @@ def test_un_usuario_no_da_de_alta_sedes() -> None:
 def test_con_datos_invalidos_no_se_guarda_nada() -> None:
     sedes = _SedesEnMemoria()
     with pytest.raises(InvalidData) as e:
-        dar_de_alta_sede(_perfil("admin"), replace(VALIDOS, direccion=""), sedes)
+        dar_de_alta_sede(_perfil("admin"), replace(VALIDOS, address=""), sedes)
     assert e.value.errors == {"direccion": "La dirección es obligatoria"}
     assert sedes.guardadas == []
 

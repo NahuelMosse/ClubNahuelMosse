@@ -17,7 +17,7 @@ from app.modules.espacios.reglas import (
     validar_cambio,
     validar_espacio,
 )
-from app.modules.sesion import Perfil
+from app.modules.session import Profile
 from app.shared.errors import Forbidden, InvalidData, Unavailable
 
 
@@ -74,8 +74,8 @@ class Espacios(Protocol):
         ...
 
 
-def _solo_admin(perfil: Perfil) -> None:
-    if perfil.rol != "admin":
+def _solo_admin(perfil: Profile) -> None:
+    if perfil.role != "admin":
         raise Forbidden("sólo un administrador gestiona espacios")
 
 
@@ -90,7 +90,7 @@ def _nombre(deporte: str, tipo: str) -> Callable[[SedeDelEspacio, int], str]:
 
 
 def nombre_sugerido(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
-    perfil: Perfil, sede_id: UUID, deporte: str, tipo: str, espacios: Espacios
+    perfil: Profile, sede_id: UUID, deporte: str, tipo: str, espacios: Espacios
 ) -> NombreSugerido:
     """El nombre que tendría el próximo espacio de ese tipo en esa sede."""
     _solo_admin(perfil)
@@ -103,7 +103,7 @@ def nombre_sugerido(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus 
 
 
 def dar_de_alta_espacio(
-    perfil: Perfil, datos: DatosEspacio, numero: int | None, espacios: Espacios
+    perfil: Profile, datos: DatosEspacio, numero: int | None, espacios: Espacios
 ) -> Espacio:
     """Registra un espacio activo con el nombre compuesto del enunciado (RF 5).
 
@@ -129,7 +129,7 @@ def espacios_activos(
 
 
 def editar_espacio(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
-    perfil: Perfil,
+    perfil: Profile,
     espacio_id: UUID,
     techada: bool | None,  # noqa: FBT001
     iluminada: bool | None,  # noqa: FBT001
@@ -146,7 +146,7 @@ def editar_espacio(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus l
     return espacios.actualizar(espacio_id, cambio, perfil.id)
 
 
-def dar_de_baja_espacio(perfil: Perfil, espacio_id: UUID, espacios: Espacios) -> None:
+def dar_de_baja_espacio(perfil: Profile, espacio_id: UUID, espacios: Espacios) -> None:
     """Retira un espacio (CU-23): deja de verse y de poder reservarse. No se permite con
     reservas pendientes (decisión 5): la cancelación forzosa es de CU-15."""
     _solo_admin(perfil)

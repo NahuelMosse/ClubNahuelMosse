@@ -15,7 +15,7 @@ from app.modules.notificaciones.casos_de_uso import (
 )
 from app.modules.notificaciones.reglas import Notificacion, TipoDeAviso
 from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
-from app.modules.sesion import Perfil, SinSesion, usuario_actual
+from app.modules.session import NoSession, Profile, current_user
 from app.shared.errors import Unavailable
 from app.shared.input_validation import Identifier
 
@@ -40,7 +40,7 @@ class Errores(BaseModel):
     "/dispositivos",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         403: {"description": "El administrador no recibe avisos"},
         409: {"description": "La cuenta ya no está activa"},
         422: {"model": Errores},
@@ -54,7 +54,7 @@ class Errores(BaseModel):
 )
 def registrar(
     pedido: PedidoDeDispositivo,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Response:
     try:
@@ -69,13 +69,13 @@ def registrar(
 @router.post(
     "/dispositivos/baja",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="Dar de baja el teléfono al cerrar la sesión",
     description="Deja de recibir avisos de esta cuenta. Si no estaba registrado, responde igual.",
 )
 def baja(
     pedido: BajaDeDispositivo,
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Response:
     dar_de_baja_dispositivo(notificaciones, perfil, pedido.token)
@@ -104,14 +104,14 @@ def _vista(n: Notificacion) -> NotificacionVista:
 @router.get(
     "/notificaciones",
     response_model=Centro,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="El centro de notificaciones de quien consulta",
     description=(
         "Las últimas 100, de la más nueva a la más vieja, y cuántas hay sin leer en total."
     ),
 )
 def centro(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Centro:
     lista, sin_leer = mis_notificaciones(notificaciones, perfil)
@@ -121,11 +121,11 @@ def centro(
 @router.post(
     "/notificaciones/leer-todas",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={401: {"model": SinSesion}},
+    responses={401: {"model": NoSession}},
     summary="Marcar todas las notificaciones como leídas",
 )
 def leer_todas(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
 ) -> Response:
     marcar_todas(notificaciones, perfil)
@@ -136,14 +136,14 @@ def leer_todas(
     "/notificaciones/{notificacion_id}/leer",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        401: {"model": SinSesion},
+        401: {"model": NoSession},
         404: {"description": "No hay una notificación de quien pide con ese número"},
     },
     summary="Marcar una notificación como leída",
     description="Marcar una que ya estaba leída responde igual.",
 )
 def leer(
-    perfil: Annotated[Perfil, Depends(usuario_actual)],
+    perfil: Annotated[Profile, Depends(current_user)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
     notificacion_id: Annotated[Identifier, Path()],
 ) -> Response:

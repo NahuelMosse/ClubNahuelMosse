@@ -118,6 +118,16 @@ datos push `tipo`→`kind`, `reserva_id`→`booking_id`; enlace `clubnahuelmosse
 `horarios_disponibles`→`available_slots`, `enviar_recordatorios`→`send_reminders`, `despachar_pendientes`→`dispatch_pending`,
 `barrer_cada`→`sweep_every`; `nombre_compuesto`→`composite_name`, `en_transaccion`→`in_transaction`, `conexion`→`connection`,
 `instalar`→`install`, `sembrar_admin`→`seed_admin`, `crear_app`→`create_app`, `_ciclo_de_vida`→`_lifespan`.
+Sedes, usuarios, sesión y recuperación (API): `Perfiles`→`Profiles`, `SinSesion`→`NoSession`, `usuario_actual`→`current_user`, `PerfilesSql`→`ProfilesSql`,
+`repositorio_perfiles`→`profile_repository`, `perfil_autenticado`→`authenticated_profile`, `perfil_activo`→`active_profile`, `VerificadorDeTokens`→`TokenVerifier`,
+`DatosSede`→`VenueData`, `SedesSql`→`VenuesSql`, `repositorio_sedes`→`venue_repository`, `sedes_activas`→`active_venues`, `SedeVista`→`VenueView`,
+`PedidoDeSede`→`VenueRequest`, `UsuariosSql`→`UsersSql`, `repositorio_usuarios`→`user_repository`, `RepositorioUsuarios`→`UserRepository`,
+`ProveedorIdentidad`→`IdentityProvider`, `DatosRegistro`→`RegistrationData`, `Registro`→`Registration`, `validar_registro`→`validate_registration`,
+`normalizar_correo`→`normalize_email`, `correo_valido`→`valid_email`, `normalizar_dni`→`normalize_dni`, `problemas_contrasena`→`password_problems`,
+`DatosPersonales`→`PersonalData`, `PerfilEditado`→`EditedProfile`, `validar_edicion`→`validate_edit`, `editar_perfil`→`update_profile`,
+`dar_de_baja`→`deactivate`, `PerfilPropio`→`OwnProfile`, `EnlacesSql`→`LinksSql`, `repositorio_enlaces`→`link_repository`,
+`RepositorioEnlaces`→`LinkRepository`, `hash_de`→`hash_of`, `enlace_vigente`→`link_is_valid`, `Mensaje`→`Message`, `Destinatario`→`Recipient`,
+`EnlaceReclamado`→`ClaimedLink`, `EnlaceInvalido`→`InvalidLink`, `enviar`→`send`; `Pedido*`→`*Request`, `*Vista`→`*View`, `ErroresDe*`→`*Errors`.
 Dart: `ClienteApi`→`ApiClient`, `Respuesta`→`ApiResponse`, `RutaDeLaApi`→`ApiRoute`, `rutasDeLaApi`→`apiRoutes`, `rutaDeclarada`→`isDeclaredRoute`,
 `SinConexion`→`Offline`, `ErrorDelServidor`→`ServerError`, `ServidorSinRespuesta`→`ServerTimeout`, `Sesion`→`Session`, `Perfil`→`Profile`,
 `Rol`→`Role`, `CentroDeNotificaciones`→`NotificationCenter`, `Catalogo`→`Catalog`, `TipoDeCancha`→`SpaceKind`,

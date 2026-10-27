@@ -17,7 +17,7 @@ from test_recordatorio import CanalDePrueba, Socio, a_las, un_socio
 from app.modules.notificaciones.casos_de_uso import despachar_pendientes, enviar_recordatorios
 from app.modules.notificaciones.repositorio import NotificacionesSql
 from app.modules.notificaciones.push import canal_push
-from app.modules.usuarios.sembrar_admin import main as sembrar
+from app.modules.users.seed_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 # conftest.py deja acá la base de pruebas antes de importar los tests.
