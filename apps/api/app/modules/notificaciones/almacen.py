@@ -45,7 +45,11 @@ class Notificaciones(Protocol):
     def dar_de_baja_tokens(self, tokens: Sequence[str]) -> None: ...
 
     def registrar_dispositivo(
-        self, usuario_id: UUID, token: str, plataforma: str, permiso: bool
+        self,
+        usuario_id: UUID,
+        token: str,
+        plataforma: str,
+        permiso: bool,  # noqa: FBT001
     ) -> bool:
         """Deja el dispositivo a nombre de [usuario_id]. `False` si la cuenta ya no está
         activa."""
