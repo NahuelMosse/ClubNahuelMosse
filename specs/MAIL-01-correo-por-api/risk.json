@@ -1,0 +1,20 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "infra"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/recuperacion/correo.py",
+    "apps/api/app/shared/config.py",
+    "render.yaml"
+  ],
+  "tasks": 1
+}
