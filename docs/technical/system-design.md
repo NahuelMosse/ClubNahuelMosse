@@ -40,11 +40,12 @@ C4Container
   Rel(api, correo, "SMTP con STARTTLS verificado, puerto 587")
 ```
 
-Dentro de la API (`apps/api/app`): `dominio` (reglas puras), `aplicacion` (casos de uso), `infraestructura`
-(repositorios SQL, Firebase, correo) e `interfaz` (rutas FastAPI, middleware, comandos). La regla de capas la hacen
-cumplir `tests/unit/test_arquitectura.py` y `tests/unit/test_capas.py`. El barrido de recordatorios corre como tarea de
+Dentro de la API (`apps/api/app`): una carpeta por funcionalidad en `modules/` (cada una con `rutas.py`,
+`casos_de_uso.py`, `reglas.py` y `repositorio.py`) y `shared/` para lo común (base, errores, Firebase, zona). La regla
+de capas la hacen cumplir `tests/unit/test_arquitectura_funcionalidades.py` y
+`tests/unit/test_capas_funcionalidades.py`. El barrido de recordatorios corre como tarea de
 fondo dentro del proceso web (`app/main.py`, `_ciclo_de_vida`) y también como comando de una pasada
-(`python -m app.interfaz.barrido --una-vez`).
+(`python -m app.modules.notificaciones.barrido --una-vez`).
 
 ## Data
 
@@ -52,7 +53,7 @@ Motor: PostgreSQL con la extensión `btree_gist` (`migraciones/versions/0001_mod
 las migraciones 0001 a 0008, y una vista, `reserva_con_estado`, que agrega `estado_actual` («completada» cuando una reserva
 activa ya terminó). Las claves primarias son `id bigint GENERATED ALWAYS AS IDENTITY`. Cada clave foránea apunta a `id` de
 otra tabla y los índices se nombran en cada tabla. Las fechas son `timestamptz`; la zona del club es
-`America/Argentina/Buenos_Aires` (`app/dominio/zona.py`).
+`America/Argentina/Buenos_Aires` (`app/shared/zona.py`).
 
 | Entity | Relations and cardinality | Owner module | Volume today | Growth per month |
 |---|---|---|---|---|
@@ -66,7 +67,7 @@ otra tabla y los índices se nombran en cada tabla. Las fechas son `timestamptz`
 | `notificacion` | N avisos : 1 `usuario`; 0..1 : 1 `reserva`; `reemplazada_por` apunta a otra `notificacion` | notificaciones | `not verified` | objetivo sin medir: 3 000 |
 | `notificacion_reserva` | une un aviso agrupado con las reservas que cubre (N : N; una reserva tiene a lo sumo un aviso) | notificaciones | `not verified` | objetivo sin medir: 100 |
 
-**Table → owner module.** Cada repositorio escribe sólo sus tablas; `tests/unit/test_capas.py` (`TABLAS_PROPIAS`) lo
+**Table → owner module.** Cada repositorio escribe sólo sus tablas; `tests/unit/test_capas_funcionalidades.py` (`TABLAS_PROPIAS`) lo
 verifica. Cuando un caso necesita tocar otra tabla, llama al repositorio dueño (la baja de una cuenta cancela sus
 reservas con `ReservasSql.cancelar_futuras_de`).
 
@@ -273,10 +274,10 @@ flowchart LR
 - **Environments:** hay dos, local y Render; no hay staging.
   - **local:** la API con `uvicorn` contra una Postgres local y el emulador de Firebase Auth (`firebase.json`, puerto 9099,
     `npm run emuladores`), `CORREO_MODO=buzon`, sin credenciales de Firebase: el canal push es el nulo
-    (`infraestructura/push.py`, `CanalNulo`). La app apunta a `http://10.0.2.2:8000` con `AUTH_EMULADOR`. Los tests usan
+    (`modules/notificaciones/push.py`, `CanalNulo`). La app apunta a `http://10.0.2.2:8000` con `AUTH_EMULADOR`. Los tests usan
     una base `*_test` (`apps/api/README.md`, «Probar»).  - **Render:** `render.yaml` define el web service Python `clubnahuelmosse-api` y la base `clubnahuelmosse-db`, ambos
     `plan: free`, y es la única fuente de la configuración del despliegue. El despliegue no se hizo todavía: el
-    escenario RNF-01-H06-01 se saltea sin `API_URL_NUBE`. El health check es `/health`, que no toca la base ni Firebase (`interfaz/salud.py`).
+    escenario RNF-01-H06-01 se saltea sin `API_URL_NUBE`. El health check es `/health`, que no toca la base ni Firebase (`salud.py`).
 - **Deploy and rollback:** el despliegue sale solo con cada commit de la rama enlazada; la vuelta atrás de código es redeploy
   del commit anterior. Pasos en el runbook.
 - **Expected scaling:** una instancia web sin escalado automático ni más de un proceso. Lo primero que se agota es el pool
@@ -308,8 +309,8 @@ flowchart LR
 
 ## Errors
 
-Taxonomía de la API. Las excepciones del dominio están en `app/dominio/errores.py` (reexportadas por
-`app/aplicacion/errores.py`); las rutas las traducen a HTTP con `interfaz/respuestas.py`.
+Taxonomía de la API. Las excepciones del negocio están en `app/shared/errores.py`; las rutas las traducen a HTTP con
+`shared/respuestas.py`.
 
 | Error | Class (domain, operational, bug) | Comes from | Translated to | What the user sees | Reference id |
 |---|---|---|---|---|---|
@@ -319,7 +320,7 @@ Taxonomía de la API. Las excepciones del dominio están en `app/dominio/errores
 | `NoEncontrada` | domain | casos de uso | 404 sin cuerpo | no encontrado | no |
 | `NoAutenticado` | domain | `perfil_autenticado` | 401 con `WWW-Authenticate: Bearer` | vuelve al inicio de sesión | no |
 | `Demorado` | operational | Firebase (`TOO_MANY_ATTEMPTS`) | 429 | pedir que reintente más tarde | no |
-| JSON mal formado, dato fuera de rango o faltante | domain | validación de FastAPI (`interfaz/entradas.py`) | 422 con `{"errores": {campo: mensaje}}`, sin repetir lo recibido | el mensaje junto al campo | no |
+| JSON mal formado, dato fuera de rango o faltante | domain | validación de FastAPI (`shared/entradas.py`) | 422 con `{"errores": {campo: mensaje}}`, sin repetir lo recibido | el mensaje junto al campo | no |
 | Base caída, cualquier otra excepción | bug | cualquier capa | 500 | «Ocurrió un error.» | no |
 
 ## External dependencies
@@ -328,10 +329,10 @@ Una fila por llamada externa. Los tiempos salen del código; lo que el código n
 
 | Dependency | Timeout | Retries (backoff, jitter, idempotent only) | Circuit breaker | Fallback | What happens if it fails |
 |---|---|---|---|---|---|
-| PostgreSQL (`app/infraestructura/db.py`) | los valores por defecto del driver y del pool | sin reintentos; `pool_pre_ping=True` comprueba la conexión antes de usarla | no | ninguno | si falla, el pedido responde 500 |
+| PostgreSQL (`app/shared/db.py`) | los valores por defecto del driver y del pool | sin reintentos; `pool_pre_ping=True` comprueba la conexión antes de usarla | no | ninguno | si falla, el pedido responde 500 |
 | Firebase Authentication: SDK de administración y API REST de Identity Toolkit (`identidad.py`) | SDK: `httpTimeout` de 4 s; REST: `timeout=4` s de `urllib`; la verificación de la firma de un token, `not verified` | SDK: el cliente de `firebase-admin` reintenta una vez ante errores de conexión o de lectura y hasta 4 veces ante 500 o 503, con espera exponencial; REST: ninguno | no | ninguno | si falla, un token inválido, vencido o revocado da 401; si Firebase no responde, el pedido da 500; `TOO_MANY_ATTEMPTS` da 429; crear cuenta o cambiar contraseña falla el pedido |
 | Firebase Cloud Messaging (`push.py`) | `httpTimeout` de 10 s | el cliente de `firebase-admin` (arriba); un aviso `fallida` no se reintenta | no | sin credenciales, el canal nulo deja el aviso como `sin_canal` | si falla, el aviso queda `fallida` y la persona lo ve igual en el centro de avisos de la app; el token que FCM rechaza como inválido se da de baja; la reserva no cambia |
-| SMTP (`app/infraestructura/correo.py`) | 10 s | sin reintentos | no | ninguno | si falla, el error va al log sin la dirección y la respuesta es la misma que para un correo sin cuenta; la persona no recibe el enlace y puede pedir otro. STARTTLS con `ssl.create_default_context()`: verifica certificado y nombre |
+| SMTP (`app/modules/recuperacion/correo.py`) | 10 s | sin reintentos | no | ninguno | si falla, el error va al log sin la dirección y la respuesta es la misma que para un correo sin cuenta; la persona no recibe el enlace y puede pedir otro. STARTTLS con `ssl.create_default_context()`: verifica certificado y nombre |
 | Firebase Authentication desde la app (`firebase_auth`) | la app corta cada pedido a la API a los 30 s (`lib/api/cliente_api.dart`); al retomar la sesión, 3 s (`lib/sesion/sesion.dart`) | ninguno automático; cada pantalla ofrece reintentar | no | ninguno | si falla, se ve el aviso de error de red con reintento; retomar la sesión sin red no la cierra |
 
 ## Threat model
@@ -343,7 +344,7 @@ Cuatro superficies.
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
 | T-01 | Spoofing | alguien se hace pasar por otra cuenta con un token falso, vencido, de otro proyecto o revocado | mitigate: `verify_id_token` con `check_revoked=True` (`identidad.py`); la API no arranca con el emulador junto a credenciales reales o un proyecto que no es de demo | autor del repo | `tests/integracion/test_sesion_api.py`, `tests/escenarios/test_seguridad_api.py` (`@REV-01-S18`) |
-| T-02 | Tampering | pedido con cuerpo mal formado, campos de más, números fuera de rango o NUL en un texto | mitigate: la validación de FastAPI y Pydantic, que responde 422 sin repetir lo recibido (`interfaz/entradas.py`) | autor del repo | `tests/escenarios/test_seguridad_cuerpo.py` |
+| T-02 | Tampering | pedido con cuerpo mal formado, campos de más, números fuera de rango o NUL en un texto | mitigate: la validación de FastAPI y Pydantic, que responde 422 sin repetir lo recibido (`shared/entradas.py`) | autor del repo | `tests/escenarios/test_seguridad_cuerpo.py` |
 | T-03 | Repudiation | una persona niega haber cancelado o anulado una reserva | mitigate: `cancelada_por`, `cancelada_en` y `motivo` en `reserva`; el log por pedido con el usuario y la referencia | autor del repo | `tests/integracion/test_anular_reserva_api.py` |
 | T-04 | Information disclosure | consultar si un DNI o un correo ya están registrados, o leer reservas ajenas | mitigate lo segundo (las consultas filtran por dueño: una reserva ajena da 404); accept lo primero: `POST /registro` y `PUT /yo` responden 409 con el campo repetido, porque la persona necesita saber qué corregir | autor del repo | `tests/escenarios/test_seguridad_api.py` |
 | T-05 | Denial of service | ráfagas de pedidos | accept: la API no limita la frecuencia; sólo Firebase frena los intentos de contraseña (`Demorado`, 429) | autor del repo | `not verified` |
@@ -353,7 +354,7 @@ Cuatro superficies.
 
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
-| T-07 | Spoofing | otra app abre el enlace de recuperación del correo | mitigate: el código va después del «#» y no llega al servidor; vigencia de 30 minutos y un solo uso (`aplicacion/recuperacion.py`) | autor del repo | `tests/integracion/test_recuperacion_api.py` |
+| T-07 | Spoofing | otra app abre el enlace de recuperación del correo | mitigate: el código va después del «#» y no llega al servidor; vigencia de 30 minutos y un solo uso (`modules/recuperacion/casos_de_uso.py`) | autor del repo | `tests/integracion/test_recuperacion_api.py` |
 | T-08 | Tampering | modificar el APK o las claves que lleva | accept: las `--dart-define` de Firebase son identificadores públicos del proyecto, no secretos; el APK `release` se firma con la clave de depuración mientras no se configure otra (`apps/mobile/README.md`) | autor del repo | `not verified` |
 | T-09 | Repudiation | la app no deja rastro de sus fallos | mitigate en parte: `errores_no_manejados.dart` captura los errores no manejados, pero sólo los imprime en el teléfono | autor del repo | `not verified` |
 | T-10 | Information disclosure | datos de la sesión en el teléfono | mitigate: `shared_preferences` guarda sólo la apariencia, el permiso de avisos y el token de FCM; el perfil no se guarda; la sesión la guarda `firebase_auth` | autor del repo | `not verified` (no se inspeccionó el almacenamiento del teléfono) |
@@ -415,7 +416,7 @@ una persona; lo que sigue es lo que el sistema hace hoy.
 | nombre, apellido (`usuario.nombre`, `usuario.apellido`) | socios y administradores | identifying | identificar a la persona en el club | pendiente de una persona (consentimiento al registrarse: `not verified`) | `usuario`; Firebase no los guarda | sin plazo | no se borra: baja lógica |
 | DNI (`usuario.dni`) | socios y administradores | identifying | impedir cuentas duplicadas y buscar socios | pendiente de una persona | `usuario`; el log no lo guarda (sin query string) | sin plazo; la baja libera el DNI para otra cuenta | no se borra: baja lógica |
 | fecha de nacimiento (`usuario.fecha_nacimiento`) | socios y administradores | identifying | requisito del perfil del enunciado | pendiente de una persona | `usuario` | sin plazo | no se borra |
-| correo (`usuario.correo`) | socios y administradores | identifying | iniciar sesión y recuperar la contraseña | pendiente de una persona | `usuario`, Firebase Authentication, el servidor de correo y `correo_saliente` en modo buzón; no va al log | sin plazo | la baja borra la cuenta de Firebase (`aplicacion/baja.py`); en la base queda |
+| correo (`usuario.correo`) | socios y administradores | identifying | iniciar sesión y recuperar la contraseña | pendiente de una persona | `usuario`, Firebase Authentication, el servidor de correo y `correo_saliente` en modo buzón; no va al log | sin plazo | la baja borra la cuenta de Firebase (`modules/usuarios/baja.py`); en la base queda |
 | contraseña | socios y administradores | sensitive | autenticar | pendiente de una persona | sólo en Firebase Authentication; la base guarda `contrasena_cambiada_en` | la gestiona Firebase | la baja borra la cuenta de Firebase |
 | token de dispositivo (`dispositivo.token`) | socios | identifying | enviar avisos | permiso del sistema operativo guardado en `dispositivo.permiso` | `dispositivo`; Firebase Cloud Messaging | sin plazo; se da de baja al cerrar sesión | baja lógica |
 | reservas y avisos (`reserva`, `notificacion`) | socios | identifying | historial y recordatorios | pendiente de una persona | `reserva`, `notificacion`, `notificacion_reserva` | sin plazo; el historial se conserva a propósito | no se borra |

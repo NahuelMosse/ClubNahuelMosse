@@ -90,7 +90,7 @@ No hay alertas definidas ni `runbook_url`. Lo que sigue es por síntoma, para qu
   el servicio. En la tabla `notificacion`, el `envio` del aviso dice qué pasó: `sin_permiso` (la persona no dio permiso),
   `sin_canal` (falta `FIREBASE_CREDENCIALES_JSON`), `fallida` (FCM falló; el log trae `aviso_sin_enviar` con el número del
   aviso).
-- **Mitigate:** disparar el barrido desde afuera con `uv run python -m app.interfaz.barrido --una-vez` (por ejemplo, con un
+- **Mitigate:** disparar el barrido desde afuera con `uv run python -m app.modules.notificaciones.barrido --una-vez` (por ejemplo, con un
   cron externo), o mantener el servicio despierto en la hora previa a los turnos.
 - **Verify:** el aviso pasa a `enviada`.
 - **Escalate:** el arreglo de fondo es un cron que llame al barrido; el plan free de Render no tiene cron jobs.
@@ -160,7 +160,7 @@ Ante una fuga, en este orden: revocar todo lo expuesto en la misma operación, e
 valor viejo falla (401 o 403), limpiar el lugar de la fuga, revisar el uso del secreto en la ventana expuesta y dejarlo
 registrado. Borrar el commit o reiniciar la API no revoca nada. Para cortar las sesiones de una cuenta, se le cambia la
 contraseña: la API revoca sus refresh tokens al cambiarla (`ProveedorFirebase.cambiar_contrasena` en
-`app/infraestructura/identidad.py`) y verifica cada token con `check_revoked=True`. No hay un comando para revocar las
+`app/shared/identidad.py`) y verifica cada token con `check_revoked=True`. No hay un comando para revocar las
 sesiones de todas las cuentas a la vez.
 
 No hay un escáner de secretos como pre-commit ni un gestor de secretos por ambiente: hoy el repo sólo evita versionar el
