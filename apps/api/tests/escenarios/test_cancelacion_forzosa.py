@@ -94,8 +94,8 @@ def test_al_anular_una_reserva_el_usuario_recibe_el_aviso_con_deporte_sede_fecha
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.titulo == TITULO
-    assert aviso.cuerpo == cuerpo_esperado(socio.sede, "21:00")
+    assert aviso.title == TITULO
+    assert aviso.body == cuerpo_esperado(socio.sede, "21:00")
 
     # Verifica: queda también en el centro, sin leer.
     centro = socio.centro()
@@ -103,8 +103,8 @@ def test_al_anular_una_reserva_el_usuario_recibe_el_aviso_con_deporte_sede_fecha
     [entrada] = centro["notificaciones"]
     assert (entrada["tipo"], entrada["titulo"], entrada["cuerpo"]) == (
         "cancelacion_forzosa",
-        aviso.titulo,
-        aviso.cuerpo,
+        aviso.title,
+        aviso.body,
     )
 
 
@@ -123,7 +123,7 @@ def test_al_tocar_el_aviso_la_app_sabe_que_reserva_abrir_y_el_historial_la_trae_
 
     # Verifica: el push y el centro llevan el tipo y el número de la reserva.
     [(_, aviso)] = canal.enviados
-    assert aviso.datos == {"tipo": "cancelacion_forzosa", "reserva_id": str(reserva["id"])}
+    assert aviso.data == {"tipo": "cancelacion_forzosa", "reserva_id": str(reserva["id"])}
     [entrada] = socio.centro()["notificaciones"]
     assert entrada["reserva_id"] == reserva["id"]
 
@@ -184,7 +184,7 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
             dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
 
     # Verifica: cada persona recibe un solo aviso, con los datos de su propia reserva.
-    assert [(t, a.cuerpo) for t, a in canal.enviados] == [
+    assert [(t, a.body) for t, a in canal.enviados] == [
         ([uno.dispositivo], cuerpo_esperado(uno.sede, "20:00", "Baja de la sede")),
         ([otro.dispositivo], cuerpo_esperado(otro.sede, "21:00", "Baja de la sede")),
     ]
@@ -221,8 +221,8 @@ def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con
 
     # Verifica: el último push dice lo mismo y lleva a Mis reservas sin una reserva puntual.
     _, aviso = canal.enviados[-1]
-    assert (aviso.titulo, aviso.cuerpo) == (entrada["titulo"], entrada["cuerpo"])
-    assert aviso.datos == {"tipo": "cancelacion_forzosa"}
+    assert (aviso.title, aviso.body) == (entrada["titulo"], entrada["cuerpo"])
+    assert aviso.data == {"tipo": "cancelacion_forzosa"}
 
     # Verifica: las dos figuran anuladas en el historial, cada una con su motivo.
     historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
@@ -298,7 +298,7 @@ def test_si_el_usuario_ya_habia_cancelado_la_reserva_no_recibe_aviso(
     assert anular(socio, admin, reserva) == 409
 
     # Verifica: sólo quedó la confirmación de su propia cancelación.
-    assert [a.datos["tipo"] for _, a in canal.enviados] == ["cancelacion_usuario"]
+    assert [a.data["tipo"] for _, a in canal.enviados] == ["cancelacion_usuario"]
     assert [e["tipo"] for e in socio.centro()["notificaciones"]] == ["cancelacion_usuario"]
 
 

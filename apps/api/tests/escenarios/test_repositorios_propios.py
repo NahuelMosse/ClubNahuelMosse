@@ -157,7 +157,7 @@ def test_el_recordatorio_sale_una_hora_antes(
     lejos = _reserva(motor, mundo, base + timedelta(hours=1), creada=creada)
 
     def ids(conn: Connection) -> list[UUID]:
-        return [r.reserva_id for r in NotificationsSql(conn).due(ahora, mundo["usuario"])]
+        return [r.booking_id for r in NotificationsSql(conn).due(ahora, mundo["usuario"])]
 
     with motor.connect() as conn:
         assert ids(conn) == [cerca]

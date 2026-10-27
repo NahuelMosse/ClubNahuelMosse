@@ -50,10 +50,10 @@ def test_al_cancelar_una_reserva_se_envia_la_confirmacion_con_la_reserva_y_el_ho
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.titulo == "Reserva cancelada"
-    assert aviso.cuerpo == cuerpo_esperado(socio.sede, "21:00")
-    assert aviso.datos["reserva_id"] == str(reserva["id"])
-    assert aviso.datos["tipo"] == "cancelacion_usuario"
+    assert aviso.title == "Reserva cancelada"
+    assert aviso.body == cuerpo_esperado(socio.sede, "21:00")
+    assert aviso.data["reserva_id"] == str(reserva["id"])
+    assert aviso.data["tipo"] == "cancelacion_usuario"
 
 
 def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
@@ -71,7 +71,7 @@ def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
     # Verifica: el push y el centro llevan el número de la reserva, que el historial lista
     # como cancelada.
     [(_, aviso)] = canal.enviados
-    assert aviso.datos["reserva_id"] == str(reserva["id"])
+    assert aviso.data["reserva_id"] == str(reserva["id"])
     [entrada] = socio.centro()["notificaciones"]
     assert entrada["reserva_id"] == reserva["id"]
     historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
