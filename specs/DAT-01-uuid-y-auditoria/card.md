@@ -30,6 +30,8 @@ not_read:
   reuses: el tipo `Identificador` de entradas.py, que pasa a UUID en un solo lugar
 - T3 · S3,DAT-01-ASM-05 · apps/mobile/lib/espacios/espacio.dart (data), apps/mobile/lib/sedes/sede.dart (data), apps/mobile/lib/sedes/fotos.dart (presentation), apps/mobile/lib/reservas/reservas.dart (data), apps/mobile/lib/admin/historial_reservas.dart (data), apps/mobile/lib/notificaciones/notificacion.dart (data), apps/mobile/lib/app.dart (presentation) · tests: apps/mobile/test/ids_uuid_test.dart "la app lee los ids como texto UUID y navega con ellos @DAT-01-S3"; apps/mobile/test/ids_uuid_test.dart "un aviso con reserva_id UUID abre la reserva y uno con reserva_id numérico abre el centro de notificaciones @assumption:DAT-01-ASM-05"
   reuses: los modelos existentes; el id pasa de int a String
+- T4 · S1,S2,DAT-01-ASM-01,DAT-01-ASM-03,DAT-01-ASM-04 · docs/technical/modelo-de-datos.md · tests: apps/api/tests/unit/test_documentacion_del_modelo_corregida.py "cada tabla y columna que nombra la página del modelo de datos existe en las migraciones"; apps/api/tests/escenarios/test_documentacion_modelo_vigente.py "el modelo de datos lleva columnas, claves, índices y triggers de cada tabla"
+  reuses: la página del modelo de DOC-01, con las claves uuid, uuid_v7() y creado_en/modificado_en en las 9 tablas
 
 ## Changes to existing behavior
 
