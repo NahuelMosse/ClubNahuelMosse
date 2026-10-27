@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 
-from app.config import config
+from app.shared.config import config
 
 
 def test_json_roto_da_400(api: TestClient) -> None:

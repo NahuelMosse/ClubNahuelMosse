@@ -22,10 +22,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.aplicacion.recuperacion import Mensaje
-from app.config import config
-from app.infraestructura import correo
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.recuperacion.casos_de_uso import Mensaje
+from app.shared.config import config
+from app.modules.recuperacion import correo
+from app.modules.usuarios.sembrar_admin import main as sembrar
 from app.main import crear_app
 
 RAIZ_API = Path(__file__).resolve().parents[2]

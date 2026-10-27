@@ -73,6 +73,9 @@ class SistemaFalso implements SistemaDeNotificaciones {
   Future<bool> permitido() async => concedido;
 
   @override
+  Future<bool> preguntado() async => true;
+
+  @override
   Future<bool> solicitarPermiso() async {
     solicitudes++;
     concedido = true;

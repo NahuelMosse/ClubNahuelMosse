@@ -17,7 +17,7 @@ cd apps/api
 uv sync
 ```
 
-La configuración llega por variables de entorno. `app/config.py` también lee un archivo `.env`
+La configuración llega por variables de entorno. `app/shared/config.py` también lee un archivo `.env`
 local, que no se versiona; `.env.example` lista las variables. `FIREBASE_AUTH_EMULATOR_HOST`,
 `GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_CONTRASENA` y `TEST_DATABASE_URL` se leen sólo del
 entorno del proceso: en el `.env` no tienen efecto.
@@ -48,7 +48,7 @@ uv run alembic upgrade head
 La cuenta de administrador no se registra desde la app; se siembra:
 
 ```sh
-ADMIN_CONTRASENA=<contraseña> uv run python -m app.interfaz.sembrar_admin \
+ADMIN_CONTRASENA=<contraseña> uv run python -m app.modules.usuarios.sembrar_admin \
   --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
 ```
 
@@ -82,7 +82,7 @@ FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; f
 
 ## Catálogo de deportes
 
-El catálogo es fijo y vive en `app/dominio/espacios.py`; la app lo pide con `GET /espacios/catalogo`.
+El catálogo es fijo y vive en `app/modules/espacios/reglas.py`; la app lo pide con `GET /espacios/catalogo`.
 Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
 (B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
 
@@ -125,7 +125,7 @@ barrido corre como un comando de una pasada, para que lo dispare un cron o una t
 
 ```sh
 cd apps/api
-uv run python -m app.interfaz.barrido --una-vez
+uv run python -m app.modules.notificaciones.barrido --una-vez
 ```
 
 Termina con código 0 si el barrido corrió y 1 si falló. Quién lo dispara no está decidido:
@@ -181,7 +181,7 @@ El `render.yaml` de la raíz del repo describe todo: un web service de Python pa
    base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.interfaz.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.modules.usuarios.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
    ```
 
 6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y

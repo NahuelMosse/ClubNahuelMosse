@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from app.interfaz import cuerpo
 from app.main import crear_app
+from app.shared import cuerpo
 
 UN_MB = 1024 * 1024
 

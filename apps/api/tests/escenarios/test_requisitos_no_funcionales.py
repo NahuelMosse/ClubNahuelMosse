@@ -29,6 +29,7 @@ PUBLICAS = {
     ("post", "/recuperacion/consulta"),
     ("put", "/recuperacion"),
     ("get", "/enlace/recuperar"),
+    ("get", "/health"),
 }
 
 # ic_launcher.png que genera `flutter create`, por densidad.
@@ -290,7 +291,8 @@ def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     readme = _leer(APP / "README.md")
     definidas = set(
         re.findall(
-            r"String\.fromEnvironment\(\s*'([A-Z_]+)'", _leer(APP / "lib" / "configuracion.dart")
+            r"String\.fromEnvironment\(\s*'([A-Z_]+)'",
+            _leer(APP / "lib" / "comun" / "configuracion.dart"),
         )
     )
 
@@ -309,7 +311,7 @@ def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
 def test_el_readme_del_backend_alcanza_para_configurar_ejecutar_y_desplegar() -> None:
     """siguiendo sólo el README del backend se configura, ejecuta y despliega la API @RNF-01-H07-02 @supuesto:RNF-01-SUP-05"""
     readme = _leer(API / "README.md")
-    configuracion = _leer(API / "app" / "config.py")
+    configuracion = _leer(API / "app" / "shared" / "config.py")
     variables = {
         campo.upper()
         for campo in re.findall(r"^    ([a-z_]+): ", configuracion, re.M)

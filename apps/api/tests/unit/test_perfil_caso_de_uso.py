@@ -2,9 +2,10 @@ from datetime import date
 
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos
-from app.aplicacion.perfil import editar_perfil
-from app.dominio.usuarios import DatosPersonales, Perfil, PerfilEditado
+from app.modules.sesion.perfil import Perfil
+from app.modules.usuarios.perfil import editar_perfil
+from app.modules.usuarios.reglas import DatosPersonales, PerfilEditado
+from app.shared.errores import DatosInvalidos
 
 HOY = date(2026, 9, 27)
 PERFIL = Perfil(

@@ -3,8 +3,8 @@
 import pytest
 from sqlalchemy import Engine
 
-from app.dominio.errores import Cambiado
-from app.infraestructura.reservas import ReservasSql
+from app.modules.reservas.repositorio import ReservasSql
+from app.shared.errores import Cambiado
 from tests.integracion.test_api_limpia_reservas import _a_las, _agenda, cancha
 
 __all__ = ["cancha"]

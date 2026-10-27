@@ -271,7 +271,7 @@ del resto de las consultas no se midió.
 
 ## Quién escribe cada tabla
 
-Cada repositorio de `apps/api/app/infraestructura` escribe sólo sus tablas; el test `tests/unit/test_capas.py` lo verifica.
+Cada repositorio (`apps/api/app/modules/<funcionalidad>/repositorio.py`) escribe sólo sus tablas; el test `tests/unit/test_capas_funcionalidades.py` lo verifica.
 Si un caso necesita otra tabla, llama al repositorio dueño (por ejemplo, dar de baja una cuenta cancela sus reservas
 mediante el de reservas).
 

@@ -1,5 +1,6 @@
 """La documentación del modelo de datos y de la navegación dice lo que hay en el código."""
 
+# ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
 import re
 from pathlib import Path
 
@@ -17,9 +18,10 @@ def _texto(ruta: Path) -> str:
     return ruta.read_text(encoding="utf-8")
 
 
-def _subir(migracion: Path) -> str:
-    """El cuerpo de `upgrade()` de una migración."""
-    return _texto(migracion).split("def upgrade", 1)[1].split("def downgrade", 1)[0]
+def _sql(migracion: Path) -> str:
+    """El cuerpo de `upgrade()` con las cadenas contiguas de Python unidas en una sola."""
+    subir = _texto(migracion).split("def upgrade", 1)[1].split("def downgrade", 1)[0]
+    return re.sub(r'"\s*\n\s*"', "", subir)
 
 
 def _partes(cuerpo: str) -> list[str]:
@@ -40,19 +42,24 @@ def _tablas() -> dict[str, set[str]]:
     """Las columnas de cada tabla tal como las dejan las migraciones aplicadas en orden."""
     tablas: dict[str, set[str]] = {}
     for migracion in MIGRACIONES:
-        sql = _subir(migracion)
+        sql = _sql(migracion)
         for nombre, cuerpo in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", sql, re.S):
             sin_comentarios = re.sub(r"--[^\n]*", "", cuerpo)
             primeras = (p.split()[0].lower() for p in _partes(sin_comentarios) if p.strip())
             tablas[nombre] = {c for c in primeras if c not in NO_COLUMNA}
-        for tabla, cambios in re.findall(r"ALTER TABLE (\w+)\s+((?:ADD|DROP) COLUMN.*?)\"", sql, re.S):
-            for accion, columna in re.findall(r"(ADD|DROP) COLUMN (?:IF (?:NOT )?EXISTS )?(\w+)", cambios):
+        for tabla, cambios in re.findall(
+            r"ALTER TABLE (\w+)\s+((?:ADD|DROP) COLUMN.*?)\"", sql, re.S
+        ):
+            for accion, columna in re.findall(
+                r"(ADD|DROP) COLUMN (?:IF (?:NOT )?EXISTS )?(\w+)", cambios
+            ):
                 (tablas[tabla].add if accion == "ADD" else tablas[tabla].discard)(columna)
     return tablas
 
 
 def _palabras_de_las_migraciones() -> set[str]:
-    return set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_subir(m) for m in MIGRACIONES)))
+    """Todo nombre que aparece en las migraciones, también los de las constantes de módulo."""
+    return set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_texto(m) for m in MIGRACIONES)))
 
 
 def _secciones(texto: str, nivel: str) -> dict[str, str]:
@@ -74,7 +81,9 @@ def _diagrama_er(texto: str) -> dict[str, set[str]]:
     return columnas
 
 
-def test_cada_tabla_y_columna_que_nombra_la_pagina_del_modelo_de_datos_existe_en_las_migraciones() -> None:
+def test_cada_tabla_y_columna_que_nombra_la_pagina_del_modelo_de_datos_existe_en_las_migraciones() -> (
+    None
+):
     """cada tabla y columna que nombra la página del modelo de datos existe en las migraciones @DOC-01-S1"""
     tablas = _tablas()
     texto = _texto(MODELO)
@@ -113,10 +122,14 @@ def test_la_pagina_del_modelo_de_datos_explica_cada_tabla_de_las_migraciones() -
         )
 
 
-def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_migraciones_todos() -> None:
+def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_migraciones_todos() -> (
+    None
+):
     """los estados de reserva y de aviso de la página son los que admiten las migraciones, todos @DOC-01-S1"""
-    sql = "\n".join(_subir(m) for m in MIGRACIONES)
-    reserva = set(re.findall(r"'(\w+)'", re.search(r"estado IN \(([^)]*)\)", sql).group(1)))
+    sql = "\n".join(_sql(m) for m in MIGRACIONES)
+    por_estado = re.search(r"estado IN \(([^)]*)\)", sql)
+    assert por_estado is not None
+    reserva = set(re.findall(r"'(\w+)'", por_estado.group(1)))
     envio = set(re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1]))
     estados = _secciones(_texto(MODELO), "##")["Estados"]
     por_diagrama = _secciones(estados, "###")
@@ -131,7 +144,9 @@ def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_
     assert en_diagrama("notificacion.envio") == envio
 
 
-def test_la_seccion_data_de_system_design_remite_a_la_pagina_del_modelo_de_datos_sin_repetir_sus_columnas() -> None:
+def test_la_seccion_data_de_system_design_remite_a_la_pagina_del_modelo_de_datos_sin_repetir_sus_columnas() -> (
+    None
+):
     """la sección Data de system-design remite a la página del modelo de datos sin repetir sus columnas @DOC-01-S3 @assumption:DOC-01-ASM-01"""
     datos = _secciones(_texto(DISENO), "##")["Data"]
 
@@ -152,8 +167,12 @@ def _rutas_de_app_dart() -> set[str]:
         sangria = len(coincide.group(1))
         while pila and pila[-1][0] >= sangria:
             pila.pop()
-        padre = pila[-1][1] if pila else ""
-        ruta = coincide.group(2) if coincide.group(2).startswith("/") else f"{padre}/{coincide.group(2)}"
+        padre = pila[-1][1].rstrip("/") if pila else ""
+        ruta = (
+            coincide.group(2)
+            if coincide.group(2).startswith("/")
+            else f"{padre}/{coincide.group(2)}"
+        )
         pila.append((sangria, ruta))
         rutas.add(ruta)
     return rutas

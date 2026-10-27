@@ -126,6 +126,8 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _activo = true;
     final sesion = ++_sesionActual;
     _desde = enDelClub(ahora()).subtract(const Duration(minutes: 5));
+    if (!await _sistema.preguntado()) await _sistema.solicitarPermiso();
+    if (_liberado || sesion != _sesionActual) return;
     await _revisarPermiso(registrar: true);
     if (_liberado || sesion != _sesionActual) return;
     await _sondear();

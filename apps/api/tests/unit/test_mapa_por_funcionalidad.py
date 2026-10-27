@@ -2,21 +2,20 @@ import re
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
-APP = RAIZ / "apps" / "api" / "app"
+MODULOS = RAIZ / "apps" / "api" / "app" / "modules"
 MAPA = RAIZ / "docs" / "technical" / "mapa-del-codigo.md"
-CAPAS = ["interfaz", "aplicacion", "dominio", "infraestructura"]
-# Rutas que sólo se montan en las pruebas: no son de ninguna funcionalidad.
-FUERA = {"interfaz/pruebas.py"}
 
 
-def _filas() -> list[list[str]]:
+def _filas() -> dict[str, set[str]]:
     texto = MAPA.read_text(encoding="utf-8")
     seccion = texto.split("### Por funcionalidad", 1)[1].split("\n#", 1)[0]
-    return [
-        [c.strip() for c in linea.strip("|").split("|")]
-        for linea in seccion.splitlines()
-        if linea.startswith("| ") and not linea.startswith("| Funcionalidad")
-    ]
+    filas: dict[str, set[str]] = {}
+    for linea in seccion.splitlines():
+        if not linea.startswith("| ") or linea.startswith("| Funcionalidad"):
+            continue
+        nombre, *celdas = [c.strip() for c in linea.strip("|").split("|")]
+        filas[nombre.strip("`")] = set(re.findall(r"`([\w.]+\.py)`", " ".join(celdas)))
+    return filas
 
 
 def test_el_mapa_del_codigo_lista_por_funcionalidad_un_archivo_de_cada_capa_que_existe() -> None:
@@ -24,18 +23,20 @@ def test_el_mapa_del_codigo_lista_por_funcionalidad_un_archivo_de_cada_capa_que_
     @ARQ-01-ASM-03"""
     filas = _filas()
     assert filas
-    nombrados: set[str] = set()
-    for fila in filas:
-        for capa, celda in zip(CAPAS, fila[1:5], strict=True):
-            archivos = re.findall(r"`([\w.]+\.py)`", celda)
-            assert archivos, f"{fila[0]} no nombra un archivo de {capa}"
-            for archivo in archivos:
-                assert (APP / capa / archivo).is_file(), f"{capa}/{archivo}"
-                nombrados.add(f"{capa}/{archivo}")
+    for nombre, archivos in filas.items():
+        assert archivos, f"{nombre} no nombra ningún archivo"
+        for archivo in archivos:
+            assert (MODULOS / nombre / archivo).is_file(), f"{nombre}/{archivo}"
+
+
+def test_el_mapa_del_codigo_lista_cada_funcionalidad_con_sus_archivos() -> None:
+    """el mapa del código lista cada funcionalidad con sus archivos
+    @ARQ-04-S1"""
+    filas = _filas()
     existentes = {
-        f"{capa}/{a.name}"
-        for capa in CAPAS
-        for a in (APP / capa).glob("*.py")
-        if a.name != "__init__.py"
+        carpeta.name: {a.name for a in carpeta.glob("*.py") if a.name != "__init__.py"}
+        for carpeta in MODULOS.iterdir()
+        if carpeta.is_dir() and carpeta.name != "__pycache__"
     }
-    assert existentes - nombrados - FUERA == set()
+    assert existentes
+    assert filas == existentes

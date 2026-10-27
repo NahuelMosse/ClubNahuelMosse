@@ -15,8 +15,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, event, text
 from sqlalchemy.exc import IntegrityError
 
-from app.infraestructura.db import motor as motor_de_la_app
-from app.interfaz.sembrar_admin import main as sembrar
+from app.shared.db import motor as motor_de_la_app
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -376,7 +376,9 @@ def test_las_sedes_y_el_historial_global_hacen_consultas_fijas(
 
 
 def _casos_de_uso() -> list[str]:
-    fuente = (RAIZ_API / "app" / "aplicacion" / "reservas.py").read_text(encoding="utf-8")
+    fuente = (RAIZ_API / "app" / "modules" / "reservas" / "casos_de_uso.py").read_text(
+        encoding="utf-8"
+    )
     return [
         n.name
         for n in ast.parse(fuente).body

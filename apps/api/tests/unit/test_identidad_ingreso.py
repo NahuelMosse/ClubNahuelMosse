@@ -8,7 +8,7 @@ from typing import Any, cast
 
 import pytest
 
-from app.infraestructura.identidad import Demorado, ProveedorFirebase
+from app.shared.identidad import Demorado, ProveedorFirebase
 
 
 def _responde_400(monkeypatch: pytest.MonkeyPatch, mensaje: str) -> None:

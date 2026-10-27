@@ -3,13 +3,14 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.aplicacion.notificaciones import (
+from app.modules.notificaciones import push
+from app.modules.notificaciones.casos_de_uso import (
     CanalNoConfigurado,
     Pendiente,
     ResultadoDeEnvio,
     enviar_recordatorios,
 )
-from app.dominio.notificaciones import (
+from app.modules.notificaciones.reglas import (
     Aviso,
     Envio,
     Notificacion,
@@ -17,7 +18,6 @@ from app.dominio.notificaciones import (
     mensaje_recordatorio,
     tipo_corto,
 )
-from app.infraestructura import push
 
 AHORA = datetime(2026, 10, 1, 23, 0, tzinfo=UTC)
 

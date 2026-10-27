@@ -18,14 +18,17 @@ List<(String, String)> _filas() {
     '../../docs/technical/navegacion-de-la-app.md',
   ).readAsStringSync();
   final tabla = texto.split('## Rutas').last.split('\n## ').first;
-  final fila = RegExp(r'^\| `([^`]+)` \|.*\| ([^|]+) \| [^|]+ \|$', multiLine: true);
+  final fila = RegExp(
+    r'^\| `([^`]+)` \|.*\| ([^|]+) \| [^|]+ \|$',
+    multiLine: true,
+  );
   return [
     for (final m in fila.allMatches(tabla))
       (
-        m.group(1)!.replaceAllMapped(RegExp(r':\w+'), (_) => '1').replaceAll(
-          RegExp(r'=(?=&|$)'),
-          '=1',
-        ),
+        m
+            .group(1)!
+            .replaceAllMapped(RegExp(r':\w+'), (_) => '1')
+            .replaceAll(RegExp(r'=(?=&|$)'), '=1'),
         m.group(2)!.trim(),
       ),
   ];
@@ -45,6 +48,7 @@ void main() {
         for (final sesion in ['ninguna', 'usuario', 'admin']) {
           await tester.pumpWidget(
             App(
+              key: UniqueKey(),
               api: apiRutas({}),
               sesion: SesionFalsa(switch (sesion) {
                 'usuario' => perfilUsuario,
@@ -65,11 +69,22 @@ void main() {
             'Admin' => sesion == 'admin',
             _ => throw StateError('rol sin documentar: $quien'),
           };
-          final alLogin = ruta != '/' &&
-              find.byType(PantallaInicioSesion).evaluate().isNotEmpty;
-          final denegado = ruta != _acceso &&
-              find.byType(PantallaAccesoDenegado).evaluate().isNotEmpty;
-          final alPanel = quien != 'Admin' &&
+          final alLogin =
+              ruta != '/' &&
+              find
+                  .byType(PantallaInicioSesion)
+                  .hitTestable()
+                  .evaluate()
+                  .isNotEmpty;
+          final denegado =
+              ruta != _acceso &&
+              find
+                  .byType(PantallaAccesoDenegado)
+                  .hitTestable()
+                  .evaluate()
+                  .isNotEmpty;
+          final alPanel =
+              quien != 'Admin' &&
               ruta != _acceso &&
               sesion == 'admin' &&
               quien == 'Usuario' &&

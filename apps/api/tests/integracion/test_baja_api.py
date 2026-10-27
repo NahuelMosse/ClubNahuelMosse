@@ -10,7 +10,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 CONTRASENA = "ClubNahuel1"

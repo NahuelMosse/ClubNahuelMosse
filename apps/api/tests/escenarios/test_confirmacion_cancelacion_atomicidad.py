@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, app_de, un_socio
 
-from app.infraestructura.push import canal_push
+from app.modules.notificaciones.push import canal_push
 
 
 @pytest.fixture

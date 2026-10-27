@@ -1,6 +1,6 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'notificacion.dart';
+
+export 'sistema_simulado.dart';
 
 /// Qué avisó el aviso que la persona tocó en la bandeja del sistema: lo que hace falta para
 /// abrir la pantalla que corresponde.
@@ -40,6 +40,9 @@ abstract interface class SistemaDeNotificaciones {
 
   Future<bool> permitido();
 
+  /// Si el sistema operativo ya le preguntó a la persona por las notificaciones.
+  Future<bool> preguntado();
+
   /// Pide el permiso al sistema operativo y dice si quedó concedido.
   Future<bool> solicitarPermiso();
 
@@ -57,55 +60,4 @@ abstract interface class SistemaDeNotificaciones {
 
   /// El aviso que abrió la app desde cero, si la abrió uno.
   Future<AvisoTocado?> abiertaPor();
-}
-
-/// El sistema de un dispositivo de prueba, sin Firebase Cloud Messaging.
-///
-/// El permiso lo guarda la app en el dispositivo (los escenarios lo fijan) y arranca
-/// concedido; pedirlo lo concede. Nada llega por acá: con la app abierta la lista se entera
-/// consultando la API.
-class SistemaSimulado implements SistemaDeNotificaciones {
-  static const _clavePermiso = 'permiso_notificaciones_simulado';
-  static const _claveToken = 'token_notificaciones_simulado';
-
-  @override
-  String get plataforma => 'android';
-
-  @override
-  Future<bool> permitido() async =>
-      (await SharedPreferences.getInstance()).getString(_clavePermiso) !=
-      'denegado';
-
-  @override
-  Future<bool> solicitarPermiso() async {
-    await (await SharedPreferences.getInstance()).setString(
-      _clavePermiso,
-      'concedido',
-    );
-    return true;
-  }
-
-  @override
-  Future<String?> token() async {
-    final prefs = await SharedPreferences.getInstance();
-    final guardado = prefs.getString(_claveToken);
-    if (guardado != null) return guardado;
-    final nuevo = 'simulado-${DateTime.now().microsecondsSinceEpoch}';
-    await prefs.setString(_claveToken, nuevo);
-    return nuevo;
-  }
-
-  @override
-  Future<void> olvidarToken() async {
-    await (await SharedPreferences.getInstance()).remove(_claveToken);
-  }
-
-  @override
-  Stream<void> get alLlegar => const Stream.empty();
-
-  @override
-  Stream<AvisoTocado> get alTocar => const Stream.empty();
-
-  @override
-  Future<AvisoTocado?> abiertaPor() async => null;
 }
