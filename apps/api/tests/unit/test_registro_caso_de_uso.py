@@ -1,4 +1,5 @@
 from datetime import date
+from uuid import UUID
 
 import pytest
 
@@ -44,11 +45,11 @@ class Usuarios:
     def uid_activo(self, uid: str) -> bool:
         return uid in self.activos
 
-    def insertar(self, uid: str, registro: Registro) -> int:
+    def insertar(self, uid: str, registro: Registro) -> UUID:
         if self.falla is not None:
             raise self.falla
         self.insertados.append(uid)
-        return 1
+        return UUID(int=1)
 
 
 def test_si_falla_el_alta_se_borra_la_cuenta_creada() -> None:
@@ -68,7 +69,7 @@ def test_un_error_al_borrar_no_tapa_el_error_original() -> None:
 def test_una_cuenta_del_proveedor_sin_perfil_activo_se_reemplaza() -> None:
     identidad = Identidad(existente="uid-viejo")
     usuarios = Usuarios()
-    assert registrar(DATOS, HOY, identidad, usuarios) == 1
+    assert registrar(DATOS, HOY, identidad, usuarios) == UUID(int=1)
     assert identidad.borradas == ["uid-viejo"]
     assert usuarios.insertados == [identidad.cuentas["ana@correo.com"]]
 

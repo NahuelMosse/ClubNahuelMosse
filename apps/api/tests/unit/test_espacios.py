@@ -2,6 +2,7 @@ from collections.abc import Callable
 from dataclasses import replace
 from datetime import date
 from typing import Any
+from uuid import UUID
 
 import pytest
 
@@ -20,7 +21,7 @@ from app.modules.sesion.perfil import Perfil, Rol
 from app.shared.errores import DatosInvalidos, NoDisponible, Prohibido
 
 VALIDOS = DatosEspacio(
-    sede_id=3,
+    sede_id=UUID(int=3),
     deporte="Futbol",
     tipo="F5",
     techada=False,
@@ -38,7 +39,7 @@ def _errores(**cambios: Any) -> dict[str, str]:
 def test_un_espacio_completo_se_puede_guardar() -> None:
     espacio, errores = validar_espacio(VALIDOS)
     assert errores == {}
-    assert espacio == EspacioNuevo(3, "Futbol", "F5", False, True, 38000)
+    assert espacio == EspacioNuevo(UUID(int=3), "Futbol", "F5", False, True, 38000)
 
 
 def test_cada_campo_que_falta_es_obligatorio() -> None:
@@ -72,7 +73,7 @@ def test_el_catalogo_no_repite_claves() -> None:
 
 def _perfil(rol: Rol) -> Perfil:
     return Perfil(
-        id=7,
+        id=UUID(int=7),
         uid="uid",
         nombre="Ana",
         apellido="Díaz",
@@ -86,11 +87,11 @@ def _perfil(rol: Rol) -> Perfil:
 class _EspaciosEnMemoria:
     def __init__(self, sede: SedeDelEspacio | None) -> None:
         self.sede = sede
-        self.guardados: list[tuple[EspacioNuevo, int | None, str, int]] = []
+        self.guardados: list[tuple[EspacioNuevo, int | None, str, UUID]] = []
 
     def activos(
         self,
-        sede_id: int | None = None,
+        sede_id: UUID | None = None,
         deporte: str | None = None,
         tipo: str | None = None,
     ) -> list[Espacio]:
@@ -98,7 +99,7 @@ class _EspaciosEnMemoria:
 
     def siguiente(
         self,
-        sede_id: int,
+        sede_id: UUID,
         deporte: str,
         tipo: str,
         nombre: Callable[[SedeDelEspacio, int], str],
@@ -110,19 +111,19 @@ class _EspaciosEnMemoria:
         nuevo: EspacioNuevo,
         numero: int | None,
         nombre: Callable[[SedeDelEspacio, int], str],
-        autor: int,
+        autor: UUID,
     ) -> Espacio:
         assert self.sede is not None
         compuesto = nombre(self.sede, 3)
         self.guardados.append((nuevo, numero, compuesto, autor))
-        return Espacio(1, compuesto, nuevo.sede_id, self.sede.nombre, nuevo.deporte,
+        return Espacio(UUID(int=1), compuesto, nuevo.sede_id, self.sede.nombre, nuevo.deporte,
                        nuevo.tipo, 3, nuevo.techada, nuevo.iluminada,
                        nuevo.precio_por_hora)  # fmt: skip
 
-    def actualizar(self, espacio_id: int, cambio: CambioDeEspacio, autor: int) -> Espacio:
+    def actualizar(self, espacio_id: UUID, cambio: CambioDeEspacio, autor: UUID) -> Espacio:
         raise NotImplementedError
 
-    def dar_de_baja(self, espacio_id: int, autor: int) -> None:
+    def dar_de_baja(self, espacio_id: UUID, autor: UUID) -> None:
         raise NotImplementedError
 
 
@@ -130,20 +131,20 @@ MORON = SedeDelEspacio("Sede Morón", "Av. Rivadavia", 19850)
 
 
 def test_el_nombre_sugerido_es_el_del_enunciado_con_el_numero_siguiente() -> None:
-    s = nombre_sugerido(_perfil("admin"), 3, "Futbol", "F5", _EspaciosEnMemoria(MORON))
+    s = nombre_sugerido(_perfil("admin"), UUID(int=3), "Futbol", "F5", _EspaciosEnMemoria(MORON))
     assert (s.nombre, s.numero) == ("Moron_Rivadavia_19850_Futbol_F5_3", 3)
 
 
 def test_sin_sede_activa_no_hay_nombre() -> None:
     with pytest.raises(NoDisponible):
-        nombre_sugerido(_perfil("admin"), 3, "Futbol", "F5", _EspaciosEnMemoria(None))
+        nombre_sugerido(_perfil("admin"), UUID(int=3), "Futbol", "F5", _EspaciosEnMemoria(None))
 
 
 def test_el_alta_queda_a_nombre_del_administrador_con_el_nombre_compuesto() -> None:
     espacios = _EspaciosEnMemoria(MORON)
     espacio = dar_de_alta_espacio(_perfil("admin"), VALIDOS, 3, espacios)
     assert espacio.nombre == "Moron_Rivadavia_19850_Futbol_F5_3"
-    assert [(n, a) for _, n, _, a in espacios.guardados] == [(3, 7)]
+    assert [(n, a) for _, n, _, a in espacios.guardados] == [(3, UUID(int=7))]
 
 
 def test_un_usuario_no_gestiona_espacios() -> None:
@@ -151,7 +152,7 @@ def test_un_usuario_no_gestiona_espacios() -> None:
     with pytest.raises(Prohibido):
         dar_de_alta_espacio(_perfil("usuario"), VALIDOS, None, espacios)
     with pytest.raises(Prohibido):
-        nombre_sugerido(_perfil("usuario"), 3, "Futbol", "F5", espacios)
+        nombre_sugerido(_perfil("usuario"), UUID(int=3), "Futbol", "F5", espacios)
     assert espacios.guardados == []
 
 

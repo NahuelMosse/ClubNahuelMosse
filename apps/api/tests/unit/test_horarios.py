@@ -1,4 +1,5 @@
 from datetime import date, datetime, time, timedelta
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -79,15 +80,15 @@ class _Horarios:
         self._agenda = agenda
         self.pedido: tuple[datetime, datetime] | None = None
 
-    def agenda(self, espacio_id: int) -> Agenda | None:
+    def agenda(self, espacio_id: UUID) -> Agenda | None:
         return self._agenda
 
     def ocupadas(
         self,
-        espacio_id: int,
+        espacio_id: UUID,
         desde: datetime,
         hasta: datetime,
-        salvo: tuple[int, int] | None = None,
+        salvo: tuple[UUID, UUID] | None = None,
     ) -> list[tuple[datetime, datetime]]:
         self.pedido = (desde, hasta)
         return []
@@ -95,20 +96,20 @@ class _Horarios:
 
 def test_sin_fecha_consulta_hoy() -> None:
     horarios = _Horarios(Agenda(time(8), time(23), TODOS))
-    g = horarios_disponibles(horarios, 1, None, 1, _a(JUEVES, 9))
+    g = horarios_disponibles(horarios, UUID(int=1), None, 1, _a(JUEVES, 9))
     assert g.fecha == JUEVES
     assert horarios.pedido == (_a(JUEVES, 0), _a(JUEVES, 0) + timedelta(days=2))
 
 
 def test_un_espacio_que_no_esta_activo_no_se_consulta() -> None:
     with pytest.raises(NoDisponible):
-        horarios_disponibles(_Horarios(None), 1, JUEVES, 1, _a(JUEVES, 9))
+        horarios_disponibles(_Horarios(None), UUID(int=1), JUEVES, 1, _a(JUEVES, 9))
 
 
 def test_una_fecha_fuera_de_la_semana_se_rechaza() -> None:
     with pytest.raises(DatosInvalidos):
         horarios_disponibles(
-            _Horarios(Agenda(time(8), time(23), TODOS)), 1, JUEVES + timedelta(8), 1,
+            _Horarios(Agenda(time(8), time(23), TODOS)), UUID(int=1), JUEVES + timedelta(8), 1,
             _a(JUEVES, 9),
         )  # fmt: skip
 
