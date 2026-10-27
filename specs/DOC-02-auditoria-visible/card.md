@@ -14,7 +14,7 @@ not_read:
 
 ## Tasks
 
-- T1 · S1 · docs/technical/modelo-de-datos.md (presentation), apps/api/tests/unit/test_auditoria_documentada.py · tests: apps/api/tests/unit/test_auditoria_documentada.py "cada tabla del diagrama y de su sección muestra creado_en y modificado_en @DOC-02-S1"
+- T1 · S1 · docs/technical/modelo-de-datos.md (presentation), apps/api/tests/unit/test_auditoria_documentada.py, apps/api/tests/unit/test_documentacion_del_modelo.py · tests: apps/api/tests/unit/test_auditoria_documentada.py "cada tabla del diagrama y de su sección muestra creado_en y modificado_en @DOC-02-S1"
   reuses: el diagrama y las secciones existentes de docs/technical/modelo-de-datos.md
 
 ## Changes to existing behavior
@@ -29,6 +29,7 @@ lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/test
 app: sh D:/Temp/w/herramientas/arq01-app.sh doc02_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh doc02_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 no-visual: la card cambia documentación; ninguna pantalla de la app
+refactor-tests: el lector de columnas de test_documentacion_del_modelo.py (DOC-01) no resuelve el bucle con que la 0010 agrega la auditoría; suma las dos columnas a cada tabla, que test_uuid_y_auditoria.py comprueba contra la base
 ```
 
 ## Log
