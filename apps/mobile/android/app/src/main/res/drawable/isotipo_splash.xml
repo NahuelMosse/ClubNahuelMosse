@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- El isotipo reducido para entrar en el círculo (2/3) de la máscara del splash de Android 12. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/isotipo"
+    android:insetLeft="27%"
+    android:insetTop="27%"
+    android:insetRight="27%"
+    android:insetBottom="27%" />

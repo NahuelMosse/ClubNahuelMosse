@@ -1,0 +1,30 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "sesión"
+  ],
+  "files": [
+    "apps/mobile/tool/generar_isotipo_test.dart",
+    "apps/mobile/assets/icono/icono.png",
+    "apps/mobile/assets/icono/icono_primer_plano.png",
+    "apps/mobile/android/app/src/main/res/drawable/launch_background.xml",
+    "apps/mobile/android/app/src/main/res/drawable-v21/launch_background.xml",
+    "apps/mobile/android/app/src/main/res/drawable/isotipo.xml",
+    "apps/mobile/android/app/src/main/res/drawable/ic_notificacion.xml",
+    "apps/mobile/android/app/src/main/res/values/colors.xml",
+    "apps/mobile/android/app/src/main/res/values-v31/styles.xml",
+    "apps/mobile/android/app/src/main/res/values-night-v31/styles.xml",
+    "apps/mobile/android/app/src/main/AndroidManifest.xml",
+    "apps/mobile/pubspec.yaml",
+    "apps/mobile/lib/comun/pantalla_de_carga.dart",
+    "apps/mobile/lib/main.dart"
+  ],
+  "tasks": 2
+}

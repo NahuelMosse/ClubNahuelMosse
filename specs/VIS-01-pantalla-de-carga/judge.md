@@ -1,0 +1,7 @@
+- ACT-01 · M · S3 names three members (`icono.png`, `icono_primer_plano.png`, «los mipmap generados») and T1 plans a single test whose name only says «el ícono del launcher»; the device shows the mipmaps and the adaptive background (`pubspec.yaml` still has `adaptive_icon_background: "#0A0A0B"`, against ASM-02's green), so a test that reads only the source PNGs passes with the old N still installed · card.md S3, T1 · lenses.md interpretation «Does a quantifier name its members, and does each member have a test?» · closed · T1 «el ícono del launcher, sus mipmap generados y el fondo adaptativo son el isotipo oscuro sobre verde eléctrico»
+
+## Verified
+
+- interpretation · fails (ACT-01). L1 and L3 are covered: S1, S2 and S3 come from L1, and S4 plus ASM-04 from L3. The extra progress indicator is declared as ASM-03. The card makes S1 Android-only, which matches the repo: there is no `ios/` or `web/`, and `flutter_launcher_icons` has `ios: false`. The API sends `AndroidNotification(tag=…)` with no icon or color (`apps/api/app/modules/notificaciones/push.py:49`), so the manifest defaults in S4 do apply.
+- security · meets. The card touches no text from the person, no route, no log, no header and no query, so no question of the lens applies.
+- overdesign · meets. `pantalla_de_carga.dart` replaces the private `_Espera` so the S2 test can import it. `generar_isotipo_test.dart` reuses `PintorIsotipo` to draw the PNGs. The plan adds no layer, interface or flag.

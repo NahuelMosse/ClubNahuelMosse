@@ -7,6 +7,7 @@ import 'app.dart';
 import 'comun/apariencia.dart';
 import 'comun/configuracion.dart';
 import 'comun/dialogo_error.dart';
+import 'comun/pantalla_de_carga.dart';
 import 'notificaciones/centro.dart';
 import 'notificaciones/notificaciones.dart';
 import 'notificaciones/sistema.dart';
@@ -14,7 +15,6 @@ import 'notificaciones/sistema_fcm.dart';
 import 'sesion/firebase.dart';
 import 'sesion/sesion.dart';
 import 'tema/tema.dart';
-import 'tema/tokens.dart';
 
 void main() => arrancar(Configuracion.desdeEntorno());
 
@@ -78,11 +78,6 @@ class _Espera extends StatelessWidget {
     debugShowCheckedModeBanner: false,
     theme: temaClaro,
     darkTheme: temaOscuro,
-    home: Builder(
-      builder: (context) => Scaffold(
-        backgroundColor: context.paleta.bgBase,
-        body: const Center(child: CircularProgressIndicator()),
-      ),
-    ),
+    home: const PantallaDeCarga(),
   );
 }
