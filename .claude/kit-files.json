@@ -57,7 +57,7 @@
   },
   ".claude/hooks/delegate-code.mjs": {
     "module": "core",
-    "sha256": "e9bc711eedbcea5b060cbc815af9d10026ba5982719485b35f09f6d66cd7d41c"
+    "sha256": "3b75ed6e22669544f94887325563182268eb1c94c91a7621146d3543c95142e0"
   },
   ".claude/hooks/edit-count.mjs": {
     "module": "core",
@@ -69,7 +69,7 @@
   },
   ".claude/hooks/guard.mjs": {
     "module": "core",
-    "sha256": "77cae78c86441be7324a18ad4372262c006e9398e999351b40a9de7145ae46e1"
+    "sha256": "714a531f30604532aebd105fc1766d4558ffcd5c1e7e9b5ec1321c5141884988"
   },
   ".claude/hooks/light-images.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "7a30138b43e5fd0168fb9247ab1d59effe0470454e5596e6cb0d673129e2ddbb"
+    "sha256": "537c87a4c27e74522fa2c7c13c085ce43ec27b3637fb61f572151b1ed457c706"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -137,11 +137,11 @@
   },
   ".claude/reference/criteria.md": {
     "module": "core",
-    "sha256": "96d57a21ccea279da1e3d37707f8de781a7993e4d84a6f91d869fbce2cb2ed87"
+    "sha256": "ffa96233d7f1566f6181aec79128b576ed11e4c28cd1842db81dcbaaf0a32127"
   },
   ".claude/reference/database.md": {
     "module": "data",
-    "sha256": "8b90bbb0bf7118b62b718336149eea9d035a17bcf28e5d26ceed96759d969344"
+    "sha256": "a6bb578c6d6c0c253c65c11ba99da9f01a63d801db929cb21a20f1d24392318e"
   },
   ".claude/reference/dependencies.md": {
     "module": "core",
@@ -461,7 +461,7 @@
   },
   ".claude/stacks/node-ts.md": {
     "module": "core",
-    "sha256": "3cb1c60d3861c3825a9d0801333b9939b5be6cd81b15eee678c34e33f9fa4d41"
+    "sha256": "4e83c010fc307247158b8143bd9026830a54c9c73660a0f93a4d9d6bff585189"
   },
   ".claude/stacks/react-shadcn.md": {
     "module": "ui",
@@ -1301,7 +1301,7 @@
   },
   ".claude/tools/app.mjs": {
     "module": "core",
-    "sha256": "b00aa907d997b343cf7d16570b8feee3405862f95e33a82e5bc30e945273a401"
+    "sha256": "02a22148a1d887e7935dfe6147b3029026f1fd518ffb5a8da8833e4e73c4a87c"
   },
   ".claude/tools/attack.mjs": {
     "module": "profile:backend",
@@ -1317,15 +1317,15 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "7749e496008f9070696136e4726976a856fb2c31b358cbf9df5ac21c511a26bd"
+    "sha256": "5f09ee85597dd97a27a922f116dcd725d930e51594c5faa87ee66733b8ef6bbf"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "c97f82d489636221c8d365c0dc1435e0ad9c6b5e16d20e5b69141ef6d313c2ec"
+    "sha256": "afad3dd50f5520d7d7273d11d1fb686275f6e6edc730006ee347a28830eca7b5"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
-    "sha256": "c412bc6926ed66496ab4934fd1b08bad4682dd90ad1c875d2fd93cb85b75e4a9"
+    "sha256": "ed9d3c00f6431bc0a20f0385802aac9d5c432f4913eb9d9e597e6cee7975cac7"
   },
   ".claude/tools/doctor.mjs": {
     "module": "core",
@@ -1369,7 +1369,7 @@
   },
   ".claude/tools/mutate.mjs": {
     "module": "core",
-    "sha256": "c9539f32dae94cd55dfd6a71ef3625c58b29fb1b4f5da4f74d09ea4d31e78342"
+    "sha256": "1a897872c88f3c30440082b0cf115fba3d43a2ce8e32b2fd25f7b01dcd566076"
   },
   ".claude/tools/once.mjs": {
     "module": "core",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "d74af8a3dcfea2943cb0261dcb8c2fe56dad7e416e1b4a3611efe0f29b56ca8b"
+    "sha256": "de068d74c3fb11e85a593ade47d0e4029f9449e3de3511ee06b547d8d97145a2"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1429,11 +1429,11 @@
   },
   ".claude/agents/builder.md": {
     "module": "core",
-    "sha256": "6d3c1a80ba2bff4bc66864d67cf56255989656b0b13bdf6e66ab5449c08b3c1a"
+    "sha256": "1ed3aca2d7e5ff406f632ca851131ed33cc7de3899efcd9b76c81b5538743daa"
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
-    "sha256": "fcaafac9c5c9af435ebb30e014359303d7b4a6d5c58bcd1227fdfd7e6c423d15"
+    "sha256": "fb973c5d782a89eac71726fe3e8ed2fd0d05c4ba9438fd2784ed9e6df44c1a4c"
   },
   ".claude/agents/judge.md": {
     "module": "core",
@@ -1461,7 +1461,7 @@
   },
   ".claude/templates/card.md": {
     "module": "core",
-    "sha256": "57bb7643b74f4d771265274fdd3275f45fd6ed5697251e0c4f7bd40d9dceac96"
+    "sha256": "f13f6d74f75406f7e8f35776cc181e010fb086d00684474f8dabc2070ab935ca"
   },
   ".claude/templates/components/motion/test-results/.last-run.json": {
     "module": "ui",
@@ -1477,11 +1477,11 @@
   },
   ".claude/tools/card-doc.mjs": {
     "module": "core",
-    "sha256": "600daf73ef1df2a01994153947f6fbc87b4fa045a9177096d6c09fe114874749"
+    "sha256": "abffede3ce0f74f3a4645ecbe05694217672d2c0b266463bf822d3f09e60a566"
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "447e30071f0af39c307073def0d8d7fbe07bbb438e059c90c9db4fa111e5e4dd"
+    "sha256": "a1e02ff222cbe1b78f0907dbb5398a03513e8e0e78a59a5d79cdbcaf0d2beeff"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1841,7 +1841,7 @@
   },
   ".claude/templates/eslint-readability.mjs": {
     "module": "core",
-    "sha256": "5d1a64db9ff087f956ff7a9bf055968142f5c29f749b4767a712316b5e366fa1"
+    "sha256": "ee253a97c3bed3ded380516cacf9b8c21886f57b68b1b8fd11315d8893972ab1"
   },
   ".claude/tools/__pycache__/asset-pipeline.cpython-313.pyc": {
     "module": "core",
@@ -1906,5 +1906,9 @@
   "apps/mobile/test/kit/kit_states.dart": {
     "module": "profile:flutter",
     "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
+  },
+  ".claude/rules/speed.md": {
+    "module": "core",
+    "sha256": "535f9d4ad9afe732eca81e395d540243bf17c5ffae8d91e84ed29ae50c1358a9"
   }
 }

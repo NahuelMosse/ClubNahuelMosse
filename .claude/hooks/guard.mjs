@@ -92,13 +92,18 @@ try {
       reject(`Could not query git for ${path} (${head.error.code}). Without being able to verify whether the test is frozen, the guard blocks.`);
     }
     const root = rootOf(path);
-    if (head.status === 0 && /@[A-Z][A-Z0-9]*-\d+-S\d+(?!\d)/.test(head.stdout) && root && currentCard(root, { named: true })) {
+    // `refactor-tests: <why>` in the card's Gate lets a mechanical change (ids from numbers to text, a module moved) edit frozen
+    // tests in place instead of copying them; close.mjs lists every one it touched, with its diff, for a person to review.
+    const gateOf = (card) => { try { return (readFileSync(`${card}/card.md`, 'utf8').split(/^## Gate\b/m)[1] ?? '').split(/^## /m)[0]; } catch { return ''; } };
+    const refactoring = root && currentCard(root, { named: true }) && /^\s*refactor-tests\s*:\s*\S/m.test(gateOf(currentCard(root, { named: true })));
+    if (head.status === 0 && /@[A-Z][A-Z0-9]*-\d+-S\d+(?!\d)/.test(head.stdout) && root && currentCard(root, { named: true }) && !refactoring) {
       const own = cardIdOf(currentCard(root, { named: true }));
       const mine = own && new RegExp(`@${own}-S\\d+(?!\\d)`).test(head.stdout);
       reject(
         `${relativeTo(root, path)} has tests tagged ${mine ? 'by this card' : 'by another card'} and a commit already holds them: frozen. ` +
         'Whoever implements does not edit them. If one is wrong, say so in the `## Log` of card.md (a new line) and in judge.md or your report: a person decides; ' +
-        'a new behavior is a new test with its own tag.'
+        'a new behavior is a new test with its own tag. A mechanical change that has to touch many of them (a type or a path that changes everywhere) ' +
+        'declares `refactor-tests: <why>` in ## Gate: they are edited in place and the close lists each one for review.'
       );
     }
   }
