@@ -1,137 +1,52 @@
 <h1 align="center">ClubNahuelMosse</h1>
 
-<p align="center"><strong>Reservá la cancha en tres pasos, sin llamar ni escribir al club.</strong></p>
+<p align="center"><strong>Reservá la cancha en tres pasos, sin llamar ni escribir al club.</strong><br>
+App móvil para reservar espacios deportivos, ver su disponibilidad y recibir avisos. Electiva General, Universidad de Morón.</p>
 
 <p align="center">
-ClubNahuelMosse es una aplicación móvil para reservar espacios deportivos de distintas sedes, ver su disponibilidad y recibir
-avisos de las reservas próximas. Es para los socios de un club que reservan canchas y para el club que las administra.<br>
-Trabajo práctico de Electiva General, Universidad de Morón.
-</p>
-
-<p align="center">
-  <img src="docs/capturas/00-carga.jpg" width="220" alt="Pantalla de carga">
-  <img src="docs/capturas/02-inicio.jpg" width="220" alt="Inicio">
-  <img src="docs/capturas/05-horarios.jpg" width="220" alt="Horarios disponibles">
+  <img src="docs/capturas/02-inicio.jpg" width="200" alt="Inicio">
+  <img src="docs/capturas/05-horarios.jpg" width="200" alt="Horarios disponibles">
+  <img src="docs/capturas/07-listo.jpg" width="200" alt="Reserva confirmada">
+  <img src="docs/capturas/09-avisos.jpg" width="200" alt="Notificaciones">
 </p>
 
 ## Qué hace
 
-- **Reservar en tres pasos.** Entrás con tu cuenta, elegís sede y cancha, mirás los horarios libres, confirmás y listo.
+- **Reservar en tres pasos:** sede, cancha y horario libre.
+- **Mis reservas:** próximas e historial, con modificar y cancelar.
+- **Avisos por push y por correo:** recordatorio una hora antes y aviso de cancelación.
+- **Modo claro y oscuro.**
+- **Panel de administración** para que el club gestione las reservas.
+- **Recuperación de contraseña por correo.**
 
-<p align="center">
-  <img src="docs/capturas/01-login.jpg" width="150" alt="Inicio de sesión">
-  <img src="docs/capturas/03-sedes.jpg" width="150" alt="Sedes">
-  <img src="docs/capturas/04-sede.jpg" width="150" alt="Una sede y sus canchas">
-  <img src="docs/capturas/05-horarios.jpg" width="150" alt="Horarios">
-  <img src="docs/capturas/06-confirmar.jpg" width="150" alt="Confirmar la reserva">
-  <img src="docs/capturas/07-listo.jpg" width="150" alt="Reserva confirmada">
-</p>
+## Con qué está hecha
 
-- **Mis reservas.** Ves las reservas próximas y el historial, y podés modificar o cancelar una reserva.
+| Parte | Tecnología |
+|---|---|
+| App móvil (`apps/mobile`) | Flutter, sólo Android |
+| API REST (`apps/api`) | FastAPI y SQLAlchemy, con PostgreSQL |
+| Cuentas y avisos push | Firebase Authentication y Cloud Messaging |
+| Correo | Brevo |
+| Despliegue (`render.yaml`) | Render |
 
-<p align="center">
-  <img src="docs/capturas/08-reservas.jpg" width="200" alt="Mis reservas">
-</p>
-
-- **Avisos push y por correo.** Un recordatorio una hora antes de cada reserva y el aviso cuando una reserva se cancela. Los
-  correos tienen el mismo diseño que la app.
-
-<p align="center">
-  <img src="docs/capturas/09-avisos.jpg" width="200" alt="Notificaciones">
-</p>
-
-- **Perfil y modo claro u oscuro.** Tus datos en un lugar y la app en el tema que prefieras.
-
-<p align="center">
-  <img src="docs/capturas/10-perfil.jpg" width="200" alt="Perfil">
-  <img src="docs/capturas/11-inicio-claro.jpg" width="200" alt="Inicio en modo claro">
-</p>
-
-- **Panel de administración.** El club ve y gestiona las reservas de sus espacios.
-
-<p align="center">
-  <img src="docs/capturas/12-admin-reservas.png" width="360" alt="Panel de administración, reservas"><br>
-  <sub>Captura de la suite de pruebas, con datos de prueba.</sub>
-</p>
-
-## Cómo está hecha
-
-| Parte | Carpeta | Tecnología |
-|---|---|---|
-| App móvil (sólo Android) | `apps/mobile` | Flutter |
-| API REST | `apps/api` | FastAPI y SQLAlchemy, con PostgreSQL |
-| Autenticación | Firebase | Firebase Authentication; el emulador está en `firebase.json` |
-| Avisos push | Firebase | Firebase Cloud Messaging |
-| Correo | Brevo | Correos transaccionales con el diseño de la app |
-| Despliegue de la API y la base | `render.yaml` | Render (planes `free`) |
-
-La app habla con la API por HTTPS; la API valida los tokens de Firebase, guarda en PostgreSQL y manda los avisos. Cada servicio
-externo, con lo que hace y su configuración, está en [Integraciones](docs/technical/integraciones.md). Para quien no conoce
-estas tecnologias, la [Guía básica](docs/guia-basica.md) las explica.
+Cada servicio externo está en [Integraciones](docs/technical/integraciones.md).
 
 ## Cómo correrla
 
-Cada parte se configura, ejecuta, prueba y despliega con su propio README:
+Cada parte se configura, ejecuta y despliega con su README: [`apps/api/README.md`](apps/api/README.md) y
+[`apps/mobile/README.md`](apps/mobile/README.md).
 
-- [`apps/api/README.md`](apps/api/README.md): la API y su base, la configuración por variables de entorno y el despliegue en
-  Render.
-- [`apps/mobile/README.md`](apps/mobile/README.md): la app, sus `--dart-define` y cómo construir el APK.
-
-Desde la raíz, `sh scripts/test.sh` corre los chequeos y las pruebas de la API y de la app; `npm run emuladores` levanta el
-emulador de Firebase Auth (después de `npm ci`).
+```sh
+npm ci && npm run emuladores   # emulador de Firebase Auth
+sh scripts/test.sh             # chequeos y pruebas de la API y la app
+cd sitio-docs && npm install && npm run build   # sitio de documentación (Docusaurus)
+```
 
 ## Documentación
 
-- [Guía básica](docs/guia-basica.md): qué es cada tecnología, cómo viaja un pedido y dónde tocar para cambiar algo,
-  para quien no conoce Flutter, FastAPI, Firebase ni Render. **Si nunca viste el repo, empezá por acá.**
-- [Arquitectura](docs/technical/arquitectura.md): las piezas, las capas de la API y de la app, los flujos principales
-  (reservar, avisos, cuentas) y las decisiones que explican la forma del código.
-- [Mapa del código](docs/technical/mapa-del-codigo.md): dónde está cada cosa, archivo por archivo, con las rutas de la API
-  y de la app, la configuración, los tests y los scripts.
-- [Diseño del sistema](docs/technical/system-design.md): modelo de datos columna por columna, entornos, observabilidad,
-  errores, dependencias externas, amenazas, secretos, datos personales y presupuesto de rendimiento.
-- [Integraciones](docs/technical/integraciones.md): los servicios externos que usa la app.
-- [Decisiones de arquitectura](docs/adr): el stack ([0001](docs/adr/0001-stack.md)) y el hosting
-  ([0002](docs/adr/0002-hosting-en-render.md)).
-- [Runbook](docs/technical/runbook.md): despliegue, vuelta atrás, diagnóstico, incidentes y rotación de secretos.
-- [Costo de la infraestructura](docs/technical/infra-cost.md).
-- [Declaración de accesibilidad](docs/business/accessibility.md) y el registro por pantalla.
-- [Matriz de seguridad ASVS](specs/asvs.md), nivel 2.
-
-La misma documentación se lee como sitio web con Docusaurus. `sitio-docs/` no guarda copias: al construir, toma los `.md`
-de `docs/`, de los README y de `specs/`, muestra Swagger UI con `apps/api/openapi.json` y
-la referencia del código desde los docstrings de `apps/api/app/`. Hacen falta Node 20 y Python 3.
-
-```sh
-cd sitio-docs
-npm install
-npm start          # en vivo, en http://localhost:3000
-npm run build      # sitio estático en sitio-docs/build/, se sirve con `npm run serve`
-```
-
-Los supuestos que cambian lo que ve quien usa la app o lo que hace quien la opera están en los README de `apps/api` y
-`apps/mobile`; el registro completo de cada caso de uso, en `specs/<caso>/ambiguedades.md`.
-
-## Supuestos de la documentación
-
-- REV-07-ASM-01: donde la app todavía no tiene algo (copias de seguridad, objetivos de servicio medidos, presupuesto de
-  rendimiento) el documento lo dice tal cual y escribe el objetivo como meta sin medir.
-- REV-07-ASM-02: los README de `apps/api` y `apps/mobile` listan los supuestos que cambian lo que ve quien usa o lo que hace
-  quien opera, con su ID, y no los 545 registrados.
-- REV-07-ASM-03: el modelo de datos lleva columnas, claves, índices y triggers de cada tabla.
-- REV-07-ASM-04: estos documentos se escriben aunque el módulo de documentación del método esté apagado, porque los pide el
-  grado de producción.
-- REV-07-ASM-05: los documentos describen `main`; los números de hallazgo que citan remiten a la revisión de la rama
-  `kit-3`.
-- REV-07-ASM-06: las filas de la matriz ASVS que hoy fallan quedan `fails` con el hallazgo y la card que las corrige; los
-  plazos de remediación (V15.1.1) los decide una persona.
-- REV-07-ASM-08: los precios salen de https://render.com/pricing.md consultado el 2026-10-20; la página no dice si la base
-  free tiene backups.
-- REV-07-ASM-09: la política de claves con su ciclo de vida, el inventario criptográfico completo y el documento de las vías
-  de autenticación (ASVS V11.1.1, V11.1.2, V6.1.3) no estaban pedidos y los decide una persona: esas filas quedan `fails`.
-
-## Estado
-
-La revisión general de `main` está en [`specs/REVISION-main.md`](specs/REVISION-main.md): qué corrió, qué falla y qué
-conviene hacer después. La anterior, de la rama `kit-3`, sigue en `specs/REVISION-kit3.md`; las cards `REV-01` a `REV-08`
-corrigieron lo que encontró.
+- [Guía básica](docs/guia-basica.md): si nunca viste el repo, empezá por acá.
+- [Arquitectura](docs/technical/arquitectura.md) y [mapa del código](docs/technical/mapa-del-codigo.md).
+- [Diseño del sistema](docs/technical/system-design.md) y [runbook](docs/technical/runbook.md).
+- [Decisiones de arquitectura](docs/adr) y [costo de la infraestructura](docs/technical/infra-cost.md).
+- [Accesibilidad](docs/business/accessibility.md) y [matriz de seguridad ASVS](specs/asvs.md).
+- [Supuestos de la documentación](docs/supuestos-de-la-documentacion.md) y estado de la revisión.
