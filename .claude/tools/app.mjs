@@ -11,7 +11,7 @@
 //                                         and DATA_DIR
 // up:     nothing to do if the app of `.validation/app.json` lives, answers and was started from the
 //         same code (the key of once.mjs); otherwise it brings the old one down by PID, starts a new one,
-//         waits up to 60 s for the port, seeds, writes app.json and prints `APP_URL=<url>`.
+//         waits up to 180 s for the port, seeds, writes app.json and prints `APP_URL=<url>`.
 // down:   brings the app down by PID and removes app.json (the data folder stays).
 // status: app.json, and whether the app lives and is up to date. Exit 0 only if both.
 // probe <steps.json> [--widths 320,390,1280] [--route "POST /x=201|500|hold"] [--axe] [--watch <locator>] [--contrast "<sel>,<sel>"]
@@ -43,7 +43,7 @@ import { currentCard, keyOf } from './card.mjs';
 import { endsWithLine } from './final-line.mjs';
 
 // KIT_APP_START_TIMEOUT_S raises it on a loaded machine, where a cold Python import alone can pass 60 s.
-const START_TIMEOUT_MS = (Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 60) * 1000;
+const START_TIMEOUT_MS = (Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 180) * 1000;
 const POLL_MS = 250;
 const root = process.cwd();
 const stateFile = join(root, '.validation', 'app.json');
@@ -138,7 +138,7 @@ const startApp = async ({ app, seed }, cwd = root) => {
   const deadline = Date.now() + START_TIMEOUT_MS;
   while (!await answers(port)) {
     if (!alive(child.pid)) return failed(`The app exited before answering on port ${port}: ${app}`);
-    if (Date.now() > deadline) return failed(`The app did not answer on port ${port} within ${START_TIMEOUT_MS / 1000} s: ${app}`);
+    if (Date.now() > deadline) return failed(`The app did not answer on port ${port} within ${START_TIMEOUT_MS / 1000} s (KIT_APP_START_TIMEOUT_S raises it): ${app}`);
     await pause(POLL_MS);
   }
   if (seed) {

@@ -209,6 +209,7 @@ The rules behind these criteria, with the smell detectors and the templates, are
 | P14 | The data model is in system-design.md before the code: entities, relations, owner, cardinality, volume, queries with their index, migrations | J | production | mechanism (require-bar · required) | DB-OPS-04 · INF-* |
 | P15 | Personal data inventoried and classified in system-design.md, with retention, encryption at rest and encrypted backups; Ley 25.326 and GDPR as context | J | production | mechanism (required) | SEC-DAT-03 · DB-SEC-07 · Ley 25.326 · GDPR |
 | P16 | A migration that exists on the main branch is never edited, renamed or deleted; new migrations sort after main's last one with a single history head; the model has no migration pending; the new migrations apply on top of main's last state with seeded data | C | poc | mechanism (guard · required) | DB-MIG-12 · DB-MIG-13 · DB-MIG-14 · DB-MIG-15 · DB-MIG-17 · DB-MIG-19 · DB-MIG-20 |
+| P17 | Every new table has its primary key per the repo's id decision (UUIDv7 by default, never serial or int), `created_at` and `updated_at` as timestamptz NOT NULL (only `created_at` in a declared append-only table) | C | poc | mechanism (gate table-shape) | DB-MOD-03 · DB-MOD-14 · RFC 9562 |
 
 ## O · Operation and safe change
 
@@ -336,7 +337,7 @@ Prioritized with the WebAIM Million 2026: 96% of errors fall in the first six.
 | W3 | Business docs: what it does, how it is used, rules and limits, in the business's language, without jargon or IDs | J | production | prose | DOC-* |
 | W4 | Technical docs: C4 context and containers, and a page per module (responsibility, decisions, data flow) | J | production | prose | DOC-* · c4model.com |
 | W5 | Runbook: deploy, rollback, diagnosis, one section per alert by symptom, secret rotation and revocation, security incident response | J | production | prose | DOC-* · OBS-SUP-06 · SEC-IR-03 · Google SRE |
-| W6 | When a public route or a module changes, its doc changes in the same diff | C | mvp | mechanism (required) | DOC-* |
+| W6 | A card that changes behavior updates in its own diff the feature page (rules, edge cases, its tests), the API contract when it touches a route and docs/data-model.md when it touches the schema | C | mvp | mechanism (gate docs) | DOC-* |
 | W7 | Links in the docs are valid | T | mvp | command (stack profile) | DOC-* |
 | W8 | If there is an API: a contract with examples, errors, auth, version and deprecation policy, linted; the published interactive reference comes from that same spec, “Try it out” never reaches production, and the docs UI is not open in production when the API is internal | C | mvp | command (stack profile) | API-* · OpenAPI 3.1 · RFC 9745 · RFC 8594 · OWASP API9 |
 | W9 | The contract matches the implementation, by a contract test | T | mvp | command (stack profile) | API-* |
@@ -384,14 +385,14 @@ Criteria required at each grade (cumulative), by area:
 | E · Errors and reliability | 16 | 0 | 8 | 16 |
 | T · Tests | 14 | 4 | 13 | 14 |
 | S · Security | 24 | 1 | 10 | 24 |
-| P · Data and privacy | 16 | 1 | 7 | 16 |
+| P · Data and privacy | 17 | 2 | 8 | 17 |
 | O · Operation and safe change | 30 | 2 | 10 | 30 |
 | I · Interaction and accessibility | 40 | 3 | 21 | 40 |
 | C · Compatibility | 4 | 1 | 4 | 4 |
 | A · Agent failures | 9 | 6 | 8 | 9 |
 | V · Process and evidence | 7 | 5 | 7 | 7 |
 | W · Documentation | 11 | 0 | 5 | 11 |
-| **Total** | **207** | **33** | **116** | **207** |
+| **Total** | **208** | **34** | **117** | **208** |
 
 ## What this list says about the method today
 
@@ -403,16 +404,16 @@ Criteria required at each grade (cumulative), by area:
 | E · Errors and reliability | 16 | 1 | 3 | 10 | 2 |
 | T · Tests | 14 | 5 | 2 | 4 | 3 |
 | S · Security | 24 | 5 | 10 | 7 | 2 |
-| P · Data and privacy | 16 | 3 | 10 | 2 | 1 |
+| P · Data and privacy | 17 | 4 | 10 | 2 | 1 |
 | O · Operation and safe change | 30 | 5 | 17 | 5 | 3 |
 | I · Interaction and accessibility | 40 | 0 | 3 | 37 | 0 |
 | C · Compatibility | 4 | 0 | 1 | 2 | 1 |
 | A · Agent failures | 9 | 3 | 0 | 3 | 3 |
 | V · Process and evidence | 7 | 2 | 1 | 4 | 0 |
 | W · Documentation | 11 | 2 | 4 | 5 | 0 |
-| **Total** | **207** | **30** | **63** | **97** | **17** |
+| **Total** | **208** | **31** | **63** | **97** | **17** |
 
-**Only 30 of 207 criteria are secured by a mechanism.** Another 63 depend on the agent running a
+**Only 31 of 208 criteria are secured by a mechanism.** Another 63 depend on the agent running a
 command; 97 are written and nothing verifies them; 17 the method does not ask for. The measured
 runs fail precisely on the prose ones: the state after the action, the legitimate data a defense
 breaks, the request from another port. The ones that moved to mechanism —the review cap, the bar

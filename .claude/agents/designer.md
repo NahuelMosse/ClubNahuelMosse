@@ -76,6 +76,9 @@ updates `critique.md`; a blocker still open stays open for the close.
 **The CTA round.** One of the rounds is dedicated to the primary CTA, by `.claude/reference/cta.md`: findable at 390, label with verb and data, the gesture after the
 tap derived from the product with its own reference of gesture, timings measured in frames at 0, 150, 400 and 900 ms, one idle animation at most.
 
+**It feels fast** (`rules/speed.md`): every moment of `behavior:` says what is on screen within 100 ms (the pressed state, a skeleton
+with the content's grid, the optimistic row), what stays during a refetch (the previous data) and what is prefetched on intent.
+
 **Each round `<k>`** (2 at least, 3 at most):
 1. Run the whole round in one call: `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/rondas/r<k> [--steps <steps>.json]`
    (viewport captures at 390, 768, 1024 and 1440, load at 0/600/2000 ms, one per section, the rules of `.claude/reference/excellence.md` measured,

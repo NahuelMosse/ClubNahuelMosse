@@ -61,8 +61,8 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { asOneArg, cardFiles, currentCard, cardStart, existedAt, fileMapLines, git, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
-import { active } from './kit.mjs';
+import { asOneArg, cardFiles, commandDir, oneRound, originOf, currentCard, cardStart, existedAt, fileMapLines, git, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { active, addedOf } from './kit.mjs';
 import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
 import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
@@ -70,6 +70,7 @@ import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } f
 import { CARD_FILE, readCard, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
 import { cardChecks, noVisualCheck, probeRecords, removeOnlyOf, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
+import { affected } from './affected.mjs';
 import { escalate } from './risk.mjs';
 import { changedBetween, snapshot } from './tree-snapshot.mjs';
 
@@ -275,7 +276,7 @@ const killTree = (p) => {
 };
 
 // `app:` and `seed:` tell app.mjs how to start the app the judges share; `no-visual:` is a declaration risk.mjs reads: none is a check.
-const ENVIRONMENT_LINE = /^(app|seed|no-visual):/;
+const ENVIRONMENT_LINE = /^(app|seed|no-visual|no-docs|refactor-tests):/;
 // `heading` is `Verification` in plan.md and `Gate` in card.md: the same block, the same lines.
 const HOST_WORDS = /\bHost\b|\b[Vv]irtual[ -][Hh]osts?\b/;
 export const wantsStrictHost = (doc) => {
@@ -285,6 +286,15 @@ export const wantsStrictHost = (doc) => {
 };
 
 export const mutationWorkers = (cores = cpus().length) => Math.max(1, Math.floor(cores / 2));
+
+// The tests the card's files can break, quoted for the shell; empty when the card touched no code a test reaches.
+// A command that starts with `cd <dir> &&` gets them from that folder, and only those inside it.
+export const affectedOf = (base, root = process.cwd(), dir = '') => {
+  const touched = cardFiles(root, base).filter((f) => !f.startsWith('specs/') && existsSync(join(root, f)));
+  const tests = touched.length ? affected(root, touched) : [];
+  const local = dir ? tests.filter((f) => f.startsWith(`${dir}/`)).map((f) => f.slice(dir.length + 1)) : tests;
+  return local.map((f) => `"${f}"`).join(' ');
+};
 
 export const planCommands = (plan, { base, cardDir }, heading = 'Verification') => {
   const section = plan.split(/^## /m).find((s) => s.startsWith(heading));
@@ -299,6 +309,12 @@ export const planCommands = (plan, { base, cardDir }, heading = 'Verification') 
     const name = l.slice(0, i).replace(TIMEOUT_TAG, '').trim();
     const timeoutMin = limit ? Number(limit[1]) * (/^h/i.test(limit[2]) ? 60 : 1) : undefined;
     let command = l.slice(i + 1).trim();
+    // `{affected}` is the tests the card's files can break (affected.mjs over the card's diff): the gate runs those, the CI of the
+    // PR runs the whole suite. A card that changes a line does not pay the whole suite on every gate round.
+    if (command.includes('{affected}')) {
+      const tests = affectedOf(base, process.cwd(), commandDir(command));
+      command = tests ? command.replaceAll('{affected}', tests) : 'node -e "console.log(\'no test reaches the files of the card\')"';
+    }
     // An `attacks` line asks for a refused foreign Host only in production or when the card speaks of the host.
     if (/^attacks$/i.test(name) && /attack\.mjs\s+\S+/.test(command) && !/--strict-host/.test(command) && wantsStrictHost(plan)) command = command.replace(/(attack\.mjs\s+\S+)/, '$1 --strict-host');
     const mutate = name.match(/^mutate\s+(\S+)$/);
@@ -494,9 +510,12 @@ const SPEC_TAG = /@(?:assumption:|supuesto:)?[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+|
 export const replacedFailures = (root, output) => {
   const failing = failingTests(output, Infinity);
   if (!failing.length) return null;
+  // A replacement declared by an earlier card still holds: the frozen test stays replaced, and copying its line into every
+  // later card's Log was work with no information in it.
   const card = currentCard(root);
-  const doc = card && existsSync(join(card, CARD_FILE)) ? readFileSync(join(card, CARD_FILE), 'utf8') : '';
-  const declared = replacementsOf(doc);
+  const specsDir = join(root, 'specs');
+  const cards = existsSync(specsDir) ? readdirSync(specsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => join(specsDir, e.name)) : [];
+  const declared = [...new Set([card, ...cards].filter(Boolean))].flatMap((c) => replacementsOf(readCard(c) ?? ''));
   // A replacement may keep the title of the test it replaces: it is failing only if a test of that name fails in its own
   // file. A failure whose runner does not say the file counts against any file.
   const fileOf = (t) => (t.file ?? t.nodeFile ?? '').replace(/:\d+(?::\d+)?$/, '');
@@ -687,6 +706,8 @@ export const design = (root, cardDir, off = new Set()) => {
     // A Dart widget is not a web screen: its `color:` is a named argument, not CSS. Flutter's design bar is its profile's
     // goldens and guidelines, not the design line, tokens.css and CSS transitions checked here.
     .filter((f) => !f.endsWith('.dart'))
+    // A file the card only moved is a screen of the card only when the move added markup to it.
+    .filter((f) => !originOf(root, base, f) || addedOf(root, base, f).some((l) => BUILDS_SCREEN.test(l.text)))
     .filter((f) => IS_SCREEN.test(f) || (IS_CODE.test(f) && BUILDS_SCREEN.test(readFileSync(join(root, f), 'utf8'))));
   if (!touched.length) return [];
   // The component set is checked as a whole in its gallery; the screens, for how they use it.
@@ -763,14 +784,16 @@ export const K4_MIN_LINES = 5;
 export const K4_MIN_TOKENS = 50;
 export const DECLARED_K4 = /declared\s*·\s*K4\s*·\s*([^\s·:]+)(?::[\d-]+)?\s*·\s*(.+?)\s*$/;
 export const declaredClones = (cardDir) => {
-  const doc = existsSync(join(cardDir, CARD_FILE)) ? readFileSync(join(cardDir, CARD_FILE), 'utf8') : '';
+  const doc = existsSync(join(cardDir, CARD_FILE)) ? readCard(cardDir) : '';
   return new Map((doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').map((l) => l.match(DECLARED_K4)).filter(Boolean).map((m) => [m[1], m[2]]));
 };
 
 // The lines of each file the card added or changed since its start: [[from, to], …]; a file the card created is `null` (all of it).
 const addedLines = (root, base, files) => {
-  const out = new Map(files.map((f) => [f, existedAt(root, base, f) ? [] : null]));
-  const diff = git(root, ['diff', '-U0', '--no-color', base, '--', ...files]).stdout ?? '';
+  // A moved file diffs against where it came from: only what changed in the move is the card's.
+  const origins = files.map((f) => originOf(root, base, f)).filter(Boolean);
+  const out = new Map(files.map((f) => [f, existedAt(root, base, f) || originOf(root, base, f) ? [] : null]));
+  const diff = git(root, ['diff', '-U0', '--no-color', '-M80%', base, '--', ...files, ...origins]).stdout ?? '';
   let file = null;
   for (const l of diff.split(/\r?\n/)) {
     if (l.startsWith('+++ ')) { file = l.slice(4).replace(/^b\//, ''); continue; }
@@ -1201,7 +1224,7 @@ const isScreenCard = (root, cardDir) => {
 };
 
 // The gate's own checks: every spec has a tagged test, and a screen passes axe, contrast and focus.
-export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root, readCard(cardDir)).probe ? screenChecks(probeRecords(root)) : [])];
+export const gateChecks = (root, cardDir) => oneRound(() => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root, readCard(cardDir)).probe ? screenChecks(probeRecords(root)) : [])]);
 
 // One line per check: `<name>: passed`, `<name>: failed: <why>` or `<name>: could not run: <why>`.
 const lineOf = (name, state, detail) => `${name}: ${state === 'passed' ? 'passed' : `${state}: ${detail}`}`;

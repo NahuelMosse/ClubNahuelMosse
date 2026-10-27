@@ -23,8 +23,9 @@
 //
 // Dart: a `.dart` file gets `DART_OPERATORS`, against `flutter test <the file's tests>`. Use `--since` so only the lines the card
 // changed are mutated: each mutant reruns `flutter test`.
-import { readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
-import { copyTree } from './copy-tree.mjs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { syncTree, unlinkDependencies } from './copy-tree.mjs';
 import { endsWithLine } from './final-line.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
@@ -242,9 +243,23 @@ const BUDGET_MS = 10 * 60_000;
 // every crash would count as a detected mutant.
 const parallel = Math.max(1, Number(option('--parallel') ?? 1) || 1);
 
-// The copy carries everything except git, the tools' output folders and the dependencies, which are
-// linked: copying them takes minutes (copy-tree.mjs).
-const copies = Array.from({ length: parallel }, () => mkdtempSync(join(tmpdir(), 'mutate-')));
+// The copy carries everything except git, the tools' output folders and what a build regenerates; the dependencies are linked
+// (copy-tree.mjs). It is kept between runs, one per project and slot, and only brought up to date: copying the whole project
+// for every file cost minutes on a slow disk, and a Flutter or Gradle build started from zero each time. A slot another run holds
+// (its lock is younger than two hours) is not shared: that run gets a throwaway copy, deleted at the end.
+const KEEP = join(tmpdir(), `mutate-${createHash('sha1').update(resolve(root).toLowerCase()).digest('hex').slice(0, 10)}`);
+const lockOf = (dir) => `${dir}.lock`;
+const takeSlot = (dir) => {
+  try { mkdirSync(lockOf(dir)); return true; } catch {}
+  try { if (Date.now() - statSync(lockOf(dir)).mtimeMs > 2 * 3600_000) { rmSync(lockOf(dir), { recursive: true, force: true }); mkdirSync(lockOf(dir)); return true; } } catch {}
+  return false;
+};
+// A project that itself lives in the temporary folder (a test's throwaway repo) gets throwaway copies: keeping them would pile up.
+const keepable = !resolve(root).toLowerCase().startsWith(resolve(tmpdir()).toLowerCase());
+const copies = Array.from({ length: parallel }, (_, i) => {
+  const dir = `${KEEP}-${i}`;
+  return keepable && takeSlot(dir) ? { dir, kept: true } : { dir: mkdtempSync(join(tmpdir(), 'mutate-')), kept: false };
+});
 // A mutant can hang the suite. When the deadline passes the whole process tree is brought down:
 // cutting only the shell leaves the suite alive, occupying the copy and a port. Hanging counts as
 // detected.
@@ -274,13 +289,10 @@ let alive;
 let timedOut = 0;
 let baseMs = 0;
 try {
-  for (const copy of copies) {
-    copyTree(root, copy);
-    if (existsSync(join(root, 'node_modules'))) symlinkSync(join(root, 'node_modules'), join(copy, 'node_modules'), 'junction');
-  }
+  for (const copy of copies) syncTree(root, copy.dir, { fresh: !copy.kept });
 
   // The suite has to pass unmutated; if it does not, every number below is garbage.
-  const base = await run(copies[0], 600_000);
+  const base = await run(copies[0].dir, 600_000);
   if (base.status !== 0) {
     console.error(base.timedOut
       ? 'The unmutated suite did not finish in 10 minutes: nothing can be measured.'
@@ -298,7 +310,7 @@ try {
     alive = [];
     timedOut = 0;
     const queue = [...mutants];
-    await Promise.all(copies.map(async (copy) => {
+    await Promise.all(copies.map(async ({ dir: copy }) => {
       const target = join(copy, rel);
       for (let m = queue.shift(); m; m = queue.shift()) {
         writeFileSync(target, m.text);
@@ -310,18 +322,18 @@ try {
     alive.sort((a, b) => a.n - b.n);
   }
 } finally {
-  // The link is removed before deleting the copy, so the deletion cannot follow it into the
-  // project's dependencies.
-  // If the link could not be removed, the copy is left alone. And if Windows does not let it be
-  // deleted —a suite process that still has it open—, it warns and the result comes out anyway.
-  for (const copy of copies) {
-    const link = join(copy, 'node_modules');
-    try { unlinkSync(link); } catch {}
-    if (existsSync(link)) console.error(`Could not remove the link ${link}: the copy is left undeleted.`);
-    else {
-      try { rmSync(copy, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); }
-      catch (e) { console.error(`Could not delete the temporary copy ${copy} (${e.code}); it can be deleted by hand.`); }
+  // A kept copy gets the mutated file back and its slot released, for the next run. A throwaway one loses its links first, so
+  // the deletion cannot follow them into the project's dependencies; if Windows does not let it be deleted —a suite process
+  // that still has it open—, it warns and the result comes out anyway.
+  for (const { dir: copy, kept } of copies) {
+    if (kept) {
+      try { writeFileSync(join(copy, rel), readFileSync(join(root, rel))); } catch {}
+      rmSync(lockOf(copy), { recursive: true, force: true });
+      continue;
     }
+    unlinkDependencies(copy);
+    try { rmSync(copy, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 }); }
+    catch (e) { console.error(`Could not delete the temporary copy ${copy} (${e.code}); it can be deleted by hand.`); }
   }
 }
 if (!alive) process.exit();
