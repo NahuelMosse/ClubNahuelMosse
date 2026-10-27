@@ -18,7 +18,7 @@ not_read:
 ## Tasks
 
 - T1 · S1,S2,SES-01-ASM-01,SES-01-ASM-02 · apps/mobile/lib/sesion/formulario_de_inicio_sesion.dart (presentation), apps/mobile/lib/sesion/aviso_de_inicio_sesion.dart (presentation: el aviso suma el alto del teclado a su borde inferior) · tests: apps/mobile/test/teclado_en_el_login_test.dart "con el teclado abierto la foto del inicio de sesión ocupa la misma área @SES-01-S1 @assumption:SES-01-ASM-01"; apps/mobile/test/teclado_en_el_login_test.dart "con el teclado abierto el botón de ingresar se alcanza desplazando @SES-01-S2"; apps/mobile/test/teclado_en_el_login_test.dart "con el teclado abierto el aviso de credenciales inválidas queda por encima del teclado @assumption:SES-01-ASM-02"
-  reuses: apps/mobile/lib/sesion/fondo_de_inicio_sesion.dart `FondoDeInicioSesion`
+  reuses: `FondoDeInicioSesion` (la foto, sin cambios)
 
 ## Changes to existing behavior
 
@@ -30,6 +30,7 @@ not_read:
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh test/teclado_en_el_login_test.dart test/pantalla_inicio_sesion_test.dart
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/teclado_en_el_login_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+refactor-tests: los tests de fondo_del_login_test.dart pasan tal cual a teclado_en_el_login_test.dart, sin el import sin uso y sin el montaje duplicado (L4)
 no-docs: un arreglo de diseño de una pantalla; el contrato y el modelo de datos no cambian
 no-visual: con el teclado cerrado la pantalla se ve igual; lo cubre el test de área de la foto
 ```
