@@ -1,10 +1,11 @@
 import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 
-/// Qué avisa una notificación: el recordatorio de una reserva próxima, la cancelación que
+/// Qué avisa una notificación: el recordatorio de una reserva próxima (una hora o cinco minutos antes), la cancelación que
 /// hizo el club o la confirmación de la que hizo la propia persona.
 enum TipoDeNotificacion {
   recordatorio('recordatorio'),
+  recordatorioCinco('recordatorio_cinco'),
   cancelacionForzosa('cancelacion_forzosa'),
   cancelacionUsuario('cancelacion_usuario');
 
