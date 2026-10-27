@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/esqueleto.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/fechas.dart';
 import '../comun/linea_del_dia.dart';
@@ -353,13 +354,19 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
             ),
       body: datos == null || cancha == null
           ? SafeArea(
-              child: Center(
-                child: _cambio
-                    ? const SizedBox.shrink()
-                    : _fallo
-                    ? BotonTexto(texto: 'REINTENTAR', alTocar: _cargar)
-                    : const CircularProgressIndicator(),
-              ),
+              child: _cambio
+                  ? const SizedBox.shrink()
+                  : _fallo
+                  ? Center(
+                      child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                    )
+                  : const Padding(
+                      padding: Medidas.paginaDeLista,
+                      child: EsqueletoDeLista(
+                        forma: FormaDeEsqueleto.grilla,
+                        cantidad: 6,
+                      ),
+                    ),
             )
           : SingleChildScrollView(
               child: Column(
@@ -469,13 +476,16 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     if (grilla == null) {
       return Padding(
         padding: const EdgeInsets.all(Medidas.s24),
-        child: Center(
-          child: _cambio
-              ? const SizedBox.shrink()
-              : _consultando || !_fallo
-              ? const CircularProgressIndicator()
-              : BotonTexto(texto: 'REINTENTAR', alTocar: _consultar),
-        ),
+        child: _cambio
+            ? const SizedBox.shrink()
+            : _consultando || !_fallo
+            ? const EsqueletoDeLista(
+                forma: FormaDeEsqueleto.grilla,
+                cantidad: 4,
+              )
+            : Center(
+                child: BotonTexto(texto: 'REINTENTAR', alTocar: _consultar),
+              ),
       );
     }
     return SeccionDeHorarios(

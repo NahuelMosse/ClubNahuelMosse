@@ -30,6 +30,7 @@ not_read:
 suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/esqueletos_de_carga_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+refactor-tests: la espera de lista deja de ser un spinner y pasa a ser bloques `Esqueleto`; los tests que buscaban `CircularProgressIndicator` buscan `Esqueleto`
 ```
 
 ## Log

@@ -118,7 +118,11 @@ void main() {
           MaterialApp(
             theme: temaOscuro,
             home: Scaffold(
-              body: BotonPrimario(texto: 'ENVIAR', alTocar: () {}, cargando: true),
+              body: BotonPrimario(
+                texto: 'ENVIAR',
+                alTocar: () {},
+                cargando: true,
+              ),
             ),
           ),
         );

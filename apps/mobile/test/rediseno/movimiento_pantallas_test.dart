@@ -5,6 +5,7 @@ import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/comun/boton.dart';
 import 'package:clubnahuelmosse/comun/campo_texto.dart';
+import 'package:clubnahuelmosse/comun/esqueleto.dart';
 import 'package:clubnahuelmosse/comun/ficha_socio.dart';
 import 'package:clubnahuelmosse/comun/isotipo.dart';
 import 'package:clubnahuelmosse/comun/linea_del_dia.dart';
@@ -355,11 +356,8 @@ void main() {
       expect(tester.element(find.text('Mis reservas')), same(titulo));
       expect(tester.element(find.text('Historial')), same(selector));
       expect(
-        find.descendant(
-          of: lista,
-          matching: find.byType(CircularProgressIndicator),
-        ),
-        findsOneWidget,
+        find.descendant(of: lista, matching: find.byType(Esqueleto)),
+        findsWidgets,
       );
 
       espera.complete();
@@ -380,7 +378,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final espera = Completer<void>();
-      await montarUsuario(tester, api: _apiSede(espera), inicio: '/sedes/00000000-0000-7000-8000-000000000001');
+      await montarUsuario(
+        tester,
+        api: _apiSede(espera),
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+      );
       const tenis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
       const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
       final titulo = tester.element(find.text('SEDE MORÓN'));
@@ -459,7 +461,7 @@ void main() {
 
       // La lista vieja es de Próximas: con Historial elegido no puede verse.
       expect(find.text('ACTIVA'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(Esqueleto), findsWidgets);
       expect(find.text('COMPLETADA'), findsNothing);
 
       espera.complete();
@@ -467,7 +469,7 @@ void main() {
       await tester.pump(_ms(200));
       expect(find.text('COMPLETADA'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(Esqueleto), findsNothing);
     },
   );
 
@@ -923,7 +925,8 @@ void main() {
       await montarUsuario(
         tester,
         api: apiRutas(rutasDeSedes()),
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+        inicio:
+            '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
       final linea = find.byType(LineaDelDia);
       expect(

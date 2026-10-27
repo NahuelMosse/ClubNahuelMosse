@@ -6,6 +6,7 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
+import '../comun/esqueleto.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/fechas.dart';
 import '../comun/formato_fecha.dart';
@@ -362,11 +363,16 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
               consultando: _consultando,
             ),
       body: opciones == null
-          ? Center(
-              child: _falloAlCargar
-                  ? BotonTexto(texto: 'REINTENTAR', alTocar: _cargar)
-                  : const CircularProgressIndicator(),
-            )
+          ? _falloAlCargar
+                ? Center(
+                    child: BotonTexto(texto: 'REINTENTAR', alTocar: _cargar),
+                  )
+                : const SafeArea(
+                    child: Padding(
+                      padding: Medidas.paginaDeLista,
+                      child: EsqueletoDeLista(forma: FormaDeEsqueleto.grilla),
+                    ),
+                  )
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(
                 Medidas.s24,
@@ -404,8 +410,8 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
                   ..._filtros(opciones.$1, opciones.$2),
                   if (_consultando)
                     const Padding(
-                      padding: EdgeInsets.all(Medidas.s24),
-                      child: Center(child: CircularProgressIndicator()),
+                      padding: EdgeInsets.only(top: Medidas.s24),
+                      child: EsqueletoDeLista(forma: FormaDeEsqueleto.cancha),
                     ),
                   if ((_consulta, _resultado) case (
                     final consulta?,

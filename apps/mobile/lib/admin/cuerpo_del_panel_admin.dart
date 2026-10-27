@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../comun/boton.dart';
+import '../comun/esqueleto.dart';
 import '../espacios/espacio.dart';
 import '../tema/tokens.dart';
 import 'cargando_reservas_admin.dart';
@@ -49,7 +50,7 @@ List<Widget> cuerpoDelPanelAdmin({
       const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: Medidas.s16),
-          child: Center(child: CircularProgressIndicator()),
+          child: EsqueletoDeLista(forma: FormaDeEsqueleto.reserva, cantidad: 1),
         ),
       ),
   ];

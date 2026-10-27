@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/carga_de_lista.dart';
+import '../comun/esqueleto.dart';
 import '../espacios/espacio.dart';
 import '../espacios/iconos.dart';
 import '../tema/tema.dart';
@@ -153,7 +154,10 @@ class ContenidoDeSede extends StatelessWidget {
                 const SizedBox(height: Medidas.s12),
                 CambioDeLista(
                   child: filtrando
-                      ? const EsperaDeLista(key: ValueKey('carga'))
+                      ? const EsqueletoDeLista(
+                          key: ValueKey('carga'),
+                          forma: FormaDeEsqueleto.cancha,
+                        )
                       : ListaDeCanchas(
                           key: ValueKey((deporte, tipo)),
                           sedeId: sede.id,

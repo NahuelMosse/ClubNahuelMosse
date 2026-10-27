@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
-import '../comun/carga_de_lista.dart';
 import '../comun/en_curso.dart';
+import '../comun/esqueleto.dart';
 import '../comun/marco_de_tarjeta.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
@@ -108,7 +108,8 @@ class PlantillaListadoAdmin extends StatelessWidget {
                   ),
                   const SizedBox(height: Medidas.s16),
                   ...listado,
-                  if (!hayDatos && !fallo) const EsperaDeLista(),
+                  if (!hayDatos && !fallo)
+                    const EsqueletoDeLista(forma: FormaDeEsqueleto.sede),
                   if (!hayDatos && fallo)
                     Center(
                       child: BotonTexto(
