@@ -1,0 +1,1 @@
+- apps/api/app/modules/notificaciones/casos_de_uso.py:49 · “None” → “0” · “o:Destinatario|None=@@,)->None:"""Mandauna” · el valor por defecto de `destinatario` sólo se usa en `destinatario or notificaciones.destinatario(usuario_id)`: None y 0 son falsos y llevan a la misma búsqueda
