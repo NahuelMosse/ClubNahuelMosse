@@ -51,3 +51,5 @@ no-docs: refactor interno; el comportamiento, el contrato y el modelo de datos n
 
 - L1 · tambien quiero que limpies el codigo, porque creo que esta muy sucio, dificil de leer · de funcionalidad no sacaria nada · quedas solo toda la noche, simplifica sin sacar fucionalidad y deja todo mas organizado
 - L2 · 2026-10-27 · declared · fault-db · la base es Postgres, no un archivo; la suite de integración la usa como siempre
+- L3 · 2026-10-27 · RED · tests/unit/test_codigo_legible.py (6 tests) + tests/integracion/test_api_legible.py (1) · arq01-pytest: 4 failed (ruff, 40 líneas, constantes, SQL único), 3 passed (firmas, bloqueos, reinicio) · commit 369231d
+- L4 · 2026-10-27 · T1 · pyproject (C90,PLR,RET,N,ERA,FBT; N818 ignorado; rutas* sin PLR0913/0917), constantes MIN_LARGO_DE_CONTRASENA/HORAS_POR_DIA/HTTPStatus.BAD_REQUEST, validar_rango partida, `*` en confirmar/promover, noqa PLR0913 con motivo; peticion.state.usuario_id quitado (el parámetro `peticion` queda: el test de firmas lo exige) · mypy --strict app: Success; tests/unit + sedes/sesion/rutas_protegidas: 321 passed, 5 failed (los de test_codigo_legible que esperan T2-T4)

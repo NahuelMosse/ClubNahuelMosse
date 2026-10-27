@@ -14,11 +14,12 @@ class RepositorioAdministradores(RepositorioUsuarios, Protocol):
     def hacer_admin(self, id_usuario: UUID) -> None: ...
 
 
-def sembrar_admin(
+def sembrar_admin(  # noqa: PLR0913 -- firma pública fijada por sus llamadores
     datos: DatosRegistro,
     hoy: date,
     identidad: ProveedorIdentidad,
     usuarios: RepositorioAdministradores,
+    *,
     promover: bool = False,
 ) -> UUID:
     """Crea una cuenta de administrador con esos datos, o asciende la que ya existe.

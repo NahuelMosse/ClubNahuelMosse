@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import date
 
 LARGO_MAXIMO_NOMBRE = 60
+MIN_LARGO_DE_CONTRASENA = 8
 
 
 @dataclass(frozen=True)
@@ -45,8 +46,8 @@ def normalizar_dni(dni: str) -> str:
 def problemas_contrasena(contrasena: str) -> list[str]:
     """Las reglas que no cumple, en el orden en que las muestra la app."""
     faltan = []
-    if len(contrasena) < 8:
-        faltan.append("Al menos 8 caracteres")
+    if len(contrasena) < MIN_LARGO_DE_CONTRASENA:
+        faltan.append(f"Al menos {MIN_LARGO_DE_CONTRASENA} caracteres")
     if not re.search(r"[A-ZÁÉÍÓÚÑ]", contrasena):
         faltan.append("Una letra mayúscula")
     if not re.search(r"[0-9]", contrasena):

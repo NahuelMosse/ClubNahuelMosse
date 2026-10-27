@@ -32,9 +32,23 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "SIM"]
+select = ["E", "F", "I", "B", "UP", "SIM", "C90", "PLR", "RET", "N", "ERA", "FBT"]
+# N818: las excepciones del dominio conservan sus nombres en castellano (HorarioOcupado,
+# NoEncontrada), sin el sufijo `Error`.
+ignore = ["N818"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 4
 
 [tool.ruff.lint.per-file-ignores]
+# Cada `Depends` de una ruta de FastAPI cuenta como parámetro y es la forma de inyectar del framework.
+"app/modules/*/rutas*.py" = ["PLR0913", "PLR0917"]
+# Docstrings con las tags de la spec.
+"tests/unit/test_codigo_legible.py" = ["E501"]
+"tests/integracion/test_api_legible.py" = ["E501"]
 # Los escenarios quedan congelados al commitearse en rojo: el estilo no justifica recongelarlos.
 "tests/escenarios/*" = ["E501", "SIM117", "I001", "B008"]
 # Estos escenarios importan los fixtures de test_datos.py para que pytest los vea.

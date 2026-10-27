@@ -5,6 +5,7 @@ import os
 import urllib.error
 import urllib.request
 from functools import cache
+from http import HTTPStatus
 
 import firebase_admin
 from firebase_admin import auth
@@ -88,7 +89,7 @@ class ProveedorFirebase:
         except urllib.error.HTTPError as e:
             # La respuesta de error es un recurso abierto: se cierra pase lo que pase.
             with e:
-                if e.code != 400:
+                if e.code != HTTPStatus.BAD_REQUEST:
                     raise
                 mensaje = str(json.loads(e.read()).get("error", {}).get("message", ""))
                 if mensaje.startswith("TOO_MANY_ATTEMPTS"):

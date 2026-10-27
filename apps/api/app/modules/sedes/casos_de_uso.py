@@ -14,7 +14,7 @@ class Sedes(Protocol):
         """Lanza `Duplicado(["nombre"])` si otra sede activa ya tiene ese nombre."""
         ...
 
-    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, confirmar: bool) -> Sede:
+    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, *, confirmar: bool) -> Sede:
         """Guarda los datos nuevos de la sede activa [sede_id]. Las reservas no se tocan.
 
         Sin [confirmar], lanza `ReservasAfuera` si el horario nuevo deja afuera reservas
@@ -43,8 +43,8 @@ def dar_de_alta_sede(perfil: Perfil, datos: DatosSede, sedes: Sedes) -> Sede:
     return sedes.insertar(nueva, autor=perfil.id)
 
 
-def editar_sede(
-    perfil: Perfil, sede_id: UUID, datos: DatosSede, confirmar: bool, sedes: Sedes
+def editar_sede(  # noqa: PLR0913 -- firma pública fijada por sus llamadores
+    perfil: Perfil, sede_id: UUID, datos: DatosSede, *, confirmar: bool, sedes: Sedes
 ) -> Sede:
     """Corrige el nombre, la dirección o el horario de una sede (CU-18). Las reservas ya
     hechas se respetan: el horario nuevo rige para las que vengan (RF 3 se valida al

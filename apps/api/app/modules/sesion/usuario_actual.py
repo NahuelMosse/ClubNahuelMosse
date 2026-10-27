@@ -26,13 +26,11 @@ def usuario_actual(
 ) -> Perfil:
     """Quién hace el pedido, según el token de Firebase de la cabecera `Authorization`."""
     try:
-        perfil = perfil_autenticado(
+        return perfil_autenticado(
             credencial.credentials if credencial else None,
             identidad=proveedor,
             usuarios=perfiles,
         )
-        peticion.state.usuario_id = perfil.id
-        return perfil
     except NoAutenticado as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
