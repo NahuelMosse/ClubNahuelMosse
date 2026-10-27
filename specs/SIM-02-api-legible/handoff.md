@@ -1,15 +1,11 @@
 # Handoff SIM-02
 
-Hecho: RED commiteado (369231d); T1 (pyproject, usuario_actual, usuarios/reglas, horarios/reglas, identidad, sedes/casos_de_uso+rutas, administradores, contrasena).
+Hecho: RED (369231d); T1; T2 (reservas; almacen con noqa PLR0913/0917 como las otras firmas públicas); pyproject con per-file-ignore de PLR2004/SIM102/C901 para tests/unit/test_codigo_legible.py (el test congelado se queda, no se reemplaza).
 
 Falta:
-- T2 (reservas): `3600` y `23P01` una vez cada uno en reservas/*.py como constantes con nombre; partir mover/insertar/anular/historial a <=40 líneas sin reordenar los bloqueos usuario > sede > espacio > reserva.
-- T3 (notificaciones): quitar el alias `reemplaza`, partir encolar_cancelacion_forzosa y entregar.
-- T4 (espacios, sedes/repositorio con `actualizar(..., *, confirmar)`, horarios/disponibilidad) y el resto de hallazgos de ruff.
+- T3 (notificaciones): quitar el alias `reemplaza`, partir encolar_cancelacion_forzosa y entregar, FBT001 en almacen/repositorio/casos_de_uso.
+- T4 (espacios: insertar 58 y actualizar 45 líneas; sedes/repositorio con `actualizar(..., *, confirmar)`; horarios/disponibilidad y horarios/repositorio PLR0913; recuperacion/casos_de_uso:96) y el resto de ruff.
 
 Hallazgos: cd apps/api; UV_PROJECT_ENVIRONMENT=<venv> uv run --no-sync ruff check app --output-format concise
-
-Problema abierto: tests/unit/test_codigo_legible.py (congelado) no pasa ruff (PLR2004 x3 con 10/4, SIM102 x2, C901 en _bloqueos) y el gate lint lo incluye: reemplazarlo por un archivo nuevo con las mismas tags (y Log `replaces:`) con constantes y `_bloqueos` más plano.
-
-Verificación: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_codigo_legible.py (rutas relativas a apps/api).
-Las firmas públicas (git show main:) no cambian: nombres y orden de parámetros; por eso `peticion: Request` sigue en usuario_actual.
+Verificación: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_codigo_legible.py (desde la raíz del worktree). Cerrar con ruff format --check app, mypy --strict app y la suite completa.
+Firmas públicas no cambian (git show main:); PLR0913 en firmas públicas fijas: `# noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores`.

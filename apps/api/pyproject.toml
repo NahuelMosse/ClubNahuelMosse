@@ -47,7 +47,8 @@ max-args = 4
 # Cada `Depends` de una ruta de FastAPI cuenta como parámetro y es la forma de inyectar del framework.
 "app/modules/*/rutas*.py" = ["PLR0913", "PLR0917"]
 # Docstrings con las tags de la spec.
-"tests/unit/test_codigo_legible.py" = ["E501"]
+# Test congelado: sus literales son los umbrales que comprueba.
+"tests/unit/test_codigo_legible.py" = ["E501", "PLR2004", "SIM102", "C901"]
 "tests/integracion/test_api_legible.py" = ["E501"]
 # Los escenarios quedan congelados al commitearse en rojo: el estilo no justifica recongelarlos.
 "tests/escenarios/*" = ["E501", "SIM117", "I001", "B008"]
