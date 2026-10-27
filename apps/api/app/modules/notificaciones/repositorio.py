@@ -12,6 +12,7 @@ from app.modules.notificaciones.reglas import (
     ESPERA_DEL_RECORDATORIO,
     Aviso,
     AvisoPerdido,
+    Destinatario,
     Envio,
     Notificacion,
     Pendiente,
@@ -259,6 +260,14 @@ class NotificacionesSql:
             datos,
         ).first()
         return vigente is not None
+
+    def destinatario(self, usuario_id: UUID) -> Destinatario | None:
+        fila = self._conn.execute(
+            text("SELECT correo, nombre FROM usuario WHERE id = :usuario"),
+            {"usuario": usuario_id},
+        ).first()
+        self._conn.rollback()
+        return None if fila is None else Destinatario(correo=fila.correo, nombre=fila.nombre)
 
     def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
         filas = self._conn.execute(

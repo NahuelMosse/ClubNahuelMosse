@@ -63,22 +63,24 @@ class _Repositorio:
 
 
 class _Canal:
+    """Un canal que acepta todos los tokens y guarda lo que le mandaron."""
+
     def __init__(self) -> None:
         self.avisos: list[Aviso] = []
 
     def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
-        self.avisos.append(aviso)
-        return ResultadoDeEnvio(enviados=1)
+        self.avisos += [aviso]
+        return ResultadoDeEnvio(enviados=len(tokens))
 
 
 def _entregar(repo: _Repositorio, canal: _Canal) -> None:
     entregar(cast(Any, repo), canal, UUID(int=1), USUARIO, AVISO)
 
 
-def test_cada_notificacion_registrada_sale_tambien_por_correo_con_su_titulo_cuerpo_y_la_plantilla_de_la_app(
+def test_cada_notificacion_registrada_sale_tambien_por_correo_con_titulo_cuerpo_y_plantilla(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """cada notificación registrada sale también por correo con su título, cuerpo y la plantilla de la app
+    """cada notificación registrada sale también por correo con su título, cuerpo y la plantilla
     @MAIL-03-S1 @assumption:MAIL-03-ASM-02"""
     enviados: list[Mensaje] = []
     monkeypatch.setattr(casos_de_uso, "enviar", enviados.append)

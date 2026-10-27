@@ -3,11 +3,11 @@ from datetime import datetime
 from uuid import UUID
 
 from app.modules.notificaciones.almacen import Notificaciones
+from app.modules.notificaciones.correo import correo_de_aviso
 from app.modules.notificaciones.reglas import (
     Aviso,
+    Destinatario,
     Notificacion,
-    Recordatorio,
-    correo_recordatorio,
     mensaje_recordatorio,
 )
 from app.modules.notificaciones.reglas import CanalNoConfigurado as CanalNoConfigurado
@@ -15,6 +15,7 @@ from app.modules.notificaciones.reglas import CanalPush as CanalPush
 from app.modules.notificaciones.reglas import Pendiente as Pendiente
 from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
 from app.modules.sesion import Perfil
+from app.shared.config import config
 from app.shared.correo import enviar
 from app.shared.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 
@@ -23,20 +24,42 @@ PLATAFORMAS = ("android", "ios")
 _registro = logging.getLogger(__name__)
 
 
+def _avisar_por_correo(
+    notificaciones: Notificaciones,
+    usuario_id: UUID,
+    aviso: Aviso,
+    destinatario: Destinatario | None,
+) -> None:
+    """El correo no frena nada: el log lleva el tipo del error y no la dirección."""
+    try:
+        destino = destinatario or notificaciones.destinatario(usuario_id)
+        if destino is None or not destino.correo:
+            return
+        enviar(correo_de_aviso(aviso, destino, config.url_publica))
+    except Exception as e:
+        _registro.warning("el correo del aviso falló: %s", type(e).__name__)
+
+
 def entregar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     notificaciones: Notificaciones,
     canal: CanalPush,
     notificacion_id: UUID,
     usuario_id: UUID,
     aviso: Aviso,
+    destinatario: Destinatario | None = None,
 ) -> None:
-    """Manda un aviso ya registrado a los teléfonos con permiso y deja anotado cómo salió.
+    """Manda un aviso ya registrado por correo y a los teléfonos con permiso, y deja anotado
+    cómo salió el push.
+
+    El correo sale primero y no depende del push; si falla sólo queda en el log. Quien ya
+    conoce al destinatario lo pasa, y si no se lo busca.
 
     Sin ningún dispositivo con permiso queda sólo en el centro: `sin_permiso` si hay
     dispositivos que no lo dieron y `sin_canal` si no hay ninguno al que mandarlo, igual que
     cuando no hay servicio de envío. Un envío que falla no se reintenta desde acá: queda
     marcado como fallido.
     """
+    _avisar_por_correo(notificaciones, usuario_id, aviso, destinatario)
     tokens = notificaciones.tokens_con_permiso(usuario_id)
     if not tokens:
         hay_dispositivos = notificaciones.tiene_dispositivos(usuario_id)
@@ -92,16 +115,6 @@ def despachar_pendientes(
     return despachados
 
 
-def _avisar_por_correo(recordatorio: Recordatorio) -> None:
-    """El correo no frena nada: el push ya salió y el log no lleva la dirección."""
-    if not recordatorio.correo:
-        return
-    try:
-        enviar(correo_recordatorio(recordatorio))
-    except Exception as e:
-        _registro.warning("el correo del recordatorio falló: %s", type(e).__name__)
-
-
 def enviar_recordatorios(
     notificaciones: Notificaciones,
     canal: CanalPush,
@@ -122,8 +135,8 @@ def enviar_recordatorios(
             if nuevo is None:
                 continue
             registrados += 1
-            entregar(notificaciones, canal, nuevo, recordatorio.usuario_id, aviso)
-            _avisar_por_correo(recordatorio)
+            conocido = Destinatario(recordatorio.correo, recordatorio.nombre)
+            entregar(notificaciones, canal, nuevo, recordatorio.usuario_id, aviso, conocido)
         except Exception as e:
             # El recordatorio de una persona no corta el de las demás.
             _registro.warning("el recordatorio falló: %s", type(e).__name__)

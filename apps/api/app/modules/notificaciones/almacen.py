@@ -6,6 +6,7 @@ from uuid import UUID
 from app.modules.notificaciones.reglas import (
     Aviso,
     AvisoPerdido,
+    Destinatario,
     Envio,
     Notificacion,
     Pendiente,
@@ -21,6 +22,10 @@ class Notificaciones(Protocol):
 
     def registrar(self, recordatorio: Recordatorio, aviso: Aviso) -> UUID | None:
         """Guarda el aviso en el centro. `None` si ya estaba: otro barrido lo registró."""
+        ...
+
+    def destinatario(self, usuario_id: UUID) -> Destinatario | None:
+        """El correo y el nombre de [usuario_id]. `None` si no hay esa persona."""
         ...
 
     def tokens_con_permiso(self, usuario_id: UUID) -> list[str]: ...
