@@ -30,7 +30,8 @@ suite [timeout 2 h]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cachepro
 lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app apps/api/tests/unit/test_api_en_ingles_verde.py
 app: sh D:/Temp/w/herramientas/arq01-app.sh eng14_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh eng14_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
-refactor-tests: los tests de la API siguen a los módulos renombrados: cambian sólo imports, símbolos y rutas de archivo
+refactor-tests: los tests de la API siguen a los módulos renombrados: cambian imports, símbolos y rutas de archivo, y los de contrato cambian su línea base de main (1ee70de y 612d445 a 88d1a9c, con `recordatorio_cinco`) según los `replaces:` del Log; lo que comparan (rutas, métodos, códigos, campos, parámetros, operationId, security) no cambia
+publish: no se publica: la rama `ingles-api` no se pushea ni abre PR a main por pedido del usuario; el cierre lo declara como «no se pudo correr»
 no-docs: nombres internos; el comportamiento no cambia
 no-visual: la card no toca la app
 ```
