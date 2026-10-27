@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../tema/tokens.dart';
 import 'esqueleto.dart';
-import 'zona_de_esqueletos.dart';
 
+// kit-shape: _Aviso es un detalle privado de la forma `aviso`, no tiene otro uso.
 /// La forma de lo que va a aparecer en una lista.
 enum FormaDeEsqueleto { sede, cancha, reserva, aviso, grilla }
 

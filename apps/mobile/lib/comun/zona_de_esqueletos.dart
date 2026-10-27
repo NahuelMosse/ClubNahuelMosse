@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+// kit-shape: el widget con estado y su State son un solo componente; _Deslizar es su degradé privado.
+
 /// Reúne los bloques de una pantalla bajo un mismo brillo que los recorre. Se detiene con
 /// «reducir movimiento» y el lector de pantalla dice «Cargando» una vez, sin leer los bloques.
 class ZonaDeEsqueletos extends StatefulWidget {
