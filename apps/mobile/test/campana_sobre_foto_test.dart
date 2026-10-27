@@ -6,7 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'notificaciones_test.dart' show ApiFalsa, centroDe;
 import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
 
 Future<void> _montarCampana(
   WidgetTester tester, {
@@ -25,9 +24,8 @@ Future<void> _montarCampana(
   await tester.pumpAndSettle();
 }
 
-Color _colorDelIcono(WidgetTester tester) => tester
-    .widget<Icon>(find.byIcon(Icons.notifications_none_rounded))
-    .color!;
+Color _colorDelIcono(WidgetTester tester) =>
+    tester.widget<Icon>(find.byIcon(Icons.notifications_none_rounded)).color!;
 
 void main() {
   testWidgets(

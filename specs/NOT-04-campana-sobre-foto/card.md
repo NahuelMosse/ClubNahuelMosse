@@ -28,6 +28,7 @@ not_read:
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh test/campana_sobre_foto_test.dart test/notificaciones_test.dart test/campana_marca_leidas_test.dart
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/campana_sobre_foto_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+refactor-tests: el test del RED trae un import que no usa (soporte/usuario.dart: SesionFalsa y perfilUsuario vienen de soporte/montar.dart) y no tiene el formato de dart format; se corrige sin cambiar lo que verifica
 no-docs: un color de un ícono; el contrato y el modelo de datos no cambian
 no-visual: cambia el color de un ícono a un token que ya existe; lo verifica el test en los dos modos
 ```
