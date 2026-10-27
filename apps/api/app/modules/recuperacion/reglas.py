@@ -1,3 +1,4 @@
+# kit-shape: los tipos del mensaje, el destinatario y el enlace reclamado son un solo concepto
 from dataclasses import dataclass
 from uuid import UUID
 

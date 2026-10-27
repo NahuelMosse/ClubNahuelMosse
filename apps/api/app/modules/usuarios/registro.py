@@ -1,3 +1,4 @@
+# kit-shape: los contratos del alta y la función que los usa se leen juntos
 import logging
 from datetime import date
 from typing import Protocol

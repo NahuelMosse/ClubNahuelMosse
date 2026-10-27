@@ -1,3 +1,4 @@
+# kit-shape: el contrato del repositorio de administradores y la función que lo usa se leen juntos
 from datetime import date
 from typing import Protocol
 from uuid import UUID

@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de sedes y las funciones que arman su entidad van juntos
 from typing import Any
 from uuid import UUID
 

@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de horarios y las funciones que arman su agenda van juntos
 from datetime import datetime
 from typing import Any
 from uuid import UUID

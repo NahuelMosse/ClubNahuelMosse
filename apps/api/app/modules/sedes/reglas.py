@@ -1,3 +1,4 @@
+# kit-shape: los tipos de la sede y las funciones que la validan son un solo concepto
 import re
 from dataclasses import dataclass
 from datetime import time

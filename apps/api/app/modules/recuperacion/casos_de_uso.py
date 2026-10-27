@@ -1,3 +1,4 @@
+# kit-shape: los contratos de la recuperación y los casos de uso que los usan se leen juntos
 """Recuperar la contraseña con un enlace de un solo uso que llega por correo.
 
 La respuesta a quien pide el enlace es siempre la misma, tenga cuenta o no el correo: decir

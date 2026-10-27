@@ -1,3 +1,4 @@
+# kit-shape: el contrato de disponibilidad y la función que lo usa se leen juntos
 from datetime import date, datetime, time
 from typing import Protocol
 from uuid import UUID

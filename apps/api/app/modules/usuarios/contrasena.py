@@ -1,3 +1,4 @@
+# kit-shape: los contratos del cambio de contraseña y el caso de uso que los usa se leen juntos
 import logging
 from typing import Protocol
 from uuid import UUID

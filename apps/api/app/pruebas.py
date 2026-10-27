@@ -1,3 +1,4 @@
+# kit-shape: los modelos de los pedidos de prueba y las rutas que los usan se leen juntos
 """Lo que los escenarios necesitan ver o forzar y la app no. Sólo existe con `PRUEBAS=1`."""
 
 from datetime import date, datetime

@@ -1,3 +1,4 @@
+# kit-shape: el contrato del repositorio de sedes y los casos de uso que lo usan se leen juntos
 from typing import Protocol
 from uuid import UUID
 
