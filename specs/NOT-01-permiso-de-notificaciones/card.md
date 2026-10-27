@@ -21,6 +21,8 @@ not_read:
 
 - T1 · S1,S2,NOT-01-ASM-01,NOT-01-ASM-02 · apps/mobile/lib/notificaciones/sistema.dart (data), apps/mobile/lib/notificaciones/sistema_simulado.dart (data), apps/mobile/lib/notificaciones/sistema_fcm.dart (data), apps/mobile/lib/notificaciones/centro.dart (rule), apps/mobile/lib/main.dart (presentation) · tests: apps/mobile/test/permiso_al_entrar_test.dart "al entrar, si el sistema todavía no le preguntó, la app pide el permiso y registra el teléfono con la respuesta @NOT-01-S1 @assumption:NOT-01-ASM-02"; apps/mobile/test/permiso_al_entrar_test.dart "si ya contestó, al entrar no vuelve a preguntar @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "un administrador no recibe la pregunta al entrar @assumption:NOT-01-ASM-01"; apps/mobile/test/permiso_al_entrar_test.dart "Activar sigue pidiendo el permiso @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "si al entrar niega el permiso, el teléfono se registra sin permiso y no se vuelve a preguntar @NOT-01-S1 @NOT-01-S2"; apps/mobile/test/permiso_al_entrar_test.dart "el sistema simulado sin respuesta guardada dice que todavía no preguntó y pedirle el permiso concedido o negado lo guarda @assumption:NOT-01-ASM-03"
   reuses: apps/mobile/lib/notificaciones/sistema.dart SistemaDeNotificaciones.solicitarPermiso; apps/mobile/lib/notificaciones/centro.dart _revisarPermiso
+- T2 · S1,S2 · apps/mobile/test/permiso_sin_cabos_sueltos_test.dart · tests: apps/mobile/test/permiso_sin_cabos_sueltos_test.dart "con Firebase, el permiso cuenta como preguntado sólo después de que el sistema tiene una respuesta @NOT-01-S2"; apps/mobile/test/permiso_sin_cabos_sueltos_test.dart "el sistema simulado conserva el token del teléfono entre pedidos @NOT-01-S1"; apps/mobile/test/permiso_sin_cabos_sueltos_test.dart "si la app se cierra mientras el sistema pregunta el permiso, no registra el teléfono @NOT-01-S1"
+  reuses: los falsos de notificaciones_test.dart (ApiFalsa, SistemaFalso, centroDe)
 
 ## Changes to existing behavior
 
@@ -32,10 +34,9 @@ not_read:
 ```
 suite: sh D:/Temp/w/herramientas/flutter-mobile.sh {affected}
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
-mutate apps/mobile/lib/notificaciones/centro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
-mutate apps/mobile/lib/notificaciones/sistema.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
-mutate apps/mobile/lib/notificaciones/sistema_simulado.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
-mutate apps/mobile/lib/notificaciones/sistema_fcm.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/notificaciones_test.dart
+mutate apps/mobile/lib/notificaciones/centro.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/permiso_sin_cabos_sueltos_test.dart test/notificaciones_test.dart
+mutate apps/mobile/lib/notificaciones/sistema_simulado.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/permiso_sin_cabos_sueltos_test.dart test/notificaciones_test.dart
+mutate apps/mobile/lib/notificaciones/sistema_fcm.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/permiso_al_entrar_notificaciones_test.dart test/permiso_sin_cabos_sueltos_test.dart test/notificaciones_test.dart
 ```
 
 ## Log
@@ -73,3 +74,4 @@ mutate apps/mobile/lib/notificaciones/sistema_fcm.dart: sh D:/Temp/w/herramienta
 - L31 · 2026-10-26 · declared · K4 · apps/mobile/test/reloj_del_token_test.dart · reemplazo del test congelado de piezas_de_pantalla_test.dart: repite su ayudante de lectura de lib/; el congelado no se edita ni se importa
 - L32 · 2026-10-26 · replaces: apps/mobile/test/sin_sobreingenieria_test.dart "a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04" · falla por un bug propio (`onError` devuelve Object); la declaración anterior nombraba el reemplazo sin sus tags · by: apps/mobile/test/limite_de_espera_test.dart "a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04" (copiada de SIM-01 L79: la compuerta sólo lee el Log de la card en curso)
 - L33 · 2026-10-27 · kit updated 440e63628bf1cf2dc2867520e033d628b18457c9 → 6e0cf032840cd6d397bc89e595efb8851b7ffb45 · actualización a 6.20 pedida por la persona
+- L34 · 2026-10-27 · T2 · los tres mutantes vivos (centro.dart:128 `||`→`&&`, sistema_simulado.dart:39 `!=`→`==`, sistema_fcm.dart:30 `!=`→`==`) tienen test en permiso_sin_cabos_sueltos_test.dart: 3 passed. sistema.dart sale de las líneas de mutación: es la interfaz y no tiene operador que mutar (mutate.mjs, exit 3)
