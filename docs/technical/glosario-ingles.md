@@ -18,6 +18,9 @@ Criterios: `reserva`→`booking` (no reservation); `sede`→`venue`; `espacio`�
 | `perfil.py` / `usuario_actual.py` / `administradores.py` / `baja.py` | `profile.py` / `current_user.py` / `admins.py` / `deactivation.py` |
 | `contrasena.py` / `registro.py` / `rutas_cuenta.py` / `rutas_registro.py` / `sembrar_admin.py` | `password.py` / `registration.py` / `account_routes.py` / `registration_routes.py` / `seed_admin.py` |
 | `salud.py` / `pruebas.py` | `health.py` / `e2e_support.py` |
+| `shared/{correo,mensaje,plantilla_correo}.py` / `reservas/correo.py` | `shared/{email,message,email_template}.py` / `bookings/email.py` |
+| `html_de_correo` / `correo_de_reserva` / `tipo_corto` / `correo_recordatorio` | `html_email` / `booking_email` / `short_kind` / `reminder_email` |
+| `Mensaje.para` / `.asunto` / `.cuerpo` | `Message.recipient` / `.subject` / `.body` |
 | `shared/{credencial_firebase,cuerpo,entradas,errores,errores_http,identidad,respuestas,zona}.py` | `{firebase_credential,body_limit,input_validation,errors,http_errors,identity,responses,club_timezone}.py` |
 | `apps/mobile/lib/` | `comun`→`common`, `tema`→`theme`, `inicio`→`home`, `espacios`→`spaces`, `sedes`→`venues`, `reservas`→`bookings`, `sesion`→`session`, `usuarios`→`users`, `notificaciones`→`notifications` (`admin`, `api` igual) |
 | `lib/rutas.dart` / `lib/api/rutas.dart` / `lib/redireccion.dart` | `router.dart` / `api/api_routes.dart` / `redirect.dart` |

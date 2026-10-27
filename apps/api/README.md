@@ -19,7 +19,7 @@ uv sync
 
 La configuración llega por variables de entorno. `app/shared/config.py` también lee un archivo `.env`
 local, que no se versiona; `.env.example` lista las variables. `FIREBASE_AUTH_EMULATOR_HOST`,
-`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_CONTRASENA` y `TEST_DATABASE_URL` se leen sólo del
+`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_PASSWORD` y `TEST_DATABASE_URL` se leen sólo del
 entorno del proceso: en el `.env` no tienen efecto.
 
 | Variable | Qué es |
@@ -35,7 +35,7 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. En producción hace falta ésta o `FIREBASE_CREDENCIALES_JSON`: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
 | `FIREBASE_CREDENCIALES_JSON` | El contenido del JSON de la cuenta de servicio, para plataformas que no montan archivos (Render, con un Blueprint). Si `GOOGLE_APPLICATION_CREDENTIALS` también está definida, manda el JSON |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
-| `ADMIN_CONTRASENA` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
+| `ADMIN_PASSWORD` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
 | `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
 | `VERSION` | Versión que informa `/health` y que lleva cada línea del log; por defecto sale del `pyproject.toml` |
 
@@ -48,7 +48,7 @@ uv run alembic upgrade head
 La cuenta de administrador no se registra desde la app; se siembra:
 
 ```sh
-ADMIN_CONTRASENA=<contraseña> uv run python -m app.modules.users.seed_admin \
+ADMIN_PASSWORD=<contraseña> uv run python -m app.modules.users.seed_admin \
   --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
 ```
 
@@ -181,7 +181,7 @@ El `render.yaml` de la raíz del repo describe todo: un web service de Python pa
    base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.modules.users.seed_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_PASSWORD=<contraseña>    uv run python -m app.modules.users.seed_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
    ```
 
 6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y

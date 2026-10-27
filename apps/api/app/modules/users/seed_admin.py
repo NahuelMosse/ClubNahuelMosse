@@ -1,6 +1,6 @@
 """Creates the first admin account, or promotes an existing one.
 
-    ADMIN_CONTRASENA=... uv run python -m app.modules.users.seed_admin \\
+    ADMIN_PASSWORD=... uv run python -m app.modules.users.seed_admin \\
         --correo admin@club.com --nombre Ana --apellido Díaz --dni 30111222 --nacimiento 1985-06-01
 
 The password arrives through an environment variable so it does not stay in the terminal history.
@@ -33,9 +33,9 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse(argv)
-    password = os.environ.get("ADMIN_CONTRASENA", "")
+    password = os.environ.get("ADMIN_PASSWORD") or os.environ.get("ADMIN_CONTRASENA", "")
     if not password:
-        print("Falta la variable de entorno ADMIN_CONTRASENA", file=sys.stderr)
+        print("Falta la variable de entorno ADMIN_PASSWORD", file=sys.stderr)
         return 2
 
     with engine().connect() as conn:
