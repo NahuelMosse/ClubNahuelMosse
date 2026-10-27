@@ -57,6 +57,7 @@ son las de la revisión; la columna dice cuál afecta a cada pantalla.
 | `pantalla_mis_reservas` | Partially Supports | I9 (barra inferior); I24 en la cancelación | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_notificaciones` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_acceso_denegado` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
+| `pantalla_de_carga` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_panel_admin` | Partially Supports | I9 («ESPACIOS» toca el borde al 200 %); I24 en las bajas | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_sedes_admin` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
 | `pantalla_formulario_sede` | Partially Supports | I7; contraste del botón GUARDAR SEDE (4,06:1 en oscuro); I24 en la baja | widget tests y capturas; TalkBack `not verified` |
