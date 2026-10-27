@@ -16,7 +16,7 @@ not_read:
 
 ## Tasks
 
-- T1 · S1,SAL-01-ASM-01,SAL-01-ASM-02 · apps/mobile/lib/inicio/saludo_de_inicio.dart (presentation) · tests: apps/mobile/test/saludo_por_hora_test.dart "el saludo sigue la hora del club: días, tardes y noches @SAL-01-S1 @assumption:SAL-01-ASM-01"; apps/mobile/test/saludo_por_hora_test.dart "el saludo se calcula al armar el inicio @assumption:SAL-01-ASM-02"
+- T1 · S1,SAL-01-ASM-01,SAL-01-ASM-02 · apps/mobile/lib/inicio/saludo_de_inicio.dart (presentation) · tests: apps/mobile/test/saludo_por_hora_test.dart "el saludo sigue la hora del club: días de 06:00 a 11:59, tardes de 12:00 a 19:59, noches de 20:00 a 05:59 @SAL-01-S1 @assumption:SAL-01-ASM-01"; apps/mobile/test/saludo_por_hora_test.dart "el saludo se calcula al armar el inicio @assumption:SAL-01-ASM-02"
   reuses: apps/mobile/lib/comun/zona_club.dart `ahoraEnElClub`
 
 ## Changes to existing behavior
@@ -41,3 +41,4 @@ no-visual: cambia el texto del saludo, no su estilo ni su lugar
 - L3 · 2026-10-27 · declared · attacks · la card no toca la API
 - L4 · 2026-10-27 · replaces: apps/mobile/integration_test/inicio/home_test.dart "al iniciar sesión ve el Home con el saludo y su nombre @TP-01-H01-01 @supuesto:TP-01-SUP-07" · TP-01-SUP-07 fijaba el saludo; el pedido lo hace depender de la hora · by: apps/mobile/test/saludo_por_hora_test.dart "el saludo sigue la hora del club: días, tardes y noches @SAL-01-S1 @assumption:SAL-01-ASM-01"
 - L5 · 2026-10-27 · replaces: apps/mobile/test/rediseno/movimiento_pantallas_test.dart "el inicio entra escalonado: saludo, marcador, próxima reserva y tiles @RED-04-S6" · busca «BUENOS DÍAS,» con el reloj real; se fija el reloj a la mañana del club · by: el mismo test con `withClock`
+- L6 · 2026-10-27 · el test que reemplaza a L4 se titula "el saludo sigue la hora del club: días de 06:00 a 11:59, tardes de 12:00 a 19:59, noches de 20:00 a 05:59 @SAL-01-S1 @assumption:SAL-01-ASM-01" (el título nombra los tramos de SAL-01-ASM-01); el test de L4 queda esperando el saludo de la hora del club en que corre
