@@ -9,9 +9,9 @@ from zoneinfo import ZoneInfo
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.notificaciones.casos_de_uso import ResultadoDeEnvio, enviar_recordatorios
-from app.modules.notificaciones.reglas import Aviso, Recordatorio
-from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.rules import Notice, Reminder
+from app.modules.notifications.use_cases import DeliveryResult, send_reminders
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -23,13 +23,13 @@ def _con(token: str) -> dict[str, str]:
 class Canal:
     def __init__(self, falla: bool = False) -> None:
         self.falla = falla
-        self.enviados: list[tuple[list[str], Aviso]] = []
+        self.enviados: list[tuple[list[str], Notice]] = []
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         if self.falla:
             raise ConnectionError("el servicio no contesta")
         self.enviados.append((list(tokens), aviso))
-        return ResultadoDeEnvio(enviados=len(tokens))
+        return DeliveryResult(enviados=len(tokens))
 
 
 def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
@@ -63,7 +63,7 @@ def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
 
 def _barrer(motor: Engine, usuario: UUID, canal: Canal, ahora: datetime) -> int:
     with motor.connect() as conn:
-        return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, usuario)
+        return send_reminders(NotificationsSql(conn), canal, ahora, usuario)
 
 
 def _manana_a_las(hora: int) -> datetime:
@@ -411,7 +411,7 @@ def test_las_respuestas_del_centro_no_traen_campos_de_mas_ni_se_cachean(
     assert set(r.json()) == {"notificaciones", "no_leidas"}
 
 
-class EntreLaFotoYElRegistro(NotificacionesSql):
+class EntreLaFotoYElRegistro(NotificationsSql):
     """Hace que algo pase justo después de que el barrido mira las reservas y antes de que
     registre el aviso."""
 
@@ -419,8 +419,8 @@ class EntreLaFotoYElRegistro(NotificacionesSql):
         super().__init__(conn)
         self._alguien = alguien
 
-    def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
-        foto = super().vencidos(ahora, usuario_id)
+    def due(self, ahora: datetime, usuario_id: UUID | None) -> list[Reminder]:
+        foto = super().due(ahora, usuario_id)
         self._alguien()
         return foto
 
@@ -429,7 +429,7 @@ def _barrer_con(
     motor: Engine, usuario: UUID, canal: Canal, ahora: datetime, alguien: Callable[[], None]
 ) -> int:
     with motor.connect() as conn:
-        return enviar_recordatorios(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
+        return send_reminders(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
 
 
 def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:

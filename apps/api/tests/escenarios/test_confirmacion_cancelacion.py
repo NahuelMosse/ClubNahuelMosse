@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.push import push_channel
 
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 
@@ -14,9 +14,9 @@ DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     """El servicio de notificaciones del teléfono, que anota lo que la API le pide enviar."""
     canal = CanalDePrueba()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
 def cancelar(socio: Socio, reserva_id: str) -> int:
@@ -50,10 +50,10 @@ def test_al_cancelar_una_reserva_se_envia_la_confirmacion_con_la_reserva_y_el_ho
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.titulo == "Reserva cancelada"
-    assert aviso.cuerpo == cuerpo_esperado(socio.sede, "21:00")
-    assert aviso.datos["reserva_id"] == str(reserva["id"])
-    assert aviso.datos["tipo"] == "cancelacion_usuario"
+    assert aviso.title == "Reserva cancelada"
+    assert aviso.body == cuerpo_esperado(socio.sede, "21:00")
+    assert aviso.data["reserva_id"] == str(reserva["id"])
+    assert aviso.data["tipo"] == "cancelacion_usuario"
 
 
 def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
@@ -71,7 +71,7 @@ def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
     # Verifica: el push y el centro llevan el número de la reserva, que el historial lista
     # como cancelada.
     [(_, aviso)] = canal.enviados
-    assert aviso.datos["reserva_id"] == str(reserva["id"])
+    assert aviso.data["reserva_id"] == str(reserva["id"])
     [entrada] = socio.centro()["notificaciones"]
     assert entrada["reserva_id"] == reserva["id"]
     historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()

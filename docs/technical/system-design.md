@@ -45,7 +45,7 @@ Dentro de la API (`apps/api/app`): una carpeta por funcionalidad en `modules/` (
 de capas la hacen cumplir `tests/unit/test_arquitectura_funcionalidades.py` y
 `tests/unit/test_capas_funcionalidades.py`. El barrido de recordatorios corre como tarea de
 fondo dentro del proceso web (`app/main.py`, `_ciclo_de_vida`) y también como comando de una pasada
-(`python -m app.modules.notificaciones.barrido --una-vez`).
+(`python -m app.modules.notifications.sweep --una-vez`).
 
 ## Data
 
@@ -67,7 +67,7 @@ flowchart LR
 - **Environments:** hay dos, local y Render; no hay staging.
   - **local:** la API con `uvicorn` contra una Postgres local y el emulador de Firebase Auth (`firebase.json`, puerto 9099,
     `npm run emuladores`), `CORREO_MODO=buzon`, sin credenciales de Firebase: el canal push es el nulo
-    (`modules/notificaciones/push.py`, `CanalNulo`). La app apunta a `http://10.0.2.2:8000` con `AUTH_EMULADOR`. Los tests usan
+    (`modules/notifications/push.py`, `NullChannel`). La app apunta a `http://10.0.2.2:8000` con `AUTH_EMULADOR`. Los tests usan
     una base `*_test` (`apps/api/README.md`, «Probar»).  - **Render:** `render.yaml` define el web service Python `clubnahuelmosse-api` y la base `clubnahuelmosse-db`, ambos
     `plan: free`, y es la única fuente de la configuración del despliegue. El despliegue no se hizo todavía: el
     escenario RNF-01-H06-01 se saltea sin `API_URL_NUBE`. El health check es `/health`, que no toca la base ni Firebase (`salud.py`).

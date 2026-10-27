@@ -8,14 +8,14 @@ from fastapi import FastAPI
 from app import e2e_support, health
 from app.modules import (
     availability,
-    notificaciones,
+    notifications,
     password_recovery,
     reservas,
     spaces,
     users,
     venues,
 )
-from app.modules.notificaciones import barrer_cada
+from app.modules.notifications import sweep_every
 from app.shared import http_errors, input_validation
 from app.shared.body_limit import BodyLimit
 from app.shared.config import config
@@ -24,7 +24,7 @@ from app.shared.config import config
 @asynccontextmanager
 async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
     sweep = (
-        asyncio.create_task(barrer_cada(config.reminders_every))
+        asyncio.create_task(sweep_every(config.reminders_every))
         if config.reminders_every > 0
         else None
     )
@@ -54,7 +54,7 @@ def create_app() -> FastAPI:
     app.include_router(spaces.router)
     app.include_router(availability.router)
     app.include_router(reservas.router)
-    app.include_router(notificaciones.router)
+    app.include_router(notifications.router)
     # The outbox only opens against the emulator, never in production.
     if config.e2e_testing and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
         app.include_router(e2e_support.router)

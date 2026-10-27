@@ -7,9 +7,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
-from app.modules.notificaciones.casos_de_uso import despachar_pendientes
-from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.use_cases import dispatch_pending
+from app.modules.notifications.repository import NotificationsSql, enqueue_forced_cancellation
+from app.modules.notifications.push import push_channel
 from app.modules.users.seed_admin import main as sembrar
 
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
@@ -19,7 +19,7 @@ TITULO = "El club anuló tu reserva"
 
 
 class CanalQueFalla:
-    def enviar(self, tokens: Sequence[str], aviso: Any) -> Any:
+    def send(self, tokens: Sequence[str], aviso: Any) -> Any:
         raise ConnectionError("el servicio no contesta")
 
 
@@ -27,9 +27,9 @@ class CanalQueFalla:
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     """El servicio de notificaciones del teléfono, que anota lo que la API le pide enviar."""
     canal = CanalDePrueba()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
 @pytest.fixture
@@ -94,8 +94,8 @@ def test_al_anular_una_reserva_el_usuario_recibe_el_aviso_con_deporte_sede_fecha
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.titulo == TITULO
-    assert aviso.cuerpo == cuerpo_esperado(socio.sede, "21:00")
+    assert aviso.title == TITULO
+    assert aviso.body == cuerpo_esperado(socio.sede, "21:00")
 
     # Verifica: queda también en el centro, sin leer.
     centro = socio.centro()
@@ -103,8 +103,8 @@ def test_al_anular_una_reserva_el_usuario_recibe_el_aviso_con_deporte_sede_fecha
     [entrada] = centro["notificaciones"]
     assert (entrada["tipo"], entrada["titulo"], entrada["cuerpo"]) == (
         "cancelacion_forzosa",
-        aviso.titulo,
-        aviso.cuerpo,
+        aviso.title,
+        aviso.body,
     )
 
 
@@ -123,7 +123,7 @@ def test_al_tocar_el_aviso_la_app_sabe_que_reserva_abrir_y_el_historial_la_trae_
 
     # Verifica: el push y el centro llevan el tipo y el número de la reserva.
     [(_, aviso)] = canal.enviados
-    assert aviso.datos == {"tipo": "cancelacion_forzosa", "reserva_id": str(reserva["id"])}
+    assert aviso.data == {"tipo": "cancelacion_forzosa", "reserva_id": str(reserva["id"])}
     [entrada] = socio.centro()["notificaciones"]
     assert entrada["reserva_id"] == reserva["id"]
 
@@ -178,13 +178,13 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
                 ),
                 {"u": socio.usuario_id, "id": reserva["id"]},
             )
-            encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reserva["id"])])
+            enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(reserva["id"])])
     with motor.connect() as conn:
         for socio in (uno, otro):
-            despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
+            dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
 
     # Verifica: cada persona recibe un solo aviso, con los datos de su propia reserva.
-    assert [(t, a.cuerpo) for t, a in canal.enviados] == [
+    assert [(t, a.body) for t, a in canal.enviados] == [
         ([uno.dispositivo], cuerpo_esperado(uno.sede, "20:00", "Baja de la sede")),
         ([otro.dispositivo], cuerpo_esperado(otro.sede, "21:00", "Baja de la sede")),
     ]
@@ -221,8 +221,8 @@ def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con
 
     # Verifica: el último push dice lo mismo y lleva a Mis reservas sin una reserva puntual.
     _, aviso = canal.enviados[-1]
-    assert (aviso.titulo, aviso.cuerpo) == (entrada["titulo"], entrada["cuerpo"])
-    assert aviso.datos == {"tipo": "cancelacion_forzosa"}
+    assert (aviso.title, aviso.body) == (entrada["titulo"], entrada["cuerpo"])
+    assert aviso.data == {"tipo": "cancelacion_forzosa"}
 
     # Verifica: las dos figuran anuladas en el historial, cada una con su motivo.
     historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
@@ -298,7 +298,7 @@ def test_si_el_usuario_ya_habia_cancelado_la_reserva_no_recibe_aviso(
     assert anular(socio, admin, reserva) == 409
 
     # Verifica: sólo quedó la confirmación de su propia cancelación.
-    assert [a.datos["tipo"] for _, a in canal.enviados] == ["cancelacion_usuario"]
+    assert [a.data["tipo"] for _, a in canal.enviados] == ["cancelacion_usuario"]
     assert [e["tipo"] for e in socio.centro()["notificaciones"]] == ["cancelacion_usuario"]
 
 
@@ -348,7 +348,7 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
     admin: dict[str, str],
 ) -> None:
     """si el push falla el aviso queda en el centro con el envío fallido @supuesto:CU-24.2-SUP-01 @supuesto:CU-24.2-SUP-07"""
-    app_de(api).dependency_overrides[canal_push] = lambda: CanalQueFalla()
+    app_de(api).dependency_overrides[push_channel] = lambda: CanalQueFalla()
     try:
         socio = un_socio(api, motor, iniciar_sesion, unico)
         reserva = socio.reservar("21:00")
@@ -358,4 +358,4 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
         assert [e["titulo"] for e in socio.centro()["notificaciones"]] == [TITULO]
         assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] == "fallida"
     finally:
-        app_de(api).dependency_overrides.pop(canal_push, None)
+        app_de(api).dependency_overrides.pop(push_channel, None)

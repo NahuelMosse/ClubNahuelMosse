@@ -1,0 +1,38 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/notifications/__init__.py",
+    "apps/api/app/modules/notifications/use_cases.py",
+    "apps/api/app/modules/notifications/rules.py",
+    "apps/api/app/modules/notifications/store.py",
+    "apps/api/app/modules/notifications/repository.py",
+    "apps/api/app/modules/notifications/sweep.py",
+    "apps/api/app/modules/notifications/push.py",
+    "apps/api/app/modules/notifications/routes.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract"
+    ],
+    "why": [
+      "apps/api/app/main.py is shared code (imported by apps/api/tests/conftest.py) and `## Tasks` does not name it",
+      "apps/api/app/modules/reservas/repositorio.py is shared code (imported by apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/espacios/rutas.py, apps/api/app/modules/horarios/__init__.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/reservas/rutas.py is shared code (imported by apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/horarios/__init__.py, apps/api/app/modules/recuperacion/__init__.py, …) and `## Tasks` does not name it"
+    ]
+  }
+}

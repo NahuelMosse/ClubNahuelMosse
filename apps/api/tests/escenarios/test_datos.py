@@ -14,9 +14,9 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import OperationalError
 from test_recordatorio import CanalDePrueba, Socio, a_las, un_socio
 
-from app.modules.notificaciones.casos_de_uso import despachar_pendientes, enviar_recordatorios
-from app.modules.notificaciones.repositorio import NotificacionesSql
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.use_cases import dispatch_pending, send_reminders
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.push import push_channel
 from app.modules.users.seed_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]
@@ -30,9 +30,9 @@ REVISIONES = ["0002", "0003", "0004", "0005", "0006", "0007", "0008"]
 @pytest.fixture
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     canal = CanalDePrueba()
-    api.app.dependency_overrides[canal_push] = lambda: canal
+    api.app.dependency_overrides[push_channel] = lambda: canal
     yield canal
-    api.app.dependency_overrides.pop(canal_push, None)
+    api.app.dependency_overrides.pop(push_channel, None)
 
 
 @pytest.fixture
@@ -160,13 +160,13 @@ def _cancelar(socio: Socio, desde: str) -> None:
 
 def _despachar(socio: Socio, canal: CanalDePrueba) -> None:
     with socio.motor.connect() as conn:
-        despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
+        dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
 
 
 class _CanalQueSeCae(CanalDePrueba):
     """El proceso muere justo después de tomar el aviso, antes de saber si salió."""
 
-    def enviar(self, tokens: list[str], aviso: Any) -> Any:
+    def send(self, tokens: list[str], aviso: Any) -> Any:
         raise SystemExit("el proceso se cayó")
 
 
@@ -189,8 +189,8 @@ def _recordatorio(socio: Socio, envio: str, hace: str) -> None:
 
 def _barrer(socio: Socio, canal: CanalDePrueba) -> None:
     with socio.motor.connect() as conn:
-        despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
-        enviar_recordatorios(NotificacionesSql(conn), canal, a_las(19, 10), socio.usuario_id)
+        dispatch_pending(NotificationsSql(conn), canal, socio.usuario_id)
+        send_reminders(NotificationsSql(conn), canal, a_las(19, 10), socio.usuario_id)
 
 
 @pytest.fixture

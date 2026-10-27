@@ -53,7 +53,7 @@ def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
     assert base.anular(socio, admin, reserva, motivo) == 200
 
     [(_, aviso)] = canal.enviados
-    assert aviso.cuerpo.endswith(f"Motivo: {'x' * 199}….")
+    assert aviso.body.endswith(f"Motivo: {'x' * 199}….")
     historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
     assert [r["motivo"] for r in historial["reservas"]] == [motivo]
 
@@ -67,13 +67,13 @@ def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
     admin: dict[str, str],
 ) -> None:
     """encolar dos veces la misma reserva deja un solo aviso @supuesto:CU-24.2-SUP-08"""
-    from app.modules.notificaciones.repositorio import encolar_cancelacion_forzosa
+    from app.modules.notifications.repository import enqueue_forced_cancellation
 
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
     assert base.anular(socio, admin, reserva) == 200
 
     with motor.begin() as conn:
-        encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reserva["id"])])
+        enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(reserva["id"])])
 
     assert len(socio.centro()["notificaciones"]) == 1

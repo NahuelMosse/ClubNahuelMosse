@@ -25,7 +25,7 @@ dev = [
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-p no:cacheprovider"
-filterwarnings = ["error"]
+filterwarnings = ["error", "ignore:MulticastMessage.tokens:DeprecationWarning"]
 
 [tool.ruff]
 line-length = 100

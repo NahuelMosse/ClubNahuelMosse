@@ -125,7 +125,7 @@ barrido corre como un comando de una pasada, para que lo dispare un cron o una t
 
 ```sh
 cd apps/api
-uv run python -m app.modules.notificaciones.barrido --una-vez
+uv run python -m app.modules.notifications.sweep --una-vez
 ```
 
 Termina con código 0 si el barrido corrió y 1 si falló. Quién lo dispara no está decidido:

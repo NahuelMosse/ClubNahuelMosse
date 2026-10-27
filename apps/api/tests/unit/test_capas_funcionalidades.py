@@ -14,7 +14,7 @@ TABLAS_PROPIAS = {
     "users/repository.py": {"usuario"},
     "reservas/repositorio.py": {"reserva"},
     "venues/repository.py": {"sede"},
-    "notificaciones/repositorio.py": {"notificacion", "notificacion_reserva", "dispositivo"},
+    "notifications/repository.py": {"notificacion", "notificacion_reserva", "dispositivo"},
     "spaces/repository.py": {"espacio"},
     "password_recovery/repository.py": {"enlace_recuperacion"},
     "password_recovery/email.py": {"correo_saliente"},
@@ -113,10 +113,10 @@ def test_la_zona_del_club_se_define_una_sola_vez_en_la_api() -> None:
 
 def test_la_anticipacion_sale_de_las_reglas_y_no_esta_en_el_sql() -> None:
     """la anticipación del recordatorio sale de las reglas y no está escrita en el SQL @REV-06-S9 @assumption:REV-06-ASM-08"""
-    archivo = MODULOS / "notificaciones" / "repositorio.py"
+    archivo = MODULOS / "notifications" / "repository.py"
     arbol = ast.parse(archivo.read_text(encoding="utf-8"))
     nombres = {n.id for n in ast.walk(arbol) if isinstance(n, ast.Name)}
-    assert "ANTICIPACION" in nombres
+    assert "LEAD_TIME" in nombres
     assert not any("1 hour" in t for t in _textos(archivo))
 
 

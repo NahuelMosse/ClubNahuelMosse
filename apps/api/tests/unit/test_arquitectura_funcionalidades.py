@@ -3,7 +3,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 RAIZ = Path(__file__).resolve().parents[4]
 API = RAIZ / "apps" / "api"
@@ -18,7 +18,7 @@ ARCHIVOS_DE_CADA_UNA = {
     "spaces": CON_CUATRO_EN_INGLES,
     "availability": CON_CUATRO_EN_INGLES,
     "reservas": CON_CUATRO,
-    "notificaciones": CON_CUATRO,
+    "notifications": CON_CUATRO_EN_INGLES,
     "password_recovery": CON_CUATRO_EN_INGLES,
     "users": {
         "account_routes",
@@ -35,10 +35,10 @@ ARCHIVOS_DE_CADA_UNA = {
 }
 FUNCIONALIDADES = set(ARCHIVOS_DE_CADA_UNA)
 CASOS_DE_USO = [
-    *(f"{f}/casos_de_uso.py" for f in ("reservas", "notificaciones")),
+    "reservas/casos_de_uso.py",
     *(
         f"{f}/use_cases.py"
-        for f in ("venues", "spaces", "availability", "password_recovery", "session")
+        for f in ("venues", "spaces", "availability", "password_recovery", "session", "notifications")
     ),
     *(f"users/{c}.py" for c in ("registration", "profile", "password", "deactivation", "admins")),
 ]
@@ -77,6 +77,13 @@ RENOMBRADOS = {
     "PedidoDeEspacio": "SpaceRequest",
     "Sugerencia": "Suggestion",
     "TipoVista": "KindView",
+}
+# ENG-04: los esquemas del módulo de notificaciones pasan a inglés.
+RENOMBRADOS_DE_NOTIFICACIONES = {
+    "BajaDeDispositivo": "DeviceUnregistration",
+    "Centro": "Center",
+    "NotificacionVista": "NotificationView",
+    "PedidoDeDispositivo": "DeviceRequest",
 }
 
 
@@ -276,7 +283,16 @@ def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None
             de_main = de_main.replace(viejo, nuevo)
         else:
             de_main = re.sub(rf'(?<=["/]){viejo}(?=")', nuevo, de_main)
+    for viejo, nuevo in RENOMBRADOS_DE_NOTIFICACIONES.items():
+        de_main = de_main.replace(f'"{viejo}"', f'"{nuevo}"')
+        de_main = de_main.replace(f'schemas/{viejo}"', f'schemas/{nuevo}"')
     esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(_contrato(de_main)))
+    # El módulo de notificaciones tiene su propio esquema de errores, antes compartido por nombre.
+    esquemas = cast(dict[str, object], esperado["components"]["schemas"])
+    esquemas["Errors"] = esquemas["Errores"]
+    registrar = cast(dict[str, Any], esperado["paths"]["/dispositivos"]["put"])
+    errores = registrar["responses"]["422"]["content"]["application/json"]["schema"]
+    errores["$ref"] = "#/components/schemas/Errors"
     actual = _contrato(
         (API / "openapi.json").read_text(encoding="utf-8").replace("ErrorBody", "Errores")
     )
@@ -343,7 +359,7 @@ def test_los_errores_comunes_viven_en_shared_errores() -> None:
 def test_notificaciones_no_importa_reservas_el_aviso_recibe_los_datos_que_necesita() -> None:
     """notificaciones no importa reservas: el aviso recibe los datos que necesita
     @ARQ-04-S2 @assumption:ARQ-04-ASM-04"""
-    archivos = _fuentes(MODULOS / "notificaciones")
+    archivos = _fuentes(MODULOS / "notifications")
     assert archivos
     for archivo in archivos:
         for nombre in _importados(archivo):

@@ -9,11 +9,11 @@ from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 
-from app.modules.notificaciones import (
-    NotificacionesSql,
-    canal_push,
-    enviar_recordatorios,
-    repositorio_notificaciones,
+from app.modules.notifications import (
+    NotificationsSql,
+    notifications_repository,
+    push_channel,
+    send_reminders,
 )
 from app.modules.password_recovery import hash_of
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
@@ -195,7 +195,7 @@ class Registered(_Wire):
 def sweep(
     request: Sweep,
     conn: DbConnection,
-    notifications: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
+    notifications: Annotated[NotificationsSql, Depends(notifications_repository)],
 ) -> Registered:
     """The reminder sweep running at the time [now], as if the server clock were that."""
     user = None
@@ -208,7 +208,7 @@ def sweep(
         if user is None:
             return Registered(registered=0)
     now = request.now or datetime.now().astimezone()
-    return Registered(registered=enviar_recordatorios(notifications, canal_push(), now, user))
+    return Registered(registered=send_reminders(notifications, push_channel(), now, user))
 
 
 class Device(_Wire):
