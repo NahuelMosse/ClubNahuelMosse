@@ -37,7 +37,7 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
+suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
 captures [timeout 45 min]: sh D:/Temp/w/herramientas/arq03-capturas.sh
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
