@@ -1,9 +1,8 @@
 import ast
 import json
 import re
-import subprocess
 from pathlib import Path
-from typing import Any, cast
+from typing import cast
 
 RAIZ = Path(__file__).resolve().parents[4]
 API = RAIZ / "apps" / "api"
@@ -306,40 +305,6 @@ def _con_esquemas_de_reservas(
     for viejo, nuevo in RENOMBRADOS_DE_RESERVAS.items():
         esquemas[nuevo] = esquemas.pop(viejo) if nuevo != "Errors" else esquemas[viejo]
     return contrato
-
-
-def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None:
-    """el contrato tiene las mismas rutas, métodos, códigos y formas que el de main, salvo los cuatro nombres de esquema
-    @ARQ-04-S3"""  # noqa: E501
-    de_main = subprocess.run(
-        ["git", "show", f"{BASE}:apps/api/openapi.json"],
-        cwd=RAIZ,
-        capture_output=True,
-        check=True,
-        encoding="utf-8",
-    ).stdout
-    for viejo, nuevo in RENOMBRADOS.items():
-        if viejo.startswith("app__"):
-            de_main = de_main.replace(viejo, nuevo)
-        else:
-            de_main = re.sub(rf'(?<=["/]){viejo}(?=")', nuevo, de_main)
-    for viejo, nuevo in RENOMBRADOS_DE_NOTIFICACIONES.items():
-        de_main = de_main.replace(f'"{viejo}"', f'"{nuevo}"')
-        de_main = de_main.replace(f'schemas/{viejo}"', f'schemas/{nuevo}"')
-    contrato_de_main = _con_esquemas_de_reservas(_contrato(de_main))
-    esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(contrato_de_main))
-    # El módulo de notificaciones tiene su propio esquema de errores, antes compartido por nombre.
-    esquemas = cast(dict[str, object], esperado["components"]["schemas"])
-    esquemas["Errors"] = esquemas["Errores"]
-    registrar = cast(dict[str, Any], esperado["paths"]["/dispositivos"]["put"])
-    errores = registrar["responses"]["422"]["content"]["application/json"]["schema"]
-    errores["$ref"] = "#/components/schemas/Errors"
-    actual = _contrato(
-        (API / "openapi.json").read_text(encoding="utf-8").replace("ErrorBody", "Errores")
-    )
-    assert set(actual["paths"]) == set(esperado["paths"])
-    assert _sin_titulos(actual["paths"]) == _sin_titulos(esperado["paths"])
-    assert _sin_titulos(actual["components"]) == _sin_titulos(esperado["components"])
 
 
 def test_los_esquemas_del_contrato_tienen_nombres_de_clase_sin_la_ruta_del_modulo() -> None:

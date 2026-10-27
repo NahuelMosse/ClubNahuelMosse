@@ -153,6 +153,21 @@ def _replace_notice(conn: Connection, previous: Row[Any], notification_id: UUID)
         )
 
 
+def _reminder_of(row: Row[Any], kind: ReminderKind) -> Reminder:
+    return Reminder(
+        booking_id=row.id,
+        user_id=row.usuario_id,
+        starts_at=row.inicio,
+        ends_at=row.fin,
+        sport=row.deporte,
+        kind=row.tipo,
+        venue=row.sede,
+        email=row.correo,
+        name=row.nombre_usuario,
+        reminder_kind=kind,
+    )
+
+
 class NotificationsSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
@@ -207,21 +222,7 @@ class NotificationsSql:
             },
         ).all()
         self._conn.rollback()
-        return [
-            Reminder(
-                booking_id=row.id,
-                user_id=row.usuario_id,
-                starts_at=row.inicio,
-                ends_at=row.fin,
-                sport=row.deporte,
-                kind=row.tipo,
-                venue=row.sede,
-                email=row.correo,
-                name=row.nombre_usuario,
-                reminder_kind=kind,
-            )
-            for row in rows
-        ]
+        return [_reminder_of(row, kind) for row in rows]
 
     def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
         params = {

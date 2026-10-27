@@ -15,7 +15,12 @@ def _con_aviso_de_cinco_minutos(nodo: Any) -> Any:
     """El `openapi.json` de main no se regeneró tras NOT-05: su API ya publica `recordatorio_cinco`."""
     if isinstance(nodo, list):
         if nodo == TIPOS_SIN_CINCO:
-            return ["recordatorio", "recordatorio_cinco", "cancelacion_forzosa", "cancelacion_usuario"]
+            return [
+                "recordatorio",
+                "recordatorio_cinco",
+                "cancelacion_forzosa",
+                "cancelacion_usuario",
+            ]
         return [_con_aviso_de_cinco_minutos(n) for n in nodo]
     if isinstance(nodo, dict):
         return {k: _con_aviso_de_cinco_minutos(v) for k, v in nodo.items()}

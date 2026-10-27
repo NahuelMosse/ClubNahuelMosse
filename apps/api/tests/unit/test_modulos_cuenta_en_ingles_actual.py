@@ -9,8 +9,7 @@ from tests.unit import test_modulos_cuenta_en_ingles as anterior
 from tests.unit.test_base_en_ingles import PALABRAS_COMUNES, _castellano, _palabras
 
 ARCHIVOS = {
-    modulo: [a for a in archivos if a != "email"]
-    for modulo, archivos in anterior.ARCHIVOS.items()
+    modulo: [a for a in archivos if a != "email"] for modulo, archivos in anterior.ARCHIVOS.items()
 }
 NUEVOS = [anterior.MODULOS / m / f"{a}.py" for m, archivos in ARCHIVOS.items() for a in archivos]
 TIPOS_SIN_CINCO = '"enum": ["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]'
@@ -27,7 +26,11 @@ def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice
     sobran = [v for v in anterior.VIEJOS if (anterior.MODULOS / v).exists()]
     importes = [
         str(p.relative_to(anterior.RAIZ_API))
-        for carpeta in (anterior.APP, anterior.RAIZ_API / "tests", anterior.RAIZ_API / "migraciones")
+        for carpeta in (
+            anterior.APP,
+            anterior.RAIZ_API / "tests",
+            anterior.RAIZ_API / "migraciones",
+        )
         for p in carpeta.rglob("*.py")
         if p.resolve() != Path(anterior.__file__).resolve()
         and ".venv" not in p.parts

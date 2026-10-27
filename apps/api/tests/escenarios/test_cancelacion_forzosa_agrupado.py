@@ -193,7 +193,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
 
     def leyendo() -> None:
         with motor.connect() as conn:
-            NotificationsSql(conn).leer(socio.usuario_id, UUID(leido["id"]))
+            NotificationsSql(conn).read(socio.usuario_id, UUID(leido["id"]))
 
     lectura = threading.Thread(target=leyendo)
 

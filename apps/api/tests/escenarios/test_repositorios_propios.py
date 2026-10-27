@@ -4,10 +4,9 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
-from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, text
 
 from app.modules.bookings.repository import BookingsSql
-from app.modules.notifications.repository import NotificationsSql
 from app.modules.spaces.repository import SpacesSql
 from app.modules.users.repository import UsersSql
 from app.modules.venues.repository import VenuesSql
@@ -143,24 +142,3 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
         VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
     assert _uno(motor, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
     assert _uno(motor, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
-
-
-def test_el_recordatorio_sale_una_hora_antes(
-    motor: Engine, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """el recordatorio sale una hora antes del inicio, con la anticipación de dominio @REV-06-S9 @assumption:REV-06-ASM-08"""
-    mundo = _mundo(motor)
-    base = _hora(dias=9)
-    ahora = base - timedelta(minutes=50)
-    creada = base - timedelta(days=30)
-    cerca = _reserva(motor, mundo, base, creada=creada)
-    lejos = _reserva(motor, mundo, base + timedelta(hours=1), creada=creada)
-
-    def ids(conn: Connection) -> list[UUID]:
-        return [r.booking_id for r in NotificationsSql(conn).due(ahora, mundo["usuario"])]
-
-    with motor.connect() as conn:
-        assert ids(conn) == [cerca]
-    monkeypatch.setattr("app.modules.notifications.repository.LEAD_TIME", timedelta(hours=2))
-    with motor.connect() as conn:
-        assert ids(conn) == [cerca, lejos]

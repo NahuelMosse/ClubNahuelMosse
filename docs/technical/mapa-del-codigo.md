@@ -98,7 +98,7 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 | `users` | `registration_routes.py`, `account_routes.py`, `registration.py`, `profile.py`, `password.py`, `deactivation.py`, `admins.py`, `seed_admin.py`, `rules.py`, `repository.py` | `usuarios/` |
 | `session` | `use_cases.py`, `profile.py`, `current_user.py`, `repository.py` | `sesion/` |
 | `password_recovery` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sesion/` |
-| `notifications` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `sweep.py`, `push.py` | `notifications/` |
+| `notifications` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `sweep.py`, `push.py`, `email.py` | `notifications/` |
 
 Compartido en `app/shared/`: `config.py`, `db.py` (`engine`, `connection()`, `in_transaction`), `errors.py` (todos los
 errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `body_limit.py`, `club_timezone.py` (`CLUB_TIMEZONE`),

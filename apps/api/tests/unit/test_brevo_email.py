@@ -62,6 +62,7 @@ def test_con_modo_brevo_el_correo_sale_por_la_api_con_clave_remitente_y_texto(
         "textContent": "Hola",
     }
 
+
 NO_HEADERS: Any = None
 
 
