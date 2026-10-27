@@ -1,0 +1,20 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "docs/technical/navegacion-de-la-app.md",
+    "apps/api/tests/unit/test_documentacion_del_modelo.py",
+    "apps/api/tests/unit/test_rutas_documentadas.py"
+  ],
+  "tasks": 1
+}

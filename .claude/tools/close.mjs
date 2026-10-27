@@ -21,7 +21,7 @@ import { closingCost } from './card-cost.mjs';
 import { specsCheck } from './gate-checks.mjs';
 import { active } from './kit.mjs';
 import { readRecord } from './once.mjs';
-import { missing, writeSessionLines } from './required.mjs';
+import { declaredUnmutated, missing, writeSessionLines } from './required.mjs';
 import { declaredClones, planCommands, replacementsOf, skippedBy } from './verify.mjs';
 import { declaredOverdesign } from './overdesign.mjs';
 
@@ -197,14 +197,16 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
   const swaps = replacementsOf(doc);
   const clones = [...declaredClones(cardDir)];
   const kept = [...declaredOverdesign(cardDir)];
+  const unmutated = [...declaredUnmutated(cardDir)];
   // With `refactor-tests:`, every frozen test the card edited in place: it existed before the card and carries a spec tag.
   const refactor = gateBlock(doc)?.match(/^\s*refactor-tests\s*:\s*(\S.*)$/m)?.[1]?.trim();
   const edited = refactor ? git(root, ['diff', '--numstat', `${base}..HEAD`]).stdout.split('\n').filter(Boolean).map((l) => l.split('\t'))
     .filter(([, , f]) => f && git(root, ['cat-file', '-e', `${base}:${f}`]).status === 0 && /@[A-Z][A-Z0-9]*-\d+-S\d+(?!\d)/.test(git(root, ['show', `${base}:${f}`]).stdout ?? '')) : [];
-  if (swaps.length || clones.length || kept.length || edited.length) parts.push('', '## Needs a person',
+  if (swaps.length || clones.length || kept.length || unmutated.length || edited.length) parts.push('', '## Needs a person',
     ...swaps.map((r) => `- replaced test: ${r.file} "${r.name}" by ${r.by} "${r.byName}" — ${r.why}; confirm the old test was wrong and the new one is not looser`),
     ...clones.map(([file, why]) => `- duplication left in place (K4): ${file} — ${why}; confirm the two copies must differ`),
     ...kept.map(([file, why]) => `- structure kept on purpose (overdesign): ${file} — ${why}; confirm the problem asks for it`),
+    ...unmutated.map(([file, why]) => `- left unmutated: ${file} — ${why}; confirm its tests are enough without mutation`),
     ...edited.map(([plus, minus, f]) => `- frozen test edited by the refactor (${refactor}): ${f} (+${plus} −${minus}); confirm no assertion was loosened: \`git diff ${base.slice(0, 9)}..HEAD -- ${f}\``));
   const decisions = [...off].map(([name, o]) => `- module ${name} off by decision: ${o.reason}`);
   if (grade !== 'production') decisions.push(`- grade: ${grade} — ${manifest?.grade?.reason ?? ''}`);

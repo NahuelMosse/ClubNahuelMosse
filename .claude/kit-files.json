@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "e76a2a60200eb9f2707ce6aeb793761a32adecfebba678b1966a3821415928f4"
+    "sha256": "6447d261fa320d342609543f08c8d91675574e032be449fa921f4a49b2535561"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1321,7 +1321,7 @@
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "5e46dc00fa371394ce4f131a86df7765d64a3cec8ac59c36f548a2882160683b"
+    "sha256": "93fe02cd96b70a80c265dd4b1f4ba44b1e6b133d7686edae3a2ae571851925e2"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
@@ -1393,7 +1393,7 @@
   },
   ".claude/tools/required.mjs": {
     "module": "core",
-    "sha256": "140b273f2a0e4f8c4b457ff4e7ce63ca604bc717a31f73773eae838461fecd38"
+    "sha256": "f9e62e985d333a56b9d35cf1ccf8f0c483ea3c3db372ec807e558af123e619c7"
   },
   ".claude/tools/review-range.mjs": {
     "module": "core",

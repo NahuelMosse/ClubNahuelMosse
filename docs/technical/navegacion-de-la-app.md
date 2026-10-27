@@ -1,6 +1,6 @@
 # Navegación de la app
 
-La app móvil usa **GoRouter**; todas las rutas están en `apps/mobile/lib/app.dart`. Un `redirect` global se evalúa en cada cambio de ruta y cada vez que la sesión cambia (`refreshListenable: sesion`): toda ruta bajo `/admin` exige rol administrador, las de la sección de usuario (`/inicio`, `/perfil`, `/sedes`, `/reservas`, `/reservar`, `/notificaciones` y sus hijas) exigen rol usuario, y el resto es pública.
+La app móvil usa **GoRouter**; todas las rutas están en `apps/mobile/lib/rutas.dart`, agrupadas en un método por sección, y `apps/mobile/lib/app.dart` sólo arma el router con ellas. Un `redirect` global, la función `redirigirSegunRol` de `apps/mobile/lib/redireccion.dart`, se evalúa en cada cambio de ruta y cada vez que la sesión cambia (`refreshListenable: sesion`): toda ruta bajo `/admin` exige rol administrador, las de la sección de usuario (`/inicio`, `/perfil`, `/sedes`, `/reservas`, `/reservar`, `/notificaciones` y sus hijas) exigen rol usuario, y el resto es pública.
 
 ## Rutas
 

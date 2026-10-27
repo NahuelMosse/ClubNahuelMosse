@@ -208,7 +208,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TB
-  main["main.dart<br/>arranque"] --> app["app.dart<br/>rutas, redirect por rol, repositorios"]
+  main["main.dart<br/>arranque"] --> app["app.dart<br/>repositorios; rutas.dart y redireccion.dart"]
   app --> pantallas["pantallas por dominio<br/>sesion · usuarios · inicio · sedes · reservas · notificaciones · admin"]
   pantallas --> repos["repositorios<br/>Sedes · Espacios · Horarios · Reservas · HistorialDeReservas · Recuperacion"]
   pantallas --> comun["comun/ y tema/<br/>componentes, movimiento, diálogos, paleta"]
@@ -222,7 +222,7 @@ flowchart TB
   pantalla es un `StatefulWidget` que pide datos con `Future` y repinta con `setState`. `Sesion`,
   `CentroDeNotificaciones` y `Apariencia` son `ChangeNotifier` porque cambian por su cuenta, y el router escucha a
   `Sesion` para redirigir cuando se cierra.
-- **Navegación.** Todo está en `app.dart`. El `redirect` global decide por rol; las rutas que necesitan datos en `extra`
+- **Navegación.** Las rutas están en `rutas.dart`, una sección por método, y el `redirect` global, en `redireccion.dart`, decide por rol; las rutas que necesitan datos en `extra`
   (confirmar una reserva, el detalle de admin) vuelven a su listado si se abren sin ellos.
 - **Errores de red.** `ClienteApi` corta cada pedido a los 30 s. Las pantallas usan `atenderErrorDeRed` para mostrar el diálogo que corresponde (sin conexión, sesión vencida, error
   del servidor con su referencia) y ofrecer reintentar. Si la sesión vence en medio de una reserva, la elección queda

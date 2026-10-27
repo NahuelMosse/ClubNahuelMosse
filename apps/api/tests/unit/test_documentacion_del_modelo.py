@@ -7,7 +7,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
 MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migraciones" / "versions").glob("0*.py"))
-APP_DART = RAIZ / "apps" / "mobile" / "lib" / "app.dart"
+APP_DART = RAIZ / "apps" / "mobile" / "lib" / "rutas.dart"
 MODELO = RAIZ / "docs" / "technical" / "modelo-de-datos.md"
 NAVEGACION = RAIZ / "docs" / "technical" / "navegacion-de-la-app.md"
 DISENO = RAIZ / "docs" / "technical" / "system-design.md"

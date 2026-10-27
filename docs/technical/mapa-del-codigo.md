@@ -12,7 +12,7 @@ nombre, no por línea: buscalos con el buscador del editor.
 | Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `ReservasSql.insertar` en `apps/api/app/modules/reservas/repositorio.py`, que traduce el error `23P01` a `HorarioOcupado` |
 | El caso de uso «reservar» | `apps/api/app/modules/reservas/casos_de_uso.py` (`reservar`) |
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
-| Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/app.dart` sólo oculta pantallas |
+| Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
 | Cómo se valida el token de Firebase | `apps/api/app/modules/sesion/usuario_actual.py` (`usuario_actual`) → `sesion/casos_de_uso.py` (`perfil_autenticado`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
 | La hora y la zona del club | API: `apps/api/app/shared/zona.py` (`ZONA_CLUB`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
 | Los recordatorios de una hora antes | `apps/api/app/modules/notificaciones/barrido.py` (el reloj) → `casos_de_uso.py` (`enviar_recordatorios`, `entregar`) → `push.py` (FCM) |
@@ -243,7 +243,7 @@ cada test en una transacción que se descarta. Para correr sólo una card: `uv r
   `HistorialDeReservas`, `Recuperacion`) sobre un único `ClienteApi`. `_AppState` los crea en `app.dart` y los pasa por
   constructor a cada pantalla, que es un `StatefulWidget` con `setState`. Los que cambian solos (`Sesion`,
   `CentroDeNotificaciones`, `Apariencia`) son `ChangeNotifier`.
-- **Navegación con `go_router`**, todas las rutas en `app.dart`, con un `redirect` global por rol.
+- **Navegación con `go_router`**, todas las rutas en `rutas.dart`, con un `redirect` global por rol en `redireccion.dart`.
 - `test/arquitectura_test.dart` vigila la estructura.
 
 ### Archivo por archivo
@@ -253,7 +253,9 @@ cada test en una transacción que se descarta. Para correr sólo una card: `uv r
 | Archivo | Qué tiene |
 |---|---|
 | `main.dart` | `main()` y `arrancar()`: captura de errores, Firebase, cliente, sesión, push, apariencia; retoma la sesión con reintento y lanza `App` |
-| `app.dart` | `App`: crea los repositorios, define todas las rutas y el `redirect` por rol, escucha los toques en avisos push y arma `MaterialApp.router` |
+| `app.dart` | `App`: crea los repositorios, escucha los toques en avisos push y arma `MaterialApp.router` con el router de `rutas.dart` |
+| `rutas.dart` | `Rutas`: todas las rutas de GoRouter, un método por sección (sesión, inicio, sedes, reservas, admin) |
+| `redireccion.dart` | `redirigirSegunRol`: a dónde va cada ruta según haya sesión y el rol |
 
 **`api/`**
 
@@ -351,7 +353,7 @@ errores) e `iconos.dart`.
 
 ### Rutas de la app
 
-Todas en `lib/app.dart`. «Avanza» entra desde la derecha; «raíz» cambia sin animación (las pestañas); «resultado» funde.
+Todas en `lib/rutas.dart`. «Avanza» entra desde la derecha; «raíz» cambia sin animación (las pestañas); «resultado» funde.
 
 | Ruta | Pantalla | Transición | Quién |
 |---|---|---|---|
