@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 
@@ -78,7 +78,7 @@ def test_una_cuenta_deshabilitada_en_firebase_no_tiene_sesion(
 ) -> None:
     from firebase_admin import auth
 
-    from app.infraestructura.identidad import ProveedorFirebase, _app_firebase
+    from app.shared.identidad import ProveedorFirebase, _app_firebase
 
     correo = _registrar(api, unico())
     token = iniciar_sesion(correo, CONTRASENA)

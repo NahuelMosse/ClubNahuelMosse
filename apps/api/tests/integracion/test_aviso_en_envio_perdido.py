@@ -4,9 +4,9 @@ from collections.abc import Sequence
 
 from sqlalchemy import Engine, text
 
-from app.aplicacion.notificaciones import despachar_pendientes
-from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
-from app.infraestructura.notificaciones import NotificacionesSql
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
+from app.modules.notificaciones.repositorio import NotificacionesSql
 
 
 class _CanalQueCuenta:

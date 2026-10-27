@@ -5,7 +5,7 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app.config import Config, config
+from app.shared.config import Config, config
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 VERSION = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))["project"][

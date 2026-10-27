@@ -55,6 +55,7 @@ The steps of a `probe` can press Enter from each control and type markup: `[{ "e
 
 ```
 suite: node --test {affected}
+fmt: npx prettier --check .
 lint: npx eslint src test
 mutate src/modules/customers/domain/search.mjs: node --test test/search.test.mjs
 app: node src/main.mjs

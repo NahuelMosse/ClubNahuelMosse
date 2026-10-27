@@ -5,7 +5,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from firebase_admin import credentials
 
-from app.infraestructura.credencial_firebase import credencial_de_servicio
+from app.shared.credencial_firebase import credencial_de_servicio
 
 
 def _cuenta_de_servicio() -> str:

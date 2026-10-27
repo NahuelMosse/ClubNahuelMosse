@@ -4,11 +4,11 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from app.dependencias import repositorio_sedes
-from app.dominio.sedes import Sede
-from app.dominio.usuarios import Perfil
-from app.interfaz.sesion import usuario_actual
 from app.main import crear_app
+from app.modules.sedes.reglas import Sede
+from app.modules.sedes.repositorio import repositorio_sedes
+from app.modules.sesion.perfil import Perfil
+from app.modules.sesion.usuario_actual import usuario_actual
 
 INTERFAZ = Path(__file__).resolve().parents[2] / "app" / "interfaz"
 # Los comandos de consola no tienen pedido HTTP: arman sus piezas ellos mismos.
@@ -79,13 +79,9 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     from fastapi import Depends, FastAPI
 
-    from app.dependencias import (
-        NotificacionesSql,
-        ReservasSql,
-        conexion,
-        repositorio_notificaciones,
-        repositorio_reservas,
-    )
+    from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
+    from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
+    from app.shared.db import conexion
 
     app = FastAPI()
     conexiones: list[object] = []

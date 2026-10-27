@@ -129,7 +129,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__interfaz__sesion__PedidoDeEdicion"
+                "$ref": "#/components/schemas/PedidoDeEdicionDePerfil"
               }
             }
           },
@@ -538,7 +538,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__interfaz__sedes__PedidoDeEdicion"
+                "$ref": "#/components/schemas/PedidoDeEdicionDeSede"
               }
             }
           }
@@ -976,7 +976,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__interfaz__espacios__PedidoDeCambio"
+                "$ref": "#/components/schemas/PedidoDeCambioDeEspacio"
               }
             }
           }
@@ -1555,7 +1555,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__interfaz__reservas__PedidoDeCambio"
+                "$ref": "#/components/schemas/PedidoDeCambioDeReserva"
               }
             }
           }
@@ -2653,6 +2653,93 @@
         ],
         "title": "PedidoDeAnulacion"
       },
+      "PedidoDeCambioDeEspacio": {
+        "properties": {
+          "deporte": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deporte"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "techada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Techada"
+          },
+          "iluminada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio Por Hora"
+          }
+        },
+        "type": "object",
+        "title": "PedidoDeCambioDeEspacio"
+      },
+      "PedidoDeCambioDeReserva": {
+        "properties": {
+          "espacio_id": {
+            "type": "integer",
+            "maximum": 9.223372036854776e+18,
+            "minimum": 1.0,
+            "title": "Espacio Id"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "desde": {
+            "type": "string",
+            "title": "Desde"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "fecha",
+          "desde"
+        ],
+        "title": "PedidoDeCambioDeReserva"
+      },
       "PedidoDeDispositivo": {
         "properties": {
           "token": {
@@ -2679,6 +2766,72 @@
           "permiso"
         ],
         "title": "PedidoDeDispositivo"
+      },
+      "PedidoDeEdicionDePerfil": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "default": ""
+          },
+          "apellido": {
+            "type": "string",
+            "title": "Apellido",
+            "default": ""
+          },
+          "dni": {
+            "type": "string",
+            "title": "Dni",
+            "default": ""
+          },
+          "fecha_nacimiento": {
+            "type": "string",
+            "title": "Fecha Nacimiento",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "PedidoDeEdicionDePerfil"
+      },
+      "PedidoDeEdicionDeSede": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "default": ""
+          },
+          "direccion": {
+            "type": "string",
+            "title": "Direccion",
+            "default": ""
+          },
+          "apertura": {
+            "type": "string",
+            "title": "Apertura",
+            "default": ""
+          },
+          "cierre": {
+            "type": "string",
+            "title": "Cierre",
+            "default": ""
+          },
+          "dias": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 7,
+            "title": "Dias",
+            "default": []
+          },
+          "confirmar": {
+            "type": "boolean",
+            "title": "Confirmar",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "PedidoDeEdicionDeSede"
       },
       "PedidoDeEnlace": {
         "properties": {
@@ -3389,159 +3542,6 @@
           "type"
         ],
         "title": "ValidationError"
-      },
-      "app__interfaz__espacios__PedidoDeCambio": {
-        "properties": {
-          "deporte": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deporte"
-          },
-          "tipo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tipo"
-          },
-          "techada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Techada"
-          },
-          "iluminada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Precio Por Hora"
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeCambio"
-      },
-      "app__interfaz__reservas__PedidoDeCambio": {
-        "properties": {
-          "espacio_id": {
-            "type": "integer",
-            "maximum": 9.223372036854776e+18,
-            "minimum": 1.0,
-            "title": "Espacio Id"
-          },
-          "fecha": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha"
-          },
-          "desde": {
-            "type": "string",
-            "title": "Desde"
-          }
-        },
-        "type": "object",
-        "required": [
-          "espacio_id",
-          "fecha",
-          "desde"
-        ],
-        "title": "PedidoDeCambio"
-      },
-      "app__interfaz__sedes__PedidoDeEdicion": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre",
-            "default": ""
-          },
-          "direccion": {
-            "type": "string",
-            "title": "Direccion",
-            "default": ""
-          },
-          "apertura": {
-            "type": "string",
-            "title": "Apertura",
-            "default": ""
-          },
-          "cierre": {
-            "type": "string",
-            "title": "Cierre",
-            "default": ""
-          },
-          "dias": {
-            "items": {
-              "type": "integer"
-            },
-            "type": "array",
-            "maxItems": 7,
-            "title": "Dias",
-            "default": []
-          },
-          "confirmar": {
-            "type": "boolean",
-            "title": "Confirmar",
-            "default": false
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEdicion"
-      },
-      "app__interfaz__sesion__PedidoDeEdicion": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre",
-            "default": ""
-          },
-          "apellido": {
-            "type": "string",
-            "title": "Apellido",
-            "default": ""
-          },
-          "dni": {
-            "type": "string",
-            "title": "Dni",
-            "default": ""
-          },
-          "fecha_nacimiento": {
-            "type": "string",
-            "title": "Fecha Nacimiento",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEdicion"
       }
     },
     "securitySchemes": {

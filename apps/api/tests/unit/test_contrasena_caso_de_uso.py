@@ -2,9 +2,9 @@ from datetime import date
 
 import pytest
 
-from app.aplicacion.contrasena import NO_COINCIDE, cambiar_contrasena
-from app.aplicacion.errores import DatosInvalidos
-from app.dominio.usuarios import Perfil
+from app.modules.sesion.perfil import Perfil
+from app.modules.usuarios.contrasena import NO_COINCIDE, cambiar_contrasena
+from app.shared.errores import DatosInvalidos
 
 PERFIL = Perfil(
     id=7,

@@ -132,7 +132,22 @@ tables, compute fields or hide others; that assembly happens behind the route, i
 - **Measured limits, enforced by the stack's linter** in the `lint:` line: about 250 lines per file, 40 per function, cyclomatic
   complexity 10, nesting depth 3, 4 parameters. Going over needs an inline reason (`eslint-disable-next-line <rule> -- <why>`).
   Config per stack: `.claude/stacks/<stack>.md`, "Readability limits"; for ESLint, `.claude/templates/eslint-readability.mjs`.
-- Names say intent, early returns replace nested branches, and the libraries of the previous section keep hand-written plumbing out of the reading.
+
+## Readable code
+
+- **A name says what the thing is in the domain**, not how it is stored: `reservationEnd`, not `d2` or `tmp`. A boolean is a
+  question (`isActive`, `hasStarted`). No abbreviation a newcomer has to look up.
+- **A function does one thing at one level**: it reads as a list of steps whose names tell the story. A comment that separates
+  two phases means two functions.
+- **No boolean flag parameters** (`notify(true)`): two functions, or a named option. More than four parameters: one object.
+- **Early return for the edge cases**, so the main path is not indented. No nested ternaries.
+- **A literal that carries a rule has a name** (`MAX_HOURS = 4`, `EXCLUSION_VIOLATION = "23P01"`); `0`, `1` and `""` are exempt.
+  The same literal or SQL fragment three times is one name.
+- **A comment says why** (a constraint, a decision, a trap), never what the next line does. Dead code and code commented out
+  are deleted: git keeps them.
+- **Types at the boundaries, errors by name**: every exported function is typed; a failure is a named error, never a silent
+  `None`, `false` or empty `catch`. A test title reads as the behavior (`rejects a booking in the past`).
+- **Formatting is the formatter's** (the `fmt:` line of the gate), never a matter of taste.
 
 ## Dependency direction
 

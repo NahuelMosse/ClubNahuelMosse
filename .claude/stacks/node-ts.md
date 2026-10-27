@@ -75,7 +75,9 @@ The `lint:` line enforces them: spread `readability` from `.claude/templates/esl
 (`max-lines` 250, `max-lines-per-function` 40, `complexity` 10, `max-depth` 3, `max-params` 4, `max-classes-per-file` 1; tests excluded).
 Over a limit: `// eslint-disable-next-line <rule> -- <reason>`. The same fragment carries `no-await-in-loop` (`rules/speed.md`); a
 React repo adds `eslint-plugin-react-hooks` (`rules-of-hooks`, `exhaustive-deps`), and a TypeScript one with type information
-`@typescript-eslint/no-floating-promises`.
+`@typescript-eslint/no-floating-promises`. It also carries the readable-code rules (`no-nested-ternary`, `no-else-return`,
+`no-lonely-if`, `curly`, `no-magic-numbers`); with **eslint-plugin-sonarjs** (K2 · K3) add `sonarjs/cognitive-complexity` 15,
+`sonarjs/no-identical-functions` and `sonarjs/no-commented-code`. The formatter is its own gate line: `fmt: npx prettier --check .`.
 
 **Paradigm.** NestJS: use cases, services, repositories and controllers are classes, one per file; pure helpers in their own
 module file named for the concept (`money.ts`), never loose functions beside a class. Express, Fastify, Hono and React: a file is a

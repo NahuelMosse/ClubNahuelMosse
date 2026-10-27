@@ -44,54 +44,50 @@ Las razones del stack están en [ADR-0001](../adr/0001-stack.md) y las del hosti
    no se duplica (índice único).
 3. **Capas con flechas en un solo sentido**, en la API y en la app, vigiladas por tests.
 4. **El reloj y la zona del club son explícitos.** Toda fecha de negocio se calcula en `America/Argentina/Buenos_Aires`
-   (`dominio/zona.py` en la API, `comun/zona_club.dart` en la app), y el reloj se inyecta para poder fijarlo en los tests.
+   (`shared/zona.py` en la API, `comun/zona_club.dart` en la app), y el reloj se inyecta para poder fijarlo en los tests.
 5. **Nada se pierde en silencio.** Los avisos se encolan en la misma transacción que el cambio que los origina y un
    despachador los entrega después; si el proceso cae a mitad de camino, el aviso queda en la cola.
 
 ## La API
 
-### Capas
+### Funcionalidades
+
+La API se organiza por funcionalidad: cada carpeta de `app/modules/` (`reservas`, `horarios`, `sedes`, `espacios`,
+`usuarios`, `sesion`, `recuperacion`, `notificaciones`) tiene sus rutas, sus casos de uso, sus reglas y su repositorio.
+Lo que usan varias va en `app/shared/`. El detalle archivo por archivo está en [`mapa-del-codigo.md`](mapa-del-codigo.md).
 
 ```mermaid
 flowchart TB
-  subgraph interfaz["interfaz/ — HTTP"]
-    rutas["rutas FastAPI"]
-    cmd["comandos: barrido, sembrar_admin"]
+  main["main.py — arma la app"]
+  subgraph modulo["app/modules/&lt;funcionalidad&gt;/"]
+    rutas["rutas.py — HTTP"]
+    cu["casos_de_uso.py<br/>+ Protocol del repositorio"]
+    reglas["reglas.py — reglas puras"]
+    repo["repositorio.py — SQL"]
   end
-  dep["dependencias.py"]
-  subgraph aplicacion["aplicacion/ — casos de uso"]
-    cu["reservar, cancelar, anular, registrar, …<br/>+ Protocol de cada repositorio"]
-  end
-  subgraph dominio["dominio/ — reglas puras"]
-    reglas["horarios, reservas, usuarios, notificaciones, errores, zona"]
-  end
-  subgraph infraestructura["infraestructura/ — afuera"]
-    repos["repositorios SQL"]
-    ext["Firebase, FCM, SMTP"]
-  end
+  shared["app/shared/<br/>db, errores, zona, identidad, entradas, respuestas"]
+  main --> rutas
   rutas --> cu
-  rutas --> dep
-  dep --> repos
-  dep --> ext
+  rutas --> repo
   cu --> reglas
-  repos --> reglas
-  ext --> reglas
+  repo --> reglas
+  modulo --> shared
 ```
 
-- **`dominio`** no conoce HTTP, SQL ni SDK: son funciones y `dataclass` que validan y calculan. Ejemplo:
+- **`reglas.py`** no conoce HTTP, SQL ni SDK: son funciones y `dataclass` que validan y calculan. Ejemplo:
   `validar_reserva` decide si un rango entra en el horario de la sede y en los límites de duración.
-- **`aplicacion`** orquesta un caso de uso: pide datos por un `Protocol` («algo que sepa insertar una reserva»), aplica
-  las reglas del dominio y lanza errores del dominio (`Prohibido`, `HorarioOcupado`, `DatosInvalidos`…). No sabe que
-  existe FastAPI ni Postgres, y por eso sus tests usan dobles en memoria.
-- **`infraestructura`** cumple esos `Protocol` sin heredarlos: `ReservasSql`, `UsuariosSql`, etc. escriben SQL con
+- **`casos_de_uso.py`** orquesta: pide datos por un `Protocol` («algo que sepa insertar una reserva»), aplica las reglas
+  y lanza errores del negocio (`Prohibido`, `HorarioOcupado`, `DatosInvalidos`…). No sabe que existe FastAPI ni
+  Postgres, y por eso sus tests usan dobles en memoria.
+- **`repositorio.py`** cumple ese `Protocol` sin heredarlo: `ReservasSql`, `UsuariosSql`, etc. escriben SQL con
   `text()` sobre la conexión del pedido. Cada repositorio escribe sólo sus tablas.
-- **`interfaz`** traduce HTTP a casos de uso y errores a códigos: arma el repositorio con la conexión del pedido, llama
+- **`rutas.py`** traduce HTTP a casos de uso y errores a códigos: arma el repositorio con la conexión del pedido, llama
   al caso de uso y convierte `Prohibido` en 403, `NoEncontrada` en 404, `DatosInvalidos` en 422 con
   `{"errores": {campo: mensaje}}`, los conflictos en 409.
-- **`dependencias.py`** es el único lugar donde `interfaz` toca `infraestructura`.
+- **Una funcionalidad sólo entra en otra por su `__init__.py`**; `shared/` no importa ninguna.
 
-Los tests `tests/unit/test_arquitectura.py`, `test_capas.py` y `test_capas_integracion.py` fallan si alguien rompe
-estas flechas.
+Los tests `tests/unit/test_arquitectura_funcionalidades.py`, `test_capas_funcionalidades.py` y
+`test_capas_integracion_funcionalidades.py` fallan si alguien rompe estas flechas.
 
 FastAPI publica siempre `/docs`, `/redoc` y `/openapi.json`.
 
@@ -100,9 +96,9 @@ FastAPI publica siempre `/docs`, `/redoc` y `/openapi.json`.
 ```mermaid
 sequenceDiagram
   participant App
-  participant Ruta as interfaz/reservas.py
+  participant Ruta as modules/reservas/rutas.py
   participant Auth as usuario_actual
-  participant CU as aplicacion/reservas.py
+  participant CU as modules/reservas/casos_de_uso.py
   participant Repo as ReservasSql
   participant PG as PostgreSQL
   App->>Ruta: POST /reservas (Bearer token)
@@ -130,20 +126,20 @@ Detalles que importan:
   superposición que pase igual.
 - **Pedido repetido.** Si la misma persona manda la misma reserva dentro de cinco minutos (un doble toque, un reintento
   tras un corte), la API devuelve la reserva que ya existe en lugar de fallar.
-- **Una conexión por pedido.** `conexion()` (`infraestructura/db.py`) presta una conexión del pool y el repositorio
+- **Una conexión por pedido.** `conexion()` (`shared/db.py`) presta una conexión del pool y el repositorio
   confirma explícitamente; lo que no se confirmó se descarta al devolverla.
 
 ### Lo transversal
 
 | Tema | Cómo está resuelto | Dónde |
 |---|---|---|
-| Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `usuario` | `interfaz/sesion.py` (`usuario_actual`), `infraestructura/identidad.py` |
-| Autorización | por rol, dentro de cada caso de uso (`perfil.rol`); por dueño en las consultas (`WHERE usuario_id = …`): una reserva ajena da 404 | `aplicacion/*.py` |
-| Validación de entrada | tipos de pydantic; un cuerpo que no es JSON da 400 sin repetirlo | `interfaz/entradas.py` |
-| Errores | errores del dominio → 403, 404, 409 y 422 con `{"errores": …}` | `main.py`, `interfaz/errores_http.py`, `interfaz/respuestas.py` |
-| Salud | `/health` dice que el proceso vive | `interfaz/salud.py` |
-| Base | pool de conexiones de SQLAlchemy con `pool_pre_ping` | `infraestructura/db.py` |
-| Hora | `ZONA_CLUB` y `datetime.now(ZONA_CLUB)`; las columnas son `timestamptz` | `dominio/zona.py` |
+| Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `usuario` | `modules/sesion/usuario_actual.py` (`usuario_actual`), `shared/identidad.py` |
+| Autorización | por rol, dentro de cada caso de uso (`perfil.rol`); por dueño en las consultas (`WHERE usuario_id = …`): una reserva ajena da 404 | `modules/*/casos_de_uso.py` |
+| Validación de entrada | tipos de pydantic; un cuerpo que no es JSON da 400 sin repetirlo | `shared/entradas.py` |
+| Errores | errores del negocio → 403, 404, 409 y 422 con `{"errores": …}` | `main.py`, `shared/errores_http.py`, `shared/respuestas.py` |
+| Salud | `/health` dice que el proceso vive | `salud.py` |
+| Base | pool de conexiones de SQLAlchemy con `pool_pre_ping` | `shared/db.py` |
+| Hora | `ZONA_CLUB` y `datetime.now(ZONA_CLUB)`; las columnas son `timestamptz` | `shared/zona.py` |
 
 ## Los avisos
 
@@ -167,10 +163,10 @@ stateDiagram-v2
   persona. Si a una persona le anulan otra reserva mientras tiene un aviso de anulación sin leer, se abre un aviso nuevo
   con la cantidad total y el anterior queda reemplazado (`reemplazada_por`); `notificacion_reserva` liga cada reserva
   con el aviso que se la informó.
-- **Recordatorios.** El barrido (`interfaz/barrido.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
+- **Recordatorios.** El barrido (`modules/notificaciones/barrido.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
   segundos: primero despacha los pendientes y después busca las reservas activas que empiezan dentro de la próxima hora
   y no tienen recordatorio. El índice único `notificacion_recordatorio_unico` impide el duplicado aunque dos barridos se
-  crucen. El mismo barrido existe como comando de una pasada (`python -m app.interfaz.barrido --una-vez`) para un cron.
+  crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notificaciones.barrido --una-vez`) para un cron.
 - **En el teléfono.** `CentroDeNotificaciones` registra el token de FCM con `PUT /dispositivos` al iniciar sesión, lo da
   de baja al cerrarla, consulta `GET /notificaciones` cada 20 s mientras la app está abierta y en primer plano, y lleva
   a la reserva cuando se toca un aviso (`rutaDelAviso`). Con la app cerrada, el aviso lo muestra la bandeja del sistema.
@@ -290,7 +286,7 @@ pasada para un cron), y la base vence a los 30 días.
 
 | Nivel | Dónde | Qué asegura |
 |---|---|---|
-| Unitarios de la API | `apps/api/tests/unit` | reglas del dominio, casos de uso con dobles, las reglas de capas |
+| Unitarios de la API | `apps/api/tests/unit` | reglas de cada funcionalidad, casos de uso con dobles, las reglas de capas |
 | Integración de la API | `apps/api/tests/integracion` | cada ruta contra Postgres y el emulador de Auth; las restricciones de la base |
 | Escenarios de la API | `apps/api/tests/escenarios` | cada escenario de cada card, con su tag; el contrato OpenAPI publicado; migraciones; `render.yaml` |
 | Widgets de la app | `apps/mobile/test` | pantallas y flujos contra una API falsa, con el reloj fijo; accesibilidad; movimiento |

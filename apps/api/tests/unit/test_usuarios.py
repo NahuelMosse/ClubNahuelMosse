@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.dominio.usuarios import DatosRegistro, problemas_contrasena, validar_registro
+from app.modules.usuarios.reglas import DatosRegistro, problemas_contrasena, validar_registro
 
 HOY = date(2026, 11, 12)
 

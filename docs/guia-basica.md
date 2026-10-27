@@ -45,13 +45,13 @@ Seguir un pedido de punta a punta es la forma más rápida de entender el códig
    hablan directo con el servidor.
 3. **El repositorio usa el cliente HTTP** (`lib/api/cliente_api.dart`), que manda `POST /reservas` con un JSON y el token
    de la sesión en el encabezado `Authorization: Bearer …`.
-4. **La API recibe el pedido** en `apps/api/app/interfaz/reservas.py`. Primero le pregunta a Firebase si el token es
+4. **La API recibe el pedido** en `apps/api/app/modules/reservas/rutas.py`. Primero le pregunta a Firebase si el token es
    válido y de quién es.
-5. **La ruta llama al caso de uso** `reservar` en `app/aplicacion/reservas.py`, que aplica las reglas: que sea un usuario
+5. **La ruta llama al caso de uso** `reservar` en `app/modules/reservas/casos_de_uso.py`, que aplica las reglas: que sea un usuario
    y no un admin, de 1 a 4 horas, dentro de los próximos 7 días, en el horario de la sede.
-6. **Las reglas puras** (calcular horarios, validar rangos) están en `app/dominio/reservas.py` y `horarios.py`. No tocan
+6. **Las reglas puras** (calcular horarios, validar rangos) están en `app/modules/reservas/reglas.py` y `app/modules/horarios/reglas.py`. No tocan
    la base ni la red, así que se prueban fácil.
-7. **El repositorio SQL** (`app/infraestructura/reservas.py`) hace el `INSERT`. Si dos personas reservan la misma cancha
+7. **El repositorio SQL** (`app/modules/reservas/repositorio.py`) hace el `INSERT`. Si dos personas reservan la misma cancha
    a la misma hora, la base rechaza la segunda con una restricción, y la API responde **409**.
 8. **La respuesta vuelve** como JSON con código **201**, y la app muestra la pantalla de reserva confirmada.
 
@@ -61,12 +61,10 @@ Seguir un pedido de punta a punta es la forma más rápida de entender el códig
 apps/
   api/                    el servidor
     app/
-      interfaz/           las rutas HTTP: reciben el pedido y devuelven la respuesta
-      aplicacion/         los casos de uso: reservar, cancelar, registrar…
-      dominio/            las reglas del negocio, sin base ni red
-      infraestructura/    el SQL, Firebase, el correo
+      modules/            una carpeta por funcionalidad (reservas, horarios, sedes, espacios, usuarios,
+                          sesion, recuperacion, notificaciones): sus rutas, casos de uso, reglas y SQL
+      shared/             lo que usan varias: base, errores, zona horaria, Firebase, configuración
       main.py             arma la aplicación
-      config.py           la configuración (variables de entorno)
     migraciones/versions/ los cambios de tablas, numerados 0001, 0002…
     tests/                tests del servidor
   mobile/                 la app
@@ -84,15 +82,16 @@ specs/                    los requisitos, uno por carpeta
 render.yaml               cómo se despliega en Render
 ```
 
-La API está en **capas**, y la regla es que las flechas van siempre hacia adentro:
+La API se organiza **por funcionalidad**, y dentro de cada una las flechas van siempre hacia adentro:
 
 ```mermaid
 flowchart LR
-  interfaz --> aplicacion --> dominio
-  infraestructura --> dominio
+  rutas --> casos_de_uso --> reglas
+  repositorio --> reglas
 ```
 
-El dominio no sabe nada de HTTP ni de SQL; un test (`tests/unit/test_arquitectura.py`) falla si alguien lo rompe.
+Las reglas no saben nada de HTTP ni de SQL; un test (`tests/unit/test_arquitectura_funcionalidades.py`) falla si alguien
+lo rompe.
 
 ## Cómo se cambia algo típico
 
@@ -100,10 +99,10 @@ El dominio no sabe nada de HTTP ni de SQL; un test (`tests/unit/test_arquitectur
 |---|---|
 | Cambiar un texto de una pantalla | La pantalla en `apps/mobile/lib/<tema>/pantalla_*.dart`; buscá el texto con el buscador del editor |
 | Cambiar un color | `apps/mobile/lib/tema/tokens.dart`. Ninguna pantalla escribe colores a mano |
-| Agregar una regla de negocio (por ejemplo, un máximo de horas) | `apps/api/app/dominio/` y su test en `apps/api/tests/unit/` |
-| Agregar un dato a una tabla | Una migración nueva en `apps/api/migraciones/versions/` (copiá la forma de la última), el SQL del repositorio en `infraestructura/` y la ruta en `interfaz/` |
+| Agregar una regla de negocio (por ejemplo, un máximo de horas) | `reglas.py` de la funcionalidad en `apps/api/app/modules/` y su test en `apps/api/tests/unit/` |
+| Agregar un dato a una tabla | Una migración nueva en `apps/api/migraciones/versions/` (copiá la forma de la última), el SQL del `repositorio.py` y la ruta en `rutas.py`, ambos en la carpeta de la funcionalidad |
 | Agregar una pantalla | Un archivo `pantalla_*.dart` en la carpeta del tema y su ruta en `lib/app.dart` |
-| Agregar una ruta de la API | La función en `app/interfaz/<tema>.py`, registrarla en `lib/api/rutas.dart` de la app y regenerar `openapi.json` (ver el README de la API) |
+| Agregar una ruta de la API | La función en `app/modules/<funcionalidad>/rutas.py`, registrarla en `lib/api/rutas.dart` de la app y regenerar `openapi.json` (ver el README de la API) |
 
 ## Cómo se prueba en tu máquina
 

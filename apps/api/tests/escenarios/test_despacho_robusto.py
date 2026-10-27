@@ -7,10 +7,10 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, un_socio
 
-from app.aplicacion.notificaciones import despachar_pendientes
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.push import canal_push
-from app.interfaz import barrido
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notificaciones.push import canal_push
+from app.modules.notificaciones import barrido
 
 
 @pytest.fixture

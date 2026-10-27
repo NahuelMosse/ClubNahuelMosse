@@ -11,7 +11,7 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
+from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 URL_PRUEBAS = os.environ["DATABASE_URL"]
@@ -109,8 +109,8 @@ class _CanalQueFalla:
 
 def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> None:
     """un aviso que falla queda fallido y no se vuelve a intentar @SIM-01-S1 @assumption:SIM-01-ASM-02"""
-    from app.aplicacion.notificaciones import despachar_pendientes
-    from app.infraestructura.notificaciones import NotificacionesSql
+    from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+    from app.modules.notificaciones.repositorio import NotificacionesSql
 
     with motor.begin() as conn:
         id_: int = conn.execute(

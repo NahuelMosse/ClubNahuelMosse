@@ -1,7 +1,6 @@
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos
-from app.aplicacion.recuperacion import (
+from app.modules.recuperacion.casos_de_uso import (
     MAXIMO_POR_HORA,
     VIGENCIA_MINUTOS,
     EnlaceInvalido,
@@ -9,7 +8,8 @@ from app.aplicacion.recuperacion import (
     pedir_enlace,
     usar_enlace,
 )
-from app.dominio.recuperacion import Destinatario, EnlaceReclamado
+from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
+from app.shared.errores import DatosInvalidos
 
 LUCIA = Destinatario(7, "Lucía", "lucia@correo.com")
 URL = "https://api.club.com/"

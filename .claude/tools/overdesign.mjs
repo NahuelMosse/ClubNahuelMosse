@@ -6,7 +6,7 @@
 // What the card added fails; what was already in the repo is only reported. `kit-overdesign: <reason>` anywhere in a file declares it.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, existedAt, git } from './card.mjs';
+import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, existedAt, git, originOf } from './card.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
 
 export const TINY_LINES = 20;
@@ -160,7 +160,8 @@ const read = (root, f) => { try { return readFileSync(join(root, f), 'utf8'); } 
 export const overdesignFindings = (root, cardDir) => {
   const base = cardStart(root, cardDir);
   const mine = cardFiles(root, base).map(posix);
-  const created = new Set(mine.filter((f) => existsSync(join(root, f)) && !existedAt(root, base, f)));
+  // A file the card only moved is not created: what it carried was already in the repo.
+  const created = new Set(mine.filter((f) => existsSync(join(root, f)) && !existedAt(root, base, f) && !originOf(root, base, f)));
   const repo = (git(root, ['ls-files', '-co', '--exclude-standard']).stdout ?? '').split(/\r?\n/).map(posix).filter(Boolean);
   const code = repo.filter((f) => IS_CODE.test(f) && !/^(?:specs|\.claude)\//.test(f));
   const texts = code.map((file) => ({ file, text: read(root, file) ?? '' }));

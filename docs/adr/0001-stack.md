@@ -23,7 +23,7 @@ lo exigen son RNF-01 (requisitos no funcionales) y los CU de sesión, reservas y
 | Monthly infra cost | hoy USD 0 con los planes free de Render y Firebase Authentication; las alternativas pagas están en `docs/technical/infra-cost.md` |
 | Cost to operate | parches de dependencias a mano (sin bot de actualizaciones, hallazgo 25); sin backups en la base free (hallazgo 4); Firebase no se opera |
 | Corrective maintenance cost | el autor conoce el stack, se reproduce en local con Postgres y el emulador de Firebase Auth (`firebase.json`), y los tres tienen comunidad grande. Hay 384 tests de la API y 416 de la app que corren en local (revisión, «Qué corrió») |
-| Lock-in and exit | los datos son Postgres estándar; la API es REST con OpenAPI. Salir de Firebase Authentication exige migrar las cuentas y las contraseñas (`usuario.firebase_uid` es la clave de unión) y reemplazar la verificación de tokens (`infraestructura/identidad.py`) |
+| Lock-in and exit | los datos son Postgres estándar; la API es REST con OpenAPI. Salir de Firebase Authentication exige migrar las cuentas y las contraseñas (`usuario.firebase_uid` es la clave de unión) y reemplazar la verificación de tokens (`shared/identidad.py`) |
 
 ### Alternative B — Django REST Framework con la autenticación propia (usuarios y contraseñas en la base) y avisos push con otro servicio
 

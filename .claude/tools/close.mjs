@@ -15,7 +15,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { NOT_PRODUCTION, cardFiles, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
+import { NOT_PRODUCTION, cardFiles, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, git, keyOf, namedIn, relativeTo, taskTokens } from './card.mjs';
 import { actHold, actsOf, cardIdOf, gateBlock, readCard, requirementOf, riskOf, rolesOf, sectionOf, specTagsIn } from './card-doc.mjs';
 import { closingCost } from './card-cost.mjs';
 import { specsCheck } from './gate-checks.mjs';
@@ -51,7 +51,7 @@ export const critiqueOf = (text) => {
   return { score: scores.length ? Math.min(...scores) : null, blockers };
 };
 
-export const run = (root, { write = true } = {}) => {
+const runOnce = (root, { write = true } = {}) => {
   const cardDir = currentCard(root);
   if (!cardDir) return null;
   const id = cardIdOf(cardDir);
@@ -169,6 +169,8 @@ export const run = (root, { write = true } = {}) => {
   if (write) result.closing = writeClosing(root, cardDir, { card, doc, risk, acts, asms, untagged, base, off, grade, manifest, checks });
   return result;
 };
+// One round: every check of the close shares one listing of the card's files and one start (card.mjs, `oneRound`).
+export const run = (root, options = {}) => oneRound(() => runOnce(root, options));
 
 const bullets = (checks, state) => {
   const lines = checks.filter((c) => (state === 'passed' ? ['passed', 'skipped'] : [state]).includes(c.state))
