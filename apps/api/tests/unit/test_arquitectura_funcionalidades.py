@@ -3,6 +3,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
+from typing import cast
 
 RAIZ = Path(__file__).resolve().parents[4]
 API = RAIZ / "apps" / "api"
@@ -39,6 +40,8 @@ CASOS_DE_USO = [
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
 BASE_DE_DATOS_Y_WEB = ("sqlalchemy", "fastapi", "psycopg")
 ERRORES_COMUNES = {"DatosInvalidos", "Prohibido", "NoEncontrada"}
+# Commit en que nació la card: el contrato de la API antes de moverla.
+BASE = "612d445fe18ee945ab3c3f8da31d133b11452d23"
 RENOMBRADOS = {
     "app__interfaz__reservas__PedidoDeCambio": "PedidoDeCambioDeReserva",
     "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
@@ -49,6 +52,19 @@ RENOMBRADOS = {
 
 def _entradas(carpeta: Path) -> set[str]:
     return {e.name for e in carpeta.iterdir() if e.name not in {"__pycache__", "__init__.py"}}
+
+
+def _es_submodulo(nombre: str) -> bool:
+    """El nombre es un archivo del módulo y el `__init__` de su carpeta no lo exporta."""
+    ruta = API.joinpath(*nombre.split("."))
+    if not ruta.parent.is_dir():
+        return False
+    existentes = {e.name for e in ruta.parent.iterdir()}
+    if ruta.name not in existentes and f"{ruta.name}.py" not in existentes:
+        return False
+    init = ruta.parent / "__init__.py"
+    exportado = init.is_file() and f'"{ruta.name}"' in init.read_text(encoding="utf-8")
+    return not exportado
 
 
 def _importados(archivo: Path) -> set[str]:
@@ -64,7 +80,9 @@ def _importados(archivo: Path) -> set[str]:
             base = paquete[: len(paquete) - (nodo.level - 1)] if nodo.level else []
             modulo = ".".join([*base, *(nodo.module.split(".") if nodo.module else [])])
             encontrados.add(modulo)
-            encontrados.update(f"{modulo}.{a.name}" for a in nodo.names)
+            encontrados.update(
+                f"{modulo}.{a.name}" for a in nodo.names if _es_submodulo(f"{modulo}.{a.name}")
+            )
     return encontrados
 
 
@@ -180,7 +198,7 @@ def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None
     """el contrato tiene las mismas rutas, métodos, códigos y formas que el de main, salvo los cuatro nombres de esquema
     @ARQ-04-S3"""  # noqa: E501
     de_main = subprocess.run(
-        ["git", "show", "main:apps/api/openapi.json"],
+        ["git", "show", f"{BASE}:apps/api/openapi.json"],
         cwd=RAIZ,
         capture_output=True,
         check=True,
@@ -199,7 +217,7 @@ def test_los_esquemas_del_contrato_tienen_nombres_de_clase_sin_la_ruta_del_modul
     """los esquemas del contrato tienen nombres de clase, sin la ruta del módulo
     @ARQ-04-S3 @assumption:ARQ-04-ASM-05"""
     contrato = _contrato((API / "openapi.json").read_text(encoding="utf-8"))
-    esquemas = set(contrato["components"]["schemas"])  # type: ignore[call-overload]
+    esquemas = set(cast(dict[str, object], contrato["components"]["schemas"]))
     assert [n for n in esquemas if "__" in n] == []
     assert set(RENOMBRADOS.values()) <= esquemas
 
@@ -208,9 +226,12 @@ def _rutas_viejas(archivo: Path) -> list[str]:
     patron = re.compile(r"\bapp\.(" + "|".join(CAPAS_VIEJAS) + r")\b")
     hallados = [n for n in _importados(archivo) if patron.match(n)]
     for nodo in ast.walk(ast.parse(archivo.read_text(encoding="utf-8"))):
-        es_texto = isinstance(nodo, ast.Constant) and isinstance(nodo.value, str)
-        if es_texto and patron.search(nodo.value):  # type: ignore[attr-defined]
-            hallados.append(nodo.value)  # type: ignore[attr-defined]
+        if (
+            isinstance(nodo, ast.Constant)
+            and isinstance(nodo.value, str)
+            and patron.search(nodo.value)
+        ):
+            hallados.append(nodo.value)
     return hallados
 
 
