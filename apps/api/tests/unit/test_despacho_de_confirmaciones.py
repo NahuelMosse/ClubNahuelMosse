@@ -5,11 +5,11 @@ from uuid import UUID
 import pytest
 
 from app.modules.notifications.rules import (
+    BookingData,
     Delivery,
     LostNotice,
     Notice,
     Notification,
-    BookingData,
     Reminder,
     cancellation_message,
 )

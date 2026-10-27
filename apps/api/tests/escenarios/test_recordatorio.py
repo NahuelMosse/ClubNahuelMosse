@@ -155,9 +155,9 @@ def test_una_hora_antes_del_inicio_se_envia_una_sola_vez_el_recordatorio_con_dep
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.titulo == "Tu reserva es en 1 hora"
-    assert aviso.cuerpo == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
-    assert aviso.datos["reserva_id"] == str(reserva["id"])
+    assert aviso.title == "Tu reserva es en 1 hora"
+    assert aviso.body == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
+    assert aviso.data["reserva_id"] == str(reserva["id"])
 
     # Verifica: se envía una sola vez, aunque el barrido vuelva a pasar antes del turno.
     assert socio.barrer(canal, a_las(20, 30)) == 0
@@ -279,4 +279,4 @@ def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horari
     assert socio.barrer(canal, a_las(21, 0)) == 1
     [(tokens, aviso)] = canal.enviados
     assert tokens == [socio.dispositivo]
-    assert aviso.cuerpo == f"Fútbol 5 · {socio.sede} · 22:00 – 23:00"
+    assert aviso.body == f"Fútbol 5 · {socio.sede} · 22:00 – 23:00"
