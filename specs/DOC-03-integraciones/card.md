@@ -20,7 +20,7 @@ not_read:
 ## Tasks
 
 - T1 · S1,S2,DOC-03-ASM-01,DOC-03-ASM-02,DOC-03-ASM-03,DOC-03-ASM-04 · docs/technical/integraciones.md (presentation), docs/technical/arquitectura.md (presentation), docs/technical/system-design.md (presentation) · tests: apps/api/tests/unit/test_integraciones_documentadas.py "integraciones.md tiene una sección por servicio con para qué se usa @DOC-03-S1 @assumption:DOC-03-ASM-02"; apps/api/tests/unit/test_integraciones_documentadas.py "cada sección nombra sus archivos y sus variables @DOC-03-S2 @assumption:DOC-03-ASM-04"; apps/api/tests/unit/test_integraciones_documentadas.py "cada archivo y variable que cita integraciones.md existe en el repo @assumption:DOC-03-ASM-01"; apps/api/tests/unit/test_integraciones_documentadas.py "integraciones.md no tiene claves, cuentas de servicio ni URLs con contraseña @assumption:DOC-03-ASM-03"
-  new: no había un documento de integraciones; estaban repartidas en arquitectura.md, system-design.md y mapa-del-codigo.md
+  new: no había un documento de integraciones; estaban repartidas entre la arquitectura, el diseño del sistema y el mapa del código
 
 ## Changes to existing behavior
 
