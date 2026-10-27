@@ -37,7 +37,7 @@ class Notificaciones {
   }
 
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<void> leer(int id) async {
+  Future<void> leer(String id) async {
     final r = await _api.post(
       '/notificaciones/$id/leer',
       const {},

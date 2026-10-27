@@ -30,7 +30,7 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('POST', '/reservas/1/modificar') => () {
+            ('POST', '/reservas/00000000-0000-7000-8000-000000000001/modificar') => () {
               final r =
                   alModificar ??
                   (
@@ -82,7 +82,7 @@ void main() {
       await tocar(tester, find.text('MODIFICAR'));
 
       final consulta = pedidos.last.url;
-      expect(consulta.path, '/espacios/9/horarios');
+      expect(consulta.path, '/espacios/00000000-0000-7000-8000-000000000009/horarios');
       expect(consulta.queryParameters['reserva_id'], '1');
       expect(consulta.queryParameters['fecha'], '2026-11-12');
       expect(consulta.queryParameters['horas'], '1');
@@ -120,7 +120,7 @@ void main() {
 
     final post = pedidos.singleWhere((p) => p.method == 'POST');
     expect(jsonDecode(post.body), {
-      'espacio_id': 9,
+      'espacio_id': '00000000-0000-7000-8000-000000000009',
       'fecha': '2026-11-12',
       'desde': '19:00',
     });

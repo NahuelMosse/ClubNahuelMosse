@@ -23,29 +23,29 @@ void main() {
       '"contadores": {"todas": 49, "activas": 12, "completadas": 31, "anuladas": 5}';
 
   const reservaActivaJson =
-      '{"id": 1, "espacio_id": 9, "sede_id": 1, "espacio":'
+      '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
       ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
       ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
       ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-      ' "estado": "activa", "motivo": null, "usuario_id": 1, "usuario": "Nahuel Mosse",'
+      ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
       ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
       ' "cancelada_por_nombre": null, "espacio_de_baja": false, "anulable": true}';
 
   const reservaCompletadaJson =
-      '{"id": 2, "espacio_id": 10, "sede_id": 2, "espacio":'
+      '{"id": "00000000-0000-7000-8000-000000000002", "espacio_id": "00000000-0000-7000-8000-000000000010", "sede_id": "00000000-0000-7000-8000-000000000002", "espacio":'
       ' "RamosMejia_Belgrano_1240_Voley_IND_1", "deporte": "Voley", "tipo": "IND", "sede":'
       ' "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", "inicio":'
       ' "2026-11-04T20:00:00-03:00", "fin": "2026-11-04T21:00:00-03:00", "total": 33000,'
-      ' "estado": "completada", "motivo": null, "usuario_id": 1, "usuario": "Nahuel Mosse",'
+      ' "estado": "completada", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
       ' "creado_en": "2026-10-20T09:10:00-03:00", "cancelada_en": null,'
       ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
   const reservaAnuladaJson =
-      '{"id": 3, "espacio_id": 11, "sede_id": 2, "espacio":'
+      '{"id": "00000000-0000-7000-8000-000000000003", "espacio_id": "00000000-0000-7000-8000-000000000011", "sede_id": "00000000-0000-7000-8000-000000000002", "espacio":'
       ' "RamosMejia_Belgrano_1240_Hockey_H7_1", "deporte": "Hockey", "tipo": "H7", "sede":'
       ' "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", "inicio":'
       ' "2026-10-30T19:00:00-03:00", "fin": "2026-10-30T20:00:00-03:00", "total": 48000,'
-      ' "estado": "anulada", "motivo": "mantenimiento de la cancha", "usuario_id": 1,'
+      ' "estado": "anulada", "motivo": "mantenimiento de la cancha", "usuario_id": "00000000-0000-7000-8000-000000000001",'
       ' "usuario": "Nahuel Mosse", "creado_en": "2026-10-21T11:07:00-03:00",'
       ' "cancelada_en": "2026-10-28T09:15:00-03:00", "cancelada_por_nombre":'
       ' "Admin Sistema", "espacio_de_baja": false, "aviso_envio": "enviada",'

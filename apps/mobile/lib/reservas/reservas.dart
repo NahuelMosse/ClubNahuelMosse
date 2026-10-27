@@ -46,9 +46,9 @@ class Reserva {
     this.cancelable = false,
   });
 
-  final int id;
-  final int espacioId;
-  final int sedeId;
+  final String id;
+  final String espacioId;
+  final String sedeId;
 
   /// El nombre compuesto del espacio.
   final String espacio;
@@ -69,9 +69,9 @@ class Reserva {
 
   static Reserva? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
-      'espacio_id': final int espacioId,
-      'sede_id': final int sedeId,
+      'id': final String id,
+      'espacio_id': final String espacioId,
+      'sede_id': final String sedeId,
       'espacio': final String espacio,
       'deporte': final String deporte,
       'tipo': final String tipo,

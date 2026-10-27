@@ -369,7 +369,7 @@ Future<String> crearEspacio(
   final id = switch (sedes) {
     {'sedes': final List<Object?> lista} => [
       for (final s in lista)
-        if (s case {'id': final int id, 'nombre': final String n})
+        if (s case {'id': final String id, 'nombre': final String n})
           if (n == nombreSede) id,
     ].firstOrNull,
     _ => null,
@@ -527,7 +527,7 @@ Future<List<bool>> dispositivosDe(String correo) async {
 }
 
 /// Los números de las próximas reservas de la cuenta [correo], según la API.
-Future<List<int>> numerosDeReservas(
+Future<List<String>> numerosDeReservas(
   String correo, {
   String contrasena = 'ClubNahuel1',
 }) async {
@@ -545,7 +545,7 @@ Future<List<int>> numerosDeReservas(
       'reservas': final List<Object?> reservas,
     })
       for (final reserva in reservas)
-        if (reserva case {'id': final int id}) id,
+        if (reserva case {'id': final String id}) id,
   ];
 }
 
@@ -612,7 +612,7 @@ Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
   final id = switch (espacios) {
     {'espacios': final List<Object?> lista} => [
       for (final e in lista)
-        if (e case {'id': final int id, 'nombre': final String n})
+        if (e case {'id': final String id, 'nombre': final String n})
           if (n == nombreEspacio) id,
     ].firstOrNull,
     _ => null,
@@ -669,7 +669,7 @@ Future<int> reservarPorLaApi(
   final id = switch (espacios) {
     {'espacios': final List<Object?> lista} => [
       for (final e in lista)
-        if (e case {'id': final int id, 'nombre': final String n})
+        if (e case {'id': final String id, 'nombre': final String n})
           if (n == nombreEspacio) id,
     ].firstOrNull,
     _ => null,
@@ -798,7 +798,7 @@ Future<void> cancelarDesdeOtroTelefono(
 }
 
 /// Una reserva próxima como la ve quien la hizo: lo que el administrador necesita para anularla.
-typedef ReservaAnulable = ({int id, int espacioId, String inicio});
+typedef ReservaAnulable = ({String id, String espacioId, String inicio});
 
 /// Las próximas reservas de la cuenta [correo], según la API, de la más cercana a la más lejana.
 Future<List<ReservaAnulable>> proximasDe(
@@ -812,8 +812,8 @@ Future<List<ReservaAnulable>> proximasDe(
     if (datos case {'reservas': final List<Object?> reservas})
       for (final reserva in reservas)
         if (reserva case {
-          'id': final int id,
-          'espacio_id': final int espacioId,
+          'id': final String id,
+          'espacio_id': final String espacioId,
           'inicio': final String inicio,
         })
           (id: id, espacioId: espacioId, inicio: inicio),

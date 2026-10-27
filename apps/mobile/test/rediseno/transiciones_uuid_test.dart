@@ -191,11 +191,11 @@ ClienteApi _apiUsuario() => apiRutas({
 });
 
 const _reservaAdmin =
-    '{"id": 1, "espacio_id": 9, "sede_id": 1, "espacio":'
+    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
     ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
     ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "activa", "motivo": null, "usuario_id": 1, "usuario": "Nahuel Mosse",'
+    ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
     ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
     ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
@@ -261,19 +261,19 @@ final _hijas = <_Hija>[
   _Hija(
     'sede',
     (t) => _usuarioEn(t, '/sedes'),
-    (t) => _ir(t, '/sedes/1'),
+    (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     PantallaSede,
   ),
   _Hija(
     'horarios',
-    (t) => _usuarioEn(t, '/sedes/1'),
-    (t) => _ir(t, '/sedes/1/canchas/9'),
+    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009'),
     PantallaHorarios,
   ),
   _Hija(
     'confirmar reserva',
     (t) async {
-      await _usuarioEn(t, '/sedes/1/canchas/9');
+      await _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009');
       await _tocarYEsperar(t, find.text('18:00 – 19:00'));
     },
     (t) => _tocar(t, find.text('CONTINUAR')),
@@ -374,7 +374,7 @@ class _Raiz {
 }
 
 final _raices = <_Raiz>[
-  _Raiz('inicio', (t) => _usuarioEn(t, '/sedes/1'), '/inicio', PantallaInicio),
+  _Raiz('inicio', (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'), '/inicio', PantallaInicio),
   _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/sedes', PantallaSedes),
   _Raiz(
     'reservas',
@@ -401,7 +401,7 @@ final _raices = <_Raiz>[
     '/admin/espacios',
     PantallaEspaciosAdmin,
   ),
-  _Raiz('login', (t) => _usuarioEn(t, '/sedes/1'), '/', PantallaInicioSesion),
+  _Raiz('login', (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'), '/', PantallaInicioSesion),
 ];
 
 // ---- los resultados (S4) ----
@@ -569,7 +569,7 @@ void main() {
 
       // Avanzar: la hija ya está en su lugar.
       await _usuarioEn(tester, '/sedes');
-      await _ir(tester, '/sedes/1');
+      await _ir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _arrancar(tester);
       _sinTransicionDeEmpuje(tester, PantallaSede);
 
@@ -589,7 +589,7 @@ void main() {
       await _reiniciar(tester);
 
       // Raíz de pestaña.
-      await _usuarioEn(tester, '/sedes/1');
+      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _ir(tester, '/inicio');
       await _arrancar(tester);
       await _quieta(tester, PantallaInicio);
@@ -607,7 +607,7 @@ void main() {
     'tocar la pestaña activa dentro de una sede o «VER TODAS» y «Ver sedes» del inicio llegan sin animación @RED-04-ASM-05',
     (tester) async {
       // La pestaña activa, desde adentro de una sede, lleva al listado.
-      await _usuarioEn(tester, '/sedes/1');
+      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _tocar(
         tester,
         find.descendant(

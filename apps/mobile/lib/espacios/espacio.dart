@@ -76,11 +76,11 @@ class Espacio {
     required this.precioPorHora,
   });
 
-  final int id;
+  final String id;
 
   /// El nombre compuesto del enunciado, por ejemplo `Moron_Rivadavia_19850_Futbol_F5_1`.
   final String nombre;
-  final int sedeId;
+  final String sedeId;
   final String sede;
   final String deporte;
   final String tipo;
@@ -102,9 +102,9 @@ class Espacio {
 
   static Espacio? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
+      'id': final String id,
       'nombre': final String nombre,
-      'sede_id': final int sedeId,
+      'sede_id': final String sedeId,
       'sede': final String sede,
       'deporte': final String deporte,
       'tipo': final String tipo,

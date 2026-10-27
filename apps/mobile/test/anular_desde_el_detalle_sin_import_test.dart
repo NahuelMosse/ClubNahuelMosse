@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 
 String _reserva({
@@ -18,12 +17,12 @@ String _reserva({
   String? anuladaEn,
   String? anuladaPor,
 }) =>
-    '{"id": 1, "espacio_id": 9, "sede_id": 1, "espacio":'
+    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
     ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
     ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
     ' "estado": "$estado", "motivo": ${motivo == null ? 'null' : '"$motivo"'},'
-    ' "usuario_id": 1, "usuario": "Nahuel Mosse",'
+    ' "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
     ' "creado_en": "2026-11-02T18:42:00-03:00",'
     ' "cancelada_en": ${anuladaEn == null ? 'null' : '"$anuladaEn"'},'
     ' "cancelada_por_nombre": ${anuladaPor == null ? 'null' : '"$anuladaPor"'},'
@@ -45,7 +44,7 @@ void main() {
       anuladaPor: 'Ana Díaz',
     );
     final api = apiRutas({
-      'POST /reservas/1/anular': (200, anulada),
+      'POST /reservas/00000000-0000-7000-8000-000000000001/anular': (200, anulada),
     }, pedidos: pedidos);
     final sesion = SesionFalsa(perfilAdmin);
     final leida = ReservaHistorial.desdeJson(jsonDecode(reserva));
@@ -73,7 +72,7 @@ void main() {
   }
 
   Iterable<http.Request> anulaciones(List<http.Request> pedidos) => pedidos
-      .where((p) => p.method == 'POST' && p.url.path == '/reservas/1/anular');
+      .where((p) => p.method == 'POST' && p.url.path == '/reservas/00000000-0000-7000-8000-000000000001/anular');
 
   testWidgets(
     'el administrador anula una reserva desde el detalle del historial '

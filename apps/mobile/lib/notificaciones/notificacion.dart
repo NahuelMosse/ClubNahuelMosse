@@ -17,7 +17,7 @@ enum TipoDeNotificacion {
 
 /// A dónde lleva tocar un aviso: Mis reservas con la reserva resaltada. Las cancelaciones —del
 /// club o de la propia persona— dejaron la reserva en el historial, así que abren esa pestaña.
-String rutaDelAviso(TipoDeNotificacion? tipo, int? reservaId) {
+String rutaDelAviso(TipoDeNotificacion? tipo, String? reservaId) {
   final historial =
       tipo == TipoDeNotificacion.cancelacionForzosa ||
       tipo == TipoDeNotificacion.cancelacionUsuario;
@@ -40,11 +40,11 @@ class Notificacion {
     required this.leida,
   });
 
-  final int id;
+  final String id;
   final TipoDeNotificacion tipo;
   final String titulo;
   final String cuerpo;
-  final int? reservaId;
+  final String? reservaId;
 
   /// En la hora del club.
   final DateTime creada;
@@ -62,7 +62,7 @@ class Notificacion {
 
   static Notificacion? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
+      'id': final String id,
       'tipo': final String tipo,
       'titulo': final String titulo,
       'cuerpo': final String cuerpo,
@@ -77,7 +77,9 @@ class Notificacion {
         tipo: t,
         titulo: titulo,
         cuerpo: cuerpo,
-        reservaId: json['reserva_id'] is int ? json['reserva_id'] as int : null,
+        reservaId: json['reserva_id'] is String
+            ? json['reserva_id'] as String
+            : null,
         creada: enDelClub(cuando),
         leida: leida,
       );

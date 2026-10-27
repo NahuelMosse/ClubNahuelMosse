@@ -11,7 +11,7 @@ import 'soporte/usuario.dart';
 
 void main() {
   final sede = Sede.desdeJson({
-    'id': 1,
+    'id': '00000000-0000-7000-8000-000000000001',
     'nombre': 'Sede Morón',
     'direccion': 'Av. Rivadavia 19850',
     'apertura': '08:00',
@@ -75,7 +75,7 @@ void main() {
   group('pantalla', () {
     const disponibles =
         '{"espacios": [$espacioF5Json, '
-        '{"id": 11, "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": 1, '
+        '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
         '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
         '"techada": true, "iluminada": true, "precio_por_hora": 43000}]}';
 

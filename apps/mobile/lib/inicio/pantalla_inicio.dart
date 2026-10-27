@@ -64,7 +64,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
   int _pedido = 0;
 
   /// La reserva que se está cancelando: su botón muestra que espera.
-  int? _cancelando;
+  String? _cancelando;
 
   /// Ya se vieron los bloques con datos: los que se vuelven a armar al recargar nacen
   /// terminados, sin repetir la entrada.

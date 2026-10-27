@@ -56,30 +56,32 @@ const _catalogoConDesconocido =
     '{"clave": "R7", "nombre": "Rugby 7"}]}'
     ']}';
 
-String _sede(int id, String nombre, String direccion, int canchas) =>
-    '{"id": $id, "nombre": "$nombre", "direccion": "$direccion", '
+String _sede(String id, String nombre, String direccion, int canchas) =>
+    '{"id": "$id", "nombre": "$nombre", "direccion": "$direccion", '
     '"apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7], '
     '"canchas": $canchas, "deportes": ["Futbol", "Tenis"]}';
 
 final _sedes =
-    '{"sedes": [${_sede(1, 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
-    '${_sede(2, 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
-    '${_sede(3, 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
-    '${_sede(4, 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}';
+    '{"sedes": [${_sede('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+    '${_sede('00000000-0000-7000-8000-000000000002', 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
+    '${_sede('00000000-0000-7000-8000-000000000003', 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
+    '${_sede('00000000-0000-7000-8000-000000000004', 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}';
 
 /// Un instante del club: [dia] de noviembre de 2026 a las [hora]:[minuto] (UTC−3).
 DateTime _delClub(int dia, int hora, [int minuto = 0]) =>
     DateTime.utc(2026, 11, dia, hora + 3, minuto);
 
+String _uuid(int n) => '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
+
 String _reserva({
-  int id = 1,
+  String id = '00000000-0000-7000-8000-000000000001',
   DateTime? inicio,
   String estado = 'activa',
   String? motivo,
 }) {
   final desde = inicio ?? _delClub(12, 21);
   final hasta = desde.add(const Duration(hours: 1));
-  return '{"id": $id, "espacio_id": 9, "sede_id": 2, '
+  return '{"id": "$id", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000002", '
       '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
       '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
       '"inicio": "${desde.toIso8601String()}", "fin": "${hasta.toIso8601String()}", '
@@ -275,9 +277,9 @@ void main() {
         await _montarInicio(
           tester,
           reservas: [
-            _reserva(id: 1, inicio: _delClub(12, 21)),
-            _reserva(id: 2, inicio: _delClub(13, 10)),
-            _reserva(id: 3, inicio: _delClub(14, 10)),
+            _reserva(id: '00000000-0000-7000-8000-000000000001', inicio: _delClub(12, 21)),
+            _reserva(id: '00000000-0000-7000-8000-000000000002', inicio: _delClub(13, 10)),
+            _reserva(id: '00000000-0000-7000-8000-000000000003', inicio: _delClub(14, 10)),
           ],
         );
 
@@ -361,7 +363,7 @@ void main() {
           reservas: [
             for (var i = 1; i <= 20; i++)
               _reserva(
-                id: i,
+                id: _uuid(i),
                 inicio: _delClub(12, 21).add(Duration(days: i)),
               ),
           ],
@@ -439,9 +441,9 @@ void main() {
       await _montarMisReservas(
         tester,
         historial:
-            '[${_reserva(id: 1, estado: 'cancelada', inicio: _delClub(14, 12))}, '
-            '${_reserva(id: 2, estado: 'anulada', motivo: 'lluvia', inicio: _delClub(14, 12))}, '
-            '${_reserva(id: 3, estado: 'completada', inicio: _delClub(10, 12))}]',
+            '[${_reserva(id: '00000000-0000-7000-8000-000000000001', estado: 'cancelada', inicio: _delClub(14, 12))}, '
+            '${_reserva(id: '00000000-0000-7000-8000-000000000002', estado: 'anulada', motivo: 'lluvia', inicio: _delClub(14, 12))}, '
+            '${_reserva(id: '00000000-0000-7000-8000-000000000003', estado: 'completada', inicio: _delClub(10, 12))}]',
         inicio: '/reservas?historial=1',
       );
 
@@ -527,8 +529,8 @@ void main() {
         await _montarMisReservas(
           tester,
           proximas:
-              '[${_reserva(id: 1, inicio: _delClub(13, 10))}, '
-              '${_reserva(id: 2, inicio: _delClub(14, 10))}]',
+              '[${_reserva(id: '00000000-0000-7000-8000-000000000001', inicio: _delClub(13, 10))}, '
+              '${_reserva(id: '00000000-0000-7000-8000-000000000002', inicio: _delClub(14, 10))}]',
           inicio: '/reservas?reserva=2',
         );
 
@@ -629,7 +631,7 @@ void main() {
             rutasDeSedes(
               sedes:
                   '[$sedeMoronConDeportes, $sedeHaedoSinCanchas, '
-                  '${_sede(7, 'Sede Ituzaingó', 'Blas Parera 300', 12)}]',
+                  '${_sede('00000000-0000-7000-8000-000000000007', 'Sede Ituzaingó', 'Blas Parera 300', 12)}]',
             ),
           ),
         );
@@ -666,7 +668,7 @@ void main() {
     Future<void> abrirHorarios(WidgetTester tester, {String? grilla}) =>
         montarUsuario(
           tester,
-          inicio: '/sedes/1/canchas/9',
+          inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
           tamano: const Size(393, 2400),
           api: apiRutas(rutasDeSedes(grilla: grilla)),
         );

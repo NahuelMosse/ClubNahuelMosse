@@ -21,7 +21,7 @@ class FiltrosDeHistorial {
   /// Las cuatro pestañas del prototipo: nunca [EstadoDeReserva.cancelada], que sólo aparece
   /// dentro de «Todas».
   final EstadoDeReserva? estado;
-  final int? sedeId;
+  final String? sedeId;
   final String? deporte;
   final DateTime? desde;
   final DateTime? hasta;
@@ -142,9 +142,9 @@ class ReservaHistorial {
     this.avisoEn,
   });
 
-  final int id;
-  final int espacioId;
-  final int sedeId;
+  final String id;
+  final String espacioId;
+  final String sedeId;
   final String espacio;
   final String deporte;
   final String tipo;
@@ -155,7 +155,7 @@ class ReservaHistorial {
   final int total;
   final EstadoDeReserva estado;
   final String? motivo;
-  final int usuarioId;
+  final String usuarioId;
   final String usuario;
   final DateTime creadoEn;
   final DateTime? canceladaEn;
@@ -179,9 +179,9 @@ class ReservaHistorial {
 
   static ReservaHistorial? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
-      'espacio_id': final int espacioId,
-      'sede_id': final int sedeId,
+      'id': final String id,
+      'espacio_id': final String espacioId,
+      'sede_id': final String sedeId,
       'espacio': final String espacio,
       'deporte': final String deporte,
       'tipo': final String tipo,
@@ -192,7 +192,7 @@ class ReservaHistorial {
       'total': final int total,
       'estado': final String estado,
       'motivo': final Object? motivo,
-      'usuario_id': final int usuarioId,
+      'usuario_id': final String usuarioId,
       'usuario': final String usuario,
       'creado_en': final String creadoEn,
       'cancelada_en': final Object? canceladaEn,
@@ -312,7 +312,7 @@ class HistorialDeReservas {
   /// El detalle de cualquier reserva por [id]. `null` si ya no existe.
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<ReservaHistorial?> detalle(int id) async {
+  Future<ReservaHistorial?> detalle(String id) async {
     final r = await _api.get(
       '/reservas/todas/$id',
       token: await _sesion.token(),

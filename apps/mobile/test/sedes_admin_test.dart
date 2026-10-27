@@ -42,7 +42,7 @@ void main() {
     });
 
     test('una respuesta que no se entiende es un error del servidor', () {
-      final api = apiRutas({'GET /sedes': (200, '{"sedes": [{"id": 1}]}')});
+      final api = apiRutas({'GET /sedes': (200, '{"sedes": [{"id": "00000000-0000-7000-8000-000000000001"}]}')});
       expect(sedes(api).activas(), throwsA(isA<ErrorDelServidor>()));
     });
 
