@@ -68,9 +68,9 @@ def despachar_pendientes(
     log como `aviso_sin_enviar`.
     """
     for perdido in notificaciones.marcar_varados_fallidos(usuario_id):
-        # Sólo el número y el tipo: nada de la persona ni del texto del aviso.
+        # Sólo el id y el tipo: nada de la persona ni del texto del aviso.
         _registro.error(
-            "aviso_sin_enviar notificacion_id=%d tipo=%s", perdido.notificacion_id, perdido.tipo
+            "aviso_sin_enviar notificacion_id=%s tipo=%s", perdido.notificacion_id, perdido.tipo
         )
     despachados = 0
     while (p := notificaciones.tomar_siguiente(usuario_id)) is not None:

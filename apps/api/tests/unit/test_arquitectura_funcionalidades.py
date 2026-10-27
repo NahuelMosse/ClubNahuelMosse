@@ -194,6 +194,40 @@ def _contrato(texto: str) -> dict[str, dict[str, object]]:
     return contrato
 
 
+def _es_nombre_de_id(nombre: object) -> bool:
+    return isinstance(nombre, str) and (
+        nombre == "id" or nombre.endswith("_id") or nombre == "reemplazada_por"
+    )
+
+
+def _como_uuid(esquema: object) -> object:
+    if not isinstance(esquema, dict):
+        return esquema
+    if esquema.get("type") == "integer":
+        resto = {k: v for k, v in esquema.items() if k not in ("type", "maximum", "minimum")}
+        return {**resto, "type": "string", "format": "uuid"}
+    if isinstance(esquema.get("anyOf"), list):
+        return {**esquema, "anyOf": [_como_uuid(v) for v in esquema["anyOf"]]}
+    return esquema
+
+
+def _con_ids_uuid(documento: object) -> object:
+    """Los ids enteros del contrato viejo pasan a uuid, que es como son hoy."""
+    if isinstance(documento, list):
+        return [_con_ids_uuid(v) for v in documento]
+    if not isinstance(documento, dict):
+        return documento
+    nuevo = {k: _con_ids_uuid(v) for k, v in documento.items()}
+    if _es_nombre_de_id(nuevo.get("name")) and "schema" in nuevo:
+        nuevo["schema"] = _como_uuid(nuevo["schema"])
+    propiedades = nuevo.get("properties")
+    if isinstance(propiedades, dict):
+        nuevo["properties"] = {
+            k: _como_uuid(v) if _es_nombre_de_id(k) else v for k, v in propiedades.items()
+        }
+    return nuevo
+
+
 def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None:
     """el contrato tiene las mismas rutas, métodos, códigos y formas que el de main, salvo los cuatro nombres de esquema
     @ARQ-04-S3"""  # noqa: E501
@@ -206,7 +240,7 @@ def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None
     ).stdout
     for viejo, nuevo in RENOMBRADOS.items():
         de_main = de_main.replace(viejo, nuevo)
-    esperado = _contrato(de_main)
+    esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(_contrato(de_main)))
     actual = _contrato((API / "openapi.json").read_text(encoding="utf-8"))
     assert set(actual["paths"]) == set(esperado["paths"])
     assert _sin_titulos(actual["paths"]) == _sin_titulos(esperado["paths"])
