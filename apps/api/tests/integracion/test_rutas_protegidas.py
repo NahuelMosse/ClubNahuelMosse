@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
-from app.main import crear_app
+from app.main import create_app
 
 # Lo que la API sirve sin sesión: alta de cuenta y recuperación de contraseña, con la página
 # del enlace del correo.
@@ -41,7 +41,7 @@ def _rutas_de(grupos: list[Any], prefijo: str) -> Iterator[tuple[str, str]]:
 
 def test_cada_ruta_registrada_fuera_de_las_publicas_rechaza_sin_sesion() -> None:
     """@REV-02-ASM-03"""
-    app = crear_app()
+    app = create_app()
     operaciones = sorted(op for op in _rutas(app) if op not in PUBLICAS)
     aceptadas = []
 

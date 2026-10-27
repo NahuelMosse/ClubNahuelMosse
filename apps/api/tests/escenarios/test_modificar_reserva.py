@@ -48,7 +48,12 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     reserva = api.post(
         "/reservas",
         headers=sesion,
-        json={"espacio_id": str(espacio), "fecha": manana.isoformat(), "desde": "21:00", "horas": 1},
+        json={
+            "espacio_id": str(espacio),
+            "fecha": manana.isoformat(),
+            "desde": "21:00",
+            "horas": 1,
+        },
     ).json()
 
     ayer = api.post(

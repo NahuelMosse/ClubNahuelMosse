@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.modules.usuarios.registro import ProveedorIdentidad, RepositorioUsuarios, registrar
 from app.modules.usuarios.reglas import DatosRegistro, normalizar_correo
-from app.shared.errores import CuentaExistente
+from app.shared.errors import AccountExists
 
 
 class RepositorioAdministradores(RepositorioUsuarios, Protocol):
@@ -30,7 +30,7 @@ def sembrar_admin(  # noqa: PLR0913 -- firma pública fijada por sus llamadores
     """
     existente = usuarios.id_activo_por_correo(normalizar_correo(datos.correo))
     if existente is not None and not promover:
-        raise CuentaExistente
+        raise AccountExists
     id_usuario = existente if existente is not None else registrar(datos, hoy, identidad, usuarios)
     usuarios.hacer_admin(id_usuario)
     return id_usuario

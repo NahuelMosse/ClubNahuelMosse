@@ -16,9 +16,9 @@ from app.modules.sedes.casos_de_uso import (
 from app.modules.sedes.reglas import DatosSede, Sede
 from app.modules.sedes.repositorio import SedesSql, repositorio_sedes
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.entradas import Identificador, leer_hora
-from app.shared.errores import ConReservasFuturas, Duplicado, ReservasAfuera
-from app.shared.respuestas import conflicto
+from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings
+from app.shared.input_validation import Identifier, parse_time
+from app.shared.responses import conflict
 
 router = APIRouter(tags=["sedes"])
 
@@ -85,8 +85,8 @@ def _datos(pedido: PedidoDeSede) -> DatosSede:
     return DatosSede(
         nombre=pedido.nombre,
         direccion=pedido.direccion,
-        apertura=leer_hora(pedido.apertura),
-        cierre=leer_hora(pedido.cierre),
+        apertura=parse_time(pedido.apertura),
+        cierre=parse_time(pedido.cierre),
         dias=tuple(pedido.dias),
     )
 
@@ -111,8 +111,8 @@ def alta_de_sede(
 ) -> SedeVista | Response:
     try:
         sede = dar_de_alta_sede(perfil, _datos(pedido), sedes)
-    except Duplicado:
-        return conflicto({"nombre": "Ya existe una sede con ese nombre"})
+    except Duplicate:
+        return conflict({"nombre": "Ya existe una sede con ese nombre"})
     return _vista(sede)
 
 
@@ -149,15 +149,15 @@ def edicion_de_sede(
     pedido: PedidoDeEdicionDeSede,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
-    sede_id: Annotated[Identificador, Path()],
+    sede_id: Annotated[Identifier, Path()],
 ) -> SedeVista | Response:
     try:
         sede = editar_sede(perfil, sede_id, _datos(pedido), confirmar=pedido.confirmar, sedes=sedes)
-    except Duplicado:
-        return conflicto({"nombre": "Ya existe una sede con ese nombre"})
-    except ReservasAfuera as e:
+    except Duplicate:
+        return conflict({"nombre": "Ya existe una sede con ese nombre"})
+    except BookingsOutsideHours as e:
         return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.cantidad}
+            status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.count}
         )
     return _vista(sede)
 
@@ -180,12 +180,12 @@ def edicion_de_sede(
 def baja_de_sede(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     sedes: Annotated[SedesSql, Depends(repositorio_sedes)],
-    sede_id: Annotated[Identificador, Path()],
+    sede_id: Annotated[Identifier, Path()],
 ) -> Response:
     try:
         dar_de_baja_sede(perfil, sede_id, sedes)
-    except ConReservasFuturas:
-        return conflicto(
+    except HasFutureBookings:
+        return conflict(
             {"sede": "No se puede dar de baja la sede porque posee reservas futuras asociadas."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

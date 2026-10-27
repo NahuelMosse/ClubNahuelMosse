@@ -12,7 +12,24 @@ GLOSARIO = RAIZ / "docs" / "technical" / "glosario-ingles.md"
 # El punto de partida del pasaje al inglés: lo que el glosario tiene que cubrir.
 BASE = "9b83c86"
 # Nombres que ya están en inglés o que no se traducen.
-SIN_TRADUCIR = {"ctx", "detail", "input", "loc", "msg", "type", "dni", "id", "token", "total", "cancelable", "q", "firebase_uid", "admin", "api", "health"}
+SIN_TRADUCIR = {
+    "ctx",
+    "detail",
+    "input",
+    "loc",
+    "msg",
+    "type",
+    "dni",
+    "id",
+    "token",
+    "total",
+    "cancelable",
+    "q",
+    "firebase_uid",
+    "admin",
+    "api",
+    "health",
+}
 TIPOS_SQL = r"(?:bigint|bigserial|uuid|text|integer|smallint|boolean|date|time|timestamptz)"
 # Cada cambio de columnas de una migración, en orden: definición en CREATE TABLE (una línea con `:=` es una variable
 # de función), ADD, DROP o RENAME.
@@ -26,11 +43,17 @@ CAMBIO_DE_COLUMNA = re.compile(
 
 
 def _git(*argumentos: str) -> str:
-    return subprocess.run(["git", *argumentos], cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", check=True).stdout
+    return subprocess.run(
+        ["git", *argumentos], cwd=RAIZ, capture_output=True, text=True, encoding="utf-8", check=True
+    ).stdout
 
 
 def _carpetas(ruta: str) -> set[str]:
-    return {n for n in _git("ls-tree", "--name-only", f"{BASE}:{ruta}").split() if not n.startswith("_") and "." not in n}
+    return {
+        n
+        for n in _git("ls-tree", "--name-only", f"{BASE}:{ruta}").split()
+        if not n.startswith("_") and "." not in n
+    }
 
 
 def _nombres_del_contrato() -> set[str]:
@@ -48,9 +71,16 @@ def _columnas() -> set[str]:
     """Las columnas que existen después de aplicar las migraciones de main, en orden."""
     carpeta = "apps/api/migraciones/versions"
     columnas: set[str] = set()
-    for archivo in sorted(n for n in _git("ls-tree", "--name-only", f"{BASE}:{carpeta}").split() if n.endswith(".py")):
+    for archivo in sorted(
+        n for n in _git("ls-tree", "--name-only", f"{BASE}:{carpeta}").split() if n.endswith(".py")
+    ):
         # Sin `downgrade` ni sus ayudantes `_*_abajo`: lo que hacen no llega a la base de main.
-        subida = re.sub(r"^def \w*(?:abajo|downgrade)\w*\(.*?(?=^def |\Z)", "", _git("show", f"{BASE}:{carpeta}/{archivo}"), flags=re.M | re.S)
+        subida = re.sub(
+            r"^def \w*(?:abajo|downgrade)\w*\(.*?(?=^def |\Z)",
+            "",
+            _git("show", f"{BASE}:{carpeta}/{archivo}"),
+            flags=re.M | re.S,
+        )
         for cambio in CAMBIO_DE_COLUMNA.finditer(subida):
             columnas |= {cambio["definida"] or cambio["agregada"] or cambio["nueva"]} - {None}
             columnas -= {cambio["quitada"] or cambio["vieja"]}
@@ -71,10 +101,18 @@ def _grupos(texto: str) -> dict[tuple[str, str], list[tuple[str, str]]]:
 def test_el_glosario_cubre_cada_nombre_de_main_en_9b83c86() -> None:
     """el glosario nombra cada módulo de la API, carpeta de la app, columna, campo JSON, parámetro y ruta de main en 9b83c86 @ENG-00-S2"""
     texto = GLOSARIO.read_text(encoding="utf-8")
-    nombres = _carpetas("apps/api/app/modules") | _carpetas("apps/mobile/lib") | _nombres_del_contrato() | _columnas()
+    nombres = (
+        _carpetas("apps/api/app/modules")
+        | _carpetas("apps/mobile/lib")
+        | _nombres_del_contrato()
+        | _columnas()
+    )
 
     # Un tramo de ruta vale citado como `/tramo`.
-    assert sorted(n for n in nombres - SIN_TRADUCIR if f"`{n}`" not in texto and f"`/{n}" not in texto) == []
+    assert (
+        sorted(n for n in nombres - SIN_TRADUCIR if f"`{n}`" not in texto and f"`/{n}" not in texto)
+        == []
+    )
 
 
 def test_el_glosario_no_junta_dos_terminos_en_un_mismo_nombre() -> None:

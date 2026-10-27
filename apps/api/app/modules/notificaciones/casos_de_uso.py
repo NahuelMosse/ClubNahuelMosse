@@ -9,7 +9,7 @@ from app.modules.notificaciones.reglas import CanalPush as CanalPush
 from app.modules.notificaciones.reglas import Pendiente as Pendiente
 from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
 from app.modules.sesion import Perfil
-from app.shared.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
+from app.shared.errors import Forbidden, InvalidData, NotFound, Unavailable
 
 PLATAFORMAS = ("android", "ios")
 
@@ -121,20 +121,20 @@ def registrar_dispositivo(  # noqa: PLR0913, PLR0917 -- firma pública fijada po
 ) -> None:
     """Registra el teléfono de quien pide, con el permiso que le dio al sistema operativo.
 
-    Lanza `Prohibido` si es administrador, `DatosInvalidos` si falta el token o la plataforma
-    no existe y `NoDisponible` si la cuenta ya no está activa.
+    Lanza `Forbidden` si es administrador, `InvalidData` si falta el token o la plataforma
+    no existe y `Unavailable` si la cuenta ya no está activa.
     """
     if perfil.rol != "usuario":
-        raise Prohibido("sólo un usuario recibe avisos")
+        raise Forbidden("sólo un usuario recibe avisos")
     errores: dict[str, str] = {}
     if not token.strip():
         errores["token"] = "Este campo es obligatorio"
     if plataforma not in PLATAFORMAS:
         errores["plataforma"] = "Tiene que ser android o ios"
     if errores:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     if not notificaciones.registrar_dispositivo(perfil.id, token.strip(), plataforma, permiso):
-        raise NoDisponible("la cuenta ya no está activa")
+        raise Unavailable("la cuenta ya no está activa")
 
 
 def dar_de_baja_dispositivo(notificaciones: Notificaciones, perfil: Perfil, token: str) -> None:
@@ -149,9 +149,9 @@ def mis_notificaciones(
 
 
 def marcar_leida(notificaciones: Notificaciones, perfil: Perfil, notificacion_id: UUID) -> None:
-    """Lanza `NoEncontrada` si la notificación no es de quien pide."""
+    """Lanza `NotFound` si la notificación no es de quien pide."""
     if not notificaciones.leer(perfil.id, notificacion_id):
-        raise NoEncontrada("no hay una notificación suya con ese número")
+        raise NotFound("no hay una notificación suya con ese número")
 
 
 def marcar_todas(notificaciones: Notificaciones, perfil: Perfil) -> None:

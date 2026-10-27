@@ -86,5 +86,10 @@ def test_el_glosario_fija_los_nombres_del_dominio_y_lo_que_queda_en_castellano()
     assert tablas["usuario"] == {"app_user"}
     assert "`tipo`→`kind`" in texto
     queda = texto.split("## Queda en castellano", 1)[1]
-    for tema in ("texto que ve el usuario", "títulos y archivos de test", "dni", "migraciones 0001–0010"):
+    for tema in (
+        "texto que ve el usuario",
+        "títulos y archivos de test",
+        "dni",
+        "migraciones 0001–0010",
+    ):
         assert tema in queda, tema

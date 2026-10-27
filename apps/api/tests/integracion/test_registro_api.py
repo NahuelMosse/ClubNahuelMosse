@@ -88,11 +88,11 @@ def test_una_cuenta_de_firebase_sin_perfil_no_bloquea_el_registro(
 ) -> None:
     from firebase_admin import auth
 
-    from app.shared.identidad import _app_firebase
+    from app.shared.identity import _firebase_app
 
     s = unico()
     correo = f"huerfana.{s}@correo.com"
-    auth.create_user(email=correo, password="OtraClave9", app=_app_firebase())
+    auth.create_user(email=correo, password="OtraClave9", app=_firebase_app())
 
     r = api.post("/registro", json=_pedido(s, correo=correo))
     assert r.status_code == 201, r.text

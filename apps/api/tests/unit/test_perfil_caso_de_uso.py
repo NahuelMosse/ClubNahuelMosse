@@ -6,7 +6,7 @@ import pytest
 from app.modules.sesion.perfil import Perfil
 from app.modules.usuarios.perfil import editar_perfil
 from app.modules.usuarios.reglas import DatosPersonales, PerfilEditado
-from app.shared.errores import DatosInvalidos
+from app.shared.errors import InvalidData
 
 HOY = date(2026, 9, 27)
 PERFIL = Perfil(
@@ -52,7 +52,7 @@ def test_guarda_los_datos_normalizados() -> None:
 def test_un_dato_invalido_no_guarda_nada(datos: DatosPersonales, campos: set[str]) -> None:
     """Verifica CU-06-SUP-01 y CU-06-SUP-04."""
     perfiles = Perfiles()
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         editar_perfil(PERFIL, datos, HOY, perfiles)
-    assert set(error.value.errores) == campos
+    assert set(error.value.errors) == campos
     assert perfiles.guardados == []

@@ -5,7 +5,7 @@ import pytest
 
 from app.modules.sesion.casos_de_uso import perfil_autenticado
 from app.modules.sesion.perfil import Perfil
-from app.shared.errores import NoAutenticado
+from app.shared.errors import NotAuthenticated
 
 PERFIL = Perfil(
     id=UUID(int=7),
@@ -24,7 +24,7 @@ class Tokens:
         self.validos = validos
         self.consultados: list[str] = []
 
-    def uid_del_token(self, token: str) -> str | None:
+    def uid_from_token(self, token: str) -> str | None:
         self.consultados.append(token)
         return self.validos.get(token)
 
@@ -44,16 +44,16 @@ def test_un_token_valido_de_una_cuenta_activa_da_su_perfil() -> None:
 @pytest.mark.parametrize("token", [None, ""])
 def test_sin_token_no_se_consulta_al_proveedor(token: str | None) -> None:
     tokens = Tokens({})
-    with pytest.raises(NoAutenticado):
+    with pytest.raises(NotAuthenticated):
         perfil_autenticado(token, tokens, Perfiles({}))
     assert tokens.consultados == []
 
 
 def test_un_token_invalido_no_autentica() -> None:
-    with pytest.raises(NoAutenticado):
+    with pytest.raises(NotAuthenticated):
         perfil_autenticado("vencido", Tokens({}), Perfiles({"u": PERFIL}))
 
 
 def test_una_cuenta_sin_perfil_activo_no_autentica() -> None:
-    with pytest.raises(NoAutenticado):
+    with pytest.raises(NotAuthenticated):
         perfil_autenticado("t", Tokens({"t": "u"}), Perfiles({}))

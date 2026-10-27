@@ -4,22 +4,22 @@ from uuid import UUID
 
 from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
 from app.modules.sesion import Perfil
-from app.shared.errores import DatosInvalidos, Prohibido
+from app.shared.errors import Forbidden, InvalidData
 
 
 class Sedes(Protocol):
     def activas(self) -> list[Sede]: ...
 
     def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
-        """Lanza `Duplicado(["nombre"])` si otra sede activa ya tiene ese nombre."""
+        """Lanza `Duplicate(["nombre"])` si otra sede activa ya tiene ese nombre."""
         ...
 
     def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, *, confirmar: bool) -> Sede:
         """Guarda los datos nuevos de la sede activa [sede_id]. Las reservas no se tocan.
 
-        Sin [confirmar], lanza `ReservasAfuera` si el horario nuevo deja afuera reservas
-        futuras activas que el de antes admitía. Lanza `NoEncontrada` si la sede ya no está
-        activa y `Duplicado(["nombre"])` si otra sede activa ya tiene ese nombre.
+        Sin [confirmar], lanza `BookingsOutsideHours` si el horario nuevo deja afuera reservas
+        futuras activas que el de antes admitía. Lanza `NotFound` si la sede ya no está
+        activa y `Duplicate(["nombre"])` si otra sede activa ya tiene ese nombre.
         """
         ...
 
@@ -27,7 +27,7 @@ class Sedes(Protocol):
         """Da de baja la sede activa [sede_id] y sus espacios, a nombre de [autor]. Las
         reservas pasadas los siguen nombrando.
 
-        Lanza `NoEncontrada` si la sede ya no está activa y `ConReservasFuturas` si alguno de
+        Lanza `NotFound` si la sede ya no está activa y `HasFutureBookings` si alguno de
         sus espacios tiene una reserva activa que todavía no terminó.
         """
         ...
@@ -36,10 +36,10 @@ class Sedes(Protocol):
 def dar_de_alta_sede(perfil: Perfil, datos: DatosSede, sedes: Sedes) -> Sede:
     """Registra una sede nueva, activa desde ya, a nombre del administrador que la carga."""
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador da de alta sedes")
+        raise Forbidden("sólo un administrador da de alta sedes")
     nueva, errores = validar_sede(datos)
     if nueva is None:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     return sedes.insertar(nueva, autor=perfil.id)
 
 
@@ -50,10 +50,10 @@ def editar_sede(  # noqa: PLR0913 -- firma pública fijada por sus llamadores
     hechas se respetan: el horario nuevo rige para las que vengan (RF 3 se valida al
     reservar)."""
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador edita sedes")
+        raise Forbidden("sólo un administrador edita sedes")
     nueva, errores = validar_sede(datos)
     if nueva is None:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     return sedes.actualizar(sede_id, nueva, autor=perfil.id, confirmar=confirmar)
 
 
@@ -66,5 +66,5 @@ def dar_de_baja_sede(perfil: Perfil, sede_id: UUID, sedes: Sedes) -> None:
     """Retira una sede (CU-19): deja de verse y sus espacios dejan de poder reservarse. No se
     permite con reservas pendientes (decisión 5): la cancelación forzosa es de CU-15."""
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador da de baja sedes")
+        raise Forbidden("sólo un administrador da de baja sedes")
     sedes.dar_de_baja(sede_id, autor=perfil.id)

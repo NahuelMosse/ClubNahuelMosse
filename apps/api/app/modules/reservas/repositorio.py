@@ -24,9 +24,15 @@ from app.modules.reservas.reglas import (
     Reserva,
     ReservaHistorial,
 )
-from app.shared.db import VENTANA_DE_REINTENTO, Conexion, en_transaccion
-from app.shared.errores import AgendaCambiada, Cambiado, HorarioOcupado, NoDisponible, NoEncontrada
-from app.shared.zona import NOMBRE_ZONA_CLUB
+from app.shared.club_timezone import CLUB_TIMEZONE_NAME
+from app.shared.db import RETRY_WINDOW, DbConnection, in_transaction
+from app.shared.errors import (
+    ConcurrentChange,
+    NotFound,
+    OpeningHoursChanged,
+    SlotTaken,
+    Unavailable,
+)
 
 # SQLSTATE de la restricción de exclusión: otra reserva activa pisa el horario.
 EXCLUSION_VIOLATION = "23P01"
@@ -74,17 +80,17 @@ _SEDE_COMPARTIDA = (
 )
 
 # Los días del filtro se cortan a medianoche del club, no de la sesión de Postgres (UTC).
-_ZONA_CLUB = f"'{NOMBRE_ZONA_CLUB}'"
+_ZONA_CLUB = f"'{CLUB_TIMEZONE_NAME}'"
 
 
 @contextmanager
 def _horario_ocupado() -> Iterator[None]:
-    """Una superposición con otra reserva activa sale como `HorarioOcupado`."""
+    """Una superposición con otra reserva activa sale como `SlotTaken`."""
     try:
         yield
     except IntegrityError as e:
         if getattr(e.orig, "sqlstate", None) == EXCLUSION_VIOLATION:
-            raise HorarioOcupado("otra reserva activa pisa ese horario") from e
+            raise SlotTaken("otra reserva activa pisa ese horario") from e
         raise
 
 
@@ -145,7 +151,7 @@ class ReservasSql:
                 "SELECT id FROM reserva WHERE usuario_id = :usuario"
                 " AND espacio_id = :espacio AND inicio = :inicio AND fin = :fin"
                 " AND estado = 'activa'"
-                f" AND creado_en > now() - interval '{VENTANA_DE_REINTENTO}'"
+                f" AND creado_en > now() - interval '{RETRY_WINDOW}'"
             ),
             datos,
         ).first()
@@ -188,7 +194,7 @@ class ReservasSql:
         validó la reserva, se vuelve a validar con el nuevo."""
         sede = self._conn.execute(text(_SEDE_COMPARTIDA), datos).first()
         if sede is not None and agenda_de_fila(sede) != agenda:
-            raise AgendaCambiada("la sede cambió de horario")
+            raise OpeningHoursChanged("la sede cambió de horario")
         return sede
 
     def mover(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
@@ -210,7 +216,7 @@ class ReservasSql:
             "inicio": inicio,
             "fin": fin,
         }
-        with _horario_ocupado(), en_transaccion(self._conn):
+        with _horario_ocupado(), in_transaction(self._conn):
             # Como al reservar: sede compartida, espacios exclusivos (por número: dos cambios
             # cruzados entre las mismas canchas se esperan en vez de trabarse) y la reserva.
             sede = self._sede_vigente(datos, agenda)
@@ -218,7 +224,7 @@ class ReservasSql:
             self._exigir_reserva_movible(datos)
             espacio = espacios.get(espacio_id)
             if sede is None or espacio is None or not espacio.activo:
-                raise NoDisponible("el espacio nuevo ya no está activo")
+                raise Unavailable("el espacio nuevo ya no está activo")
             # El horario anterior se libera en la misma transacción que toma el nuevo: si el
             # nuevo choca con otra reserva, no cambia nada.
             self._conn.execute(
@@ -252,13 +258,13 @@ class ReservasSql:
             datos,
         ).first()
         if fila is None:
-            raise NoEncontrada("no hay una reserva suya con ese número")
+            raise NotFound("no hay una reserva suya con ese número")
         if fila.estado != "activa" or fila.empezo or not fila.donde_estaba:
-            raise Cambiado("la reserva ya no está activa, ya empezó o ya se movió")
+            raise ConcurrentChange("la reserva ya no está activa, ya empezó o ya se movió")
 
     def cancelar(self, usuario_id: UUID, reserva_id: UUID) -> Reserva:
         datos = {"usuario": usuario_id, "id": reserva_id}
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             fila = self._conn.execute(
                 text(
                     "SELECT estado, cancelada_por, inicio <= now() AS empezo FROM reserva"
@@ -267,12 +273,12 @@ class ReservasSql:
                 datos,
             ).first()
             if fila is None:
-                raise NoEncontrada("no hay una reserva suya con ese número")
+                raise NotFound("no hay una reserva suya con ese número")
             if fila.estado == "cancelada" and fila.cancelada_por == usuario_id:
                 self._conn.rollback()
                 return self._una(reserva_id)
             if fila.estado != "activa" or fila.empezo:
-                raise Cambiado("la reserva ya no está activa o ya empezó")
+                raise ConcurrentChange("la reserva ya no está activa o ya empezó")
             self._conn.execute(
                 text(
                     "UPDATE reserva SET estado = 'cancelada', cancelada_en = now(),"
@@ -321,14 +327,14 @@ class ReservasSql:
             datos,
         ).first()
         if cuenta is None or sede is None or espacio is None:
-            raise NoDisponible("la cuenta o el espacio ya no están activos")
+            raise Unavailable("la cuenta o el espacio ya no están activos")
         return espacio
 
     def insertar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
         self, usuario_id: UUID, espacio_id: UUID, inicio: datetime, fin: datetime, agenda: Agenda
     ) -> Reserva:
         datos = {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
-        with _horario_ocupado(), en_transaccion(self._conn):
+        with _horario_ocupado(), in_transaction(self._conn):
             espacio = self._bloquear_para_alta(datos, agenda)
             repetida = self._id_repetida(datos)
             if repetida is not None:
@@ -360,7 +366,7 @@ class ReservasSql:
             datos,
         ).first()
         if previa is None:
-            raise NoEncontrada("no hay una reserva con ese número")
+            raise NotFound("no hay una reserva con ese número")
         datos |= {
             "usuario": previa.usuario_id,
             "sede": previa.sede_id,
@@ -384,7 +390,7 @@ class ReservasSql:
             datos,
         ).first()
         if fila is None:
-            raise NoEncontrada("no hay una reserva con ese número")
+            raise NotFound("no hay una reserva con ese número")
         return fila
 
     def anular(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
@@ -397,7 +403,7 @@ class ReservasSql:
             "espacio": espacio_id,
             "inicio": inicio,
         }
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             previa = self._bloquear_para_anular(datos)
             fila = self._bloquear_reserva_a_anular(datos)
             if (
@@ -408,7 +414,7 @@ class ReservasSql:
                 self._conn.rollback()
                 return self._detalle(reserva_id)
             if fila.estado != "activa" or fila.empezo or not fila.como_se_vio:
-                raise Cambiado("la reserva ya no está activa, ya empezó o cambió")
+                raise ConcurrentChange("la reserva ya no está activa, ya empezó o cambió")
             self._conn.execute(
                 text(
                     "UPDATE reserva SET estado = 'anulada', motivo = :motivo,"
@@ -423,7 +429,7 @@ class ReservasSql:
     def _detalle(self, reserva_id: UUID) -> ReservaHistorial:
         detalle = self.una_de_cualquiera(reserva_id)
         if detalle is None:
-            raise NoEncontrada("no hay una reserva con ese número")
+            raise NotFound("no hay una reserva con ese número")
         return detalle
 
     def _contar(
@@ -485,5 +491,5 @@ class ReservasSql:
         return None if fila is None else ReservaHistorial(**fila._mapping)
 
 
-def repositorio_reservas(conn: Conexion) -> ReservasSql:
+def repositorio_reservas(conn: DbConnection) -> ReservasSql:
     return ReservasSql(conn)

@@ -5,7 +5,7 @@ from fastapi import Depends
 from sqlalchemy import Connection, text
 
 from app.modules.sesion.perfil import Perfil
-from app.shared.db import Conexion
+from app.shared.db import DbConnection
 
 
 class PerfilesSql:
@@ -38,7 +38,7 @@ class PerfilesSql:
         )
 
 
-def repositorio_perfiles(conn: Conexion) -> PerfilesSql:
+def repositorio_perfiles(conn: DbConnection) -> PerfilesSql:
     return PerfilesSql(conn)
 
 

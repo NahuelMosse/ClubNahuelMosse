@@ -21,7 +21,7 @@ from app.modules.notificaciones.reglas import (
     mensaje_cancelacion_forzosa,
     mensaje_cancelaciones_forzosas,
 )
-from app.shared.db import Conexion, en_transaccion
+from app.shared.db import DbConnection, in_transaction
 
 # Cuántas notificaciones trae el centro: las más nuevas.
 LIMITE_DEL_CENTRO = 100
@@ -220,7 +220,7 @@ class NotificacionesSql:
             "inicio": recordatorio.inicio,
             "anticipacion": ANTICIPACION,
         }
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
             # la cuenta darse de baja. Se vuelve a mirar con la cuenta y la reserva compartidas,
             # en el orden de las reservas, así ninguna de las dos cambia hasta el commit.
@@ -279,7 +279,7 @@ class NotificacionesSql:
         return bool(hay)
 
     def marcar_varados_fallidos(self, usuario_id: UUID | None) -> list[AvisoPerdido]:
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # Un recordatorio registrado cuyo turno ya empezó o se canceló no va a salir nunca.
             muertos = self._conn.execute(
                 text(
@@ -370,7 +370,7 @@ class NotificacionesSql:
             "plataforma": plataforma,
             "permiso": permiso,
         }
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # La cuenta se toma compartida, como al reservar: no se da de baja en el medio.
             cuenta = self._conn.execute(
                 text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
@@ -457,5 +457,5 @@ class NotificacionesSql:
         self._conn.commit()
 
 
-def repositorio_notificaciones(conn: Conexion) -> NotificacionesSql:
+def repositorio_notificaciones(conn: DbConnection) -> NotificacionesSql:
     return NotificacionesSql(conn)

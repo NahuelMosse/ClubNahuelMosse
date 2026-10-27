@@ -24,7 +24,7 @@ def test_el_mapa_del_codigo_sigue_al_dia() -> None:
     """el mapa del código sigue al día @ARQ-02-S3"""
     mapa = (RAIZ / "docs" / "technical" / "mapa-del-codigo.md").read_text(encoding="utf-8")
 
-    assert "`errores_http.py`" in mapa
+    assert "`http_errors.py`" in mapa
 
 
 def test_la_agenda_de_una_sede_se_arma_en_una_sola_funcion_y_con_los_dias_en_tupla() -> None:
@@ -42,11 +42,11 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
     """los repositorios confirman con en_transaccion y los métodos que corren dentro de otro
     no lo usan @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
     db = (SHARED / "db.py").read_text(encoding="utf-8")
-    assert "def en_transaccion(" in db
+    assert "def in_transaction(" in db
     usan = [
         a.parent.name
         for a in MODULOS.glob("*/repositorio.py")
-        if "en_transaccion(" in a.read_text(encoding="utf-8")
+        if "in_transaction(" in a.read_text(encoding="utf-8")
     ]
     assert len(usan) >= 6
 
@@ -56,7 +56,7 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
         ("notificaciones/repositorio.py", "encolar_cancelacion_usuario"),
     ]:
         cuerpo = _metodo(archivo, metodo)
-        assert "en_transaccion" not in cuerpo, metodo
+        assert "in_transaction" not in cuerpo, metodo
         assert ".commit()" not in cuerpo, metodo
 
 

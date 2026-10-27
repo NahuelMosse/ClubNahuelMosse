@@ -14,7 +14,7 @@ nombre, no por línea: buscalos con el buscador del editor.
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
 | Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
 | Cómo se valida el token de Firebase | `apps/api/app/modules/sesion/usuario_actual.py` (`usuario_actual`) → `sesion/casos_de_uso.py` (`perfil_autenticado`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
-| La hora y la zona del club | API: `apps/api/app/shared/zona.py` (`ZONA_CLUB`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
+| La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
 | Los recordatorios de una hora antes | `apps/api/app/modules/notificaciones/barrido.py` (el reloj) → `casos_de_uso.py` (`enviar_recordatorios`, `entregar`) → `push.py` (FCM) |
 | Los avisos de cancelación | se encolan en la misma transacción que cancela (`ReservasSql.cancelar` y `ReservasSql.anular`) y salen con `despachar_pendientes` |
 | El correo de recuperación de contraseña | `apps/api/app/modules/recuperacion/casos_de_uso.py` (código, vigencia, tope por hora) y `correo.py` (SMTP o buzón) |
@@ -71,7 +71,7 @@ app-tp/
 El código se agrupa por funcionalidad: una carpeta por funcionalidad bajo `app/modules/`, plana, con los archivos que
 necesita entre `rutas.py` (HTTP), `casos_de_uso.py` (orquestación), `reglas.py` (reglas puras) y `repositorio.py`
 (SQL con `text()` sobre una `Connection` de SQLAlchemy, sin ORM). Lo compartido está en `app/shared/` y arriba quedan
-`main.py`, `salud.py` y `pruebas.py`.
+`main.py`, `health.py` y `e2e_support.py`.
 
 - Una funcionalidad importa a otra sólo por su `__init__.py`, y no hay ciclos.
 - `shared/` no importa funcionalidades; `reglas.py` no importa base de datos ni web; los casos de uso no importan
@@ -100,9 +100,9 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 | `recuperacion` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py`, `correo.py` | `sesion/` |
 | `notificaciones` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py`, `barrido.py`, `push.py` | `notificaciones/` |
 
-Compartido en `app/shared/`: `config.py`, `db.py` (motor, `conexion()`, `en_transaccion`), `errores.py` (todos los
-errores del negocio), `errores_http.py`, `respuestas.py`, `entradas.py`, `cuerpo.py`, `zona.py` (`ZONA_CLUB`),
-`identidad.py` (`ProveedorFirebase`) y `credencial_firebase.py`.
+Compartido en `app/shared/`: `config.py`, `db.py` (`engine`, `connection()`, `in_transaction`), `errors.py` (todos los
+errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `body_limit.py`, `club_timezone.py` (`CLUB_TIMEZONE`),
+`identity.py` (`FirebaseProvider`) y `firebase_credential.py`.
 
 ### Archivo por archivo
 
@@ -110,24 +110,24 @@ errores del negocio), `errores_http.py`, `respuestas.py`, `entradas.py`, `cuerpo
 
 | Archivo | Qué tiene |
 |---|---|
-| `main.py` | `crear_app()`: arma la app, los handlers de error y los routers; `_ciclo_de_vida` (el barrido en segundo plano) |
-| `salud.py` | `/health` (el proceso vive) |
-| `pruebas.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
+| `main.py` | `create_app()`: arma la app, los handlers de error y los routers; `_lifespan` (el barrido en segundo plano) |
+| `health.py` | `/health` (el proceso vive) |
+| `e2e_support.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
 
 **`shared/`**
 
 | Archivo | Qué tiene |
 |---|---|
-| `config.py` | `Config` (pydantic-settings), lee el entorno y `apps/api/.env` |
-| `db.py` | el motor, `conexion()` (una conexión por pedido), `en_transaccion`, `restriccion_violada` |
-| `errores.py` | las excepciones del negocio: `DatosInvalidos`, `Duplicado`, `NoAutenticado`, `Demorado`, `CuentaExistente`, `Prohibido`, `NoDisponible`, `NumeroOcupado`, `HorarioOcupado`, `NoEncontrada`, `Cambiado`, `ReservasAfuera`, `AgendaCambiada`, `ConReservasFuturas` |
-| `errores_http.py` | handlers de `DatosInvalidos` (422 con `errores`), `Prohibido` (403) y `NoEncontrada` (404), los tres iguales en toda la API |
-| `respuestas.py` | `conflicto`: el 409 con `errores` que cada ruta elige |
-| `entradas.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identificador`…), `leer_hora` y el handler de 422 y 400 |
-| `cuerpo.py` | `CuerpoAcotado`: tope de tamaño y de tiempo del cuerpo |
-| `zona.py` | `ZONA_CLUB`, la única definición de `America/Argentina/Buenos_Aires` |
-| `identidad.py` | `ProveedorFirebase`: verificar tokens, comprobar contraseñas, crear y borrar cuentas |
-| `credencial_firebase.py` | `credencial_de_servicio`: la cuenta de servicio desde el JSON o el archivo |
+| `config.py` | `Settings` (pydantic-settings), lee el entorno y `apps/api/.env` |
+| `db.py` | `engine`, `connection()` (una conexión por pedido), `DbConnection`, `in_transaction`, `violated_constraint` |
+| `errors.py` | las excepciones del negocio: `InvalidData`, `Duplicate`, `NotAuthenticated`, `RateLimited`, `AccountExists`, `Forbidden`, `Unavailable`, `NumberTaken`, `SlotTaken`, `NotFound`, `ConcurrentChange`, `BookingsOutsideHours`, `OpeningHoursChanged`, `HasFutureBookings` |
+| `http_errors.py` | handlers de `InvalidData` (422 con `errores`), `Forbidden` (403) y `NotFound` (404), los tres iguales en toda la API |
+| `responses.py` | `conflict`: el 409 con `errores` que cada ruta elige |
+| `input_validation.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identifier`…), `parse_time` y el handler de 422 y 400 |
+| `body_limit.py` | `BodyLimit`: tope de tamaño y de tiempo del cuerpo |
+| `club_timezone.py` | `CLUB_TIMEZONE`, la única definición de `America/Argentina/Buenos_Aires` |
+| `identity.py` | `FirebaseProvider`: verificar tokens, comprobar contraseñas, crear y borrar cuentas |
+| `firebase_credential.py` | `service_credential`: la cuenta de servicio desde el JSON o el archivo |
 
 **`modules/`** (cada archivo `rutas*.py` lleva las rutas HTTP; `repositorio.py` el SQL y su proveedor `repositorio_*`)
 
@@ -149,7 +149,7 @@ si el rol no es `admin`.
 
 | Método y ruta | Archivo | Caso de uso | Quién |
 |---|---|---|---|
-| GET `/health` | `salud.py` | — | cualquiera |
+| GET `/health` | `health.py` | — | cualquiera |
 | GET `/openapi.json` | FastAPI | — | cualquiera (también `/docs` y `/redoc`) |
 | POST `/registro` | `usuarios/rutas_registro.py` | `registrar` | cualquiera |
 | POST `/recuperacion` | `recuperacion/rutas.py` | `pedir_enlace` | cualquiera |
@@ -202,7 +202,7 @@ si el rol no es `admin`.
 | `PRUEBAS` | false | montar `/_pruebas` (sólo junto al emulador) |
 | `VERSION` | la del `pyproject.toml` | lo que informan `/health` y el log |
 
-Fuera de `Config`: `FIREBASE_AUTH_EMULATOR_HOST` (emulador de Auth), `GOOGLE_APPLICATION_CREDENTIALS` (cuenta de servicio
+Fuera de `Settings`: `FIREBASE_AUTH_EMULATOR_HOST` (emulador de Auth), `GOOGLE_APPLICATION_CREDENTIALS` (cuenta de servicio
 por archivo), `ADMIN_CONTRASENA` (sólo `sembrar_admin`) y `TEST_DATABASE_URL` (sólo tests).
 
 ### Migraciones

@@ -57,22 +57,20 @@ def _reserva(
     motor: Engine, mundo: dict[str, UUID], inicio: datetime, creada: datetime | None = None
 ) -> UUID:
     with motor.begin() as conn:
-        return (
-            conn.execute(
-                text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total, creado_en, modificado_en) VALUES (:u, :e, :i, :f, 38000, 38000,"
-                    " coalesce(:c, now()), coalesce(:c, now())) RETURNING id"
-                ),
-                {
-                    "u": mundo["usuario"],
-                    "e": mundo["espacio"],
-                    "i": inicio,
-                    "f": inicio + timedelta(hours=1),
-                    "c": creada,
-                },
-            ).scalar_one()
-        )
+        return conn.execute(
+            text(
+                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
+                " total, creado_en, modificado_en) VALUES (:u, :e, :i, :f, 38000, 38000,"
+                " coalesce(:c, now()), coalesce(:c, now())) RETURNING id"
+            ),
+            {
+                "u": mundo["usuario"],
+                "e": mundo["espacio"],
+                "i": inicio,
+                "f": inicio + timedelta(hours=1),
+                "c": creada,
+            },
+        ).scalar_one()
 
 
 def _uno(motor: Engine, sql: str, **datos: Any) -> Any:
@@ -147,7 +145,9 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
     assert _uno(motor, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
 
 
-def test_el_recordatorio_sale_una_hora_antes(motor: Engine, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_el_recordatorio_sale_una_hora_antes(
+    motor: Engine, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """el recordatorio sale una hora antes del inicio, con la anticipación de dominio @REV-06-S9 @assumption:REV-06-ASM-08"""
     mundo = _mundo(motor)
     base = _hora(dias=9)

@@ -11,7 +11,7 @@ from app.modules.recuperacion.casos_de_uso import (
     usar_enlace,
 )
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
-from app.shared.errores import DatosInvalidos
+from app.shared.errors import InvalidData
 
 LUCIA = Destinatario(UUID(int=7), "Lucía", "lucia@correo.com")
 URL = "https://api.club.com/"
@@ -53,10 +53,10 @@ class Identidad:
         self.cambios: list[tuple[str, str]] = []
         self.falla = falla
 
-    def cambiar_contrasena(self, uid: str, nueva: str) -> None:
+    def change_password(self, uid: str, new_password: str) -> None:
         if self.falla:
             raise RuntimeError("Firebase no contesta")
-        self.cambios.append((uid, nueva))
+        self.cambios.append((uid, new_password))
 
 
 class Rastro:
@@ -94,9 +94,9 @@ def test_despues_del_tope_por_hora_no_se_envian_mas() -> None:
 
 
 def test_un_correo_mal_escrito_se_rechaza() -> None:
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         pedir_enlace("lucia@correo", URL, Enlaces())
-    assert error.value.errores == {"correo": "Revisá el formato del correo"}
+    assert error.value.errors == {"correo": "Revisá el formato del correo"}
 
 
 def test_con_un_enlace_vigente_cambia_la_contrasena_y_deja_rastro() -> None:
@@ -118,7 +118,7 @@ def test_si_firebase_falla_el_enlace_se_libera() -> None:
 
 def test_una_contrasena_debil_no_gasta_el_enlace() -> None:
     enlaces = Enlaces(vigentes={hash_de("abc")})
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         usar_enlace("abc", "corta", enlaces, Identidad(), Rastro())
-    assert error.value.errores == {"nueva": "Al menos 8 caracteres"}
+    assert error.value.errors == {"nueva": "Al menos 8 caracteres"}
     assert hash_de("abc") in enlaces.vigentes

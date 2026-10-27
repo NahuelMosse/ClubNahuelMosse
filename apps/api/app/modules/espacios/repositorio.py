@@ -13,13 +13,13 @@ from app.modules.espacios.reglas import (
     NombreSugerido,
     SedeDelEspacio,
 )
-from app.shared.db import VENTANA_DE_REINTENTO, Conexion, en_transaccion, restriccion_violada
-from app.shared.errores import (
-    ConReservasFuturas,
-    Duplicado,
-    NoDisponible,
-    NoEncontrada,
-    NumeroOcupado,
+from app.shared.db import RETRY_WINDOW, DbConnection, in_transaction, violated_constraint
+from app.shared.errors import (
+    Duplicate,
+    HasFutureBookings,
+    NotFound,
+    NumberTaken,
+    Unavailable,
 )
 
 COLUMNAS_DE_ESPACIO = (
@@ -127,7 +127,7 @@ class EspaciosSql:
                 " AND e.numero = :numero AND e.activo AND e.creado_por = :autor"
                 " AND e.techada = :techada AND e.iluminada = :iluminada"
                 " AND e.precio_por_hora = :precio"
-                f" AND e.creado_en > now() - interval '{VENTANA_DE_REINTENTO}'"
+                f" AND e.creado_en > now() - interval '{RETRY_WINDOW}'"
             ),
             {
                 "sede": nuevo.sede_id,
@@ -150,7 +150,7 @@ class EspaciosSql:
         autor: UUID,
     ) -> Espacio:
         try:
-            with en_transaccion(self._conn):
+            with in_transaction(self._conn):
                 sede = self._tomar_numeracion(nuevo)
                 siguiente = self._calcular(
                     nuevo.sede_id, nuevo.deporte, nuevo.tipo, lambda n: nombre(sede, n)
@@ -159,10 +159,10 @@ class EspaciosSql:
                     return self._numero_tomado(nuevo, numero, siguiente, autor)
                 fila = self._insertar_fila(nuevo, siguiente, autor)
         except IntegrityError as e:
-            indice = restriccion_violada(e)
+            indice = violated_constraint(e)
             # Un alta de otra sede tomó el mismo nombre entre el cálculo y el INSERT.
             if indice == "espacio_nombre_key":
-                raise Duplicado(["nombre"]) from e
+                raise Duplicate(["nombre"]) from e
             raise
         return espacio_de_fila(fila)
 
@@ -172,7 +172,7 @@ class EspaciosSql:
         # el mismo número.
         sede = self._sede(nuevo.sede_id, bloquear=True)
         if sede is None:
-            raise NoDisponible("la sede no está activa")
+            raise Unavailable("la sede no está activa")
         self._conn.execute(
             text("SELECT pg_advisory_xact_lock(:espacio, hashtext(:c))"),
             {
@@ -189,7 +189,7 @@ class EspaciosSql:
         self._conn.rollback()
         if repetido is not None:
             return repetido
-        raise NumeroOcupado(siguiente.numero, siguiente.nombre)
+        raise NumberTaken(siguiente.numero, siguiente.nombre)
 
     def _insertar_fila(
         self, nuevo: EspacioNuevo, siguiente: NombreSugerido, autor: UUID
@@ -225,7 +225,7 @@ class EspaciosSql:
             "precio": cambio.precio_por_hora,
             "autor": autor,
         }
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             self._tomar_sede_del_espacio(datos)
             self._modificar(datos)
             fila = self._conn.execute(
@@ -248,7 +248,7 @@ class EspaciosSql:
             datos,
         ).first()
         if sede is None:
-            raise NoEncontrada("el espacio ya no está activo")
+            raise NotFound("el espacio ya no está activo")
 
     def _modificar(self, datos: dict[str, Any]) -> None:
         # El espacio pudo darse de baja entre el chequeo y acá: si no se tocó ninguna
@@ -265,11 +265,11 @@ class EspaciosSql:
             datos,
         ).first()
         if tocada is None:
-            raise NoEncontrada("el espacio se dio de baja mientras tanto")
+            raise NotFound("el espacio se dio de baja mientras tanto")
 
     def dar_de_baja(self, espacio_id: UUID, autor: UUID) -> None:
         datos = {"id": espacio_id, "autor": autor}
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # La sede compartida y después el espacio exclusivo, el orden de una reserva: la
             # que se está haciendo termina antes y acá se la ve, o espera y encuentra el
             # espacio dado de baja.
@@ -281,7 +281,7 @@ class EspaciosSql:
                 datos,
             ).first()
             if fila is None:
-                raise NoEncontrada("el espacio ya no está activo")
+                raise NotFound("el espacio ya no está activo")
             pendientes: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM reserva WHERE espacio_id = :id"
@@ -290,7 +290,7 @@ class EspaciosSql:
                 datos,
             ).scalar_one()
             if pendientes:
-                raise ConReservasFuturas("el espacio tiene reservas que todavía no terminaron")
+                raise HasFutureBookings("el espacio tiene reservas que todavía no terminaron")
             self._conn.execute(
                 text(
                     "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
@@ -313,5 +313,5 @@ class EspaciosSql:
         )
 
 
-def repositorio_espacios(conn: Conexion) -> EspaciosSql:
+def repositorio_espacios(conn: DbConnection) -> EspaciosSql:
     return EspaciosSql(conn)

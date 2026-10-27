@@ -7,7 +7,7 @@ from sqlalchemy import Connection, text
 
 from app.modules.espacios import COLUMNAS_DE_ESPACIO, Espacio, espacio_de_fila
 from app.modules.horarios.reglas import Agenda
-from app.shared.db import Conexion
+from app.shared.db import DbConnection
 
 
 def agenda_de_fila(fila: Any) -> Agenda:
@@ -84,5 +84,5 @@ class HorariosSql:
         return [(f.inicio, f.fin) for f in filas]
 
 
-def repositorio_horarios(conn: Conexion) -> HorariosSql:
+def repositorio_horarios(conn: DbConnection) -> HorariosSql:
     return HorariosSql(conn)

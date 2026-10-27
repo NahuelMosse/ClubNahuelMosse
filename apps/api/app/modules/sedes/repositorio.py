@@ -7,9 +7,9 @@ from sqlalchemy.exc import IntegrityError
 
 from app.modules.espacios import EspaciosSql
 from app.modules.sedes.reglas import Sede, SedeNueva
-from app.shared.db import Conexion, en_transaccion, restriccion_violada
-from app.shared.errores import ConReservasFuturas, Duplicado, NoEncontrada, ReservasAfuera
-from app.shared.zona import NOMBRE_ZONA_CLUB
+from app.shared.club_timezone import CLUB_TIMEZONE_NAME
+from app.shared.db import DbConnection, in_transaction, violated_constraint
+from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings, NotFound
 
 _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
 
@@ -41,8 +41,8 @@ _AFUERA = (
 
 def _afuera(prefijo: str) -> str:
     return _AFUERA.format(
-        ini=f"r.inicio AT TIME ZONE '{NOMBRE_ZONA_CLUB}'",
-        fin=f"r.fin AT TIME ZONE '{NOMBRE_ZONA_CLUB}'",
+        ini=f"r.inicio AT TIME ZONE '{CLUB_TIMEZONE_NAME}'",
+        fin=f"r.fin AT TIME ZONE '{CLUB_TIMEZONE_NAME}'",
         p=prefijo,
     )
 
@@ -66,7 +66,7 @@ class SedesSql:
 
     def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
         try:
-            with en_transaccion(self._conn):
+            with in_transaction(self._conn):
                 fila = self._conn.execute(
                     text(
                         "INSERT INTO sede AS s (nombre, calle, altura, apertura, cierre, dias,"
@@ -86,9 +86,9 @@ class SedesSql:
                     },
                 ).one()
         except IntegrityError as e:
-            indice = restriccion_violada(e)
+            indice = violated_constraint(e)
             if indice == "sede_nombre_activa_unico":
-                raise Duplicado(["nombre"]) from e
+                raise Duplicate(["nombre"]) from e
             raise
         return _sede(fila, canchas=0)
 
@@ -111,7 +111,7 @@ class SedesSql:
             ).scalar_one()
         )
         if afuera:
-            raise ReservasAfuera(afuera)
+            raise BookingsOutsideHours(afuera)
 
     def _guardar(self, valores: dict[str, Any]) -> None:
         self._conn.execute(
@@ -135,7 +135,7 @@ class SedesSql:
             "autor": autor,
         }
         try:
-            with en_transaccion(self._conn):
+            with in_transaction(self._conn):
                 # Exclusiva: una reserva que se está haciendo en la sede termina antes, o espera
                 # al horario nuevo y se vuelve a validar con él.
                 antes = self._conn.execute(
@@ -146,23 +146,23 @@ class SedesSql:
                     valores,
                 ).first()
                 if antes is None:
-                    raise NoEncontrada("la sede ya no está activa")
+                    raise NotFound("la sede ya no está activa")
                 if not confirmar:
                     self._verificar_reservas(valores, antes)
                 self._guardar(valores)
         except IntegrityError as e:
-            indice = restriccion_violada(e)
+            indice = violated_constraint(e)
             if indice == "sede_nombre_activa_unico":
-                raise Duplicado(["nombre"]) from e
+                raise Duplicate(["nombre"]) from e
             raise
         guardada = next((s for s in self.activas() if s.id == sede_id), None)
         if guardada is None:
-            raise NoEncontrada("la sede se dio de baja apenas se guardó")
+            raise NotFound("la sede se dio de baja apenas se guardó")
         return guardada
 
     def dar_de_baja(self, sede_id: UUID, autor: UUID) -> None:
         datos = {"id": sede_id, "autor": autor}
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # Exclusiva: una reserva que se está haciendo en la sede termina antes y acá se la
             # ve, o espera y encuentra la sede dada de baja.
             if (
@@ -171,7 +171,7 @@ class SedesSql:
                 ).first()
                 is None
             ):
-                raise NoEncontrada("la sede ya no está activa")
+                raise NotFound("la sede ya no está activa")
             pendientes: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
@@ -180,7 +180,7 @@ class SedesSql:
                 datos,
             ).scalar_one()
             if pendientes:
-                raise ConReservasFuturas("la sede tiene reservas que todavía no terminaron")
+                raise HasFutureBookings("la sede tiene reservas que todavía no terminaron")
             EspaciosSql(self._conn).dar_de_baja_de_sede(sede_id, autor)
             self._conn.execute(
                 text(
@@ -192,5 +192,5 @@ class SedesSql:
             )
 
 
-def repositorio_sedes(conn: Conexion) -> SedesSql:
+def repositorio_sedes(conn: DbConnection) -> SedesSql:
     return SedesSql(conn)

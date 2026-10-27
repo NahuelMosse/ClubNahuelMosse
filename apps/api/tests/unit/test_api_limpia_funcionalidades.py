@@ -6,8 +6,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import crear_app
-from app.shared.errores import DatosInvalidos, NoEncontrada, Prohibido
+from app.main import create_app
+from app.shared.errors import Forbidden, InvalidData, NotFound
 
 API = Path(__file__).resolve().parents[2]
 APP = API / "app"
@@ -34,7 +34,7 @@ def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api()
     comunes = re.compile(
         r"sin_permiso\(|no_encontrado\(|datos_invalidos\("
         r"|HTTP_403_FORBIDDEN\)|HTTP_404_NOT_FOUND\)"
-        r'|HTTP_422_UNPROCESSABLE_CONTENT,\s*content=\{"errores": e\.errores\}'
+        r'|HTTP_422_UNPROCESSABLE_CONTENT,\s*content=\{"errores": e\.errors\}'
     )
     rutas = [a for a in _fuentes(MODULOS) if a.name.startswith("rutas")]
     assert rutas
@@ -50,12 +50,12 @@ def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api()
     ("error", "codigo", "cuerpo"),
     [
         (
-            DatosInvalidos({"nombre": "Falta el nombre"}),
+            InvalidData({"nombre": "Falta el nombre"}),
             422,
             b'{"errores":{"nombre":"Falta el nombre"}}',
         ),
-        (Prohibido("no"), 403, b""),
-        (NoEncontrada(), 404, b""),
+        (Forbidden("no"), 403, b""),
+        (NotFound(), 404, b""),
     ],
 )
 def test_cada_error_del_dominio_comun_se_responde_con_su_codigo_y_su_cuerpo(
@@ -63,7 +63,7 @@ def test_cada_error_del_dominio_comun_se_responde_con_su_codigo_y_su_cuerpo(
 ) -> None:
     """datos inválidos responde 422 con sus errores, prohibido 403 y no encontrada 404, sin cuerpo
     @ARQ-02-S1 @assumption:ARQ-02-ASM-01"""
-    app = crear_app()
+    app = create_app()
 
     def falla() -> None:
         raise error
@@ -79,7 +79,7 @@ def test_el_contrato_publicado_no_cambia() -> None:
     """el contrato publicado no cambia @ARQ-02-S3 @assumption:ARQ-02-ASM-04"""
     publicado = json.loads((API / "openapi.json").read_text(encoding="utf-8"))
 
-    assert crear_app().openapi() == publicado
+    assert create_app().openapi() == publicado
 
 
 def test_los_repositorios_confirman_y_deshacen_en_un_solo_lugar() -> None:
@@ -97,8 +97,8 @@ def test_la_zona_del_club_el_lector_de_horas_y_el_identificador_se_definen_una_v
     todo = "\n".join(codigo.values())
 
     assert "timedelta(hours=-3)" not in todo
-    assert len(re.findall(r"^def _?leer_hora\(", todo, flags=re.MULTILINE)) == 1
-    assert [n for n, t in codigo.items() if "Identificador = " in t] == ["shared/entradas.py"]
+    assert len(re.findall(r"^def _?parse_time\(", todo, flags=re.MULTILINE)) == 1
+    assert [n for n, t in codigo.items() if "Identifier = " in t] == ["shared/input_validation.py"]
 
 
 def test_email_validator_deja_de_ser_dependencia_y_nadie_la_importa() -> None:

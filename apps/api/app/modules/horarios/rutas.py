@@ -12,9 +12,9 @@ from app.modules.horarios.disponibilidad import canchas_disponibles
 from app.modules.horarios.reglas import MAX_HORAS, MIN_HORAS
 from app.modules.horarios.repositorio import HorariosSql, repositorio_horarios
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.entradas import Identificador, leer_hora
-from app.shared.errores import DatosInvalidos, NoDisponible
-from app.shared.zona import ZONA_CLUB as ZONA
+from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
+from app.shared.errors import InvalidData, Unavailable
+from app.shared.input_validation import Identifier, parse_time
 
 router = APIRouter(tags=["horarios"])
 
@@ -61,10 +61,10 @@ def _hora(momento: datetime) -> str:
 def ver_horarios(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
-    espacio_id: Annotated[Identificador, Path()],
+    espacio_id: Annotated[Identifier, Path()],
     fecha: Annotated[date | None, Query()] = None,
     horas: Annotated[int, Query(ge=MIN_HORAS, le=MAX_HORAS)] = MIN_HORAS,
-    reserva_id: Annotated[Identificador | None, Query()] = None,
+    reserva_id: Annotated[Identifier | None, Query()] = None,
 ) -> GrillaVista | JSONResponse:
     try:
         g = horarios_disponibles(
@@ -75,7 +75,7 @@ def ver_horarios(
             datetime.now(ZONA),
             None if reserva_id is None else (reserva_id, perfil.id),
         )
-    except NoDisponible:
+    except Unavailable:
         return JSONResponse(
             status_code=status.HTTP_404_NOT_FOUND,
             content={"errores": {"espacio_id": NO_DISPONIBLE}},
@@ -110,25 +110,25 @@ SEDE_NO_DISPONIBLE = "La sede ya no está disponible"
 def ver_disponibles(
     _: Annotated[Perfil, Depends(usuario_actual)],
     horarios: Annotated[HorariosSql, Depends(repositorio_horarios)],
-    sede_id: Annotated[Identificador, Query()],
+    sede_id: Annotated[Identifier, Query()],
     deporte: Annotated[str, Query(min_length=1)],
     fecha: Annotated[date, Query()],
     desde: Annotated[str, Query()],
     hasta: Annotated[str, Query()],
     tipo: Annotated[str | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
-    inicio, fin = leer_hora(desde), leer_hora(hasta)
+    inicio, fin = parse_time(desde), parse_time(hasta)
     errores = {
         campo: "Elegí una hora en punto"
         for campo, hora in (("desde", inicio), ("hasta", fin))
         if hora is None
     }
     if inicio is None or fin is None:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     try:
         libres = canchas_disponibles(
             horarios, sede_id, deporte, tipo, fecha, inicio, fin, datetime.now(ZONA)
         )
-    except NoDisponible:
-        raise DatosInvalidos({"sede_id": SEDE_NO_DISPONIBLE}) from None
+    except Unavailable:
+        raise InvalidData({"sede_id": SEDE_NO_DISPONIBLE}) from None
     return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in libres])

@@ -6,7 +6,7 @@ from typing import Literal, Protocol
 from uuid import UUID
 
 from app.modules.espacios import CATALOGO
-from app.shared.zona import ZONA_CLUB
+from app.shared.club_timezone import CLUB_TIMEZONE
 
 TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
 Envio = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
@@ -119,7 +119,7 @@ def tipo_corto(deporte: str, tipo: str) -> str:
 
 
 def _hora(momento: datetime) -> str:
-    return momento.astimezone(ZONA_CLUB).strftime("%H:%M")
+    return momento.astimezone(CLUB_TIMEZONE).strftime("%H:%M")
 
 
 def mensaje_recordatorio(r: Recordatorio) -> Aviso:
@@ -138,7 +138,7 @@ def datos_del_aviso(tipo: TipoDeAviso, reserva_id: UUID | None) -> dict[str, str
 
 def _cuando(momento: datetime) -> str:
     """«Mié 11, 20:00», en la hora del club."""
-    local = momento.astimezone(ZONA_CLUB)
+    local = momento.astimezone(CLUB_TIMEZONE)
     return f"{DIAS[local.weekday()]} {local.day}, {_hora(local)}"
 
 

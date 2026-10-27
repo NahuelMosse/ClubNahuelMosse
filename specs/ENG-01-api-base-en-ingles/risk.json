@@ -1,0 +1,38 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "password",
+    "contrasena",
+    "migracion"
+  ],
+  "files": [
+    "apps/api/app/main.py",
+    "apps/api/app/health.py",
+    "apps/api/app/e2e_support.py",
+    "apps/api/app/shared/db.py",
+    "apps/api/app/shared/firebase_credential.py",
+    "apps/api/app/shared/body_limit.py",
+    "apps/api/app/shared/input_validation.py",
+    "apps/api/app/shared/errors.py",
+    "apps/api/app/shared/http_errors.py",
+    "apps/api/app/shared/identity.py",
+    "apps/api/app/shared/responses.py",
+    "apps/api/app/shared/club_timezone.py",
+    "apps/api/app/shared/__init__.py",
+    "docs/technical/glosario-ingles.md",
+    "apps/api/app/shared/config.py"
+  ],
+  "tasks": 2
+}

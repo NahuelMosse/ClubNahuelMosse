@@ -39,7 +39,7 @@ CASOS_DE_USO = [
 ]
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
 BASE_DE_DATOS_Y_WEB = ("sqlalchemy", "fastapi", "psycopg")
-ERRORES_COMUNES = {"DatosInvalidos", "Prohibido", "NoEncontrada"}
+ERRORES_COMUNES = {"InvalidData", "Forbidden", "NotFound"}
 # Commit en que nació la card: el contrato de la API antes de moverla.
 BASE = "612d445fe18ee945ab3c3f8da31d133b11452d23"
 RENOMBRADOS = {
@@ -108,7 +108,7 @@ def _ajenas(archivo: Path) -> set[tuple[str, str]]:
 def test_arriba_solo_quedan_main_salud_pruebas_shared_y_modules() -> None:
     """arriba sólo quedan main, salud, pruebas, shared y modules
     @ARQ-04-S1 @assumption:ARQ-04-ASM-01"""
-    assert _entradas(APP) == {"main.py", "salud.py", "pruebas.py", "shared", "modules"}
+    assert _entradas(APP) == {"main.py", "health.py", "e2e_support.py", "shared", "modules"}
     assert _entradas(MODULOS) == FUNCIONALIDADES
 
 
@@ -295,7 +295,7 @@ def test_los_errores_comunes_viven_en_shared_errores() -> None:
         arbol = ast.parse(archivo.read_text(encoding="utf-8"))
         return {n.name for n in ast.walk(arbol) if isinstance(n, ast.ClassDef)}
 
-    errores = SHARED / "errores.py"
+    errores = SHARED / "errors.py"
     assert errores.is_file()
     assert clases(errores) >= ERRORES_COMUNES
     for archivo in _fuentes(MODULOS):

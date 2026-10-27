@@ -14,13 +14,13 @@ from app.modules.notificaciones.casos_de_uso import (
 )
 from app.modules.notificaciones.push import canal_push
 from app.modules.notificaciones.repositorio import NotificacionesSql
-from app.shared.db import motor
+from app.shared.db import engine
 
 _registro = logging.getLogger(__name__)
 
 
 def barrer_una_vez() -> int:
-    with motor().connect() as conn:
+    with engine().connect() as conn:
         notificaciones = NotificacionesSql(conn)
         canal = canal_push()
         # Lo que se registró con un hecho y no llegó a salir, por ejemplo si el servidor se
@@ -36,7 +36,7 @@ def despachar_de(usuario_id: UUID, canal: CanalPush) -> None:
     """Manda lo que quedó pendiente de [usuario_id], con su propia conexión: corre cuando la
     respuesta ya salió. Un fallo acá no cambia lo que la persona hizo; el barrido lo retoma."""
     try:
-        with motor().connect() as conn:
+        with engine().connect() as conn:
             despachar_pendientes(NotificacionesSql(conn), canal, usuario_id)
     except Exception:
         _registro.exception("el despacho de avisos falló")

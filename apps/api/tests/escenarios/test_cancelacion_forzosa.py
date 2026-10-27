@@ -213,7 +213,10 @@ def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con
     assert centro["no_leidas"] == 1
     [entrada] = centro["notificaciones"]
     assert entrada["titulo"] == "El club anuló 2 de tus reservas"
-    assert entrada["cuerpo"] == "Tenés 2 reservas anuladas por el club. Mirá el detalle en tu historial."
+    assert (
+        entrada["cuerpo"]
+        == "Tenés 2 reservas anuladas por el club. Mirá el detalle en tu historial."
+    )
     assert entrada["reserva_id"] is None
 
     # Verifica: el último push dice lo mismo y lleva a Mis reservas sin una reserva puntual.

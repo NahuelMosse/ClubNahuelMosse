@@ -8,7 +8,7 @@ import pytest
 from app.modules.sedes.casos_de_uso import dar_de_alta_sede
 from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
 from app.modules.sesion.perfil import Perfil, Rol
-from app.shared.errores import DatosInvalidos, Prohibido
+from app.shared.errors import Forbidden, InvalidData
 
 VALIDOS = DatosSede(
     nombre="Sede Haedo",
@@ -127,16 +127,16 @@ def test_el_alta_queda_a_nombre_del_administrador() -> None:
 
 def test_un_usuario_no_da_de_alta_sedes() -> None:
     sedes = _SedesEnMemoria()
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         dar_de_alta_sede(_perfil("usuario"), VALIDOS, sedes)
     assert sedes.guardadas == []
 
 
 def test_con_datos_invalidos_no_se_guarda_nada() -> None:
     sedes = _SedesEnMemoria()
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         dar_de_alta_sede(_perfil("admin"), replace(VALIDOS, direccion=""), sedes)
-    assert e.value.errores == {"direccion": "La dirección es obligatoria"}
+    assert e.value.errors == {"direccion": "La dirección es obligatoria"}
     assert sedes.guardadas == []
 
 

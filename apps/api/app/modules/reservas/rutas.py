@@ -26,10 +26,10 @@ from app.modules.reservas.reglas import (
 )
 from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.entradas import Identificador, leer_hora
-from app.shared.errores import Cambiado, DatosInvalidos, HorarioOcupado, NoDisponible
-from app.shared.respuestas import conflicto
-from app.shared.zona import ZONA_CLUB as ZONA
+from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
+from app.shared.errors import ConcurrentChange, InvalidData, SlotTaken, Unavailable
+from app.shared.input_validation import Identifier, parse_time
+from app.shared.responses import conflict
 
 router = APIRouter(tags=["reservas"])
 
@@ -93,7 +93,7 @@ def listar_reservas(
 
 
 class PedidoDeReserva(BaseModel):
-    espacio_id: Identificador
+    espacio_id: Identifier
     fecha: date
     desde: str
     # Sin cota acá: el caso de uso rechaza una duración fuera de rango antes de calcular nada.
@@ -129,14 +129,14 @@ def hacer_reserva(
             perfil,
             pedido.espacio_id,
             pedido.fecha,
-            leer_hora(pedido.desde),
+            parse_time(pedido.desde),
             pedido.horas,
             datetime.now(ZONA),
         )
-    except NoDisponible:
-        raise DatosInvalidos({"espacio_id": NO_DISPONIBLE}) from None
-    except HorarioOcupado:
-        return conflicto({"horario": OCUPADO})
+    except Unavailable:
+        raise InvalidData({"espacio_id": NO_DISPONIBLE}) from None
+    except SlotTaken:
+        return conflict({"horario": OCUPADO})
     return _vista(reserva)
 
 
@@ -161,20 +161,20 @@ CAMBIO = "Esto cambió mientras tanto"
 def cancelar(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[Identificador, Path()],
+    reserva_id: Annotated[Identifier, Path()],
     despues: BackgroundTasks,
     canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaVista | Response:
     try:
         reserva = cancelar_reserva(reservas, perfil, reserva_id)
-    except Cambiado:
-        return conflicto({"reserva": CAMBIO})
+    except ConcurrentChange:
+        return conflict({"reserva": CAMBIO})
     despues.add_task(despachar_de, perfil.id, canal)
     return _vista(reserva)
 
 
 class PedidoDeCambioDeReserva(BaseModel):
-    espacio_id: Identificador
+    espacio_id: Identifier
     fecha: date
     desde: str
 
@@ -205,7 +205,7 @@ def modificar(
     pedido: PedidoDeCambioDeReserva,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[Identificador, Path()],
+    reserva_id: Annotated[Identifier, Path()],
 ) -> ReservaVista | Response:
     try:
         reserva = modificar_reserva(
@@ -214,15 +214,15 @@ def modificar(
             reserva_id,
             pedido.espacio_id,
             pedido.fecha,
-            leer_hora(pedido.desde),
+            parse_time(pedido.desde),
             datetime.now(ZONA),
         )
-    except NoDisponible:
-        raise DatosInvalidos({"espacio_id": NO_DISPONIBLE}) from None
-    except Cambiado:
-        return conflicto({"reserva": CAMBIO})
-    except HorarioOcupado:
-        return conflicto({"horario": OCUPADO})
+    except Unavailable:
+        raise InvalidData({"espacio_id": NO_DISPONIBLE}) from None
+    except ConcurrentChange:
+        return conflict({"reserva": CAMBIO})
+    except SlotTaken:
+        return conflict({"horario": OCUPADO})
     return _vista(reserva)
 
 
@@ -277,7 +277,7 @@ def listar_todas(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
     estado: Annotated[FiltroEstado | None, Query()] = None,
-    sede_id: Annotated[Identificador | None, Query()] = None,
+    sede_id: Annotated[Identifier | None, Query()] = None,
     deporte: Annotated[str | None, Query()] = None,
     desde: Annotated[date | None, Query()] = None,
     hasta: Annotated[date | None, Query()] = None,
@@ -319,14 +319,14 @@ def listar_todas(
 def detalle(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[Identificador, Path()],
+    reserva_id: Annotated[Identifier, Path()],
 ) -> ReservaHistorialVista:
     return _vista_admin(detalle_admin(reservas, perfil, reserva_id))
 
 
 class PedidoDeAnulacion(BaseModel):
     motivo: str
-    espacio_id: Identificador
+    espacio_id: Identifier
     inicio: AwareDatetime
 
 
@@ -353,7 +353,7 @@ def anular(
     pedido: PedidoDeAnulacion,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-    reserva_id: Annotated[Identificador, Path()],
+    reserva_id: Annotated[Identifier, Path()],
     despues: BackgroundTasks,
     canal: Annotated[CanalPush, Depends(canal_push)],
 ) -> ReservaHistorialVista | Response:
@@ -366,8 +366,8 @@ def anular(
             pedido.espacio_id,
             pedido.inicio,
         )
-    except Cambiado:
-        return conflicto({"reserva": CAMBIO})
+    except ConcurrentChange:
+        return conflict({"reserva": CAMBIO})
     # El aviso a quien reservó sale recién con la anulación confirmada y la respuesta enviada.
     despues.add_task(despachar_de, reserva.usuario_id, canal)
     return _vista_admin(reserva)

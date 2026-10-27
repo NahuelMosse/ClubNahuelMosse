@@ -5,7 +5,7 @@ import pytest
 
 from app.modules.usuarios.registro import registrar
 from app.modules.usuarios.reglas import DatosRegistro, Registro
-from app.shared.errores import Duplicado
+from app.shared.errors import Duplicate
 
 DATOS = DatosRegistro("Ana", "Pérez", "12345678", "2000-03-14", "ana@correo.com", "ClubNahuel1")
 HOY = date(2026, 11, 12)
@@ -17,16 +17,16 @@ class Identidad:
         self.borradas: list[str] = []
         self.falla_borrar = falla_borrar
 
-    def crear_cuenta(self, correo: str, contrasena: str) -> str:
-        if correo in self.cuentas:
-            raise Duplicado(["correo"])
-        self.cuentas[correo] = f"uid-{len(self.cuentas) + len(self.borradas)}"
-        return self.cuentas[correo]
+    def create_account(self, email: str, password: str) -> str:
+        if email in self.cuentas:
+            raise Duplicate(["correo"])
+        self.cuentas[email] = f"uid-{len(self.cuentas) + len(self.borradas)}"
+        return self.cuentas[email]
 
-    def uid_de(self, correo: str) -> str | None:
-        return self.cuentas.get(correo)
+    def uid_of(self, email: str) -> str | None:
+        return self.cuentas.get(email)
 
-    def borrar_cuenta(self, uid: str) -> None:
+    def delete_account(self, uid: str) -> None:
         if self.falla_borrar:
             raise RuntimeError("el proveedor no responde")
         self.borradas.append(uid)
@@ -61,9 +61,9 @@ def test_si_falla_el_alta_se_borra_la_cuenta_creada() -> None:
 
 def test_un_error_al_borrar_no_tapa_el_error_original() -> None:
     identidad = Identidad(falla_borrar=True)
-    with pytest.raises(Duplicado) as e:
-        registrar(DATOS, HOY, identidad, Usuarios(falla=Duplicado(["dni"])))
-    assert e.value.campos == ["dni"]
+    with pytest.raises(Duplicate) as e:
+        registrar(DATOS, HOY, identidad, Usuarios(falla=Duplicate(["dni"])))
+    assert e.value.fields == ["dni"]
 
 
 def test_una_cuenta_del_proveedor_sin_perfil_activo_se_reemplaza() -> None:
@@ -76,6 +76,6 @@ def test_una_cuenta_del_proveedor_sin_perfil_activo_se_reemplaza() -> None:
 
 def test_una_cuenta_con_perfil_activo_sigue_siendo_duplicado() -> None:
     identidad = Identidad(existente="uid-activo")
-    with pytest.raises(Duplicado):
+    with pytest.raises(Duplicate):
         registrar(DATOS, HOY, identidad, Usuarios(activos={"uid-activo"}))
     assert identidad.borradas == []

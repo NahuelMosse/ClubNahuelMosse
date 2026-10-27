@@ -54,22 +54,6 @@ def _registro(**cambios: str) -> dict[str, str]:
     return {**base, **cambios}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def test_la_baja_de_un_token_ajeno_no_hace_nada_y_responde_204(
     api: TestClient,
     motor: Engine,
@@ -118,14 +102,12 @@ def test_un_fallo_de_tls_del_correo_no_deja_la_direccion_en_el_log(
     @REV-01-S11 @assumption:REV-01-ASM-06
     """
     monkeypatch.setattr(correo.smtplib, "SMTP", _SmtpSinConfianza)
-    monkeypatch.setattr(config, "correo_modo", "smtp")
+    monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "smtp.ejemplo.com")
-    monkeypatch.setattr(config, "correo_remitente", "club@ejemplo.com")
+    monkeypatch.setattr(config, "email_sender", "club@ejemplo.com")
 
     with caplog.at_level(logging.DEBUG):
         correo.enviar(Mensaje(para="ana.rios@ejemplo.com", asunto="Tu enlace", cuerpo="Hola"))
 
     assert caplog.records
     assert "ana.rios@ejemplo.com" not in caplog.text
-
-

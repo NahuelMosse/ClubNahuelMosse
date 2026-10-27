@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.modules.espacios import Espacio
 from app.modules.horarios.reglas import Agenda, rango, validar_rango
-from app.shared.errores import DatosInvalidos, NoDisponible
+from app.shared.errors import InvalidData, Unavailable
 
 
 class Disponibilidad(Protocol):
@@ -33,14 +33,14 @@ def canchas_disponibles(  # noqa: PLR0913, PLR0917 -- firma pública fijada por 
 ) -> list[Espacio]:
     """Las canchas libres en todo el rango (CU-13).
 
-    Lanza `NoDisponible` si la sede ya no está activa y `DatosInvalidos` si el rango no se
+    Lanza `Unavailable` si la sede ya no está activa y `InvalidData` si el rango no se
     puede reservar.
     """
     agenda = disponibilidad.agenda_de_sede(sede_id)
     if agenda is None:
-        raise NoDisponible("la sede no está activa")
+        raise Unavailable("la sede no está activa")
     errores = validar_rango(agenda, fecha, desde, hasta, ahora)
     if errores:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     inicio, fin = rango(fecha, desde, hasta, ahora.tzinfo)
     return disponibilidad.libres(sede_id, deporte, tipo, inicio, fin)

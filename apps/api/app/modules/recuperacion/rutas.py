@@ -17,7 +17,7 @@ from app.modules.recuperacion.correo import enviar
 from app.modules.recuperacion.repositorio import EnlacesSql, repositorio_enlaces
 from app.modules.usuarios import UsuariosSql, repositorio_usuarios
 from app.shared.config import config
-from app.shared.identidad import ProveedorFirebase, identidad
+from app.shared.identity import FirebaseProvider, identity
 
 router = APIRouter(tags=["recuperación de contraseña"])
 
@@ -56,7 +56,7 @@ def pedir(
 ) -> Response:
     mensaje = pedir_enlace(pedido.correo, config.url_publica, enlaces)
     if mensaje is not None:
-        if config.correo_modo == "buzon":
+        if config.email_mode == "outbox":
             # En desarrollo y escenarios el buzón se llena antes de responder, así el
             # correo ya está cuando la app muestra «Revisá tu correo».
             enviar(mensaje)
@@ -94,7 +94,7 @@ def usar(
     pedido: ContrasenaNueva,
     enlaces: Annotated[EnlacesSql, Depends(repositorio_enlaces)],
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
-    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
+    proveedor: Annotated[FirebaseProvider, Depends(identity)],
 ) -> Response:
     try:
         usar_enlace(

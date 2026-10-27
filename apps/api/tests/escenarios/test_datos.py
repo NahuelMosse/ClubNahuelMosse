@@ -113,17 +113,7 @@ def _empate(socio: Socio) -> None:
         )
 
 
-
-
 MARCADORES_INVALIDOS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDowMDowMHxhYmM"]
-
-
-
-
-
-
-
-
 
 
 def test_el_historial_global_tiene_un_indice_por_fecha(motor: Engine) -> None:
@@ -173,19 +163,11 @@ def _despachar(socio: Socio, canal: CanalDePrueba) -> None:
         despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
 
 
-
-
 class _CanalQueSeCae(CanalDePrueba):
     """El proceso muere justo después de tomar el aviso, antes de saber si salió."""
 
     def enviar(self, tokens: list[str], aviso: Any) -> Any:
         raise SystemExit("el proceso se cayó")
-
-
-
-
-
-
 
 
 def _recordatorio(socio: Socio, envio: str, hace: str) -> None:
@@ -209,12 +191,6 @@ def _barrer(socio: Socio, canal: CanalDePrueba) -> None:
     with socio.motor.connect() as conn:
         despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
         enviar_recordatorios(NotificacionesSql(conn), canal, a_las(19, 10), socio.usuario_id)
-
-
-
-
-
-
 
 
 @pytest.fixture

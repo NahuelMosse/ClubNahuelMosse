@@ -12,13 +12,13 @@ from app.modules.reservas.reglas import (
     ReservaHistorial,
 )
 from app.modules.sesion import Perfil
-from app.shared.errores import (
-    AgendaCambiada,
-    DatosInvalidos,
-    HorarioOcupado,
-    NoDisponible,
-    NoEncontrada,
-    Prohibido,
+from app.shared.errors import (
+    Forbidden,
+    InvalidData,
+    NotFound,
+    OpeningHoursChanged,
+    SlotTaken,
+    Unavailable,
 )
 
 # Largo máximo del motivo de una anulación.
@@ -39,15 +39,15 @@ def _con_la_agenda_vigente(
     for _ in range(INTENTOS_CON_AGENDA_NUEVA):
         agenda = reservas.agenda(espacio_id)
         if agenda is None:
-            raise NoDisponible("el espacio no está activo")
+            raise Unavailable("el espacio no está activo")
         errores = validar(agenda)
         if errores:
-            raise DatosInvalidos(errores)
+            raise InvalidData(errores)
         try:
             return guardar(agenda)
-        except AgendaCambiada:
+        except OpeningHoursChanged:
             continue
-    raise HorarioOcupado("el horario de la sede cambió varias veces seguidas")
+    raise SlotTaken("el horario de la sede cambió varias veces seguidas")
 
 
 def mis_reservas(reservas: Reservas, perfil: Perfil, cuando: Cuando) -> list[Reserva]:
@@ -59,13 +59,13 @@ def _exigir_fecha_a_la_vista(fecha: date, ahora: datetime) -> None:
     """Una fecha más allá de la ventana de reserva se rechaza antes de calcular el fin del
     turno: cerca de `date.max` esa cuenta se desborda."""
     if fecha >= ahora.date() + timedelta(days=DIAS_A_LA_VISTA):
-        raise DatosInvalidos({"fecha": f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"})
+        raise InvalidData({"fecha": f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"})
 
 
 def _exigir_mismo_tipo(reservas: Reservas, actual: Reserva, espacio_id: UUID) -> None:
     nuevo = reservas.tipo_de_espacio(espacio_id)
     if nuevo is None or nuevo != (actual.sede_id, actual.deporte, actual.tipo):
-        raise DatosInvalidos({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
+        raise InvalidData({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
 
 
 def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
@@ -80,17 +80,17 @@ def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamado
     """Reserva [horas] horas del espacio desde [desde] el [fecha], en la hora del club que
     trae [ahora] (RF 3). El backend valida el horario y la superposición antes de guardar.
 
-    Lanza `Prohibido` si quien pide es administrador, `DatosInvalidos` si el horario no se
-    puede reservar, `NoDisponible` y `HorarioOcupado` como `Reservas.insertar`.
+    Lanza `Forbidden` si quien pide es administrador, `InvalidData` si el horario no se
+    puede reservar, `Unavailable` y `SlotTaken` como `Reservas.insertar`.
     """
     if perfil.rol != "usuario":
-        raise Prohibido("sólo un usuario reserva")
+        raise Forbidden("sólo un usuario reserva")
     if desde is None:
-        raise DatosInvalidos({"desde": "Elegí una hora en punto"})
+        raise InvalidData({"desde": "Elegí una hora en punto"})
     if error := error_de_duracion(horas):
         # Antes de calcular el fin del turno: con una duración desmesurada esa cuenta se
         # desborda. `hasta` es el campo que ya leen los clientes.
-        raise DatosInvalidos({"horas": error, "hasta": error})
+        raise InvalidData({"horas": error, "hasta": error})
     _exigir_fecha_a_la_vista(fecha, ahora)
     inicio, _ = rango(fecha, desde, desde, ahora.tzinfo)
     fin = inicio + timedelta(hours=horas)
@@ -124,18 +124,18 @@ def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por su
     """Cambia la cancha, el día o el horario de una reserva propia, con la misma duración
     (CU-11). La reserva conserva su número.
 
-    Lanza `Prohibido` si quien pide es administrador, `NoEncontrada` si la reserva no es
-    suya, `DatosInvalidos` si el horario nuevo no vale, y `NoDisponible`, `Cambiado` y
-    `HorarioOcupado` como `Reservas.mover`.
+    Lanza `Forbidden` si quien pide es administrador, `NotFound` si la reserva no es
+    suya, `InvalidData` si el horario nuevo no vale, y `Unavailable`, `ConcurrentChange` y
+    `SlotTaken` como `Reservas.mover`.
     """
     if perfil.rol != "usuario":
-        raise Prohibido("sólo un usuario reserva")
+        raise Forbidden("sólo un usuario reserva")
     if desde is None:
-        raise DatosInvalidos({"desde": "Elegí una hora en punto"})
+        raise InvalidData({"desde": "Elegí una hora en punto"})
     _exigir_fecha_a_la_vista(fecha, ahora)
     actual = reservas.propia(perfil.id, reserva_id)
     if actual is None:
-        raise NoEncontrada("no hay una reserva suya con ese número")
+        raise NotFound("no hay una reserva suya con ese número")
     inicio, _ = rango(fecha, desde, desde, ahora.tzinfo)
     # Un reintento después de un corte llega con la reserva ya movida: se devuelve como está.
     if actual.estado == "activa" and (actual.espacio_id, actual.inicio) == (espacio_id, inicio):
@@ -159,27 +159,27 @@ def historial_global(
     """El historial completo de reservas de todos los usuarios y todas las sedes (CU-14, RF
     6): sólo lo consulta un administrador. No modifica nada (la consulta es de sólo lectura).
 
-    Lanza `Prohibido` si quien pide no es administrador y `DatosInvalidos` si el rango de
+    Lanza `Forbidden` si quien pide no es administrador y `InvalidData` si el rango de
     fechas tiene `desde` posterior a `hasta`.
     """
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador consulta el historial global")
+        raise Forbidden("sólo un administrador consulta el historial global")
     if filtros.desde is not None and filtros.hasta is not None and filtros.desde > filtros.hasta:
-        raise DatosInvalidos({"fechas": "Desde no puede ser posterior a Hasta"})
+        raise InvalidData({"fechas": "Desde no puede ser posterior a Hasta"})
     return reservas.historial(filtros)
 
 
 def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> ReservaHistorial:
     """El detalle de cualquier reserva del sistema, para un administrador (CU-14).
 
-    Lanza `Prohibido` si quien pide no es administrador y `NoEncontrada` si no hay ninguna
+    Lanza `Forbidden` si quien pide no es administrador y `NotFound` si no hay ninguna
     reserva con ese número.
     """
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador consulta el detalle de cualquier reserva")
+        raise Forbidden("sólo un administrador consulta el detalle de cualquier reserva")
     detalle = reservas.una_de_cualquiera(reserva_id)
     if detalle is None:
-        raise NoEncontrada("no hay una reserva con ese número")
+        raise NotFound("no hay una reserva con ese número")
     return detalle
 
 
@@ -194,14 +194,14 @@ def anular_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus l
     """Anula por una causa operativa una reserva activa que todavía no empezó (CU-15, RF 3):
     el horario vuelve a quedar libre y la reserva guarda quién la anuló, cuándo y por qué.
 
-    Lanza `Prohibido` si quien pide no es administrador, `DatosInvalidos` si el motivo está
-    vacío o es demasiado largo, y `NoEncontrada` y `Cambiado` como `Reservas.anular`.
+    Lanza `Forbidden` si quien pide no es administrador, `InvalidData` si el motivo está
+    vacío o es demasiado largo, y `NotFound` y `ConcurrentChange` como `Reservas.anular`.
     """
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador anula una reserva")
+        raise Forbidden("sólo un administrador anula una reserva")
     limpio = motivo.strip()
     if not limpio:
-        raise DatosInvalidos({"motivo": "El motivo es obligatorio para anular"})
+        raise InvalidData({"motivo": "El motivo es obligatorio para anular"})
     if len(limpio) > MOTIVO_MAXIMO:
-        raise DatosInvalidos({"motivo": f"El motivo admite hasta {MOTIVO_MAXIMO} caracteres"})
+        raise InvalidData({"motivo": f"El motivo admite hasta {MOTIVO_MAXIMO} caracteres"})
     return reservas.anular(perfil.id, reserva_id, limpio, espacio_id, inicio)

@@ -77,7 +77,7 @@ después de cualquier cambio de rutas o modelos:
 
 ```sh
 cd apps/api
-FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import crear_app; pathlib.Path('openapi.json').write_text(json.dumps(crear_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
+FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import create_app; pathlib.Path('openapi.json').write_text(json.dumps(create_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
 ```
 
 ## Catálogo de deportes

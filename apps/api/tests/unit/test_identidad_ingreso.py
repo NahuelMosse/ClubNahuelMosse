@@ -8,7 +8,7 @@ from typing import Any, cast
 
 import pytest
 
-from app.shared.identidad import Demorado, ProveedorFirebase
+from app.shared.identity import FirebaseProvider, RateLimited
 
 
 def _responde_400(monkeypatch: pytest.MonkeyPatch, mensaje: str) -> None:
@@ -22,10 +22,10 @@ def _responde_400(monkeypatch: pytest.MonkeyPatch, mensaje: str) -> None:
 
 def test_una_contrasena_rechazada_es_falso_y_no_otra_cosa(monkeypatch: pytest.MonkeyPatch) -> None:
     _responde_400(monkeypatch, "INVALID_LOGIN_CREDENTIALS")
-    assert ProveedorFirebase().contrasena_correcta("a@b.com", "mala") is False
+    assert FirebaseProvider().password_matches("a@b.com", "mala") is False
 
 
 def test_demasiados_intentos_se_informa_como_demora(monkeypatch: pytest.MonkeyPatch) -> None:
     _responde_400(monkeypatch, "TOO_MANY_ATTEMPTS_TRY_LATER : x")
-    with pytest.raises(Demorado):
-        ProveedorFirebase().contrasena_correcta("a@b.com", "mala")
+    with pytest.raises(RateLimited):
+        FirebaseProvider().password_matches("a@b.com", "mala")

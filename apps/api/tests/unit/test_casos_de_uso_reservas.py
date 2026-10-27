@@ -25,14 +25,14 @@ from app.modules.reservas.reglas import (
     ReservaHistorial,
 )
 from app.modules.sesion.perfil import Perfil
-from app.shared.errores import (
-    AgendaCambiada,
-    Cambiado,
-    DatosInvalidos,
-    HorarioOcupado,
-    NoDisponible,
-    NoEncontrada,
-    Prohibido,
+from app.shared.errors import (
+    ConcurrentChange,
+    Forbidden,
+    InvalidData,
+    NotFound,
+    OpeningHoursChanged,
+    SlotTaken,
+    Unavailable,
 )
 
 ZONA = timezone(timedelta(hours=-3))
@@ -107,7 +107,7 @@ class Memoria:
         self.llamadas.append(("mover", usuario_id, reserva_id, antes, espacio_id, inicio, fin))
         if self.agendas_cambiadas:
             self.agendas_cambiadas -= 1
-            raise AgendaCambiada()
+            raise OpeningHoursChanged()
         return _reserva(espacio_id=espacio_id, inicio=inicio, fin=fin)
 
     def cancelar(self, usuario_id, reserva_id):
@@ -118,7 +118,7 @@ class Memoria:
         self.llamadas.append(("insertar", usuario_id, espacio_id, inicio, fin, agenda))
         if self.agendas_cambiadas:
             self.agendas_cambiadas -= 1
-            raise AgendaCambiada()
+            raise OpeningHoursChanged()
         return _reserva(espacio_id=espacio_id, inicio=inicio, fin=fin)
 
     def anular(self, admin_id, reserva_id, motivo, espacio_id, inicio):
@@ -137,8 +137,8 @@ class Memoria:
         return self.detalle
 
 
-def _errores(excepcion: pytest.ExceptionInfo[DatosInvalidos]) -> dict[str, str]:
-    return excepcion.value.errores
+def _errores(excepcion: pytest.ExceptionInfo[InvalidData]) -> dict[str, str]:
+    return excepcion.value.errors
 
 
 # mis_reservas
@@ -184,12 +184,12 @@ def test_reservar_hasta_la_medianoche_es_valido() -> None:
 
 
 def test_reservar_un_administrador_es_prohibido() -> None:
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         reservar(Memoria(), _perfil(rol="admin"), _id(2), MANANA, time(18, 0), 1, AHORA)
 
 
 def test_reservar_sin_hora_pide_una_hora_en_punto() -> None:
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         reservar(Memoria(), _perfil(), _id(2), MANANA, None, 1, AHORA)
 
     assert set(_errores(e)) == {"desde"}
@@ -199,7 +199,7 @@ def test_reservar_sin_hora_pide_una_hora_en_punto() -> None:
 def test_reservar_con_una_duracion_fuera_de_una_a_cuatro_horas_falla(horas: int) -> None:
     repo = Memoria()
 
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         reservar(repo, _perfil(), _id(2), MANANA, time(18, 0), horas, AHORA)
 
     assert set(_errores(e)) == {"horas", "hasta"}
@@ -214,11 +214,11 @@ def test_reservar_acepta_los_bordes_de_la_duracion(horas: int) -> None:
 
 
 def test_reservar_un_dia_fuera_de_la_ventana_falla_aun_en_date_max() -> None:
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         reservar(Memoria(), _perfil(), _id(2), date.max, time(18, 0), 4, AHORA)
     assert set(_errores(e)) == {"fecha"}
 
-    with pytest.raises(DatosInvalidos):
+    with pytest.raises(InvalidData):
         reservar(
             Memoria(), _perfil(), _id(2), AHORA.date() + timedelta(days=7), time(18, 0), 1, AHORA
         )
@@ -246,16 +246,16 @@ def test_reservar_un_espacio_sin_agenda_no_esta_disponible() -> None:
     repo = Memoria()
     repo.agenda_actual = None
 
-    with pytest.raises(NoDisponible):
+    with pytest.raises(Unavailable):
         reservar(repo, _perfil(), _id(2), MANANA, time(18, 0), 1, AHORA)
 
 
 def test_reservar_fuera_del_horario_de_la_sede_falla_sin_guardar() -> None:
     repo = Memoria()
 
-    with pytest.raises(DatosInvalidos):
+    with pytest.raises(InvalidData):
         reservar(repo, _perfil(), _id(2), MANANA, time(7, 0), 1, AHORA)
-    with pytest.raises(DatosInvalidos):
+    with pytest.raises(InvalidData):
         reservar(repo, _perfil(), _id(2), MANANA, time(22, 0), 2, AHORA)
     assert [c for c in repo.llamadas if c[0] == "insertar"] == []
 
@@ -274,7 +274,7 @@ def test_reservar_con_la_agenda_cambiando_siempre_termina_en_horario_ocupado() -
     repo = Memoria()
     repo.agendas_cambiadas = 99
 
-    with pytest.raises(HorarioOcupado):
+    with pytest.raises(SlotTaken):
         reservar(repo, _perfil(), _id(2), MANANA, time(18, 0), 1, AHORA)
 
     assert len([c for c in repo.llamadas if c[0] == "insertar"]) == 3
@@ -295,9 +295,9 @@ def test_cancelar_reserva_cancela_la_de_quien_pide() -> None:
 def test_cancelar_reserva_deja_pasar_los_errores_del_repositorio() -> None:
     class Ajena(Memoria):
         def cancelar(self, usuario_id, reserva_id):
-            raise NoEncontrada("no")
+            raise NotFound("no")
 
-    with pytest.raises(NoEncontrada):
+    with pytest.raises(NotFound):
         cancelar_reserva(Ajena(), _perfil(), _id(5))
 
 
@@ -330,14 +330,14 @@ def test_modificar_reserva_mueve_con_la_misma_duracion_y_el_estado_anterior() ->
 
 
 def test_modificar_reserva_un_administrador_es_prohibido() -> None:
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         modificar_reserva(
             _con_reserva(), _perfil(rol="admin"), _id(5), _id(2), MANANA, time(9, 0), AHORA
         )
 
 
 def test_modificar_reserva_sin_hora_falla() -> None:
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         modificar_reserva(_con_reserva(), _perfil(), _id(5), _id(2), MANANA, None, AHORA)
 
     assert set(_errores(e)) == {"desde"}
@@ -346,7 +346,7 @@ def test_modificar_reserva_sin_hora_falla() -> None:
 def test_modificar_reserva_fuera_de_la_ventana_falla_antes_de_buscarla() -> None:
     repo = _con_reserva()
 
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         modificar_reserva(repo, _perfil(), _id(5), _id(2), date.max, time(9, 0), AHORA)
 
     assert set(_errores(e)) == {"fecha"}
@@ -354,7 +354,7 @@ def test_modificar_reserva_fuera_de_la_ventana_falla_antes_de_buscarla() -> None
 
 
 def test_modificar_reserva_ajena_no_se_encuentra() -> None:
-    with pytest.raises(NoEncontrada):
+    with pytest.raises(NotFound):
         modificar_reserva(Memoria(), _perfil(), _id(5), _id(2), MANANA, time(9, 0), AHORA)
 
 
@@ -392,19 +392,19 @@ def test_modificar_reserva_a_una_cancha_de_otro_tipo_o_sede_falla(tipo) -> None:
     repo = _con_reserva()
     repo.tipo = tipo
 
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         modificar_reserva(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
 
     assert set(_errores(e)) == {"espacio_id"}
 
 
 def test_modificar_reserva_valida_el_horario_con_la_agenda() -> None:
-    with pytest.raises(DatosInvalidos):
+    with pytest.raises(InvalidData):
         modificar_reserva(_con_reserva(), _perfil(), _id(5), _id(3), MANANA, time(7, 0), AHORA)
 
     repo = _con_reserva()
     repo.agenda_actual = None
-    with pytest.raises(NoDisponible):
+    with pytest.raises(Unavailable):
         modificar_reserva(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
 
 
@@ -416,7 +416,7 @@ def test_modificar_reserva_revalida_si_cambia_la_agenda_y_se_rinde_a_la_tercera(
 
     repo = _con_reserva()
     repo.agendas_cambiadas = 99
-    with pytest.raises(HorarioOcupado):
+    with pytest.raises(SlotTaken):
         modificar_reserva(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
     assert len([c for c in repo.llamadas if c[0] == "mover"]) == 3
 
@@ -446,7 +446,7 @@ def test_historial_global_lo_consulta_un_administrador_con_sus_filtros() -> None
 def test_historial_global_un_usuario_es_prohibido() -> None:
     repo = Memoria()
 
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         historial_global(repo, _perfil(), FiltrosHistorial())
     assert repo.llamadas == []
 
@@ -455,7 +455,7 @@ def test_historial_global_rechaza_desde_posterior_a_hasta() -> None:
     admin = _perfil(rol="admin")
     filtros = FiltrosHistorial(desde=date(2026, 1, 2), hasta=date(2026, 1, 1))
 
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         historial_global(Memoria(), admin, filtros)
 
     assert set(_errores(e)) == {"fechas"}
@@ -483,13 +483,13 @@ def test_detalle_admin_un_usuario_es_prohibido() -> None:
     repo = Memoria()
     repo.detalle = _historial()
 
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         detalle_admin(repo, _perfil(), _id(5))
     assert repo.llamadas == []
 
 
 def test_detalle_admin_sin_reserva_no_se_encuentra() -> None:
-    with pytest.raises(NoEncontrada):
+    with pytest.raises(NotFound):
         detalle_admin(Memoria(), _perfil(rol="admin"), _id(5))
 
 
@@ -511,7 +511,7 @@ def test_anular_reserva_guarda_el_motivo_sin_espacios_y_quien_anula() -> None:
 def test_anular_reserva_un_usuario_es_prohibido() -> None:
     repo = Memoria()
 
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         anular_reserva(repo, _perfil(), _id(5), "lluvia", _id(2), AHORA)
     assert repo.llamadas == []
 
@@ -520,7 +520,7 @@ def test_anular_reserva_un_usuario_es_prohibido() -> None:
 def test_anular_reserva_sin_motivo_falla(motivo: str) -> None:
     repo = Memoria()
 
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         anular_reserva(repo, _perfil(rol="admin"), _id(5), motivo, _id(2), AHORA)
 
     assert set(_errores(e)) == {"motivo"}
@@ -533,7 +533,7 @@ def test_anular_reserva_acepta_el_motivo_maximo_y_rechaza_uno_mas() -> None:
 
     anular_reserva(repo, admin, _id(5), "x" * MOTIVO_MAXIMO, _id(2), AHORA)
     anular_reserva(repo, admin, _id(5), " " + "x" * MOTIVO_MAXIMO + " ", _id(2), AHORA)
-    with pytest.raises(DatosInvalidos) as e:
+    with pytest.raises(InvalidData) as e:
         anular_reserva(repo, admin, _id(5), "x" * (MOTIVO_MAXIMO + 1), _id(2), AHORA)
 
     assert set(_errores(e)) == {"motivo"}
@@ -544,7 +544,7 @@ def test_anular_reserva_acepta_el_motivo_maximo_y_rechaza_uno_mas() -> None:
 def test_anular_reserva_deja_pasar_lo_que_ya_cambio() -> None:
     class Cambio(Memoria):
         def anular(self, *a):
-            raise Cambiado()
+            raise ConcurrentChange()
 
-    with pytest.raises(Cambiado):
+    with pytest.raises(ConcurrentChange):
         anular_reserva(Cambio(), _perfil(rol="admin"), _id(5), "x", _id(2), AHORA)
