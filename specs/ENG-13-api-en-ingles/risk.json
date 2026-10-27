@@ -1,0 +1,29 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "session",
+    "password_recovery"
+  ],
+  "files": [
+    "apps/api/app/main.py",
+    "apps/api/app/health.py",
+    "apps/api/app/e2e_support.py",
+    "apps/api/app/shared/config.py",
+    "apps/api/app/shared/db.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1
+}
