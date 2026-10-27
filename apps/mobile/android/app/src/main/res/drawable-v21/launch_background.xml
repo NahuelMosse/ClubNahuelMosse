@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="#D4FF3D" />
+    <item>
+        <color android:color="#D4FF3D" />
+    </item>
     <item
         android:width="120dp"
         android:height="120dp"
