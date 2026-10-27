@@ -108,19 +108,22 @@ class _FormularioDeInicioSesionState extends State<FormularioDeInicioSesion> {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
+    // El fondo no se redimensiona con el teclado: el formulario lo esquiva solo.
+    final teclado = MediaQuery.viewInsetsOf(context).bottom;
     return Scaffold(
       backgroundColor: p.bgBase,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const FondoDeInicioSesion(),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
+              padding: EdgeInsets.fromLTRB(
                 Medidas.s24,
                 56,
                 Medidas.s24,
-                96,
+                96 + teclado,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

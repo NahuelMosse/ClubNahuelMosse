@@ -23,7 +23,7 @@ class AvisoDeInicioSesion extends StatelessWidget {
     return Positioned(
       left: Medidas.s24,
       right: Medidas.s24,
-      bottom: Medidas.s24,
+      bottom: Medidas.s24 + MediaQuery.viewInsetsOf(context).bottom,
       child: SafeArea(
         top: false,
         child: Temblor(
