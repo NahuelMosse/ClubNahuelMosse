@@ -380,7 +380,7 @@ def test_las_sedes_y_el_historial_global_hacen_consultas_fijas(
 
 
 def _casos_de_uso() -> list[str]:
-    fuente = (RAIZ_API / "app" / "modules" / "reservas" / "casos_de_uso.py").read_text(
+    fuente = (RAIZ_API / "app" / "modules" / "bookings" / "use_cases.py").read_text(
         encoding="utf-8"
     )
     return [
