@@ -83,8 +83,7 @@ for (const [carpeta, [etiqueta, posicion]] of Object.entries(secciones)) {
 }
 console.log(`${paginas.length} páginas en ${relative(repo, destino)}`);
 
-// El contrato de la API para las páginas de la API, con las direcciones contra las que se prueba.
-// `docusaurus gen-api-docs` lo lee de static/openapi.json y arma docs/api.
+// El contrato de la API para la página /api (Redoc), con las direcciones contra las que se prueba.
 const contrato = JSON.parse(readFileSync(join(repo, 'apps', 'api', 'openapi.json'), 'utf8'));
 contrato.servers = [
   { url: 'https://clubnahuelmosse-api.onrender.com', description: 'Render' },

@@ -18,9 +18,9 @@ not_read:
 
 ## Tasks
 
-- T1 · S1,S2,DOC-04-ASM-01,DOC-04-ASM-02 · sitio-docs/docusaurus.config.js (presentation), sitio-docs/sidebars.js (presentation), sitio-docs/scripts/copiar.mjs (presentation), sitio-docs/package.json, sitio-docs/package-lock.json, sitio-docs/src/components/Swagger.js (presentation) · tests: sitio-docs/tests/api-nativa.test.mjs "la referencia de la API son páginas del sitio generadas del contrato, una por operación @DOC-04-S1"; sitio-docs/tests/api-nativa.test.mjs "el sitio no tiene iframe ni Swagger UI incrustado @DOC-04-S2"; sitio-docs/tests/api-nativa.test.mjs "cada operación se puede probar contra la API desplegada @assumption:DOC-04-ASM-01"; sitio-docs/tests/api-nativa.test.mjs "integraciones.md está en la sección técnica del sitio @assumption:DOC-04-ASM-02"
+- T1 · S1,S2,DOC-04-ASM-01,DOC-04-ASM-02 · sitio-docs/docusaurus.config.js (presentation), sitio-docs/sidebars.js (presentation), sitio-docs/scripts/copiar.mjs (presentation), sitio-docs/package.json, sitio-docs/package-lock.json, sitio-docs/.gitignore (ya no se copia swagger-ui a static/), sitio-docs/src/components/Swagger.js (presentation) · tests: sitio-docs/tests/api-nativa-redoc.test.mjs "la referencia de la API es una página nativa del sitio generada del contrato, con el tema del sitio @DOC-04-S1"; sitio-docs/tests/api-nativa-redoc.test.mjs "el sitio no tiene iframe ni Swagger UI incrustado @DOC-04-S2"; sitio-docs/tests/api-nativa-redoc.test.mjs "el contrato del sitio trae la dirección de la API desplegada @assumption:DOC-04-ASM-01"; sitio-docs/tests/api-nativa-redoc.test.mjs "integraciones.md está en la sección técnica del sitio @assumption:DOC-04-ASM-02"
   reuses: apps/api/openapi.json (el contrato, sin cambios); sitio-docs/scripts/copiar.mjs (la lista de páginas)
-  new: docusaurus-plugin-openapi-docs y docusaurus-theme-openapi-docs: el generador nativo de Docusaurus para OpenAPI; nada del repo arma páginas desde el contrato
+  new: redocusaurus (Redoc como preset de Docusaurus, ASM-03): nada del repo arma páginas desde el contrato; openapi-docs no compila con esta versión
 
 ## Changes to existing behavior
 
@@ -29,7 +29,7 @@ not_read:
 ## Gate
 
 ```
-suite: node --test sitio-docs/tests/
+suite: node --test "sitio-docs/tests/*.test.mjs"
 build: cd sitio-docs && npm run build
 no-docs: la card cambia el sitio de documentación mismo; el contrato y el modelo de datos no cambian
 no-visual: el sitio toma el tema de Docusaurus que ya tiene; lo verifica el build y el test de páginas
