@@ -27,10 +27,8 @@ def _con_aviso_de_cinco_minutos(nodo: Any) -> Any:
     return nodo
 
 
-def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
-    None
-):
-    """el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
+def contrato_distinto_del_de_main() -> dict[str, Any]:
+    """Las formas del contrato actual que difieren de las de main; vacío si coinciden en rutas y formas."""
     from app.main import app
 
     de_main = subprocess.run(
@@ -41,4 +39,11 @@ def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_securi
     actual = _forma(app.openapi())
 
     assert sorted(actual) == sorted(esperado)
-    assert {k: v for k, v in actual.items() if v != esperado[k]} == {}
+    return {k: v for k, v in actual.items() if v != esperado[k]}
+
+
+def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
+    None
+):
+    """el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
+    assert contrato_distinto_del_de_main() == {}
