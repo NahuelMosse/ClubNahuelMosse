@@ -50,7 +50,7 @@ not_read:
 suite [timeout 2 h]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider
 lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app apps/api/tests apps/mobile
 migrate-upgrade: cd apps/api && sh -c "DATABASE_URL=postgresql+psycopg://club:club@127.0.0.1:8701/club_dat01_migra uv run --no-sync alembic upgrade head"
-app-suite: sh D:/Temp/w/herramientas/flutter-mobile.sh {affected}
+app-suite: sh D:/Temp/w/herramientas/flutter-mobile.sh
 app: sh D:/Temp/w/herramientas/arq01-app.sh dat01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh dat01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 refactor-tests: los ids pasan de int a UUID en toda la API: los tests que arman ids o comparan con números se ajustan en su lugar

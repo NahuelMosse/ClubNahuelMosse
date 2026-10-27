@@ -10,12 +10,14 @@ import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/montar.dart';
 import '../soporte/reloj_fijo.dart';
-import '../soporte/usuario.dart';
 
-String _reserva(int id) {
-  final desde = DateTime.utc(2026, 11, 12, 21).add(Duration(days: id));
+String _uuid(int n) =>
+    '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
+
+String _reserva(int n) {
+  final desde = DateTime.utc(2026, 11, 12, 21).add(Duration(days: n));
   final hasta = desde.add(const Duration(hours: 1));
-  return '{"id": $id, "espacio_id": 9, "sede_id": 2, '
+  return '{"id": "${_uuid(n)}", "espacio_id": "${_uuid(9)}", "sede_id": "${_uuid(2)}", '
       '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
       '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
       '"inicio": "${desde.toIso8601String()}", "fin": "${hasta.toIso8601String()}", '
