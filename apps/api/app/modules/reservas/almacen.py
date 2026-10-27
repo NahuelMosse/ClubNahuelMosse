@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
-from app.modules.horarios import Agenda
+from app.modules.availability import OpeningHours
 from app.modules.reservas.reglas import (
     Cuando,
     FiltrosHistorial,
@@ -18,7 +18,7 @@ class Reservas(Protocol):
         historial: completadas, canceladas y anuladas, de la más reciente a la más vieja."""
         ...
 
-    def agenda(self, espacio_id: UUID) -> Agenda | None:
+    def agenda(self, espacio_id: UUID) -> OpeningHours | None:
         """El horario de la sede del espacio, o `None` si el espacio o su sede no están
         activos."""
         ...
@@ -45,7 +45,7 @@ class Reservas(Protocol):
         espacio_id: UUID,
         inicio: datetime,
         fin: datetime,
-        agenda: Agenda,
+        agenda: OpeningHours,
     ) -> Reserva:
         """Pasa la reserva, que estaba en [antes] (espacio e inicio), a [espacio_id] de
         [inicio] a [fin], con el precio de ahora de ese espacio. El horario anterior se libera
@@ -66,7 +66,12 @@ class Reservas(Protocol):
         ...
 
     def insertar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
-        self, usuario_id: UUID, espacio_id: UUID, inicio: datetime, fin: datetime, agenda: Agenda
+        self,
+        usuario_id: UUID,
+        espacio_id: UUID,
+        inicio: datetime,
+        fin: datetime,
+        agenda: OpeningHours,
     ) -> Reserva:
         """Guarda la reserva activa con el precio de ahora del espacio.
 

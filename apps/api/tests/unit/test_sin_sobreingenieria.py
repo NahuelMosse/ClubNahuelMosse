@@ -97,7 +97,7 @@ def test_docs_y_openapi_responden_con_la_configuracion_de_render() -> None:
 
 def test_un_texto_largo_o_con_control_ya_no_se_rechaza_y_las_horas_siguen_de_1_a_4() -> None:
     """un texto largo o con caracteres de control ya no se rechaza y las horas siguen siendo de 1 a 4 @SIM-01-S1 @assumption:SIM-01-ASM-05"""
-    from app.modules.horarios.reglas import error_de_duracion
+    from app.modules.availability.rules import duration_error
     from app.modules.sedes.rutas import PedidoDeSede
     from app.shared.input_validation import parse_time
 
@@ -105,8 +105,8 @@ def test_un_texto_largo_o_con_control_ya_no_se_rechaza_y_las_horas_siguen_de_1_a
     assert len(pedido.nombre) == 501
     assert "maxLength" not in str(create_app().openapi())
     assert parse_time("08:00") is not None and parse_time("8:00") is None
-    assert error_de_duracion(0) and error_de_duracion(5)
-    assert error_de_duracion(1) is None and error_de_duracion(4) is None
+    assert duration_error(0) and duration_error(5)
+    assert duration_error(1) is None and duration_error(4) is None
 
 
 def test_no_quedan_scripts_avisos_de_terceros_ni_documentacion_de_lo_que_se_sacó() -> None:

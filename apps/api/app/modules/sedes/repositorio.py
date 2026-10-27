@@ -5,8 +5,8 @@ from uuid import UUID
 from sqlalchemy import Connection, Row, text
 from sqlalchemy.exc import IntegrityError
 
-from app.modules.espacios import EspaciosSql
 from app.modules.sedes.reglas import Sede, SedeNueva
+from app.modules.spaces import SpacesSql
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection, in_transaction, violated_constraint
 from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings, NotFound
@@ -181,7 +181,7 @@ class SedesSql:
             ).scalar_one()
             if pendientes:
                 raise HasFutureBookings("la sede tiene reservas que todavía no terminaron")
-            EspaciosSql(self._conn).dar_de_baja_de_sede(sede_id, autor)
+            SpacesSql(self._conn).deactivate_venue_spaces(sede_id, autor)
             self._conn.execute(
                 text(
                     "UPDATE sede SET activa = false, dado_de_baja_en = now(),"

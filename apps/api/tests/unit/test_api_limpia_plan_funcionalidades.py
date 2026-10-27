@@ -31,11 +31,11 @@ def test_la_agenda_de_una_sede_se_arma_en_una_sola_funcion_y_con_los_dias_en_tup
     """la agenda de una sede se arma en una sola función y con los días en tupla
     @ARQ-02-S2 @assumption:ARQ-02-ASM-06"""
     codigo = _codigo([a for a in MODULOS.rglob("*.py") if "__pycache__" not in a.parts])
-    armados = {n: len(re.findall(r"\bAgenda\(", t)) for n, t in codigo.items()}
+    armados = {n: len(re.findall(r"\bOpeningHours\(", t)) for n, t in codigo.items()}
 
     assert sum(armados.values()) == 1
     (archivo,) = [n for n, c in armados.items() if c]
-    assert re.search(r"Agenda\([^)]*tuple\(", codigo[archivo], flags=re.DOTALL)
+    assert re.search(r"OpeningHours\([^)]*tuple\(", codigo[archivo], flags=re.DOTALL)
 
 
 def test_los_repositorios_confirman_con_en_transaccion() -> None:
@@ -45,14 +45,14 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
     assert "def in_transaction(" in db
     usan = [
         a.parent.name
-        for a in MODULOS.glob("*/repositorio.py")
+        for a in [*MODULOS.glob("*/repositorio.py"), *MODULOS.glob("*/repository.py")]
         if "in_transaction(" in a.read_text(encoding="utf-8")
     ]
     assert len(usan) >= 6
 
     for archivo, metodo in [
         ("reservas/repositorio.py", "cancelar_futuras_de"),
-        ("espacios/repositorio.py", "dar_de_baja_de_sede"),
+        ("spaces/repository.py", "deactivate_venue_spaces"),
         ("notificaciones/repositorio.py", "encolar_cancelacion_usuario"),
     ]:
         cuerpo = _metodo(archivo, metodo)

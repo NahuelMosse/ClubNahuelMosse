@@ -15,7 +15,7 @@ TABLAS_PROPIAS = {
     "reservas/repositorio.py": {"reserva"},
     "sedes/repositorio.py": {"sede"},
     "notificaciones/repositorio.py": {"notificacion", "notificacion_reserva", "dispositivo"},
-    "espacios/repositorio.py": {"espacio"},
+    "spaces/repository.py": {"espacio"},
     "recuperacion/repositorio.py": {"enlace_recuperacion"},
     "recuperacion/correo.py": {"correo_saliente"},
 }

@@ -12,10 +12,11 @@ MODULOS = APP / "modules"
 SHARED = APP / "shared"
 
 CON_CUATRO = {"rutas", "casos_de_uso", "reglas", "repositorio"}
+CON_CUATRO_EN = {"routes", "use_cases", "rules", "repository"}
 ARCHIVOS_DE_CADA_UNA = {
     "sedes": CON_CUATRO,
-    "espacios": CON_CUATRO,
-    "horarios": CON_CUATRO,
+    "spaces": CON_CUATRO_EN,
+    "availability": CON_CUATRO_EN,
     "reservas": CON_CUATRO,
     "notificaciones": CON_CUATRO,
     "recuperacion": CON_CUATRO,
@@ -34,7 +35,10 @@ ARCHIVOS_DE_CADA_UNA = {
 }
 FUNCIONALIDADES = set(ARCHIVOS_DE_CADA_UNA)
 CASOS_DE_USO = [
-    *(f"{f}/casos_de_uso.py" for f in sorted(FUNCIONALIDADES - {"usuarios"})),
+    *(
+        f"{f}/use_cases.py" if f in {"spaces", "availability"} else f"{f}/casos_de_uso.py"
+        for f in sorted(FUNCIONALIDADES - {"usuarios"})
+    ),
     *(f"usuarios/{c}.py" for c in ("registro", "perfil", "contrasena", "baja", "administradores")),
 ]
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
@@ -44,9 +48,18 @@ ERRORES_COMUNES = {"InvalidData", "Forbidden", "NotFound"}
 BASE = "612d445fe18ee945ab3c3f8da31d133b11452d23"
 RENOMBRADOS = {
     "app__interfaz__reservas__PedidoDeCambio": "PedidoDeCambioDeReserva",
-    "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
+    "app__interfaz__espacios__PedidoDeCambio": "SpaceChangeRequest",
     "app__interfaz__sedes__PedidoDeEdicion": "PedidoDeEdicionDeSede",
     "app__interfaz__sesion__PedidoDeEdicion": "PedidoDeEdicionDePerfil",
+    "Catalogo": "CatalogView",
+    "DeporteVista": "SportView",
+    "EspacioVista": "SpaceView",
+    "FranjaVista": "SlotView",
+    "GrillaVista": "SlotGridView",
+    "ListaDeEspacios": "SpaceList",
+    "PedidoDeEspacio": "SpaceRequest",
+    "Sugerencia": "Suggestion",
+    "TipoVista": "KindView",
 }
 
 
@@ -156,7 +169,7 @@ def test_shared_no_importa_funcionalidades_y_reglas_no_importa_base_de_datos_ni_
     for archivo in fuentes_de_shared:
         propios = [n for n in _importados(archivo) if n.startswith("app.modules")]
         assert propios == [], f"{archivo.relative_to(APP)} importa {propios}"
-    reglas = [p for p in _de_funcionalidades() if p.name == "reglas.py"]
+    reglas = [p for p in _de_funcionalidades() if p.name in {"reglas.py", "rules.py"}]
     assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"sesion"}
     for archivo in reglas:
         for nombre in _importados(archivo):
@@ -172,9 +185,12 @@ def test_los_casos_de_uso_no_importan_repositorio_ni_rutas() -> None:
         for nombre in _importados(archivo):
             ultimo = nombre.split(".")[-1]
             es_de_la_app = nombre.startswith("app.modules.")
-            assert not (es_de_la_app and (ultimo == "repositorio" or ultimo.startswith("rutas"))), (
-                f"{ruta} importa {nombre}"
-            )
+            assert not (
+                es_de_la_app
+                and (
+                    ultimo in {"repositorio", "repository", "routes"} or ultimo.startswith("rutas")
+                )
+            ), f"{ruta} importa {nombre}"
 
 
 def _sin_titulos(documento: object) -> object:
@@ -239,9 +255,14 @@ def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None
         encoding="utf-8",
     ).stdout
     for viejo, nuevo in RENOMBRADOS.items():
-        de_main = de_main.replace(viejo, nuevo)
+        if viejo.startswith("app__"):
+            de_main = de_main.replace(viejo, nuevo)
+        else:
+            de_main = re.sub(rf'(?<=["/]){viejo}(?=")', nuevo, de_main)
     esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(_contrato(de_main)))
-    actual = _contrato((API / "openapi.json").read_text(encoding="utf-8"))
+    actual = _contrato(
+        (API / "openapi.json").read_text(encoding="utf-8").replace("ErrorBody", "Errores")
+    )
     assert set(actual["paths"]) == set(esperado["paths"])
     assert _sin_titulos(actual["paths"]) == _sin_titulos(esperado["paths"])
     assert _sin_titulos(actual["components"]) == _sin_titulos(esperado["components"])

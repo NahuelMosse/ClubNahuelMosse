@@ -106,6 +106,21 @@ datos push `tipo`→`kind`, `reserva_id`→`booking_id`; enlace `clubnahuelmosse
 `Contadores`→`Counters`, `ReservasSql`→`BookingsSql`, `Cuando`→`When`; `Sede`→`Venue`, `SedeNueva`→`NewVenue`, `SedeDelEspacio`→`SpaceVenue`,
 `Espacio`→`Space`, `EspacioNuevo`→`NewSpace`, `CambioDeEspacio`→`SpaceChange`; `Deporte`→`Sport`, `Tipo`→`Kind`, `NombreSugerido`→`SuggestedName`,
 `CATALOGO`→`CATALOG`; `Agenda`→`OpeningHours`, `Franja`→`Slot`, `Grilla`→`SlotGrid`, `Horarios`→`Availability`;
+`DatosEspacio`→`SpaceData`, `Espacios`→`Spaces`, `EspaciosSql`→`SpacesSql`, `HorariosSql`→`AvailabilitySql`, `Disponibilidad`→`SlotSearch`,
+`ListaDeEspacios`→`SpaceList`, `EspacioVista`→`SpaceView`, `TipoVista`→`KindView`, `DeporteVista`→`SportView`, la vista del catálogo `CatalogView` (en Python `Catalogo` pasa a `CatalogView`, no a `Catalog`),
+`Sugerencia`→`Suggestion`, `Errores`→`ErrorBody`, `PedidoDeEspacio`→`SpaceRequest`, `PedidoDeCambioDeEspacio`→`SpaceChangeRequest`;
+`catalogo`→`catalog`, `nombre_sugerido`→`suggested_name`, `espacios_activos`→`active_spaces`, `tipo_del_catalogo`→`catalog_kind`,
+`parte_de_sede`→`venue_part`, `parte_de_calle`→`street_part`, `espacio_de_fila`→`space_of_row`, `agenda_de_fila`→`opening_hours_of_row`,
+`repositorio_espacios`→`spaces_repository`, `repositorio_horarios`→`availability_repository`, `vista_de_espacio`→`space_view`,
+`canchas_disponibles`→`available_spaces`, `grilla`→`slot_grid`, `rango`→`time_range`, `error_de_duracion`→`duration_error`,
+`validar_consulta`→`validate_query`, `validar_rango`→`validate_range`, `validar_reserva`→`validate_booking`, `validar_cambio`→`validate_change`
+(kwarg `dados`→`given`), `COLUMNAS_DE_ESPACIO`→`SPACE_COLUMNS`, `DIAS_A_LA_VISTA`→`DAYS_IN_VIEW`, `MIN_HORAS`/`MAX_HORAS`→`MIN_HOURS`/`MAX_HOURS`,
+`HORAS_POR_DIA`→`HOURS_PER_DAY`; vistas de horarios `SlotView`, `SlotGridView`; funciones de ruta `ver_catalogo`→`show_catalog`,
+`listar_espacios`→`list_spaces`, `sugerir_nombre`→`suggest_name`, `alta_de_espacio`→`create_space_route`, `edicion_de_espacio`→`update_space_route`,
+`baja_de_espacio`→`deactivate_space_route`, `ver_horarios`→`show_slots`, `ver_disponibles`→`show_available`; métodos de repositorio `activos`→`active`, `siguiente`→`next_number`, `insertar`→`insert`, `actualizar`→`update`,
+`dar_de_baja`→`deactivate`, `dar_de_baja_de_sede`→`deactivate_venue_spaces`, `agenda`→`opening_hours`, `agenda_de_sede`→`venue_opening_hours`,
+`ocupadas`→`taken`, `libres`→`free`; atributos `fecha`→`day` (en `SlotGrid`, para no pisar el tipo `date`), `hoy`→`today`, `abre`→`opens`,
+`franjas`→`slots`, `no_disponibles`→`unavailable`, `inicio`/`fin`→`start`/`end`, `disponible`→`available`, `apertura`/`cierre`/`dias`→`opens_at`/`closes_at`/`open_days`;
 `Notificacion`→`Notification` (Python) / `AppNotification` (Dart); `Aviso`→`Notice`, `Recordatorio`→`Reminder`, `CanalPush`→`PushChannel`,
 `ResultadoDeEnvio`→`DeliveryResult`, `DatosDeReserva`→`BookingData`; `DatosInvalidos`→`InvalidData`, `Duplicado`→`Duplicate`,
 `NoAutenticado`→`NotAuthenticated`, `Demorado`→`RateLimited`, `CuentaExistente`→`AccountExists`, `Prohibido`→`Forbidden`,

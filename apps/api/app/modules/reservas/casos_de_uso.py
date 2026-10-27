@@ -2,7 +2,13 @@ from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
 from uuid import UUID
 
-from app.modules.horarios import DIAS_A_LA_VISTA, Agenda, error_de_duracion, rango, validar_reserva
+from app.modules.availability import (
+    DAYS_IN_VIEW,
+    OpeningHours,
+    duration_error,
+    time_range,
+    validate_booking,
+)
 from app.modules.reservas.almacen import Reservas
 from app.modules.reservas.reglas import Cuando as Cuando
 from app.modules.reservas.reglas import (
@@ -30,8 +36,8 @@ INTENTOS_CON_AGENDA_NUEVA = 3
 def _con_la_agenda_vigente(
     reservas: Reservas,
     espacio_id: UUID,
-    validar: Callable[[Agenda], dict[str, str]],
-    guardar: Callable[[Agenda], Reserva],
+    validar: Callable[[OpeningHours], dict[str, str]],
+    guardar: Callable[[OpeningHours], Reserva],
 ) -> Reserva:
     """Valida el horario con la agenda de la sede y guarda. Si un administrador cambió la
     agenda en el medio, vuelve a validar con la nueva: lo que se guarda respeta el horario que
@@ -58,8 +64,8 @@ def mis_reservas(reservas: Reservas, perfil: Perfil, cuando: Cuando) -> list[Res
 def _exigir_fecha_a_la_vista(fecha: date, ahora: datetime) -> None:
     """Una fecha más allá de la ventana de reserva se rechaza antes de calcular el fin del
     turno: cerca de `date.max` esa cuenta se desborda."""
-    if fecha >= ahora.date() + timedelta(days=DIAS_A_LA_VISTA):
-        raise InvalidData({"fecha": f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"})
+    if fecha >= ahora.date() + timedelta(days=DAYS_IN_VIEW):
+        raise InvalidData({"fecha": f"Elegí un día de los próximos {DAYS_IN_VIEW}"})
 
 
 def _exigir_mismo_tipo(reservas: Reservas, actual: Reserva, espacio_id: UUID) -> None:
@@ -87,12 +93,12 @@ def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamado
         raise Forbidden("sólo un usuario reserva")
     if desde is None:
         raise InvalidData({"desde": "Elegí una hora en punto"})
-    if error := error_de_duracion(horas):
+    if error := duration_error(horas):
         # Antes de calcular el fin del turno: con una duración desmesurada esa cuenta se
         # desborda. `hasta` es el campo que ya leen los clientes.
         raise InvalidData({"horas": error, "hasta": error})
     _exigir_fecha_a_la_vista(fecha, ahora)
-    inicio, _ = rango(fecha, desde, desde, ahora.tzinfo)
+    inicio, _ = time_range(fecha, desde, desde, ahora.tzinfo)
     fin = inicio + timedelta(hours=horas)
     # Un reintento después de un corte puede llegar cuando el turno ya empezó: si la reserva
     # se hizo, se devuelve sin volver a validar el horario.
@@ -101,7 +107,7 @@ def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamado
     return _con_la_agenda_vigente(
         reservas,
         espacio_id,
-        lambda agenda: validar_reserva(agenda, fecha, desde, horas, ahora),
+        lambda agenda: validate_booking(agenda, fecha, desde, horas, ahora),
         lambda agenda: reservas.insertar(perfil.id, espacio_id, inicio, fin, agenda),
     )
 
@@ -136,7 +142,7 @@ def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por su
     actual = reservas.propia(perfil.id, reserva_id)
     if actual is None:
         raise NotFound("no hay una reserva suya con ese número")
-    inicio, _ = rango(fecha, desde, desde, ahora.tzinfo)
+    inicio, _ = time_range(fecha, desde, desde, ahora.tzinfo)
     # Un reintento después de un corte llega con la reserva ya movida: se devuelve como está.
     if actual.estado == "activa" and (actual.espacio_id, actual.inicio) == (espacio_id, inicio):
         return actual
@@ -146,7 +152,7 @@ def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por su
     return _con_la_agenda_vigente(
         reservas,
         espacio_id,
-        lambda agenda: validar_reserva(agenda, fecha, desde, duracion // timedelta(hours=1), ahora),
+        lambda a: validate_booking(a, fecha, desde, duracion // timedelta(hours=1), ahora),
         lambda agenda: reservas.mover(
             perfil.id, reserva_id, antes, espacio_id, inicio, inicio + duracion, agenda
         ),

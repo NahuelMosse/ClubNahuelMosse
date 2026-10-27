@@ -679,7 +679,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Catalogo"
+                  "$ref": "#/components/schemas/CatalogView"
                 }
               }
             }
@@ -773,7 +773,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListaDeEspacios"
+                  "$ref": "#/components/schemas/SpaceList"
                 }
               }
             }
@@ -817,7 +817,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeEspacio"
+                "$ref": "#/components/schemas/SpaceRequest"
               }
             }
           }
@@ -828,7 +828,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EspacioVista"
+                  "$ref": "#/components/schemas/SpaceView"
                 }
               }
             }
@@ -853,7 +853,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -910,7 +910,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Sugerencia"
+                  "$ref": "#/components/schemas/Suggestion"
                 }
               }
             }
@@ -932,7 +932,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -971,7 +971,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeCambioDeEspacio"
+                "$ref": "#/components/schemas/SpaceChangeRequest"
               }
             }
           }
@@ -982,7 +982,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EspacioVista"
+                  "$ref": "#/components/schemas/SpaceView"
                 }
               }
             }
@@ -1007,7 +1007,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -1064,7 +1064,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1159,7 +1159,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GrillaVista"
+                  "$ref": "#/components/schemas/SlotGridView"
                 }
               }
             }
@@ -1179,7 +1179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1188,7 +1188,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -1283,7 +1283,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListaDeEspacios"
+                  "$ref": "#/components/schemas/SpaceList"
                 }
               }
             }
@@ -1302,7 +1302,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -2159,11 +2159,11 @@
         ],
         "title": "BajaDeDispositivo"
       },
-      "Catalogo": {
+      "CatalogView": {
         "properties": {
           "deportes": {
             "items": {
-              "$ref": "#/components/schemas/DeporteVista"
+              "$ref": "#/components/schemas/SportView"
             },
             "type": "array",
             "title": "Deportes"
@@ -2173,7 +2173,7 @@
         "required": [
           "deportes"
         ],
-        "title": "Catalogo"
+        "title": "CatalogView"
       },
       "Centro": {
         "properties": {
@@ -2251,31 +2251,21 @@
         "type": "object",
         "title": "ContrasenaNueva"
       },
-      "DeporteVista": {
+      "ErrorBody": {
         "properties": {
-          "clave": {
-            "type": "string",
-            "title": "Clave"
-          },
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "tipos": {
-            "items": {
-              "$ref": "#/components/schemas/TipoVista"
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
             },
-            "type": "array",
-            "title": "Tipos"
+            "type": "object",
+            "title": "Errores"
           }
         },
         "type": "object",
         "required": [
-          "clave",
-          "nombre",
-          "tipos"
+          "errores"
         ],
-        "title": "DeporteVista"
+        "title": "ErrorBody"
       },
       "Errores": {
         "properties": {
@@ -2341,127 +2331,6 @@
         ],
         "title": "ErroresDeSede"
       },
-      "EspacioVista": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "sede_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Sede Id"
-          },
-          "sede": {
-            "type": "string",
-            "title": "Sede"
-          },
-          "deporte": {
-            "type": "string",
-            "title": "Deporte"
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo"
-          },
-          "numero": {
-            "type": "integer",
-            "title": "Numero"
-          },
-          "techada": {
-            "type": "boolean",
-            "title": "Techada"
-          },
-          "iluminada": {
-            "type": "boolean",
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "type": "integer",
-            "title": "Precio Por Hora"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "nombre",
-          "sede_id",
-          "sede",
-          "deporte",
-          "tipo",
-          "numero",
-          "techada",
-          "iluminada",
-          "precio_por_hora"
-        ],
-        "title": "EspacioVista"
-      },
-      "FranjaVista": {
-        "properties": {
-          "inicio": {
-            "type": "string",
-            "title": "Inicio"
-          },
-          "fin": {
-            "type": "string",
-            "title": "Fin"
-          },
-          "disponible": {
-            "type": "boolean",
-            "title": "Disponible"
-          }
-        },
-        "type": "object",
-        "required": [
-          "inicio",
-          "fin",
-          "disponible"
-        ],
-        "title": "FranjaVista"
-      },
-      "GrillaVista": {
-        "properties": {
-          "fecha": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha"
-          },
-          "hoy": {
-            "type": "string",
-            "format": "date",
-            "title": "Hoy"
-          },
-          "abre": {
-            "type": "boolean",
-            "title": "Abre"
-          },
-          "franjas": {
-            "items": {
-              "$ref": "#/components/schemas/FranjaVista"
-            },
-            "type": "array",
-            "title": "Franjas"
-          },
-          "no_disponibles": {
-            "type": "integer",
-            "title": "No Disponibles"
-          }
-        },
-        "type": "object",
-        "required": [
-          "fecha",
-          "hoy",
-          "abre",
-          "franjas",
-          "no_disponibles"
-        ],
-        "title": "GrillaVista"
-      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -2510,21 +2379,23 @@
         ],
         "title": "HistorialVista"
       },
-      "ListaDeEspacios": {
+      "KindView": {
         "properties": {
-          "espacios": {
-            "items": {
-              "$ref": "#/components/schemas/EspacioVista"
-            },
-            "type": "array",
-            "title": "Espacios"
+          "clave": {
+            "type": "string",
+            "title": "Clave"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
           }
         },
         "type": "object",
         "required": [
-          "espacios"
+          "clave",
+          "nombre"
         ],
-        "title": "ListaDeEspacios"
+        "title": "KindView"
       },
       "ListaDeReservas": {
         "properties": {
@@ -2640,67 +2511,6 @@
           "inicio"
         ],
         "title": "PedidoDeAnulacion"
-      },
-      "PedidoDeCambioDeEspacio": {
-        "properties": {
-          "deporte": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deporte"
-          },
-          "tipo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tipo"
-          },
-          "techada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Techada"
-          },
-          "iluminada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Precio Por Hora"
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeCambioDeEspacio"
       },
       "PedidoDeCambioDeReserva": {
         "properties": {
@@ -2830,78 +2640,6 @@
         },
         "type": "object",
         "title": "PedidoDeEnlace"
-      },
-      "PedidoDeEspacio": {
-        "properties": {
-          "sede_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Sede Id"
-          },
-          "deporte": {
-            "type": "string",
-            "title": "Deporte",
-            "default": ""
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo",
-            "default": ""
-          },
-          "techada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Techada"
-          },
-          "iluminada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Precio Por Hora"
-          },
-          "numero": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Numero"
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEspacio"
       },
       "PedidoDeReserva": {
         "properties": {
@@ -3432,7 +3170,303 @@
         ],
         "title": "SinSesion"
       },
-      "Sugerencia": {
+      "SlotGridView": {
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hoy": {
+            "type": "string",
+            "format": "date",
+            "title": "Hoy"
+          },
+          "abre": {
+            "type": "boolean",
+            "title": "Abre"
+          },
+          "franjas": {
+            "items": {
+              "$ref": "#/components/schemas/SlotView"
+            },
+            "type": "array",
+            "title": "Franjas"
+          },
+          "no_disponibles": {
+            "type": "integer",
+            "title": "No Disponibles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fecha",
+          "hoy",
+          "abre",
+          "franjas",
+          "no_disponibles"
+        ],
+        "title": "SlotGridView"
+      },
+      "SlotView": {
+        "properties": {
+          "inicio": {
+            "type": "string",
+            "title": "Inicio"
+          },
+          "fin": {
+            "type": "string",
+            "title": "Fin"
+          },
+          "disponible": {
+            "type": "boolean",
+            "title": "Disponible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inicio",
+          "fin",
+          "disponible"
+        ],
+        "title": "SlotView"
+      },
+      "SpaceChangeRequest": {
+        "properties": {
+          "deporte": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deporte"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "techada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Techada"
+          },
+          "iluminada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio Por Hora"
+          }
+        },
+        "type": "object",
+        "title": "SpaceChangeRequest"
+      },
+      "SpaceList": {
+        "properties": {
+          "espacios": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceView"
+            },
+            "type": "array",
+            "title": "Espacios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacios"
+        ],
+        "title": "SpaceList"
+      },
+      "SpaceRequest": {
+        "properties": {
+          "sede_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sede Id"
+          },
+          "deporte": {
+            "type": "string",
+            "title": "Deporte",
+            "default": ""
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "default": ""
+          },
+          "techada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Techada"
+          },
+          "iluminada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio Por Hora"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero"
+          }
+        },
+        "type": "object",
+        "title": "SpaceRequest"
+      },
+      "SpaceView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "sede_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sede Id"
+          },
+          "sede": {
+            "type": "string",
+            "title": "Sede"
+          },
+          "deporte": {
+            "type": "string",
+            "title": "Deporte"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "numero": {
+            "type": "integer",
+            "title": "Numero"
+          },
+          "techada": {
+            "type": "boolean",
+            "title": "Techada"
+          },
+          "iluminada": {
+            "type": "boolean",
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "type": "integer",
+            "title": "Precio Por Hora"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nombre",
+          "sede_id",
+          "sede",
+          "deporte",
+          "tipo",
+          "numero",
+          "techada",
+          "iluminada",
+          "precio_por_hora"
+        ],
+        "title": "SpaceView"
+      },
+      "SportView": {
+        "properties": {
+          "clave": {
+            "type": "string",
+            "title": "Clave"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipos": {
+            "items": {
+              "$ref": "#/components/schemas/KindView"
+            },
+            "type": "array",
+            "title": "Tipos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clave",
+          "nombre",
+          "tipos"
+        ],
+        "title": "SportView"
+      },
+      "Suggestion": {
         "properties": {
           "nombre": {
             "type": "string",
@@ -3448,25 +3482,7 @@
           "nombre",
           "numero"
         ],
-        "title": "Sugerencia"
-      },
-      "TipoVista": {
-        "properties": {
-          "clave": {
-            "type": "string",
-            "title": "Clave"
-          },
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          }
-        },
-        "type": "object",
-        "required": [
-          "clave",
-          "nombre"
-        ],
-        "title": "TipoVista"
+        "title": "Suggestion"
       },
       "UsuarioRepetido": {
         "properties": {
