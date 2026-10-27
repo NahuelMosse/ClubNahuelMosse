@@ -1,0 +1,19 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "docs/technical/modelo-de-datos.md",
+    "apps/api/tests/unit/test_auditoria_documentada.py"
+  ],
+  "tasks": 1
+}
