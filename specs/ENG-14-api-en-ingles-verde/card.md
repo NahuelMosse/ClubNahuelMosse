@@ -40,3 +40,5 @@ no-visual: la card no toca la app
 - L1 · no me gusta nada que todo el codigo este en español · Todo, base y API incluidas · dejala en su propia branch, sin tocar main · ahora si termina de implementar todo lo que faltaba
 - L2 · 2026-10-27 · declared · fault-db · la base es Postgres, no un archivo
 - L3 · 2026-10-27 · declared · attacks · la card no cambia rutas ni cuerpos
+- L4 · 2026-10-27 · replaces: apps/api/tests/unit/test_api_en_ingles.py "el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de" · compara con 1ee70de y main ya pasó de ese commit (NOT-05 agregó `recordatorio_cinco`; el `openapi.json` de main no se regeneró) · by: apps/api/tests/unit/test_api_en_ingles_contrato_actual.py "el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de"
+- L5 · 2026-10-27 · T1 · apps/api/openapi.json regenerado (create_app().openapi()); contra main 88d1a9c sólo difiere en `recordatorio_cinco`, que la API de main ya publica y su json no

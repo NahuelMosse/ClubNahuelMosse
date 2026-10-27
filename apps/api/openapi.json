@@ -2814,6 +2814,7 @@
             "type": "string",
             "enum": [
               "recordatorio",
+              "recordatorio_cinco",
               "cancelacion_forzosa",
               "cancelacion_usuario"
             ],

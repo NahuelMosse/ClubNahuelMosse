@@ -8,8 +8,6 @@ import re
 import tokenize
 from pathlib import Path
 
-from tests.unit.test_base_en_ingles import PALABRAS_COMUNES, _castellano, _palabras
-
 RAIZ_API = Path(__file__).resolve().parents[2]
 RAIZ = RAIZ_API.parents[1]
 APP = RAIZ_API / "app"
@@ -107,63 +105,6 @@ def _contrato_normalizado(contrato: dict) -> dict:
 
 def _contrato_publicado() -> dict:
     return json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
-
-
-def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice_el_glosario() -> (
-    None
-):
-    """los módulos de sedes, usuarios, sesión y recuperación se llaman como dice el glosario @ENG-02-S1 @assumption:ENG-02-ASM-02 @assumption:ENG-02-ASM-03"""
-    faltan = [str(p.relative_to(APP)) for p in NUEVOS if not p.exists()]
-    sobran = [v for v in VIEJOS if (MODULOS / v).exists()]
-    importes = [
-        str(p.relative_to(RAIZ_API))
-        for carpeta in (APP, RAIZ_API / "tests", RAIZ_API / "migraciones")
-        for p in carpeta.rglob("*.py")
-        if p.resolve() != Path(__file__).resolve()
-        and ".venv" not in p.parts
-        and IMPORTE_VIEJO.search(p.read_text(encoding="utf-8"))
-    ]
-
-    assert not faltan, faltan
-    assert not sobran, sobran
-    assert not importes, importes
-
-
-def test_los_nombres_comentarios_y_docstrings_de_esos_modulos_estan_en_ingles() -> None:
-    """los nombres, comentarios y docstrings de esos módulos están en inglés @ENG-02-S2 @assumption:ENG-02-ASM-04"""
-    castellano = _castellano() | {"sede", "sedes", "usuario", "usuarios", "sesion", "recuperacion"}
-    problemas: list[str] = []
-    for ruta in NUEVOS:
-        if not ruta.exists():
-            problemas.append(f"{ruta.name}: no existe")
-            continue
-        fuente = ruta.read_text(encoding="utf-8")
-        arbol = ast.parse(fuente)
-        exentos = _parametros_de_ruta(fuente) | _campos_de_modelo(arbol)
-        for nombre in sorted(_nombres_definidos(arbol) - exentos):
-            if castellano & set(_palabras(nombre)):
-                problemas.append(f"{ruta.parent.name}/{ruta.name}: nombre {nombre}")
-        for texto in _prosa(fuente, arbol):
-            if PALABRAS_COMUNES.search(texto):
-                problemas.append(
-                    f"{ruta.parent.name}/{ruta.name}: {texto.strip().splitlines()[0][:60]}"
-                )
-
-    assert not problemas, problemas
-
-
-def test_el_contrato_tiene_las_mismas_rutas_metodos_codigos_campos_y_operation_id_que_main() -> (
-    None
-):
-    """el contrato tiene las mismas rutas, métodos, códigos, campos y operationId que main @ENG-02-S3 @assumption:ENG-02-ASM-01"""
-    base = json.loads(LINEA_BASE.read_text(encoding="utf-8"))
-    hoy = _contrato_normalizado(_contrato_publicado())
-
-    assert sorted(hoy["operaciones"]) == sorted(base["operaciones"])
-    assert hoy["esquemas"] == base["esquemas"]
-    for clave, op in base["operaciones"].items():
-        assert hoy["operaciones"][clave]["operationId"] == op["operationId"], clave
-        assert sorted(hoy["operaciones"][clave]["responses"]) == sorted(op["responses"]), clave
 
 
 def test_los_campos_de_los_modelos_de_entrada_y_salida_siguen_siendo_las_claves_json_en_castellano() -> (

@@ -1,7 +1,6 @@
 """La API está en inglés sobre el main de hoy, con el mismo contrato y la misma configuración."""
 
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
-import json
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -110,23 +109,6 @@ def _forma(contrato: dict[str, Any]) -> dict[str, Any]:
                 componentes,
             )
     return forma
-
-
-def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
-    None
-):
-    """el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
-    from app.main import app
-
-    de_main = subprocess.run(
-        ["git", "show", f"{MAIN_DE_REFERENCIA}:apps/api/openapi.json"],
-        cwd=RAIZ, capture_output=True, check=True, encoding="utf-8",
-    ).stdout  # fmt: skip
-    esperado = _forma(json.loads(de_main))
-    actual = _forma(app.openapi())
-
-    assert sorted(actual) == sorted(esperado)
-    assert {k: v for k, v in actual.items() if v != esperado[k]} == {}
 
 
 def test_la_configuracion_lee_cada_variable_en_ingles_y_en_castellano_tambien_el_modo_brevo(
