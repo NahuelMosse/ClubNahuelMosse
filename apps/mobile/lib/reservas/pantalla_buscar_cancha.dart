@@ -8,23 +8,23 @@ import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
 import '../comun/chip_elegible.dart';
 import '../comun/estado_vacio.dart';
+import '../comun/fechas.dart';
 import '../comun/formato_fecha.dart';
+import '../comun/reloj.dart';
 import '../comun/selector.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sedes/tarjeta_cancha.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/fechas.dart';
+import 'barra_de_busqueda.dart';
 import 'horarios.dart';
-import '../comun/reloj.dart';
 import 'reglas_busqueda.dart';
 import 'tarjeta_error_de_busqueda.dart';
-import 'barra_de_busqueda.dart';
-import '../sedes/tarjeta_cancha.dart';
 
 /// «Consultar canchas»: las canchas de una sede y un deporte libres en todo un rango de un
 /// día. Consultar no reserva nada; cada cancha lleva a sus horarios con el rango elegido.

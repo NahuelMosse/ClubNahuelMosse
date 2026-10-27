@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../comun/carga_de_lista.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
+import '../comun/carga_de_lista.dart';
 import '../comun/en_curso.dart';
 import '../comun/marco_de_tarjeta.dart';
 import '../sesion/sesion.dart';

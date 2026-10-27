@@ -1,9 +1,7 @@
 include: package:flutter_lints/flutter.yaml
 
 analyzer:
-  # Test congelado en rojo con un import que quedó sin uso: no se puede editar y `flutter test` lo sigue corriendo.
   exclude:
-    - test/anular_desde_el_detalle_test.dart
     # Ayudantes del kit, copiados tal cual por el perfil flutter.
     - test/kit/**
   language:
@@ -21,3 +19,5 @@ linter:
     - require_trailing_commas
     - avoid_dynamic_calls
     - unawaited_futures
+    - directives_ordering
+    - avoid_positional_boolean_parameters

@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
-import '../comun/calendario.dart';
 import '../comun/boton.dart';
+import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_de_campo.dart';
@@ -14,8 +14,8 @@ import '../comun/reglas_registro.dart';
 import '../comun/reloj.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'registro.dart';
 import 'aviso_de_registro.dart';
+import 'registro.dart';
 
 /// Los campos del formulario, con el nombre que usa la API.
 enum _Campo {

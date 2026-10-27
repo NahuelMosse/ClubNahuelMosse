@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../comun/boton.dart';
 import '../comun/etiqueta.dart';
 import '../comun/formato_precio.dart';
@@ -6,8 +7,8 @@ import '../comun/marco_de_tarjeta.dart';
 import '../espacios/espacio.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fotos.dart';
 import 'etiquetas_y_precio.dart';
+import 'fotos.dart';
 
 /// `Card-Cancha`: la foto de su deporte con el tipo y el nombre, sus datos, el precio y
 /// «VER HORARIOS / RESERVAR».

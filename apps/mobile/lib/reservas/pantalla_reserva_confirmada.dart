@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../comun/boton.dart';
+import '../comun/fechas.dart';
 import '../comun/marco_de_tarjeta.dart';
 import '../comun/movimiento.dart';
 import '../comun/troquel.dart';
 import '../sedes/fotos.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/fechas.dart';
-import 'reservas.dart';
-import 'pasos_de_reserva.dart';
 import 'fila_de_dato.dart';
 import 'fila_de_total.dart';
+import 'pasos_de_reserva.dart';
+import 'reservas.dart';
 
 /// El comprobante: la reserva quedó hecha. Espera a que la persona elija adónde ir.
 class PantallaReservaConfirmada extends StatelessWidget {

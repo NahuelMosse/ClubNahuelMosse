@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../comun/carga_de_lista.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
+import '../comun/carga_de_lista.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_no_manejados.dart';
 import '../comun/fechas.dart';
@@ -19,11 +19,11 @@ import '../sedes/sedes.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
-import 'hero_de_inicio.dart';
-import 'proxima_reserva.dart';
-import 'deportes_de_inicio.dart';
 import 'accesos_de_inicio.dart';
 import 'animacion_de_tiles.dart';
+import 'deportes_de_inicio.dart';
+import 'hero_de_inicio.dart';
+import 'proxima_reserva.dart';
 
 typedef _Datos = ({
   Reserva? proxima,

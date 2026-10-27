@@ -11,14 +11,14 @@ import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tokens.dart';
+import 'boton_chico.dart';
 import 'cabecera_de_perfil.dart';
+import 'confirmar_baja.dart';
 import 'datos_de_perfil.dart';
 import 'edicion_de_perfil.dart';
-import 'modo_oscuro.dart';
-import 'confirmar_baja.dart';
-import 'tarjeta_de_perfil.dart';
-import 'boton_chico.dart';
 import 'fila_de_perfil.dart';
+import 'modo_oscuro.dart';
+import 'tarjeta_de_perfil.dart';
 
 /// Mi perfil: todos los datos de la cuenta, pedidos a la API cada vez que se abre, y los
 /// accesos a lo que se puede hacer con ella.

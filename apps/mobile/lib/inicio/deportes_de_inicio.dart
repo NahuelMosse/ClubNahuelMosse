@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../comun/movimiento.dart';
 import '../comun/tile_deporte.dart';
 import '../espacios/espacio.dart';
 import '../sedes/fotos.dart';
 import '../tema/tokens.dart';
-import 'titulo_de_inicio.dart';
 import 'animacion_de_tiles.dart';
+import 'titulo_de_inicio.dart';
 
 /// Los deportes del club. Cada uno abre «Buscar cancha» con ese deporte elegido.
 class DeportesDeInicio extends StatelessWidget {

@@ -120,7 +120,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    Widget chip(String texto, bool elegido, VoidCallback alTocar) =>
+    Widget chip(String texto, VoidCallback alTocar, {required bool elegido}) =>
         ChipElegible(
           texto: texto,
           elegido: elegido,
@@ -182,10 +182,10 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                       for (final sede in widget.sedes)
                         chip(
                           sede.nombre,
-                          _sedeId == sede.id,
                           () => setState(
                             () => _sedeId = _sedeId == sede.id ? null : sede.id,
                           ),
+                          elegido: _sedeId == sede.id,
                         ),
                     ],
                   ),
@@ -199,12 +199,12 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                       for (final deporte in widget.catalogo.deportes)
                         chip(
                           deporte.nombre,
-                          _deporte == deporte.clave,
                           () => setState(
                             () => _deporte = _deporte == deporte.clave
                                 ? null
                                 : deporte.clave,
                           ),
+                          elegido: _deporte == deporte.clave,
                         ),
                     ],
                   ),
@@ -217,8 +217,8 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                     children: [
                       chip(
                         'Todas',
-                        _estado == null,
                         () => setState(() => _estado = null),
+                        elegido: _estado == null,
                       ),
                       for (final e in const [
                         EstadoDeReserva.activa,
@@ -231,9 +231,9 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                             EstadoDeReserva.completada => 'Completadas',
                             _ => 'Anuladas',
                           },
-                          _estado == e,
                           () =>
                               setState(() => _estado = _estado == e ? null : e),
+                          elegido: _estado == e,
                         ),
                     ],
                   ),

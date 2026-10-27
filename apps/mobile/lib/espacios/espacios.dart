@@ -67,11 +67,7 @@ class Espacios extends ChangeNotifier {
     String? deporte,
     String? tipo,
   }) async {
-    final filtros = {
-      'sede_id': ?sedeId,
-      'deporte': ?deporte,
-      'tipo': ?tipo,
-    };
+    final filtros = {'sede_id': ?sedeId, 'deporte': ?deporte, 'tipo': ?tipo};
     final consulta = Uri(
       path: '/espacios',
       queryParameters: filtros.isEmpty ? null : filtros,

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../comun/boton.dart';
 import '../espacios/espacio.dart';
 import '../reservas/reservas.dart';
+import '../reservas/tarjeta_reserva.dart';
 import '../tema/tokens.dart';
 import 'titulo_de_inicio.dart';
-import '../reservas/tarjeta_reserva.dart';
 
 /// «Tu próxima reserva»: la tarjeta de Mis reservas, con sus dos acciones.
 class ProximaReserva extends StatelessWidget {

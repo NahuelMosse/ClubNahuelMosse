@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../sesion/sesion.dart';
+
 import '../comun/reglas_registro.dart';
+import '../sesion/sesion.dart';
 import 'fila_de_dato_de_perfil.dart';
 
 /// Los datos personales en modo lectura. El correo no se puede cambiar (RF 2) y se ve y se

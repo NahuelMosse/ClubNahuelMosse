@@ -3,17 +3,17 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/fechas.dart';
+import '../comun/reserva_pendiente.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
-import '../comun/fechas.dart';
-import 'horarios.dart';
-import '../comun/reserva_pendiente.dart';
-import 'reservas.dart';
 import 'esqueleto_de_confirmacion.dart';
-import 'tarjeta_de_eleccion.dart';
 import 'fila_de_dato.dart';
+import 'horarios.dart';
+import 'reservas.dart';
+import 'tarjeta_de_eleccion.dart';
 
 /// Lo que la confirmación le devuelve a los horarios al cerrarse: si el horario se ocupó,
 /// la grilla se vuelve a leer.

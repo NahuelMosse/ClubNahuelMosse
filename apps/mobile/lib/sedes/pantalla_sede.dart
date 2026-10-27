@@ -9,9 +9,9 @@ import '../espacios/espacios.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
+import 'contenido_de_sede.dart';
 import 'sede.dart';
 import 'sedes.dart';
-import 'contenido_de_sede.dart';
 
 /// Una sede con todas sus canchas, cada una con sus datos y el paso a los horarios.
 class PantallaSede extends StatefulWidget {

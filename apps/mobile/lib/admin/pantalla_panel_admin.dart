@@ -8,20 +8,20 @@ import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/estado_vacio.dart';
-import '../sesion/fallo_de_carga.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../reservas/reservas.dart' show EstadoDeReserva;
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'anular_reserva.dart';
+import 'barra_de_pestanas_admin.dart';
 import 'historial_reservas.dart';
 import 'listado_admin.dart';
 import 'pantalla_filtros_reservas.dart';
-import 'barra_de_pestanas_admin.dart';
 import 'tarjeta_reserva_admin.dart';
 
 /// El panel de administración: el historial global de reservas (CU-14), pestaña «Reservas».

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+
 import '../comun/boton.dart';
 import '../comun/en_curso.dart';
+import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
 import '../comun/reloj.dart';
 import '../comun/tarjeta_reserva.dart';
@@ -10,10 +12,9 @@ import '../espacios/iconos.dart';
 import '../sedes/fotos.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/fechas.dart';
-import 'reservas.dart';
 import 'accion_de_reserva.dart';
 import 'etiqueta_de_estado.dart';
+import 'reservas.dart';
 
 /// `Card-Reserva`: deporte, sede y dirección, precio y estado arriba; el espacio, la fecha
 /// y el horario abajo, con el porqué si se canceló o se anuló.

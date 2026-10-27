@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../sesion/fallo_de_carga.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
 import 'baja_espacio.dart';

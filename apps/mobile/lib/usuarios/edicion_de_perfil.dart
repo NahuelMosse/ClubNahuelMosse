@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../api/cliente_api.dart';
 import '../comun/boton.dart';
 import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
 import '../comun/formato_fecha.dart';
+import '../comun/reglas_registro.dart';
 import '../comun/reloj.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
-import '../comun/reglas_registro.dart';
 
 enum _Campo {
   nombre('nombre'),

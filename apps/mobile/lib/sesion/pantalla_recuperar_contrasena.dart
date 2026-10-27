@@ -6,10 +6,10 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/reglas_registro.dart';
 import '../comun/resultado.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/reglas_registro.dart';
 import 'recuperacion.dart';
 
 const avisoEnlaceEnviado =

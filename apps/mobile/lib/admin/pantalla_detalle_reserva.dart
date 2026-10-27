@@ -10,9 +10,9 @@ import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'anular_reserva.dart';
+import 'aviso_de_baja.dart';
 import 'historial_reservas.dart';
 import 'tarjeta_datos_de_reserva.dart';
-import 'aviso_de_baja.dart';
 import 'trazabilidad.dart';
 
 /// El detalle de una reserva del historial global (CU-14): datos y trazabilidad, y si la

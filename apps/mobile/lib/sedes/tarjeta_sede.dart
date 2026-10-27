@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+
 import '../comun/dorsal.dart';
 import '../comun/etiqueta.dart';
 import '../comun/fechas.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'fotos.dart';
-import 'sede.dart';
 import 'resumen_de_sede.dart';
+import 'sede.dart';
 
 /// `Card-Sede`: portada con nombre, dirección, horario y canchas; abajo, los deportes y
 /// «Ver canchas». Se toca entera.

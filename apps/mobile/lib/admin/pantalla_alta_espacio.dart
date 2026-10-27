@@ -17,8 +17,8 @@ import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
 import 'formulario_espacio.dart';
-import 'par_de_campos.dart';
 import 'nombre_generado.dart';
+import 'par_de_campos.dart';
 
 enum _Campo {
   sede('sede_id'),

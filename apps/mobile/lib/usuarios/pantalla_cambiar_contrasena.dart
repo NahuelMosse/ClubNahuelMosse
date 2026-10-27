@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
 import '../comun/formulario_contrasena.dart';
+import '../comun/reglas_contrasena.dart';
+import '../comun/reglas_registro.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
-import '../comun/reglas_contrasena.dart';
-import '../comun/reglas_registro.dart';
 
 enum _Campo { actual, nueva, repetida }
 
