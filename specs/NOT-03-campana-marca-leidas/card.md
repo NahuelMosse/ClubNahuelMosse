@@ -21,7 +21,7 @@ not_read:
 - T1 · S1,NOT-03-ASM-02 · apps/mobile/lib/notificaciones/pantalla_notificaciones.dart (presentation) · tests: apps/mobile/test/campana_marca_leidas_test.dart "abrir la campana y volver deja leídas las que se mostraron y la campana en cero @NOT-03-S1"; apps/mobile/test/campana_marca_leidas_test.dart "con el centro abierto las nuevas siguen marcadas sin leer @NOT-03-S1"; apps/mobile/test/campana_marca_leidas_test.dart "si la API no contesta al salir se ven leídas y la próxima lectura corrige @assumption:NOT-03-ASM-02"
   reuses: apps/mobile/lib/notificaciones/centro.dart `marcarTodas`
 - T2 · S2,NOT-03-ASM-01 · apps/mobile/lib/notificaciones/centro.dart (presentation), apps/mobile/lib/app.dart (presentation) · tests: apps/mobile/test/campana_marca_leidas_test.dart "tocar un push marca leídas las de ese tipo y reserva y abre la reserva @NOT-03-S2"; apps/mobile/test/campana_marca_leidas_test.dart "un push que no se toca sigue sin leer @assumption:NOT-03-ASM-01"
-  reuses: apps/mobile/lib/notificaciones/centro.dart `marcarLeida`; apps/mobile/lib/notificaciones/sistema.dart `AvisoTocado`
+  reuses: apps/mobile/lib/notificaciones/centro.dart `marcarLeida`; `AvisoTocado` (tipo y reserva del push)
 
 ## Changes to existing behavior
 
