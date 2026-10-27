@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de usuarios y su proveedor de dependencia se leen juntos
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
