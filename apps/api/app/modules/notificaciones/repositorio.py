@@ -286,7 +286,7 @@ class NotificacionesSql:
                 " WHERE n.reemplazada_por IS NULL"
                 " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
                 " AND n.envio = 'pendiente' AND (n.tipo <> 'recordatorio'"
-                " OR (n.creada_en < now() - CAST(:espera AS interval)"
+                " OR (n.creado_en < now() - CAST(:espera AS interval)"
                 " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio AND r.inicio > now()))"
                 " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"
                 " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
@@ -352,7 +352,7 @@ class NotificacionesSql:
                     " VALUES (:usuario, :token, :plataforma, :permiso)"
                     " ON CONFLICT (token) WHERE activo DO UPDATE SET"
                     " usuario_id = EXCLUDED.usuario_id, plataforma = EXCLUDED.plataforma,"
-                    " permiso = EXCLUDED.permiso, actualizado_en = now()"
+                    " permiso = EXCLUDED.permiso, modificado_en = now()"
                     " WHERE dispositivo.usuario_id = EXCLUDED.usuario_id"
                 ),
                 datos,
@@ -372,10 +372,10 @@ class NotificacionesSql:
     def de_usuario(self, usuario_id: UUID) -> tuple[list[Notificacion], int]:
         filas = self._conn.execute(
             text(
-                "SELECT id, tipo, titulo, cuerpo, reserva_id, creada_en,"
+                "SELECT id, tipo, titulo, cuerpo, reserva_id, creado_en AS creada_en,"
                 " leida_en IS NOT NULL AS leida FROM notificacion WHERE usuario_id = :usuario"
                 " AND reemplazada_por IS NULL"
-                f" ORDER BY creada_en DESC, id DESC LIMIT {LIMITE_DEL_CENTRO}"
+                f" ORDER BY creado_en DESC, id DESC LIMIT {LIMITE_DEL_CENTRO}"
             ),
             {"usuario": usuario_id},
         ).all()

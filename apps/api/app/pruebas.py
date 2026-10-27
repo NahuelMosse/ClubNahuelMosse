@@ -165,7 +165,7 @@ def dar_de_baja_espacio(pedido: Espacio, conn: Conexion) -> Response:
 def vencer(codigo: str, conn: Conexion) -> Response:
     conn.execute(
         text(
-            "UPDATE enlace_recuperacion SET emitido_en = clock_timestamp() - interval '1 hour',"
+            "UPDATE enlace_recuperacion SET creado_en = clock_timestamp() - interval '1 hour',"
             " vence_en = clock_timestamp() - interval '30 minutes' WHERE codigo_hash = :h"
         ),
         {"h": hash_de(codigo)},

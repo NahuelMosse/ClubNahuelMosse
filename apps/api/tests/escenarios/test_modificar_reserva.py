@@ -48,14 +48,14 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     reserva = api.post(
         "/reservas",
         headers=sesion,
-        json={"espacio_id": espacio, "fecha": manana.isoformat(), "desde": "21:00", "horas": 1},
+        json={"espacio_id": str(espacio), "fecha": manana.isoformat(), "desde": "21:00", "horas": 1},
     ).json()
 
     ayer = api.post(
         f"/reservas/{reserva['id']}/modificar",
         headers=sesion,
         json={
-            "espacio_id": espacio,
+            "espacio_id": str(espacio),
             "fecha": (manana - timedelta(days=2)).isoformat(),
             "desde": "10:00",
         },
@@ -63,7 +63,7 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     tarde = api.post(
         f"/reservas/{reserva['id']}/modificar",
         headers=sesion,
-        json={"espacio_id": espacio, "fecha": manana.isoformat(), "desde": "23:00"},
+        json={"espacio_id": str(espacio), "fecha": manana.isoformat(), "desde": "23:00"},
     )
 
     # Verifica: los dos cambios se rechazan por su regla.

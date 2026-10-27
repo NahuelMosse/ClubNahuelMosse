@@ -43,7 +43,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
         "/espacios",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "sede_id": sede,
+            "sede_id": str(sede),
             "deporte": "Futbol",
             "tipo": "F5",
             "techada": False,

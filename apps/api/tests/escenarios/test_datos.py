@@ -194,7 +194,7 @@ def _recordatorio(socio: Socio, envio: str, hace: str) -> None:
         conn.execute(
             text(
                 "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                " reserva_inicio, envio, creada_en, tomada_en, intentos)"
+                " reserva_inicio, envio, creado_en, tomada_en, intentos)"
                 " SELECT :u, 'recordatorio', 'Tu turno es en una hora', 'Fútbol 5 en la sede',"
                 " id, inicio, :envio, now() - CAST(:hace AS interval),"
                 " CASE WHEN :envio = 'enviando' THEN now() - CAST(:hace AS interval) END,"

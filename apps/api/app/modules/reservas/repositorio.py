@@ -44,7 +44,7 @@ _COLUMNAS_HISTORIAL = (
     " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL ELSE aviso.envio END"
     " AS aviso_envio,"
     " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL"
-    " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creada_en END AS aviso_en"
+    " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creado_en END AS aviso_en"
 )
 # Lo que los filtros del historial global miran: alcanza para contar.
 _JOIN_FILTROS = (

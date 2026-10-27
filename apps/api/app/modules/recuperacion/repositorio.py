@@ -13,7 +13,7 @@ _VIGENTE = """
     AND e.invalidado_en IS NULL
     AND e.vence_en > clock_timestamp()
     AND u.activo
-    AND (u.contrasena_cambiada_en IS NULL OR u.contrasena_cambiada_en < e.emitido_en)
+    AND (u.contrasena_cambiada_en IS NULL OR u.contrasena_cambiada_en < e.creado_en)
 """
 
 
@@ -42,7 +42,7 @@ class EnlacesSql:
             emitidos: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM enlace_recuperacion WHERE usuario_id = :u"
-                    " AND emitido_en > clock_timestamp() - interval '1 hour'"
+                    " AND creado_en > clock_timestamp() - interval '1 hour'"
                 ),
                 {"u": usuario_id},
             ).scalar_one()
