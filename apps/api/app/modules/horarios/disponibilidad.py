@@ -1,5 +1,6 @@
 from datetime import date, datetime, time
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.espacios import Espacio
 from app.modules.horarios.reglas import Agenda, rango, validar_rango
@@ -7,12 +8,12 @@ from app.shared.errores import DatosInvalidos, NoDisponible
 
 
 class Disponibilidad(Protocol):
-    def agenda_de_sede(self, sede_id: int) -> Agenda | None:
+    def agenda_de_sede(self, sede_id: UUID) -> Agenda | None:
         """El horario de la sede, o `None` si no está activa."""
         ...
 
     def libres(
-        self, sede_id: int, deporte: str, tipo: str | None, inicio: datetime, fin: datetime
+        self, sede_id: UUID, deporte: str, tipo: str | None, inicio: datetime, fin: datetime
     ) -> list[Espacio]:
         """Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas
         activas que pisen [inicio, fin), por deporte, tipo y número."""
@@ -21,7 +22,7 @@ class Disponibilidad(Protocol):
 
 def canchas_disponibles(
     disponibilidad: Disponibilidad,
-    sede_id: int,
+    sede_id: UUID,
     deporte: str,
     tipo: str | None,
     fecha: date,

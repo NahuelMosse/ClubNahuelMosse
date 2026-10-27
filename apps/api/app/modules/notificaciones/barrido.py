@@ -5,6 +5,7 @@ import asyncio
 import logging
 import sys
 from datetime import UTC, datetime
+from uuid import UUID
 
 from app.modules.notificaciones.casos_de_uso import (
     CanalPush,
@@ -31,7 +32,7 @@ def barrer_una_vez() -> int:
         return enviar_recordatorios(notificaciones, canal, datetime.now(UTC))
 
 
-def despachar_de(usuario_id: int, canal: CanalPush) -> None:
+def despachar_de(usuario_id: UUID, canal: CanalPush) -> None:
     """Manda lo que quedó pendiente de [usuario_id], con su propia conexión: corre cuando la
     respuesta ya salió. Un fallo acá no cambia lo que la persona hizo; el barrido lo retoma."""
     try:

@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from uuid import UUID
 
 from app.modules.notificaciones.almacen import Notificaciones
 from app.modules.notificaciones.reglas import Aviso, Notificacion, mensaje_recordatorio
@@ -18,8 +19,8 @@ _registro = logging.getLogger(__name__)
 def entregar(
     notificaciones: Notificaciones,
     canal: CanalPush,
-    notificacion_id: int,
-    usuario_id: int,
+    notificacion_id: UUID,
+    usuario_id: UUID,
     aviso: Aviso,
 ) -> None:
     """Manda un aviso ya registrado a los teléfonos con permiso y deja anotado cómo salió.
@@ -55,7 +56,7 @@ def entregar(
 
 
 def despachar_pendientes(
-    notificaciones: Notificaciones, canal: CanalPush, usuario_id: int | None = None
+    notificaciones: Notificaciones, canal: CanalPush, usuario_id: UUID | None = None
 ) -> int:
     """Manda los avisos que se registraron junto con el hecho que avisan, como la confirmación
     de una cancelación, y devuelve cuántos salieron a despacho.
@@ -88,7 +89,7 @@ def enviar_recordatorios(
     notificaciones: Notificaciones,
     canal: CanalPush,
     ahora: datetime,
-    usuario_id: int | None = None,
+    usuario_id: UUID | None = None,
 ) -> int:
     """Registra y envía el aviso de una hora antes de cada reserva a la que ya le toca, y
     devuelve cuántos registró.
@@ -143,7 +144,7 @@ def mis_notificaciones(
     return notificaciones.de_usuario(perfil.id)
 
 
-def marcar_leida(notificaciones: Notificaciones, perfil: Perfil, notificacion_id: int) -> None:
+def marcar_leida(notificaciones: Notificaciones, perfil: Perfil, notificacion_id: UUID) -> None:
     """Lanza `NoEncontrada` si la notificación no es de quien pide."""
     if not notificaciones.leer(perfil.id, notificacion_id):
         raise NoEncontrada("no hay una notificación suya con ese número")

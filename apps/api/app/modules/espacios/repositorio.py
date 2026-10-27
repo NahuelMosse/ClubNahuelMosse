@@ -1,6 +1,7 @@
 # kit-shape: el repositorio de espacios y las funciones que arman su entidad van juntos
 from collections.abc import Callable
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
@@ -32,9 +33,9 @@ _CANDADO_NUMERACION = 21
 
 def espacio_de_fila(fila: Any) -> Espacio:
     return Espacio(
-        id=int(fila.id),
+        id=fila.id,
         nombre=fila.nombre,
-        sede_id=int(fila.sede_id),
+        sede_id=fila.sede_id,
         sede=fila.sede,
         deporte=fila.deporte,
         tipo=fila.tipo,
@@ -51,7 +52,7 @@ class EspaciosSql:
 
     def activos(
         self,
-        sede_id: int | None = None,
+        sede_id: UUID | None = None,
         deporte: str | None = None,
         tipo: str | None = None,
     ) -> list[Espacio]:
@@ -59,7 +60,7 @@ class EspaciosSql:
             text(
                 f"SELECT {COLUMNAS_DE_ESPACIO} FROM espacio e JOIN sede s ON s.id = e.sede_id"
                 " WHERE e.activo AND s.activa"
-                " AND (CAST(:sede AS bigint) IS NULL OR e.sede_id = :sede)"
+                " AND (CAST(:sede AS uuid) IS NULL OR e.sede_id = :sede)"
                 " AND (CAST(:deporte AS text) IS NULL OR e.deporte = :deporte)"
                 " AND (CAST(:tipo AS text) IS NULL OR e.tipo = :tipo)"
                 " ORDER BY lower(s.nombre), s.id, e.deporte, e.tipo, e.numero"
@@ -69,7 +70,7 @@ class EspaciosSql:
         self._conn.rollback()
         return [espacio_de_fila(f) for f in filas]
 
-    def _sede(self, sede_id: int, bloquear: bool) -> SedeDelEspacio | None:
+    def _sede(self, sede_id: UUID, bloquear: bool) -> SedeDelEspacio | None:
         fila = self._conn.execute(
             text(
                 "SELECT nombre, calle, altura FROM sede WHERE id = :id AND activa"
@@ -81,7 +82,7 @@ class EspaciosSql:
 
     def _calcular(
         self,
-        sede_id: int,
+        sede_id: UUID,
         sede: SedeDelEspacio,
         deporte: str,
         tipo: str,
@@ -106,7 +107,7 @@ class EspaciosSql:
 
     def siguiente(
         self,
-        sede_id: int,
+        sede_id: UUID,
         deporte: str,
         tipo: str,
         nombre: Callable[[SedeDelEspacio, int], str],
@@ -117,7 +118,7 @@ class EspaciosSql:
         finally:
             self._conn.rollback()
 
-    def _repetido(self, nuevo: EspacioNuevo, numero: int, autor: int) -> Espacio | None:
+    def _repetido(self, nuevo: EspacioNuevo, numero: int, autor: UUID) -> Espacio | None:
         fila = self._conn.execute(
             text(
                 f"SELECT {COLUMNAS_DE_ESPACIO} FROM espacio e JOIN sede s ON s.id = e.sede_id"
@@ -145,7 +146,7 @@ class EspaciosSql:
         nuevo: EspacioNuevo,
         numero: int | None,
         nombre: Callable[[SedeDelEspacio, int], str],
-        autor: int,
+        autor: UUID,
     ) -> Espacio:
         try:
             with en_transaccion(self._conn):
@@ -199,7 +200,7 @@ class EspaciosSql:
             raise
         return espacio_de_fila(fila)
 
-    def actualizar(self, espacio_id: int, cambio: CambioDeEspacio, autor: int) -> Espacio:
+    def actualizar(self, espacio_id: UUID, cambio: CambioDeEspacio, autor: UUID) -> Espacio:
         datos = {
             "id": espacio_id,
             "techada": cambio.techada,
@@ -245,7 +246,7 @@ class EspaciosSql:
             ).one()
         return espacio_de_fila(fila)
 
-    def dar_de_baja(self, espacio_id: int, autor: int) -> None:
+    def dar_de_baja(self, espacio_id: UUID, autor: UUID) -> None:
         datos = {"id": espacio_id, "autor": autor}
         with en_transaccion(self._conn):
             # La sede compartida y después el espacio exclusivo, el orden de una reserva: la
@@ -278,7 +279,7 @@ class EspaciosSql:
                 datos,
             )
 
-    def dar_de_baja_de_sede(self, sede_id: int, autor: int) -> None:
+    def dar_de_baja_de_sede(self, sede_id: UUID, autor: UUID) -> None:
         """Da de baja los espacios activos de una sede, dentro de la transacción de quien llama:
         sin commit."""
         self._conn.execute(

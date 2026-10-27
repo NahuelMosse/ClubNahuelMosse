@@ -1,5 +1,6 @@
 from datetime import date
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.usuarios.registro import ProveedorIdentidad, RepositorioUsuarios, registrar
 from app.modules.usuarios.reglas import DatosRegistro, normalizar_correo
@@ -7,9 +8,9 @@ from app.shared.errores import CuentaExistente
 
 
 class RepositorioAdministradores(RepositorioUsuarios, Protocol):
-    def id_activo_por_correo(self, correo: str) -> int | None: ...
+    def id_activo_por_correo(self, correo: str) -> UUID | None: ...
 
-    def hacer_admin(self, id_usuario: int) -> None: ...
+    def hacer_admin(self, id_usuario: UUID) -> None: ...
 
 
 def sembrar_admin(
@@ -18,7 +19,7 @@ def sembrar_admin(
     identidad: ProveedorIdentidad,
     usuarios: RepositorioAdministradores,
     promover: bool = False,
-) -> int:
+) -> UUID:
     """Crea una cuenta de administrador con esos datos, o asciende la que ya existe.
 
     El rol no se elige al iniciar sesión: sale de la cuenta, y la primera se siembra así.

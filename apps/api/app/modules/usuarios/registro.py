@@ -1,6 +1,7 @@
 import logging
 from datetime import date
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.usuarios.reglas import DatosRegistro, Registro, validar_registro
 from app.shared.errores import DatosInvalidos, Duplicado
@@ -23,7 +24,7 @@ class RepositorioUsuarios(Protocol):
 
     def uid_activo(self, uid: str) -> bool: ...
 
-    def insertar(self, uid: str, registro: Registro) -> int:
+    def insertar(self, uid: str, registro: Registro) -> UUID:
         """Inserta y confirma el perfil. Lanza `Duplicado` si la base rechaza correo o DNI."""
         ...
 
@@ -48,7 +49,7 @@ def registrar(
     hoy: date,
     identidad: ProveedorIdentidad,
     usuarios: RepositorioUsuarios,
-) -> int:
+) -> UUID:
     registro, errores = validar_registro(datos, hoy)
     if registro is None:
         raise DatosInvalidos(errores)

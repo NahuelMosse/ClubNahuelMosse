@@ -1,18 +1,17 @@
-"""Lo que entra por HTTP: el identificador numérico, la hora `HH:MM` y la respuesta a un dato
+"""Lo que entra por HTTP: el identificador UUID, la hora `HH:MM` y la respuesta a un dato
 de forma inválida."""
 
 import re
 from datetime import time
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import Field
 
-# Un número de fila de la base: cabe en un bigint.
-ID_MAXIMO = 2**63 - 1
-Identificador = Annotated[int, Field(ge=1, le=ID_MAXIMO)]
+Identificador = Annotated[UUID, Field()]
 
 _HORA = re.compile(r"\d{2}:\d{2}", re.ASCII)
 

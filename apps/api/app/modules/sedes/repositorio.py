@@ -1,4 +1,5 @@
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
@@ -14,7 +15,7 @@ _COLUMNAS = "s.id, s.nombre, s.calle, s.altura, s.apertura, s.cierre, s.dias"
 
 def _sede(fila: Any, canchas: int, deportes: tuple[str, ...] = ()) -> Sede:
     return Sede(
-        id=int(fila.id),
+        id=fila.id,
         nombre=fila.nombre,
         calle=fila.calle,
         altura=int(fila.altura),
@@ -62,7 +63,7 @@ class SedesSql:
         self._conn.rollback()
         return [_sede(f, int(f.canchas), tuple(f.deportes)) for f in filas]
 
-    def insertar(self, nueva: SedeNueva, autor: int) -> Sede:
+    def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
         try:
             with en_transaccion(self._conn):
                 fila = self._conn.execute(
@@ -90,7 +91,7 @@ class SedesSql:
             raise
         return _sede(fila, canchas=0)
 
-    def actualizar(self, sede_id: int, datos: SedeNueva, autor: int, confirmar: bool) -> Sede:
+    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, confirmar: bool) -> Sede:
         valores = {
             "id": sede_id,
             "nombre": datos.nombre,
@@ -152,7 +153,7 @@ class SedesSql:
             raise NoEncontrada("la sede se dio de baja apenas se guardó")
         return guardada
 
-    def dar_de_baja(self, sede_id: int, autor: int) -> None:
+    def dar_de_baja(self, sede_id: UUID, autor: UUID) -> None:
         datos = {"id": sede_id, "autor": autor}
         with en_transaccion(self._conn):
             # Exclusiva: una reserva que se está haciendo en la sede termina antes y acá se la

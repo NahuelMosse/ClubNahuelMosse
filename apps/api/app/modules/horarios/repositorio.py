@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import Connection, text
 
@@ -17,7 +18,7 @@ class HorariosSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def agenda(self, espacio_id: int) -> Agenda | None:
+    def agenda(self, espacio_id: UUID) -> Agenda | None:
         fila = self._conn.execute(
             text(
                 "SELECT s.apertura, s.cierre, s.dias FROM espacio e"
@@ -29,7 +30,7 @@ class HorariosSql:
         self._conn.rollback()
         return None if fila is None else agenda_de_fila(fila)
 
-    def agenda_de_sede(self, sede_id: int) -> Agenda | None:
+    def agenda_de_sede(self, sede_id: UUID) -> Agenda | None:
         fila = self._conn.execute(
             text("SELECT apertura, cierre, dias FROM sede WHERE id = :id AND activa"),
             {"id": sede_id},
@@ -38,7 +39,7 @@ class HorariosSql:
         return None if fila is None else agenda_de_fila(fila)
 
     def libres(
-        self, sede_id: int, deporte: str, tipo: str | None, inicio: datetime, fin: datetime
+        self, sede_id: UUID, deporte: str, tipo: str | None, inicio: datetime, fin: datetime
     ) -> list[Espacio]:
         filas = self._conn.execute(
             text(
@@ -56,10 +57,10 @@ class HorariosSql:
 
     def ocupadas(
         self,
-        espacio_id: int,
+        espacio_id: UUID,
         desde: datetime,
         hasta: datetime,
-        salvo: tuple[int, int] | None = None,
+        salvo: tuple[UUID, UUID] | None = None,
     ) -> list[tuple[datetime, datetime]]:
         reserva, usuario = salvo or (None, None)
         filas = self._conn.execute(
@@ -67,8 +68,8 @@ class HorariosSql:
                 "SELECT inicio, fin FROM reserva"
                 " WHERE espacio_id = :id AND estado = 'activa'"
                 " AND inicio < :hasta AND fin > :desde"
-                " AND (CAST(:reserva AS bigint) IS NULL"
-                "      OR NOT (id = :reserva AND usuario_id = CAST(:usuario AS bigint)))"
+                " AND (CAST(:reserva AS uuid) IS NULL"
+                "      OR NOT (id = :reserva AND usuario_id = CAST(:usuario AS uuid)))"
             ),
             {
                 "id": espacio_id,

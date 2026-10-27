@@ -1,5 +1,6 @@
 import logging
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.sesion import Perfil
 from app.modules.usuarios.reglas import problemas_contrasena
@@ -20,7 +21,7 @@ class ClavesDeIdentidad(Protocol):
 
 
 class RastroDeContrasena(Protocol):
-    def marcar_cambio_de_contrasena(self, id_usuario: int) -> None: ...
+    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None: ...
 
 
 def cambiar_contrasena(

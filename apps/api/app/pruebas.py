@@ -65,7 +65,7 @@ def ocupar(ocupacion: Ocupacion, conn: Conexion) -> Response:
             "      LATERAL (SELECT (CAST(:fecha AS date) + make_interval(hours => :hora))"
             f"               AT TIME ZONE '{NOMBRE_ZONA_CLUB}' AS inicio) x,"
             "      (SELECT id FROM usuario WHERE CAST(:correo AS text) IS NULL"
-            "         AND id = (SELECT min(id) FROM usuario)"
+            "         AND id = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
             "       UNION ALL"
             "       SELECT id FROM usuario WHERE activo"
             "         AND lower(correo) = lower(CAST(:correo AS text))) u"
@@ -117,7 +117,7 @@ def anular(pedido: Espacio, conn: Conexion) -> Response:
     conn.execute(
         text(
             "UPDATE reserva r SET estado = 'anulada', motivo = 'mantenimiento de la cancha',"
-            " cancelada_en = now(), cancelada_por = (SELECT min(id) FROM usuario)"
+            " cancelada_en = now(), cancelada_por = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
             " FROM espacio e WHERE e.id = r.espacio_id AND e.nombre = :espacio"
             " AND r.estado = 'activa'"
         ),
@@ -137,7 +137,7 @@ def dar_de_baja_sede(pedido: NombreDeSede, conn: Conexion) -> Response:
     conn.execute(
         text(
             "UPDATE sede SET activa = false, dado_de_baja_en = now(),"
-            " dado_de_baja_por = (SELECT min(id) FROM usuario)"
+            " dado_de_baja_por = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
             " WHERE nombre = :nombre AND activa"
         ),
         pedido.model_dump(),
@@ -152,7 +152,7 @@ def dar_de_baja_espacio(pedido: Espacio, conn: Conexion) -> Response:
     conn.execute(
         text(
             "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
-            " dado_de_baja_por = (SELECT min(id) FROM usuario)"
+            " dado_de_baja_por = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
             " WHERE nombre = :espacio AND activo"
         ),
         pedido.model_dump(),

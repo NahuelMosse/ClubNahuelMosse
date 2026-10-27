@@ -1,5 +1,6 @@
 # kit-shape: las rutas de espacios y los modelos de sus pedidos y respuestas se leen juntos
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, Query, Response, status
 from fastapi.responses import JSONResponse
@@ -60,9 +61,9 @@ def ver_catalogo(_: Annotated[Perfil, Depends(usuario_actual)]) -> Catalogo:
 
 
 class EspacioVista(BaseModel):
-    id: int
+    id: UUID
     nombre: str
-    sede_id: int
+    sede_id: UUID
     sede: str
     deporte: str
     tipo: str

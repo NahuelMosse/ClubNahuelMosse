@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Literal
+from uuid import UUID
 
 Estado = Literal["activa", "completada", "cancelada", "anulada"]
 # Las cuatro pestañas del historial global (CU-14): «cancelada» no tiene pestaña propia,
@@ -20,9 +21,9 @@ class Reserva:
     está hoy, el total que se guardó al reservar y el estado de ahora (una activa que ya
     terminó es completada)."""
 
-    id: int
-    espacio_id: int
-    sede_id: int
+    id: UUID
+    espacio_id: UUID
+    sede_id: UUID
     espacio: str
     deporte: str
     tipo: str
@@ -44,7 +45,7 @@ class FiltrosHistorial:
     cualquier campo significa que ese filtro no se aplica."""
 
     estado: FiltroEstado | None = None
-    sede_id: int | None = None
+    sede_id: UUID | None = None
     deporte: str | None = None
     desde: date | None = None
     hasta: date | None = None
@@ -57,9 +58,9 @@ class ReservaHistorial:
     """Una reserva como la ve un administrador: con quién la hizo, cuándo se creó y, si
     corresponde, quién y cuándo la canceló o anuló."""
 
-    id: int
-    espacio_id: int
-    sede_id: int
+    id: UUID
+    espacio_id: UUID
+    sede_id: UUID
     espacio: str
     deporte: str
     tipo: str
@@ -71,7 +72,7 @@ class ReservaHistorial:
     total: int
     estado: Estado
     motivo: str | None
-    usuario_id: int
+    usuario_id: UUID
     usuario: str
     creado_en: datetime
     cancelada_en: datetime | None

@@ -3,6 +3,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal, Protocol
+from uuid import UUID
 
 from app.modules.espacios import CATALOGO
 from app.shared.zona import ZONA_CLUB
@@ -27,8 +28,8 @@ class Aviso:
 class Pendiente:
     """Un aviso ya registrado en el centro que todavía no salió hacia el teléfono."""
 
-    notificacion_id: int
-    usuario_id: int
+    notificacion_id: UUID
+    usuario_id: UUID
     aviso: Aviso
 
 
@@ -56,11 +57,11 @@ class CanalPush(Protocol):
 class Notificacion:
     """Una entrada del centro de notificaciones."""
 
-    id: int
+    id: UUID
     tipo: TipoDeAviso
     titulo: str
     cuerpo: str
-    reserva_id: int | None
+    reserva_id: UUID | None
     creada_en: datetime
     leida: bool
 
@@ -69,8 +70,8 @@ class Notificacion:
 class Recordatorio:
     """Una reserva activa a la que le toca el aviso de una hora antes."""
 
-    reserva_id: int
-    usuario_id: int
+    reserva_id: UUID
+    usuario_id: UUID
     inicio: datetime
     fin: datetime
     deporte: str
@@ -82,7 +83,7 @@ class Recordatorio:
 class ReservaAnulada:
     """Una reserva que el club canceló, con lo que hace falta para avisárselo a quien la hizo."""
 
-    reserva_id: int
+    reserva_id: UUID
     inicio: datetime
     deporte: str
     tipo: str
@@ -104,7 +105,7 @@ ESPERA_DEL_ENVIO = timedelta(minutes=10)
 class AvisoPerdido:
     """Un aviso que se dio por fallido sin haber salido: lo que hace falta para el log."""
 
-    notificacion_id: int
+    notificacion_id: UUID
     tipo: TipoDeAviso
 
 
@@ -130,7 +131,7 @@ def mensaje_recordatorio(r: Recordatorio) -> Aviso:
     )
 
 
-def datos_del_aviso(tipo: TipoDeAviso, reserva_id: int | None) -> dict[str, str]:
+def datos_del_aviso(tipo: TipoDeAviso, reserva_id: UUID | None) -> dict[str, str]:
     """Con qué datos la app sabe adónde llevar a la persona al tocar el aviso."""
     return {"tipo": tipo} | ({} if reserva_id is None else {"reserva_id": str(reserva_id)})
 
@@ -145,7 +146,7 @@ def _cuando(momento: datetime) -> str:
 class DatosDeReserva:
     """Lo que el aviso de cancelación necesita saber de la reserva cancelada."""
 
-    id: int
+    id: UUID
     deporte: str
     tipo: str
     sede: str
