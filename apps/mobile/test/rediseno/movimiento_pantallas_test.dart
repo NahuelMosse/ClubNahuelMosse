@@ -1,3 +1,5 @@
+import 'package:clubnahuelmosse/comun/zona_club.dart';
+import 'package:clubnahuelmosse/inicio/saludo_de_inicio.dart';
 import 'dart:async';
 import 'dart:convert';
 
@@ -380,7 +382,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final espera = Completer<void>();
-      await montarUsuario(tester, api: _apiSede(espera), inicio: '/sedes/00000000-0000-7000-8000-000000000001');
+      await montarUsuario(
+        tester,
+        api: _apiSede(espera),
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+      );
       const tenis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
       const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
       final titulo = tester.element(find.text('SEDE MORÓN'));
@@ -515,7 +521,13 @@ void main() {
         () => find.byType(TileDeporte).evaluate().isNotEmpty,
       );
 
-      expect(_aparecedores(tester, find.text('BUENOS DÍAS,')), isNotEmpty);
+      expect(
+        _aparecedores(
+          tester,
+          find.text(SaludoDeInicio.paraLaHora(ahoraEnElClub())),
+        ),
+        isNotEmpty,
+      );
       expect(
         _aparecedores(
           tester,
@@ -923,7 +935,8 @@ void main() {
       await montarUsuario(
         tester,
         api: apiRutas(rutasDeSedes()),
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+        inicio:
+            '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
       final linea = find.byType(LineaDelDia);
       expect(

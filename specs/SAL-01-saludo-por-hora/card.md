@@ -29,7 +29,7 @@ not_read:
 suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib/inicio apps/mobile/test/saludo_por_hora_test.dart apps/mobile/test/inicio_test.dart apps/mobile/test/rediseno/movimiento_pantallas_test.dart apps/mobile/integration_test/inicio/home_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
-refactor-tests: los tests que buscan «BUENOS DÍAS,» en el inicio fijan el reloj a la mañana del club con `withClock`; lo que verifican no cambia
+refactor-tests: los tests que buscaban «BUENOS DÍAS,» en el inicio (inicio_test, movimiento_pantallas_test, integration_test/inicio/home_test) esperan `SaludoDeInicio.paraLaHora(ahoraEnElClub())`, el saludo de la hora en que corren; lo demás que verifican no cambia
 no-docs: un texto de pantalla
 no-visual: cambia el texto del saludo, no su estilo ni su lugar
 ```
@@ -42,3 +42,4 @@ no-visual: cambia el texto del saludo, no su estilo ni su lugar
 - L4 · 2026-10-27 · replaces: apps/mobile/integration_test/inicio/home_test.dart "al iniciar sesión ve el Home con el saludo y su nombre @TP-01-H01-01 @supuesto:TP-01-SUP-07" · TP-01-SUP-07 fijaba el saludo; el pedido lo hace depender de la hora · by: apps/mobile/test/saludo_por_hora_test.dart "el saludo sigue la hora del club: días, tardes y noches @SAL-01-S1 @assumption:SAL-01-ASM-01"
 - L5 · 2026-10-27 · replaces: apps/mobile/test/rediseno/movimiento_pantallas_test.dart "el inicio entra escalonado: saludo, marcador, próxima reserva y tiles @RED-04-S6" · busca «BUENOS DÍAS,» con el reloj real; se fija el reloj a la mañana del club · by: el mismo test con `withClock`
 - L6 · 2026-10-27 · el test que reemplaza a L4 se titula "el saludo sigue la hora del club: días de 06:00 a 11:59, tardes de 12:00 a 19:59, noches de 20:00 a 05:59 @SAL-01-S1 @assumption:SAL-01-ASM-01" (el título nombra los tramos de SAL-01-ASM-01); el test de L4 queda esperando el saludo de la hora del club en que corre
+- L7 · 2026-10-27 · T1 · `SaludoDeInicio.paraLaHora` elige el saludo; el test de L5 y inicio_test esperan `paraLaHora(ahoraEnElClub())` en vez de fijar el reloj (la línea `refactor-tests:` del Gate), y el de L4 deja la etiqueta `@supuesto:TP-01-SUP-07`, que esta card reemplaza
