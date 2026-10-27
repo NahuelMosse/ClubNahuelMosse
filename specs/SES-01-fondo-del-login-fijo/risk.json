@@ -1,0 +1,18 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [],
+  "words": [
+    "login",
+    "sesión"
+  ],
+  "files": [
+    "apps/mobile/lib/sesion/formulario_de_inicio_sesion.dart"
+  ],
+  "tasks": 1
+}
