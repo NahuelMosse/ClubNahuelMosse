@@ -1,1 +1,2 @@
 - apps/api/app/modules/notificaciones/repositorio.py:247 · “False” → “None” · “fcuentaisNone:return@@vigente=self._conn.e” · `_sigue_vigente` sólo se usa como `if not self._sigue_vigente(datos)`: None y False se leen igual
+- apps/api/app/modules/reservas/repositorio.py:86 · “None” → “0” · “r(e.orig,"sqlstate",@@)==EXCLUSION_VIOLATI” · es el valor por defecto de `getattr` cuando el error no trae código: ni None ni 0 son iguales a "23P01", así que la comparación da lo mismo
