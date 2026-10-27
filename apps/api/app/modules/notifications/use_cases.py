@@ -4,17 +4,19 @@ from uuid import UUID
 
 from app.modules.notifications.rules import ChannelNotConfigured as ChannelNotConfigured
 from app.modules.notifications.rules import DeliveryResult as DeliveryResult
+from app.modules.notifications.email import notice_email
 from app.modules.notifications.rules import (
     Notice,
     Notification,
+    Recipient,
     Reminder,
-    reminder_email,
     reminder_message,
 )
 from app.modules.notifications.rules import PendingNotice as PendingNotice
 from app.modules.notifications.rules import PushChannel as PushChannel
 from app.modules.notifications.store import Notifications
 from app.modules.session import Profile
+from app.shared.config import config
 from app.shared.email import send
 from app.shared.errors import Forbidden, InvalidData, NotFound, Unavailable
 
@@ -23,20 +25,42 @@ PLATFORMS = ("android", "ios")
 _log = logging.getLogger(__name__)
 
 
+def _notify_by_email(
+    notifications: Notifications,
+    user_id: UUID,
+    notice: Notice,
+    recipient: Recipient | None,
+) -> None:
+    """The email stops nothing: the log carries the error type and not the address."""
+    try:
+        target = recipient or notifications.recipient(user_id)
+        if target is None or not target.email:
+            return
+        send(notice_email(notice, target, config.public_url))
+    except Exception as e:
+        _log.warning("el correo del aviso falló: %s", type(e).__name__)
+
+
 def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     notifications: Notifications,
     channel: PushChannel,
     notification_id: UUID,
     user_id: UUID,
     notice: Notice,
+    recipient: Recipient | None = None,
 ) -> None:
-    """Sends an already registered notice to the phones with permission and records how it went.
+    """Sends an already registered notice by email and to the phones with permission, and
+    records how the push went.
+
+    The email goes first and does not depend on the push; if it fails it only reaches the log.
+    Whoever already knows the recipient passes it, and otherwise it is looked up.
 
     With no device that has permission it stays only in the center: `sin_permiso` if there are
     devices that did not grant it and `sin_canal` if there is none to send it to, same as
     when there is no sending service. A delivery that fails is not retried from here: it is
     marked as failed.
     """
+    _notify_by_email(notifications, user_id, notice, recipient)
     tokens = notifications.tokens_with_permission(user_id)
     if not tokens:
         has_devices = notifications.has_devices(user_id)
@@ -86,16 +110,6 @@ def dispatch_pending(
     return dispatched
 
 
-def _notify_by_email(reminder: Reminder) -> None:
-    """The email stops nothing: the push already went out and the log does not carry the address."""
-    if not reminder.email:
-        return
-    try:
-        send(reminder_email(reminder))
-    except Exception as e:
-        _log.warning("el correo del recordatorio falló: %s", type(e).__name__)
-
-
 def send_reminders(
     notifications: Notifications,
     channel: PushChannel,
@@ -116,8 +130,8 @@ def send_reminders(
             if new_id is None:
                 continue
             registered += 1
-            deliver(notifications, channel, new_id, reminder.user_id, notice)
-            _notify_by_email(reminder)
+            known = Recipient(reminder.email, reminder.name)
+            deliver(notifications, channel, new_id, reminder.user_id, notice, known)
         except Exception as e:
             # One person's reminder does not cut the others.
             _log.warning("el recordatorio falló: %s", type(e).__name__)

@@ -7,7 +7,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Row, text
 
 from app.modules.notifications.rules import (
-    LEAD_TIME,
+    LEAD_TIME_BY_KIND,
     REMINDER_GRACE,
     SENDING_TIMEOUT,
     Delivery,
@@ -15,7 +15,9 @@ from app.modules.notifications.rules import (
     Notice,
     Notification,
     PendingNotice,
+    Recipient,
     Reminder,
+    ReminderKind,
     VoidedBooking,
     forced_cancellation_message,
     forced_cancellations_message,
@@ -177,6 +179,15 @@ class NotificationsSql:
         )
 
     def due(self, now: datetime, user_id: UUID | None) -> list[Reminder]:
+        return [
+            r
+            for kind in LEAD_TIME_BY_KIND
+            for r in self._due_of(kind, now, user_id)
+        ]
+
+    def _due_of(
+        self, kind: ReminderKind, now: datetime, user_id: UUID | None
+    ) -> list[Reminder]:
         rows = self._conn.execute(
             text(
                 "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede,"
@@ -191,10 +202,15 @@ class NotificationsSql:
                 " <= r.inicio - CAST(:anticipacion AS interval)"
                 " AND (CAST(:usuario AS uuid) IS NULL OR r.usuario_id = :usuario)"
                 " AND NOT EXISTS (SELECT 1 FROM notificacion n WHERE n.reserva_id = r.id"
-                " AND n.tipo = 'recordatorio' AND n.reserva_inicio = r.inicio)"
+                " AND n.tipo = :clase AND n.reserva_inicio = r.inicio)"
                 " ORDER BY r.inicio, r.id"
             ),
-            {"ahora": now, "usuario": user_id, "anticipacion": LEAD_TIME},
+            {
+                "ahora": now,
+                "usuario": user_id,
+                "anticipacion": LEAD_TIME_BY_KIND[kind],
+                "clase": kind,
+            },
         ).all()
         self._conn.rollback()
         return [
@@ -208,6 +224,7 @@ class NotificationsSql:
                 venue=row.sede,
                 email=row.correo,
                 name=row.nombre_usuario,
+                reminder_kind=kind,
             )
             for row in rows
         ]
@@ -219,7 +236,8 @@ class NotificationsSql:
             "cuerpo": notice.body,
             "reserva": reminder.booking_id,
             "inicio": reminder.starts_at,
-            "anticipacion": LEAD_TIME,
+            "anticipacion": LEAD_TIME_BY_KIND[reminder.reminder_kind],
+            "clase": reminder.reminder_kind,
         }
         with in_transaction(self._conn):
             # Between `due` looking and here, the booking may have been cancelled, voided or
@@ -231,10 +249,11 @@ class NotificationsSql:
             row = self._conn.execute(
                 text(
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                    " reserva_inicio, envio) VALUES (:usuario, 'recordatorio', :titulo, :cuerpo,"
+                    " reserva_inicio, envio) VALUES (:usuario, :clase, :titulo, :cuerpo,"
                     " :reserva, :inicio, 'pendiente')"
-                    " ON CONFLICT (reserva_id, reserva_inicio) WHERE tipo = 'recordatorio'"
-                    " DO NOTHING RETURNING id"
+                    # No target: each class has its own partial unique index, and one whose
+                    # predicate has a parameter cannot be inferred.
+                    " ON CONFLICT DO NOTHING RETURNING id"
                 ),
                 params,
             ).first()
@@ -257,6 +276,14 @@ class NotificationsSql:
             params,
         ).first()
         return current is not None
+
+    def recipient(self, user_id: UUID) -> Recipient | None:
+        row = self._conn.execute(
+            text("SELECT correo, nombre FROM usuario WHERE id = :usuario AND activo"),
+            {"usuario": user_id},
+        ).first()
+        self._conn.rollback()
+        return None if row is None else Recipient(email=row.correo, name=row.nombre)
 
     def tokens_with_permission(self, user_id: UUID) -> list[str]:
         rows = self._conn.execute(
@@ -285,7 +312,7 @@ class NotificationsSql:
             dead = self._conn.execute(
                 text(
                     "UPDATE notificacion n SET envio = 'fallida' WHERE n.envio = 'pendiente'"
-                    " AND n.tipo = 'recordatorio'"
+                    " AND n.tipo IN ('recordatorio', 'recordatorio_cinco')"
                     " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
                     " AND NOT EXISTS (SELECT 1 FROM reserva r WHERE r.id = n.reserva_id"
                     " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio"
@@ -315,7 +342,8 @@ class NotificationsSql:
                 " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
                 " WHERE n.reemplazada_por IS NULL"
                 " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
-                " AND n.envio = 'pendiente' AND (n.tipo <> 'recordatorio'"
+                " AND n.envio = 'pendiente'"
+                " AND (n.tipo NOT IN ('recordatorio', 'recordatorio_cinco')"
                 " OR (n.creado_en < now() - CAST(:espera AS interval)"
                 " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio AND r.inicio > now()))"
                 " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"

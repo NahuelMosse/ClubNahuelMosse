@@ -1,0 +1,23 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "README.md",
+    "docs/capturas/00-carga.jpg",
+    "docs/capturas/01-login.jpg",
+    "docs/capturas/03-sedes.jpg",
+    "docs/capturas/04-sede.jpg",
+    "docs/capturas/06-confirmar.jpg",
+    "docs/capturas/08-reservas.jpg",
+    "docs/capturas/10-perfil.jpg",
+    "docs/capturas/11-inicio-claro.jpg",
+    "docs/capturas/12-admin-reservas.png"
+  ],
+  "tasks": 1
+}

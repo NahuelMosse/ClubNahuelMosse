@@ -9,6 +9,7 @@ from app.modules.notifications.rules import (
     Notice,
     Notification,
     PendingNotice,
+    Recipient,
     Reminder,
 )
 
@@ -22,6 +23,10 @@ class Notifications(Protocol):
     def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
         """Saves the notice in the center. `None` if it was already there: another sweep
         registered it."""
+        ...
+
+    def recipient(self, user_id: UUID) -> Recipient | None:
+        """The email and name of [user_id]. `None` if there is no such person."""
         ...
 
     def tokens_with_permission(self, user_id: UUID) -> list[str]: ...

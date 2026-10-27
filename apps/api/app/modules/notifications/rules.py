@@ -10,10 +10,23 @@ from app.shared.club_timezone import CLUB_TIMEZONE
 from app.shared.email_template import html_email
 from app.shared.message import Message
 
-NoticeKind = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
+NoticeKind = Literal[
+    "recordatorio", "recordatorio_cinco", "cancelacion_forzosa", "cancelacion_usuario"
+]
+ReminderKind = Literal["recordatorio", "recordatorio_cinco"]
 Delivery = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
 
 LEAD_TIME = timedelta(hours=1)
+FIVE_MINUTE_LEAD_TIME = timedelta(minutes=5)
+# Each reminder class: how long before the booking it goes out and the title it carries.
+LEAD_TIME_BY_KIND: dict[ReminderKind, timedelta] = {
+    "recordatorio": LEAD_TIME,
+    "recordatorio_cinco": FIVE_MINUTE_LEAD_TIME,
+}
+TITLE_BY_KIND: dict[ReminderKind, str] = {
+    "recordatorio": "Tu reserva es en 1 hora",
+    "recordatorio_cinco": "Tu reserva empieza en 5 minutos",
+}
 WEEKDAYS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
 
 
@@ -24,6 +37,14 @@ class Notice:
     title: str
     body: str
     data: dict[str, str]
+
+
+@dataclass(frozen=True)
+class Recipient:
+    """Who the notice reaches by email."""
+
+    email: str
+    name: str
 
 
 @dataclass(frozen=True)
@@ -81,6 +102,7 @@ class Reminder:
     venue: str
     email: str = ""
     name: str = ""
+    reminder_kind: ReminderKind = "recordatorio"
 
 
 @dataclass(frozen=True)
@@ -127,13 +149,13 @@ def _time(moment: datetime) -> str:
 
 
 def reminder_message(r: Reminder) -> Notice:
-    """The one-hour-ahead notice: short kind, venue and the time range."""
+    """The reminder notice (an hour or five minutes ahead): short kind, venue and the time range."""
     return Notice(
-        title="Tu reserva es en 1 hora",
+        title=TITLE_BY_KIND[r.reminder_kind],
         body=(
             f"{short_kind(r.sport, r.kind)} · {r.venue} · {_time(r.starts_at)} – {_time(r.ends_at)}"
         ),
-        data=notice_data("recordatorio", r.booking_id),
+        data=notice_data(r.reminder_kind, r.booking_id),
     )
 
 

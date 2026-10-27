@@ -3,7 +3,8 @@
 Cómo está hecha la app: las piezas, cómo se hablan, los flujos principales y las decisiones que explican la forma del
 código. Para ubicar un archivo, [`mapa-del-codigo.md`](mapa-del-codigo.md). Para el modelo de datos columna por columna,
 las amenazas, los secretos y los datos personales, [`system-design.md`](system-design.md). Para operar, el
-[runbook](runbook.md).
+[runbook](runbook.md). Los servicios externos y dónde se integra cada uno, en
+[`integraciones.md`](integraciones.md).
 
 ## Qué es
 
