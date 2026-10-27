@@ -6,12 +6,12 @@ import '../comun/barra_superior.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/formulario_contrasena.dart';
-import '../comun/resultado.dart';
-import '../tema/tokens.dart';
 import '../comun/reglas_contrasena.dart';
 import '../comun/reglas_registro.dart';
-import 'recuperacion.dart';
+import '../comun/resultado.dart';
+import '../tema/tokens.dart';
 import 'fallo_de_carga.dart';
+import 'recuperacion.dart';
 import 'sesion.dart';
 import 'tarjeta_cuenta.dart';
 

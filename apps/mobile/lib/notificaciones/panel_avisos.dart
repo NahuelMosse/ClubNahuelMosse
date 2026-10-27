@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../comun/movimiento.dart';
 import '../comun/reloj.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'centro.dart';
+import 'encabezado_del_panel.dart';
 import 'notificacion.dart';
 import 'tarjeta_aviso.dart';
 
@@ -160,58 +160,7 @@ class _ContenidoDelPanel extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              // Un lector de pantalla anuncia el panel cuando aparece.
-                              child: Semantics(
-                                header: true,
-                                liveRegion: true,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: Medidas.s4,
-                                  ),
-                                  child: Text(
-                                    'NOTIFICACIONES',
-                                    style: Textos.sobretitulo.copyWith(
-                                      color: p.textMuted,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Semantics(
-                              button: true,
-                              label: 'MARCAR TODAS',
-                              excludeSemantics: true,
-                              onTap: centro.marcarTodas,
-                              child: InkWell(
-                                onTap: centro.marcarTodas,
-                                borderRadius: BorderRadius.circular(
-                                  Medidas.radioMd,
-                                ),
-                                child: ConstrainedBox(
-                                  constraints: const BoxConstraints(
-                                    minHeight: kMinInteractiveDimension,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: Medidas.s8,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        'MARCAR TODAS',
-                                        style: Textos.sobretitulo.copyWith(
-                                          color: p.accentInk,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        EncabezadoDelPanel(alMarcarTodas: centro.marcarTodas),
                         const SizedBox(height: Medidas.s4),
                         Flexible(
                           child: ListView.separated(

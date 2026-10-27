@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'crece.dart';
 import 'horarios.dart';
 import 'marco_elegible.dart';
-import 'crece.dart';
 
 class TarjetaFranja extends StatelessWidget {
   const TarjetaFranja({

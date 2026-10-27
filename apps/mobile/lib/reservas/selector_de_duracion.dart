@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../comun/fechas.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/fechas.dart';
-import 'reglas_busqueda.dart';
 import 'boton_redondo.dart';
+import 'reglas_busqueda.dart';
 
 /// `Stepper-Duracion`: una hora menos, la duración y una hora más.
 class SelectorDeDuracion extends StatelessWidget {

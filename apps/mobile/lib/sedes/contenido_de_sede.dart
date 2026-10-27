@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
-import '../comun/carga_de_lista.dart';
 import 'package:go_router/go_router.dart';
-import '../comun/estado_vacio.dart';
+
+import '../comun/carga_de_lista.dart';
 import '../espacios/espacio.dart';
 import '../espacios/iconos.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fotos.dart';
-import 'portada_con_titulo.dart';
-import 'sede.dart';
 import 'etiqueta_clara.dart';
 import 'filtro_de_canchas.dart';
-import 'tarjeta_cancha.dart';
+import 'fotos.dart';
+import 'lista_de_canchas.dart';
+import 'portada_con_titulo.dart';
 import 'resumen_de_sede.dart';
+import 'sede.dart';
 
 class ContenidoDeSede extends StatelessWidget {
   const ContenidoDeSede({
@@ -154,33 +154,12 @@ class ContenidoDeSede extends StatelessWidget {
                 CambioDeLista(
                   child: filtrando
                       ? const EsperaDeLista(key: ValueKey('carga'))
-                      : Column(
+                      : ListaDeCanchas(
                           key: ValueKey((deporte, tipo)),
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (todas.isEmpty)
-                              const EstadoVacio(
-                                titulo: 'Todavía no hay canchas',
-                                texto:
-                                    'Esta sede no tiene canchas disponibles por el momento.',
-                              )
-                            else if (canchas.isEmpty)
-                              const EstadoVacio(
-                                titulo: 'No hay canchas con este filtro',
-                                texto:
-                                    'Probá con otro deporte o con otro tipo.',
-                              ),
-                            for (final cancha in canchas) ...[
-                              TarjetaCancha(
-                                cancha: cancha,
-                                catalogo: catalogo,
-                                alReservar: () => context.go(
-                                  '/sedes/${sede.id}/canchas/${cancha.id}',
-                                ),
-                              ),
-                              const SizedBox(height: Medidas.s16),
-                            ],
-                          ],
+                          sedeId: sede.id,
+                          canchas: canchas,
+                          todas: todas,
+                          catalogo: catalogo,
                         ),
                 ),
               ],

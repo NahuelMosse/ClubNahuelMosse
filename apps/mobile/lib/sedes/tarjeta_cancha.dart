@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+
 import '../comun/boton.dart';
-import '../comun/etiqueta.dart';
 import '../comun/formato_precio.dart';
 import '../comun/marco_de_tarjeta.dart';
 import '../espacios/espacio.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fotos.dart';
 import 'etiquetas_y_precio.dart';
+import 'foto_de_cancha.dart';
 
 /// `Card-Cancha`: la foto de su deporte con el tipo y el nombre, sus datos, el precio y
 /// «VER HORARIOS / RESERVAR».
@@ -42,29 +42,7 @@ class TarjetaCancha extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(
-                  height: 180,
-                  child: FotoConVelo(
-                    imagen: fotoDeDeporte(cancha.deporte),
-                    child: Padding(
-                      padding: const EdgeInsets.all(Medidas.s12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Etiqueta(texto: tipo, sobreFoto: true),
-                          Text(
-                            cancha.nombre,
-                            style: Textos.mono.copyWith(
-                              fontSize: 12,
-                              color: p.textOnMedia,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                FotoDeCancha(cancha: cancha, tipo: tipo),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(
                     Medidas.s16,

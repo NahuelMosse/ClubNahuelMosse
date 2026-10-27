@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+
 import '../comun/movimiento.dart';
 import '../tema/tokens.dart';
 import 'acceso_de_inicio.dart';
-import 'titulo_de_inicio.dart';
 import 'animacion_de_tiles.dart';
+import 'titulo_de_inicio.dart';
 
 /// ACCESOS RÁPIDOS: buscar una cancha o recorrer las sedes.
 class AccesosDeInicio extends StatelessWidget {

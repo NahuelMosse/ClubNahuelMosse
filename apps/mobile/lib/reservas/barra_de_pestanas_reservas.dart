@@ -16,7 +16,7 @@ class BarraDePestanasReservas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    Widget pestana(String texto, bool esHistorial) {
+    Widget pestana(String texto, {required bool esHistorial}) {
       final elegida = historial == esHistorial;
       return Expanded(
         child: ChipElegible(
@@ -39,9 +39,9 @@ class BarraDePestanasReservas extends StatelessWidget {
       ),
       child: Row(
         children: [
-          pestana('Próximas', false),
+          pestana('Próximas', esHistorial: false),
           const SizedBox(width: Medidas.s4),
-          pestana('Historial', true),
+          pestana('Historial', esHistorial: true),
         ],
       ),
     );

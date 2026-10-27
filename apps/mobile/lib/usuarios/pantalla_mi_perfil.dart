@@ -4,21 +4,12 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/apariencia.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/boton.dart';
 import '../comun/dialogo_error.dart';
-import '../comun/movimiento.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tokens.dart';
-import 'cabecera_de_perfil.dart';
-import 'datos_de_perfil.dart';
-import 'edicion_de_perfil.dart';
-import 'modo_oscuro.dart';
 import 'confirmar_baja.dart';
-import 'tarjeta_de_perfil.dart';
-import 'boton_chico.dart';
-import 'fila_de_perfil.dart';
+import 'contenido_de_mi_perfil.dart';
 
 /// Mi perfil: todos los datos de la cuenta, pedidos a la API cada vez que se abre, y los
 /// accesos a lo que se puede hacer con ella.
@@ -154,98 +145,21 @@ class _PantallaMiPerfilState extends State<PantallaMiPerfil> {
                     ),
                   )
                 : const SizedBox.shrink())
-          // Una pantalla corta y fija: todo queda armado aunque salga de la vista.
-          : SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  CabeceraDePerfil(perfil: perfil),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      Medidas.s24,
-                      Medidas.s20,
-                      Medidas.s24,
-                      Medidas.s48,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Aparecer(
-                          retraso: const Duration(milliseconds: 100),
-                          child: TarjetaDePerfil(
-                            titulo: 'DATOS PERSONALES',
-                            accion: _editando
-                                ? null
-                                : BotonChico(
-                                    texto: 'Editar',
-                                    icono: Icons.edit_outlined,
-                                    alTocar: () =>
-                                        setState(() => _editando = true),
-                                  ),
-                            child: _editando
-                                ? EdicionDePerfil(
-                                    perfil: perfil,
-                                    sesion: widget.sesion,
-                                    alGuardar: (nuevo) {
-                                      if (!mounted) return;
-                                      setState(() {
-                                        _perfil = nuevo;
-                                        _editando = false;
-                                      });
-                                    },
-                                  )
-                                : DatosDePerfil(perfil: perfil),
-                          ),
-                        ),
-                        const SizedBox(height: Medidas.s16),
-                        Aparecer(
-                          retraso: const Duration(milliseconds: 180),
-                          child: TarjetaDePerfil(
-                            titulo: 'SEGURIDAD',
-                            child: FilaDePerfil(
-                              icono: Icons.lock_outline_rounded,
-                              texto: 'Cambiar contraseña',
-                              alTocar: () => context.push('/perfil/contrasena'),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: Medidas.s16),
-                        Aparecer(
-                          retraso: const Duration(milliseconds: 260),
-                          child: TarjetaDePerfil(
-                            titulo: 'APARIENCIA',
-                            child: ModoOscuro(apariencia: widget.apariencia),
-                          ),
-                        ),
-                        const SizedBox(height: Medidas.s20),
-                        Aparecer(
-                          retraso: const Duration(milliseconds: 340),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              BotonContorno(
-                                texto: 'CERRAR SESIÓN',
-                                alTocar: _dandoDeBaja
-                                    ? null
-                                    : () =>
-                                          cerrarSesion(context, widget.sesion),
-                              ),
-                              const SizedBox(height: Medidas.s8),
-                              BotonContorno(
-                                texto: _dandoDeBaja
-                                    ? 'ELIMINANDO TU CUENTA…'
-                                    : 'ELIMINAR CUENTA',
-                                peligro: true,
-                                alTocar: _dandoDeBaja ? null : _confirmarBaja,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          : ContenidoDeMiPerfil(
+              perfil: perfil,
+              sesion: widget.sesion,
+              apariencia: widget.apariencia,
+              editando: _editando,
+              dandoDeBaja: _dandoDeBaja,
+              alEditar: () => setState(() => _editando = true),
+              alGuardar: (nuevo) {
+                if (!mounted) return;
+                setState(() {
+                  _perfil = nuevo;
+                  _editando = false;
+                });
+              },
+              alConfirmarBaja: _confirmarBaja,
             ),
     );
   }

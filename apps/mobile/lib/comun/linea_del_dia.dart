@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
-import 'fechas.dart';
 import '../tema/tokens.dart';
+import 'fechas.dart';
+import 'horas_de_la_linea.dart';
 
 /// Estado de una hora en la [LineaDelDia].
 enum EstadoFranja { libre, ocupada, elegida }
@@ -17,7 +18,6 @@ class LineaDelDia extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    final marca = Textos.mono.copyWith(fontSize: 11, color: p.textPrimary);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -79,28 +79,7 @@ class LineaDelDia extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          ExcludeSemantics(
-            child: Row(
-              children: [
-                for (var i = 0; i < franjas.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 3),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: i % 4 == 0
-                          ? Text(
-                              dosCifras(desde + i),
-                              style: marca,
-                              softWrap: false,
-                              overflow: TextOverflow.visible,
-                            )
-                          : null,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          HorasDeLaLinea(cantidad: franjas.length, desde: desde),
         ],
       ),
     );

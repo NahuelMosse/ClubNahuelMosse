@@ -3,35 +3,18 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
-import '../comun/calendario.dart';
 import '../comun/boton.dart';
-import '../comun/campo_texto.dart';
+import '../comun/calendario.dart';
 import '../comun/dialogo_error.dart';
 import '../comun/errores_de_campo.dart';
 import '../comun/faltantes.dart';
-import '../comun/formato_fecha.dart';
 import '../comun/reglas_registro.dart';
 import '../comun/reloj.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'campo_de_registro.dart';
+import 'encabezado_de_registro.dart';
+import 'formulario_de_registro.dart';
 import 'registro.dart';
-import 'aviso_de_registro.dart';
-
-/// Los campos del formulario, con el nombre que usa la API.
-enum _Campo {
-  nombre('nombre'),
-  apellido('apellido'),
-  dni('dni'),
-  fechaNacimiento('fecha_nacimiento'),
-  correo('correo'),
-  contrasena('contrasena');
-
-  const _Campo(this.clave);
-  final String clave;
-
-  static _Campo? deLaApi(String clave) =>
-      values.where((c) => c.clave == clave).firstOrNull;
-}
 
 class PantallaRegistro extends StatefulWidget {
   const PantallaRegistro({super.key, required this.api, this.hoy});
@@ -47,12 +30,12 @@ class PantallaRegistro extends StatefulWidget {
 
 class _PantallaRegistroState extends State<PantallaRegistro> {
   final _controladores = [
-    for (final _ in _Campo.values) TextEditingController(),
+    for (final _ in CampoDeRegistro.values) TextEditingController(),
   ];
-  final _focos = [for (final _ in _Campo.values) FocusNode()];
-  final _textos = [for (final _ in _Campo.values) ''];
-  final _tocados = <_Campo>{};
-  final _erroresDelServidor = <_Campo, String>{};
+  final _focos = [for (final _ in CampoDeRegistro.values) FocusNode()];
+  final _textos = [for (final _ in CampoDeRegistro.values) ''];
+  final _tocados = <CampoDeRegistro>{};
+  final _erroresDelServidor = <CampoDeRegistro, String>{};
   bool _intentoCrear = false;
   String? _aviso;
 
@@ -71,7 +54,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   @override
   void initState() {
     super.initState();
-    for (final campo in _Campo.values) {
+    for (final campo in CampoDeRegistro.values) {
       _focos[campo.index].addListener(() {
         // Salir de un campo vacío no marca nada: eso lo hace el intento de crear la cuenta.
         if (!_focos[campo.index].hasFocus && _valor(campo).isNotEmpty) {
@@ -83,13 +66,13 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   }
 
   /// Sólo un cambio de texto invalida lo que dijo la API; mover el cursor, no.
-  void _alCambiar(_Campo campo) {
+  void _alCambiar(CampoDeRegistro campo) {
     final texto = _controladores[campo.index].text;
     if (texto == _textos[campo.index]) return;
     setState(() {
       _textos[campo.index] = texto;
       _erroresDelServidor.remove(campo);
-      if (campo == _Campo.correo || campo == _Campo.dni) {
+      if (campo == CampoDeRegistro.correo || campo == CampoDeRegistro.dni) {
         _aviso = null;
         _huboCorte = false;
         _yaExiste = false;
@@ -108,39 +91,44 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     super.dispose();
   }
 
-  String _valor(_Campo c) => _controladores[c.index].text;
+  String _valor(CampoDeRegistro c) => _controladores[c.index].text;
 
-  String? _errorDeRegla(_Campo campo) => switch (campo) {
-    _Campo.nombre => validarNombre(
+  String? _errorDeRegla(CampoDeRegistro campo) => switch (campo) {
+    CampoDeRegistro.nombre => validarNombre(
       _valor(campo),
       obligatorio: 'El nombre es obligatorio',
     ),
-    _Campo.apellido => validarNombre(
+    CampoDeRegistro.apellido => validarNombre(
       _valor(campo),
       obligatorio: 'El apellido es obligatorio',
     ),
-    _Campo.dni => validarDni(_valor(campo)),
-    _Campo.fechaNacimiento => validarFechaNacimiento(_valor(campo), _hoy),
-    _Campo.correo => validarCorreo(_valor(campo)),
-    _Campo.contrasena => validarContrasena(_valor(campo)),
+    CampoDeRegistro.dni => validarDni(_valor(campo)),
+    CampoDeRegistro.fechaNacimiento => validarFechaNacimiento(
+      _valor(campo),
+      _hoy,
+    ),
+    CampoDeRegistro.correo => validarCorreo(_valor(campo)),
+    CampoDeRegistro.contrasena => validarContrasena(_valor(campo)),
   };
 
-  String? _errorVisible(_Campo campo) => errorAMostrar(
+  String? _errorVisible(CampoDeRegistro campo) => errorAMostrar(
     delServidor: _erroresDelServidor[campo],
     deRegla: _errorDeRegla(campo),
     intentado: _intentoCrear,
     tocado: _tocados.contains(campo),
   );
 
-  bool get _completo => _Campo.values.every((c) => _errorDeRegla(c) == null);
+  bool get _completo =>
+      CampoDeRegistro.values.every((c) => _errorDeRegla(c) == null);
 
   Future<void> _crearCuenta() async {
     if (_enviando) return;
-    final fecha = leerFecha(_valor(_Campo.fechaNacimiento));
+    final fecha = leerFecha(_valor(CampoDeRegistro.fechaNacimiento));
     if (!_completo || fecha == null) {
       setState(() => _intentoCrear = true);
       enfocarElPrimerFaltante([
-        for (final c in _Campo.values) (_focos[c.index], _errorDeRegla(c)),
+        for (final c in CampoDeRegistro.values)
+          (_focos[c.index], _errorDeRegla(c)),
       ]);
       return;
     }
@@ -152,12 +140,12 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     try {
       final r = await _servicio.registrar(
         DatosDeRegistro(
-          nombre: _valor(_Campo.nombre),
-          apellido: _valor(_Campo.apellido),
-          dni: _valor(_Campo.dni),
+          nombre: _valor(CampoDeRegistro.nombre),
+          apellido: _valor(CampoDeRegistro.apellido),
+          dni: _valor(CampoDeRegistro.dni),
           fechaNacimiento: fecha,
-          correo: _valor(_Campo.correo),
-          contrasena: _valor(_Campo.contrasena),
+          correo: _valor(CampoDeRegistro.correo),
+          contrasena: _valor(CampoDeRegistro.contrasena),
         ),
       );
       if (!mounted) return;
@@ -176,7 +164,7 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
       } else {
         setState(() {
           for (final MapEntry(:key, :value) in errores.entries) {
-            final campo = _Campo.deLaApi(key);
+            final campo = CampoDeRegistro.deLaApi(key);
             if (campo != null) _erroresDelServidor[campo] = value;
           }
           _aviso = r.codigo == 409 && mensaje is String ? mensaje : null;
@@ -199,50 +187,18 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
   Future<void> _elegirFecha() async {
     final elegida = await elegirFechaDeNacimiento(
       context,
-      leerFecha(_valor(_Campo.fechaNacimiento)) ?? DateTime(_hoy.year - 20),
+      leerFecha(_valor(CampoDeRegistro.fechaNacimiento)) ??
+          DateTime(_hoy.year - 20),
     );
     if (elegida == null || !mounted) return;
-    _controladores[_Campo.fechaNacimiento.index].text = formatearFecha(elegida);
-    setState(() => _tocados.add(_Campo.fechaNacimiento));
-  }
-
-  CampoTexto _campo(
-    _Campo campo, {
-    required String etiqueta,
-    required String accesible,
-    required String placeholder,
-    TextInputType? teclado,
-    Widget? accionFinal,
-    bool oculto = false,
-    Iterable<String>? autocompletar,
-  }) {
-    return CampoTexto(
-      etiqueta: etiqueta,
-      etiquetaAccesible: accesible,
-      controlador: _controladores[campo.index],
-      foco: _focos[campo.index],
-      placeholder: placeholder,
-      error: _errorVisible(campo),
-      teclado: teclado,
-      oculto: oculto,
-      habilitado: !_enviando,
-      accionFinal: accionFinal,
-      autocompletar: autocompletar,
-      accion: campo == _Campo.contrasena
-          ? TextInputAction.done
-          : TextInputAction.next,
-      formateadores: switch (campo) {
-        _Campo.dni => [formatoDni],
-        _Campo.fechaNacimiento => const [FormatoFecha()],
-        _ => null,
-      },
+    _controladores[CampoDeRegistro.fechaNacimiento.index].text = formatearFecha(
+      elegida,
     );
+    setState(() => _tocados.add(CampoDeRegistro.fechaNacimiento));
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = context.paleta;
-    final aviso = _aviso;
     return Scaffold(
       appBar: BarraSuperior(
         titulo: 'Registro',
@@ -260,94 +216,16 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_yaExiste) ...[
-                const AvisoDeRegistro(
-                  texto:
-                      'Tu cuenta ya existe: el registro se completó antes del corte. '
-                      'Iniciá sesión con tu correo y tu contraseña.',
-                ),
-                BotonTexto(
-                  texto: 'INICIAR SESIÓN',
-                  alTocar: () => context.go('/'),
-                ),
-                const SizedBox(height: Medidas.s16),
-              ] else if (aviso != null) ...[
-                AvisoDeRegistro(texto: aviso),
-                const SizedBox(height: Medidas.s16),
-              ],
-              Text(
-                'Creá tu cuenta',
-                style: Textos.h1.copyWith(color: p.textPrimary),
-              ),
-              const SizedBox(height: Medidas.s4),
-              Text(
-                'Todos los campos son obligatorios.',
-                style: Textos.leyenda.copyWith(color: p.textSecondary),
-              ),
-              const SizedBox(height: Medidas.s16),
-              _campo(
-                _Campo.nombre,
-                etiqueta: 'NOMBRE',
-                accesible: 'Nombre',
-                placeholder: 'Tu nombre',
-                teclado: TextInputType.name,
-                autocompletar: const [AutofillHints.givenName],
-              ),
-              const SizedBox(height: Medidas.s16),
-              _campo(
-                _Campo.apellido,
-                etiqueta: 'APELLIDO',
-                accesible: 'Apellido',
-                placeholder: 'Tu apellido',
-                teclado: TextInputType.name,
-                autocompletar: const [AutofillHints.familyName],
-              ),
-              const SizedBox(height: Medidas.s16),
-              _campo(
-                _Campo.dni,
-                etiqueta: 'DNI',
-                accesible: 'DNI',
-                placeholder: '00.000.000',
-                teclado: TextInputType.number,
-              ),
-              const SizedBox(height: Medidas.s16),
-              _campo(
-                _Campo.fechaNacimiento,
-                etiqueta: 'FECHA DE NACIMIENTO',
-                accesible: 'Fecha de nacimiento',
-                placeholder: 'DD / MM / AAAA',
-                teclado: TextInputType.number,
-                accionFinal: IconButton(
-                  tooltip: 'Elegir fecha',
-                  onPressed: _enviando ? null : _elegirFecha,
-                  icon: Icon(
-                    Icons.calendar_today_outlined,
-                    color: p.textSecondary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: Medidas.s16),
-              _campo(
-                _Campo.correo,
-                etiqueta: 'CORREO ELECTRÓNICO',
-                accesible: 'Correo electrónico',
-                placeholder: 'tu@correo.com',
-                teclado: TextInputType.emailAddress,
-                autocompletar: const [AutofillHints.email],
-              ),
-              const SizedBox(height: Medidas.s16),
-              _campo(
-                _Campo.contrasena,
-                etiqueta: 'CONTRASEÑA',
-                accesible: 'Contraseña',
-                placeholder: '8+ caracteres, mayúscula y número',
-                oculto: !_contrasenaVisible,
-                autocompletar: const [AutofillHints.newPassword],
-                accionFinal: VerContrasena(
-                  visible: _contrasenaVisible,
-                  alCambiar: () =>
-                      setState(() => _contrasenaVisible = !_contrasenaVisible),
-                ),
+              EncabezadoDeRegistro(yaExiste: _yaExiste, aviso: _aviso),
+              FormularioDeRegistro(
+                controladores: _controladores,
+                focos: _focos,
+                errorDe: _errorVisible,
+                enviando: _enviando,
+                contrasenaVisible: _contrasenaVisible,
+                alElegirFecha: _elegirFecha,
+                alCambiarVisibilidad: () =>
+                    setState(() => _contrasenaVisible = !_contrasenaVisible),
               ),
               const SizedBox(height: Medidas.s16),
               BotonPrimario(

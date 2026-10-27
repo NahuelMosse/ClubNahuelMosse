@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+
+import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
 import '../comun/marco_de_tarjeta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/fechas.dart';
 import 'horarios.dart';
 
 /// La tarjeta de resumen: el precio, y el total con el horario y la fecha elegidos.

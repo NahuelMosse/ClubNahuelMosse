@@ -58,23 +58,8 @@ Page<void> paginaDeResultado(
   );
 }
 
-/// Una pantalla que sube desde abajo y sale hacia abajo.
-Page<void> paginaQueSube(
-  BuildContext context,
-  GoRouterState estado,
-  Widget hijo,
-) {
-  final quieta = MediaQuery.disableAnimationsOf(context);
-  return CustomTransitionPage<void>(
-    key: estado.pageKey,
-    child: hijo,
-    transitionDuration: quieta ? Duration.zero : Movimiento.subida,
-    reverseTransitionDuration: quieta ? Duration.zero : Movimiento.subida,
-    transitionsBuilder: _subida,
-  );
-}
-
-/// Lo mismo que [paginaQueSube], para una ruta que se abre con el `Navigator`.
+/// Una pantalla que sube desde abajo y sale hacia abajo, para una ruta que se abre con el
+/// `Navigator`.
 Route<T> rutaQueSube<T>(
   BuildContext context, {
   required WidgetBuilder builder,

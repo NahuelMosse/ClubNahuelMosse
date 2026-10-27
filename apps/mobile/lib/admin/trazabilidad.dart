@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+
+import '../comun/fechas.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'historial_reservas.dart';
 import 'paso_de_trazabilidad.dart';
-import '../comun/fechas.dart';
-import '../comun/marco_de_tarjeta.dart';
 
 class Trazabilidad extends StatelessWidget {
   const Trazabilidad({super.key, required this.reserva});

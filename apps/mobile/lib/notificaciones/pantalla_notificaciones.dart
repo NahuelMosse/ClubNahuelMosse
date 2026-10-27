@@ -12,8 +12,8 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'centro.dart';
 import 'notificacion.dart';
-import 'tarjeta_aviso.dart';
 import 'notificaciones_desactivadas.dart';
+import 'tarjeta_aviso.dart';
 
 /// `Centro de notificaciones`: las notificaciones agrupadas por día, con las sin leer
 /// marcadas. Sin permiso del sistema, dice «Notificaciones desactivadas» y ofrece activarlas.

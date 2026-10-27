@@ -4,21 +4,21 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
-import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
-import '../comun/en_curso.dart';
 import '../comun/errores_no_manejados.dart';
 import '../comun/formato_precio.dart';
-import '../comun/selector.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tokens.dart';
 import 'baja_espacio.dart';
+import 'boton_de_baja_de_espacio.dart';
+import 'campo_de_precio_por_hora.dart';
+import 'campos_fijos_de_espacio.dart';
 import 'formulario_espacio.dart';
 import 'nombre_generado.dart';
-import 'par_de_campos.dart';
+import 'par_de_condiciones_de_espacio.dart';
 
 /// «Editar espacio deportivo»: condición, iluminación y precio. La sede, el deporte, el
 /// tipo y el nombre compuesto se ven pero no cambian.
@@ -176,19 +176,17 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
     );
   }
 
+  /// El precio cargado vale: el error se ve recién cuando se lo cambia.
+  String? get _errorDelPrecio =>
+      _errorDelServidor ??
+      (leerPrecio(_precio.text) == widget.espacio.precioPorHora
+          ? null
+          : errorDePrecio(_precio.text));
+
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
     final e = widget.espacio;
-    final catalogo = _catalogo;
-    final deporte = catalogo?.deporte(e.deporte)?.nombre ?? e.deporte;
-    final tipo = catalogo?.tipoCorto(e.deporte, e.tipo) ?? e.tipo;
-    // El precio cargado vale: el error se ve recién cuando se lo cambia.
-    final errorDelPrecio =
-        _errorDelServidor ??
-        (leerPrecio(_precio.text) == e.precioPorHora
-            ? null
-            : errorDePrecio(_precio.text));
     return PopScope(
       // Mientras se guarda no se sale: el cambio quedaría hecho sin que se viera.
       canPop: !_ocupado,
@@ -203,69 +201,22 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 ...encabezadoDeEspacio(context, 'Editar espacio deportivo'),
-                CampoSelector(
-                  etiqueta: 'SEDE',
-                  etiquetaAccesible: 'Sede',
-                  valor: e.sede,
-                  placeholder: '',
-                  icono: Icons.expand_more_rounded,
-                  alTocar: null,
-                  soloLectura: true,
+                ...camposFijosDeEspacio(e, _catalogo),
+                ParDeCondicionesDeEspacio(
+                  techada: _techada,
+                  iluminada: _iluminada,
+                  alElegirCondicion: _ocupado
+                      ? null
+                      : () => _elegirSiNo(condicion: true),
+                  alElegirIluminacion: _ocupado
+                      ? null
+                      : () => _elegirSiNo(condicion: false),
                 ),
                 const SizedBox(height: Medidas.s12),
-                CampoSelector(
-                  etiqueta: 'DEPORTE',
-                  etiquetaAccesible: 'Deporte',
-                  valor: deporte,
-                  placeholder: '',
-                  icono: Icons.expand_more_rounded,
-                  alTocar: null,
-                  soloLectura: true,
-                ),
-                const SizedBox(height: Medidas.s12),
-                CampoSelector(
-                  etiqueta: 'TIPO',
-                  etiquetaAccesible: 'Tipo',
-                  valor: tipo,
-                  placeholder: '',
-                  icono: Icons.expand_more_rounded,
-                  alTocar: null,
-                  soloLectura: true,
-                ),
-                const SizedBox(height: Medidas.s12),
-                ParDeCampos(
-                  izquierda: CampoSelector(
-                    etiqueta: 'CONDICIÓN',
-                    etiquetaAccesible: 'Condición',
-                    valor: _techada ? 'Techada' : 'Al aire libre',
-                    placeholder: '',
-                    icono: Icons.expand_more_rounded,
-                    alTocar: _ocupado
-                        ? null
-                        : () => _elegirSiNo(condicion: true),
-                  ),
-                  derecha: CampoSelector(
-                    etiqueta: 'ILUMINACIÓN',
-                    etiquetaAccesible: 'Iluminación',
-                    valor: _iluminada ? 'Iluminada' : 'Sin iluminación',
-                    placeholder: '',
-                    icono: Icons.expand_more_rounded,
-                    alTocar: _ocupado
-                        ? null
-                        : () => _elegirSiNo(condicion: false),
-                  ),
-                ),
-                const SizedBox(height: Medidas.s12),
-                CampoTexto(
-                  etiqueta: 'PRECIO POR HORA',
-                  etiquetaAccesible: 'Precio por hora',
+                CampoDePrecioPorHora(
                   controlador: _precio,
-                  placeholder: '\$ 0',
-                  error: errorDelPrecio,
+                  error: _errorDelPrecio,
                   habilitado: !_ocupado,
-                  teclado: TextInputType.number,
-                  accion: TextInputAction.done,
-                  formateadores: const [FormatoPrecio()],
                 ),
                 const SizedBox(height: Medidas.s16),
                 NombreGenerado(nombre: e.nombre),
@@ -283,14 +234,10 @@ class _PantallaEditarEspacioState extends State<PantallaEditarEspacio> {
                       : () => Navigator.of(context).maybePop(),
                 ),
                 const SizedBox(height: Medidas.s12),
-                if (_dandoDeBaja)
-                  const EnCurso('Dando de baja el espacio')
-                else
-                  BotonContorno(
-                    texto: 'DAR DE BAJA EL ESPACIO',
-                    peligro: true,
-                    alTocar: _ocupado ? null : _darDeBaja,
-                  ),
+                BotonDeBajaDeEspacio(
+                  dandoDeBaja: _dandoDeBaja,
+                  alTocar: _ocupado ? null : _darDeBaja,
+                ),
               ],
             ),
           ),

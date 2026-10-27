@@ -7,12 +7,12 @@ import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/sesion.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'anular_reserva.dart';
+import 'aviso_de_baja.dart';
+import 'cabecera_de_detalle_reserva.dart';
 import 'historial_reservas.dart';
 import 'tarjeta_datos_de_reserva.dart';
-import 'aviso_de_baja.dart';
 import 'trazabilidad.dart';
 
 /// El detalle de una reserva del historial global (CU-14): datos y trazabilidad, y si la
@@ -93,34 +93,8 @@ class _PantallaDetalleReservaState extends State<PantallaDetalleReserva> {
         body: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  Medidas.s8,
-                  Medidas.s16,
-                  Medidas.s24,
-                  Medidas.s8,
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: _anulando
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      tooltip: 'Volver',
-                      icon: const Icon(Icons.arrow_back_rounded),
-                      color: p.textPrimary,
-                    ),
-                    Expanded(
-                      child: Semantics(
-                        header: true,
-                        child: Text(
-                          'Detalle de reserva',
-                          style: Textos.h2.copyWith(color: p.textPrimary),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              CabeceraDeDetalleReserva(
+                alVolver: _anulando ? null : () => Navigator.of(context).pop(),
               ),
               Expanded(
                 child: SingleChildScrollView(

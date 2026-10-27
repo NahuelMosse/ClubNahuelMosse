@@ -36,7 +36,7 @@ Future<ResultadoDeError> atenderErrorDeRed(
   final reintentar = await showDialog<bool>(
     context: context,
     barrierColor: context.paleta.bgScrim,
-    builder: (context) => _Modal(
+    builder: (context) => ModalDeAviso(
       icono: sinConexion ? Icons.wifi_off_rounded : Icons.cloud_off_rounded,
       titulo: sinConexion ? 'Error de conexión' : 'Error del servidor',
       texto: switch (error) {
@@ -78,7 +78,7 @@ Future<void> _avisarDeHorario(
 ) => showDialog<void>(
   context: context,
   barrierColor: context.paleta.bgScrim,
-  builder: (context) => _Modal(
+  builder: (context) => ModalDeAviso(
     icono: Icons.schedule_rounded,
     titulo: titulo,
     texto: texto,
@@ -86,31 +86,13 @@ Future<void> _avisarDeHorario(
   ),
 );
 
-/// La confirmación de cancelar una reserva ([texto] dice cuál). Devuelve `true` si la
-/// persona confirmó.
-Future<bool> confirmarCancelacion(BuildContext context, String texto) async =>
-    await showDialog<bool>(
-      context: context,
-      barrierColor: context.paleta.bgScrim,
-      builder: (context) => _Modal(
-        icono: Icons.warning_amber_rounded,
-        titulo: '¿Cancelar la reserva?',
-        texto: texto,
-        principal: 'CANCELAR RESERVA',
-        principalPeligro: true,
-        secundaria: 'NO CANCELAR',
-        secundariaContorno: true,
-      ),
-    ) ??
-    false;
-
 /// El horario nuevo de una sede deja afuera reservas futuras: GUARDAR IGUAL devuelve
 /// `true`.
 Future<bool> confirmarHorarioNuevo(BuildContext context, String texto) async =>
     await showDialog<bool>(
       context: context,
       barrierColor: context.paleta.bgScrim,
-      builder: (context) => _Modal(
+      builder: (context) => ModalDeAviso(
         icono: Icons.warning_amber_rounded,
         titulo: '¿Guardar el horario nuevo?',
         texto: texto,
@@ -121,75 +103,11 @@ Future<bool> confirmarHorarioNuevo(BuildContext context, String texto) async =>
     ) ??
     false;
 
-/// Confirmar la baja de una sede: DAR DE BAJA devuelve `true`.
-Future<bool> confirmarBajaDeSede(BuildContext context, String texto) async =>
-    await showDialog<bool>(
-      context: context,
-      barrierColor: context.paleta.bgScrim,
-      builder: (context) => _Modal(
-        icono: Icons.warning_amber_rounded,
-        titulo: '¿Dar de baja la sede?',
-        texto: texto,
-        principal: 'DAR DE BAJA',
-        principalPeligro: true,
-        secundaria: 'CANCELAR',
-        secundariaContorno: true,
-      ),
-    ) ??
-    false;
-
-/// La sede tiene reservas pendientes y no se puede dar de baja.
-Future<void> mostrarSedeConReservas(BuildContext context) => showDialog<void>(
-  context: context,
-  barrierColor: context.paleta.bgScrim,
-  builder: (context) => const _Modal(
-    icono: Icons.event_busy_rounded,
-    titulo: 'No se puede dar de baja la sede',
-    texto:
-        'La sede posee reservas futuras asociadas a sus espacios deportivos. '
-        'Gestionalas primero.',
-    principal: 'ACEPTAR',
-  ),
-);
-
-/// Confirmar la baja del espacio [nombre]: CONFIRMAR BAJA devuelve `true`.
-Future<bool> confirmarBajaDeEspacio(
-  BuildContext context,
-  String nombre,
-) async =>
-    await showDialog<bool>(
-      context: context,
-      barrierColor: context.paleta.bgScrim,
-      builder: (context) => _Modal(
-        icono: Icons.warning_amber_rounded,
-        titulo: '¿Dar de baja el espacio?',
-        texto: '$nombre. La acción es permanente.',
-        principal: 'CONFIRMAR BAJA',
-        principalPeligro: true,
-        secundaria: 'CANCELAR',
-        secundariaContorno: true,
-      ),
-    ) ??
-    false;
-
-/// El espacio tiene reservas pendientes y no se puede dar de baja.
-Future<void> mostrarEspacioConReservas(BuildContext context) =>
-    showDialog<void>(
-      context: context,
-      barrierColor: context.paleta.bgScrim,
-      builder: (context) => const _Modal(
-        icono: Icons.event_busy_rounded,
-        titulo: 'No se puede dar de baja el espacio',
-        texto: 'El espacio posee reservas futuras. Gestionalas primero.',
-        principal: 'ACEPTAR',
-      ),
-    );
-
 /// La reserva quedó cancelada.
 Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
   context: context,
   barrierColor: context.paleta.bgScrim,
-  builder: (context) => const _Modal(
+  builder: (context) => const ModalDeAviso(
     icono: Icons.check_circle_outline_rounded,
     exito: true,
     titulo: 'Reserva cancelada con éxito',
@@ -202,7 +120,7 @@ Future<void> mostrarCancelada(BuildContext context) => showDialog<void>(
 Future<void> mostrarReservaAnulada(BuildContext context) => showDialog<void>(
   context: context,
   barrierColor: context.paleta.bgScrim,
-  builder: (context) => const _Modal(
+  builder: (context) => const ModalDeAviso(
     icono: Icons.check_circle_outline_rounded,
     exito: true,
     titulo: 'Reserva anulada correctamente',
@@ -218,7 +136,7 @@ Future<void> mostrarCambioMientrasTanto(
 ) => showDialog<void>(
   context: context,
   barrierColor: context.paleta.bgScrim,
-  builder: (context) => const _Modal(
+  builder: (context) => const ModalDeAviso(
     icono: Icons.sync_problem_rounded,
     titulo: 'Esto cambió mientras tanto',
     texto:
@@ -236,7 +154,7 @@ Future<void> mostrarSesionVencida(BuildContext context) => showDialog<void>(
   barrierColor: context.paleta.bgScrim,
   builder: (context) => const PopScope(
     canPop: false,
-    child: _Modal(
+    child: ModalDeAviso(
       icono: Icons.cloud_off_rounded,
       titulo: 'Tu sesión expiró',
       texto:
@@ -261,8 +179,9 @@ Color textoSobre(Color fondo, Paleta p) {
 
 /// `Modal` del prototipo: ícono en círculo, título, texto y hasta dos acciones. La
 /// principal cierra con `true` y la secundaria con `false`.
-class _Modal extends StatelessWidget {
-  const _Modal({
+class ModalDeAviso extends StatelessWidget {
+  const ModalDeAviso({
+    super.key,
     required this.icono,
     required this.titulo,
     required this.texto,

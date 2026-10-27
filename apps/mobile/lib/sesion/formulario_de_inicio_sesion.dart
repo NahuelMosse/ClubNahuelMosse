@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../comun/reserva_pendiente.dart';
+
 import '../api/cliente_api.dart';
 import '../comun/boton.dart';
-import '../comun/campo_texto.dart';
 import '../comun/movimiento.dart';
-import '../comun/snackbar.dart';
-import '../tema/tema.dart';
+import '../comun/reserva_pendiente.dart';
 import '../tema/tokens.dart';
+import 'aviso_de_inicio_sesion.dart';
+import 'campos_de_inicio_sesion.dart';
+import 'enlace_a_registro.dart';
 import 'fallo_de_carga.dart';
-import 'sesion.dart';
 import 'fondo_de_inicio_sesion.dart';
 import 'marca_de_inicio_sesion.dart';
+import 'sesion.dart';
 
 const mensajeCredencialesInvalidas =
     'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
@@ -107,7 +108,6 @@ class _FormularioDeInicioSesionState extends State<FormularioDeInicioSesion> {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    final aviso = _aviso;
     return Scaffold(
       backgroundColor: p.bgBase,
       body: Stack(
@@ -129,49 +129,17 @@ class _FormularioDeInicioSesionState extends State<FormularioDeInicioSesion> {
                   const SizedBox(height: Medidas.s24),
                   Aparecer(
                     retraso: const Duration(milliseconds: 460),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        CampoTexto(
-                          etiquetaAccesible: 'Correo',
-                          placeholder: 'Correo',
-                          controlador: _correo,
-                          error: _errorCorreo,
-                          teclado: TextInputType.emailAddress,
-                          autocompletar: const [AutofillHints.email],
-                          accion: TextInputAction.next,
-                          habilitado: !_enviando,
-                        ),
-                        const SizedBox(height: Medidas.s12),
-                        CampoTexto(
-                          etiquetaAccesible: 'Contraseña',
-                          placeholder: 'Contraseña',
-                          controlador: _contrasena,
-                          error: _errorContrasena,
-                          oculto: !_contrasenaVisible,
-                          autocompletar: const [AutofillHints.password],
-                          accion: TextInputAction.done,
-                          alEnviar: (_) => _ingresar(),
-                          habilitado: !_enviando,
-                          accionFinal: VerContrasena(
-                            visible: _contrasenaVisible,
-                            alCambiar: () => setState(
-                              () => _contrasenaVisible = !_contrasenaVisible,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: Medidas.s12),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: BotonTexto(
-                            texto: '¿Olvidaste tu contraseña?',
-                            sobreFoto: true,
-                            alTocar: _enviando
-                                ? null
-                                : () => context.go('/recuperar-contrasena'),
-                          ),
-                        ),
-                      ],
+                    child: CamposDeInicioSesion(
+                      correo: _correo,
+                      contrasena: _contrasena,
+                      errorCorreo: _errorCorreo,
+                      errorContrasena: _errorContrasena,
+                      contrasenaVisible: _contrasenaVisible,
+                      enviando: _enviando,
+                      alEnviar: _ingresar,
+                      alCambiarVisibilidad: () => setState(
+                        () => _contrasenaVisible = !_contrasenaVisible,
+                      ),
                     ),
                   ),
                   const SizedBox(height: Medidas.s24),
@@ -186,47 +154,16 @@ class _FormularioDeInicioSesionState extends State<FormularioDeInicioSesion> {
                   const SizedBox(height: Medidas.s24),
                   Aparecer(
                     retraso: const Duration(milliseconds: 620),
-                    child: Wrap(
-                      alignment: WrapAlignment.center,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(
-                          '¿No tenés cuenta?',
-                          style: Textos.leyenda.copyWith(
-                            color: p.textOnMediaMuted,
-                          ),
-                        ),
-                        BotonTexto(
-                          texto: 'COMENZAR',
-                          icono: Icons.arrow_forward_rounded,
-                          sobreFoto: true,
-                          alTocar: _enviando
-                              ? null
-                              : () => context.go('/registro'),
-                        ),
-                      ],
-                    ),
+                    child: EnlaceARegistro(enviando: _enviando),
                   ),
                 ],
               ),
             ),
           ),
-          Positioned(
-            left: Medidas.s24,
-            right: Medidas.s24,
-            bottom: Medidas.s24,
-            child: SafeArea(
-              top: false,
-              child: Temblor(
-                disparador: _avisos,
-                child: aviso == null
-                    ? const SizedBox.shrink()
-                    : SnackbarError(
-                        texto: aviso,
-                        alCerrar: () => setState(() => _aviso = null),
-                      ),
-              ),
-            ),
+          AvisoDeInicioSesion(
+            aviso: _aviso,
+            avisos: _avisos,
+            alCerrar: () => setState(() => _aviso = null),
           ),
         ],
       ),

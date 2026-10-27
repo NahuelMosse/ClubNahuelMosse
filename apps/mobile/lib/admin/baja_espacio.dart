@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../comun/dialogo_error.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/sesion.dart';
 import 'baja.dart';
+import 'dialogos_de_baja.dart';
 
 /// Confirma y da de baja [espacio] (CU-23). Con [volverAlListado] (se llegó desde la
 /// edición), termina en el listado de espacios del panel.

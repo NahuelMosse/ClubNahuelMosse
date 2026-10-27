@@ -6,7 +6,7 @@ import 'package:clubnahuelmosse/comun/barra_inferior.dart';
 import 'package:clubnahuelmosse/comun/boton.dart';
 import 'package:clubnahuelmosse/comun/calendario.dart';
 import 'package:clubnahuelmosse/comun/campo_texto.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
+import 'package:clubnahuelmosse/admin/dialogos_de_baja.dart';
 import 'package:clubnahuelmosse/comun/selector.dart';
 import 'package:clubnahuelmosse/comun/reloj.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';

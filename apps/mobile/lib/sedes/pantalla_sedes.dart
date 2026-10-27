@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../comun/carga_de_lista.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
+import '../comun/carga_de_lista.dart';
 import '../comun/estado_vacio.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
@@ -11,12 +11,12 @@ import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'resumen_de_sede.dart';
 import 'sede.dart';
 import 'sedes.dart';
 import 'tarjeta_sede.dart';
 
 export 'tarjeta_sede.dart' show TarjetaSede;
-import 'resumen_de_sede.dart';
 
 /// «Todas las sedes»: el catálogo del club, desde la pestaña SEDES.
 class PantallaSedes extends StatefulWidget {

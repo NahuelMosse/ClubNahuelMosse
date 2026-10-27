@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'boton.dart';
+import 'acciones_de_resultado.dart';
+import 'detalle_de_resultado.dart';
 import 'movimiento.dart';
 
 enum TonoResultado { exito, aviso, peligro }
@@ -58,7 +59,6 @@ class PantallaResultado extends StatelessWidget {
       TonoResultado.aviso => (p.bgSurfaceRaised, p.textSecondary),
       TonoResultado.peligro => (p.stateDangerMuted, p.stateDangerInk),
     };
-    final textoSecundario = secundaria;
     return Scaffold(
       backgroundColor: p.bgBase,
       body: SafeArea(
@@ -96,78 +96,18 @@ class PantallaResultado extends StatelessWidget {
                 Aparecer(
                   retraso: const Duration(milliseconds: 460),
                   desdeY: 14,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        texto,
-                        textAlign: TextAlign.center,
-                        style: Textos.cuerpo.copyWith(color: p.textSecondary),
-                      ),
-                      if (detalle case final dato?) ...[
-                        const SizedBox(height: Medidas.s16),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: Medidas.s16,
-                            vertical: Medidas.s8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: p.bgBase,
-                            borderRadius: BorderRadius.circular(
-                              Medidas.radioMd,
-                            ),
-                            border: Border.all(color: p.accentInk),
-                          ),
-                          child: Text(
-                            dato,
-                            textAlign: TextAlign.center,
-                            // La mono fina en el lima oscuro del modo claro no llega a 4,5:1.
-                            style: Textos.mono.copyWith(
-                              color:
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? p.accentInk
-                                  : p.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                  child: DetalleDeResultado(texto: texto, detalle: detalle),
                 ),
                 SizedBox(height: separacionAcciones),
                 Aparecer(
                   retraso: const Duration(milliseconds: 550),
                   desdeY: 14,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      BotonPrimario(
-                        texto: principal,
-                        alTocar: alTocarPrincipal,
-                      ),
-                      if (textoSecundario != null) ...[
-                        const SizedBox(height: Medidas.s8),
-                        Center(
-                          child: cargandoSecundaria
-                              ? const SizedBox(
-                                  height: Medidas.altoControl,
-                                  child: Center(
-                                    child: SizedBox.square(
-                                      dimension: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                      ),
-                                    ),
-                                  ),
-                                )
-                              : BotonTexto(
-                                  texto: textoSecundario,
-                                  alTocar: alTocarSecundaria,
-                                ),
-                        ),
-                      ],
-                    ],
+                  child: AccionesDeResultado(
+                    principal: principal,
+                    alTocarPrincipal: alTocarPrincipal,
+                    secundaria: secundaria,
+                    alTocarSecundaria: alTocarSecundaria,
+                    cargandoSecundaria: cargandoSecundaria,
                   ),
                 ),
               ],
