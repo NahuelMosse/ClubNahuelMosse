@@ -16,7 +16,7 @@ class _CanalQueCuenta:
 
     def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         self.llamadas += 1
-        return DeliveryResult(enviados=1, invalidos=[])
+        return DeliveryResult(sent=1, invalid=())
 
 
 def _enviando(motor: Engine, minutos: int) -> UUID:

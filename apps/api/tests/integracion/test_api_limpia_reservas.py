@@ -90,7 +90,7 @@ def test_mover_con_el_horario_viejo_de_la_sede_no_cambia_nada(
 
     with motor.connect() as conn, pytest.raises(OpeningHoursChanged):
         BookingsSql(conn).move(
-            yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13), vieja
+            yo, reserva.id, (espacio, reserva.starts_at), espacio, _a_las(1, 12), _a_las(1, 13), vieja
         )
 
 
@@ -105,7 +105,7 @@ def test_una_reserva_cancelada_no_se_mueve(motor: Engine, cancha: tuple[str, str
 
     with motor.connect() as conn, pytest.raises(ConcurrentChange):
         BookingsSql(conn).move(
-            yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13), agenda
+            yo, reserva.id, (espacio, reserva.starts_at), espacio, _a_las(1, 12), _a_las(1, 13), agenda
         )
 
 
@@ -130,6 +130,6 @@ def test_no_se_reserva_ni_se_mueve_a_una_cancha_de_baja(
             BookingsSql(conn).insert(yo, espacio, _a_las(2, 10), _a_las(2, 11), agenda)
         with pytest.raises(Unavailable):
             BookingsSql(conn).move(
-                yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13),
+                yo, reserva.id, (espacio, reserva.starts_at), espacio, _a_las(1, 12), _a_las(1, 13),
                 agenda,
             )  # fmt: skip

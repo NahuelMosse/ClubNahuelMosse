@@ -27,13 +27,13 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `DATABASE_URL` | Conexión a PostgreSQL, `postgresql+psycopg://<usuario>:<contraseña>@host:puerto/base`. Por defecto, usuario, contraseña y base `club` en `localhost:5432` |
 | `FIREBASE_PROJECT_ID` | Identificador del proyecto de Firebase que emite los tokens |
 | `FIREBASE_API_KEY` | Clave web del proyecto; la API la usa para comprobar contraseñas. No hace falta con el emulador |
-| `URL_PUBLICA` | Dirección pública de esta API; los enlaces de los correos apuntan ahí |
-| `CORREO_MODO` | `smtp` (por defecto) envía los correos por SMTP; `brevo` los envía por la API de Brevo; `buzon` los deja en la tabla `correo_saliente` y sólo sirve para desarrollo |
-| `BREVO_API_KEY` | Clave de la API de Brevo; hace falta con `CORREO_MODO=brevo` |
-| `FIREBASE_CREDENCIALES_JSON` | Contenido del JSON de la cuenta de servicio de Firebase, alternativa a `GOOGLE_APPLICATION_CREDENTIALS` |
-| `SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | Servidor de correo saliente con `CORREO_MODO=smtp` |
-| `PRUEBAS` | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
-| `RECORDATORIOS_CADA` | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
+| `PUBLIC_URL` (o `URL_PUBLICA`) | Dirección pública de esta API; los enlaces de los correos apuntan ahí |
+| `EMAIL_MODE` (o `CORREO_MODO`) | `smtp` (por defecto) envía los correos por SMTP; `brevo` los envía por la API de Brevo; `buzon` los deja en la tabla `correo_saliente` y sólo sirve para desarrollo |
+| `BREVO_API_KEY` | Clave de la API de Brevo; hace falta con `EMAIL_MODE=brevo` |
+| `FIREBASE_CREDENTIALS_JSON` (o `FIREBASE_CREDENCIALES_JSON`) | Contenido del JSON de la cuenta de servicio de Firebase, alternativa a `GOOGLE_APPLICATION_CREDENTIALS` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Servidor de correo saliente con `EMAIL_MODE=smtp`; cada uno también se lee como `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` |
+| `E2E_TESTING` (o `PRUEBAS`) | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
+| `REMINDERS_EVERY` (o `RECORDATORIOS_CADA`) | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. En producción hace falta ésta o `FIREBASE_CREDENCIALES_JSON`: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
 | `FIREBASE_CREDENCIALES_JSON` | El contenido del JSON de la cuenta de servicio, para plataformas que no montan archivos (Render, con un Blueprint). Si `GOOGLE_APPLICATION_CREDENTIALS` también está definida, manda el JSON |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |

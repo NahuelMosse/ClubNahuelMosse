@@ -28,7 +28,7 @@ class CanalDePrueba:
 
     def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         self.enviados.append((list(tokens), aviso))
-        return DeliveryResult(enviados=len(tokens), invalidos=())
+        return DeliveryResult(sent=len(tokens), invalid=())
 
 
 @dataclass

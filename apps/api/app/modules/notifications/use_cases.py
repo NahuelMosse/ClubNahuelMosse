@@ -2,14 +2,13 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
+from app.modules.notifications.email import notice_email
 from app.modules.notifications.rules import ChannelNotConfigured as ChannelNotConfigured
 from app.modules.notifications.rules import DeliveryResult as DeliveryResult
-from app.modules.notifications.email import notice_email
 from app.modules.notifications.rules import (
     Notice,
     Notification,
     Recipient,
-    Reminder,
     reminder_message,
 )
 from app.modules.notifications.rules import PendingNotice as PendingNotice

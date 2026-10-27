@@ -29,7 +29,7 @@ class Canal:
         if self.falla:
             raise ConnectionError("el servicio no contesta")
         self.enviados.append((list(tokens), aviso))
-        return DeliveryResult(enviados=len(tokens))
+        return DeliveryResult(sent=len(tokens))
 
 
 def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
@@ -183,7 +183,7 @@ def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_re
     segundo = Canal()
     assert _barrer(motor, usuario, segundo, _manana_a_las(21)) == 1
     assert [t for t, _ in segundo.enviados] == [[f"b-{s}"]]
-    assert segundo.enviados[0][1].datos["reserva_id"] == str(otra_reserva["id"])
+    assert segundo.enviados[0][1].data["reserva_id"] == str(otra_reserva["id"])
     # Dar de baja uno que ya no está responde igual.
     repetida = api.post("/dispositivos/baja", headers=_con(token_usuario), json={"token": f"a-{s}"})
     assert repetida.status_code == 204

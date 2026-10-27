@@ -179,15 +179,9 @@ class NotificationsSql:
         )
 
     def due(self, now: datetime, user_id: UUID | None) -> list[Reminder]:
-        return [
-            r
-            for kind in LEAD_TIME_BY_KIND
-            for r in self._due_of(kind, now, user_id)
-        ]
+        return [r for kind in LEAD_TIME_BY_KIND for r in self._due_of(kind, now, user_id)]
 
-    def _due_of(
-        self, kind: ReminderKind, now: datetime, user_id: UUID | None
-    ) -> list[Reminder]:
+    def _due_of(self, kind: ReminderKind, now: datetime, user_id: UUID | None) -> list[Reminder]:
         rows = self._conn.execute(
             text(
                 "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede,"
