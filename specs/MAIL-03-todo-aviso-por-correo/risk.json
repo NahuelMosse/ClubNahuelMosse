@@ -1,0 +1,18 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/notificaciones/casos_de_uso.py",
+    "apps/api/app/modules/notificaciones/correo.py",
+    "apps/api/app/modules/notificaciones/repositorio.py"
+  ],
+  "tasks": 1
+}
