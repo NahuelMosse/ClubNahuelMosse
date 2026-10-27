@@ -25,7 +25,7 @@ class RastroDeContrasena(Protocol):
     def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None: ...
 
 
-def cambiar_contrasena(
+def cambiar_contrasena(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     perfil: Perfil,
     actual: str,
     nueva: str,

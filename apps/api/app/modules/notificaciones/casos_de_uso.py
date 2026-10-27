@@ -16,7 +16,7 @@ PLATAFORMAS = ("android", "ios")
 _registro = logging.getLogger(__name__)
 
 
-def entregar(
+def entregar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     notificaciones: Notificaciones,
     canal: CanalPush,
     notificacion_id: UUID,
@@ -112,8 +112,12 @@ def enviar_recordatorios(
     return registrados
 
 
-def registrar_dispositivo(
-    notificaciones: Notificaciones, perfil: Perfil, token: str, plataforma: str, permiso: bool
+def registrar_dispositivo(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
+    notificaciones: Notificaciones,
+    perfil: Perfil,
+    token: str,
+    plataforma: str,
+    permiso: bool,  # noqa: FBT001
 ) -> None:
     """Registra el teléfono de quien pide, con el permiso que le dio al sistema operativo.
 

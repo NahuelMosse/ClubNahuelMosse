@@ -89,7 +89,7 @@ def _nombre(deporte: str, tipo: str) -> Callable[[SedeDelEspacio, int], str]:
     )
 
 
-def nombre_sugerido(
+def nombre_sugerido(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     perfil: Perfil, sede_id: UUID, deporte: str, tipo: str, espacios: Espacios
 ) -> NombreSugerido:
     """El nombre que tendría el próximo espacio de ese tipo en esa sede."""
@@ -128,11 +128,11 @@ def espacios_activos(
     return espacios.activos(sede_id, deporte, tipo)
 
 
-def editar_espacio(
+def editar_espacio(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     perfil: Perfil,
     espacio_id: UUID,
-    techada: bool | None,
-    iluminada: bool | None,
+    techada: bool | None,  # noqa: FBT001
+    iluminada: bool | None,  # noqa: FBT001
     precio_por_hora: int | None,
     dados: frozenset[str],
     espacios: Espacios,

@@ -37,7 +37,7 @@ class Reservas(Protocol):
         """Sede, deporte y tipo del espacio."""
         ...
 
-    def mover(
+    def mover(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
         self,
         usuario_id: UUID,
         reserva_id: UUID,
@@ -65,7 +65,7 @@ class Reservas(Protocol):
         """
         ...
 
-    def insertar(
+    def insertar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
         self, usuario_id: UUID, espacio_id: UUID, inicio: datetime, fin: datetime, agenda: Agenda
     ) -> Reserva:
         """Guarda la reserva activa con el precio de ahora del espacio.
@@ -78,7 +78,7 @@ class Reservas(Protocol):
         """
         ...
 
-    def anular(
+    def anular(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
         self, admin_id: UUID, reserva_id: UUID, motivo: str, espacio_id: UUID, inicio: datetime
     ) -> ReservaHistorial:
         """Anula la reserva [reserva_id], que el administrador vio en [espacio_id] desde

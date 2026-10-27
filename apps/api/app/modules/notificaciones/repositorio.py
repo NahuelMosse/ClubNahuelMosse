@@ -1,9 +1,10 @@
 # kit-shape: el repositorio de avisos y la función que arma su fila van juntos
 from collections.abc import Sequence
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Connection, text
+from sqlalchemy import Connection, Row, text
 
 from app.modules.notificaciones.reglas import (
     ANTICIPACION,
@@ -43,12 +44,39 @@ def encolar_cancelacion_forzosa(
     saliendo en este momento: cada reserva sigue ligada al aviso que se lo informó. Si el
     anterior no había salido, sus reservas pasan al nuevo.
     """
+    _bloquear_anulaciones(conn, usuario_id)
+    nuevas = _anuladas_sin_aviso(conn, usuario_id, reserva_ids)
+    if not nuevas:
+        return
+    previo = _aviso_sin_leer(conn, usuario_id)
+    # Uno que está saliendo también se reemplaza: sale igual y su push lo pisa el del nuevo en
+    # la bandeja, pero el centro tiene que mostrar uno solo.
+    total = len(nuevas) + (0 if previo is None else int(previo.cantidad))
+    notificacion_id = _abrir_aviso(conn, usuario_id, nuevas, total)
+    if previo is not None:
+        _reemplazar_aviso(conn, previo, notificacion_id)
+    for r in nuevas:
+        conn.execute(
+            text(
+                "INSERT INTO notificacion_reserva (notificacion_id, reserva_id)"
+                " VALUES (:notificacion, :reserva)"
+            ),
+            {"notificacion": notificacion_id, "reserva": r.reserva_id},
+        )
+
+
+def _bloquear_anulaciones(conn: Connection, usuario_id: UUID) -> None:
     # Es el último bloqueo de la transacción: las anulaciones simultáneas de una misma persona
     # se esperan acá, después de los bloqueos de la cuenta, la sede, el espacio y la reserva.
     conn.execute(
         text("SELECT pg_advisory_xact_lock(:ns, hashtext(CAST(:usuario AS text)))"),
         {"ns": _BLOQUEO_DE_ANULACIONES, "usuario": usuario_id},
     )
+
+
+def _anuladas_sin_aviso(
+    conn: Connection, usuario_id: UUID, reserva_ids: Sequence[UUID]
+) -> list[ReservaAnulada]:
     filas = conn.execute(
         text(
             "SELECT r.id, r.inicio, e.deporte, e.tipo, s.nombre AS sede, r.motivo"
@@ -60,9 +88,7 @@ def encolar_cancelacion_forzosa(
         ),
         {"ids": list(reserva_ids), "usuario": usuario_id},
     ).all()
-    if not filas:
-        return
-    nuevas = [
+    return [
         ReservaAnulada(
             reserva_id=f.id,
             inicio=f.inicio,
@@ -73,7 +99,10 @@ def encolar_cancelacion_forzosa(
         )
         for f in filas
     ]
-    previo = conn.execute(
+
+
+def _aviso_sin_leer(conn: Connection, usuario_id: UUID) -> Row[Any] | None:
+    return conn.execute(
         text(
             "SELECT n.id, n.envio, coalesce(n.cantidad, 1) AS cantidad FROM notificacion n"
             " WHERE n.usuario_id = :usuario AND n.tipo = 'cancelacion_forzosa'"
@@ -82,10 +111,11 @@ def encolar_cancelacion_forzosa(
         ),
         {"usuario": usuario_id},
     ).first()
-    # Uno que está saliendo también se reemplaza: sale igual y su push lo pisa el del nuevo en
-    # la bandeja, pero el centro tiene que mostrar uno solo.
-    reemplaza = previo
-    total = len(nuevas) + (0 if reemplaza is None else int(reemplaza.cantidad))
+
+
+def _abrir_aviso(
+    conn: Connection, usuario_id: UUID, nuevas: list[ReservaAnulada], total: int
+) -> UUID:
     aviso = (
         mensaje_cancelaciones_forzosas(total) if total > 1 else mensaje_cancelacion_forzosa(nuevas)
     )
@@ -105,26 +135,21 @@ def encolar_cancelacion_forzosa(
             "cantidad": total,
         },
     ).scalar_one()
-    if reemplaza is not None:
-        conn.execute(
-            text("UPDATE notificacion SET reemplazada_por = :nuevo WHERE id = :id"),
-            {"nuevo": notificacion_id, "id": reemplaza.id},
-        )
-        if reemplaza.envio == "pendiente":
-            conn.execute(
-                text(
-                    "UPDATE notificacion_reserva SET notificacion_id = :nuevo"
-                    " WHERE notificacion_id = :id"
-                ),
-                {"nuevo": notificacion_id, "id": reemplaza.id},
-            )
-    for r in nuevas:
+    return notificacion_id
+
+
+def _reemplazar_aviso(conn: Connection, previo: Row[Any], notificacion_id: UUID) -> None:
+    conn.execute(
+        text("UPDATE notificacion SET reemplazada_por = :nuevo WHERE id = :id"),
+        {"nuevo": notificacion_id, "id": previo.id},
+    )
+    if previo.envio == "pendiente":
         conn.execute(
             text(
-                "INSERT INTO notificacion_reserva (notificacion_id, reserva_id)"
-                " VALUES (:notificacion, :reserva)"
+                "UPDATE notificacion_reserva SET notificacion_id = :nuevo"
+                " WHERE notificacion_id = :id"
             ),
-            {"notificacion": notificacion_id, "reserva": r.reserva_id},
+            {"nuevo": notificacion_id, "id": previo.id},
         )
 
 
@@ -199,22 +224,7 @@ class NotificacionesSql:
             # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
             # la cuenta darse de baja. Se vuelve a mirar con la cuenta y la reserva compartidas,
             # en el orden de las reservas, así ninguna de las dos cambia hasta el commit.
-            cuenta = self._conn.execute(
-                text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
-            ).first()
-            vigente = None
-            if cuenta is not None:
-                vigente = self._conn.execute(
-                    text(
-                        "SELECT 1 FROM reserva WHERE id = :reserva AND estado = 'activa'"
-                        " AND inicio = :inicio AND inicio > now()"
-                        " AND greatest(creado_en, modificado_en)"
-                        " <= inicio - CAST(:anticipacion AS interval)"
-                        " FOR SHARE"
-                    ),
-                    datos,
-                ).first()
-            if vigente is None:
+            if not self._sigue_vigente(datos):
                 self._conn.rollback()
                 return None
             fila = self._conn.execute(
@@ -228,6 +238,24 @@ class NotificacionesSql:
                 datos,
             ).first()
         return None if fila is None else fila.id
+
+    def _sigue_vigente(self, datos: dict[str, Any]) -> bool:
+        cuenta = self._conn.execute(
+            text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), datos
+        ).first()
+        if cuenta is None:
+            return False
+        vigente = self._conn.execute(
+            text(
+                "SELECT 1 FROM reserva WHERE id = :reserva AND estado = 'activa'"
+                " AND inicio = :inicio AND inicio > now()"
+                " AND greatest(creado_en, modificado_en)"
+                " <= inicio - CAST(:anticipacion AS interval)"
+                " FOR SHARE"
+            ),
+            datos,
+        ).first()
+        return vigente is not None
 
     def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
         filas = self._conn.execute(
@@ -330,7 +358,11 @@ class NotificacionesSql:
         self._conn.commit()
 
     def registrar_dispositivo(
-        self, usuario_id: UUID, token: str, plataforma: str, permiso: bool
+        self,
+        usuario_id: UUID,
+        token: str,
+        plataforma: str,
+        permiso: bool,  # noqa: FBT001
     ) -> bool:
         datos = {
             "usuario": usuario_id,

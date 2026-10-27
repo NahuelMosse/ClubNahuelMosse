@@ -152,7 +152,7 @@ def edicion_de_sede(
     sede_id: Annotated[Identificador, Path()],
 ) -> SedeVista | Response:
     try:
-        sede = editar_sede(perfil, sede_id, _datos(pedido), pedido.confirmar, sedes)
+        sede = editar_sede(perfil, sede_id, _datos(pedido), confirmar=pedido.confirmar, sedes=sedes)
     except Duplicado:
         return conflicto({"nombre": "Ya existe una sede con ese nombre"})
     except ReservasAfuera as e:

@@ -25,7 +25,7 @@ class Horarios(Protocol):
         ...
 
 
-def horarios_disponibles(
+def horarios_disponibles(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     horarios: Horarios,
     espacio_id: UUID,
     fecha: date | None,

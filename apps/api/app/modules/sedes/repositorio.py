@@ -2,7 +2,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Connection, text
+from sqlalchemy import Connection, Row, text
 from sqlalchemy.exc import IntegrityError
 
 from app.modules.espacios import EspaciosSql
@@ -92,7 +92,38 @@ class SedesSql:
             raise
         return _sede(fila, canchas=0)
 
-    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, confirmar: bool) -> Sede:
+    def _verificar_reservas(self, valores: dict[str, Any], antes: Row[Any]) -> None:
+        afuera = int(
+            self._conn.execute(
+                text(
+                    "SELECT count(*) FROM reserva r"
+                    " JOIN espacio e ON e.id = r.espacio_id"
+                    " WHERE e.sede_id = :id AND r.estado = 'activa'"
+                    " AND r.inicio > now()"
+                    f" AND {_afuera('')} AND NOT {_afuera('antes_')}"
+                ),
+                valores
+                | {
+                    "antes_apertura": antes.apertura,
+                    "antes_cierre": antes.cierre,
+                    "antes_dias": list(antes.dias),
+                },
+            ).scalar_one()
+        )
+        if afuera:
+            raise ReservasAfuera(afuera)
+
+    def _guardar(self, valores: dict[str, Any]) -> None:
+        self._conn.execute(
+            text(
+                "UPDATE sede SET nombre = :nombre, calle = :calle, altura = :altura,"
+                " apertura = :apertura, cierre = :cierre, dias = CAST(:dias AS smallint[]),"
+                " modificado_por = :autor, modificado_en = now() WHERE id = :id"
+            ),
+            valores,
+        )
+
+    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, *, confirmar: bool) -> Sede:
         valores = {
             "id": sede_id,
             "nombre": datos.nombre,
@@ -117,33 +148,8 @@ class SedesSql:
                 if antes is None:
                     raise NoEncontrada("la sede ya no está activa")
                 if not confirmar:
-                    afuera = int(
-                        self._conn.execute(
-                            text(
-                                "SELECT count(*) FROM reserva r"
-                                " JOIN espacio e ON e.id = r.espacio_id"
-                                " WHERE e.sede_id = :id AND r.estado = 'activa'"
-                                " AND r.inicio > now()"
-                                f" AND {_afuera('')} AND NOT {_afuera('antes_')}"
-                            ),
-                            valores
-                            | {
-                                "antes_apertura": antes.apertura,
-                                "antes_cierre": antes.cierre,
-                                "antes_dias": list(antes.dias),
-                            },
-                        ).scalar_one()
-                    )
-                    if afuera:
-                        raise ReservasAfuera(afuera)
-                self._conn.execute(
-                    text(
-                        "UPDATE sede SET nombre = :nombre, calle = :calle, altura = :altura,"
-                        " apertura = :apertura, cierre = :cierre, dias = CAST(:dias AS smallint[]),"
-                        " modificado_por = :autor, modificado_en = now() WHERE id = :id"
-                    ),
-                    valores,
-                )
+                    self._verificar_reservas(valores, antes)
+                self._guardar(valores)
         except IntegrityError as e:
             indice = restriccion_violada(e)
             if indice == "sede_nombre_activa_unico":

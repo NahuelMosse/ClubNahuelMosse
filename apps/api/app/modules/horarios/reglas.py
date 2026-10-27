@@ -8,6 +8,7 @@ from datetime import date, datetime, time, timedelta, tzinfo
 MIN_HORAS = 1
 MAX_HORAS = 4
 DIAS_A_LA_VISTA = 7
+HORAS_POR_DIA = 24
 
 
 @dataclass(frozen=True)
@@ -48,7 +49,7 @@ def validar_consulta(fecha: date, hoy: date, horas: int) -> dict[str, str]:
     return errores
 
 
-def grilla(
+def grilla(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     agenda: Agenda,
     fecha: date,
     horas: int,
@@ -90,19 +91,37 @@ def rango(fecha: date, desde: time, hasta: time, zona: tzinfo | None) -> tuple[d
     return inicio, fin
 
 
-def validar_rango(
+def _error_de_fecha(agenda: Agenda, fecha: date, hoy: date) -> str | None:
+    if fecha < hoy:
+        return "La fecha tiene que ser futura"
+    if fecha >= hoy + timedelta(days=DIAS_A_LA_VISTA):
+        return f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"
+    if fecha.isoweekday() not in agenda.dias:
+        return "La sede no abre ese día"
+    return None
+
+
+def _error_de_hasta(
+    agenda: Agenda, inicio: datetime, fin: datetime, cierre: datetime
+) -> str | None:
+    if fin - inicio < timedelta(hours=MIN_HORAS):
+        return "La duración mínima es de una hora"
+    if fin - inicio > timedelta(hours=MAX_HORAS):
+        return f"La duración máxima es de {MAX_HORAS} horas"
+    if fin > cierre:
+        return f"La sede cierra a las {_hhmm(agenda.cierre)}"
+    return None
+
+
+def validar_rango(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     agenda: Agenda, fecha: date, desde: time, hasta: time, ahora: datetime
 ) -> dict[str, str]:
     """Los errores de un rango consultado, por campo: futuro, en horas completas, de 1 a 4
     horas y dentro del horario de la sede (RF 3)."""
     errores: dict[str, str] = {}
-    hoy = ahora.date()
-    if fecha < hoy:
-        errores["fecha"] = "La fecha tiene que ser futura"
-    elif fecha >= hoy + timedelta(days=DIAS_A_LA_VISTA):
-        errores["fecha"] = f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"
-    elif fecha.isoweekday() not in agenda.dias:
-        errores["fecha"] = "La sede no abre ese día"
+    error_de_fecha = _error_de_fecha(agenda, fecha, ahora.date())
+    if error_de_fecha:
+        errores["fecha"] = error_de_fecha
     for campo, hora in (("desde", desde), ("hasta", hasta)):
         if (hora.minute, hora.second, hora.microsecond) != (0, 0, 0):
             errores[campo] = "Elegí una hora en punto"
@@ -110,12 +129,9 @@ def validar_rango(
         return errores
     inicio, fin = rango(fecha, desde, hasta, ahora.tzinfo)
     apertura, cierre = rango(fecha, agenda.apertura, agenda.cierre, ahora.tzinfo)
-    if fin - inicio < timedelta(hours=MIN_HORAS):
-        errores["hasta"] = "La duración mínima es de una hora"
-    elif fin - inicio > timedelta(hours=MAX_HORAS):
-        errores["hasta"] = f"La duración máxima es de {MAX_HORAS} horas"
-    elif fin > cierre:
-        errores["hasta"] = f"La sede cierra a las {_hhmm(agenda.cierre)}"
+    error_de_hasta = _error_de_hasta(agenda, inicio, fin, cierre)
+    if error_de_hasta:
+        errores["hasta"] = error_de_hasta
     if inicio < apertura:
         errores["desde"] = f"La sede abre a las {_hhmm(agenda.apertura)}"
     elif "fecha" not in errores and inicio <= ahora:
@@ -132,7 +148,7 @@ def error_de_duracion(horas: int) -> str | None:
     return None
 
 
-def validar_reserva(
+def validar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     agenda: Agenda, fecha: date, desde: time, horas: int, ahora: datetime
 ) -> dict[str, str]:
     """Los errores de reservar [horas] horas desde [desde] el [fecha]: los de un rango (RF 3)
@@ -142,8 +158,8 @@ def validar_reserva(
         errores["hasta"] = error
         return errores
     fin = desde.hour + horas
-    if fin > 24:
+    if fin > HORAS_POR_DIA:
         errores = validar_rango(agenda, fecha, desde, time(0, 0), ahora)
         errores["hasta"] = f"La sede cierra a las {_hhmm(agenda.cierre)}"
         return errores
-    return validar_rango(agenda, fecha, desde, time(fin % 24, desde.minute), ahora)
+    return validar_rango(agenda, fecha, desde, time(fin % HORAS_POR_DIA, desde.minute), ahora)

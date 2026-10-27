@@ -23,25 +23,24 @@ from app.shared.errores import (
 
 # Largo máximo del motivo de una anulación.
 MOTIVO_MAXIMO = 500
+# Cuántas veces se vuelve a validar si la agenda de la sede cambia mientras se guarda.
+INTENTOS_CON_AGENDA_NUEVA = 3
 
 
 def _con_la_agenda_vigente(
     reservas: Reservas,
     espacio_id: UUID,
-    fecha: date,
-    desde: time,
-    horas: int,
-    ahora: datetime,
+    validar: Callable[[Agenda], dict[str, str]],
     guardar: Callable[[Agenda], Reserva],
 ) -> Reserva:
     """Valida el horario con la agenda de la sede y guarda. Si un administrador cambió la
     agenda en el medio, vuelve a validar con la nueva: lo que se guarda respeta el horario que
     rige cuando se guarda (RF 3)."""
-    for _ in range(3):
+    for _ in range(INTENTOS_CON_AGENDA_NUEVA):
         agenda = reservas.agenda(espacio_id)
         if agenda is None:
             raise NoDisponible("el espacio no está activo")
-        errores = validar_reserva(agenda, fecha, desde, horas, ahora)
+        errores = validar(agenda)
         if errores:
             raise DatosInvalidos(errores)
         try:
@@ -63,7 +62,13 @@ def _exigir_fecha_a_la_vista(fecha: date, ahora: datetime) -> None:
         raise DatosInvalidos({"fecha": f"Elegí un día de los próximos {DIAS_A_LA_VISTA}"})
 
 
-def reservar(
+def _exigir_mismo_tipo(reservas: Reservas, actual: Reserva, espacio_id: UUID) -> None:
+    nuevo = reservas.tipo_de_espacio(espacio_id)
+    if nuevo is None or nuevo != (actual.sede_id, actual.deporte, actual.tipo):
+        raise DatosInvalidos({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
+
+
+def reservar(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     reservas: Reservas,
     perfil: Perfil,
     espacio_id: UUID,
@@ -96,10 +101,7 @@ def reservar(
     return _con_la_agenda_vigente(
         reservas,
         espacio_id,
-        fecha,
-        desde,
-        horas,
-        ahora,
+        lambda agenda: validar_reserva(agenda, fecha, desde, horas, ahora),
         lambda agenda: reservas.insertar(perfil.id, espacio_id, inicio, fin, agenda),
     )
 
@@ -110,7 +112,7 @@ def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> Re
     return reservas.cancelar(perfil.id, reserva_id)
 
 
-def modificar_reserva(
+def modificar_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     reservas: Reservas,
     perfil: Perfil,
     reserva_id: UUID,
@@ -138,25 +140,15 @@ def modificar_reserva(
     # Un reintento después de un corte llega con la reserva ya movida: se devuelve como está.
     if actual.estado == "activa" and (actual.espacio_id, actual.inicio) == (espacio_id, inicio):
         return actual
-    nuevo = reservas.tipo_de_espacio(espacio_id)
-    if nuevo is None or nuevo != (actual.sede_id, actual.deporte, actual.tipo):
-        raise DatosInvalidos({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
-    horas = int((actual.fin - actual.inicio).total_seconds()) // 3600
+    _exigir_mismo_tipo(reservas, actual, espacio_id)
+    duracion = actual.fin - actual.inicio
+    antes = (actual.espacio_id, actual.inicio)
     return _con_la_agenda_vigente(
         reservas,
         espacio_id,
-        fecha,
-        desde,
-        horas,
-        ahora,
+        lambda agenda: validar_reserva(agenda, fecha, desde, duracion // timedelta(hours=1), ahora),
         lambda agenda: reservas.mover(
-            perfil.id,
-            reserva_id,
-            (actual.espacio_id, actual.inicio),
-            espacio_id,
-            inicio,
-            inicio + timedelta(hours=horas),
-            agenda,
+            perfil.id, reserva_id, antes, espacio_id, inicio, inicio + duracion, agenda
         ),
     )
 
@@ -191,7 +183,7 @@ def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> Reser
     return detalle
 
 
-def anular_reserva(
+def anular_reserva(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llamadores
     reservas: Reservas,
     perfil: Perfil,
     reserva_id: UUID,
