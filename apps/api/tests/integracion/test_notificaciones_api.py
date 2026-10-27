@@ -315,7 +315,10 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
 
     with motor.connect() as conn:
         antes = conn.execute(
-            text("SELECT creado_en AS creada_en, enviada_en, leida_en FROM notificacion WHERE id = :i"),
+            text(
+                "SELECT creado_en AS creada_en, enviada_en, leida_en"
+                " FROM notificacion WHERE id = :i"
+            ),
             {"i": aviso["id"]},
         ).one()
     assert antes.creada_en is not None
