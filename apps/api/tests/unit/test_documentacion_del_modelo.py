@@ -1,6 +1,7 @@
 """La documentación del modelo de datos y de la navegación dice lo que hay en el código."""
 
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
+import ast
 import re
 from pathlib import Path
 
@@ -19,9 +20,18 @@ def _texto(ruta: Path) -> str:
 
 
 def _sql(migracion: Path) -> str:
-    """El cuerpo de `upgrade()` con las cadenas contiguas de Python unidas en una sola."""
-    subir = _texto(migracion).split("def upgrade", 1)[1].split("def downgrade", 1)[0]
-    return re.sub(r'"\s*\n\s*"', "", subir)
+    """El cuerpo de `upgrade()` y de las funciones del módulo que llama, con las cadenas contiguas
+    de Python unidas en una sola."""
+    fuente = _texto(migracion)
+    funciones = {
+        n.name: ast.get_source_segment(fuente, n) or ""
+        for n in ast.parse(fuente).body
+        if isinstance(n, ast.FunctionDef)
+    }
+    subir = funciones.get("upgrade", "")
+    llamadas = re.findall(r"\b(_\w+)\(\)", subir)
+    cuerpo = "\n".join([subir, *(funciones.get(nombre, "") for nombre in llamadas)])
+    return re.sub(r'"\s*\n\s*"', "", cuerpo)
 
 
 def _partes(cuerpo: str) -> list[str]:
@@ -54,6 +64,11 @@ def _tablas() -> dict[str, set[str]]:
                 r"(ADD|DROP) COLUMN (?:IF (?:NOT )?EXISTS )?(\w+)", cambios
             ):
                 (tablas[tabla].add if accion == "ADD" else tablas[tabla].discard)(columna)
+        for tabla, vieja, nueva in re.findall(
+            r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", sql
+        ):
+            tablas[tabla].discard(vieja)
+            tablas[tabla].add(nueva)
     return tablas
 
 
