@@ -17,6 +17,11 @@ not_read:
 - ENG-04-ASM-02 · los demás módulos y `app/main.py` cambian sólo las líneas que importan este módulo · S1
 - ENG-04-ASM-03 · los tests cambian sólo lo que el renombre obliga con `refactor-tests:`; títulos y nombres de archivo de test quedan en castellano · S1
 - ENG-04-ASM-04 · un nombre que el glosario no tiene se traduce con el mismo criterio y se agrega al glosario · S2
+- ENG-04-ASM-05 · los campos de los modelos Pydantic (`token`, `plataforma`, `permiso`, `errores`, `titulo`, `cuerpo`, `reserva_id`, `creada_en`, `leida`, `notificaciones`, `no_leidas`) siguen en castellano: son claves JSON y `loc` de validación; las clases van en inglés y no hay alias; el test de S2 los exime · S2 (test: S2)
+- ENG-04-ASM-06 · las claves y valores de los datos del push y los textos de los avisos no cambian; las claves SQL y los valores guardados tampoco · S3 (test: S3 compara `armar_mensaje`/`build_message`)
+- ENG-04-ASM-07 · `scripts/e2e.sh` y `app/e2e_support.py` cambian sólo las rutas de módulo que importan · S1 (test: S1)
+- ENG-04-ASM-08 · los docs que nombran las rutas del módulo (`docs/technical/mapa-del-codigo.md`, `apps/api/README.md`, los que leen los tests de docs) se actualizan · S1 (test: S1)
+- ENG-04-ASM-09 · cada operación lleva `operation_id` explícito con el valor de hoy, así los `operationId` no cambian; el test de S3 compara también parámetros y `security` por operación · S3 (test: S3)
 
 ## Tasks
 
