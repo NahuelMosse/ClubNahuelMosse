@@ -1,3 +1,4 @@
+# kit-shape: las rutas de espacios y los modelos de sus pedidos y respuestas se leen juntos
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, Response, status
@@ -22,7 +23,7 @@ from app.aplicacion.espacios import (
 from app.dependencias import EspaciosSql, repositorio_espacios
 from app.dominio.espacios import DatosEspacio, Espacio
 from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Identificador, Texto40
+from app.interfaz.entradas import Identificador
 from app.interfaz.respuestas import conflicto
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -90,8 +91,8 @@ def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     sede_id: Annotated[Identificador | None, Query()] = None,
-    deporte: Annotated[Texto40 | None, Query(min_length=1)] = None,
-    tipo: Annotated[Texto40 | None, Query(min_length=1)] = None,
+    deporte: Annotated[str | None, Query(min_length=1)] = None,
+    tipo: Annotated[str | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
     activos = espacios_activos(espacios, sede_id, deporte, tipo)
     return ListaDeEspacios(espacios=[vista_de_espacio(e) for e in activos])
@@ -120,8 +121,8 @@ def sugerir_nombre(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
     sede_id: Annotated[Identificador, Query()],
-    deporte: Annotated[Texto40, Query()],
-    tipo: Annotated[Texto40, Query()],
+    deporte: Annotated[str, Query()],
+    tipo: Annotated[str, Query()],
 ) -> Sugerencia:
     try:
         s = nombre_sugerido(perfil, sede_id, deporte, tipo, espacios)
@@ -132,8 +133,8 @@ def sugerir_nombre(
 
 class PedidoDeEspacio(BaseModel):
     sede_id: Identificador | None = None
-    deporte: Texto40 = ""
-    tipo: Texto40 = ""
+    deporte: str = ""
+    tipo: str = ""
     techada: bool | None = None
     iluminada: bool | None = None
     precio_por_hora: int | None = None
@@ -199,8 +200,8 @@ def alta_de_espacio(
 class PedidoDeCambio(BaseModel):
     # El deporte y el tipo no cambian: se aceptan y se ignoran, para que un cliente que reenvía
     # el espacio entero siga andando, pero tienen que ser texto válido.
-    deporte: Texto40 | None = None
-    tipo: Texto40 | None = None
+    deporte: str | None = None
+    tipo: str | None = None
     techada: bool | None = None
     iluminada: bool | None = None
     precio_por_hora: int | None = None

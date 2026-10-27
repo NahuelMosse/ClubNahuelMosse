@@ -8,7 +8,7 @@ from fastapi import Depends
 from sqlalchemy import Connection
 
 from app.infraestructura.correo import enviar as enviar_correo
-from app.infraestructura.db import base_disponible, conexion, esquema_al_dia, motor, uso_del_pool
+from app.infraestructura.db import conexion, motor
 from app.infraestructura.enlaces import EnlacesSql
 from app.infraestructura.espacios import EspaciosSql
 from app.infraestructura.horarios import HorariosSql
@@ -64,11 +64,9 @@ __all__ = [
     "ReservasSql",
     "SedesSql",
     "UsuariosSql",
-    "base_disponible",
     "canal_push",
     "conexion",
     "enviar_correo",
-    "esquema_al_dia",
     "identidad",
     "motor",
     "repositorio_enlaces",
@@ -78,5 +76,4 @@ __all__ = [
     "repositorio_reservas",
     "repositorio_sedes",
     "repositorio_usuarios",
-    "uso_del_pool",
 ]

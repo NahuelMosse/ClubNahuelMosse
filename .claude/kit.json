@@ -1,5 +1,5 @@
 {
-  "kit": "6.15.0",
+  "kit": "6.17.4",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "40001f0ea5f273b38d96671595c03b9ca0ef3998"
+    "commit": "440e63628bf1cf2dc2867520e033d628b18457c9"
   },
   "modules": {
     "ui": {
@@ -130,6 +130,11 @@
       "since": "update 2026-10-22",
       "reason": "derived from the modules that were on",
       "state": "on"
+    },
+    "flutter": {
+      "state": "on",
+      "since": "kit.mjs profile on 2026-10-26",
+      "reason": "apps/mobile es Flutter"
     }
   }
 }

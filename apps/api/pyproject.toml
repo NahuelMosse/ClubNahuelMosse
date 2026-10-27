@@ -11,7 +11,6 @@ dependencies = [
     "alembic>=1.13",
     "pydantic-settings>=2.4",
     "firebase-admin>=6.5",
-    "prometheus-client>=0.20",
 ]
 
 [dependency-groups]
@@ -40,6 +39,11 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 "tests/escenarios/*" = ["E501", "SIM117", "I001", "B008"]
 # Estos escenarios importan los fixtures de test_datos.py para que pytest los vea.
 "tests/escenarios/test_datos_*.py" = ["E501", "SIM117", "I001", "B008", "F811"]
+# Tests congelados de SIM-01 (docstrings con la tag y el nombre de la spec).
+"tests/unit/test_sin_sobreingenieria.py" = ["E501"]
+"tests/unit/test_cuerpo_acotado.py" = ["E501"]
+"tests/integracion/test_sin_sobreingenieria_api.py" = ["E501", "I001"]
+"tests/integracion/test_aviso_en_envio_perdido.py" = ["E501"]
 # Tests congelados con literales largos.
 "tests/unit/test_capas.py" = ["E501"]
 "tests/unit/test_sin_supresiones.py" = ["E501"]

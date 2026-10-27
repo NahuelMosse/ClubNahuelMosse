@@ -105,7 +105,7 @@
   },
   ".claude/hooks/time-cap.mjs": {
     "module": "core",
-    "sha256": "cca3b3416ce2732ccab27c3a5b10b8201760557094b2d22e2d845193ea057906"
+    "sha256": "27ea27dfdc167011a44da9a6642ae7f51f52e9bed0b979acba3455f670dc6609"
   },
   ".claude/hooks/trim-output.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "3f98f61e8f5d0b1c42b6e904bff129b4dc1580f0546cd727573bf9be939b84f7"
+    "sha256": "7a30138b43e5fd0168fb9247ab1d59effe0470454e5596e6cb0d673129e2ddbb"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1349,7 +1349,7 @@
   },
   ".claude/tools/install.mjs": {
     "module": "core",
-    "sha256": "d14852f2be0e21740d05bbf0b9cbb5304c7979bbe750acad4dd106e3057754df"
+    "sha256": "b85393b2bf96ff24b0bcc9e111bb26709a0c5395bedbcb6eabf8c84f2dde6809"
   },
   ".claude/tools/judge-context.mjs": {
     "module": "core",
@@ -1357,7 +1357,7 @@
   },
   ".claude/tools/kit.mjs": {
     "module": "core",
-    "sha256": "6ddd3fd98ced40d2b490de557a048fe396463e6c36b1ecb618f4704ee0d30d23"
+    "sha256": "a6abe278d94c621424fef49f59010050546574fcc0a6ea30b4ec15b6a9b4e5ec"
   },
   ".claude/tools/migrations.mjs": {
     "module": "core",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "78431819e315ac8cbbb7296acea6c5c88bd15a54ff0941f4494fbfe5a6928913"
+    "sha256": "d74af8a3dcfea2943cb0261dcb8c2fe56dad7e416e1b4a3611efe0f29b56ca8b"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1461,7 +1461,7 @@
   },
   ".claude/templates/card.md": {
     "module": "core",
-    "sha256": "583294d3511fdfd1420def495799dfebbd4fdcae8807b39624f2797394606ae5"
+    "sha256": "57bb7643b74f4d771265274fdd3275f45fd6ed5697251e0c4f7bd40d9dceac96"
   },
   ".claude/templates/components/motion/test-results/.last-run.json": {
     "module": "ui",
@@ -1481,7 +1481,7 @@
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "780dcc85aae3b0bbcc7a98ca1738e665f564c3214cd7e0e35beb436285578daf"
+    "sha256": "447e30071f0af39c307073def0d8d7fbe07bbb438e059c90c9db4fa111e5e4dd"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1493,7 +1493,7 @@
   },
   ".claude/tools/plan.mjs": {
     "module": "core",
-    "sha256": "9c26898bf5a9756d6630b738cecd9ff79e07682ee6920ad680b89985a2ad3692"
+    "sha256": "021daa023045e43a166008bed5c1f41447956e8c67aa1764fc78bc3584ea3b3b"
   },
   ".claude/tools/risk.mjs": {
     "module": "core",
@@ -1866,5 +1866,45 @@
   ".claude/tools/overdesign.mjs": {
     "module": "core",
     "sha256": "90cebfadddf3604524f8739c294ebcf84c5cd7eb78fb3df41ff88b1df0856db1"
+  },
+  ".claude/profiles/flutter.md": {
+    "module": "profile:flutter",
+    "sha256": "71dfdace8bcc85006864e322c3bbea22c5903a2d221c5df66ad104b52ad22278"
+  },
+  ".claude/profiles/flutter/test-kit/example-motion.json": {
+    "module": "profile:flutter",
+    "sha256": "0fee6e4c84817be2a65aa98f648571595baf82df48c4bb9fc708dc7741f00147"
+  },
+  ".claude/profiles/flutter/test-kit/kit_a11y.dart": {
+    "module": "profile:flutter",
+    "sha256": "3fdfe3bbc9a125a628810b170f9c0d711b9a803843c76499ebbf1baff3fc79a5"
+  },
+  ".claude/profiles/flutter/test-kit/kit_motion.dart": {
+    "module": "profile:flutter",
+    "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
+  },
+  ".claude/profiles/flutter/test-kit/kit_states.dart": {
+    "module": "profile:flutter",
+    "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
+  },
+  ".claude/reference/design-refs-mobile.md": {
+    "module": "profile:flutter",
+    "sha256": "b980a1c68a31482e227b7f00615e351baefb1efad8a7819538eaf515b3cc72cb"
+  },
+  ".claude/tools/flutter-gate.mjs": {
+    "module": "profile:flutter",
+    "sha256": "d0bde5d25f97130572fd30b7d37398931de492bcceb806f919d6a0ed917c4ced"
+  },
+  "apps/mobile/test/kit/kit_a11y.dart": {
+    "module": "profile:flutter",
+    "sha256": "3fdfe3bbc9a125a628810b170f9c0d711b9a803843c76499ebbf1baff3fc79a5"
+  },
+  "apps/mobile/test/kit/kit_motion.dart": {
+    "module": "profile:flutter",
+    "sha256": "7209e193f9175749fdf9d544356f574e55d9db524093871d3009838c90c5540e"
+  },
+  "apps/mobile/test/kit/kit_states.dart": {
+    "module": "profile:flutter",
+    "sha256": "a5309cc870bfda56f2a1b45993e5e643bed9102137d6dfdb1341ea2ff56e57dc"
   }
 }

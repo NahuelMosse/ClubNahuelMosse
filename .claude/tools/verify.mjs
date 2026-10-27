@@ -67,8 +67,8 @@ import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs'
 import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
 import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
-import { CARD_FILE, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
-import { cardChecks, noVisualCheck, probeRecords, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
+import { CARD_FILE, readCard, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
+import { cardChecks, noVisualCheck, probeRecords, removeOnlyOf, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
 import { escalate } from './risk.mjs';
 import { changedBetween, snapshot } from './tree-snapshot.mjs';
@@ -679,6 +679,8 @@ const controls = (lines) => withoutHidden(lines).match(CONTROL)?.length ?? 0;
 export const design = (root, cardDir, off = new Set()) => {
   // A card that declared `no-visual:` changes no markup (its gate check verifies the diff): it owes no design line.
   if (riskOf(cardDir)?.declared?.some((d) => d.lens === 'visual')) return [];
+  // A remove-only card adds no look: no design line is owed for it (its `remove-only` check fails if it adds any).
+  if (removeOnlyOf(readCard(cardDir))) return [];
   const base = cardStart(root, cardDir);
   const touched = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
@@ -1199,7 +1201,7 @@ const isScreenCard = (root, cardDir) => {
 };
 
 // The gate's own checks: every spec has a tagged test, and a screen passes axe, contrast and focus.
-export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root).probe ? screenChecks(probeRecords(root)) : [])];
+export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root, readCard(cardDir)).probe ? screenChecks(probeRecords(root)) : [])];
 
 // One line per check: `<name>: passed`, `<name>: failed: <why>` or `<name>: could not run: <why>`.
 const lineOf = (name, state, detail) => `${name}: ${state === 'passed' ? 'passed' : `${state}: ${detail}`}`;

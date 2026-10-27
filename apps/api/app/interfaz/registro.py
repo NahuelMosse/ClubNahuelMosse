@@ -1,3 +1,4 @@
+# kit-shape: las rutas de registro y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import datetime
 from typing import Annotated
 
@@ -10,8 +11,6 @@ from app.aplicacion.registro import registrar
 from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
 from app.dominio.usuarios import DatosRegistro
 from app.dominio.zona import ZONA_CLUB as ZONA
-from app.interfaz.entradas import Clave, Correo, Texto40, Texto120
-from app.interfaz.limites import Frenado, frenar_por_origen
 
 router = APIRouter(tags=["usuarios"])
 MENSAJE_DUPLICADO = "El usuario ya está registrado. Modificá el correo o el DNI."
@@ -22,12 +21,12 @@ MENSAJES_CAMPO = {
 
 
 class PedidoRegistro(BaseModel):
-    nombre: Texto120 = ""
-    apellido: Texto120 = ""
-    dni: Texto40 = ""
-    fecha_nacimiento: Texto40 = ""
-    correo: Correo = ""
-    contrasena: Clave = ""
+    nombre: str = ""
+    apellido: str = ""
+    dni: str = ""
+    fecha_nacimiento: str = ""
+    correo: str = ""
+    contrasena: str = ""
 
 
 class RegistroCreado(BaseModel):
@@ -51,10 +50,8 @@ class UsuarioRepetido(BaseModel):
     responses={
         422: {"model": ErroresDeCampo},
         409: {"model": UsuarioRepetido},
-        429: {"model": Frenado},
     },
     summary="Registrar un usuario nuevo",
-    dependencies=[Depends(frenar_por_origen("registro"))],
 )
 def registrar_usuario(
     pedido: PedidoRegistro,

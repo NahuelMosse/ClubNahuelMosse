@@ -26,6 +26,9 @@ if (!['Agent', 'Skill', 'Bash', 'PowerShell'].includes(tool)) process.exit(0);
 
 const WARN_AT = 0.7;
 const EVERY_MIN = 10;
+// What the close itself runs passes past the cap: the gate (verify.mjs), what required.mjs asks for (once.mjs) and the close.
+// Blocking them left a card past its cap unable to close (require-at-close wants those records), and the repo stuck behind it.
+const CLOSES = /^\s*(?:cd\s+[^;&|]+(?:&&|;)\s*)?node\s+\S*(?:verify|once|close|required)\.mjs\b/;
 const RUNS_SUITE = /(^|[\s;&|(])(npm (run )?test\b|npm run test[\w:-]*|pnpm (run )?test\b|yarn test\b|npx (playwright|vitest|jest|stryker|c8)\b|node --test\b|node [^\s]*(mutate|verify)\.mjs\b|pytest\b|go test\b|dotnet test\b|mvn\b[^;&|]*\btest\b|gradle\b[^;&|]*\btest\b|\.\/gradlew\b[^;&|]*\btest\b|cargo test\b|stryker\b|vitest\b|jest\b)/;
 
 try {
@@ -48,17 +51,19 @@ try {
     if (pct >= 1) {
       const heavy = tool === 'Agent'
         ? true
-        : tool !== 'Skill' && RUNS_SUITE.test(String(data.command ?? ''));
+        : tool !== 'Skill' && RUNS_SUITE.test(String(data.command ?? '')) && !CLOSES.test(String(data.command ?? ''));
       if (heavy) {
         process.stderr.write(
-          "Past the time plan's cap: close with what there is and declare what did not run (three states).\n");
+          "Past the time plan's cap: no new agent or suite. Close now with what there is: `node .claude/tools/verify.mjs`, what " +
+          '`node .claude/tools/required.mjs` lists (through once.mjs), then `/close`, which declares what did not run (three states). ' +
+          'A new request of the person is a new card after this one closes.\n');
         process.exit(2);
       }
     }
     if (pct >= WARN_AT) {
       message = `Time plan: ${Math.round(elapsed)} min of ${Math.round(capMin)} min cap (${Math.round(pct * 100)} %) since card.md was committed.` +
         (pct >= 1
-          ? "Past the cap no new agent and no test suite or mutation starts: close with what there is and declare what did not run (three states)."
+          ? " Past the cap no new agent and no test suite starts outside the close: run the gate (verify.mjs), what required.mjs lists and `/close` now, declaring what did not run (three states)."
           : 'Cut scope now what will not fit, and keep the close for the time that is left.');
     }
   }

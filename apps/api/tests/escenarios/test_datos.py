@@ -113,100 +113,17 @@ def _empate(socio: Socio) -> None:
         )
 
 
-def test_el_historial_propio_llega_por_tandas(api: TestClient, socio: Socio) -> None:
-    """el historial propio de reservas se entrega por páginas @REV-03-S2"""
-    _pasadas(socio, 25)
-    _empate(socio)
-
-    primera = api.get("/reservas", headers=socio.sesion, params={"cuando": "historial"}).json()
-    segunda = api.get(
-        "/reservas",
-        headers=socio.sesion,
-        params={"cuando": "historial", "despues": primera["siguiente"]},
-    ).json()
-
-    assert len(primera["reservas"]) == 20
-    assert len(segunda["reservas"]) == 6
-    assert segunda["siguiente"] is None
-    ids = [r["id"] for r in primera["reservas"] + segunda["reservas"]]
-    assert len(set(ids)) == 26
 
 
 MARCADORES_INVALIDOS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDowMDowMHxhYmM"]
 
 
-@pytest.mark.parametrize("marcador", MARCADORES_INVALIDOS)
-def test_un_marcador_de_tanda_que_no_se_entiende_es_un_dato_invalido(
-    api: TestClient, socio: Socio, marcador: str
-) -> None:
-    """un marcador de página inválido se rechaza @REV-03-S2 @assumption:REV-03-ASM-01"""
-    r = api.get(
-        "/reservas", headers=socio.sesion, params={"cuando": "historial", "despues": marcador}
-    )
-
-    assert r.status_code == 422
-    assert "despues" in r.json()["errores"]
 
 
-@pytest.mark.parametrize("marcador", MARCADORES_INVALIDOS)
-def test_un_marcador_invalido_del_historial_global_es_un_dato_invalido(
-    api: TestClient, token_admin: str, marcador: str
-) -> None:
-    """un marcador inválido del historial global se rechaza @REV-03-S3 @assumption:REV-03-ASM-01"""
-    r = api.get(
-        "/reservas/todas",
-        headers={"Authorization": f"Bearer {token_admin}"},
-        params={"despues": marcador},
-    )
-
-    assert r.status_code == 422
-    assert "despues" in r.json()["errores"]
 
 
-def test_el_historial_global_avanza_por_marcador(
-    api: TestClient, socio: Socio, token_admin: str
-) -> None:
-    """una página avanzada del historial global se resuelve por marcador @REV-03-S3"""
-    _pasadas(socio, 25)
-    _empate(socio)
-    admin = {"Authorization": f"Bearer {token_admin}"}
-    filtro = {"q": socio.sede}
-
-    primera = api.get("/reservas/todas", headers=admin, params=filtro).json()
-    segunda = api.get(
-        "/reservas/todas", headers=admin, params={**filtro, "despues": primera["siguiente"]}
-    ).json()
-
-    assert len(primera["reservas"]) == 20
-    assert len(segunda["reservas"]) == 6
-    assert segunda["siguiente"] is None
-    reservas = primera["reservas"] + segunda["reservas"]
-    inicios = [r["inicio"] for r in reservas]
-    assert inicios == sorted(inicios, reverse=True)
-    assert len({r["id"] for r in reservas}) == 26
-    assert primera["total"] == 26
 
 
-def test_las_apps_instaladas_siguen_paginando_por_numero(
-    api: TestClient, socio: Socio, token_admin: str
-) -> None:
-    """el historial global sigue aceptando la página de las apps instaladas
-    @REV-03-S3 @assumption:REV-03-ASM-11
-    """
-    _pasadas(socio, 25)
-    admin = {"Authorization": f"Bearer {token_admin}"}
-    filtro = {"q": socio.sede}
-    primera = api.get("/reservas/todas", headers=admin, params=filtro).json()
-
-    por_numero = api.get("/reservas/todas", headers=admin, params={**filtro, "pagina": 2}).json()
-    los_dos = api.get(
-        "/reservas/todas",
-        headers=admin,
-        params={**filtro, "pagina": 1, "despues": primera["siguiente"]},
-    ).json()
-
-    assert len(por_numero["reservas"]) == 5
-    assert [r["id"] for r in los_dos["reservas"]] == [r["id"] for r in por_numero["reservas"]]
 
 
 def test_el_historial_global_tiene_un_indice_por_fecha(motor: Engine) -> None:
@@ -256,16 +173,6 @@ def _despachar(socio: Socio, canal: CanalDePrueba) -> None:
         despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)
 
 
-def test_un_aviso_varado_en_enviando_se_vuelve_a_mandar(socio: Socio, canal: CanalDePrueba) -> None:
-    """un aviso que quedó enviando por una caída se vuelve a enviar @REV-03-S5 @assumption:REV-03-ASM-04"""
-    _cancelar(socio, "20:00")
-    _varar(socio, "10 minutes")
-    canal.enviados.clear()
-
-    _despachar(socio, canal)
-
-    assert _envios(socio) == ["enviada"]
-    assert len(canal.enviados) == 1
 
 
 class _CanalQueSeCae(CanalDePrueba):
@@ -275,64 +182,10 @@ class _CanalQueSeCae(CanalDePrueba):
         raise SystemExit("el proceso se cayó")
 
 
-def test_un_aviso_que_quedo_a_medio_mandar_lo_retoma_el_despacho_siguiente(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """un aviso que quedó enviando por una caída real se vuelve a enviar
-    @REV-03-S5 @assumption:REV-03-ASM-04
-    """
-    _cancelar(socio, "20:00")
-    with socio.motor.begin() as conn:
-        conn.execute(
-            text(
-                "UPDATE notificacion SET envio = 'pendiente', enviada_en = NULL WHERE usuario_id = :u"
-            ),
-            {"u": socio.usuario_id},
-        )
-    with pytest.raises(SystemExit):
-        _despachar(socio, _CanalQueSeCae())
-    with socio.motor.begin() as conn:
-        conn.execute(
-            text(
-                "UPDATE notificacion SET tomada_en = tomada_en - interval '10 minutes'"
-                " WHERE usuario_id = :u"
-            ),
-            {"u": socio.usuario_id},
-        )
-    canal.enviados.clear()
-
-    _despachar(socio, canal)
-
-    assert _envios(socio) == ["enviada"]
-    assert len(canal.enviados) == 1
 
 
-def test_un_aviso_que_se_esta_mandando_no_se_toma_dos_veces(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """un aviso tomado hace un momento no se vuelve a tomar @REV-03-S5 @assumption:REV-03-ASM-04"""
-    _cancelar(socio, "20:00")
-    _varar(socio, "1 minute")
-    canal.enviados.clear()
-
-    _despachar(socio, canal)
-
-    assert _envios(socio) == ["enviando"]
-    assert canal.enviados == []
 
 
-def test_un_aviso_que_ya_se_intento_tres_veces_queda_fallido(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """el aviso que agotó sus intentos queda fallido @REV-03-S5 @assumption:REV-03-ASM-05"""
-    _cancelar(socio, "20:00")
-    _varar(socio, "10 minutes", intentos=3)
-    canal.enviados.clear()
-
-    _despachar(socio, canal)
-
-    assert _envios(socio) == ["fallida"]
-    assert canal.enviados == []
 
 
 def _recordatorio(socio: Socio, envio: str, hace: str) -> None:
@@ -358,45 +211,10 @@ def _barrer(socio: Socio, canal: CanalDePrueba) -> None:
         enviar_recordatorios(NotificacionesSql(conn), canal, a_las(19, 10), socio.usuario_id)
 
 
-def test_un_recordatorio_registrado_y_no_enviado_se_reintenta(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """un recordatorio registrado y no enviado se reintenta @REV-03-S6"""
-    _recordatorio(socio, "pendiente", "10 minutes")
-    canal.enviados.clear()
-
-    _barrer(socio, canal)
-
-    assert _envios(socio) == ["enviada"]
-    assert len(canal.enviados) == 1
 
 
-def test_un_recordatorio_pendiente_de_una_reserva_cancelada_no_sale(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """el recordatorio pendiente de una reserva ya cancelada no se manda @REV-03-S6"""
-    _recordatorio(socio, "pendiente", "10 minutes")
-    reserva = socio.reservas[-1]
-    r = socio.api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
-    assert r.status_code == 200
-    canal.enviados.clear()
-
-    _barrer(socio, canal)
-
-    assert canal.enviados == []
 
 
-def test_un_recordatorio_varado_en_enviando_no_se_repite(
-    socio: Socio, canal: CanalDePrueba
-) -> None:
-    """el recordatorio varado queda fallido: se envía una sola vez @REV-03-S6 @assumption:REV-03-ASM-02"""
-    _recordatorio(socio, "enviando", "10 minutes")
-    canal.enviados.clear()
-
-    _barrer(socio, canal)
-
-    assert _envios(socio) == ["fallida"]
-    assert canal.enviados == []
 
 
 @pytest.fixture

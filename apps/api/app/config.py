@@ -8,20 +8,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 RAIZ_API = Path(__file__).resolve().parents[1]
 
 
-def _version_del_paquete() -> str:
-    proyecto = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))
-    return str(proyecto["project"]["version"])
+_PROYECTO = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))
 
 
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_file=RAIZ_API / ".env", extra="ignore")
 
-    version: str = _version_del_paquete()
+    version: str = str(_PROYECTO["project"]["version"])
     database_url: str = "postgresql+psycopg://club:club@localhost:5432/club"
-    # El usuario propio de la app, sin permiso de crear tablas; vacío usa DATABASE_URL.
-    database_url_app: str = ""
-    # El token del endpoint /metrics; vacío lo deja apagado.
-    metricas_token: str = ""
     firebase_project_id: str = "demo-clubnahuelmosse"
     # La clave web del proyecto, para comprobar contraseñas; el emulador no la necesita.
     firebase_api_key: str = ""
@@ -42,12 +36,6 @@ class Config(BaseSettings):
     pruebas: bool = False
     # Cada cuántos segundos el barrido manda los recordatorios que ya les toca; 0 lo apaga.
     recordatorios_cada: int = 30
-    # Detrás del proxy de Render el origen de un pedido es el último valor de X-Forwarded-For.
-    detras_de_proxy: bool = False
-    # /docs y /redoc; en producción se apagan, el contrato sigue en /openapi.json.
-    documentacion_interactiva: bool = True
-    # Host que acepta la API además de los propios y el de url_publica, separados por coma.
-    hosts_permitidos: str = ""
 
     @field_validator("database_url")
     @classmethod

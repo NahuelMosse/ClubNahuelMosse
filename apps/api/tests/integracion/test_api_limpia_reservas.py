@@ -58,29 +58,6 @@ def cancha(
     return sede[0], _cancha(api, token_admin, sede[0]), _usuario(api, motor, token_usuario)
 
 
-def test_el_historial_dice_que_hay_mas_solo_si_sobra_una_fila(
-    motor: Engine, cancha: tuple[int, int, int]
-) -> None:
-    """el historial dice que hay más sólo si sobra una fila @ARQ-02-S2 @assumption:ARQ-02-ASM-06"""
-    _, espacio, yo = cancha
-    with motor.begin() as conn:
-        for dias in (3, 2):
-            inicio = _a_las(-dias, 10)
-            conn.execute(
-                text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total, creado_en) VALUES (:u, :e, :i, :i + interval '1 hour', 38000, 38000,"
-                    " :i - interval '1 day')"
-                ),
-                {"u": yo, "e": espacio, "i": inicio},
-            )
-
-    with motor.connect() as conn:
-        justas = ReservasSql(conn).de_usuario(yo, "historial", limite=2)
-        sobra = ReservasSql(conn).de_usuario(yo, "historial", limite=1)
-
-    assert (len(justas.reservas), justas.hay_mas) == (2, False)
-    assert (len(sobra.reservas), sobra.hay_mas) == (1, True)
 
 
 def test_una_reserva_ajena_o_inexistente_no_se_encuentra(

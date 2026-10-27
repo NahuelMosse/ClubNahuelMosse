@@ -1,3 +1,4 @@
+# kit-shape: las rutas de notificaciones y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import datetime
 from typing import Annotated, Literal
 
@@ -15,7 +16,7 @@ from app.aplicacion.notificaciones import (
 from app.dependencias import NotificacionesSql, repositorio_notificaciones
 from app.dominio.notificaciones import Notificacion, TipoDeAviso
 from app.dominio.usuarios import Perfil
-from app.interfaz.entradas import Identificador, TokenDeDispositivo
+from app.interfaz.entradas import Identificador
 from app.interfaz.reservas import Errores
 from app.interfaz.sesion import SinSesion, usuario_actual
 
@@ -23,13 +24,13 @@ router = APIRouter(tags=["notificaciones"])
 
 
 class PedidoDeDispositivo(BaseModel):
-    token: TokenDeDispositivo
+    token: str
     plataforma: Literal["android", "ios"]
     permiso: bool
 
 
 class BajaDeDispositivo(BaseModel):
-    token: TokenDeDispositivo
+    token: str
 
 
 @router.put(

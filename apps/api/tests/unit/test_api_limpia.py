@@ -7,7 +7,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.aplicacion.errores import DatosInvalidos, NoEncontrada, Prohibido
-from app.config import config
 from app.main import crear_app
 
 API = Path(__file__).resolve().parents[2]
@@ -91,35 +90,10 @@ def test_la_zona_del_club_el_lector_de_horas_y_el_identificador_se_definen_una_v
     assert [n for n, t in codigo.items() if "2**63" in t] == ["interfaz/entradas.py"]
 
 
-def test_las_metricas_salen_de_prometheus_client_con_las_mismas_series_y_un_registro_propio(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    """las métricas salen de prometheus-client con las mismas series y un registro propio
-    @ARQ-02-S1 @assumption:ARQ-02-ASM-02"""
-    texto = (INTERFAZ / "metricas.py").read_text(encoding="utf-8")
-    assert "prometheus_client" in texto
-    assert "CollectorRegistry(" in texto
-
-    monkeypatch.setattr(config, "metricas_token", "secreto")
-    app = crear_app()
-    app.add_api_route("/cosa", lambda: {"ok": True})
-    c = TestClient(app, base_url="http://localhost")
-    c.get("/cosa")
-    metricas = c.get("/metrics", headers={"Authorization": "Bearer secreto"}).text
-
-    assert re.search(r'solicitudes_total\{[^}]*ruta="/cosa"[^}]*codigo="200"[^}]*\} 1\.0', metricas)
-    assert re.search(
-        r'solicitud_segundos_bucket\{(?=[^}]*le="0\.05")(?=[^}]*ruta="/cosa")', metricas
-    )
-    assert "pool_conexiones_en_uso" in metricas
-    assert "pool_conexiones_libres" in metricas
-
-
 def test_email_validator_deja_de_ser_dependencia_y_nadie_la_importa() -> None:
     """email-validator deja de ser dependencia y nadie la importa @assumption:ARQ-02-ASM-03"""
     proyecto = tomllib.loads((API / "pyproject.toml").read_text(encoding="utf-8"))
     dependencias = " ".join(proyecto["project"]["dependencies"])
 
     assert "email-validator" not in dependencias
-    assert "prometheus-client" in dependencias
     assert not any("email_validator" in a.read_text(encoding="utf-8") for a in APP.rglob("*.py"))

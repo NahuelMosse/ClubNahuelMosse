@@ -1,15 +1,11 @@
 import logging
-from collections.abc import Sequence
 from datetime import datetime
-from typing import Protocol
 
+from app.aplicacion.almacen_de_avisos import Notificaciones
 from app.aplicacion.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 from app.dominio.notificaciones import (
     Aviso,
-    AvisoPerdido,
-    Envio,
     Notificacion,
-    Recordatorio,
     mensaje_recordatorio,
 )
 from app.dominio.notificaciones import (
@@ -29,60 +25,6 @@ from app.dominio.usuarios import Perfil
 PLATAFORMAS = ("android", "ios")
 
 _registro = logging.getLogger(__name__)
-
-
-class Notificaciones(Protocol):
-    def vencidos(self, ahora: datetime, usuario_id: int | None) -> list[Recordatorio]:
-        """Las reservas activas que empiezan dentro de la hora siguiente a [ahora], hechas o
-        modificadas con una hora o más de anticipación y sin aviso para su horario actual."""
-        ...
-
-    def registrar(self, recordatorio: Recordatorio, aviso: Aviso) -> int | None:
-        """Guarda el aviso en el centro. `None` si ya estaba: otro barrido lo registró."""
-        ...
-
-    def tokens_con_permiso(self, usuario_id: int) -> list[str]: ...
-
-    def tiene_dispositivos(self, usuario_id: int) -> bool:
-        """Si [usuario_id] tiene algún dispositivo registrado, con o sin permiso."""
-        ...
-
-    def marcar_varados_fallidos(self, usuario_id: int | None) -> list[AvisoPerdido]:
-        """Pasa a `fallida`, y devuelve, los avisos de [usuario_id] o de todos que no van a
-        salir: los `enviando` con la toma vencida que `que_hacer_con_varado` da por fallidos y
-        los recordatorios registrados cuyo turno ya empezó o se canceló."""
-        ...
-
-    def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
-        """Reserva para quien llama el aviso más viejo de [usuario_id] o de todos que está
-        sin enviar —un recordatorio sólo si sigue vigente— o que quedó `enviando` con la toma
-        vencida y se puede reintentar: pasa a `enviando` con un intento más, así dos despachos
-        al mismo tiempo no mandan el mismo dos veces. `None` si no queda ninguno."""
-        ...
-
-    def marcar_envio(self, notificacion_id: int, envio: Envio) -> None: ...
-
-    def dar_de_baja_tokens(self, tokens: Sequence[str]) -> None: ...
-
-    def registrar_dispositivo(
-        self, usuario_id: int, token: str, plataforma: str, permiso: bool
-    ) -> bool:
-        """Deja el dispositivo a nombre de [usuario_id]. `False` si la cuenta ya no está
-        activa."""
-        ...
-
-    def baja_dispositivo(self, usuario_id: int, token: str) -> None: ...
-
-    def de_usuario(self, usuario_id: int) -> tuple[list[Notificacion], int]:
-        """Las últimas notificaciones, de la más nueva a la más vieja, y cuántas hay sin
-        leer en total."""
-        ...
-
-    def leer(self, usuario_id: int, notificacion_id: int) -> bool:
-        """Marca como leída una notificación propia. `False` si no es de [usuario_id]."""
-        ...
-
-    def leer_todas(self, usuario_id: int) -> None: ...
 
 
 def entregar(
@@ -128,12 +70,13 @@ def despachar_pendientes(
     notificaciones: Notificaciones, canal: CanalPush, usuario_id: int | None = None
 ) -> int:
     """Manda los avisos que se registraron junto con el hecho que avisan, como la confirmación
-    de una cancelación, y devuelve cuántos salieron a despacho. Retoma los que quedaron
-    `enviando` por un proceso caído y los recordatorios registrados que no salieron.
+    de una cancelación, y devuelve cuántos salieron a despacho.
 
     Toma de a uno: lo que no se intentó sigue `pendiente`, y un aviso que falla por cualquier
     motivo queda `fallida` sin cortar los que siguen. Antes de tomar, los que no van a salir
-    quedan `fallida` y se avisan en el log como `aviso_sin_enviar`.
+    (un recordatorio que ya no corresponde, o un aviso con más de 10 minutos en `enviando`
+    porque la API se cayó a mitad del envío) quedan `fallida`, no se reenvían y se avisan en el
+    log como `aviso_sin_enviar`.
     """
     for perdido in notificaciones.marcar_varados_fallidos(usuario_id):
         # Sólo el número y el tipo: nada de la persona ni del texto del aviso.

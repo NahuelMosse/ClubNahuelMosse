@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { basename, join, resolve } from 'node:path';
 import { asmsOf, cardIdOf, plannedTestsOf, reuseOf, rolesOf, sectionOf, specTagsIn, specsOf, tasksOf, whyLayerOf } from './card-doc.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION } from './card.mjs';
-import { gateLinesOf, hasAttacksLine, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
+import { gateLinesOf, hasAttacksLine, removeOnlyOf, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -18,7 +18,9 @@ export const LOOK_MAX_LINES = 15;
 // `behavior:` (one line per moment) and `tokens:`; short, so that it is read.
 export const lookProblems = (doc, cardDir) => {
   const section = sectionOf(doc, 'Look');
-  if (section === null) return ['no `## Look` section (visual lens): add `ref:`, `behavior:`, `tokens:` and `copy:` (template: .claude/templates/card.md)'];
+  if (section === null) return ['no `## Look` section (visual lens): add `ref:`, `behavior:`, `tokens:` and `copy:` (template: .claude/templates/card.md), or `remove-only: <what goes>` when the card only takes something off a screen'];
+  // A card that only takes something off has no new look to direct: the gate's `remove-only` check holds it against the diff.
+  if (removeOnlyOf(doc)) return [];
   const lines = section.split(/\r?\n/).map((l) => l.trim()).filter((l) => l && !l.startsWith('<!--'));
   const field = (name) => lines.flatMap((l) => { const m = l.match(new RegExp(`^(?:[-*]\\s*)?${name}:\\s*(.*)$`, 'i')); return m && m[1].trim() ? [m[1].trim()] : []; });
   const out = [];
@@ -131,7 +133,7 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
   if (lenses.includes('integrity') && gate.some((l) => /^app\s*:/i.test(l)) && !planned.some((t) => /reinici|restart|sobrevive/i.test(t.title)))
     out.push('integrity lens with an `app:` line and no planned test whose title says reinici, restart or sobrevive (a record survives restarting the app on the same database)');
 
-  const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'));
+  const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'), doc);
   if (lenses.includes('visual') && instruments.golden) {
     if (!gate.some((l) => /^a11y\s*(\[[^\]]*\])?\s*:/i.test(l))) out.push('no `a11y:` line in ## Gate (visual lens, flutter): `a11y: flutter test <file>` with `kitA11y`');
     const moving = (sectionOf(doc, 'Look') ?? '').split('\n').some((l) => /^\W*behavior:/i.test(l.trim()) && /\b(?:hover|cursor|foco|focus|press|tap|animat\w*|transition\w*|hero|fade|slide)\b/i.test(l));
@@ -243,7 +245,7 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   out.push(...reuseProblems(doc, root));
   out.push(...whyLayerProblems(doc, root));
   if (lenses.includes('visual')) {
-    const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'));
+    const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'), doc);
     const kind = instruments.probe && instruments.golden ? 'probe` or `golden' : instruments.golden ? 'golden' : 'probe';
     for (const x of statesLacking(doc, instruments)) out.push(`state ${x}: no \`${kind} ${x}:\` line in ## Gate (visual lens)`);
   }

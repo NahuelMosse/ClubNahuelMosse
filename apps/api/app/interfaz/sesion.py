@@ -1,3 +1,4 @@
+# kit-shape: las rutas de sesión y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import date, datetime
 from typing import Annotated
 
@@ -18,8 +19,6 @@ from app.aplicacion.sesion import perfil_autenticado
 from app.dependencias import ProveedorFirebase, UsuariosSql, identidad, repositorio_usuarios
 from app.dominio.usuarios import DatosPersonales, Perfil, Rol
 from app.dominio.zona import ZONA_CLUB as ZONA
-from app.interfaz.entradas import Clave, Texto40, Texto120
-from app.interfaz.limites import Frenado, frenar_por_cuenta
 
 router = APIRouter(tags=["sesión"])
 _portador = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
@@ -72,8 +71,8 @@ def perfil_propio(perfil: Annotated[Perfil, Depends(usuario_actual)]) -> PerfilP
 
 
 class PedidoCambioDeContrasena(BaseModel):
-    actual: Clave = ""
-    nueva: Clave = ""
+    actual: str = ""
+    nueva: str = ""
 
 
 class ErroresDeContrasena(BaseModel):
@@ -111,16 +110,10 @@ def cambiar_contrasena_propia(
 
 
 class PedidoDeEdicion(BaseModel):
-    nombre: Texto120 = ""
-    apellido: Texto120 = ""
-    dni: Texto40 = ""
-    fecha_nacimiento: Texto40 = ""
-
-
-def _frenar_edicion(peticion: Request, perfil: Annotated[Perfil, Depends(usuario_actual)]) -> None:
-    """Cada intento con un DNI cuenta, sea ajeno o propio: no sirve para averiguar quién es
-    socio."""
-    frenar_por_cuenta(peticion, "editar-perfil", perfil.id)
+    nombre: str = ""
+    apellido: str = ""
+    dni: str = ""
+    fecha_nacimiento: str = ""
 
 
 @router.put(
@@ -130,11 +123,9 @@ def _frenar_edicion(peticion: Request, perfil: Annotated[Perfil, Depends(usuario
         401: {"model": SinSesion},
         409: {"model": ErroresDeContrasena, "description": "Otra cuenta ya tiene ese DNI"},
         422: {"model": ErroresDeContrasena},
-        429: {"model": Frenado},
     },
     summary="Editar los datos personales de quien inició sesión",
     description="Todo menos el correo, que no se puede cambiar.",
-    dependencies=[Depends(_frenar_edicion)],
 )
 def editar_perfil_propio(
     pedido: PedidoDeEdicion,

@@ -5,7 +5,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'admin/historial_reservas.dart';
-import 'comun/aviso_despertando.dart';
 import 'admin/pantalla_alta_espacio.dart';
 import 'admin/pantalla_detalle_reserva.dart';
 import 'admin/pantalla_editar_espacio.dart';
@@ -608,7 +607,6 @@ class _AppState extends State<App> {
         builder: (context, hijo) => Stack(
           children: [
             hijo ?? const SizedBox.shrink(),
-            AvisoDespertando(despertando: widget.api.despertando),
             if (widget.centro case final centro?)
               PanelDeAvisos(
                 centro: centro,

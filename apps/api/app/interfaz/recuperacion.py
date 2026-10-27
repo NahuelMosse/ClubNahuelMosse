@@ -1,3 +1,4 @@
+# kit-shape: las rutas de recuperación y los modelos de sus pedidos y respuestas se leen juntos
 import base64
 import hashlib
 from typing import Annotated
@@ -17,8 +18,6 @@ from app.dependencias import (
     repositorio_usuarios,
 )
 from app.dependencias import enviar_correo as enviar
-from app.interfaz.entradas import Clave, Codigo, Correo
-from app.interfaz.limites import Frenado, frenar_por_origen
 
 router = APIRouter(tags=["recuperación de contraseña"])
 
@@ -27,16 +26,16 @@ PAQUETE_ANDROID = "ar.edu.unimoron.clubnahuelmosse"
 
 
 class PedidoDeEnlace(BaseModel):
-    correo: Correo = ""
+    correo: str = ""
 
 
 class ConsultaDeEnlace(BaseModel):
-    codigo: Codigo = ""
+    codigo: str = ""
 
 
 class ContrasenaNueva(BaseModel):
-    codigo: Codigo = ""
-    nueva: Clave = ""
+    codigo: str = ""
+    nueva: str = ""
 
 
 class ErroresDeCampo(BaseModel):
@@ -46,10 +45,9 @@ class ErroresDeCampo(BaseModel):
 @router.post(
     "/recuperacion",
     status_code=status.HTTP_202_ACCEPTED,
-    responses={422: {"model": ErroresDeCampo}, 429: {"model": Frenado}},
+    responses={422: {"model": ErroresDeCampo}},
     summary="Pedir un enlace para crear una contraseña nueva",
     description="Responde lo mismo exista o no una cuenta con ese correo.",
-    dependencies=[Depends(frenar_por_origen("recuperacion"))],
 )
 def pedir(
     pedido: PedidoDeEnlace,

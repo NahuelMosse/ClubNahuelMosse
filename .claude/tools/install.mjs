@@ -143,10 +143,10 @@ const profilesOn = (map, on, recorded) => Object.entries(map.profiles ?? {})
   .filter(([n, p]) => p.status !== 'planned' && (recorded ? recorded[n]?.state === 'on' : p.modules.some((m) => on.has(m)))).map(([n]) => n);
 
 // Every file that goes to the target for a choice of modules, with its rendered content.
-const bundle = (source, map, on, stack, settings, profiles = []) => {
+const bundle = (source, map, on, stack, settings, profiles = [], target = null) => {
   const all = listKit(source);
   const files = [...coreFiles(map, all, stack), ...[...on].flatMap((name) => filesOfModule(map, name, all)), ...profiles.flatMap((p) => filesOfProfile(map, p, all))];
-  const copies = profiles.flatMap((p) => copiesOfProfile(map, p));
+  const copies = profiles.flatMap((p) => copiesOfProfile(map, p, target));
   const origin = new Map(copies.map((c) => [c.to, c.from]));
   return [...new Set([...files, ...copies.map((c) => c.to)])].sort().map((rel) => {
     const raw = readFileSync(join(source, origin.get(rel) ?? rel));
@@ -281,7 +281,7 @@ const main = async () => {
     rulePaths: { ...readRulePaths(source), ...(o.adopt ? readRulePaths(target) : {}), ...(o.rulePaths ? Object.fromEntries(o.rulePaths.split(';').map((p) => { const [k, v] = p.split('='); return [k, v.split(',')]; })) : {}) },
   };
   const profiles = profilesOn(map, on, chosenProfiles ? Object.fromEntries(chosenProfiles.map((n) => [n, { state: 'on' }])) : null);
-  const files = bundle(source, map, on, stack, settings, profiles);
+  const files = bundle(source, map, on, stack, settings, profiles, target);
   const manifest = {
     kit: map.kit, stack, e2e: settings.e2e, rulePaths: settings.rulePaths,
     source: { path: source, commit: commitOf(source) },
@@ -338,7 +338,7 @@ const update = (o, target, source, map) => {
   for (const n of on) state.modules[n] ??= { state: 'on', version: map.modules[n].version, since: `update ${today()}` };
   const settings = { e2e: manifest.e2e, rulePaths: manifest.rulePaths };
   const profiles = profilesOn(map, on, manifest.profiles);
-  const files = bundle(source, map, on, manifest.stack, settings, profiles);
+  const files = bundle(source, map, on, manifest.stack, settings, profiles, target);
   const wanted = new Set(files.map((f) => f.rel));
   const owner = (rel) => { const p = profileOfFile(map, rel, profiles); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
   // A repo that recorded no profiles gets them from its modules; the mcp entries of the ones on are written, never over what is there.
@@ -366,6 +366,8 @@ const update = (o, target, source, map) => {
   for (const [rel, rec] of Object.entries(manifest.files ?? {}).filter(([r, x]) => !wanted.has(r) && state.modules[x.module]?.state !== 'off')) {
     const path = join(target, rel);
     if (existsSync(path) && sha(readFileSync(path)) === rec.sha256) { rmSync(path); removed.push(rel); delete state.files[rel]; }
+    // A record of a file the kit no longer places there, and that is not on disk, is only a stale line of the manifest.
+    else if (!existsSync(path)) delete state.files[rel];
   }
   // A source of another version that changes nothing is not an update: it is a stale or wrong source.
   if (map.kit !== manifest.kit && !replaced.length && !removed.length)

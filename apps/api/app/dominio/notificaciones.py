@@ -1,3 +1,4 @@
+# kit-shape: son los tipos del aviso y las funciones que arman sus textos, un solo concepto
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -93,15 +94,12 @@ class ReservaAnulada:
 # Cuánto del motivo entra en el aviso: el resto se lee en el historial.
 LIMITE_DEL_MOTIVO = 200
 
-# Un aviso `enviando` hace más que esto se da por varado: el proceso que lo tomó se cayó.
-TOMA_VENCIDA = timedelta(minutes=5)
-# Cuántas veces se toma un aviso antes de darlo por fallido.
-INTENTOS_MAXIMOS = 3
 # Un recordatorio recién registrado lo está enviando quien lo registró: el despacho lo toma
 # sólo si pasó más que esto sin salir.
 ESPERA_DEL_RECORDATORIO = timedelta(minutes=1)
+# Pasado este tiempo un aviso `enviando` se da por perdido: la API se cayó a mitad del envío.
+ESPERA_DEL_ENVIO = timedelta(minutes=10)
 
-DestinoDelVarado = Literal["reintentar", "dar_por_fallido"]
 
 
 @dataclass(frozen=True)
@@ -110,17 +108,6 @@ class AvisoPerdido:
 
     notificacion_id: int
     tipo: TipoDeAviso
-
-
-def que_hacer_con_varado(tipo: TipoDeAviso, intentos: int) -> DestinoDelVarado:
-    """Qué se hace con un aviso que quedó `enviando` sin que se sepa si salió.
-
-    Un recordatorio no se repite (el CU lo fija: «se envía una sola vez»). Uno de cancelación sí,
-    porque la persona no puede perdérselo, hasta [INTENTOS_MAXIMOS] veces.
-    """
-    if tipo == "recordatorio" or intentos >= INTENTOS_MAXIMOS:
-        return "dar_por_fallido"
-    return "reintentar"
 
 
 def tipo_corto(deporte: str, tipo: str) -> str:
