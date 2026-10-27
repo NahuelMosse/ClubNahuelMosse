@@ -27,14 +27,6 @@ export default {
         theme: { customCss: './src/css/custom.css' },
       },
     ],
-    [
-      'redocusaurus',
-      {
-        // static/openapi.json lo arma scripts/copiar.mjs desde apps/api/openapi.json, con las direcciones de la API.
-        specs: [{ id: 'api', spec: 'static/openapi.json', route: '/api' }],
-        theme: { primaryColor: '#4d6600' },
-      },
-    ],
   ],
   themes: [
     '@docusaurus/theme-mermaid',
@@ -47,7 +39,7 @@ export default {
     colorMode: { defaultMode: 'dark', respectPrefersColorScheme: true },
     navbar: {
       title: 'ClubNahuelMosse',
-      items: [{ to: '/api', label: 'API', position: 'left' }],
+      items: [],
     },
     prism: {
       theme: prismThemes.github,

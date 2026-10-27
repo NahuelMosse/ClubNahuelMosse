@@ -3,3 +3,4 @@ build/
 .docusaurus/
 docs/
 static/openapi.json
+static/swagger-ui/
