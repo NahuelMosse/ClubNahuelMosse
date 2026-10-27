@@ -1,0 +1,1 @@
+- apps/api/app/modules/notificaciones/repositorio.py:247 · “False” → “None” · “fcuentaisNone:return@@vigente=self._conn.e” · `_sigue_vigente` sólo se usa como `if not self._sigue_vigente(datos)`: None y False se leen igual
