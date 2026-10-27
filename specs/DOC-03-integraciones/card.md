@@ -41,3 +41,4 @@ no-visual: la card agrega documentación; ninguna pantalla
 - L3 · 2026-10-27 · declared · attacks · la card no toca la API
 - L4 · 2026-10-27 · el juez del plan pide que no se citen valores secretos (ACT-01: DOC-03-ASM-03), qué escribe un servicio sin archivos en la app (ACT-02: DOC-03-ASM-04, S2 dice «los que existan») y no sumar lo que L1 no pide (ACT-03: S1 y S2 sin «qué pasa si no responde» ni «cómo se prueba en local» como exigencia; ASM-04 los deja sólo donde el runbook ya los tiene)
 - L5 · 2026-10-27 · declared · DOC-03-ASM-04 · las líneas de caída y de prueba local son opcionales y copian el runbook; el test de S2 verifica archivos y variables, que es lo que el supuesto exige
+- L6 · 2026-10-27 · declared · S1 · S1 ya no pide «qué pasa si no responde» ni «cómo se prueba en local» (L4); su único miembro es «para qué se usa», que verifica su test
