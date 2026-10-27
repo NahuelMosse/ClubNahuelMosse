@@ -17,7 +17,7 @@ not_read:
 ## Tasks
 
 - T1 · S1,SAL-01-ASM-01,SAL-01-ASM-02 · apps/mobile/lib/inicio/saludo_de_inicio.dart (presentation) · tests: apps/mobile/test/saludo_por_hora_test.dart "el saludo sigue la hora del club: días de 06:00 a 11:59, tardes de 12:00 a 19:59, noches de 20:00 a 05:59 @SAL-01-S1 @assumption:SAL-01-ASM-01"; apps/mobile/test/saludo_por_hora_test.dart "el saludo se calcula al armar el inicio @assumption:SAL-01-ASM-02"
-  reuses: apps/mobile/lib/comun/zona_club.dart `ahoraEnElClub`
+  reuses: `ahoraEnElClub` de comun/zona_club
   también: apps/mobile/integration_test/inicio/home_test.dart · el test de L4, que espera el saludo de la hora del club
 
 ## Changes to existing behavior
