@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
-import '../comun/boton.dart';
-import '../comun/campo_texto.dart';
 import '../comun/formato_fecha.dart';
 import '../comun/transiciones.dart';
 import '../espacios/espacio.dart';
 import '../reservas/reservas.dart';
 import '../sedes/sede.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'acciones_de_filtros.dart';
+import 'cabecera_de_filtros.dart';
+import 'filtro_de_deporte.dart';
+import 'filtro_de_estado.dart';
+import 'filtro_de_sede.dart';
 import 'historial_reservas.dart';
+import 'rango_de_fechas_de_filtro.dart';
+import 'titulo_de_filtro.dart';
 
 /// El panel de Filtros del historial global (CU-14, paso 5): sede, deporte, estado y rango
 /// de fechas, más el buscador. Abre con lo ya aplicado y sólo devuelve algo al confirmar.
@@ -42,7 +46,7 @@ class _PanelDeFiltros extends StatefulWidget {
 }
 
 class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
-  late int? _sedeId = widget.filtros.sedeId;
+  late String? _sedeId = widget.filtros.sedeId;
   late String? _deporte = widget.filtros.deporte;
   late EstadoDeReserva? _estado = widget.filtros.estado;
   late String? _q = widget.filtros.q;
@@ -123,33 +127,7 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s24,
-                Medidas.s16,
-                Medidas.s16,
-                0,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Semantics(
-                      header: true,
-                      child: Text(
-                        'Filtros',
-                        style: Textos.h2.copyWith(color: p.textPrimary),
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    tooltip: 'Cerrar',
-                    icon: const Icon(Icons.close_rounded),
-                    color: p.textSecondary,
-                  ),
-                ],
-              ),
-            ),
+            const CabeceraDeFiltros(),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
@@ -159,217 +137,56 @@ class _PanelDeFiltrosState extends State<_PanelDeFiltros> {
                   Medidas.s24,
                 ),
                 children: [
-                  _Titulo('SEDE'),
+                  TituloDeFiltro('SEDE'),
                   const SizedBox(height: Medidas.s8),
-                  Wrap(
-                    spacing: Medidas.s8,
-                    runSpacing: Medidas.s8,
-                    children: [
-                      for (final sede in widget.sedes)
-                        _Chip(
-                          texto: sede.nombre,
-                          elegido: _sedeId == sede.id,
-                          alTocar: () => setState(
-                            () => _sedeId = _sedeId == sede.id ? null : sede.id,
-                          ),
-                        ),
-                    ],
+                  FiltroDeSede(
+                    sedes: widget.sedes,
+                    elegida: _sedeId,
+                    alElegir: (sede) => setState(
+                      () => _sedeId = _sedeId == sede.id ? null : sede.id,
+                    ),
                   ),
                   const SizedBox(height: Medidas.s20),
-                  _Titulo('DEPORTE'),
+                  TituloDeFiltro('DEPORTE'),
                   const SizedBox(height: Medidas.s8),
-                  Wrap(
-                    spacing: Medidas.s8,
-                    runSpacing: Medidas.s8,
-                    children: [
-                      for (final deporte in widget.catalogo.deportes)
-                        _Chip(
-                          texto: deporte.nombre,
-                          elegido: _deporte == deporte.clave,
-                          alTocar: () => setState(
-                            () => _deporte = _deporte == deporte.clave
-                                ? null
-                                : deporte.clave,
-                          ),
-                        ),
-                    ],
+                  FiltroDeDeporte(
+                    deportes: widget.catalogo.deportes,
+                    elegido: _deporte,
+                    alElegir: (deporte) => setState(
+                      () => _deporte = _deporte == deporte.clave
+                          ? null
+                          : deporte.clave,
+                    ),
                   ),
                   const SizedBox(height: Medidas.s20),
-                  _Titulo('ESTADO'),
+                  TituloDeFiltro('ESTADO'),
                   const SizedBox(height: Medidas.s8),
-                  Wrap(
-                    spacing: Medidas.s8,
-                    runSpacing: Medidas.s8,
-                    children: [
-                      _Chip(
-                        texto: 'Todas',
-                        elegido: _estado == null,
-                        alTocar: () => setState(() => _estado = null),
-                      ),
-                      for (final e in const [
-                        EstadoDeReserva.activa,
-                        EstadoDeReserva.completada,
-                        EstadoDeReserva.anulada,
-                      ])
-                        _Chip(
-                          texto: switch (e) {
-                            EstadoDeReserva.activa => 'Activas',
-                            EstadoDeReserva.completada => 'Completadas',
-                            _ => 'Anuladas',
-                          },
-                          elegido: _estado == e,
-                          alTocar: () =>
-                              setState(() => _estado = _estado == e ? null : e),
-                        ),
-                    ],
+                  FiltroDeEstado(
+                    elegido: _estado,
+                    alElegir: (e) => setState(
+                      () => _estado = e == null || _estado == e ? null : e,
+                    ),
                   ),
                   const SizedBox(height: Medidas.s20),
-                  _Titulo('RANGO DE FECHAS'),
+                  TituloDeFiltro('RANGO DE FECHAS'),
                   const SizedBox(height: Medidas.s8),
                   // En un teléfono chico dos campos lado a lado no dejan ver la fecha
                   // entera; se apilan.
-                  LayoutBuilder(
-                    builder: (context, caja) {
-                      final desde = CampoTexto(
-                        etiqueta: 'Desde',
-                        etiquetaAccesible: 'Desde',
-                        placeholder: 'DD / MM / AAAA',
-                        controlador: _desde,
-                        teclado: TextInputType.number,
-                        formateadores: const [FormatoFecha()],
-                        accionFinal: Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16,
-                          color: p.textMuted,
-                        ),
-                        error: _noEsFecha(_desde)
-                            ? 'Fecha inválida'
-                            : _rangoInvalido
-                            ? 'Desde no puede ser posterior a Hasta'
-                            : null,
-                      );
-                      final hasta = CampoTexto(
-                        etiqueta: 'Hasta',
-                        etiquetaAccesible: 'Hasta',
-                        placeholder: 'DD / MM / AAAA',
-                        controlador: _hasta,
-                        teclado: TextInputType.number,
-                        formateadores: const [FormatoFecha()],
-                        accionFinal: Icon(
-                          Icons.calendar_today_outlined,
-                          size: 16,
-                          color: p.textMuted,
-                        ),
-                        error: _noEsFecha(_hasta)
-                            ? 'Fecha inválida'
-                            : _rangoInvalido
-                            ? (caja.maxWidth < 330
-                                  ? 'Hasta no puede ser anterior a Desde'
-                                  : ' ')
-                            : null,
-                      );
-                      if (caja.maxWidth < 330) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            desde,
-                            const SizedBox(height: Medidas.s12),
-                            hasta,
-                          ],
-                        );
-                      }
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(child: desde),
-                          const SizedBox(width: Medidas.s12),
-                          Expanded(child: hasta),
-                        ],
-                      );
-                    },
+                  RangoDeFechasDeFiltro(
+                    desde: _desde,
+                    hasta: _hasta,
+                    desdeInvalida: _noEsFecha(_desde),
+                    hastaInvalida: _noEsFecha(_hasta),
+                    rangoInvalido: _rangoInvalido,
                   ),
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s24,
-                0,
-                Medidas.s24,
-                Medidas.s24,
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: BotonContorno(texto: 'LIMPIAR', alTocar: _limpiar),
-                  ),
-                  const SizedBox(width: Medidas.s12),
-                  Expanded(
-                    child: BotonPrimario(
-                      texto: 'APLICAR',
-                      alTocar: _rangoInvalido || _hayFechaInvalida
-                          ? null
-                          : _aplicar,
-                    ),
-                  ),
-                ],
-              ),
+            AccionesDeFiltros(
+              alLimpiar: _limpiar,
+              alAplicar: _rangoInvalido || _hayFechaInvalida ? null : _aplicar,
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _Titulo extends StatelessWidget {
-  const _Titulo(this.texto);
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    texto,
-    style: Textos.sobretitulo.copyWith(color: context.paleta.textMuted),
-  );
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.texto,
-    required this.elegido,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final bool elegido;
-  final VoidCallback alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      button: true,
-      selected: elegido,
-      excludeSemantics: true,
-      label: texto,
-      child: Material(
-        color: elegido ? p.accentBase : p.bgSurface,
-        shape: const StadiumBorder(),
-        child: InkWell(
-          onTap: alTocar,
-          customBorder: const StadiumBorder(),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: Medidas.s16,
-              vertical: Medidas.s8,
-            ),
-            child: Text(
-              texto,
-              style: Textos.cuerpo.copyWith(
-                color: elegido ? p.accentOn : p.textPrimary,
-              ),
-            ),
-          ),
         ),
       ),
     );

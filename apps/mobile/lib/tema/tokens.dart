@@ -183,6 +183,12 @@ abstract final class Medidas {
   static const double radioPill = 999;
   static const double tactil = 44;
   static const double altoControl = 52;
+
+  /// El margen del contenido de un listado que se desliza.
+  static const paginaDeLista = EdgeInsets.fromLTRB(s24, s24, s24, s40);
+
+  /// El margen del contenido de un formulario que se desliza.
+  static const paginaDeFormulario = EdgeInsets.fromLTRB(s24, s12, s24, s40);
 }
 
 extension PaletaDelContexto on BuildContext {

@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../comun/barra_inferior.dart';
 import '../comun/boton.dart';
+import '../comun/carga_de_lista.dart';
+import '../comun/en_curso.dart';
+import '../comun/marco_de_tarjeta.dart';
 import '../sesion/sesion.dart';
 import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
@@ -10,7 +13,11 @@ import '../tema/tokens.dart';
 
 /// «PANEL ADMIN» y el título de la sección, con el botón de la cuenta a la derecha.
 class EncabezadoAdmin extends StatelessWidget {
-  const EncabezadoAdmin({super.key, required this.titulo, required this.sesion});
+  const EncabezadoAdmin({
+    super.key,
+    required this.titulo,
+    required this.sesion,
+  });
 
   final String titulo;
   final Sesion sesion;
@@ -88,12 +95,7 @@ class PlantillaListadoAdmin extends StatelessWidget {
             onRefresh: alRefrescar,
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                Medidas.s24,
-                Medidas.s24,
-                Medidas.s24,
-                Medidas.s40,
-              ),
+              padding: Medidas.paginaDeLista,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -106,11 +108,7 @@ class PlantillaListadoAdmin extends StatelessWidget {
                   ),
                   const SizedBox(height: Medidas.s16),
                   ...listado,
-                  if (!hayDatos && !fallo)
-                    const Padding(
-                      padding: EdgeInsets.all(Medidas.s40),
-                      child: Center(child: CircularProgressIndicator()),
-                    ),
+                  if (!hayDatos && !fallo) const EsperaDeLista(),
                   if (!hayDatos && fallo)
                     Center(
                       child: BotonTexto(
@@ -180,7 +178,6 @@ class TarjetaAdmin extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.paleta;
     // Con cualquier agrandado del texto, los botones lado a lado ya no entran en 360.
     final grande = MediaQuery.textScalerOf(context).scale(10) > 10.5;
     final editar = BotonContorno(
@@ -191,14 +188,7 @@ class TarjetaAdmin extends StatelessWidget {
       alTocar: alEditar,
     );
     final Widget baja = dandoDeBaja
-        ? Semantics(
-            label: 'Dando de baja $nombre',
-            excludeSemantics: true,
-            child: const SizedBox(
-              height: Medidas.altoControl,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          )
+        ? EnCurso('Dando de baja $nombre')
         : BotonContorno(
             texto: textoBaja,
             icono: Icons.delete_outline_rounded,
@@ -207,13 +197,9 @@ class TarjetaAdmin extends StatelessWidget {
             etiquetaAccesible: etiquetaBaja,
             alTocar: alDarDeBaja,
           );
-    return Container(
+    return MarcoDeTarjeta(
+      recorte: Clip.none,
       padding: const EdgeInsets.all(Medidas.s16),
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        borderRadius: BorderRadius.circular(Medidas.radioLg),
-        border: Border.all(color: p.borderDefault),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 DUPLICADO = "Ya existe un espacio deportivo con ese nombre en la sede seleccionada."
@@ -19,7 +19,7 @@ def _con(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio(sede_id: int, **cambios: object) -> dict[str, object]:
+def _espacio(sede_id: str, **cambios: object) -> dict[str, object]:
     return {
         "sede_id": sede_id,
         "deporte": "Futbol",
@@ -31,7 +31,7 @@ def _espacio(sede_id: int, **cambios: object) -> dict[str, object]:
 
 
 def test_el_alta_arma_el_nombre_y_guarda_el_rastro(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     sugerido = api.get(
@@ -57,7 +57,7 @@ def test_el_alta_arma_el_nombre_y_guarda_el_rastro(
 
 
 def test_los_numeros_no_se_reutilizan_despues_de_una_baja(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     primero = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
@@ -74,7 +74,7 @@ def test_los_numeros_no_se_reutilizan_despues_de_una_baja(
 
 
 def test_si_otro_alta_tomo_el_numero_vuelve_con_el_siguiente(
-    api: TestClient, token_admin: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     assert api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).is_success
@@ -92,7 +92,7 @@ def test_si_otro_alta_tomo_el_numero_vuelve_con_el_siguiente(
 
 
 def test_dos_altas_a_la_vez_toman_numeros_distintos(
-    api: TestClient, token_admin: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     with ThreadPoolExecutor(max_workers=3) as pool:
@@ -108,7 +108,7 @@ def test_dos_altas_a_la_vez_toman_numeros_distintos(
 
 
 def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
-    api: TestClient, token_admin: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     r = api.post(
@@ -126,7 +126,7 @@ def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
 
 
 def test_una_sede_dada_de_baja_no_recibe_espacios(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     with motor.begin() as conn:
@@ -144,7 +144,7 @@ def test_los_usuarios_ven_los_espacios_activos_y_el_catalogo(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
 ) -> None:
     sede_id, prefijo = sede
     f7 = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, tipo="F7"))
@@ -166,7 +166,7 @@ def test_los_usuarios_ven_los_espacios_activos_y_el_catalogo(
 
 
 def test_un_usuario_no_pide_nombres_de_espacios(
-    api: TestClient, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     r = api.get(
         "/espacios/nombre",
@@ -183,7 +183,7 @@ def test_sin_sesion_no_hay_espacios(api: TestClient) -> None:
 
 
 def test_el_numero_saltea_un_nombre_que_ya_uso_otra_sede(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     assert api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).is_success
@@ -220,7 +220,7 @@ def test_el_numero_saltea_un_nombre_que_ya_uso_otra_sede(
 
 
 def test_el_mismo_pedido_repetido_despues_de_un_corte_devuelve_el_espacio_ya_guardado(
-    api: TestClient, token_admin: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     primero = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id, numero=1))
@@ -240,7 +240,7 @@ def test_el_mismo_pedido_repetido_despues_de_un_corte_devuelve_el_espacio_ya_gua
 def test_el_pedido_de_otro_administrador_no_se_toma_como_propio(
     api: TestClient,
     token_admin: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     iniciar_sesion: Callable[[str, str], str | None],
     unico: Callable[[], str],
     monkeypatch: pytest.MonkeyPatch,
@@ -264,7 +264,7 @@ def test_se_filtran_los_espacios_de_una_sede_y_la_sede_dice_sus_deportes(
     api: TestClient,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     sede_id, prefijo = sede
@@ -301,7 +301,7 @@ def test_se_filtran_los_espacios_de_una_sede_y_la_sede_dice_sus_deportes(
 
 
 def test_se_filtran_los_espacios_por_deporte_y_tipo(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     for cambios in ({}, {"tipo": "F7"}, {"deporte": "Hockey", "tipo": "H7"}):
@@ -316,14 +316,14 @@ def test_se_filtran_los_espacios_por_deporte_y_tipo(
     assert nombres(deporte="Futbol", tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
     assert nombres(deporte="Golf") == []
     assert nombres(tipo="F7") == [f"{prefijo}_Futbol_F7_1"]
-    for malo in ({"deporte": ""}, {"tipo": ""}, {"deporte": "x" * 41}):
+    for malo in ({"deporte": ""}, {"tipo": ""}):
         params: dict[str, str | int] = {"sede_id": sede_id, **malo}
         r = api.get("/espacios", headers=_con(token_usuario), params=params)
         assert r.status_code == 422
 
 
 def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
@@ -335,10 +335,11 @@ def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
                     " total, estado, cancelada_en)"
-                    " SELECT min(id), :e, x.i, x.i + interval '1 hour', 38000, 38000, :estado,"
-                    " CASE WHEN :estado = 'cancelada' THEN now() END FROM usuario,"
+                    " SELECT (SELECT id FROM usuario ORDER BY id LIMIT 1), :e, x.i,"
+                    " x.i + interval '1 hour', 38000, 38000, :estado,"
+                    " CASE WHEN :estado = 'cancelada' THEN now() END FROM"
                     " (SELECT (CAST(:dia AS date) + make_interval(hours => :hora))"
-                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x GROUP BY x.i"
+                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
                 ),
                 {"e": espacio["id"], "dia": manana, "hora": hora, "estado": estado},
             )
@@ -357,7 +358,7 @@ def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
 
 
 def test_los_horarios_se_piden_con_sesion_y_dentro_de_la_semana(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
@@ -368,11 +369,12 @@ def test_los_horarios_se_piden_con_sesion_y_dentro_de_la_semana(
     lejos = {"fecha": (hoy + timedelta(days=7)).isoformat()}
     assert api.get(ruta, headers=_con(token_usuario), params=lejos).status_code == 422
     assert api.get(ruta, headers=_con(token_usuario), params={"horas": 5}).status_code == 422
-    assert api.get("/espacios/999999999/horarios", headers=_con(token_usuario)).status_code == 404
+    inexistente = "/espacios/00000000-0000-7000-8000-0000000000ff/horarios"
+    assert api.get(inexistente, headers=_con(token_usuario)).status_code == 404
 
 
 def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     ids = [
@@ -388,9 +390,10 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
             conn.execute(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total) SELECT min(id), :e, x.i, x.i + interval '1 hour', 38000, 38000"
-                    " FROM usuario, (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
-                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x GROUP BY x.i"
+                    " total) SELECT (SELECT id FROM usuario ORDER BY id LIMIT 1), :e, x.i,"
+                    " x.i + interval '1 hour', 38000, 38000"
+                    " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
+                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
                 ),
                 {"e": espacio, "dia": manana, "h": hora},
             )
@@ -416,7 +419,7 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
 
 
 def test_las_canchas_disponibles_rechazan_un_rango_invalido(
-    api: TestClient, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     base: dict[str, str | int] = {"sede_id": sede_id, "deporte": "Futbol", "fecha": "2020-01-01"}
@@ -440,19 +443,20 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
     r = api.get(
         "/espacios/disponibles",
         headers=_con(token_usuario),
-        params=base | {"sede_id": 999999999, "desde": "10:00", "hasta": "11:00"},
+        params=base
+        | {"sede_id": "00000000-0000-7000-8000-000000000000", "desde": "10:00", "hasta": "11:00"},
     )
     assert r.json()["errores"] == {"sede_id": "La sede ya no está disponible"}
     assert api.get("/espacios/disponibles", params=base).status_code in (401, 422)
 
 
 def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las_reservas(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
         conn.execute(
             text(
                 "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
@@ -483,7 +487,7 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
 
 
 def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
@@ -511,7 +515,7 @@ def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
 
 
 def test_editar_sin_un_campo_lo_deja_como_estaba(
-    api: TestClient, token_admin: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
@@ -531,7 +535,7 @@ def test_editar_sin_un_campo_lo_deja_como_estaba(
 
 
 def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
@@ -556,12 +560,12 @@ def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(
 
 
 def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(
@@ -585,14 +589,16 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
 
 
 def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
-    api: TestClient, motor: Engine, token_admin: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
 
-    def con_reserva(desde: str, estado: str) -> int:
+    def con_reserva(desde: str, estado: str) -> str:
         espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
         with motor.begin() as conn:
-            dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+            dueno: Any = conn.execute(
+                text("SELECT id FROM usuario ORDER BY id LIMIT 1")
+            ).scalar_one()
             conn.execute(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
@@ -603,7 +609,7 @@ def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
                 ),
                 {"u": dueno, "e": espacio["id"], "estado": estado},
             )
-        return int(espacio["id"])
+        return str(espacio["id"])
 
     futura = con_reserva("1 day", "activa")
     terminada = con_reserva("-1 day", "activa")

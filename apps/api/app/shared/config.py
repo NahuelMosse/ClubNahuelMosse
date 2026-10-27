@@ -1,0 +1,50 @@
+import tomllib
+from pathlib import Path
+from typing import Literal
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+RAIZ_API = Path(__file__).resolve().parents[2]
+
+
+_PROYECTO = tomllib.loads((RAIZ_API / "pyproject.toml").read_text(encoding="utf-8"))
+
+
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(env_file=RAIZ_API / ".env", extra="ignore")
+
+    version: str = str(_PROYECTO["project"]["version"])
+    database_url: str = "postgresql+psycopg://club:club@localhost:5432/club"
+    firebase_project_id: str = "demo-clubnahuelmosse"
+    # La clave web del proyecto, para comprobar contraseñas; el emulador no la necesita.
+    firebase_api_key: str = ""
+    # El JSON de la cuenta de servicio de Firebase, para las plataformas que no montan archivos
+    # desde un blueprint. Con GOOGLE_APPLICATION_CREDENTIALS definida se usa el archivo.
+    firebase_credenciales_json: str = ""
+    # La dirección pública de esta API: los enlaces de los correos apuntan acá.
+    url_publica: str = "http://localhost:8000"
+    # "smtp" en producción; "buzon" deja los correos en la tabla correo_saliente, con los
+    # códigos en claro, y sirve sólo para desarrollo y escenarios.
+    correo_modo: Literal["buzon", "smtp"] = "smtp"
+    smtp_host: str = ""
+    smtp_puerto: int = 587
+    smtp_usuario: str = ""
+    smtp_contrasena: str = ""
+    correo_remitente: str = ""
+    # Habilita /_pruebas (el buzón y el vencimiento de enlaces), y sólo contra el emulador.
+    pruebas: bool = False
+    # Cada cuántos segundos el barrido manda los recordatorios que ya les toca; 0 lo apaga.
+    recordatorios_cada: int = 30
+
+    @field_validator("database_url")
+    @classmethod
+    def _con_driver_psycopg(cls, url: str) -> str:
+        """Render entrega `postgresql://...`; SQLAlchemy necesita nombrar el driver."""
+        for esquema in ("postgres://", "postgresql://"):
+            if url.startswith(esquema):
+                return "postgresql+psycopg://" + url.removeprefix(esquema)
+        return url
+
+
+config = Config()

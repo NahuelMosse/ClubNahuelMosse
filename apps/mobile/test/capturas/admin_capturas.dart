@@ -127,7 +127,7 @@ void main() {
           tamano: tamano,
           api: apiRutas({
             'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-            'PUT /sedes/1': alGuardar,
+            'PUT /sedes/00000000-0000-7000-8000-000000000001': alGuardar,
           }),
         );
         await tester.tap(find.bySemanticsLabel('Editar sede Sede Morón'));
@@ -179,7 +179,7 @@ void main() {
           tamano: tamano,
           api: apiRutas({
             'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-            'DELETE /sedes/1': (409, '{"errores": {"sede": "x"}}'),
+            'DELETE /sedes/00000000-0000-7000-8000-000000000001': (409, '{"errores": {"sede": "x"}}'),
           }),
         );
         await tester.tap(find.bySemanticsLabel('Dar de baja Sede Morón'));

@@ -6,6 +6,7 @@
 //   round. A `judge` with no risk.json is refused: the classification comes first.
 // - The agents whose model is part of what they are (`judge`, `oracle`, `planner`) are not launched with another one:
 //   their frontmatter decides.
+// - The `design-critic` runs once; a second call, starting with `RECHECK`, is allowed only while critique.md has an open blocker.
 // - During a card every launch names its agent (no `general-purpose`), and a `scout` is not sent to read the kit.
 // - A review skill (`/code-review`, `/simplify`…) has one lap per card: the judge is the review.
 // The card is the one `specs/.current` names, in the repo that holds it; the counts live inside that repo's git folder
@@ -19,6 +20,7 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { delegateToRepo } from '../tools/card.mjs';
 import { riskOf } from '../tools/card-doc.mjs';
+import { critiqueOf } from '../tools/close.mjs';
 
 const REVIEWS = new Set(['code-review', 'simplify', 'design-review', 'accessibility-audit', 'design-deslop', 'architecture-review']);
 const PINNED = new Set(['judge', 'oracle', 'planner', 'design-critic']);
@@ -103,9 +105,20 @@ if (review === 'design-critic') {
   if (!risk) refuse(`No design-critic without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first.`);
   if (!risk.lenses?.includes('visual')) refuse(`risk.json of ${cardName} has no \`visual\` lens: the design-critic runs only on a visual card.`);
 }
-const cap = 1;
+// The design-critic runs once, and once more only to re-check its own blockers: `critique.md` holds an open blocker and the
+// prompt starts with `RECHECK`. Never a third call.
+let cap = 1;
+if (review === 'design-critic' && done === 1) {
+  const critique = join(card, 'critique.md');
+  const openBlockers = existsSync(critique) ? critiqueOf(readFileSync(critique, 'utf8')).blockers : [];
+  if (openBlockers.length) {
+    cap = 2;
+    if (!/^\s*RECHECK\b/.test(prompt))
+      refuse(`The design-critic already ran on this card (${cardName}) and critique.md has an open blocker: the second call re-checks only that blocker, and its prompt starts with \`RECHECK\`. It does not re-run the rubric: it looks at the blocker with fresh captures and updates critique.md with the blocker closed or still open.`);
+  }
+}
 if (done >= cap) {
-  const what = review === 'judge-plan' ? `The plan judge already ran on this card (${cardName}); a card gets one` : review === 'design-critic' ? `The design-critic already ran on this card (${cardName}); a card gets one critique` : `${review} already ran on this card (${cardName}); a card gets one lap`;
+  const what = review === 'judge-plan' ? `The plan judge already ran on this card (${cardName}); a card gets one` : review === 'design-critic' ? `The design-critic already ran on this card (${cardName})${done >= 2 ? ' and re-checked its blocker' : ' and critique.md has no open blocker to re-check'}; a card gets one critique and, with a blocker, one re-check` : `${review} already ran on this card (${cardName}); a card gets one lap`;
   refuse(`${what}. Another round will not leave it spotless: it finds something else small. What is left is closed or declared in judge.md, and the PR is the review of the rest.`);
 }
 mkdirSync(dir, { recursive: true });

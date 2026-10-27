@@ -28,6 +28,7 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 - What answers a body of another content-type, empty, or with extra keys?
 - What does the client see on an error: a stable shape (`{error, message}`) and no stack?
 - Does an existing client keep working: which route, field or status of main changes?
+- Is each route a resource the client understands (`/orders/42` with its lines, totals and status), or a table exposed as is (`/order_lines?order_id=42`, foreign keys, internal columns)?
 
 ## integrity
 
@@ -57,6 +58,19 @@ A card that edits a code file with markup in it and does not change the screen d
 - What does the screen show at 320, 768 and 1280 px, and does anything scroll sideways?
 - Does a transient state stay on screen long enough to be measured (route held)?
 - Is the `ref:` a product of level, and does each `behavior:` say when it happens and how often?
+
+## overdesign
+
+Always read by the plan `judge` at high, whatever the lenses of `risk.json`. The plan wins by being the simplest structure that works (`rules/architecture.md`).
+
+- Does a `domain/` or `application/` folder in `## Tasks` isolate a business rule that its `why-layer:` names, or is it a folder for one CRUD (`customers/domain/customer.ts` with only fields)?
+- Is a use case, service or controller method only forwarding to the repository with the same arguments (`findById(id) { return this.repo.findById(id) }`)?
+- Does an interface, abstract class or `I<Name>` file have a second implementation or a test fake in the plan, or only one class behind it?
+- Is there a factory, strategy, adapter, builder, bus or mediator whose second variant or second consumer is named in the plan?
+- Is a container, registry or service locator planned where the framework's DI or constructor parameters would do?
+- Is there a config key, option or flag for a value the card fixes and nobody will change?
+- Does the plan create a folder for one wrapper file under 20 lines, or a module with layer folders it does not fill?
+- Could each new file be deleted by calling the code from the file above it, and would the tests still say the same?
 
 ## security
 

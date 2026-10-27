@@ -1,16 +1,17 @@
 """Un aviso que falla al despacharse no traba a los otros ni corta el barrido."""
 
 from collections.abc import Callable, Iterator
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, un_socio
 
-from app.aplicacion.notificaciones import despachar_pendientes
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.push import canal_push
-from app.interfaz import barrido
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notificaciones.push import canal_push
+from app.modules.notificaciones import barrido
 
 
 @pytest.fixture
@@ -26,7 +27,7 @@ class FallaLaPrimeraVez(NotificacionesSql):
 
     llamadas = 0
 
-    def tokens_con_permiso(self, usuario_id: int) -> list[str]:
+    def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
         FallaLaPrimeraVez.llamadas += 1
         if FallaLaPrimeraVez.llamadas == 1:
             raise OSError("la base no contesta")

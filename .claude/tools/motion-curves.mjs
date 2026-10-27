@@ -81,7 +81,10 @@ export const analyzeSeries = (t, v, eps) => {
   const med = median(vel.filter((d) => d > tol / 4));
   const jumps = [];
   if (settle - start >= 4) {
+    // A large first step followed by steps that only shrink is the start of an ease-out, not a jump.
+    const easesOut = vel.every((d, k) => k === 0 || d <= vel[k - 1] * 1.05);
     vel.forEach((d, k) => {
+      if (k === 0 && easesOut) return;
       if (d > 3 * med && d > 2 * Math.max(vel[k - 1] ?? 0, vel[k + 1] ?? 0) && d >= 0.1 * amp) jumps.push({ atMs: round(t[start + k] - t0, 0), size: round(d, 2) });
     });
   }

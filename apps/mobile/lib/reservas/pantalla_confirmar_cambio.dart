@@ -3,15 +3,17 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/fechas.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'eleccion.dart';
-import 'fechas.dart';
+import 'esqueleto_de_confirmacion.dart';
+import 'fila_de_dato.dart';
+import 'horario_de_cambio.dart';
 import 'horarios.dart';
-import 'pantalla_confirmar_reserva.dart';
 import 'reservas.dart';
+import 'tarjeta_de_eleccion.dart';
 
 /// Cómo terminó la modificación, para los horarios y Mis reservas, que quedan debajo.
 enum ResultadoDeModificar {
@@ -87,19 +89,21 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     } on SesionVencida {
       if (!mounted) return;
       setState(() => _enviando = false);
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
+      await avisarSesionVencida(context, widget.sesion);
       return;
-    } on SinConexion catch (x) {
-      fallo = x;
-    } on ErrorDelServidor catch (x) {
+    } on FalloDeRed catch (x) {
       fallo = x;
     }
     if (!mounted) return;
     setState(() => _enviando = false);
     if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _guardar();
+      await avisarFalloDeEnvio(
+        context,
+        sesion: widget.sesion,
+        vencida: false,
+        error: fallo,
+        reintentar: _guardar,
+      );
       return;
     }
     await mostrarCambioMientrasTanto(context);
@@ -111,12 +115,8 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
     final p = context.paleta;
     final r = widget.reserva;
     final e = widget.eleccion;
-    String dia(DateTime d) => fechaLarga(d).split(' de ').first;
-    String dos(int n) => n.toString().padLeft(2, '0');
-    final antes =
-        '${dia(r.inicio)} · ${dos(r.inicio.hour)}:${dos(r.inicio.minute)} – '
-        '${dos(r.fin.hour)}:${dos(r.fin.minute)}';
-    final ahora = '${dia(e.fecha)} · ${e.inicio} – ${e.fin}';
+    final antes = '${diaCorto(r.inicio)} · ${rangoDeHoras(r.inicio, r.fin)}';
+    final ahora = '${diaCorto(e.fecha)} · ${e.inicio} – ${e.fin}';
     // Mientras se guarda no se sale: el cambio podría quedar hecho sin que se vea.
     return EsqueletoDeConfirmacion(
       titulo: 'Confirmá el cambio',
@@ -129,8 +129,8 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
       tarjeta: TarjetaDeEleccion(
         eleccion: e,
         filas: [
-          _Horario(titulo: 'ANTES', valor: antes, nuevo: false),
-          _Horario(titulo: 'AHORA', valor: ahora, nuevo: true),
+          HorarioDeCambio(titulo: 'ANTES', valor: antes, nuevo: false),
+          HorarioDeCambio(titulo: 'AHORA', valor: ahora, nuevo: true),
           Divider(height: Medidas.s16, color: p.borderDefault),
           FilaDeDato(
             dato: 'Cancha',
@@ -139,57 +139,6 @@ class _PantallaConfirmarCambioState extends State<PantallaConfirmarCambio> {
           FilaDeDato(dato: 'Fecha', valor: fechaLarga(e.fecha)),
           const SizedBox(height: Medidas.s8),
         ],
-      ),
-    );
-  }
-}
-
-/// El horario de antes, con una cruz, o el de ahora, con un tilde y en lima.
-class _Horario extends StatelessWidget {
-  const _Horario({
-    required this.titulo,
-    required this.valor,
-    required this.nuevo,
-  });
-
-  final String titulo;
-  final String valor;
-  final bool nuevo;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      label: '$titulo: $valor',
-      excludeSemantics: true,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: Medidas.s8),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              nuevo ? Icons.check_rounded : Icons.close_rounded,
-              size: 18,
-              color: nuevo ? p.stateSuccessInk : p.stateDangerInk,
-            ),
-            const SizedBox(width: Medidas.s8),
-            Text(
-              titulo,
-              style: Textos.sobretitulo.copyWith(color: p.textMuted),
-            ),
-            const SizedBox(width: Medidas.s16),
-            Expanded(
-              child: Text(
-                valor,
-                textAlign: TextAlign.end,
-                style: nuevo
-                    ? Textos.cuerpoFuerte.copyWith(color: p.accentInk)
-                    : Textos.cuerpo.copyWith(color: p.textSecondary),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

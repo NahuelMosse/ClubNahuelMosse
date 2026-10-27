@@ -1,0 +1,41 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "integrity"
+  ],
+  "modules": [
+    "api",
+    "data"
+  ],
+  "signals": [
+    "data-dependency",
+    "http-dependency"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/pyproject.toml",
+    "apps/api/tests/unit/test_codigo_legible.py",
+    "apps/api/app/modules/sesion/usuario_actual.py",
+    "apps/api/app/modules/usuarios/reglas.py",
+    "apps/api/app/modules/horarios/reglas.py",
+    "apps/api/app/shared/identidad.py",
+    "apps/api/app/modules/sedes/casos_de_uso.py",
+    "apps/api/app/modules/usuarios/administradores.py",
+    "apps/api/tests/integracion/test_api_legible.py",
+    "apps/api/app/modules/reservas/repositorio.py",
+    "apps/api/app/modules/reservas/casos_de_uso.py",
+    "apps/api/app/modules/reservas/reglas.py",
+    "apps/api/app/modules/reservas/rutas.py",
+    "apps/api/app/modules/notificaciones/repositorio.py",
+    "apps/api/app/modules/notificaciones/casos_de_uso.py",
+    "apps/api/app/modules/notificaciones/reglas.py",
+    "apps/api/app/modules/espacios/casos_de_uso.py",
+    "apps/api/app/modules/espacios/reglas.py",
+    "apps/api/app/modules/espacios/repositorio.py",
+    "apps/api/app/modules/sedes/repositorio.py",
+    "apps/api/app/modules/horarios/disponibilidad.py"
+  ],
+  "tasks": 4
+}

@@ -3,8 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/dialogo_error.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import 'pantalla_confirmar_cambio.dart';
 import 'reservas.dart';
 
@@ -21,7 +21,7 @@ Future<void> cancelarConAvisos(
   required Sesion sesion,
   required Reservas reservas,
   required Reserva reserva,
-  required void Function(int? id) marcar,
+  required void Function(String? id) marcar,
   required void Function() alCancelar,
   required Future<void> Function() recargar,
   required Future<void> Function() releer,
@@ -51,8 +51,7 @@ Future<void> cancelarConAvisos(
     } on SesionVencida {
       if (!context.mounted) return;
       marcar(null);
-      await mostrarSesionVencida(context);
-      if (context.mounted) await cerrarSesion(context, sesion);
+      await avisarSesionVencida(context, sesion);
       return;
     } on SinConexion catch (e) {
       huboCorte = true;
@@ -62,7 +61,7 @@ Future<void> cancelarConAvisos(
     }
     if (!context.mounted) return;
     marcar(null);
-    final otraVez = await mostrarErrorDeRed(context, fallo);
+    final otraVez = await preguntarReintento(context, fallo);
     if (!context.mounted) return;
     if (!otraVez) {
       // Si el corte llegó después de que el servidor la canceló, la lectura lo muestra.

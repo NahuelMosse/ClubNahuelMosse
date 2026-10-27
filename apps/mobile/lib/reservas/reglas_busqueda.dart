@@ -3,6 +3,7 @@
 /// mensajes son los mismos.
 library;
 
+import '../comun/fechas.dart';
 import '../sedes/sede.dart';
 
 const minHoras = 1;
@@ -17,7 +18,7 @@ int? horaEnPunto(String hhmm) {
 }
 
 /// «18:00».
-String hhmm(int hora) => '${(hora % 24).toString().padLeft(2, '0')}:00';
+String hhmm(int hora) => horaCerrada(hora);
 
 /// El error de [dia] que no depende de la sede: pasado o fuera de los próximos días.
 Map<String, String> erroresDeLaFecha({

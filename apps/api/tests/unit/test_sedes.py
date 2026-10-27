@@ -1,13 +1,14 @@
 from dataclasses import replace
 from datetime import date, time
 from typing import Any
+from uuid import UUID
 
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos, Prohibido
-from app.aplicacion.sedes import dar_de_alta_sede
-from app.dominio.sedes import DatosSede, Sede, SedeNueva, validar_sede
-from app.dominio.usuarios import Perfil, Rol
+from app.modules.sedes.casos_de_uso import dar_de_alta_sede
+from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
+from app.modules.sesion.perfil import Perfil, Rol
+from app.shared.errores import DatosInvalidos, Prohibido
 
 VALIDOS = DatosSede(
     nombre="Sede Haedo",
@@ -87,7 +88,7 @@ def test_los_dias_son_de_la_semana() -> None:
 
 def _perfil(rol: Rol) -> Perfil:
     return Perfil(
-        id=7,
+        id=UUID(int=7),
         uid="uid",
         nombre="Ana",
         apellido="Díaz",
@@ -100,20 +101,20 @@ def _perfil(rol: Rol) -> Perfil:
 
 class _SedesEnMemoria:
     def __init__(self) -> None:
-        self.guardadas: list[tuple[SedeNueva, int]] = []
+        self.guardadas: list[tuple[SedeNueva, UUID]] = []
 
     def activas(self) -> list[Sede]:
         return []
 
-    def insertar(self, nueva: SedeNueva, autor: int) -> Sede:
+    def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
         self.guardadas.append((nueva, autor))
-        return Sede(1, nueva.nombre, nueva.calle, nueva.altura, nueva.apertura, nueva.cierre,
-                    nueva.dias, 0)  # fmt: skip
+        return Sede(UUID(int=1), nueva.nombre, nueva.calle, nueva.altura, nueva.apertura,
+                    nueva.cierre, nueva.dias, 0)  # fmt: skip
 
-    def actualizar(self, sede_id: int, datos: SedeNueva, autor: int, confirmar: bool) -> Sede:
+    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, confirmar: bool) -> Sede:
         raise NotImplementedError
 
-    def dar_de_baja(self, sede_id: int, autor: int) -> None:
+    def dar_de_baja(self, sede_id: UUID, autor: UUID) -> None:
         raise NotImplementedError
 
 
@@ -121,7 +122,7 @@ def test_el_alta_queda_a_nombre_del_administrador() -> None:
     sedes = _SedesEnMemoria()
     sede = dar_de_alta_sede(_perfil("admin"), VALIDOS, sedes)
     assert sede.nombre == "Sede Haedo"
-    assert [autor for _, autor in sedes.guardadas] == [7]
+    assert [autor for _, autor in sedes.guardadas] == [UUID(int=7)]
 
 
 def test_un_usuario_no_da_de_alta_sedes() -> None:

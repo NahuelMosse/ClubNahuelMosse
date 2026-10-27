@@ -55,18 +55,20 @@ class CentroDeNotificaciones extends ChangeNotifier {
   /// descarta.
   int _sesionActual = 0;
   bool _leyoAlguna = false;
-  int _ultimoPresentado = 0;
+
+  /// Las que ya llegaron en alguna lectura de esta sesión: sólo una que no está acá es nueva.
+  final _vistas = <String>{};
 
   /// Desde cuándo una notificación sin leer cuenta como recién llegada en la primera lectura:
   /// una que llegó mientras la app arrancaba avisa; una de hace días queda en la campana.
   DateTime _desde = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
   /// Las que el panel ya mostró en esta sesión.
-  final _avisadas = <int>{};
+  final _avisadas = <String>{};
 
   /// Confirmaciones de cancelación que llegaron con la persona en Mis reservas, donde ya vio
   /// el mensaje de éxito: siguen sin leer, pero el panel no las muestra.
-  final _silenciadas = <int>{};
+  final _silenciadas = <String>{};
 
   /// La ruta en la que está la persona; la app la conecta al enrutador.
   String Function() ubicacion = _sinUbicacion;
@@ -124,6 +126,8 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _activo = true;
     final sesion = ++_sesionActual;
     _desde = enDelClub(ahora()).subtract(const Duration(minutes: 5));
+    if (!await _sistema.preguntado()) await _sistema.solicitarPermiso();
+    if (_liberado || sesion != _sesionActual) return;
     await _revisarPermiso(registrar: true);
     if (_liberado || sesion != _sesionActual) return;
     await _sondear();
@@ -165,7 +169,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
     _lista = const [];
     _noLeidas = 0;
     _leyoAlguna = false;
-    _ultimoPresentado = 0;
+    _vistas.clear();
     _avisadas.clear();
     _silenciadas.clear();
     _panelAbierto = false;
@@ -218,13 +222,12 @@ class CentroDeNotificaciones extends ChangeNotifier {
   void _aplicar(LecturaDelCentro lectura) {
     _lista = lectura.notificaciones;
     _noLeidas = lectura.noLeidas;
-    final masNueva = _lista.fold<int>(0, (m, n) => n.id > m ? n.id : m);
     if (ubicacion() == '/reservas') {
       _silenciadas.addAll([
         for (final n in _lista)
           if (!n.leida &&
               n.tipo == TipoDeNotificacion.cancelacionUsuario &&
-              n.id > _ultimoPresentado)
+              !_vistas.contains(n.id))
             n.id,
       ]);
     }
@@ -232,7 +235,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
       (n) =>
           !n.leida &&
           !_silenciadas.contains(n.id) &&
-          n.id > _ultimoPresentado &&
+          !_vistas.contains(n.id) &&
           (_leyoAlguna || n.creada.isAfter(_desde)),
     );
     // Si la persona cerró el panel sin leer, lo que llegue después suma a la campana y no
@@ -244,7 +247,7 @@ class CentroDeNotificaciones extends ChangeNotifier {
       _panelAbierto = true;
       _avisadas.addAll(enElPanel.map((n) => n.id));
     }
-    if (masNueva > _ultimoPresentado) _ultimoPresentado = masNueva;
+    _vistas.addAll(_lista.map((n) => n.id));
     _leyoAlguna = true;
     notifyListeners();
   }

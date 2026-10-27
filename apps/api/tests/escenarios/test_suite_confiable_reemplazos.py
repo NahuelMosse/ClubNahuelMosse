@@ -24,7 +24,9 @@ def _entorno(quitar: tuple[str, ...] = (), poner: dict[str, str] | None = None) 
 
 
 def _casos_de_uso() -> list[str]:
-    fuente = (RAIZ_API / "app" / "aplicacion" / "reservas.py").read_text(encoding="utf-8")
+    fuente = (RAIZ_API / "app" / "modules" / "reservas" / "casos_de_uso.py").read_text(
+        encoding="utf-8"
+    )
     return [
         n.name
         for n in ast.parse(fuente).body
@@ -43,7 +45,9 @@ def _falla_por_falta_de_emulador(corrida: "subprocess.CompletedProcess[str]") ->
     assert "error" in salida.lower()
 
 
-def test_con_la_variable_del_emulador_ausente_la_corrida_falla_con_el_mensaje_del_emulador() -> None:
+def test_con_la_variable_del_emulador_ausente_la_corrida_falla_con_el_mensaje_del_emulador() -> (
+    None
+):
     """con la variable del emulador ausente la corrida sale distinta de cero y dice que hace falta el emulador
     @REV-08-S5 @assumption:REV-08-ASM-10
     """

@@ -1,6 +1,6 @@
+import '../comun/fechas.dart';
 import '../espacios/espacio.dart';
 import '../sedes/sede.dart';
-import 'fechas.dart';
 
 /// Lo que se eligió en los horarios y pasa a la confirmación de la reserva. Elegir no
 /// reserva nada.

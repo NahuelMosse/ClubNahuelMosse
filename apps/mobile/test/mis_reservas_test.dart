@@ -11,14 +11,14 @@ import 'package:http/testing.dart';
 import 'soporte/usuario.dart';
 
 String reservaJson({
-  int id = 1,
+  String id = '00000000-0000-7000-8000-000000000001',
   String inicio = '2026-11-13T00:00:00+00:00',
   String fin = '2026-11-13T01:00:00+00:00',
   String estado = 'activa',
   String? motivo,
   bool? cancelable,
 }) =>
-    '{"id": $id, "espacio_id": 9, "sede_id": 1, "espacio": "Moron_Rivadavia_19850_Futbol_F5_1", '
+    '{"id": "$id", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio": "Moron_Rivadavia_19850_Futbol_F5_1", '
     '"deporte": "Futbol", "tipo": "F5", "sede": "Sede Morón", '
     '"direccion": "Av. Rivadavia 19850", "inicio": "$inicio", "fin": "$fin", '
     '"precio_por_hora": 38000, "total": 38000, "estado": "$estado", '
@@ -26,7 +26,7 @@ String reservaJson({
     '"cancelable": ${cancelable ?? estado == 'activa'}}';
 
 void main() {
-  const proximas = '[{"id": 1}]';
+  const proximas = '[{"id": "00000000-0000-7000-8000-000000000001"}]';
 
   Future<List<http.Request>> abrir(
     WidgetTester tester, {
@@ -84,8 +84,8 @@ void main() {
       tester,
       historial:
           '[${reservaJson(estado: 'cancelada')}, '
-          '${reservaJson(id: 2, estado: 'anulada', motivo: 'lluvia')}, '
-          '${reservaJson(id: 3, estado: 'completada')}]',
+          '${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'anulada', motivo: 'lluvia')}, '
+          '${reservaJson(id: '00000000-0000-7000-8000-000000000003', estado: 'completada')}]',
     );
 
     await tester.tap(find.text('Historial'));
@@ -140,7 +140,7 @@ void main() {
         tester,
         proximas: '[${reservaJson()}]',
         historial:
-            '[${reservaJson(id: 2, estado: 'anulada', motivo: 'Lluvia')}]',
+            '[${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'anulada', motivo: 'Lluvia')}]',
       );
       expect(find.text('ACTIVA'), findsOneWidget);
 

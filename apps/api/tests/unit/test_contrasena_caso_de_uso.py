@@ -1,13 +1,14 @@
 from datetime import date
+from uuid import UUID
 
 import pytest
 
-from app.aplicacion.contrasena import NO_COINCIDE, cambiar_contrasena
-from app.aplicacion.errores import DatosInvalidos
-from app.dominio.usuarios import Perfil
+from app.modules.sesion.perfil import Perfil
+from app.modules.usuarios.contrasena import NO_COINCIDE, cambiar_contrasena
+from app.shared.errores import DatosInvalidos
 
 PERFIL = Perfil(
-    id=7,
+    id=UUID(int=7),
     uid="u7",
     nombre="Lucía",
     apellido="Gómez",
@@ -32,9 +33,9 @@ class Identidad:
 
 class Rastro:
     def __init__(self) -> None:
-        self.marcados: list[int] = []
+        self.marcados: list[UUID] = []
 
-    def marcar_cambio_de_contrasena(self, id_usuario: int) -> None:
+    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
         self.marcados.append(id_usuario)
 
 
@@ -42,7 +43,7 @@ def test_con_la_actual_correcta_cambia_y_deja_rastro() -> None:
     identidad, rastro = Identidad("ClubNahuel1"), Rastro()
     cambiar_contrasena(PERFIL, "ClubNahuel1", "ClubNahuel2", identidad, rastro)
     assert identidad.cambios == [("u7", "ClubNahuel2")]
-    assert rastro.marcados == [7]
+    assert rastro.marcados == [UUID(int=7)]
 
 
 def test_con_la_actual_equivocada_no_cambia_nada() -> None:
@@ -78,7 +79,7 @@ def test_una_nueva_igual_a_la_actual_se_acepta() -> None:
 
 
 class RastroQueFalla:
-    def marcar_cambio_de_contrasena(self, id_usuario: int) -> None:
+    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
         raise RuntimeError("la base no contesta")
 
 

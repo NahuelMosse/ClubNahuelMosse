@@ -1,14 +1,35 @@
-import 'package:shared_preferences/shared_preferences.dart';
-
 import 'notificacion.dart';
+
+export 'sistema_simulado.dart';
 
 /// Qué avisó el aviso que la persona tocó en la bandeja del sistema: lo que hace falta para
 /// abrir la pantalla que corresponde.
 class AvisoTocado {
-  const AvisoTocado({this.tipo, this.reservaId});
+  const AvisoTocado({this.tipo, this.reservaId, this.antiguo = false});
+
+  /// Lee los datos del mensaje push. Un `reserva_id` que no es un UUID (un aviso numérico
+  /// anterior a los UUID) marca el aviso como [antiguo]: no se puede resaltar esa reserva.
+  factory AvisoTocado.desdeDatos(Map<String, Object?> datos) {
+    final id = datos['reserva_id']?.toString() ?? '';
+    final esUuid = _uuid.hasMatch(id);
+    return AvisoTocado(
+      tipo: TipoDeNotificacion.de(datos['tipo']?.toString() ?? ''),
+      reservaId: esUuid ? id : null,
+      antiguo: id.isNotEmpty && !esUuid,
+    );
+  }
+
+  static final _uuid = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+  );
 
   final TipoDeNotificacion? tipo;
-  final int? reservaId;
+  final String? reservaId;
+  final bool antiguo;
+
+  /// A dónde abre tocarlo: el centro de notificaciones si es un aviso antiguo.
+  String get ruta =>
+      antiguo ? '/notificaciones' : rutaDelAviso(tipo, reservaId);
 }
 
 /// El sistema de notificaciones del teléfono: el permiso, el token del dispositivo y lo que
@@ -18,6 +39,9 @@ abstract interface class SistemaDeNotificaciones {
   String get plataforma;
 
   Future<bool> permitido();
+
+  /// Si el sistema operativo ya le preguntó a la persona por las notificaciones.
+  Future<bool> preguntado();
 
   /// Pide el permiso al sistema operativo y dice si quedó concedido.
   Future<bool> solicitarPermiso();
@@ -36,55 +60,4 @@ abstract interface class SistemaDeNotificaciones {
 
   /// El aviso que abrió la app desde cero, si la abrió uno.
   Future<AvisoTocado?> abiertaPor();
-}
-
-/// El sistema de un dispositivo de prueba, sin Firebase Cloud Messaging.
-///
-/// El permiso lo guarda la app en el dispositivo (los escenarios lo fijan) y arranca
-/// concedido; pedirlo lo concede. Nada llega por acá: con la app abierta la lista se entera
-/// consultando la API.
-class SistemaSimulado implements SistemaDeNotificaciones {
-  static const _clavePermiso = 'permiso_notificaciones_simulado';
-  static const _claveToken = 'token_notificaciones_simulado';
-
-  @override
-  String get plataforma => 'android';
-
-  @override
-  Future<bool> permitido() async =>
-      (await SharedPreferences.getInstance()).getString(_clavePermiso) !=
-      'denegado';
-
-  @override
-  Future<bool> solicitarPermiso() async {
-    await (await SharedPreferences.getInstance()).setString(
-      _clavePermiso,
-      'concedido',
-    );
-    return true;
-  }
-
-  @override
-  Future<String?> token() async {
-    final prefs = await SharedPreferences.getInstance();
-    final guardado = prefs.getString(_claveToken);
-    if (guardado != null) return guardado;
-    final nuevo = 'simulado-${DateTime.now().microsecondsSinceEpoch}';
-    await prefs.setString(_claveToken, nuevo);
-    return nuevo;
-  }
-
-  @override
-  Future<void> olvidarToken() async {
-    await (await SharedPreferences.getInstance()).remove(_claveToken);
-  }
-
-  @override
-  Stream<void> get alLlegar => const Stream.empty();
-
-  @override
-  Stream<AvisoTocado> get alTocar => const Stream.empty();
-
-  @override
-  Future<AvisoTocado?> abiertaPor() async => null;
 }

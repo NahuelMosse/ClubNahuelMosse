@@ -24,22 +24,22 @@ import 'soporte/usuario.dart';
 final ahoraClub = DateTime.utc(2026, 11, 12, 20);
 
 String notif({
-  required int id,
+  required String id,
   required DateTime club,
   String tipo = 'recordatorio',
   String titulo = 'Tu reserva es en 1 hora',
   String cuerpo = 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
-  int? reservaId = 1,
+  String? reservaId = '00000000-0000-7000-8000-000000000001',
   bool leida = false,
 }) =>
-    '{"id": $id, "tipo": "$tipo", "titulo": "$titulo", "cuerpo": "$cuerpo", '
-    '"reserva_id": ${reservaId ?? 'null'}, '
+    '{"id": "$id", "tipo": "$tipo", "titulo": "$titulo", "cuerpo": "$cuerpo", '
+    '"reserva_id": ${reservaId == null ? 'null' : '"$reservaId"'}, '
     '"creada_en": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
     '"leida": $leida}';
 
-final recordatorio = notif(id: 3, club: DateTime.utc(2026, 11, 12, 19, 58));
+final recordatorio = notif(id: '00000000-0000-7000-8000-000000000003', club: DateTime.utc(2026, 11, 12, 19, 58));
 final confirmacion = notif(
-  id: 2,
+  id: '00000000-0000-7000-8000-000000000002',
   club: DateTime.utc(2026, 11, 12, 17),
   tipo: 'cancelacion_usuario',
   titulo: 'Reserva cancelada',
@@ -48,7 +48,7 @@ final confirmacion = notif(
   leida: true,
 );
 final alerta = notif(
-  id: 1,
+  id: '00000000-0000-7000-8000-000000000001',
   club: DateTime.utc(2026, 11, 11, 15),
   tipo: 'cancelacion_forzosa',
   titulo: 'El club anuló tu reserva',
@@ -71,6 +71,9 @@ class SistemaFalso implements SistemaDeNotificaciones {
 
   @override
   Future<bool> permitido() async => concedido;
+
+  @override
+  Future<bool> preguntado() async => true;
 
   @override
   Future<bool> solicitarPermiso() async {
@@ -146,7 +149,7 @@ class ApiFalsa {
         ('DELETE', '/yo') => (204, ''),
         ('GET', '/reservas') => (
           200,
-          '{"reservas": [${reservaJson()}, ${reservaJson(id: 2, inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
+          '{"reservas": [${reservaJson()}, ${reservaJson(id: '00000000-0000-7000-8000-000000000002', inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
         ),
         ('GET', '/espacios/catalogo') => (200, catalogoJson),
         ('GET', '/sedes') => (200, '{"sedes": []}'),
@@ -215,23 +218,26 @@ void main() {
       final grupos = agruparPorDia(lista, hoy);
 
       expect(grupos.map((g) => g.rotulo), ['HOY', 'AYER']);
-      expect(grupos.first.notificaciones.map((n) => n.id), [3, 2]);
+      expect(grupos.first.notificaciones.map((n) => n.id), [
+        '00000000-0000-7000-8000-000000000003',
+        '00000000-0000-7000-8000-000000000002',
+      ]);
     });
 
     test(
       'cada aviso lleva a la pestaña de Mis reservas que le corresponde',
       () {
         expect(
-          rutaDelAviso(TipoDeNotificacion.recordatorio, 7),
-          '/reservas?reserva=7',
+          rutaDelAviso(TipoDeNotificacion.recordatorio, '00000000-0000-7000-8000-000000000007'),
+          '/reservas?reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
-          rutaDelAviso(TipoDeNotificacion.cancelacionForzosa, 7),
-          '/reservas?historial=1&reserva=7',
+          rutaDelAviso(TipoDeNotificacion.cancelacionForzosa, '00000000-0000-7000-8000-000000000007'),
+          '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
-          rutaDelAviso(TipoDeNotificacion.cancelacionUsuario, 7),
-          '/reservas?historial=1&reserva=7',
+          rutaDelAviso(TipoDeNotificacion.cancelacionUsuario, '00000000-0000-7000-8000-000000000007'),
+          '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
           rutaDelAviso(TipoDeNotificacion.recordatorio, null),
@@ -244,7 +250,7 @@ void main() {
     test('un tipo que la app no conoce no se lee', () {
       expect(
         Notificacion.desdeJson(
-          jsonDecode(notif(id: 9, club: hoy, tipo: 'otra')),
+          jsonDecode(notif(id: '00000000-0000-7000-8000-000000000009', club: hoy, tipo: 'otra')),
         ),
         isNull,
       );
@@ -392,8 +398,8 @@ void main() {
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abierta?.reservaId, 1);
-      expect(api.de('POST', '/notificaciones/3/leer'), hasLength(1));
+      expect(abierta?.reservaId, '00000000-0000-7000-8000-000000000001');
+      expect(api.de('POST', '/notificaciones/00000000-0000-7000-8000-000000000003/leer'), hasLength(1));
     });
 
     testWidgets(
@@ -602,7 +608,7 @@ void main() {
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abiertas.map((n) => n.id), [3]);
+      expect(abiertas.map((n) => n.id), ['00000000-0000-7000-8000-000000000003']);
     });
 
     testWidgets('sin permiso del sistema no abre el panel', (tester) async {
@@ -671,7 +677,7 @@ void main() {
 
           await llega(tester, api, centro, [
             recordatorio,
-            recordatorio.replaceFirst('"id": 3', '"id": 4'),
+            recordatorio.replaceFirst('"id": "00000000-0000-7000-8000-000000000003"', '"id": "00000000-0000-7000-8000-000000000004"'),
           ]);
 
           expect(tester.takeException(), isNull);
@@ -724,12 +730,12 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    String reciente(int id) => notif(id: id, club: enDelClub(DateTime.now()));
+    String reciente(String id) => notif(id: id, club: enDelClub(DateTime.now()));
 
     testWidgets('lo que llega mientras la app arranca abre el panel', (
       tester,
     ) async {
-      await montarPanel(tester, [reciente(5)]);
+      await montarPanel(tester, [reciente('00000000-0000-7000-8000-000000000005')]);
 
       expect(find.text('MARCAR TODAS'), findsOneWidget);
     });
@@ -738,7 +744,7 @@ void main() {
       'si se cerró el panel sin leer, lo que llega después no lo reabre',
       (tester) async {
         final (api, centro) = await montarPanel(tester, []);
-        await llega(tester, api, centro, [reciente(5)]);
+        await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000005')]);
         expect(find.text('MARCAR TODAS'), findsOneWidget);
 
         await tester.tap(
@@ -746,7 +752,7 @@ void main() {
           warnIfMissed: false,
         );
         await tester.pumpAndSettle();
-        await llega(tester, api, centro, [reciente(6), reciente(5)]);
+        await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000006'), reciente('00000000-0000-7000-8000-000000000005')]);
 
         expect(find.text('MARCAR TODAS'), findsNothing);
         expect(centro.noLeidas, 2);
@@ -757,11 +763,11 @@ void main() {
       tester,
     ) async {
       final (api, centro) = await montarPanel(tester, []);
-      await llega(tester, api, centro, [reciente(5)]);
+      await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000005')]);
       await tester.tap(find.text('MARCAR TODAS'));
       await tester.pumpAndSettle();
 
-      await llega(tester, api, centro, [reciente(6)]);
+      await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000006')]);
 
       expect(find.text('MARCAR TODAS'), findsOneWidget);
     });
@@ -1143,7 +1149,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final api = ApiFalsa()
         ..avisos = [
-          recordatorio.replaceFirst('"reserva_id": 1', '"reserva_id": 2'),
+          recordatorio.replaceFirst('"reserva_id": "00000000-0000-7000-8000-000000000001"', '"reserva_id": "00000000-0000-7000-8000-000000000002"'),
         ]
         ..noLeidas = 1;
       await montarUsuario(
@@ -1175,11 +1181,11 @@ void main() {
         final api = ApiFalsa()
           ..avisos = [
             notif(
-              id: 4,
+              id: '00000000-0000-7000-8000-000000000004',
               club: DateTime.utc(2026, 11, 12, 19, 58),
               tipo: 'cancelacion_usuario',
               titulo: 'Reserva cancelada',
-              reservaId: 2,
+              reservaId: '00000000-0000-7000-8000-000000000002',
             ),
           ]
           ..noLeidas = 1;

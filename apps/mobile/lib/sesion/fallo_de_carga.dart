@@ -8,7 +8,8 @@ import 'tarjeta_cuenta.dart';
 /// de red ofrece reintentar con [reintentar].
 ///
 /// Tapada por otra pantalla no avisa: al volver, el listado ofrece REINTENTAR.
-/// [alVencer] corre antes del aviso de sesión vencida.
+/// [alVencer] corre antes del aviso de sesión vencida; [alNoReintentar], si la persona no
+/// reintenta.
 Future<void> avisarFalloDeCarga(
   BuildContext context, {
   required Sesion sesion,
@@ -16,32 +17,56 @@ Future<void> avisarFalloDeCarga(
   required Object? error,
   required Future<void> Function() reintentar,
   VoidCallback? alVencer,
-}) async {
-  if (ModalRoute.of(context)?.isCurrent == false) return;
-  if (vencida) alVencer?.call();
-  await avisarFalloDeEnvio(
-    context,
-    sesion: sesion,
-    vencida: vencida,
-    error: error,
-    reintentar: reintentar,
-  );
-}
+  VoidCallback? alNoReintentar,
+}) => avisarFalloDeEnvio(
+  context,
+  sesion: sesion,
+  vencida: vencida,
+  error: error,
+  reintentar: reintentar,
+  soloAlFrente: true,
+  alVencer: alVencer,
+  alNoReintentar: alNoReintentar,
+);
 
 /// Avisa el fallo de un pedido: la sesión vencida cierra la sesión; un error de red
 /// ofrece reintentar con [reintentar]. Sin fallo ni vencimiento no hace nada.
+///
+/// Con [soloAlFrente], tapada por otra pantalla no avisa. [alVencer] corre antes del aviso
+/// de sesión vencida; [alNoReintentar], si la persona no reintenta y la pantalla sigue.
 Future<void> avisarFalloDeEnvio(
   BuildContext context, {
   required Sesion sesion,
   required bool vencida,
   required Object? error,
   required Future<void> Function() reintentar,
+  bool soloAlFrente = false,
+  VoidCallback? alVencer,
+  VoidCallback? alNoReintentar,
 }) async {
+  if (soloAlFrente && ModalRoute.of(context)?.isCurrent == false) return;
   if (vencida) {
-    await mostrarSesionVencida(context);
-    if (context.mounted) await cerrarSesion(context, sesion);
+    await avisarSesionVencida(context, sesion, antes: alVencer);
   } else if (error != null) {
-    final quiereReintentar = await mostrarErrorDeRed(context, error);
-    if (quiereReintentar && context.mounted) await reintentar();
+    if (await preguntarReintento(context, error)) {
+      if (context.mounted) await reintentar();
+    } else if (context.mounted) {
+      alNoReintentar?.call();
+    }
   }
 }
+
+/// Avisa que la sesión venció y la cierra; [antes] corre antes del aviso.
+Future<void> avisarSesionVencida(
+  BuildContext context,
+  Sesion sesion, {
+  VoidCallback? antes,
+}) async {
+  antes?.call();
+  await mostrarSesionVencida(context);
+  if (context.mounted) await cerrarSesion(context, sesion);
+}
+
+/// Avisa el error de red de [error] y devuelve si la persona eligió reintentar.
+Future<bool> preguntarReintento(BuildContext context, Object error) =>
+    mostrarErrorDeRed(context, error);

@@ -29,6 +29,22 @@ C4Container
   Rel(api, db, "SQL")
 ```
 
+## Modules and libraries
+
+One folder per feature (`src/modules/<feature>/`; layer folders inside only for a module with business rules worth isolating, a CRUD has none) and a small `shared/` kernel; no top-level layer folders. Public index of each module is its only door.
+
+| Module | What it owns | Public index exports |
+|---|---|---|
+
+| Category | Library (the repo's own, else the stack's default) | Where it lives |
+|---|---|---|
+| Persistence and migrations | | the module's repository |
+| Dependency injection | | the framework's, or constructor parameters |
+| Validation | | edge of `interface/` |
+| Authentication, dates, HTTP client, queues | | |
+
+A category hand-rolled instead of using a library is an `ASM-NN` here with the reason.
+
 ## Data
 
 | Entity | Relations and cardinality | Owner module | Volume today | Growth per month |

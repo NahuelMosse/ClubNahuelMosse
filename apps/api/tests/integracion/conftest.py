@@ -5,7 +5,7 @@ from collections.abc import Callable, Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 
@@ -54,7 +54,7 @@ def token_usuario(
 
 
 @pytest.fixture
-def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> tuple[int, str]:
+def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> tuple[str, str]:
     s = unico()
     r = api.post(
         "/sedes",

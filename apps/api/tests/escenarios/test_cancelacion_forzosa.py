@@ -1,15 +1,16 @@
 from collections.abc import Callable, Iterator, Sequence
 from typing import Any
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
-from app.aplicacion.notificaciones import despachar_pendientes
-from app.infraestructura.notificaciones import NotificacionesSql, encolar_cancelacion_forzosa
-from app.infraestructura.push import canal_push
-from app.interfaz.sembrar_admin import main as sembrar
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
+from app.modules.notificaciones.push import canal_push
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 CONTRASENA = "ClubNahuel1"
@@ -65,7 +66,7 @@ def cuerpo_esperado(sede: str, hora: str, motivo: str = MOTIVO) -> str:
     return f"Fútbol 5 · {sede} · {DIAS[dia.weekday()]} {dia.day}, {hora}. Motivo: {motivo}."
 
 
-def para_el_admin(socio: Socio, admin: dict[str, str], reserva_id: int) -> dict[str, Any]:
+def para_el_admin(socio: Socio, admin: dict[str, str], reserva_id: str) -> dict[str, Any]:
     """La reserva como la ve el administrador en el historial global."""
     r = socio.api.get(f"/reservas/todas?q={socio.sede}", headers=admin)
     assert r.status_code == 200
@@ -177,7 +178,7 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
                 ),
                 {"u": socio.usuario_id, "id": reserva["id"]},
             )
-            encolar_cancelacion_forzosa(conn, socio.usuario_id, [reserva["id"]])
+            encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reserva["id"])])
     with motor.connect() as conn:
         for socio in (uno, otro):
             despachar_pendientes(NotificacionesSql(conn), canal, socio.usuario_id)

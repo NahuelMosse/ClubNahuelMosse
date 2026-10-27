@@ -29,7 +29,7 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('DELETE', '/espacios/9') => () {
+            ('DELETE', '/espacios/00000000-0000-7000-8000-000000000009') => () {
               dadoDeBaja = alDarDeBaja.$1 == 204 || alDarDeBaja.$1 == 404;
               return alDarDeBaja;
             }(),

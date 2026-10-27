@@ -88,7 +88,7 @@ def test_una_cuenta_de_firebase_sin_perfil_no_bloquea_el_registro(
 ) -> None:
     from firebase_admin import auth
 
-    from app.infraestructura.identidad import _app_firebase
+    from app.shared.identidad import _app_firebase
 
     s = unico()
     correo = f"huerfana.{s}@correo.com"

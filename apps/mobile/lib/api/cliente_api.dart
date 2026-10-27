@@ -6,21 +6,22 @@ import 'package:http/http.dart' as http;
 
 import 'rutas.dart';
 
+/// Un pedido a la API que falló sin que la persona tenga la culpa: [SinConexion] o
+/// [ErrorDelServidor]. Se atrapa con `on FalloDeRed` donde ambos se tratan igual.
+abstract interface class FalloDeRed implements Exception {}
+
 /// No se llegó a la API: sin red, o la API no responde a tiempo.
-class SinConexion implements Exception {
+class SinConexion implements FalloDeRed {
   const SinConexion();
 }
 
 /// La API respondió con un error propio (5xx) o con algo que no es la API.
-class ErrorDelServidor implements Exception {
-  const ErrorDelServidor(this.codigo, {this.mensaje, this.referencia});
+class ErrorDelServidor implements FalloDeRed {
+  const ErrorDelServidor(this.codigo, {this.mensaje});
   final int codigo;
 
   /// Lo que el servidor dice a la persona: sólo viene con un 429 (demasiados intentos).
   final String? mensaje;
-
-  /// El número con el que se encuentra este error en el registro de la API.
-  final String? referencia;
 }
 
 /// El pedido salió pero la API no contestó dentro del límite. Es un error del servidor, no
@@ -40,8 +41,7 @@ class ClienteApi {
   ClienteApi(
     String base, {
     http.Client? cliente,
-    this.limite = const Duration(seconds: 60),
-    this.avisoDespuesDe = const Duration(seconds: 5),
+    this.limite = const Duration(seconds: 30),
     this.verificarRutas = kDebugMode,
   }) : _base = Uri.parse(base),
        _cliente = cliente ?? http.Client();
@@ -55,23 +55,14 @@ class ClienteApi {
 
   void _declarada(String metodo, String ruta) {
     if (verificarRutas && !rutaDeclarada(metodo, ruta)) {
-      throw AssertionError('La app no declara pedir $metodo $ruta (lib/api/rutas.dart)');
+      throw AssertionError(
+        'La app no declara pedir $metodo $ruta (lib/api/rutas.dart)',
+      );
     }
   }
 
-  /// Cuánto espera una respuesta antes de rendirse: una API gratuita tarda hasta un minuto
-  /// en despertar.
+  /// Cuánto espera una respuesta antes de rendirse.
   final Duration limite;
-
-  /// Cuánto tarda un pedido antes de que [despertando] se encienda.
-  final Duration avisoDespuesDe;
-
-  final _despertando = ValueNotifier<bool>(false);
-
-  /// `true` mientras algún pedido lleva más de [avisoDespuesDe] sin respuesta.
-  ValueListenable<bool> get despertando => _despertando;
-
-  var _lentos = 0;
 
   Future<Respuesta> post(
     String ruta,
@@ -133,11 +124,6 @@ class ClienteApi {
   ) async {
     _declarada(metodo, ruta);
     final http.Response r;
-    var lento = false;
-    final aviso = Timer(avisoDespuesDe, () {
-      lento = true;
-      _despertando.value = ++_lentos > 0;
-    });
     try {
       r = await pedido().timeout(limite);
     } on TimeoutException {
@@ -145,13 +131,8 @@ class ClienteApi {
     } on Exception {
       // Sin red, DNS, TLS o la conexión cortada.
       throw const SinConexion();
-    } finally {
-      aviso.cancel();
-      if (lento) _despertando.value = --_lentos > 0;
     }
-    if (r.statusCode >= 500) {
-      throw ErrorDelServidor(r.statusCode, referencia: _referencia(r));
-    }
+    if (r.statusCode >= 500) throw ErrorDelServidor(r.statusCode);
     final Object? datos;
     try {
       final texto = utf8.decode(r.bodyBytes);
@@ -168,16 +149,6 @@ class ClienteApi {
       throw ErrorDelServidor(429, mensaje: mensaje is String ? mensaje : null);
     }
     return Respuesta(r.statusCode, cuerpo);
-  }
-
-  static String? _referencia(http.Response r) {
-    try {
-      final datos = jsonDecode(utf8.decode(r.bodyBytes));
-      final referencia = datos is Map ? datos['referencia'] : null;
-      return referencia is String && referencia.isNotEmpty ? referencia : null;
-    } on FormatException {
-      return null;
-    }
   }
 
   void cerrar() => _cliente.close();

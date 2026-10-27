@@ -24,7 +24,7 @@ import { pathToFileURL } from 'node:url';
 import { active, lensesOff } from './kit.mjs';
 import { importersOf } from './importers.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, fileMapLines, git, namedIn } from './card.mjs';
-import { AUTH_OR_PAYMENT, RISK_WORDS, hasTasksSection, readCard, requirementOf, sectionOf, tasksOf } from './card-doc.mjs';
+import { AUTH_OR_PAYMENT, hasTasksSection, readCard, requirementOf, riskWordsIn, sectionOf, tasksOf } from './card-doc.mjs';
 import { planProblems } from './plan.mjs';
 import { noVisualOf } from './gate-checks.mjs';
 import { IS_SCREEN, detectIn } from './signals.mjs';
@@ -49,7 +49,7 @@ export const classify = ({ files, taskCount, text, root, securityL2On = false, n
     api: Boolean(found.route || found.listen || found['http-dependency'] || files.some((f) => API_PATH.test(f))),
     data: Boolean(found.schema || found['data-dependency'] || files.some((f) => DATA_PATH.test(f))),
   };
-  const words = [...new Set((text.match(RISK_WORDS) ?? []).map((w) => w.toLowerCase()))];
+  const words = [...new Set(riskWordsIn(text).map((w) => w.toLowerCase()))];
   const touched = Object.keys(modules).filter((m) => modules[m]);
   const securityTouched = securityL2On && Boolean(found['auth-dependency']);
   const size = !touched.length && !words.length && taskCount >= 1 && taskCount <= 2 ? 'small' : 'large';

@@ -2,13 +2,14 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, cast
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.dominio.notificaciones import Aviso, ResultadoDeEnvio
+from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 CONTRASENA = "ClubNahuel1"
@@ -36,8 +37,8 @@ class Socio:
     motor: Engine
     correo: str
     sesion: dict[str, str]
-    usuario_id: int
-    espacio_id: int
+    usuario_id: UUID
+    espacio_id: UUID
     sede: str
     dispositivo: str
     reservas: list[dict[str, Any]] = field(default_factory=list)
@@ -47,7 +48,7 @@ class Socio:
             "/reservas",
             headers=self.sesion,
             json={
-                "espacio_id": self.espacio_id,
+                "espacio_id": str(self.espacio_id),
                 "fecha": manana().isoformat(),
                 "desde": desde,
                 "horas": 1,
@@ -60,8 +61,8 @@ class Socio:
 
     def barrer(self, canal: CanalDePrueba, ahora: datetime) -> int:
         """El barrido de recordatorios corriendo a la hora [ahora] del club, para este socio."""
-        from app.aplicacion.notificaciones import enviar_recordatorios
-        from app.infraestructura.notificaciones import NotificacionesSql
+        from app.modules.notificaciones.casos_de_uso import enviar_recordatorios
+        from app.modules.notificaciones.repositorio import NotificacionesSql
 
         with self.motor.connect() as conn:
             return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, self.usuario_id)
@@ -131,7 +132,7 @@ def un_socio(
         json={"token": dispositivo, "plataforma": "android", "permiso": permiso},
     )
     assert registro.status_code == 204
-    return Socio(api, motor, correo, sesion, int(usuario), int(espacio), sede, dispositivo)
+    return Socio(api, motor, correo, sesion, usuario, espacio, sede, dispositivo)
 
 
 def test_una_hora_antes_del_inicio_se_envia_una_sola_vez_el_recordatorio_con_deporte_sede_y_horario(
@@ -265,7 +266,7 @@ def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horari
     cambio = socio.api.post(
         f"/reservas/{reserva['id']}/modificar",
         headers=socio.sesion,
-        json={"espacio_id": socio.espacio_id, "fecha": manana().isoformat(), "desde": "22:00"},
+        json={"espacio_id": str(socio.espacio_id), "fecha": manana().isoformat(), "desde": "22:00"},
     )
     assert cambio.status_code == 200
     canal = CanalDePrueba()

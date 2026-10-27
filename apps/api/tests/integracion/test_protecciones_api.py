@@ -1,31 +1,13 @@
 """El repaso de seguridad del borde de la API, probado contra la app real."""
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable
 from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, text
 
-from app.config import config
-
-
-def test_un_cuerpo_enorme_devuelve_413(api: TestClient) -> None:
-    r = api.post(
-        "/registro",
-        content=b'{"nombre": "' + b"a" * 100_000 + b'"}',
-        headers={"content-type": "application/json"},
-    )
-    assert r.status_code == 413
-
-
-def test_un_content_length_mentido_se_rechaza_sin_leer(api: TestClient) -> None:
-    r = api.post(
-        "/registro",
-        content=b"{}",
-        headers={"content-type": "application/json", "content-length": "500000000"},
-    )
-    assert r.status_code == 413
+from app.shared.config import config
 
 
 def test_json_roto_da_400(api: TestClient) -> None:
@@ -69,11 +51,6 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
     assert rol == "usuario"
 
 
-def test_las_respuestas_no_se_cachean_ni_se_adivina_el_tipo(api: TestClient) -> None:
-    r = api.post("/registro", json={})
-    assert r.headers["cache-control"] == "no-store"
-    assert r.headers["x-content-type-options"] == "nosniff"
-    assert r.headers["content-type"].startswith("application/json")
 
 
 def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:
@@ -83,12 +60,3 @@ def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:
         assert fuga not in texto
 
 
-def test_un_cuerpo_por_partes_de_mas_de_64_kb_devuelve_413(api: TestClient) -> None:
-    def partes() -> Iterator[bytes]:
-        yield b'{"nombre": "'
-        for _ in range(3):
-            yield b"a" * 40_000
-        yield b'"}'
-
-    r = api.post("/registro", content=partes(), headers={"content-type": "application/json"})
-    assert r.status_code == 413

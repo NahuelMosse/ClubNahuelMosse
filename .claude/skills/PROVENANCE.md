@@ -36,7 +36,7 @@ need to look for them here.
 | `.claude/tools/once.mjs` | our own | — |
 | `.claude/tools/attack.mjs` (profile backend) | our own | — |
 | The coverage and duplication thresholds of the gate (`stacks/`) | the **Sonar way** quality gate of SonarQube: no new issues, security hotspots reviewed, coverage of 80 % or more and duplication of 3 % or less over the new code | — |
-| The gate's static-analysis line with Semgrep | Semgrep Community Edition rules use the *Semgrep Rules License v1.0*: internal use, not for competing nor for a SaaS service | see the license before using it for a client |
+| The gate's static-analysis line with Semgrep | Semgrep Community Edition rules use the *Semgrep Rules License v1.0*: internal use, not for competing nor for a SaaS service | the kit ships its own rules (`.claude/rules/semgrep/sdd.yml`) and never redistributes registry rules; registry packs are for internal use only, with `--metrics=off` |
 | The ladder of `.claude/rules/architecture.md` —reuse, standard library, platform, installed dependency— | the idea is from **Ponytail** (`github.com/DietrichGebert/ponytail`); the wording is our own and leaves out its testing doctrine | — |
 
 **`design-review`** is the one from `claude-code-kit`; **`interface-design`**, the one from

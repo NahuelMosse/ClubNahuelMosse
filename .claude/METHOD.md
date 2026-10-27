@@ -9,10 +9,10 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
    from `.claude/templates/card.md`:
    - header: `status: proposed`, `cap: <N> min`, `sources:`, `not_read:`;
    - `## Specs`: every sentence of the card as `S<n> · "<verbatim quote>"`; an assumption as `<ID>-ASM-NN · <reading> · S<n>`;
-   - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test;
+   - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test; each production task gets an indented `reuses:`/`new:` line, a new layer or pattern a `why-layer:`;
    - `## Gate`: one command per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), and the plan's own: a `probe <state>:` for each state `## Specs` names, `attacks:` with the card's limits, `migrate-upgrade:` if it touches data;
    - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
-   - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`, profile web; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`;
+   - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`, profile web; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`, `copy:`;
 
    - `## Changes to existing behavior`: a route, screen or file of main the card changes (`none` if it only adds).
 
@@ -32,11 +32,11 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
    - Visual lens: with the tests green, one `designer` does 2-3 capture rounds against `ref/` (`rondas.md`), or the gate fails.
    - An `S#` over a set («un campo», «cada», «todos») gets one planned test per member the card names.
    - Validate what comes from outside on the way in; a missing key of a closed enumeration is an error, not a default. The scope is the
-     card's: an unasked control, endpoint or header is not built, it is a line `OUT · <what>` in the Log.
-4. **Gate.** `node .claude/tools/verify.mjs` runs each line of `## Gate` once (records in `.validation/`), checks every `S#` has a test, and
-   prints what fails. What a formatter or generator writes runs before the gate and is committed: a line that changes versioned files fails. Fix and rerun until green, or until two rounds without progress: then write it in the Log and stop; the close lists it in `## Could not run`.
+     card's: an unasked control, endpoint or header is a Log line `OUT · <what>`, not built.
+4. **Gate.** `node .claude/tools/verify.mjs` runs each line of `## Gate` once, checks every `S#` has a test, and
+   prints what fails. What a formatter or generator writes runs before the gate and is committed: a line that changes versioned files fails. Fix and rerun until green, or two rounds without progress: then log it and stop; the close lists it in `## Could not run`.
 5. **`/close`.** `node .claude/tools/close.mjs` runs nine checks and writes `closing.md` (`## Passed`, `## Failed`, `## Could not run`,
-   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes the branch, a ready PR, the CI result and one card comment. Never main, `--force` or a merge.
+   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes the branch, a ready PR, the CI result and one card comment; never main, `--force` or a merge.
 
 ## The invariants
 
@@ -50,8 +50,8 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 ## Cost rules
 
 - **One `Write` per file, not ten `Edit`s.** Never `sed -i` or `node -e` to change a file: the guards do not see them.
-- **One wait per agent or process** (`wait.mjs`; its last line `<tool>: exit <N> in <X> min` ends it). No polling, no `sleep`.
-  Nothing over ~30 s runs in the foreground: background with a log, read with `Grep`.
+- **One wait per agent or process** (`wait.mjs`; its last line `<tool>: exit <N> in <X> min` ends it).
+  Nothing over ~30 s runs in the foreground: background, log, `Grep`.
 - **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
 - **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
@@ -63,8 +63,8 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 |---|---|
 | Builds a group of tasks (RED, code, gate) of a large card | `builder` |
 | Capture rounds of a `(presentation)` screen against its `ref/`, after the builder | `designer` |
-| Critiques the look after the designer (`visual`, `production`) | `design-critic` (Opus) |
-| Judges the plan at high (`PLAN`, 12 turns) against the lenses of `risk.json`; writes `judge.md`, does not fix | `judge` (Opus) |
+| Critiques the look (`visual`, `production`); re-checks its blockers once | `design-critic` (Opus) |
+| Judges the plan at high (`PLAN`, 12 turns) against the lenses of `risk.json`; writes `judge.md` | `judge` (Opus) |
 | Fetches the requirement from Jira and freezes it | `archivist` |
 | Sweeps more than two files | `scout` |
 | Runs tests, builds, installs, or reads a long log | `runner` · `executor` |

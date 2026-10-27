@@ -1,15 +1,16 @@
 import uuid
+from uuid import UUID
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 
-from app.infraestructura.espacios import EspaciosSql
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.reservas import ReservasSql
-from app.infraestructura.sedes import SedesSql
-from app.infraestructura.usuarios import UsuariosSql
+from app.modules.espacios.repositorio import EspaciosSql
+from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.reservas.repositorio import ReservasSql
+from app.modules.sedes.repositorio import SedesSql
+from app.modules.usuarios.repositorio import UsuariosSql
 
 
 def _hora(dias: int = 0, minutos: int = 0) -> datetime:
@@ -17,7 +18,7 @@ def _hora(dias: int = 0, minutos: int = 0) -> datetime:
     return base + timedelta(days=dias, minutes=minutos)
 
 
-def _mundo(motor: Engine) -> dict[str, int]:
+def _mundo(motor: Engine) -> dict[str, UUID]:
     """Una cuenta, una sede con un espacio, todo confirmado en la base."""
     s = uuid.uuid4().hex[:8]
     with motor.begin() as conn:
@@ -53,10 +54,10 @@ def _mundo(motor: Engine) -> dict[str, int]:
 
 
 def _reserva(
-    motor: Engine, mundo: dict[str, int], inicio: datetime, creada: datetime | None = None
-) -> int:
+    motor: Engine, mundo: dict[str, UUID], inicio: datetime, creada: datetime | None = None
+) -> UUID:
     with motor.begin() as conn:
-        return int(
+        return (
             conn.execute(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
@@ -135,7 +136,7 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
     mundo = _mundo(motor)
     original = EspaciosSql.dar_de_baja_de_sede
 
-    def escribe_y_cae(self: EspaciosSql, sede_id: int, autor: int) -> None:
+    def escribe_y_cae(self: EspaciosSql, sede_id: UUID, autor: UUID) -> None:
         original(self, sede_id, autor)
         raise RuntimeError("falla después de escribir los espacios")
 
@@ -155,11 +156,11 @@ def test_el_recordatorio_sale_una_hora_antes(motor: Engine, monkeypatch: pytest.
     cerca = _reserva(motor, mundo, base, creada=creada)
     lejos = _reserva(motor, mundo, base + timedelta(hours=1), creada=creada)
 
-    def ids(conn: Connection) -> list[int]:
+    def ids(conn: Connection) -> list[UUID]:
         return [r.reserva_id for r in NotificacionesSql(conn).vencidos(ahora, mundo["usuario"])]
 
     with motor.connect() as conn:
         assert ids(conn) == [cerca]
-    monkeypatch.setattr("app.infraestructura.notificaciones.ANTICIPACION", timedelta(hours=2))
+    monkeypatch.setattr("app.modules.notificaciones.repositorio.ANTICIPACION", timedelta(hours=2))
     with motor.connect() as conn:
         assert ids(conn) == [cerca, lejos]

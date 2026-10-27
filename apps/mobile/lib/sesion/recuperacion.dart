@@ -1,4 +1,5 @@
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 import 'sesion.dart';
 
 /// El enlace del correo venció, ya se usó o quedó reemplazado por uno más nuevo.
@@ -24,7 +25,7 @@ class Recuperacion {
     final r = await _api.post('/recuperacion', {'correo': correo});
     if (r.codigo == 202) return;
     if (r.codigo == 422) {
-      if (r.cuerpo['errores'] case {'correo': final String mensaje}) {
+      if (erroresDeCampo(r.cuerpo)['correo'] case final mensaje?) {
         throw CorreoRechazado(mensaje);
       }
     }
@@ -54,7 +55,7 @@ class Recuperacion {
       case 410:
         throw const EnlaceInvalido();
       case 422:
-        if (r.cuerpo['errores'] case {'nueva': final String mensaje}) {
+        if (erroresDeCampo(r.cuerpo)['nueva'] case final mensaje?) {
           throw ContrasenaRechazada({'nueva': mensaje});
         }
     }

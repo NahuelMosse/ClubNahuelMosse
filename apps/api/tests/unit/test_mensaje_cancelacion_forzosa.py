@@ -1,11 +1,12 @@
 from datetime import UTC, datetime
+from uuid import UUID
 
-from app.dominio.notificaciones import ReservaAnulada, mensaje_cancelacion_forzosa
+from app.modules.notificaciones.reglas import ReservaAnulada, mensaje_cancelacion_forzosa
 
 
 def _anulada(reserva_id: int = 7, motivo: str = "mantenimiento de la cancha") -> ReservaAnulada:
     return ReservaAnulada(
-        reserva_id=reserva_id,
+        reserva_id=UUID(int=reserva_id),
         # Mié 11 a las 20:00 en el club (UTC−3)
         inicio=datetime(2026, 11, 11, 23, 0, tzinfo=UTC),
         deporte="Futbol",
@@ -22,7 +23,7 @@ def test_una_reserva_dice_deporte_sede_dia_hora_y_motivo() -> None:
     assert aviso.cuerpo == (
         "Fútbol 5 · Sede Ramos Mejía · Mié 11, 20:00. Motivo: mantenimiento de la cancha."
     )
-    assert aviso.datos == {"tipo": "cancelacion_forzosa", "reserva_id": "7"}
+    assert aviso.datos == {"tipo": "cancelacion_forzosa", "reserva_id": str(UUID(int=7))}
 
 
 def test_varias_reservas_dicen_cuantas_son_y_no_apuntan_a_una() -> None:

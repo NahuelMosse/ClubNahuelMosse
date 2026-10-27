@@ -6,7 +6,7 @@ import 'package:clubnahuelmosse/comun/barra_inferior.dart';
 import 'package:clubnahuelmosse/comun/boton.dart';
 import 'package:clubnahuelmosse/comun/calendario.dart';
 import 'package:clubnahuelmosse/comun/campo_texto.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
+import 'package:clubnahuelmosse/admin/dialogos_de_baja.dart';
 import 'package:clubnahuelmosse/comun/selector.dart';
 import 'package:clubnahuelmosse/comun/reloj.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
@@ -156,7 +156,7 @@ void main() {
             pedidos.add(pedido);
             final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
               ('GET', '/sedes') => (200, '{"sedes": [$sedeMoronJson]}'),
-              ('PUT', '/sedes/1') => (200, sedeMoronJson),
+              ('PUT', '/sedes/00000000-0000-7000-8000-000000000001') => (200, sedeMoronJson),
               _ => (404, '{}'),
             };
             return http.Response.bytes(
@@ -195,7 +195,7 @@ void main() {
   Future<void> hastaConfirmarReserva(WidgetTester tester) async {
     await montarUsuario(
       tester,
-      inicio: '/sedes/1/canchas/9',
+      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas({
         ...rutasDeSedes(),
         'POST /reservas': (
@@ -237,7 +237,7 @@ void main() {
         api: apiRutas({
           ...rutas,
           'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
-          'POST /reservas/1/modificar': (
+          'POST /reservas/00000000-0000-7000-8000-000000000001/modificar': (
             422,
             '{"errores": {"fecha": "Ese horario ya empezó"}}',
           ),
@@ -400,7 +400,7 @@ void main() {
         tester,
         PantallaRegistro(
           api: apiRutas({
-            'POST /registro': (201, '{"id": 1}'),
+            'POST /registro': (201, '{"id": "00000000-0000-7000-8000-000000000001"}'),
           }, pedidos: pedidos),
         ),
         tema: temaOscuro,

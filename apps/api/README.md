@@ -17,7 +17,7 @@ cd apps/api
 uv sync
 ```
 
-La configuración llega por variables de entorno. `app/config.py` también lee un archivo `.env`
+La configuración llega por variables de entorno. `app/shared/config.py` también lee un archivo `.env`
 local, que no se versiona; `.env.example` lista las variables. `FIREBASE_AUTH_EMULATOR_HOST`,
 `GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_CONTRASENA` y `TEST_DATABASE_URL` se leen sólo del
 entorno del proceso: en el `.env` no tienen efecto.
@@ -37,10 +37,7 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
 | `ADMIN_CONTRASENA` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
 | `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
-| `DATABASE_URL_APP` | Conexión de la API con el usuario `club_app`, que lee y escribe filas y no cambia el esquema. Sin definir, la API usa `DATABASE_URL`. Las migraciones usan siempre `DATABASE_URL` |
-| `METRICAS_TOKEN` | Token que `GET /metrics` pide como `Authorization: Bearer`. Sin definir, `/metrics` responde 404 |
 | `VERSION` | Versión que informa `/health` y que lleva cada línea del log; por defecto sale del `pyproject.toml` |
-| `DETRAS_DE_PROXY` | `true` si un proxy (Render) delante de la API pone `X-Forwarded-For`; sin eso la API toma como cliente la dirección que ve |
 
 Crear las tablas en la base de `DATABASE_URL`:
 
@@ -51,7 +48,7 @@ uv run alembic upgrade head
 La cuenta de administrador no se registra desde la app; se siembra:
 
 ```sh
-ADMIN_CONTRASENA=<contraseña> uv run python -m app.interfaz.sembrar_admin \
+ADMIN_CONTRASENA=<contraseña> uv run python -m app.modules.usuarios.sembrar_admin \
   --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
 ```
 
@@ -69,22 +66,9 @@ FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_PROJECT_ID=demo-clubnahuelmo
 La documentación queda en `http://localhost:8000/docs`. Desde el emulador de Android la API se ve
 como `http://10.0.2.2:8000`.
 
-## Supuestos de operación
+## Errores
 
-- **Límites de frecuencia:** por origen (10 pedidos por minuto, sin sesión) y por cuenta (10 por
-  hora, con sesión), en la memoria de cada instancia. Pasado el cupo responde 429 con `Retry-After`
-  y `{"mensaje": ...}`.
-- **Host:** un pedido con un Host que no sea el propio, el de `URL_PUBLICA` o uno de
-  `HOSTS_PERMITIDOS` (coma) responde 400. `/health` responde siempre.
-- **Proxy:** con `DETRAS_DE_PROXY=true` el origen es el último valor de `X-Forwarded-For`, el que
-  agrega Render.
-- **Documentación:** `DOCUMENTACION_INTERACTIVA=false` apaga `/docs` y `/redoc`; `/openapi.json`
-  sigue. Render lo apaga y chequea por `/ready`.
-- **Errores:** 400 por Host ajeno o `Content-Length` inválido (`{"detail": ...}`); 422 por un dato
-  inválido (`{"errores": {campo: mensaje}}`); 429 por límite.
-- **Emulador:** con `FIREBASE_AUTH_EMULATOR_HOST` definida la API no arranca si hay credenciales
-  (`FIREBASE_CREDENCIALES_JSON`, `GOOGLE_APPLICATION_CREDENTIALS`) o si el proyecto no empieza con
-  `demo-`.
+422 por un dato inválido (`{"errores": {campo: mensaje}}`); 403 y 404 sin cuerpo.
 
 ## Contrato
 
@@ -98,7 +82,7 @@ FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; f
 
 ## Catálogo de deportes
 
-El catálogo es fijo y vive en `app/dominio/espacios.py`; la app lo pide con `GET /espacios/catalogo`.
+El catálogo es fijo y vive en `app/modules/espacios/reglas.py`; la app lo pide con `GET /espacios/catalogo`.
 Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
 (B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
 
@@ -141,66 +125,32 @@ barrido corre como un comando de una pasada, para que lo dispare un cron o una t
 
 ```sh
 cd apps/api
-uv run python -m app.interfaz.barrido --una-vez
+uv run python -m app.modules.notificaciones.barrido --una-vez
 ```
 
 Termina con código 0 si el barrido corrió y 1 si falló. Quién lo dispara no está decidido:
 `render.yaml` no suma una tarea paga. Un aviso que no salió deja una línea de error
 `aviso_sin_enviar` en el log, con el número de la notificación y el tipo del error, sin el token.
 
-**Usuario de la API.** Con el dueño de la base, una vez (y de nuevo para cambiar la clave):
-
-```sh
-python scripts/usuario_de_la_app.py --url <DATABASE_URL del dueño> --clave <clave nueva>
-```
-
-Después se define `DATABASE_URL_APP` con ese usuario (`club_app`). Si Render no deja crear el rol,
-se deja sin definir.
-
-**Respaldo y vuelta atrás.** Hacen falta `pg_dump` y `pg_restore` (herramientas cliente de
-PostgreSQL de la misma versión mayor que la base):
-
-```sh
-python scripts/respaldo.py guardar --url <DATABASE_URL> --archivo club.dump
-python scripts/respaldo.py restaurar --url <URL de una base vacía> --archivo club.dump
-```
-
-La vuelta atrás se prueba restaurando en otra base y comparando las filas, nunca sobre la de
-producción. Mientras no haya plan pago, la base gratuita vence a los 30 días: se guarda un respaldo
-antes. Objetivos que se asumen mientras una persona no decida otros: RPO igual al tiempo desde el
-último respaldo (se recomienda uno por día y otro antes de cada despliegue con migraciones) y RTO de
-una hora, que es lo que tarda crear una base, restaurar y cambiar `DATABASE_URL`.
-
-**Métricas y logs.** `GET /metrics` (con `METRICAS_TOKEN`) expone los contadores; `/ready` dice si la
-base responde y el esquema está al día. Cada error 500 devuelve una referencia que es el
-`X-Request-ID` del pedido y que se busca en el log.
+**Logs.** Un aviso que no salió deja una línea de error `aviso_sin_enviar` en el log, con el número de la
+notificación y el tipo del error, sin el token.
 
 ## Decisiones de datos
 
 Lo que se asumió donde el requisito no lo dice (REV-03); cada una se cambia en un solo lugar.
 
-- REV-03-ASM-02: un aviso de cancelación que quedó `enviando` por una caída del proceso se
-  vuelve a mandar y puede llegar dos veces; un recordatorio varado queda `fallida` y no se repite
-  («se envía una sola vez», CU-24.1). Si se prefiere no repetir nunca, el aviso de cancelación
-  también pasa a `fallida` (`que_hacer_con_varado`, `app/dominio/notificaciones.py`).
-- REV-03-ASM-03: el historial propio (`GET /reservas`) trae tandas de 20, igual que el global;
-  `siguiente` es el valor de `despues` que pide la tanda que sigue y es `null` en la última. Un
-  cliente que no manda `despues` ve las 20 más recientes.
-- REV-03-ASM-04: un aviso `enviando` hace más de 5 minutos se da por varado (`TOMA_VENCIDA`).
-- REV-03-ASM-05: cada toma de un aviso suma un intento (`notificacion.intentos`, con la hora en
-  `tomada_en`); con 3 queda `fallida` y el log registra `aviso_sin_enviar` con el número y el
-  tipo, sin datos de la persona.
-- REV-03-ASM-11: `GET /reservas/todas` acepta `despues` y sigue aceptando `pagina` para las
-  apps ya instaladas; con los dos, manda `despues`. Un `despues` que no sale de un `siguiente`
-  es un 422.
+- REV-03-ASM-02: un aviso que lleva más de 10 minutos en `enviando` (la API se cayó a mitad del
+  envío) pasa a `fallida` en el siguiente barrido y no se repite («se envía una sola vez»,
+  CU-24.1); SIM-01-ASM-10.
+- REV-03-ASM-03: el historial propio (`GET /reservas`) trae todas las reservas de una vez, igual
+  que el global; no hay cursor ni tandas.
 
 ## Desplegar en Render
 
 El `render.yaml` de la raíz del repo describe todo: un web service de Python para la API
 (`apps/api`) y una base Postgres gestionada, ambos en el plan `free`. Render instala con `uv sync`
 (detecta `uv.lock`), migra con `alembic upgrade head` dentro del build, arranca `uvicorn` en el
-`$PORT` que asigna y consulta `/ready` como health check: responde 200 si la base contesta y el
-esquema está en la última migración.
+`$PORT` que asigna y consulta `/health` como health check.
 
 1. **Cuenta de Render.** Crear la cuenta en <https://render.com> y autorizar el acceso a GitHub.
 2. **Proyecto de Firebase.** En <https://console.firebase.google.com> crear un proyecto
@@ -222,8 +172,6 @@ esquema está en la última migración.
    | `FIREBASE_CREDENCIALES_JSON` | el **contenido completo** del `.json` de la cuenta de servicio |
    | `URL_PUBLICA` | `https://<nombre del servicio>.onrender.com`, la dirección que Render muestra para `clubnahuelmosse-api` |
    | `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | los de la cuenta de correo saliente (`SMTP_PUERTO` ya está en 587) |
-   | `DATABASE_URL_APP` | la URL de la base con el usuario `club_app` (ver «Usuario de la API» en «Operar»); vacía, la API usa el dueño |
-   | `METRICAS_TOKEN` | un valor largo al azar para leer `/metrics`; vacía, la ruta no existe |
 
    Render pide estos valores sólo al crear el Blueprint; para cambiarlos después, se editan en
    *Environment* del servicio. `DATABASE_URL` sale de la base: `config.py` le agrega el driver
@@ -233,7 +181,7 @@ esquema está en la última migración.
    base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.interfaz.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.modules.usuarios.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
    ```
 
 6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y
@@ -247,8 +195,7 @@ Límites del plan `free`:
 - El servicio se duerme tras 15 minutos sin tráfico y el primer pedido después tarda alrededor
   de un minuto: conviene despertarlo antes de una demostración. Mientras duerme, el barrido de
   recordatorios no corre.
-- La base gratuita vence a los 30 días de creada, sin backups automáticos (ver «Respaldo y vuelta
-  atrás»), y hay una por workspace.
+- La base gratuita vence a los 30 días de creada, sin backups automáticos, y hay una por workspace.
 - `preDeployCommand` no existe en el plan gratuito; por eso las migraciones corren en el build.
   Con un plan pago, se mueve esa parte a `preDeployCommand` en el `render.yaml`.
 

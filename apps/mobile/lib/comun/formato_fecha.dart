@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
 
+export 'fechas.dart' show formatearFecha;
+
 /// Arma `DD / MM / AAAA` a medida que se escriben los dígitos.
 class FormatoFecha extends TextInputFormatter {
   const FormatoFecha();
@@ -44,9 +46,3 @@ DateTime? leerFecha(String valor) {
   if (fecha.year != anio || fecha.month != mes || fecha.day != dia) return null;
   return fecha;
 }
-
-/// La fecha como se escribe en el campo (`DD / MM / AAAA`), la inversa de [leerFecha].
-String formatearFecha(DateTime fecha) =>
-    '${_dosCifras(fecha.day)} / ${_dosCifras(fecha.month)} / ${fecha.year}';
-
-String _dosCifras(int n) => n.toString().padLeft(2, '0');

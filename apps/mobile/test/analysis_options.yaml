@@ -1,0 +1,8 @@
+include: ../analysis_options.yaml
+
+# Los tests congelados no se reescriben: el orden de imports y los booleanos posicionales se exigen sólo en lib.
+linter:
+  rules:
+    directives_ordering: false
+    avoid_positional_boolean_parameters: false
+    curly_braces_in_flow_control_structures: false

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
-import 'boton.dart';
 import '../tema/tokens.dart';
+import 'boton.dart';
 
 /// `Empty-State`: ícono en círculo, título y texto, en lugar de un listado vacío.
 class EstadoVacio extends StatelessWidget {

@@ -9,7 +9,9 @@ const _portadas = [
   AssetImage('assets/imagenes/sedes/portada_4.jpg'),
 ];
 
-ImageProvider portadaDeSede(int id) => _portadas[id % _portadas.length];
+/// El mismo id da siempre la misma portada: la suma de sus caracteres, módulo las portadas.
+ImageProvider portadaDeSede(String id) =>
+    _portadas[id.codeUnits.fold(0, (a, c) => a + c) % _portadas.length];
 
 ImageProvider fotoDeDeporte(String deporte) => switch (deporte) {
   'Basquet' => _portadas[0],

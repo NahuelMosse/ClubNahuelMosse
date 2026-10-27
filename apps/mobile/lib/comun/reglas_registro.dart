@@ -4,7 +4,8 @@ library;
 
 import 'formato_fecha.dart';
 
-export 'formato_fecha.dart' show formatearFecha, leerFecha;
+export 'fechas.dart' show dniLegible, fechaIso, fechaLegible, formatearFecha;
+export 'formato_fecha.dart' show leerFecha;
 
 const largoMaximoNombre = 60;
 
@@ -58,24 +59,4 @@ String? validarContrasena(String valor) {
   if (valor.isEmpty) return 'La contraseña es obligatoria';
   final faltan = problemasContrasena(valor);
   return faltan.isEmpty ? null : faltan.first;
-}
-
-String _dos(int n) => n.toString().padLeft(2, '0');
-
-/// La fecha en el formato que espera la API (`AAAA-MM-DD`).
-String fechaIso(DateTime fecha) =>
-    '${fecha.year.toString().padLeft(4, '0')}-${_dos(fecha.month)}-${_dos(fecha.day)}';
-
-/// La fecha para leer, como en el perfil (`DD/MM/AAAA`).
-String fechaLegible(DateTime fecha) =>
-    '${_dos(fecha.day)}/${_dos(fecha.month)}/${fecha.year}';
-
-/// El DNI con los puntos de mil, como se lee en el documento: `42.118.507`.
-String dniLegible(String dni) {
-  final digitos = normalizarDni(dni);
-  final grupos = <String>[];
-  for (var fin = digitos.length; fin > 0; fin -= 3) {
-    grupos.insert(0, digitos.substring(fin - 3 < 0 ? 0 : fin - 3, fin));
-  }
-  return grupos.join('.');
 }

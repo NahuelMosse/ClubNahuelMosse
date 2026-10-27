@@ -8,7 +8,7 @@
 //                                        a signal that appeared after the decision does not change it
 //   kit.mjs grade <poc|mvp|production> --reason "…"
 //                                        how much the bar asks; it only goes up; a person, no open card
-//   kit.mjs profile <on|off> <web|backend|flutter> --reason "…"
+//   kit.mjs profile <on|off> <web|backend|flutter> --reason "…" [--card-open "…" (on only, recorded in the card's Log)]
 //                                        a profile is a package of modules, tools, agents, references and extras
 //                                        (the skill and the MCP server of web) for one environment; on turns its
 //                                        modules on and copies its files, off turns them off and removes the files
@@ -34,7 +34,7 @@ import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync, appendFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { cardFiles, cardStart, currentCard, fileMapLines, git, pathTokens } from './card.mjs';
+import { cardFiles, cardStart, currentCard, fileMapLines, git, originOf, ownBase, pathTokens } from './card.mjs';
 import { describe, detect, detectIn, evidenceOf, kindOf } from './signals.mjs';
 
 export const KIT_JSON = '.claude/kit.json';
@@ -226,9 +226,25 @@ export const filesOfModule = (map, name, all) => matching(map.modules[name].file
 export const filesOfProfile = (map, name, all) => matching(map.profiles?.[name]?.files ?? [], all);
 
 // The files a profile copies out of .claude/ into the repo: `{ from, to }`, as `copies` declares them.
-export const copiesOfProfile = (map, name) => map.profiles?.[name]?.copies ?? [];
+// A copy with `"package": "<file>"` goes into the package that file marks (`pubspec.yaml` with `flutter:` for the Dart helpers):
+// the repo root when it has one, else the shallowest folder that does (`apps/mobile/`), so the package's tests can import it.
+const SKIP_DIRS = new Set(['node_modules', '.git', 'build', '.dart_tool', 'ios', 'android', '.claude', 'specs']);
+export const packageDirOf = (root, marker) => {
+  const marks = (dir) => { try { const f = join(root, dir, marker); return existsSync(f) && (marker !== 'pubspec.yaml' || /^flutter:/m.test(readFileSync(f, 'utf8'))); } catch { return false; } };
+  let level = [''];
+  for (let depth = 0; depth <= 3 && level.length; depth++) {
+    const hit = level.filter(marks).sort()[0];
+    if (hit !== undefined) return hit;
+    level = level.flatMap((d) => { try { return readdirSync(join(root, d), { withFileTypes: true }).filter((e) => e.isDirectory() && !SKIP_DIRS.has(e.name)).map((e) => (d ? `${d}/${e.name}` : e.name)); } catch { return []; } });
+  }
+  return '';
+};
+export const copiesOfProfile = (map, name, root = null) => (map.profiles?.[name]?.copies ?? []).map((c) => {
+  const dir = root && c.package ? packageDirOf(root, c.package) : '';
+  return dir ? { ...c, to: `${dir}/${c.to}` } : c;
+});
 
-export const profileListsFile = (map, name, file) => filesOfProfile(map, name, [file]).length > 0 || copiesOfProfile(map, name).some((c) => c.to === file);
+export const profileListsFile = (map, name, file) => filesOfProfile(map, name, [file]).length > 0 || copiesOfProfile(map, name).some((c) => c.to === file || (c.package && file.endsWith(`/${c.to}`)));
 
 // The profile that owns a file: none means a module or the base. A file two profiles list belongs to
 // the first of `prefer` (the ones that are on) that lists it.
@@ -297,7 +313,9 @@ const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|woff2?|ttf|pdf|zip|gz)$/i;
 // The lines the card added to a file, with their numbers; a file new to git counts as all added.
 export const addedOf = (root, base, f) => {
   if (BINARY.test(f)) return [];
-  const d = git(root, ['diff', '-U0', base, '--', f]).stdout ?? '';
+  // A moved file diffs against where it came from (originOf): a move adds only what it changed.
+  const origin = originOf(root, base, f);
+  const d = git(root, ['diff', '-U0', '-M80%', ownBase(root, base), '--', f, ...(origin ? [origin] : [])]).stdout ?? '';
   if (!d) {
     const path = join(root, f);
     return existsSync(path) ? (() => { try { return readFileSync(path, 'utf8').split('\n').map((text, i) => ({ n: i + 1, text })); } catch { return []; } })() : [];
@@ -564,14 +582,19 @@ const recordProfiles = (root, manifest) => {
     .map(([n, s]) => [n, s.state === 'on' ? { state: 'on', since: 'recorded from its modules' } : { state: 'off', reason: s.reason, by: 'derived', at: today() }]));
 };
 
-const turnProfile = (root, mode, name, reason) => {
+// `--card-open "<why>"` turns a profile on with a card open, when the card needs that profile's instruments to close (a Flutter
+// screen in a repo with only web on). Only `on`: it adds instruments, it never lowers the bar. The card's Log records it.
+const turnProfile = (root, mode, name, reason, cardOpen = '') => {
   const state = requireManifest(root);
   if (!['on', 'off'].includes(mode)) fail('kit.mjs profile <on|off> <web|backend|flutter> --reason "…"');
   const installed = profileArg(state.map, name);
   if (installed.status === 'planned') fail(`Profile ${name} is planned, not available: it is declared in modules.json and has no files yet. Nothing changed.`);
   if (mode === 'off' && process.env.SDD_UNATTENDED === '1') fail('Unattended nobody turns a profile off: that decision is a person\'s. `kit.mjs profile on <profile>` is the way to resolve it.');
   if (!reason) fail(`Turning a profile ${mode} needs its reason: \`kit.mjs profile ${mode} ${name} --reason "<why>"\`. It is written in the manifest and repeated in every closing.`);
-  if (openCard(root)) fail('There is a card open: a profile changes between cards, so the bar the card was planned with does not change under it. Close the card first.');
+  const open = openCard(root);
+  const why = String(cardOpen ?? '').trim();
+  if (open && !(mode === 'on' && why))
+    fail(`There is a card open: a profile changes between cards, so the bar the card was planned with does not change under it. Close the card first.${mode === 'on' ? '\nIf the card needs this profile\'s instruments to close, run again with --card-open "<why>"; it is recorded in the card\'s Log.' : ''}`);
   const source = sourceOf(root, state.manifest);
   const sourceMap = readModules(source);
   const p = (mode === 'on' ? sourceMap : state.map).profiles?.[name] ?? installed;
@@ -585,7 +608,7 @@ const turnProfile = (root, mode, name, reason) => {
     const { copied, kept } = copyFiles(source, root, files);
     manifest.files ??= {};
     for (const f of [...copied, ...files.filter((x) => !kept.includes(x) && existsSync(join(root, x)))]) manifest.files[f] = { module: `profile:${name}`, sha256: sha256(join(root, f)) };
-    for (const { from, to } of copiesOfProfile(sourceMap, name)) {
+    for (const { from, to } of copiesOfProfile(sourceMap, name, root)) {
       const dest = join(root, to);
       if (existsSync(dest)) { if (sha256(dest) !== sha256(join(source, from))) kept.push(to); else manifest.files[to] = { module: `profile:${name}`, sha256: sha256(dest) }; continue; }
       mkdirSync(dirname(dest), { recursive: true });
@@ -596,6 +619,12 @@ const turnProfile = (root, mode, name, reason) => {
     const mcp = mcpAdd(root, p.mcp);
     manifest.profiles[name] = { state: 'on', since: `kit.mjs profile on ${today()}`, reason, ...(Object.keys(mcp).length ? { mcp } : {}) };
     writeManifest(root, manifest);
+    if (open) {
+      const doc = join(open, 'card.md');
+      const text = existsSync(doc) ? readFileSync(doc, 'utf8') : '';
+      const n = (text.match(/^\s*[-*]\s*L\d+\b/gm) ?? []).length + 1;
+      if (existsSync(doc)) appendFileSync(doc, `${text.endsWith('\n') ? '' : '\n'}- L${n} · ${today()} · profile ${name} on with the card open · ${why}\n`);
+    }
     console.log(`Profile ${name} is on: ${copied.length} file(s) copied${kept.length ? `; ${kept.length} already there with local changes, left as they are: ${kept.join(', ')}` : ''}${Object.keys(mcp).length ? `; ${MCP_JSON}: ${Object.keys(mcp).join(', ')} added` : ''}.`);
     return;
   }
@@ -668,7 +697,7 @@ const repair = (root) => {
   const { copied, kept } = copyFiles(source, root, wanted.filter((f) => !existsSync(join(root, f))));
   state.manifest.files ??= {};
   for (const f of copied) state.manifest.files[f] = { module: modulesOfFile(sourceMap, f, all)[0] ?? (profileOfFile(sourceMap, f, profilesOn) ? `profile:${profileOfFile(sourceMap, f, profilesOn)}` : 'core'), sha256: sha256(join(root, f)) };
-  for (const { from, to } of profilesOn.flatMap((name) => copiesOfProfile(sourceMap, name))) {
+  for (const { from, to } of profilesOn.flatMap((name) => copiesOfProfile(sourceMap, name, root))) {
     if (existsSync(join(root, to))) continue;
     mkdirSync(dirname(join(root, to)), { recursive: true });
     copyFileSync(join(source, from), join(root, to));
@@ -689,7 +718,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     else if (command === 'off') turnOff(root, name, flag(rest, '--reason'));
     else if (command === 'confirm-off') confirmOff(root, name, flag(rest, '--reason'));
     else if (command === 'grade') turnGrade(root, name, flag(rest, '--reason'));
-    else if (command === 'profile') turnProfile(root, name, rest[0], flag(rest, '--reason'));
+    else if (command === 'profile') turnProfile(root, name, rest[0], flag(rest, '--reason'), flag(rest, '--card-open'));
     else if (command === 'repair') repair(root);
     else if (command === 'e2e') setE2e(root, name);
     else fail('kit.mjs status | on <module> | off <module> --reason "…" | confirm-off <module> --reason "…" | grade <poc|mvp|production> --reason "…" | profile <on|off> <web|backend|flutter> --reason "…" | repair | e2e <path>');

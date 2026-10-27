@@ -8,6 +8,7 @@ import sys
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -15,8 +16,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Connection, Engine, event, text
 from sqlalchemy.exc import IntegrityError
 
-from app.infraestructura.db import motor as motor_de_la_app
-from app.interfaz.sembrar_admin import main as sembrar
+from app.shared.db import motor as motor_de_la_app
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -59,8 +60,8 @@ def test_un_token_invalido_cuenta_como_sin_sesion(api: TestClient) -> None:
     assert _sin_401(api, {"Authorization": "Bearer no-es-un-token"}) == {}
 
 
-def _usuario(conn: Connection, correo: str, dni: str) -> int:
-    return int(
+def _usuario(conn: Connection, correo: str, dni: str) -> UUID:
+    return (
         conn.execute(
             text(
                 "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
@@ -72,8 +73,8 @@ def _usuario(conn: Connection, correo: str, dni: str) -> int:
     )
 
 
-def _espacio(conn: Connection, s: str) -> int:
-    return int(
+def _espacio(conn: Connection, s: str) -> UUID:
+    return (
         conn.execute(
             text(
                 "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
@@ -88,7 +89,7 @@ def _espacio(conn: Connection, s: str) -> int:
     )
 
 
-def _reserva(conn: Connection, usuario: int, espacio: int, horas: int) -> None:
+def _reserva(conn: Connection, usuario: UUID, espacio: UUID, horas: int) -> None:
     inicio = datetime(2030, 11, 14, 8, tzinfo=ZONA)
     conn.execute(
         text(
@@ -280,7 +281,7 @@ def _socio(
     return {"Authorization": f"Bearer {token}"}
 
 
-def _proximas(motor: Engine, correo: str, espacio: int, cantidad: int) -> None:
+def _proximas(motor: Engine, correo: str, espacio: UUID, cantidad: int) -> None:
     with motor.begin() as conn:
         conn.execute(
             text(
@@ -376,7 +377,9 @@ def test_las_sedes_y_el_historial_global_hacen_consultas_fijas(
 
 
 def _casos_de_uso() -> list[str]:
-    fuente = (RAIZ_API / "app" / "aplicacion" / "reservas.py").read_text(encoding="utf-8")
+    fuente = (RAIZ_API / "app" / "modules" / "reservas" / "casos_de_uso.py").read_text(
+        encoding="utf-8"
+    )
     return [
         n.name
         for n in ast.parse(fuente).body

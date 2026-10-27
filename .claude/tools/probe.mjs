@@ -9,6 +9,7 @@
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { wallOf, BotWall, productRefOf } from './bot-wall.mjs';
 
 // One entry per flag: how it is written, what it does, and whether it may be repeated.
 export const FLAGS = [
@@ -257,8 +258,13 @@ const run = async (page, step, appUrl, ctx) => {
   const loc = (s) => page.locator(s).first();
   if ('enter-each' in step) { if (!ctx.silent) ctx.found.enter = await enterEach(page, step, ctx, appUrl); }
   else if ('type-markup' in step) { await loc(step['type-markup']).fill(MARKUP, { timeout: STEP_TIMEOUT_MS }); ctx.found.typed = true; }
-  else if ('goto' in step) await page.goto(new URL(step.goto, appUrl).href, { waitUntil: 'load', timeout: STEP_TIMEOUT_MS * 3 });
-  else if ('fill' in step) await loc(step.fill).fill(step.value ?? '', { timeout: STEP_TIMEOUT_MS });
+  else if ('goto' in step) {
+    const target = new URL(step.goto, appUrl).href;
+    const why = await wallOf(page, await page.goto(target, { waitUntil: 'load', timeout: STEP_TIMEOUT_MS * 3 }), target);
+    if (why) throw new BotWall(target, why);
+    const notProduct = await productRefOf(page, target);
+    if (notProduct) throw new BotWall(target, null, notProduct);
+  } else if ('fill' in step) await loc(step.fill).fill(step.value ?? '', { timeout: STEP_TIMEOUT_MS });
   else if ('click' in step) await loc(step.click).click({ timeout: STEP_TIMEOUT_MS });
   else if ('press' in step) await (step.on ? loc(step.on).press(step.press, { timeout: STEP_TIMEOUT_MS }) : page.keyboard.press(step.press));
   else if ('select' in step) await loc(step.select).selectOption(step.value ?? '', { timeout: STEP_TIMEOUT_MS });
@@ -325,8 +331,10 @@ export const probe = async (argv, root = process.cwd()) => {
   mkdirSync(out, { recursive: true });
   const browser = await (pw.chromium ?? pw.default.chromium).launch();
   let failed = false;
+  let wall = null;
   try {
     for (const { width, height } of viewports) {
+      if (wall) break;
       const context = await browser.newContext({ viewport: { width, height } });
       const page = await context.newPage();
       for (const r of routes) {
@@ -342,7 +350,7 @@ export const probe = async (argv, root = process.cwd()) => {
         const name = `w${width}${height === 900 ? '' : `x${height}`}-step${String(i + 1).padStart(2, '0')}`;
         let error = null;
         delete found.enter;
-        try { await run(page, step, appUrl, { steps: parsed.steps, i, skip: enterSkip, found }); } catch (e) { error = `${JSON.stringify(step)}: ${String(e.message).split('\n')[0]}`; }
+        try { await run(page, step, appUrl, { steps: parsed.steps, i, skip: enterSkip, found }); } catch (e) { error = `${JSON.stringify(step)}: ${String(e.message).split('\n')[0]}`; if (e.botWall) wall = e.message; }
         const record = { width, height, step: i + 1, action: step, url: page.url(), error };
         if (found.enter) {
           record.enter = found.enter;
@@ -392,6 +400,7 @@ export const probe = async (argv, root = process.cwd()) => {
   } finally {
     await browser.close();
   }
+  if (wall) { rmSync(out, { recursive: true, force: true }); console.error(wall); return 2; }
   log(`probe written to ${out}`);
   return failed ? 1 : 0;
 };

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
 import '../sesion/sesion.dart';
 import 'sede.dart';
 
@@ -79,7 +80,7 @@ class Sedes extends ChangeNotifier {
   /// Lanza [ReservasAfuera], [SedeNoDisponible], [SedeRechazada], [SesionVencida],
   /// [SinConexion] o [ErrorDelServidor].
   Future<Sede> editar(
-    int id, {
+    String id, {
     required String nombre,
     required String direccion,
     required String apertura,
@@ -108,7 +109,7 @@ class Sedes extends ChangeNotifier {
   ///
   /// Lanza [SedeNoDisponible], [SedeConReservas], [SesionVencida], [SinConexion] o
   /// [ErrorDelServidor].
-  Future<void> darDeBaja(int id) async {
+  Future<void> darDeBaja(String id) async {
     final r = await _api.delete('/sedes/$id', token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404) throw const SedeNoDisponible();
@@ -120,13 +121,7 @@ class Sedes extends ChangeNotifier {
   Sede _guardada(Respuesta r, int exito) {
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 409 || r.codigo == 422) {
-      final errores = switch (r.cuerpo['errores']) {
-        final Map<String, Object?> mapa => {
-          for (final MapEntry(:key, :value) in mapa.entries)
-            if (value is String) key: value,
-        },
-        _ => const <String, String>{},
-      };
+      final errores = erroresDeCampo(r.cuerpo);
       if (errores.isNotEmpty) {
         throw SedeRechazada(errores, repetido: r.codigo == 409);
       }

@@ -42,7 +42,7 @@ void main() {
     });
 
     test('una respuesta que no se entiende es un error del servidor', () {
-      final api = apiRutas({'GET /sedes': (200, '{"sedes": [{"id": 1}]}')});
+      final api = apiRutas({'GET /sedes': (200, '{"sedes": [{"id": "00000000-0000-7000-8000-000000000001"}]}')});
       expect(sedes(api).activas(), throwsA(isA<ErrorDelServidor>()));
     });
 
@@ -58,7 +58,7 @@ void main() {
         cierre: '23:00',
         dias: const [1, 2, 3, 4, 5, 6, 7],
       );
-      expect(sede.id, 5);
+      expect(sede.id, '00000000-0000-7000-8000-000000000005');
       expect(pedidos.single.headers['authorization'], 'Bearer token-falso');
       expect(jsonDecode(pedidos.single.body), {
         'nombre': 'Sede Haedo',

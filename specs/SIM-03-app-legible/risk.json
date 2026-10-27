@@ -1,0 +1,23 @@
+{
+  "size": "large",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/analysis_options.yaml",
+    "apps/mobile/test/codigo_legible_test.dart",
+    "apps/mobile/lib/comun/transiciones.dart",
+    "apps/mobile/lib/comun/movimiento.dart",
+    "apps/mobile/lib/comun/dialogo_error.dart",
+    "apps/mobile/lib/app.dart",
+    "apps/mobile/lib/reservas/tarjeta_reserva.dart",
+    "apps/mobile/lib/admin/pantalla_filtros_reservas.dart",
+    "apps/mobile/lib/admin/pantalla_panel_admin.dart",
+    "apps/mobile/lib/reservas/pantalla_reserva_confirmada.dart",
+    "apps/mobile/lib/sesion/tarjeta_cuenta.dart",
+    "apps/mobile/lib/admin/pantalla_alta_espacio.dart"
+  ],
+  "tasks": 4
+}

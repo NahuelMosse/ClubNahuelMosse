@@ -19,6 +19,7 @@ What the plan has to have:
 
 - **The order, and why that order.** Which step enables which. If two are independent, say so —
   it helps to parallelize.
+- **The modules and the libraries.** Which feature modules (`src/modules/<feature>/`, a small `shared/`) the work adds or touches, with a layer folder only where the module has business rules worth isolating (a CRUD has none), and the library per category it uses (persistence with migrations, dependency injection, validation, auth, HTTP client, queues): the repo's own, else the stack's default in `.claude/stacks/<stack>.md`. A top-level `domain/` or `infrastructure/` folder, or a hand-rolled ORM or container, is a defect of the plan; so is a layer or pattern with no `why-layer:` (what business rule it isolates, or the second variant it serves): drop it.
 - **The files that are touched**, with path. It is what is later compared against the diff.
 - **What can break.** What works today and depends on what you are going to change. With
   `file:line`.

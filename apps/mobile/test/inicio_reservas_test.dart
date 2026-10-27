@@ -35,7 +35,7 @@ class _Servidor {
         200,
         '{"reservas": [${_activa ? reservaJson() : ''}]}',
       ),
-      ('POST', '/reservas/1/cancelar') => await _cancelar(),
+      ('POST', '/reservas/00000000-0000-7000-8000-000000000001/cancelar') => await _cancelar(),
       _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
     };
     return http.Response.bytes(

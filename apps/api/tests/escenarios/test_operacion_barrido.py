@@ -5,6 +5,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from uuid import UUID
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -12,9 +13,9 @@ from sqlalchemy import Engine, text
 RAIZ_API = Path(__file__).resolve().parents[2]
 
 
-def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> int:
+def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> UUID:
     with motor.begin() as conn:
-        return int(
+        return (
             conn.execute(
                 text(
                     "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
@@ -57,7 +58,7 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
     reserva = _reserva_en_la_proxima_hora(motor, f"socio.{s}@correo.com", s)
 
     corrida = subprocess.run(
-        [sys.executable, "-m", "app.interfaz.barrido", "--una-vez"],
+        [sys.executable, "-m", "app.modules.notificaciones.barrido", "--una-vez"],
         cwd=RAIZ_API, env={**os.environ, "PYTHONUTF8": "1"},
         capture_output=True, text=True, timeout=120, check=False,
     )  # fmt: skip

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../comun/dialogo_error.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
 import '../sesion/sesion.dart';
 import 'baja.dart';
+import 'dialogos_de_baja.dart';
 
 /// Confirma y da de baja [sede] y sus espacios (CU-19). Con [volverAlListado] (se llegó
 /// desde la edición), termina en el listado de sedes del panel.

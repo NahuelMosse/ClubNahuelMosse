@@ -6,23 +6,26 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/calendario.dart';
 import '../comun/campo_texto.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
+import '../comun/fechas.dart';
 import '../comun/formato_fecha.dart';
+import '../comun/reloj.dart';
 import '../comun/selector.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
-import '../sedes/pantalla_sede.dart';
 import '../sedes/sede.dart';
 import '../sedes/sedes.dart';
+import '../sedes/tarjeta_cancha.dart';
+import '../sesion/fallo_de_carga.dart';
 import '../sesion/sesion.dart';
-import '../sesion/tarjeta_cuenta.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import 'fechas.dart';
+import 'barra_de_busqueda.dart';
+import 'filtro_de_techada.dart';
 import 'horarios.dart';
-import '../comun/reloj.dart';
+import 'rango_horario_de_busqueda.dart';
 import 'reglas_busqueda.dart';
+import 'tarjeta_error_de_busqueda.dart';
 
 /// «Consultar canchas»: las canchas de una sede y un deporte libres en todo un rango de un
 /// día. Consultar no reserva nada; cada cancha lleva a sus horarios con el rango elegido.
@@ -107,20 +110,18 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     }
     if (!mounted) return;
     setState(() => _falloAlCargar = true);
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    } else if (fallo != null) {
-      final reintentar = await mostrarErrorDeRed(context, fallo);
-      if (reintentar && mounted) await _cargar();
-    }
+    await avisarFalloDeEnvio(
+      context,
+      sesion: widget.sesion,
+      vencida: vencida,
+      error: fallo,
+      reintentar: _cargar,
+    );
   }
 
   void _alEscribirFecha() {
@@ -230,9 +231,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       return;
     } on SesionVencida {
       vencida = true;
-    } on SinConexion catch (e) {
-      _falla = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       _falla = e;
     }
     if (!mounted) return;
@@ -240,10 +239,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       _consultando = false;
       _consulta = consulta;
     });
-    if (vencida) {
-      await mostrarSesionVencida(context);
-      if (mounted) await cerrarSesion(context, widget.sesion);
-    }
+    if (vencida) await avisarSesionVencida(context, widget.sesion);
   }
 
   void _limpiar() {
@@ -360,7 +356,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       ),
       bottomNavigationBar: opciones == null
           ? null
-          : _BarraAccion(
+          : BarraDeBusqueda(
               alLimpiar: _consultando ? null : _limpiar,
               alConsultar: _completo && !_consultando ? _consultar : null,
               consultando: _consultando,
@@ -395,7 +391,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
                   ),
                   if (_falla case final falla?) ...[
                     const SizedBox(height: Medidas.s16),
-                    _TarjetaError(
+                    TarjetaErrorDeBusqueda(
                       sinConexion: falla is SinConexion,
                       alVolver: () => setState(() {
                         _falla = null;
@@ -428,9 +424,7 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
       return 'Elegí sede, deporte y rango horario. Solo horas completas, de '
           '$minHoras a $maxHoras horas.';
     }
-    final dia = fechaLarga(c.fecha).split(' de ');
-    final mes = dia.length > 1 ? ' ${dia[1].substring(0, 3)}' : '';
-    return '${c.sede.nombre} · ${_queSeBusco(c, catalogo)} · ${dia.first}$mes · '
+    return '${c.sede.nombre} · ${_queSeBusco(c, catalogo)} · ${fechaCorta(c.fecha)} · '
         '${hhmm(c.desde)} a ${hhmm(c.hasta)}';
   }
 
@@ -499,33 +493,13 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
         ),
       ),
       const SizedBox(height: Medidas.s12),
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: CampoSelector(
-              etiqueta: 'DESDE',
-              etiquetaAccesible: 'Desde',
-              valor: hhmm(_desde),
-              placeholder: '',
-              icono: Icons.expand_more_rounded,
-              alTocar: _consultando ? null : () => _elegirHora(inicio: true),
-              error: errores['desde'],
-            ),
-          ),
-          const SizedBox(width: Medidas.s12),
-          Expanded(
-            child: CampoSelector(
-              etiqueta: 'HASTA',
-              etiquetaAccesible: 'Hasta',
-              valor: hhmm(_hasta),
-              placeholder: '',
-              icono: Icons.expand_more_rounded,
-              alTocar: _consultando ? null : () => _elegirHora(inicio: false),
-              error: errores['hasta'],
-            ),
-          ),
-        ],
+      RangoHorarioDeBusqueda(
+        desde: _desde,
+        hasta: _hasta,
+        errorDesde: errores['desde'],
+        errorHasta: errores['hasta'],
+        alElegirDesde: _consultando ? null : () => _elegirHora(inicio: true),
+        alElegirHasta: _consultando ? null : () => _elegirHora(inicio: false),
       ),
     ];
   }
@@ -552,32 +526,11 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
     return [
       const SizedBox(height: Medidas.s24),
       if (resultado.isNotEmpty) ...[
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          clipBehavior: Clip.none,
-          child: Row(
-            children: [
-              for (final (valor, cuantas) in [
-                (null, resultado.length),
-                (false, aireLibre),
-                (true, resultado.length - aireLibre),
-              ]) ...[
-                _ChipCondicion(
-                  texto:
-                      '${switch (valor) {
-                        null => 'Todas',
-                        false => 'Al aire libre',
-                        true => 'Techada',
-                      }} ($cuantas)',
-                  elegido: techada == valor,
-                  alTocar: cuantas == 0
-                      ? null
-                      : () => setState(() => _techada = valor),
-                ),
-                const SizedBox(width: Medidas.s8),
-              ],
-            ],
-          ),
+        FiltroDeTechada(
+          total: resultado.length,
+          aireLibre: aireLibre,
+          elegida: techada,
+          alElegir: (valor) => setState(() => _techada = valor),
         ),
         const SizedBox(height: Medidas.s12),
       ],
@@ -610,185 +563,16 @@ class _PantallaBuscarCanchaState extends State<PantallaBuscarCancha> {
   }
 
   void _aLosHorarios(_Consulta consulta, Espacio cancha) {
-    final f = consulta.fecha;
     final fin = consulta.hasta == 0 ? 24 : consulta.hasta;
     final ruta = Uri(
       path: '/sedes/${consulta.sede.id}/canchas/${cancha.id}',
       queryParameters: {
-        'fecha':
-            '${f.year}-${f.month.toString().padLeft(2, '0')}-'
-            '${f.day.toString().padLeft(2, '0')}',
+        'fecha': fechaIso(consulta.fecha),
         'horas': '${fin - consulta.desde}',
         'inicio': hhmm(consulta.desde),
       },
     );
     // Encima de la búsqueda: al volver, los filtros y el resultado siguen ahí.
     context.push(ruta.toString());
-  }
-}
-
-class _ChipCondicion extends StatelessWidget {
-  const _ChipCondicion({
-    required this.texto,
-    required this.elegido,
-    required this.alTocar,
-  });
-
-  final String texto;
-  final bool elegido;
-  final VoidCallback? alTocar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      button: true,
-      selected: elegido,
-      enabled: alTocar != null,
-      label: texto,
-      excludeSemantics: true,
-      onTap: alTocar,
-      child: Material(
-        color: elegido ? p.accentBase : p.bgSurfaceRaised,
-        shape: StadiumBorder(
-          side: BorderSide(color: elegido ? p.accentEdge : p.borderControl),
-        ),
-        child: InkWell(
-          onTap: alTocar,
-          customBorder: const StadiumBorder(),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: Medidas.s48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: Medidas.s16),
-              child: Center(
-                widthFactor: 1,
-                child: Text(
-                  texto,
-                  style: Textos.cuerpoFuerte.copyWith(
-                    color: elegido
-                        ? p.accentOn
-                        : alTocar == null
-                        ? p.textMuted
-                        : p.textPrimary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// `Card-Error` del prototipo: la consulta falló y los filtros siguen cargados.
-class _TarjetaError extends StatelessWidget {
-  const _TarjetaError({
-    required this.sinConexion,
-    required this.alVolver,
-    required this.alReintentar,
-  });
-
-  final bool sinConexion;
-  final VoidCallback alVolver;
-  final VoidCallback alReintentar;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return Semantics(
-      container: true,
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(Medidas.s16),
-        decoration: BoxDecoration(
-          color: p.stateDangerMuted,
-          borderRadius: BorderRadius.circular(Medidas.radioLg),
-          border: Border.all(color: p.stateDanger),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              'NO SE PUDO CONSULTAR',
-              style: Textos.sobretitulo.copyWith(color: p.stateDangerInk),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              'No se pudo consultar la disponibilidad',
-              style: Textos.titulo.copyWith(color: p.textPrimary),
-            ),
-            const SizedBox(height: Medidas.s4),
-            Text(
-              '${sinConexion ? 'Revisá tu conexión e intentá nuevamente.' : 'El servidor no respondió. Intentá más tarde.'}'
-              ' Los filtros que cargaste se mantienen.',
-              style: Textos.cuerpo.copyWith(color: p.textSecondary),
-            ),
-            const SizedBox(height: Medidas.s12),
-            Row(
-              children: [
-                BotonTexto(texto: 'VOLVER', alTocar: alVolver),
-                const SizedBox(width: Medidas.s8),
-                Expanded(
-                  child: BotonContorno(
-                    texto: 'REINTENTAR',
-                    alTocar: alReintentar,
-                    peligro: true,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarraAccion extends StatelessWidget {
-  const _BarraAccion({
-    required this.alLimpiar,
-    required this.alConsultar,
-    required this.consultando,
-  });
-
-  final VoidCallback? alLimpiar;
-  final VoidCallback? alConsultar;
-  final bool consultando;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.bgSurface,
-        border: Border(top: BorderSide(color: p.borderDefault)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s16,
-            Medidas.s24,
-            Medidas.s16,
-          ),
-          child: Row(
-            children: [
-              BotonTexto(texto: 'LIMPIAR', alTocar: alLimpiar),
-              const SizedBox(width: Medidas.s12),
-              Expanded(
-                child: BotonPrimario(
-                  texto: 'CONSULTAR',
-                  alTocar: alConsultar,
-                  cargando: consultando,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }

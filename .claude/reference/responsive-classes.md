@@ -20,7 +20,7 @@ Round widths: 390, 768, 1024 and 1440.
 4. **Nothing appears only with hover.** What hover reveals is also reached by tap and by focus (`:focus-within`, `:focus-visible`); hover effects go in `@media (hover: hover)`. [round] `:hover` rules that change `display`, `visibility` or `opacity` of a descendant with no focus twin.
 5. **Inputs of 16 px or more** so iOS does not zoom, with the right `type`, `inputmode` and `autocomplete`. [round] inputs, selects and textareas under 16 px.
 6. **No horizontal scroll** at 320, 360 and 390 px. [round] `scrollWidth > clientWidth` of the document at 320 and 390.
-7. **Primary CTA in compact in the lower half**, or fixed at the bottom when the page is long; content stays in the center. [round] where the first primary button or link falls, as a percent of the height; above 50 % fails.
+7. **Primary CTA in compact: in the first viewport at 390, reachable by thumb** (`reference/cta.md`). Below the fold it is repeated after each objection. The lower half of the screen is a recommendation, never a failure: the center of the screen is what is touched most. A fixed bar at the bottom only on a product or order page, with the selection inside (flavor, quantity, price), or on a sales landing that has a product or flavor selection; discouraged on any other home or landing. [round] the first primary button or link must fall inside the first viewport.
 8. **Priority in the first screen:** the first thing seen on a phone is what the person came to do.
 9. **Mobile components where they belong:** sheets (not popovers) in compact, popovers or panels from 840; horizontal scroll with snap; large controls. Nothing critical glued to the bottom edge on desktop.
 10. **Safe areas:** `env(safe-area-inset-*)` on fixed bars.
@@ -29,6 +29,7 @@ Round widths: 390, 768, 1024 and 1440.
 13. **Same functions at every width.** Only how many are in view changes: whatever exists at 1440 exists at 390, visible or in a menu.
 14. **Desktop is reachable by keyboard:** everything with Tab, visible focus, standard shortcuts (Esc closes, Enter submits, `/` or Ctrl+K searches). Right click and tooltips repeat visible actions, never the only path.
 15. **Reading width:** running text under about 75 characters per line on wide screens; extra space goes to panels, not to longer lines.
+16. **Desktop is composed, not a stretched phone.** From 1200 the hero content (text and media of the first viewport) spans half the width or more, and at least two sections have another number of columns than at 390 (three sections or more measured). [round] `desktop hero span` and `desktop composition: sections recomposed from 390`, from `measureLayout` at each width.
 
 ## Forms, navigation, tables
 - **Forms.** Compact: one column, label above the field, no label inside the field, the keyboard set by `type` and `inputmode`, no data split across fields. Desktop: one main column, short pairs on a line (city and zip), Tab in order, Enter submits.

@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, un_socio
 
-from app.aplicacion.notificaciones import despachar_pendientes
-from app.infraestructura.notificaciones import NotificacionesSql
-from app.infraestructura.push import canal_push
+from app.modules.notificaciones.casos_de_uso import despachar_pendientes
+from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notificaciones.push import canal_push
 
 
 class CanalCaido:
@@ -26,7 +26,7 @@ def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     app_de(api).dependency_overrides.pop(canal_push, None)
 
 
-def _cancelar(socio: Socio, reserva_id: int) -> int:
+def _cancelar(socio: Socio, reserva_id: str) -> int:
     return socio.api.post(f"/reservas/{reserva_id}/cancelar", headers=socio.sesion).status_code
 
 

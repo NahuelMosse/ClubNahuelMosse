@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'barra_fija.dart';
 import 'movimiento.dart';
 
 /// `Btn/Type=Primary`: pill lima de 52 de alto. Deshabilitado se pone gris.
@@ -201,23 +202,15 @@ class BarraDeAccion extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.paleta;
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: p.bgSurfaceRaised,
-        border: Border(top: BorderSide(color: p.borderDefault)),
+    return BarraFija(
+      color: p.bgSurfaceRaised,
+      padding: const EdgeInsets.fromLTRB(
+        Medidas.s24,
+        Medidas.s16,
+        Medidas.s24,
+        Medidas.s24,
       ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-            Medidas.s24,
-            Medidas.s16,
-            Medidas.s24,
-            Medidas.s24,
-          ),
-          child: child,
-        ),
-      ),
+      child: child,
     );
   }
 }

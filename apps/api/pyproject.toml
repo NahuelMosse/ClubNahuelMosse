@@ -11,7 +11,6 @@ dependencies = [
     "alembic>=1.13",
     "pydantic-settings>=2.4",
     "firebase-admin>=6.5",
-    "email-validator>=2.2",
 ]
 
 [dependency-groups]
@@ -33,13 +32,38 @@ line-length = 100
 target-version = "py312"
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "B", "UP", "SIM"]
+select = ["E", "F", "I", "B", "UP", "SIM", "C90", "PLR", "RET", "N", "ERA", "FBT"]
+# N818: las excepciones del dominio conservan sus nombres en castellano (HorarioOcupado,
+# NoEncontrada), sin el sufijo `Error`.
+ignore = ["N818"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.pylint]
+max-args = 4
 
 [tool.ruff.lint.per-file-ignores]
+# Con `--select` el `ignore` global no rige: las excepciones del dominio siguen sin sufijo `Error`.
+"app/**/*.py" = ["N818"]
+# Cada `Depends` de una ruta de FastAPI cuenta como parámetro y es la forma de inyectar del framework.
+"app/modules/*/rutas*.py" = ["PLR0913", "PLR0917"]
+# Las reglas de código legible son para la API; los tests siguen el estilo de pytest (parámetros
+# booleanos de `parametrize`, valores esperados escritos en el test).
+"tests/**/*.py" = ["C90", "PLR", "RET", "N", "ERA", "FBT"]
+# Test congelado: sus literales son los umbrales que comprueba.
+"tests/unit/test_codigo_legible.py" = ["E501", "PLR2004", "SIM102", "C901"]
+"tests/integracion/test_api_legible.py" = ["E501"]
 # Los escenarios quedan congelados al commitearse en rojo: el estilo no justifica recongelarlos.
 "tests/escenarios/*" = ["E501", "SIM117", "I001", "B008"]
 # Estos escenarios importan los fixtures de test_datos.py para que pytest los vea.
 "tests/escenarios/test_datos_*.py" = ["E501", "SIM117", "I001", "B008", "F811"]
+# Tests congelados de SIM-01 (docstrings con la tag y el nombre de la spec).
+"tests/unit/test_sin_sobreingenieria.py" = ["E501"]
+"tests/unit/test_cuerpo_acotado.py" = ["E501"]
+"tests/integracion/test_sin_sobreingenieria_api.py" = ["E501", "I001"]
+"tests/integracion/test_aviso_en_envio_perdido.py" = ["E501"]
+"tests/integracion/test_uuid_y_auditoria.py" = ["E501"]
 # Tests congelados con literales largos.
 "tests/unit/test_capas.py" = ["E501"]
 "tests/unit/test_sin_supresiones.py" = ["E501"]

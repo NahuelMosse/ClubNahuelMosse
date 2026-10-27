@@ -17,6 +17,7 @@ PUBLICAS = {
     ("post", "/recuperacion/consulta"),
     ("put", "/recuperacion"),
     ("get", "/enlace/recuperar"),
+    ("get", "/health"),
 }
 
 

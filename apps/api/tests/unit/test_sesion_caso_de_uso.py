@@ -1,13 +1,14 @@
 from datetime import date
+from uuid import UUID
 
 import pytest
 
-from app.aplicacion.errores import NoAutenticado
-from app.aplicacion.sesion import perfil_autenticado
-from app.dominio.usuarios import Perfil
+from app.modules.sesion.casos_de_uso import perfil_autenticado
+from app.modules.sesion.perfil import Perfil
+from app.shared.errores import NoAutenticado
 
 PERFIL = Perfil(
-    id=7,
+    id=UUID(int=7),
     uid="u",
     nombre="Lucía",
     apellido="Gómez",

@@ -1,0 +1,15 @@
+# SIM-01 · judge (plan)
+
+- ACT-01 · M · S1 enumera miembros sin test planificado: tiempos de espera de la base con 503, chequeo del emulador contra credenciales reales (main.py:77), filtro de Host, logs en JSON con referencia de error, pantalla de error de arranque; los tests de T1 nombran métricas, límite, encabezados de seguridad, id de pedido y /ready, y los de T7 «despertando» y errores no manejados · card.md S1 · lenses.md quantifiers «Does a quantifier name its members, and does each member have a test?» · plan · closed · T1 «la API no tiene tiempos de espera de la base, chequeo del emulador, filtro de Host ni logs en JSON» y T7 «la app arranca sin pantalla de error de arranque»
+- ACT-02 · M · la migración 0009 no dice qué pasa con las filas que ya están en `enviando` (o con `intentos` > 0) al migrar: con ASM-02 nada las recupera y quedan `enviando` para siempre (infraestructura/reservas.py:47 las muestra como pendientes); 0006 sí las pasaba a `fallida`. El test «la base ya no tiene intentos ni tomada_en» no siembra datos · card.md SIM-01-ASM-02 y T5 · lenses.md integrity «What happens to the data already there when migrating?» y «Does the upgrade run from the last state of main with seeded data?» · plan · closed · SIM-01-ASM-07, T5 «la migración 0009 pasa a fallida un aviso que estaba enviando»
+- ACT-03 · L · el contrato sigue documentando estados que se sacan: `429: Frenado` en registro.py:54, recuperacion.py:49 y sesion.py:133, `503` en main.py:141; ningún test verifica que `/openapi.json` deje de anunciarlos (sí debe seguir el 429 de Firebase de sesion.py:89) · card.md «límite de pedidos · ya no hay 429 de la API; el 429 de Firebase al iniciar sesión sigue» · lenses.md contract «Which statuses does the contract (openapi) document that the app returns?» · plan · closed · T1 «el contrato no anuncia el 429 del límite de pedidos ni el 503, y sigue el 429 de Firebase al iniciar sesión»
+- ACT-04 · L · `config.documentacion_interactiva` (main.py:137) es una opción para un valor que S3 fija («en todos los entornos»); T2 toca config.py pero no dice que la saca, y la línea de render.yaml sólo la enciende · card.md S3 y «render.yaml · /docs queda encendido» · lenses.md overdesign «Is there a config key, option or flag for a value the card fixes and nobody will change?» · plan · closed · T2 (sin `config.documentacion_interactiva`, test «…sin opción para apagarlos»)
+
+## Verified
+
+- interpretation · meets · L1 (tres frases) cubierto por S1, S2 y L3; los huecos van como ASM-01..06
+- quantifiers · fails (ACT-01)
+- overdesign · fails (ACT-04) · el plan saca capas y no agrega ninguna; la única pieza nueva es la migración 0009, necesaria
+- visual · meets · `ref:` es la app actual, que es la referencia correcta para una card que sólo quita; los estados de sin conexión y servidor sin respuesta tienen test en T7
+- contract · fails (ACT-03)
+- integrity · fails (ACT-02) · las columnas son `text`, así que sacar los topes de largo no choca con la base; reinicio cubierto por T4

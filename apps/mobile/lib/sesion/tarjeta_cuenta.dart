@@ -4,10 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/avatar.dart';
 import '../comun/dialogo_error.dart';
-import '../comun/insignia.dart';
-import '../comun/movimiento.dart';
-import '../tema/tema.dart';
 import '../tema/tokens.dart';
+import 'panel_de_cuenta.dart';
 import 'sesion.dart';
 
 /// El avatar de la cabecera: abre la tarjeta de la cuenta.
@@ -72,14 +70,12 @@ Future<void> mostrarTarjetaCuenta(BuildContext context, Sesion sesion) {
   final perfil = sesion.perfil;
   if (perfil == null) return Future.value();
   final origen = context;
-  final esUsuario = perfil.rol == Rol.usuario;
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Cerrar la tarjeta de tu cuenta',
     barrierColor: context.paleta.bgScrim,
     pageBuilder: (context, _, _) {
-      final p = context.paleta;
       // Perfil y reservas se apilan sobre el inicio: el atrás del teléfono vuelve a él.
       void ir(String ruta) {
         Navigator.of(context).pop();
@@ -98,100 +94,13 @@ Future<void> mostrarTarjetaCuenta(BuildContext context, Sesion sesion) {
             ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 300),
-              child: Aparecer(
-                desdeY: -16,
-                duracion: const Duration(milliseconds: 350),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(Medidas.radioLg),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x8C000000),
-                        offset: Offset(0, 14),
-                        blurRadius: 34,
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: p.bgSurfaceRaised,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(Medidas.radioLg),
-                      side: BorderSide(color: p.borderDefault),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    // Con el teléfono apaisado o el texto grande no entra en el alto.
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(Medidas.s16),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                AvatarIniciales(
-                                  nombre: perfil.nombre,
-                                  apellido: perfil.apellido,
-                                ),
-                                const SizedBox(width: Medidas.s12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${perfil.nombre} ${perfil.apellido}',
-                                        style: Textos.titulo.copyWith(
-                                          color: p.textPrimary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: Medidas.s4),
-                                      Text(
-                                        perfil.correo,
-                                        style: Textos.leyenda.copyWith(
-                                          color: p.textMuted,
-                                        ),
-                                      ),
-                                      if (esUsuario) ...[
-                                        const SizedBox(height: Medidas.s4),
-                                        const Insignia(texto: 'MIEMBRO ACTIVO'),
-                                      ],
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Divider(height: 1, color: p.borderDefault),
-                          const SizedBox(height: Medidas.s8),
-                          if (esUsuario) ...[
-                            _Opcion(
-                              icono: Icons.person_outline_rounded,
-                              texto: 'Perfil completo',
-                              alTocar: () => ir('/perfil'),
-                            ),
-                            _Opcion(
-                              icono: Icons.calendar_today_outlined,
-                              texto: 'Mis reservas',
-                              alTocar: () => ir('/reservas'),
-                            ),
-                          ],
-                          _Opcion(
-                            icono: Icons.logout_rounded,
-                            texto: 'Cerrar sesión',
-                            peligro: true,
-                            alTocar: () {
-                              Navigator.of(context).pop();
-                              cerrarSesion(origen, sesion);
-                            },
-                          ),
-                          const SizedBox(height: Medidas.s8),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+              child: PanelDeCuenta(
+                perfil: perfil,
+                alIr: ir,
+                alCerrarSesion: () {
+                  Navigator.of(context).pop();
+                  cerrarSesion(origen, sesion);
+                },
               ),
             ),
           ),
@@ -199,54 +108,4 @@ Future<void> mostrarTarjetaCuenta(BuildContext context, Sesion sesion) {
       );
     },
   );
-}
-
-class _Opcion extends StatelessWidget {
-  const _Opcion({
-    required this.icono,
-    required this.texto,
-    required this.alTocar,
-    this.peligro = false,
-  });
-
-  final IconData icono;
-  final String texto;
-  final VoidCallback alTocar;
-  final bool peligro;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.paleta;
-    final color = peligro ? p.stateDangerInk : p.textPrimary;
-    return Semantics(
-      button: true,
-      child: InkWell(
-        onTap: alTocar,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: Medidas.altoControl),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Medidas.s16),
-            child: Row(
-              children: [
-                Icon(icono, size: 20, color: peligro ? color : p.textSecondary),
-                const SizedBox(width: Medidas.s12),
-                Expanded(
-                  child: Text(
-                    texto,
-                    style: Textos.cuerpoFuerte.copyWith(color: color),
-                  ),
-                ),
-                if (!peligro)
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    size: 18,
-                    color: p.textSecondary,
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -50,6 +50,39 @@ or the card has a screen (`## Screen: states and motion`).
 - The verification commands live once, as `verify:*` scripts of `package.json` (`verify:suite`, `verify:lint`,
   `verify:contract`…); the `## Gate` lines and the pipeline both invoke them.
 
+## Default libraries by category
+
+Solved problems use a library (`rules/architecture.md`, «Solved problems use the stack's library»). **The repo's
+existing choice always wins**; this table is for a new repo or a category the repo does not cover yet. A library
+lives in the module's `infrastructure/` (or the composition root for DI), behind domain names.
+
+| Category | NestJS | Express, Fastify, Hono |
+|---|---|---|
+| Persistence and migrations | the repo's ORM: **Prisma**, **TypeORM**, **MikroORM** or **Sequelize**; new repo: Prisma or TypeORM, with its migrations | **Prisma** (`prisma migrate`) or **Drizzle** (`drizzle-kit`); a query builder (**Kysely**, **Knex**) when SQL stays visible |
+| Dependency injection | Nest's own DI: `@Module` per feature, providers, `@Injectable` | constructor parameters wired in the entry file; **awilix** or **tsyringe** only when the app wires many services; never a hand-written container or registry |
+| Validation | `class-validator` with `ValidationPipe`, or **zod** through a pipe | **zod** or **valibot** at the edge |
+| Authentication | `@nestjs/passport` or `@nestjs/jwt`; **better-auth** or an identity provider | **Passport**, **better-auth**, **jose** for tokens; an identity provider before home-made sessions |
+| Dates | `Temporal` where available, else **date-fns** or **Luxon** | the same |
+| HTTP client | `@nestjs/axios` or the platform `fetch` with a thin adapter | `fetch` (undici) or **ky** |
+| Queues and jobs | `@nestjs/bullmq` | **BullMQ** (Redis) or **pg-boss** (Postgres) |
+
+A module per feature maps to `src/modules/<feature>/` (Nest: the feature module folder), with layer folders only where the module
+has rules worth isolating; `shared/` holds the kernel. The architecture test of D2 reads those paths.
+
+## Readability limits
+
+The `lint:` line enforces them: spread `readability` from `.claude/templates/eslint-readability.mjs` into `eslint.config.mjs`
+(`max-lines` 250, `max-lines-per-function` 40, `complexity` 10, `max-depth` 3, `max-params` 4, `max-classes-per-file` 1; tests excluded).
+Over a limit: `// eslint-disable-next-line <rule> -- <reason>`. The same fragment carries `no-await-in-loop` (`rules/speed.md`); a
+React repo adds `eslint-plugin-react-hooks` (`rules-of-hooks`, `exhaustive-deps`), and a TypeScript one with type information
+`@typescript-eslint/no-floating-promises`. It also carries the readable-code rules (`no-nested-ternary`, `no-else-return`,
+`no-lonely-if`, `curly`, `no-magic-numbers`); with **eslint-plugin-sonarjs** (K2 · K3) add `sonarjs/cognitive-complexity` 15,
+`sonarjs/no-identical-functions` and `sonarjs/no-commented-code`. The formatter is its own gate line: `fmt: npx prettier --check .`.
+
+**Paradigm.** NestJS: use cases, services, repositories and controllers are classes, one per file; pure helpers in their own
+module file named for the concept (`money.ts`), never loose functions beside a class. Express, Fastify, Hono and React: a file is a
+set of related functions (or one component) or one class, never both. The gate's `shape` check flags the mix.
+
 ## The `## Gate` section of `card.md`
 
 What `verify.mjs` runs in parallel. An example for a card with a domain module, a server and a
@@ -138,7 +171,7 @@ thousand tokens; a long full page, ten.
 | K1 | `grep -rnE "\)!\|\]!\|\bas any\b\|as unknown as\|@ts-(ignore\|expect-error)\|eslint-disable\|catch *\([^)]*\) *\{ *\}" $(git diff --name-only <card-base>)`; and for a closed enumeration, `Record<StageId, …>`, not `Record<string, …>`; a member list written twice: by name `grep -rln -E "'(member1\|member2\|…)'" --exclude-dir=node_modules .`, by count `grep -rn -E "repeat\( *N\|\.length *[=!]== *N\|Array\( *N" --include=*.css --include=*.ts .` |
 | K5 | `node -e "const p=require('./package.json');const s=Object.values(p.scripts\|\|{}).join(' ');for(const d of Object.keys(p.devDependencies\|\|{}))if(!s.includes(d.split('/').pop().replace('@','')))console.log('nobody runs:',d)"` — empty; and for every production `export`, `git grep -wl <name> \| wc -l` greater than 1 |
 | D2 · D11 · D15 | an `architecture.test` that parses the imports of each layer; or **dependency-cruiser** with `forbidden` rules: the domain and application folders to `node_modules` except the allow-list, deep imports into another module (`only-public-index`), and a table touched outside its owner module. Untested on this machine |
-| K4 | `npx jscpd --min-lines 6 <production-folder>` — as a development dependency |
+| K4 | `npx -y jscpd@4 --min-lines 5 --min-tokens 50 <production-folder>` — blocking for a clone with a side in lines the card wrote (`verify.mjs`, every grade); a clone already in the repo is a note; it finds exact copies, not renamed ones |
 | D3 | `npx madge --circular --extensions ts,tsx,js,mjs <src>`, or dependency-cruiser with the `no-circular` rule — no cycles (the `cycles:` line). Untested on this machine |
 | E6 · E12 · E13 | **eslint** with `sonarjs`, `@typescript-eslint/no-floating-promises` and `no-misused-promises`, a `no-restricted-syntax` over a `CatchClause` whose only statement is a call to `console` or the logger, and `preserve-caught-error` if the version ships it [NV]. Untested on this machine |
 | D6 | the loop of `reference/code-patterns.md` over `src`: exported interfaces with at most one implementation and no fake in tests; abstract classes with at most one subclass. Informative |
@@ -153,7 +186,7 @@ thousand tokens; a long full page, ten.
 | Criterion | Command |
 |---|---|
 | K2 · K3 | `node .claude/tools/once.mjs lint -- npx eslint <production and test files in the diff>`, with **eslint-plugin-sonarjs** (`sonarjs.configs.recommended`) for all and `no-conditional-in-test` also for the unit tests — zero problems. The tests go in the same command: `required.mjs` asks that every test in the diff has passed through the linter (the `lint:` line). Tested on this machine with version 4.2.2. With a company server: `sonar-scanner` and `sonar.qualitygate.wait=true` |
-| S3 | **Semgrep** Community Edition: `semgrep scan --config p/default --error <files in the diff>`. Untested on this machine |
+| S3 | **Semgrep** Community Edition with the kit's own rules: `semgrep scan --metrics=off --disable-version-check --config .claude/rules/semgrep/sdd.yml --error <files in the diff>`; exit 1 = findings, 0 = clean. Registry packs (`--config p/expressjs`) only for internal use, always with `--metrics=off` |
 | T11 | `npx c8 --include <production files in the diff> --check-coverage --lines 80 node --test <unit-tests>` |
 | S12 | `npx @lizenz/checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Unlicense;CC0-1.0;Zlib"` (successor of `license-checker-rseidelsohn`), or `npx licensee --production --errors-only` with a `.licensee.json`; the repo's own list if `docs/technical/dependencies.md` overrides it. Fonts, icons, images and copied fragments: **scancode-toolkit** or the inventory in the notices. A command not verified on this machine: **Untested on this machine** |
 | S17 | **OWASP ZAP** in baseline mode, against the running app: `zap-baseline.py -t http://127.0.0.1:<port>` — needs Docker or Java. Untested on this machine. Once per card, at the end; not rerun after fixes |
@@ -194,6 +227,7 @@ keys of its pattern in `reference/accessibility.md` (module ui).
 | O7 | `netstat` during the run: a single own port, on the declared interface |
 | O15 | `npx size-limit` per route, or a script over `.vite/manifest.json`; Playwright with the `web-vitals` library (`onLCP`, `onINP`, `onCLS` with `reportAllChanges`), CPU throttled x4 through CDP, the scenario's interactions (the `budget:` and `vitals:` lines); Lighthouse CI (`npx @lhci/cli autorun`) as an option, which in navigation mode gives no INP. Run alone, in a production build. Untested on this machine |
 | P5 · P6 · P8 · P9 · P10 · P11 · S20 | Testcontainers (`@testcontainers/postgresql`); EXPLAIN with no `Seq Scan`, `type: ALL` or Table Scan on growing tables; count queries by wrapping `client.query` of pg, `$on('query')` of Prisma, `logging` of Sequelize or `on('query')` of Knex [NV]; the PK, FK, type and privilege queries of `reference/database.md` (module data). Untested on this machine |
+| P17 | the gate's `table-shape` over the card's SQL migrations (module data). Prisma on PostgreSQL: `id String @id @default(uuid(7)) @db.Uuid`, `createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)`, `updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)`, `@@map("<table>")` for snake_case; Drizzle: `uuid().primaryKey()` with a v7 default from the app, `timestamp({ withTimezone: true }).notNull().defaultNow()`; TypeORM: `@PrimaryColumn('uuid')` filled with a v7 library, `@CreateDateColumn({ type: 'timestamptz' })`, `@UpdateDateColumn({ type: 'timestamptz' })` |
 | P7 | `pg_dump -Fc`, `pg_restore -d restore_check`, a validation query and the time against the RTO. Untested on this machine |
 | O16 | `curl -s http://127.0.0.1:<port>/health` compared with the `version` of `package.json`; for a CLI, `--version` |
 | O18 | `curl -fsS` to `/health` and `/ready`, and `/ready` with the database stopped (Testcontainers `stop`) giving 503. Untested on this machine |

@@ -1,14 +1,16 @@
 from datetime import date
+from uuid import UUID
 
 import pytest
 
-from app.aplicacion.errores import DatosInvalidos
-from app.aplicacion.perfil import editar_perfil
-from app.dominio.usuarios import DatosPersonales, Perfil, PerfilEditado
+from app.modules.sesion.perfil import Perfil
+from app.modules.usuarios.perfil import editar_perfil
+from app.modules.usuarios.reglas import DatosPersonales, PerfilEditado
+from app.shared.errores import DatosInvalidos
 
 HOY = date(2026, 9, 27)
 PERFIL = Perfil(
-    id=7,
+    id=UUID(int=7),
     uid="u7",
     nombre="Lucía",
     apellido="Gómez",
@@ -21,9 +23,9 @@ PERFIL = Perfil(
 
 class Perfiles:
     def __init__(self) -> None:
-        self.guardados: list[tuple[int, PerfilEditado]] = []
+        self.guardados: list[tuple[UUID, PerfilEditado]] = []
 
-    def actualizar(self, id_usuario: int, editado: PerfilEditado) -> None:
+    def actualizar(self, id_usuario: UUID, editado: PerfilEditado) -> None:
         self.guardados.append((id_usuario, editado))
 
 
@@ -32,7 +34,9 @@ def test_guarda_los_datos_normalizados() -> None:
     editar_perfil(
         PERFIL, DatosPersonales(" Ana ", " Díaz ", "30.111.223", "1985-06-01"), HOY, perfiles
     )
-    assert perfiles.guardados == [(7, PerfilEditado("Ana", "Díaz", "30111223", date(1985, 6, 1)))]
+    assert perfiles.guardados == [
+        (UUID(int=7), PerfilEditado("Ana", "Díaz", "30111223", date(1985, 6, 1)))
+    ]
 
 
 @pytest.mark.parametrize(

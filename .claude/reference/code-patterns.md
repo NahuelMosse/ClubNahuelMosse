@@ -170,6 +170,8 @@ Exceptions where the pattern **is not discussed** because it is a requirement of
 
 **Patterns an AI agent tends to put in without need.** The frequency is the study's judgment, not a measured figure; the kit measured in its runs that agents overdesign (“What not to do” exists for that) and that agent code leaves unused symbols (K5).
 
+The gate's `overdesign` check (`gate-checks.mjs`) fails what the card adds of A1 (one implementation, no fake in the repo), A3 (a method that forwards with the same arguments) and A11 (empty layer folders, a folder with one tiny file), and reports the same in code that was already there; the plan asks `why-layer:` for the rest.
+
 | # | Pattern put in without need | How it looks | Detection | Instead |
 |---|---|---|---|---|
 | A1 | An interface with a single implementation and no fake | `IUserService` + `UserService`; `PaymentGateway` + `StripeGateway` and nothing else | C12 [tried] | Export the concrete function/class; the interface is born with the second implementation or the fake |
@@ -225,7 +227,7 @@ It does not see forwarding under another name; for that, judgment.
 
 **C16 — Name patterns** (an alert, not a verdict) [tried on the sample]: ``rg -n "class \w+(Factory|Builder|Strategy|Mediator|UnitOfWork|IdentityMap|Dto)\b|(Command|Query)(Handler|Bus)\b|static getInstance|new EventEmitter\(" src/``
 
-Tools that cover part without scripts [NV: not run this session]: `knip` and `ts-prune` for unused exports (K5); `jscpd` for duplication (K4, and to measure whether the “abstraction” removed anything); `dependency-cruiser` for deep imports (ARQ-04).
+Tools that cover part without scripts [NV: not run this session]: `knip` and `ts-prune` for unused exports (K5); `jscpd` for duplication (K4, which `verify.mjs` runs in every grade; and to measure whether the “abstraction” removed anything); `dependency-cruiser` for deep imports (ARQ-04).
 
 **Questions of judgment for the reviewer.** (1) What force does it solve, and where is it written (file or requirement)? No answer → surplus. (2) If I inline it, how many lines are duplicated and in how many places? At most 1 place → surplus. (3) How many implementations, subclasses, subscribers or variants does it have **today**? 1 → surplus unless a test fake or a written requirement of a second one. (4) Is the interface smaller than what it hides (D4)? If each method forwards, it is Middle Man. (5) How many files does a typical change touch (adding a field, a variant)? If the pattern raised it, it is costing (measured by the kit: 8 files against 4, `rules/architecture.md` rule 2). (6) Has it grown with parameters and conditionals since it was created? → the wrong abstraction (B14). (7) Does the language, the platform or a present dependency already do it (ladder 2–4)?
 

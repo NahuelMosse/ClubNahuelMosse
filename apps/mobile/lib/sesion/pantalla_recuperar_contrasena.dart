@@ -6,10 +6,10 @@ import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
 import '../comun/campo_texto.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/reglas_registro.dart';
 import '../comun/resultado.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
-import '../comun/reglas_registro.dart';
 import 'recuperacion.dart';
 
 const avisoEnlaceEnviado =
@@ -67,9 +67,7 @@ class _PantallaRecuperarContrasenaState
       if (mounted) setState(() => _enviado = true);
     } on CorreoRechazado catch (e) {
       if (mounted) setState(() => _errorDelServidor = e.mensaje);
-    } on SinConexion catch (e) {
-      fallo = e;
-    } on ErrorDelServidor catch (e) {
+    } on FalloDeRed catch (e) {
       fallo = e;
     } finally {
       if (mounted) setState(() => _enviando = false);

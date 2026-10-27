@@ -1,4 +1,6 @@
 import '../api/cliente_api.dart';
+import '../comun/errores_de_campo.dart';
+import '../comun/fechas.dart';
 import '../comun/zona_club.dart';
 import '../reservas/reservas.dart'
     show EstadoDeReserva, ReservaCambiada, ReservaRechazada;
@@ -19,7 +21,7 @@ class FiltrosDeHistorial {
   /// Las cuatro pestañas del prototipo: nunca [EstadoDeReserva.cancelada], que sólo aparece
   /// dentro de «Todas».
   final EstadoDeReserva? estado;
-  final int? sedeId;
+  final String? sedeId;
   final String? deporte;
   final DateTime? desde;
   final DateTime? hasta;
@@ -64,10 +66,6 @@ class FiltrosDeHistorial {
     q: nueva,
   );
 
-  static String _fecha(DateTime d) =>
-      '${d.year}-${d.month.toString().padLeft(2, '0')}-'
-      '${d.day.toString().padLeft(2, '0')}';
-
   String get _query {
     final estado = this.estado;
     final deporte = this.deporte;
@@ -78,8 +76,8 @@ class FiltrosDeHistorial {
       if (estado != null) 'estado=${estado.name}',
       if (sedeId != null) 'sede_id=$sedeId',
       if (deporte != null) 'deporte=${Uri.encodeQueryComponent(deporte)}',
-      if (desde != null) 'desde=${_fecha(desde)}',
-      if (hasta != null) 'hasta=${_fecha(hasta)}',
+      if (desde != null) 'desde=${fechaIso(desde)}',
+      if (hasta != null) 'hasta=${fechaIso(hasta)}',
       if (busqueda != null) 'q=${Uri.encodeQueryComponent(busqueda)}',
     ];
     return partes.join('&');
@@ -144,9 +142,9 @@ class ReservaHistorial {
     this.avisoEn,
   });
 
-  final int id;
-  final int espacioId;
-  final int sedeId;
+  final String id;
+  final String espacioId;
+  final String sedeId;
   final String espacio;
   final String deporte;
   final String tipo;
@@ -157,7 +155,7 @@ class ReservaHistorial {
   final int total;
   final EstadoDeReserva estado;
   final String? motivo;
-  final int usuarioId;
+  final String usuarioId;
   final String usuario;
   final DateTime creadoEn;
   final DateTime? canceladaEn;
@@ -181,9 +179,9 @@ class ReservaHistorial {
 
   static ReservaHistorial? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
-      'espacio_id': final int espacioId,
-      'sede_id': final int sedeId,
+      'id': final String id,
+      'espacio_id': final String espacioId,
+      'sede_id': final String sedeId,
       'espacio': final String espacio,
       'deporte': final String deporte,
       'tipo': final String tipo,
@@ -194,7 +192,7 @@ class ReservaHistorial {
       'total': final int total,
       'estado': final String estado,
       'motivo': final Object? motivo,
-      'usuario_id': final int usuarioId,
+      'usuario_id': final String usuarioId,
       'usuario': final String usuario,
       'creado_en': final String creadoEn,
       'cancelada_en': final Object? canceladaEn,
@@ -271,10 +269,6 @@ class HistorialDeReservas {
   final ClienteApi _api;
   final Sesion _sesion;
 
-  /// El `siguiente` que trajo cada página ya leída, por filtros y número de página: la que
-  /// sigue lo manda como `despues`, y el servidor no recorre las anteriores.
-  final Map<String, String> _marcadores = {};
-
   /// La página [pagina] (empieza en 1) que cumple [filtros].
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
@@ -282,12 +276,9 @@ class HistorialDeReservas {
     FiltrosDeHistorial filtros, {
     int pagina = 1,
   }) async {
-    if (pagina == 1) _marcadores.clear();
-    final despues = _marcadores['${filtros._query}|${pagina - 1}'];
     final query = [
       filtros._query,
       'pagina=$pagina',
-      if (despues != null) 'despues=${Uri.encodeQueryComponent(despues)}',
     ].where((s) => s.isNotEmpty).join('&');
     final r = await _api.get(
       '/reservas/todas?$query',
@@ -305,9 +296,6 @@ class HistorialDeReservas {
         final leidas = [for (final e in lista) ReservaHistorial.desdeJson(e)];
         final contadores = Contadores.desdeJson(contadoresJson);
         if (!leidas.contains(null) && contadores != null) {
-          if (r.cuerpo case {'siguiente': final String marcador}) {
-            _marcadores['${filtros._query}|$p'] = marcador;
-          }
           return PaginaDeHistorial(
             reservas: [...leidas.nonNulls],
             total: total,
@@ -324,7 +312,7 @@ class HistorialDeReservas {
   /// El detalle de cualquier reserva por [id]. `null` si ya no existe.
   ///
   /// Lanza [SesionVencida], [SinConexion] o [ErrorDelServidor].
-  Future<ReservaHistorial?> detalle(int id) async {
+  Future<ReservaHistorial?> detalle(String id) async {
     final r = await _api.get(
       '/reservas/todas/$id',
       token: await _sesion.token(),
@@ -354,14 +342,8 @@ class HistorialDeReservas {
     }, token: await _sesion.token());
     if (r.codigo == 401) throw const SesionVencida();
     if (r.codigo == 404 || r.codigo == 409) throw const ReservaCambiada();
-    if (r.cuerpo case {
-      'errores': final Map<String, Object?> errores,
-    } when r.codigo == 422) {
-      throw ReservaRechazada({
-        for (final MapEntry(:key, :value) in errores.entries)
-          if (value is String) key: value,
-      });
-    }
+    final errores = erroresDeCampo(r.cuerpo);
+    if (r.codigo == 422 && errores.isNotEmpty) throw ReservaRechazada(errores);
     final anulada = r.codigo == 200
         ? ReservaHistorial.desdeJson(r.cuerpo)
         : null;

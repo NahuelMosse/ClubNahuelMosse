@@ -1,3 +1,5 @@
+import '../comun/fechas.dart';
+
 /// Una sede activa, como la devuelve la API.
 class Sede {
   const Sede({
@@ -11,7 +13,7 @@ class Sede {
     this.deportes = const [],
   });
 
-  final int id;
+  final String id;
   final String nombre;
   final String direccion;
 
@@ -31,7 +33,7 @@ class Sede {
 
   static Sede? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
+      'id': final String id,
       'nombre': final String nombre,
       'direccion': final String direccion,
       'apertura': final String apertura,
@@ -68,8 +70,6 @@ enum DiasQueAbre {
   final List<int> dias;
 }
 
-const _abreviados = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
-
 String diasDeLaSemana(List<int> dias) {
   final ordenados = {...dias}.toList()..sort();
   for (final opcion in DiasQueAbre.values) {
@@ -80,6 +80,6 @@ String diasDeLaSemana(List<int> dias) {
   }
   return [
     for (final d in ordenados)
-      if (d >= 1 && d <= 7) _abreviados[d - 1],
+      if (d >= 1 && d <= 7) diaDeLaSemanaCorto(d),
   ].join(', ');
 }

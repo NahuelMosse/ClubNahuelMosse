@@ -22,7 +22,7 @@
 // `could not run: timeout`, never as passed.
 // What the grade leaves out does not run: a `mutate` line over a file the grade does not ask to mutate
 // (required.mjs `mutationRequired`: none at poc, the domain at mvp), a line whose criterion the grade leaves
-// out (`LINE_CRITERIA`) and the duplication and HTML checks (K4, K11) are reported as
+// out (`LINE_CRITERIA`) and the HTML check (K11) are reported as
 // `skipped: not required by grade <g>`, never as passed. Measured: a card at mvp ran 13 mutations for 2
 // domain files and chased survivors in code the grade does not ask to mutate.
 // A line whose command another line already includes (`web` inside `suite`, because `npm test` runs
@@ -61,15 +61,16 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSyn
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { asOneArg, cardFiles, currentCard, cardStart, fileMapLines, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
-import { active } from './kit.mjs';
+import { asOneArg, cardFiles, commandDir, oneRound, originOf, ownBase, currentCard, cardStart, existedAt, fileMapLines, git, keyOf, IS_CODE, RAW_COLOR, RAW_DURATION, RAW_LAYOUT, DECLARES_TOKEN } from './card.mjs';
+import { active, addedOf } from './kit.mjs';
 import { expandScripts, launchesPlaywright, takeLock } from './browser-lock.mjs';
 import { endsWithLine } from './final-line.mjs';
 import { logPath, readRecord, withTestTimeout, writeRecord } from './once.mjs';
 import { QUALITY, missing, mutationRequired, splitPending, writeSessionLines } from './required.mjs';
-import { CARD_FILE, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
-import { cardChecks, noVisualCheck, probeRecords, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
+import { CARD_FILE, readCard, requirementOf, riskOf, sectionOf } from './card-doc.mjs';
+import { cardChecks, noVisualCheck, probeRecords, removeOnlyOf, screenChecks, specsCheck, visualInstruments } from './gate-checks.mjs';
 import { detectIn } from './signals.mjs';
+import { affected } from './affected.mjs';
 import { escalate } from './risk.mjs';
 import { changedBetween, snapshot } from './tree-snapshot.mjs';
 
@@ -275,7 +276,7 @@ const killTree = (p) => {
 };
 
 // `app:` and `seed:` tell app.mjs how to start the app the judges share; `no-visual:` is a declaration risk.mjs reads: none is a check.
-const ENVIRONMENT_LINE = /^(app|seed|no-visual):/;
+const ENVIRONMENT_LINE = /^(app|seed|no-visual|no-docs|refactor-tests):/;
 // `heading` is `Verification` in plan.md and `Gate` in card.md: the same block, the same lines.
 const HOST_WORDS = /\bHost\b|\b[Vv]irtual[ -][Hh]osts?\b/;
 export const wantsStrictHost = (doc) => {
@@ -285,6 +286,15 @@ export const wantsStrictHost = (doc) => {
 };
 
 export const mutationWorkers = (cores = cpus().length) => Math.max(1, Math.floor(cores / 2));
+
+// The tests the card's files can break, quoted for the shell; empty when the card touched no code a test reaches.
+// A command that starts with `cd <dir> &&` gets them from that folder, and only those inside it.
+export const affectedOf = (base, root = process.cwd(), dir = '') => {
+  const touched = cardFiles(root, base).filter((f) => !f.startsWith('specs/') && existsSync(join(root, f)));
+  const tests = touched.length ? affected(root, touched) : [];
+  const local = dir ? tests.filter((f) => f.startsWith(`${dir}/`)).map((f) => f.slice(dir.length + 1)) : tests;
+  return local.map((f) => `"${f}"`).join(' ');
+};
 
 export const planCommands = (plan, { base, cardDir }, heading = 'Verification') => {
   const section = plan.split(/^## /m).find((s) => s.startsWith(heading));
@@ -299,6 +309,12 @@ export const planCommands = (plan, { base, cardDir }, heading = 'Verification') 
     const name = l.slice(0, i).replace(TIMEOUT_TAG, '').trim();
     const timeoutMin = limit ? Number(limit[1]) * (/^h/i.test(limit[2]) ? 60 : 1) : undefined;
     let command = l.slice(i + 1).trim();
+    // `{affected}` is the tests the card's files can break (affected.mjs over the card's diff): the gate runs those, the CI of the
+    // PR runs the whole suite. A card that changes a line does not pay the whole suite on every gate round.
+    if (command.includes('{affected}')) {
+      const tests = affectedOf(base, process.cwd(), commandDir(command));
+      command = tests ? command.replaceAll('{affected}', tests) : 'node -e "console.log(\'no test reaches the files of the card\')"';
+    }
     // An `attacks` line asks for a refused foreign Host only in production or when the card speaks of the host.
     if (/^attacks$/i.test(name) && /attack\.mjs\s+\S+/.test(command) && !/--strict-host/.test(command) && wantsStrictHost(plan)) command = command.replace(/(attack\.mjs\s+\S+)/, '$1 --strict-host');
     const mutate = name.match(/^mutate\s+(\S+)$/);
@@ -494,9 +510,12 @@ const SPEC_TAG = /@(?:assumption:|supuesto:)?[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+|
 export const replacedFailures = (root, output) => {
   const failing = failingTests(output, Infinity);
   if (!failing.length) return null;
+  // A replacement declared by an earlier card still holds: the frozen test stays replaced, and copying its line into every
+  // later card's Log was work with no information in it.
   const card = currentCard(root);
-  const doc = card && existsSync(join(card, CARD_FILE)) ? readFileSync(join(card, CARD_FILE), 'utf8') : '';
-  const declared = replacementsOf(doc);
+  const specsDir = join(root, 'specs');
+  const cards = existsSync(specsDir) ? readdirSync(specsDir, { withFileTypes: true }).filter((e) => e.isDirectory()).map((e) => join(specsDir, e.name)) : [];
+  const declared = [...new Set([card, ...cards].filter(Boolean))].flatMap((c) => replacementsOf(readCard(c) ?? ''));
   // A replacement may keep the title of the test it replaces: it is failing only if a test of that name fails in its own
   // file. A failure whose runner does not say the file counts against any file.
   const fileOf = (t) => (t.file ?? t.nodeFile ?? '').replace(/:\d+(?::\d+)?$/, '');
@@ -679,12 +698,16 @@ const controls = (lines) => withoutHidden(lines).match(CONTROL)?.length ?? 0;
 export const design = (root, cardDir, off = new Set()) => {
   // A card that declared `no-visual:` changes no markup (its gate check verifies the diff): it owes no design line.
   if (riskOf(cardDir)?.declared?.some((d) => d.lens === 'visual')) return [];
+  // A remove-only card adds no look: no design line is owed for it (its `remove-only` check fails if it adds any).
+  if (removeOnlyOf(readCard(cardDir))) return [];
   const base = cardStart(root, cardDir);
   const touched = cardFiles(root, base)
     .filter((f) => !/^(specs|test|tests|e2e|\.claude)\//.test(f) && !/\.(test|spec)\./.test(f) && existsSync(join(root, f)))
     // A Dart widget is not a web screen: its `color:` is a named argument, not CSS. Flutter's design bar is its profile's
     // goldens and guidelines, not the design line, tokens.css and CSS transitions checked here.
     .filter((f) => !f.endsWith('.dart'))
+    // A file the card only moved is a screen of the card only when the move added markup to it.
+    .filter((f) => !originOf(root, base, f) || addedOf(root, base, f).some((l) => BUILDS_SCREEN.test(l.text)))
     .filter((f) => IS_SCREEN.test(f) || (IS_CODE.test(f) && BUILDS_SCREEN.test(readFileSync(join(root, f), 'utf8'))));
   if (!touched.length) return [];
   // The component set is checked as a whole in its gallery; the screens, for how they use it.
@@ -751,21 +774,42 @@ const lastLine = (text) => text.trim().split('\n').filter(Boolean).at(-1) ?? 'no
 const cardCode = (root, cardDir) => cardFiles(root, cardStart(root, cardDir))
   .filter((f) => IS_CODE.test(f) && !/^(specs|\.claude)\//.test(f) && existsSync(join(root, f)));
 
-// K4 — measured: duplication was never measured in 3 inspections. Clones between files of the card,
-// or between them and the rest of the repo, one action each.
+// K4 — measured: duplication was never measured in 3 inspections, and apps built with the kit repeated the same logic in several
+// places. Blocking for what the card writes: a clone where at least one side is lines this card added or changed. A clone that was
+// already there (the card touched the file, not those lines) is a `note:`, never a failure. jscpd matches token by token, so an exact
+// copy is found and a copy with renamed identifiers is not (measured): the plan's `reuses:`/`new:` line is what stops that one.
 // A clone that cannot be extracted —one copy is a frozen test— is declared in the Log: `declared · K4 · <file>[:<lines>] · <why>`.
 // A clone with a declared file on either side is not reported; close.mjs lists the declaration for a person.
+export const K4_MIN_LINES = 5;
+export const K4_MIN_TOKENS = 50;
 export const DECLARED_K4 = /declared\s*·\s*K4\s*·\s*([^\s·:]+)(?::[\d-]+)?\s*·\s*(.+?)\s*$/;
 export const declaredClones = (cardDir) => {
-  const doc = existsSync(join(cardDir, CARD_FILE)) ? readFileSync(join(cardDir, CARD_FILE), 'utf8') : '';
+  const doc = existsSync(join(cardDir, CARD_FILE)) ? readCard(cardDir) : '';
   return new Map((doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').map((l) => l.match(DECLARED_K4)).filter(Boolean).map((m) => [m[1], m[2]]));
 };
 
-export const duplication = (root, cardDir, run = defaultRun) => {
+// The lines of each file the card added or changed since its start: [[from, to], …]; a file the card created is `null` (all of it).
+const addedLines = (root, base, files) => {
+  // A moved file diffs against where it came from: only what changed in the move is the card's.
+  const origins = files.map((f) => originOf(root, base, f)).filter(Boolean);
+  const from = ownBase(root, base);
+  const out = new Map(files.map((f) => [f, existedAt(root, from, f) || originOf(root, base, f) ? [] : null]));
+  const diff = git(root, ['diff', '-U0', '--no-color', '-M80%', from, '--', ...files, ...origins]).stdout ?? '';
+  let file = null;
+  for (const l of diff.split(/\r?\n/)) {
+    if (l.startsWith('+++ ')) { file = l.slice(4).replace(/^b\//, ''); continue; }
+    const m = l.match(/^@@ -\S+ \+(\d+)(?:,(\d+))? @@/);
+    if (m && file && Array.isArray(out.get(file))) { const n = m[2] === undefined ? 1 : Number(m[2]); if (n) out.get(file).push([Number(m[1]), Number(m[1]) + n - 1]); }
+  }
+  return out;
+};
+const isNew = (ranges, start, end) => ranges === null || (ranges ?? []).some(([a, b]) => start <= b && end >= a);
+
+export const duplication = (root, cardDir, run = defaultRun, notes = []) => {
   const files = cardCode(root, cardDir);
   if (!files.length) return [];
   const out = '.validation/jscpd';
-  const common = ['--silent', '--gitignore', '--reporters', 'json', '--output', out,
+  const common = ['--silent', '--gitignore', '--min-lines', String(K4_MIN_LINES), '--min-tokens', String(K4_MIN_TOKENS), '--reporters', 'json', '--output', out,
     '--ignore', '**/node_modules/**,**/.claude/**,**/specs/**,**/.validation/**', '.'];
   const local = join(root, 'node_modules', '.bin', process.platform === 'win32' ? 'jscpd.cmd' : 'jscpd');
   rmSync(join(root, out), { recursive: true, force: true });
@@ -782,12 +826,16 @@ export const duplication = (root, cardDir, run = defaultRun) => {
   }
   const norm = (n) => (isAbsolute(n) ? relative(root, n) : n).split('\\').join('/');
   const declared = declaredClones(cardDir);
+  const added = addedLines(root, cardStart(root, cardDir), files);
   return (report.duplicates ?? []).flatMap((d) => {
     const a = norm(d.firstFile.name);
     const b = norm(d.secondFile.name);
     if (!files.includes(a) && !files.includes(b)) return [];
     if (declared.has(a) || declared.has(b)) return [];
-    return [`K4 · clone of ${d.lines} lines: ${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end} · close: extract what both share into one place, or add to the Log \`declared · K4 · <file> · <why the two must differ>\``];
+    const where = `${a}:${d.firstFile.start}-${d.firstFile.end} and ${b}:${d.secondFile.start}-${d.secondFile.end}`;
+    const fresh = (f, side) => files.includes(f) && isNew(added.get(f), side.start, side.end);
+    if (!fresh(a, d.firstFile) && !fresh(b, d.secondFile)) { notes.push(`note: K4 · clone already in the repo, not from this card: ${d.lines} lines, ${where}`); return []; }
+    return [`K4 · new duplication of ${d.lines} lines: ${where} · close: extract to the owning module or \`shared/\` and import it from both, or add to the Log \`declared · K4 · <file> · <why the two must differ>\``];
   });
 };
 
@@ -1036,7 +1084,7 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
   const covered = containedCommands(graded, root).map(({ inner, outer }) => ({ inner: graded.find((c) => c.name === inner), outer }));
   const commands = graded.filter((c) => !covered.some((v) => v.inner === c));
   for (const v of covered) say(`covered by ${v.outer}: ${v.inner.name} is not run on its own`);
-  for (const id of ['K4', 'K11']) if (exempt.criteria.has(id)) skipped.push({ name: `${id} ${id === 'K4' ? 'duplication' : 'html'}`, reason: `not required by grade ${exempt.grade}` });
+  if (exempt.criteria.has('K11')) skipped.push({ name: 'K11 html', reason: `not required by grade ${exempt.grade}` });
   for (const s of skipped) say(`skipped: ${s.reason} ${s.name}`);
 
   const last = commands.filter((c) => FINAL_PHASE.test(c.name));
@@ -1141,9 +1189,11 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
   if (rewritten.length) actions.unshift(`gate: ${rewritten.join(', ')} changed during the gate; run the writer before the gate and commit`);
   writeSessionLines(root, cardDir);
   // Its findings go to a record that required.mjs and close.mjs read: the three tools say the same.
+  const duplicationNotes = [];
   const quality = [...design(root, cardDir, exempt.procedures),
-    ...(exempt.criteria.has('K4') ? [] : duplication(root, cardDir)),
+    ...(exempt.criteria.has('K4') ? [] : duplication(root, cardDir, defaultRun, duplicationNotes)),
     ...(exempt.criteria.has('K11') ? [] : htmlProblems(root, cardDir))];
+  for (const n of duplicationNotes) say(n);
   writeRecord(root, { ...QUALITY, exit: quality.length ? 1 : 0, findings: quality });
   // The diff can raise risk.json (never lower it); required.mjs below reads it already raised.
   if (single && existsSync(join(cardDir, 'risk.json'))) {
@@ -1154,6 +1204,7 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
   for (const f of lacking) actions.push(quality.includes(f) ? f : `${f} · close: \`node ${TOOLS}/required.mjs\` exits 0`);
   // The checks that read what the card and the probe left on disk: out-of-scope.mjs runs inside required.mjs above.
   const checks = single ? gateChecks(root, cardDir) : [];
+  for (const c of checks) for (const n of c.notes ?? []) say(n);
   for (const c of checks.filter((x) => x.state !== 'passed'))
     actions.push(`${c.name} · ${c.state === 'failed' ? c.detail : `could not run: ${c.detail}`} · close: \`node ${TOOLS}/verify.mjs\` shows ${c.name} passed`);
   const flaky = results.flatMap((r) => (r.flaky ?? []).map((f) => ({ line: r.name, ...f })));
@@ -1174,7 +1225,7 @@ const isScreenCard = (root, cardDir) => {
 };
 
 // The gate's own checks: every spec has a tagged test, and a screen passes axe, contrast and focus.
-export const gateChecks = (root, cardDir) => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root).probe ? screenChecks(probeRecords(root)) : [])];
+export const gateChecks = (root, cardDir) => oneRound(() => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root, readCard(cardDir)).probe ? screenChecks(probeRecords(root)) : [])]);
 
 // One line per check: `<name>: passed`, `<name>: failed: <why>` or `<name>: could not run: <why>`.
 const lineOf = (name, state, detail) => `${name}: ${state === 'passed' ? 'passed' : `${state}: ${detail}`}`;

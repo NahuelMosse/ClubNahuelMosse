@@ -1,5 +1,5 @@
 {
-  "kit": "6.7.0",
+  "kit": "6.21.4",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -28,7 +28,7 @@
   },
   "source": {
     "path": "D:/projects/SDD-implementation",
-    "commit": "97eec52609c3eefac0eb5177b856f7ee0cc26e56"
+    "commit": "8536fa90613ca7e11abc0090e440768a668903cd"
   },
   "modules": {
     "ui": {
@@ -108,10 +108,10 @@
     }
   },
   "grade": {
-    "level": "production",
-    "reason": "the app goes to production with login, sessions and personal data",
+    "level": "mvp",
+    "reason": "the app is an university project",
     "by": "person",
-    "at": "2026-10-20",
+    "at": "2026-10-26",
     "history": []
   },
   "profiles": {
@@ -130,6 +130,11 @@
       "since": "update 2026-10-22",
       "reason": "derived from the modules that were on",
       "state": "on"
+    },
+    "flutter": {
+      "state": "on",
+      "since": "kit.mjs profile on 2026-10-26",
+      "reason": "apps/mobile es Flutter"
     }
   }
 }

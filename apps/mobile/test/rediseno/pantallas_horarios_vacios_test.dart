@@ -11,7 +11,7 @@ import '../soporte/usuario.dart';
 Future<void> _abrirHorarios(WidgetTester tester, String grilla) =>
     montarUsuario(
       tester,
-      inicio: '/sedes/1/canchas/9',
+      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       tamano: const Size(393, 2400),
       api: apiRutas(rutasDeSedes(grilla: grilla)),
     );
