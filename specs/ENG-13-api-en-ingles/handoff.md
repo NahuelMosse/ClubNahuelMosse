@@ -1,21 +1,25 @@
-# Handoff ENG-13 (builder 3)
+# Handoff ENG-13 API (builder 4)
 
-Worktree D:/Temp/w/ingles, branch `ingles`. Never push, never PR, never touch main. Gate env: export
-`UV_PROJECT_ENVIRONMENT="D:/desktop folders/estudio/Universidad de moron/Electiva general/app-tp/apps/api/.venv"`
-and `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`; Postgres 127.0.0.1:8701. Use `git -C <root>`.
-Shell redirections/sed on app/ are blocked: use Edit/Write or a `grunt` (give it exact edits). Context cap: delegate mechanical work.
+Worktree D:/Temp/w/ingles-api, branch `ingles-api`. Never push/PR/touch main or `ingles`. Env: export
+`UV_PROJECT_ENVIRONMENT="D:/desktop folders/estudio/Universidad de moron/Electiva general/app-tp/apps/api/.venv"`,
+`FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`, `PG_PUERTO=8701`. Hook blocks a bare whole-suite run in a subagent: use
+`node .claude/tools/verify.mjs > /tmp/x.log` in background (26 min) or bounded pytest on files
+(`cd apps/api; uv run --no-sync pytest -q -p no:cacheprovider --tb=line <files>`).
 
-## Done
-- RED test `apps/api/tests/unit/test_api_en_ingles.py`; ENG-00..ENG-05 merged and committed.
-- `git merge origin/main` (MAIL-02) IN PROGRESS (conflict resolved in tree; commit it if not yet committed: `git status`, then `git commit` with message `ENG-13: merge origin/main (MAIL-02) in English`):
-  - Spanish files removed; English ones written: app/shared/{email.py,message.py,email_template.py} (html_email), modules/bookings/email.py (booking_email), notifications/rules.py `reminder_email` + `Reminder.email/.name`, use_cases `_notify_by_email`, `short_kind` exported by notifications, password_recovery html body, bookings routes `create_booking` sends via BackgroundTasks `after`, password_recovery/email.py deleted (routes import app.shared.email.send), repository.py conflict resolved (`email=row.correo, name=row.nombre_usuario`), specs/.current = ENG-13-api-en-ingles.
-  - Tests ported by a grunt: tests/unit/test_emails_with_design.py, test_email_template.py, test_brevo_email.py (old Spanish files git rm'd); pyproject per-file ignore renamed. Check the grunt finished: `git status`, then run those 3 tests.
+## Done (committed up to 3414fb5 + "test_correo sobre shared.email")
+- Merge of main committed; seed_admin reads ADMIN_PASSWORD then ADMIN_CONTRASENA; .env.example, README, docs/technical (system-design, arquitectura), glossary rows (email/message/email_template/booking_email/short_kind/reminder_email/Message fields); Log L5-L9 (replaces x3, ASM-05, seed_admin).
+- openapi.json regenerated: same paths/methods/responses/params as 1ee70de, only schema names differ.
+- mypy clean (fixed `profile.rol`->`role` in notifications/use_cases.py); ruff format on app clean; test_correo.py ported to app.shared.email/Message; test_basquet_3x3 and test_horarios lint fixed.
 
-## Not done (in order)
-1. Confirm the merge is committed; run ruff check/format app tests, mypy; run the 3 ported tests.
-2. Log (Edit on card.md ## Log, append only): `- L<n> · <date> · replaces: apps/api/tests/unit/test_correo_brevo.py "<each test title>" · module/names renamed to English · by: tests/unit/test_brevo_email.py "<title>"`; same for test_correos_con_diseno.py and test_plantilla_correo.py (MAIL-02, merged from main).
-3. seed_admin (app/modules/users/seed_admin.py line ~36): read `ADMIN_PASSWORD` then `ADMIN_CONTRASENA` (S3 test in test_api_en_ingles.py); update docstring, .env.example, apps/api/README.md mentions. scripts/e2e.sh: grep showed no `sembrar_admin` left; verify.
-4. Docs: docs/technical/system-design.md (lines ~128 `recuperacion/correo.py` -> `shared/email.py`; ~150 `modules/recuperacion/casos_de_uso.py` -> `modules/password_recovery/use_cases.py`; ~212 `modules/usuarios/baja.py` -> `modules/users/...`), arquitectura.md line ~136 `modules/sesion/usuario_actual.py` -> `modules/session/...`; add glossary entries to docs/technical/glosario-ingles.md (shared/correo.py->email.py, mensaje->message, plantilla_correo->email_template `html_de_correo->html_email`, reservas/correo.py->bookings/email.py `correo_de_reserva->booking_email`, `tipo_corto->short_kind`, `correo_recordatorio->reminder_email`, Message fields para/asunto/cuerpo -> recipient/subject/body); docs feature page for MAIL-02 if one exists in docs/features names old modules.
-5. Log ENG-13-ASM-05: METRICS_TOKEN/BEHIND_PROXY/INTERACTIVE_DOCS no longer exist in main (test_sin_sobreingenieria asserts removal) -> the English config does not carry them; record with that test title or declare.
-6. Regenerate apps/api/openapi.json; full suite in background to a log, read only failing lines; compare failures against D:/Temp/w/main; then `node .claude/tools/verify.mjs`; Log line `- L<n> · <date> · T1 · <evidence>`.
-7. Commit per step (`ENG-13: ...`, trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`); never push.
+## Open: last verify (/tmp/ingles-api-verify2.log): 36 failed, 684 passed. Failures seen, with cause
+1. Tests still importing old paths: tests/unit/test_config_en_ingles.py:82 `from app.modules.password_recovery import email` (-> `app.shared.email`, Message in `app.shared.message`); same check any other test importing `password_recovery.email` / `password_recovery.rules.Message`.
+2. tests/unit/test_mapa_por_funcionalidad.py: docs/technical/mapa-del-codigo.md lists `password_recovery/email.py` (gone) and lacks new files (bookings/email.py, shared/email.py, message.py, email_template.py); update the map.
+3. test_glosario_ingles.py / test_glosario_ingles_completo.py: glossary parse complains about `Errors` term joining (section 'Clases y ...'); my 3 new glossary rows may duplicate a term or join two terms in one name: check the failing assert, adjust rows.
+4. test_sin_supresiones.py / test_capas_funcionalidades.py::test_no_queda_una_supresion_de_tipos: tests/unit/test_brevo_email.py has `# type: ignore[arg-type]` (ported file); remove it (cast/Any).
+5. test_codigo_legible.py:122 `assert 3 > 10` (public signatures of use cases and repositories vs main: probably counts functions in modules renamed; inspect) and test_api_limpia_funcionalidades.py:42 `assert []` (route-handler scan; inspect, likely module path list needs bookings/email or password_recovery changes).
+6. Not yet diagnosed (run per file, compare with `D:/Temp/w/main` same test): escenarios/test_cancelacion_forzosa*.py, test_confirmacion_cancelacion_reglas, test_despacho_robusto, integracion/test_api_limpia_reservas, test_notificaciones_api (likely the MAIL-02 `_notify_by_email`/Reminder `.email` rename or `rol`-like attribute left; check tracebacks), escenarios/test_suite_confiable*.py (test names/paths of reservas module -> bookings), test_documentacion*.py and test_requisitos_no_funcionales (README/docs paths), test_modulos_cuenta_en_ingles + test_base_en_ingles (contract/glosario main comparison: maybe my regenerated openapi or glossary).
+Fix those failing only here; rerun the files; then verify again.
+
+## Gate lines (last run)
+passed: attacks, fmt, specs, migrations, boundaries. failed: lint (that line runs flutter analyze: 20799 issues, mobile side, not API), suite (above), layers/shape/overdesign (`repository.py` names not recognised as data files, availability/rules.py, notifications/push.py, session/use_cases.py class+functions, users/registration UserRepository: same code as main, only renamed; need `declared · ...` Log lines or card marks), rounds/dead-clicks/copy/axe/contrast/focus (visual lens, no look in a rename card), required (T1 does not list renamed files/pyproject/.env.example; K4 duplications in renamed tests; I-tokens on email_template).
+Those structural lines need a decision from the card owner (declare in Log or enumerate files in T1).
