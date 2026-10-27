@@ -121,17 +121,17 @@ class Horarios {
   ///
   /// [reservaId] es la reserva que se está modificando: no cuenta como ocupada.
   Future<Grilla> de(
-    int espacioId, {
+    String espacioId, {
     DateTime? fecha,
     int horas = 1,
-    int? reservaId,
+    String? reservaId,
   }) async {
     final dia = fecha;
     final consulta = Uri(
       path: '/espacios/$espacioId/horarios',
       queryParameters: {
         'horas': '$horas',
-        'reserva_id': ?reservaId?.toString(),
+        'reserva_id': ?reservaId,
         if (dia != null) 'fecha': fechaIso(dia),
       },
     );
@@ -153,7 +153,7 @@ class Horarios {
   ///
   /// Lanza [RangoRechazado], [SesionVencida], [SinConexion] o [ErrorDelServidor].
   Future<List<Espacio>> libres({
-    required int sedeId,
+    required String sedeId,
     required String deporte,
     String? tipo,
     required DateTime fecha,
@@ -163,7 +163,7 @@ class Horarios {
     final consulta = Uri(
       path: '/espacios/disponibles',
       queryParameters: {
-        'sede_id': '$sedeId',
+        'sede_id': sedeId,
         'deporte': deporte,
         'tipo': ?tipo,
         'fecha': fechaIso(fecha),

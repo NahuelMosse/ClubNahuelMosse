@@ -13,7 +13,7 @@ class Sede {
     this.deportes = const [],
   });
 
-  final int id;
+  final String id;
   final String nombre;
   final String direccion;
 
@@ -33,7 +33,7 @@ class Sede {
 
   static Sede? desdeJson(Object? json) {
     if (json case {
-      'id': final int id,
+      'id': final String id,
       'nombre': final String nombre,
       'direccion': final String direccion,
       'apertura': final String apertura,

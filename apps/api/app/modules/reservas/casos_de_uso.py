@@ -1,5 +1,6 @@
 from collections.abc import Callable
 from datetime import date, datetime, time, timedelta
+from uuid import UUID
 
 from app.modules.horarios import DIAS_A_LA_VISTA, Agenda, error_de_duracion, rango, validar_reserva
 from app.modules.reservas.almacen import Reservas
@@ -26,7 +27,7 @@ MOTIVO_MAXIMO = 500
 
 def _con_la_agenda_vigente(
     reservas: Reservas,
-    espacio_id: int,
+    espacio_id: UUID,
     fecha: date,
     desde: time,
     horas: int,
@@ -65,7 +66,7 @@ def _exigir_fecha_a_la_vista(fecha: date, ahora: datetime) -> None:
 def reservar(
     reservas: Reservas,
     perfil: Perfil,
-    espacio_id: int,
+    espacio_id: UUID,
     fecha: date,
     desde: time | None,
     horas: int,
@@ -103,7 +104,7 @@ def reservar(
     )
 
 
-def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Reserva:
+def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> Reserva:
     """Cancela una reserva propia que todavía no empezó (CU-10, decisión 13: hasta el
     inicio, sin anticipación mínima)."""
     return reservas.cancelar(perfil.id, reserva_id)
@@ -112,8 +113,8 @@ def cancelar_reserva(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Res
 def modificar_reserva(
     reservas: Reservas,
     perfil: Perfil,
-    reserva_id: int,
-    espacio_id: int,
+    reserva_id: UUID,
+    espacio_id: UUID,
     fecha: date,
     desde: time | None,
     ahora: datetime,
@@ -176,7 +177,7 @@ def historial_global(
     return reservas.historial(filtros)
 
 
-def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: int) -> ReservaHistorial:
+def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: UUID) -> ReservaHistorial:
     """El detalle de cualquier reserva del sistema, para un administrador (CU-14).
 
     Lanza `Prohibido` si quien pide no es administrador y `NoEncontrada` si no hay ninguna
@@ -193,9 +194,9 @@ def detalle_admin(reservas: Reservas, perfil: Perfil, reserva_id: int) -> Reserv
 def anular_reserva(
     reservas: Reservas,
     perfil: Perfil,
-    reserva_id: int,
+    reserva_id: UUID,
     motivo: str,
-    espacio_id: int,
+    espacio_id: UUID,
     inicio: datetime,
 ) -> ReservaHistorial:
     """Anula por una causa operativa una reserva activa que todavía no empezó (CU-15, RF 3):

@@ -15,7 +15,7 @@ void main() {
 
   test('la sede lee sus deportes, y sin ellos queda vacía', () {
     final con = Sede.desdeJson({
-      'id': 1,
+      'id': '00000000-0000-7000-8000-000000000001',
       'nombre': 'Sede Morón',
       'direccion': 'Av. Rivadavia 19850',
       'apertura': '08:00',
@@ -26,7 +26,7 @@ void main() {
     });
     expect(con?.deportes, ['Futbol', 'Tenis']);
     final sin = Sede.desdeJson({
-      'id': 1,
+      'id': '00000000-0000-7000-8000-000000000001',
       'nombre': 'Sede Morón',
       'direccion': 'Av. Rivadavia 19850',
       'apertura': '08:00',
@@ -91,7 +91,7 @@ void main() {
       final pedidos = <http.Request>[];
       await montarUsuario(
         tester,
-        inicio: '/sedes/1',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: apiRutas(rutasDeSedes(), pedidos: pedidos),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
@@ -111,14 +111,14 @@ void main() {
         findsOneWidget,
       );
       final canchas = pedidos.where((p) => p.url.path == '/espacios').single;
-      expect(canchas.url.queryParameters, {'sede_id': '1'});
+      expect(canchas.url.queryParameters, {'sede_id': '00000000-0000-7000-8000-000000000001'});
       semantica.dispose();
     });
 
     testWidgets('sin canchas lo dice con el contador en cero', (tester) async {
       await montarUsuario(
         tester,
-        inicio: '/sedes/5',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000005',
         api: apiRutas(rutasDeSedes(espacios: '[]')),
       );
       expect(find.text('0 CANCHAS'), findsOneWidget);
@@ -131,7 +131,7 @@ void main() {
       (tester) async {
         await montarUsuario(
           tester,
-          inicio: '/sedes/99',
+          inicio: '/sedes/00000000-0000-7000-8000-000000000099',
           api: apiRutas(rutasDeSedes()),
         );
         expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
@@ -163,7 +163,7 @@ void main() {
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
       );
-      await montarUsuario(tester, inicio: '/sedes/1', api: api);
+      await montarUsuario(tester, inicio: '/sedes/00000000-0000-7000-8000-000000000001', api: api);
       expect(find.text('Error de conexión'), findsOneWidget);
       await tester.tap(
         find.descendant(
@@ -178,7 +178,7 @@ void main() {
 
   group('filtro', () {
     const f7 =
-        '{"id": 12, "nombre": "Moron_Rivadavia_19850_Futbol_F7_1", "sede_id": 1, '
+        '{"id": "00000000-0000-7000-8000-000000000012", "nombre": "Moron_Rivadavia_19850_Futbol_F7_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
         '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F7", "numero": 1, '
         '"techada": false, "iluminada": true, "precio_por_hora": 55000}';
 
@@ -226,7 +226,7 @@ void main() {
       final pedidos = <http.Request>[];
       await montarUsuario(
         tester,
-        inicio: '/sedes/1',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(pedidos: pedidos),
       );
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
@@ -236,7 +236,7 @@ void main() {
       expect(find.text('2 CANCHAS · FÚTBOL · TODOS LOS TIPOS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsOneWidget);
       expect(pedidos.last.url.queryParameters, {
-        'sede_id': '1',
+        'sede_id': '00000000-0000-7000-8000-000000000001',
         'deporte': 'Futbol',
       });
 
@@ -282,7 +282,7 @@ void main() {
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
       );
-      await montarUsuario(tester, inicio: '/sedes/1', api: cliente);
+      await montarUsuario(tester, inicio: '/sedes/00000000-0000-7000-8000-000000000001', api: cliente);
       await tocarChip(tester, 'Deporte Fútbol');
       expect(find.text('1 CANCHA · FÚTBOL'), findsOneWidget);
 
@@ -290,7 +290,7 @@ void main() {
       datos.add(f7);
       await tocarChip(tester, 'Deporte Fútbol');
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
-      expect(pedidos.last.url.queryParameters, {'sede_id': '1'});
+      expect(pedidos.last.url.queryParameters, {'sede_id': '00000000-0000-7000-8000-000000000001'});
 
       // Al volver a elegir el deporte aparece el tipo nuevo.
       await tocarChip(tester, 'Deporte Fútbol');
@@ -303,7 +303,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(tester, inicio: '/sedes/1', api: api());
+      await montarUsuario(tester, inicio: '/sedes/00000000-0000-7000-8000-000000000001', api: api());
       await tocarChip(tester, 'Deporte Tenis');
       expect(find.text('1 CANCHA · TENIS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsNothing);
@@ -314,7 +314,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarUsuario(
         tester,
-        inicio: '/sedes/1',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(fallaAlFiltrar: true),
       );
       await tocarChip(tester, 'Deporte Fútbol');
@@ -333,7 +333,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarUsuario(
         tester,
-        inicio: '/sedes/1',
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
         api: apiRutas(rutasDeSedes()),
       );
       await tester.ensureVisible(find.text('VER HORARIOS / RESERVAR').first);

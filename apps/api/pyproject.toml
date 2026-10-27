@@ -44,6 +44,7 @@ select = ["E", "F", "I", "B", "UP", "SIM"]
 "tests/unit/test_cuerpo_acotado.py" = ["E501"]
 "tests/integracion/test_sin_sobreingenieria_api.py" = ["E501", "I001"]
 "tests/integracion/test_aviso_en_envio_perdido.py" = ["E501"]
+"tests/integracion/test_uuid_y_auditoria.py" = ["E501"]
 # Tests congelados con literales largos.
 "tests/unit/test_capas.py" = ["E501"]
 "tests/unit/test_sin_supresiones.py" = ["E501"]

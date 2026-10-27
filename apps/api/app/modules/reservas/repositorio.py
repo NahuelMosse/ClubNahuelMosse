@@ -1,6 +1,7 @@
 # kit-shape: el repositorio de reservas y la función que lo entrega a las rutas van juntos
 from datetime import datetime
 from typing import Any
+from uuid import UUID
 
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
@@ -43,7 +44,7 @@ _COLUMNAS_HISTORIAL = (
     " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL ELSE aviso.envio END"
     " AS aviso_envio,"
     " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL"
-    " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creada_en END AS aviso_en"
+    " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creado_en END AS aviso_en"
 )
 # Lo que los filtros del historial global miran: alcanza para contar.
 _JOIN_FILTROS = (
@@ -67,7 +68,7 @@ class ReservasSql:
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
 
-    def de_usuario(self, usuario_id: int, cuando: Cuando) -> list[Reserva]:
+    def de_usuario(self, usuario_id: UUID, cuando: Cuando) -> list[Reserva]:
         orden = (
             " AND r.estado_actual = 'activa' ORDER BY r.inicio, r.id"
             if cuando == "proximas"
@@ -84,10 +85,10 @@ class ReservasSql:
         self._conn.rollback()
         return [Reserva(**f._mapping) for f in filas]
 
-    def agenda(self, espacio_id: int) -> Agenda | None:
+    def agenda(self, espacio_id: UUID) -> Agenda | None:
         return HorariosSql(self._conn).agenda(espacio_id)
 
-    def _id_repetida(self, datos: dict[str, Any]) -> int | None:
+    def _id_repetida(self, datos: dict[str, Any]) -> UUID | None:
         """La reserva activa que el mismo pedido ya hizo hace un momento, si la hay."""
         fila = self._conn.execute(
             text(
@@ -98,10 +99,10 @@ class ReservasSql:
             ),
             datos,
         ).first()
-        return None if fila is None else int(fila.id)
+        return None if fila is None else fila.id
 
     def repetida(
-        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime
+        self, usuario_id: UUID, espacio_id: UUID, inicio: datetime, fin: datetime
     ) -> Reserva | None:
         id_repetida = self._id_repetida(
             {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
@@ -110,7 +111,7 @@ class ReservasSql:
         self._conn.rollback()
         return reserva
 
-    def _una(self, reserva_id: int) -> Reserva:
+    def _una(self, reserva_id: UUID) -> Reserva:
         fila = self._conn.execute(
             text(
                 f"SELECT {_COLUMNAS} FROM reserva_con_estado r JOIN espacio e"
@@ -120,7 +121,7 @@ class ReservasSql:
         ).one()
         return Reserva(**fila._mapping)
 
-    def propia(self, usuario_id: int, reserva_id: int) -> Reserva | None:
+    def propia(self, usuario_id: UUID, reserva_id: UUID) -> Reserva | None:
         fila = self._conn.execute(
             text(
                 f"SELECT {_COLUMNAS} FROM reserva_con_estado r JOIN espacio e"
@@ -132,20 +133,20 @@ class ReservasSql:
         self._conn.rollback()
         return None if fila is None else Reserva(**fila._mapping)
 
-    def tipo_de_espacio(self, espacio_id: int) -> tuple[int, str, str] | None:
+    def tipo_de_espacio(self, espacio_id: UUID) -> tuple[UUID, str, str] | None:
         fila = self._conn.execute(
             text("SELECT sede_id, deporte, tipo FROM espacio WHERE id = :id"),
             {"id": espacio_id},
         ).first()
         self._conn.rollback()
-        return None if fila is None else (int(fila.sede_id), fila.deporte, fila.tipo)
+        return None if fila is None else (fila.sede_id, fila.deporte, fila.tipo)
 
     def mover(
         self,
-        usuario_id: int,
-        reserva_id: int,
-        antes: tuple[int, datetime],
-        espacio_id: int,
+        usuario_id: UUID,
+        reserva_id: UUID,
+        antes: tuple[UUID, datetime],
+        espacio_id: UUID,
         inicio: datetime,
         fin: datetime,
         agenda: Agenda,
@@ -218,7 +219,7 @@ class ReservasSql:
         self._conn.rollback()
         return reserva
 
-    def cancelar(self, usuario_id: int, reserva_id: int) -> Reserva:
+    def cancelar(self, usuario_id: UUID, reserva_id: UUID) -> Reserva:
         datos = {"usuario": usuario_id, "id": reserva_id}
         with en_transaccion(self._conn):
             fila = self._conn.execute(
@@ -253,7 +254,7 @@ class ReservasSql:
             )
         return reserva
 
-    def cancelar_futuras_de(self, usuario_id: int) -> None:
+    def cancelar_futuras_de(self, usuario_id: UUID) -> None:
         """Cancela las reservas activas que todavía no empezaron de una cuenta que se da de
         baja, dentro de la transacción de quien llama: sin commit."""
         self._conn.execute(
@@ -266,7 +267,7 @@ class ReservasSql:
         )
 
     def insertar(
-        self, usuario_id: int, espacio_id: int, inicio: datetime, fin: datetime, agenda: Agenda
+        self, usuario_id: UUID, espacio_id: UUID, inicio: datetime, fin: datetime, agenda: Agenda
     ) -> Reserva:
         datos = {"usuario": usuario_id, "espacio": espacio_id, "inicio": inicio, "fin": fin}
         try:
@@ -303,7 +304,7 @@ class ReservasSql:
                 if repetida is not None:
                     self._conn.rollback()
                     return self._una(repetida)
-                nueva: int = self._conn.execute(
+                nueva: UUID = self._conn.execute(
                     text(
                         "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
                         " total) VALUES (:usuario, :espacio, :inicio, :fin, :precio,"
@@ -316,12 +317,12 @@ class ReservasSql:
             if getattr(e.orig, "sqlstate", None) == "23P01":
                 raise HorarioOcupado("otra reserva activa pisa ese horario") from e
             raise
-        reserva = self._una(int(nueva))
+        reserva = self._una(nueva)
         self._conn.rollback()
         return reserva
 
     def anular(
-        self, admin_id: int, reserva_id: int, motivo: str, espacio_id: int, inicio: datetime
+        self, admin_id: UUID, reserva_id: UUID, motivo: str, espacio_id: UUID, inicio: datetime
     ) -> ReservaHistorial:
         datos: dict[str, Any] = {
             "admin": admin_id,
@@ -382,10 +383,10 @@ class ReservasSql:
                 datos,
             )
             # El aviso se encola en la misma transacción, después de los bloqueos de siempre.
-            encolar_cancelacion_forzosa(self._conn, int(previa.usuario_id), [reserva_id])
+            encolar_cancelacion_forzosa(self._conn, previa.usuario_id, [reserva_id])
         return self._detalle(reserva_id)
 
-    def _detalle(self, reserva_id: int) -> ReservaHistorial:
+    def _detalle(self, reserva_id: UUID) -> ReservaHistorial:
         fila = self._conn.execute(
             text(f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE r.id = :id"),
             {"id": reserva_id},
@@ -464,7 +465,7 @@ class ReservasSql:
             ),
         )
 
-    def una_de_cualquiera(self, reserva_id: int) -> ReservaHistorial | None:
+    def una_de_cualquiera(self, reserva_id: UUID) -> ReservaHistorial | None:
         fila = self._conn.execute(
             text(f"SELECT {_COLUMNAS_HISTORIAL}{_JOIN_HISTORIAL} WHERE r.id = :id"),
             {"id": reserva_id},

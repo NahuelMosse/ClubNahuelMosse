@@ -10,7 +10,7 @@ import 'soporte/admin.dart';
 
 void main() {
   const editado =
-      '{"id": 9, "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": 1, '
+      '{"id": "00000000-0000-7000-8000-000000000009", "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
       '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 1, '
       '"techada": false, "iluminada": true, "precio_por_hora": 45000}';
 
@@ -30,7 +30,7 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('PUT', '/espacios/9') => () {
+            ('PUT', '/espacios/00000000-0000-7000-8000-000000000009') => () {
               guardado = alGuardar.$1 == 200;
               return alGuardar;
             }(),

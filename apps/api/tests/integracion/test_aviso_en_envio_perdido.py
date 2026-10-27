@@ -1,6 +1,7 @@
 """Un aviso que quedó `enviando` por una API caída pasa a fallida en el barrido."""
 
 from collections.abc import Sequence
+from uuid import UUID
 
 from sqlalchemy import Engine, text
 
@@ -18,9 +19,9 @@ class _CanalQueCuenta:
         return ResultadoDeEnvio(enviados=1, invalidos=[])
 
 
-def _enviando(motor: Engine, minutos: int) -> int:
+def _enviando(motor: Engine, minutos: int) -> UUID:
     with motor.begin() as conn:
-        id_: int = conn.execute(
+        id_: UUID = conn.execute(
             text(
                 "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio, enviando_desde)"
                 " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'enviando',"
@@ -32,7 +33,7 @@ def _enviando(motor: Engine, minutos: int) -> int:
     return id_
 
 
-def _envio(motor: Engine, id_: int) -> str:
+def _envio(motor: Engine, id_: UUID) -> str:
     with motor.connect() as conn:
         envio: str = conn.execute(
             text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}

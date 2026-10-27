@@ -54,7 +54,7 @@ def token_usuario(
 
 
 @pytest.fixture
-def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> tuple[int, str]:
+def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> tuple[str, str]:
     s = unico()
     r = api.post(
         "/sedes",

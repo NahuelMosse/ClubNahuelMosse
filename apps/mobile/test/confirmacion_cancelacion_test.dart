@@ -10,12 +10,12 @@ import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
 
 final cancelada = notif(
-  id: 5,
+  id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 59),
   tipo: 'cancelacion_usuario',
   titulo: 'Reserva cancelada',
   cuerpo: 'Fútbol 5 · Sede Morón · Mié 11, 20:00. El horario quedó liberado.',
-  reservaId: 2,
+  reservaId: '00000000-0000-7000-8000-000000000002',
 );
 
 void main() {
@@ -100,7 +100,7 @@ void main() {
         await llega(tester, api, centro, [cancelada]);
 
         await llega(tester, api, centro, [
-          recordatorio.replaceFirst('"id": 3', '"id": 6'),
+          recordatorio.replaceFirst('"id": "00000000-0000-7000-8000-000000000003"', '"id": "00000000-0000-7000-8000-000000000006"'),
           cancelada,
         ]);
 

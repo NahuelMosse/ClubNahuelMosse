@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "bfbba2f3f08f1fb9bf5b3e34806573c132e2bdcc3920169b3257b67347890d4a"
+    "sha256": "e76a2a60200eb9f2707ce6aeb793761a32adecfebba678b1966a3821415928f4"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -193,7 +193,7 @@
   },
   ".claude/rules/architecture.md": {
     "module": "core",
-    "sha256": "3c9c3b9c275a5c40123db109f227e5ed39728b702fe2e14132a7fbc72a1711f5"
+    "sha256": "70b9182df9335c542f775e5f974416f162fd441660fcf50859a41bcaee20d74e"
   },
   ".claude/rules/interface.md": {
     "module": "ui",
@@ -1317,11 +1317,11 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "cbd33c7c4875cabe407eccb6141e89312b977e618c5ac84d87330bc8efe589d2"
+    "sha256": "004c49c0b526b820f2027ffee03aee6b7cf9f25c5f4f920b0e1e38ec14972425"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
-    "sha256": "a89527e78908da224be5db779f3c2bd903ec23eef13552bae5aecbaa73c5dbce"
+    "sha256": "5e46dc00fa371394ce4f131a86df7765d64a3cec8ac59c36f548a2882160683b"
   },
   ".claude/tools/copy-tree.mjs": {
     "module": "core",
@@ -1357,7 +1357,7 @@
   },
   ".claude/tools/kit.mjs": {
     "module": "core",
-    "sha256": "ff6cb46c8170fb5b3a8ae7957182911985a8874b99ba794e0674a76620f3eedd"
+    "sha256": "b0ffeb702431030c90da9caaaca2462cb3361706c3f4d668c19788a0a160e194"
   },
   ".claude/tools/migrations.mjs": {
     "module": "core",
@@ -1421,7 +1421,7 @@
   },
   ".claude/tools/verify.mjs": {
     "module": "core",
-    "sha256": "25da5d4bda1ad8c2aec4c3044aadb3635a5d177f143faf1a1299290f4a788912"
+    "sha256": "87f9c762d6dd78d8298a431ac4ffa68feff9975c0691f5692d78a59084e296e1"
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
@@ -1481,7 +1481,7 @@
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "f0661fd236e4aad453ec961451331aea4ad081d905dda626969fbf8da1c7bc58"
+    "sha256": "7de32d9229927b7a3cce5ab3824f769117f03e80093107c31b7283e4beb28f16"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1865,7 +1865,7 @@
   },
   ".claude/tools/overdesign.mjs": {
     "module": "core",
-    "sha256": "5d3abe59421f44d4ee129a096db535edfbf8eeb476dc5b06eb12748cf424d574"
+    "sha256": "ad7e8bf934ac6a65d9b7f9f37842e0148a417b2bd9c85b8dc4936eb0016f4acf"
   },
   ".claude/profiles/flutter.md": {
     "module": "profile:flutter",

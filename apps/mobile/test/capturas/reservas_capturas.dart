@@ -19,11 +19,11 @@ void main() {
   const modos = {'oscuro': true, 'claro': false};
   final proximas =
       '[${reservaJson()}, '
-      '${reservaJson(id: 2, inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]';
+      '${reservaJson(id: '00000000-0000-7000-8000-000000000002', inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]';
   final historial =
       '[${reservaJson(estado: 'cancelada', inicio: '2026-11-11T23:00:00+00:00', fin: '2026-11-12T00:00:00+00:00')}, '
-      '${reservaJson(id: 2, estado: 'completada', inicio: '2026-11-04T23:00:00+00:00', fin: '2026-11-05T00:00:00+00:00')}, '
-      '${reservaJson(id: 3, estado: 'anulada', motivo: 'mantenimiento de la cancha', inicio: '2026-10-30T22:00:00+00:00', fin: '2026-10-30T23:00:00+00:00')}]';
+      '${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completada', inicio: '2026-11-04T23:00:00+00:00', fin: '2026-11-05T00:00:00+00:00')}, '
+      '${reservaJson(id: '00000000-0000-7000-8000-000000000003', estado: 'anulada', motivo: 'mantenimiento de la cancha', inicio: '2026-10-30T22:00:00+00:00', fin: '2026-10-30T23:00:00+00:00')}]';
 
   Future<void> capturar(WidgetTester tester, String archivo) async {
     await tester.runAsync(() async {

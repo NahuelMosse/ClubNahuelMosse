@@ -113,12 +113,12 @@ class _AppState extends State<App> {
         _rutas.routerDelegate.currentConfiguration.uri.path;
     // Un aviso de la bandeja del sistema abre la app en la reserva que avisa.
     _alTocarUnAviso = centro.alTocarDesdeElSistema.listen(
-      (aviso) => _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId)),
+      (aviso) => _rutas.go(aviso.ruta),
     );
     unawaited(
       centro.abiertaPor().then((aviso) {
         if (aviso != null) {
-          _rutas.go(rutaDelAviso(aviso.tipo, aviso.reservaId));
+          _rutas.go(aviso.ruta);
         }
       }),
     );
@@ -293,7 +293,7 @@ class _AppState extends State<App> {
               estado,
               PantallaSede(
                 key: ValueKey(estado.pathParameters['sede']),
-                sedeId: int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
+                sedeId: estado.pathParameters['sede'] ?? '',
                 sedes: _sedes,
                 espacios: _espacios,
                 sesion: widget.sesion,
@@ -307,11 +307,8 @@ class _AppState extends State<App> {
                   estado,
                   PantallaHorarios(
                     key: ValueKey(estado.pathParameters['cancha']),
-                    sedeId:
-                        int.tryParse(estado.pathParameters['sede'] ?? '') ?? 0,
-                    espacioId:
-                        int.tryParse(estado.pathParameters['cancha'] ?? '') ??
-                        0,
+                    sedeId: estado.pathParameters['sede'] ?? '',
+                    espacioId: estado.pathParameters['cancha'] ?? '',
                     sedes: _sedes,
                     espacios: _espacios,
                     horarios: _horarios,
@@ -356,9 +353,7 @@ class _AppState extends State<App> {
             reservas: _reservas,
             espacios: _espacios,
             sesion: widget.sesion,
-            reservaId: int.tryParse(
-              estado.uri.queryParameters['reserva'] ?? '',
-            ),
+            reservaId: estado.uri.queryParameters['reserva'],
             enHistorial: estado.uri.queryParameters['historial'] == '1',
           ),
         ),

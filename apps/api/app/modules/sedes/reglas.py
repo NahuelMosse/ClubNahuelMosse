@@ -1,6 +1,8 @@
+# kit-shape: los tipos de la sede y las funciones que la validan son un solo concepto
 import re
 from dataclasses import dataclass
 from datetime import time
+from uuid import UUID
 
 from app.modules.espacios import parte_de_calle, parte_de_sede
 
@@ -35,7 +37,7 @@ class SedeNueva:
 
 @dataclass(frozen=True)
 class Sede:
-    id: int
+    id: UUID
     nombre: str
     calle: str
     altura: int

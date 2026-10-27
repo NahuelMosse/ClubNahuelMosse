@@ -1,6 +1,7 @@
 # kit-shape: las rutas de notificaciones y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import datetime
 from typing import Annotated, Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, Response, status
 from pydantic import BaseModel
@@ -82,11 +83,11 @@ def baja(
 
 
 class NotificacionVista(BaseModel):
-    id: int
+    id: UUID
     tipo: TipoDeAviso
     titulo: str
     cuerpo: str
-    reserva_id: int | None
+    reserva_id: UUID | None
     creada_en: datetime
     leida: bool
 

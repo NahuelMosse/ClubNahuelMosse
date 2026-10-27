@@ -16,7 +16,7 @@ def cancha(
     motor: Engine,
     iniciar_sesion: Callable[[str, str], str | None],
     unico: Callable[[], str],
-) -> tuple[dict[str, str], int]:
+) -> tuple[dict[str, str], str]:
     """Una cuenta de usuario y un Fútbol 5 en una sede de 08:00 a 23:00 todos los días."""
     s = unico()
     correo = f"socio.{s}@correo.com"
@@ -46,14 +46,14 @@ def cancha(
         ).scalar_one()
     token = iniciar_sesion(correo, "ClubNahuel1")
     assert token is not None
-    return {"Authorization": f"Bearer {token}"}, int(espacio)
+    return {"Authorization": f"Bearer {token}"}, str(espacio)
 
 
 def _manana() -> date:
     return datetime.now(ZONA).date() + timedelta(days=1)
 
 
-def _reservas(motor: Engine, espacio: int) -> int:
+def _reservas(motor: Engine, espacio: str) -> int:
     with motor.connect() as conn:
         return int(
             conn.execute(
@@ -63,7 +63,7 @@ def _reservas(motor: Engine, espacio: int) -> int:
 
 
 def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], int]
+    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva en un horario pasado @CU-09-H01-04"""
     sesion, espacio = cancha
@@ -82,7 +82,7 @@ def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
 
 
 def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sede(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], int]
+    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva que termina después del cierre de la sede @CU-09-H01-05"""
     sesion, espacio = cancha
@@ -105,7 +105,7 @@ def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sed
 
 
 def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_completa(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], int]
+    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva que no empieza o no termina en hora completa @CU-09-H01-06"""
     sesion, espacio = cancha
@@ -128,7 +128,7 @@ def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_comp
 
 
 def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], int]
+    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva de menos de una hora @CU-09-H01-08"""
     sesion, espacio = cancha
@@ -151,7 +151,7 @@ def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
 
 
 def test_el_backend_rechaza_una_reserva_que_se_superpone_en_parte_con_otra_del_mismo_espacio(
-    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], int]
+    api: TestClient, motor: Engine, cancha: tuple[dict[str, str], str]
 ) -> None:
     """el backend rechaza una reserva que se superpone en parte con otra del mismo espacio @CU-09-H02-02"""
     sesion, espacio = cancha

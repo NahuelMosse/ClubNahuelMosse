@@ -1,6 +1,7 @@
 # kit-shape: las rutas de registro y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import JSONResponse
@@ -31,7 +32,7 @@ class PedidoRegistro(BaseModel):
 
 
 class RegistroCreado(BaseModel):
-    id: int
+    id: UUID
 
 
 class ErroresDeCampo(BaseModel):

@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 from datetime import date
 from typing import Literal
+from uuid import UUID
 
 Rol = Literal["usuario", "admin"]
 
 
 @dataclass(frozen=True)
 class Perfil:
-    id: int
+    id: UUID
     uid: str
     nombre: str
     apellido: str

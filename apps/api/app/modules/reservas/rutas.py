@@ -1,6 +1,7 @@
 # kit-shape: las rutas de reservas y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import date, datetime
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
@@ -40,9 +41,9 @@ NO_DISPONIBLE = "Esta cancha ya no está disponible"
 
 
 class _CamposDeReserva(BaseModel):
-    id: int
-    espacio_id: int
-    sede_id: int
+    id: UUID
+    espacio_id: UUID
+    sede_id: UUID
     espacio: str
     deporte: str
     tipo: str
@@ -226,7 +227,7 @@ def modificar(
 
 
 class ReservaHistorialVista(_CamposDeReserva):
-    usuario_id: int
+    usuario_id: UUID
     usuario: str
     creado_en: datetime
     cancelada_en: datetime | None

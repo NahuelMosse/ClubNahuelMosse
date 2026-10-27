@@ -3,6 +3,7 @@
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from typing import Any
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
@@ -31,17 +32,19 @@ class Canal:
         return ResultadoDeEnvio(enviados=len(tokens))
 
 
-def _yo(api: TestClient, motor: Engine, token: str) -> int:
+def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
     correo = api.get("/yo", headers=_con(token)).json()["correo"]
     with motor.connect() as conn:
-        return int(
-            conn.execute(
-                text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
-            ).scalar_one()
+        return UUID(
+            str(
+                conn.execute(
+                    text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
+                ).scalar_one()
+            )
         )
 
 
-def _espacio(api: TestClient, token_admin: str, sede_id: int) -> int:
+def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
         "/espacios",
         headers=_con(token_admin),
@@ -55,10 +58,10 @@ def _espacio(api: TestClient, token_admin: str, sede_id: int) -> int:
         },
     )
     assert r.status_code == 201
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
-def _barrer(motor: Engine, usuario: int, canal: Canal, ahora: datetime) -> int:
+def _barrer(motor: Engine, usuario: UUID, canal: Canal, ahora: datetime) -> int:
     with motor.connect() as conn:
         return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, usuario)
 
@@ -76,7 +79,7 @@ def _registrar(api: TestClient, token: str, dispositivo: str, permiso: bool = Tr
     ).status_code
 
 
-def _reservar(api: TestClient, token: str, espacio: int, desde: str = "21:00") -> dict[str, Any]:
+def _reservar(api: TestClient, token: str, espacio: str, desde: str = "21:00") -> dict[str, Any]:
     r = api.post(
         "/reservas",
         headers=_con(token),
@@ -151,7 +154,7 @@ def test_un_token_registrado_por_otra_cuenta_no_cambia_de_dueno(
             text("SELECT usuario_id FROM dispositivo WHERE token = :t AND activo"),
             {"t": dispositivo},
         ).all()
-    assert [int(d.usuario_id) for d in duenos] == [_yo(api, motor, token_usuario)]
+    assert [d.usuario_id for d in duenos] == [_yo(api, motor, token_usuario)]
 
 
 def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_recibir(
@@ -159,7 +162,7 @@ def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_re
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """varias sesiones a la vez y al cerrar una deja de recibir push (decisión 14)"""
@@ -191,7 +194,7 @@ def test_una_reserva_hecha_con_menos_de_una_hora_de_anticipacion_no_recibe_recor
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
 ) -> None:
     """una reserva hecha con menos de una hora de anticipación no avisa (decisión 10)"""
     espacio = _espacio(api, token_admin, sede[0])
@@ -222,7 +225,7 @@ def test_si_el_barrido_llega_tarde_el_recordatorio_sale_mientras_la_reserva_no_e
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """si el servidor estuvo caído el aviso sale tarde, antes del inicio @supuesto:CU-24.1-SUP-07"""
@@ -242,7 +245,7 @@ def test_una_reserva_modificada_despues_del_aviso_recibe_otro_para_el_horario_nu
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
 ) -> None:
     """una reserva modificada recibe un aviso nuevo y el anterior queda @supuesto:CU-24.1-SUP-12"""
     espacio = _espacio(api, token_admin, sede[0])
@@ -274,7 +277,7 @@ def test_un_envio_fallido_deja_el_aviso_en_el_centro_marcado_como_fallido(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """el envío fallido queda en el centro, sin reintento @supuesto:CU-24.1-SUP-02"""
@@ -299,7 +302,7 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """se estampan la creación, el envío y la lectura @supuesto:CU-24.1-SUP-05"""
@@ -312,7 +315,10 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
 
     with motor.connect() as conn:
         antes = conn.execute(
-            text("SELECT creada_en, enviada_en, leida_en FROM notificacion WHERE id = :i"),
+            text(
+                "SELECT creado_en AS creada_en, enviada_en, leida_en"
+                " FROM notificacion WHERE id = :i"
+            ),
             {"i": aviso["id"]},
         ).one()
     assert antes.creada_en is not None
@@ -340,7 +346,7 @@ def test_las_notificaciones_son_de_quien_las_recibe(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     iniciar_sesion: Callable[[str, str], str | None],
     unico: Callable[[], str],
 ) -> None:
@@ -392,7 +398,8 @@ def test_el_borde_de_dispositivos_y_notificaciones_responde_con_un_codigo(
     assert api.post("/notificaciones/0/leer", headers=sesion).status_code == 422
     assert api.post(f"/notificaciones/{2**63}/leer", headers=sesion).status_code == 422
     assert api.post("/notificaciones/abc/leer", headers=sesion).status_code == 422
-    assert api.post("/notificaciones/999999/leer", headers=sesion).status_code == 404
+    inexistente = "/notificaciones/00000000-0000-7000-8000-0000000000ff/leer"
+    assert api.post(inexistente, headers=sesion).status_code == 404
 
 
 def test_las_respuestas_del_centro_no_traen_campos_de_mas_ni_se_cachean(
@@ -412,20 +419,20 @@ class EntreLaFotoYElRegistro(NotificacionesSql):
         super().__init__(conn)
         self._alguien = alguien
 
-    def vencidos(self, ahora: datetime, usuario_id: int | None) -> list[Recordatorio]:
+    def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
         foto = super().vencidos(ahora, usuario_id)
         self._alguien()
         return foto
 
 
 def _barrer_con(
-    motor: Engine, usuario: int, canal: Canal, ahora: datetime, alguien: Callable[[], None]
+    motor: Engine, usuario: UUID, canal: Canal, ahora: datetime, alguien: Callable[[], None]
 ) -> int:
     with motor.connect() as conn:
         return enviar_recordatorios(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
 
 
-def _sin_recordatorios(motor: Engine, usuario: int) -> bool:
+def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:
     with motor.connect() as conn:
         return (
             conn.execute(
@@ -444,7 +451,7 @@ def test_una_reserva_cancelada_entre_la_lectura_y_el_registro_no_recibe_aviso(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     espacio = _espacio(api, token_admin, sede[0])
@@ -467,7 +474,7 @@ def test_una_reserva_movida_entre_la_lectura_y_el_registro_no_avisa_el_horario_v
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     espacio = _espacio(api, token_admin, sede[0])
@@ -498,7 +505,7 @@ def test_una_cuenta_dada_de_baja_entre_la_lectura_y_el_registro_no_recibe_aviso(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     espacio = _espacio(api, token_admin, sede[0])

@@ -8,6 +8,7 @@ import sys
 from collections.abc import Callable, Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -59,8 +60,8 @@ def test_un_token_invalido_cuenta_como_sin_sesion(api: TestClient) -> None:
     assert _sin_401(api, {"Authorization": "Bearer no-es-un-token"}) == {}
 
 
-def _usuario(conn: Connection, correo: str, dni: str) -> int:
-    return int(
+def _usuario(conn: Connection, correo: str, dni: str) -> UUID:
+    return (
         conn.execute(
             text(
                 "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
@@ -72,8 +73,8 @@ def _usuario(conn: Connection, correo: str, dni: str) -> int:
     )
 
 
-def _espacio(conn: Connection, s: str) -> int:
-    return int(
+def _espacio(conn: Connection, s: str) -> UUID:
+    return (
         conn.execute(
             text(
                 "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
@@ -88,7 +89,7 @@ def _espacio(conn: Connection, s: str) -> int:
     )
 
 
-def _reserva(conn: Connection, usuario: int, espacio: int, horas: int) -> None:
+def _reserva(conn: Connection, usuario: UUID, espacio: UUID, horas: int) -> None:
     inicio = datetime(2030, 11, 14, 8, tzinfo=ZONA)
     conn.execute(
         text(
@@ -280,7 +281,7 @@ def _socio(
     return {"Authorization": f"Bearer {token}"}
 
 
-def _proximas(motor: Engine, correo: str, espacio: int, cantidad: int) -> None:
+def _proximas(motor: Engine, correo: str, espacio: UUID, cantidad: int) -> None:
     with motor.begin() as conn:
         conn.execute(
             text(

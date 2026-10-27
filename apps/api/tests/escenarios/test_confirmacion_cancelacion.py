@@ -19,7 +19,7 @@ def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     app_de(api).dependency_overrides.pop(canal_push, None)
 
 
-def cancelar(socio: Socio, reserva_id: int) -> int:
+def cancelar(socio: Socio, reserva_id: str) -> int:
     return socio.api.post(f"/reservas/{reserva_id}/cancelar", headers=socio.sesion).status_code
 
 

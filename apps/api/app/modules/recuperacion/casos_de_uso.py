@@ -1,3 +1,4 @@
+# kit-shape: los contratos de la recuperación y los casos de uso que los usan se leen juntos
 """Recuperar la contraseña con un enlace de un solo uso que llega por correo.
 
 La respuesta a quien pide el enlace es siempre la misma, tenga cuenta o no el correo: decir
@@ -8,6 +9,7 @@ import hashlib
 import logging
 import secrets
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
 from app.modules.recuperacion.reglas import Mensaje as Mensaje
@@ -29,7 +31,7 @@ class RepositorioEnlaces(Protocol):
         ...
 
     def emitir(
-        self, usuario_id: int, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
+        self, usuario_id: UUID, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
     ) -> bool:
         """Invalida los enlaces de la cuenta y guarda el nuevo, salvo que ya haya emitido
         `maximo_por_hora` en la última hora. Dos pedidos a la vez de la misma cuenta se
@@ -42,7 +44,7 @@ class RepositorioEnlaces(Protocol):
         """Marca el enlace como usado si sigue vigente; de dos pedidos a la vez gana uno."""
         ...
 
-    def liberar(self, enlace_id: int) -> None: ...
+    def liberar(self, enlace_id: UUID) -> None: ...
 
 
 class CambioDeContrasena(Protocol):
@@ -50,7 +52,7 @@ class CambioDeContrasena(Protocol):
 
 
 class RastroDeContrasena(Protocol):
-    def marcar_cambio_de_contrasena(self, id_usuario: int) -> None: ...
+    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None: ...
 
 
 def hash_de(codigo: str) -> str:

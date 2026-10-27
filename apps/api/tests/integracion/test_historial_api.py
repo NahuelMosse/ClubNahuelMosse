@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta
 from typing import Any
+from uuid import UUID
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -11,7 +12,7 @@ def _con(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
+def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
         "/espacios",
         headers=_con(token_admin),
@@ -24,10 +25,10 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
             "precio_por_hora": 38000,
         },
     )
-    return int(r.json()["id"])
+    return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, token_usuario: str, espacio: int, dia: int) -> dict[str, Any]:
+def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int) -> dict[str, Any]:
     fecha = (date.today() + timedelta(days=dia)).isoformat()
     r = api.post(
         "/reservas",
@@ -39,7 +40,7 @@ def _reservar(api: TestClient, token_usuario: str, espacio: int, dia: int) -> di
     return reserva
 
 
-def _mover_a(motor: Engine, id_: int, dia: str, hora: int) -> None:
+def _mover_a(motor: Engine, id_: UUID, dia: str, hora: int) -> None:
     """Deja la reserva en [dia] a las [hora] del club."""
     with motor.begin() as conn:
         conn.execute(
@@ -53,7 +54,7 @@ def _mover_a(motor: Engine, id_: int, dia: str, hora: int) -> None:
         )
 
 
-def _ids(api: TestClient, token: str, consulta: str) -> set[int]:
+def _ids(api: TestClient, token: str, consulta: str) -> set[str]:
     r = api.get(f"/reservas/todas?{consulta}", headers=_con(token))
     assert r.status_code == 200
     cuerpo: dict[str, Any] = r.json()
@@ -61,14 +62,14 @@ def _ids(api: TestClient, token: str, consulta: str) -> set[int]:
 
 
 def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """a las 21:00 y a las 23:00 del club la reserva cae en su día, no en el siguiente en UTC"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])
     a_las_21 = _reservar(api, token_usuario, espacio, dia=1)["id"]
     a_las_23 = _reservar(api, token_usuario, espacio, dia=2)["id"]
-    _mover_a(motor, a_las_21, "2031-09-10", 21)
-    _mover_a(motor, a_las_23, "2031-09-10", 23)
+    _mover_a(motor, UUID(a_las_21), "2031-09-10", 21)
+    _mover_a(motor, UUID(a_las_23), "2031-09-10", 23)
     base = f"q={sede[1]}"
 
     assert _ids(api, token_admin, f"{base}&desde=2031-09-10&hasta=2031-09-10") == {
@@ -81,7 +82,7 @@ def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
 
 
 def test_la_busqueda_toma_los_comodines_como_texto(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """% y _ no son comodines en la búsqueda @supuesto:CU-14-SUP-02"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])

@@ -37,7 +37,10 @@ when they exist*, never *that they must exist*.
 
 The gate checks it: `overdesign` fails a pass-through method, an interface or abstract class with one implementation, a folder with one
 tiny file and an empty layer folder that the card added, and reports the ones already in the repo; `plan.mjs` asks `why-layer:` for a
-new `domain/` or `application/` folder and for a factory, strategy, adapter, bus or `I<Name>` interface file.
+new `domain/` or `application/` folder and for a factory, strategy, adapter, bus or `I<Name>` interface file. A finding the card
+keeps on purpose (the port a use case depends on so it does not import the repository, in a module whose layers have their
+`why-layer:`) goes in the Log as `declared · overdesign · <file> · <the rule that asks for it>`: it stays a note and the close
+lists it for a person.
 
 ## The five that matter
 

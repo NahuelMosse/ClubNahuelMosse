@@ -10,11 +10,11 @@ import 'admin.dart';
 import 'montar.dart';
 
 const sedeMoronConDeportes =
-    '{"id": 1, "nombre": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
+    '{"id": "00000000-0000-7000-8000-000000000001", "nombre": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
     '"apertura": "08:00", "cierre": "23:00", "dias": [1,2,3,4,5,6,7], '
     '"canchas": 2, "deportes": ["Futbol", "Tenis"]}';
 const sedeHaedoSinCanchas =
-    '{"id": 5, "nombre": "Sede Haedo", "direccion": "Av. Vergara 1850", '
+    '{"id": "00000000-0000-7000-8000-000000000005", "nombre": "Sede Haedo", "direccion": "Av. Vergara 1850", '
     '"apertura": "08:00", "cierre": "22:00", "dias": [1,2,3,4,5,6,7], '
     '"canchas": 0, "deportes": []}';
 
@@ -45,7 +45,7 @@ Map<String, (int, String)> rutasDeSedes({
   'GET /espacios/catalogo': (200, catalogoJson),
   'GET /sedes': (200, '{"sedes": $sedes}'),
   'GET /espacios': (200, '{"espacios": $espacios}'),
-  'GET /espacios/9/horarios': (200, grilla ?? grillaJson()),
+  'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (200, grilla ?? grillaJson()),
 };
 
 /// La app entera con la sesión de un usuario, abierta en [inicio].

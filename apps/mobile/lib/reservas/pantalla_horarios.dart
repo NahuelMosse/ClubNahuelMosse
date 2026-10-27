@@ -53,8 +53,8 @@ class PantallaHorarios extends StatefulWidget {
     this.volverA = 'Mis reservas',
   });
 
-  final int sedeId;
-  final int espacioId;
+  final String sedeId;
+  final String espacioId;
   final Sedes sedes;
   final Espacios espacios;
   final Horarios horarios;
@@ -79,7 +79,7 @@ class PantallaHorarios extends StatefulWidget {
 
 class _PantallaHorariosState extends State<PantallaHorarios> {
   (Sede, List<Espacio>, Catalogo)? _datos;
-  late int _elegida = widget.espacioId;
+  late String _elegida = widget.espacioId;
   late DateTime? _fecha = switch (widget.modificando) {
     final r? => _diaDe(r.inicio),
     null => widget.fecha,
@@ -93,7 +93,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
 
   /// La cancha y la duración con que se pidió la grilla que está en pantalla: mientras
   /// llega otra, el resumen y la nota siguen hablando de esa.
-  (int, int)? _deLaGrilla;
+  (String, int)? _deLaGrilla;
 
   /// El día de hoy en el club, según la última grilla: FECHA sigue a la vista aunque la
   /// consulta siguiente falle.
@@ -266,7 +266,7 @@ class _PantallaHorariosState extends State<PantallaHorarios> {
     context.go(laSede ? '/sedes' : '/sedes/${widget.sedeId}');
   }
 
-  void _elegirCancha(int id) {
+  void _elegirCancha(String id) {
     if (id == _elegida) return;
     setState(() => _elegida = id);
     _consultar();

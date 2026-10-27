@@ -1,23 +1,24 @@
 # kit-shape: el contrato del repositorio de horarios y el caso de uso que lo usa se leen juntos
 from datetime import date, datetime, timedelta
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.horarios.reglas import Agenda, Grilla, grilla, validar_consulta
 from app.shared.errores import DatosInvalidos, NoDisponible
 
 
 class Horarios(Protocol):
-    def agenda(self, espacio_id: int) -> Agenda | None:
+    def agenda(self, espacio_id: UUID) -> Agenda | None:
         """El horario de la sede del espacio, o `None` si el espacio o su sede no están
         activos."""
         ...
 
     def ocupadas(
         self,
-        espacio_id: int,
+        espacio_id: UUID,
         desde: datetime,
         hasta: datetime,
-        salvo: tuple[int, int] | None = None,
+        salvo: tuple[UUID, UUID] | None = None,
     ) -> list[tuple[datetime, datetime]]:
         """Inicio y fin de las reservas activas del espacio que pisan [desde, hasta), salvo
         la reserva [salvo] = (número, usuario) si es de ese usuario."""
@@ -26,11 +27,11 @@ class Horarios(Protocol):
 
 def horarios_disponibles(
     horarios: Horarios,
-    espacio_id: int,
+    espacio_id: UUID,
     fecha: date | None,
     horas: int,
     ahora: datetime,
-    salvo: tuple[int, int] | None = None,
+    salvo: tuple[UUID, UUID] | None = None,
 ) -> Grilla:
     """La grilla del espacio para [fecha] (hoy si no viene) con franjas de [horas].
 

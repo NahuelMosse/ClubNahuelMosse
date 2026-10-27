@@ -1,4 +1,6 @@
 # kit-shape: el repositorio de usuarios y su proveedor de dependencia se leen juntos
+from uuid import UUID
+
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
@@ -32,22 +34,22 @@ class UsuariosSql:
         self._conn.rollback()
         return activo is not None
 
-    def id_activo_por_correo(self, correo: str) -> int | None:
+    def id_activo_por_correo(self, correo: str) -> UUID | None:
         id_usuario = self._conn.execute(
             text("SELECT id FROM usuario WHERE lower(correo) = :correo AND activo"),
             {"correo": correo},
         ).scalar()
         self._conn.rollback()
-        return None if id_usuario is None else int(id_usuario)
+        return None if id_usuario is None else id_usuario
 
-    def hacer_admin(self, id_usuario: int) -> None:
+    def hacer_admin(self, id_usuario: UUID) -> None:
         self._conn.execute(
             text("UPDATE usuario SET rol = 'admin' WHERE id = :id AND rol <> 'admin'"),
             {"id": id_usuario},
         )
         self._conn.commit()
 
-    def actualizar(self, id_usuario: int, editado: PerfilEditado) -> None:
+    def actualizar(self, id_usuario: UUID, editado: PerfilEditado) -> None:
         try:
             with en_transaccion(self._conn):
                 self._conn.execute(
@@ -69,7 +71,7 @@ class UsuariosSql:
                 raise Duplicado([_INDICE_A_CAMPO[indice]]) from e
             raise
 
-    def dar_de_baja(self, id_usuario: int) -> bool:
+    def dar_de_baja(self, id_usuario: UUID) -> bool:
         with en_transaccion(self._conn):
             # Primero la cuenta: su bloqueo ordena lo que venga después, y una cuenta que ya
             # estaba de baja no se vuelve a procesar.
@@ -86,35 +88,33 @@ class UsuariosSql:
             ReservasSql(self._conn).cancelar_futuras_de(id_usuario)
         return True
 
-    def marcar_cambio_de_contrasena(self, id_usuario: int) -> None:
+    def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
         self._conn.execute(
             text("UPDATE usuario SET contrasena_cambiada_en = clock_timestamp() WHERE id = :id"),
             {"id": id_usuario},
         )
         self._conn.commit()
 
-    def insertar(self, uid: str, registro: Registro) -> int:
+    def insertar(self, uid: str, registro: Registro) -> UUID:
         """Inserta el perfil y lo confirma: si el commit falla, el caso de uso compensa."""
         try:
             with en_transaccion(self._conn):
-                nuevo = int(
-                    self._conn.execute(
-                        text(
-                            "INSERT INTO usuario"
-                            " (firebase_uid, correo, nombre, apellido, dni, fecha_nacimiento)"
-                            " VALUES (:uid, :correo, :nombre, :apellido, :dni, :nacimiento)"
-                            " RETURNING id"
-                        ),
-                        {
-                            "uid": uid,
-                            "correo": registro.correo,
-                            "nombre": registro.nombre,
-                            "apellido": registro.apellido,
-                            "dni": registro.dni,
-                            "nacimiento": registro.fecha_nacimiento,
-                        },
-                    ).scalar_one()
-                )
+                nuevo: UUID = self._conn.execute(
+                    text(
+                        "INSERT INTO usuario"
+                        " (firebase_uid, correo, nombre, apellido, dni, fecha_nacimiento)"
+                        " VALUES (:uid, :correo, :nombre, :apellido, :dni, :nacimiento)"
+                        " RETURNING id"
+                    ),
+                    {
+                        "uid": uid,
+                        "correo": registro.correo,
+                        "nombre": registro.nombre,
+                        "apellido": registro.apellido,
+                        "dni": registro.dni,
+                        "nacimiento": registro.fecha_nacimiento,
+                    },
+                ).scalar_one()
         except IntegrityError as e:
             indice = restriccion_violada(e)
             if indice in _INDICE_A_CAMPO:

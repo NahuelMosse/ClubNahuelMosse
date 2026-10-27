@@ -1,4 +1,6 @@
+# kit-shape: el contrato del repositorio de sedes y los casos de uso que lo usan se leen juntos
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.sedes.reglas import DatosSede, Sede, SedeNueva, validar_sede
 from app.modules.sesion import Perfil
@@ -8,11 +10,11 @@ from app.shared.errores import DatosInvalidos, Prohibido
 class Sedes(Protocol):
     def activas(self) -> list[Sede]: ...
 
-    def insertar(self, nueva: SedeNueva, autor: int) -> Sede:
+    def insertar(self, nueva: SedeNueva, autor: UUID) -> Sede:
         """Lanza `Duplicado(["nombre"])` si otra sede activa ya tiene ese nombre."""
         ...
 
-    def actualizar(self, sede_id: int, datos: SedeNueva, autor: int, confirmar: bool) -> Sede:
+    def actualizar(self, sede_id: UUID, datos: SedeNueva, autor: UUID, confirmar: bool) -> Sede:
         """Guarda los datos nuevos de la sede activa [sede_id]. Las reservas no se tocan.
 
         Sin [confirmar], lanza `ReservasAfuera` si el horario nuevo deja afuera reservas
@@ -21,7 +23,7 @@ class Sedes(Protocol):
         """
         ...
 
-    def dar_de_baja(self, sede_id: int, autor: int) -> None:
+    def dar_de_baja(self, sede_id: UUID, autor: UUID) -> None:
         """Da de baja la sede activa [sede_id] y sus espacios, a nombre de [autor]. Las
         reservas pasadas los siguen nombrando.
 
@@ -42,7 +44,7 @@ def dar_de_alta_sede(perfil: Perfil, datos: DatosSede, sedes: Sedes) -> Sede:
 
 
 def editar_sede(
-    perfil: Perfil, sede_id: int, datos: DatosSede, confirmar: bool, sedes: Sedes
+    perfil: Perfil, sede_id: UUID, datos: DatosSede, confirmar: bool, sedes: Sedes
 ) -> Sede:
     """Corrige el nombre, la dirección o el horario de una sede (CU-18). Las reservas ya
     hechas se respetan: el horario nuevo rige para las que vengan (RF 3 se valida al
@@ -60,7 +62,7 @@ def sedes_activas(sedes: Sedes) -> list[Sede]:
     return sedes.activas()
 
 
-def dar_de_baja_sede(perfil: Perfil, sede_id: int, sedes: Sedes) -> None:
+def dar_de_baja_sede(perfil: Perfil, sede_id: UUID, sedes: Sedes) -> None:
     """Retira una sede (CU-19): deja de verse y sus espacios dejan de poder reservarse. No se
     permite con reservas pendientes (decisión 5): la cancelación forzosa es de CU-15."""
     if perfil.rol != "admin":

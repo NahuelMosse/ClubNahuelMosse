@@ -11,10 +11,10 @@ import 'soporte/usuario.dart';
 
 void main() {
   const espacios =
-      '[{"id": 9, "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": 1, '
+      '[{"id": "00000000-0000-7000-8000-000000000009", "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
       '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 1, '
       '"techada": false, "iluminada": true, "precio_por_hora": 38000}, '
-      '{"id": 11, "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": 1, '
+      '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
       '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
       '"techada": true, "iluminada": true, "precio_por_hora": 38000}]';
 
@@ -25,10 +25,10 @@ void main() {
     final pedidos = <http.Request>[];
     await montarUsuario(
       tester,
-      inicio: '/sedes/1/canchas/9',
+      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas({
         ...rutasDeSedes(espacios: espacios),
-        'GET /espacios/11/horarios': (200, grillaJson(ocupadas: {18})),
+        'GET /espacios/00000000-0000-7000-8000-000000000011/horarios': (200, grillaJson(ocupadas: {18})),
         ...cambios,
       }, pedidos: pedidos),
     );
@@ -111,7 +111,7 @@ void main() {
 
       await tocar(tester, 'Cancha 2, Techada');
 
-      expect(pedidos.last.url.path, '/espacios/11/horarios');
+      expect(pedidos.last.url.path, '/espacios/00000000-0000-7000-8000-000000000011/horarios');
       expect(elegido(tester, 'Cancha 2, Techada'), isTrue);
       expect(habilitado(tester, '18:00 – 19:00'), isFalse);
       expect(find.text('Sin horario elegido'), findsOneWidget);
@@ -138,7 +138,7 @@ void main() {
   ) async {
     await abrir(
       tester,
-      cambios: {'GET /espacios/9/horarios': (200, grillaJson(abre: false))},
+      cambios: {'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (200, grillaJson(abre: false))},
     );
 
     expect(find.text('No hay horarios disponibles'), findsOneWidget);
@@ -154,7 +154,7 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /espacios/9/horarios': (
+        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
           200,
           grillaJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
         ),
@@ -171,7 +171,7 @@ void main() {
   testWidgets('el servidor falla: el aviso y después REINTENTAR sin horarios', (
     tester,
   ) async {
-    await abrir(tester, cambios: {'GET /espacios/9/horarios': (500, '{}')});
+    await abrir(tester, cambios: {'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (500, '{}')});
 
     expect(find.text('Error del servidor'), findsOneWidget);
     await tester.tap(find.text('ACEPTAR'));
@@ -184,7 +184,7 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /espacios/9/horarios': (
+        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
           404,
           '{"errores": {"espacio_id": "Esta cancha ya no está disponible"}}',
         ),
@@ -203,7 +203,7 @@ void main() {
   ) async {
     await montarUsuario(
       tester,
-      inicio: '/sedes/1/canchas/9/reservar',
+      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009/reservar',
       api: apiRutas(rutasDeSedes(espacios: espacios)),
     );
 
@@ -240,14 +240,14 @@ void main() {
     final pedidos = <http.Request>[];
     await montarUsuario(
       tester,
-      inicio: '/sedes/1/canchas/9',
+      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: ClienteApi(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final rutas = rutasDeSedes(espacios: espacios);
           final vencida =
-              pedido.url.path == '/espacios/9/horarios' &&
+              pedido.url.path == '/espacios/00000000-0000-7000-8000-000000000009/horarios' &&
               pedido.url.queryParameters.containsKey('fecha');
           final (codigo, cuerpo) = vencida
               ? (
@@ -281,7 +281,7 @@ void main() {
     await montarUsuario(
       tester,
       tamano: const Size(360, 800),
-      inicio: '/sedes/1/canchas/9',
+      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas(rutasDeSedes(espacios: espacios)),
     );
 

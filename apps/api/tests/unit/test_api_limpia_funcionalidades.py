@@ -98,7 +98,7 @@ def test_la_zona_del_club_el_lector_de_horas_y_el_identificador_se_definen_una_v
 
     assert "timedelta(hours=-3)" not in todo
     assert len(re.findall(r"^def _?leer_hora\(", todo, flags=re.MULTILINE)) == 1
-    assert [n for n, t in codigo.items() if "2**63" in t] == ["shared/entradas.py"]
+    assert [n for n, t in codigo.items() if "Identificador = " in t] == ["shared/entradas.py"]
 
 
 def test_email_validator_deja_de_ser_dependencia_y_nadie_la_importa() -> None:

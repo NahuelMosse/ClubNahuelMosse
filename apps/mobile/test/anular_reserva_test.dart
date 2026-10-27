@@ -15,12 +15,12 @@ import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 
 String reservaJson({bool anulable = true, String estado = 'activa'}) =>
-    '{"id": 1, "espacio_id": 9, "sede_id": 1, "espacio":'
+    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
     ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
     ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
     ' "estado": "$estado", "motivo": ${estado == 'anulada' ? '"lluvia"' : 'null'},'
-    ' "usuario_id": 1, "usuario": "Nahuel Mosse",'
+    ' "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
     ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
     ' "cancelada_por_nombre": null, "espacio_de_baja": false,'
     ' "anulable": $anulable}';
@@ -43,7 +43,7 @@ void main() {
     final api = apiRutas({
       'GET /reservas/todas': (200, listado(reservaJson(anulable: anulable))),
       'GET /espacios/catalogo': (200, catalogoJson),
-      'POST /reservas/1/anular':
+      'POST /reservas/00000000-0000-7000-8000-000000000001/anular':
           alAnular ?? (200, reservaJson(anulable: false, estado: 'anulada')),
     }, pedidos: pedidos);
     final sesion = SesionFalsa(perfilAdmin);
@@ -110,7 +110,7 @@ void main() {
       final pedido = anulaciones(pedidos).single;
       expect(jsonDecode(pedido.body), {
         'motivo': 'Mantenimiento',
-        'espacio_id': 9,
+        'espacio_id': '00000000-0000-7000-8000-000000000009',
         'inicio': '2026-11-13T00:00:00.000Z',
       });
       expect(find.text('Reserva anulada correctamente'), findsOneWidget);
@@ -199,7 +199,7 @@ void main() {
     (tester) async {
       final pedidos = <http.Request>[];
       final api = apiRutas({
-        'POST /reservas/1/anular': (
+        'POST /reservas/00000000-0000-7000-8000-000000000001/anular': (
           200,
           reservaJson(anulable: false, estado: 'anulada'),
         ),

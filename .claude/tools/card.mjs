@@ -82,14 +82,14 @@ const starts = new Map();
 let rounds = 0;
 export const oneRound = (fn) => {
   rounds++;
-  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); renames.clear(); } }
+  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); renames.clear(); owns.clear(); } }
 };
 const remembered = (cache, key, compute) => {
   if (!rounds) return compute();
   if (!cache.has(key)) cache.set(key, compute());
   return cache.get(key);
 };
-export const resetFileCache = () => { listings.clear(); hashed.clear(); changedFiles.clear(); starts.clear(); renames.clear(); };
+export const resetFileCache = () => { listings.clear(); hashed.clear(); changedFiles.clear(); starts.clear(); renames.clear(); owns.clear(); };
 const listing = (root) => {
   if (!listings.has(root)) {
     const r = spawnSync('git', ['ls-files', '-co', '-t', '--exclude-standard', '-z'], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
@@ -368,8 +368,10 @@ export const existedAt = (root, ref, rel) => git(root, ['cat-file', '-e', `${ref
 export const commandDir = (command) => String(command).match(/^\s*cd\s+(?:"([^"]+)"|'([^']+)'|([^\s&;|]+))\s*&&/)?.slice(1).find(Boolean)?.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '') ?? '';
 
 // Where the card's own changes start: its first commit's parent, or, when main was merged into the card after that, the
-// merge-base with main. Otherwise a merge of main makes every file of other cards look like this card's.
-const ownBase = (root, base) => {
+// merge-base with main. Otherwise a merge of main makes every file of other cards look like this card's, and a file main moved
+// looks new. What a file was before the card is read here, not at the card's start.
+const owns = new Map();
+export const ownBase = (root, base) => remembered(owns, `${root}\0${base}`, () => {
   for (const ref of ['main', 'origin/main', 'master']) {
     const mb = git(root, ['merge-base', 'HEAD', ref]).stdout?.trim();
     if (!mb) continue;
@@ -380,7 +382,7 @@ const ownBase = (root, base) => {
     return base;
   }
   return base;
-};
+});
 
 // A file the card only moved (git sees a rename at 80 % similarity or more) is judged against where it came from: its old
 // classes, clones and interfaces are the repo's, not the card's. `originOf` is that path at the card's start, or null.

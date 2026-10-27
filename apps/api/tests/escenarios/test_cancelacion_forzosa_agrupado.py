@@ -4,6 +4,7 @@ import threading
 import time
 from collections.abc import Callable, Sequence
 from typing import Any
+from uuid import UUID
 
 import pytest
 import test_cancelacion_forzosa as base
@@ -42,7 +43,7 @@ def _avisos(motor: Engine, socio: Socio) -> list[Any]:
         )
 
 
-def _en_paralelo(motor: Engine, usuario_id: int, lotes: Sequence[Sequence[int]]) -> None:
+def _en_paralelo(motor: Engine, usuario_id: UUID, lotes: Sequence[Sequence[UUID]]) -> None:
     """Encola el primer lote y, con su transacción todavía abierta, el segundo, que tiene que
     quedar esperando a que la primera termine."""
     primera_dentro, soltar = threading.Event(), threading.Event()
@@ -119,14 +120,14 @@ def test_un_aviso_que_no_salio_pasa_sus_reservas_al_que_lo_reemplaza(
     reservas = [socio.reservar("20:00"), socio.reservar("21:00")]
     _anular_en_la_base(motor, socio, reservas)
     with motor.begin() as conn:
-        encolar_cancelacion_forzosa(conn, socio.usuario_id, [reservas[0]["id"]])
+        encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reservas[0]["id"])])
     with motor.begin() as conn:
-        encolar_cancelacion_forzosa(conn, socio.usuario_id, [reservas[1]["id"]])
+        encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reservas[1]["id"])])
 
     with motor.connect() as conn:
         vinculos = conn.execute(
             text("SELECT notificacion_id FROM notificacion_reserva WHERE reserva_id = ANY(:ids)"),
-            {"ids": [r["id"] for r in reservas]},
+            {"ids": [UUID(r["id"]) for r in reservas]},
         ).all()
     *_, nuevo = _avisos(motor, socio)
     assert {v.notificacion_id for v in vinculos} == {nuevo.id}
@@ -155,7 +156,7 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
     if con_aviso_previo:
         _anular_en_la_base(motor, socio, simultaneas)
 
-    _en_paralelo(motor, socio.usuario_id, [[simultaneas[0]["id"]], [simultaneas[1]["id"]]])
+    _en_paralelo(motor, socio.usuario_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]])
 
     [visible] = socio.centro()["notificaciones"]
     assert visible["titulo"] == f"El club anuló {total} de tus reservas"
@@ -190,7 +191,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
 
     def leyendo() -> None:
         with motor.connect() as conn:
-            NotificacionesSql(conn).leer(socio.usuario_id, leido["id"])
+            NotificacionesSql(conn).leer(socio.usuario_id, UUID(leido["id"]))
 
     lectura = threading.Thread(target=leyendo)
 
@@ -198,7 +199,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
 
     def encolando() -> None:
         with motor.begin() as conn:
-            encolar_cancelacion_forzosa(conn, socio.usuario_id, [segunda["id"]])
+            encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(segunda["id"])])
             primera_dentro.set()
             soltar.wait(10)
 

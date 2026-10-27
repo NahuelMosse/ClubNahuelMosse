@@ -526,9 +526,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Sede Id"
             }
           }
@@ -618,9 +617,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Sede Id"
             }
           }
@@ -724,9 +722,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "integer",
-                  "maximum": 9223372036854775807,
-                  "minimum": 1
+                  "type": "string",
+                  "format": "uuid"
                 },
                 {
                   "type": "null"
@@ -883,9 +880,8 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Sede Id"
             }
           },
@@ -964,9 +960,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Espacio Id"
             }
           }
@@ -1038,9 +1033,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Espacio Id"
             }
           }
@@ -1107,9 +1101,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Espacio Id"
             }
           },
@@ -1149,9 +1142,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "integer",
-                  "maximum": 9223372036854775807,
-                  "minimum": 1
+                  "type": "string",
+                  "format": "uuid"
                 },
                 {
                   "type": "null"
@@ -1224,9 +1216,8 @@
             "in": "query",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Sede Id"
             }
           },
@@ -1470,9 +1461,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Reserva Id"
             }
           }
@@ -1543,9 +1533,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Reserva Id"
             }
           }
@@ -1652,9 +1641,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "integer",
-                  "maximum": 9223372036854775807,
-                  "minimum": 1
+                  "type": "string",
+                  "format": "uuid"
                 },
                 {
                   "type": "null"
@@ -1797,9 +1785,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Reserva Id"
             }
           }
@@ -1863,9 +1850,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Reserva Id"
             }
           }
@@ -2121,9 +2107,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "maximum": 9223372036854775807,
-              "minimum": 1,
+              "type": "string",
+              "format": "uuid",
               "title": "Notificacion Id"
             }
           }
@@ -2359,7 +2344,8 @@
       "EspacioVista": {
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
           "nombre": {
@@ -2367,7 +2353,8 @@
             "title": "Nombre"
           },
           "sede_id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Sede Id"
           },
           "sede": {
@@ -2558,7 +2545,8 @@
       "NotificacionVista": {
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
           "tipo": {
@@ -2581,7 +2569,8 @@
           "reserva_id": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "string",
+                "format": "uuid"
               },
               {
                 "type": "null"
@@ -2634,9 +2623,8 @@
             "title": "Motivo"
           },
           "espacio_id": {
-            "type": "integer",
-            "maximum": 9.223372036854776e+18,
-            "minimum": 1.0,
+            "type": "string",
+            "format": "uuid",
             "title": "Espacio Id"
           },
           "inicio": {
@@ -2717,9 +2705,8 @@
       "PedidoDeCambioDeReserva": {
         "properties": {
           "espacio_id": {
-            "type": "integer",
-            "maximum": 9.223372036854776e+18,
-            "minimum": 1.0,
+            "type": "string",
+            "format": "uuid",
             "title": "Espacio Id"
           },
           "fecha": {
@@ -2849,9 +2836,8 @@
           "sede_id": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 9.223372036854776e+18,
-                "minimum": 1.0
+                "type": "string",
+                "format": "uuid"
               },
               {
                 "type": "null"
@@ -2920,9 +2906,8 @@
       "PedidoDeReserva": {
         "properties": {
           "espacio_id": {
-            "type": "integer",
-            "maximum": 9.223372036854776e+18,
-            "minimum": 1.0,
+            "type": "string",
+            "format": "uuid",
             "title": "Espacio Id"
           },
           "fecha": {
@@ -3065,7 +3050,8 @@
       "RegistroCreado": {
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           }
         },
@@ -3078,15 +3064,18 @@
       "ReservaHistorialVista": {
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
           "espacio_id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Espacio Id"
           },
           "sede_id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Sede Id"
           },
           "espacio": {
@@ -3149,7 +3138,8 @@
             "title": "Motivo"
           },
           "usuario_id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Usuario Id"
           },
           "usuario": {
@@ -3247,15 +3237,18 @@
       "ReservaVista": {
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
           "espacio_id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Espacio Id"
           },
           "sede_id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Sede Id"
           },
           "espacio": {
@@ -3358,7 +3351,8 @@
       "SedeVista": {
         "properties": {
           "id": {
-            "type": "integer",
+            "type": "string",
+            "format": "uuid",
             "title": "Id"
           },
           "nombre": {

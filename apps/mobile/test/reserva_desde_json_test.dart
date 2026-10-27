@@ -2,9 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:clubnahuelmosse/reservas/reservas.dart';
 
 Map<String, Object?> _json({String inicio = '2026-10-23T20:00:00Z', String fin = '2026-10-23T21:00:00Z'}) => {
-  'id': 1,
-  'espacio_id': 2,
-  'sede_id': 3,
+  'id': '00000000-0000-7000-8000-000000000001',
+  'espacio_id': '00000000-0000-7000-8000-000000000002',
+  'sede_id': '00000000-0000-7000-8000-000000000003',
   'espacio': 'Cancha 1',
   'deporte': 'Fútbol',
   'tipo': 'F5',

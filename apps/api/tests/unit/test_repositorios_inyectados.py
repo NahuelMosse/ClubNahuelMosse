@@ -1,6 +1,7 @@
 import ast
 from datetime import date, time
 from pathlib import Path
+from uuid import UUID
 
 from fastapi.testclient import TestClient
 
@@ -39,7 +40,7 @@ class _SedesDePrueba:
     def activas(self) -> list[Sede]:
         return [
             Sede(
-                id=7,
+                id=UUID(int=7),
                 nombre="Sede de prueba",
                 calle="Calle",
                 altura=123,
@@ -56,7 +57,7 @@ def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza()
     """una ruta recibe su repositorio por dependencia y un test lo reemplaza @ARQ-01-S2"""
     app = crear_app()
     app.dependency_overrides[usuario_actual] = lambda: Perfil(
-        id=1,
+        id=UUID(int=1),
         uid="uid-prueba",
         nombre="Ana",
         apellido="Díaz",

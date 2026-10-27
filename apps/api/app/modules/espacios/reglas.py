@@ -2,6 +2,7 @@
 import re
 import unicodedata
 from dataclasses import dataclass
+from uuid import UUID
 
 _PREFIJO_SEDE = re.compile(r"^sede\b\s*", re.IGNORECASE)
 _PREFIJO_CALLE = re.compile(r"^(avenida|avda\.?|av\.?|calle)(\s+|(?<=\.))", re.IGNORECASE)
@@ -123,7 +124,7 @@ def tipo_del_catalogo(deporte: str, tipo: str) -> Tipo | None:
 class DatosEspacio:
     """Lo que llega del formulario, sin validar."""
 
-    sede_id: int | None
+    sede_id: UUID | None
     deporte: str
     tipo: str
     techada: bool | None
@@ -133,7 +134,7 @@ class DatosEspacio:
 
 @dataclass(frozen=True)
 class EspacioNuevo:
-    sede_id: int
+    sede_id: UUID
     deporte: str
     tipo: str
     techada: bool
@@ -143,9 +144,9 @@ class EspacioNuevo:
 
 @dataclass(frozen=True)
 class Espacio:
-    id: int
+    id: UUID
     nombre: str
-    sede_id: int
+    sede_id: UUID
     sede: str
     deporte: str
     tipo: str

@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -9,7 +11,7 @@ from app.shared.entradas import Identificador
 
 class _Pedido(BaseModel):
     nombre: str = ""
-    cantidad: Identificador = 1
+    cantidad: Identificador = UUID(int=1)
 
 
 @pytest.fixture(scope="module")
@@ -24,23 +26,24 @@ def cliente() -> TestClient:
     return TestClient(app)
 
 
-@pytest.mark.parametrize("numero", [0, -1, 2**63, 2**70])
-def test_un_identificador_cabe_en_un_bigint(numero: int) -> None:
+@pytest.mark.parametrize("texto", ["", "1", "no-es-un-uuid", "0123456789abcdef0123456789abcdeg"])
+def test_un_identificador_mal_formado_no_pasa(texto: str) -> None:
     with pytest.raises(ValidationError):
-        TypeAdapter(Identificador).validate_python(numero)
+        TypeAdapter(Identificador).validate_python(texto)
 
 
-def test_los_bordes_de_un_identificador_pasan() -> None:
+def test_un_identificador_acepta_mayusculas_y_sin_guiones() -> None:
     adaptador = TypeAdapter(Identificador)
+    esperado = UUID("0197b5a2-7c3e-7a10-8f4d-1e2f3a4b5c6d")
 
-    assert adaptador.validate_python(1) == 1
-    assert adaptador.validate_python(2**63 - 1) == 2**63 - 1
+    assert adaptador.validate_python("0197B5A2-7C3E-7A10-8F4D-1E2F3A4B5C6D") == esperado
+    assert adaptador.validate_python("0197b5a27c3e7a108f4d1e2f3a4b5c6d") == esperado
 
 
-def test_un_numero_fuera_de_rango_dice_que_esta_fuera_de_rango(cliente: TestClient) -> None:
-    r = cliente.post("/pedido", json={"cantidad": 2**70})
+def test_un_identificador_mal_formado_tiene_un_mensaje_general(cliente: TestClient) -> None:
+    r = cliente.post("/pedido", json={"cantidad": "1"})
 
-    assert r.json() == {"errores": {"cantidad": "Está fuera del rango permitido"}}
+    assert r.json() == {"errores": {"cantidad": "El dato no es válido"}}
 
 
 def test_un_dato_de_otro_tipo_tiene_un_mensaje_general(cliente: TestClient) -> None:

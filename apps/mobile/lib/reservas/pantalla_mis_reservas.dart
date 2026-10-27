@@ -37,7 +37,7 @@ class PantallaMisReservas extends StatefulWidget {
   final Sesion sesion;
 
   /// La reserva que se resalta y se trae a la vista, si se llegó desde un aviso.
-  final int? reservaId;
+  final String? reservaId;
 
   /// Abre en el historial: para los avisos de una reserva que ya no está entre las próximas.
   final bool enHistorial;
@@ -128,7 +128,7 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
 
   /// La reserva que se está cancelando: su botón muestra que espera y los demás quedan
   /// deshabilitados.
-  int? _cancelando;
+  String? _cancelando;
 
   /// Pide confirmación y cancela [r]. Al terminar, bien o porque la reserva ya había
   /// cambiado, la lista se vuelve a leer.

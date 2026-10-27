@@ -1,4 +1,6 @@
 # kit-shape: el repositorio de enlaces y la función que lo entrega a las rutas van juntos
+from uuid import UUID
+
 from sqlalchemy import Connection, text
 
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
@@ -11,7 +13,7 @@ _VIGENTE = """
     AND e.invalidado_en IS NULL
     AND e.vence_en > clock_timestamp()
     AND u.activo
-    AND (u.contrasena_cambiada_en IS NULL OR u.contrasena_cambiada_en < e.emitido_en)
+    AND (u.contrasena_cambiada_en IS NULL OR u.contrasena_cambiada_en < e.creado_en)
 """
 
 
@@ -28,16 +30,19 @@ class EnlacesSql:
         return None if fila is None else Destinatario(fila.id, fila.nombre, fila.correo)
 
     def emitir(
-        self, usuario_id: int, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
+        self, usuario_id: UUID, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
     ) -> bool:
         with en_transaccion(self._conn):
             # El candado ordena los pedidos simultáneos de la misma cuenta: el segundo cuenta
             # e invalida recién cuando el primero terminó.
-            self._conn.execute(text("SELECT pg_advisory_xact_lock(:u)"), {"u": usuario_id})
+            self._conn.execute(
+                text("SELECT pg_advisory_xact_lock(hashtextextended(CAST(:u AS text), 0))"),
+                {"u": usuario_id},
+            )
             emitidos: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM enlace_recuperacion WHERE usuario_id = :u"
-                    " AND emitido_en > clock_timestamp() - interval '1 hour'"
+                    " AND creado_en > clock_timestamp() - interval '1 hour'"
                 ),
                 {"u": usuario_id},
             ).scalar_one()
@@ -88,7 +93,7 @@ class EnlacesSql:
             return None
         return EnlaceReclamado(fila.id, fila.usuario_id, fila.firebase_uid)
 
-    def liberar(self, enlace_id: int) -> None:
+    def liberar(self, enlace_id: UUID) -> None:
         self._conn.execute(
             text("UPDATE enlace_recuperacion SET usado_en = NULL WHERE id = :id"), {"id": enlace_id}
         )

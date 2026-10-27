@@ -244,17 +244,17 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     de_beto = api.post(
         "/reservas",
         headers=beto,
-        json={"espacio_id": espacio, "fecha": manana, "desde": "10:00", "horas": 1},
+        json={"espacio_id": str(espacio), "fecha": manana, "desde": "10:00", "horas": 1},
     )
     de_ana = api.post(
         "/reservas",
         headers=ana,
         json={
-            "espacio_id": espacio,
+            "espacio_id": str(espacio),
             "fecha": manana,
             "desde": "12:00",
             "horas": 1,
-            "usuario_id": id_beto,
+            "usuario_id": str(id_beto),
         },
     )
     intento = api.post(f"/reservas/{de_beto.json()['id']}/cancelar", headers=ana)
@@ -262,7 +262,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     assert (de_beto.status_code, de_ana.status_code) == (201, 201)
     with motor.connect() as conn:
         dueno = {
-            r.id: r.usuario_id
+            str(r.id): r.usuario_id
             for r in conn.execute(
                 text("SELECT id, usuario_id FROM reserva WHERE espacio_id = :e"), {"e": espacio}
             )

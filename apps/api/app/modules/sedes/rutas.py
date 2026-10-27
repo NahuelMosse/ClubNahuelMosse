@@ -1,6 +1,7 @@
 # kit-shape: las rutas de sedes y los modelos de sus pedidos y respuestas se leen juntos
 from datetime import time
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
@@ -23,7 +24,7 @@ router = APIRouter(tags=["sedes"])
 
 
 class SedeVista(BaseModel):
-    id: int
+    id: UUID
     nombre: str
     direccion: str
     apertura: str

@@ -1,6 +1,7 @@
 # kit-shape: el repositorio de avisos y la función que arma su fila van juntos
 from collections.abc import Sequence
 from datetime import datetime
+from uuid import UUID
 
 from sqlalchemy import Connection, text
 
@@ -31,7 +32,7 @@ _BLOQUEO_DE_ANULACIONES = 2402
 
 
 def encolar_cancelacion_forzosa(
-    conn: Connection, usuario_id: int, reserva_ids: Sequence[int]
+    conn: Connection, usuario_id: UUID, reserva_ids: Sequence[UUID]
 ) -> None:
     """Registra en el centro de [usuario_id] el aviso de las reservas que el club canceló, con
     el envío pendiente, dentro de la transacción de quien llama: sin commit, así que si la
@@ -45,7 +46,7 @@ def encolar_cancelacion_forzosa(
     # Es el último bloqueo de la transacción: las anulaciones simultáneas de una misma persona
     # se esperan acá, después de los bloqueos de la cuenta, la sede, el espacio y la reserva.
     conn.execute(
-        text("SELECT pg_advisory_xact_lock(:ns, CAST(:usuario AS integer))"),
+        text("SELECT pg_advisory_xact_lock(:ns, hashtext(CAST(:usuario AS text)))"),
         {"ns": _BLOQUEO_DE_ANULACIONES, "usuario": usuario_id},
     )
     filas = conn.execute(
@@ -63,7 +64,7 @@ def encolar_cancelacion_forzosa(
         return
     nuevas = [
         ReservaAnulada(
-            reserva_id=int(f.id),
+            reserva_id=f.id,
             inicio=f.inicio,
             deporte=f.deporte,
             tipo=f.tipo,
@@ -89,23 +90,21 @@ def encolar_cancelacion_forzosa(
         mensaje_cancelaciones_forzosas(total) if total > 1 else mensaje_cancelacion_forzosa(nuevas)
     )
     unica = nuevas[0] if total == 1 else None
-    notificacion_id = int(
-        conn.execute(
-            text(
-                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                " reserva_inicio, envio, cantidad) VALUES (:usuario, 'cancelacion_forzosa',"
-                " :titulo, :cuerpo, :reserva, :inicio, 'pendiente', :cantidad) RETURNING id"
-            ),
-            {
-                "usuario": usuario_id,
-                "titulo": aviso.titulo,
-                "cuerpo": aviso.cuerpo,
-                "reserva": None if unica is None else unica.reserva_id,
-                "inicio": None if unica is None else unica.inicio,
-                "cantidad": total,
-            },
-        ).scalar_one()
-    )
+    notificacion_id: UUID = conn.execute(
+        text(
+            "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
+            " reserva_inicio, envio, cantidad) VALUES (:usuario, 'cancelacion_forzosa',"
+            " :titulo, :cuerpo, :reserva, :inicio, 'pendiente', :cantidad) RETURNING id"
+        ),
+        {
+            "usuario": usuario_id,
+            "titulo": aviso.titulo,
+            "cuerpo": aviso.cuerpo,
+            "reserva": None if unica is None else unica.reserva_id,
+            "inicio": None if unica is None else unica.inicio,
+            "cantidad": total,
+        },
+    ).scalar_one()
     if reemplaza is not None:
         conn.execute(
             text("UPDATE notificacion SET reemplazada_por = :nuevo WHERE id = :id"),
@@ -134,7 +133,7 @@ class NotificacionesSql:
         self._conn = conn
 
     def encolar_cancelacion_usuario(
-        self, usuario_id: int, reserva_id: int, inicio: datetime, aviso: Aviso
+        self, usuario_id: UUID, reserva_id: UUID, inicio: datetime, aviso: Aviso
     ) -> None:
         """Deja el aviso de la cancelación que hizo la persona, dentro de la transacción de quien
         llama: sin commit. El índice único evita repetirlo."""
@@ -154,7 +153,7 @@ class NotificacionesSql:
             },
         )
 
-    def vencidos(self, ahora: datetime, usuario_id: int | None) -> list[Recordatorio]:
+    def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
         filas = self._conn.execute(
             text(
                 "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede"
@@ -166,7 +165,7 @@ class NotificacionesSql:
                 # Una reserva hecha o movida con menos anticipación que el aviso no avisa.
                 " AND greatest(r.creado_en, r.modificado_en)"
                 " <= r.inicio - CAST(:anticipacion AS interval)"
-                " AND (CAST(:usuario AS bigint) IS NULL OR r.usuario_id = :usuario)"
+                " AND (CAST(:usuario AS uuid) IS NULL OR r.usuario_id = :usuario)"
                 " AND NOT EXISTS (SELECT 1 FROM notificacion n WHERE n.reserva_id = r.id"
                 " AND n.tipo = 'recordatorio' AND n.reserva_inicio = r.inicio)"
                 " ORDER BY r.inicio, r.id"
@@ -176,8 +175,8 @@ class NotificacionesSql:
         self._conn.rollback()
         return [
             Recordatorio(
-                reserva_id=int(f.id),
-                usuario_id=int(f.usuario_id),
+                reserva_id=f.id,
+                usuario_id=f.usuario_id,
                 inicio=f.inicio,
                 fin=f.fin,
                 deporte=f.deporte,
@@ -187,7 +186,7 @@ class NotificacionesSql:
             for f in filas
         ]
 
-    def registrar(self, recordatorio: Recordatorio, aviso: Aviso) -> int | None:
+    def registrar(self, recordatorio: Recordatorio, aviso: Aviso) -> UUID | None:
         datos = {
             "usuario": recordatorio.usuario_id,
             "titulo": aviso.titulo,
@@ -228,9 +227,9 @@ class NotificacionesSql:
                 ),
                 datos,
             ).first()
-        return None if fila is None else int(fila.id)
+        return None if fila is None else fila.id
 
-    def tokens_con_permiso(self, usuario_id: int) -> list[str]:
+    def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
         filas = self._conn.execute(
             text(
                 "SELECT token FROM dispositivo WHERE usuario_id = :usuario AND activo"
@@ -241,7 +240,7 @@ class NotificacionesSql:
         self._conn.rollback()
         return [f.token for f in filas]
 
-    def tiene_dispositivos(self, usuario_id: int) -> bool:
+    def tiene_dispositivos(self, usuario_id: UUID) -> bool:
         hay: bool = self._conn.execute(
             text(
                 "SELECT EXISTS (SELECT 1 FROM dispositivo WHERE usuario_id = :usuario AND activo)"
@@ -251,14 +250,14 @@ class NotificacionesSql:
         self._conn.rollback()
         return bool(hay)
 
-    def marcar_varados_fallidos(self, usuario_id: int | None) -> list[AvisoPerdido]:
+    def marcar_varados_fallidos(self, usuario_id: UUID | None) -> list[AvisoPerdido]:
         with en_transaccion(self._conn):
             # Un recordatorio registrado cuyo turno ya empezó o se canceló no va a salir nunca.
             muertos = self._conn.execute(
                 text(
                     "UPDATE notificacion n SET envio = 'fallida' WHERE n.envio = 'pendiente'"
                     " AND n.tipo = 'recordatorio'"
-                    " AND (CAST(:usuario AS bigint) IS NULL OR n.usuario_id = :usuario)"
+                    " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
                     " AND NOT EXISTS (SELECT 1 FROM reserva r WHERE r.id = n.reserva_id"
                     " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio"
                     " AND r.inicio > now()) RETURNING n.id, n.tipo"
@@ -270,14 +269,14 @@ class NotificacionesSql:
                 text(
                     "UPDATE notificacion SET envio = 'fallida' WHERE envio = 'enviando'"
                     " AND enviando_desde < now() - CAST(:espera AS interval)"
-                    " AND (CAST(:usuario AS bigint) IS NULL OR usuario_id = :usuario)"
+                    " AND (CAST(:usuario AS uuid) IS NULL OR usuario_id = :usuario)"
                     " RETURNING id, tipo"
                 ),
                 {"usuario": usuario_id, "espera": ESPERA_DEL_ENVIO},
             ).all()
-        return [AvisoPerdido(int(f.id), f.tipo) for f in [*muertos, *atascados]]
+        return [AvisoPerdido(f.id, f.tipo) for f in [*muertos, *atascados]]
 
-    def tomar_siguiente(self, usuario_id: int | None) -> Pendiente | None:
+    def tomar_siguiente(self, usuario_id: UUID | None) -> Pendiente | None:
         # Los que salen: los pendientes, y los recordatorios sólo si siguen vigentes y ya pasó el
         # minuto de quien los registró. `enviando` es la toma: evita mandarlo dos veces.
         f = self._conn.execute(
@@ -285,9 +284,9 @@ class NotificacionesSql:
                 "UPDATE notificacion SET envio = 'enviando', enviando_desde = now() WHERE id = ("
                 " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
                 " WHERE n.reemplazada_por IS NULL"
-                " AND (CAST(:usuario AS bigint) IS NULL OR n.usuario_id = :usuario)"
+                " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
                 " AND n.envio = 'pendiente' AND (n.tipo <> 'recordatorio'"
-                " OR (n.creada_en < now() - CAST(:espera AS interval)"
+                " OR (n.creado_en < now() - CAST(:espera AS interval)"
                 " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio AND r.inicio > now()))"
                 " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"
                 " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
@@ -298,16 +297,16 @@ class NotificacionesSql:
         if f is None:
             return None
         return Pendiente(
-            notificacion_id=int(f.id),
-            usuario_id=int(f.usuario_id),
+            notificacion_id=f.id,
+            usuario_id=f.usuario_id,
             aviso=Aviso(
                 titulo=f.titulo,
                 cuerpo=f.cuerpo,
-                datos=datos_del_aviso(f.tipo, None if f.reserva_id is None else int(f.reserva_id)),
+                datos=datos_del_aviso(f.tipo, None if f.reserva_id is None else f.reserva_id),
             ),
         )
 
-    def marcar_envio(self, notificacion_id: int, envio: Envio) -> None:
+    def marcar_envio(self, notificacion_id: UUID, envio: Envio) -> None:
         self._conn.execute(
             text(
                 "UPDATE notificacion SET envio = CAST(:envio AS text),"
@@ -331,7 +330,7 @@ class NotificacionesSql:
         self._conn.commit()
 
     def registrar_dispositivo(
-        self, usuario_id: int, token: str, plataforma: str, permiso: bool
+        self, usuario_id: UUID, token: str, plataforma: str, permiso: bool
     ) -> bool:
         datos = {
             "usuario": usuario_id,
@@ -353,14 +352,14 @@ class NotificacionesSql:
                     " VALUES (:usuario, :token, :plataforma, :permiso)"
                     " ON CONFLICT (token) WHERE activo DO UPDATE SET"
                     " usuario_id = EXCLUDED.usuario_id, plataforma = EXCLUDED.plataforma,"
-                    " permiso = EXCLUDED.permiso, actualizado_en = now()"
+                    " permiso = EXCLUDED.permiso, modificado_en = now()"
                     " WHERE dispositivo.usuario_id = EXCLUDED.usuario_id"
                 ),
                 datos,
             )
         return True
 
-    def baja_dispositivo(self, usuario_id: int, token: str) -> None:
+    def baja_dispositivo(self, usuario_id: UUID, token: str) -> None:
         self._conn.execute(
             text(
                 "UPDATE dispositivo SET activo = false, dado_de_baja_en = now()"
@@ -370,13 +369,13 @@ class NotificacionesSql:
         )
         self._conn.commit()
 
-    def de_usuario(self, usuario_id: int) -> tuple[list[Notificacion], int]:
+    def de_usuario(self, usuario_id: UUID) -> tuple[list[Notificacion], int]:
         filas = self._conn.execute(
             text(
-                "SELECT id, tipo, titulo, cuerpo, reserva_id, creada_en,"
+                "SELECT id, tipo, titulo, cuerpo, reserva_id, creado_en AS creada_en,"
                 " leida_en IS NOT NULL AS leida FROM notificacion WHERE usuario_id = :usuario"
                 " AND reemplazada_por IS NULL"
-                f" ORDER BY creada_en DESC, id DESC LIMIT {LIMITE_DEL_CENTRO}"
+                f" ORDER BY creado_en DESC, id DESC LIMIT {LIMITE_DEL_CENTRO}"
             ),
             {"usuario": usuario_id},
         ).all()
@@ -391,11 +390,11 @@ class NotificacionesSql:
         return (
             [
                 Notificacion(
-                    id=int(f.id),
+                    id=f.id,
                     tipo=f.tipo,
                     titulo=f.titulo,
                     cuerpo=f.cuerpo,
-                    reserva_id=None if f.reserva_id is None else int(f.reserva_id),
+                    reserva_id=None if f.reserva_id is None else f.reserva_id,
                     creada_en=f.creada_en,
                     leida=bool(f.leida),
                 )
@@ -404,7 +403,7 @@ class NotificacionesSql:
             int(sin_leer),
         )
 
-    def leer(self, usuario_id: int, notificacion_id: int) -> bool:
+    def leer(self, usuario_id: UUID, notificacion_id: UUID) -> bool:
         fila = self._conn.execute(
             text(
                 "UPDATE notificacion SET leida_en = coalesce(leida_en, now())"
@@ -415,7 +414,7 @@ class NotificacionesSql:
         self._conn.commit()
         return fila is not None
 
-    def leer_todas(self, usuario_id: int) -> None:
+    def leer_todas(self, usuario_id: UUID) -> None:
         self._conn.execute(
             text(
                 "UPDATE notificacion SET leida_en = now()"

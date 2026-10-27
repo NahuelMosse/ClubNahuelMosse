@@ -23,7 +23,7 @@ class PantallaSede extends StatefulWidget {
     required this.sesion,
   });
 
-  final int sedeId;
+  final String sedeId;
   final Sedes sedes;
   final Espacios espacios;
   final Sesion sesion;

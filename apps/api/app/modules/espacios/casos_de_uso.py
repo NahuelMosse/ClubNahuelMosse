@@ -1,6 +1,7 @@
 # kit-shape: el contrato del repositorio de espacios y los casos de uso que lo usan se leen juntos
 from collections.abc import Callable
 from typing import Protocol
+from uuid import UUID
 
 from app.modules.espacios.reglas import (
     CATALOGO,
@@ -23,14 +24,14 @@ from app.shared.errores import DatosInvalidos, NoDisponible, Prohibido
 class Espacios(Protocol):
     def activos(
         self,
-        sede_id: int | None = None,
+        sede_id: UUID | None = None,
         deporte: str | None = None,
         tipo: str | None = None,
     ) -> list[Espacio]: ...
 
     def siguiente(
         self,
-        sede_id: int,
+        sede_id: UUID,
         deporte: str,
         tipo: str,
         nombre: Callable[[SedeDelEspacio, int], str],
@@ -44,7 +45,7 @@ class Espacios(Protocol):
         nuevo: EspacioNuevo,
         numero: int | None,
         nombre: Callable[[SedeDelEspacio, int], str],
-        autor: int,
+        autor: UUID,
     ) -> Espacio:
         """Guarda el espacio con el número siguiente.
 
@@ -55,7 +56,7 @@ class Espacios(Protocol):
         """
         ...
 
-    def actualizar(self, espacio_id: int, cambio: CambioDeEspacio, autor: int) -> Espacio:
+    def actualizar(self, espacio_id: UUID, cambio: CambioDeEspacio, autor: UUID) -> Espacio:
         """Guarda el cambio del espacio activo [espacio_id]. Las reservas ya hechas conservan
         el precio con que se hicieron.
 
@@ -63,7 +64,7 @@ class Espacios(Protocol):
         """
         ...
 
-    def dar_de_baja(self, espacio_id: int, autor: int) -> None:
+    def dar_de_baja(self, espacio_id: UUID, autor: UUID) -> None:
         """Da de baja el espacio activo [espacio_id] a nombre de [autor]. Las reservas pasadas
         lo siguen nombrando.
 
@@ -89,7 +90,7 @@ def _nombre(deporte: str, tipo: str) -> Callable[[SedeDelEspacio, int], str]:
 
 
 def nombre_sugerido(
-    perfil: Perfil, sede_id: int, deporte: str, tipo: str, espacios: Espacios
+    perfil: Perfil, sede_id: UUID, deporte: str, tipo: str, espacios: Espacios
 ) -> NombreSugerido:
     """El nombre que tendría el próximo espacio de ese tipo en esa sede."""
     _solo_admin(perfil)
@@ -118,7 +119,7 @@ def dar_de_alta_espacio(
 
 def espacios_activos(
     espacios: Espacios,
-    sede_id: int | None = None,
+    sede_id: UUID | None = None,
     deporte: str | None = None,
     tipo: str | None = None,
 ) -> list[Espacio]:
@@ -129,7 +130,7 @@ def espacios_activos(
 
 def editar_espacio(
     perfil: Perfil,
-    espacio_id: int,
+    espacio_id: UUID,
     techada: bool | None,
     iluminada: bool | None,
     precio_por_hora: int | None,
@@ -145,7 +146,7 @@ def editar_espacio(
     return espacios.actualizar(espacio_id, cambio, perfil.id)
 
 
-def dar_de_baja_espacio(perfil: Perfil, espacio_id: int, espacios: Espacios) -> None:
+def dar_de_baja_espacio(perfil: Perfil, espacio_id: UUID, espacios: Espacios) -> None:
     """Retira un espacio (CU-23): deja de verse y de poder reservarse. No se permite con
     reservas pendientes (decisión 5): la cancelación forzosa es de CU-15."""
     _solo_admin(perfil)

@@ -7,15 +7,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'montar.dart';
 
 const sedeHaedoJson =
-    '{"id": 5, "nombre": "Sede Haedo", "direccion": "Av. Vergara 1850", '
+    '{"id": "00000000-0000-7000-8000-000000000005", "nombre": "Sede Haedo", "direccion": "Av. Vergara 1850", '
     '"apertura": "08:00", "cierre": "23:00", "dias": [1,2,3,4,5,6,7], '
     '"canchas": 0}';
 const sedeMoronJson =
-    '{"id": 1, "nombre": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
+    '{"id": "00000000-0000-7000-8000-000000000001", "nombre": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
     '"apertura": "09:00", "cierre": "00:00", "dias": [1,2,3,4,5,6], '
     '"canchas": 1}';
 const sedeCastelarJson =
-    '{"id": 2, "nombre": "Sede Castelar", "direccion": "Av. Rivadavia 23500", '
+    '{"id": "00000000-0000-7000-8000-000000000002", "nombre": "Sede Castelar", "direccion": "Av. Rivadavia 23500", '
     '"apertura": "08:00", "cierre": "22:00", "dias": [1,2,3,4,5,6,7], '
     '"canchas": 4}';
 
@@ -65,15 +65,15 @@ const catalogoJson =
     '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}]}';
 
 const espacioF5Json =
-    '{"id": 9, "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": 1, '
+    '{"id": "00000000-0000-7000-8000-000000000009", "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
     '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 1, "techada": false, '
     '"iluminada": true, "precio_por_hora": 38000}';
 const espacioTenisJson =
-    '{"id": 10, "nombre": "Moron_Rivadavia_19850_Tenis_PDL_1", "sede_id": 1, '
+    '{"id": "00000000-0000-7000-8000-000000000010", "nombre": "Moron_Rivadavia_19850_Tenis_PDL_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
     '"sede": "Sede Morón", "deporte": "Tenis", "tipo": "PDL", "numero": 1, "techada": false, '
     '"iluminada": false, "precio_por_hora": 32000}';
 const espacioCastelarJson =
-    '{"id": 11, "nombre": "Castelar_Rivadavia_23500_Futbol_F7_1", "sede_id": 2, '
+    '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Castelar_Rivadavia_23500_Futbol_F7_1", "sede_id": "00000000-0000-7000-8000-000000000002", '
     '"sede": "Sede Castelar", "deporte": "Futbol", "tipo": "F7", "numero": 1, "techada": true, '
     '"iluminada": true, "precio_por_hora": 55000}';
 

@@ -29,10 +29,10 @@ from test_datos import (  # noqa: F401 — los fixtures se importan para que pyt
 from test_recordatorio import Socio
 
 
-def _ids_del_socio(socio: Socio) -> set[int]:
+def _ids_del_socio(socio: Socio) -> set[str]:
     with socio.motor.connect() as conn:
         return {
-            int(f.id)
+            str(f.id)
             for f in conn.execute(
                 text("SELECT id FROM reserva WHERE usuario_id = :u"), {"u": socio.usuario_id}
             )
