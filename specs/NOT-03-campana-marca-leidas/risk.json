@@ -1,0 +1,14 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/notificaciones/pantalla_notificaciones.dart",
+    "apps/mobile/lib/notificaciones/centro.dart",
+    "apps/mobile/lib/app.dart"
+  ],
+  "tasks": 2
+}
