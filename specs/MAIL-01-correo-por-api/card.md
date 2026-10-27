@@ -32,6 +32,7 @@ suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/un
 lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app apps/api/tests/unit/test_correo_brevo.py
 app: sh D:/Temp/w/herramientas/arq01-app.sh mail01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh mail01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
+refactor-tests: los tests de test_correo_por_brevo.py pasan tal cual a test_correo_brevo.py, con nombres de función más cortos para el largo de línea del lint
 no-docs: un modo más de envío de correo; el contrato y el modelo de datos no cambian
 ```
 
