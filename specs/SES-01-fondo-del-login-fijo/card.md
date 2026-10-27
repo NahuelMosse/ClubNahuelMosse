@@ -40,3 +40,4 @@ no-visual: con el teclado cerrado la pantalla se ve igual; lo cubre el test de �
 - L2 · 2026-10-27 · declared · fault-db · la card no toca la base: sólo la app
 - L3 · 2026-10-27 · declared · attacks · la card no toca la API
 - L4 · 2026-10-27 · replaces: apps/mobile/test/fondo_del_login_test.dart "los tres tests" · import sin usar (lint) y montaje duplicado de pantallas_test.dart (K4) · by: apps/mobile/test/teclado_en_el_login_test.dart "los tres tests" (mismos tags)
+- L5 · 2026-10-27 · T1 · `node .claude/tools/verify.mjs` → exit 0 (fmt, lint, suite, specs, layers, shape, overdesign, migrations, boundaries, required: passed); RED: el área de la foto pasaba de 852 a 552 de alto con el teclado
