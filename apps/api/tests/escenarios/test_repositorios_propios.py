@@ -6,9 +6,9 @@ from typing import Any
 import pytest
 from sqlalchemy import Connection, Engine, create_engine, text
 
-from app.modules.spaces.repository import SpacesSql
+from app.modules.bookings.repository import BookingsSql
 from app.modules.notifications.repository import NotificationsSql
-from app.modules.reservas.repositorio import ReservasSql
+from app.modules.spaces.repository import SpacesSql
 from app.modules.users.repository import UsersSql
 from app.modules.venues.repository import VenuesSql
 
@@ -93,7 +93,7 @@ def test_cancelar_una_reserva_deja_su_aviso(motor: Engine) -> None:
     mundo = _mundo(motor)
     reserva = _reserva(motor, mundo, _hora(dias=3))
     with motor.connect() as conn:
-        ReservasSql(conn).cancelar(mundo["usuario"], reserva)
+        BookingsSql(conn).cancel(mundo["usuario"], reserva)
     assert (
         _uno(
             motor,

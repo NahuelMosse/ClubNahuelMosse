@@ -8,9 +8,9 @@ from fastapi import FastAPI
 from app import e2e_support, health
 from app.modules import (
     availability,
+    bookings,
     notifications,
     password_recovery,
-    reservas,
     spaces,
     users,
     venues,
@@ -53,7 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(venues.router)
     app.include_router(spaces.router)
     app.include_router(availability.router)
-    app.include_router(reservas.router)
+    app.include_router(bookings.router)
     app.include_router(notifications.router)
     # The outbox only opens against the emulator, never in production.
     if config.e2e_testing and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):

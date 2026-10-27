@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.modules.reservas import ReservasSql
+from app.modules.bookings import BookingsSql
 from app.modules.users.rules import EditedProfile, Registration
 from app.shared.db import DbConnection, in_transaction, violated_constraint
 from app.shared.errors import Duplicate
@@ -85,7 +85,7 @@ class UsersSql:
             if deactivated is None:
                 self._conn.rollback()
                 return False
-            ReservasSql(self._conn).cancelar_futuras_de(user_id)
+            BookingsSql(self._conn).cancel_future_of(user_id)
         return True
 
     def mark_password_changed(self, user_id: UUID) -> None:

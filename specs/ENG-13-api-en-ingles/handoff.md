@@ -1,21 +1,19 @@
-# Handoff ENG-13 (builder 1)
+# Handoff ENG-13 (builder 2)
 
 Worktree D:/Temp/w/ingles, branch `ingles`. Never push, never PR, never touch main. Gate env: export
 `UV_PROJECT_ENVIRONMENT="D:/desktop folders/estudio/Universidad de moron/Electiva general/app-tp/apps/api/.venv"`
-and `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`; Postgres 127.0.0.1:8701. Use `git -C <root>` (compound `cd && git` calls were refused by the context cap hook).
-`sed -i` on app/ is blocked by a hook: use Edit/Write, or a `grunt` (Edit replace_all).
+and `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`; Postgres 127.0.0.1:8701. Use `git -C <root>`.
+`sed -i` on app/ is blocked: Edit/Write or a `grunt` (Edit replace_all). Context cap: delegate mechanical renames to grunts.
 
-## Done (committed)
-- RED `apps/api/tests/unit/test_api_en_ingles.py` (f7592ce): S1 (module folders/file stems), S2 (openapi vs `git show 1ee70de:apps/api/openapi.json`, schema names ignored), S3 (`Settings` class, AliasChoices pairs, brevo/buzon, ADMIN_PASSWORD via `app.modules.users.seed_admin.main` + its module-level `engine`), S4 (git merge-base), ASM-04 (e2e.sh text). It imports `Settings` from app.shared.config (exists since ENG-01 merge).
-- Merged in order, conflicts resolved: ENG-00, ENG-01 (config.py = Settings with `email_mode` outbox|smtp|brevo, `brevo_api_key`; `buzon` accepted), ENG-02 (recuperacion/correo.py deleted; brevo ported into `password_recovery/email.py` as `_by_brevo`, `_SENDERS` dict), ENG-03 (merge commit made with leftovers below).
-- specs/.current kept as ENG-13-api-en-ingles at each merge (`git checkout --ours specs/.current`).
+## Done
+- RED test `apps/api/tests/unit/test_api_en_ingles.py` (S1-S4, ASM-04). Merged ENG-00..ENG-04 (committed). ENG-03 leftover imports fixed and committed.
+- ENG-04 merge: resolved by taking ENG-04 files + English names for the other modules (committed).
+- ENG-05 merge IN PROGRESS (uncommitted): reservas/* and usuarios/repositorio.py removed (git rm), users/repository.py ported to BookingsSql.cancel_future_of, pyproject resolved, specs/.current ours. Two grunts were launched: (a) app/main.py + app/modules/bookings/* renamed to English module names (check `import app.main` works), (b) conflict markers in tests/docs resolved. Verify both: `grep -rn "^<<<<<<<" apps docs scripts`; `git status --short | grep -E "^(UU|UD|DU|AA)"`. openapi.json still conflicted: regenerate later (`git checkout --ours` then regenerate with the repo generator; see git log for how ENG-05 did it) and `git add`. Then `git commit` the merge.
 
 ## Left
-1. FIRST (ENG-03 leftovers, not yet applied): in `apps/api/app/modules/spaces/routes.py`, `spaces/use_cases.py`, `availability/routes.py` replace `app.modules.sesion`->`app.modules.session`, `Perfil`->`Profile`, `SinSesion`->`NoSession`, `usuario_actual`->`current_user`, and `profile.rol`->`profile.role` (use_cases.py:78); keep isort order. Check no other file still imports Spanish module names: `grep -rnE "app\.modules\.(sedes|usuarios|sesion|recuperacion|espacios|horarios)" apps/api` (app and tests).
-2. `apps/api/openapi.json` was resolved with "ours" at the ENG-03 merge: regenerate at the end (look at how ENG-05 handoff did it / the repo's generator) and make sure operation_ids stay (explicit `operation_id=` in routes; S2 test compares against 1ee70de).
-3. Merge ENG-04-api-notificaciones-en-ingles then ENG-05-api-reservas-en-ingles (`git merge --no-edit <branch>`); expect modify/delete conflicts (old Spanish files modified by main-side renames: accept the deletion with `git rm`, port the HEAD-side import changes into the new English files), conflicts in main.py (routers), tests test_arquitectura_funcionalidades / test_capas_funcionalidades / test_sin_sobreingenieria, docs/technical/mapa-del-codigo.md. Keep `specs/.current` = ENG-13-api-en-ingles. Read each branch's handoff (`git show <branch>:specs/<card>/handoff.md`) for rename maps. Old module `notificaciones` -> `notifications`, `reservas` -> `bookings` (ENG-05 uses explicit operation_id).
-4. `scripts/e2e.sh` line ~88: `app.modules.usuarios.sembrar_admin` -> `app.modules.users.seed_admin` (same options; `--correo "$ADMIN_CORREO"`). `seed_admin.py` (users module) must read `ADMIN_PASSWORD` first, then `ADMIN_CONTRASENA` (S3 test). README/docs mention of the module command: update (`apps/api/README.md`, docs/technical/*).
-5. S3 note: S3 lists METRICS_TOKEN/BEHIND_PROXY/INTERACTIVE_DOCS but main retired those variables (test_sin_sobreingenieria asserts they are gone); they are not config fields. Log it in card.md `## Log` as `OUT`/ASM-style note instead of re-adding.
-6. Update `render.yaml` only if it names renamed modules (it should not). Keep Brevo behavior from main.
-7. Run `uv run --no-sync ruff format apps/api/app` + `ruff check`/mypy; full unit suite in background to a log (read only failing lines); compare failures with D:/Temp/w/main (known failures on main are logged, not weakened). Then the gate `node .claude/tools/verify.mjs`; add Log lines (`- L5 · <date> · T1 · <evidence>`, via Edit) in card.md. Update `docs/technical/glosario-ingles.md` + mapa-del-codigo if names changed.
-8. Commit per step (`ENG-13: ...`, Co-Authored-By trailer as in the repo); never push.
+1. Finish/verify ENG-05 merge and commit.
+2. `git merge origin/main` (already fetched): MAIL-02 moved email into app/shared/correo.py, shared/mensaje.py, shared/plantilla_correo.py, reservas/correo.py (booking confirmation email), reminder email in notificaciones. Port to English: shared/email.py, shared/message.py, shared/email_template.py, bookings/email.py, notifications reminder email; add to docs/technical/glosario-ingles.md. password_recovery/email.py already has `_by_brevo`/`_SENDERS` from ENG-02: reconcile with main's shared mail code.
+3. `scripts/e2e.sh` ~line 88: `app.modules.usuarios.sembrar_admin` -> `app.modules.users.seed_admin`; seed_admin reads ADMIN_PASSWORD then ADMIN_CONTRASENA (S3 test). Update README/docs mentions.
+4. Log (Edit, card.md ## Log, append only): METRICS_TOKEN/BEHIND_PROXY/INTERACTIVE_DOCS no longer exist in main (test_sin_sobreingenieria asserts removal): record as ENG-13-ASM-05 with its test title, or declare.
+5. Regenerate `apps/api/openapi.json`; `ruff format/check`, mypy; full suite in background with a log (read only failing lines); failures that also fail in D:/Temp/w/main go in the Log. Then the gate `node .claude/tools/verify.mjs`; Log line `- L<n> · <date> · T1 · <evidence>`.
+6. Commit per step (`ENG-13: ...`, trailer `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`); never push.

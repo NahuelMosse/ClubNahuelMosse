@@ -79,7 +79,7 @@ flowchart TB
 - **`casos_de_uso.py`** orquesta: pide datos por un `Protocol` («algo que sepa insertar una reserva»), aplica las reglas
   y lanza errores del negocio (`Prohibido`, `HorarioOcupado`, `DatosInvalidos`…). No sabe que existe FastAPI ni
   Postgres, y por eso sus tests usan dobles en memoria.
-- **`repositorio.py`** cumple ese `Protocol` sin heredarlo: `ReservasSql`, `UsuariosSql`, etc. escriben SQL con
+- **`repositorio.py`** cumple ese `Protocol` sin heredarlo: `BookingsSql`, `UsuariosSql`, etc. escriben SQL con
   `text()` sobre la conexión del pedido. Cada repositorio escribe sólo sus tablas.
 - **`rutas.py`** traduce HTTP a casos de uso y errores a códigos: arma el repositorio con la conexión del pedido, llama
   al caso de uso y convierte `Prohibido` en 403, `NoEncontrada` en 404, `DatosInvalidos` en 422 con
@@ -96,10 +96,10 @@ FastAPI publica siempre `/docs`, `/redoc` y `/openapi.json`.
 ```mermaid
 sequenceDiagram
   participant App
-  participant Ruta as modules/reservas/rutas.py
+  participant Ruta as modules/bookings/routes.py
   participant Auth as usuario_actual
-  participant CU as modules/reservas/casos_de_uso.py
-  participant Repo as ReservasSql
+  participant CU as modules/bookings/use_cases.py
+  participant Repo as BookingsSql
   participant PG as PostgreSQL
   App->>Ruta: POST /reservas (Bearer token)
   Ruta->>Auth: token
@@ -158,7 +158,7 @@ stateDiagram-v2
   enviando --> fallida: FCM falló
 ```
 
-- **Cancelación y anulación.** `ReservasSql.cancelar` y `ReservasSql.anular` cambian la reserva y encolan el aviso en la
+- **Cancelación y anulación.** `BookingsSql.cancel` y `BookingsSql.void` cambian la reserva y encolan el aviso en la
   misma transacción. Al responder, la ruta agrega una tarea de fondo (`despachar_de`) que entrega los pendientes de esa
   persona. Si a una persona le anulan otra reserva mientras tiene un aviso de anulación sin leer, se abre un aviso nuevo
   con la cantidad total y el anterior queda reemplazado (`reemplazada_por`); `notificacion_reserva` liga cada reserva
