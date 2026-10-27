@@ -22,13 +22,32 @@ export default {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
+          docItemComponent: '@theme/ApiItem',
         },
         blog: false,
         theme: { customCss: './src/css/custom.css' },
       },
     ],
   ],
+  plugins: [
+    [
+      'docusaurus-plugin-openapi-docs',
+      {
+        id: 'api',
+        docsPluginId: 'classic',
+        config: {
+          api: {
+            // Lo arma scripts/copiar.mjs desde apps/api/openapi.json, con las direcciones de la API.
+            specPath: 'static/openapi.json',
+            outputDir: 'docs/api',
+            sidebarOptions: { groupPathsBy: 'tag', categoryLinkSource: 'tag' },
+          },
+        },
+      },
+    ],
+  ],
   themes: [
+    'docusaurus-theme-openapi-docs',
     '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',

@@ -3,8 +3,9 @@
   "private": true,
   "scripts": {
     "copiar": "node scripts/copiar.mjs",
-    "start": "npm run copiar && docusaurus start",
-    "build": "npm run copiar && docusaurus build",
+    "api": "docusaurus gen-api-docs all",
+    "start": "npm run copiar && npm run api && docusaurus start",
+    "build": "npm run copiar && npm run api && docusaurus build",
     "serve": "docusaurus serve"
   },
   "dependencies": {
@@ -15,11 +16,14 @@
     "@mdx-js/react": "^3.1.0",
     "@mermaid-js/layout-elk": "^0.1.9",
     "clsx": "^2.1.1",
+    "docusaurus-plugin-openapi-docs": "^5.2.0",
+    "docusaurus-plugin-sass": "^0.2.6",
+    "docusaurus-theme-openapi-docs": "^5.2.0",
     "prism-react-renderer": "^2.4.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "svg-pan-zoom": "^3.6.2",
-    "swagger-ui-dist": "^5.34.0"
+    "sass": "^1.90.0",
+    "svg-pan-zoom": "^3.6.2"
   },
   "engines": {
     "node": ">=20"
