@@ -103,7 +103,7 @@ void main() {
         manifiesto,
         contains('com.google.firebase.messaging.default_notification_color'),
       );
-      expect(manifiesto, contains('@color/verde_electrico'));
+      expect(manifiesto, contains('@color/color_notificacion'));
       expect(
         _leer('$_res/drawable/ic_notificacion.xml'),
         contains('#FFFFFFFF'),

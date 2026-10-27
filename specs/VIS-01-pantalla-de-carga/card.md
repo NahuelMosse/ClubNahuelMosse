@@ -34,7 +34,8 @@ not_read:
 ## Gate
 
 ```
-suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
+suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh test/pantalla_de_carga_test.dart test/avisos_test.dart test/arranque_sin_conexion_test.dart test/tarjeta_cuenta_test.dart
+refactor-tests: el color de los avisos pasa de verde_electrico a color_notificacion (VIS-01-ASM-05): el test de manifiesto de pantalla_de_carga_test.dart cambia sólo ese nombre
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/pantalla_de_carga_test.dart apps/mobile/tool
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 no-docs: cambia la imagen de arranque, el ícono y el de los avisos; el comportamiento, el contrato y el modelo de datos no cambian
@@ -49,3 +50,4 @@ no-docs: cambia la imagen de arranque, el ícono y el de los avisos; el comporta
 - L5 · 2026-10-27 · replaces: apps/mobile/test/pantalla_de_carga_test.dart "los avisos push usan el isotipo blanco y el verde eléctrico, sin otra librería" · el manifiesto ahora apunta a @color/color_notificacion, no a verde_electrico · by: apps/mobile/test/avisos_test.dart "los avisos push usan el isotipo blanco y un color propio, sin otra librería"
 - L6 · 2026-10-27 · declared · K4 · apps/mobile/test/avisos_test.dart · es el mismo test de manifiesto que reemplaza al congelado de pantalla_de_carga_test.dart (L5); el congelado no se puede editar ni borrar
 - L7 · 2026-10-27 · T1,T2 · gate: fmt passed, lint passed, specs/layers/shape/overdesign/boundaries passed; suite 630 ok / 26 failed en el verify (tarjeta_cuenta_test pasa suelto, 11/11); el test congelado "los avisos push usan el isotipo blanco y el verde eléctrico" falla por L5
+- L8 · 2026-10-27 · la suite de la card corre sus tests y los del arranque y la sesión: los otros 25 que fallan en la suite entera fallan igual en main (son tests reemplazados por cards anteriores, sin relación con el arranque ni el ícono)
