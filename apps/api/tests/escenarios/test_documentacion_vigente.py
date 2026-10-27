@@ -141,21 +141,6 @@ def _columnas_por_tabla() -> dict[str, set[str]]:
     return tablas
 
 
-def test_el_modelo_de_datos_documenta_todas_las_tablas() -> None:
-    """el modelo de datos documenta las nueve tablas con sus columnas @REV-07-S8"""
-    datos = _seccion(_texto(DISENO), "Data")
-    tablas = _columnas_por_tabla()
-
-    assert len(tablas) >= 9
-    faltan = [
-        f"{tabla}.{columna}"
-        for tabla, columnas in sorted(tablas.items())
-        for columna in sorted(columnas | {""})
-        if f"`{tabla}`" not in datos or (columna and f"`{columna}`" not in datos)
-    ]
-    assert faltan == []
-
-
 def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:
     """el presupuesto de rendimiento y capacidad está escrito @REV-07-S9"""
     diseno = _texto(DISENO)

@@ -32,8 +32,11 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_documentacion_del_modelo.py tests/escenarios/test_documentacion_vigente.py tests/unit/test_mapa_por_funcionalidad.py
-lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_documentacion_del_modelo.py
+suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_documentacion_del_modelo.py tests/escenarios/test_documentacion_vigente.py tests/escenarios/test_documentacion_supuestos_vigente.py tests/escenarios/test_documentacion_modelo_vigente.py tests/unit/test_mapa_por_funcionalidad.py
+app-suite: sh D:/Temp/w/herramientas/flutter-mobile.sh test/navegacion_documentada_test.dart
+zoom: node --test sitio-docs/tests/zoom-de-diagramas.test.mjs
+lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_documentacion_del_modelo.py apps/api/tests/escenarios/test_documentacion_vigente.py apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py apps/api/tests/escenarios/test_documentacion_modelo_vigente.py apps/mobile/test/navegacion_documentada_test.dart
+lint-js: node --check sitio-docs/tests/zoom-de-diagramas.test.mjs sitio-docs/src/clientModules/zoom-de-diagramas.js sitio-docs/scripts/copiar.mjs
 refactor-tests: los tests del RED leían mal las migraciones (cadenas de Python contiguas, constantes de módulo) y las rutas anidadas de app.dart; se corrigen en su lugar y se borran las copias corregidas (Log L5-L12)
 no-visual: la card escribe documentación sobre la app y su navegación; no cambia ninguna pantalla
 ```
@@ -54,3 +57,4 @@ no-visual: la card escribe documentación sobre la app y su navegación; no camb
 - L12 · 2026-10-26 · replaces: apps/api/tests/escenarios/test_documentacion_vigente.py "el modelo de datos documenta las nueve tablas con sus columnas" · el modelo vive en modelo-de-datos.md (DOC-01-ASM-01) · by: apps/api/tests/escenarios/test_documentacion_modelo_vigente.py "el modelo de datos documenta las nueve tablas con sus columnas"
 - L13 · 2026-10-26 · T4 · node --test tests/zoom-de-diagramas.test.mjs: 1 pass (rojo antes: módulo inexistente). npm install svg-pan-zoom y docusaurus build NO corrieron (npm colgado >35 min); package.json declara svg-pan-zoom ^3.6.2, package-lock sin sincronizar
 - L14 · 2026-10-27 · kit updated 440e63628bf1cf2dc2867520e033d628b18457c9 → 6e0cf032840cd6d397bc89e595efb8851b7ffb45 · actualización a 6.20 pedida por la persona
+- L15 · 2026-10-27 · refactor-tests · test_documentacion_del_modelo.py y navegacion_documentada_test.dart quedan con los analizadores corregidos y se borran sus copias (_corregida, _visible); los tres tests de REV-07 que leían el modelo en system-design.md salen de test_documentacion_vigente.py y test_documentacion_supuestos_vigente.py: viven en test_documentacion_modelo_vigente.py (L10-L12)
