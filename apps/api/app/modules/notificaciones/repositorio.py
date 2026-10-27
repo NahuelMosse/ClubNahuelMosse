@@ -263,7 +263,7 @@ class NotificacionesSql:
 
     def destinatario(self, usuario_id: UUID) -> Destinatario | None:
         fila = self._conn.execute(
-            text("SELECT correo, nombre FROM usuario WHERE id = :usuario"),
+            text("SELECT correo, nombre FROM usuario WHERE id = :usuario AND activo"),
             {"usuario": usuario_id},
         ).first()
         self._conn.rollback()
