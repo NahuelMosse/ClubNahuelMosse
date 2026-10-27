@@ -25,19 +25,18 @@ PROTEGIDAS = 28
 
 
 def _rutas(app: FastAPI) -> Iterator[tuple[str, str]]:
-    """Método y ruta de cada operación; FastAPI agrupa los routers incluidos en `app.routes`."""
-    grupos: list[Any] = list(app.routes)
+    """Método y ruta de cada operación, también las de un router incluido dentro de otro."""
+    yield from _rutas_de(list(app.routes), "")
+
+
+def _rutas_de(grupos: list[Any], prefijo: str) -> Iterator[tuple[str, str]]:
     for grupo in grupos:
         if isinstance(grupo, APIRoute):
-            registradas, prefijo = [grupo], ""
+            for metodo in grupo.methods or ():
+                yield metodo, prefijo + grupo.path
         elif (router := getattr(grupo, "original_router", None)) is not None:
-            registradas = [r for r in router.routes if isinstance(r, APIRoute)]
-            prefijo = grupo.include_context.prefix
-        else:
-            continue  # /docs, /redoc y /openapi.json
-        for r in registradas:
-            for metodo in r.methods or ():
-                yield metodo, prefijo + r.path
+            yield from _rutas_de(list(router.routes), prefijo + grupo.include_context.prefix)
+        # /docs, /redoc y /openapi.json no son operaciones de la API.
 
 
 def test_cada_ruta_registrada_fuera_de_las_publicas_rechaza_sin_sesion() -> None:
