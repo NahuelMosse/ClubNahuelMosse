@@ -35,8 +35,7 @@ not_read:
 suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_documentacion_del_modelo.py tests/escenarios/test_documentacion_vigente.py tests/escenarios/test_documentacion_supuestos_vigente.py tests/escenarios/test_documentacion_modelo_vigente.py tests/unit/test_mapa_por_funcionalidad.py
 app-suite: sh D:/Temp/w/herramientas/flutter-mobile.sh test/navegacion_documentada_test.dart
 zoom: node --test sitio-docs/tests/zoom-de-diagramas.test.mjs
-lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_documentacion_del_modelo.py apps/api/tests/escenarios/test_documentacion_vigente.py apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py apps/api/tests/escenarios/test_documentacion_modelo_vigente.py apps/mobile/test/navegacion_documentada_test.dart
-lint-js: node --check sitio-docs/tests/zoom-de-diagramas.test.mjs sitio-docs/src/clientModules/zoom-de-diagramas.js sitio-docs/scripts/copiar.mjs
+lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_documentacion_del_modelo.py apps/api/tests/escenarios/test_documentacion_vigente.py apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py apps/api/tests/escenarios/test_documentacion_modelo_vigente.py apps/mobile/test/navegacion_documentada_test.dart && node --check sitio-docs/tests/zoom-de-diagramas.test.mjs && node --check sitio-docs/src/clientModules/zoom-de-diagramas.js && node --check sitio-docs/scripts/copiar.mjs
 refactor-tests: los tests del RED leían mal las migraciones (cadenas de Python contiguas, constantes de módulo) y las rutas anidadas de app.dart; se corrigen en su lugar y se borran las copias corregidas (Log L5-L12)
 no-visual: la card escribe documentación sobre la app y su navegación; no cambia ninguna pantalla
 ```
