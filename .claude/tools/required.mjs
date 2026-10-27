@@ -3,7 +3,8 @@
 //
 // Says what is missing, on the code being delivered, to be able to close:
 // - the mutation of every logic file the card touched (`mutationRequired`: nothing at poc, the domain at mvp, every file
-//   but the screens at production; a screen file —markup, components— and a Tasks line marked `presentation` are not mutated);
+//   but the screens at production; a screen file —markup, components— and a file marked `(presentation)` are not mutated, and
+//   `declared · mutate · <file> · <why>` in the Log leaves one out, listed by the close for a person);
 // - the linter over every test file the card touched;
 // - that no file outside card.md's `## Tasks` was touched, and that no OUT points at something the card created or modified;
 // - the migrations of main untouched, the new ones in order, and the upgrade from main run (migrations.mjs);
@@ -19,7 +20,7 @@ import { pathToFileURL } from 'node:url';
 import {
   IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, commandDir, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
 } from './card.mjs';
-import { actHold, actsOf, gateBlock, readCard, riskOf } from './card-doc.mjs';
+import { ROLES, actHold, actsOf, gateBlock, readCard, riskOf } from './card-doc.mjs';
 import { active, lateSignals, LATE_ADVICE } from './kit.mjs';
 import { runningAgents } from './agents-running.mjs';
 import { editedFromBase, IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
@@ -93,10 +94,27 @@ const covers = (command, file, { folders }) => {
 
 // A screen is not mutated: a view file has no logic and needs a browser per mutant. Its logic lives in .ts/.js modules, which are.
 const IS_UI = /\.(tsx|jsx|vue|svelte|html)$/;
-const isPresentation = (lines, file, root) => IS_UI.test(file) || namedIn(lines, file, root).some((l) => /\bpresentation\b/i.test(l));
+const isPresentation = (lines, file, root) => IS_UI.test(file) || hasRole(lines, file, root, 'presentation');
+
+// A file's role is the `(role)` right after it on its Tasks line: `repositorio.py (data), casos_de_uso.py (rule)` makes only the
+// second a rule. A line that marks no file at all is read whole, as plain words.
+const ROLE_AFTER = new RegExp(`([^\\s,\`]+)\`?\\s*\\((${ROLES.join('|')})\\)`, 'g');
+const hasRole = (lines, file, root, role) => namedIn(lines, file, root).some((l) => {
+  const marks = [...l.matchAll(ROLE_AFTER)];
+  if (!marks.length) return new RegExp(`\\b${role}\\b`, 'i').test(l);
+  return marks.some(([, path, r]) => {
+    const p = path.replaceAll('\\', '/');
+    return r === role && (p === file || file.endsWith(`/${p}`));
+  });
+});
 
 // The domain: a file under a `domain/` folder or one the Tasks line marks as `rule`.
-const isDomain = (lines, file, root) => /(^|\/)domain\//.test(file) || namedIn(lines, file, root).some((l) => /\brule\b/i.test(l));
+const isDomain = (lines, file, root) => /(^|\/)domain\//.test(file) || hasRole(lines, file, root, 'rule');
+
+// `declared · mutate · <file> · <why>` in the Log: the card leaves that file unmutated on purpose; the close lists it for a person.
+export const DECLARED_MUTATE = /declared\s*·\s*mutate\s*·\s*([^\s·]+)\s*·\s*(.+?)\s*$/;
+export const declaredUnmutated = (cardDir) => new Map((String(readCard(cardDir) ?? '').split(/^## Log\b.*$/m)[1] ?? '').split('\n')
+  .map((l) => l.match(DECLARED_MUTATE)).filter(Boolean).map((m) => [m[1].replaceAll('\\', '/'), m[2]]));
 
 // Whether the grade asks for the mutation of a file. `root` is the card's repo (the cwd by default).
 export const mutationRequired = (exempt, map, file, root = process.cwd()) =>
@@ -152,10 +170,11 @@ const missingOnce = (root, { closing = true } = {}) => {
   };
   const passed = (re, codes) => recorded.filter((r) => re.test(r.command) && codes.includes(r.exit) && runOnThisCode(r));
   const mutations = passed(MUTATOR, [0, 3]);
+  const unmutated = declaredUnmutated(cardDir);
   const lints = passed(LINTER, [0]);
 
   const out = [
-    ...production.filter((f) => mutationRequired(exempt, map, f, root))
+    ...production.filter((f) => mutationRequired(exempt, map, f, root) && !unmutated.has(f))
       .filter((f) => !mutations.some((r) => covers(r.command, f, { folders: false })))
       .map((f) => `mutation of ${f} · run: \`node .claude/tools/once.mjs mutate -- node .claude/tools/mutate.mjs ${f} --since ${base} -- ${asOneArg(gateLine(cardDir, 'suite') ?? '<unit suite command>')}\``),
     ...(exempt.criteria.has('T6') ? [] : tests.filter((f) => !lints.some((r) => covers(r.command, f, { folders: true })))

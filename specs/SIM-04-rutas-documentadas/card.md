@@ -35,3 +35,4 @@ no-visual: la card cambia documentación y tests; ninguna pantalla
 ## Log
 
 - L1 · en la docu podes poner el router de la app?
+- L2 · 2026-10-27 · kit updated 1013a50fa7803b47e455fb6e186a0899bfae88b2 → 8536fa90613ca7e11abc0090e440768a668903cd · SIM-04: kit 6.21.4
