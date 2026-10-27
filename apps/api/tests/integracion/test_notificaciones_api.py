@@ -395,7 +395,8 @@ def test_el_borde_de_dispositivos_y_notificaciones_responde_con_un_codigo(
     assert api.post("/notificaciones/0/leer", headers=sesion).status_code == 422
     assert api.post(f"/notificaciones/{2**63}/leer", headers=sesion).status_code == 422
     assert api.post("/notificaciones/abc/leer", headers=sesion).status_code == 422
-    assert api.post("/notificaciones/999999/leer", headers=sesion).status_code == 404
+    inexistente = "/notificaciones/00000000-0000-7000-8000-0000000000ff/leer"
+    assert api.post(inexistente, headers=sesion).status_code == 404
 
 
 def test_las_respuestas_del_centro_no_traen_campos_de_mas_ni_se_cachean(

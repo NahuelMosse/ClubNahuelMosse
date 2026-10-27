@@ -255,7 +255,11 @@ def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_ba
         api.put(f"/sedes/{sede}", headers=_con(token_admin), json=_sede(nombre)).status_code == 404
     )
     assert (
-        api.put("/sedes/999999999", headers=_con(token_admin), json=_sede(nombre)).status_code
+        api.put(
+            "/sedes/00000000-0000-7000-8000-0000000000ff",
+            headers=_con(token_admin),
+            json=_sede(nombre),
+        ).status_code
         == 404
     )
 

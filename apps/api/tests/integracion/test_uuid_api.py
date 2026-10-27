@@ -44,7 +44,7 @@ def test_la_api_devuelve_y_recibe_los_ids_como_texto_uuid(
     assert UUID_V7.match(espacio_id)
     listado = api.get("/espacios", headers=_con(token_admin), params={"sede_id": sede_id})
     assert listado.status_code == 200
-    assert espacio_id in [e["id"] for e in listado.json()]
+    assert espacio_id in [e["id"] for e in listado.json()["espacios"]]
     horarios = api.get(f"/espacios/{espacio_id}/horarios", headers=_con(token_admin))
     assert horarios.status_code == 200, horarios.text
 

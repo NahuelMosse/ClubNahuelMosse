@@ -369,7 +369,8 @@ def test_los_horarios_se_piden_con_sesion_y_dentro_de_la_semana(
     lejos = {"fecha": (hoy + timedelta(days=7)).isoformat()}
     assert api.get(ruta, headers=_con(token_usuario), params=lejos).status_code == 422
     assert api.get(ruta, headers=_con(token_usuario), params={"horas": 5}).status_code == 422
-    assert api.get("/espacios/999999999/horarios", headers=_con(token_usuario)).status_code == 404
+    inexistente = "/espacios/00000000-0000-7000-8000-0000000000ff/horarios"
+    assert api.get(inexistente, headers=_con(token_usuario)).status_code == 404
 
 
 def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
