@@ -5,18 +5,19 @@ from pathlib import Path
 
 API = Path(__file__).resolve().parents[2]
 APP = API / "app"
+MODULOS = APP / "modules"
+SHARED = APP / "shared"
 RAIZ = API.parents[1]
-INFRA = APP / "infraestructura"
 
-# Cada repositorio escribe sólo las tablas que son suyas.
+# Cada archivo de acceso a datos escribe sólo las tablas que son suyas.
 TABLAS_PROPIAS = {
-    "usuarios.py": {"usuario"},
-    "reservas.py": {"reserva"},
-    "sedes.py": {"sede"},
-    "notificaciones.py": {"notificacion", "notificacion_reserva", "dispositivo"},
-    "espacios.py": {"espacio"},
-    "enlaces.py": {"enlace_recuperacion"},
-    "correo.py": {"correo_saliente"},
+    "usuarios/repositorio.py": {"usuario"},
+    "reservas/repositorio.py": {"reserva"},
+    "sedes/repositorio.py": {"sede"},
+    "notificaciones/repositorio.py": {"notificacion", "notificacion_reserva", "dispositivo"},
+    "espacios/repositorio.py": {"espacio"},
+    "recuperacion/repositorio.py": {"enlace_recuperacion"},
+    "recuperacion/correo.py": {"correo_saliente"},
 }
 ESCRITURA = re.compile(
     r"(?:INSERT\s+INTO|(?<!FOR\s)(?<!DO\s)UPDATE|DELETE\s+FROM)\s+(\w+)", re.IGNORECASE
@@ -46,40 +47,47 @@ def _fuentes(carpeta: Path) -> list[Path]:
     return [a for a in carpeta.rglob("*.py") if "__pycache__" not in a.parts]
 
 
-def test_interfaz_no_importa_infraestructura() -> None:
-    """interfaz no importa infraestructura: las dependencias salen de dependencias.py @REV-06-S1 @assumption:REV-06-ASM-01"""
-    dependencias = APP / "dependencias.py"
-    assert dependencias.exists(), "falta app/dependencias.py"
-    assert any(m.startswith("app.infraestructura") for m in _modulos(dependencias))
-    archivos = _fuentes(APP / "interfaz")
+def _nombre(archivo: Path) -> str:
+    return archivo.relative_to(APP).as_posix().removeprefix("modules/")
+
+
+def test_ninguna_funcionalidad_importa_el_repositorio_de_otra() -> None:
+    """el repositorio de una funcionalidad sólo lo importa ella misma: las demás lo piden por su índice
+    @REV-06-S1 @assumption:REV-06-ASM-01"""
+    archivos = _fuentes(MODULOS)
+    assert archivos
+    for archivo in archivos:
+        propia = archivo.relative_to(MODULOS).parts[0]
+        for nombre in _modulos(archivo):
+            partes = nombre.split(".")
+            if partes[:2] == ["app", "modules"] and len(partes) > 3 and partes[3] == "repositorio":
+                assert partes[2] == propia, f"{_nombre(archivo)} importa {nombre}"
+
+
+def test_shared_no_importa_funcionalidades_ni_rutas() -> None:
+    """lo compartido no importa funcionalidades @REV-06-S1 @assumption:REV-06-ASM-01"""
+    archivos = _fuentes(SHARED)
     assert archivos
     for archivo in archivos:
         for nombre in _modulos(archivo):
-            assert not nombre.startswith("app.infraestructura"), f"{archivo.name} importa {nombre}"
-
-
-def test_infraestructura_no_importa_interfaz_ni_aplicacion() -> None:
-    """infraestructura no importa interfaz ni aplicacion @REV-06-S1 @assumption:REV-06-ASM-01"""
-    archivos = _fuentes(INFRA)
-    assert archivos
-    for archivo in archivos:
-        for nombre in _modulos(archivo):
-            assert not nombre.startswith(("app.interfaz", "app.aplicacion")), (
+            assert not nombre.startswith(("app.modules", "app.main")), (
                 f"{archivo.name} importa {nombre}"
             )
 
 
 def test_cada_repositorio_escribe_solo_su_tabla() -> None:
     """cada repositorio escribe sólo su tabla @REV-06-S6 @assumption:REV-06-ASM-05"""
-    for archivo in _fuentes(INFRA):
-        propias = TABLAS_PROPIAS.get(archivo.name, set())
+    archivos = [*_fuentes(SHARED), *_fuentes(MODULOS)]
+    assert archivos
+    for archivo in archivos:
+        propias = TABLAS_PROPIAS.get(_nombre(archivo), set())
         for texto in _textos(archivo):
             for tabla in ESCRITURA.findall(texto):
-                assert tabla.lower() in propias, f"{archivo.name} escribe la tabla {tabla}"
+                assert tabla.lower() in propias, f"{_nombre(archivo)} escribe la tabla {tabla}"
 
 
 def test_no_queda_una_supresion_de_tipos() -> None:
-    """no queda un type: ignore en la API ni en sus tests @REV-06-S7 @assumption:REV-06-ASM-06"""
+    """no queda una supresión de tipos en la API ni en sus tests @REV-06-S7 @assumption:REV-06-ASM-06"""
     aguja = "type" + ": ignore"
     for carpeta in (APP, API / "tests"):
         for archivo in _fuentes(carpeta):
@@ -100,25 +108,25 @@ def test_la_zona_del_club_se_define_una_sola_vez_en_la_api() -> None:
         for a in _fuentes(APP)
         if any(ZONA_LITERAL in t for t in _textos(a))
     )
-    assert con_zona == ["dominio/zona.py"]
+    assert con_zona == ["shared/zona.py"]
 
 
-def test_la_anticipacion_sale_de_dominio_y_no_esta_en_el_sql() -> None:
-    """la anticipación del recordatorio sale de dominio y no está escrita en el SQL @REV-06-S9 @assumption:REV-06-ASM-08"""
-    archivo = INFRA / "notificaciones.py"
+def test_la_anticipacion_sale_de_las_reglas_y_no_esta_en_el_sql() -> None:
+    """la anticipación del recordatorio sale de las reglas y no está escrita en el SQL @REV-06-S9 @assumption:REV-06-ASM-08"""
+    archivo = MODULOS / "notificaciones" / "repositorio.py"
     arbol = ast.parse(archivo.read_text(encoding="utf-8"))
     nombres = {n.id for n in ast.walk(arbol) if isinstance(n, ast.Name)}
     assert "ANTICIPACION" in nombres
     assert not any("1 hour" in t for t in _textos(archivo))
 
 
-def test_las_rutas_de_mis_reservas_y_de_cancelar_entran_por_aplicacion() -> None:
-    """las rutas de mis reservas y de cancelar entran por aplicacion @REV-06-S11 @assumption:REV-06-ASM-09"""
-    arbol = ast.parse((APP / "interfaz" / "reservas.py").read_text(encoding="utf-8"))
+def test_las_rutas_de_mis_reservas_y_de_cancelar_entran_por_los_casos_de_uso() -> None:
+    """las rutas de mis reservas y de cancelar entran por los casos de uso @REV-06-S11 @assumption:REV-06-ASM-09"""
+    arbol = ast.parse((MODULOS / "reservas" / "rutas.py").read_text(encoding="utf-8"))
     traidos = {
         a.name
         for n in ast.walk(arbol)
-        if isinstance(n, ast.ImportFrom) and n.module == "app.aplicacion.reservas"
+        if isinstance(n, ast.ImportFrom) and n.module == "app.modules.reservas.casos_de_uso"
         for a in n.names
     }
     assert {"mis_reservas", "cancelar_reserva"} <= traidos
