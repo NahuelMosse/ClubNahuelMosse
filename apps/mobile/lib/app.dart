@@ -72,12 +72,14 @@ class _AppState extends State<App> {
     centro.ubicacion = () =>
         _rutas.routerDelegate.currentConfiguration.uri.path;
     // Un aviso de la bandeja del sistema abre la app en la reserva que avisa.
-    _alTocarUnAviso = centro.alTocarDesdeElSistema.listen(
-      (aviso) => _rutas.go(aviso.ruta),
-    );
+    _alTocarUnAviso = centro.alTocarDesdeElSistema.listen((aviso) {
+      unawaited(centro.marcarLasDelAviso(aviso));
+      _rutas.go(aviso.ruta);
+    });
     unawaited(
       centro.abiertaPor().then((aviso) {
         if (aviso != null) {
+          unawaited(centro.marcarLasDelAviso(aviso));
           _rutas.go(aviso.ruta);
         }
       }),

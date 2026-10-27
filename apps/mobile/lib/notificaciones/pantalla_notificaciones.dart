@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -83,6 +85,17 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
       reintentar: _cargar,
       alNoReintentar: () => setState(() => _fallo = true),
     );
+  }
+
+  /// Al salir se dan por leídas las que se mostraron; mientras está abierto siguen sin leer
+  /// para que se distingan. Va en un microtask: no se avisa a nadie en medio del desmontaje.
+  @override
+  void dispose() {
+    final centro = widget.centro;
+    if (centro.noLeidas > 0 || centro.sinLeer.isNotEmpty) {
+      scheduleMicrotask(centro.marcarTodas);
+    }
+    super.dispose();
   }
 
   @override
