@@ -1,5 +1,7 @@
 """Un aviso a una persona sin correo cargado sale sólo por push."""
 
+# ruff: noqa: E501  (el título de la prueba lleva su etiqueta y no se parte)
+
 from typing import Any, cast
 from uuid import UUID
 
@@ -9,7 +11,6 @@ from app.modules.notificaciones import casos_de_uso
 from app.modules.notificaciones.casos_de_uso import entregar
 from app.modules.notificaciones.reglas import Destinatario
 from app.shared.mensaje import Mensaje
-
 from tests.unit.test_aviso_por_correo import AVISO, USUARIO, _Canal, _Repositorio
 
 
