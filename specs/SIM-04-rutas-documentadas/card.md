@@ -15,7 +15,7 @@ not_read:
 ## Tasks
 
 - T1 · S1 · docs/technical/navegacion-de-la-app.md (presentation), docs/technical/arquitectura.md, docs/technical/mapa-del-codigo.md, apps/api/tests/unit/test_documentacion_del_modelo.py, apps/api/tests/unit/test_rutas_documentadas.py · tests: apps/api/tests/unit/test_rutas_documentadas.py "la página de navegación nombra rutas.dart y redireccion.dart, donde viven las rutas y la redirección @SIM-04-S1"
-  reuses: el lector de rutas `_rutas_de_app_dart` de test_documentacion_del_modelo.py, apuntado a rutas.dart
+  reuses: el lector de rutas `_rutas_de_app_dart` de test_documentacion_del_modelo.py, apuntado al archivo nuevo del router
 
 ## Changes to existing behavior
 
