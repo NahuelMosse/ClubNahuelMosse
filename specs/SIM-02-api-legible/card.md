@@ -47,6 +47,8 @@ attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh sim02_app --json --body-limi
 no-docs: refactor interno; el comportamiento, el contrato y el modelo de datos no cambian
 mutate apps/api/app/modules/notificaciones/casos_de_uso.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_cola_de_avisos.py tests/unit/test_recordatorios.py
 mutate apps/api/app/modules/reservas/almacen.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_casos_de_uso_reservas.py
+mutate apps/api/app/modules/reservas/casos_de_uso.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_casos_de_uso_reservas.py
+mutate apps/api/app/modules/reservas/repositorio.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/integracion/test_reservas_api.py tests/integracion/test_api_limpia_reservas.py tests/integracion/test_api_limpia_reserva_movida.py tests/integracion/test_anular_reserva_api.py tests/integracion/test_historial_api.py tests/integracion/test_api_legible.py
 mutate apps/api/app/modules/notificaciones/almacen.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_despacho_de_confirmaciones.py tests/unit/test_cola_de_avisos.py tests/unit/test_recordatorios.py
 mutate apps/api/app/modules/notificaciones/repositorio.py: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/escenarios/test_cancelacion_forzosa.py tests/escenarios/test_cancelacion_forzosa_agrupado.py tests/escenarios/test_confirmacion_cancelacion_reglas.py tests/integracion/test_notificaciones_api.py
 ```
