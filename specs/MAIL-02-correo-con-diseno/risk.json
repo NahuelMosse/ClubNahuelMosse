@@ -1,0 +1,35 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [
+    "contraseña"
+  ],
+  "files": [
+    "apps/api/app/modules/recuperacion/reglas.py",
+    "apps/api/app/modules/recuperacion/casos_de_uso.py",
+    "apps/api/app/modules/recuperacion/correo.py"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract",
+      "interpretation",
+      "security",
+      "visual"
+    ],
+    "why": [
+      "apps/api/app/modules/recuperacion/rutas.py is shared code (imported by apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/horarios/__init__.py, apps/api/app/modules/notificaciones/__init__.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/notificaciones/__init__.py and 1 more outside `## Tasks` bring ui, api"
+    ]
+  }
+}

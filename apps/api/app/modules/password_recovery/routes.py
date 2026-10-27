@@ -7,7 +7,6 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Response, status
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 
-from app.modules.password_recovery.email import send
 from app.modules.password_recovery.repository import LinksSql, link_repository
 from app.modules.password_recovery.use_cases import (
     InvalidLink,
@@ -17,6 +16,7 @@ from app.modules.password_recovery.use_cases import (
 )
 from app.modules.users import UsersSql, user_repository
 from app.shared.config import config
+from app.shared.email import send
 from app.shared.identity import FirebaseProvider, identity
 
 router = APIRouter(tags=["recuperación de contraseña"])

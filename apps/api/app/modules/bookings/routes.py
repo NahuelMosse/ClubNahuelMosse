@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, Response, status
 from pydantic import AwareDatetime, BaseModel
 
+from app.modules.bookings.email import booking_email
 from app.modules.bookings.repository import BookingsSql, bookings_repository
 from app.modules.bookings.rules import (
     Booking,
@@ -27,6 +28,7 @@ from app.modules.bookings.use_cases import (
 from app.modules.notifications import PushChannel, dispatch_for, push_channel
 from app.modules.session import NoSession, Profile, current_user
 from app.shared.club_timezone import CLUB_TIMEZONE
+from app.shared.email import send
 from app.shared.errors import ConcurrentChange, InvalidData, SlotTaken, Unavailable
 from app.shared.input_validation import Identifier, parse_time
 from app.shared.responses import conflict
@@ -140,6 +142,7 @@ def create_booking(
     payload: BookingRequest,
     perfil: Annotated[Profile, Depends(current_user)],
     bookings: Annotated[BookingsSql, Depends(bookings_repository)],
+    after: BackgroundTasks,
 ) -> BookingView | Response:
     try:
         booking = book(
@@ -155,6 +158,7 @@ def create_booking(
         raise InvalidData({"espacio_id": UNAVAILABLE_MESSAGE}) from None
     except SlotTaken:
         return conflict({"horario": SLOT_TAKEN_MESSAGE})
+    after.add_task(send, booking_email(perfil, booking))
     return _view(booking)
 
 

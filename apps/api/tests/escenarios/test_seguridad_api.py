@@ -24,7 +24,7 @@ from sqlalchemy import Engine, text
 
 from app.modules.password_recovery.rules import Message as Mensaje
 from app.shared.config import config
-from app.modules.password_recovery import email as correo
+from app.shared import email as correo
 from app.modules.users.seed_admin import main as sembrar
 from app.main import create_app
 

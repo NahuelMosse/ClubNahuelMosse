@@ -7,12 +7,15 @@ from app.modules.notifications.rules import DeliveryResult as DeliveryResult
 from app.modules.notifications.rules import (
     Notice,
     Notification,
+    Reminder,
+    reminder_email,
     reminder_message,
 )
 from app.modules.notifications.rules import PendingNotice as PendingNotice
 from app.modules.notifications.rules import PushChannel as PushChannel
 from app.modules.notifications.store import Notifications
 from app.modules.session import Profile
+from app.shared.email import send
 from app.shared.errors import Forbidden, InvalidData, NotFound, Unavailable
 
 PLATFORMS = ("android", "ios")
@@ -83,6 +86,16 @@ def dispatch_pending(
     return dispatched
 
 
+def _notify_by_email(reminder: Reminder) -> None:
+    """The email stops nothing: the push already went out and the log does not carry the address."""
+    if not reminder.email:
+        return
+    try:
+        send(reminder_email(reminder))
+    except Exception as e:
+        _log.warning("el correo del recordatorio falló: %s", type(e).__name__)
+
+
 def send_reminders(
     notifications: Notifications,
     channel: PushChannel,
@@ -104,6 +117,7 @@ def send_reminders(
                 continue
             registered += 1
             deliver(notifications, channel, new_id, reminder.user_id, notice)
+            _notify_by_email(reminder)
         except Exception as e:
             # One person's reminder does not cut the others.
             _log.warning("el recordatorio falló: %s", type(e).__name__)

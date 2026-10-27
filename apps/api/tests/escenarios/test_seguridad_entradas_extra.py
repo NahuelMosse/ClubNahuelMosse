@@ -12,7 +12,7 @@ from sqlalchemy import Engine, text
 
 from app.modules.password_recovery.rules import Message as Mensaje
 from app.shared.config import config
-from app.modules.password_recovery import email as correo
+from app.shared import email as correo
 
 RAIZ_REPO = Path(__file__).resolve().parents[4]
 CONTRASENA = "ClubNahuel1"

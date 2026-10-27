@@ -7,9 +7,9 @@ from email.message import EmailMessage
 
 from sqlalchemy import text
 
-from app.modules.password_recovery.rules import Message
 from app.shared.config import config
 from app.shared.db import engine
+from app.shared.message import Message
 
 email_log = logging.getLogger("clubnahuelmosse.correo")
 
@@ -33,6 +33,8 @@ def _by_smtp(message: Message) -> None:
     email_message["To"] = message.recipient
     email_message["Subject"] = message.subject
     email_message.set_content(message.body)
+    if message.html is not None:
+        email_message.add_alternative(message.html, subtype="html")
     with smtplib.SMTP(config.smtp_host, config.smtp_port, timeout=10) as smtp:
         smtp.starttls(context=ssl.create_default_context())
         smtp.login(config.smtp_user, config.smtp_password)
@@ -40,16 +42,17 @@ def _by_smtp(message: Message) -> None:
 
 
 def _by_brevo(message: Message) -> None:
+    payload = {
+        "sender": {"email": config.email_sender, "name": SENDER_NAME},
+        "to": [{"email": message.recipient}],
+        "subject": message.subject,
+        "textContent": message.body,
+    }
+    if message.html is not None:
+        payload["htmlContent"] = message.html
     request = urllib.request.Request(
         BREVO_URL,
-        data=json.dumps(
-            {
-                "sender": {"email": config.email_sender, "name": SENDER_NAME},
-                "to": [{"email": message.recipient}],
-                "subject": message.subject,
-                "textContent": message.body,
-            }
-        ).encode(),
+        data=json.dumps(payload).encode(),
         headers={
             "api-key": config.brevo_api_key,
             "content-type": "application/json",

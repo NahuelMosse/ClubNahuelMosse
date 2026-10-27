@@ -9,6 +9,7 @@ from app.modules.notifications.rules import (
     BookingData,
     PushChannel,
     cancellation_message,
+    short_kind,
 )
 from app.modules.notifications.sweep import dispatch_for, sweep_every
 from app.modules.notifications.use_cases import send_reminders
@@ -23,6 +24,7 @@ __all__ = [
     "notifications_repository",
     "push_channel",
     "router",
+    "short_kind",
     "send_reminders",
     "sweep_every",
 ]

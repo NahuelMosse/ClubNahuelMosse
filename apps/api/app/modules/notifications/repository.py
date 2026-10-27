@@ -179,7 +179,8 @@ class NotificationsSql:
     def due(self, now: datetime, user_id: UUID | None) -> list[Reminder]:
         rows = self._conn.execute(
             text(
-                "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede"
+                "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede,"
+                " u.correo, u.nombre AS nombre_usuario"
                 " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
                 " JOIN sede s ON s.id = e.sede_id JOIN usuario u ON u.id = r.usuario_id"
                 " WHERE r.estado = 'activa' AND u.activo"
@@ -205,6 +206,8 @@ class NotificationsSql:
                 sport=row.deporte,
                 kind=row.tipo,
                 venue=row.sede,
+                email=row.correo,
+                name=row.nombre_usuario,
             )
             for row in rows
         ]

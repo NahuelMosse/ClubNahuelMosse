@@ -7,6 +7,8 @@ from uuid import UUID
 
 from app.modules.spaces import CATALOG
 from app.shared.club_timezone import CLUB_TIMEZONE
+from app.shared.email_template import html_email
+from app.shared.message import Message
 
 NoticeKind = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
 Delivery = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
@@ -77,6 +79,8 @@ class Reminder:
     sport: str
     kind: str
     venue: str
+    email: str = ""
+    name: str = ""
 
 
 @dataclass(frozen=True)
@@ -111,11 +115,11 @@ class LostNotice:
 
 def short_kind(sport: str, kind: str) -> str:
     """The kind name when it starts with the sport name; otherwise only the sport name."""
-    d = next((d for d in CATALOG if d.clave == sport), None)
-    t = None if d is None else next((t for t in d.tipos if t.clave == kind), None)
+    d = next((d for d in CATALOG if d.key == sport), None)
+    t = None if d is None else next((t for t in d.kinds if t.key == kind), None)
     if d is None or t is None:
         return sport
-    return t.nombre if t.nombre.startswith(d.nombre) else d.nombre
+    return t.name if t.name.startswith(d.name) else d.name
 
 
 def _time(moment: datetime) -> str:
@@ -130,6 +134,22 @@ def reminder_message(r: Reminder) -> Notice:
             f"{short_kind(r.sport, r.kind)} · {r.venue} · {_time(r.starts_at)} – {_time(r.ends_at)}"
         ),
         data=notice_data("recordatorio", r.booking_id),
+    )
+
+
+def reminder_email(r: Reminder) -> Message:
+    """The same one-hour-ahead notice, by email with the app's design."""
+    details = [
+        ("Cancha", short_kind(r.sport, r.kind)),
+        ("Sede", r.venue),
+        ("Horario", f"{_time(r.starts_at)} a {_time(r.ends_at)}"),
+    ]
+    greeting = f"Hola {r.name}: tu turno empieza en 1 hora."
+    return Message(
+        recipient=r.email,
+        subject="Tu reserva es en 1 hora",
+        body="\n".join([greeting, "", *(f"{label}: {value}" for label, value in details)]),
+        html=html_email("Tu reserva es en 1 hora", [greeting], details=details),
     )
 
 

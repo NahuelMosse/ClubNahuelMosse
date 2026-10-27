@@ -1,13 +1,8 @@
-# kit-shape: the types of the message, the recipient and the claimed link are a single concept
+# kit-shape: the recipient and the claimed link are a single concept
 from dataclasses import dataclass
 from uuid import UUID
 
-
-@dataclass(frozen=True)
-class Message:
-    recipient: str
-    subject: str
-    body: str
+from app.shared.message import Message as Message
 
 
 @dataclass(frozen=True)

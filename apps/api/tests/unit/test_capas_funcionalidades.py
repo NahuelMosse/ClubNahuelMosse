@@ -17,7 +17,7 @@ TABLAS_PROPIAS = {
     "notifications/repository.py": {"notificacion", "notificacion_reserva", "dispositivo"},
     "spaces/repository.py": {"espacio"},
     "password_recovery/repository.py": {"enlace_recuperacion"},
-    "password_recovery/email.py": {"correo_saliente"},
+    "shared/email.py": {"correo_saliente"},
 }
 ESCRITURA = re.compile(
     r"(?:INSERT\s+INTO|(?<!FOR\s)(?<!DO\s)UPDATE|DELETE\s+FROM)\s+(\w+)", re.IGNORECASE

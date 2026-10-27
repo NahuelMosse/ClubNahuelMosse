@@ -14,6 +14,7 @@ from uuid import UUID
 from app.modules.password_recovery.rules import ClaimedLink, Recipient
 from app.modules.password_recovery.rules import Message as Message
 from app.modules.users import normalize_email, password_problems, valid_email
+from app.shared.email_template import html_email
 from app.shared.errors import InvalidData
 
 VALIDITY_MINUTES = 30
@@ -77,6 +78,8 @@ def request_link(email: str, public_url: str, links: LinkRepository) -> Message 
     # The code goes after the "#": the browser does not send it to the server, so it does not
     # end up in any request log.
     link = f"{public_url.rstrip('/')}/enlace/recuperar#codigo={code}"
+    expiry = f"El enlace vence en {VALIDITY_MINUTES} minutos y sirve una sola vez."
+    discard = "Si no lo pediste, ignorá este correo: tu contraseña no cambia."
     return Message(
         recipient=recipient.email,
         subject="Creá una contraseña nueva",
@@ -84,8 +87,17 @@ def request_link(email: str, public_url: str, links: LinkRepository) -> Message 
             f"Hola {recipient.first_name}:\n\n"
             "Para crear una contraseña nueva, abrí este enlace desde tu teléfono:\n"
             f"{link}\n\n"
-            f"El enlace vence en {VALIDITY_MINUTES} minutos y sirve una sola vez. Si no lo "
-            "pediste, ignorá este correo: tu contraseña no cambia."
+            f"{expiry} {discard}"
+        ),
+        html=html_email(
+            "Creá una contraseña nueva",
+            [
+                f"Hola {recipient.first_name}:",
+                "Para crear una contraseña nueva, tocá el botón desde tu teléfono.",
+                expiry,
+            ],
+            button=("Crear contraseña nueva", link),
+            footer=discard,
         ),
     )
 
