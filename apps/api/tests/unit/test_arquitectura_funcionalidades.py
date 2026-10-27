@@ -49,6 +49,22 @@ RENOMBRADOS = {
     "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
     "app__interfaz__sedes__PedidoDeEdicion": "VenueEditRequest",
     "app__interfaz__sesion__PedidoDeEdicion": "ProfileEditRequest",
+    "ConsultaDeEnlace": "LinkCheck",
+    "ContrasenaNueva": "NewPassword",
+    "ErroresDeCampo": "FieldErrors",
+    "ErroresDeContrasena": "PasswordErrors",
+    "ErroresDeSede": "VenueErrors",
+    "PedidoCambioDeContrasena": "PasswordChangeRequest",
+    "PedidoDeEnlace": "LinkRequest",
+    "PedidoDeSede": "VenueRequest",
+    "PedidoRegistro": "RegistrationRequest",
+    "PerfilPropio": "OwnProfile",
+    "RegistroCreado": "RegistrationCreated",
+    "ReservasFueraDelHorario": "BookingsOutside",
+    "SedeVista": "VenueView",
+    "Sedes": "VenueList",
+    "SinSesion": "NoSession",
+    "UsuarioRepetido": "DuplicateUser",
 }
 
 

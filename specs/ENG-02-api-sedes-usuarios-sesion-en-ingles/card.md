@@ -48,3 +48,5 @@ no-docs: nombres internos; el comportamiento y el modelo de datos no cambian (el
 - L1 · no me gusta nada que todo el codigo este en español · Todo, base y API incluidas · hacelo en paralelo · estamos en etapa critica, necesito que todo lo que hagamos se haga lo mas rapido posible · Seguir con todo
 - L2 · 2026-10-27 · declared · fault-db · la base es Postgres, no un archivo; la card no cambia cómo se conecta ni el SQL
 - L3 · 2026-10-27 · parte de ENG-01 (base de la API en inglés, rama ENG-01-api-base-en-ingles), en paralelo con ENG-03, ENG-04 y ENG-05: cada una renombra sus módulos y sólo las líneas de import de los otros
+- L4 · 2026-10-27 · T1 · tests/unit con el venv compartido: 319 passed, 6 failed antes del ajuste; test_arquitectura_funcionalidades (nombres de esquema) corregido y en verde (11 passed); pyproject per-file-ignores cubre `*routes.py`
+- L5 · 2026-10-27 · T1 · gate parcial: fallan en unit test_base_en_ingles (contract/_pruebas), test_codigo_legible (firmas vs main), test_sin_supresiones x2 (type:ignore), test_sin_sobreingenieria (DB puerto 8703); la comprobación contra la base ENG-01 no corrió (time-cap)
