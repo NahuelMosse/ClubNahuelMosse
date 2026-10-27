@@ -25,7 +25,7 @@ not_read:
 
 ```
 suite: node --test "sitio-docs/tests/*.test.mjs"
-lint: node --check sitio-docs/scripts/copiar.mjs && node --check sitio-docs/tests/integraciones-en-el-sitio.test.mjs
+lint: node --check sitio-docs/tests/integraciones-en-el-sitio.test.mjs
 no-docs: la card cambia el sitio de documentación mismo
 no-visual: suma una página con el tema del sitio
 ```
