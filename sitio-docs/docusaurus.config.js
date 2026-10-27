@@ -14,6 +14,7 @@ export default {
     hooks: { onBrokenMarkdownLinks: 'warn' },
   },
   i18n: { defaultLocale: 'es', locales: ['es'] },
+  clientModules: ['./src/clientModules/zoom-de-diagramas.js'],
   presets: [
     [
       'classic',

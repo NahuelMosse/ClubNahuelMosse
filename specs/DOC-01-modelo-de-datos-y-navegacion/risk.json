@@ -1,0 +1,34 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [
+    "docs",
+    "screen"
+  ],
+  "words": [
+    "migraciones",
+    "sesión",
+    "rol"
+  ],
+  "files": [
+    "docs/technical/modelo-de-datos.md",
+    "docs/technical/system-design.md",
+    "docs/technical/navegacion-de-la-app.md",
+    "sitio-docs/scripts/copiar.mjs"
+  ],
+  "tasks": 3,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "la card escribe documentación sobre la app y su navegación; no cambia ninguna pantalla",
+      "files": [
+        "sitio-docs/scripts/copiar.mjs"
+      ]
+    }
+  ]
+}
