@@ -159,7 +159,7 @@ void main() {
 
         final consulta = pedidos.last.url;
         expect(consulta.path, '/espacios/disponibles');
-        expect(consulta.queryParameters['sede_id'], '1');
+        expect(consulta.queryParameters['sede_id'], '00000000-0000-7000-8000-000000000001');
         expect(consulta.queryParameters['deporte'], 'Futbol');
         expect(consulta.queryParameters['desde'], '18:00');
         expect(consulta.queryParameters['hasta'], '19:00');

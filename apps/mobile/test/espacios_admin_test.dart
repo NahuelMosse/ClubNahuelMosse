@@ -140,7 +140,7 @@ void main() {
       );
       expect((nombre, numero), ('Moron_Rivadavia_19850_Futbol_F5_1', 1));
       expect(pedidos.single.url.queryParameters, {
-        'sede_id': '1',
+        'sede_id': '00000000-0000-7000-8000-000000000001',
         'deporte': 'Futbol',
         'tipo': 'F5',
       });

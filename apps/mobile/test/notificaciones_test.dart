@@ -218,7 +218,10 @@ void main() {
       final grupos = agruparPorDia(lista, hoy);
 
       expect(grupos.map((g) => g.rotulo), ['HOY', 'AYER']);
-      expect(grupos.first.notificaciones.map((n) => n.id), [3, 2]);
+      expect(grupos.first.notificaciones.map((n) => n.id), [
+        '00000000-0000-7000-8000-000000000003',
+        '00000000-0000-7000-8000-000000000002',
+      ]);
     });
 
     test(
@@ -605,7 +608,7 @@ void main() {
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abiertas.map((n) => n.id), [3]);
+      expect(abiertas.map((n) => n.id), ['00000000-0000-7000-8000-000000000003']);
     });
 
     testWidgets('sin permiso del sistema no abre el panel', (tester) async {

@@ -111,7 +111,7 @@ void main() {
         findsOneWidget,
       );
       final canchas = pedidos.where((p) => p.url.path == '/espacios').single;
-      expect(canchas.url.queryParameters, {'sede_id': '1'});
+      expect(canchas.url.queryParameters, {'sede_id': '00000000-0000-7000-8000-000000000001'});
       semantica.dispose();
     });
 
@@ -236,7 +236,7 @@ void main() {
       expect(find.text('2 CANCHAS · FÚTBOL · TODOS LOS TIPOS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsOneWidget);
       expect(pedidos.last.url.queryParameters, {
-        'sede_id': '1',
+        'sede_id': '00000000-0000-7000-8000-000000000001',
         'deporte': 'Futbol',
       });
 
@@ -290,7 +290,7 @@ void main() {
       datos.add(f7);
       await tocarChip(tester, 'Deporte Fútbol');
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
-      expect(pedidos.last.url.queryParameters, {'sede_id': '1'});
+      expect(pedidos.last.url.queryParameters, {'sede_id': '00000000-0000-7000-8000-000000000001'});
 
       // Al volver a elegir el deporte aparece el tipo nuevo.
       await tocarChip(tester, 'Deporte Fútbol');
