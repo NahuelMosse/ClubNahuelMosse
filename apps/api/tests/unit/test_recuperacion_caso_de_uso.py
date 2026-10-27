@@ -1,6 +1,13 @@
 import pytest
 
-from app.modules.recuperacion.casos_de_uso import MAXIMO_POR_HORA, VIGENCIA_MINUTOS, EnlaceInvalido, hash_de, pedir_enlace, usar_enlace
+from app.modules.recuperacion.casos_de_uso import (
+    MAXIMO_POR_HORA,
+    VIGENCIA_MINUTOS,
+    EnlaceInvalido,
+    hash_de,
+    pedir_enlace,
+    usar_enlace,
+)
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
 from app.shared.errores import DatosInvalidos
 

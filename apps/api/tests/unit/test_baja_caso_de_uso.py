@@ -2,8 +2,8 @@ from datetime import date
 
 import pytest
 
-from app.modules.usuarios.baja import dar_de_baja
 from app.modules.sesion.perfil import Perfil, Rol
+from app.modules.usuarios.baja import dar_de_baja
 from app.shared.errores import Prohibido
 
 

@@ -7,8 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.reservas.repositorio import ReservasSql
 from app.modules.horarios.reglas import Agenda
+from app.modules.reservas.repositorio import ReservasSql
 from app.shared.errores import AgendaCambiada, Cambiado, NoDisponible
 
 CLUB = ZoneInfo("America/Argentina/Buenos_Aires")
@@ -56,8 +56,6 @@ def cancha(
 ) -> tuple[int, int, int]:
     """La sede, una cancha suya y quien reserva."""
     return sede[0], _cancha(api, token_admin, sede[0]), _usuario(api, motor, token_usuario)
-
-
 
 
 def test_una_reserva_ajena_o_inexistente_no_se_encuentra(

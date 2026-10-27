@@ -6,8 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.usuarios.sembrar_admin import main as sembrar
 from app.main import crear_app
+from app.modules.usuarios.sembrar_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 
