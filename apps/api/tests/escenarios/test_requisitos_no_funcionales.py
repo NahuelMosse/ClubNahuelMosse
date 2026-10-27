@@ -262,7 +262,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     assert (de_beto.status_code, de_ana.status_code) == (201, 201)
     with motor.connect() as conn:
         dueno = {
-            r.id: r.usuario_id
+            str(r.id): r.usuario_id
             for r in conn.execute(
                 text("SELECT id, usuario_id FROM reserva WHERE espacio_id = :e"), {"e": espacio}
             )

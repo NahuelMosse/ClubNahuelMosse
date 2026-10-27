@@ -10,9 +10,10 @@ from uuid import UUID
 from alembic import command
 from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, text
+from sqlalchemy import Engine, create_engine, text
 
 from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
+from tests.integracion.test_uuid_y_auditoria import base_nueva  # noqa: F401  (fixture)
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 URL_PRUEBAS = os.environ["DATABASE_URL"]
@@ -59,7 +60,9 @@ def test_el_historial_propio_es_el_listado_entero_y_sin_marcador(
 ) -> None:
     """el historial propio es el listado ordenadas por fecha, entero y sin marcador @SIM-01-S1 @assumption:SIM-01-ASM-01"""
     espacio = _espacio(api, token_admin, sede[0])
-    creadas = [_reservar(api, token_usuario, espacio, d, h)["id"] for d in (1, 2) for h in range(8, 19)]
+    creadas = [
+        _reservar(api, token_usuario, espacio, d, h)["id"] for d in (1, 2) for h in range(8, 19)
+    ]
 
     r = api.get("/reservas", headers=_con(token_usuario), params={"cuando": "proximas"})
 
@@ -157,24 +160,36 @@ def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(motor: Engine) -> None:
     assert columnas and not {"intentos", "tomada_en"} & columnas
 
 
-def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(motor: Engine) -> None:
+def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(
+    base_nueva: tuple[AlembicConfig, str],  # noqa: F811  (la fixture importada)
+) -> None:
     """la migración 0009 pasa a fallida un aviso que estaba enviando @assumption:SIM-01-ASM-07"""
-    alembic = AlembicConfig(str(RAIZ_API / "alembic.ini"))
-    alembic.set_main_option("sqlalchemy.url", URL_PRUEBAS.replace("%", "%%"))
-    command.downgrade(alembic, "0008")
+    # En una base propia: la base compartida no puede volver a 0008 una vez que la 0010
+    # creó filas con ids nuevos (DAT-01-ASM-02).
+    alembic, url = base_nueva
+    command.upgrade(alembic, "0008")
+    motor = create_engine(url)
     try:
         with motor.begin() as conn:
-            id_: UUID = conn.execute(
+            conn.execute(
+                text(
+                    "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
+                    " fecha_nacimiento) VALUES ('uid-0009', 'a@correo.com', 'Ana', 'Pérez',"
+                    " '30111222', '2000-03-14')"
+                )
+            )
+            id_: int = conn.execute(
                 text(
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio, tomada_en)"
                     " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'enviando', now()"
-                    " FROM usuario WHERE activo LIMIT 1 RETURNING id"
+                    " FROM usuario LIMIT 1 RETURNING id"
                 )
             ).scalar_one()
+        command.upgrade(alembic, "0009")
+        with motor.connect() as conn:
+            envio: str = conn.execute(
+                text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
+            ).scalar_one()
     finally:
-        command.upgrade(alembic, "head")
-    with motor.connect() as conn:
-        envio: str = conn.execute(
-            text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
-        ).scalar_one()
+        motor.dispose()
     assert envio == "fallida"
