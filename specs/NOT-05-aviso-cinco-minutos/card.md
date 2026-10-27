@@ -48,3 +48,4 @@ no-visual: el aviso usa el ícono y la tarjeta del recordatorio
 - L4 · 2026-10-27 · T1 · migración 0011, `ANTICIPACION_POR_CLASE` y `TITULO_POR_CLASE` en reglas, `vencidos`/`registrar`/`_sigue_vigente` por clase y el despacho trata los dos tipos; `registrar` usa `ON CONFLICT DO NOTHING` sin objetivo porque cada clase tiene su índice único parcial · suite y app-tests passed en verify.mjs
 - L5 · 2026-10-27 · T2 · `TipoDeNotificacion.recordatorioCinco` con el ícono y el destino del recordatorio
 - L6 · 2026-10-27 · declared · K4 · apps/api/tests/unit/test_recordatorio_cinco.py · el canal y el repositorio falsos repiten los de test_correos_con_diseno.py y test_recordatorio_cinco_base.py, congelados desde su RED
+- L7 · 2026-10-27 · declared · mutate · apps/api/app/modules/notificaciones/reglas.py · la card sólo suma constantes y tablas por clase: mutate.mjs no encuentra operadores que aplicar
