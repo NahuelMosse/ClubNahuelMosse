@@ -31,6 +31,7 @@ not_read:
 ```
 suite: node --test "sitio-docs/tests/*.test.mjs"
 build: cd sitio-docs && npm run build
+lint: node --check sitio-docs/tests/api-nativa-redoc.test.mjs && node --check sitio-docs/scripts/copiar.mjs && node --check sitio-docs/docusaurus.config.js
 no-docs: la card cambia el sitio de documentación mismo; el contrato y el modelo de datos no cambian
 no-visual: el sitio toma el tema de Docusaurus que ya tiene; lo verifica el build y el test de páginas
 ```
