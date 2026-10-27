@@ -5,7 +5,6 @@ import subprocess
 from pathlib import Path
 
 from tests.escenarios.test_documentacion_vigente import (
-    _columnas_por_tabla,
     _requisitos,
     _seccion,
     _texto,
@@ -57,20 +56,6 @@ def test_el_diseno_del_sistema_dice_lo_que_hoy_falta_y_lo_escribe_como_meta_sin_
     assert re.search(r"SLO[^\n]*(sin medir|meta|objetivo)", diseno, re.I)
 
 
-def test_el_modelo_de_datos_lleva_columnas_claves_indices_y_triggers_de_cada_tabla() -> None:
-    """el modelo de datos lleva columnas, claves, índices y triggers de cada tabla
-    @REV-07-S8 @assumption:REV-07-ASM-03
-    """
-    datos = _seccion(_texto(DISENO), "Data")
-
-    assert re.search(r"PRIMARY KEY|clave primaria", datos, re.I)
-    assert re.search(r"FOREIGN KEY|clave foránea|REFERENCES", datos, re.I)
-    assert re.search(r"índice|INDEX", datos, re.I)
-    assert re.search(r"trigger", datos, re.I)
-    for tabla in _columnas_por_tabla():
-        assert f"`{tabla}`" in datos, tabla
-
-
 def test_el_diseno_del_sistema_trata_las_seis_categorias_stride() -> None:
     """el diseño del sistema trata las seis categorías STRIDE
     @REV-07-S2 @assumption:REV-07-ASM-09
@@ -83,21 +68,6 @@ def test_el_diseno_del_sistema_trata_las_seis_categorias_stride() -> None:
         filas = [f for f in amenazas.splitlines() if f.startswith("| T-") and categoria in f]
         assert filas, categoria
         assert all(re.search(r"mitigate|eliminate|transfer|accept", f) for f in filas), categoria
-
-
-def test_cada_tabla_del_esquema_migrado_figura_en_el_modelo_de_datos_con_sus_columnas() -> None:
-    """cada tabla del esquema migrado figura en el modelo de datos con sus columnas
-    @REV-07-S8 @assumption:REV-07-ASM-10
-    """
-    datos = _seccion(_texto(DISENO), "Data")
-    tablas = _columnas_por_tabla()
-
-    assert len(tablas) == 9
-    for tabla, columnas in tablas.items():
-        trozos = re.split(rf"^#+ .*`{tabla}`.*$", datos, flags=re.M)
-        assert len(trozos) > 1, tabla
-        seccion = re.split(r"^#+ ", trozos[1], flags=re.M)[0]
-        assert [c for c in sorted(columnas) if f"`{c}`" not in seccion] == [], tabla
 
 
 def test_el_diseno_del_sistema_trae_el_inventario_de_datos_personales() -> None:

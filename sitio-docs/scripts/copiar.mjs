@@ -12,14 +12,16 @@ const destino = join(sitio, 'docs');
 const github = 'https://github.com/NahuelMosse/ClubNahuelMosse/blob/main/';
 
 // [origen en el repo, destino en docs/, posición en su sección]
-const paginas = [
+const todas = [
   ['README.md', 'intro.md', 1],
   ['docs/guia-basica.md', 'guia-basica.md', 2],
   ['docs/technical/arquitectura.md', 'tecnica/arquitectura.md', 1],
-  ['docs/technical/mapa-del-codigo.md', 'tecnica/mapa-del-codigo.md', 2],
-  ['docs/technical/system-design.md', 'tecnica/system-design.md', 3],
-  ['docs/technical/runbook.md', 'tecnica/runbook.md', 4],
-  ['docs/technical/infra-cost.md', 'tecnica/infra-cost.md', 5],
+  ['docs/technical/modelo-de-datos.md', 'tecnica/modelo-de-datos.md', 2],
+  ['docs/technical/navegacion-de-la-app.md', 'tecnica/navegacion-de-la-app.md', 3],
+  ['docs/technical/mapa-del-codigo.md', 'tecnica/mapa-del-codigo.md', 4],
+  ['docs/technical/system-design.md', 'tecnica/system-design.md', 5],
+  ['docs/technical/runbook.md', 'tecnica/runbook.md', 6],
+  ['docs/technical/infra-cost.md', 'tecnica/infra-cost.md', 7],
   ['apps/api/README.md', 'guias/api.md', 1],
   ['apps/mobile/README.md', 'guias/app.md', 2],
   ['docs/adr/0001-stack.md', 'decisiones/0001-stack.md', 1],
@@ -28,6 +30,13 @@ const paginas = [
   ['specs/TRAZABILIDAD.md', 'producto/trazabilidad.md', 2],
   ['specs/REVISION-main.md', 'producto/revision.md', 3],
 ];
+
+// Una página cuyo origen falta (todavía no se fusionó) se omite con un aviso, no frena el armado.
+const paginas = todas.filter(([origen]) => {
+  if (existsSync(join(repo, origen))) return true;
+  console.warn(`aviso: falta ${origen}, se omite`);
+  return false;
+});
 
 const secciones = {
   tecnica: ['Técnica', 2],
