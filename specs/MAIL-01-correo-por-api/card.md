@@ -18,7 +18,7 @@ not_read:
 
 ## Tasks
 
-- T1 · S1,S2,MAIL-01-ASM-01,MAIL-01-ASM-02 · apps/api/app/modules/recuperacion/correo.py (data), apps/api/app/shared/config.py (data), render.yaml · tests: apps/api/tests/unit/test_correo_por_brevo.py "con CORREO_MODO=brevo el correo sale por la API de Brevo con su clave, remitente, destinatario, asunto y cuerpo @MAIL-01-S1 @assumption:MAIL-01-ASM-02"; apps/api/tests/unit/test_correo_por_brevo.py "si Brevo falla o no responde el error queda en el log sin la dirección y el pedido sigue en 202 @MAIL-01-S2"; apps/api/tests/unit/test_correo_por_brevo.py "smtp y buzon siguen igual y render.yaml usa brevo con la clave como secreto @assumption:MAIL-01-ASM-01"
+- T1 · S1,S2,MAIL-01-ASM-01,MAIL-01-ASM-02 · apps/api/app/modules/recuperacion/correo.py (data), apps/api/app/shared/config.py (data), render.yaml · tests: apps/api/tests/unit/test_correo_brevo.py "con CORREO_MODO=brevo el correo sale por la API de Brevo con su clave, remitente, destinatario, asunto y cuerpo @MAIL-01-S1 @assumption:MAIL-01-ASM-02"; apps/api/tests/unit/test_correo_brevo.py "si Brevo falla o no responde el error queda en el log sin la dirección y el pedido sigue en 202 @MAIL-01-S2"; apps/api/tests/unit/test_correo_brevo.py "smtp y buzon siguen igual y render.yaml usa brevo con la clave como secreto @assumption:MAIL-01-ASM-01"
   reuses: apps/api/app/modules/recuperacion/correo.py `enviar` (elige el modo y atrapa el error), `correo_log`; apps/api/app/shared/config.py `Settings`
 
 ## Changes to existing behavior
@@ -28,8 +28,8 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_correo_por_brevo.py tests/unit/test_recuperacion_caso_de_uso.py tests/integracion/test_recuperacion_api.py
-lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app apps/api/tests/unit/test_correo_por_brevo.py
+suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_correo_brevo.py tests/unit/test_recuperacion_caso_de_uso.py tests/integracion/test_recuperacion_api.py
+lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app apps/api/tests/unit/test_correo_brevo.py
 app: sh D:/Temp/w/herramientas/arq01-app.sh mail01_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh mail01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 no-docs: un modo más de envío de correo; el contrato y el modelo de datos no cambian
@@ -40,3 +40,5 @@ no-docs: un modo más de envío de correo; el contrato y el modelo de datos no c
 - L1 · el servicio de email funciona? pedi recuperar contrase;a a mi email con el + para hacer un submail y no me llega
 - L2 · 2026-10-27 · declared · fault-db · la card no toca la base
 - L3 · 2026-10-27 · declared · attacks · la card no cambia rutas ni cuerpos: sólo cómo sale el correo después del 202
+- L4 · 2026-10-27 · replaces: apps/api/tests/unit/test_correo_por_brevo.py (3 tests) · los nombres de función superaban 100 columnas (E501 en el lint del gate) · by: apps/api/tests/unit/test_correo_brevo.py (mismos tags y contenido)
+- L5 · 2026-10-27 · T1 · suite passed (verify.mjs, 2.3 min); lint corregido en el archivo nuevo; modo brevo sale por BackgroundTasks como smtp (rutas.py sólo compara con "buzon")

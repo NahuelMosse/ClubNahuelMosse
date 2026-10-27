@@ -29,7 +29,10 @@ services:
       - key: URL_PUBLICA
         sync: false
       - key: CORREO_MODO
-        value: smtp
+        value: brevo
+      # Render gratis bloquea el SMTP saliente: el correo sale por la API HTTP de Brevo.
+      - key: BREVO_API_KEY
+        sync: false
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PUERTO

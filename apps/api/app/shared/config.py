@@ -24,9 +24,11 @@ class Config(BaseSettings):
     firebase_credenciales_json: str = ""
     # La dirección pública de esta API: los enlaces de los correos apuntan acá.
     url_publica: str = "http://localhost:8000"
-    # "smtp" en producción; "buzon" deja los correos en la tabla correo_saliente, con los
+    # "brevo" en producción (la API HTTP, porque Render gratis bloquea el SMTP saliente); "smtp"
+    # para un servidor propio; "buzon" deja los correos en la tabla correo_saliente, con los
     # códigos en claro, y sirve sólo para desarrollo y escenarios.
-    correo_modo: Literal["buzon", "smtp"] = "smtp"
+    correo_modo: Literal["buzon", "smtp", "brevo"] = "smtp"
+    brevo_api_key: str = ""
     smtp_host: str = ""
     smtp_puerto: int = 587
     smtp_usuario: str = ""

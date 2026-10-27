@@ -16,17 +16,11 @@ RAIZ = Path(__file__).resolve().parents[4]
 
 
 class _Respuesta:
-    def __init__(self, estado: int) -> None:
-        self.status = estado
-
     def __enter__(self) -> "_Respuesta":
         return self
 
     def __exit__(self, *_: object) -> None:
         return None
-
-    def getcode(self) -> int:
-        return self.status
 
 
 def _en_modo_brevo(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -35,16 +29,17 @@ def _en_modo_brevo(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(config, "correo_remitente", "club@correo.com")
 
 
-def test_con_correo_modo_brevo_el_correo_sale_por_la_api_de_brevo_con_su_clave_remitente_destinatario_asunto_y_cuerpo(
+def test_con_modo_brevo_el_correo_sale_por_la_api_con_clave_remitente_y_texto(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """@MAIL-01-S1 @assumption:MAIL-01-ASM-02"""
+    """con CORREO_MODO=brevo el correo sale por la API de Brevo con su clave, remitente,
+    destinatario, asunto y cuerpo @MAIL-01-S1 @assumption:MAIL-01-ASM-02"""
     _en_modo_brevo(monkeypatch)
     pedidos: list[Any] = []
 
     def falso_urlopen(pedido: Any, timeout: float | None = None) -> _Respuesta:
         pedidos.append((pedido, timeout))
-        return _Respuesta(201)
+        return _Respuesta()
 
     monkeypatch.setattr("urllib.request.urlopen", falso_urlopen)
     monkeypatch.setattr(
@@ -68,16 +63,20 @@ def test_con_correo_modo_brevo_el_correo_sale_por_la_api_de_brevo_con_su_clave_r
 
 @pytest.mark.parametrize(
     "falla",
-    [urllib.error.HTTPError("https://x", 401, "no", None, None), TimeoutError("agotado")],  # type: ignore[arg-type]
+    [
+        urllib.error.HTTPError("https://x", 401, "no", None, None),  # type: ignore[arg-type]
+        TimeoutError("agotado"),
+    ],
 )
-def test_si_brevo_falla_o_no_responde_el_error_queda_en_el_log_sin_la_direccion_y_el_pedido_sigue_en_202(
+def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
     api: TestClient,
     unico: Callable[[], str],
     falla: Exception,
 ) -> None:
-    """@MAIL-01-S2"""
+    """si Brevo falla o no responde el error queda en el log sin la dirección y el pedido
+    sigue en 202 @MAIL-01-S2"""
     _en_modo_brevo(monkeypatch)
 
     def roto(*_: Any, **__: Any) -> None:
@@ -102,10 +101,11 @@ def test_si_brevo_falla_o_no_responde_el_error_queda_en_el_log_sin_la_direccion_
     assert api.post("/recuperacion", json={"correo": pedido["correo"]}).status_code == 202
 
 
-def test_smtp_y_buzon_siguen_igual_y_render_yaml_usa_brevo_con_la_clave_como_secreto(
+def test_smtp_y_buzon_siguen_igual_y_render_yaml_usa_brevo_con_la_clave_secreta(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """@assumption:MAIL-01-ASM-01"""
+    """smtp y buzon siguen igual y render.yaml usa brevo con la clave como secreto
+    @assumption:MAIL-01-ASM-01"""
     monkeypatch.setenv("CORREO_MODO", "smtp")
     assert Config(_env_file=None).correo_modo == "smtp"
     monkeypatch.setenv("CORREO_MODO", "buzon")
