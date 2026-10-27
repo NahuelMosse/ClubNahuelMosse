@@ -1,4 +1,3 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/sesion/fondo_de_inicio_sesion.dart';
 import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
@@ -6,12 +5,12 @@ import 'package:clubnahuelmosse/sesion/sesion.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 
 import 'soporte/montar.dart';
 
 const _pantalla = Size(393, 852);
 const _alturaTeclado = 300.0;
+const _arribaDelTeclado = 852.0 - _alturaTeclado;
 
 void main() {
   setUpAll(cargarFuentes);
@@ -20,32 +19,21 @@ void main() {
     WidgetTester tester, {
     CredencialesFalsas? credenciales,
   }) async {
-    final sesion = Sesion(
-      credenciales: credenciales ?? CredencialesFalsas(),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
-    );
-    final rutas = GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (_, _) => PantallaInicioSesion(
-            sesion: sesion,
-            pendiente: ReservaPendiente(),
-          ),
-        ),
-        GoRoute(
-          path: '/recuperar-contrasena',
-          builder: (_, _) => const Text('RECUPERAR'),
-        ),
-      ],
-    );
-    addTearDown(rutas.dispose);
     tester.view.physicalSize = _pantalla * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     addTearDown(tester.view.resetViewInsets);
     await tester.pumpWidget(
-      MaterialApp.router(theme: temaOscuro, routerConfig: rutas),
+      MaterialApp(
+        theme: temaOscuro,
+        home: PantallaInicioSesion(
+          sesion: Sesion(
+            credenciales: credenciales ?? CredencialesFalsas(),
+            api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+          ),
+          pendiente: ReservaPendiente(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -54,8 +42,6 @@ void main() {
     tester.view.viewInsets = const FakeViewPadding(bottom: _alturaTeclado * 3);
     await tester.pumpAndSettle();
   }
-
-  final arribaDelTeclado =_pantalla.height - _alturaTeclado;
 
   testWidgets(
     'con el teclado abierto la foto del inicio de sesión ocupa la misma área @SES-01-S1 @assumption:SES-01-ASM-01',
@@ -80,7 +66,7 @@ void main() {
 
       expect(
         tester.getRect(find.text('INICIAR SESIÓN')).bottom,
-        lessThanOrEqualTo(arribaDelTeclado),
+        lessThanOrEqualTo(_arribaDelTeclado),
       );
     },
   );
@@ -104,7 +90,7 @@ void main() {
       expect(find.text(mensajeCredencialesInvalidas), findsOneWidget);
       expect(
         tester.getRect(find.byTooltip('Cerrar aviso')).bottom,
-        lessThanOrEqualTo(arribaDelTeclado),
+        lessThanOrEqualTo(_arribaDelTeclado),
       );
     },
   );
