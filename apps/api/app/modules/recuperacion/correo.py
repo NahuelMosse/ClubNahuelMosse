@@ -33,6 +33,8 @@ def _por_smtp(mensaje: Mensaje) -> None:
     correo["To"] = mensaje.para
     correo["Subject"] = mensaje.asunto
     correo.set_content(mensaje.cuerpo)
+    if mensaje.html is not None:
+        correo.add_alternative(mensaje.html, subtype="html")
     with smtplib.SMTP(config.smtp_host, config.smtp_puerto, timeout=10) as smtp:
         smtp.starttls(context=ssl.create_default_context())
         smtp.login(config.smtp_usuario, config.smtp_contrasena)
@@ -40,16 +42,17 @@ def _por_smtp(mensaje: Mensaje) -> None:
 
 
 def _por_brevo(mensaje: Mensaje) -> None:
+    contenido = {
+        "sender": {"email": config.correo_remitente, "name": REMITENTE_NOMBRE},
+        "to": [{"email": mensaje.para}],
+        "subject": mensaje.asunto,
+        "textContent": mensaje.cuerpo,
+    }
+    if mensaje.html is not None:
+        contenido["htmlContent"] = mensaje.html
     pedido = urllib.request.Request(
         BREVO_URL,
-        data=json.dumps(
-            {
-                "sender": {"email": config.correo_remitente, "name": REMITENTE_NOMBRE},
-                "to": [{"email": mensaje.para}],
-                "subject": mensaje.asunto,
-                "textContent": mensaje.cuerpo,
-            }
-        ).encode(),
+        data=json.dumps(contenido).encode(),
         headers={
             "api-key": config.brevo_api_key,
             "content-type": "application/json",
