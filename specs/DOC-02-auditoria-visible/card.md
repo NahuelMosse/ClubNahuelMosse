@@ -25,7 +25,7 @@ not_read:
 
 ```
 suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_auditoria_documentada.py tests/unit/test_documentacion_del_modelo.py tests/escenarios/test_documentacion_modelo_uuid.py tests/escenarios/test_documentacion_modelo_vigente.py
-lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_auditoria_documentada.py
+lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_auditoria_documentada.py apps/api/tests/unit/test_documentacion_del_modelo.py
 app: sh D:/Temp/w/herramientas/arq01-app.sh doc02_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh doc02_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 no-visual: la card cambia documentación; ninguna pantalla de la app
