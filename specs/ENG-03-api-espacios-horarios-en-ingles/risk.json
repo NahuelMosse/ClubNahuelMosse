@@ -1,0 +1,30 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/spaces/__init__.py",
+    "apps/api/app/modules/spaces/use_cases.py",
+    "apps/api/app/modules/spaces/rules.py",
+    "apps/api/app/modules/spaces/repository.py",
+    "apps/api/app/modules/spaces/routes.py",
+    "apps/api/app/modules/availability/__init__.py",
+    "apps/api/app/modules/availability/use_cases.py",
+    "apps/api/app/modules/availability/slots.py",
+    "apps/api/app/modules/availability/rules.py",
+    "apps/api/app/modules/availability/repository.py",
+    "apps/api/app/modules/availability/routes.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1
+}
