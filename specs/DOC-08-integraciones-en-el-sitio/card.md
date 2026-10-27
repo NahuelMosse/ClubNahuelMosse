@@ -25,7 +25,7 @@ not_read:
 
 ```
 suite: node --test "sitio-docs/tests/*.test.mjs"
-lint: node --check sitio-docs/tests/integraciones-en-el-sitio.test.mjs
+lint: npx -y eslint@9 --no-config-lookup --rule {"no-unused-vars":"error"} sitio-docs/tests/integraciones-en-el-sitio.test.mjs sitio-docs/scripts/copiar.mjs
 no-docs: la card cambia el sitio de documentación mismo
 no-visual: suma una página con el tema del sitio
 ```
