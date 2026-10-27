@@ -7,11 +7,12 @@ from uuid import UUID
 from sqlalchemy import Connection, Row, text
 
 from app.modules.notificaciones.reglas import (
-    ANTICIPACION,
+    ANTICIPACION_POR_CLASE,
     ESPERA_DEL_ENVIO,
     ESPERA_DEL_RECORDATORIO,
     Aviso,
     AvisoPerdido,
+    ClaseDeRecordatorio,
     Destinatario,
     Envio,
     Notificacion,
@@ -180,6 +181,15 @@ class NotificacionesSql:
         )
 
     def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
+        return [
+            r
+            for clase in ANTICIPACION_POR_CLASE
+            for r in self._vencidos_de(clase, ahora, usuario_id)
+        ]
+
+    def _vencidos_de(
+        self, clase: ClaseDeRecordatorio, ahora: datetime, usuario_id: UUID | None
+    ) -> list[Recordatorio]:
         filas = self._conn.execute(
             text(
                 "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede,"
@@ -194,10 +204,15 @@ class NotificacionesSql:
                 " <= r.inicio - CAST(:anticipacion AS interval)"
                 " AND (CAST(:usuario AS uuid) IS NULL OR r.usuario_id = :usuario)"
                 " AND NOT EXISTS (SELECT 1 FROM notificacion n WHERE n.reserva_id = r.id"
-                " AND n.tipo = 'recordatorio' AND n.reserva_inicio = r.inicio)"
+                " AND n.tipo = :clase AND n.reserva_inicio = r.inicio)"
                 " ORDER BY r.inicio, r.id"
             ),
-            {"ahora": ahora, "usuario": usuario_id, "anticipacion": ANTICIPACION},
+            {
+                "ahora": ahora,
+                "usuario": usuario_id,
+                "anticipacion": ANTICIPACION_POR_CLASE[clase],
+                "clase": clase,
+            },
         ).all()
         self._conn.rollback()
         return [
@@ -211,6 +226,7 @@ class NotificacionesSql:
                 sede=f.sede,
                 correo=f.correo,
                 nombre=f.nombre_usuario,
+                clase=clase,
             )
             for f in filas
         ]
@@ -222,7 +238,8 @@ class NotificacionesSql:
             "cuerpo": aviso.cuerpo,
             "reserva": recordatorio.reserva_id,
             "inicio": recordatorio.inicio,
-            "anticipacion": ANTICIPACION,
+            "anticipacion": ANTICIPACION_POR_CLASE[recordatorio.clase],
+            "clase": recordatorio.clase,
         }
         with en_transaccion(self._conn):
             # Entre que `vencidos` miró y acá, la reserva pudo cancelarse, anularse o moverse, o
@@ -234,10 +251,11 @@ class NotificacionesSql:
             fila = self._conn.execute(
                 text(
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                    " reserva_inicio, envio) VALUES (:usuario, 'recordatorio', :titulo, :cuerpo,"
+                    " reserva_inicio, envio) VALUES (:usuario, :clase, :titulo, :cuerpo,"
                     " :reserva, :inicio, 'pendiente')"
-                    " ON CONFLICT (reserva_id, reserva_inicio) WHERE tipo = 'recordatorio'"
-                    " DO NOTHING RETURNING id"
+                    # Sin objetivo: cada clase tiene su índice único parcial, y el de un predicado
+                    # con parámetro no se puede inferir.
+                    " ON CONFLICT DO NOTHING RETURNING id"
                 ),
                 datos,
             ).first()
@@ -296,7 +314,7 @@ class NotificacionesSql:
             muertos = self._conn.execute(
                 text(
                     "UPDATE notificacion n SET envio = 'fallida' WHERE n.envio = 'pendiente'"
-                    " AND n.tipo = 'recordatorio'"
+                    " AND n.tipo IN ('recordatorio', 'recordatorio_cinco')"
                     " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
                     " AND NOT EXISTS (SELECT 1 FROM reserva r WHERE r.id = n.reserva_id"
                     " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio"
@@ -325,7 +343,8 @@ class NotificacionesSql:
                 " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
                 " WHERE n.reemplazada_por IS NULL"
                 " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
-                " AND n.envio = 'pendiente' AND (n.tipo <> 'recordatorio'"
+                " AND n.envio = 'pendiente'"
+                " AND (n.tipo NOT IN ('recordatorio', 'recordatorio_cinco')"
                 " OR (n.creado_en < now() - CAST(:espera AS interval)"
                 " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio AND r.inicio > now()))"
                 " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"

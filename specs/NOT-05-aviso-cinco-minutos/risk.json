@@ -1,0 +1,22 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [
+    "migración"
+  ],
+  "files": [
+    "apps/api/migraciones/versions/0011_recordatorio_cinco_minutos.py",
+    "apps/api/app/modules/notificaciones/reglas.py",
+    "apps/api/app/modules/notificaciones/repositorio.py",
+    "apps/api/app/modules/notificaciones/casos_de_uso.py",
+    "apps/mobile/lib/notificaciones/notificacion.dart"
+  ],
+  "tasks": 2
+}

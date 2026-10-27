@@ -10,10 +10,23 @@ from app.shared.mensaje import Mensaje
 from app.shared.plantilla_correo import html_de_correo
 from app.shared.zona import ZONA_CLUB
 
-TipoDeAviso = Literal["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]
+TipoDeAviso = Literal[
+    "recordatorio", "recordatorio_cinco", "cancelacion_forzosa", "cancelacion_usuario"
+]
+ClaseDeRecordatorio = Literal["recordatorio", "recordatorio_cinco"]
 Envio = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
 
 ANTICIPACION = timedelta(hours=1)
+ANTICIPACION_CINCO = timedelta(minutes=5)
+# Cada aviso de antes: su clase, cuánto antes sale y el título que lleva.
+ANTICIPACION_POR_CLASE: dict[ClaseDeRecordatorio, timedelta] = {
+    "recordatorio": ANTICIPACION,
+    "recordatorio_cinco": ANTICIPACION_CINCO,
+}
+TITULO_POR_CLASE: dict[ClaseDeRecordatorio, str] = {
+    "recordatorio": "Tu reserva es en 1 hora",
+    "recordatorio_cinco": "Tu reserva empieza en 5 minutos",
+}
 DIAS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
 
 
@@ -89,6 +102,7 @@ class Recordatorio:
     sede: str
     correo: str = ""
     nombre: str = ""
+    clase: ClaseDeRecordatorio = "recordatorio"
 
 
 @dataclass(frozen=True)
@@ -135,11 +149,11 @@ def _hora(momento: datetime) -> str:
 
 
 def mensaje_recordatorio(r: Recordatorio) -> Aviso:
-    """«Tu reserva es en 1 hora» con «Fútbol 5 · Sede Morón · 21:00 – 22:00»."""
+    """«Tu reserva es en 1 hora» (o «empieza en 5 minutos») con el deporte, la sede y el horario."""
     return Aviso(
-        titulo="Tu reserva es en 1 hora",
+        titulo=TITULO_POR_CLASE[r.clase],
         cuerpo=f"{tipo_corto(r.deporte, r.tipo)} · {r.sede} · {_hora(r.inicio)} – {_hora(r.fin)}",
-        datos=datos_del_aviso("recordatorio", r.reserva_id),
+        datos=datos_del_aviso(r.clase, r.reserva_id),
     )
 
 
