@@ -27,7 +27,7 @@ class NullChannel:
         raise ChannelNotConfigured("no hay credenciales de Firebase en el entorno")
 
 
-# What FCM answers when the token is no longer valid: uninstalled, from another project or malformed.
+# What FCM answers when the token is no longer valid: uninstalled, from another project, malformed.
 _INVALID_TOKEN = (
     messaging.UnregisteredError,
     messaging.SenderIdMismatchError,

@@ -9,6 +9,7 @@ from app.modules.notifications.rules import (
     LostNotice,
     Notice,
     Notification,
+    BookingData,
     Reminder,
     cancellation_message,
 )
@@ -17,29 +18,15 @@ from app.modules.notifications.use_cases import (
     PendingNotice,
     dispatch_pending,
 )
-from app.modules.reservas.reglas import Reserva
 
 
 def _id(numero: int) -> UUID:
     return UUID(int=numero)
 
 
-def _reserva(inicio: datetime) -> Reserva:
-    return Reserva(
-        id=_id(12),
-        espacio_id=_id(1),
-        sede_id=_id(1),
-        espacio="Cancha 1",
-        deporte="Futbol",
-        tipo="F5",
-        sede="Sede Ramos Mejía",
-        direccion="Av. de Mayo 100",
-        inicio=inicio,
-        fin=inicio,
-        precio_por_hora=38000,
-        total=38000,
-        estado="cancelada",
-        motivo=None,
+def _reserva(inicio: datetime) -> BookingData:
+    return BookingData(
+        id=_id(12), sport="Futbol", kind="F5", venue="Sede Ramos Mejía", starts_at=inicio
     )
 
 
@@ -64,7 +51,7 @@ class RepositorioEnMemoria:
         if not self.pendientes:
             return None
         siguiente = self.pendientes.pop(0)
-        self.envios[siguiente.notificacion_id] = "enviando"
+        self.envios[siguiente.notification_id] = "enviando"
         return siguiente
 
     def tokens_with_permission(self, usuario_id: UUID) -> list[str]:
@@ -75,10 +62,10 @@ class RepositorioEnMemoria:
     def has_devices(self, usuario_id: UUID) -> bool:
         return self.hay_dispositivos
 
-    def mark_delivery(self, notificacion_id: UUID, envio: Delivery) -> None:
+    def mark_delivery(self, notification_id: UUID, envio: Delivery) -> None:
         if self.no_puede_marcar:
             raise OSError("la base no contesta")
-        self.envios[notificacion_id] = envio
+        self.envios[notification_id] = envio
 
     def deactivate_tokens(self, tokens: Sequence[str]) -> None:
         self.bajas.extend(tokens)
@@ -86,7 +73,7 @@ class RepositorioEnMemoria:
     def due(self, ahora: datetime, usuario_id: UUID | None) -> list[Reminder]:
         raise NotImplementedError
 
-    def registrar(self, recordatorio: Reminder, aviso: Notice) -> UUID | None:
+    def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
         raise NotImplementedError
 
     def register_device(self, usuario_id: UUID, token: str, plataforma: str, permiso: bool) -> bool:
@@ -98,7 +85,7 @@ class RepositorioEnMemoria:
     def of_user(self, usuario_id: UUID) -> tuple[list[Notification], int]:
         raise NotImplementedError
 
-    def leer(self, usuario_id: UUID, notificacion_id: UUID) -> bool:
+    def read(self, usuario_id: UUID, notification_id: UUID) -> bool:
         raise NotImplementedError
 
     def read_all(self, usuario_id: UUID) -> None:
@@ -106,7 +93,7 @@ class RepositorioEnMemoria:
 
 
 class CanalQueFalla:
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
         raise ConnectionError("el servicio no contesta")
 
 
@@ -115,9 +102,9 @@ class CanalQueAcepta:
         self.invalidos = invalidos
         self.enviados: list[Notice] = []
 
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        self.enviados.append(aviso)
-        return DeliveryResult(enviados=len(tokens) - len(self.invalidos), invalidos=self.invalidos)
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
+        self.enviados.append(notice)
+        return DeliveryResult(sent=len(tokens) - len(self.invalidos), invalid=self.invalidos)
 
 
 def _pendiente(numero: int) -> PendingNotice:
@@ -128,13 +115,13 @@ def _pendiente(numero: int) -> PendingNotice:
 
 def test_el_mensaje_nombra_la_reserva_con_el_dia_y_la_hora_del_club() -> None:
     """el día sale abreviado como en el prototipo @supuesto:CU-24.3-SUP-05"""
-    aviso = cancellation_message(_reserva(datetime(2026, 11, 11, 23, 0, tzinfo=UTC)))
+    notice = cancellation_message(_reserva(datetime(2026, 11, 11, 23, 0, tzinfo=UTC)))
 
-    assert aviso.titulo == "Reserva cancelada"
-    assert aviso.cuerpo == (
+    assert notice.title == "Reserva cancelada"
+    assert notice.body == (
         "Fútbol 5 · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado."
     )
-    assert aviso.datos == {"tipo": "cancelacion_usuario", "reserva_id": str(_id(12))}
+    assert notice.data == {"tipo": "cancelacion_usuario", "reserva_id": str(_id(12))}
 
 
 def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
@@ -241,4 +228,4 @@ def test_lo_que_no_se_intento_sigue_pendiente_si_el_despacho_se_corta() -> None:
     with pytest.raises(OSError):
         dispatch_pending(repo, CanalQueAcepta())
 
-    assert [p.notificacion_id for p in repo.pendientes] == [_id(2)]
+    assert [p.notification_id for p in repo.pendientes] == [_id(2)]

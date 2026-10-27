@@ -126,7 +126,9 @@ def reminder_message(r: Reminder) -> Notice:
     """The one-hour-ahead notice: short kind, venue and the time range."""
     return Notice(
         title="Tu reserva es en 1 hora",
-        body=f"{short_kind(r.sport, r.kind)} · {r.venue} · {_time(r.starts_at)} – {_time(r.ends_at)}",
+        body=(
+            f"{short_kind(r.sport, r.kind)} · {r.venue} · {_time(r.starts_at)} – {_time(r.ends_at)}"
+        ),
         data=notice_data("recordatorio", r.booking_id),
     )
 

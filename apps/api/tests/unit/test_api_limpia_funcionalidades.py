@@ -25,7 +25,9 @@ def _fuentes(carpeta: Path) -> list[Path]:
 
 def _datos() -> dict[str, str]:
     """Los archivos que hablan con la base: el de transacciones y los repositorios."""
-    return _codigo([SHARED / "db.py", *MODULOS.glob("*/repositorio.py")])
+    return _codigo(
+        [SHARED / "db.py", *MODULOS.glob("*/repositorio.py"), *MODULOS.glob("*/repository.py")]
+    )
 
 
 def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api() -> None:

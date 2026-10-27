@@ -3,7 +3,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from typing import cast
+from typing import Any, cast
 
 RAIZ = Path(__file__).resolve().parents[4]
 API = RAIZ / "apps" / "api"
@@ -17,7 +17,7 @@ ARCHIVOS_DE_CADA_UNA = {
     "espacios": CON_CUATRO,
     "horarios": CON_CUATRO,
     "reservas": CON_CUATRO,
-    "notifications": CON_CUATRO,
+    "notifications": {"routes", "use_cases", "rules", "repository"},
     "recuperacion": CON_CUATRO,
     "usuarios": {
         "rutas_cuenta",
@@ -34,7 +34,8 @@ ARCHIVOS_DE_CADA_UNA = {
 }
 FUNCIONALIDADES = set(ARCHIVOS_DE_CADA_UNA)
 CASOS_DE_USO = [
-    *(f"{f}/casos_de_uso.py" for f in sorted(FUNCIONALIDADES - {"usuarios"})),
+    *(f"{f}/casos_de_uso.py" for f in sorted(FUNCIONALIDADES - {"usuarios", "notifications"})),
+    "notifications/use_cases.py",
     *(f"usuarios/{c}.py" for c in ("registro", "perfil", "contrasena", "baja", "administradores")),
 ]
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
@@ -47,6 +48,13 @@ RENOMBRADOS = {
     "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
     "app__interfaz__sedes__PedidoDeEdicion": "PedidoDeEdicionDeSede",
     "app__interfaz__sesion__PedidoDeEdicion": "PedidoDeEdicionDePerfil",
+}
+# ENG-04: los esquemas del módulo de notificaciones pasan a inglés.
+RENOMBRADOS_DE_NOTIFICACIONES = {
+    "BajaDeDispositivo": "DeviceUnregistration",
+    "Centro": "Center",
+    "NotificacionVista": "NotificationView",
+    "PedidoDeDispositivo": "DeviceRequest",
 }
 
 
@@ -156,7 +164,7 @@ def test_shared_no_importa_funcionalidades_y_reglas_no_importa_base_de_datos_ni_
     for archivo in fuentes_de_shared:
         propios = [n for n in _importados(archivo) if n.startswith("app.modules")]
         assert propios == [], f"{archivo.relative_to(APP)} importa {propios}"
-    reglas = [p for p in _de_funcionalidades() if p.name == "reglas.py"]
+    reglas = [p for p in _de_funcionalidades() if p.name in {"reglas.py", "rules.py"}]
     assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"sesion"}
     for archivo in reglas:
         for nombre in _importados(archivo):
@@ -172,9 +180,13 @@ def test_los_casos_de_uso_no_importan_repositorio_ni_rutas() -> None:
         for nombre in _importados(archivo):
             ultimo = nombre.split(".")[-1]
             es_de_la_app = nombre.startswith("app.modules.")
-            assert not (es_de_la_app and (ultimo == "repositorio" or ultimo.startswith("rutas"))), (
-                f"{ruta} importa {nombre}"
-            )
+            assert not (
+                es_de_la_app
+                and (
+                    ultimo in {"repositorio", "repository"}
+                    or ultimo.startswith(("rutas", "routes"))
+                )
+            ), f"{ruta} importa {nombre}"
 
 
 def _sin_titulos(documento: object) -> object:
@@ -240,7 +252,16 @@ def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None
     ).stdout
     for viejo, nuevo in RENOMBRADOS.items():
         de_main = de_main.replace(viejo, nuevo)
+    for viejo, nuevo in RENOMBRADOS_DE_NOTIFICACIONES.items():
+        de_main = de_main.replace(f'"{viejo}"', f'"{nuevo}"')
+        de_main = de_main.replace(f'schemas/{viejo}"', f'schemas/{nuevo}"')
     esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(_contrato(de_main)))
+    # El módulo de notificaciones tiene su propio esquema de errores, antes compartido por nombre.
+    esquemas = cast(dict[str, object], esperado["components"]["schemas"])
+    esquemas["Errors"] = esquemas["Errores"]
+    registrar = cast(dict[str, Any], esperado["paths"]["/dispositivos"]["put"])
+    errores = registrar["responses"]["422"]["content"]["application/json"]["schema"]
+    errores["$ref"] = "#/components/schemas/Errors"
     actual = _contrato((API / "openapi.json").read_text(encoding="utf-8"))
     assert set(actual["paths"]) == set(esperado["paths"])
     assert _sin_titulos(actual["paths"]) == _sin_titulos(esperado["paths"])

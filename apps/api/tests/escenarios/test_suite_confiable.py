@@ -434,4 +434,4 @@ def test_los_casos_de_uso_de_reservas_se_prueban_sin_base_ni_emulador() -> None:
 
     assert corrida.returncode == 0, corrida.stdout[-2000:]
     codigo = unitarios.read_text(encoding="utf-8")
-    assert [c for c in CASOS_DE_USO if not re.search(rf"\b{c}\(", codigo)] == []
+    assert [c for c in _casos_de_uso() if not re.search(rf"\b{c}\(", codigo)] == []

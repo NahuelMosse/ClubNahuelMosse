@@ -45,7 +45,7 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
     assert "def in_transaction(" in db
     usan = [
         a.parent.name
-        for a in MODULOS.glob("*/repositorio.py")
+        for a in [*MODULOS.glob("*/repositorio.py"), *MODULOS.glob("*/repository.py")]
         if "in_transaction(" in a.read_text(encoding="utf-8")
     ]
     assert len(usan) >= 6

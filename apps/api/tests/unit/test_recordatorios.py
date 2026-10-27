@@ -47,11 +47,11 @@ class RepositorioEnMemoria:
     def due(self, ahora: datetime, usuario_id: UUID | None) -> list[Reminder]:
         return list(self.pendientes)
 
-    def registrar(self, recordatorio: Reminder, aviso: Notice) -> UUID | None:
-        if any(r.reserva_id == recordatorio.reserva_id for r in self.registrados.values()):
+    def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
+        if any(r.booking_id == reminder.booking_id for r in self.registrados.values()):
             return None
         nuevo = _id(len(self.registrados) + 1)
-        self.registrados[nuevo] = recordatorio
+        self.registrados[nuevo] = reminder
         return nuevo
 
     def tokens_with_permission(self, usuario_id: UUID) -> list[str]:
@@ -60,8 +60,8 @@ class RepositorioEnMemoria:
     def has_devices(self, usuario_id: UUID) -> bool:
         return self.hay_dispositivos
 
-    def mark_delivery(self, notificacion_id: UUID, envio: Delivery) -> None:
-        self.envios[notificacion_id] = envio
+    def mark_delivery(self, notification_id: UUID, envio: Delivery) -> None:
+        self.envios[notification_id] = envio
 
     def deactivate_tokens(self, tokens: Sequence[str]) -> None:
         self.bajas.extend(tokens)
@@ -78,7 +78,7 @@ class RepositorioEnMemoria:
     def of_user(self, usuario_id: UUID) -> tuple[list[Notification], int]:
         raise NotImplementedError
 
-    def leer(self, usuario_id: UUID, notificacion_id: UUID) -> bool:
+    def read(self, usuario_id: UUID, notification_id: UUID) -> bool:
         raise NotImplementedError
 
     def read_all(self, usuario_id: UUID) -> None:
@@ -86,7 +86,7 @@ class RepositorioEnMemoria:
 
 
 class CanalQueFalla:
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
         raise ConnectionError("el servicio no contesta")
 
 
@@ -95,16 +95,16 @@ class CanalQueRechaza:
         self.invalidos = invalidos
         self.enviados = enviados
 
-    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
-        return DeliveryResult(enviados=self.enviados, invalidos=self.invalidos)
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
+        return DeliveryResult(sent=self.enviados, invalid=self.invalidos)
 
 
 def test_el_mensaje_lleva_deporte_sede_y_horario_del_club() -> None:
-    aviso = reminder_message(_recordatorio())
+    notice = reminder_message(_recordatorio())
 
-    assert aviso.titulo == "Tu reserva es en 1 hora"
-    assert aviso.cuerpo == "Fútbol 5 · Sede Morón · 21:00 – 22:00"
-    assert aviso.datos == {"tipo": "recordatorio", "reserva_id": str(_id(7))}
+    assert notice.title == "Tu reserva es en 1 hora"
+    assert notice.body == "Fútbol 5 · Sede Morón · 21:00 – 22:00"
+    assert notice.data == {"tipo": "recordatorio", "reserva_id": str(_id(7))}
 
 
 @pytest.mark.parametrize(
@@ -167,7 +167,7 @@ def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
 
 def test_un_aviso_que_otro_barrido_ya_registro_no_se_envia_de_nuevo() -> None:
     repo = RepositorioEnMemoria([_recordatorio()], ["t"])
-    repo.registrar(_recordatorio(), reminder_message(_recordatorio()))
+    repo.register(_recordatorio(), reminder_message(_recordatorio()))
 
     assert send_reminders(repo, CanalQueFalla(), AHORA) == 0
     assert repo.envios == {}
