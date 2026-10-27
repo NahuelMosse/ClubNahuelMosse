@@ -54,7 +54,7 @@ def _reservar(api: TestClient, token: str, espacio: int, dia: int, hora: int) ->
 
 
 def test_el_historial_propio_es_el_listado_entero_y_sin_marcador(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """el historial propio es el listado ordenadas por fecha, entero y sin marcador @SIM-01-S1 @assumption:SIM-01-ASM-01"""
     espacio = _espacio(api, token_admin, sede[0])
@@ -69,7 +69,7 @@ def test_el_historial_propio_es_el_listado_entero_y_sin_marcador(
 
 
 def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """el historial del administrador sigue paginando por número de página @SIM-01-S2 @assumption:SIM-01-ASM-01"""
     espacio = _espacio(api, token_admin, sede[0])
@@ -86,7 +86,7 @@ def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
 
 
 def test_una_reserva_sobrevive_a_reiniciar_la_api(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """una reserva sobrevive a reiniciar la API sobre la misma base @SIM-01-S2"""
     from app.main import crear_app

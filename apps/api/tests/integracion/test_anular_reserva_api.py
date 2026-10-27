@@ -48,7 +48,7 @@ def _pedido(reserva: dict[str, Any], motivo: str = MOTIVO) -> dict[str, Any]:
 
 
 def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repetir(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """anular estampa el rastro y repetir el pedido responde igual @supuesto:CU-15-SUP-07"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])
@@ -104,7 +104,7 @@ def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repe
 
 
 def test_anular_rechaza_lo_que_no_corresponde(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """rechazos por motivo y por reserva cambiada @supuesto:CU-15-SUP-01 @supuesto:CU-15-SUP-05"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])
@@ -125,11 +125,11 @@ def test_anular_rechaza_lo_que_no_corresponde(
             {"id": empezada["id"]},
         )
 
-    def anular(id_: int, pedido: dict[str, Any], token: str = token_admin) -> int:
+    def anular(id_: str, pedido: dict[str, Any], token: str = token_admin) -> int:
         return api.post(f"/reservas/{id_}/anular", headers=_con(token), json=pedido).status_code
 
     assert anular(reserva["id"], _pedido(reserva), token_usuario) == 403
-    assert anular(reserva["id"] + 10**6, _pedido(reserva)) == 404
+    assert anular("00000000-0000-7000-8000-000000000000", _pedido(reserva)) == 404
     assert anular(reserva["id"], _pedido(reserva, "")) == 422
     assert anular(reserva["id"], _pedido(reserva, "   ")) == 422
     assert anular(reserva["id"], _pedido(reserva, "x" * 501)) == 422
@@ -147,7 +147,7 @@ def test_anular_rechaza_lo_que_no_corresponde(
 
 
 def test_el_listado_ofrece_anular_solo_lo_activo_que_no_empezo(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     espacio = _espacio_nuevo(api, token_admin, sede[0])
     reserva = _reservar(api, token_usuario, espacio)
@@ -162,7 +162,7 @@ def test_el_listado_ofrece_anular_solo_lo_activo_que_no_empezo(
 
 
 def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     espacio = _espacio_nuevo(api, token_admin, sede[0])
     for dia in range(1, 6):
@@ -193,7 +193,7 @@ def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
 
 
 def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """anular lo que ya empezó se rechaza por empezada, no por un horario desactualizado"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])

@@ -61,7 +61,7 @@ def _ids(api: TestClient, token: str, consulta: str) -> set[int]:
 
 
 def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """a las 21:00 y a las 23:00 del club la reserva cae en su día, no en el siguiente en UTC"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])
@@ -81,7 +81,7 @@ def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
 
 
 def test_la_busqueda_toma_los_comodines_como_texto(
-    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """% y _ no son comodines en la búsqueda @supuesto:CU-14-SUP-02"""
     espacio = _espacio_nuevo(api, token_admin, sede[0])

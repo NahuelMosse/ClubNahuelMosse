@@ -159,7 +159,7 @@ def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_re
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """varias sesiones a la vez y al cerrar una deja de recibir push (decisión 14)"""
@@ -191,7 +191,7 @@ def test_una_reserva_hecha_con_menos_de_una_hora_de_anticipacion_no_recibe_recor
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
 ) -> None:
     """una reserva hecha con menos de una hora de anticipación no avisa (decisión 10)"""
     espacio = _espacio(api, token_admin, sede[0])
@@ -222,7 +222,7 @@ def test_si_el_barrido_llega_tarde_el_recordatorio_sale_mientras_la_reserva_no_e
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """si el servidor estuvo caído el aviso sale tarde, antes del inicio @supuesto:CU-24.1-SUP-07"""
@@ -242,7 +242,7 @@ def test_una_reserva_modificada_despues_del_aviso_recibe_otro_para_el_horario_nu
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
 ) -> None:
     """una reserva modificada recibe un aviso nuevo y el anterior queda @supuesto:CU-24.1-SUP-12"""
     espacio = _espacio(api, token_admin, sede[0])
@@ -274,7 +274,7 @@ def test_un_envio_fallido_deja_el_aviso_en_el_centro_marcado_como_fallido(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """el envío fallido queda en el centro, sin reintento @supuesto:CU-24.1-SUP-02"""
@@ -299,7 +299,7 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     """se estampan la creación, el envío y la lectura @supuesto:CU-24.1-SUP-05"""
@@ -340,7 +340,7 @@ def test_las_notificaciones_son_de_quien_las_recibe(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     iniciar_sesion: Callable[[str, str], str | None],
     unico: Callable[[], str],
 ) -> None:
@@ -444,7 +444,7 @@ def test_una_reserva_cancelada_entre_la_lectura_y_el_registro_no_recibe_aviso(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     espacio = _espacio(api, token_admin, sede[0])
@@ -467,7 +467,7 @@ def test_una_reserva_movida_entre_la_lectura_y_el_registro_no_avisa_el_horario_v
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     espacio = _espacio(api, token_admin, sede[0])
@@ -498,7 +498,7 @@ def test_una_cuenta_dada_de_baja_entre_la_lectura_y_el_registro_no_recibe_aviso(
     motor: Engine,
     token_admin: str,
     token_usuario: str,
-    sede: tuple[int, str],
+    sede: tuple[str, str],
     unico: Callable[[], str],
 ) -> None:
     espacio = _espacio(api, token_admin, sede[0])

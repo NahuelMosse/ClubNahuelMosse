@@ -278,7 +278,7 @@ def test_la_ultima_pagina_permitida_del_historial_global_responde(
 
 NULO = "Ana\x00Rios"
 SEDE = {"direccion": "Av. Vergara 1850", "apertura": "08:00", "cierre": "23:00", "dias": [1]}
-ESPACIO = {"sede_id": 1, "tipo": "F5", "techada": False, "iluminada": True, "precio_por_hora": 1}
+ESPACIO = {"sede_id": "00000000-0000-7000-8000-000000000001", "tipo": "F5", "techada": False, "iluminada": True, "precio_por_hora": 1}
 
 
 

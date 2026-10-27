@@ -75,8 +75,8 @@ def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
     nombre = f"Sede Haedo {unico()}"
     r = api.post("/sedes", headers=_con(token_admin), json=_sede(nombre))
     assert r.status_code == 201
-    assert r.json() | {"id": 0} == {
-        "id": 0,
+    assert r.json() | {"id": ""} == {
+        "id": "",
         "nombre": nombre,
         "direccion": "Av. Vergara 1850",
         "apertura": "08:00",

@@ -52,7 +52,7 @@ def _yo(api: TestClient, motor: Engine, token: str) -> int:
 
 
 def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, prefijo = sede
     espacio = api.post(
@@ -116,7 +116,7 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: int) -> int:
 
 
 def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
@@ -152,7 +152,7 @@ def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
 
 
 def test_el_administrador_no_reserva_y_un_espacio_dado_de_baja_no_se_reserva(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
@@ -172,7 +172,7 @@ def test_el_administrador_no_reserva_y_un_espacio_dado_de_baja_no_se_reserva(
 
 
 def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
@@ -226,7 +226,7 @@ def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
 
 
 def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
@@ -254,7 +254,7 @@ def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
 
 
 def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
@@ -290,7 +290,7 @@ def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
 
 
 def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     una = _espacio_nuevo(api, token_admin, sede_id)
@@ -348,7 +348,7 @@ def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total
 
 
 def test_modificar_rechaza_lo_que_no_corresponde(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
@@ -397,7 +397,7 @@ def test_modificar_rechaza_lo_que_no_corresponde(
 
 
 def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     a = _espacio_nuevo(api, token_admin, sede_id)
@@ -443,7 +443,7 @@ def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
 
 
 def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)

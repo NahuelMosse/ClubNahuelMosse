@@ -52,7 +52,7 @@ def _dar_de_baja(motor: Engine, tabla: str, columna: str, id_: int) -> None:
 
 @pytest.fixture
 def cancha(
-    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[int, str]
+    api: TestClient, motor: Engine, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> tuple[int, int, int]:
     """La sede, una cancha suya y quien reserva."""
     return sede[0], _cancha(api, token_admin, sede[0]), _usuario(api, motor, token_usuario)

@@ -28,11 +28,11 @@ def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administra
     token = iniciar_sesion(correo, "ClubNahuel1")
 
     r = api.post(
-        "/reservas/1/anular",
+        "/reservas/00000000-0000-7000-8000-000000000001/anular",
         headers={"Authorization": f"Bearer {token}"},
         json={
             "motivo": "mantenimiento de la cancha",
-            "espacio_id": 1,
+            "espacio_id": "00000000-0000-7000-8000-000000000002",
             "inicio": "2030-01-01T21:00:00-03:00",
         },
     )
