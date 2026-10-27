@@ -1,3 +1,4 @@
+// kit-shape: la rejilla y su opción privada se leen juntas y no se usan por separado
 import 'package:flutter/material.dart';
 
 import '../tema/tema.dart';

@@ -1,3 +1,4 @@
+// kit-shape: el widget, su State y el pintor de los aros son una sola pieza de Flutter
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';

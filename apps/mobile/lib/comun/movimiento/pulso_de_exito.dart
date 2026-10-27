@@ -1,3 +1,4 @@
+// kit-shape: el widget, su State y el recorte de revelado son una sola pieza de Flutter
 import 'package:flutter/material.dart';
 
 import 'tiempos.dart';

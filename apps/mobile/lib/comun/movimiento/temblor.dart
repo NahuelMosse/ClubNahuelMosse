@@ -1,3 +1,4 @@
+// kit-shape: el widget y su State son una sola pieza de Flutter
 import 'dart:async';
 import 'dart:math' as math;
 
