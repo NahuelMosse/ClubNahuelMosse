@@ -13,10 +13,10 @@ from app.modules.recuperacion.casos_de_uso import (
     pedir_enlace,
     usar_enlace,
 )
-from app.modules.recuperacion.correo import enviar
 from app.modules.recuperacion.repositorio import EnlacesSql, repositorio_enlaces
 from app.modules.usuarios import UsuariosSql, repositorio_usuarios
 from app.shared.config import config
+from app.shared.correo import enviar
 from app.shared.identidad import ProveedorFirebase, identidad
 
 router = APIRouter(tags=["recuperación de contraseña"])

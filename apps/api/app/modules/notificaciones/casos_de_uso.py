@@ -14,8 +14,8 @@ from app.modules.notificaciones.reglas import CanalNoConfigurado as CanalNoConfi
 from app.modules.notificaciones.reglas import CanalPush as CanalPush
 from app.modules.notificaciones.reglas import Pendiente as Pendiente
 from app.modules.notificaciones.reglas import ResultadoDeEnvio as ResultadoDeEnvio
-from app.modules.recuperacion import enviar
 from app.modules.sesion import Perfil
+from app.shared.correo import enviar
 from app.shared.errores import DatosInvalidos, NoDisponible, NoEncontrada, Prohibido
 
 PLATAFORMAS = ("android", "ios")

@@ -1,14 +1,7 @@
-# kit-shape: los tipos del mensaje, el destinatario y el enlace reclamado son un solo concepto
 from dataclasses import dataclass
 from uuid import UUID
 
-
-@dataclass(frozen=True)
-class Mensaje:
-    para: str
-    asunto: str
-    cuerpo: str
-    html: str | None = None
+from app.shared.correo import Mensaje as Mensaje
 
 
 @dataclass(frozen=True)

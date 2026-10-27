@@ -51,7 +51,7 @@ def _boton(texto: str, url: str) -> str:
     )
 
 
-def html_de_correo(  # noqa: PLR0913 -- el contenido de un correo son estas partes
+def html_de_correo(  # noqa: PLR0913, PLR0917 -- el contenido de un correo son estas partes
     titulo: str,
     parrafos: Sequence[str],
     boton: tuple[str, str] | None = None,

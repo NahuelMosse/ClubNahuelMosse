@@ -1,7 +1,7 @@
 from app.modules.notificaciones import tipo_corto
-from app.modules.recuperacion import Mensaje
 from app.modules.reservas.reglas import Reserva
 from app.modules.sesion import Perfil
+from app.shared.correo import Mensaje
 from app.shared.plantilla_correo import html_de_correo
 from app.shared.zona import ZONA_CLUB
 
