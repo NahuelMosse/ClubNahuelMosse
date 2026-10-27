@@ -4,6 +4,8 @@ from uuid import UUID
 
 import pytest
 
+from app.modules.bookings.rules import Booking
+from app.modules.notificaciones import DatosDeReserva
 from app.modules.notificaciones.casos_de_uso import (
     Pendiente,
     ResultadoDeEnvio,
@@ -17,29 +19,28 @@ from app.modules.notificaciones.reglas import (
     Recordatorio,
     mensaje_cancelacion,
 )
-from app.modules.reservas.reglas import Reserva
 
 
 def _id(numero: int) -> UUID:
     return UUID(int=numero)
 
 
-def _reserva(inicio: datetime) -> Reserva:
-    return Reserva(
+def _reserva(inicio: datetime) -> Booking:
+    return Booking(
         id=_id(12),
-        espacio_id=_id(1),
-        sede_id=_id(1),
-        espacio="Cancha 1",
-        deporte="Futbol",
-        tipo="F5",
-        sede="Sede Ramos Mejía",
-        direccion="Av. de Mayo 100",
-        inicio=inicio,
-        fin=inicio,
-        precio_por_hora=38000,
+        space_id=_id(1),
+        venue_id=_id(1),
+        space="Cancha 1",
+        sport="Futbol",
+        kind="F5",
+        venue="Sede Ramos Mejía",
+        address="Av. de Mayo 100",
+        starts_at=inicio,
+        ends_at=inicio,
+        price_per_hour=38000,
         total=38000,
-        estado="cancelada",
-        motivo=None,
+        status="cancelada",
+        reason=None,
     )
 
 
@@ -132,7 +133,10 @@ def _pendiente(numero: int) -> Pendiente:
 
 def test_el_mensaje_nombra_la_reserva_con_el_dia_y_la_hora_del_club() -> None:
     """el día sale abreviado como en el prototipo @supuesto:CU-24.3-SUP-05"""
-    aviso = mensaje_cancelacion(_reserva(datetime(2026, 11, 11, 23, 0, tzinfo=UTC)))
+    reserva = _reserva(datetime(2026, 11, 11, 23, 0, tzinfo=UTC))
+    aviso = mensaje_cancelacion(
+        DatosDeReserva(reserva.id, reserva.sport, reserva.kind, reserva.venue, reserva.starts_at)
+    )
 
     assert aviso.titulo == "Reserva cancelada"
     assert aviso.cuerpo == (

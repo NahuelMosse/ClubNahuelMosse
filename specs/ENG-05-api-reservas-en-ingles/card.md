@@ -50,3 +50,4 @@ no-docs: nombres internos; el comportamiento y el modelo de datos no cambian (el
 - L1 · no me gusta nada que todo el codigo este en español · Todo, base y API incluidas · hacelo en paralelo · estamos en etapa critica, necesito que todo lo que hagamos se haga lo mas rapido posible · Seguir con todo
 - L2 · 2026-10-27 · declared · fault-db · la base es Postgres, no un archivo; la card no cambia cómo se conecta ni el SQL
 - L3 · 2026-10-27 · parte de ENG-01 (base de la API en inglés), en paralelo con ENG-02, ENG-03 y ENG-04: cada una renombra sus módulos y sólo las líneas de import de los otros
+- L4 · 2026-10-27 · T1 · `pytest tests/unit/test_modulo_reservas_en_ingles.py` 3 passed (S1-S3); tests/unit 316 passed, 5 failed que también fallan en HEAD; fmt passed, attacks passed; lint: 1 error mypy en recuperacion/rutas.py (`url_publica`), ajeno a T1; suite de verify.mjs sin terminar tras 28 min

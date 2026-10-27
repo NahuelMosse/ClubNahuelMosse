@@ -45,13 +45,13 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
     assert "def in_transaction(" in db
     usan = [
         a.parent.name
-        for a in MODULOS.glob("*/repositorio.py")
+        for a in [*MODULOS.glob("*/repositorio.py"), *MODULOS.glob("*/repository.py")]
         if "in_transaction(" in a.read_text(encoding="utf-8")
     ]
     assert len(usan) >= 6
 
     for archivo, metodo in [
-        ("reservas/repositorio.py", "cancelar_futuras_de"),
+        ("bookings/repository.py", "cancel_future_of"),
         ("espacios/repositorio.py", "dar_de_baja_de_sede"),
         ("notificaciones/repositorio.py", "encolar_cancelacion_usuario"),
     ]:
@@ -62,7 +62,7 @@ def test_los_repositorios_confirman_con_en_transaccion() -> None:
 
 def test_las_reservas_se_arman_con_fila_mapping() -> None:
     """las reservas se arman con fila._mapping @ARQ-02-S1 @assumption:ARQ-02-ASM-06"""
-    reservas = (MODULOS / "reservas" / "repositorio.py").read_text(encoding="utf-8")
+    reservas = (MODULOS / "bookings" / "repository.py").read_text(encoding="utf-8")
 
-    assert "Reserva(**" in reservas
+    assert "Booking(**" in reservas
     assert "._mapping" in reservas

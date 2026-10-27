@@ -16,7 +16,7 @@ ARCHIVOS_DE_CADA_UNA = {
     "sedes": CON_CUATRO,
     "espacios": CON_CUATRO,
     "horarios": CON_CUATRO,
-    "reservas": CON_CUATRO,
+    "bookings": {"routes", "use_cases", "rules", "repository"},
     "notificaciones": CON_CUATRO,
     "recuperacion": CON_CUATRO,
     "usuarios": {
@@ -34,7 +34,10 @@ ARCHIVOS_DE_CADA_UNA = {
 }
 FUNCIONALIDADES = set(ARCHIVOS_DE_CADA_UNA)
 CASOS_DE_USO = [
-    *(f"{f}/casos_de_uso.py" for f in sorted(FUNCIONALIDADES - {"usuarios"})),
+    *(
+        f"{f}/{'use_cases' if f == 'bookings' else 'casos_de_uso'}.py"
+        for f in sorted(FUNCIONALIDADES - {"usuarios"})
+    ),
     *(f"usuarios/{c}.py" for c in ("registro", "perfil", "contrasena", "baja", "administradores")),
 ]
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
@@ -43,10 +46,21 @@ ERRORES_COMUNES = {"InvalidData", "Forbidden", "NotFound"}
 # Commit en que nació la card: el contrato de la API antes de moverla.
 BASE = "612d445fe18ee945ab3c3f8da31d133b11452d23"
 RENOMBRADOS = {
-    "app__interfaz__reservas__PedidoDeCambio": "PedidoDeCambioDeReserva",
+    "app__interfaz__reservas__PedidoDeCambio": "BookingChangeRequest",
     "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
     "app__interfaz__sedes__PedidoDeEdicion": "PedidoDeEdicionDeSede",
     "app__interfaz__sesion__PedidoDeEdicion": "PedidoDeEdicionDePerfil",
+}
+# ENG-05 renamed the bookings schemas; the rest of the contract is unchanged.
+RENOMBRADOS_DE_RESERVAS = {
+    "ReservaHistorialVista": "BookingHistoryView",
+    "ReservaVista": "BookingView",
+    "ListaDeReservas": "BookingList",
+    "PedidoDeReserva": "BookingRequest",
+    "PedidoDeAnulacion": "VoidRequest",
+    "HistorialVista": "HistoryView",
+    "ContadoresVista": "CountersView",
+    "Errores": "Errors",
 }
 
 
@@ -156,7 +170,7 @@ def test_shared_no_importa_funcionalidades_y_reglas_no_importa_base_de_datos_ni_
     for archivo in fuentes_de_shared:
         propios = [n for n in _importados(archivo) if n.startswith("app.modules")]
         assert propios == [], f"{archivo.relative_to(APP)} importa {propios}"
-    reglas = [p for p in _de_funcionalidades() if p.name == "reglas.py"]
+    reglas = [p for p in _de_funcionalidades() if p.name in {"reglas.py", "rules.py"}]
     assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"sesion"}
     for archivo in reglas:
         for nombre in _importados(archivo):
@@ -172,9 +186,10 @@ def test_los_casos_de_uso_no_importan_repositorio_ni_rutas() -> None:
         for nombre in _importados(archivo):
             ultimo = nombre.split(".")[-1]
             es_de_la_app = nombre.startswith("app.modules.")
-            assert not (es_de_la_app and (ultimo == "repositorio" or ultimo.startswith("rutas"))), (
-                f"{ruta} importa {nombre}"
+            es_capa_ajena = ultimo in {"repositorio", "repository"} or ultimo.startswith(
+                ("rutas", "routes")
             )
+            assert not (es_de_la_app and es_capa_ajena), f"{ruta} importa {nombre}"
 
 
 def _sin_titulos(documento: object) -> object:
@@ -228,6 +243,29 @@ def _con_ids_uuid(documento: object) -> object:
     return nuevo
 
 
+def _con_esquemas_de_reservas(
+    contrato: dict[str, dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    """Las rutas de /reservas usan los esquemas en inglés; Errors es una copia de Errores."""
+
+    def renombrar(texto: str) -> str:
+        for viejo, nuevo in RENOMBRADOS_DE_RESERVAS.items():
+            texto = texto.replace(f'/schemas/{viejo}"', f'/schemas/{nuevo}"')
+        return texto
+
+    rutas = cast(dict[str, object], contrato["paths"])
+    contrato["paths"] = {
+        ruta: json.loads(renombrar(json.dumps(item))) if ruta.startswith("/reservas") else item
+        for ruta, item in rutas.items()
+    }
+    esquemas = cast(dict[str, object], contrato["components"]["schemas"])
+    esquemas = json.loads(renombrar(json.dumps(esquemas)))
+    contrato["components"]["schemas"] = esquemas
+    for viejo, nuevo in RENOMBRADOS_DE_RESERVAS.items():
+        esquemas[nuevo] = esquemas.pop(viejo) if nuevo != "Errors" else esquemas[viejo]
+    return contrato
+
+
 def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None:
     """el contrato tiene las mismas rutas, métodos, códigos y formas que el de main, salvo los cuatro nombres de esquema
     @ARQ-04-S3"""  # noqa: E501
@@ -240,7 +278,8 @@ def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None
     ).stdout
     for viejo, nuevo in RENOMBRADOS.items():
         de_main = de_main.replace(viejo, nuevo)
-    esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(_contrato(de_main)))
+    contrato_de_main = _con_esquemas_de_reservas(_contrato(de_main))
+    esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(contrato_de_main))
     actual = _contrato((API / "openapi.json").read_text(encoding="utf-8"))
     assert set(actual["paths"]) == set(esperado["paths"])
     assert _sin_titulos(actual["paths"]) == _sin_titulos(esperado["paths"])
@@ -309,4 +348,4 @@ def test_notificaciones_no_importa_reservas_el_aviso_recibe_los_datos_que_necesi
     assert archivos
     for archivo in archivos:
         for nombre in _importados(archivo):
-            assert not nombre.startswith("app.modules.reservas"), f"{archivo.name}: {nombre}"
+            assert not nombre.startswith("app.modules.bookings"), f"{archivo.name}: {nombre}"

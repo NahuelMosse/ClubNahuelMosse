@@ -80,8 +80,8 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     from fastapi import Depends, FastAPI
 
+    from app.modules.bookings.repository import BookingsSql, bookings_repository
     from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
-    from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
     from app.shared.db import connection
 
     app = FastAPI()
@@ -94,7 +94,7 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     @app.get("/dos")
     def dos(
-        reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
+        reservas: Annotated[BookingsSql, Depends(bookings_repository)],
         avisos: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
     ) -> bool:
         return reservas._conn is avisos._conn

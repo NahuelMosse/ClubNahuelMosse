@@ -48,6 +48,7 @@ max-args = 4
 "app/**/*.py" = ["N818"]
 # Cada `Depends` de una ruta de FastAPI cuenta como parámetro y es la forma de inyectar del framework.
 "app/modules/*/rutas*.py" = ["PLR0913", "PLR0917"]
+"app/modules/bookings/routes.py" = ["PLR0913", "PLR0917"]
 # Las reglas de código legible son para la API; los tests siguen el estilo de pytest (parámetros
 # booleanos de `parametrize`, valores esperados escritos en el test).
 "tests/**/*.py" = ["C90", "PLR", "RET", "N", "ERA", "FBT"]

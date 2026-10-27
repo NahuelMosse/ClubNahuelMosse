@@ -45,13 +45,13 @@ Seguir un pedido de punta a punta es la forma más rápida de entender el códig
    hablan directo con el servidor.
 3. **El repositorio usa el cliente HTTP** (`lib/api/cliente_api.dart`), que manda `POST /reservas` con un JSON y el token
    de la sesión en el encabezado `Authorization: Bearer …`.
-4. **La API recibe el pedido** en `apps/api/app/modules/reservas/rutas.py`. Primero le pregunta a Firebase si el token es
+4. **La API recibe el pedido** en `apps/api/app/modules/bookings/routes.py`. Primero le pregunta a Firebase si el token es
    válido y de quién es.
-5. **La ruta llama al caso de uso** `reservar` en `app/modules/reservas/casos_de_uso.py`, que aplica las reglas: que sea un usuario
+5. **La ruta llama al caso de uso** `book` en `app/modules/bookings/use_cases.py`, que aplica las reglas: que sea un usuario
    y no un admin, de 1 a 4 horas, dentro de los próximos 7 días, en el horario de la sede.
-6. **Las reglas puras** (calcular horarios, validar rangos) están en `app/modules/reservas/reglas.py` y `app/modules/horarios/reglas.py`. No tocan
+6. **Las reglas puras** (calcular horarios, validar rangos) están en `app/modules/bookings/rules.py` y `app/modules/horarios/reglas.py`. No tocan
    la base ni la red, así que se prueban fácil.
-7. **El repositorio SQL** (`app/modules/reservas/repositorio.py`) hace el `INSERT`. Si dos personas reservan la misma cancha
+7. **El repositorio SQL** (`app/modules/bookings/repository.py`) hace el `INSERT`. Si dos personas reservan la misma cancha
    a la misma hora, la base rechaza la segunda con una restricción, y la API responde **409**.
 8. **La respuesta vuelve** como JSON con código **201**, y la app muestra la pantalla de reserva confirmada.
 

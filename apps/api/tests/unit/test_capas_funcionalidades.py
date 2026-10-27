@@ -12,7 +12,7 @@ RAIZ = API.parents[1]
 # Cada archivo de acceso a datos escribe sólo las tablas que son suyas.
 TABLAS_PROPIAS = {
     "usuarios/repositorio.py": {"usuario"},
-    "reservas/repositorio.py": {"reserva"},
+    "bookings/repository.py": {"reserva"},
     "sedes/repositorio.py": {"sede"},
     "notificaciones/repositorio.py": {"notificacion", "notificacion_reserva", "dispositivo"},
     "espacios/repositorio.py": {"espacio"},
@@ -122,14 +122,14 @@ def test_la_anticipacion_sale_de_las_reglas_y_no_esta_en_el_sql() -> None:
 
 def test_las_rutas_de_mis_reservas_y_de_cancelar_entran_por_los_casos_de_uso() -> None:
     """las rutas de mis reservas y de cancelar entran por los casos de uso @REV-06-S11 @assumption:REV-06-ASM-09"""
-    arbol = ast.parse((MODULOS / "reservas" / "rutas.py").read_text(encoding="utf-8"))
+    arbol = ast.parse((MODULOS / "bookings" / "routes.py").read_text(encoding="utf-8"))
     traidos = {
         a.name
         for n in ast.walk(arbol)
-        if isinstance(n, ast.ImportFrom) and n.module == "app.modules.reservas.casos_de_uso"
+        if isinstance(n, ast.ImportFrom) and n.module == "app.modules.bookings.use_cases"
         for a in n.names
     }
-    assert {"mis_reservas", "cancelar_reserva"} <= traidos
+    assert {"my_bookings", "cancel_booking"} <= traidos
 
 
 def test_cada_card_tiene_su_seccion_de_cambios_a_lo_existente() -> None:

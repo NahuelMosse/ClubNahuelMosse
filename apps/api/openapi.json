@@ -1346,7 +1346,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListaDeReservas"
+                  "$ref": "#/components/schemas/BookingList"
                 }
               }
             }
@@ -1365,7 +1365,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1390,7 +1390,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeReserva"
+                "$ref": "#/components/schemas/BookingRequest"
               }
             }
           }
@@ -1401,7 +1401,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaVista"
+                  "$ref": "#/components/schemas/BookingView"
                 }
               }
             }
@@ -1424,7 +1424,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1433,7 +1433,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1473,7 +1473,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaVista"
+                  "$ref": "#/components/schemas/BookingView"
                 }
               }
             }
@@ -1496,7 +1496,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1544,7 +1544,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeCambioDeReserva"
+                "$ref": "#/components/schemas/BookingChangeRequest"
               }
             }
           }
@@ -1555,7 +1555,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaVista"
+                  "$ref": "#/components/schemas/BookingView"
                 }
               }
             }
@@ -1581,7 +1581,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1590,7 +1590,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1736,7 +1736,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HistorialVista"
+                  "$ref": "#/components/schemas/HistoryView"
                 }
               }
             }
@@ -1758,7 +1758,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1797,7 +1797,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaHistorialVista"
+                  "$ref": "#/components/schemas/BookingHistoryView"
                 }
               }
             }
@@ -1861,7 +1861,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeAnulacion"
+                "$ref": "#/components/schemas/VoidRequest"
               }
             }
           }
@@ -1872,7 +1872,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaHistorialVista"
+                  "$ref": "#/components/schemas/BookingHistoryView"
                 }
               }
             }
@@ -1898,7 +1898,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1907,7 +1907,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -2159,6 +2159,351 @@
         ],
         "title": "BajaDeDispositivo"
       },
+      "BookingChangeRequest": {
+        "properties": {
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "desde": {
+            "type": "string",
+            "title": "Desde"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "fecha",
+          "desde"
+        ],
+        "title": "BookingChangeRequest"
+      },
+      "BookingHistoryView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "sede_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sede Id"
+          },
+          "espacio": {
+            "type": "string",
+            "title": "Espacio"
+          },
+          "deporte": {
+            "type": "string",
+            "title": "Deporte"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "sede": {
+            "type": "string",
+            "title": "Sede"
+          },
+          "direccion": {
+            "type": "string",
+            "title": "Direccion"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inicio"
+          },
+          "fin": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fin"
+          },
+          "precio_por_hora": {
+            "type": "integer",
+            "title": "Precio Por Hora"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activa",
+              "completada",
+              "cancelada",
+              "anulada"
+            ],
+            "title": "Estado"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "usuario_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Usuario Id"
+          },
+          "usuario": {
+            "type": "string",
+            "title": "Usuario"
+          },
+          "creado_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creado En"
+          },
+          "cancelada_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada En"
+          },
+          "cancelada_por_nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Por Nombre"
+          },
+          "espacio_de_baja": {
+            "type": "boolean",
+            "title": "Espacio De Baja"
+          },
+          "anulable": {
+            "type": "boolean",
+            "title": "Anulable"
+          },
+          "aviso_envio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aviso Envio"
+          },
+          "aviso_en": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aviso En"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "espacio_id",
+          "sede_id",
+          "espacio",
+          "deporte",
+          "tipo",
+          "sede",
+          "direccion",
+          "inicio",
+          "fin",
+          "precio_por_hora",
+          "total",
+          "estado",
+          "motivo",
+          "usuario_id",
+          "usuario",
+          "creado_en",
+          "cancelada_en",
+          "cancelada_por_nombre",
+          "espacio_de_baja",
+          "anulable",
+          "aviso_envio",
+          "aviso_en"
+        ],
+        "title": "BookingHistoryView"
+      },
+      "BookingList": {
+        "properties": {
+          "reservas": {
+            "items": {
+              "$ref": "#/components/schemas/BookingView"
+            },
+            "type": "array",
+            "title": "Reservas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reservas"
+        ],
+        "title": "BookingList"
+      },
+      "BookingRequest": {
+        "properties": {
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "desde": {
+            "type": "string",
+            "title": "Desde"
+          },
+          "horas": {
+            "type": "integer",
+            "title": "Horas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "fecha",
+          "desde",
+          "horas"
+        ],
+        "title": "BookingRequest"
+      },
+      "BookingView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "sede_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sede Id"
+          },
+          "espacio": {
+            "type": "string",
+            "title": "Espacio"
+          },
+          "deporte": {
+            "type": "string",
+            "title": "Deporte"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "sede": {
+            "type": "string",
+            "title": "Sede"
+          },
+          "direccion": {
+            "type": "string",
+            "title": "Direccion"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inicio"
+          },
+          "fin": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Fin"
+          },
+          "precio_por_hora": {
+            "type": "integer",
+            "title": "Precio Por Hora"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "activa",
+              "completada",
+              "cancelada",
+              "anulada"
+            ],
+            "title": "Estado"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "cancelable": {
+            "type": "boolean",
+            "title": "Cancelable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "espacio_id",
+          "sede_id",
+          "espacio",
+          "deporte",
+          "tipo",
+          "sede",
+          "direccion",
+          "inicio",
+          "fin",
+          "precio_por_hora",
+          "total",
+          "estado",
+          "motivo",
+          "cancelable"
+        ],
+        "title": "BookingView"
+      },
       "Catalogo": {
         "properties": {
           "deportes": {
@@ -2207,7 +2552,23 @@
         "type": "object",
         "title": "ConsultaDeEnlace"
       },
-      "ContadoresVista": {
+      "ContrasenaNueva": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo",
+            "default": ""
+          },
+          "nueva": {
+            "type": "string",
+            "title": "Nueva",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ContrasenaNueva"
+      },
+      "CountersView": {
         "properties": {
           "todas": {
             "type": "integer",
@@ -2233,23 +2594,7 @@
           "completadas",
           "anuladas"
         ],
-        "title": "ContadoresVista"
-      },
-      "ContrasenaNueva": {
-        "properties": {
-          "codigo": {
-            "type": "string",
-            "title": "Codigo",
-            "default": ""
-          },
-          "nueva": {
-            "type": "string",
-            "title": "Nueva",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "ContrasenaNueva"
+        "title": "CountersView"
       },
       "DeporteVista": {
         "properties": {
@@ -2340,6 +2685,22 @@
           "errores"
         ],
         "title": "ErroresDeSede"
+      },
+      "Errors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "Errors"
       },
       "EspacioVista": {
         "properties": {
@@ -2475,11 +2836,11 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
-      "HistorialVista": {
+      "HistoryView": {
         "properties": {
           "reservas": {
             "items": {
-              "$ref": "#/components/schemas/ReservaHistorialVista"
+              "$ref": "#/components/schemas/BookingHistoryView"
             },
             "type": "array",
             "title": "Reservas"
@@ -2497,7 +2858,7 @@
             "title": "Por Pagina"
           },
           "contadores": {
-            "$ref": "#/components/schemas/ContadoresVista"
+            "$ref": "#/components/schemas/CountersView"
           }
         },
         "type": "object",
@@ -2508,7 +2869,7 @@
           "por_pagina",
           "contadores"
         ],
-        "title": "HistorialVista"
+        "title": "HistoryView"
       },
       "ListaDeEspacios": {
         "properties": {
@@ -2525,22 +2886,6 @@
           "espacios"
         ],
         "title": "ListaDeEspacios"
-      },
-      "ListaDeReservas": {
-        "properties": {
-          "reservas": {
-            "items": {
-              "$ref": "#/components/schemas/ReservaVista"
-            },
-            "type": "array",
-            "title": "Reservas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "reservas"
-        ],
-        "title": "ListaDeReservas"
       },
       "NotificacionVista": {
         "properties": {
@@ -2616,31 +2961,6 @@
         "type": "object",
         "title": "PedidoCambioDeContrasena"
       },
-      "PedidoDeAnulacion": {
-        "properties": {
-          "motivo": {
-            "type": "string",
-            "title": "Motivo"
-          },
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "inicio": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Inicio"
-          }
-        },
-        "type": "object",
-        "required": [
-          "motivo",
-          "espacio_id",
-          "inicio"
-        ],
-        "title": "PedidoDeAnulacion"
-      },
       "PedidoDeCambioDeEspacio": {
         "properties": {
           "deporte": {
@@ -2701,31 +3021,6 @@
         },
         "type": "object",
         "title": "PedidoDeCambioDeEspacio"
-      },
-      "PedidoDeCambioDeReserva": {
-        "properties": {
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "fecha": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha"
-          },
-          "desde": {
-            "type": "string",
-            "title": "Desde"
-          }
-        },
-        "type": "object",
-        "required": [
-          "espacio_id",
-          "fecha",
-          "desde"
-        ],
-        "title": "PedidoDeCambioDeReserva"
       },
       "PedidoDeDispositivo": {
         "properties": {
@@ -2903,36 +3198,6 @@
         "type": "object",
         "title": "PedidoDeEspacio"
       },
-      "PedidoDeReserva": {
-        "properties": {
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "fecha": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha"
-          },
-          "desde": {
-            "type": "string",
-            "title": "Desde"
-          },
-          "horas": {
-            "type": "integer",
-            "title": "Horas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "espacio_id",
-          "fecha",
-          "desde",
-          "horas"
-        ],
-        "title": "PedidoDeReserva"
-      },
       "PedidoDeSede": {
         "properties": {
           "nombre": {
@@ -3060,280 +3325,6 @@
           "id"
         ],
         "title": "RegistroCreado"
-      },
-      "ReservaHistorialVista": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "sede_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Sede Id"
-          },
-          "espacio": {
-            "type": "string",
-            "title": "Espacio"
-          },
-          "deporte": {
-            "type": "string",
-            "title": "Deporte"
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo"
-          },
-          "sede": {
-            "type": "string",
-            "title": "Sede"
-          },
-          "direccion": {
-            "type": "string",
-            "title": "Direccion"
-          },
-          "inicio": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Inicio"
-          },
-          "fin": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Fin"
-          },
-          "precio_por_hora": {
-            "type": "integer",
-            "title": "Precio Por Hora"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "estado": {
-            "type": "string",
-            "enum": [
-              "activa",
-              "completada",
-              "cancelada",
-              "anulada"
-            ],
-            "title": "Estado"
-          },
-          "motivo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Motivo"
-          },
-          "usuario_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Usuario Id"
-          },
-          "usuario": {
-            "type": "string",
-            "title": "Usuario"
-          },
-          "creado_en": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Creado En"
-          },
-          "cancelada_en": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cancelada En"
-          },
-          "cancelada_por_nombre": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cancelada Por Nombre"
-          },
-          "espacio_de_baja": {
-            "type": "boolean",
-            "title": "Espacio De Baja"
-          },
-          "anulable": {
-            "type": "boolean",
-            "title": "Anulable"
-          },
-          "aviso_envio": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Aviso Envio"
-          },
-          "aviso_en": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Aviso En"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "espacio_id",
-          "sede_id",
-          "espacio",
-          "deporte",
-          "tipo",
-          "sede",
-          "direccion",
-          "inicio",
-          "fin",
-          "precio_por_hora",
-          "total",
-          "estado",
-          "motivo",
-          "usuario_id",
-          "usuario",
-          "creado_en",
-          "cancelada_en",
-          "cancelada_por_nombre",
-          "espacio_de_baja",
-          "anulable",
-          "aviso_envio",
-          "aviso_en"
-        ],
-        "title": "ReservaHistorialVista"
-      },
-      "ReservaVista": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "sede_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Sede Id"
-          },
-          "espacio": {
-            "type": "string",
-            "title": "Espacio"
-          },
-          "deporte": {
-            "type": "string",
-            "title": "Deporte"
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo"
-          },
-          "sede": {
-            "type": "string",
-            "title": "Sede"
-          },
-          "direccion": {
-            "type": "string",
-            "title": "Direccion"
-          },
-          "inicio": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Inicio"
-          },
-          "fin": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Fin"
-          },
-          "precio_por_hora": {
-            "type": "integer",
-            "title": "Precio Por Hora"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "estado": {
-            "type": "string",
-            "enum": [
-              "activa",
-              "completada",
-              "cancelada",
-              "anulada"
-            ],
-            "title": "Estado"
-          },
-          "motivo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Motivo"
-          },
-          "cancelable": {
-            "type": "boolean",
-            "title": "Cancelable"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "espacio_id",
-          "sede_id",
-          "espacio",
-          "deporte",
-          "tipo",
-          "sede",
-          "direccion",
-          "inicio",
-          "fin",
-          "precio_por_hora",
-          "total",
-          "estado",
-          "motivo",
-          "cancelable"
-        ],
-        "title": "ReservaVista"
       },
       "ReservasFueraDelHorario": {
         "properties": {
@@ -3536,6 +3527,31 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VoidRequest": {
+        "properties": {
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inicio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "motivo",
+          "espacio_id",
+          "inicio"
+        ],
+        "title": "VoidRequest"
       }
     },
     "securitySchemes": {

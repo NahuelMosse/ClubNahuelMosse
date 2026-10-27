@@ -39,7 +39,7 @@ def test_la_api_publica_openapi_con_todos_los_endpoints_del_contrato(api: TestCl
     assert publicado.status_code == 200
     assert _operaciones(publicado.json()) == _operaciones(versionado)
     assert len(_operaciones(versionado)) >= 30
-    assert PUBLICAS <= _operaciones(versionado)
+    assert _operaciones(versionado) >= PUBLICAS
     assert docs.status_code == 200
     assert "swagger" in docs.text.lower()
 

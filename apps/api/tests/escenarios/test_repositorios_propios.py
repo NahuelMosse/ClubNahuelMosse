@@ -8,7 +8,7 @@ from sqlalchemy import Connection, Engine, create_engine, text
 
 from app.modules.espacios.repositorio import EspaciosSql
 from app.modules.notificaciones.repositorio import NotificacionesSql
-from app.modules.reservas.repositorio import ReservasSql
+from app.modules.bookings.repository import BookingsSql
 from app.modules.sedes.repositorio import SedesSql
 from app.modules.usuarios.repositorio import UsuariosSql
 
@@ -93,7 +93,7 @@ def test_cancelar_una_reserva_deja_su_aviso(motor: Engine) -> None:
     mundo = _mundo(motor)
     reserva = _reserva(motor, mundo, _hora(dias=3))
     with motor.connect() as conn:
-        ReservasSql(conn).cancelar(mundo["usuario"], reserva)
+        BookingsSql(conn).cancel(mundo["usuario"], reserva)
     assert (
         _uno(
             motor,

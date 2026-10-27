@@ -9,14 +9,14 @@ nombre, no por línea: buscalos con el buscador del editor.
 | Busco | Está en |
 |---|---|
 | Las reglas de una reserva (1 a 4 horas, 7 días a la vista, horario de la sede) | `apps/api/app/modules/horarios/reglas.py` (`validar_reserva`, `error_de_duracion`, `MIN_HORAS`, `MAX_HORAS`, `DIAS_A_LA_VISTA`) |
-| Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `ReservasSql.insertar` en `apps/api/app/modules/reservas/repositorio.py`, que traduce el error `23P01` a `HorarioOcupado` |
-| El caso de uso «reservar» | `apps/api/app/modules/reservas/casos_de_uso.py` (`reservar`) |
+| Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `BookingsSql.insert` en `apps/api/app/modules/bookings/repository.py`, que traduce el error `23P01` a `HorarioOcupado` |
+| El caso de uso «reservar» | `apps/api/app/modules/bookings/use_cases.py` (`book`) |
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
 | Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
 | Cómo se valida el token de Firebase | `apps/api/app/modules/sesion/usuario_actual.py` (`usuario_actual`) → `sesion/casos_de_uso.py` (`perfil_autenticado`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
 | La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
 | Los recordatorios de una hora antes | `apps/api/app/modules/notificaciones/barrido.py` (el reloj) → `casos_de_uso.py` (`enviar_recordatorios`, `entregar`) → `push.py` (FCM) |
-| Los avisos de cancelación | se encolan en la misma transacción que cancela (`ReservasSql.cancelar` y `ReservasSql.anular`) y salen con `despachar_pendientes` |
+| Los avisos de cancelación | se encolan en la misma transacción que cancela (`BookingsSql.cancel` y `BookingsSql.void`) y salen con `despachar_pendientes` |
 | El correo de recuperación de contraseña | `apps/api/app/modules/recuperacion/casos_de_uso.py` (código, vigencia, tope por hora) y `correo.py` (SMTP o buzón) |
 | Las variables de entorno de la API | `apps/api/app/shared/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
 | El motor de la base y la conexión por pedido | `apps/api/app/shared/db.py` |
@@ -77,7 +77,7 @@ necesita entre `rutas.py` (HTTP), `casos_de_uso.py` (orquestación), `reglas.py`
 - `shared/` no importa funcionalidades; `reglas.py` no importa base de datos ni web; los casos de uso no importan
   `repositorio` ni `rutas`.
 - Las rutas reciben el repositorio con `Depends` desde el proveedor de su propio `repositorio.py`
-  (`repositorio_reservas`, …); un test lo reemplaza con `app.dependency_overrides`. Los comandos (`barrido.py`,
+  (`bookings_repository`, …); un test lo reemplaza con `app.dependency_overrides`. Los comandos (`barrido.py`,
   `sembrar_admin.py`) arman sus piezas ellos mismos.
 - Cada repositorio escribe sólo sus tablas.
 
@@ -91,7 +91,7 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 
 | Funcionalidad | Archivos | App |
 |---|---|---|
-| `reservas` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py` | `reservas/` |
+| `bookings` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py` | `reservas/` |
 | `horarios` | `rutas.py`, `casos_de_uso.py`, `disponibilidad.py`, `reglas.py`, `repositorio.py` | `reservas/` |
 | `sedes` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `sedes/`, `admin/` |
 | `espacios` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `espacios/`, `admin/` |
@@ -138,7 +138,7 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 | `sedes` | `sedes_activas`, `dar_de_alta_sede`, `editar_sede`, `dar_de_baja_sede`, `validar_sede`, `SedesSql` | `sede` |
 | `espacios` | el catálogo fijo (`Deporte`, `Tipo`), `nombre_sugerido`, alta, edición y baja de espacios, `EspaciosSql` | `espacio` |
 | `horarios` | `Agenda`, `grilla`, `validar_reserva`, `horarios_disponibles`, `canchas_disponibles` (`disponibilidad.py`), `HorariosSql` (lecturas) | — |
-| `reservas` | `reservar`, `mis_reservas`, `cancelar_reserva`, `modificar_reserva`, `historial_global`, `detalle_admin`, `anular_reserva`, `ReservasSql` (historial paginado por cursor) | `reserva` |
+| `bookings` | `book`, `my_bookings`, `cancel_booking`, `modify_booking`, `global_history`, `admin_detail`, `void_booking`, `BookingsSql` (historial paginado por cursor) | `reserva` |
 | `notificaciones` | `ANTICIPACION` (1 h), `enviar_recordatorios`, `despachar_pendientes`, dispositivos y centro de avisos, `NotificacionesSql`, `canal_push` (`push.py`: `CanalFcm`, `CanalNulo`), `barrido.py` (en proceso con `barrer_cada` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
 | `recuperacion` | `pedir_enlace`, `enlace_vigente`, `usar_enlace`, `hash_de`, `EnlacesSql`, `correo.py` (`enviar`: SMTP con STARTTLS verificado, o el buzón de desarrollo) | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
 
@@ -173,7 +173,7 @@ si el rol no es `admin`.
 | GET `/espacios/{espacio_id}/horarios` | `horarios/rutas.py` | `horarios_disponibles` | sesión |
 | GET `/espacios/disponibles` | `horarios/rutas.py` | `canchas_disponibles` | sesión |
 | GET `/reservas` | `reservas/rutas.py` | `mis_reservas` | sesión |
-| POST `/reservas` | `reservas/rutas.py` | `reservar` | usuario (admin: 403) |
+| POST `/reservas` | `reservas/rutas.py` | `book` | usuario (admin: 403) |
 | POST `/reservas/{id}/cancelar` | `reservas/rutas.py` | `cancelar_reserva`, después despacha el aviso | usuario, sólo sus reservas (una ajena da 404) |
 | POST `/reservas/{id}/modificar` | `reservas/rutas.py` | `modificar_reserva` | usuario |
 | GET `/reservas/todas` | `reservas/rutas.py` | `historial_global` | admin |

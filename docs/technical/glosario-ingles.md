@@ -118,6 +118,16 @@ datos push `tipo`→`kind`, `reserva_id`→`booking_id`; enlace `clubnahuelmosse
 `horarios_disponibles`→`available_slots`, `enviar_recordatorios`→`send_reminders`, `despachar_pendientes`→`dispatch_pending`,
 `barrer_cada`→`sweep_every`; `nombre_compuesto`→`composite_name`, `en_transaccion`→`in_transaction`, `conexion`→`connection`,
 `instalar`→`install`, `sembrar_admin`→`seed_admin`, `crear_app`→`create_app`, `_ciclo_de_vida`→`_lifespan`.
+Módulo `bookings`: `Estado`→`Status`, `FiltroEstado`→`StatusFilter`, `POR_PAGINA`→`PAGE_SIZE`; protocolo `Reservas`→`Bookings` (`de_usuario`→`of_user`,
+`agenda`→`opening_hours`, `repetida`→`repeated`, `propia`→`own`, `tipo_de_espacio`→`space_kind`, `mover`→`move`, `cancelar`→`cancel`,
+`insertar`→`insert`, `anular`→`void`, `historial`→`history`, `una_de_cualquiera`→`any_one`; en `BookingsSql` también `cancelar_futuras_de`→`cancel_future_of`);
+casos de uso `detalle_admin`→`admin_detail`; constantes `MOTIVO_MAXIMO`→`MAX_REASON_LENGTH`, `INTENTOS_CON_AGENDA_NUEVA`→`ATTEMPTS_WITH_NEW_HOURS`,
+`PAGINA_MAXIMA`→`MAX_PAGE`, `OCUPADO`→`SLOT_TAKEN_MESSAGE`, `NO_DISPONIBLE`→`UNAVAILABLE_MESSAGE`, `CAMBIO`→`CHANGED_MESSAGE`;
+esquemas HTTP `ReservaVista`→`BookingView`, `ReservaHistorialVista`→`BookingHistoryView`, `ListaDeReservas`→`BookingList`, `PedidoDeReserva`→`BookingRequest`,
+`PedidoDeCambioDeReserva`→`BookingChangeRequest`, `PedidoDeAnulacion`→`VoidRequest`, `HistorialVista`→`HistoryView`, `ContadoresVista`→`CountersView`,
+`Errores`→`Errors` (los de `bookings`), `_vista`→`_view`, `_vista_admin`→`_admin_view`; handlers `listar_reservas`→`list_bookings`,
+`hacer_reserva`→`create_booking`, `cancelar`→`cancel`, `modificar`→`modify`, `listar_todas`→`list_all`, `detalle`→`detail`, `anular`→`void`;
+proveedor `repositorio_reservas`→`bookings_repository`.
 Dart: `ClienteApi`→`ApiClient`, `Respuesta`→`ApiResponse`, `RutaDeLaApi`→`ApiRoute`, `rutasDeLaApi`→`apiRoutes`, `rutaDeclarada`→`isDeclaredRoute`,
 `SinConexion`→`Offline`, `ErrorDelServidor`→`ServerError`, `ServidorSinRespuesta`→`ServerTimeout`, `Sesion`→`Session`, `Perfil`→`Profile`,
 `Rol`→`Role`, `CentroDeNotificaciones`→`NotificationCenter`, `Catalogo`→`Catalog`, `TipoDeCancha`→`SpaceKind`,

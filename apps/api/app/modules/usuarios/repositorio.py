@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import IntegrityError
 
-from app.modules.reservas import ReservasSql
+from app.modules.bookings import BookingsSql
 from app.modules.usuarios.reglas import PerfilEditado, Registro
 from app.shared.db import DbConnection, in_transaction, violated_constraint
 from app.shared.errors import Duplicate
@@ -85,7 +85,7 @@ class UsuariosSql:
             if dada is None:
                 self._conn.rollback()
                 return False
-            ReservasSql(self._conn).cancelar_futuras_de(id_usuario)
+            BookingsSql(self._conn).cancel_future_of(id_usuario)
         return True
 
     def marcar_cambio_de_contrasena(self, id_usuario: UUID) -> None:
