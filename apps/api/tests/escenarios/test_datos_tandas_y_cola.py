@@ -6,7 +6,6 @@ Los helpers y los fixtures son los de test_datos.py.
 import threading
 from collections.abc import Callable
 from typing import Any
-from uuid import UUID
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
