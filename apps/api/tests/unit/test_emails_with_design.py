@@ -35,7 +35,9 @@ class _Links:
     def recipient(self, email: str) -> Recipient:
         return Recipient(_id(1), self.name, ADDRESS)
 
-    def issue(self, user_id: UUID, code_hash: str, validity_minutes: int, max_per_hour: int) -> bool:
+    def issue(
+        self, user_id: UUID, code_hash: str, validity_minutes: int, max_per_hour: int
+    ) -> bool:
         return True
 
 
@@ -94,7 +96,15 @@ def _profile(name: str = "Ana") -> Profile:
 def _reminder(venue: str = "Sede Morón") -> Reminder:
     starts_at = datetime(2026, 10, 2, 0, 0, tzinfo=UTC)
     return Reminder(
-        _id(7), _id(1), starts_at, starts_at + timedelta(hours=1), "Futbol", "F5", venue, ADDRESS, "Ana"
+        _id(7),
+        _id(1),
+        starts_at,
+        starts_at + timedelta(hours=1),
+        "Futbol",
+        "F5",
+        venue,
+        ADDRESS,
+        "Ana",
     )
 
 
@@ -115,7 +125,9 @@ def test_cada_correo_sigue_llevando_su_texto_y_el_html_repite_el_enlace_del_boto
         tasks = BackgroundTasks()
         patch.setattr(routes, "book", lambda *a, **k: _booking())
         routes.create_booking(
-            routes.BookingRequest(espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1),
+            routes.BookingRequest(
+                espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1
+            ),
             _profile(),
             cast(Any, None),
             tasks,
@@ -227,7 +239,9 @@ def test_al_hacer_una_reserva_sale_el_correo_de_confirmacion_con_deporte_sede_di
     monkeypatch.setattr(routes, "book", lambda *a, **k: _booking())
     tasks = BackgroundTasks()
     response = routes.create_booking(
-        routes.BookingRequest(espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1),
+        routes.BookingRequest(
+            espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1
+        ),
         _profile(),
         cast(Any, None),
         tasks,
@@ -261,7 +275,9 @@ def test_si_el_correo_de_confirmacion_falla_la_reserva_responde_igual_y_queda_en
     monkeypatch.setattr(routes, "book", lambda *a, **k: _booking())
     tasks = BackgroundTasks()
     response = routes.create_booking(
-        routes.BookingRequest(espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1),
+        routes.BookingRequest(
+            espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1
+        ),
         _profile(),
         cast(Any, None),
         tasks,
@@ -287,7 +303,9 @@ def test_modificar_cancelar_o_anular_no_mandan_correo(monkeypatch: pytest.Monkey
     tasks = BackgroundTasks()
     routes.cancel(_profile(), cast(Any, None), _id(9), tasks, cast(Any, None))
     routes.modify(
-        routes.BookingChangeRequest(espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00"),
+        routes.BookingChangeRequest(
+            espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00"
+        ),
         _profile(),
         cast(Any, None),
         _id(9),

@@ -25,7 +25,7 @@ EXTRA_CASTELLANO = {
     "invalidos", "anticipacion", "espera", "motivo", "vigente", "registro", "pedido",
     "cuenta", "fila", "filas", "vencidos", "varados", "atascados", "muertos", "previo",
     "nuevas", "nuevo", "anuladas", "anulada", "perdido", "dispositivo", "dispositivos",
-    "leida", "leer", "todas", "creada", "baja", "aviso", "centro", "lista", "vista",
+    "leida", "leer", "todas", "creada", "baja", "centro", "lista", "vista",
     "bloqueo", "recordatorio", "cancelacion", "forzosa", "hora", "cuando", "momento",
     "usuario", "reserva", "sede", "tipo", "titulo", "cuerpo", "datos", "plataforma",
     "permiso", "notificacion", "notificaciones", "inicio", "fin", "deporte", "unica",

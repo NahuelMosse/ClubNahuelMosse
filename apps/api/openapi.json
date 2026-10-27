@@ -679,7 +679,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Catalogo"
+                  "$ref": "#/components/schemas/CatalogView"
                 }
               }
             }
@@ -773,7 +773,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListaDeEspacios"
+                  "$ref": "#/components/schemas/SpaceList"
                 }
               }
             }
@@ -817,7 +817,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeEspacio"
+                "$ref": "#/components/schemas/SpaceRequest"
               }
             }
           }
@@ -828,7 +828,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EspacioVista"
+                  "$ref": "#/components/schemas/SpaceView"
                 }
               }
             }
@@ -853,7 +853,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -910,7 +910,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Sugerencia"
+                  "$ref": "#/components/schemas/Suggestion"
                 }
               }
             }
@@ -932,7 +932,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -971,7 +971,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeCambioDeEspacio"
+                "$ref": "#/components/schemas/SpaceChangeRequest"
               }
             }
           }
@@ -982,7 +982,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EspacioVista"
+                  "$ref": "#/components/schemas/SpaceView"
                 }
               }
             }
@@ -1007,7 +1007,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -1064,7 +1064,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1159,7 +1159,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GrillaVista"
+                  "$ref": "#/components/schemas/SlotGridView"
                 }
               }
             }
@@ -1179,7 +1179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             }
@@ -1188,7 +1188,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -1283,7 +1283,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListaDeEspacios"
+                  "$ref": "#/components/schemas/SpaceList"
                 }
               }
             }
@@ -1302,7 +1302,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
@@ -1346,7 +1346,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListaDeReservas"
+                  "$ref": "#/components/schemas/BookingList"
                 }
               }
             }
@@ -1365,7 +1365,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1390,7 +1390,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeReserva"
+                "$ref": "#/components/schemas/BookingRequest"
               }
             }
           }
@@ -1401,7 +1401,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaVista"
+                  "$ref": "#/components/schemas/BookingView"
                 }
               }
             }
@@ -1424,7 +1424,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1433,7 +1433,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1473,7 +1473,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaVista"
+                  "$ref": "#/components/schemas/BookingView"
                 }
               }
             }
@@ -1496,7 +1496,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1544,7 +1544,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeCambioDeReserva"
+                "$ref": "#/components/schemas/BookingChangeRequest"
               }
             }
           }
@@ -1555,7 +1555,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaVista"
+                  "$ref": "#/components/schemas/BookingView"
                 }
               }
             }
@@ -1581,7 +1581,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1590,7 +1590,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1736,7 +1736,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HistorialVista"
+                  "$ref": "#/components/schemas/HistoryView"
                 }
               }
             }
@@ -1758,7 +1758,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1797,7 +1797,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaHistorialVista"
+                  "$ref": "#/components/schemas/BookingHistoryView"
                 }
               }
             }
@@ -1861,7 +1861,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeAnulacion"
+                "$ref": "#/components/schemas/VoidRequest"
               }
             }
           }
@@ -1872,7 +1872,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReservaHistorialVista"
+                  "$ref": "#/components/schemas/BookingHistoryView"
                 }
               }
             }
@@ -1898,7 +1898,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1907,7 +1907,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             },
@@ -1928,7 +1928,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PedidoDeDispositivo"
+                "$ref": "#/components/schemas/DeviceRequest"
               }
             }
           },
@@ -1959,7 +1959,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Errores"
+                  "$ref": "#/components/schemas/Errors"
                 }
               }
             }
@@ -1984,7 +1984,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BajaDeDispositivo"
+                "$ref": "#/components/schemas/DeviceUnregistration"
               }
             }
           },
@@ -2036,7 +2036,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Centro"
+                  "$ref": "#/components/schemas/Center"
                 }
               }
             }
@@ -2146,656 +2146,7 @@
   },
   "components": {
     "schemas": {
-      "BajaDeDispositivo": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token"
-        ],
-        "title": "BajaDeDispositivo"
-      },
-      "BookingsOutside": {
-        "properties": {
-          "reservas_afuera": {
-            "type": "integer",
-            "title": "Reservas Afuera"
-          }
-        },
-        "type": "object",
-        "required": [
-          "reservas_afuera"
-        ],
-        "title": "BookingsOutside"
-      },
-      "Catalogo": {
-        "properties": {
-          "deportes": {
-            "items": {
-              "$ref": "#/components/schemas/DeporteVista"
-            },
-            "type": "array",
-            "title": "Deportes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "deportes"
-        ],
-        "title": "Catalogo"
-      },
-      "Centro": {
-        "properties": {
-          "notificaciones": {
-            "items": {
-              "$ref": "#/components/schemas/NotificacionVista"
-            },
-            "type": "array",
-            "title": "Notificaciones"
-          },
-          "no_leidas": {
-            "type": "integer",
-            "title": "No Leidas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "notificaciones",
-          "no_leidas"
-        ],
-        "title": "Centro"
-      },
-      "ContadoresVista": {
-        "properties": {
-          "todas": {
-            "type": "integer",
-            "title": "Todas"
-          },
-          "activas": {
-            "type": "integer",
-            "title": "Activas"
-          },
-          "completadas": {
-            "type": "integer",
-            "title": "Completadas"
-          },
-          "anuladas": {
-            "type": "integer",
-            "title": "Anuladas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "todas",
-          "activas",
-          "completadas",
-          "anuladas"
-        ],
-        "title": "ContadoresVista"
-      },
-      "DeporteVista": {
-        "properties": {
-          "clave": {
-            "type": "string",
-            "title": "Clave"
-          },
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "tipos": {
-            "items": {
-              "$ref": "#/components/schemas/TipoVista"
-            },
-            "type": "array",
-            "title": "Tipos"
-          }
-        },
-        "type": "object",
-        "required": [
-          "clave",
-          "nombre",
-          "tipos"
-        ],
-        "title": "DeporteVista"
-      },
-      "DuplicateUser": {
-        "properties": {
-          "mensaje": {
-            "type": "string",
-            "title": "Mensaje"
-          },
-          "campos": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Campos"
-          },
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "mensaje",
-          "campos",
-          "errores"
-        ],
-        "title": "DuplicateUser"
-      },
-      "Errores": {
-        "properties": {
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "errores"
-        ],
-        "title": "Errores"
-      },
-      "EspacioVista": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "sede_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Sede Id"
-          },
-          "sede": {
-            "type": "string",
-            "title": "Sede"
-          },
-          "deporte": {
-            "type": "string",
-            "title": "Deporte"
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo"
-          },
-          "numero": {
-            "type": "integer",
-            "title": "Numero"
-          },
-          "techada": {
-            "type": "boolean",
-            "title": "Techada"
-          },
-          "iluminada": {
-            "type": "boolean",
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "type": "integer",
-            "title": "Precio Por Hora"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "nombre",
-          "sede_id",
-          "sede",
-          "deporte",
-          "tipo",
-          "numero",
-          "techada",
-          "iluminada",
-          "precio_por_hora"
-        ],
-        "title": "EspacioVista"
-      },
-      "FieldErrors": {
-        "properties": {
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "errores"
-        ],
-        "title": "FieldErrors"
-      },
-      "FranjaVista": {
-        "properties": {
-          "inicio": {
-            "type": "string",
-            "title": "Inicio"
-          },
-          "fin": {
-            "type": "string",
-            "title": "Fin"
-          },
-          "disponible": {
-            "type": "boolean",
-            "title": "Disponible"
-          }
-        },
-        "type": "object",
-        "required": [
-          "inicio",
-          "fin",
-          "disponible"
-        ],
-        "title": "FranjaVista"
-      },
-      "GrillaVista": {
-        "properties": {
-          "fecha": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha"
-          },
-          "hoy": {
-            "type": "string",
-            "format": "date",
-            "title": "Hoy"
-          },
-          "abre": {
-            "type": "boolean",
-            "title": "Abre"
-          },
-          "franjas": {
-            "items": {
-              "$ref": "#/components/schemas/FranjaVista"
-            },
-            "type": "array",
-            "title": "Franjas"
-          },
-          "no_disponibles": {
-            "type": "integer",
-            "title": "No Disponibles"
-          }
-        },
-        "type": "object",
-        "required": [
-          "fecha",
-          "hoy",
-          "abre",
-          "franjas",
-          "no_disponibles"
-        ],
-        "title": "GrillaVista"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "type": "array",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "title": "HTTPValidationError"
-      },
-      "HistorialVista": {
-        "properties": {
-          "reservas": {
-            "items": {
-              "$ref": "#/components/schemas/ReservaHistorialVista"
-            },
-            "type": "array",
-            "title": "Reservas"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "pagina": {
-            "type": "integer",
-            "title": "Pagina"
-          },
-          "por_pagina": {
-            "type": "integer",
-            "title": "Por Pagina"
-          },
-          "contadores": {
-            "$ref": "#/components/schemas/ContadoresVista"
-          }
-        },
-        "type": "object",
-        "required": [
-          "reservas",
-          "total",
-          "pagina",
-          "por_pagina",
-          "contadores"
-        ],
-        "title": "HistorialVista"
-      },
-      "LinkCheck": {
-        "properties": {
-          "codigo": {
-            "type": "string",
-            "title": "Codigo",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "LinkCheck"
-      },
-      "LinkRequest": {
-        "properties": {
-          "correo": {
-            "type": "string",
-            "title": "Correo",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "LinkRequest"
-      },
-      "ListaDeEspacios": {
-        "properties": {
-          "espacios": {
-            "items": {
-              "$ref": "#/components/schemas/EspacioVista"
-            },
-            "type": "array",
-            "title": "Espacios"
-          }
-        },
-        "type": "object",
-        "required": [
-          "espacios"
-        ],
-        "title": "ListaDeEspacios"
-      },
-      "ListaDeReservas": {
-        "properties": {
-          "reservas": {
-            "items": {
-              "$ref": "#/components/schemas/ReservaVista"
-            },
-            "type": "array",
-            "title": "Reservas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "reservas"
-        ],
-        "title": "ListaDeReservas"
-      },
-      "NewPassword": {
-        "properties": {
-          "codigo": {
-            "type": "string",
-            "title": "Codigo",
-            "default": ""
-          },
-          "nueva": {
-            "type": "string",
-            "title": "Nueva",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "NewPassword"
-      },
-      "NoSession": {
-        "properties": {
-          "detail": {
-            "type": "string",
-            "title": "Detail"
-          }
-        },
-        "type": "object",
-        "required": [
-          "detail"
-        ],
-        "title": "NoSession"
-      },
-      "NotificacionVista": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "tipo": {
-            "type": "string",
-            "enum": [
-              "recordatorio",
-              "cancelacion_forzosa",
-              "cancelacion_usuario"
-            ],
-            "title": "Tipo"
-          },
-          "titulo": {
-            "type": "string",
-            "title": "Titulo"
-          },
-          "cuerpo": {
-            "type": "string",
-            "title": "Cuerpo"
-          },
-          "reserva_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Reserva Id"
-          },
-          "creada_en": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Creada En"
-          },
-          "leida": {
-            "type": "boolean",
-            "title": "Leida"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "tipo",
-          "titulo",
-          "cuerpo",
-          "reserva_id",
-          "creada_en",
-          "leida"
-        ],
-        "title": "NotificacionVista"
-      },
-      "OwnProfile": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "apellido": {
-            "type": "string",
-            "title": "Apellido"
-          },
-          "correo": {
-            "type": "string",
-            "title": "Correo"
-          },
-          "rol": {
-            "type": "string",
-            "enum": [
-              "usuario",
-              "admin"
-            ],
-            "title": "Rol"
-          },
-          "dni": {
-            "type": "string",
-            "title": "Dni"
-          },
-          "fecha_nacimiento": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha Nacimiento"
-          }
-        },
-        "type": "object",
-        "required": [
-          "nombre",
-          "apellido",
-          "correo",
-          "rol",
-          "dni",
-          "fecha_nacimiento"
-        ],
-        "title": "OwnProfile"
-      },
-      "PasswordChangeRequest": {
-        "properties": {
-          "actual": {
-            "type": "string",
-            "title": "Actual",
-            "default": ""
-          },
-          "nueva": {
-            "type": "string",
-            "title": "Nueva",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "PasswordChangeRequest"
-      },
-      "PasswordErrors": {
-        "properties": {
-          "errores": {
-            "additionalProperties": {
-              "type": "string"
-            },
-            "type": "object",
-            "title": "Errores"
-          }
-        },
-        "type": "object",
-        "required": [
-          "errores"
-        ],
-        "title": "PasswordErrors"
-      },
-      "PedidoDeAnulacion": {
-        "properties": {
-          "motivo": {
-            "type": "string",
-            "title": "Motivo"
-          },
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "inicio": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Inicio"
-          }
-        },
-        "type": "object",
-        "required": [
-          "motivo",
-          "espacio_id",
-          "inicio"
-        ],
-        "title": "PedidoDeAnulacion"
-      },
-      "PedidoDeCambioDeEspacio": {
-        "properties": {
-          "deporte": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Deporte"
-          },
-          "tipo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tipo"
-          },
-          "techada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Techada"
-          },
-          "iluminada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Precio Por Hora"
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeCambioDeEspacio"
-      },
-      "PedidoDeCambioDeReserva": {
+      "BookingChangeRequest": {
         "properties": {
           "espacio_id": {
             "type": "string",
@@ -2818,214 +2169,9 @@
           "fecha",
           "desde"
         ],
-        "title": "PedidoDeCambioDeReserva"
+        "title": "BookingChangeRequest"
       },
-      "PedidoDeDispositivo": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          },
-          "plataforma": {
-            "type": "string",
-            "enum": [
-              "android",
-              "ios"
-            ],
-            "title": "Plataforma"
-          },
-          "permiso": {
-            "type": "boolean",
-            "title": "Permiso"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token",
-          "plataforma",
-          "permiso"
-        ],
-        "title": "PedidoDeDispositivo"
-      },
-      "PedidoDeEspacio": {
-        "properties": {
-          "sede_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "uuid"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Sede Id"
-          },
-          "deporte": {
-            "type": "string",
-            "title": "Deporte",
-            "default": ""
-          },
-          "tipo": {
-            "type": "string",
-            "title": "Tipo",
-            "default": ""
-          },
-          "techada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Techada"
-          },
-          "iluminada": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Iluminada"
-          },
-          "precio_por_hora": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Precio Por Hora"
-          },
-          "numero": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Numero"
-          }
-        },
-        "type": "object",
-        "title": "PedidoDeEspacio"
-      },
-      "PedidoDeReserva": {
-        "properties": {
-          "espacio_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Espacio Id"
-          },
-          "fecha": {
-            "type": "string",
-            "format": "date",
-            "title": "Fecha"
-          },
-          "desde": {
-            "type": "string",
-            "title": "Desde"
-          },
-          "horas": {
-            "type": "integer",
-            "title": "Horas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "espacio_id",
-          "fecha",
-          "desde",
-          "horas"
-        ],
-        "title": "PedidoDeReserva"
-      },
-      "ProfileEditRequest": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre",
-            "default": ""
-          },
-          "apellido": {
-            "type": "string",
-            "title": "Apellido",
-            "default": ""
-          },
-          "dni": {
-            "type": "string",
-            "title": "Dni",
-            "default": ""
-          },
-          "fecha_nacimiento": {
-            "type": "string",
-            "title": "Fecha Nacimiento",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "ProfileEditRequest"
-      },
-      "RegistrationCreated": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id"
-        ],
-        "title": "RegistrationCreated"
-      },
-      "RegistrationRequest": {
-        "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre",
-            "default": ""
-          },
-          "apellido": {
-            "type": "string",
-            "title": "Apellido",
-            "default": ""
-          },
-          "dni": {
-            "type": "string",
-            "title": "Dni",
-            "default": ""
-          },
-          "fecha_nacimiento": {
-            "type": "string",
-            "title": "Fecha Nacimiento",
-            "default": ""
-          },
-          "correo": {
-            "type": "string",
-            "title": "Correo",
-            "default": ""
-          },
-          "contrasena": {
-            "type": "string",
-            "title": "Contrasena",
-            "default": ""
-          }
-        },
-        "type": "object",
-        "title": "RegistrationRequest"
-      },
-      "ReservaHistorialVista": {
+      "BookingHistoryView": {
         "properties": {
           "id": {
             "type": "string",
@@ -3196,9 +2342,55 @@
           "aviso_envio",
           "aviso_en"
         ],
-        "title": "ReservaHistorialVista"
+        "title": "BookingHistoryView"
       },
-      "ReservaVista": {
+      "BookingList": {
+        "properties": {
+          "reservas": {
+            "items": {
+              "$ref": "#/components/schemas/BookingView"
+            },
+            "type": "array",
+            "title": "Reservas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reservas"
+        ],
+        "title": "BookingList"
+      },
+      "BookingRequest": {
+        "properties": {
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "desde": {
+            "type": "string",
+            "title": "Desde"
+          },
+          "horas": {
+            "type": "integer",
+            "title": "Horas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacio_id",
+          "fecha",
+          "desde",
+          "horas"
+        ],
+        "title": "BookingRequest"
+      },
+      "BookingView": {
         "properties": {
           "id": {
             "type": "string",
@@ -3297,27 +2489,252 @@
           "motivo",
           "cancelable"
         ],
-        "title": "ReservaVista"
+        "title": "BookingView"
       },
-      "Sugerencia": {
+      "BookingsOutside": {
         "properties": {
-          "nombre": {
-            "type": "string",
-            "title": "Nombre"
-          },
-          "numero": {
+          "reservas_afuera": {
             "type": "integer",
-            "title": "Numero"
+            "title": "Reservas Afuera"
           }
         },
         "type": "object",
         "required": [
-          "nombre",
-          "numero"
+          "reservas_afuera"
         ],
-        "title": "Sugerencia"
+        "title": "BookingsOutside"
       },
-      "TipoVista": {
+      "CatalogView": {
+        "properties": {
+          "deportes": {
+            "items": {
+              "$ref": "#/components/schemas/SportView"
+            },
+            "type": "array",
+            "title": "Deportes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "deportes"
+        ],
+        "title": "CatalogView"
+      },
+      "Center": {
+        "properties": {
+          "notificaciones": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationView"
+            },
+            "type": "array",
+            "title": "Notificaciones"
+          },
+          "no_leidas": {
+            "type": "integer",
+            "title": "No Leidas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notificaciones",
+          "no_leidas"
+        ],
+        "title": "Center"
+      },
+      "CountersView": {
+        "properties": {
+          "todas": {
+            "type": "integer",
+            "title": "Todas"
+          },
+          "activas": {
+            "type": "integer",
+            "title": "Activas"
+          },
+          "completadas": {
+            "type": "integer",
+            "title": "Completadas"
+          },
+          "anuladas": {
+            "type": "integer",
+            "title": "Anuladas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "todas",
+          "activas",
+          "completadas",
+          "anuladas"
+        ],
+        "title": "CountersView"
+      },
+      "DeviceRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "plataforma": {
+            "type": "string",
+            "enum": [
+              "android",
+              "ios"
+            ],
+            "title": "Plataforma"
+          },
+          "permiso": {
+            "type": "boolean",
+            "title": "Permiso"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "plataforma",
+          "permiso"
+        ],
+        "title": "DeviceRequest"
+      },
+      "DeviceUnregistration": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "title": "DeviceUnregistration"
+      },
+      "DuplicateUser": {
+        "properties": {
+          "mensaje": {
+            "type": "string",
+            "title": "Mensaje"
+          },
+          "campos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Campos"
+          },
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensaje",
+          "campos",
+          "errores"
+        ],
+        "title": "DuplicateUser"
+      },
+      "ErrorBody": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "ErrorBody"
+      },
+      "Errors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "Errors"
+      },
+      "FieldErrors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "FieldErrors"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HistoryView": {
+        "properties": {
+          "reservas": {
+            "items": {
+              "$ref": "#/components/schemas/BookingHistoryView"
+            },
+            "type": "array",
+            "title": "Reservas"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "pagina": {
+            "type": "integer",
+            "title": "Pagina"
+          },
+          "por_pagina": {
+            "type": "integer",
+            "title": "Por Pagina"
+          },
+          "contadores": {
+            "$ref": "#/components/schemas/CountersView"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reservas",
+          "total",
+          "pagina",
+          "por_pagina",
+          "contadores"
+        ],
+        "title": "HistoryView"
+      },
+      "KindView": {
         "properties": {
           "clave": {
             "type": "string",
@@ -3333,7 +2750,581 @@
           "clave",
           "nombre"
         ],
-        "title": "TipoVista"
+        "title": "KindView"
+      },
+      "LinkCheck": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "LinkCheck"
+      },
+      "LinkRequest": {
+        "properties": {
+          "correo": {
+            "type": "string",
+            "title": "Correo",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "LinkRequest"
+      },
+      "NewPassword": {
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "title": "Codigo",
+            "default": ""
+          },
+          "nueva": {
+            "type": "string",
+            "title": "Nueva",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "NewPassword"
+      },
+      "NoSession": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "NoSession"
+      },
+      "NotificationView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "recordatorio",
+              "cancelacion_forzosa",
+              "cancelacion_usuario"
+            ],
+            "title": "Tipo"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "cuerpo": {
+            "type": "string",
+            "title": "Cuerpo"
+          },
+          "reserva_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reserva Id"
+          },
+          "creada_en": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Creada En"
+          },
+          "leida": {
+            "type": "boolean",
+            "title": "Leida"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "titulo",
+          "cuerpo",
+          "reserva_id",
+          "creada_en",
+          "leida"
+        ],
+        "title": "NotificationView"
+      },
+      "OwnProfile": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "apellido": {
+            "type": "string",
+            "title": "Apellido"
+          },
+          "correo": {
+            "type": "string",
+            "title": "Correo"
+          },
+          "rol": {
+            "type": "string",
+            "enum": [
+              "usuario",
+              "admin"
+            ],
+            "title": "Rol"
+          },
+          "dni": {
+            "type": "string",
+            "title": "Dni"
+          },
+          "fecha_nacimiento": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Nacimiento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "apellido",
+          "correo",
+          "rol",
+          "dni",
+          "fecha_nacimiento"
+        ],
+        "title": "OwnProfile"
+      },
+      "PasswordChangeRequest": {
+        "properties": {
+          "actual": {
+            "type": "string",
+            "title": "Actual",
+            "default": ""
+          },
+          "nueva": {
+            "type": "string",
+            "title": "Nueva",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "PasswordChangeRequest"
+      },
+      "PasswordErrors": {
+        "properties": {
+          "errores": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Errores"
+          }
+        },
+        "type": "object",
+        "required": [
+          "errores"
+        ],
+        "title": "PasswordErrors"
+      },
+      "ProfileEditRequest": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "default": ""
+          },
+          "apellido": {
+            "type": "string",
+            "title": "Apellido",
+            "default": ""
+          },
+          "dni": {
+            "type": "string",
+            "title": "Dni",
+            "default": ""
+          },
+          "fecha_nacimiento": {
+            "type": "string",
+            "title": "Fecha Nacimiento",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "ProfileEditRequest"
+      },
+      "RegistrationCreated": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id"
+        ],
+        "title": "RegistrationCreated"
+      },
+      "RegistrationRequest": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre",
+            "default": ""
+          },
+          "apellido": {
+            "type": "string",
+            "title": "Apellido",
+            "default": ""
+          },
+          "dni": {
+            "type": "string",
+            "title": "Dni",
+            "default": ""
+          },
+          "fecha_nacimiento": {
+            "type": "string",
+            "title": "Fecha Nacimiento",
+            "default": ""
+          },
+          "correo": {
+            "type": "string",
+            "title": "Correo",
+            "default": ""
+          },
+          "contrasena": {
+            "type": "string",
+            "title": "Contrasena",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "RegistrationRequest"
+      },
+      "SlotGridView": {
+        "properties": {
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "hoy": {
+            "type": "string",
+            "format": "date",
+            "title": "Hoy"
+          },
+          "abre": {
+            "type": "boolean",
+            "title": "Abre"
+          },
+          "franjas": {
+            "items": {
+              "$ref": "#/components/schemas/SlotView"
+            },
+            "type": "array",
+            "title": "Franjas"
+          },
+          "no_disponibles": {
+            "type": "integer",
+            "title": "No Disponibles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fecha",
+          "hoy",
+          "abre",
+          "franjas",
+          "no_disponibles"
+        ],
+        "title": "SlotGridView"
+      },
+      "SlotView": {
+        "properties": {
+          "inicio": {
+            "type": "string",
+            "title": "Inicio"
+          },
+          "fin": {
+            "type": "string",
+            "title": "Fin"
+          },
+          "disponible": {
+            "type": "boolean",
+            "title": "Disponible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inicio",
+          "fin",
+          "disponible"
+        ],
+        "title": "SlotView"
+      },
+      "SpaceChangeRequest": {
+        "properties": {
+          "deporte": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deporte"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "techada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Techada"
+          },
+          "iluminada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio Por Hora"
+          }
+        },
+        "type": "object",
+        "title": "SpaceChangeRequest"
+      },
+      "SpaceList": {
+        "properties": {
+          "espacios": {
+            "items": {
+              "$ref": "#/components/schemas/SpaceView"
+            },
+            "type": "array",
+            "title": "Espacios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacios"
+        ],
+        "title": "SpaceList"
+      },
+      "SpaceRequest": {
+        "properties": {
+          "sede_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sede Id"
+          },
+          "deporte": {
+            "type": "string",
+            "title": "Deporte",
+            "default": ""
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "default": ""
+          },
+          "techada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Techada"
+          },
+          "iluminada": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio Por Hora"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero"
+          }
+        },
+        "type": "object",
+        "title": "SpaceRequest"
+      },
+      "SpaceView": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "sede_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sede Id"
+          },
+          "sede": {
+            "type": "string",
+            "title": "Sede"
+          },
+          "deporte": {
+            "type": "string",
+            "title": "Deporte"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "numero": {
+            "type": "integer",
+            "title": "Numero"
+          },
+          "techada": {
+            "type": "boolean",
+            "title": "Techada"
+          },
+          "iluminada": {
+            "type": "boolean",
+            "title": "Iluminada"
+          },
+          "precio_por_hora": {
+            "type": "integer",
+            "title": "Precio Por Hora"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nombre",
+          "sede_id",
+          "sede",
+          "deporte",
+          "tipo",
+          "numero",
+          "techada",
+          "iluminada",
+          "precio_por_hora"
+        ],
+        "title": "SpaceView"
+      },
+      "SportView": {
+        "properties": {
+          "clave": {
+            "type": "string",
+            "title": "Clave"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipos": {
+            "items": {
+              "$ref": "#/components/schemas/KindView"
+            },
+            "type": "array",
+            "title": "Tipos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clave",
+          "nombre",
+          "tipos"
+        ],
+        "title": "SportView"
+      },
+      "Suggestion": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "numero": {
+            "type": "integer",
+            "title": "Numero"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nombre",
+          "numero"
+        ],
+        "title": "Suggestion"
       },
       "ValidationError": {
         "properties": {
@@ -3536,6 +3527,31 @@
           "deportes"
         ],
         "title": "VenueView"
+      },
+      "VoidRequest": {
+        "properties": {
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "espacio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Espacio Id"
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Inicio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "motivo",
+          "espacio_id",
+          "inicio"
+        ],
+        "title": "VoidRequest"
       }
     },
     "securitySchemes": {

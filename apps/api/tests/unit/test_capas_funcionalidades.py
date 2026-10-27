@@ -60,7 +60,11 @@ def test_ninguna_funcionalidad_importa_el_repositorio_de_otra() -> None:
         propia = archivo.relative_to(MODULOS).parts[0]
         for nombre in _modulos(archivo):
             partes = nombre.split(".")
-            if partes[:2] == ["app", "modules"] and len(partes) > 3 and partes[3] in {"repositorio", "repository"}:
+            if (
+                partes[:2] == ["app", "modules"]
+                and len(partes) > 3
+                and partes[3] in {"repositorio", "repository"}
+            ):
                 assert partes[2] == propia, f"{_nombre(archivo)} importa {nombre}"
 
 

@@ -136,7 +136,7 @@ def register_device(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
     Raises `Forbidden` for an administrator, `InvalidData` if the token is missing or the
     platform does not exist and `Unavailable` if the account is no longer active.
     """
-    if profile.rol != "usuario":
+    if profile.role != "usuario":
         raise Forbidden("sólo un usuario recibe avisos")
     errors: dict[str, str] = {}
     if not token.strip():

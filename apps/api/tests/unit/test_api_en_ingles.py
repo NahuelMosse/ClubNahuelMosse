@@ -60,11 +60,15 @@ def entorno_limpio(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
     return monkeypatch
 
 
-def test_la_base_y_los_modulos_de_la_api_se_llaman_como_dice_el_glosario_y_no_queda_ninguno_en_castellano() -> None:
+def test_la_base_y_los_modulos_de_la_api_se_llaman_como_dice_el_glosario_y_no_queda_ninguno_en_castellano() -> (
+    None
+):
     """la base y los módulos de la API se llaman como dice el glosario y no queda ninguno en castellano @ENG-13-S1 @assumption:ENG-13-ASM-02 @assumption:ENG-13-ASM-03"""
-    carpetas = {p.name for p in (APP / "modules").iterdir() if p.is_dir() and p.name != "__pycache__"}
+    carpetas = {
+        p.name for p in (APP / "modules").iterdir() if p.is_dir() and p.name != "__pycache__"
+    }
     assert carpetas == MODULOS
-    assert ARCHIVOS_DE_LA_BASE <= {p.name for p in APP.glob("*.py")}
+    assert {p.name for p in APP.glob("*.py")} >= ARCHIVOS_DE_LA_BASE
     en_castellano = sorted(
         str(p.relative_to(APP))
         for p in APP.rglob("*.py")
@@ -108,7 +112,9 @@ def _forma(contrato: dict[str, Any]) -> dict[str, Any]:
     return forma
 
 
-def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> None:
+def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
+    None
+):
     """el contrato tiene las mismas rutas, códigos, campos, operationId y security que main en 1ee70de @ENG-13-S2 @assumption:ENG-13-ASM-01"""
     from app.main import app
 
@@ -140,12 +146,21 @@ def test_la_configuracion_lee_cada_variable_en_ingles_y_en_castellano_tambien_el
         entorno_limpio.delenv(ingles)
         entorno_limpio.delenv(castellano)
 
-    for variable, campo in (("SMTP_HOST", "smtp_host"), ("BREVO_API_KEY", "brevo_api_key"), ("FIREBASE_API_KEY", "firebase_api_key")):
+    for variable, campo in (
+        ("SMTP_HOST", "smtp_host"),
+        ("BREVO_API_KEY", "brevo_api_key"),
+        ("FIREBASE_API_KEY", "firebase_api_key"),
+    ):
         entorno_limpio.setenv(variable, "valor")
         assert getattr(Settings(_env_file=None), campo) == "valor", variable
         entorno_limpio.delenv(variable)
 
-    for modo, esperado in (("outbox", "outbox"), ("buzon", "outbox"), ("smtp", "smtp"), ("brevo", "brevo")):
+    for modo, esperado in (
+        ("outbox", "outbox"),
+        ("buzon", "outbox"),
+        ("smtp", "smtp"),
+        ("brevo", "brevo"),
+    ):
         entorno_limpio.setenv("EMAIL_MODE", modo)
         assert Settings(_env_file=None).email_mode == esperado, modo
 
@@ -163,7 +178,18 @@ def test_la_contrasena_del_administrador_se_lee_de_admin_password_y_de_admin_con
         raise SinBase
 
     entorno_limpio.setattr(seed_admin, "engine", sin_base)
-    argv = ["--correo", "a@b.c", "--nombre", "A", "--apellido", "B", "--dni", "1", "--nacimiento", "2000-01-01"]
+    argv = [
+        "--correo",
+        "a@b.c",
+        "--nombre",
+        "A",
+        "--apellido",
+        "B",
+        "--dni",
+        "1",
+        "--nacimiento",
+        "2000-01-01",
+    ]
     assert seed_admin.main(argv) == 2
     for variable in ("ADMIN_PASSWORD", "ADMIN_CONTRASENA"):
         entorno_limpio.setenv(variable, "Clave1234")
@@ -180,7 +206,9 @@ def test_la_rama_contiene_main_en_1ee70de() -> None:
     assert contiene == 0
 
 
-def test_scripts_e2e_sh_siembra_el_admin_con_el_modulo_users_seed_admin_y_las_mismas_opciones() -> None:
+def test_scripts_e2e_sh_siembra_el_admin_con_el_modulo_users_seed_admin_y_las_mismas_opciones() -> (
+    None
+):
     """scripts/e2e.sh siembra el admin con el módulo users.seed_admin y las mismas opciones @assumption:ENG-13-ASM-04"""
     guion = (RAIZ / "scripts" / "e2e.sh").read_text(encoding="utf-8")
 

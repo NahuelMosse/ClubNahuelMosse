@@ -11,7 +11,9 @@ from app.modules.password_recovery.rules import Message
 from app.shared import email
 from app.shared.config import Settings, config
 
-MESSAGE = Message(recipient="lucia+club@correo.com", subject="Creá una contraseña nueva", body="Hola")
+MESSAGE = Message(
+    recipient="lucia+club@correo.com", subject="Creá una contraseña nueva", body="Hola"
+)
 ROOT = Path(__file__).resolve().parents[4]
 
 
@@ -84,7 +86,9 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
 
     monkeypatch.setattr("urllib.request.urlopen", broken)
     email.send(MESSAGE)
-    assert f"no se pudo enviar el correo «{MESSAGE.subject}»: {type(failure).__name__}" in caplog.text
+    assert (
+        f"no se pudo enviar el correo «{MESSAGE.subject}»: {type(failure).__name__}" in caplog.text
+    )
     assert "lucia" not in caplog.text
     assert "clave-secreta" not in caplog.text
 
