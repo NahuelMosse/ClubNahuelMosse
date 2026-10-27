@@ -1,20 +1,75 @@
-# ClubNahuelMosse
+<h1 align="center">ClubNahuelMosse</h1>
 
-Aplicación móvil para reservar espacios deportivos de distintas sedes, consultar su disponibilidad y recibir avisos de las
-reservas próximas. Trabajo práctico de Electiva General, Universidad de Morón.
+<p align="center"><strong>Reservá la cancha en tres pasos, sin llamar ni escribir al club.</strong></p>
 
-## Cómo se arma
+<p align="center">
+ClubNahuelMosse es una aplicación móvil para reservar espacios deportivos de distintas sedes, ver su disponibilidad y recibir
+avisos de las reservas próximas. Es para los socios de un club que reservan canchas y para el club que las administra.<br>
+Trabajo práctico de Electiva General, Universidad de Morón.
+</p>
+
+<p align="center">
+  <img src="docs/capturas/00-carga.jpg" width="220" alt="Pantalla de carga">
+  <img src="docs/capturas/02-inicio.jpg" width="220" alt="Inicio">
+  <img src="docs/capturas/05-horarios.jpg" width="220" alt="Horarios disponibles">
+</p>
+
+## Qué hace
+
+- **Reservar en tres pasos.** Entrás con tu cuenta, elegís sede y cancha, mirás los horarios libres, confirmás y listo.
+
+<p align="center">
+  <img src="docs/capturas/01-login.jpg" width="150" alt="Inicio de sesión">
+  <img src="docs/capturas/03-sedes.jpg" width="150" alt="Sedes">
+  <img src="docs/capturas/04-sede.jpg" width="150" alt="Una sede y sus canchas">
+  <img src="docs/capturas/05-horarios.jpg" width="150" alt="Horarios">
+  <img src="docs/capturas/06-confirmar.jpg" width="150" alt="Confirmar la reserva">
+  <img src="docs/capturas/07-listo.jpg" width="150" alt="Reserva confirmada">
+</p>
+
+- **Mis reservas.** Ves las reservas próximas y el historial, y podés modificar o cancelar una reserva.
+
+<p align="center">
+  <img src="docs/capturas/08-reservas.jpg" width="200" alt="Mis reservas">
+</p>
+
+- **Avisos push y por correo.** Un recordatorio una hora antes de cada reserva y el aviso cuando una reserva se cancela. Los
+  correos tienen el mismo diseño que la app.
+
+<p align="center">
+  <img src="docs/capturas/09-avisos.jpg" width="200" alt="Notificaciones">
+</p>
+
+- **Perfil y modo claro u oscuro.** Tus datos en un lugar y la app en el tema que prefieras.
+
+<p align="center">
+  <img src="docs/capturas/10-perfil.jpg" width="200" alt="Perfil">
+  <img src="docs/capturas/11-inicio-claro.jpg" width="200" alt="Inicio en modo claro">
+</p>
+
+- **Panel de administración.** El club ve y gestiona las reservas de sus espacios.
+
+<p align="center">
+  <img src="docs/capturas/12-admin-reservas.png" width="360" alt="Panel de administración, reservas"><br>
+  <sub>Captura de la suite de pruebas, con datos de prueba.</sub>
+</p>
+
+## Cómo está hecha
 
 | Parte | Carpeta | Tecnología |
 |---|---|---|
 | App móvil (sólo Android) | `apps/mobile` | Flutter |
 | API REST | `apps/api` | FastAPI y SQLAlchemy, con PostgreSQL |
-| Autenticación y avisos push | Firebase | Authentication y Cloud Messaging; el emulador de Auth está en `firebase.json` |
+| Autenticación | Firebase | Firebase Authentication; el emulador está en `firebase.json` |
+| Avisos push | Firebase | Firebase Cloud Messaging |
+| Correo | Brevo | Correos transaccionales con el diseño de la app |
 | Despliegue de la API y la base | `render.yaml` | Render (planes `free`) |
 
-La app habla con la API por HTTPS; la API valida los tokens de Firebase, guarda en PostgreSQL y manda los avisos.
+La app habla con la API por HTTPS; la API valida los tokens de Firebase, guarda en PostgreSQL y manda los avisos. Cada servicio
+externo, con lo que hace y su configuración, está en [Integraciones](docs/technical/integraciones.md). Para quien no conoce
+estas tecnologias, la [Guía básica](docs/guia-basica.md) las explica.
 
-## Cómo se usa
+## Cómo correrla
 
 Cada parte se configura, ejecuta, prueba y despliega con su propio README:
 
@@ -35,6 +90,7 @@ emulador de Firebase Auth (después de `npm ci`).
   y de la app, la configuración, los tests y los scripts.
 - [Diseño del sistema](docs/technical/system-design.md): modelo de datos columna por columna, entornos, observabilidad,
   errores, dependencias externas, amenazas, secretos, datos personales y presupuesto de rendimiento.
+- [Integraciones](docs/technical/integraciones.md): los servicios externos que usa la app.
 - [Decisiones de arquitectura](docs/adr): el stack ([0001](docs/adr/0001-stack.md)) y el hosting
   ([0002](docs/adr/0002-hosting-en-render.md)).
 - [Runbook](docs/technical/runbook.md): despliegue, vuelta atrás, diagnóstico, incidentes y rotación de secretos.
