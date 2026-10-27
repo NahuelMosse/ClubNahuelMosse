@@ -31,6 +31,7 @@ not_read:
 ```
 suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_integraciones_documentadas.py
 lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_integraciones_documentadas.py
+refactor-tests: apps/api/tests/unit/test_integraciones_documentadas.py · el linter (E501, 100 columnas) rechaza líneas largas de los tests recién escritos; sólo se parten líneas, sin cambiar lo que verifican
 no-visual: la card agrega documentación; ninguna pantalla
 ```
 
@@ -42,3 +43,4 @@ no-visual: la card agrega documentación; ninguna pantalla
 - L4 · 2026-10-27 · el juez del plan pide que no se citen valores secretos (ACT-01: DOC-03-ASM-03), qué escribe un servicio sin archivos en la app (ACT-02: DOC-03-ASM-04, S2 dice «los que existan») y no sumar lo que L1 no pide (ACT-03: S1 y S2 sin «qué pasa si no responde» ni «cómo se prueba en local» como exigencia; ASM-04 los deja sólo donde el runbook ya los tiene)
 - L5 · 2026-10-27 · declared · DOC-03-ASM-04 · las líneas de caída y de prueba local son opcionales y copian el runbook; el test de S2 verifica archivos y variables, que es lo que el supuesto exige
 - L6 · 2026-10-27 · declared · S1 · S1 ya no pide «qué pasa si no responde» ni «cómo se prueba en local» (L4); su único miembro es «para qué se usa», que verifica su test
+- L7 · 2026-10-27 · T1 · node .claude/tools/verify.mjs → exit 0 (lint, suite, specs, layers, shape, overdesign, migrations, boundaries, required passed); integraciones.md + enlaces desde arquitectura.md y system-design.md; refactor-tests declarado en Gate (sólo se partieron líneas largas por E501)
