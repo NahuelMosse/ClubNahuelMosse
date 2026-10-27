@@ -6,6 +6,7 @@ import '../tema/tokens.dart';
 import 'centro.dart';
 
 /// La campana de la cabecera: abre el centro de notificaciones y cuenta las que no se leyeron.
+/// Va sobre la foto de la portada, así que el ícono usa el color sobre foto en los dos modos.
 class BotonNotificaciones extends StatelessWidget {
   const BotonNotificaciones({super.key, required this.centro});
 
@@ -37,7 +38,7 @@ class BotonNotificaciones extends StatelessWidget {
                 Icon(
                   Icons.notifications_none_rounded,
                   size: 26,
-                  color: p.textPrimary,
+                  color: p.textOnMedia,
                 ),
                 if (sinLeer > 0)
                   Positioned(
