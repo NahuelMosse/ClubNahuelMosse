@@ -1,0 +1,28 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [
+    "screen"
+  ],
+  "words": [],
+  "files": [
+    "sitio-docs/docusaurus.config.js",
+    "sitio-docs/sidebars.js",
+    "sitio-docs/scripts/copiar.mjs",
+    "sitio-docs/package.json",
+    "sitio-docs/package-lock.json",
+    "sitio-docs/src/components/Swagger.js"
+  ],
+  "tasks": 1,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "el sitio toma el tema de Docusaurus que ya tiene; lo verifica el build y el test de páginas",
+      "files": [
+        "sitio-docs/scripts/copiar.mjs"
+      ]
+    }
+  ]
+}
