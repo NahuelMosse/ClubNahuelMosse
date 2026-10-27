@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../comun/fechas.dart';
-import '../comun/tarjeta_reserva.dart';
 import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'cabecera_de_reserva.dart';
+import 'detalle_de_reserva.dart';
 import 'historial_reservas.dart';
 
 /// Lo que cuenta una reserva en el listado del admin: deporte, precio y estado, sede,
@@ -37,21 +36,11 @@ class CuerpoDeReservaAdmin extends StatelessWidget {
             huecoAntesDelPrecio: Medidas.s8,
             apilarSiTextoGrande: true,
           ),
-          const SizedBox(height: Medidas.s4),
-          Text(
-            '${r.sede} · ${r.direccion}',
-            style: Textos.leyenda.copyWith(color: p.textSecondary),
-          ),
-          const SizedBox(height: Medidas.s12),
-          UsuarioDeReserva(usuario: r.usuario),
-          const SizedBox(height: Medidas.s8),
-          Text(r.espacio, style: Textos.mono.copyWith(color: p.textMuted)),
-          const SizedBox(height: Medidas.s8),
-          FechaYHorario(
-            fecha: fechaLarga(r.inicio),
+          DetalleDeReserva(
+            reserva: r,
             horario: horario,
-            separacionVertical: Medidas.s4,
-            alineacion: WrapCrossAlignment.start,
+            huecoAntesDeLaSede: Medidas.s4,
+            separacionFechaYHorario: Medidas.s4,
           ),
           if (r.espacioDeBaja) ...[
             const SizedBox(height: Medidas.s8),
