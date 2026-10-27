@@ -41,6 +41,7 @@ fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed app
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
 no-visual: la card parte widgets en archivos y piezas con nombre sin cambiar lo que muestra una pantalla; las capturas se comparan sin regenerarlas
 no-docs: refactor interno de la app; el comportamiento, el contrato y el modelo de datos no cambian
+refactor-tests: los diálogos de baja de sede y de espacio pasan a admin/ y el de cancelación a reservas/; los tests que los importaban de comun/dialogo_error.dart cambian sólo esa línea
 ```
 
 ## Log
@@ -53,3 +54,4 @@ no-docs: refactor interno de la app; el comportamiento, el contrato y el modelo 
 - L6 · 2026-10-27 · T2 (movimiento) · comun/movimiento.dart es un índice con `export … show`; siete widgets en comun/movimiento/; analyze limpio y «movimiento.dart reexporta» en verde
 - L7 · 2026-10-27 · OUT · T2 (dialogo_error) sin hacer: interfaz_accesible_test y movimiento_pantallas_test (congelados) llaman confirmarBajaDeSede, confirmarBajaDeEspacio y confirmarCancelacion importando comun/dialogo_error.dart; moverlos obliga a cambiar esos imports
 - L8 · 2026-10-27 · card · la prueba de 80 líneas encuentra ~30 funciones largas, no las 6 de T4 (ej. dialogo_anular_reserva:59, pantalla_detalle_reserva:85, pantalla_editar_espacio:179, pantalla_formulario_sede:386, tarjeta_reserva_admin:47, ficha_socio:28, resultado:53, panel_avisos:126, pantalla_horarios:338, hero_de_inicio:31); T4 queda corta
+- L9 · 2026-10-27 · decisión sobre L7 y L8: los diálogos específicos salen de comun/ hacia admin/ y reservas/ (comun no importa features), con `refactor-tests:` para la línea de import de los tests congelados; T4 abarca todas las funciones de más de 80 líneas que marca el test, y sus archivos se suman a la línea T4 cuando queden partidas
