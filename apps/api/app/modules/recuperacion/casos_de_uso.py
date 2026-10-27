@@ -14,7 +14,7 @@ from uuid import UUID
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
 from app.modules.recuperacion.reglas import Mensaje as Mensaje
 from app.modules.usuarios import correo_valido, normalizar_correo, problemas_contrasena
-from app.shared.errores import DatosInvalidos
+from app.shared.errors import InvalidData
 
 VIGENCIA_MINUTOS = 30
 MAXIMO_POR_HORA = 3
@@ -66,7 +66,7 @@ def pedir_enlace(correo: str, url_publica: str, enlaces: RepositorioEnlaces) -> 
     """
     correo = normalizar_correo(correo)
     if not correo_valido(correo):
-        raise DatosInvalidos({"correo": "Revisá el formato del correo"})
+        raise InvalidData({"correo": "Revisá el formato del correo"})
     destinatario = enlaces.destinatario(correo)
     if destinatario is None:
         return None
@@ -102,7 +102,7 @@ def usar_enlace(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus llam
 ) -> None:
     """Crea la contraseña nueva con el enlace, que deja de servir."""
     if faltan := problemas_contrasena(nueva):
-        raise DatosInvalidos({"nueva": faltan[0]})
+        raise InvalidData({"nueva": faltan[0]})
     reclamado = enlaces.reclamar(hash_de(codigo))
     if reclamado is None:
         raise EnlaceInvalido

@@ -51,8 +51,8 @@ class Reservas(Protocol):
         [inicio] a [fin], con el precio de ahora de ese espacio. El horario anterior se libera
         sólo si el nuevo queda tomado.
 
-        Lanza `NoEncontrada`, `Cambiado` (ya no activa, empezada o ya no en [antes]),
-        `NoDisponible` (el espacio nuevo ya no está), `HorarioOcupado` y `AgendaCambiada` si
+        Lanza `NotFound`, `ConcurrentChange` (ya no activa, empezada o ya no en [antes]),
+        `Unavailable` (el espacio nuevo ya no está), `SlotTaken` y `OpeningHoursChanged` si
         la sede ya no tiene la [agenda] con que se validó.
         """
         ...
@@ -61,7 +61,7 @@ class Reservas(Protocol):
         """Cancela la reserva de [usuario_id] y estampa cuándo y quién (RF 3: el horario
         vuelve a quedar libre). Si ya la había cancelado esa persona, la devuelve igual.
 
-        Lanza `NoEncontrada` si no es suya y `Cambiado` si ya no está activa o ya empezó.
+        Lanza `NotFound` si no es suya y `ConcurrentChange` si ya no está activa o ya empezó.
         """
         ...
 
@@ -71,9 +71,9 @@ class Reservas(Protocol):
         """Guarda la reserva activa con el precio de ahora del espacio.
 
         Si la misma persona pidió lo mismo hace un momento, es su pedido repetido después de
-        un corte y devuelve esa reserva. Lanza `HorarioOcupado` si otra reserva activa del
-        espacio se superpone, `NoDisponible` si el espacio, su sede o la cuenta ya no
-        están activos, y `AgendaCambiada` si la sede ya no tiene la [agenda] con que se
+        un corte y devuelve esa reserva. Lanza `SlotTaken` si otra reserva activa del
+        espacio se superpone, `Unavailable` si el espacio, su sede o la cuenta ya no
+        están activos, y `OpeningHoursChanged` si la sede ya no tiene la [agenda] con que se
         validó.
         """
         ...
@@ -85,7 +85,7 @@ class Reservas(Protocol):
         [inicio], y estampa quién, cuándo y el [motivo] (CU-15): el horario vuelve a quedar
         libre. Si ya la había anulado ese administrador con ese motivo, la devuelve igual.
 
-        Lanza `NoEncontrada` si no existe y `Cambiado` si ya no está activa, ya empezó o ya no
+        Lanza `NotFound` si no existe y `ConcurrentChange` si ya no está activa, ya empezó o ya no
         está en ese espacio y horario.
         """
         ...

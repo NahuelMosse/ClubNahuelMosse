@@ -4,7 +4,7 @@ from typing import Protocol
 from uuid import UUID
 
 from app.modules.horarios.reglas import Agenda, Grilla, grilla, validar_consulta
-from app.shared.errores import DatosInvalidos, NoDisponible
+from app.shared.errors import InvalidData, Unavailable
 
 
 class Horarios(Protocol):
@@ -35,17 +35,17 @@ def horarios_disponibles(  # noqa: PLR0913, PLR0917 -- firma pública fijada por
 ) -> Grilla:
     """La grilla del espacio para [fecha] (hoy si no viene) con franjas de [horas].
 
-    Lanza `DatosInvalidos` si la fecha o la duración no se pueden consultar y
-    `NoDisponible` si el espacio ya no se puede reservar.
+    Lanza `InvalidData` si la fecha o la duración no se pueden consultar y
+    `Unavailable` si el espacio ya no se puede reservar.
     """
     hoy = ahora.date()
     dia = fecha or hoy
     errores = validar_consulta(dia, hoy, horas)
     if errores:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     agenda = horarios.agenda(espacio_id)
     if agenda is None:
-        raise NoDisponible("el espacio no está activo")
+        raise Unavailable("el espacio no está activo")
     desde = datetime.combine(dia, datetime.min.time(), tzinfo=ahora.tzinfo)
     ocupadas = horarios.ocupadas(espacio_id, desde, desde + timedelta(days=2), salvo)
     return grilla(agenda, dia, horas, ahora, ocupadas)

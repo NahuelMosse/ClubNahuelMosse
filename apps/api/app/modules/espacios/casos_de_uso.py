@@ -18,7 +18,7 @@ from app.modules.espacios.reglas import (
     validar_espacio,
 )
 from app.modules.sesion import Perfil
-from app.shared.errores import DatosInvalidos, NoDisponible, Prohibido
+from app.shared.errors import InvalidData, Unavailable, Forbidden
 
 
 class Espacios(Protocol):
@@ -49,9 +49,9 @@ class Espacios(Protocol):
     ) -> Espacio:
         """Guarda el espacio con el número siguiente.
 
-        Si [numero] ya no es el siguiente, lanza `NumeroOcupado` con el que sigue, salvo que
+        Si [numero] ya no es el siguiente, lanza `NumberTaken` con el que sigue, salvo que
         ese número lo haya tomado hace un momento el mismo [autor] con los mismos datos: es
-        su propio pedido repetido después de un corte, y lo devuelve. Lanza `NoDisponible`
+        su propio pedido repetido después de un corte, y lo devuelve. Lanza `Unavailable`
         si la sede ya no está activa.
         """
         ...
@@ -60,7 +60,7 @@ class Espacios(Protocol):
         """Guarda el cambio del espacio activo [espacio_id]. Las reservas ya hechas conservan
         el precio con que se hicieron.
 
-        Lanza `NoEncontrada` si el espacio o su sede ya no están activos.
+        Lanza `NotFound` si el espacio o su sede ya no están activos.
         """
         ...
 
@@ -68,7 +68,7 @@ class Espacios(Protocol):
         """Da de baja el espacio activo [espacio_id] a nombre de [autor]. Las reservas pasadas
         lo siguen nombrando.
 
-        Lanza `NoEncontrada` si ya no está activo y `ConReservasFuturas` si tiene una reserva
+        Lanza `NotFound` si ya no está activo y `HasFutureBookings` si tiene una reserva
         activa que todavía no terminó.
         """
         ...
@@ -76,7 +76,7 @@ class Espacios(Protocol):
 
 def _solo_admin(perfil: Perfil) -> None:
     if perfil.rol != "admin":
-        raise Prohibido("sólo un administrador gestiona espacios")
+        raise Forbidden("sólo un administrador gestiona espacios")
 
 
 def catalogo() -> tuple[Deporte, ...]:
@@ -95,10 +95,10 @@ def nombre_sugerido(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus 
     """El nombre que tendría el próximo espacio de ese tipo en esa sede."""
     _solo_admin(perfil)
     if tipo_del_catalogo(deporte, tipo) is None:
-        raise DatosInvalidos({"tipo": "Elegí un tipo de la lista"})
+        raise InvalidData({"tipo": "Elegí un tipo de la lista"})
     sugerido = espacios.siguiente(sede_id, deporte, tipo, _nombre(deporte, tipo))
     if sugerido is None:
-        raise NoDisponible("la sede no está activa")
+        raise Unavailable("la sede no está activa")
     return sugerido
 
 
@@ -108,12 +108,12 @@ def dar_de_alta_espacio(
     """Registra un espacio activo con el nombre compuesto del enunciado (RF 5).
 
     [numero] es el que vio el administrador: si otro alta lo tomó mientras tanto, lanza
-    `NumeroOcupado` con el siguiente, para que lo vea antes de guardar.
+    `NumberTaken` con el siguiente, para que lo vea antes de guardar.
     """
     _solo_admin(perfil)
     nuevo, errores = validar_espacio(datos)
     if nuevo is None:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     return espacios.insertar(nuevo, numero, _nombre(nuevo.deporte, nuevo.tipo), perfil.id)
 
 
@@ -142,7 +142,7 @@ def editar_espacio(  # noqa: PLR0913, PLR0917 -- firma pública fijada por sus l
     _solo_admin(perfil)
     cambio, errores = validar_cambio(techada, iluminada, precio_por_hora, dados=dados)
     if cambio is None:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     return espacios.actualizar(espacio_id, cambio, perfil.id)
 
 

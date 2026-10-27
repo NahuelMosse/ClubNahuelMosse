@@ -12,9 +12,9 @@ from app.modules.usuarios.contrasena import cambiar_contrasena
 from app.modules.usuarios.perfil import editar_perfil
 from app.modules.usuarios.reglas import DatosPersonales
 from app.modules.usuarios.repositorio import UsuariosSql, repositorio_usuarios
-from app.shared.errores import Demorado, Duplicado
-from app.shared.identidad import ProveedorFirebase, identidad
-from app.shared.zona import ZONA_CLUB as ZONA
+from app.shared.errors import RateLimited, Duplicate
+from app.shared.identity import FirebaseProvider, identidad
+from app.shared.club_timezone import CLUB_TIMEZONE as ZONA
 
 router = APIRouter(tags=["sesión"])
 
@@ -62,7 +62,7 @@ def cambiar_contrasena_propia(
     pedido: PedidoCambioDeContrasena,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
-    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
+    proveedor: Annotated[FirebaseProvider, Depends(identidad)],
 ) -> Response:
     try:
         cambiar_contrasena(
@@ -72,7 +72,7 @@ def cambiar_contrasena_propia(
             identidad=proveedor,
             usuarios=usuarios,
         )
-    except Demorado:
+    except RateLimited:
         return Response(status_code=status.HTTP_429_TOO_MANY_REQUESTS)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -108,7 +108,7 @@ def editar_perfil_propio(
             hoy=datetime.now(ZONA).date(),
             usuarios=usuarios,
         )
-    except Duplicado:
+    except Duplicate:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
             content={"errores": {"dni": "Este DNI ya está registrado"}},
@@ -139,7 +139,7 @@ def editar_perfil_propio(
 def dar_de_baja_propia(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     usuarios: Annotated[UsuariosSql, Depends(repositorio_usuarios)],
-    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
+    proveedor: Annotated[FirebaseProvider, Depends(identidad)],
 ) -> Response:
     dar_de_baja(perfil, usuarios, proveedor)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

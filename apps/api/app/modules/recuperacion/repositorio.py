@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import Connection, text
 
 from app.modules.recuperacion.reglas import Destinatario, EnlaceReclamado
-from app.shared.db import Conexion, en_transaccion
+from app.shared.db import DbConnection, in_transaction
 
 # Un enlace vale si no se usó ni se reemplazó, no venció, la cuenta sigue activa y la
 # contraseña no cambió después de emitirlo.
@@ -32,7 +32,7 @@ class EnlacesSql:
     def emitir(
         self, usuario_id: UUID, codigo_hash: str, vigencia_minutos: int, maximo_por_hora: int
     ) -> bool:
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # El candado ordena los pedidos simultáneos de la misma cuenta: el segundo cuenta
             # e invalida recién cuando el primero terminó.
             self._conn.execute(
@@ -79,7 +79,7 @@ class EnlacesSql:
         return fila is not None
 
     def reclamar(self, codigo_hash: str) -> EnlaceReclamado | None:
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             fila = self._conn.execute(
                 text(
                     "UPDATE enlace_recuperacion e SET usado_en = clock_timestamp()"
@@ -100,5 +100,5 @@ class EnlacesSql:
         self._conn.commit()
 
 
-def repositorio_enlaces(conn: Conexion) -> EnlacesSql:
+def repositorio_enlaces(conn: DbConnection) -> EnlacesSql:
     return EnlacesSql(conn)

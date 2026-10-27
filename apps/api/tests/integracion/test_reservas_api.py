@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
 from app.modules.reservas.repositorio import ReservasSql
-from app.shared.errores import AgendaCambiada, HorarioOcupado
+from app.shared.errors import OpeningHoursChanged, SlotTaken
 
 
 def _con(token: str) -> dict[str, str]:
@@ -202,7 +202,7 @@ def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
                     agenda = sql.agenda(UUID(espacio))
                     assert agenda is not None
                     return str(sql.insertar(usuario, UUID(espacio), inicio, fin, agenda).id)
-                except HorarioOcupado:
+                except SlotTaken:
                     return "ocupado"
 
         # Dos personas distintas: una la toma y la otra ve el horario ocupado.
@@ -437,7 +437,7 @@ def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
                     ReservasSql(conn).mover(
                         yo, reserva, antes, espacio, inicio, inicio + hora_, agenda
                     )
-                except HorarioOcupado:
+                except SlotTaken:
                     return "ocupado"
                 return "movida"
 
@@ -464,7 +464,7 @@ def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
         conn.execute(text("UPDATE sede SET apertura = '09:00' WHERE id = :s"), {"s": sede_id})
 
     # Verifica: la reserva de las 8, validada antes del cambio, no entra.
-    with motor.connect() as conn, pytest.raises(AgendaCambiada):
+    with motor.connect() as conn, pytest.raises(OpeningHoursChanged):
         ReservasSql(conn).insertar(yo, UUID(espacio), manana, manana + timedelta(hours=1), vieja)
     # Verifica: por la API, se vuelve a validar con el horario nuevo.
     r = api.post(

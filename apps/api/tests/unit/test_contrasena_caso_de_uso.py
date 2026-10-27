@@ -5,7 +5,7 @@ import pytest
 
 from app.modules.sesion.perfil import Perfil
 from app.modules.usuarios.contrasena import NO_COINCIDE, cambiar_contrasena
-from app.shared.errores import DatosInvalidos
+from app.shared.errors import InvalidData
 
 PERFIL = Perfil(
     id=UUID(int=7),
@@ -24,11 +24,11 @@ class Identidad:
         self.contrasena = contrasena
         self.cambios: list[tuple[str, str]] = []
 
-    def contrasena_correcta(self, correo: str, contrasena: str) -> bool:
-        return correo == PERFIL.correo and contrasena == self.contrasena
+    def password_matches(self, email: str, password: str) -> bool:
+        return email == PERFIL.correo and password == self.contrasena
 
-    def cambiar_contrasena(self, uid: str, nueva: str) -> None:
-        self.cambios.append((uid, nueva))
+    def change_password(self, uid: str, new_password: str) -> None:
+        self.cambios.append((uid, new_password))
 
 
 class Rastro:
@@ -48,9 +48,9 @@ def test_con_la_actual_correcta_cambia_y_deja_rastro() -> None:
 
 def test_con_la_actual_equivocada_no_cambia_nada() -> None:
     identidad, rastro = Identidad("ClubNahuel1"), Rastro()
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         cambiar_contrasena(PERFIL, "OtraClave9", "ClubNahuel2", identidad, rastro)
-    assert error.value.errores == {"actual": NO_COINCIDE}
+    assert error.value.errors == {"actual": NO_COINCIDE}
     assert identidad.cambios == [] and rastro.marcados == []
 
 
@@ -66,9 +66,9 @@ def test_una_nueva_que_no_cumple_las_reglas_se_rechaza_antes_de_mirar_la_actual(
     nueva: str, mensaje: str
 ) -> None:
     identidad = Identidad("ClubNahuel1")
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         cambiar_contrasena(PERFIL, "equivocada", nueva, identidad, Rastro())
-    assert error.value.errores == {"nueva": mensaje}
+    assert error.value.errors == {"nueva": mensaje}
 
 
 def test_una_nueva_igual_a_la_actual_se_acepta() -> None:
@@ -94,9 +94,9 @@ def test_si_falla_el_rastro_el_cambio_igual_se_informa_hecho(
 
 def test_sin_la_actual_no_se_pregunta_al_proveedor() -> None:
     class SinConsultas(Identidad):
-        def contrasena_correcta(self, correo: str, contrasena: str) -> bool:
+        def password_matches(self, email: str, password: str) -> bool:
             raise AssertionError("no tendría que consultar")
 
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         cambiar_contrasena(PERFIL, "", "ClubNahuel2", SinConsultas("x"), Rastro())
-    assert error.value.errores == {"actual": NO_COINCIDE}
+    assert error.value.errors == {"actual": NO_COINCIDE}

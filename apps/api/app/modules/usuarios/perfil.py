@@ -5,12 +5,12 @@ from uuid import UUID
 
 from app.modules.sesion import Perfil
 from app.modules.usuarios.reglas import DatosPersonales, PerfilEditado, validar_edicion
-from app.shared.errores import DatosInvalidos
+from app.shared.errors import InvalidData
 
 
 class PerfilesEditables(Protocol):
     def actualizar(self, id_usuario: UUID, editado: PerfilEditado) -> None:
-        """Lanza `Duplicado(["dni"])` si otra cuenta activa ya tiene ese DNI."""
+        """Lanza `Duplicate(["dni"])` si otra cuenta activa ya tiene ese DNI."""
         ...
 
 
@@ -20,5 +20,5 @@ def editar_perfil(
     """Guarda los datos personales de quien tiene la sesión. El correo no se toca (RF 2)."""
     editado, errores = validar_edicion(datos, hoy)
     if editado is None:
-        raise DatosInvalidos(errores)
+        raise InvalidData(errores)
     usuarios.actualizar(perfil.id, editado)

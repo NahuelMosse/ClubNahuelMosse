@@ -108,7 +108,7 @@ def test_la_zona_del_club_se_define_una_sola_vez_en_la_api() -> None:
         for a in _fuentes(APP)
         if any(ZONA_LITERAL in t for t in _textos(a))
     )
-    assert con_zona == ["shared/zona.py"]
+    assert con_zona == ["shared/club_timezone.py"]
 
 
 def test_la_anticipacion_sale_de_las_reglas_y_no_esta_en_el_sql() -> None:

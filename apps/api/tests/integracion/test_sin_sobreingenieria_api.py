@@ -93,12 +93,12 @@ def test_una_reserva_sobrevive_a_reiniciar_la_api(
     api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """una reserva sobrevive a reiniciar la API sobre la misma base @SIM-01-S2"""
-    from app.main import crear_app
+    from app.main import create_app
 
     espacio = _espacio(api, token_admin, sede[0])
     creada = _reservar(api, token_usuario, espacio, 1, 10)["id"]
 
-    with TestClient(crear_app()) as otra:
+    with TestClient(create_app()) as otra:
         r = otra.get("/reservas", headers=_con(token_usuario))
     assert creada in [x["id"] for x in r.json()["reservas"]]
 

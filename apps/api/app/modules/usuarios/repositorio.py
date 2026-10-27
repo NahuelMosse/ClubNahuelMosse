@@ -6,8 +6,8 @@ from sqlalchemy.exc import IntegrityError
 
 from app.modules.reservas import ReservasSql
 from app.modules.usuarios.reglas import PerfilEditado, Registro
-from app.shared.db import Conexion, en_transaccion, restriccion_violada
-from app.shared.errores import Duplicado
+from app.shared.db import DbConnection, in_transaction, violated_constraint
+from app.shared.errors import Duplicate
 
 _INDICE_A_CAMPO = {"usuario_correo_unico": "correo", "usuario_dni_unico": "dni"}
 
@@ -51,7 +51,7 @@ class UsuariosSql:
 
     def actualizar(self, id_usuario: UUID, editado: PerfilEditado) -> None:
         try:
-            with en_transaccion(self._conn):
+            with in_transaction(self._conn):
                 self._conn.execute(
                     text(
                         "UPDATE usuario SET nombre = :nombre, apellido = :apellido, dni = :dni,"
@@ -66,13 +66,13 @@ class UsuariosSql:
                     },
                 )
         except IntegrityError as e:
-            indice = restriccion_violada(e)
+            indice = violated_constraint(e)
             if indice in _INDICE_A_CAMPO:
-                raise Duplicado([_INDICE_A_CAMPO[indice]]) from e
+                raise Duplicate([_INDICE_A_CAMPO[indice]]) from e
             raise
 
     def dar_de_baja(self, id_usuario: UUID) -> bool:
-        with en_transaccion(self._conn):
+        with in_transaction(self._conn):
             # Primero la cuenta: su bloqueo ordena lo que venga después, y una cuenta que ya
             # estaba de baja no se vuelve a procesar.
             dada = self._conn.execute(
@@ -98,7 +98,7 @@ class UsuariosSql:
     def insertar(self, uid: str, registro: Registro) -> UUID:
         """Inserta el perfil y lo confirma: si el commit falla, el caso de uso compensa."""
         try:
-            with en_transaccion(self._conn):
+            with in_transaction(self._conn):
                 nuevo: UUID = self._conn.execute(
                     text(
                         "INSERT INTO usuario"
@@ -116,13 +116,13 @@ class UsuariosSql:
                     },
                 ).scalar_one()
         except IntegrityError as e:
-            indice = restriccion_violada(e)
+            indice = violated_constraint(e)
             if indice in _INDICE_A_CAMPO:
-                raise Duplicado([_INDICE_A_CAMPO[indice]]) from e
+                raise Duplicate([_INDICE_A_CAMPO[indice]]) from e
             raise
         return nuevo
 
 
 # Un repositorio por pedido: arma sobre la conexión que FastAPI resuelve una vez.
-def repositorio_usuarios(conn: Conexion) -> UsuariosSql:
+def repositorio_usuarios(conn: DbConnection) -> UsuariosSql:
     return UsuariosSql(conn)

@@ -106,9 +106,9 @@ def api(request: pytest.FixtureRequest) -> Iterator[TestClient]:
     """
     _host_emulador(request.config)
     request.getfixturevalue("motor")
-    from app.main import crear_app
+    from app.main import create_app
 
-    with TestClient(crear_app()) as cliente:
+    with TestClient(create_app()) as cliente:
         yield cliente
 
 

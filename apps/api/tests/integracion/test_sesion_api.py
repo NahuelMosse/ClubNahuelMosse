@@ -78,13 +78,13 @@ def test_una_cuenta_deshabilitada_en_firebase_no_tiene_sesion(
 ) -> None:
     from firebase_admin import auth
 
-    from app.shared.identidad import ProveedorFirebase, _app_firebase
+    from app.shared.identity import FirebaseProvider, _firebase_app
 
     correo = _registrar(api, unico())
     token = iniciar_sesion(correo, CONTRASENA)
-    uid = ProveedorFirebase().uid_de(correo)
+    uid = FirebaseProvider().uid_of(correo)
     assert uid is not None
-    auth.update_user(uid, disabled=True, app=_app_firebase())
+    auth.update_user(uid, disabled=True, app=_firebase_app())
     assert _yo(api, token)[0] == 401
 
 

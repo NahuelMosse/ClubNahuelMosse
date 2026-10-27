@@ -110,7 +110,7 @@ errores del negocio), `errores_http.py`, `respuestas.py`, `entradas.py`, `cuerpo
 
 | Archivo | Qué tiene |
 |---|---|
-| `main.py` | `crear_app()`: arma la app, los handlers de error y los routers; `_ciclo_de_vida` (el barrido en segundo plano) |
+| `main.py` | `create_app()`: arma la app, los handlers de error y los routers; `_ciclo_de_vida` (el barrido en segundo plano) |
 | `salud.py` | `/health` (el proceso vive) |
 | `pruebas.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
 

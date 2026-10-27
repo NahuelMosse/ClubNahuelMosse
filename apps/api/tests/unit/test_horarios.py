@@ -14,7 +14,7 @@ from app.modules.horarios.reglas import (
     validar_rango,
     validar_reserva,
 )
-from app.shared.errores import DatosInvalidos, NoDisponible
+from app.shared.errors import InvalidData, Unavailable
 
 ZONA = ZoneInfo("America/Argentina/Buenos_Aires")
 TODOS = (1, 2, 3, 4, 5, 6, 7)
@@ -102,12 +102,12 @@ def test_sin_fecha_consulta_hoy() -> None:
 
 
 def test_un_espacio_que_no_esta_activo_no_se_consulta() -> None:
-    with pytest.raises(NoDisponible):
+    with pytest.raises(Unavailable):
         horarios_disponibles(_Horarios(None), UUID(int=1), JUEVES, 1, _a(JUEVES, 9))
 
 
 def test_una_fecha_fuera_de_la_semana_se_rechaza() -> None:
-    with pytest.raises(DatosInvalidos):
+    with pytest.raises(InvalidData):
         horarios_disponibles(
             _Horarios(Agenda(time(8), time(23), TODOS)), UUID(int=1), JUEVES + timedelta(8), 1,
             _a(JUEVES, 9),

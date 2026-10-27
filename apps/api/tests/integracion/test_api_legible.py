@@ -40,7 +40,7 @@ def test_una_reserva_hecha_y_movida_sobrevive_a_reiniciar_la_api(
     api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """una reserva hecha y movida sobrevive a reiniciar la API sobre la misma base @SIM-02-S1"""
-    from app.main import crear_app
+    from app.main import create_app
 
     espacio = _espacio(api, token_admin, sede[0])
     r = api.post("/reservas", headers=_con(token_usuario), json=_pedido(espacio, 1, 10))
@@ -53,7 +53,7 @@ def test_una_reserva_hecha_y_movida_sobrevive_a_reiniciar_la_api(
     )
     assert movida.status_code == 200, movida.text
 
-    with TestClient(crear_app()) as otra:
+    with TestClient(create_app()) as otra:
         r = otra.get("/reservas", headers=_con(token_usuario))
     leida = next(x for x in r.json()["reservas"] if x["id"] == creada)
     assert leida["inicio"] == movida.json()["inicio"]

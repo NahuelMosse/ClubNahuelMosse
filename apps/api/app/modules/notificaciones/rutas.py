@@ -16,8 +16,8 @@ from app.modules.notificaciones.casos_de_uso import (
 from app.modules.notificaciones.reglas import Notificacion, TipoDeAviso
 from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.entradas import Identificador
-from app.shared.errores import NoDisponible
+from app.shared.input_validation import Identifier
+from app.shared.errors import Unavailable
 
 router = APIRouter(tags=["notificaciones"])
 
@@ -61,7 +61,7 @@ def registrar(
         registrar_dispositivo(
             notificaciones, perfil, pedido.token, pedido.plataforma, pedido.permiso
         )
-    except NoDisponible:
+    except Unavailable:
         return Response(status_code=status.HTTP_409_CONFLICT)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -145,7 +145,7 @@ def leer_todas(
 def leer(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     notificaciones: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
-    notificacion_id: Annotated[Identificador, Path()],
+    notificacion_id: Annotated[Identifier, Path()],
 ) -> Response:
     marcar_leida(notificaciones, perfil, notificacion_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

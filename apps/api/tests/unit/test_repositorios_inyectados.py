@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from app.main import crear_app
+from app.main import create_app
 from app.modules.sedes.reglas import Sede
 from app.modules.sedes.repositorio import repositorio_sedes
 from app.modules.sesion.perfil import Perfil
@@ -17,14 +17,14 @@ COMANDOS = {"barrido.py", "sembrar_admin.py"}
 
 
 def _construcciones(archivo: Path) -> list[str]:
-    """Lo que el archivo construye de infraestructura: `…Sql(…)` y `ProveedorFirebase(…)`."""
+    """Lo que el archivo construye de infraestructura: `…Sql(…)` y `FirebaseProvider(…)`."""
     arbol = ast.parse(archivo.read_text(encoding="utf-8"))
     return [
         f"{archivo.name}:{nodo.lineno} {nodo.func.id}"
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.Call)
         and isinstance(nodo.func, ast.Name)
-        and (nodo.func.id.endswith("Sql") or nodo.func.id == "ProveedorFirebase")
+        and (nodo.func.id.endswith("Sql") or nodo.func.id == "FirebaseProvider")
     ]
 
 
@@ -55,7 +55,7 @@ class _SedesDePrueba:
 
 def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza() -> None:
     """una ruta recibe su repositorio por dependencia y un test lo reemplaza @ARQ-01-S2"""
-    app = crear_app()
+    app = create_app()
     app.dependency_overrides[usuario_actual] = lambda: Perfil(
         id=UUID(int=1),
         uid="uid-prueba",
@@ -82,7 +82,7 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
     from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
-    from app.shared.db import conexion
+    from app.shared.db import connection
 
     app = FastAPI()
     conexiones: list[object] = []
@@ -99,7 +99,7 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
     ) -> bool:
         return reservas._conn is avisos._conn
 
-    app.dependency_overrides[conexion] = conexion_de_prueba
+    app.dependency_overrides[connection] = conexion_de_prueba
 
     respuesta = TestClient(app).get("/dos")
 

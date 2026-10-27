@@ -26,7 +26,7 @@ from app.modules.recuperacion.casos_de_uso import Mensaje
 from app.shared.config import config
 from app.modules.recuperacion import correo
 from app.modules.usuarios.sembrar_admin import main as sembrar
-from app.main import crear_app
+from app.main import create_app
 
 RAIZ_API = Path(__file__).resolve().parents[2]
 RAIZ_REPO = RAIZ_API.parents[1]
@@ -154,11 +154,11 @@ def smtp_falso(monkeypatch: pytest.MonkeyPatch) -> type[_SmtpFalso]:
     _SmtpFalso.rechazar = False
     _SmtpFalso.certificado_invalido = False
     monkeypatch.setattr(correo.smtplib, "SMTP", _SmtpFalso)
-    monkeypatch.setattr(config, "correo_modo", "smtp")
+    monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "smtp.ejemplo.com")
-    monkeypatch.setattr(config, "smtp_usuario", "club-smtp")
-    monkeypatch.setattr(config, "smtp_contrasena", "SmtpClave9")
-    monkeypatch.setattr(config, "correo_remitente", "club@ejemplo.com")
+    monkeypatch.setattr(config, "smtp_user", "club-smtp")
+    monkeypatch.setattr(config, "smtp_password", "SmtpClave9")
+    monkeypatch.setattr(config, "email_sender", "club@ejemplo.com")
     return _SmtpFalso
 
 
@@ -408,7 +408,7 @@ def test_el_contrato_versionado_coincide_con_la_api() -> None:
     """el contrato OpenAPI versionado coincide con lo que la API publica @REV-01-S15"""
     versionado = json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
 
-    assert versionado == crear_app().openapi()
+    assert versionado == create_app().openapi()
 
 
 
@@ -432,9 +432,9 @@ def test_la_api_arranca_con_el_emulador_y_un_proyecto_de_demo(
     monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
     monkeypatch.delenv("GOOGLE_APPLICATION_CREDENTIALS", raising=False)
     monkeypatch.setattr(config, "firebase_project_id", "demo-clubnahuelmosse")
-    monkeypatch.setattr(config, "firebase_credenciales_json", "")
+    monkeypatch.setattr(config, "firebase_credentials_json", "")
 
-    assert isinstance(crear_app(), FastAPI)
+    assert isinstance(create_app(), FastAPI)
 
 
 def _duenio(motor: Engine, token: str) -> str:

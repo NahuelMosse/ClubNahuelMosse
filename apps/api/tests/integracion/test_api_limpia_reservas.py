@@ -11,7 +11,7 @@ from sqlalchemy import Engine, text
 
 from app.modules.horarios.reglas import Agenda
 from app.modules.reservas.repositorio import ReservasSql
-from app.shared.errores import AgendaCambiada, Cambiado, NoDisponible
+from app.shared.errors import ConcurrentChange, OpeningHoursChanged, Unavailable
 
 CLUB = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -88,7 +88,7 @@ def test_mover_con_el_horario_viejo_de_la_sede_no_cambia_nada(
     with motor.begin() as conn:
         conn.execute(text("UPDATE sede SET apertura = '09:00' WHERE id = :s"), {"s": sede_id})
 
-    with motor.connect() as conn, pytest.raises(AgendaCambiada):
+    with motor.connect() as conn, pytest.raises(OpeningHoursChanged):
         ReservasSql(conn).mover(
             yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13), vieja
         )
@@ -103,7 +103,7 @@ def test_una_reserva_cancelada_no_se_mueve(motor: Engine, cancha: tuple[str, str
         reserva = ReservasSql(conn).insertar(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
         ReservasSql(conn).cancelar(yo, reserva.id)
 
-    with motor.connect() as conn, pytest.raises(Cambiado):
+    with motor.connect() as conn, pytest.raises(ConcurrentChange):
         ReservasSql(conn).mover(
             yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13), agenda
         )
@@ -126,9 +126,9 @@ def test_no_se_reserva_ni_se_mueve_a_una_cancha_de_baja(
         _dar_de_baja(motor, "espacio", "activo", espacio)
 
     with motor.connect() as conn:
-        with pytest.raises(NoDisponible):
+        with pytest.raises(Unavailable):
             ReservasSql(conn).insertar(yo, espacio, _a_las(2, 10), _a_las(2, 11), agenda)
-        with pytest.raises(NoDisponible):
+        with pytest.raises(Unavailable):
             ReservasSql(conn).mover(
                 yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13),
                 agenda,

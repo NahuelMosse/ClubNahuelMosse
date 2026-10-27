@@ -18,7 +18,7 @@ from app.modules.espacios.reglas import (
     validar_espacio,
 )
 from app.modules.sesion.perfil import Perfil, Rol
-from app.shared.errores import DatosInvalidos, NoDisponible, Prohibido
+from app.shared.errors import Forbidden, InvalidData, Unavailable
 
 VALIDOS = DatosEspacio(
     sede_id=UUID(int=3),
@@ -136,7 +136,7 @@ def test_el_nombre_sugerido_es_el_del_enunciado_con_el_numero_siguiente() -> Non
 
 
 def test_sin_sede_activa_no_hay_nombre() -> None:
-    with pytest.raises(NoDisponible):
+    with pytest.raises(Unavailable):
         nombre_sugerido(_perfil("admin"), UUID(int=3), "Futbol", "F5", _EspaciosEnMemoria(None))
 
 
@@ -149,15 +149,15 @@ def test_el_alta_queda_a_nombre_del_administrador_con_el_nombre_compuesto() -> N
 
 def test_un_usuario_no_gestiona_espacios() -> None:
     espacios = _EspaciosEnMemoria(MORON)
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         dar_de_alta_espacio(_perfil("usuario"), VALIDOS, None, espacios)
-    with pytest.raises(Prohibido):
+    with pytest.raises(Forbidden):
         nombre_sugerido(_perfil("usuario"), UUID(int=3), "Futbol", "F5", espacios)
     assert espacios.guardados == []
 
 
 def test_con_datos_invalidos_no_se_guarda_nada() -> None:
     espacios = _EspaciosEnMemoria(MORON)
-    with pytest.raises(DatosInvalidos):
+    with pytest.raises(InvalidData):
         dar_de_alta_espacio(_perfil("admin"), replace(VALIDOS, tipo=""), None, espacios)
     assert espacios.guardados == []

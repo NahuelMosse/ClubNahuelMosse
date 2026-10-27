@@ -17,15 +17,15 @@ from app.modules.espacios.casos_de_uso import (
 from app.modules.espacios.reglas import DatosEspacio, Espacio
 from app.modules.espacios.repositorio import EspaciosSql, repositorio_espacios
 from app.modules.sesion import Perfil, SinSesion, usuario_actual
-from app.shared.entradas import Identificador
-from app.shared.errores import (
-    ConReservasFuturas,
-    DatosInvalidos,
-    Duplicado,
-    NoDisponible,
-    NumeroOcupado,
+from app.shared.input_validation import Identifier
+from app.shared.errors import (
+    HasFutureBookings,
+    InvalidData,
+    Duplicate,
+    Unavailable,
+    NumberTaken,
 )
-from app.shared.respuestas import conflicto
+from app.shared.responses import conflict
 
 router = APIRouter(tags=["espacios"])
 
@@ -90,7 +90,7 @@ def vista_de_espacio(e: Espacio) -> EspacioVista:
 def listar_espacios(
     _: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    sede_id: Annotated[Identificador | None, Query()] = None,
+    sede_id: Annotated[Identifier | None, Query()] = None,
     deporte: Annotated[str | None, Query(min_length=1)] = None,
     tipo: Annotated[str | None, Query(min_length=1)] = None,
 ) -> ListaDeEspacios:
@@ -120,19 +120,19 @@ class Errores(BaseModel):
 def sugerir_nombre(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    sede_id: Annotated[Identificador, Query()],
+    sede_id: Annotated[Identifier, Query()],
     deporte: Annotated[str, Query()],
     tipo: Annotated[str, Query()],
 ) -> Sugerencia:
     try:
         s = nombre_sugerido(perfil, sede_id, deporte, tipo, espacios)
-    except NoDisponible:
-        raise DatosInvalidos({"sede_id": SEDE_NO_DISPONIBLE}) from None
+    except Unavailable:
+        raise InvalidData({"sede_id": SEDE_NO_DISPONIBLE}) from None
     return Sugerencia.model_validate(s, from_attributes=True)
 
 
 class PedidoDeEspacio(BaseModel):
-    sede_id: Identificador | None = None
+    sede_id: Identifier | None = None
     deporte: str = ""
     tipo: str = ""
     techada: bool | None = None
@@ -178,20 +178,20 @@ def alta_de_espacio(
     )
     try:
         espacio = dar_de_alta_espacio(perfil, datos, pedido.numero, espacios)
-    except NoDisponible:
-        raise DatosInvalidos({"sede_id": SEDE_NO_DISPONIBLE}) from None
-    except NumeroOcupado as e:
+    except Unavailable:
+        raise InvalidData({"sede_id": SEDE_NO_DISPONIBLE}) from None
+    except NumberTaken as e:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
             content={"errores": {"nombre": DUPLICADO}, "nombre": e.nombre, "numero": e.siguiente},
         )
-    except Duplicado:
+    except Duplicate:
         contenido: dict[str, object] = {"errores": {"nombre": DUPLICADO}}
         if pedido.sede_id is not None:
             try:
                 s = nombre_sugerido(perfil, pedido.sede_id, pedido.deporte, pedido.tipo, espacios)
                 contenido |= {"nombre": s.nombre, "numero": s.numero}
-            except (NoDisponible, DatosInvalidos):
+            except (Unavailable, InvalidData):
                 pass
         return JSONResponse(status_code=status.HTTP_409_CONFLICT, content=contenido)
     return vista_de_espacio(espacio)
@@ -227,7 +227,7 @@ def edicion_de_espacio(
     pedido: PedidoDeCambioDeEspacio,
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    espacio_id: Annotated[Identificador, Path()],
+    espacio_id: Annotated[Identifier, Path()],
 ) -> EspacioVista:
     espacio = editar_espacio(
         perfil,
@@ -259,12 +259,12 @@ def edicion_de_espacio(
 def baja_de_espacio(
     perfil: Annotated[Perfil, Depends(usuario_actual)],
     espacios: Annotated[EspaciosSql, Depends(repositorio_espacios)],
-    espacio_id: Annotated[Identificador, Path()],
+    espacio_id: Annotated[Identifier, Path()],
 ) -> Response:
     try:
         dar_de_baja_espacio(perfil, espacio_id, espacios)
-    except ConReservasFuturas:
-        return conflicto(
+    except HasFutureBookings:
+        return conflict(
             {"espacio": "No se puede dar de baja el espacio porque posee reservas futuras."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

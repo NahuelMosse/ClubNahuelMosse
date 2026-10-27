@@ -8,8 +8,8 @@ from pydantic import BaseModel
 from app.modules.sesion.casos_de_uso import perfil_autenticado
 from app.modules.sesion.perfil import Perfil
 from app.modules.sesion.repositorio import Perfiles
-from app.shared.errores import NoAutenticado
-from app.shared.identidad import ProveedorFirebase, identidad
+from app.shared.errors import NotAuthenticated
+from app.shared.identity import FirebaseProvider, identidad
 
 _portador = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
 
@@ -22,7 +22,7 @@ def usuario_actual(
     peticion: Request,
     credencial: Annotated[HTTPAuthorizationCredentials | None, Depends(_portador)],
     perfiles: Perfiles,
-    proveedor: Annotated[ProveedorFirebase, Depends(identidad)],
+    proveedor: Annotated[FirebaseProvider, Depends(identidad)],
 ) -> Perfil:
     """Quién hace el pedido, según el token de Firebase de la cabecera `Authorization`."""
     try:
@@ -31,7 +31,7 @@ def usuario_actual(
             identidad=proveedor,
             usuarios=perfiles,
         )
-    except NoAutenticado as e:
+    except NotAuthenticated as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Sesión inválida o vencida",
