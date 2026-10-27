@@ -1,3 +1,4 @@
+# kit-shape: el repositorio de espacios y las funciones que arman su entidad van juntos
 from collections.abc import Callable
 from typing import Any
 

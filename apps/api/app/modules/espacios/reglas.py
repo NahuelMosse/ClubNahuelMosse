@@ -1,3 +1,4 @@
+# kit-shape: los tipos del espacio y las funciones que los validan y nombran son un solo concepto
 import re
 import unicodedata
 from dataclasses import dataclass

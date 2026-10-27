@@ -1,3 +1,4 @@
+# kit-shape: el contrato del repositorio de espacios y los casos de uso que lo usan se leen juntos
 from collections.abc import Callable
 from typing import Protocol
 

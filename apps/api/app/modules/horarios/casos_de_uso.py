@@ -1,3 +1,4 @@
+# kit-shape: el contrato del repositorio de horarios y el caso de uso que lo usa se leen juntos
 from datetime import date, datetime, timedelta
 from typing import Protocol
 
