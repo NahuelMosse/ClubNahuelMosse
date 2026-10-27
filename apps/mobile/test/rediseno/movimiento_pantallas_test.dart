@@ -16,6 +16,7 @@ import 'package:clubnahuelmosse/comun/selector.dart';
 import 'package:clubnahuelmosse/comun/snackbar.dart';
 import 'package:clubnahuelmosse/comun/tile_deporte.dart';
 import 'package:clubnahuelmosse/comun/dialogo_error.dart';
+import 'package:clubnahuelmosse/reservas/confirmar_cancelacion.dart';
 import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
 import 'package:clubnahuelmosse/reservas/pantalla_reserva_confirmada.dart';
 import 'package:clubnahuelmosse/reservas/reservas.dart';

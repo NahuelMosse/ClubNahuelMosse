@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/carga_de_lista.dart';
-import '../comun/dialogo_error.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
@@ -16,6 +15,7 @@ import '../tema/tema.dart';
 import '../tema/tokens.dart';
 import 'barra_de_pestanas_reservas.dart';
 import 'cancelacion.dart';
+import 'confirmar_cancelacion.dart';
 import 'reservas.dart';
 import 'tarjeta_reserva.dart';
 
