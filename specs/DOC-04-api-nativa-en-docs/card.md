@@ -14,6 +14,7 @@ not_read:
 - S2 · "ademas tiene un scroll dentro" · acceptance: ninguna página del sitio tiene un `iframe` ni un panel con scroll propio para la API; se borran `src/components/Swagger.js`, la copia de `swagger-ui-dist` a `static/swagger-ui/` y la dependencia `swagger-ui-dist`
 - DOC-04-ASM-01 · cada operación conserva el panel para probarla contra la API (el que trae el tema de openapi-docs), con la misma dirección de la API desplegada que hoy usa la página de Swagger · S1
 - DOC-04-ASM-02 · `docs/technical/integraciones.md` entra en la lista de páginas que arma el sitio, en la sección técnica · S1
+- DOC-04-ASM-03 · si el generador de una página por operación no compila con esta versión de Docusaurus, la referencia es Redoc integrado al tema (redocusaurus, en `/api`, con el color del sitio y la barra de navegación del sitio) · S1
 
 ## Tasks
 
@@ -39,3 +40,5 @@ no-visual: el sitio toma el tema de Docusaurus que ya tiene; lo verifica el buil
 - L1 · el swagger incluido dentro de la docu no se siente nativo, ademas tiene un scroll dentro
 - L2 · 2026-10-27 · declared · fault-db · la card no toca la base
 - L3 · 2026-10-27 · declared · attacks · la card no toca la API
+- L4 · 2026-10-27 · docusaurus-plugin/theme-openapi-docs 5.2.0 y 4.7.1 no compilan con Docusaurus 3.10 + webpack 5.112 («Cannot get final name for export '__esModule'»; con concatenateModules:false las páginas fallan con «exports is not defined»; webpack 5.99.9 da OOM) · cambio de enfoque: la referencia es Redoc integrado al tema (redocusaurus) en /api, sin iframe, una sola barra de scroll · DOC-04-ASM-03
+- L5 · 2026-10-27 · replaces: sitio-docs/tests/api-nativa.test.mjs (4 pruebas) y sitio-docs/tests/api-nativa-paginas.test.mjs · esperaban páginas por operación del generador openapi-docs, que no compila · by: sitio-docs/tests/api-nativa-redoc.test.mjs (mismas etiquetas S1, S2, ASM-01, ASM-02 y ASM-03)

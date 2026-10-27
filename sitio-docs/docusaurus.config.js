@@ -22,32 +22,21 @@ export default {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
-          docItemComponent: '@theme/ApiItem',
         },
         blog: false,
         theme: { customCss: './src/css/custom.css' },
       },
     ],
-  ],
-  plugins: [
     [
-      'docusaurus-plugin-openapi-docs',
+      'redocusaurus',
       {
-        id: 'api',
-        docsPluginId: 'classic',
-        config: {
-          api: {
-            // Lo arma scripts/copiar.mjs desde apps/api/openapi.json, con las direcciones de la API.
-            specPath: 'static/openapi.json',
-            outputDir: 'docs/api',
-            sidebarOptions: { groupPathsBy: 'tag', categoryLinkSource: 'tag' },
-          },
-        },
+        // static/openapi.json lo arma scripts/copiar.mjs desde apps/api/openapi.json, con las direcciones de la API.
+        specs: [{ id: 'api', spec: 'static/openapi.json', route: '/api' }],
+        theme: { primaryColor: '#4d6600' },
       },
     ],
   ],
   themes: [
-    'docusaurus-theme-openapi-docs',
     '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
@@ -58,7 +47,7 @@ export default {
     colorMode: { defaultMode: 'dark', respectPrefersColorScheme: true },
     navbar: {
       title: 'ClubNahuelMosse',
-      items: [],
+      items: [{ to: '/api', label: 'API', position: 'left' }],
     },
     prism: {
       theme: prismThemes.github,
