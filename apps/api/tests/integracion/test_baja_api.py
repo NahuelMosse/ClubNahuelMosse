@@ -4,6 +4,7 @@ import os
 from collections.abc import Callable
 from datetime import datetime, timedelta
 from typing import Any
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -31,7 +32,7 @@ def _registrar(api: TestClient, s: str) -> tuple[str, str]:
     return correo, dni
 
 
-def _espacio(motor: Engine, s: str) -> int:
+def _espacio(motor: Engine, s: str) -> UUID:
     with motor.begin() as conn:
         sede: Any = conn.execute(
             text(
@@ -41,30 +42,34 @@ def _espacio(motor: Engine, s: str) -> int:
             ),
             {"n": f"Sede {s}"},
         ).scalar_one()
-        return int(
-            conn.execute(
-                text(
-                    "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre,"
-                    " precio_por_hora, techada, iluminada)"
-                    " VALUES (:sede, 'Voley', 'IND', 1, :n, 33000, true, true) RETURNING id"
-                ),
-                {"sede": sede, "n": f"RamosMejia_Belgrano_1240_Voley_IND_1_{s}"},
-            ).scalar_one()
+        return UUID(
+            str(
+                conn.execute(
+                    text(
+                        "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre,"
+                        " precio_por_hora, techada, iluminada)"
+                        " VALUES (:sede, 'Voley', 'IND', 1, :n, 33000, true, true) RETURNING id"
+                    ),
+                    {"sede": sede, "n": f"RamosMejia_Belgrano_1240_Voley_IND_1_{s}"},
+                ).scalar_one()
+            )
         )
 
 
-def _reservar(motor: Engine, correo: str, espacio: int, inicio: datetime) -> int:
+def _reservar(motor: Engine, correo: str, espacio: UUID, inicio: datetime) -> UUID:
     with motor.begin() as conn:
-        return int(
-            conn.execute(
-                text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin,"
-                    " precio_por_hora, total)"
-                    " SELECT id, :e, :i, :f, 33000, 33000 FROM usuario"
-                    " WHERE correo = :c AND activo RETURNING id"
-                ),
-                {"c": correo, "e": espacio, "i": inicio, "f": inicio + timedelta(hours=1)},
-            ).scalar_one()
+        return UUID(
+            str(
+                conn.execute(
+                    text(
+                        "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin,"
+                        " precio_por_hora, total)"
+                        " SELECT id, :e, :i, :f, 33000, 33000 FROM usuario"
+                        " WHERE correo = :c AND activo RETURNING id"
+                    ),
+                    {"c": correo, "e": espacio, "i": inicio, "f": inicio + timedelta(hours=1)},
+                ).scalar_one()
+            )
         )
 
 
@@ -86,7 +91,7 @@ def test_la_baja_es_logica_conserva_el_historial_y_libera_el_correo(
     assert api.delete("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 204
 
     with motor.connect() as conn:
-        estados: dict[int, str] = dict(
+        estados: dict[UUID, str] = dict(
             conn.execute(
                 text("SELECT id, estado FROM reserva WHERE id IN (:a, :b, :c)"),
                 {"a": pasada, "b": en_curso, "c": futura},

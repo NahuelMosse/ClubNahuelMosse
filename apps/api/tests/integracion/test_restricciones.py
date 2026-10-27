@@ -12,7 +12,7 @@ from sqlalchemy.exc import DBAPIError
 AR = timezone(timedelta(hours=-3))
 
 
-def _usuario(db: Connection, correo: str | None = None, dni: str | None = None) -> int:
+def _usuario(db: Connection, correo: str | None = None, dni: str | None = None) -> uuid.UUID:
     s = uuid.uuid4().hex[:8]
     return db.execute(
         text(
@@ -29,7 +29,7 @@ def _usuario(db: Connection, correo: str | None = None, dni: str | None = None) 
 
 def _sede(
     db: Connection, apertura: str = "08:00", cierre: str = "23:00", dias: str = "{1,2,3}"
-) -> int:
+) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
@@ -39,7 +39,7 @@ def _sede(
     ).scalar_one()
 
 
-def _espacio(db: Connection) -> int:
+def _espacio(db: Connection) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada, iluminada,"
@@ -111,7 +111,7 @@ def test_los_dias_son_una_lista_de_uno_a_siete(db: Connection, dias: str) -> Non
 
 @pytest.mark.parametrize("tabla", ["usuario", "sede", "espacio"])
 def test_nada_se_borra(db: Connection, tabla: str) -> None:
-    ids: dict[str, Callable[[Connection], int]] = {
+    ids: dict[str, Callable[[Connection], uuid.UUID]] = {
         "usuario": _usuario,
         "sede": _sede,
         "espacio": _espacio,

@@ -335,10 +335,11 @@ def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
                     " total, estado, cancelada_en)"
-                    " SELECT min(id), :e, x.i, x.i + interval '1 hour', 38000, 38000, :estado,"
-                    " CASE WHEN :estado = 'cancelada' THEN now() END FROM usuario,"
+                    " SELECT (SELECT id FROM usuario ORDER BY id LIMIT 1), :e, x.i,"
+                    " x.i + interval '1 hour', 38000, 38000, :estado,"
+                    " CASE WHEN :estado = 'cancelada' THEN now() END FROM"
                     " (SELECT (CAST(:dia AS date) + make_interval(hours => :hora))"
-                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x GROUP BY x.i"
+                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
                 ),
                 {"e": espacio["id"], "dia": manana, "hora": hora, "estado": estado},
             )
@@ -388,9 +389,10 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
             conn.execute(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total) SELECT min(id), :e, x.i, x.i + interval '1 hour', 38000, 38000"
-                    " FROM usuario, (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
-                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x GROUP BY x.i"
+                    " total) SELECT (SELECT id FROM usuario ORDER BY id LIMIT 1), :e, x.i,"
+                    " x.i + interval '1 hour', 38000, 38000"
+                    " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
+                    " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
                 ),
                 {"e": espacio, "dia": manana, "h": hora},
             )
@@ -453,7 +455,7 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
     sede_id, _ = sede
     alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
         conn.execute(
             text(
                 "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
@@ -562,7 +564,7 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
     sede_id, _ = sede
     uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(
@@ -590,10 +592,12 @@ def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
 ) -> None:
     sede_id, _ = sede
 
-    def con_reserva(desde: str, estado: str) -> int:
+    def con_reserva(desde: str, estado: str) -> str:
         espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
         with motor.begin() as conn:
-            dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+            dueno: Any = conn.execute(
+                text("SELECT id FROM usuario ORDER BY id LIMIT 1")
+            ).scalar_one()
             conn.execute(
                 text(
                     "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
@@ -604,7 +608,7 @@ def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
                 ),
                 {"u": dueno, "e": espacio["id"], "estado": estado},
             )
-        return int(espacio["id"])
+        return str(espacio["id"])
 
     futura = con_reserva("1 day", "activa")
     terminada = con_reserva("-1 day", "activa")

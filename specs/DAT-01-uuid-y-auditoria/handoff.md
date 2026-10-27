@@ -7,10 +7,7 @@ Como verificar sin correr suites (mypy cubre tests; la config del repo choca con
 - escenarios: `/tmp/m.ini` = `[mypy] strict=True, plugins=pydantic.mypy, mypy_path=tests/escenarios, namespace_packages=True` + `ignore_missing_imports` para firebase_admin; `mypy --config-file /tmp/m.ini $(ls tests/escenarios/*.py | grep -v documentacion)`. Los errores restantes de escenarios (var-annotated, CanalQueFalla, smtplib, CASOS_DE_USO) no son de ids.
 
 Pendiente (refactor-tests):
-- tests/integracion, ids de la base (UUID) en helpers: `_usuario`, `_yo`, `_registrar`, `_barrer`, `usuario`/`espacio` en test_reservas_api.py (lineas 23-24, 44, 190), test_notificaciones_api.py (34, 61, 154, 415-428), test_api_limpia_reservas.py (`_usuario`, `_agenda`, `_dar_de_baja id_`, fixture `cancha: tuple[int,int,int]` -> `tuple[str, str, UUID]`; lineas 72-73 `yo + 1_000_000` y `reserva.id + 1_000_000` pasan a `uuid.uuid4()`), test_api_limpia_reserva_movida.py, test_aviso_en_envio_perdido.py (`id_: int`), test_baja_api.py, test_restricciones.py, test_sin_sobreingenieria_api.py (116, 166), test_historial_api.py `_ids -> set[str]`.
-- Quitar `int(...)`: test_reservas_api.py:47 y 274, test_notificaciones_api.py:37 y 154, test_baja_api.py:44/58, test_espacios_api.py:606, test_anular_reserva_api.py / test_api_limpia_reservas.py `_usuario`.
-- Ids de la base en `json=`/`params=`/f-strings a la API: `str(...)`. Ids de la API que entran a `ReservasSql`/`NotificacionesSql`: `UUID(...)`.
-- Comparaciones UUID vs str (`str(fila.id) == r.json()["id"]`), barrido con grep `\.id ==`.
+- tests/integracion: hecho (ids UUID/str segun origen, `min(id)` sobre usuario pasa a `ORDER BY id LIMIT 1` porque Postgres no tiene `min(uuid)`). `mypy --strict tests/integracion` deja 2 errores que no son de ids: test_api_limpia_persistencia.py:45 (var-annotated) y test_aviso_en_envio_perdido.py:19 (`invalidos=[]` vs `tuple[str, ...]`). test_uuid_api.py y test_uuid_y_auditoria.py no se tocaron.
 - tests/unit: ~194 errores mypy por fakes de puertos con `int` (usuario_id, sede_id, autor, notificacion_id, `Perfil(id=1)`, etc.) -> `UUID`. No estaba en la lista original.
 - `apps/api/openapi.json`: regenerar con el comando de apps/api/README.md:80.
 - Barrido final: `grep -rnE "int\(" apps/api/tests` junto a ids; mypy de las tres carpetas; ruff de los archivos tocados.

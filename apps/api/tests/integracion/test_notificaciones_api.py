@@ -3,6 +3,7 @@
 from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from typing import Any
+from uuid import UUID
 from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
@@ -31,13 +32,15 @@ class Canal:
         return ResultadoDeEnvio(enviados=len(tokens))
 
 
-def _yo(api: TestClient, motor: Engine, token: str) -> int:
+def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
     correo = api.get("/yo", headers=_con(token)).json()["correo"]
     with motor.connect() as conn:
-        return int(
-            conn.execute(
-                text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
-            ).scalar_one()
+        return UUID(
+            str(
+                conn.execute(
+                    text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
+                ).scalar_one()
+            )
         )
 
 
@@ -58,7 +61,7 @@ def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _barrer(motor: Engine, usuario: int, canal: Canal, ahora: datetime) -> int:
+def _barrer(motor: Engine, usuario: UUID, canal: Canal, ahora: datetime) -> int:
     with motor.connect() as conn:
         return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, usuario)
 
@@ -76,7 +79,7 @@ def _registrar(api: TestClient, token: str, dispositivo: str, permiso: bool = Tr
     ).status_code
 
 
-def _reservar(api: TestClient, token: str, espacio: int, desde: str = "21:00") -> dict[str, Any]:
+def _reservar(api: TestClient, token: str, espacio: str, desde: str = "21:00") -> dict[str, Any]:
     r = api.post(
         "/reservas",
         headers=_con(token),
@@ -151,7 +154,7 @@ def test_un_token_registrado_por_otra_cuenta_no_cambia_de_dueno(
             text("SELECT usuario_id FROM dispositivo WHERE token = :t AND activo"),
             {"t": dispositivo},
         ).all()
-    assert [int(d.usuario_id) for d in duenos] == [_yo(api, motor, token_usuario)]
+    assert [d.usuario_id for d in duenos] == [_yo(api, motor, token_usuario)]
 
 
 def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_recibir(
@@ -412,20 +415,20 @@ class EntreLaFotoYElRegistro(NotificacionesSql):
         super().__init__(conn)
         self._alguien = alguien
 
-    def vencidos(self, ahora: datetime, usuario_id: int | None) -> list[Recordatorio]:
+    def vencidos(self, ahora: datetime, usuario_id: UUID | None) -> list[Recordatorio]:
         foto = super().vencidos(ahora, usuario_id)
         self._alguien()
         return foto
 
 
 def _barrer_con(
-    motor: Engine, usuario: int, canal: Canal, ahora: datetime, alguien: Callable[[], None]
+    motor: Engine, usuario: UUID, canal: Canal, ahora: datetime, alguien: Callable[[], None]
 ) -> int:
     with motor.connect() as conn:
         return enviar_recordatorios(EntreLaFotoYElRegistro(conn, alguien), canal, ahora, usuario)
 
 
-def _sin_recordatorios(motor: Engine, usuario: int) -> bool:
+def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:
     with motor.connect() as conn:
         return (
             conn.execute(

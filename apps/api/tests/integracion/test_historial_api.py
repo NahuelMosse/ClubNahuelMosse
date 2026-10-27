@@ -2,6 +2,7 @@
 
 from datetime import date, timedelta
 from typing import Any
+from uuid import UUID
 
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
@@ -27,7 +28,7 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, token_usuario: str, espacio: int, dia: int) -> dict[str, Any]:
+def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int) -> dict[str, Any]:
     fecha = (date.today() + timedelta(days=dia)).isoformat()
     r = api.post(
         "/reservas",
@@ -39,7 +40,7 @@ def _reservar(api: TestClient, token_usuario: str, espacio: int, dia: int) -> di
     return reserva
 
 
-def _mover_a(motor: Engine, id_: int, dia: str, hora: int) -> None:
+def _mover_a(motor: Engine, id_: UUID, dia: str, hora: int) -> None:
     """Deja la reserva en [dia] a las [hora] del club."""
     with motor.begin() as conn:
         conn.execute(
@@ -53,7 +54,7 @@ def _mover_a(motor: Engine, id_: int, dia: str, hora: int) -> None:
         )
 
 
-def _ids(api: TestClient, token: str, consulta: str) -> set[int]:
+def _ids(api: TestClient, token: str, consulta: str) -> set[str]:
     r = api.get(f"/reservas/todas?{consulta}", headers=_con(token))
     assert r.status_code == 200
     cuerpo: dict[str, Any] = r.json()
@@ -67,8 +68,8 @@ def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
     espacio = _espacio_nuevo(api, token_admin, sede[0])
     a_las_21 = _reservar(api, token_usuario, espacio, dia=1)["id"]
     a_las_23 = _reservar(api, token_usuario, espacio, dia=2)["id"]
-    _mover_a(motor, a_las_21, "2031-09-10", 21)
-    _mover_a(motor, a_las_23, "2031-09-10", 23)
+    _mover_a(motor, UUID(a_las_21), "2031-09-10", 21)
+    _mover_a(motor, UUID(a_las_23), "2031-09-10", 23)
     base = f"q={sede[1]}"
 
     assert _ids(api, token_admin, f"{base}&desde=2031-09-10&hasta=2031-09-10") == {

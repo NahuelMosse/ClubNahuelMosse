@@ -1,5 +1,7 @@
 """Una reserva se mueve sólo desde donde está, contra la base real."""
 
+from uuid import UUID
+
 import pytest
 from sqlalchemy import Engine
 
@@ -11,11 +13,12 @@ __all__ = ["cancha"]
 
 
 def test_una_reserva_que_ya_se_movio_no_se_vuelve_a_mover_desde_donde_estaba(
-    motor: Engine, cancha: tuple[int, int, int]
+    motor: Engine, cancha: tuple[str, str, UUID]
 ) -> None:
     """una reserva que ya se movió no se vuelve a mover desde donde estaba
     @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
-    _, espacio, yo = cancha
+    _, espacio_api, yo = cancha
+    espacio = UUID(espacio_api)
     agenda = _agenda(motor, espacio)
     with motor.connect() as conn:
         reserva = ReservasSql(conn).insertar(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)

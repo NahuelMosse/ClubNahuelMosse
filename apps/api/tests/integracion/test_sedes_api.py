@@ -193,7 +193,7 @@ def test_una_hora_que_no_es_hh_mm_es_un_error_del_campo(
     assert r.json() == {"errores": {"cierre": "El horario de cierre es obligatorio"}}
 
 
-def _alta(api: TestClient, token_admin: str, nombre: str) -> int:
+def _alta(api: TestClient, token_admin: str, nombre: str) -> str:
     r = api.post(
         "/sedes", headers=_con(token_admin), json=_sede(nombre, dias=[1, 2, 3, 4, 5, 6, 7])
     )
@@ -278,7 +278,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
         },
     ).json()["id"]
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
         manana: Any = conn.execute(
             text("SELECT (now() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date + 1")
         ).scalar_one()
@@ -385,7 +385,7 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
         },
     ).json()["id"]
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT min(id) FROM usuario")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(

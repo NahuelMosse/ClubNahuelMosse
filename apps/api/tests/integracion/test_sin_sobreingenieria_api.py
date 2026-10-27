@@ -5,6 +5,7 @@ from collections.abc import Sequence
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 from alembic import command
 from alembic.config import Config as AlembicConfig
@@ -37,7 +38,7 @@ def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, token: str, espacio: int, dia: int, hora: int) -> dict[str, Any]:
+def _reservar(api: TestClient, token: str, espacio: str, dia: int, hora: int) -> dict[str, Any]:
     r = api.post(
         "/reservas",
         headers=_con(token),
@@ -113,7 +114,7 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
     from app.modules.notificaciones.repositorio import NotificacionesSql
 
     with motor.begin() as conn:
-        id_: int = conn.execute(
+        id_: UUID = conn.execute(
             text(
                 "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio)"
                 " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'pendiente'"
@@ -163,7 +164,7 @@ def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(motor: En
     command.downgrade(alembic, "0008")
     try:
         with motor.begin() as conn:
-            id_: int = conn.execute(
+            id_: UUID = conn.execute(
                 text(
                     "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio, tomada_en)"
                     " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'enviando', now()"

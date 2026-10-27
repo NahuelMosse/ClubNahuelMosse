@@ -31,7 +31,7 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     return str(r.json()["id"])
 
 
-def _reservar(api: TestClient, token_usuario: str, espacio: int, dia: int = 1) -> dict[str, Any]:
+def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int = 1) -> dict[str, Any]:
     fecha = (date.today() + timedelta(days=dia)).isoformat()
     r = api.post(
         "/reservas",
