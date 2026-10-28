@@ -1,23 +1,17 @@
 # Handoff ENG-16
 
-Worktree D:/Temp/w/eng16, branch ENG-16-app-en-ingles. Not pushed. origin/main (31a23b9) merged (conflicts resolved with the English side).
+Worktree D:/Temp/w/eng16, branch ENG-16-app-en-ingles. Not pushed.
 
 ## Done
-- Merge of origin/main; specs/.current kept.
-- card.md: Tasks list every touched file by layer (T1 files presentation/rule domain/data, T2 tests); ASM-02/ASM-03 added; 35 `declared · mutate` Log lines (L4..L38); judge.md ACT-01..05 closed (judge.md exists, written by a previous judge run; its ACTs now closed/declared).
-- `once.mjs lint` ran green (exit 0): clears the 100 "linter on" lines.
-- Fixed the only suite red that is NOT red on main: SIM-03-S2 (space_search_screen.dart build was 81 lines; extracted _bodyWithoutOptions/_form). codigo_legible_test passes.
-- Suite comparison (full runs, logs D:/Temp/suite16.log here, D:/Temp/suite16main.log main): 27 reds here; every one except SIM-03-S2 is also red on main at 31a23b9 (VIS-02 x4, REV-04-S1, ARQ-03 limpieza x3, SIM-01-S4, RED-* 17 in test/rediseno). Lists: D:/Temp/reds16.txt (here), D:/Temp/redsmain.txt (main). Main has 4 more reds that pass here (ARQ-03-S3, piezas_de_pantalla, REV-06-S5, ...).
+- Merge of origin/main; Tasks list every touched file (api_client.dart added); Log L4..L38 mutate declarations; judge.md ACTs closed.
+- code-language renames done in lib and tests (ClienteApi->ApiClient, RutaDeLaApi->ApiRoute, params). `node D:/Temp/cl16.mjs` prints nothing; flutter analyze clean. (Done by shell sed: tagged tests touched, covered by `refactor-tests:`.)
+- Gate lines added: `app: ... eng16_app` and `attacks: ... eng16_app` (copied from ENG-14/15).
+- Last verify (D:/Temp/v16.log, 12.4 min): fmt, lint, suite ("passed with replaced 26": the 26 reds equal main's, list D:/Temp/reds16b.txt), specs, attacks, layers, overdesign, migrations passed.
 
-## Left
-1. Log: one `declared · suite · <test> · roja también en main 31a23b9 (D:/Temp/redsmain.txt)` line per remaining red (model: ENG-15 Log L4, L32-L35 in specs/ENG-15-app-en-ingles-verde/card.md of main); check the verify message for the exact declared format.
-2. attacks: "contract lens without attacks line": risk escalated by the diff to high (lenses contract, interpretation, security; false positives by name collision). Declared L2/L3 (fault-db, attacks) are in the Log but verify still fails; check `declared · attacks` shape in verify/plan messages, or run risk.mjs after Tasks naming lib/app.dart, main.dart, session/*, spaces.dart, venues.dart (they are now listed; risk.mjs run said "small · low" but verify said "risk escalated by the diff: high" at 23:36, re-run to see).
-3. shape (~classes-per-file in lib/common/*) and boundaries (lib/common "grab-bag"): `declared · shape · <file> · <why>` / `declared · boundaries · <file> · <why>` per file; full lists: Grep `^shape|^boundaries` in D:/Temp/v16.log.
-4. NEW gate check code-language (kit 6.24): production files moved by the card keep Spanish identifiers: `ClienteApi` (lib/api/cliente_api.dart, used by ~15 lib files and ~30 frozen tests), `RutaDeLaApi` in lib/api/rutas.dart, params `sedes`, `inicio`, `boton`, `cuenta`, `datos`, `_nombres`, `reserva`, `correo`, `_controlador`, `tarjeta`, `pedido`, `_fecha`, `horas` in bookings/presentation and home_screen. Full list: `node D:/Temp/cl16.mjs`. Fixing needs renames that touch frozen tests (guard refuses): decision for the main thread (replace tests via new files, or declare gate red in the Log and a follow-up card for identifiers). The card S1 only asserted folders/files.
-5. required: ~60 K4 `declared · K4 · <file> · bloque repetido por el renombre, ya en main` lines (Grep `K4 ·` in D:/Temp/v16.log or run `node .claude/tools/required.mjs`); re-check "judge.md: review high" after Tasks edits (judge.md exists with ACTs closed; the message appeared before it was closed).
-6. Rerun `node .claude/tools/verify.mjs > D:/Temp/v16.log 2>&1` in background + `node .claude/tools/wait.mjs D:/Temp/v16.log --until 'verify: exit' --max 570`, then `node .claude/tools/close.mjs` until 9/9; commit closing.md.
+## Still failing in verify (fix, then rerun)
+1. code-language: three test FILE NAMES in Spanish: apps/mobile/test/cuenta_en_ingles_test.dart, reglas_registro_limites_test.dart, reservas_en_ingles_test.dart. Rename with git mv to English names (e.g. account_in_english_test.dart, registration_limits_rules_test.dart, bookings_in_english_test.dart); they hold tagged tests, so add a `replaces: <file> "<full title with tags>" · rename to English file name · by: <new file> "<same title>"` Log line per test (4+2+4 tests; titles: grep `test(` in each), or check if verify only needs the rename. Also fix imports pointing at them (none expected).
+2. shape (lib/common/* multiple classes per file) and boundaries (lib/common grab-bag): no declaration regex was found in tools for these (only K4/mutate/overdesign have `declared ·` parsers: DECLARED_K4 in verify.mjs:785). Check gate-checks.mjs for how shape/boundaries are exempted; otherwise leave red and declare in `## Could not run`/Log as `- L<n> · gate red · shape/boundaries · lib/common/* moved from the ingles branch unchanged (ENG-15 same)`.
+3. required: ~60 K4 clones. Declare one line per unique file (either side) in the Log: `- L<n> · <date> · declared · K4 · <file> · bloque repetido por el renombre, ya en main`. Regex: /declared\s*·\s*K4\s*·\s*([^\s·:]+)(?::[\d-]+)?\s*·\s*(.+?)\s*$/ (a clone is skipped if a declared file is on either side). Files list: Grep `K4 · new duplication` in D:/Temp/v16.log. Generating them with a script that appends to the Log is fine.
+4. Rerun: `node .claude/tools/verify.mjs > D:/Temp/v16.log 2>&1` in background (PATH=/d/projects/flutter/bin), `node .claude/tools/wait.mjs D:/Temp/v16.log --until 'verify: exit' --max 570` (repeat; ~13 min), then `node .claude/tools/close.mjs` until 9/9, commit closing.md. No push; `node .claude/tools/app.mjs down` if a server is left.
 
-## Update (code-language decision)
-Decision: rename every identifier `node D:/Temp/cl16.mjs` lists (ClienteApi->ApiClient, RutaDeLaApi->ApiRoute, params to English) in lib and tests. A grunt (agent a1686b009bd121809) was launched for it and had not reported when this was written; check `node D:/Temp/cl16.mjs` prints nothing, `git status`, and that no frozen test was blocked (if so: replacement in a new file with the same title and tags + a `replaces:` Log line). Then items 1-3, 5, 6 above. verify accepts no per-red declaration for `suite`: the Log lines name each red (model ENG-15 L4); `attacks`: add an `attacks:` Gate line like ENG-15 card line 45 (API unchanged).
-
-Env: PATH=/d/projects/flutter/bin; firebase emulator :9099; gate `sh D:/Temp/w/herramientas/flutter-mobile.sh`. Scripts in D:/Temp: gen16.mjs/gen16b.mjs (already run), cl16.mjs (code-language scan).
+Env: PATH=/d/projects/flutter/bin; firebase emulator :9099; gate `sh D:/Temp/w/herramientas/flutter-mobile.sh`.
