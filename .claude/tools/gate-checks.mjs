@@ -4,9 +4,10 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
-import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, originOf, ownBase } from './card.mjs';
+import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, existedAt, originOf, ownBase } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { overdesignFindings } from './overdesign.mjs';
+import { codeLanguageOf, spanishNames } from './code-language.mjs';
 import { active, profileStates } from './kit.mjs';
 import { IS_SCREEN, SCREEN_MARKUP } from './signals.mjs';
 import { sectionOf } from './card-doc.mjs';
@@ -229,16 +230,57 @@ const blankComments = (code) => code.replace(/\/\*[\s\S]*?\*\/|(^|[^:'"`])\/\/[^
 // The layer a production file has in `## Tasks`: its own path, or the path it ends with.
 export const roleFor = (roles, file) => roles.get(file) ?? [...roles].find(([f]) => file.endsWith(`/${f}`))?.[1];
 
+// Inside a slice (`modules/<m>/`, `features/<f>/`) each file sits in the folder of its layer, so a feature reads by layer at a
+// glance: presentation in `presentation/`, rules in `domain/` (or `application/` for a use case that orchestrates), data in `data/`.
+// The names a repo already uses for the same layer count too. Only files the card created are placed; the index stays at the root.
+const LAYER_FOLDERS = {
+  presentation: ['presentation', 'ui', 'api', 'interface'],
+  rule: ['domain', 'application'],
+  data: ['data', 'infrastructure'],
+};
+const LAYER_OF_FOLDER = Object.fromEntries(Object.entries(LAYER_FOLDERS).flatMap(([role, dirs]) => dirs.map((d) => [d, role])));
+const SLICE_FILE = /^(.*?(?:^|\/)(?:modules|features)\/[^/]+)\/(.+)$/;
+const isSliceDoor = (slice, rest) => /^index\.[a-z]+$/i.test(rest) || rest === `${slice.split('/').pop()}.dart`;
+export const misplacedLayer = (file, role) => {
+  const m = file.match(SLICE_FILE);
+  if (!m || !role || isSliceDoor(m[1], m[2])) return null;
+  const folder = m[2].split('/')[0];
+  if (m[2].includes('/') && LAYER_FOLDERS[role].includes(folder)) return null;
+  return `${file} is (${role}) and sits outside its layer folder · move it to ${m[1]}/${LAYER_FOLDERS[role][0]}/`;
+};
+// Imports point inward: `domain/` imports neither `presentation/` nor `data/` of its slice, and `data/` does not import `presentation/`.
+// A Dart `package:<app>/…` import is read as `lib/…`.
+const INWARD = { rule: ['presentation', 'data'], data: ['presentation'] };
+export const layerImportProblems = (file, text) => {
+  const m = file.match(SLICE_FILE);
+  const from = m && LAYER_OF_FOLDER[m[2].split('/')[0]];
+  if (!from || !INWARD[from]) return [];
+  const lib = file.includes('lib/') ? file.slice(0, file.indexOf('lib/') + 4) : 'lib/';
+  const out = [];
+  for (const s of blankComments(text).matchAll(SPECIFIERS)) {
+    const spec = (s[1] ?? s[2] ?? s[3] ?? s[4]).replace(/^package:[^/]+\//, lib);
+    const target = resolveSpecifier(file, spec).match(SLICE_FILE);
+    if (!target || target[1] !== m[1]) continue;
+    const to = LAYER_OF_FOLDER[target[2].split('/')[0]];
+    if (INWARD[from].includes(to)) out.push(`${file}: ${m[2].split('/')[0]}/ imports ${target[2]} · the ${from === 'rule' ? 'domain' : 'data layer'} does not know the ${to === 'data' ? 'data layer' : 'presentation'}; pass what it needs as a parameter`);
+  }
+  return out;
+};
+
 export const layersCheck = (root, cardDir) => {
   const roles = rolesOf(readCard(cardDir) ?? '');
   if (!roles.size) return couldNot('layers', 'no file roles in ## Tasks');
-  const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
+  const base = cardStart(root, cardDir);
+  const files = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
   const found = [];
   for (const file of files) {
     const role = roleFor(roles, file);
+    let raw;
+    try { raw = readFileSync(join(root, file), 'utf8'); } catch { continue; }
+    if (!existedAt(root, ownBase(root, base), file) && !originOf(root, base, file)) { const p = misplacedLayer(file, role); if (p) found.push(p); }
+    found.push(...layerImportProblems(file, raw));
     if (role === 'data') continue;
-    let text;
-    try { text = blankComments(readFileSync(join(root, file), 'utf8')); } catch { continue; }
+    const text = blankComments(raw);
     const lines = text.split('\n');
     const at = (re) => { const i = lines.findIndex((l) => re.test(l)); return i < 0 ? null : i + 1; };
     if (role === 'rule') for (const [name, re] of NO_IO) { const n = at(re); if (n) found.push(`${file}:${n} rule file does I/O (${name})`); }
@@ -315,6 +357,16 @@ export const boundaryProblems = (file, text) => {
   }
   return [...new Set(out)];
 };
+// The language of the code (code-language.mjs): the names in the files the card created are in English unless CLAUDE.md declares
+// another `Code language:`. A file the repo already had keeps its names: renaming them is a card of its own.
+export const codeLanguageCheck = (root, cardDir) => {
+  if (codeLanguageOf(root) !== 'en') return [];
+  const base = cardStart(root, cardDir);
+  const files = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !/^(?:\.claude|specs)\//.test(f) && existsSync(join(root, f)) && !existedAt(root, ownBase(root, base), f) && !originOf(root, base, f));
+  const found = files.flatMap((f) => { try { return spanishNames(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
+  return [found.length ? failed('code-language', `${found.slice(0, 5).join('; ')} · name it in English, or declare \`Code language: <lang>\` in CLAUDE.md`) : ok('code-language', `${files.length} new code files, named in English`)];
+};
+
 export const boundariesCheck = (root, cardDir) => {
   const files = cardFiles(root, cardStart(root, cardDir)).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)));
   const found = files.flatMap((f) => { try { return boundaryProblems(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
@@ -450,7 +502,7 @@ export const noVisualCheck = (root, cardDir) => {
 };
 
 // The checks that read the card: verify.mjs adds them to the gate's. `layers` and `migrations` read the repo too, so they need `root`.
-export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir), ...docsCheck(root, cardDir), ...tableShapeCheck(root, cardDir)] : [])];
+export const cardChecks = (cardDir, root) => [...statesCheck(cardDir, root), ...attacksCheck(cardDir), ...roundsCheck(cardDir), ...refGenreCheck(cardDir), ...designRoundChecks(cardDir, root), ...(root ? [layersCheck(root, cardDir), shapeCheck(root, cardDir), overdesignCheck(root, cardDir), migrationsCheck(root, cardDir), boundariesCheck(root, cardDir), ...codeLanguageCheck(root, cardDir), ...noVisualCheck(root, cardDir), ...removeOnlyCheck(root, cardDir), ...docsCheck(root, cardDir), ...tableShapeCheck(root, cardDir)] : [])];
 
 const NO_PROBE = 'no record in .validation/probe: run `node .claude/tools/app.mjs probe <steps.json> --axe --contrast "<status selectors>"` (a `probe:` line in ## Gate does it)';
 

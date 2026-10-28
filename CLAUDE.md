@@ -22,8 +22,8 @@ is in the tests tagged per spec (`@<ID>-S<n>`).
 flow, the cost rules and the command that closes each step. Do not decide first whether it applies: an empty directory, a pasted
 request, no `specs/` are no reason to skip it. What cannot run is declared.
 
-**The kit is in English; the work speaks the repo's language.** Test names, comments, commits, UI text, the PR and the Jira comments
-go in the language the repo and its team use. File names, headings, IDs and tags stay in English: the hooks and tools read them.
+**The kit and the code are in English** (identifiers, file names, comments, test names) unless this file declares `Code language: <lang>`.
+Commits, UI text, the PR and the Jira comments speak the team's language. Headings, IDs and tags stay in English: the hooks read them.
 
 **The kit is a base plus profiles** (`web`, `backend`; `flutter` is planned): the screen and API instruments come with the profile, and `node .claude/tools/kit.mjs profile on|off <p> --reason "…"` turns one on or off.
 
@@ -36,8 +36,8 @@ go in the language the repo and its team use. File names, headings, IDs and tags
 3. **Three states: passed · failed · could not run.** What did not run is never "passed". A check that stops you is not turned off.
 4. **The card is born `status: proposed`** and stays so: nothing waits for a signature. The human review is the PR, and the PR says it.
 5. **One round of questions, on the card.** A later doubt is an `ASM-NN`, listed in the PR. Never a second round.
-6. **The close publishes by itself, and only that:** the card's branch, a PR ready for review, the CI result and the closing comment,
-   from the output of the gate. Never main, `--force` or a merge (`.claude/AUTONOMY.md`).
+6. **The close publishes and merges by itself:** branch, PR, CI result and closing comment, then the merge once CI passed and
+   `closing.md` has nothing failed or for a person. Never a push onto main, `--force` or `--admin` unless the user orders it (`.claude/AUTONOMY.md`).
 
 ## How to work
 
@@ -59,7 +59,7 @@ Hooks block, and block also when they fail; they reach subagents too. If one sto
 - `delegate-code`: production code is written by the `builder`, the `grunt`, or the main thread on a small card after the RED commit.
 - `review-cap`: judges by `risk.json` (none in low and medium; one plan judge before building in high), no code judge and no correction round. `require-bar`: cap, Specs, Tasks, Gate.
 - `time-cap`: warns, then stops new agents and suites. `context-cap`: caps the builder, grunt and designer (commit, `handoff.md`, a fresh one); never the main thread.
-- `require-at-close` and `publish`: no close without gate, mutation, at high `judge.md` with its ACT closed; publish never main, force or merge.
+- `require-at-close` and `publish`: no close without gate, mutation, at high `judge.md` with its ACT closed; publish pushes any branch but main and merges a PR whose checks passed; never force or `--admin` unless the user's last message orders it.
 
 ## If the task is, it goes to
 

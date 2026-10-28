@@ -1,11 +1,11 @@
 {
   ".claude/AUTONOMY.md": {
     "module": "core",
-    "sha256": "112de8e7d9709cd8e433ca0d5823ff47f34efd9064b9e15f444c4c966f1d7732"
+    "sha256": "bba5a2df1fdd1ef3818b41846cc756a1e2341614497253a8a501cdd01136ddd1"
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "5a627daede8daa0c32b2205aaafb73bf1aaa82e21f799c7c554c1354b5fdd0f3"
+    "sha256": "c36da86ccff1ab583df2d3780ddcab3784e5d54a2e0ea2ef078b22741c2b0d00"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -25,7 +25,7 @@
   },
   ".claude/agents/planner.md": {
     "module": "core",
-    "sha256": "335d8ba906cba7f630240d304a969f3dffcd0431284a3f2ec2803fa8b18a1e4f"
+    "sha256": "9264479d72cfc96d4e9e9dccfdf737ce9b666ced4aaade8af8734ba118dd21e6"
   },
   ".claude/agents/runner.md": {
     "module": "core",
@@ -41,7 +41,7 @@
   },
   ".claude/commands/close.md": {
     "module": "core",
-    "sha256": "097680c266b20eddf83f4fd09356f12de8167df71782377c9f226fb5cc2f454f"
+    "sha256": "de5d0a0a5297cf73228567205b3adcfd2a85d6e804ab0353e74190b4fbc8dae5"
   },
   ".claude/commands/design-deslop.md": {
     "module": "ui",
@@ -81,7 +81,7 @@
   },
   ".claude/hooks/publish.mjs": {
     "module": "core",
-    "sha256": "02c83f762d25e5c41094808110eff9f4abd2b6f501eefca6b3e724876c2aeb7b"
+    "sha256": "822c6624e47dcb8caa2b1aa71676fe2ee62f19968b6b50b10c4776e93828fae1"
   },
   ".claude/hooks/require-at-close.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "6447d261fa320d342609543f08c8d91675574e032be449fa921f4a49b2535561"
+    "sha256": "e7f48d57e0e77546e48fe46c5993a17599a627b42d67d9c688c48fbcaee19e92"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -121,7 +121,7 @@
   },
   ".claude/reference/architecture.md": {
     "module": "core",
-    "sha256": "5780cfcad7941df16dc8bf44908db63482fb204b5321fd2a25106902a6de18ec"
+    "sha256": "93d75e5ebe2a9db5c50aba4e3280fbbd6598650945a0d91b4cbcaa00e95c43cc"
   },
   ".claude/reference/code-patterns.md": {
     "module": "core",
@@ -193,7 +193,7 @@
   },
   ".claude/rules/architecture.md": {
     "module": "core",
-    "sha256": "70b9182df9335c542f775e5f974416f162fd441660fcf50859a41bcaee20d74e"
+    "sha256": "8ce07a530f0231de7958c7ed02767db7b64e701a381c2614c164ef5efb4d6de7"
   },
   ".claude/rules/interface.md": {
     "module": "ui",
@@ -461,7 +461,7 @@
   },
   ".claude/stacks/node-ts.md": {
     "module": "core",
-    "sha256": "3c9c23ed2913bf8c740475d7317567b766532899523de8e00e3b7d91ed614907"
+    "sha256": "f2a3f83656fe0c380c3aa890824b64bc5628ecb44d12e828cf6b75ed3cdb6753"
   },
   ".claude/stacks/react-shadcn.md": {
     "module": "ui",
@@ -1289,7 +1289,7 @@
   },
   ".claude/templates/system-design.md": {
     "module": "core",
-    "sha256": "296bc629ab8442725d8be180336957f4281e0a46d45a2a278d31a1fa666e3824"
+    "sha256": "682ae69e5fc55315907fe99ab3099d211823fac264f80b17ca85ddfe6e4d7aac"
   },
   ".claude/tools/affected.mjs": {
     "module": "core",
@@ -1429,7 +1429,7 @@
   },
   ".claude/agents/builder.md": {
     "module": "core",
-    "sha256": "83485ad412cefc8b187d5a11c9d4ecb4c93c8ad1e9294d0c20e95793b452d9b7"
+    "sha256": "77433ae5020a26bf4af6d0b4e9639160c85cb812e2e2b444b1f2b7cb53edc913"
   },
   ".claude/agents/designer.md": {
     "module": "profile:web",
@@ -1437,7 +1437,7 @@
   },
   ".claude/agents/judge.md": {
     "module": "core",
-    "sha256": "95d7614adcf49e125cc44aadd989471c321bab88de30aa14c2de6a179a592b15"
+    "sha256": "8abc1784af2987c8752fef0dfa9b043ade17bf72e7e46bb1c04de89fc2ccf7d7"
   },
   ".claude/hooks/turn-budget.mjs": {
     "module": "core",
@@ -1449,27 +1449,15 @@
   },
   ".claude/reference/lenses.md": {
     "module": "core",
-    "sha256": "9fbbf3f55b40313ee3e707ee0ba64e2614ea0efd791d05f110123a686aec9890"
+    "sha256": "1f539c88aedc33ee819a0e6612e96018d4ba2427209171d3527f8c662d6c5925"
   },
   ".claude/rules/design.md": {
     "module": "ui",
     "sha256": "4539ea272c825c4c30947788922125fe10e117ab3f592347180743cf6f40d3c6"
   },
-  ".claude/scheduled_tasks.lock": {
-    "module": "core",
-    "sha256": "7cd4a9abd2d03e47ed4b76b70804e56d0b89d171c411382381495576822809bb"
-  },
   ".claude/templates/card.md": {
     "module": "core",
-    "sha256": "7d503d39d41ec59bec965609a31e768a631829fbd8e2707663b8782c6a613be6"
-  },
-  ".claude/templates/components/motion/test-results/.last-run.json": {
-    "module": "ui",
-    "sha256": "91d1c43004802cd49950d78eb11c8fa7d05da8ffffe219a8b13b2f561bc00903"
-  },
-  ".claude/templates/components/test-results/.last-run.json": {
-    "module": "ui",
-    "sha256": "ec692fc1d5dbcd6fd12896e45e9deaf23d42d8b9205afb9b8278cf208d94fac6"
+    "sha256": "be84b0bed17b07c588ac7c6bfb39ae42c0c732dee25bb9fcb60ee6a76f09542b"
   },
   ".claude/tools/card-cost.mjs": {
     "module": "core",
@@ -1481,7 +1469,7 @@
   },
   ".claude/tools/gate-checks.mjs": {
     "module": "core",
-    "sha256": "7de32d9229927b7a3cce5ab3824f769117f03e80093107c31b7283e4beb28f16"
+    "sha256": "498e11fce79122e94679578e11e9659f4ef4b4eecad13db94049f7dc5a1b8aa6"
   },
   ".claude/tools/importers.mjs": {
     "module": "core",
@@ -1493,7 +1481,7 @@
   },
   ".claude/tools/plan.mjs": {
     "module": "core",
-    "sha256": "021daa023045e43a166008bed5c1f41447956e8c67aa1764fc78bc3584ea3b3b"
+    "sha256": "4a83d729db39d003f7ab6e1afabdd9188492afd7076fc7e4dee7502804bbce7e"
   },
   ".claude/tools/risk.mjs": {
     "module": "core",
@@ -1613,7 +1601,7 @@
   },
   ".claude/reference/structure.md": {
     "module": "core",
-    "sha256": "397bfc558c4b4af172323f5957424bd1b04354bcda7e06dd1d38279ac6ac0018"
+    "sha256": "ad10e91eeecf7b160b9873ac0b05ca2e1d0d8f35e52c2c6f914dab715243b5a7"
   },
   ".claude/reference/styles.md": {
     "module": "profile:web",
@@ -1843,10 +1831,6 @@
     "module": "core",
     "sha256": "d7037bd854cd925e0c0e6da57a511399413e59f59eac357110da9635fd009bb9"
   },
-  ".claude/tools/__pycache__/asset-pipeline.cpython-313.pyc": {
-    "module": "core",
-    "sha256": "1de2afd8282ded8a7ed53c0387b9e963d857e84a98408702b202c7b72a8653bc"
-  },
   ".claude/tools/bot-wall.mjs": {
     "module": "profile:web",
     "sha256": "f5c3313b43173dedb3dd2f3fd0a5326809ad03b03b29b068829d2e07dd9de9ea"
@@ -1865,11 +1849,11 @@
   },
   ".claude/tools/overdesign.mjs": {
     "module": "core",
-    "sha256": "ad7e8bf934ac6a65d9b7f9f37842e0148a417b2bd9c85b8dc4936eb0016f4acf"
+    "sha256": "e21dc7cd1c85126b685e3785610e8e08ed879c78997fbd4d854d4cf42d21cc3a"
   },
   ".claude/profiles/flutter.md": {
     "module": "profile:flutter",
-    "sha256": "71dfdace8bcc85006864e322c3bbea22c5903a2d221c5df66ad104b52ad22278"
+    "sha256": "5fe061f3aff2b9d432b71ba6df5ef0a63d7e562ed3441dcf4e35a49307aee971"
   },
   ".claude/profiles/flutter/test-kit/example-motion.json": {
     "module": "profile:flutter",
@@ -1910,5 +1894,9 @@
   ".claude/rules/speed.md": {
     "module": "core",
     "sha256": "535f9d4ad9afe732eca81e395d540243bf17c5ffae8d91e84ed29ae50c1358a9"
+  },
+  ".claude/tools/code-language.mjs": {
+    "module": "core",
+    "sha256": "f9cea586c3a9988513ddd758207f82aa5231abe435403fdb92f0fe7d7c3f72ba"
   }
 }

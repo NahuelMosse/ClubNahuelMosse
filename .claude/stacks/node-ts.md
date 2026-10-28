@@ -66,8 +66,8 @@ lives in the module's `infrastructure/` (or the composition root for DI), behind
 | HTTP client | `@nestjs/axios` or the platform `fetch` with a thin adapter | `fetch` (undici) or **ky** |
 | Queues and jobs | `@nestjs/bullmq` | **BullMQ** (Redis) or **pg-boss** (Postgres) |
 
-A module per feature maps to `src/modules/<feature>/` (Nest: the feature module folder), with layer folders only where the module
-has rules worth isolating; `shared/` holds the kernel. The architecture test of D2 reads those paths.
+A module per feature maps to `src/modules/<feature>/` (Nest: the feature module folder), with its layer folders inside
+(`presentation/`, `domain/`, `data/`, `application/` when a use case orchestrates); `shared/` holds the kernel. The architecture test of D2 reads those paths.
 
 ## Readability limits
 

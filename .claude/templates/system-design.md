@@ -31,7 +31,7 @@ C4Container
 
 ## Modules and libraries
 
-One folder per feature (`src/modules/<feature>/`; layer folders inside only for a module with business rules worth isolating, a CRUD has none) and a small `shared/` kernel; no top-level layer folders. Public index of each module is its only door.
+One folder per feature (`src/modules/<feature>/`; its layer folders inside: `presentation/`, `domain/`, `data/`, and `application/` when a use case orchestrates) and a small `shared/` kernel; no top-level layer folders. Public index of each module is its only door.
 
 | Module | What it owns | Public index exports |
 |---|---|---|
