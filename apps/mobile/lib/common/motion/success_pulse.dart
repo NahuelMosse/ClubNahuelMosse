@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 // kit-shape: the widget, its State and the reveal clip are a single Flutter piece
 import 'package:flutter/material.dart';
 

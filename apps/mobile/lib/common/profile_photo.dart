@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
 /// The profile background photo, with a dark veil that deepens toward the bottom.

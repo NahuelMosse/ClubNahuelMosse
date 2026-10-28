@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

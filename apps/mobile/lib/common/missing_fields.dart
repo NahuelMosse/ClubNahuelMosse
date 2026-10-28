@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 import 'package:flutter/widgets.dart';
 
 /// The error a form shows under a field: the one the server gave and, if none, the one from

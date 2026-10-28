@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 /// Dates, times, days and the DNI as the app shows them. `intl` returns names in lower
 /// case; here they get their initial capital or are upper-cased.
 /// The `es` data is loaded by `initializeDateFormatting` at startup and in tests.

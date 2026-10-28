@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 import 'package:clock/clock.dart';
 
 /// The club is at UTC−3, with no daylight saving time: hours and days are counted that way

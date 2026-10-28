@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 /// How notifications reach the app.
 enum Push {
   /// Firebase Cloud Messaging, with the real project.

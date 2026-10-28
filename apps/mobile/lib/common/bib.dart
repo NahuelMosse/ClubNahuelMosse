@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
 /// Giant number drawn only with a stroke, decorative: the screen reader ignores it.

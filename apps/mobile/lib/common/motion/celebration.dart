@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 // kit-shape: the widget, its State and the rings painter are a single Flutter piece
 import 'dart:math' as math;
 

@@ -1,3 +1,5 @@
+// kit-boundary: the app-wide widget kit, shared by every feature.
+// kit-shape: a widget with its private parts kept together.
 /// The per-field errors (`field: message`) the server sends in the body of a rejected
 /// response; empty if they are missing or are not text.
 Map<String, String> fieldErrors(Object? body) {
