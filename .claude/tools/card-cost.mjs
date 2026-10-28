@@ -44,17 +44,36 @@ const roleOf = (file) => {
 
 // The last message of each id inside one transcript.
 const norm = (p) => resolve(String(p).replace(/\\/g, '/')).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
-const inside = (cwd, root) => typeof cwd === 'string' && (norm(cwd) === root || norm(cwd).startsWith(`${root}/`));
+// `root` is one folder or several: a card built in a worktree of the repo is driven by a session whose cwd is the main
+// checkout, so the repo and every worktree of it count. Measured: 39 of 41 closings of a repo said "no message of this
+// repo" because the card lived in a worktree under another folder.
+const inside = (cwd, root) => typeof cwd === 'string' && [root].flat().some((r) => norm(cwd) === r || norm(cwd).startsWith(`${r}/`));
 
-const messagesOf = (file, sinceMs = null, root = null) => {
+// `card` ({ own, names }): the card's checkout and the strings that name it (key, folder, paths). A session that manages
+// several cards, or runs one in a worktree from the main checkout, shares its transcript among them; a message counts for
+// the card when its cwd is the card's checkout or it names the card, and a subagent whose prompt names it counts whole
+// (a `card-runner`, the card's `builder`). Without `card` every message of the repo counts.
+const names = (value, card) => { const text = JSON.stringify(value ?? '').toLowerCase().replace(/\\\\/g, '/'); return card.names.some((n) => text.includes(n)); };
+const promptOf = (lines) => {
+  for (const line of lines) {
+    let entry;
+    try { entry = JSON.parse(line); } catch { continue; }
+    if (entry.type === 'user') return entry.message?.content ?? '';
+  }
+  return '';
+};
+const messagesOf = (file, sinceMs = null, root = null, card = null) => {
   const last = new Map();
-  for (const [i, line] of readFileSync(file, 'utf8').split('\n').filter(Boolean).entries()) {
+  const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
+  const whole = card !== null && file !== card.main && names(promptOf(lines), card);
+  for (const [i, line] of lines.entries()) {
     let entry;
     try { entry = JSON.parse(line); } catch { continue; }
     const m = entry.message;
     if (!m?.usage || !m.model) continue;
     if (sinceMs !== null && !(Date.parse(entry.timestamp) >= sinceMs)) continue;
     if (root !== null && !inside(entry.cwd, root)) continue;
+    if (card !== null && !whole && !inside(entry.cwd, card.own) && !names(m.content, card)) continue;
     last.set(m.id ?? `no-id-${file}-${i}`, m);
   }
   return last;
@@ -62,8 +81,9 @@ const messagesOf = (file, sinceMs = null, root = null) => {
 
 // `since` (Date or ISO string): only the messages whose `timestamp` is at or after it count.
 // `root`: only the messages whose `cwd` is inside that folder count (a session can span several repos).
-export const costOf = (main, since = null, root = null) => {
-  const rootNorm = root === null || root === undefined ? null : norm(root);
+export const costOf = (main, since = null, root = null, card = null) => {
+  const rootNorm = root === null || root === undefined ? null : [root].flat().map(norm);
+  const cardNorm = card ? { main, own: [norm(card.own)], names: [norm(card.own), ...card.names.map((n) => String(n).toLowerCase())].filter(Boolean) } : null;
   const sinceMs = since === null || since === undefined ? null : new Date(since).getTime();
   if (Number.isNaN(sinceMs)) throw new Error(`invalid since: ${since}`);
   const sessionDir = join(dirname(main), basename(main, '.jsonl'));
@@ -71,7 +91,7 @@ export const costOf = (main, since = null, root = null) => {
   const sources = [{ file: main, role: 'main' }, ...subs.map((file) => ({ file, role: roleOf(file) }))];
   // The same message id in two transcripts is one message: the last source wins.
   const all = new Map();
-  for (const { file, role } of sources) if (existsSync(file)) for (const [id, m] of messagesOf(file, sinceMs, rootNorm)) all.set(id, { m, role });
+  for (const { file, role } of sources) if (existsSync(file)) for (const [id, m] of messagesOf(file, sinceMs, rootNorm, cardNorm)) all.set(id, { m, role });
   const byRole = {};
   const unpriced = new Set();
   let total = 0;
@@ -126,15 +146,27 @@ const cardCommitDate = (root) => {
   return r.status === 0 ? r.stdout.trim() || null : null;
 };
 
+// The repo's main checkout and its worktrees; the folder alone when git cannot list them.
+export const checkoutsOf = (cwd) => {
+  const r = spawnSync('git', ['worktree', 'list', '--porcelain'], { cwd, encoding: 'utf8' });
+  const list = r.status === 0 ? [...r.stdout.matchAll(/^worktree (.+)$/gm)].map((m) => m[1].trim()) : [];
+  return list.length ? [...new Set([cwd, ...list])] : [cwd];
+};
+
 export const closingCost = (cwd = process.cwd(), arg = null, since = null) => {
   try {
     const file = arg ? findTranscript(arg) : currentTranscript(cwd);
     if (!file) return `Cost: could not run: no transcript ${arg ? `for ${arg}` : `of this session or of the project of ${cwd}`}`;
     const from = since || cardCommitDate(cwd);
     if (!from) return 'Cost: could not run: no commit of card.md to date the start of the card';
-    const cost = costOf(file, from, cwd);
+    const checkouts = checkoutsOf(cwd);
+    // With worktrees, several cards can share the session: only what is this card's counts.
+    const folder = existsSync(join(cwd, 'specs', '.current')) ? readFileSync(join(cwd, 'specs', '.current'), 'utf8').trim().split(/[\\/]/).pop() : '';
+    const key = folder.match(/^[A-Za-z]\w*-\d+[A-Za-z0-9.]*/)?.[0];
+    const card = checkouts.length > 1 ? { own: cwd, names: [folder, key].filter(Boolean) } : null;
+    const cost = costOf(file, from, checkouts, card);
     if (cost.messages === 0) return `Cost: could not run: no message of this repo since ${from}`;
-    return costLine(cost);
+    return `${costLine(cost)}${card ? ' · the messages of this card' : ''}`;
   } catch (e) { return `Cost: could not run: ${e.message}`; }
 };
 

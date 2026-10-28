@@ -8,6 +8,11 @@
 // polling: every poll is a turn, and each wake-up past the prompt cache rewrites the whole context (the main
 // thread, builder, runner and executor keep it an hour). Measured: 949 polling turns, USD 85 of one card.
 // Give the call `timeout: 600000` (--max 570 plus a margin); the shell guard allows the wait.
+// In an interactive session the main thread does not hold its turn: it runs wait.mjs as the command of a `Monitor`
+// with `--monitor --max 1790` (a Monitor lives 30 minutes at most; `timeout_ms: 1800000`, re-armed when it expires), ends the
+// turn, and the person can talk meanwhile. Every stdout line is an event, so by default only the line that ends it
+// wakes the agent: each wake-up rereads the whole context. `--every <min>` adds a heartbeat line per period
+// (`[HB hh:mm] <N> min · <last line of the log>`) when someone asked to follow it.
 //
 // <log>      the file to read; it may not exist yet, but if nothing writes it within 15 s it is not a wait (exit 3).
 //            An agent's output file (`tasks/<id>.output`, or any file with `--agent-output`) that is still at 0 bytes
@@ -38,17 +43,18 @@
 // Exit 0: --until matched, or the agent(s) finished; 1: --fail matched; 2: --max seconds passed with neither;
 // 3: wrong usage, a log that did not appear or an agent output file empty for 15 s, or an agent with no meta.json.
 // It prints the line that decided, or the last lines of the log when time ran out.
-import { existsSync, openSync, readSync, closeSync, statSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, openSync, readSync, closeSync, statSync, readFileSync, readdirSync, writeSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { finalLineOf } from './final-line.mjs';
 
 const MAX_S = 570;
+const MONITOR_S = 1790;
 // Past this a missing or empty log is a wait on something nobody runs: blind sleeping, not waiting.
 const APPEARS_S = 15;
 const usage = (why) => {
-  console.error(`${why}\nusage: node wait.mjs <log> [--until <regex>] [--fail <regex>] [--max ${MAX_S}] [--ignore-case]\n       node wait.mjs --agent <agentId> [--agent <agentId> ...] [--any | --all] [--max ${MAX_S}]`);
+  console.error(`${why}\nusage: node wait.mjs <log> [--until <regex>] [--fail <regex>] [--max ${MAX_S} | --monitor [--every <min>] --max ${MONITOR_S}] [--ignore-case]\n       node wait.mjs --agent <agentId> [--agent <agentId> ...] [--any | --all] [--max ${MAX_S}]`);
   process.exit(3);
 };
 
@@ -73,10 +79,27 @@ const agents = [];
 for (let a = flag('--agent'); a !== null; a = flag('--agent')) agents.push(a);
 const untilText = flag('--until');
 const failText = flag('--fail');
+const monitored = bare('--monitor');
+const everyText = flag('--every');
+const every = everyText === null ? 0 : Number(everyText);
+if (everyText !== null && !(every > 0)) usage('--every is a number of minutes');
+// In a Monitor nothing wakes the agent until the end, so a hang would go unseen until the Monitor expires: a log that
+// stops growing for --quiet minutes (10 by default there, 0 turns it off) prints one warning line, and --pid ends the
+// wait as failed when that process is gone without the expected line. The pid is the operating system's: in Git Bash,
+// `cat /proc/$!/winpid` gives it for the last background command.
+const quietText = flag('--quiet');
+const quiet = quietText === null ? (monitored || every ? 10 : 0) : Number(quietText);
+if (!(quiet >= 0)) usage('--quiet is a number of minutes');
+const pidText = flag('--pid');
+const pid = pidText === null ? null : Number(pidText);
+if (pidText !== null && !(pid > 0)) usage('--pid is a process id');
+const alive = (p) => { try { process.kill(p, 0); return true; } catch (e) { return e.code === 'EPERM'; } };
+const clock = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 const maxText = flag('--max');
 const max = maxText === null ? MAX_S : Number(maxText);
 if (!(max > 0)) usage('--max is a number of seconds');
-if (max > MAX_S) usage(`--max ${max} is over ${MAX_S} s: a longer wait holds the turn until the prompt cache can lapse, and the context is rewritten at every wake-up; wait ${MAX_S} s and ask again, or launch the work in the background and let it notify`);
+if (max > MONITOR_S) usage(`--max ${max} is over ${MONITOR_S} s: a Monitor lives 30 minutes at most; re-arm it when it expires`);
+if (!(monitored || every) && max > MAX_S) usage(`--max ${max} is over ${MAX_S} s: a longer wait holds the turn until the prompt cache can lapse, and the context is rewritten at every wake-up; wait ${MAX_S} s and ask again, or launch the work in the background and let it notify`);
 const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
 const start = Date.now();
 const elapsed = () => ((Date.now() - start) / 1000).toFixed(0);
@@ -201,14 +224,30 @@ if (args.length || !agents.length) {
     return text.slice(from, end < 0 ? text.length : end).trim();
   };
   let text = '';
+  let size = -1;
+  let grew = Date.now();
+  let warned = false;
   targets.push({
     name: log,
     poll: () => {
+      // Read after checking the process, so a line it wrote just before ending is seen.
+      const dead = pid !== null && !alive(pid);
       text = read();
       const bad = fail?.exec(text);
       if (bad) return { code: 1, line: `failed after ${elapsed()} s: ${lineAt(text, bad)}` };
       const found = until?.exec(text);
       if (found) return { code: 0, line: `found after ${elapsed()} s: ${lineAt(text, found)}` };
+      if (dead && !finalLineOf(text)) {
+        return { code: 1, line: `process ${pid} ended after ${elapsed()} s without the expected line; last line of ${log}: ${text.trimEnd().split('\n').at(-1) || '(empty)'}` };
+      }
+      if (quiet) {
+        const now = existsSync(log) ? statSync(log).size : 0;
+        if (now !== size) { size = now; grew = Date.now(); warned = false; }
+        else if (!warned && Date.now() - grew >= quiet * 60000) {
+          warned = true;
+          writeSync(1, `[QUIET ${clock()}] ${log} has not grown for ${quiet} min: it may be hung. Last line: ${text.trimEnd().split('\n').at(-1)?.slice(0, 160) || '(empty)'}\n`);
+        }
+      }
       const ended = finalLineOf(text);
       if (ended) {
         if (ended.exit !== 0) return { code: 1, line: `the tool finished with an error after ${elapsed()} s: ${ended.line}` };
@@ -225,6 +264,7 @@ if (args.length || !agents.length) {
       }
       return null;
     },
+    beat: () => `${log}: ${text.trimEnd().split('\n').at(-1)?.slice(0, 160) || 'empty'}`,
     over: () => {
       const last = text.trimEnd().split('\n').slice(-5).join('\n');
       return `without ${existsSync(log) ? 'a match' : 'the file'}${last ? `; last lines of ${log}:\n${last}` : ` (${log} is empty or does not exist)`}`;
@@ -233,6 +273,7 @@ if (args.length || !agents.length) {
 }
 
 const several = targets.length > 1;
+let nextBeat = start + every * 60000;
 const done = new Map();
 for (;;) {
   for (const t of targets) {
@@ -256,6 +297,11 @@ for (;;) {
     process.exit(r.code);
   }
   if (timedOut()) break;
+  if (every && Date.now() >= nextBeat) {
+    nextBeat += every * 60000;
+    const where = targets.filter((t) => !done.has(t)).map((t) => t.beat?.() ?? `${t.name} running`).join(' · ');
+    writeSync(1, `[HB ${clock()}] ${Math.round((Date.now() - start) / 60000)} min · ${where}\n`);
+  }
   pause();
 }
 if (!several) {

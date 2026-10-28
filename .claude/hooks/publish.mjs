@@ -17,7 +17,7 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 // The user's last message in the session: a typed prompt or one sent while the agent worked; tool results,
-// reminders and subagents are not theirs.
+// reminders, background-task notices (stored as user messages that start with `<`) and subagents are not theirs.
 const lastUserText = (path) => {
   if (!path || !existsSync(path)) return '';
   let text = '';
@@ -26,7 +26,7 @@ const lastUserText = (path) => {
     let e;
     try { e = JSON.parse(line); } catch { continue; }
     const own = e.type === 'user' && !e.isMeta && !e.isSidechain;
-    if (own && typeof e.message?.content === 'string') text = e.message.content;
+    if (own && typeof e.message?.content === 'string') { if (!e.message.content.startsWith('<')) text = e.message.content; }
     else if (own && Array.isArray(e.message?.content) && e.message.content.length && e.message.content.every((c) => c.type === 'text')) {
       text = e.message.content.map((c) => c.text).filter((t) => !t.startsWith('<')).join('\n') || text;
     } else if (e.type === 'attachment' && e.attachment?.type === 'queued_command' && e.attachment.origin?.kind === 'human') {

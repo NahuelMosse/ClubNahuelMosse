@@ -11,8 +11,8 @@ const files = JSON.parse(readFileSync(join(repo, '.claude', 'kit-files.json'), '
 // The team adds its plugins to settings.json; the installer keeps that edit instead of overwriting it.
 const EDITED_BY_THE_TEAM = new Set(['.claude/settings.json']);
 
-test('el kit instalado es el 6.24.0 @KIT-01-S1', () => {
-  assert.equal(kit.kit, '6.24.0');
+test('el kit instalado es el 6.26.0 @KIT-02-S1', () => {
+  assert.equal(kit.kit, '6.26.0');
 });
 
 test('cada archivo del kit está como lo instaló la actualización, salvo settings.json @KIT-01-S1 @assumption:KIT-01-ASM-01', () => {
