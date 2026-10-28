@@ -39,3 +39,4 @@ no-visual: el README no es una pantalla de la app
 - L2 · 2026-10-27 · declared · fault-db · la card no toca la base
 - L3 · 2026-10-27 · declared · attacks · la card no toca la API
 - L4 · 2026-10-27 · replaces: apps/api/tests/unit/test_readme_conciso.py "el README muestra a lo sumo 4 capturas en una fila y no quedan capturas sin usar @DOC-06-S1" · cuenta toda imagen del README como captura y el logo no lo es · by: apps/api/tests/unit/test_readme_logo_y_capturas.py "el README muestra en una fila inicio de sesión, sedes, horarios y reserva confirmada, sin capturas sin usar @DOC-09-S2 @assumption:DOC-09-ASM-01"
+- L5 · 2026-10-27 · declared · DOC-09-ASM-01 · «16:53», «BUENOS DÍAS» y «las mejores» son el motivo de la elección, no valores que el README muestre; el test fija las cuatro capturas elegidas

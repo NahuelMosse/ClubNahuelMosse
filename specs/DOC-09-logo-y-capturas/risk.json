@@ -1,0 +1,24 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "sesión"
+  ],
+  "files": [
+    "README.md",
+    "docs/logo.png",
+    "docs/capturas/01-login.jpg",
+    "docs/capturas/03-sedes.jpg",
+    "docs/capturas/02-inicio.jpg",
+    "docs/capturas/09-avisos.jpg"
+  ],
+  "tasks": 1
+}
