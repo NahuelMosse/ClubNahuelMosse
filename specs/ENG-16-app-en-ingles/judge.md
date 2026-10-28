@@ -1,0 +1,13 @@
+- ACT-01 · H · S1 pide «el código de la app está en inglés», pero el único test planeado de S1 mira nombres de carpeta de una lista fija: no ve archivos ni símbolos (lib/api/cliente_api.dart, lib/api/rutas.dart con `RutaDeLaApi`, `metodo`, `coincideCon` pasan); lenses `interpretation` «Does each S# say the same as the sentence it quotes, no less and no more?» · card.md S1 (l.13), T1 (l.19) · plan · declared · S1 verifica nombres de carpeta; los símbolos en inglés los cubre la suite de main, que corre entera en el Gate
+- ACT-02 · M · ENG-16-ASM-01 (comportamiento distinto de main se arregla en el código) va atado a un test de nombres de carpeta que no ejercita ningún comportamiento: el supuesto no tiene test propio; lenses `interpretation` «Which reading works with any answer to the open question, and is that the one assumed?» · card.md ASM-01 (l.15), T1 (l.19) · plan · closed · ENG-16-ASM-01 y la suite del Gate
+- ACT-03 · M · S2 dice «cada funcionalidad … data, domain, presentation», pero el test planeado exime a `home` de `data` (`_featuresWithoutData`) sin `ASM` ni `AMB` en la card; lenses `interpretation` «Does a quantifier («each», «all», «any») name its members, and does each member have a test?» · card.md S2 (l.14) · plan · closed · ENG-16-ASM-02
+- ACT-04 · M · L1 «en la app no hay capas … la logica esta al lado de los componentes» habla de la app entera; S2 lo acota a `lib/features` sin declararlo: lógica fuera de capas en lib/common (dates, price_format, pending_booking, club_timezone, result) y lib/redirect.dart, router.dart queda sin spec ni test; lenses `interpretation` «Is there a sentence of L1 that no S# covers?» · card.md L1 (l.41), S2 (l.14) · plan · closed · ENG-16-ASM-03
+- ACT-05 · L · la regla de S2 obliga a crear `features/home/domain` para un archivo de 3 líneas (tile_animation.dart, una animación en `domain`); lenses `overdesign` «Does the plan create a folder for one wrapper file under 20 lines, or a module with layer folders it does not fill?» · card.md S2 (l.14), T1 (l.19) · plan · declared · animación de 3 líneas ya en main; mover el archivo rompería el layout de ENG-08..11
+
+## Verified
+
+- interpretation · fails (ACT-01, ACT-02, ACT-03, ACT-04)
+- quantifiers · fails (ACT-03)
+- overdesign · fails (ACT-05)
+- contract · meets · rutas y claves JSON de la API quedan como en main (lib/api/rutas.dart, data lee `reserva_id`, `desde`, …); T2 conserva rutas_de_la_api_test y reserva_desde_json_test y el Gate corre la suite
+- security · meets · la card no agrega entrada, ruta ni log; session/* sólo cambia de nombre y la suite de main la cubre (pantalla_inicio_sesion, recuperacion, reloj_del_token)
