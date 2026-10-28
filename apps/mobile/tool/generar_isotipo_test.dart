@@ -4,7 +4,7 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:clubnahuelmosse/comun/isotipo.dart';
+import 'package:clubnahuelmosse/common/logo_mark.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,7 +24,7 @@ Future<void> _guardar(String ruta, {Color? fondo}) async {
   }
   const logo = _lado * _proporcionDelLogo;
   lienzo.translate((_lado - logo) / 2, (_lado - logo) / 2);
-  const PintorIsotipo(color: _oscuro).paint(lienzo, const Size(logo, logo));
+  const LogoMarkPainter(color: _oscuro).paint(lienzo, const Size(logo, logo));
   final imagen = await grabador.endRecording().toImage(
     _lado.toInt(),
     _lado.toInt(),

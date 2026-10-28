@@ -8,14 +8,17 @@ void main() {
   });
 
   test('una llave suelta no hace de parámetro: solo `{nombre}` completo', () {
-    const ruta = RutaDeLaApi('GET', '/a/x}');
+    const ruta = ApiRoute('GET', '/a/x}');
     expect(ruta.coincideCon('GET', ['', 'a', 'x}']), isTrue);
     expect(ruta.coincideCon('GET', ['', 'a', 'y}']), isFalse);
   });
 
-  test('un parámetro `{id}` acepta cualquier valor no vacío y rechaza el vacío', () {
-    const ruta = RutaDeLaApi('GET', '/a/{id}');
-    expect(ruta.coincideCon('GET', ['', 'a', '7']), isTrue);
-    expect(ruta.coincideCon('GET', ['', 'a', '']), isFalse);
-  });
+  test(
+    'un parámetro `{id}` acepta cualquier valor no vacío y rechaza el vacío',
+    () {
+      const ruta = ApiRoute('GET', '/a/{id}');
+      expect(ruta.coincideCon('GET', ['', 'a', '7']), isTrue);
+      expect(ruta.coincideCon('GET', ['', 'a', '']), isFalse);
+    },
+  );
 }

@@ -26,7 +26,11 @@ Future<void> kitGolden(
         final text = error.toString();
         final overflow = text.contains('overflowed');
         final firstLine = text.split('\n').first;
-        problems.add(overflow ? 'RenderFlex overflow ($firstLine)' : 'exception ($firstLine)');
+        problems.add(
+          overflow
+              ? 'RenderFlex overflow ($firstLine)'
+              : 'exception ($firstLine)',
+        );
       }
       if (problems.isNotEmpty) {
         fail('kitGolden "$state" at ${w.round()} px: ${problems.join('; ')}');

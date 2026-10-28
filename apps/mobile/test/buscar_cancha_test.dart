@@ -1,6 +1,5 @@
-import 'package:clubnahuelmosse/comun/reloj.dart';
-import 'package:clubnahuelmosse/reservas/reglas_busqueda.dart';
-import 'package:clubnahuelmosse/sedes/sede.dart';
+import 'package:clubnahuelmosse/common/clock.dart';
+import 'package:clubnahuelmosse/features/bookings/domain/search_rules.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -8,9 +7,10 @@ import 'package:http/http.dart' as http;
 import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 
 void main() {
-  final sede = Sede.desdeJson({
+  final sede = Venue.fromJson({
     'id': '00000000-0000-7000-8000-000000000001',
     'nombre': 'Sede Morón',
     'direccion': 'Av. Rivadavia 19850',
@@ -25,13 +25,7 @@ void main() {
   final jueves = DateTime.utc(2026, 11, 12);
 
   Map<String, String> errores(DateTime dia, int desde, int hasta) =>
-      erroresDelRango(
-        sede: sede,
-        dia: dia,
-        desde: desde,
-        hasta: hasta,
-        ahora: ahora,
-      );
+      rangeErrors(venue: sede, day: dia, from: desde, to: hasta, now: ahora);
 
   group('reglas del rango', () {
     test('un rango futuro, de horas completas y dentro del horario pasa', () {
@@ -120,7 +114,7 @@ void main() {
 
     /// Un día que la sede abre dentro de la semana que viene, en `DD / MM / AAAA`.
     String proximoDiaHabil() {
-      var d = ahoraEnElClub().add(const Duration(days: 1));
+      var d = clubNow().add(const Duration(days: 1));
       while (d.weekday == DateTime.sunday) {
         d = d.add(const Duration(days: 1));
       }
@@ -159,7 +153,10 @@ void main() {
 
         final consulta = pedidos.last.url;
         expect(consulta.path, '/espacios/disponibles');
-        expect(consulta.queryParameters['sede_id'], '00000000-0000-7000-8000-000000000001');
+        expect(
+          consulta.queryParameters['sede_id'],
+          '00000000-0000-7000-8000-000000000001',
+        );
         expect(consulta.queryParameters['deporte'], 'Futbol');
         expect(consulta.queryParameters['desde'], '18:00');
         expect(consulta.queryParameters['hasta'], '19:00');

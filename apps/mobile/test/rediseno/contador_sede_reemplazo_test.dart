@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/comun/dorsal.dart';
-import 'package:clubnahuelmosse/sedes/pantalla_sedes.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/common/bib.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues_screen.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/montar.dart';
@@ -17,12 +17,12 @@ void main() {
       );
 
       final dorsal = find.descendant(
-        of: find.byType(TarjetaSede),
-        matching: find.byType(DorsalGigante),
+        of: find.byType(VenueCard),
+        matching: find.byType(GiantBib),
       );
-      final contador = tester.widget<DorsalGigante>(dorsal);
-      expect(contador.texto, '02');
-      expect(contador.color, Paleta.oscura.textOnMedia);
+      final contador = tester.widget<GiantBib>(dorsal);
+      expect(contador.text, '02');
+      expect(contador.color, Palette.dark.textOnMedia);
     },
   );
 }

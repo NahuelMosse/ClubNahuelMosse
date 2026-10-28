@@ -1,14 +1,17 @@
-import 'package:clubnahuelmosse/comun/marcador.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
+import 'package:clubnahuelmosse/common/marker.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/bookings.dart';
+import 'package:clubnahuelmosse/features/bookings/data/bookings_api.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/montar.dart';
 import '../soporte/reloj_fijo.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 String _uuid(int n) =>
     '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
@@ -39,21 +42,22 @@ void main() {
       });
       await montar(
         tester,
-        PantallaInicio(
+        HomeScreen(
           sesion: sesion,
-          reservas: Reservas(api: api, sesion: sesion),
-          espacios: Espacios(api: api, sesion: sesion),
-          sedes: Sedes(api: api, sesion: sesion),
+          reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+          espacios: Spaces(
+            repository: SpacesRepository(api: api, session: sesion),
+          ),
+          venues: Venues(
+            repository: VenuesRepository(api: api, session: sesion),
+          ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(393, 852),
       );
 
       expect(
-        find.descendant(
-          of: find.byType(Marcador),
-          matching: find.text('23'),
-        ),
+        find.descendant(of: find.byType(AppMarker), matching: find.text('23')),
         findsOneWidget,
       );
     },

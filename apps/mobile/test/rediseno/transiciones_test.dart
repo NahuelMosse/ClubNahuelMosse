@@ -1,37 +1,26 @@
+import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/pantalla_detalle_reserva.dart';
-import 'package:clubnahuelmosse/admin/pantalla_alta_espacio.dart';
-import 'package:clubnahuelmosse/admin/pantalla_editar_espacio.dart';
-import 'package:clubnahuelmosse/admin/pantalla_espacio_creado.dart';
-import 'package:clubnahuelmosse/admin/pantalla_espacios_admin.dart';
-import 'package:clubnahuelmosse/admin/pantalla_formulario_sede.dart';
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/admin/pantalla_sede_creada.dart';
-import 'package:clubnahuelmosse/admin/pantalla_sedes_admin.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/barra_inferior.dart';
-import 'package:clubnahuelmosse/espacios/espacio.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
-import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_buscar_cancha.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_confirmar_cambio.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_confirmar_reserva.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_horarios.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_mis_reservas.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_reserva_confirmada.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sedes/pantalla_sede.dart';
-import 'package:clubnahuelmosse/sedes/pantalla_sedes.dart';
-import 'package:clubnahuelmosse/sedes/sede.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/tarjeta_cuenta.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_cambiar_contrasena.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro_exitoso.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/booking_detail_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/new_space_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/edit_space_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/space_created_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_spaces_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/venue_form_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/venue_created_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_venues_screen.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/common/bottom_bar.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/space_search_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/confirm_change_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/confirm_booking_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/availability_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/my_bookings_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/booking_confirmed_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/domain/booking.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -41,6 +30,18 @@ import '../notificaciones_test.dart' show ApiFalsa, centroDe;
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
 import '../soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notifications_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/account_card.dart';
+import 'package:clubnahuelmosse/features/session/presentation/forgot_password_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
+import 'package:clubnahuelmosse/features/spaces/domain/space.dart';
+import 'package:clubnahuelmosse/features/users/presentation/change_password_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_done_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
+import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venue_screen.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues_screen.dart';
 
 const _ancho = 393.0;
 const _alto = 852.0;
@@ -185,7 +186,7 @@ List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
 
 // ---- las apps ----
 
-ClienteApi _apiUsuario() => apiRutas({
+ApiClient _apiUsuario() => apiRutas({
   ...rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12})),
   'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
 });
@@ -199,7 +200,7 @@ const _reservaAdmin =
     ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
     ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
-ClienteApi _apiAdmin() => apiRutas({
+ApiClient _apiAdmin() => apiRutas({
   ...rutasDeEspacios(),
   'GET /reservas/todas': (
     200,
@@ -262,28 +263,34 @@ final _hijas = <_Hija>[
     'sede',
     (t) => _usuarioEn(t, '/sedes'),
     (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001'),
-    PantallaSede,
+    VenueScreen,
   ),
   _Hija(
     'horarios',
     (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
-    (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009'),
-    PantallaHorarios,
+    (t) => _ir(
+      t,
+      '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+    ),
+    AvailabilityScreen,
   ),
   _Hija(
     'confirmar reserva',
     (t) async {
-      await _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009');
+      await _usuarioEn(
+        t,
+        '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      );
       await _tocarYEsperar(t, find.text('18:00 – 19:00'));
     },
     (t) => _tocar(t, find.text('CONTINUAR')),
-    PantallaConfirmarReserva,
+    ConfirmBookingScreen,
   ),
   _Hija(
     'modificar',
     (t) => _usuarioEn(t, '/reservas'),
     (t) => _tocar(t, find.text('MODIFICAR').first),
-    PantallaHorarios,
+    AvailabilityScreen,
   ),
   _Hija(
     'confirmar cambio',
@@ -293,72 +300,72 @@ final _hijas = <_Hija>[
       await _tocarYEsperar(t, find.text('19:00 – 20:00'));
     },
     (t) => _tocar(t, find.text('CONTINUAR CON EL CAMBIO')),
-    PantallaConfirmarCambio,
+    ConfirmChangeScreen,
   ),
   _Hija(
     'contraseña',
     (t) => _usuarioEn(t, '/perfil'),
     (t) => _tocar(t, find.text('Cambiar contraseña')),
-    PantallaCambiarContrasena,
+    ChangePasswordScreen,
     conBarra: true,
   ),
   _Hija(
     'registro',
     (t) => _usuarioEn(t, '/'),
     (t) => _tocar(t, find.text('COMENZAR')),
-    PantallaRegistro,
+    RegistrationScreen,
     conBarra: true,
   ),
   _Hija(
     'recuperar contraseña',
     (t) => _usuarioEn(t, '/'),
     (t) => _tocar(t, find.text('¿Olvidaste tu contraseña?')),
-    PantallaRecuperarContrasena,
+    ForgotPasswordScreen,
     conBarra: true,
   ),
   _Hija(
     'notificaciones',
     (t) => _usuarioConCentro(t, '/inicio'),
     (t) => _tocar(t, find.byIcon(Icons.notifications_none_rounded)),
-    PantallaNotificaciones,
+    NotificationsScreen,
     conBarra: true,
   ),
   _Hija(
     'buscar cancha',
     (t) => _usuarioEn(t, '/inicio'),
     (t) => _tocar(t, find.text('Buscar cancha')),
-    PantallaBuscarCancha,
+    SpaceSearchScreen,
     conBarra: true,
   ),
   _Hija(
     'detalle de reserva del admin',
     (t) => _adminEn(t, '/admin'),
     (t) => _tocar(t, find.text('Nahuel Mosse')),
-    PantallaDetalleReserva,
+    BookingDetailScreen,
   ),
   _Hija(
     'alta de sede',
     (t) => _adminEn(t, '/admin/sedes'),
     (t) => _tocar(t, find.text('AGREGAR SEDE')),
-    PantallaFormularioSede,
+    VenueFormScreen,
   ),
   _Hija(
     'edición de sede',
     (t) => _adminEn(t, '/admin/sedes'),
     (t) => _tocar(t, find.text('Editar sede').first),
-    PantallaFormularioSede,
+    VenueFormScreen,
   ),
   _Hija(
     'alta de espacio',
     (t) => _adminEn(t, '/admin/espacios'),
     (t) => _tocar(t, find.text('ALTA ESPACIO')),
-    PantallaAltaEspacio,
+    NewSpaceScreen,
   ),
   _Hija(
     'edición de espacio',
     (t) => _adminEn(t, '/admin/espacios'),
     (t) => _tocar(t, find.text('Editar').first),
-    PantallaEditarEspacio,
+    EditSpaceScreen,
   ),
 ];
 
@@ -374,34 +381,44 @@ class _Raiz {
 }
 
 final _raices = <_Raiz>[
-  _Raiz('inicio', (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'), '/inicio', PantallaInicio),
-  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/sedes', PantallaSedes),
+  _Raiz(
+    'inicio',
+    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    '/inicio',
+    HomeScreen,
+  ),
+  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/sedes', VenuesScreen),
   _Raiz(
     'reservas',
     (t) => _usuarioEn(t, '/inicio'),
     '/reservas',
-    PantallaMisReservas,
+    MyBookingsScreen,
   ),
-  _Raiz('perfil', (t) => _usuarioEn(t, '/inicio'), '/perfil', PantallaMiPerfil),
+  _Raiz('perfil', (t) => _usuarioEn(t, '/inicio'), '/perfil', MyProfileScreen),
   _Raiz(
     'panel del admin',
     (t) => _adminEn(t, '/admin/sedes'),
     '/admin',
-    PantallaPanelAdmin,
+    AdminPanelScreen,
   ),
   _Raiz(
     'sedes del admin',
     (t) => _adminEn(t, '/admin'),
     '/admin/sedes',
-    PantallaSedesAdmin,
+    AdminVenuesScreen,
   ),
   _Raiz(
     'espacios del admin',
     (t) => _adminEn(t, '/admin'),
     '/admin/espacios',
-    PantallaEspaciosAdmin,
+    AdminSpacesScreen,
   ),
-  _Raiz('login', (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'), '/', PantallaInicioSesion),
+  _Raiz(
+    'login',
+    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    '/',
+    LoginScreen,
+  ),
 ];
 
 // ---- los resultados (S4) ----
@@ -415,8 +432,8 @@ class _Resultado {
   final Type pantalla;
 }
 
-Reserva _reservaConfirmada() {
-  final reserva = Reserva.desdeJson(jsonDecode(reservaJson()));
+Booking _reservaConfirmada() {
+  final reserva = bookingFromJson(jsonDecode(reservaJson()));
   if (reserva == null) fail('la reserva de prueba no se lee');
   return reserva;
 }
@@ -426,13 +443,13 @@ final _resultados = <_Resultado>[
     'registro exitoso',
     (t) => _usuarioEn(t, '/registro'),
     (t) => _ir(t, '/registro/exitoso'),
-    PantallaRegistroExitoso,
+    RegistrationDoneScreen,
   ),
   _Resultado(
     'reserva confirmada',
     (t) => _usuarioEn(t, '/reservas'),
     (t) => _ir(t, '/reservas/confirmada', extra: _reservaConfirmada()),
-    PantallaReservaConfirmada,
+    BookingConfirmedScreen,
   ),
   _Resultado(
     'sede creada',
@@ -440,9 +457,9 @@ final _resultados = <_Resultado>[
     (t) => _ir(
       t,
       '/admin/sedes/creada',
-      extra: Sede.desdeJson(jsonDecode(sedeMoronJson)),
+      extra: Venue.fromJson(jsonDecode(sedeMoronJson)),
     ),
-    PantallaSedeCreada,
+    VenueCreatedScreen,
   ),
   _Resultado(
     'espacio creado',
@@ -450,15 +467,14 @@ final _resultados = <_Resultado>[
     (t) => _ir(
       t,
       '/admin/espacios/creado',
-      extra: Espacio.desdeJson(jsonDecode(espacioF5Json)),
+      extra: Space.fromJson(jsonDecode(espacioF5Json)),
     ),
-    PantallaEspacioCreado,
+    SpaceCreatedScreen,
   ),
 ];
 
-Finder get _panelDeFiltros => find.byWidgetPredicate(
-  (w) => w.runtimeType.toString() == '_PanelDeFiltros',
-);
+Finder get _panelDeFiltros =>
+    find.byWidgetPredicate((w) => w.runtimeType.toString() == '_FiltersPanel');
 
 void main() {
   setUpAll(cargarFuentes);
@@ -571,28 +587,28 @@ void main() {
       await _usuarioEn(tester, '/sedes');
       await _ir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _arrancar(tester);
-      _sinTransicionDeEmpuje(tester, PantallaSede);
+      _sinTransicionDeEmpuje(tester, VenueScreen);
 
       // Volver: la hija ya no está.
       await tester.binding.handlePopRoute();
       await _arrancar(tester);
       await tester.pump();
-      expect(find.byType(PantallaSede), findsNothing);
+      expect(find.byType(VenueScreen), findsNothing);
       await _reiniciar(tester);
 
       // Resultado: el fundido ya terminó.
       await _usuarioEn(tester, '/reservas');
       await _ir(tester, '/reservas/confirmada', extra: _reservaConfirmada());
       await _arrancar(tester);
-      expect(find.byType(PantallaReservaConfirmada), findsOneWidget);
-      expect(_opacidadesDe(tester, PantallaReservaConfirmada), everyElement(1));
+      expect(find.byType(BookingConfirmedScreen), findsOneWidget);
+      expect(_opacidadesDe(tester, BookingConfirmedScreen), everyElement(1));
       await _reiniciar(tester);
 
       // Raíz de pestaña.
       await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _ir(tester, '/inicio');
       await _arrancar(tester);
-      await _quieta(tester, PantallaInicio);
+      await _quieta(tester, HomeScreen);
       await _reiniciar(tester);
 
       // El panel de filtros del admin.
@@ -611,29 +627,29 @@ void main() {
       await _tocar(
         tester,
         find.descendant(
-          of: find.byType(BarraInferior),
+          of: find.byType(BottomBar),
           matching: find.text('SEDES'),
         ),
       );
       await _arrancar(tester);
-      await _quieta(tester, PantallaSedes, motivo: 'la pestaña activa');
+      await _quieta(tester, VenuesScreen, motivo: 'la pestaña activa');
       // La sede que se deja sale con su push inverso.
       await tester.pump(_ms(280));
-      expect(find.byType(PantallaSede), findsNothing);
+      expect(find.byType(VenueScreen), findsNothing);
       await _reiniciar(tester);
 
       await _usuarioEn(tester, '/inicio');
       await _tocar(tester, find.text('VER TODAS →'));
       await _arrancar(tester);
-      await _quieta(tester, PantallaMisReservas, motivo: 'VER TODAS');
-      expect(find.byType(PantallaInicio), findsNothing);
+      await _quieta(tester, MyBookingsScreen, motivo: 'VER TODAS');
+      expect(find.byType(HomeScreen), findsNothing);
       await _reiniciar(tester);
 
       await _usuarioEn(tester, '/inicio');
       await _tocar(tester, find.text('Ver sedes'));
       await _arrancar(tester);
-      await _quieta(tester, PantallaSedes, motivo: 'Ver sedes');
-      expect(find.byType(PantallaInicio), findsNothing);
+      await _quieta(tester, VenuesScreen, motivo: 'Ver sedes');
+      expect(find.byType(HomeScreen), findsNothing);
     },
   );
 
@@ -641,23 +657,19 @@ void main() {
     tester,
   ) async {
     await _usuarioEn(tester, '/inicio');
-    await _tocarYEsperar(tester, find.byType(BotonCuenta));
+    await _tocarYEsperar(tester, find.byType(AccountButton));
     await _tocar(tester, find.text('Cerrar sesión'));
-    for (
-      var i = 0;
-      i < 5 && find.byType(PantallaInicioSesion).evaluate().isEmpty;
-      i++
-    ) {
+    for (var i = 0; i < 5 && find.byType(LoginScreen).evaluate().isEmpty; i++) {
       await tester.pump();
     }
-    await _quieta(tester, PantallaInicioSesion, motivo: 'cerrar sesión');
+    await _quieta(tester, LoginScreen, motivo: 'cerrar sesión');
     await _reiniciar(tester);
 
     // Volver de recuperar la contraseña al login.
     await _usuarioEn(tester, '/recuperar-contrasena');
     await _ir(tester, '/');
     await _arrancar(tester);
-    await _quieta(tester, PantallaInicioSesion, motivo: 'recuperar → login');
+    await _quieta(tester, LoginScreen, motivo: 'recuperar → login');
   });
 
   testWidgets(

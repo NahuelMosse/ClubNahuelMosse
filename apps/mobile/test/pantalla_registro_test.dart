@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/reglas_registro.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
+import 'package:clubnahuelmosse/features/users/domain/registration_rules.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -42,7 +43,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     var pedidos = 0;
     final segundo = Completer<http.Response>();
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       cliente: MockClient((_) {
         pedidos++;
@@ -50,7 +51,11 @@ void main() {
         return segundo.future;
       }),
     );
-    await montar(tester, PantallaRegistro(api: api), tema: temaOscuro);
+    await montar(
+      tester,
+      RegistrationScreen(registration: RegistrationService(api)),
+      tema: darkTheme,
+    );
     await completar(tester);
 
     await tocar(tester, find.text('CREAR CUENTA'));
@@ -87,16 +92,18 @@ void main() {
     final semantica = tester.ensureSemantics();
     await montar(
       tester,
-      PantallaRegistro(
-        api: apiFalsa(
-          codigo: 409,
-          cuerpo:
-              '{"mensaje": "El usuario ya está registrado. Modificá el correo o el DNI.",'
-              ' "campos": ["correo"],'
-              ' "errores": {"correo": "Este correo ya está registrado"}}',
+      RegistrationScreen(
+        registration: RegistrationService(
+          apiFalsa(
+            codigo: 409,
+            cuerpo:
+                '{"mensaje": "El usuario ya está registrado. Modificá el correo o el DNI.",'
+                ' "campos": ["correo"],'
+                ' "errores": {"correo": "Este correo ya está registrado"}}',
+          ),
         ),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
     await completar(tester);
     await tocar(tester, find.text('CREAR CUENTA'));
@@ -127,8 +134,12 @@ void main() {
     final semantica = tester.ensureSemantics();
     await montar(
       tester,
-      PantallaRegistro(api: apiFalsa(codigo: 404, cuerpo: '<html>no</html>')),
-      tema: temaOscuro,
+      RegistrationScreen(
+        registration: RegistrationService(
+          apiFalsa(codigo: 404, cuerpo: '<html>no</html>'),
+        ),
+      ),
+      tema: darkTheme,
     );
     await completar(tester);
     await tocar(tester, find.text('CREAR CUENTA'));
@@ -141,13 +152,17 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    await montar(tester, PantallaRegistro(api: apiFalsa()), tema: temaOscuro);
+    await montar(
+      tester,
+      RegistrationScreen(registration: RegistrationService(apiFalsa())),
+      tema: darkTheme,
+    );
 
     await tester.enterText(find.bySemanticsLabel('Correo electrónico'), 'ana');
     await tester.tap(find.bySemanticsLabel('Nombre'));
     await tester.pumpAndSettle();
 
-    expect(find.text(validarCorreo('ana')!), findsOneWidget);
+    expect(find.text(validateEmail('ana')!), findsOneWidget);
     semantica.dispose();
   });
 }

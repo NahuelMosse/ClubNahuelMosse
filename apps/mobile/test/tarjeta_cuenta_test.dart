@@ -1,8 +1,8 @@
-import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/avatar.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/common/avatar.dart';
+import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -34,9 +34,9 @@ void main() {
     await tester.pumpWidget(
       App(
         api: inicio.startsWith('/admin') ? apiConPanelAdmin : apiInicio(),
-        sesion: sesion,
-        apariencia: Apariencia.enMemoria(),
-        inicio: inicio,
+        session: sesion,
+        appearance: Appearance.inMemory(),
+        initialLocation: inicio,
       ),
     );
     await tester.pumpAndSettle();
@@ -138,8 +138,8 @@ void main() {
     final sesion = SesionFalsa(perfilUsuario);
     await montar(
       tester,
-      PantallaMiPerfil(sesion: sesion, apariencia: Apariencia.enMemoria()),
-      tema: temaOscuro,
+      MyProfileScreen(session: sesion, appearance: Appearance.inMemory()),
+      tema: darkTheme,
     );
 
     await tester.ensureVisible(find.text('CERRAR SESIÓN'));
@@ -152,9 +152,9 @@ void main() {
   });
 
   test('las iniciales salen de la primera letra del nombre y del apellido', () {
-    expect(AvatarIniciales.iniciales('Nahuel Agustín', 'Mosse'), 'NM');
-    expect(AvatarIniciales.iniciales(' ángel ', 'ñandú'), 'ÁÑ');
-    expect(AvatarIniciales.iniciales('Ana', ''), 'A');
+    expect(AvatarInitials.initials('Nahuel Agustín', 'Mosse'), 'NM');
+    expect(AvatarInitials.initials(' ángel ', 'ñandú'), 'ÁÑ');
+    expect(AvatarInitials.initials('Ana', ''), 'A');
   });
 
   testWidgets('el avatar se abre también con el lector de pantalla', (

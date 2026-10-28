@@ -1,6 +1,6 @@
 import 'package:clock/clock.dart';
-import 'package:clubnahuelmosse/inicio/saludo_de_inicio.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_greeting.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,9 +14,9 @@ Clock _relojDelClub(int hora, int minuto) => Clock.fixed(
 Future<void> _montarSaludo(WidgetTester tester, {Key? key}) => montar(
   tester,
   Scaffold(
-    body: SaludoDeInicio(key: key, sesion: SesionFalsa(perfilUsuario)),
+    body: HomeGreeting(key: key, sesion: SesionFalsa(perfilUsuario)),
   ),
-  tema: temaOscuro,
+  tema: darkTheme,
 );
 
 void main() {

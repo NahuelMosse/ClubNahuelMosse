@@ -76,7 +76,10 @@ void main() {
 
       // Verifica: cada campo vacío dice que es obligatorio. Si falla, no sabe qué le falta.
       expect(find.text('El DNI es obligatorio'), findsOneWidget);
-      expect(find.text('La fecha de nacimiento es obligatoria'), findsOneWidget);
+      expect(
+        find.text('La fecha de nacimiento es obligatoria'),
+        findsOneWidget,
+      );
       expect(find.text('La contraseña es obligatoria'), findsOneWidget);
 
       // Verifica: con datos faltantes no se puede crear la cuenta.
@@ -109,7 +112,9 @@ void main() {
       // Verifica: el correo repetido se marca y la persona sigue en el formulario.
       await esperarA(tester, find.text('Este correo ya está registrado'));
       expect(
-        find.text('El usuario ya está registrado. Modificá el correo o el DNI.'),
+        find.text(
+          'El usuario ya está registrado. Modificá el correo o el DNI.',
+        ),
         findsOneWidget,
       );
       expect(find.text('Creá tu cuenta'), findsOneWidget);

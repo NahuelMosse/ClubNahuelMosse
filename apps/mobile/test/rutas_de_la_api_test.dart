@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/api/rutas.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -37,7 +37,7 @@ void main() {
     'un pedido a una ruta que la app no declara falla en sus propios tests @REV-08-S4 '
     '@assumption:REV-08-ASM-04',
     () async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((_) async => http.Response('{}', 200)),
       );
@@ -47,7 +47,8 @@ void main() {
         throwsA(isA<AssertionError>()),
       );
       await expectLater(
-        () => api.post('/sedes/00000000-0000-7000-8000-000000000001/anular', {}),
+        () =>
+            api.post('/sedes/00000000-0000-7000-8000-000000000001/anular', {}),
         throwsA(isA<AssertionError>()),
       );
       await expectLater(api.get('/sedes', token: 'token'), completes);
@@ -55,41 +56,65 @@ void main() {
     },
   );
 
-  test(
-    'en release un pedido a una ruta no declarada sale como hoy @REV-08-S4 '
-    '@assumption:REV-08-ASM-07',
-    () async {
-      final pedidos = <http.Request>[];
-      final api = ClienteApi(
-        'http://api.falsa',
-        verificarRutas: false,
-        cliente: MockClient((p) async {
-          pedidos.add(p);
-          return http.Response('{}', 200);
-        }),
-      );
+  test('en release un pedido a una ruta no declarada sale como hoy @REV-08-S4 '
+      '@assumption:REV-08-ASM-07', () async {
+    final pedidos = <http.Request>[];
+    final api = ApiClient(
+      'http://api.falsa',
+      verificarRutas: false,
+      cliente: MockClient((p) async {
+        pedidos.add(p);
+        return http.Response('{}', 200);
+      }),
+    );
 
-      final r = await api.get('/ruta-inventada');
+    final r = await api.get('/ruta-inventada');
 
-      expect(r.codigo, 200);
-      expect(pedidos.single.url.path, '/ruta-inventada');
-    },
-  );
+    expect(r.codigo, 200);
+    expect(pedidos.single.url.path, '/ruta-inventada');
+  });
 
-  test(
-    'el manifiesto se compara por método y por plantilla de ruta @REV-08-S4 '
-    '@assumption:REV-08-ASM-12',
-    () {
-      expect(rutaDeclarada('GET', '/reservas/todas/00000000-0000-7000-8000-000000000007'), isTrue);
-      expect(rutaDeclarada('POST', '/reservas/00000000-0000-7000-8000-000000000007/anular'), isTrue);
-      expect(rutaDeclarada('GET', '/reservas?cuando=historial'), isTrue);
-      // El método cuenta: la ruta existe pero con otro método.
-      expect(rutaDeclarada('DELETE', '/reservas'), isFalse);
-      expect(rutaDeclarada('GET', '/reservas/00000000-0000-7000-8000-000000000007/anular'), isFalse);
-      // La plantilla cuenta: un segmento de más o de menos no coincide.
-      expect(rutaDeclarada('POST', '/reservas/00000000-0000-7000-8000-000000000007/8/anular'), isFalse);
-      expect(rutaDeclarada('GET', '/reservas/todas/00000000-0000-7000-8000-000000000007/x'), isFalse);
-      expect(rutaDeclarada('GET', '/ruta-inventada'), isFalse);
-    },
-  );
+  test('el manifiesto se compara por método y por plantilla de ruta @REV-08-S4 '
+      '@assumption:REV-08-ASM-12', () {
+    expect(
+      rutaDeclarada(
+        'GET',
+        '/reservas/todas/00000000-0000-7000-8000-000000000007',
+      ),
+      isTrue,
+    );
+    expect(
+      rutaDeclarada(
+        'POST',
+        '/reservas/00000000-0000-7000-8000-000000000007/anular',
+      ),
+      isTrue,
+    );
+    expect(rutaDeclarada('GET', '/reservas?cuando=historial'), isTrue);
+    // El método cuenta: la ruta existe pero con otro método.
+    expect(rutaDeclarada('DELETE', '/reservas'), isFalse);
+    expect(
+      rutaDeclarada(
+        'GET',
+        '/reservas/00000000-0000-7000-8000-000000000007/anular',
+      ),
+      isFalse,
+    );
+    // La plantilla cuenta: un segmento de más o de menos no coincide.
+    expect(
+      rutaDeclarada(
+        'POST',
+        '/reservas/00000000-0000-7000-8000-000000000007/8/anular',
+      ),
+      isFalse,
+    );
+    expect(
+      rutaDeclarada(
+        'GET',
+        '/reservas/todas/00000000-0000-7000-8000-000000000007/x',
+      ),
+      isFalse,
+    );
+    expect(rutaDeclarada('GET', '/ruta-inventada'), isFalse);
+  });
 }

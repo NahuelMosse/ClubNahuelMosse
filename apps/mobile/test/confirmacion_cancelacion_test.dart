@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/notificaciones/centro.dart';
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,7 +22,7 @@ void main() {
   setUpAll(cargarFuentes);
 
   group('la confirmación de una cancelación en el panel', () {
-    Future<(ApiFalsa, CentroDeNotificaciones)> abrir(
+    Future<(ApiFalsa, NotificationCenter)> abrir(
       WidgetTester tester, {
       required String ubicacion,
       Size tamano = const Size(393, 852),
@@ -30,20 +30,16 @@ void main() {
     }) async {
       final api = ApiFalsa();
       final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion)..ubicacion = () => ubicacion;
+      final centro = centroDe(api, sesion)..location = () => ubicacion;
       await montar(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            PanelDeAvisos(
-              centro: centro,
-              ahora: () => ahoraClub,
-              alAbrir: (_) {},
-            ),
+            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
           ],
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: tamano,
         escalaTexto: escala,
       );
@@ -53,13 +49,13 @@ void main() {
     Future<void> llega(
       WidgetTester tester,
       ApiFalsa api,
-      CentroDeNotificaciones centro,
+      NotificationCenter centro,
       List<String> avisos,
     ) async {
       api
         ..avisos = avisos
-        ..noLeidas = avisos.length;
-      await tester.runAsync(centro.cargar);
+        ..unread = avisos.length;
+      await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
     }
 
@@ -88,8 +84,8 @@ void main() {
 
         expect(find.text('MARCAR TODAS'), findsNothing);
         expect(find.text('Reserva cancelada'), findsNothing);
-        expect(centro.noLeidas, 1);
-        expect(centro.lista.single.leida, isFalse);
+        expect(centro.unread, 1);
+        expect(centro.list.single.read, isFalse);
       },
     );
 
@@ -100,13 +96,16 @@ void main() {
         await llega(tester, api, centro, [cancelada]);
 
         await llega(tester, api, centro, [
-          recordatorio.replaceFirst('"id": "00000000-0000-7000-8000-000000000003"', '"id": "00000000-0000-7000-8000-000000000006"'),
+          recordatorio.replaceFirst(
+            '"id": "00000000-0000-7000-8000-000000000003"',
+            '"id": "00000000-0000-7000-8000-000000000006"',
+          ),
           cancelada,
         ]);
 
         expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
         expect(find.text('Reserva cancelada'), findsNothing);
-        expect(centro.noLeidas, 2);
+        expect(centro.unread, 2);
       },
     );
 
@@ -140,7 +139,7 @@ void main() {
     ) async {
       final api = ApiFalsa()
         ..avisos = [cancelada]
-        ..noLeidas = 1;
+        ..unread = 1;
       await montarUsuario(
         tester,
         inicio: '/notificaciones',
@@ -162,7 +161,7 @@ void main() {
     testWidgets('un recordatorio sigue abriendo las próximas', (tester) async {
       final api = ApiFalsa()
         ..avisos = [recordatorio]
-        ..noLeidas = 1;
+        ..unread = 1;
       await montarUsuario(
         tester,
         inicio: '/notificaciones',

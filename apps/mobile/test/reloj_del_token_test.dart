@@ -34,10 +34,14 @@ void main() {
           .where((f) => f.readAsStringSync().contains('DateTime.now()'))
           .map((f) => f.path.replaceAll('\\', '/').substring('lib/'.length))
           .toSet();
-      expect(conReloj, {'notificaciones/sistema_simulado.dart'});
+      expect(conReloj, {
+        'features/notifications/data/simulated_notification_system.dart',
+      });
 
-      final perfil = _conPiezas('usuarios/pantalla_mi_perfil.dart');
-      expect(perfil.values.join('\n'), contains('ahoraEnElClub'));
+      final perfil = _conPiezas(
+        'features/users/presentation/my_profile_screen.dart',
+      );
+      expect(perfil.values.join('\n'), contains('clubNow'));
       for (final MapEntry(:key, :value) in perfil.entries) {
         expect(value, isNot(contains('DateTime.now()')), reason: key);
       }

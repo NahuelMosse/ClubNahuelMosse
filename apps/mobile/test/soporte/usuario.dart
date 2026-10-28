@@ -1,8 +1,8 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/notificaciones/centro.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -45,17 +45,20 @@ Map<String, (int, String)> rutasDeSedes({
   'GET /espacios/catalogo': (200, catalogoJson),
   'GET /sedes': (200, '{"sedes": $sedes}'),
   'GET /espacios': (200, '{"espacios": $espacios}'),
-  'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (200, grilla ?? grillaJson()),
+  'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+    200,
+    grilla ?? grillaJson(),
+  ),
 };
 
 /// La app entera con la sesión de un usuario, abierta en [inicio].
 Future<void> montarUsuario(
   WidgetTester tester, {
-  required ClienteApi api,
+  required ApiClient api,
   String inicio = '/sedes',
   bool oscuro = true,
   Size tamano = const Size(393, 852),
-  CentroDeNotificaciones Function(Sesion)? centro,
+  NotificationCenter Function(Session)? centro,
 }) async {
   tester.view.physicalSize = tamano * 3;
   tester.view.devicePixelRatio = 3;
@@ -64,10 +67,10 @@ Future<void> montarUsuario(
   await tester.pumpWidget(
     App(
       api: api,
-      sesion: sesion,
-      apariencia: Apariencia.enMemoria(oscuro: oscuro),
-      centro: centro?.call(sesion),
-      inicio: inicio,
+      session: sesion,
+      appearance: Appearance.inMemory(dark: oscuro),
+      notificationCenter: centro?.call(sesion),
+      initialLocation: inicio,
     ),
   );
   await tester.pumpAndSettle();

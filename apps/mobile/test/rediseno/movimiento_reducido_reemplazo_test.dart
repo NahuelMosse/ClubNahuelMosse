@@ -1,11 +1,11 @@
+import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/comun/movimiento.dart';
-import 'package:clubnahuelmosse/comun/tile_deporte.dart';
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_reserva_confirmada.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/motion.dart';
+import 'package:clubnahuelmosse/common/sport_tile.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/booking_confirmed_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/domain/booking.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +14,7 @@ import '../mis_reservas_test.dart' show reservaJson;
 import '../notificaciones_test.dart'
     show ApiFalsa, ahoraClub, centroDe, recordatorio;
 import '../soporte/montar.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
 
 final _uno = closeTo(1, 1e-6);
 
@@ -24,7 +25,7 @@ Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
   await tester.pumpWidget(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: temaOscuro,
+      theme: darkTheme,
       locale: const Locale('es', 'AR'),
       supportedLocales: const [Locale('es', 'AR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -72,19 +73,19 @@ double _visibilidad(WidgetTester tester, Finder f) {
 }
 
 bool _todasEnSuFinal(WidgetTester tester) {
-  final cuantas = find.byType(Aparecer).evaluate().length;
+  final cuantas = find.byType(FadeIn).evaluate().length;
   return cuantas > 0 &&
       [
         for (var i = 0; i < cuantas; i++)
-          _opacidad(tester, find.byType(Aparecer).at(i)),
+          _opacidad(tester, find.byType(FadeIn).at(i)),
       ].every((o) => o == 1);
 }
 
 double _ancho(WidgetTester tester, Finder f) =>
     tester.getBottomRight(f).dx - tester.getTopLeft(f).dx;
 
-Reserva _reservaConfirmada() {
-  final reserva = Reserva.desdeJson(jsonDecode(reservaJson()));
+Booking _reservaConfirmada() {
+  final reserva = bookingFromJson(jsonDecode(reservaJson()));
   if (reserva == null) fail('la reserva de prueba no se lee');
   return reserva;
 }
@@ -100,11 +101,11 @@ void main() {
       // El festejo.
       await _montarLibre(
         tester,
-        PantallaReservaConfirmada(reserva: _reservaConfirmada()),
+        BookingConfirmedScreen(reserva: _reservaConfirmada()),
       );
       final titulo = find.text('¡Reserva confirmada!');
       final comprobante = find.text('Horario');
-      expect(find.byType(Festejo), findsOneWidget);
+      expect(find.byType(Celebration), findsOneWidget);
       final ancho = _ancho(tester, titulo);
       expect(_visibilidad(tester, comprobante), _uno);
       // El primer montaje de MaterialApp siempre deja agendado el cuadro de su ruta inicial.
@@ -123,18 +124,14 @@ void main() {
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            PanelDeAvisos(
-              centro: centro,
-              ahora: () => ahoraClub,
-              alAbrir: (_) {},
-            ),
+            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
           ],
         ),
       );
       api
         ..avisos = [recordatorio]
-        ..noLeidas = 1;
-      await tester.runAsync(centro.cargar);
+        ..unread = 1;
+      await tester.runAsync(centro.load);
       await tester.pump();
       await tester.pump();
       final aviso = find.text('NOTIFICACIONES');
@@ -148,7 +145,7 @@ void main() {
       await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
       await _hastaQue(
         tester,
-        () => find.byType(TileDeporte).evaluate().isNotEmpty,
+        () => find.byType(SportTile).evaluate().isNotEmpty,
       );
       expect(_todasEnSuFinal(tester), isTrue);
     },

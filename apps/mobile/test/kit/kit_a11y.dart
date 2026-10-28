@@ -21,6 +21,8 @@ Future<void> kitA11y(WidgetTester tester) async {
     handle.dispose();
   }
   if (failures.isNotEmpty) {
-    fail('kitA11y: ${failures.length} of 4 guidelines failed\n${failures.join('\n')}');
+    fail(
+      'kitA11y: ${failures.length} of 4 guidelines failed\n${failures.join('\n')}',
+    );
   }
 }

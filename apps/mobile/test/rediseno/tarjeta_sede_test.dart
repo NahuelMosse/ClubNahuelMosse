@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/comun/dorsal.dart';
-import 'package:clubnahuelmosse/sedes/pantalla_sedes.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/common/bib.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues_screen.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -18,16 +18,13 @@ void main() {
         api: apiRutas(rutasDeSedes(sedes: '[$sedeMoronConDeportes]')),
       );
 
-      final tarjeta = find.byType(TarjetaSede);
+      final tarjeta = find.byType(VenueCard);
       expect(tarjeta, findsOneWidget);
       final dorsal = find.descendant(
         of: tarjeta,
-        matching: find.byType(DorsalGigante),
+        matching: find.byType(GiantBib),
       );
-      expect(
-        tester.widget<DorsalGigante>(dorsal).color,
-        Paleta.oscura.textOnMedia,
-      );
+      expect(tester.widget<GiantBib>(dorsal).color, Palette.dark.textOnMedia);
       final rotulo = find.descendant(
         of: tarjeta,
         matching: find.text('CANCHAS'),
@@ -43,7 +40,7 @@ void main() {
           )
           .map((c) => c.decoration)
           .whereType<BoxDecoration>()
-          .where((d) => d.color == Paleta.oscura.accentBase);
+          .where((d) => d.color == Palette.dark.accentBase);
       expect(violetas, isEmpty);
     },
   );

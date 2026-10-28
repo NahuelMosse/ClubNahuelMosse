@@ -1,6 +1,7 @@
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro_exitoso.dart';
+import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_done_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -12,19 +13,19 @@ void main() {
   setUpAll(cargarFuentes);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
+  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
 
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: tema) in temas.entries) {
       testWidgets('registro vacío $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaRegistro(api: apiFalsa()),
+          RegistrationScreen(registration: RegistrationService(apiFalsa())),
           tema: tema,
           tamano: tamano,
         );
         await expectLater(
-          find.byType(PantallaRegistro),
+          find.byType(RegistrationScreen),
           matchesGoldenFile('registro/vacio_${ancho}_$modo.png'),
         );
       });
@@ -33,7 +34,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montar(
           tester,
-          PantallaRegistro(api: apiFalsa()),
+          RegistrationScreen(registration: RegistrationService(apiFalsa())),
           tema: tema,
           tamano: tamano,
         );
@@ -49,7 +50,7 @@ void main() {
         FocusManager.instance.primaryFocus?.unfocus();
         await tester.pumpAndSettle();
         await expectLater(
-          find.byType(PantallaRegistro),
+          find.byType(RegistrationScreen),
           matchesGoldenFile('registro/errores_${ancho}_$modo.png'),
         );
         semantica.dispose();
@@ -58,12 +59,12 @@ void main() {
       testWidgets('registro exitoso $ancho $modo', (tester) async {
         await montar(
           tester,
-          const PantallaRegistroExitoso(),
+          const RegistrationDoneScreen(),
           tema: tema,
           tamano: tamano,
         );
         await expectLater(
-          find.byType(PantallaRegistroExitoso),
+          find.byType(RegistrationDoneScreen),
           matchesGoldenFile('registro/exitoso_${ancho}_$modo.png'),
         );
       });

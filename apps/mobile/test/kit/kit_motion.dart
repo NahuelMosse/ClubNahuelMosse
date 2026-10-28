@@ -15,16 +15,54 @@ import 'package:flutter_test/flutter_test.dart';
 
 const double _frame = 1000 / 60;
 const int _stepMs = 16;
-const _cols = ['left', 'top', 'width', 'height', 'opacity', 'tx', 'ty', 'sx', 'sy', 'rot'];
+const _cols = [
+  'left',
+  'top',
+  'width',
+  'height',
+  'opacity',
+  'tx',
+  'ty',
+  'sx',
+  'sy',
+  'rot',
+];
 const _propOf = {
-  'left': 'left', 'top': 'top', 'width': 'width', 'height': 'height', 'opacity': 'opacity',
-  'tx': 'translateX', 'ty': 'translateY', 'sx': 'scaleX', 'sy': 'scaleY', 'rot': 'rotate',
+  'left': 'left',
+  'top': 'top',
+  'width': 'width',
+  'height': 'height',
+  'opacity': 'opacity',
+  'tx': 'translateX',
+  'ty': 'translateY',
+  'sx': 'scaleX',
+  'sy': 'scaleY',
+  'rot': 'rotate',
 };
 const _eps = {
-  'left': 1.0, 'top': 1.0, 'width': 1.0, 'height': 1.0, 'translateX': 1.0, 'translateY': 1.0,
-  'scaleX': 0.01, 'scaleY': 0.01, 'rotate': 1.0, 'opacity': 0.02,
+  'left': 1.0,
+  'top': 1.0,
+  'width': 1.0,
+  'height': 1.0,
+  'translateX': 1.0,
+  'translateY': 1.0,
+  'scaleX': 0.01,
+  'scaleY': 0.01,
+  'rotate': 1.0,
+  'opacity': 0.02,
 };
-const _preference = ['opacity', 'translateY', 'translateX', 'scaleX', 'scaleY', 'rotate', 'top', 'left', 'width', 'height'];
+const _preference = [
+  'opacity',
+  'translateY',
+  'translateX',
+  'scaleX',
+  'scaleY',
+  'rotate',
+  'top',
+  'left',
+  'width',
+  'height',
+];
 
 final List<MapEntry<String, double Function(double)>> _shapes = [
   MapEntry('linear', (u) => u),
@@ -33,8 +71,16 @@ final List<MapEntry<String, double Function(double)>> _shapes = [
   MapEntry('ease-out', (u) => 1 - math.pow(1 - u, 5).toDouble()),
   MapEntry('ease-in', (u) => math.pow(u, 2).toDouble()),
   MapEntry('ease-in', (u) => math.pow(u, 3).toDouble()),
-  MapEntry('ease-in-out', (u) => u < 0.5 ? 2 * u * u : 1 - 2 * math.pow(1 - u, 2).toDouble()),
-  MapEntry('ease-in-out', (u) => u < 0.5 ? 4 * math.pow(u, 3).toDouble() : 1 - 4 * math.pow(1 - u, 3).toDouble()),
+  MapEntry(
+    'ease-in-out',
+    (u) => u < 0.5 ? 2 * u * u : 1 - 2 * math.pow(1 - u, 2).toDouble(),
+  ),
+  MapEntry(
+    'ease-in-out',
+    (u) => u < 0.5
+        ? 4 * math.pow(u, 3).toDouble()
+        : 1 - 4 * math.pow(1 - u, 3).toDouble(),
+  ),
 ];
 
 num _round(double x, [int d = 1]) {
@@ -46,12 +92,18 @@ num _round(double x, [int d = 1]) {
 double _median(List<double> a) {
   if (a.isEmpty) return 0;
   final s = [...a]..sort();
-  return s.length.isOdd ? s[(s.length - 1) ~/ 2] : (s[s.length ~/ 2 - 1] + s[s.length ~/ 2]) / 2;
+  return s.length.isOdd
+      ? s[(s.length - 1) ~/ 2]
+      : (s[s.length ~/ 2 - 1] + s[s.length ~/ 2]) / 2;
 }
 
 /// One property over time: port of `analyzeSeries` (motion-curves.mjs). `t` in ms, `v` the values,
 /// `eps` the smallest change that counts as movement. Null when nothing moves.
-Map<String, dynamic>? analyzeSeries(List<double> t, List<double> v, double eps) {
+Map<String, dynamic>? analyzeSeries(
+  List<double> t,
+  List<double> v,
+  double eps,
+) {
   final n = v.length;
   if (n < 4) return null;
   final first = v.first;
@@ -104,7 +156,8 @@ Map<String, dynamic>? analyzeSeries(List<double> t, List<double> v, double eps) 
       }
       best[s.key] = math.min(best[s.key] ?? double.infinity, err);
     }
-    final ranked = best.entries.toList()..sort((a, b) => a.value.compareTo(b.value));
+    final ranked = best.entries.toList()
+      ..sort((a, b) => a.value.compareTo(b.value));
     shape = ranked.first.key;
   }
   final vel = <double>[];
@@ -124,9 +177,14 @@ Map<String, dynamic>? analyzeSeries(List<double> t, List<double> v, double eps) 
     }
   }
   return {
-    'from': _round(v[start - 1], 2), 'to': _round(fin, 2), 'startT': t0,
-    'durationMs': _round(durationMs, 0), 'overshootPct': overshootPct, 'shape': shape,
-    'settled': settled, 'jumps': jumps,
+    'from': _round(v[start - 1], 2),
+    'to': _round(fin, 2),
+    'startT': t0,
+    'durationMs': _round(durationMs, 0),
+    'overshootPct': overshootPct,
+    'shape': shape,
+    'settled': settled,
+    'jumps': jumps,
   };
 }
 
@@ -143,10 +201,17 @@ double _effectiveOpacity(RenderObject start) {
 
 Map<String, dynamic> _entry(Map<String, dynamic> el) {
   final primary = el['primary'] as String;
-  final m = (el['moves'] as List).cast<Map<String, dynamic>>().firstWhere((x) => x['prop'] == primary);
+  final m = (el['moves'] as List).cast<Map<String, dynamic>>().firstWhere(
+    (x) => x['prop'] == primary,
+  );
   return {
-    'label': el['label'], 'prop': primary, 'startMs': el['startMs'], 'durationMs': m['durationMs'],
-    'shape': m['shape'], 'overshootPct': m['overshootPct'], 'jumps': (m['jumps'] as List).length,
+    'label': el['label'],
+    'prop': primary,
+    'startMs': el['startMs'],
+    'durationMs': m['durationMs'],
+    'shape': m['shape'],
+    'overshootPct': m['overshootPct'],
+    'jumps': (m['jumps'] as List).length,
   };
 }
 
@@ -209,11 +274,21 @@ Future<Map<String, dynamic>> kitTrace(
   final elements = <Map<String, dynamic>>[];
   Map<String, dynamic>? el;
   if (moves.isNotEmpty) {
-    final primary = _preference.map((p) => moves.where((m) => m['prop'] == p)).firstWhere((x) => x.isNotEmpty).first['prop'];
+    final primary = _preference
+        .map((p) => moves.where((m) => m['prop'] == p))
+        .firstWhere((x) => x.isNotEmpty)
+        .first['prop'];
     el = {
-      'id': 1, 'label': label, 'parent': 0, 'tag': tag, 'primary': primary, 'moves': moves,
+      'id': 1,
+      'label': label,
+      'parent': 0,
+      'tag': tag,
+      'primary': primary,
+      'moves': moves,
       'startMs': moves.map((m) => m['startMs'] as num).reduce(math.min),
-      'endMs': moves.map((m) => (m['startMs'] as num) + (m['durationMs'] as num)).reduce(math.max),
+      'endMs': moves
+          .map((m) => (m['startMs'] as num) + (m['durationMs'] as num))
+          .reduce(math.max),
       'series': {'t': times, for (final c in _cols) c: series[c]},
     };
     elements.add(el);
@@ -221,7 +296,12 @@ Future<Map<String, dynamic>> kitTrace(
 
   Map<String, dynamic>? entry = el == null ? null : _entry(el);
   if (entry != null && (role == 'click' || role == 'hero')) {
-    entry = {...entry, 'stepMs': 0, 'count': 1, 'totalMs': (el!['endMs'] as num) - (el['startMs'] as num)};
+    entry = {
+      ...entry,
+      'stepMs': 0,
+      'count': 1,
+      'totalMs': (el!['endMs'] as num) - (el['startMs'] as num),
+    };
   }
   final roles = <String, dynamic>{};
   if (role.startsWith('cta.')) {
@@ -231,18 +311,29 @@ Future<Map<String, dynamic>> kitTrace(
   }
 
   final grammar = <String, dynamic>{
-    'durationsMs': entry == null ? null : {'min': entry['durationMs'], 'median': entry['durationMs'], 'max': entry['durationMs']},
+    'durationsMs': entry == null
+        ? null
+        : {
+            'min': entry['durationMs'],
+            'median': entry['durationMs'],
+            'max': entry['durationMs'],
+          },
     'shapes': entry == null ? <String, int>{} : {entry['shape'] as String: 1},
     'staggerMs': 0,
     'cursor': null,
   };
 
   final report = <String, dynamic>{
-    'source': 'flutter', 'name': name, 'frames': times.length,
-    'elements': elements, 'roles': roles, 'grammar': grammar,
+    'source': 'flutter',
+    'name': name,
+    'frames': times.length,
+    'elements': elements,
+    'roles': roles,
+    'grammar': grammar,
   };
   final dir = Directory('build/kit')..createSync(recursive: true);
-  File('${dir.path}/motion-${name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_')}.json')
-      .writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
+  File(
+    '${dir.path}/motion-${name.replaceAll(RegExp(r'[^A-Za-z0-9._-]'), '_')}.json',
+  ).writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
   return report;
 }

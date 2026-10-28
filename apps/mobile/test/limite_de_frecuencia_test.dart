@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/common/error_dialog.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +14,7 @@ void main() {
   testWidgets(
     'la app muestra el 429 con el mensaje del servidor en su diálogo de error @REV-01-S6 @assumption:REV-01-ASM-14',
     (tester) async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient(
           (_) async => http.Response(
@@ -34,7 +34,7 @@ void main() {
                   try {
                     await api.post('/recuperacion', {'correo': 'a@b.com'});
                   } on Exception catch (e) {
-                    if (context.mounted) await mostrarErrorDeRed(context, e);
+                    if (context.mounted) await showNetworkError(context, e);
                   }
                 },
                 child: const Text('ABRIR'),
@@ -42,7 +42,7 @@ void main() {
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
       );
 

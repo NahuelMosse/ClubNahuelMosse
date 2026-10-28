@@ -10,7 +10,11 @@ void main() {
   const generico =
       'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
 
-  Future<void> ingresar(WidgetTester tester, String correo, String clave) async {
+  Future<void> ingresar(
+    WidgetTester tester,
+    String correo,
+    String clave,
+  ) async {
     if (correo.isNotEmpty) await escribir(tester, 'Correo', correo);
     if (clave.isNotEmpty) await escribir(tester, 'Contraseña', clave);
     await tocar(tester, 'INICIAR SESIÓN');

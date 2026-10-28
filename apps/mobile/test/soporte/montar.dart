@@ -1,37 +1,47 @@
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/session/data/credentials.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/bookings.dart';
+import 'package:clubnahuelmosse/features/bookings/data/bookings_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:clubnahuelmosse/features/session/domain/profile.dart';
+import 'package:clubnahuelmosse/features/session/domain/role.dart';
+import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
-ClienteApi apiFalsa({int codigo = 201, String cuerpo = '{"id": "00000000-0000-7000-8000-000000000001"}'}) =>
-    ClienteApi(
-      'http://api.falsa',
-      cliente: MockClient(
-        (_) async => http.Response.bytes(
-          utf8.encode(cuerpo),
-          codigo,
-          headers: {'content-type': 'application/json; charset=utf-8'},
-        ),
-      ),
-    );
+ApiClient apiFalsa({
+  int codigo = 201,
+  String cuerpo = '{"id": "00000000-0000-7000-8000-000000000001"}',
+}) => ApiClient(
+  'http://api.falsa',
+  cliente: MockClient(
+    (_) async => http.Response.bytes(
+      utf8.encode(cuerpo),
+      codigo,
+      headers: {'content-type': 'application/json; charset=utf-8'},
+    ),
+  ),
+);
 
 /// Un cliente de la API que responde según `MÉTODO /ruta`; lo que no está es un 404.
 /// Guarda cada pedido en [pedidos] para afirmar qué se mandó.
-ClienteApi apiRutas(
+ApiClient apiRutas(
   Map<String, (int, String)> respuestas, {
   List<http.Request>? pedidos,
-}) => ClienteApi(
+}) => ApiClient(
   'http://api.falsa',
   cliente: MockClient((pedido) async {
     pedidos?.add(pedido);
@@ -72,7 +82,7 @@ const _proximaJson =
 
 /// Una API con lo que lee el Home: 4 sedes con 17 canchas (o, con [unaSede], una sede con
 /// una cancha), el catálogo de deportes y, con [conReserva], una próxima reserva.
-ClienteApi apiInicio({
+ApiClient apiInicio({
   bool conReserva = true,
   bool unaSede = false,
 }) => apiRutas({
@@ -91,16 +101,20 @@ ClienteApi apiInicio({
 
 /// El Home leyendo de [apiInicio].
 Widget inicioFalso(
-  Sesion sesion, {
+  Session sesion, {
   bool conReserva = true,
   bool unaSede = false,
 }) {
   final api = apiInicio(conReserva: conReserva, unaSede: unaSede);
-  return PantallaInicio(
+  return HomeScreen(
     sesion: sesion,
-    reservas: Reservas(api: api, sesion: sesion),
-    espacios: Espacios(api: api, sesion: sesion),
-    sedes: Sedes(api: api, sesion: sesion),
+    reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+    espacios: Spaces(
+      repository: SpacesRepository(api: api, session: sesion),
+    ),
+    venues: Venues(
+      repository: VenuesRepository(api: api, session: sesion),
+    ),
   );
 }
 
@@ -158,7 +172,7 @@ Future<void> cargarFuentes() async {
 }
 
 /// Firebase sin red: [alIngresar] decide qué pasa con cada intento.
-class CredencialesFalsas implements Credenciales {
+class CredencialesFalsas implements Credentials {
   CredencialesFalsas({this.alIngresar, this.conCuenta = false});
 
   final Future<void> Function(String correo, String contrasena)? alIngresar;
@@ -167,10 +181,10 @@ class CredencialesFalsas implements Credenciales {
   int salidas = 0;
 
   @override
-  bool get hayCuenta => conCuenta;
+  bool get hasAccount => conCuenta;
 
   @override
-  Future<void> ingresar(String correo, String contrasena) async {
+  Future<void> signIn(String correo, String contrasena) async {
     intentos.add((correo, contrasena));
     await alIngresar?.call(correo, contrasena);
     conCuenta = true;
@@ -181,12 +195,12 @@ class CredencialesFalsas implements Credenciales {
 
   @override
   Future<String?> token() async {
-    if (tokenFalla) throw const CredencialesInvalidas();
+    if (tokenFalla) throw const InvalidCredentials();
     return conCuenta ? 'token-falso' : null;
   }
 
   @override
-  Future<void> salir() async {
+  Future<void> signOut() async {
     salidas++;
     conCuenta = false;
   }
@@ -197,44 +211,49 @@ String perfilJson({String rol = 'usuario'}) =>
     '{"nombre": "Nahuel", "apellido": "Mosse", "correo": "nahuel@correo.com", '
     '"rol": "$rol", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}';
 
-final perfilUsuario = Perfil(
-  nombre: 'Nahuel',
-  apellido: 'Mosse',
-  correo: 'nmosse@unimoron.edu.ar',
-  rol: Rol.usuario,
+final perfilUsuario = Profile(
+  firstName: 'Nahuel',
+  lastName: 'Mosse',
+  email: 'nmosse@unimoron.edu.ar',
+  role: Role.user,
   dni: '42118507',
-  fechaNacimiento: DateTime(2000, 3, 14),
+  birthDate: DateTime(2000, 3, 14),
 );
 
-final perfilAdmin = Perfil(
-  nombre: 'Ana',
-  apellido: 'Díaz',
-  correo: 'admin@clubnahuelmosse.com',
-  rol: Rol.admin,
+final perfilAdmin = Profile(
+  firstName: 'Ana',
+  lastName: 'Díaz',
+  email: 'admin@clubnahuelmosse.com',
+  role: Role.admin,
   dni: '20000001',
-  fechaNacimiento: DateTime(1980, 1, 1),
+  birthDate: DateTime(1980, 1, 1),
 );
 
 /// Una sesión ya iniciada con [perfil], sin Firebase ni API.
-class SesionFalsa extends Sesion {
+class SesionFalsa extends Session {
   SesionFalsa(this._perfilFalso)
-    : super(credenciales: CredencialesFalsas(conCuenta: true), api: apiFalsa());
+    : super(
+        repository: SessionRepository(
+          credentials: CredencialesFalsas(conCuenta: true),
+          api: apiFalsa(),
+        ),
+      );
 
-  Perfil? _perfilFalso;
+  Profile? _perfilFalso;
   int cierres = 0;
 
   @override
-  Perfil? get perfil => _perfilFalso;
+  Profile? get profile => _perfilFalso;
 
   @override
-  Future<Perfil> refrescar() async {
+  Future<Profile> refresh() async {
     final perfil = _perfilFalso;
-    if (perfil == null) throw const SesionVencida();
+    if (perfil == null) throw const SessionExpired();
     return perfil;
   }
 
   @override
-  Future<void> cerrar() async {
+  Future<void> close() async {
     cierres++;
     _perfilFalso = null;
     notifyListeners();

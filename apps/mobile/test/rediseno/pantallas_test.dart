@@ -1,26 +1,24 @@
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/dorsal.dart';
-import 'package:clubnahuelmosse/comun/ficha_socio.dart';
-import 'package:clubnahuelmosse/comun/isotipo.dart';
-import 'package:clubnahuelmosse/comun/linea_del_dia.dart';
-import 'package:clubnahuelmosse/comun/marcador.dart';
-import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
-import 'package:clubnahuelmosse/comun/tile_deporte.dart';
-import 'package:clubnahuelmosse/comun/troquel.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_mis_reservas.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sedes/fotos.dart';
-import 'package:clubnahuelmosse/sedes/pantalla_sedes.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/common/bib.dart';
+import 'package:clubnahuelmosse/common/member_profile.dart';
+import 'package:clubnahuelmosse/common/logo_mark.dart';
+import 'package:clubnahuelmosse/common/day_timeline.dart';
+import 'package:clubnahuelmosse/common/marker.dart';
+import 'package:clubnahuelmosse/common/pending_booking.dart';
+import 'package:clubnahuelmosse/common/sport_tile.dart';
+import 'package:clubnahuelmosse/common/die_cut.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/my_bookings_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/bookings.dart';
+import 'package:clubnahuelmosse/features/bookings/data/bookings_api.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 import 'package:go_router/go_router.dart';
@@ -30,8 +28,14 @@ import 'package:http/testing.dart';
 import '../soporte/montar.dart';
 import '../soporte/reloj_fijo.dart';
 import '../soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/photos.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venue_card.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-const _oscura = Paleta.oscura;
+const _oscura = Palette.dark;
 
 const _claveBorde = ValueKey('borde-reserva-activa');
 
@@ -71,7 +75,8 @@ final _sedes =
 DateTime _delClub(int dia, int hora, [int minuto = 0]) =>
     DateTime.utc(2026, 11, dia, hora + 3, minuto);
 
-String _uuid(int n) => '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
+String _uuid(int n) =>
+    '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
 
 String _reserva({
   String id = '00000000-0000-7000-8000-000000000001',
@@ -111,13 +116,17 @@ Future<void> _montarInicio(
   });
   return montar(
     tester,
-    PantallaInicio(
+    HomeScreen(
       sesion: sesion,
-      reservas: Reservas(api: api, sesion: sesion),
-      espacios: Espacios(api: api, sesion: sesion),
-      sedes: Sedes(api: api, sesion: sesion),
+      reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+      espacios: Spaces(
+        repository: SpacesRepository(api: api, session: sesion),
+      ),
+      venues: Venues(
+        repository: VenuesRepository(api: api, session: sesion),
+      ),
     ),
-    tema: tema ?? temaOscuro,
+    tema: tema ?? darkTheme,
     tamano: tamano,
   );
 }
@@ -135,7 +144,7 @@ Future<void> _montarMisReservas(
     inicio: inicio,
     oscuro: oscuro,
     tamano: const Size(393, 1600),
-    api: ClienteApi(
+    api: ApiClient(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
         final (c, cuerpo) = pedido.url.path == '/reservas'
@@ -155,7 +164,7 @@ Future<void> _montarMisReservas(
 }
 
 Finder _enElMarcador(Finder hijo) =>
-    find.descendant(of: find.byType(Marcador), matching: hijo);
+    find.descendant(of: find.byType(AppMarker), matching: hijo);
 
 Color? _colorDeCifra(WidgetTester tester, String cifra) =>
     tester.widget<Text>(_enElMarcador(find.text(cifra))).style?.color;
@@ -191,7 +200,7 @@ bool _conContornoDeFoco(WidgetTester tester, Finder tarjeta) => tester
     );
 
 Finder _enLaTarjeta(Finder hijo) =>
-    find.descendant(of: find.byType(TarjetaReserva), matching: hijo);
+    find.descendant(of: find.byType(BookingCard), matching: hijo);
 
 const _cuentas = ['HOY', 'MAÑANA', 'FALTAN 2 DÍAS'];
 
@@ -210,10 +219,10 @@ void main() {
       (tester) async {
         await _montarInicio(tester);
 
-        expect(find.byType(Marcador), findsOneWidget);
-        final celdas = tester.widget<Marcador>(find.byType(Marcador)).celdas;
+        expect(find.byType(AppMarker), findsOneWidget);
+        final celdas = tester.widget<AppMarker>(find.byType(AppMarker)).cells;
         expect(
-          [for (final c in celdas) (c.rotulo.toUpperCase(), c.cifra)],
+          [for (final c in celdas) (c.label.toUpperCase(), c.figure)],
           [('SEDES', '04'), ('CANCHAS', '17'), ('PRÓXIMAS', '01')],
         );
         for (final texto in [
@@ -231,7 +240,7 @@ void main() {
           );
         }
         expect(
-          tester.getTopLeft(find.byType(Marcador)).dy,
+          tester.getTopLeft(find.byType(AppMarker)).dy,
           lessThan(tester.getTopLeft(find.text('TU PRÓXIMA RESERVA')).dy),
         );
       },
@@ -252,13 +261,13 @@ void main() {
           ('Golf', 'Golf', '⛳'),
         ];
         expect(find.text('DEPORTES'), findsOneWidget);
-        expect(find.byType(TileDeporte), findsNWidgets(esperados.length));
+        expect(find.byType(SportTile), findsNWidgets(esperados.length));
         for (final (i, (clave, nombre, emoji)) in esperados.indexed) {
-          final tile = find.byType(TileDeporte).at(i);
-          final widget = tester.widget<TileDeporte>(tile);
-          expect(widget.nombre, nombre);
+          final tile = find.byType(SportTile).at(i);
+          final widget = tester.widget<SportTile>(tile);
+          expect(widget.name, nombre);
           expect(widget.emoji, emoji, reason: clave);
-          expect(widget.imagen, fotoDeDeporte(clave), reason: clave);
+          expect(widget.image, sportPhoto(clave), reason: clave);
           expect(
             find.descendant(of: tile, matching: find.text(nombre)),
             findsOneWidget,
@@ -277,17 +286,26 @@ void main() {
         await _montarInicio(
           tester,
           reservas: [
-            _reserva(id: '00000000-0000-7000-8000-000000000001', inicio: _delClub(12, 21)),
-            _reserva(id: '00000000-0000-7000-8000-000000000002', inicio: _delClub(13, 10)),
-            _reserva(id: '00000000-0000-7000-8000-000000000003', inicio: _delClub(14, 10)),
+            _reserva(
+              id: '00000000-0000-7000-8000-000000000001',
+              inicio: _delClub(12, 21),
+            ),
+            _reserva(
+              id: '00000000-0000-7000-8000-000000000002',
+              inicio: _delClub(13, 10),
+            ),
+            _reserva(
+              id: '00000000-0000-7000-8000-000000000003',
+              inicio: _delClub(14, 10),
+            ),
           ],
         );
 
-        final celdas = tester.widget<Marcador>(find.byType(Marcador)).celdas;
-        final destacadas = celdas.where((c) => c.destacada).toList();
+        final celdas = tester.widget<AppMarker>(find.byType(AppMarker)).cells;
+        final destacadas = celdas.where((c) => c.highlighted).toList();
         expect(destacadas, hasLength(1));
-        expect(destacadas.single.rotulo.toUpperCase(), 'PRÓXIMAS');
-        expect(destacadas.single.cifra, '03');
+        expect(destacadas.single.label.toUpperCase(), 'PRÓXIMAS');
+        expect(destacadas.single.figure, '03');
         expect(_colorDeCifra(tester, '03'), _oscura.accentOnMedia);
         expect(_colorDeCifra(tester, '04'), _oscura.textOnMedia);
         expect(find.text('LIBRES HOY'), findsNothing);
@@ -319,11 +337,11 @@ void main() {
         final semantica = tester.ensureSemantics();
         await _montarInicio(tester);
 
-        for (final tile in tester.widgetList<TileDeporte>(
-          find.byType(TileDeporte),
+        for (final tile in tester.widgetList<SportTile>(
+          find.byType(SportTile),
         )) {
-          expect(tile.alTocar, isNull, reason: tile.nombre);
-          expect(tile.elegido, isFalse, reason: tile.nombre);
+          expect(tile.onTap, isNull, reason: tile.name);
+          expect(tile.selected, isFalse, reason: tile.name);
         }
         expect(find.text('ELEGIDO'), findsNothing);
         for (final nombre in ['Fútbol', 'Tenis']) {
@@ -332,7 +350,7 @@ void main() {
           expect(nodo.flagsCollection.isButton, isFalse, reason: nombre);
         }
 
-        await tester.tap(find.byType(TileDeporte).first);
+        await tester.tap(find.byType(SportTile).first);
         await tester.pumpAndSettle();
         expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
         semantica.dispose();
@@ -345,13 +363,13 @@ void main() {
         await _montarInicio(tester, catalogo: _catalogoConDesconocido);
 
         final tiles = tester
-            .widgetList<TileDeporte>(find.byType(TileDeporte))
+            .widgetList<SportTile>(find.byType(SportTile))
             .toList();
         expect(
-          [for (final t in tiles) (t.nombre, t.emoji)],
+          [for (final t in tiles) (t.name, t.emoji)],
           [('Fútbol', '⚽'), ('Rugby', '🏅')],
         );
-        expect(tiles.last.imagen, fotoDeDeporte('Rugby'));
+        expect(tiles.last.image, sportPhoto('Rugby'));
       },
     );
 
@@ -392,8 +410,8 @@ void main() {
       'una reserva activa lleva el borde del acento y la cuenta regresiva @RED-03-S2',
       (tester) async {
         for (final (tema, p) in [
-          (temaOscuro, Paleta.oscura),
-          (temaClaro, Paleta.clara),
+          (darkTheme, Palette.dark),
+          (lightTheme, Palette.light),
         ]) {
           await _montarInicio(
             tester,
@@ -407,7 +425,7 @@ void main() {
           expect(tester.getSize(borde).width, 4);
           expect(
             tester.getTopLeft(borde).dx -
-                tester.getTopLeft(find.byType(TarjetaReserva)).dx,
+                tester.getTopLeft(find.byType(BookingCard)).dx,
             inInclusiveRange(0, 2),
           );
           expect(_enLaTarjeta(find.text('FALTAN 2 DÍAS')), findsOneWidget);
@@ -447,23 +465,23 @@ void main() {
         inicio: '/reservas?historial=1',
       );
 
-      expect(find.byType(TarjetaReserva), findsNWidgets(3));
+      expect(find.byType(BookingCard), findsNWidgets(3));
       expect(find.byKey(_claveBorde), findsNothing);
       _sinCuenta();
       expect(find.textContaining('FALTAN'), findsNothing);
-      expect(find.byType(Troquel), findsNWidgets(3));
+      expect(find.byType(DieCut), findsNWidgets(3));
     });
 
     testWidgets('mis reservas no suma un marcador @RED-03-ASM-05', (
       tester,
     ) async {
       await _montarMisReservas(tester, proximas: '[${_reserva()}]');
-      expect(find.byType(Troquel), findsOneWidget);
-      expect(find.byType(Marcador), findsNothing);
+      expect(find.byType(DieCut), findsOneWidget);
+      expect(find.byType(AppMarker), findsNothing);
 
       await tester.tap(find.text('Historial'));
       await tester.pumpAndSettle();
-      expect(find.byType(Marcador), findsNothing);
+      expect(find.byType(AppMarker), findsNothing);
     });
 
     testWidgets('la cuenta mira el día del club y no la hora @RED-03-ASM-06', (
@@ -506,7 +524,7 @@ void main() {
 
           _sinCuenta();
           expect(find.bySemanticsLabel(RegExp('faltan')), findsNothing);
-          expect(find.byType(Troquel), findsOneWidget);
+          expect(find.byType(DieCut), findsOneWidget);
           expect(find.byKey(_claveBorde), findsOneWidget);
           expect(
             _colorDelBorde(tester, find.byKey(_claveBorde)),
@@ -534,8 +552,8 @@ void main() {
           inicio: '/reservas?reserva=00000000-0000-7000-8000-000000000002',
         );
 
-        final comun = find.byType(TarjetaReserva).at(0);
-        final resaltada = find.byType(TarjetaReserva).at(1);
+        final comun = find.byType(BookingCard).at(0);
+        final resaltada = find.byType(BookingCard).at(1);
         expect(_conContornoDeFoco(tester, resaltada), isTrue);
         expect(_conContornoDeFoco(tester, comun), isFalse);
         for (final tarjeta in [comun, resaltada]) {
@@ -576,18 +594,18 @@ void main() {
         );
 
     Finder enLaFicha(Finder hijo) =>
-        find.descendant(of: find.byType(FichaSocio), matching: hijo);
+        find.descendant(of: find.byType(MemberProfile), matching: hijo);
 
     testWidgets('la cabecera de mi perfil es la ficha de socio @RED-03-S3', (
       tester,
     ) async {
       await montarPerfil(tester);
 
-      expect(find.byType(FichaSocio), findsOneWidget);
-      final ficha = tester.widget<FichaSocio>(find.byType(FichaSocio));
-      expect(ficha.iniciales, 'NM');
-      expect(ficha.nombre, 'Nahuel Mosse');
-      expect(ficha.correo, 'nmosse@unimoron.edu.ar');
+      expect(find.byType(MemberProfile), findsOneWidget);
+      final ficha = tester.widget<MemberProfile>(find.byType(MemberProfile));
+      expect(ficha.initials, 'NM');
+      expect(ficha.name, 'Nahuel Mosse');
+      expect(ficha.email, 'nmosse@unimoron.edu.ar');
       expect(enLaFicha(find.text('NM')), findsOneWidget);
       expect(enLaFicha(find.text('Nahuel Mosse')), findsOneWidget);
       expect(enLaFicha(find.text('nmosse@unimoron.edu.ar')), findsOneWidget);
@@ -598,11 +616,11 @@ void main() {
       (tester) async {
         await montarPerfil(tester);
 
-        final ficha = tester.widget<FichaSocio>(find.byType(FichaSocio));
-        expect(ficha.numero, 'MIEMBRO ACTIVO');
-        expect(ficha.estadisticas, isEmpty);
+        final ficha = tester.widget<MemberProfile>(find.byType(MemberProfile));
+        expect(ficha.number, 'MIEMBRO ACTIVO');
+        expect(ficha.stats, isEmpty);
         expect(enLaFicha(find.text('MIEMBRO ACTIVO')), findsOneWidget);
-        expect(enLaFicha(find.byType(Marcador)), findsNothing);
+        expect(enLaFicha(find.byType(AppMarker)), findsNothing);
       },
     );
 
@@ -612,8 +630,10 @@ void main() {
         for (final oscuro in [true, false]) {
           await montarPerfil(tester, oscuro: oscuro);
 
-          final ficha = tester.widget<FichaSocio>(find.byType(FichaSocio));
-          expect(ficha.imagen, fotoDeDeporte('Futbol'), reason: '$oscuro');
+          final ficha = tester.widget<MemberProfile>(
+            find.byType(MemberProfile),
+          );
+          expect(ficha.image, sportPhoto('Futbol'), reason: '$oscuro');
           expect(enLaFicha(find.byType(Image)), findsOneWidget);
         }
       },
@@ -636,27 +656,27 @@ void main() {
           ),
         );
 
-        final tarjetas = find.byType(TarjetaSede);
+        final tarjetas = find.byType(VenueCard);
         expect(tarjetas, findsNWidgets(3));
         final dorsales = <String>[];
         for (var i = 0; i < 3; i++) {
           final tarjeta = tarjetas.at(i);
           final dorsal = find.descendant(
             of: tarjeta,
-            matching: find.byType(DorsalGigante),
+            matching: find.byType(GiantBib),
           );
           expect(dorsal, findsOneWidget);
-          final canchas = tester.widget<TarjetaSede>(tarjeta).sede.canchas;
+          final canchas = tester.widget<VenueCard>(tarjeta).venue.spaceCount;
           final texto = canchas.toString().padLeft(2, '0');
-          expect(tester.widget<DorsalGigante>(dorsal).texto, texto);
+          expect(tester.widget<GiantBib>(dorsal).text, texto);
           final pintor = tester
               .widgetList<CustomPaint>(
                 find.descendant(of: dorsal, matching: find.byType(CustomPaint)),
               )
               .map((c) => c.painter)
-              .whereType<PintorDorsal>()
+              .whereType<BibPainter>()
               .single;
-          expect(pintor.texto, texto);
+          expect(pintor.text, texto);
           dorsales.add(texto);
         }
         expect(dorsales, ['02', '00', '12']);
@@ -665,13 +685,16 @@ void main() {
   });
 
   group('horarios', () {
-    Future<void> abrirHorarios(WidgetTester tester, {String? grilla}) =>
-        montarUsuario(
-          tester,
-          inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-          tamano: const Size(393, 2400),
-          api: apiRutas(rutasDeSedes(grilla: grilla)),
-        );
+    Future<void> abrirHorarios(
+      WidgetTester tester, {
+      String? grilla,
+    }) => montarUsuario(
+      tester,
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      tamano: const Size(393, 2400),
+      api: apiRutas(rutasDeSedes(grilla: grilla)),
+    );
 
     String estadoDe(int hora) {
       final etiqueta = RegExp('^${hora.toString().padLeft(2, '0')} h ');
@@ -693,9 +716,9 @@ void main() {
         final semantica = tester.ensureSemantics();
         await abrirHorarios(tester);
 
-        expect(find.byType(LineaDelDia), findsOneWidget);
+        expect(find.byType(DayTimeline), findsOneWidget);
         expect(
-          tester.getTopLeft(find.byType(LineaDelDia)).dy,
+          tester.getTopLeft(find.byType(DayTimeline)).dy,
           lessThan(tester.getTopLeft(find.text('08:00 – 09:00')).dy),
         );
         const ocupadas = {9, 12, 16, 17, 21, 22};
@@ -770,7 +793,7 @@ void main() {
       'con «No hay horarios disponibles» no va la línea del día @RED-03-ASM-08',
       (tester) async {
         await abrirHorarios(tester);
-        expect(find.byType(LineaDelDia), findsOneWidget);
+        expect(find.byType(DayTimeline), findsOneWidget);
 
         for (final grilla in [
           grillaJson(abre: false),
@@ -779,7 +802,7 @@ void main() {
           await abrirHorarios(tester, grilla: grilla);
 
           expect(find.text('No hay horarios disponibles'), findsOneWidget);
-          expect(find.byType(LineaDelDia), findsNothing);
+          expect(find.byType(DayTimeline), findsNothing);
         }
       },
     );
@@ -790,18 +813,18 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final sesion = Sesion(
-        credenciales: CredencialesFalsas(),
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: CredencialesFalsas(),
+          api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+        ),
       );
       final rutas = GoRouter(
         routes: [
           GoRoute(
             path: '/',
-            builder: (_, _) => PantallaInicioSesion(
-              sesion: sesion,
-              pendiente: ReservaPendiente(),
-            ),
+            builder: (_, _) =>
+                LoginScreen(session: sesion, pending: PendingBooking()),
           ),
         ],
       );
@@ -810,14 +833,14 @@ void main() {
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
-        MaterialApp.router(theme: temaOscuro, routerConfig: rutas),
+        MaterialApp.router(theme: darkTheme, routerConfig: rutas),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(Isotipo), findsOneWidget);
-      expect(tester.widget<Isotipo>(find.byType(Isotipo)).decorativo, isTrue);
+      expect(find.byType(LogoMark), findsOneWidget);
+      expect(tester.widget<LogoMark>(find.byType(LogoMark)).decorative, isTrue);
       expect(
-        tester.getTopLeft(find.byType(Isotipo)).dy,
+        tester.getTopLeft(find.byType(LogoMark)).dy,
         lessThan(tester.getTopLeft(find.text('BIENVENIDO A')).dy),
       );
       expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
@@ -828,11 +851,11 @@ void main() {
 
 Future<void> _expectTroquelEntreEncabezadoYDetalle(WidgetTester tester) async {
   final troquel = find.descendant(
-    of: find.byType(TarjetaReserva),
-    matching: find.byType(Troquel),
+    of: find.byType(BookingCard),
+    matching: find.byType(DieCut),
   );
   expect(troquel, findsOneWidget);
-  expect(tester.widget<Troquel>(troquel).fondo, _oscura.bgBase);
+  expect(tester.widget<DieCut>(troquel).background, _oscura.bgBase);
   final y = tester.getTopLeft(troquel).dy;
   expect(
     tester.getTopLeft(find.text('Sede Morón · Av. Rivadavia 19850')).dy,

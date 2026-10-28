@@ -1,5 +1,5 @@
-import 'package:clubnahuelmosse/comun/campo_texto.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/text_field.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,12 +11,12 @@ void main() {
     final controlador = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
-        theme: temaOscuro,
+        theme: darkTheme,
         home: Scaffold(
-          body: CampoTexto(
-            etiqueta: 'NOMBRE',
-            etiquetaAccesible: 'Nombre',
-            controlador: controlador,
+          body: FormTextField(
+            label: 'NOMBRE',
+            semanticLabel: 'Nombre',
+            controller: controlador,
             placeholder: 'Tu nombre',
             error: error,
           ),

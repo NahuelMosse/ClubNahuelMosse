@@ -176,33 +176,33 @@ void main() {
   });
 
   test(
-    'movimiento.dart reexporta sus widgets desde comun/movimiento sin cambiar los imports @assumption:SIM-03-ASM-02',
+    'movimiento.dart reexporta sus widgets desde common/motion sin cambiar los imports @assumption:SIM-03-ASM-02',
     () {
-      final indice = File('lib/comun/movimiento.dart').readAsStringSync();
+      final indice = File('lib/common/motion.dart').readAsStringSync();
       final exports = RegExp(
         r'^export .*$',
         multiLine: true,
       ).allMatches(indice).map((m) => m.group(0)!).toList();
       expect(exports, isNotEmpty);
       for (final e in exports) {
-        expect(e, contains("'movimiento/"));
+        expect(e, contains("'motion/"));
         expect(e, contains(' show '), reason: e);
       }
       expect(indice, isNot(contains('Widget')));
       for (final widget in [
-        'Aparecer',
-        'EntradaEscalonada',
-        'Temblor',
-        'PulsoDeExito',
-        'Latido',
-        'Presionable',
-        'Festejo',
-        'Movimiento',
+        'FadeIn',
+        'StaggeredEntrance',
+        'Shake',
+        'SuccessPulse',
+        'Heartbeat',
+        'Pressable',
+        'Celebration',
+        'AppMotion',
       ]) {
         expect(indice, contains(widget), reason: widget);
       }
       final piezas = Directory(
-        'lib/comun/movimiento',
+        'lib/common/motion',
       ).listSync().whereType<File>().where((f) => f.path.endsWith('.dart'));
       expect(piezas.length, greaterThanOrEqualTo(6));
     },
@@ -212,7 +212,7 @@ void main() {
     final lib = _lib();
     expect(lib['app.dart'], isNot(contains('GoRoute(')));
     expect(lib['app.dart'], isNot(contains('GoRouter(')));
-    expect(lib['rutas.dart'], contains('GoRouter('));
+    expect(lib['router.dart'], contains('GoRouter('));
   });
 
   test(
@@ -220,12 +220,12 @@ void main() {
     () {
       final lib = _lib();
       for (final ruta in [
-        'reservas/tarjeta_reserva.dart',
-        'admin/pantalla_filtros_reservas.dart',
-        'admin/pantalla_panel_admin.dart',
-        'reservas/pantalla_reserva_confirmada.dart',
-        'sesion/tarjeta_cuenta.dart',
-        'admin/pantalla_alta_espacio.dart',
+        'features/bookings/presentation/booking_card.dart',
+        'features/admin/presentation/booking_filters_screen.dart',
+        'features/admin/presentation/admin_panel_screen.dart',
+        'features/bookings/presentation/booking_confirmed_screen.dart',
+        'features/session/presentation/account_card.dart',
+        'features/admin/presentation/new_space_screen.dart',
       ]) {
         final texto = lib[ruta]!;
         final clases = RegExp(

@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,8 +15,8 @@ double _contraste(Color texto, Color fondo) {
   return (claro + 0.05) / (oscuro + 0.05);
 }
 
-/// Las 33 variables de la colección `Color` del Figma: nombre, campo de [Paleta], oscuro, claro.
-final List<(String, Color Function(Paleta), int, int)> _figma = [
+/// Las 33 variables de la colección `Color` del Figma: nombre, campo de [Palette], oscuro, claro.
+final List<(String, Color Function(Palette), int, int)> _figma = [
   ('bg/base', (p) => p.bgBase, 0xFF0A0A0B, 0xFFFFFFFF),
   ('bg/surface', (p) => p.bgSurface, 0xFF141416, 0xFFF4F4F6),
   ('bg/surface-raised', (p) => p.bgSurfaceRaised, 0xFF1E1E21, 0xFFFFFFFF),
@@ -39,7 +39,7 @@ final List<(String, Color Function(Paleta), int, int)> _figma = [
   ('accent/ink', (p) => p.accentInk, 0xFFD4FF3D, 0xFF4D6600),
   ('accent/edge', (p) => p.accentEdge, 0x00D4FF3D, 0xFF5C7A00),
   ('accent/on-media', (p) => p.accentOnMedia, 0xFFD4FF3D, 0xFFD4FF3D),
-  ('accent/libre', (p) => p.accentLibre, 0xFF6B8A1C, 0xFF8DB31F),
+  ('accent/libre', (p) => p.accentFree, 0xFF6B8A1C, 0xFF8DB31F),
   ('state/danger', (p) => p.stateDanger, 0xFFFF4D6A, 0xFFD92D4A),
   ('state/danger-ink', (p) => p.stateDangerInk, 0xFFFF7B8E, 0xFFB4233D),
   ('state/danger-muted', (p) => p.stateDangerMuted, 0x2EFF4D6A, 0x1FDC2626),
@@ -53,23 +53,29 @@ final List<(String, Color Function(Paleta), int, int)> _figma = [
 ];
 
 void main() {
-  test('cada color de la paleta oscura es el del Figma @RED-01-S1 @RED-05-S1', () {
-    expect(_figma.map((v) => v.$1).toSet(), hasLength(33));
-    for (final (nombre, campo, oscuro, _) in _figma) {
-      expect(campo(Paleta.oscura), Color(oscuro), reason: nombre);
-    }
-  });
+  test(
+    'cada color de la paleta oscura es el del Figma @RED-01-S1 @RED-05-S1',
+    () {
+      expect(_figma.map((v) => v.$1).toSet(), hasLength(33));
+      for (final (nombre, campo, oscuro, _) in _figma) {
+        expect(campo(Palette.dark), Color(oscuro), reason: nombre);
+      }
+    },
+  );
 
-  test('cada color de la paleta clara es el del Figma @RED-01-S1 @RED-05-S1', () {
-    for (final (nombre, campo, _, claro) in _figma) {
-      expect(campo(Paleta.clara), Color(claro), reason: nombre);
-    }
-  });
+  test(
+    'cada color de la paleta clara es el del Figma @RED-01-S1 @RED-05-S1',
+    () {
+      for (final (nombre, campo, _, claro) in _figma) {
+        expect(campo(Palette.light), Color(claro), reason: nombre);
+      }
+    },
+  );
 
   test(
     'el textMuted oscuro es el #85858C del Figma y llega a 4,5:1 sobre las tres superficies @RED-01-ASM-01 @RED-05-ASM-01',
     () {
-      const p = Paleta.oscura;
+      const p = Palette.dark;
       expect(p.textMuted, const Color(0xFF85858C));
       for (final fondo in [p.bgBase, p.bgSurface, p.bgSurfaceRaised]) {
         expect(_contraste(p.textMuted, fondo), greaterThanOrEqualTo(4.5));
@@ -80,13 +86,13 @@ void main() {
   test(
     'el lima es el mismo en los dos modos y en modo claro la tinta del acento llega a 4,5:1 @RED-05-ASM-02',
     () {
-      expect(Paleta.clara.accentBase, Paleta.oscura.accentBase);
-      const p = Paleta.clara;
+      expect(Palette.light.accentBase, Palette.dark.accentBase);
+      const p = Palette.light;
       expect(p.accentInk, isNot(p.accentBase));
       for (final fondo in [p.bgBase, p.bgSurface, p.bgSurfaceRaised]) {
         expect(_contraste(p.accentInk, fondo), greaterThanOrEqualTo(4.5));
       }
-      for (final modo in [Paleta.oscura, Paleta.clara]) {
+      for (final modo in [Palette.dark, Palette.light]) {
         expect(
           _contraste(modo.accentOn, modo.accentBase),
           greaterThanOrEqualTo(4.5),
@@ -98,14 +104,14 @@ void main() {
   test(
     'la etiqueta sobre foto, como «Fútbol 5», es del acento con su texto @RED-01-ASM-03 @RED-05-ASM-02',
     () {
-      final codigo = File('lib/comun/etiqueta.dart')
+      final codigo = File('lib/common/label.dart')
           .readAsLinesSync()
           .where((l) => !l.trimLeft().startsWith('//'))
           .join('\n');
       expect(codigo, contains('(p.accentBase, p.accentOn)'));
       expect(codigo, isNot(contains('Paleta.oscura')));
       expect(codigo, isNot(contains('Paleta.clara')));
-      for (final modo in [Paleta.oscura, Paleta.clara]) {
+      for (final modo in [Palette.dark, Palette.light]) {
         expect(
           _contraste(modo.accentOn, modo.accentBase),
           greaterThanOrEqualTo(4.5),

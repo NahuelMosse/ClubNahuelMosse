@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/comun/reloj.dart';
+import 'package:clubnahuelmosse/common/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -44,7 +44,7 @@ void main() {
   Future<void> completar(WidgetTester tester, {String hasta = '19:00'}) async {
     await elegir(tester, 'Sede', 'Sede Morón');
     await elegir(tester, 'Deporte', 'Fútbol');
-    final d = ahoraEnElClub().add(const Duration(days: 1));
+    final d = clubNow().add(const Duration(days: 1));
     String dos(int n) => n.toString().padLeft(2, '0');
     await tester.enterText(
       find.descendant(

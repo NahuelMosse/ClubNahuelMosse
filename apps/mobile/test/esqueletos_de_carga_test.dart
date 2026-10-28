@@ -1,12 +1,12 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/comun/esqueleto.dart';
-import 'package:clubnahuelmosse/comun/pantalla_de_carga.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/common/loading_screen.dart';
+import 'package:clubnahuelmosse/common/skeleton.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -15,7 +15,7 @@ import 'package:http/testing.dart';
 import 'soporte/montar.dart';
 
 /// Una API que nunca contesta: la pantalla se queda cargando.
-ClienteApi _apiColgada() => ClienteApi(
+ApiClient _apiColgada() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) => Completer<http.Response>().future),
 );
@@ -32,9 +32,9 @@ Future<void> _cargando(
   await tester.pumpWidget(
     App(
       api: _apiColgada(),
-      sesion: SesionFalsa(admin ? perfilAdmin : perfilUsuario),
-      apariencia: Apariencia.enMemoria(oscuro: oscuro),
-      inicio: inicio,
+      session: SesionFalsa(admin ? perfilAdmin : perfilUsuario),
+      appearance: Appearance.inMemory(dark: oscuro),
+      initialLocation: inicio,
     ),
   );
   await tester.pump();
@@ -43,12 +43,12 @@ Future<void> _cargando(
 
 Future<void> _forma(
   WidgetTester tester,
-  FormaDeEsqueleto forma, {
+  SkeletonShape forma, {
   ThemeData? tema,
 }) => tester.pumpWidget(
   MaterialApp(
-    theme: tema ?? temaOscuro,
-    home: Scaffold(body: EsqueletoDeLista(forma: forma)),
+    theme: tema ?? darkTheme,
+    home: Scaffold(body: SkeletonList(shape: forma)),
   ),
 );
 
@@ -64,24 +64,22 @@ void main() {
         'cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $ruta',
         (tester) async {
           await _cargando(tester, inicio: ruta, admin: admin);
-          expect(find.byType(Esqueleto), findsWidgets);
+          expect(find.byType(Skeleton), findsWidgets);
           expect(find.byType(CircularProgressIndicator), findsNothing);
         },
       );
     }
 
-    for (final forma in FormaDeEsqueleto.values) {
-      for (final tema in [temaOscuro, temaClaro]) {
+    for (final forma in SkeletonShape.values) {
+      for (final tema in [darkTheme, lightTheme]) {
         testWidgets(
           'cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 forma ${forma.name} ${tema.brightness.name}',
           (tester) async {
             await _forma(tester, forma, tema: tema);
-            expect(find.byType(Esqueleto), findsWidgets);
+            expect(find.byType(Skeleton), findsWidgets);
             expect(find.byType(CircularProgressIndicator), findsNothing);
-            final bloque = tester.widget<Esqueleto>(
-              find.byType(Esqueleto).first,
-            );
-            expect(bloque.alto, greaterThan(0));
+            final bloque = tester.widget<Skeleton>(find.byType(Skeleton).first);
+            expect(bloque.height, greaterThan(0));
           },
         );
       }
@@ -91,7 +89,7 @@ void main() {
       'el brillo se detiene con reducir movimiento y el lector anuncia Cargando una vez @VIS-02-S2',
       (tester) async {
         final semantica = tester.ensureSemantics();
-        await _forma(tester, FormaDeEsqueleto.reserva);
+        await _forma(tester, SkeletonShape.booking);
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.hasRunningAnimations, isTrue);
         expect(find.bySemanticsLabel('Cargando'), findsOneWidget);
@@ -102,10 +100,10 @@ void main() {
         addTearDown(
           tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
         );
-        await _forma(tester, FormaDeEsqueleto.aviso);
+        await _forma(tester, SkeletonShape.notice);
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.hasRunningAnimations, isFalse);
-        expect(find.byType(Esqueleto), findsWidgets);
+        expect(find.byType(Skeleton), findsWidgets);
         expect(find.bySemanticsLabel('Cargando'), findsOneWidget);
         semantica.dispose();
       },
@@ -116,19 +114,15 @@ void main() {
       (tester) async {
         await tester.pumpWidget(
           MaterialApp(
-            theme: temaOscuro,
+            theme: darkTheme,
             home: Scaffold(
-              body: BotonPrimario(
-                texto: 'ENVIAR',
-                alTocar: () {},
-                cargando: true,
-              ),
+              body: PrimaryButton(label: 'ENVIAR', onTap: () {}, loading: true),
             ),
           ),
         );
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
         await tester.pumpWidget(
-          MaterialApp(theme: temaOscuro, home: const PantallaDeCarga()),
+          MaterialApp(theme: darkTheme, home: const LoadingScreen()),
         );
         expect(find.byType(CircularProgressIndicator), findsOneWidget);
       },

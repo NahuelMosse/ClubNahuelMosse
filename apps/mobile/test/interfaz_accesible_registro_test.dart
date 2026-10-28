@@ -1,5 +1,6 @@
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
+import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
@@ -22,13 +23,15 @@ void main() {
       final pedidos = <http.Request>[];
       await montar(
         tester,
-        PantallaRegistro(
+        RegistrationScreen(
           // Un 422 evita la navegación de un alta exitosa, que pide un GoRouter.
-          api: apiRutas({
-            'POST /registro': (422, '{"errores": {"dni": "DNI repetido"}}'),
-          }, pedidos: pedidos),
+          registration: RegistrationService(
+            apiRutas({
+              'POST /registro': (422, '{"errores": {"dni": "DNI repetido"}}'),
+            }, pedidos: pedidos),
+          ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       await tester.enterText(find.bySemanticsLabel('Nombre'), 'Ana');
       await tester.enterText(find.bySemanticsLabel('Apellido'), 'Pérez');

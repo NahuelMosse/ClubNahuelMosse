@@ -1,5 +1,5 @@
-import 'package:clubnahuelmosse/comun/tile_deporte.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_buscar_cancha.dart';
+import 'package:clubnahuelmosse/common/sport_tile.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/space_search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -22,28 +22,25 @@ void main() {
         tamano: const Size(393, 1400),
       );
 
-      final tiles = tester.widgetList<TileDeporte>(find.byType(TileDeporte));
+      final tiles = tester.widgetList<SportTile>(find.byType(SportTile));
       expect(tiles, isNotEmpty);
       for (final tile in tiles) {
-        expect(tile.alTocar, isNotNull, reason: tile.nombre);
-        expect(tile.elegido, isFalse, reason: tile.nombre);
+        expect(tile.onTap, isNotNull, reason: tile.name);
+        expect(tile.selected, isFalse, reason: tile.name);
       }
       expect(find.text('ELEGIDO'), findsNothing);
       final nodo = tester.getSemantics(find.bySemanticsLabel('Tenis'));
       expect(nodo.flagsCollection.isButton, isTrue);
 
       await tester.tap(
-        find.ancestor(
-          of: find.text('Tenis'),
-          matching: find.byType(TileDeporte),
-        ),
+        find.ancestor(of: find.text('Tenis'), matching: find.byType(SportTile)),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(PantallaBuscarCancha), findsOneWidget);
+      expect(find.byType(SpaceSearchScreen), findsOneWidget);
       expect(
         tester
-            .widget<PantallaBuscarCancha>(find.byType(PantallaBuscarCancha))
+            .widget<SpaceSearchScreen>(find.byType(SpaceSearchScreen))
             .deporte,
         'Tenis',
       );

@@ -1,5 +1,5 @@
-import 'package:clubnahuelmosse/comun/zona_club.dart';
-import 'package:clubnahuelmosse/inicio/saludo_de_inicio.dart';
+import 'package:clubnahuelmosse/common/club_timezone.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_greeting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -31,10 +31,7 @@ void main() {
     );
 
     // Verifica: el saludo de la hora del club y el nombre de quien inició sesión.
-    expect(
-      find.text(SaludoDeInicio.paraLaHora(ahoraEnElClub())),
-      findsOneWidget,
-    );
+    expect(find.text(HomeGreeting.forHour(clubNow())), findsOneWidget);
     expect(find.text('Valentina'), findsOneWidget);
   });
 

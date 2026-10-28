@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -29,18 +29,22 @@ void main() {
     await montarUsuario(
       tester,
       inicio: '/reservas',
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('POST', '/reservas/00000000-0000-7000-8000-000000000001/cancelar') => () {
-              final respuesta =
-                  alCancelar ?? (200, reservaJson(estado: 'cancelada'));
-              // Un 409 también deja la lista sin esa reserva: ya no estaba activa.
-              cancelada = respuesta.$1 == 200 || respuesta.$1 == 409;
-              return respuesta;
-            }(),
+            (
+              'POST',
+              '/reservas/00000000-0000-7000-8000-000000000001/cancelar',
+            ) =>
+              () {
+                final respuesta =
+                    alCancelar ?? (200, reservaJson(estado: 'cancelada'));
+                // Un 409 también deja la lista sin esa reserva: ya no estaba activa.
+                cancelada = respuesta.$1 == 200 || respuesta.$1 == 409;
+                return respuesta;
+              }(),
             ('GET', '/reservas') => (
               200,
               '{"reservas": ${cancelada ? proximasDespues : '[$proxima]'}}',

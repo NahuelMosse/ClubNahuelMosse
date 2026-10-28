@@ -1,0 +1,21 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/features/bookings/data",
+    "apps/mobile/lib/features/bookings/domain",
+    "apps/mobile/lib/features/bookings/presentation",
+    "apps/mobile/lib/features/home/data",
+    "apps/mobile/lib/features/home/domain",
+    "apps/mobile/lib/features/home/presentation",
+    "apps/mobile/lib/rutas.dart",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1
+}

@@ -16,7 +16,8 @@ void main() {
     final (codigo, cuerpo) = respuesta;
     await montarUsuario(
       tester,
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       tamano: tamano,
       api: apiRutas({
         ...rutasDeSedes(),
@@ -44,7 +45,10 @@ void main() {
 
     final pedido = pedidos.lastWhere((p) => p.method == 'POST');
     expect(pedido.url.path, '/reservas');
-    expect(pedido.body, contains('"espacio_id":"00000000-0000-7000-8000-000000000009"'));
+    expect(
+      pedido.body,
+      contains('"espacio_id":"00000000-0000-7000-8000-000000000009"'),
+    );
     expect(pedido.body, contains('"desde":"18:00"'));
     expect(pedido.body, contains('"horas":1'));
     expect(find.text('¡Reserva confirmada!'), findsOneWidget);

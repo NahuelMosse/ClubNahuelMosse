@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -25,10 +25,14 @@ void main() {
     final pedidos = <http.Request>[];
     await montarUsuario(
       tester,
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas({
         ...rutasDeSedes(espacios: espacios),
-        'GET /espacios/00000000-0000-7000-8000-000000000011/horarios': (200, grillaJson(ocupadas: {18})),
+        'GET /espacios/00000000-0000-7000-8000-000000000011/horarios': (
+          200,
+          grillaJson(ocupadas: {18}),
+        ),
         ...cambios,
       }, pedidos: pedidos),
     );
@@ -111,7 +115,10 @@ void main() {
 
       await tocar(tester, 'Cancha 2, Techada');
 
-      expect(pedidos.last.url.path, '/espacios/00000000-0000-7000-8000-000000000011/horarios');
+      expect(
+        pedidos.last.url.path,
+        '/espacios/00000000-0000-7000-8000-000000000011/horarios',
+      );
       expect(elegido(tester, 'Cancha 2, Techada'), isTrue);
       expect(habilitado(tester, '18:00 – 19:00'), isFalse);
       expect(find.text('Sin horario elegido'), findsOneWidget);
@@ -138,7 +145,12 @@ void main() {
   ) async {
     await abrir(
       tester,
-      cambios: {'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (200, grillaJson(abre: false))},
+      cambios: {
+        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+          200,
+          grillaJson(abre: false),
+        ),
+      },
     );
 
     expect(find.text('No hay horarios disponibles'), findsOneWidget);
@@ -171,7 +183,15 @@ void main() {
   testWidgets('el servidor falla: el aviso y después REINTENTAR sin horarios', (
     tester,
   ) async {
-    await abrir(tester, cambios: {'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (500, '{}')});
+    await abrir(
+      tester,
+      cambios: {
+        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+          500,
+          '{}',
+        ),
+      },
+    );
 
     expect(find.text('Error del servidor'), findsOneWidget);
     await tester.tap(find.text('ACEPTAR'));
@@ -203,7 +223,8 @@ void main() {
   ) async {
     await montarUsuario(
       tester,
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009/reservar',
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009/reservar',
       api: apiRutas(rutasDeSedes(espacios: espacios)),
     );
 
@@ -240,14 +261,16 @@ void main() {
     final pedidos = <http.Request>[];
     await montarUsuario(
       tester,
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      api: ClienteApi(
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final rutas = rutasDeSedes(espacios: espacios);
           final vencida =
-              pedido.url.path == '/espacios/00000000-0000-7000-8000-000000000009/horarios' &&
+              pedido.url.path ==
+                  '/espacios/00000000-0000-7000-8000-000000000009/horarios' &&
               pedido.url.queryParameters.containsKey('fecha');
           final (codigo, cuerpo) = vencida
               ? (
@@ -281,7 +304,8 @@ void main() {
     await montarUsuario(
       tester,
       tamano: const Size(360, 800),
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas(rutasDeSedes(espacios: espacios)),
     );
 

@@ -2,11 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/comun/reglas_registro.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/users/domain/registration_rules.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -24,18 +25,18 @@ void main() {
 
   /// La app real en el perfil con una sesión iniciada. [yo] es lo que responde `GET /yo`
   /// al abrir el perfil; al iniciar sesión responde el perfil de siempre.
-  Future<Apariencia> montarPerfil(
+  Future<Appearance> montarPerfil(
     WidgetTester tester, {
     (int, String) yo = (200, ''),
     (int, String) edicion = (200, ''),
     (int, String) baja = (204, ''),
-    Apariencia? apariencia,
+    Appearance? apariencia,
   }) async {
     credenciales = CredencialesFalsas();
     ediciones.clear();
     bajas = 0;
     var consultas = 0;
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
         if (pedido.method == 'DELETE') {
@@ -55,14 +56,21 @@ void main() {
         return http.Response.bytes(utf8.encode(cuerpo), codigo);
       }),
     );
-    final sesion = Sesion(credenciales: credenciales, api: api);
-    await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
-    final tema = apariencia ?? Apariencia.enMemoria();
+    final sesion = Session(
+      repository: SessionRepository(credentials: credenciales, api: api),
+    );
+    await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
+    final tema = apariencia ?? Appearance.inMemory();
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      App(api: api, sesion: sesion, apariencia: tema, inicio: '/perfil'),
+      App(
+        api: api,
+        session: sesion,
+        appearance: tema,
+        initialLocation: '/perfil',
+      ),
     );
     await tester.pumpAndSettle();
     return tema;
@@ -88,16 +96,16 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final apariencia = await montarPerfil(
       tester,
-      apariencia: await Apariencia.cargar(),
+      apariencia: await Appearance.load(),
     );
-    expect(apariencia.oscuro, isTrue);
+    expect(apariencia.dark, isTrue);
 
     await tester.ensureVisible(find.bySemanticsLabel('Modo oscuro'));
     await tester.pumpAndSettle();
     await tester.tap(find.bySemanticsLabel('Modo oscuro'));
     await tester.pumpAndSettle();
 
-    expect(apariencia.oscuro, isFalse);
+    expect(apariencia.dark, isFalse);
     expect(
       Theme.of(tester.element(find.text('DATOS PERSONALES'))).brightness,
       Brightness.light,
@@ -153,23 +161,25 @@ void main() {
   });
 
   test('el DNI se lee con puntos de mil y la fecha con barras', () {
-    expect(dniLegible('42118507'), '42.118.507');
-    expect(dniLegible('4211850'), '4.211.850');
-    expect(fechaLegible(DateTime(2000, 3, 4)), '04/03/2000');
+    expect(readableDni('42118507'), '42.118.507');
+    expect(readableDni('4211850'), '4.211.850');
+    expect(readableDate(DateTime(2000, 3, 4)), '04/03/2000');
   });
 
   test('un perfil sin DNI o fecha es un error del servidor', () async {
-    final sesion = Sesion(
-      credenciales: CredencialesFalsas(),
-      api: apiRutas({
-        'GET /yo': (
-          200,
-          '{"nombre": "N", "apellido": "M", "correo": "a@b.com", "rol": "usuario"}',
-        ),
-      }),
+    final sesion = Session(
+      repository: SessionRepository(
+        credentials: CredencialesFalsas(),
+        api: apiRutas({
+          'GET /yo': (
+            200,
+            '{"nombre": "N", "apellido": "M", "correo": "a@b.com", "rol": "usuario"}',
+          ),
+        }),
+      ),
     );
     await expectLater(
-      sesion.iniciar('a@b.com', 'Clave1234'),
+      sesion.signIn('a@b.com', 'Clave1234'),
       throwsA(isA<Exception>()),
     );
   });
@@ -303,37 +313,39 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    final sesion = Sesion(
-      credenciales: CredencialesFalsas(),
-      api: apiRutas({
-        'GET /yo': (200, perfilJson()),
-        'PUT /yo': (
-          200,
-          '{"nombre": "Agustín", "apellido": "Paz", "correo": "nahuel@correo.com", '
-              '"rol": "usuario", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}',
-        ),
-      }),
+    final sesion = Session(
+      repository: SessionRepository(
+        credentials: CredencialesFalsas(),
+        api: apiRutas({
+          'GET /yo': (200, perfilJson()),
+          'PUT /yo': (
+            200,
+            '{"nombre": "Agustín", "apellido": "Paz", "correo": "nahuel@correo.com", '
+                '"rol": "usuario", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}',
+          ),
+        }),
+      ),
     );
-    await sesion.iniciar('a@b.com', 'Clave1234');
+    await sesion.signIn('a@b.com', 'Clave1234');
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
       App(
         api: apiInicio(),
-        sesion: sesion,
-        apariencia: Apariencia.enMemoria(),
-        inicio: '/inicio',
+        session: sesion,
+        appearance: Appearance.inMemory(),
+        initialLocation: '/inicio',
       ),
     );
     await tester.pumpAndSettle();
     expect(find.text('Nahuel'), findsOneWidget);
 
-    await sesion.editarPerfil(
-      nombre: 'Agustín',
-      apellido: 'Paz',
+    await sesion.updateProfile(
+      firstName: 'Agustín',
+      lastName: 'Paz',
       dni: '42118507',
-      fechaNacimiento: '2000-03-14',
+      birthDate: '2000-03-14',
     );
     await tester.pumpAndSettle();
     expect(find.text('Agustín'), findsOneWidget);
@@ -400,24 +412,26 @@ void main() {
     () async {
       final respuesta = Completer<http.Response>();
       final credenciales = CredencialesFalsas();
-      final sesion = Sesion(
-        credenciales: credenciales,
-        api: ClienteApi(
-          'http://api.falsa',
-          cliente: MockClient((pedido) async {
-            if (pedido.method == 'DELETE') return respuesta.future;
-            return http.Response(perfilJson(), 200);
-          }),
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: credenciales,
+          api: ApiClient(
+            'http://api.falsa',
+            cliente: MockClient((pedido) async {
+              if (pedido.method == 'DELETE') return respuesta.future;
+              return http.Response(perfilJson(), 200);
+            }),
+          ),
         ),
       );
-      await sesion.iniciar('a@b.com', 'Clave1234');
-      final baja = sesion.darDeBaja();
-      await sesion.cerrar();
-      await sesion.iniciar('otra@b.com', 'Clave1234');
+      await sesion.signIn('a@b.com', 'Clave1234');
+      final baja = sesion.deactivate();
+      await sesion.close();
+      await sesion.signIn('otra@b.com', 'Clave1234');
       respuesta.complete(http.Response('', 204));
       await baja;
 
-      expect(sesion.perfil, isNotNull);
+      expect(sesion.profile, isNotNull);
       expect(credenciales.salidas, 1);
     },
   );
@@ -428,7 +442,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       var intentos = 0;
       credenciales = CredencialesFalsas();
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           if (pedido.method == 'DELETE') {
@@ -439,17 +453,19 @@ void main() {
           return http.Response.bytes(utf8.encode(perfilJson()), 200);
         }),
       );
-      final sesion = Sesion(credenciales: credenciales, api: api);
-      await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+      final sesion = Session(
+        repository: SessionRepository(credentials: credenciales, api: api),
+      );
+      await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
       tester.view.physicalSize = const Size(393, 852) * 3;
       tester.view.devicePixelRatio = 3;
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         App(
           api: api,
-          sesion: sesion,
-          apariencia: Apariencia.enMemoria(),
-          inicio: '/perfil',
+          session: sesion,
+          appearance: Appearance.inMemory(),
+          initialLocation: '/perfil',
         ),
       );
       await tester.pumpAndSettle();

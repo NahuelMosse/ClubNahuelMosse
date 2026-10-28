@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -24,8 +24,8 @@ class _Servidor {
       .where((p) => p.method == 'GET' && p.url.path == '/reservas')
       .length;
 
-  ClienteApi get api =>
-      ClienteApi('http://api.falsa', cliente: MockClient(_responder));
+  ApiClient get api =>
+      ApiClient('http://api.falsa', cliente: MockClient(_responder));
 
   Future<http.Response> _responder(http.Request pedido) async {
     pedidos.add(pedido);
@@ -35,7 +35,8 @@ class _Servidor {
         200,
         '{"reservas": [${_activa ? reservaJson() : ''}]}',
       ),
-      ('POST', '/reservas/00000000-0000-7000-8000-000000000001/cancelar') => await _cancelar(),
+      ('POST', '/reservas/00000000-0000-7000-8000-000000000001/cancelar') =>
+        await _cancelar(),
       _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
     };
     return http.Response.bytes(
@@ -98,12 +99,12 @@ void main() {
     await tester.tap(find.text('VER TODAS →'), warnIfMissed: false);
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.byType(PantallaInicio), findsOneWidget);
+    expect(find.byType(HomeScreen), findsOneWidget);
     expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
     expect(find.text('Mis reservas'), findsNothing);
     expect(
       find.descendant(
-        of: find.byType(PantallaInicio),
+        of: find.byType(HomeScreen),
         matching: find.byWidgetPredicate((w) => w is PopScope && !w.canPop),
       ),
       findsOneWidget,

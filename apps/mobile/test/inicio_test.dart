@@ -1,18 +1,21 @@
-import 'package:clubnahuelmosse/comun/zona_club.dart';
-import 'package:clubnahuelmosse/inicio/saludo_de_inicio.dart';
-import 'package:clubnahuelmosse/comun/marcador.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
+import 'package:clubnahuelmosse/common/club_timezone.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_greeting.dart';
+import 'package:clubnahuelmosse/common/marker.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/bookings.dart';
+import 'package:clubnahuelmosse/features/bookings/data/bookings_api.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/montar.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 Finder _enElMarcador(String texto) =>
-    find.descendant(of: find.byType(Marcador), matching: find.text(texto));
+    find.descendant(of: find.byType(AppMarker), matching: find.text(texto));
 
 void main() {
   setUpAll(cargarFuentes);
@@ -23,13 +26,10 @@ void main() {
     await montar(
       tester,
       inicioFalso(SesionFalsa(perfilUsuario)),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
 
-    expect(
-      find.text(SaludoDeInicio.paraLaHora(ahoraEnElClub())),
-      findsOneWidget,
-    );
+    expect(find.text(HomeGreeting.forHour(clubNow())), findsOneWidget);
     expect(find.text('Nahuel'), findsOneWidget);
     expect(_enElMarcador('04'), findsOneWidget);
     expect(_enElMarcador('SEDES'), findsOneWidget);
@@ -55,7 +55,7 @@ void main() {
     await montar(
       tester,
       inicioFalso(SesionFalsa(perfilUsuario), conReserva: false),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
 
     expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
@@ -69,7 +69,7 @@ void main() {
     await montar(
       tester,
       inicioFalso(SesionFalsa(perfilUsuario), unaSede: true),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
 
     expect(_enElMarcador('01'), findsNWidgets(3));
@@ -80,7 +80,7 @@ void main() {
   testWidgets(
     'con el texto al 200 % en 360 px nada se desborda al recorrerlo',
     (tester) async {
-      for (final tema in [temaOscuro, temaClaro]) {
+      for (final tema in [darkTheme, lightTheme]) {
         await montar(
           tester,
           inicioFalso(SesionFalsa(perfilUsuario)),
@@ -111,13 +111,17 @@ void main() {
     final api = apiRutas({});
     await montar(
       tester,
-      PantallaInicio(
+      HomeScreen(
         sesion: sesion,
-        reservas: Reservas(api: api, sesion: sesion),
-        espacios: Espacios(api: api, sesion: sesion),
-        sedes: Sedes(api: api, sesion: sesion),
+        reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+        espacios: Spaces(
+          repository: SpacesRepository(api: api, session: sesion),
+        ),
+        venues: Venues(
+          repository: VenuesRepository(api: api, session: sesion),
+        ),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
 
     expect(find.text('Error del servidor'), findsOneWidget);

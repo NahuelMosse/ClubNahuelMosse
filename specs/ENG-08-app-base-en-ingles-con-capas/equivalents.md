@@ -1,0 +1,3 @@
+apps/mobile/lib/features/users/domain/registration_rules.dart:24 · “.trim()” → “.trimRight()” · “i=normalizeDni(value@@);if(dni.isEmpty)ret” · normalizeDni ya quita todos los espacios, el trim previo no cambia el resultado
+apps/mobile/lib/features/users/domain/registration_rules.dart:33 · “.trim()” → “.trimRight()” · “eTimetoday){if(value@@.isEmpty)return'Lafe” · sólo se pregunta si queda vacío: un texto de puros espacios queda vacío con trim y con trimRight
+apps/mobile/lib/features/users/domain/registration_rules.dart:43 · “.toLowerCase()” → “.toUpperCase()” · “alemail=value.trim()@@;if(email.isEmpty)re” · el correo sólo se compara con una expresión que acepta mayúsculas y minúsculas igual; el valor en minúsculas no se devuelve

@@ -1,36 +1,43 @@
-import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/recuperacion.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
+import 'package:clubnahuelmosse/common/pending_booking.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
 import '../soporte/montar.dart';
 import '../soporte/reloj_fijo.dart';
+import 'package:clubnahuelmosse/features/session/data/password_recovery.dart';
+import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/features/session/presentation/forgot_password_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/new_password_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 /// No afirma nada: produce la tira del paso 9 para mirarla contra el prototipo.
 void main() {
   setUpAll(cargarFuentes);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
+  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
 
-  Widget login() => PantallaInicioSesion(
-    pendiente: ReservaPendiente(),
-    sesion: Sesion(
-      credenciales: CredencialesFalsas(
-        alIngresar: (_, _) async => throw const CredencialesInvalidas(),
+  Widget login() => LoginScreen(
+    pending: PendingBooking(),
+    session: Session(
+      repository: SessionRepository(
+        credentials: CredencialesFalsas(
+          alIngresar: (_, _) async => throw const InvalidCredentials(),
+        ),
+        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
       ),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
     ),
   );
 
@@ -106,9 +113,9 @@ void main() {
       testWidgets('mi perfil $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaMiPerfil(
-            sesion: SesionFalsa(perfilUsuario),
-            apariencia: Apariencia.enMemoria(oscuro: modo == 'oscuro'),
+          MyProfileScreen(
+            session: SesionFalsa(perfilUsuario),
+            appearance: Appearance.inMemory(dark: modo == 'oscuro'),
           ),
           tema: tema,
           tamano: tamano,
@@ -120,8 +127,8 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montar(
           tester,
-          PantallaRecuperarContrasena(
-            recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+          ForgotPasswordScreen(
+            recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
           ),
           tema: tema,
           tamano: tamano,
@@ -140,8 +147,8 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montar(
           tester,
-          PantallaRecuperarContrasena(
-            recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+          ForgotPasswordScreen(
+            recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
           ),
           tema: tema,
           tamano: tamano,
@@ -164,10 +171,10 @@ void main() {
         testWidgets('recuperar $nombre $ancho $modo', (tester) async {
           await montar(
             tester,
-            PantallaNuevaContrasena(
-              recuperacion: Recuperacion(apiFalsa(codigo: codigo, cuerpo: '')),
-              sesion: SesionFalsa(null),
-              codigo: 'abc',
+            NewPasswordScreen(
+              recovery: PasswordRecovery(apiFalsa(codigo: codigo, cuerpo: '')),
+              session: SesionFalsa(null),
+              code: 'abc',
             ),
             tema: tema,
             tamano: tamano,
@@ -187,9 +194,9 @@ void main() {
           final semantica = tester.ensureSemantics();
           await montar(
             tester,
-            PantallaMiPerfil(
-              sesion: SesionFalsa(perfilUsuario),
-              apariencia: Apariencia.enMemoria(oscuro: modo == 'oscuro'),
+            MyProfileScreen(
+              session: SesionFalsa(perfilUsuario),
+              appearance: Appearance.inMemory(dark: modo == 'oscuro'),
             ),
             tema: tema,
             tamano: tamano,
@@ -220,9 +227,9 @@ void main() {
       testWidgets('mi perfil confirmar baja $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaMiPerfil(
-            sesion: SesionFalsa(perfilUsuario),
-            apariencia: Apariencia.enMemoria(oscuro: modo == 'oscuro'),
+          MyProfileScreen(
+            session: SesionFalsa(perfilUsuario),
+            appearance: Appearance.inMemory(dark: modo == 'oscuro'),
           ),
           tema: tema,
           tamano: tamano,
@@ -246,12 +253,16 @@ void main() {
         });
         await montar(
           tester,
-          PantallaPanelAdmin(
-            historial: HistorialDeReservas(api: apiPanel, sesion: sesionAdmin),
-            sedes: Sedes(api: apiPanel, sesion: sesionAdmin),
-            espacios: Espacios(api: apiPanel, sesion: sesionAdmin),
-            sesion: sesionAdmin,
-            pendientes: FiltrosDePanelPendientes(),
+          AdminPanelScreen(
+            history: BookingHistory(api: apiPanel, sesion: sesionAdmin),
+            venues: Venues(
+              repository: VenuesRepository(api: apiPanel, session: sesionAdmin),
+            ),
+            spaces: Spaces(
+              repository: SpacesRepository(api: apiPanel, session: sesionAdmin),
+            ),
+            session: sesionAdmin,
+            pending: PendingPanelFilters(),
           ),
           tema: tema,
           tamano: tamano,
@@ -262,8 +273,8 @@ void main() {
       testWidgets('recuperar contraseña $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaRecuperarContrasena(
-            recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+          ForgotPasswordScreen(
+            recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
           ),
           tema: tema,
           tamano: tamano,

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/sedes/sede.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +14,7 @@ void main() {
   setUpAll(cargarFuentes);
 
   test('la sede lee sus deportes, y sin ellos queda vacía', () {
-    final con = Sede.desdeJson({
+    final con = Venue.fromJson({
       'id': '00000000-0000-7000-8000-000000000001',
       'nombre': 'Sede Morón',
       'direccion': 'Av. Rivadavia 19850',
@@ -24,8 +24,8 @@ void main() {
       'canchas': 2,
       'deportes': ['Futbol', 'Tenis'],
     });
-    expect(con?.deportes, ['Futbol', 'Tenis']);
-    final sin = Sede.desdeJson({
+    expect(con?.sports, ['Futbol', 'Tenis']);
+    final sin = Venue.fromJson({
       'id': '00000000-0000-7000-8000-000000000001',
       'nombre': 'Sede Morón',
       'direccion': 'Av. Rivadavia 19850',
@@ -34,7 +34,7 @@ void main() {
       'dias': [1, 2],
       'canchas': 0,
     });
-    expect(sin?.deportes, isEmpty);
+    expect(sin?.sports, isEmpty);
   });
 
   group('todas las sedes', () {
@@ -111,7 +111,9 @@ void main() {
         findsOneWidget,
       );
       final canchas = pedidos.where((p) => p.url.path == '/espacios').single;
-      expect(canchas.url.queryParameters, {'sede_id': '00000000-0000-7000-8000-000000000001'});
+      expect(canchas.url.queryParameters, {
+        'sede_id': '00000000-0000-7000-8000-000000000001',
+      });
       semantica.dispose();
     });
 
@@ -154,7 +156,7 @@ void main() {
 
     testWidgets('sin conexión avisa y reintenta', (tester) async {
       var intentos = 0;
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           final ruta = pedido.url.path;
@@ -163,7 +165,11 @@ void main() {
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
       );
-      await montarUsuario(tester, inicio: '/sedes/00000000-0000-7000-8000-000000000001', api: api);
+      await montarUsuario(
+        tester,
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        api: api,
+      );
       expect(find.text('Error de conexión'), findsOneWidget);
       await tester.tap(
         find.descendant(
@@ -183,36 +189,35 @@ void main() {
         '"techada": false, "iluminada": true, "precio_por_hora": 55000}';
 
     /// Una API que responde a `GET /espacios` según el deporte y el tipo del pedido.
-    ClienteApi api({
-      List<http.Request>? pedidos,
-      bool fallaAlFiltrar = false,
-    }) => ClienteApi(
-      'http://api.falsa',
-      cliente: _Cliente((pedido) async {
-        pedidos?.add(pedido as http.Request);
-        final ruta = pedido.url.path;
-        final q = pedido.url.queryParameters;
-        if (ruta == '/espacios') {
-          if (fallaAlFiltrar && q.containsKey('deporte')) {
-            return http.Response('{}', 500);
-          }
-          final todas = [espacioF5Json, f7, espacioTenisJson];
-          final quedan = [
-            for (final e in todas)
-              if ((q['deporte'] == null ||
-                      e.contains('"deporte": "${q['deporte']}"')) &&
-                  (q['tipo'] == null || e.contains('"tipo": "${q['tipo']}"')))
-                e,
-          ];
-          return http.Response.bytes(
-            utf8.encode('{"espacios": [${quedan.join(', ')}]}'),
-            200,
-          );
-        }
-        final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
-        return http.Response.bytes(utf8.encode(cuerpo), codigo);
-      }),
-    );
+    ApiClient api({List<http.Request>? pedidos, bool fallaAlFiltrar = false}) =>
+        ApiClient(
+          'http://api.falsa',
+          cliente: _Cliente((pedido) async {
+            pedidos?.add(pedido as http.Request);
+            final ruta = pedido.url.path;
+            final q = pedido.url.queryParameters;
+            if (ruta == '/espacios') {
+              if (fallaAlFiltrar && q.containsKey('deporte')) {
+                return http.Response('{}', 500);
+              }
+              final todas = [espacioF5Json, f7, espacioTenisJson];
+              final quedan = [
+                for (final e in todas)
+                  if ((q['deporte'] == null ||
+                          e.contains('"deporte": "${q['deporte']}"')) &&
+                      (q['tipo'] == null ||
+                          e.contains('"tipo": "${q['tipo']}"')))
+                    e,
+              ];
+              return http.Response.bytes(
+                utf8.encode('{"espacios": [${quedan.join(', ')}]}'),
+                200,
+              );
+            }
+            final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
+            return http.Response.bytes(utf8.encode(cuerpo), codigo);
+          }),
+        );
 
     Future<void> tocarChip(WidgetTester tester, String etiqueta) async {
       await tester.ensureVisible(find.bySemanticsLabel(etiqueta));
@@ -259,7 +264,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final datos = [espacioF5Json, espacioTenisJson];
       final pedidos = <http.Request>[];
-      final cliente = ClienteApi(
+      final cliente = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           pedidos.add(pedido as http.Request);
@@ -282,7 +287,11 @@ void main() {
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
       );
-      await montarUsuario(tester, inicio: '/sedes/00000000-0000-7000-8000-000000000001', api: cliente);
+      await montarUsuario(
+        tester,
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        api: cliente,
+      );
       await tocarChip(tester, 'Deporte Fútbol');
       expect(find.text('1 CANCHA · FÚTBOL'), findsOneWidget);
 
@@ -290,7 +299,9 @@ void main() {
       datos.add(f7);
       await tocarChip(tester, 'Deporte Fútbol');
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
-      expect(pedidos.last.url.queryParameters, {'sede_id': '00000000-0000-7000-8000-000000000001'});
+      expect(pedidos.last.url.queryParameters, {
+        'sede_id': '00000000-0000-7000-8000-000000000001',
+      });
 
       // Al volver a elegir el deporte aparece el tipo nuevo.
       await tocarChip(tester, 'Deporte Fútbol');
@@ -303,7 +314,11 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montarUsuario(tester, inicio: '/sedes/00000000-0000-7000-8000-000000000001', api: api());
+      await montarUsuario(
+        tester,
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        api: api(),
+      );
       await tocarChip(tester, 'Deporte Tenis');
       expect(find.text('1 CANCHA · TENIS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsNothing);

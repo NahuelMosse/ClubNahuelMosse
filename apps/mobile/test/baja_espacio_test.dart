@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -24,7 +24,7 @@ void main() {
       tester,
       inicio: '/admin/espacios',
       tamano: tamano,
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
@@ -170,7 +170,7 @@ void main() {
       tester,
       inicio: '/admin/espacios',
       tamano: tamano,
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);

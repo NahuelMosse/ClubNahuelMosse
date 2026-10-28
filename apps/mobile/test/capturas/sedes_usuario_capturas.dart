@@ -62,7 +62,12 @@ void main() {
         api: apiRutas({
           ...rutasDeSedes(
             sedes: sedes,
-            espacios: espacios ?? '[$espacioF5Json, $espacioTenisJson]'.replaceAll(idMoron, sedeMoron),
+            espacios:
+                espacios ??
+                '[$espacioF5Json, $espacioTenisJson]'.replaceAll(
+                  idMoron,
+                  sedeMoron,
+                ),
           ),
           'GET /espacios/catalogo': (200, catalogoCompleto),
           'POST /reservas': (
@@ -100,13 +105,19 @@ void main() {
       });
 
       testWidgets('horarios $ancho $modo', (tester) async {
-        await abrir(tester, '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009');
+        await abrir(
+          tester,
+          '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
+        );
         await capturar(tester, 'sedes/horarios_${ancho}_$modo.png');
       });
 
       testWidgets('horarios con franja elegida $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await abrir(tester, '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009');
+        await abrir(
+          tester,
+          '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
+        );
         final franja = find.bySemanticsLabel('18:00 – 19:00');
         await tester.ensureVisible(franja);
         await tester.pumpAndSettle();
@@ -127,7 +138,8 @@ void main() {
           tester,
           oscuro: oscuro,
           tamano: tamano,
-          inicio: '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
+          inicio:
+              '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
           api: apiRutas({
             ...rutasDeSedes(sedes: sedes, grilla: grillaJson(abre: false)),
             'GET /espacios/catalogo': (200, catalogoCompleto),

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -25,24 +25,28 @@ void main() {
       tester,
       inicio: '/reservas',
       tamano: tamano,
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('POST', '/reservas/00000000-0000-7000-8000-000000000001/modificar') => () {
-              final r =
-                  alModificar ??
-                  (
-                    200,
-                    reservaJson(
-                      inicio: '2026-11-12T22:00:00+00:00',
-                      fin: '2026-11-12T23:00:00+00:00',
-                    ),
-                  );
-              modificada = r.$1 == 200;
-              return r;
-            }(),
+            (
+              'POST',
+              '/reservas/00000000-0000-7000-8000-000000000001/modificar',
+            ) =>
+              () {
+                final r =
+                    alModificar ??
+                    (
+                      200,
+                      reservaJson(
+                        inicio: '2026-11-12T22:00:00+00:00',
+                        fin: '2026-11-12T23:00:00+00:00',
+                      ),
+                    );
+                modificada = r.$1 == 200;
+                return r;
+              }(),
             ('GET', '/reservas') => (
               200,
               '{"reservas": [${modificada ? reservaJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : reservaJson()}]}',
@@ -82,8 +86,14 @@ void main() {
       await tocar(tester, find.text('MODIFICAR'));
 
       final consulta = pedidos.last.url;
-      expect(consulta.path, '/espacios/00000000-0000-7000-8000-000000000009/horarios');
-      expect(consulta.queryParameters['reserva_id'], '00000000-0000-7000-8000-000000000001');
+      expect(
+        consulta.path,
+        '/espacios/00000000-0000-7000-8000-000000000009/horarios',
+      );
+      expect(
+        consulta.queryParameters['reserva_id'],
+        '00000000-0000-7000-8000-000000000001',
+      );
       expect(consulta.queryParameters['fecha'], '2026-11-12');
       expect(consulta.queryParameters['horas'], '1');
       expect(

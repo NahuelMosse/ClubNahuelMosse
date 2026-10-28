@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/notificaciones/sistema.dart';
-import 'package:clubnahuelmosse/notificaciones/sistema_fcm.dart';
+import 'package:clubnahuelmosse/features/notifications/data/simulated_notification_system.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/fcm_notification_system.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,10 +16,10 @@ class SistemaQueDemora extends SistemaFalso {
   final respuesta = Completer<bool>();
 
   @override
-  Future<bool> preguntado() async => false;
+  Future<bool> wasAsked() async => false;
 
   @override
-  Future<bool> solicitarPermiso() {
+  Future<bool> requestPermission() {
     solicitudes++;
     return respuesta.future;
   }
@@ -57,19 +57,21 @@ void main() {
     'con Firebase, el permiso cuenta como preguntado sólo después de que el sistema tiene una respuesta @NOT-01-S2',
     () async {
       expect(
-        await SistemaFcm(
+        await FcmNotificationSystem(
           MensajeriaFalsa(AuthorizationStatus.notDetermined),
-        ).preguntado(),
+        ).wasAsked(),
         isFalse,
       );
       expect(
-        await SistemaFcm(MensajeriaFalsa(AuthorizationStatus.denied)).preguntado(),
+        await FcmNotificationSystem(
+          MensajeriaFalsa(AuthorizationStatus.denied),
+        ).wasAsked(),
         isTrue,
       );
       expect(
-        await SistemaFcm(
+        await FcmNotificationSystem(
           MensajeriaFalsa(AuthorizationStatus.authorized),
-        ).preguntado(),
+        ).wasAsked(),
         isTrue,
       );
     },
@@ -79,7 +81,7 @@ void main() {
     'el sistema simulado conserva el token del teléfono entre pedidos @NOT-01-S1',
     () async {
       SharedPreferences.setMockInitialValues({});
-      final sistema = SistemaSimulado();
+      final sistema = SimulatedNotificationSystem();
       final primero = await sistema.token();
       expect(primero, isNotNull);
       expect(await sistema.token(), primero);
@@ -91,7 +93,11 @@ void main() {
     (tester) async {
       final api = ApiFalsa();
       final sistema = SistemaQueDemora();
-      final centro = centroDe(api, SesionFalsa(perfilUsuario), sistema: sistema);
+      final centro = centroDe(
+        api,
+        SesionFalsa(perfilUsuario),
+        sistema: sistema,
+      );
       await tester.pump();
       expect(sistema.solicitudes, 1);
 

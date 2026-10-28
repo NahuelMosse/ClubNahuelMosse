@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/comun/esqueleto.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/common/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +12,7 @@ import 'package:http/testing.dart';
 import 'soporte/montar.dart';
 
 /// Una API que nunca contesta: la pantalla se queda cargando.
-ClienteApi _apiColgada() => ClienteApi(
+ApiClient _apiColgada() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) => Completer<http.Response>().future),
 );
@@ -30,9 +30,9 @@ Future<void> _cargando(
   await tester.pumpWidget(
     App(
       api: _apiColgada(),
-      sesion: SesionFalsa(admin ? perfilAdmin : perfilUsuario),
-      apariencia: Apariencia.enMemoria(oscuro: true),
-      inicio: inicio,
+      session: SesionFalsa(admin ? perfilAdmin : perfilUsuario),
+      appearance: Appearance.inMemory(dark: true),
+      initialLocation: inicio,
     ),
   );
   await tester.pump();
@@ -51,7 +51,7 @@ void main() {
         'cada pantalla que carga muestra skeletons con la forma de su contenido y no un spinner @VIS-02-S1 @assumption:VIS-02-ASM-02 $ruta',
         (tester) async {
           await _cargando(tester, inicio: ruta, admin: admin);
-          expect(find.byType(Esqueleto), findsWidgets);
+          expect(find.byType(Skeleton), findsWidgets);
           expect(find.byType(CircularProgressIndicator), findsNothing);
 
           await tester.pumpWidget(const SizedBox());

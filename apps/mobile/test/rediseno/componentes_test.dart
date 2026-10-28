@@ -1,15 +1,15 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:clubnahuelmosse/comun/dorsal.dart';
-import 'package:clubnahuelmosse/comun/ficha_socio.dart';
-import 'package:clubnahuelmosse/comun/isotipo.dart';
-import 'package:clubnahuelmosse/comun/linea_del_dia.dart';
-import 'package:clubnahuelmosse/comun/marcador.dart';
-import 'package:clubnahuelmosse/comun/tile_deporte.dart';
-import 'package:clubnahuelmosse/comun/troquel.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/common/bib.dart';
+import 'package:clubnahuelmosse/common/day_timeline.dart';
+import 'package:clubnahuelmosse/common/die_cut.dart';
+import 'package:clubnahuelmosse/common/logo_mark.dart';
+import 'package:clubnahuelmosse/common/marker.dart';
+import 'package:clubnahuelmosse/common/member_profile.dart';
+import 'package:clubnahuelmosse/common/sport_tile.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,18 +27,18 @@ final _foto = MemoryImage(
   ]),
 );
 
-const _p = Paleta.oscura;
+const _p = Palette.dark;
 
 Future<void> _montar(WidgetTester tester, Widget hijo) => montar(
   tester,
   Scaffold(body: Center(child: hijo)),
-  tema: temaOscuro,
+  tema: darkTheme,
 );
 
 const _celdas = [
-  CeldaMarcador(cifra: '04', rotulo: 'Sedes'),
-  CeldaMarcador(cifra: '17', rotulo: 'Canchas'),
-  CeldaMarcador(cifra: '23', rotulo: 'Libres hoy', destacada: true),
+  MarkerCell(figure: '04', label: 'Sedes'),
+  MarkerCell(figure: '17', label: 'Canchas'),
+  MarkerCell(figure: '23', label: 'Libres hoy', highlighted: true),
 ];
 
 Color? _colorDeTexto(WidgetTester tester, String texto) =>
@@ -49,9 +49,9 @@ void main() {
     'el isotipo se dibuja en su tamaño con el acento y se anuncia como el club @RED-02-S1',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await _montar(tester, const Isotipo(tamano: 48));
+      await _montar(tester, const LogoMark(size: 48));
 
-      expect(tester.getSize(find.byType(Isotipo)), const Size(48, 48));
+      expect(tester.getSize(find.byType(LogoMark)), const Size(48, 48));
       expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
       semantica.dispose();
     },
@@ -60,27 +60,27 @@ void main() {
   testWidgets(
     'el isotipo es un CustomPainter con el trazo del acento @RED-02-ASM-03',
     (tester) async {
-      await _montar(tester, const Isotipo(decorativo: true));
+      await _montar(tester, const LogoMark(decorative: true));
 
       final pintor = tester
           .widgetList<CustomPaint>(
             find.descendant(
-              of: find.byType(Isotipo),
+              of: find.byType(LogoMark),
               matching: find.byType(CustomPaint),
             ),
           )
           .map((c) => c.painter)
-          .whereType<PintorIsotipo>()
+          .whereType<LogoMarkPainter>()
           .single;
       expect(pintor.color, _p.accentBase);
-      expect(tester.getSize(find.byType(Isotipo)), const Size(64, 64));
+      expect(tester.getSize(find.byType(LogoMark)), const Size(64, 64));
     },
   );
 
   testWidgets(
     'el marcador muestra cada celda con su cifra y su rótulo y destaca la elegida @RED-02-S2',
     (tester) async {
-      await _montar(tester, const Marcador(celdas: _celdas));
+      await _montar(tester, const AppMarker(cells: _celdas));
 
       for (final (cifra, rotulo) in [
         ('04', 'SEDES'),
@@ -99,7 +99,7 @@ void main() {
       final marcos = tester
           .widgetList<DecoratedBox>(
             find.descendant(
-              of: find.byType(Marcador),
+              of: find.byType(AppMarker),
               matching: find.byType(DecoratedBox),
             ),
           )
@@ -118,7 +118,7 @@ void main() {
     'el lector lee cada celda del marcador como cifra y rótulo @RED-02-S2',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await _montar(tester, const Marcador(celdas: _celdas));
+      await _montar(tester, const AppMarker(cells: _celdas));
 
       for (final etiqueta in ['04 sedes', '17 canchas', '23 libres hoy']) {
         expect(find.bySemanticsLabel(etiqueta), findsOneWidget);
@@ -133,11 +133,11 @@ void main() {
       var tocado = 0;
       await _montar(
         tester,
-        TileDeporte(
-          imagen: _foto,
+        SportTile(
+          image: _foto,
           emoji: '⚽',
-          nombre: 'Fútbol',
-          alTocar: () => tocado++,
+          name: 'Fútbol',
+          onTap: () => tocado++,
         ),
       );
 
@@ -146,7 +146,7 @@ void main() {
       expect(_colorDeTexto(tester, 'Fútbol'), _p.textOnMedia);
       expect(
         find.descendant(
-          of: find.byType(TileDeporte),
+          of: find.byType(SportTile),
           matching: find.byWidgetPredicate(
             (w) => w is Image && w.image == _foto,
           ),
@@ -155,7 +155,7 @@ void main() {
       );
       expect(find.text('ELEGIDO'), findsNothing);
 
-      await tester.tap(find.byType(TileDeporte));
+      await tester.tap(find.byType(SportTile));
       expect(tocado, 1);
     },
   );
@@ -166,12 +166,12 @@ void main() {
       final semantica = tester.ensureSemantics();
       await _montar(
         tester,
-        TileDeporte(
-          imagen: _foto,
+        SportTile(
+          image: _foto,
           emoji: '🎾',
-          nombre: 'Tenis',
-          elegido: true,
-          alTocar: () {},
+          name: 'Tenis',
+          selected: true,
+          onTap: () {},
         ),
       );
 
@@ -179,7 +179,7 @@ void main() {
       final bordes = tester
           .widgetList<DecoratedBox>(
             find.descendant(
-              of: find.byType(TileDeporte),
+              of: find.byType(SportTile),
               matching: find.byType(DecoratedBox),
             ),
           )
@@ -192,7 +192,7 @@ void main() {
           );
       expect(bordes, isNotEmpty);
       expect(
-        tester.getSemantics(find.byType(TileDeporte)),
+        tester.getSemantics(find.byType(SportTile)),
         matchesSemantics(
           label: 'Tenis',
           isButton: true,
@@ -212,19 +212,19 @@ void main() {
     'los componentes de comun reciben la foto por parámetro y no importan sedes @RED-02-ASM-01',
     () {
       for (final archivo in [
-        'isotipo',
-        'marcador',
-        'tile_deporte',
-        'ficha_socio',
-        'linea_del_dia',
-        'dorsal',
-        'troquel',
+        'logo_mark',
+        'marker',
+        'sport_tile',
+        'member_profile',
+        'day_timeline',
+        'bib',
+        'die_cut',
       ]) {
-        final codigo = File('lib/comun/$archivo.dart').readAsStringSync();
+        final codigo = File('lib/common/$archivo.dart').readAsStringSync();
         expect(codigo, isNot(contains("import '../sedes")), reason: archivo);
       }
-      for (final archivo in ['tile_deporte', 'ficha_socio']) {
-        final codigo = File('lib/comun/$archivo.dart').readAsStringSync();
+      for (final archivo in ['sport_tile', 'member_profile']) {
+        final codigo = File('lib/common/$archivo.dart').readAsStringSync();
         expect(codigo, contains('ImageProvider'), reason: archivo);
       }
     },
@@ -235,14 +235,14 @@ void main() {
     (tester) async {
       await _montar(
         tester,
-        FichaSocio(
-          iniciales: 'NM',
-          nombre: 'Nahuel Agustín Mosse',
-          correo: 'nmosse@unimoron.edu.ar',
-          imagen: _foto,
-          estadisticas: const [
-            CeldaMarcador(cifra: '12', rotulo: 'Partidos'),
-            CeldaMarcador(cifra: '3', rotulo: 'Este mes', destacada: true),
+        MemberProfile(
+          initials: 'NM',
+          name: 'Nahuel Agustín Mosse',
+          email: 'nmosse@unimoron.edu.ar',
+          image: _foto,
+          stats: const [
+            MarkerCell(figure: '12', label: 'Partidos'),
+            MarkerCell(figure: '3', label: 'Este mes', highlighted: true),
           ],
         ),
       );
@@ -250,8 +250,8 @@ void main() {
       expect(find.text('FICHA DE SOCIO'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byType(FichaSocio),
-          matching: find.byType(Isotipo),
+          of: find.byType(MemberProfile),
+          matching: find.byType(LogoMark),
         ),
         findsOneWidget,
       );
@@ -261,8 +261,8 @@ void main() {
       expect(find.text('nmosse@unimoron.edu.ar'), findsOneWidget);
       expect(
         find.descendant(
-          of: find.byType(FichaSocio),
-          matching: find.byType(Marcador),
+          of: find.byType(MemberProfile),
+          matching: find.byType(AppMarker),
         ),
         findsOneWidget,
       );
@@ -271,17 +271,17 @@ void main() {
   );
 
   const franjas = [
-    EstadoFranja.libre,
-    EstadoFranja.libre,
-    EstadoFranja.ocupada,
-    EstadoFranja.elegida,
-    EstadoFranja.libre,
+    SlotState.free,
+    SlotState.free,
+    SlotState.taken,
+    SlotState.chosen,
+    SlotState.free,
   ];
 
   testWidgets(
     'la línea del día pinta una celda por hora con el color de su estado @RED-02-S5',
     (tester) async {
-      await _montar(tester, const LineaDelDia(franjas: franjas, desde: 8));
+      await _montar(tester, const DayTimeline(slots: franjas, from: 8));
 
       expect(find.text('TU DÍA EN LA CANCHA'), findsOneWidget);
       for (final leyenda in ['Libre', 'Ocupado', 'Elegido']) {
@@ -299,7 +299,7 @@ void main() {
     'el lector lee cada hora de la línea del día con su estado @RED-02-S5',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await _montar(tester, const LineaDelDia(franjas: franjas, desde: 8));
+      await _montar(tester, const DayTimeline(slots: franjas, from: 8));
 
       for (final etiqueta in [
         '08 h libre',
@@ -317,7 +317,7 @@ void main() {
   testWidgets(
     'libre es accentMuted, ocupado stateDisabled y elegido accentBase @RED-02-ASM-02',
     (tester) async {
-      await _montar(tester, const LineaDelDia(franjas: franjas, desde: 8));
+      await _montar(tester, const DayTimeline(slots: franjas, from: 8));
 
       Color? color(String hora) {
         final caja = tester.widget<DecoratedBox>(
@@ -341,7 +341,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await _montar(
         tester,
-        DorsalGigante(texto: '07', tamano: 92, color: _p.textOnMedia),
+        GiantBib(text: '07', size: 92, color: _p.textOnMedia),
       );
 
       expect(find.text('07'), findsNothing);
@@ -349,16 +349,16 @@ void main() {
       final pintor = tester
           .widgetList<CustomPaint>(
             find.descendant(
-              of: find.byType(DorsalGigante),
+              of: find.byType(GiantBib),
               matching: find.byType(CustomPaint),
             ),
           )
           .map((c) => c.painter)
-          .whereType<PintorDorsal>()
+          .whereType<BibPainter>()
           .single;
-      expect(pintor.texto, '07');
+      expect(pintor.text, '07');
       expect(pintor.color, _p.textOnMedia);
-      expect(pintor.tamano, 92);
+      expect(pintor.size, 92);
       semantica.dispose();
     },
   );
@@ -367,22 +367,22 @@ void main() {
     'el troquel dibuja la línea punteada y las dos muescas y el lector no lo lee @RED-02-S7',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await _montar(tester, Troquel(fondo: _p.bgBase));
+      await _montar(tester, DieCut(background: _p.bgBase));
 
       final pintor = tester
           .widgetList<CustomPaint>(
             find.descendant(
-              of: find.byType(Troquel),
+              of: find.byType(DieCut),
               matching: find.byType(CustomPaint),
             ),
           )
           .map((c) => c.painter)
-          .whereType<PintorTroquel>()
+          .whereType<DieCutPainter>()
           .single;
-      expect(pintor.linea, _p.borderControl);
-      expect(pintor.fondo, _p.bgBase);
-      expect(pintor.diametroMuesca, 16);
-      expect(tester.getSemantics(find.byType(Troquel)).label, isEmpty);
+      expect(pintor.line, _p.borderControl);
+      expect(pintor.background, _p.bgBase);
+      expect(pintor.notchDiameter, 16);
+      expect(tester.getSemantics(find.byType(DieCut)).label, isEmpty);
       semantica.dispose();
     },
   );

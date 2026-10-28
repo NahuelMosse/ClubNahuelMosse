@@ -1,13 +1,14 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/esqueleto.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:clubnahuelmosse/common/skeleton.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,8 @@ import 'package:http/testing.dart';
 
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 String _uuid(int n) =>
     '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
@@ -31,14 +34,18 @@ void main() {
       ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
       ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
-  Widget pantalla({required ClienteApi api}) {
+  Widget pantalla({required ApiClient api}) {
     final sesion = SesionFalsa(perfilAdmin);
-    return PantallaPanelAdmin(
-      historial: HistorialDeReservas(api: api, sesion: sesion),
-      sedes: Sedes(api: api, sesion: sesion),
-      espacios: Espacios(api: api, sesion: sesion),
-      sesion: sesion,
-      pendientes: FiltrosDePanelPendientes(),
+    return AdminPanelScreen(
+      history: BookingHistory(api: api, sesion: sesion),
+      venues: Venues(
+        repository: VenuesRepository(api: api, session: sesion),
+      ),
+      spaces: Spaces(
+        repository: SpacesRepository(api: api, session: sesion),
+      ),
+      session: sesion,
+      pending: PendingPanelFilters(),
     );
   }
 
@@ -58,7 +65,7 @@ void main() {
           'GET /espacios/catalogo': (200, catalogoJson),
         }),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
     await tester.pumpAndSettle();
 
@@ -84,7 +91,7 @@ void main() {
           'GET /espacios/catalogo': (200, catalogoJson),
         }),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
     await tester.pumpAndSettle();
 
@@ -108,7 +115,7 @@ void main() {
             'GET /espacios/catalogo': (200, catalogoJson),
           }),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
         escalaTexto: 2,
       );
@@ -136,7 +143,7 @@ void main() {
     'y la página siguiente no repite reservas',
     (tester) async {
       final segundas = <Completer<http.Response>>[];
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           final cabeceras = {'content-type': 'application/json; charset=utf-8'};
@@ -162,7 +169,7 @@ void main() {
       await montar(
         tester,
         pantalla(api: api),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(393, 852),
       );
       await tester.pumpAndSettle();
@@ -171,13 +178,13 @@ void main() {
       await tester.pump();
       await tester.pump();
       expect(segundas, hasLength(1));
-      expect(find.byType(Esqueleto, skipOffstage: false), findsOneWidget);
+      expect(find.byType(Skeleton, skipOffstage: false), findsOneWidget);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 20000));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Activas (40)'));
       await tester.pumpAndSettle();
-      expect(find.byType(Esqueleto, skipOffstage: false), findsNothing);
+      expect(find.byType(Skeleton, skipOffstage: false), findsNothing);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
       await tester.pump();

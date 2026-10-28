@@ -1,0 +1,27 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/features/admin/data",
+    "apps/mobile/lib/features/admin/domain",
+    "apps/mobile/lib/features/admin/presentation",
+    "apps/mobile/lib/rutas.dart",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract"
+    ],
+    "why": [
+      "apps/mobile/lib/app.dart is shared code (imported by apps/api/app/main.py, apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/espacios/casos_de_uso.py, …) and `## Tasks` does not name it"
+    ]
+  }
+}
