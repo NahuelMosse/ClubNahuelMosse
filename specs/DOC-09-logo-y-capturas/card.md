@@ -27,8 +27,8 @@ not_read:
 ## Gate
 
 ```
-suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider apps/api/tests/unit/test_readme_logo_y_capturas.py apps/api/tests/unit/test_readme_conciso.py
-lint: sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/tests/unit/test_readme_logo_y_capturas.py
+suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit/test_readme_logo_y_capturas.py tests/unit/test_readme_conciso.py
+lint: sh -c "cd apps/api && UV_PROJECT_ENVIRONMENT='D:/desktop folders/estudio/Universidad de moron/Electiva general/app-tp/apps/api/.venv' uv run --no-sync ruff check tests/unit/test_readme_logo_y_capturas.py"
 no-docs: la card cambia el README mismo
 no-visual: el README no es una pantalla de la app
 ```
