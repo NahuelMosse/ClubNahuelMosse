@@ -7,6 +7,7 @@ import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/comun/boton.dart';
 import 'package:clubnahuelmosse/comun/campo_texto.dart';
+import 'package:clubnahuelmosse/comun/esqueleto.dart';
 import 'package:clubnahuelmosse/comun/ficha_socio.dart';
 import 'package:clubnahuelmosse/comun/isotipo.dart';
 import 'package:clubnahuelmosse/comun/linea_del_dia.dart';
@@ -357,11 +358,8 @@ void main() {
       expect(tester.element(find.text('Mis reservas')), same(titulo));
       expect(tester.element(find.text('Historial')), same(selector));
       expect(
-        find.descendant(
-          of: lista,
-          matching: find.byType(CircularProgressIndicator),
-        ),
-        findsOneWidget,
+        find.descendant(of: lista, matching: find.byType(Esqueleto)),
+        findsWidgets,
       );
 
       espera.complete();
@@ -465,7 +463,7 @@ void main() {
 
       // La lista vieja es de Próximas: con Historial elegido no puede verse.
       expect(find.text('ACTIVA'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(Esqueleto), findsWidgets);
       expect(find.text('COMPLETADA'), findsNothing);
 
       espera.complete();
@@ -473,7 +471,7 @@ void main() {
       await tester.pump(_ms(200));
       expect(find.text('COMPLETADA'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(Esqueleto), findsNothing);
     },
   );
 

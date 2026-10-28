@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:clubnahuelmosse/admin/historial_reservas.dart';
 import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/comun/esqueleto.dart';
 import 'package:clubnahuelmosse/espacios/espacios.dart';
 import 'package:clubnahuelmosse/sedes/sedes.dart';
 import 'package:clubnahuelmosse/tema/tema.dart';
@@ -15,7 +16,8 @@ import 'package:http/testing.dart';
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
 
-String _uuid(int n) => '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
+String _uuid(int n) =>
+    '00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}';
 
 void main() {
   setUpAll(cargarFuentes);
@@ -118,7 +120,10 @@ void main() {
   );
 
   String reservaN(int id) => reservaJson
-      .replaceFirst('"id": "00000000-0000-7000-8000-000000000001",', '"id": "${_uuid(id)}",')
+      .replaceFirst(
+        '"id": "00000000-0000-7000-8000-000000000001",',
+        '"id": "${_uuid(id)}",',
+      )
       .replaceFirst('Nahuel Mosse', 'Socio $id');
 
   String pagina(Iterable<int> ids, int numero) =>
@@ -166,19 +171,13 @@ void main() {
       await tester.pump();
       await tester.pump();
       expect(segundas, hasLength(1));
-      expect(
-        find.byType(CircularProgressIndicator, skipOffstage: false),
-        findsOneWidget,
-      );
+      expect(find.byType(Esqueleto, skipOffstage: false), findsOneWidget);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, 20000));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Activas (40)'));
       await tester.pumpAndSettle();
-      expect(
-        find.byType(CircularProgressIndicator, skipOffstage: false),
-        findsNothing,
-      );
+      expect(find.byType(Esqueleto, skipOffstage: false), findsNothing);
 
       await tester.drag(find.byType(CustomScrollView), const Offset(0, -20000));
       await tester.pump();

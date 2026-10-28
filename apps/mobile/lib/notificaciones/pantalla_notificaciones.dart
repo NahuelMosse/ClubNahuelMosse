@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_superior.dart';
 import '../comun/boton.dart';
+import '../comun/esqueleto.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/reloj.dart';
 import '../sesion/fallo_de_carga.dart';
@@ -134,7 +135,12 @@ class _PantallaNotificacionesState extends State<PantallaNotificaciones> {
     bool sinAvisos,
   ) {
     if (!_leido && centro.lista.isEmpty) {
-      if (_cargando) return const Center(child: CircularProgressIndicator());
+      if (_cargando) {
+        return const Padding(
+          padding: EdgeInsets.all(Medidas.s24),
+          child: EsqueletoDeLista(forma: FormaDeEsqueleto.aviso, cantidad: 5),
+        );
+      }
       // Con el aviso de error abierto no hay nada más que mostrar: el reintento es el del aviso.
       return _fallo
           ? Center(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/carga_de_lista.dart';
+import '../comun/esqueleto.dart';
 import '../comun/estado_vacio.dart';
 import '../comun/fechas.dart';
 import '../comun/formato_precio.dart';
@@ -215,7 +216,10 @@ class _PantallaMisReservasState extends State<PantallaMisReservas> {
                       key: ValueKey((datos == null, _fallo, _historial)),
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (datos == null && !_fallo) const EsperaDeLista(),
+                        if (datos == null && !_fallo)
+                          const EsqueletoDeLista(
+                            forma: FormaDeEsqueleto.reserva,
+                          ),
                         if (datos == null && _fallo)
                           ReintentoDeLista(alTocar: _cargar),
                         if (datos != null && datos.$1.isEmpty)

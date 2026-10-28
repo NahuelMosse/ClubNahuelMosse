@@ -4,17 +4,6 @@ import '../tema/tokens.dart';
 import 'boton.dart';
 import 'movimiento.dart';
 
-/// Lo que se ve en el lugar de una lista mientras llega su lectura.
-class EsperaDeLista extends StatelessWidget {
-  const EsperaDeLista({super.key});
-
-  @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.all(Medidas.s40),
-    child: Center(child: CircularProgressIndicator()),
-  );
-}
-
 /// Lo que se ve en el lugar de una lista cuando su lectura falló: REINTENTAR.
 class ReintentoDeLista extends StatelessWidget {
   const ReintentoDeLista({super.key, required this.alTocar});

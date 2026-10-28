@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/dialogo_error.dart';
+import '../comun/esqueleto.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
 import '../sesion/fallo_de_carga.dart';
@@ -214,9 +215,12 @@ class _PantallaSedeState extends State<PantallaSede> {
         enRaiz: false,
       ),
       body: datos == null
-          ? Center(
+          ? SafeArea(
               child: _cargando
-                  ? const CircularProgressIndicator()
+                  ? const Padding(
+                      padding: Medidas.paginaDeLista,
+                      child: EsqueletoDeLista(forma: FormaDeEsqueleto.cancha),
+                    )
                   : const SizedBox.shrink(),
             )
           : ContenidoDeSede(

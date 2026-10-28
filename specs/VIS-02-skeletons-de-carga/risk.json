@@ -1,0 +1,22 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/comun/esqueleto.dart",
+    "apps/mobile/lib/comun/carga_de_lista.dart",
+    "apps/mobile/lib/inicio/pantalla_inicio.dart",
+    "apps/mobile/lib/reservas/pantalla_mis_reservas.dart",
+    "apps/mobile/lib/sedes/pantalla_sedes.dart",
+    "apps/mobile/lib/sedes/pantalla_sede.dart",
+    "apps/mobile/lib/reservas/pantalla_horarios.dart",
+    "apps/mobile/lib/reservas/pantalla_buscar_cancha.dart",
+    "apps/mobile/lib/notificaciones/pantalla_notificaciones.dart",
+    "apps/mobile/lib/admin/listado_admin.dart",
+    "apps/mobile/lib/admin/cuerpo_del_panel_admin.dart"
+  ],
+  "tasks": 1
+}

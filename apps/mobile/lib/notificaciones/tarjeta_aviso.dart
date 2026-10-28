@@ -103,11 +103,8 @@ class _Icono extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.paleta;
     final (fondo, color, icono) = switch (tipo) {
-      TipoDeNotificacion.recordatorio || TipoDeNotificacion.recordatorioCinco => (
-        p.accentBase,
-        p.accentOn,
-        Icons.schedule_rounded,
-      ),
+      TipoDeNotificacion.recordatorio || TipoDeNotificacion.recordatorioCinco =>
+        (p.accentBase, p.accentOn, Icons.schedule_rounded),
       TipoDeNotificacion.cancelacionUsuario => (
         p.stateSuccessMuted,
         p.stateSuccessInk,

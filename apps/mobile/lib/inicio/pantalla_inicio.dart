@@ -4,6 +4,7 @@ import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
 import '../comun/carga_de_lista.dart';
 import '../comun/errores_no_manejados.dart';
+import '../comun/esqueleto.dart';
 import '../comun/fechas.dart';
 import '../comun/marcador.dart';
 import '../comun/movimiento.dart';
@@ -230,7 +231,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     celdas: datos == null ? null : _celdas(datos),
                     yaEntro: yaEntro,
                   ),
-                  if (datos == null && !_fallo) const EsperaDeLista(),
+                  if (datos == null && !_fallo)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: Medidas.s24),
+                      child: EsqueletoDeLista(forma: FormaDeEsqueleto.reserva),
+                    ),
                   if (datos == null && _fallo)
                     ReintentoDeLista(alTocar: _cargar),
                   if (datos != null) ...[

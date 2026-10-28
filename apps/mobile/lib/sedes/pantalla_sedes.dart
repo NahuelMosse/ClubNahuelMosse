@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../api/cliente_api.dart';
 import '../comun/barra_inferior.dart';
-import '../comun/carga_de_lista.dart';
+import '../comun/esqueleto.dart';
 import '../comun/estado_vacio.dart';
 import '../espacios/espacio.dart';
 import '../espacios/espacios.dart';
@@ -141,7 +141,8 @@ class _PantallaSedesState extends State<PantallaSedes> {
                     const SizedBox(height: Medidas.s16),
                   ],
                 ],
-                if (datos == null && _cargando) const EsperaDeLista(),
+                if (datos == null && _cargando)
+                  const EsqueletoDeLista(forma: FormaDeEsqueleto.sede),
                 if (datos == null && !_cargando)
                   EstadoVacio(
                     titulo: 'No pudimos mostrar las sedes',
