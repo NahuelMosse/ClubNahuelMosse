@@ -1,6 +1,7 @@
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_cambiar_contrasena.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/users/presentation/change_password_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -13,25 +14,24 @@ void main() {
   late CredencialesFalsas credenciales;
   late List<http.Request> pedidos;
 
-  Future<Sesion> sesionCon((int, String) cambio) async {
+  Future<Session> sesionCon((int, String) cambio) async {
     credenciales = CredencialesFalsas();
     pedidos = [];
-    final sesion = Sesion(
-      credenciales: credenciales,
-      api: apiRutas({
-        'GET /yo': (200, perfilJson()),
-        'PUT /yo/contrasena': cambio,
-      }, pedidos: pedidos),
+    final sesion = Session(
+      repository: SessionRepository(
+        credentials: credenciales,
+        api: apiRutas({
+          'GET /yo': (200, perfilJson()),
+          'PUT /yo/contrasena': cambio,
+        }, pedidos: pedidos),
+      ),
     );
-    await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+    await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
     return sesion;
   }
 
-  Future<void> montarPantalla(WidgetTester tester, Sesion sesion) => montar(
-    tester,
-    PantallaCambiarContrasena(sesion: sesion),
-    tema: temaOscuro,
-  );
+  Future<void> montarPantalla(WidgetTester tester, Session sesion) =>
+      montar(tester, ChangePasswordScreen(session: sesion), tema: darkTheme);
 
   Future<void> completar(
     WidgetTester tester, {

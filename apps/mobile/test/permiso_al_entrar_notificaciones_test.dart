@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/notificaciones/sistema.dart';
+import 'package:clubnahuelmosse/features/notifications/data/simulated_notification_system.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,10 +16,10 @@ class SistemaSinPreguntar extends SistemaFalso {
   bool yaPreguntado = false;
 
   @override
-  Future<bool> preguntado() async => yaPreguntado;
+  Future<bool> wasAsked() async => yaPreguntado;
 
   @override
-  Future<bool> solicitarPermiso() async {
+  Future<bool> requestPermission() async {
     solicitudes++;
     yaPreguntado = true;
     concedido = respuesta;
@@ -72,7 +72,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await centro.activar();
+    await centro.enable();
 
     expect(sistema.solicitudes, 1);
   });
@@ -101,20 +101,20 @@ void main() {
     'el sistema simulado sin respuesta guardada dice que todavía no preguntó y pedirle el permiso concedido o negado lo guarda @assumption:NOT-01-ASM-03',
     () async {
       SharedPreferences.setMockInitialValues({});
-      var sistema = SistemaSimulado();
-      expect(await sistema.preguntado(), isFalse);
-      expect(await sistema.solicitarPermiso(), isTrue);
-      expect(await sistema.preguntado(), isTrue);
-      expect(await sistema.permitido(), isTrue);
+      var sistema = SimulatedNotificationSystem();
+      expect(await sistema.wasAsked(), isFalse);
+      expect(await sistema.requestPermission(), isTrue);
+      expect(await sistema.wasAsked(), isTrue);
+      expect(await sistema.isAllowed(), isTrue);
 
       SharedPreferences.setMockInitialValues({
         'permiso_notificaciones_simulado': 'denegado',
       });
-      sistema = SistemaSimulado();
-      expect(await sistema.preguntado(), isTrue);
-      expect(await sistema.permitido(), isFalse);
-      expect(await sistema.solicitarPermiso(), isFalse);
-      expect(await sistema.preguntado(), isTrue);
+      sistema = SimulatedNotificationSystem();
+      expect(await sistema.wasAsked(), isTrue);
+      expect(await sistema.isAllowed(), isFalse);
+      expect(await sistema.requestPermission(), isFalse);
+      expect(await sistema.wasAsked(), isTrue);
     },
   );
 }

@@ -1,18 +1,23 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_detalle_reserva.dart';
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/comun/formato_precio.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/history_filters.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_json.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/booking_detail_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
+import 'package:clubnahuelmosse/common/price_format.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
 import 'soporte/admin.dart';
 import 'soporte/montar.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 String reservaJson({bool anulable = true, String estado = 'activa'}) =>
     '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
@@ -49,14 +54,18 @@ void main() {
     final sesion = SesionFalsa(perfilAdmin);
     await montar(
       tester,
-      PantallaPanelAdmin(
-        historial: HistorialDeReservas(api: api, sesion: sesion),
-        sedes: Sedes(api: api, sesion: sesion),
-        espacios: Espacios(api: api, sesion: sesion),
-        sesion: sesion,
-        pendientes: FiltrosDePanelPendientes(),
+      AdminPanelScreen(
+        history: BookingHistory(api: api, sesion: sesion),
+        venues: Venues(
+          repository: VenuesRepository(api: api, session: sesion),
+        ),
+        spaces: Spaces(
+          repository: SpacesRepository(api: api, session: sesion),
+        ),
+        session: sesion,
+        pending: PendingPanelFilters(),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
       tamano: tamano,
       escalaTexto: escala,
     );
@@ -89,7 +98,7 @@ void main() {
 
     expect(find.text('¿Anular esta reserva?'), findsOneWidget);
     final dialogo = find.byType(Dialog);
-    for (final dato in ['Nahuel Mosse', 'Sede Morón', pesos(38000)]) {
+    for (final dato in ['Nahuel Mosse', 'Sede Morón', formatPesos(38000)]) {
       expect(
         find.descendant(of: dialogo, matching: find.text(dato)),
         findsOneWidget,
@@ -205,7 +214,7 @@ void main() {
         ),
       }, pedidos: pedidos);
       final sesion = SesionFalsa(perfilAdmin);
-      final reserva = ReservaHistorial.desdeJson(jsonDecode(reservaJson()));
+      final reserva = parseBookingHistoryEntry(jsonDecode(reservaJson()));
       if (reserva == null) fail('la reserva de prueba no se lee');
       bool? resultado;
       await montar(
@@ -217,16 +226,18 @@ void main() {
                 onPressed: () async {
                   resultado = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
-                      builder: (_) => PantallaDetalleReserva(
-                        reserva: reserva,
-                        historial: HistorialDeReservas(
-                          api: api,
-                          sesion: sesion,
+                      builder: (_) => BookingDetailScreen(
+                        booking: reserva,
+                        history: BookingHistory(api: api, sesion: sesion),
+                        session: sesion,
+                        spaces: Spaces(
+                          repository: SpacesRepository(
+                            api: api,
+                            session: sesion,
+                          ),
                         ),
-                        sesion: sesion,
-                        espacios: Espacios(api: api, sesion: sesion),
-                        filtros: const FiltrosDeHistorial(),
-                        pendientes: FiltrosDePanelPendientes(),
+                        filters: const HistoryFilters(),
+                        pending: PendingPanelFilters(),
                       ),
                     ),
                   );
@@ -236,7 +247,7 @@ void main() {
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();

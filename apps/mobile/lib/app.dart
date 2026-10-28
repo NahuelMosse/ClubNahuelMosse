@@ -4,136 +4,149 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-import 'admin/historial_reservas.dart';
 import 'api/cliente_api.dart';
-import 'comun/apariencia.dart';
-import 'comun/reserva_pendiente.dart';
-import 'espacios/espacios.dart';
-import 'notificaciones/centro.dart';
-import 'notificaciones/notificacion.dart';
-import 'notificaciones/panel_avisos.dart';
-import 'notificaciones/sistema.dart';
-import 'reservas/eleccion.dart';
-import 'reservas/horarios.dart';
-import 'reservas/reservas.dart';
-import 'rutas.dart';
-import 'sedes/sedes.dart';
-import 'sesion/recuperacion.dart';
-import 'sesion/sesion.dart';
-import 'tema/tema.dart';
+import 'common/appearance.dart';
+import 'common/pending_booking.dart';
+import 'features/admin/data/booking_history_api.dart';
+import 'features/admin/domain/pending_panel_filters.dart';
+import 'features/bookings/data/availability_api.dart';
+import 'features/bookings/data/bookings_api.dart';
+import 'features/bookings/domain/booking_choice.dart';
+import 'features/bookings/presentation/bookings.dart';
+import 'features/notifications/domain/app_notification.dart';
+import 'features/notifications/domain/notification_system.dart';
+import 'features/notifications/presentation/notice_panel.dart';
+import 'features/notifications/presentation/notification_center.dart';
+import 'features/session/data/password_recovery.dart';
+import 'features/session/presentation/session.dart';
+import 'features/spaces/data/spaces_repository.dart';
+import 'features/spaces/presentation/spaces.dart';
+import 'features/venues/data/venues_repository.dart';
+import 'features/venues/presentation/venues.dart';
+import 'router.dart';
+import 'theme/theme.dart';
 
 class App extends StatefulWidget {
   const App({
     super.key,
     required this.api,
-    required this.sesion,
-    required this.apariencia,
-    this.centro,
-    this.inicio = '/',
+    required this.session,
+    required this.appearance,
+    this.notificationCenter,
+    this.initialLocation = '/',
   });
 
   final ClienteApi api;
-  final Sesion sesion;
-  final Apariencia apariencia;
+  final Session session;
+  final Appearance appearance;
 
-  /// Las notificaciones de la app. Sin él no hay campana, ni panel, ni centro que consultar.
-  final CentroDeNotificaciones? centro;
+  /// The app's notifications. Without it there is no bell, no panel and no center to query.
+  final NotificationCenter? notificationCenter;
 
-  /// Dónde arranca la app: el login, o el inicio de quien ya tenía la sesión abierta.
-  final String inicio;
+  /// Where the app starts: the login, or the home of whoever already had the session open.
+  final String initialLocation;
 
   @override
   State<App> createState() => _AppState();
 }
 
 class _AppState extends State<App> {
-  late final _recuperacion = Recuperacion(widget.api);
-  late final _sedes = Sedes(api: widget.api, sesion: widget.sesion);
-  late final _espacios = Espacios(api: widget.api, sesion: widget.sesion);
-  late final _horarios = Horarios(api: widget.api, sesion: widget.sesion);
-  late final _reservas = Reservas(api: widget.api, sesion: widget.sesion);
-  late final _historialAdmin = HistorialDeReservas(
-    api: widget.api,
-    sesion: widget.sesion,
+  late final _recovery = PasswordRecovery(widget.api);
+  late final _venues = Venues(
+    repository: VenuesRepository(api: widget.api, session: widget.session),
   );
-  final _pendiente = ReservaPendiente<Eleccion>();
-  final _filtrosPendientes = FiltrosDePanelPendientes();
+  late final _spaces = Spaces(
+    repository: SpacesRepository(api: widget.api, session: widget.session),
+  );
+  late final _availability = AvailabilityApi(
+    api: widget.api,
+    sesion: widget.session,
+  );
+  late final _bookings = Bookings(
+    BookingsApi(api: widget.api, sesion: widget.session),
+  );
+  late final _adminHistory = BookingHistory(
+    api: widget.api,
+    sesion: widget.session,
+  );
+  final _pending = PendingBooking<BookingChoice>();
+  final _pendingFilters = PendingPanelFilters();
 
-  StreamSubscription<AvisoTocado>? _alTocarUnAviso;
+  StreamSubscription<NoticeTapped>? _onNotificationTapped;
 
-  /// El navegador de la app, para abrir el panel de avisos desde arriba del `Navigator`.
-  final _navegador = GlobalKey<NavigatorState>();
+  /// The app's navigator, to open the notifications panel from above the `Navigator`.
+  final _navigator = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
     super.initState();
-    final centro = widget.centro;
-    if (centro == null) return;
-    centro.ubicacion = () =>
-        _rutas.routerDelegate.currentConfiguration.uri.path;
-    // Un aviso de la bandeja del sistema abre la app en la reserva que avisa.
-    _alTocarUnAviso = centro.alTocarDesdeElSistema.listen((aviso) {
-      unawaited(centro.marcarLasDelAviso(aviso));
-      _rutas.go(aviso.ruta);
+    final center = widget.notificationCenter;
+    if (center == null) return;
+    center.location = () =>
+        _router.routerDelegate.currentConfiguration.uri.path;
+    // A notification from the system tray opens the app on the booking it is about.
+    _onNotificationTapped = center.onSystemTap.listen((notification) {
+      unawaited(center.markNoticeRead(notification));
+      _router.go(notification.route);
     });
     unawaited(
-      centro.abiertaPor().then((aviso) {
-        if (aviso != null) {
-          unawaited(centro.marcarLasDelAviso(aviso));
-          _rutas.go(aviso.ruta);
+      center.system.openedBy().then((notification) {
+        if (notification != null) {
+          unawaited(center.markNoticeRead(notification));
+          _router.go(notification.route);
         }
       }),
     );
   }
 
-  late final GoRouter _rutas = Rutas(
+  late final GoRouter _router = AppRouter(
     api: () => widget.api,
-    sesion: () => widget.sesion,
-    apariencia: () => widget.apariencia,
-    centro: () => widget.centro,
-    recuperacion: _recuperacion,
-    sedes: _sedes,
-    espacios: _espacios,
-    horarios: _horarios,
-    reservas: _reservas,
-    historialAdmin: _historialAdmin,
-    pendiente: _pendiente,
-    filtrosPendientes: _filtrosPendientes,
-  ).router(navegador: _navegador, inicio: widget.inicio);
+    session: () => widget.session,
+    appearance: () => widget.appearance,
+    center: () => widget.notificationCenter,
+    recovery: _recovery,
+    venues: _venues,
+    spaces: _spaces,
+    availability: _availability,
+    bookings: _bookings,
+    adminHistory: _adminHistory,
+    pending: _pending,
+    pendingFilters: _pendingFilters,
+  ).router(navigatorKey: _navigator, initialLocation: widget.initialLocation);
 
   @override
   void dispose() {
-    unawaited(_alTocarUnAviso?.cancel());
-    widget.centro?.dispose();
+    unawaited(_onNotificationTapped?.cancel());
+    widget.notificationCenter?.dispose();
     widget.api.cerrar();
-    _sedes.dispose();
-    _espacios.dispose();
-    _reservas.dispose();
-    _rutas.dispose();
+    _venues.dispose();
+    _spaces.dispose();
+    _bookings.dispose();
+    _router.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: widget.apariencia,
+      listenable: widget.appearance,
       builder: (context, _) => MaterialApp.router(
         title: 'ClubNahuelMosse',
         debugShowCheckedModeBanner: false,
-        theme: temaClaro,
-        darkTheme: temaOscuro,
-        themeMode: widget.apariencia.modo,
-        routerConfig: _rutas,
-        builder: (context, hijo) => Stack(
+        theme: lightTheme,
+        darkTheme: darkTheme,
+        themeMode: widget.appearance.mode,
+        routerConfig: _router,
+        builder: (context, child) => Stack(
           children: [
-            hijo ?? const SizedBox.shrink(),
-            if (widget.centro case final centro?)
-              PanelDeAvisos(
-                centro: centro,
-                navegador: _navegador,
-                alAbrir: (n) {
-                  centro.marcarLeida(n);
-                  _rutas.go(rutaDelAviso(n.tipo, n.reservaId));
+            child ?? const SizedBox.shrink(),
+            if (widget.notificationCenter case final center?)
+              NoticePanel(
+                center: center,
+                navigator: _navigator,
+                onOpen: (n) {
+                  center.markRead(n);
+                  _router.go(noticeRoute(n.kind, n.bookingId));
                 },
               ),
           ],

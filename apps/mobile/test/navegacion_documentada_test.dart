@@ -1,10 +1,10 @@
 import 'dart:io';
 
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_acceso_denegado.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/session/presentation/access_denied_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -50,13 +50,13 @@ void main() {
             App(
               key: UniqueKey(),
               api: apiRutas({}),
-              sesion: SesionFalsa(switch (sesion) {
+              session: SesionFalsa(switch (sesion) {
                 'usuario' => perfilUsuario,
                 'admin' => perfilAdmin,
                 _ => null,
               }),
-              apariencia: Apariencia.enMemoria(),
-              inicio: ruta,
+              appearance: Appearance.inMemory(),
+              initialLocation: ruta,
             ),
           );
           await tester.pump(const Duration(milliseconds: 300));
@@ -71,15 +71,11 @@ void main() {
           };
           final alLogin =
               ruta != '/' &&
-              find
-                  .byType(PantallaInicioSesion)
-                  .hitTestable()
-                  .evaluate()
-                  .isNotEmpty;
+              find.byType(LoginScreen).hitTestable().evaluate().isNotEmpty;
           final denegado =
               ruta != _acceso &&
               find
-                  .byType(PantallaAccesoDenegado)
+                  .byType(AccessDeniedScreen)
                   .hitTestable()
                   .evaluate()
                   .isNotEmpty;
@@ -88,7 +84,7 @@ void main() {
               ruta != _acceso &&
               sesion == 'admin' &&
               quien == 'Usuario' &&
-              find.byType(PantallaPanelAdmin).evaluate().isNotEmpty;
+              find.byType(AdminPanelScreen).evaluate().isNotEmpty;
 
           expect(
             !(alLogin || denegado || alPanel),

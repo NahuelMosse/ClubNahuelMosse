@@ -1,17 +1,17 @@
+import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/espacios/espacio.dart';
-import 'package:clubnahuelmosse/notificaciones/notificacion.dart';
-import 'package:clubnahuelmosse/notificaciones/sistema.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sedes/sede.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_json.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
 import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/app_notification.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/notification_system.dart';
+import 'package:clubnahuelmosse/features/spaces/domain/space.dart';
+import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 
 const _sede = '0192f3c4-7a10-7b2e-9c11-5d8e2a6f0001';
 const _espacio = '0192f3c4-7a10-7b2e-9c11-5d8e2a6f0002';
@@ -65,15 +65,15 @@ void main() {
 
   group('la app lee los ids como texto UUID y navega con ellos @DAT-01-S3', () {
     test('los modelos conservan el id como texto', () {
-      expect(Sede.desdeJson(_sedeJson())?.id, _sede);
-      final espacio = Espacio.desdeJson(_espacioJson());
+      expect(Venue.fromJson(_sedeJson())?.id, _sede);
+      final espacio = Space.fromJson(_espacioJson());
       expect(espacio?.id, _espacio);
-      expect(espacio?.sedeId, _sede);
-      final reserva = Reserva.desdeJson(_reservaJson());
+      expect(espacio?.venueId, _sede);
+      final reserva = bookingFromJson(_reservaJson());
       expect(reserva?.id, _reserva);
-      expect(reserva?.espacioId, _espacio);
-      expect(reserva?.sedeId, _sede);
-      final historial = ReservaHistorial.desdeJson({
+      expect(reserva?.spaceId, _espacio);
+      expect(reserva?.venueId, _sede);
+      final historial = parseBookingHistoryEntry({
         ..._reservaJson(),
         'usuario_id': _usuario,
         'usuario': 'Nahuel Mosse',
@@ -83,8 +83,8 @@ void main() {
         'espacio_de_baja': false,
       });
       expect(historial?.id, _reserva);
-      expect(historial?.usuarioId, _usuario);
-      final aviso = Notificacion.desdeJson({
+      expect(historial?.userId, _usuario);
+      final aviso = AppNotification.fromJson({
         'id': _aviso,
         'tipo': 'recordatorio',
         'titulo': 'Tu reserva es pronto',
@@ -94,12 +94,12 @@ void main() {
         'reserva_id': _reserva,
       });
       expect(aviso?.id, _aviso);
-      expect(aviso?.reservaId, _reserva);
+      expect(aviso?.bookingId, _reserva);
     });
 
     test('un id numérico ya no es un id', () {
-      expect(Sede.desdeJson({..._sedeJson(), 'id': 1}), isNull);
-      expect(Espacio.desdeJson({..._espacioJson(), 'sede_id': 2}), isNull);
+      expect(Venue.fromJson({..._sedeJson(), 'id': 1}), isNull);
+      expect(Space.fromJson({..._espacioJson(), 'sede_id': 2}), isNull);
     });
 
     testWidgets('la ruta de una sede pide sus canchas con el UUID', (
@@ -125,23 +125,26 @@ void main() {
       'numérico abre el centro de notificaciones '
       '@assumption:DAT-01-ASM-05', () {
     test('un aviso con reserva_id UUID abre la reserva', () {
-      final aviso = AvisoTocado.desdeDatos({
+      final aviso = NoticeTapped.fromData({
         'tipo': 'recordatorio',
         'reserva_id': _reserva,
       });
-      expect(aviso.ruta, '/reservas?reserva=$_reserva');
+      expect(aviso.route, '/reservas?reserva=$_reserva');
     });
 
     test('uno con reserva_id numérico abre el centro de notificaciones', () {
-      final aviso = AvisoTocado.desdeDatos({
+      final aviso = NoticeTapped.fromData({
         'tipo': 'recordatorio',
         'reserva_id': '7',
       });
-      expect(aviso.ruta, '/notificaciones');
+      expect(aviso.route, '/notificaciones');
     });
 
     test('uno sin reserva_id abre Mis reservas', () {
-      expect(AvisoTocado.desdeDatos({'tipo': 'recordatorio'}).ruta, '/reservas');
+      expect(
+        NoticeTapped.fromData({'tipo': 'recordatorio'}).route,
+        '/reservas',
+      );
     });
   });
 }

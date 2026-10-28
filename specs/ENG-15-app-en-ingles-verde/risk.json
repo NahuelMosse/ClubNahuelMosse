@@ -1,0 +1,22 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib",
+    "apps/mobile/test/app_en_ingles_verde_test.dart"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "medium",
+    "lenses": [
+      "contract"
+    ],
+    "why": [
+      "apps/api/app/modules/notificaciones/correo.py and 4 more outside `## Tasks` bring api"
+    ]
+  }
+}

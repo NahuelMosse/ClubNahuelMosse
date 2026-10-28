@@ -18,7 +18,10 @@ void main() {
       );
       await montarUsuario(tester, api: api);
 
-      expect(find.textContaining('Revisá tu conexión a internet'), findsOneWidget);
+      expect(
+        find.textContaining('Revisá tu conexión a internet'),
+        findsOneWidget,
+      );
       expect(find.textContaining('no responde'), findsNothing);
     },
   );

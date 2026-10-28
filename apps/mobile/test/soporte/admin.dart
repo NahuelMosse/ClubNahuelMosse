@@ -1,6 +1,6 @@
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -33,9 +33,9 @@ Future<void> montarAdmin(
   await tester.pumpWidget(
     App(
       api: api,
-      sesion: SesionFalsa(perfilAdmin),
-      apariencia: Apariencia.enMemoria(oscuro: oscuro),
-      inicio: inicio,
+      session: SesionFalsa(perfilAdmin),
+      appearance: Appearance.inMemory(dark: oscuro),
+      initialLocation: inicio,
     ),
   );
   await tester.pumpAndSettle();

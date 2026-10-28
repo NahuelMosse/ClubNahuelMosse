@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,8 +14,8 @@ double contraste(Color texto, Color fondo) {
   return (claro + 0.05) / (oscuro + 0.05);
 }
 
-/// Las 32 variables de la colección `Color` del Figma: nombre, campo de [Paleta], oscuro, claro.
-final List<(String, Color Function(Paleta), int, int)> _figma = [
+/// Las 32 variables de la colección `Color` del Figma: nombre, campo de [Palette], oscuro, claro.
+final List<(String, Color Function(Palette), int, int)> _figma = [
   ('bg/base', (p) => p.bgBase, 0xFF0B0A12, 0xFFFFFFFF),
   ('bg/surface', (p) => p.bgSurface, 0xFF17152A, 0xFFF4F4F6),
   ('bg/surface-raised', (p) => p.bgSurfaceRaised, 0xFF211E3A, 0xFFFFFFFF),
@@ -60,21 +60,21 @@ void main() {
     () {
       for (final (nombre, campo, oscuro, _) in _figma) {
         if (nombre == 'text/muted') continue;
-        expect(campo(Paleta.oscura), Color(oscuro), reason: nombre);
+        expect(campo(Palette.dark), Color(oscuro), reason: nombre);
       }
     },
   );
 
   test('cada color de la paleta clara es el del Figma @RED-01-S1', () {
     for (final (nombre, campo, _, claro) in _figma) {
-      expect(campo(Paleta.clara), Color(claro), reason: nombre);
+      expect(campo(Palette.light), Color(claro), reason: nombre);
     }
   });
 
   test(
     'el textMuted oscuro es #8C86A4 y llega a 4,5:1 sobre las tres superficies @RED-01-ASM-01',
     () {
-      const p = Paleta.oscura;
+      const p = Palette.dark;
       expect(p.textMuted, const Color(0xFF8C86A4));
       for (final fondo in [p.bgBase, p.bgSurface, p.bgSurfaceRaised]) {
         expect(contraste(p.textMuted, fondo), greaterThanOrEqualTo(4.5));
@@ -88,8 +88,8 @@ void main() {
       const negro = Color(0xFF000000);
       const blanco = Color(0xFFFFFFFF);
       for (final (modo, p) in [
-        ('oscuro', Paleta.oscura),
-        ('claro', Paleta.clara),
+        ('oscuro', Palette.dark),
+        ('claro', Palette.light),
       ]) {
         final pares = <String, (Color, Color)>{
           for (final (texto, t) in [

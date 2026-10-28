@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_acceso_denegado.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/common/error_dialog.dart';
+import 'package:clubnahuelmosse/features/session/domain/profile.dart';
+import 'package:clubnahuelmosse/features/session/presentation/access_denied_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -27,13 +27,13 @@ class _SesionDegradada extends SesionFalsa {
   _SesionDegradada() : super(perfilAdmin);
 
   int lecturas = 0;
-  Perfil? _rebajado;
+  Profile? _rebajado;
 
   @override
-  Perfil? get perfil => _rebajado ?? super.perfil;
+  Profile? get profile => _rebajado ?? super.profile;
 
   @override
-  Future<Perfil> refrescar() async {
+  Future<Profile> refresh() async {
     lecturas++;
     _rebajado = perfilUsuario;
     notifyListeners();
@@ -47,17 +47,14 @@ void main() {
   final avisos = <String, (String, Future<void> Function(BuildContext))>{
     'error de conexión': (
       'REINTENTAR',
-      (c) => mostrarErrorDeRed(c, const SinConexion()),
+      (c) => showNetworkError(c, const SinConexion()),
     ),
     'error del servidor': (
       'ACEPTAR',
-      (c) => mostrarErrorDeRed(c, const ErrorDelServidor(500)),
+      (c) => showNetworkError(c, const ErrorDelServidor(500)),
     ),
-    'sesión expirada': ('IR AL INICIO DE SESIÓN', mostrarSesionVencida),
-    'esto cambió mientras tanto': (
-      'VER LO ACTUALIZADO',
-      mostrarCambioMientrasTanto,
-    ),
+    'sesión expirada': ('IR AL INICIO DE SESIÓN', showSessionExpired),
+    'esto cambió mientras tanto': ('VER LO ACTUALIZADO', showChangedMeanwhile),
   };
 
   for (final MapEntry(key: nombre, value: (boton, abrir)) in avisos.entries) {
@@ -77,7 +74,7 @@ void main() {
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
         escalaTexto: 2,
       );
@@ -97,8 +94,8 @@ void main() {
   ) async {
     await montar(
       tester,
-      PantallaAccesoDenegado(sesion: SesionFalsa(perfilUsuario)),
-      tema: temaOscuro,
+      AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
+      tema: darkTheme,
       tamano: const Size(360, 800),
       escalaTexto: 2,
     );
@@ -117,7 +114,7 @@ void main() {
             builder: (context, _) => Scaffold(
               body: TextButton(
                 onPressed: () =>
-                    mostrarErrorDeRed(context, const ErrorDelServidor(403)),
+                    showNetworkError(context, const ErrorDelServidor(403)),
                 child: const Text('ABRIR'),
               ),
             ),
@@ -125,7 +122,7 @@ void main() {
           GoRoute(
             path: '/admin/acceso-denegado',
             builder: (context, _) =>
-                PantallaAccesoDenegado(sesion: SesionFalsa(perfilUsuario)),
+                AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
           ),
           GoRoute(
             path: '/reservas',
@@ -135,7 +132,7 @@ void main() {
       );
       addTearDown(rutas.dispose);
       await tester.pumpWidget(
-        MaterialApp.router(routerConfig: rutas, theme: temaOscuro),
+        MaterialApp.router(routerConfig: rutas, theme: darkTheme),
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
@@ -158,9 +155,9 @@ void main() {
       await tester.pumpWidget(
         App(
           api: apiRutas({'GET /reservas': (200, '{"reservas": []}')}),
-          sesion: SesionFalsa(perfilUsuario),
-          apariencia: Apariencia.enMemoria(),
-          inicio: '/admin',
+          session: SesionFalsa(perfilUsuario),
+          appearance: Appearance.inMemory(),
+          initialLocation: '/admin',
         ),
       );
       await tester.pumpAndSettle();
@@ -193,9 +190,9 @@ void main() {
               },
             ),
           ),
-          sesion: sesion,
-          apariencia: Apariencia.enMemoria(),
-          inicio: '/admin/sedes',
+          session: sesion,
+          appearance: Appearance.inMemory(),
+          initialLocation: '/admin/sedes',
         ),
       );
       await tester.pumpAndSettle();
@@ -219,9 +216,9 @@ void main() {
     await tester.pumpWidget(
       App(
         api: apiRutas({}),
-        sesion: sesion,
-        apariencia: Apariencia.enMemoria(),
-        inicio: '/admin',
+        session: sesion,
+        appearance: Appearance.inMemory(),
+        initialLocation: '/admin',
       ),
     );
     await tester.pumpAndSettle();
@@ -234,14 +231,14 @@ void main() {
   });
 
   testWidgets('un 403 devuelve su propio resultado', (tester) async {
-    ResultadoDeError? resultado;
+    ErrorOutcome? resultado;
     final rutas = GoRouter(
       routes: [
         GoRoute(
           path: '/',
           builder: (context, _) => Scaffold(
             body: TextButton(
-              onPressed: () async => resultado = await atenderErrorDeRed(
+              onPressed: () async => resultado = await handleNetworkError(
                 context,
                 const ErrorDelServidor(403),
               ),
@@ -252,18 +249,18 @@ void main() {
         GoRoute(
           path: '/admin/acceso-denegado',
           builder: (context, _) =>
-              PantallaAccesoDenegado(sesion: SesionFalsa(perfilUsuario)),
+              AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
         ),
       ],
     );
     addTearDown(rutas.dispose);
     await tester.pumpWidget(
-      MaterialApp.router(routerConfig: rutas, theme: temaOscuro),
+      MaterialApp.router(routerConfig: rutas, theme: darkTheme),
     );
     await tester.tap(find.text('ABRIR'));
     await tester.pumpAndSettle();
 
-    expect(resultado, ResultadoDeError.accesoDenegado);
+    expect(resultado, ErrorOutcome.accessDenied);
   });
 
   testWidgets(
@@ -290,9 +287,9 @@ void main() {
     await tester.pumpWidget(
       App(
         api: _api403(),
-        sesion: SesionFalsa(perfilUsuario),
-        apariencia: Apariencia.enMemoria(),
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+        session: SesionFalsa(perfilUsuario),
+        appearance: Appearance.inMemory(),
+        initialLocation: '/sedes/00000000-0000-7000-8000-000000000001',
       ),
     );
     await tester.pumpAndSettle();
@@ -309,7 +306,10 @@ void main() {
         cliente: MockClient((_) => Completer<http.Response>().future),
       );
 
-      await expectLater(api.get('/sedes'), throwsA(isA<ServidorSinRespuesta>()));
+      await expectLater(
+        api.get('/sedes'),
+        throwsA(isA<ServidorSinRespuesta>()),
+      );
     },
   );
 }

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_mis_reservas.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/my_bookings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -145,7 +145,7 @@ void main() {
       expect(find.text('ACTIVA'), findsOneWidget);
 
       GoRouter.of(
-        tester.element(find.byType(PantallaMisReservas)),
+        tester.element(find.byType(MyBookingsScreen)),
       ).go('/reservas?historial=1');
       await tester.pumpAndSettle();
 

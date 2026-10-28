@@ -1,0 +1,51 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "contraseña",
+    "contrasena",
+    "password_rules",
+    "sesión"
+  ],
+  "files": [
+    "apps/mobile/lib/common",
+    "apps/mobile/lib/theme",
+    "apps/mobile/lib/redirect.dart",
+    "apps/mobile/lib/app.dart",
+    "apps/mobile/lib/main.dart",
+    "docs/technical/glosario-ingles.md",
+    "apps/mobile/lib/features/users/domain/registration_rules.dart",
+    "apps/mobile/lib/features/users/presentation/password_rules.dart"
+  ],
+  "tasks": 2,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "interpretation",
+      "security",
+      "contract"
+    ],
+    "why": [
+      "apps/mobile/lib/admin/baja.dart is shared code (imported by apps/api/app/modules/usuarios/rutas_cuenta.py) and `## Tasks` does not name it",
+      "apps/mobile/lib/common/config.dart is shared code (imported by apps/api/app/main.py, apps/api/app/modules/notificaciones/push.py, apps/api/app/modules/recuperacion/correo.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/espacios/espacios.dart is shared code (imported by apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/espacios/casos_de_uso.py, apps/api/app/modules/espacios/repositorio.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/reservas/horarios.dart is shared code (imported by apps/api/app/modules/horarios/__init__.py, apps/api/app/modules/horarios/casos_de_uso.py, apps/api/app/modules/horarios/disponibilidad.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/reservas/reservas.dart is shared code (imported by apps/api/app/modules/reservas/__init__.py, apps/api/app/modules/reservas/almacen.py, apps/api/app/modules/reservas/casos_de_uso.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/rutas.dart is shared code (imported by apps/api/app/modules/espacios/__init__.py, apps/api/app/modules/horarios/__init__.py, apps/api/app/modules/notificaciones/__init__.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/sedes/sedes.dart is shared code (imported by apps/api/app/modules/sedes/__init__.py, apps/api/app/modules/sedes/casos_de_uso.py, apps/api/app/modules/sedes/repositorio.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/sesion/recuperacion.dart is shared code (imported by apps/api/app/modules/recuperacion/__init__.py, apps/api/app/modules/recuperacion/casos_de_uso.py, apps/api/app/modules/recuperacion/correo.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/sesion/sesion.dart is shared code (imported by apps/api/app/modules/espacios/casos_de_uso.py, apps/api/app/modules/espacios/rutas.py, apps/api/app/modules/horarios/rutas.py, …) and `## Tasks` does not name it",
+      "apps/mobile/lib/usuarios/registro.dart is shared code (imported by apps/api/app/modules/usuarios/administradores.py, apps/api/app/modules/usuarios/rutas_registro.py) and `## Tasks` does not name it",
+      "apps/api/app/modules/recuperacion/correo.py is shared code (imported by apps/api/app/modules/recuperacion/rutas.py) and `## Tasks` does not name it",
+      "apps/api/app/shared/config.py is shared code (imported by apps/api/app/main.py, apps/api/app/modules/notificaciones/push.py, apps/api/app/modules/recuperacion/correo.py, …) and `## Tasks` does not name it"
+    ]
+  }
+}

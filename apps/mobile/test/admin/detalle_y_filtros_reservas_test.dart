@@ -1,14 +1,17 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_detalle_reserva.dart';
-import 'package:clubnahuelmosse/admin/pantalla_filtros_reservas.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/history_filters.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_json.dart';
+import 'package:clubnahuelmosse/features/admin/domain/booking_history_entry.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/booking_detail_screen.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/booking_filters_screen.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/espacios/espacio.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -16,6 +19,8 @@ import 'package:http/testing.dart';
 
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
+import 'package:clubnahuelmosse/features/spaces/domain/space.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
 String _reserva({
   bool anulable = true,
@@ -38,18 +43,20 @@ void main() {
 
   final sesion = SesionFalsa(perfilAdmin);
 
-  Widget detalle(ReservaHistorial reserva, ClienteApi api) =>
-      PantallaDetalleReserva(
-        reserva: reserva,
-        historial: HistorialDeReservas(api: api, sesion: sesion),
-        sesion: sesion,
-        espacios: Espacios(api: api, sesion: sesion),
-        filtros: const FiltrosDeHistorial(),
-        pendientes: FiltrosDePanelPendientes(),
+  Widget detalle(BookingHistoryEntry reserva, ClienteApi api) =>
+      BookingDetailScreen(
+        booking: reserva,
+        history: BookingHistory(api: api, sesion: sesion),
+        session: sesion,
+        spaces: Spaces(
+          repository: SpacesRepository(api: api, session: sesion),
+        ),
+        filters: const HistoryFilters(),
+        pending: PendingPanelFilters(),
       );
 
-  ReservaHistorial leida(String json) {
-    final r = ReservaHistorial.desdeJson(jsonDecode(json));
+  BookingHistoryEntry leida(String json) {
+    final r = parseBookingHistoryEntry(jsonDecode(json));
     if (r == null) fail('la reserva de prueba no se lee');
     return r;
   }
@@ -70,7 +77,7 @@ void main() {
         ),
         'GET /espacios/catalogo': (200, catalogoJson),
       });
-      await montar(tester, detalle(leida(_reserva()), api), tema: temaOscuro);
+      await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
       expect(find.text('Notificación enviada al usuario'), findsOneWidget);
@@ -82,7 +89,7 @@ void main() {
       tester,
     ) async {
       final api = apiRutas({'GET /espacios/catalogo': (200, catalogoJson)});
-      await montar(tester, detalle(leida(_reserva()), api), tema: temaOscuro);
+      await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
       expect(find.text('Fútbol'), findsOneWidget);
@@ -92,7 +99,7 @@ void main() {
     testWidgets('la flecha tiene nombre accesible', (tester) async {
       final semantica = tester.ensureSemantics();
       final api = apiRutas({'GET /espacios/catalogo': (200, catalogoJson)});
-      await montar(tester, detalle(leida(_reserva()), api), tema: temaOscuro);
+      await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
@@ -132,7 +139,7 @@ void main() {
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
@@ -177,25 +184,24 @@ void main() {
         Builder(
           builder: (context) => Scaffold(
             body: TextButton(
-              onPressed: () => abrirFiltrosDeReservas(
+              onPressed: () => openBookingFilters(
                 context,
-                filtros: const FiltrosDeHistorial(),
-                sedes: const [],
-                catalogo: const Catalogo([]),
+                filters: const HistoryFilters(),
+                venues: const [],
+                catalog: const Catalog([]),
               ),
               child: const Text('ABRIR'),
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
     }
 
     bool aplicarHabilitado(WidgetTester tester) =>
-        tester.widget<BotonPrimario>(find.byType(BotonPrimario)).alTocar !=
-        null;
+        tester.widget<PrimaryButton>(find.byType(PrimaryButton)).onTap != null;
 
     testWidgets('una fecha que no existe marca el error y bloquea APLICAR', (
       tester,

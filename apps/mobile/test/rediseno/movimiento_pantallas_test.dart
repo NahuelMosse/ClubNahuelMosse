@@ -1,32 +1,31 @@
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'dart:async';
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/comun/campo_texto.dart';
-import 'package:clubnahuelmosse/comun/ficha_socio.dart';
-import 'package:clubnahuelmosse/comun/isotipo.dart';
-import 'package:clubnahuelmosse/comun/linea_del_dia.dart';
-import 'package:clubnahuelmosse/comun/marcador.dart';
-import 'package:clubnahuelmosse/comun/movimiento.dart';
-import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
-import 'package:clubnahuelmosse/comun/resultado.dart';
-import 'package:clubnahuelmosse/comun/selector.dart';
-import 'package:clubnahuelmosse/comun/snackbar.dart';
-import 'package:clubnahuelmosse/comun/tile_deporte.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/reservas/confirmar_cancelacion.dart';
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/reservas/pantalla_reserva_confirmada.dart';
-import 'package:clubnahuelmosse/reservas/reservas.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/sesion/tarjeta_cuenta.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro_exitoso.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/common/club_timezone.dart';
+import 'package:clubnahuelmosse/common/skeleton.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_greeting.dart';
+import 'package:clubnahuelmosse/common/text_field.dart';
+import 'package:clubnahuelmosse/common/member_profile.dart';
+import 'package:clubnahuelmosse/common/logo_mark.dart';
+import 'package:clubnahuelmosse/common/day_timeline.dart';
+import 'package:clubnahuelmosse/common/marker.dart';
+import 'package:clubnahuelmosse/common/motion.dart';
+import 'package:clubnahuelmosse/common/pending_booking.dart';
+import 'package:clubnahuelmosse/common/result.dart';
+import 'package:clubnahuelmosse/common/selector.dart';
+import 'package:clubnahuelmosse/common/snackbar.dart';
+import 'package:clubnahuelmosse/common/sport_tile.dart';
+import 'package:clubnahuelmosse/common/error_dialog.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/cancel_confirmation.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/booking_confirmed_screen.dart';
+import 'package:clubnahuelmosse/features/bookings/domain/booking.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -40,6 +39,13 @@ import '../notificaciones_test.dart'
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
 import '../soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
+import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/features/session/presentation/account_card.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_done_screen.dart';
 
 Duration _ms(int n) => Duration(milliseconds: n);
 
@@ -57,7 +63,7 @@ Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
   await tester.pumpWidget(
     MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: temaOscuro,
+      theme: darkTheme,
       locale: const Locale('es', 'AR'),
       supportedLocales: const [Locale('es', 'AR')],
       localizationsDelegates: GlobalMaterialLocalizations.delegates,
@@ -92,15 +98,15 @@ Future<void> _hastaQue(WidgetTester tester, bool Function() condicion) async {
   expect(condicion(), isTrue);
 }
 
-/// Los `Aparecer` que envuelven a [f], del más cercano al más lejano.
-List<Aparecer> _aparecedores(WidgetTester tester, Finder f) => tester
-    .widgetList<Aparecer>(find.ancestor(of: f, matching: find.byType(Aparecer)))
+/// Los `FadeIn` que envuelven a [f], del más cercano al más lejano.
+List<FadeIn> _aparecedores(WidgetTester tester, Finder f) => tester
+    .widgetList<FadeIn>(find.ancestor(of: f, matching: find.byType(FadeIn)))
     .toList();
 
-/// El `Aparecer` que envuelve a [f] y cumple [cumple].
-Finder _aparecerQue(Finder f, bool Function(Aparecer) cumple) => find.ancestor(
+/// El `FadeIn` que envuelve a [f] y cumple [cumple].
+Finder _aparecerQue(Finder f, bool Function(FadeIn) cumple) => find.ancestor(
   of: f,
-  matching: find.byWidgetPredicate((w) => w is Aparecer && cumple(w)),
+  matching: find.byWidgetPredicate((w) => w is FadeIn && cumple(w)),
 );
 
 double _opacidad(WidgetTester tester, Finder aparecer) => tester
@@ -125,11 +131,11 @@ double _visibilidad(WidgetTester tester, Finder f) {
 }
 
 bool _todasEnSuFinal(WidgetTester tester) {
-  final cuantas = find.byType(Aparecer).evaluate().length;
+  final cuantas = find.byType(FadeIn).evaluate().length;
   return cuantas > 0 &&
       [
         for (var i = 0; i < cuantas; i++)
-          _opacidad(tester, find.byType(Aparecer).at(i)),
+          _opacidad(tester, find.byType(FadeIn).at(i)),
       ].every((o) => o == 1);
 }
 
@@ -164,12 +170,12 @@ void _noTiembla(List<double> recorrido, {String? motivo}) {
   expect(recorrido, everyElement(closeTo(0, 0.01)), reason: motivo);
 }
 
-Iterable<Temblor> _temblores(WidgetTester tester, Finder f) => [
-  ...tester.widgetList<Temblor>(
-    find.descendant(of: f, matching: find.byType(Temblor)),
+Iterable<Shake> _temblores(WidgetTester tester, Finder f) => [
+  ...tester.widgetList<Shake>(
+    find.descendant(of: f, matching: find.byType(Shake)),
   ),
-  ...tester.widgetList<Temblor>(
-    find.ancestor(of: f, matching: find.byType(Temblor)),
+  ...tester.widgetList<Shake>(
+    find.ancestor(of: f, matching: find.byType(Shake)),
   ),
 ];
 
@@ -198,7 +204,7 @@ double _escalaDelPulso(WidgetTester tester) => tester
     .widget<ScaleTransition>(
       find
           .descendant(
-            of: find.byType(PulsoDeExito),
+            of: find.byType(SuccessPulse),
             matching: find.byType(ScaleTransition),
           )
           .first,
@@ -267,27 +273,29 @@ ClienteApi _apiSede(Completer<void>? espera) {
 
 // ---- las pantallas ----
 
-Widget _login({CredencialesFalsas? credenciales}) => PantallaInicioSesion(
-  sesion: Sesion(
-    credenciales: credenciales ?? CredencialesFalsas(),
-    api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+Widget _login({CredencialesFalsas? credenciales}) => LoginScreen(
+  session: Session(
+    repository: SessionRepository(
+      credentials: credenciales ?? CredencialesFalsas(),
+      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+    ),
   ),
-  pendiente: ReservaPendiente(),
+  pending: PendingBooking(),
 );
 
-Widget _resultado(TonoResultado tono) => PantallaResultado(
-  icono: Icons.check_circle_outline_rounded,
-  tono: tono,
-  titulo: 'Contraseña actualizada',
-  texto: 'Ya podés iniciar sesión con tu contraseña nueva.',
-  principal: 'VOLVER AL INICIO',
-  alTocarPrincipal: () {},
-  secundaria: 'Ver más tarde',
-  alTocarSecundaria: () {},
+Widget _resultado(ResultTone tono) => ResultScreen(
+  icon: Icons.check_circle_outline_rounded,
+  tone: tono,
+  title: 'Contraseña actualizada',
+  text: 'Ya podés iniciar sesión con tu contraseña nueva.',
+  primary: 'VOLVER AL INICIO',
+  onPrimaryTap: () {},
+  secondary: 'Ver más tarde',
+  onSecondaryTap: () {},
 );
 
-Reserva _reservaConfirmada() {
-  final reserva = Reserva.desdeJson(jsonDecode(reservaJson()));
+Booking _reservaConfirmada() {
+  final reserva = bookingFromJson(jsonDecode(reservaJson()));
   if (reserva == null) fail('la reserva de prueba no se lee');
   return reserva;
 }
@@ -355,11 +363,8 @@ void main() {
       expect(tester.element(find.text('Mis reservas')), same(titulo));
       expect(tester.element(find.text('Historial')), same(selector));
       expect(
-        find.descendant(
-          of: lista,
-          matching: find.byType(CircularProgressIndicator),
-        ),
-        findsOneWidget,
+        find.descendant(of: lista, matching: find.byType(Skeleton)),
+        findsWidgets,
       );
 
       espera.complete();
@@ -380,7 +385,11 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final espera = Completer<void>();
-      await montarUsuario(tester, api: _apiSede(espera), inicio: '/sedes/00000000-0000-7000-8000-000000000001');
+      await montarUsuario(
+        tester,
+        api: _apiSede(espera),
+        inicio: '/sedes/00000000-0000-7000-8000-000000000001',
+      );
       const tenis = 'Moron_Rivadavia_19850_Tenis_PDL_1';
       const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
       final titulo = tester.element(find.text('SEDE MORÓN'));
@@ -459,7 +468,7 @@ void main() {
 
       // La lista vieja es de Próximas: con Historial elegido no puede verse.
       expect(find.text('ACTIVA'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+      expect(find.byType(Skeleton), findsWidgets);
       expect(find.text('COMPLETADA'), findsNothing);
 
       espera.complete();
@@ -467,7 +476,7 @@ void main() {
       await tester.pump(_ms(200));
       expect(find.text('COMPLETADA'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNothing);
-      expect(find.byType(CircularProgressIndicator), findsNothing);
+      expect(find.byType(Skeleton), findsNothing);
     },
   );
 
@@ -478,23 +487,23 @@ void main() {
     (tester) async {
       await _montarLibre(tester, _login());
       Iterable<Duration> retrasos(Finder f) =>
-          _aparecedores(tester, f).map((a) => a.retraso);
+          _aparecedores(tester, f).map((a) => a.delay);
 
       expect(
         _aparecedores(
           tester,
-          find.byType(Isotipo),
-        ).any((a) => a.giro != 0 && a.desdeY < 0),
+          find.byType(LogoMark),
+        ).any((a) => a.turn != 0 && a.fromY < 0),
         isTrue,
         reason: 'el isotipo cae y gira',
       );
-      expect(retrasos(find.byType(CampoTexto).first), contains(_ms(460)));
+      expect(retrasos(find.byType(FormTextField).first), contains(_ms(460)));
       expect(retrasos(find.text('INICIAR SESIÓN')), contains(_ms(540)));
       expect(retrasos(find.text('¿No tenés cuenta?')), contains(_ms(620)));
 
       final formulario = _aparecerQue(
-        find.byType(CampoTexto).first,
-        (a) => a.retraso == _ms(460),
+        find.byType(FormTextField).first,
+        (a) => a.delay == _ms(460),
       ).first;
       expect(_opacidad(tester, formulario), 0);
       await tester.pump(_ms(400));
@@ -512,15 +521,18 @@ void main() {
       await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
       await _hastaQue(
         tester,
-        () => find.byType(TileDeporte).evaluate().isNotEmpty,
+        () => find.byType(SportTile).evaluate().isNotEmpty,
       );
 
-      expect(_aparecedores(tester, find.text('BUENOS DÍAS,')), isNotEmpty);
+      expect(
+        _aparecedores(tester, find.text(HomeGreeting.forHour(clubNow()))),
+        isNotEmpty,
+      );
       expect(
         _aparecedores(
           tester,
-          find.byType(Marcador),
-        ).any((a) => a.retraso == _ms(250) && a.escalaDesde == 0.85),
+          find.byType(AppMarker),
+        ).any((a) => a.delay == _ms(250) && a.scaleFrom == 0.85),
         isTrue,
         reason: 'el marcador a los 250 ms, creciendo de 0,85 a 1',
       );
@@ -528,23 +540,20 @@ void main() {
         _aparecedores(
           tester,
           find.text('TU PRÓXIMA RESERVA'),
-        ).any((a) => a.retraso == _ms(450) && a.desdeY > 0),
+        ).any((a) => a.delay == _ms(450) && a.fromY > 0),
         isTrue,
         reason: 'la próxima reserva a los 450 ms, bajando desde abajo',
       );
       expect(_aparecedores(tester, find.text('Buscar cancha')), isNotEmpty);
 
-      final tiles = find.byType(TileDeporte).evaluate().length;
+      final tiles = find.byType(SportTile).evaluate().length;
       expect(tiles, greaterThan(1));
       final retrasos = <Duration>[];
       for (var i = 0; i < tiles; i++) {
-        final tile = _aparecedores(
-          tester,
-          find.byType(TileDeporte).at(i),
-        ).first;
-        expect(tile.desdeX, 120, reason: 'tile $i');
-        expect(tile.giro, isNot(0), reason: 'tile $i');
-        retrasos.add(tile.retraso);
+        final tile = _aparecedores(tester, find.byType(SportTile).at(i)).first;
+        expect(tile.fromX, 120, reason: 'tile $i');
+        expect(tile.turn, isNot(0), reason: 'tile $i');
+        retrasos.add(tile.delay);
       }
       expect(retrasos.first, greaterThanOrEqualTo(_ms(700)));
       for (var i = 1; i < retrasos.length; i++) {
@@ -553,8 +562,8 @@ void main() {
 
       // El reloj arrancó con los datos: el marcador espera sus 250 ms.
       final marcador = _aparecerQue(
-        find.byType(Marcador),
-        (a) => a.retraso == _ms(250),
+        find.byType(AppMarker),
+        (a) => a.delay == _ms(250),
       ).first;
       expect(_opacidad(tester, marcador), 0);
       await tester.pump(_ms(200));
@@ -571,20 +580,20 @@ void main() {
   ) async {
     await _montarLibre(
       tester,
-      PantallaMiPerfil(
-        sesion: SesionFalsa(perfilUsuario),
-        apariencia: Apariencia.enMemoria(),
+      MyProfileScreen(
+        session: SesionFalsa(perfilUsuario),
+        appearance: Appearance.inMemory(),
       ),
     );
     await _hastaQue(
       tester,
-      () => find.byType(FichaSocio).evaluate().isNotEmpty,
+      () => find.byType(MemberProfile).evaluate().isNotEmpty,
     );
 
-    final ficha = _aparecedores(tester, find.byType(FichaSocio));
+    final ficha = _aparecedores(tester, find.byType(MemberProfile));
     expect(
       ficha.any(
-        (a) => a.desdeY == -24 && a.giro != 0 && a.curva == Movimiento.suave,
+        (a) => a.fromY == -24 && a.turn != 0 && a.curve == AppMotion.smooth,
       ),
       isTrue,
       reason: 'la ficha baja 24 girando, con la curva suave',
@@ -594,16 +603,16 @@ void main() {
     for (final titulo in ['DATOS PERSONALES', 'SEGURIDAD', 'APARIENCIA']) {
       final envolventes = _aparecedores(tester, find.text(titulo));
       expect(envolventes, isNotEmpty, reason: titulo);
-      retrasos.add(envolventes.first.retraso);
+      retrasos.add(envolventes.first.delay);
     }
     final cierre = _aparecedores(tester, find.text('CERRAR SESIÓN'));
     expect(cierre, isNotEmpty);
-    retrasos.add(cierre.first.retraso);
+    retrasos.add(cierre.first.delay);
     for (var i = 1; i < retrasos.length; i++) {
       expect(retrasos[i], greaterThan(retrasos[i - 1]), reason: 'bloque $i');
     }
     expect(
-      ficha.map((a) => a.retraso).reduce((a, b) => a < b ? a : b),
+      ficha.map((a) => a.delay).reduce((a, b) => a < b ? a : b),
       lessThanOrEqualTo(retrasos.first),
     );
   });
@@ -623,7 +632,7 @@ void main() {
       );
       await _hastaQue(
         tester,
-        () => find.byType(TileDeporte).evaluate().isNotEmpty,
+        () => find.byType(SportTile).evaluate().isNotEmpty,
       );
       expect(
         _todasEnSuFinal(tester),
@@ -636,14 +645,14 @@ void main() {
       // Otros datos: la pantalla se vacía y vuelve a leer.
       datos.value = 1;
       await tester.pump();
-      expect(find.byType(TileDeporte), findsNothing);
+      expect(find.byType(SportTile), findsNothing);
       await _hastaQue(
         tester,
-        () => find.byType(TileDeporte).evaluate().isNotEmpty,
+        () => find.byType(SportTile).evaluate().isNotEmpty,
       );
 
       // Los bloques nuevos ya están en su final, sin volver a entrar.
-      expect(find.byType(Aparecer), findsWidgets);
+      expect(find.byType(FadeIn), findsWidgets);
       expect(_todasEnSuFinal(tester), isTrue);
       expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
     },
@@ -663,9 +672,9 @@ void main() {
           child: StatefulBuilder(
             builder: (context, set) {
               reconstruir = set;
-              return CampoTexto(
-                etiquetaAccesible: 'Correo',
-                controlador: controlador,
+              return FormTextField(
+                semanticLabel: 'Correo',
+                controller: controlador,
                 error: error,
               );
             },
@@ -673,7 +682,7 @@ void main() {
         ),
       );
       final campo = find.descendant(
-        of: find.byType(CampoTexto),
+        of: find.byType(FormTextField),
         matching: find.byType(TextField),
       );
       final reposo = tester.getTopLeft(campo).dx;
@@ -687,8 +696,8 @@ void main() {
       expect(
         _temblores(
           tester,
-          find.byType(CampoTexto),
-        ).any((t) => t.disparador == error),
+          find.byType(FormTextField),
+        ).any((t) => t.trigger == error),
         isTrue,
         reason: 'el disparador es el error',
       );
@@ -715,13 +724,13 @@ void main() {
         child: StatefulBuilder(
           builder: (context, set) {
             reconstruir = set;
-            return CampoSelector(
-              etiqueta: 'DEPORTE',
-              etiquetaAccesible: 'Deporte',
-              valor: null,
+            return SelectorField(
+              label: 'DEPORTE',
+              semanticLabel: 'Deporte',
+              value: null,
               placeholder: 'Elegí un deporte',
-              icono: Icons.expand_more_rounded,
-              alTocar: () {},
+              icon: Icons.expand_more_rounded,
+              onTap: () {},
               error: error,
             );
           },
@@ -729,7 +738,7 @@ void main() {
       ),
     );
     final selector = find.descendant(
-      of: find.byType(CampoSelector),
+      of: find.byType(SelectorField),
       matching: find.byType(InkWell),
     );
     final reposo = tester.getTopLeft(selector).dx;
@@ -742,8 +751,8 @@ void main() {
     expect(
       _temblores(
         tester,
-        find.byType(CampoSelector),
-      ).any((t) => t.disparador == error),
+        find.byType(SelectorField),
+      ).any((t) => t.trigger == error),
       isTrue,
       reason: 'el disparador es el error',
     );
@@ -760,7 +769,7 @@ void main() {
     'el aviso de credenciales inválidas tiembla cada vez que aparece y el mismo error no vuelve a hacer temblar el campo @RED-04-ASM-10',
     (tester) async {
       final credenciales = CredencialesFalsas(
-        alIngresar: (_, _) async => throw const CredencialesInvalidas(),
+        alIngresar: (_, _) async => throw const InvalidCredentials(),
       );
       await _montarLibre(tester, _login(credenciales: credenciales));
       await tester.pumpAndSettle();
@@ -783,16 +792,16 @@ void main() {
         await tester.tap(find.text('INICIAR SESIÓN'));
         await _hastaQue(
           tester,
-          () => find.text(mensajeCredencialesInvalidas).evaluate().isNotEmpty,
+          () => find.text(invalidCredentialsMessage).evaluate().isNotEmpty,
         );
         await _arrancar(tester);
         _tiembla(
-          await _recorrido(tester, find.byType(SnackbarError)),
+          await _recorrido(tester, find.byType(ErrorSnackbar)),
           motivo: 'el aviso, $vez.ª vez',
         );
         await tester.tap(find.byTooltip('Cerrar aviso'));
         await tester.pumpAndSettle();
-        expect(find.text(mensajeCredencialesInvalidas), findsNothing);
+        expect(find.text(invalidCredentialsMessage), findsNothing);
       }
       expect(credenciales.intentos, hasLength(2));
     },
@@ -801,13 +810,13 @@ void main() {
   testWidgets(
     'el resultado de éxito anima su círculo y escalona su texto @RED-04-S8',
     (tester) async {
-      await _montarLibre(tester, _resultado(TonoResultado.exito));
-      final paleta = tester.element(find.byType(PantallaResultado)).paleta;
+      await _montarLibre(tester, _resultado(ResultTone.success));
+      final paleta = tester.element(find.byType(ResultScreen)).palette;
 
-      final pulso = tester.widget<PulsoDeExito>(find.byType(PulsoDeExito));
-      expect(pulso.icono, Icons.check_circle_outline_rounded);
-      expect(pulso.fondo, paleta.stateSuccessMuted);
-      expect(pulso.tinta, paleta.stateSuccessInk);
+      final pulso = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
+      expect(pulso.icon, Icons.check_circle_outline_rounded);
+      expect(pulso.background, paleta.stateSuccessMuted);
+      expect(pulso.ink, paleta.stateSuccessInk);
       expect(_escalaDelPulso(tester), closeTo(0.4, 1e-6));
       await tester.pump(_ms(550));
       expect(_escalaDelPulso(tester), closeTo(1, 1e-3));
@@ -820,7 +829,7 @@ void main() {
       ]) {
         final entrada = _aparecedores(tester, finder);
         expect(
-          entrada.any((a) => a.retraso == _ms(retraso) && a.desdeY == 14),
+          entrada.any((a) => a.delay == _ms(retraso) && a.fromY == 14),
           isTrue,
           reason: 'a los $retraso ms',
         );
@@ -833,19 +842,19 @@ void main() {
   testWidgets(
     'el resultado de aviso y el de peligro también animan su círculo @RED-04-S8',
     (tester) async {
-      for (final tono in [TonoResultado.aviso, TonoResultado.peligro]) {
+      for (final tono in [ResultTone.warning, ResultTone.danger]) {
         await _montarLibre(tester, _resultado(tono));
-        final paleta = tester.element(find.byType(PantallaResultado)).paleta;
+        final paleta = tester.element(find.byType(ResultScreen)).palette;
         final (fondo, tinta) = switch (tono) {
-          TonoResultado.aviso => (paleta.bgSurfaceRaised, paleta.textSecondary),
+          ResultTone.warning => (paleta.bgSurfaceRaised, paleta.textSecondary),
           _ => (paleta.stateDangerMuted, paleta.stateDangerInk),
         };
 
-        final pulso = tester.widget<PulsoDeExito>(find.byType(PulsoDeExito));
-        expect(pulso.fondo, fondo, reason: '$tono');
-        expect(pulso.tinta, tinta, reason: '$tono');
+        final pulso = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
+        expect(pulso.background, fondo, reason: '$tono');
+        expect(pulso.ink, tinta, reason: '$tono');
         expect(_escalaDelPulso(tester), closeTo(0.4, 1e-6), reason: '$tono');
-        expect(_radioDeRecorte(tester, find.byType(PulsoDeExito)), _cero);
+        expect(_radioDeRecorte(tester, find.byType(SuccessPulse)), _cero);
         await tester.pump(_ms(550));
         expect(_escalaDelPulso(tester), closeTo(1, 1e-3), reason: '$tono');
         await tester.pumpAndSettle();
@@ -857,19 +866,19 @@ void main() {
   testWidgets(
     '«el tilde se dibuja»: el registro exitoso revela su ícono con la misma pieza @RED-04-ASM-08',
     (tester) async {
-      await _montarLibre(tester, const PantallaRegistroExitoso());
+      await _montarLibre(tester, const RegistrationDoneScreen());
       final paleta = tester
-          .element(find.byType(PantallaRegistroExitoso))
-          .paleta;
+          .element(find.byType(RegistrationDoneScreen))
+          .palette;
 
-      final pulso = tester.widget<PulsoDeExito>(find.byType(PulsoDeExito));
-      expect(pulso.icono, Icons.check_circle_outline_rounded);
-      expect(pulso.fondo, paleta.stateSuccessMuted);
-      expect(pulso.tinta, paleta.stateSuccessInk);
+      final pulso = tester.widget<SuccessPulse>(find.byType(SuccessPulse));
+      expect(pulso.icon, Icons.check_circle_outline_rounded);
+      expect(pulso.background, paleta.stateSuccessMuted);
+      expect(pulso.ink, paleta.stateSuccessInk);
       expect(_escalaDelPulso(tester), closeTo(0.4, 1e-6));
 
       // El ícono se revela con un recorte que crece.
-      final icono = find.byType(PulsoDeExito);
+      final icono = find.byType(SuccessPulse);
       expect(_radioDeRecorte(tester, icono), _cero);
       await tester.pump(_ms(150));
       expect(_radioDeRecorte(tester, icono), _cero);
@@ -881,7 +890,7 @@ void main() {
       expect(_radioDeRecorte(tester, icono), closeTo(completo, 1e-6));
       expect(_escalaDelPulso(tester), _uno);
 
-      // El título y el texto escalonan como en PantallaResultado.
+      // El título y el texto escalonan como en ResultScreen.
       expect(_aparecedores(tester, find.text('¡Cuenta creada!')), isNotEmpty);
     },
   );
@@ -891,9 +900,9 @@ void main() {
   ) async {
     await _montarLibre(
       tester,
-      PantallaReservaConfirmada(reserva: _reservaConfirmada()),
+      BookingConfirmedScreen(reserva: _reservaConfirmada()),
     );
-    expect(find.byType(Festejo), findsOneWidget);
+    expect(find.byType(Celebration), findsOneWidget);
     final titulo = find.text('¡Reserva confirmada!');
     final comprobante = find.text('Horario');
 
@@ -923,11 +932,12 @@ void main() {
       await montarUsuario(
         tester,
         api: apiRutas(rutasDeSedes()),
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+        inicio:
+            '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       );
-      final linea = find.byType(LineaDelDia);
+      final linea = find.byType(DayTimeline);
       expect(
-        find.ancestor(of: linea, matching: find.byType(Latido)),
+        find.ancestor(of: linea, matching: find.byType(Heartbeat)),
         findsOneWidget,
       );
       final base = _ancho(tester, linea);
@@ -969,19 +979,15 @@ void main() {
       Stack(
         children: [
           const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-          PanelDeAvisos(
-            centro: centro,
-            ahora: () => ahoraClub,
-            alAbrir: (_) {},
-          ),
+          NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
         ],
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
     api
       ..avisos = [recordatorio]
-      ..noLeidas = 1;
-    await tester.runAsync(centro.cargar);
+      ..unread = 1;
+    await tester.runAsync(centro.load);
     await tester.pump();
     await tester.pump();
 
@@ -991,7 +997,7 @@ void main() {
       _aparecedores(
         tester,
         titulo,
-      ).any((a) => a.desdeY == -150 && a.curva == Movimiento.rebote),
+      ).any((a) => a.fromY == -150 && a.curve == AppMotion.bounce),
       isTrue,
       reason: 'baja desde −150 con rebote',
     );
@@ -1013,15 +1019,15 @@ void main() {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                BotonPrimario(texto: 'PRIMARIO', alTocar: () {}),
-                BotonTexto(texto: 'TEXTO', alTocar: () {}),
-                BotonContorno(texto: 'CONTORNO', alTocar: () {}),
-                BotonPeligro(texto: 'PELIGRO', alTocar: () {}),
+                PrimaryButton(label: 'PRIMARIO', onTap: () {}),
+                TextActionButton(label: 'TEXTO', onTap: () {}),
+                OutlineButton(label: 'CONTORNO', onTap: () {}),
+                DangerButton(label: 'PELIGRO', onTap: () {}),
               ],
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
 
       for (final texto in ['PRIMARIO', 'TEXTO', 'CONTORNO', 'PELIGRO']) {
@@ -1058,11 +1064,11 @@ void main() {
       // El festejo.
       await _montarLibre(
         tester,
-        PantallaReservaConfirmada(reserva: _reservaConfirmada()),
+        BookingConfirmedScreen(reserva: _reservaConfirmada()),
       );
       final titulo = find.text('¡Reserva confirmada!');
       final comprobante = find.text('Horario');
-      expect(find.byType(Festejo), findsOneWidget);
+      expect(find.byType(Celebration), findsOneWidget);
       final ancho = _ancho(tester, titulo);
       expect(_visibilidad(tester, comprobante), _uno);
       expect(tester.binding.hasScheduledFrame, isFalse);
@@ -1079,18 +1085,14 @@ void main() {
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            PanelDeAvisos(
-              centro: centro,
-              ahora: () => ahoraClub,
-              alAbrir: (_) {},
-            ),
+            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
           ],
         ),
       );
       api
         ..avisos = [recordatorio]
-        ..noLeidas = 1;
-      await tester.runAsync(centro.cargar);
+        ..unread = 1;
+      await tester.runAsync(centro.load);
       await tester.pump();
       await tester.pump();
       final aviso = find.text('NOTIFICACIONES');
@@ -1104,7 +1106,7 @@ void main() {
       await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
       await _hastaQue(
         tester,
-        () => find.byType(TileDeporte).evaluate().isNotEmpty,
+        () => find.byType(SportTile).evaluate().isNotEmpty,
       );
       expect(_todasEnSuFinal(tester), isTrue);
     },
@@ -1113,9 +1115,9 @@ void main() {
   // ---- T5: diálogos y tarjeta de la cuenta ----
 
   testWidgets(
-    'un diálogo de MarcoDeDialogo entra con fundido y escala de 0,88 a 1 @RED-04-S11',
+    'un diálogo de DialogFrame entra con fundido y escala de 0,88 a 1 @RED-04-S11',
     (tester) async {
-      await montar(tester, _cancelacion(), tema: temaOscuro);
+      await montar(tester, _cancelacion(), tema: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
@@ -1123,17 +1125,17 @@ void main() {
       expect(titulo, findsOneWidget);
       expect(
         find.descendant(
-          of: find.byType(MarcoDeDialogo),
-          matching: find.byWidgetPredicate((w) => w is Aparecer),
+          of: find.byType(DialogFrame),
+          matching: find.byWidgetPredicate((w) => w is FadeIn),
         ),
         findsWidgets,
         reason: 'el diálogo se anima dentro del marco',
       );
-      final entrada = _aparecerQue(titulo, (a) => a.escalaDesde == 0.88);
+      final entrada = _aparecerQue(titulo, (a) => a.scaleFrom == 0.88);
       expect(entrada, findsOneWidget);
-      final aparecer = tester.widget<Aparecer>(entrada);
-      expect(aparecer.desdeY, 0);
-      expect(aparecer.curva, Movimiento.rapida);
+      final aparecer = tester.widget<FadeIn>(entrada);
+      expect(aparecer.fromY, 0);
+      expect(aparecer.curve, AppMotion.fast);
 
       final alPrincipio = _ancho(tester, titulo);
       expect(_opacidad(tester, entrada), 0);
@@ -1153,25 +1155,25 @@ void main() {
         tester,
         _Anfitrion(
           abrir: (context) => unawaited(
-            elegirOpcion<int>(
+            pickOption<int>(
               context,
-              titulo: 'Elegí el deporte',
-              opciones: const [(1, 'Fútbol'), (2, 'Tenis')],
+              title: 'Elegí el deporte',
+              options: const [(1, 'Fútbol'), (2, 'Tenis')],
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
       final titulo = find.text('Elegí el deporte');
       expect(titulo, findsOneWidget);
-      final entrada = _aparecerQue(titulo, (a) => a.escalaDesde == 0.88);
+      final entrada = _aparecerQue(titulo, (a) => a.scaleFrom == 0.88);
       expect(entrada, findsOneWidget);
-      final aparecer = tester.widget<Aparecer>(entrada);
-      expect(aparecer.desdeY, 0);
-      expect(aparecer.curva, Movimiento.rapida);
+      final aparecer = tester.widget<FadeIn>(entrada);
+      expect(aparecer.fromY, 0);
+      expect(aparecer.curve, AppMotion.fast);
 
       final alPrincipio = _ancho(tester, titulo);
       await tester.pumpAndSettle();
@@ -1185,18 +1187,20 @@ void main() {
       await montar(
         tester,
         Scaffold(
-          body: Center(child: BotonCuenta(sesion: SesionFalsa(perfilUsuario))),
+          body: Center(
+            child: AccountButton(session: SesionFalsa(perfilUsuario)),
+          ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
-      await tester.tap(find.byType(BotonCuenta));
+      await tester.tap(find.byType(AccountButton));
       await tester.pump();
 
       final nombre = find.text('Nahuel Mosse');
       expect(nombre, findsOneWidget);
       final entrada = _aparecerQue(
         nombre,
-        (a) => a.desdeY == -16 && a.duracion == _ms(350),
+        (a) => a.fromY == -16 && a.duration == _ms(350),
       );
       expect(entrada, findsOneWidget);
 
@@ -1216,7 +1220,7 @@ void main() {
   testWidgets(
     'los botones de un diálogo se achican mientras se presionan @RED-04-S13',
     (tester) async {
-      await montar(tester, _cancelacion(), tema: temaOscuro);
+      await montar(tester, _cancelacion(), tema: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
 
@@ -1249,12 +1253,12 @@ void main() {
     'con reducir movimiento el diálogo aparece entero en el primer cuadro @RED-04-S14',
     (tester) async {
       _reducirMovimiento(tester);
-      await montar(tester, _cancelacion(), tema: temaOscuro);
+      await montar(tester, _cancelacion(), tema: darkTheme);
       await tester.tap(find.text('ABRIR'));
       await tester.pump();
 
       final titulo = find.text('¿Cancelar la reserva?');
-      final entrada = _aparecerQue(titulo, (a) => a.escalaDesde == 0.88);
+      final entrada = _aparecerQue(titulo, (a) => a.scaleFrom == 0.88);
       expect(entrada, findsOneWidget);
       expect(_opacidad(tester, entrada), 1);
       final alPrincipio = _ancho(tester, titulo);
@@ -1271,18 +1275,18 @@ void main() {
       final pantallas = <String, Widget>{
         'login': _login(),
         'inicio': inicioFalso(SesionFalsa(perfilUsuario)),
-        'mi perfil': PantallaMiPerfil(
-          sesion: SesionFalsa(perfilUsuario),
-          apariencia: Apariencia.enMemoria(),
+        'mi perfil': MyProfileScreen(
+          session: SesionFalsa(perfilUsuario),
+          appearance: Appearance.inMemory(),
         ),
-        'reserva confirmada': PantallaReservaConfirmada(
+        'reserva confirmada': BookingConfirmedScreen(
           reserva: _reservaConfirmada(),
         ),
       };
       for (final MapEntry(key: nombre, value: pantalla) in pantallas.entries) {
         // Como los helpers de test/capturas: `montar` termina con pumpAndSettle.
-        await montar(tester, pantalla, tema: temaOscuro);
-        expect(find.byType(Aparecer), findsWidgets, reason: nombre);
+        await montar(tester, pantalla, tema: darkTheme);
+        expect(find.byType(FadeIn), findsWidgets, reason: nombre);
         expect(_todasEnSuFinal(tester), isTrue, reason: nombre);
         expect(tester.binding.hasScheduledFrame, isFalse, reason: nombre);
         await _desmontar(tester);

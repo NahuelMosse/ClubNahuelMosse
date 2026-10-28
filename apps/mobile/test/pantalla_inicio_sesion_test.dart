@@ -1,10 +1,12 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/pending_booking.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -19,18 +21,18 @@ void main() {
     CredencialesFalsas credenciales, {
     ClienteApi? api,
   }) async {
-    final sesion = Sesion(
-      credenciales: credenciales,
-      api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
+    final sesion = Session(
+      repository: SessionRepository(
+        credentials: credenciales,
+        api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
+      ),
     );
     final rutas = GoRouter(
       routes: [
         GoRoute(
           path: '/',
-          builder: (_, _) => PantallaInicioSesion(
-            sesion: sesion,
-            pendiente: ReservaPendiente(),
-          ),
+          builder: (_, _) =>
+              LoginScreen(session: sesion, pending: PendingBooking()),
         ),
         GoRoute(path: '/inicio', builder: (_, _) => const Text('HOME')),
         GoRoute(path: '/admin', builder: (_, _) => const Text('PANEL')),
@@ -45,7 +47,7 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      MaterialApp.router(theme: temaOscuro, routerConfig: rutas),
+      MaterialApp.router(theme: darkTheme, routerConfig: rutas),
     );
     await tester.pumpAndSettle();
   }
@@ -116,16 +118,16 @@ void main() {
     await montarLogin(
       tester,
       CredencialesFalsas(
-        alIngresar: (_, _) async => throw const CredencialesInvalidas(),
+        alIngresar: (_, _) async => throw const InvalidCredentials(),
       ),
     );
 
     await ingresar(tester, 'nahuel@correo.com', 'Mala1234');
-    expect(find.text(mensajeCredencialesInvalidas), findsOneWidget);
+    expect(find.text(invalidCredentialsMessage), findsOneWidget);
 
     await tester.tap(find.byTooltip('Cerrar aviso'));
     await tester.pumpAndSettle();
-    expect(find.text(mensajeCredencialesInvalidas), findsNothing);
+    expect(find.text(invalidCredentialsMessage), findsNothing);
     semantica.dispose();
   });
 
@@ -142,9 +144,9 @@ void main() {
 
     await ingresar(tester, 'baja@correo.com', 'Clave1234');
 
-    expect(find.text(mensajeCredencialesInvalidas), findsOneWidget);
+    expect(find.text(invalidCredentialsMessage), findsOneWidget);
     expect(credenciales.salidas, 1);
-    expect(credenciales.hayCuenta, isFalse);
+    expect(credenciales.hasAccount, isFalse);
     semantica.dispose();
   });
 
@@ -163,7 +165,7 @@ void main() {
 
       expect(find.text('Error del servidor'), findsOneWidget);
       expect(find.text('REINTENTAR'), findsNothing);
-      expect(credenciales.hayCuenta, isFalse);
+      expect(credenciales.hasAccount, isFalse);
       await tester.tap(find.text('ACEPTAR'));
       await tester.pumpAndSettle();
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);

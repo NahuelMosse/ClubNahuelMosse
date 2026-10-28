@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/notificaciones/centro.dart';
-import 'package:clubnahuelmosse/notificaciones/notificacion.dart';
-import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
-import 'package:clubnahuelmosse/notificaciones/sistema.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/notification_kind.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/notification_system.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notifications_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,45 +19,45 @@ const _idRecordatorio = '00000000-0000-7000-8000-000000000003';
 
 /// Un sistema donde el test decide cuándo la persona toca un aviso de la bandeja.
 class SistemaConToques extends SistemaFalso {
-  final toques = StreamController<AvisoTocado>.broadcast();
+  final toques = StreamController<NoticeTapped>.broadcast();
 
   @override
-  Stream<AvisoTocado> get alTocar => toques.stream;
+  Stream<NoticeTapped> get onTap => toques.stream;
 }
 
-Future<(ApiFalsa, CentroDeNotificaciones)> _abrirCentro(
+Future<(ApiFalsa, NotificationCenter)> _abrirCentro(
   WidgetTester tester, {
   required List<String> avisos,
 }) async {
   final api = ApiFalsa()
     ..avisos = avisos
-    ..noLeidas = avisos.length;
+    ..unread = avisos.length;
   final sesion = SesionFalsa(perfilUsuario);
   final centro = centroDe(api, sesion);
   await montar(
     tester,
-    PantallaNotificaciones(
-      centro: centro,
-      sesion: sesion,
-      ahora: () => ahoraClub,
-      alAbrir: (_, _) {},
+    NotificationsScreen(
+      center: centro,
+      session: sesion,
+      now: () => ahoraClub,
+      onOpen: (_, _) {},
     ),
-    tema: temaOscuro,
+    tema: darkTheme,
   );
   return (api, centro);
 }
 
 /// La app entera con [avisos] sin leer y un sistema donde el test toca los avisos.
-Future<(ApiFalsa, SistemaConToques, CentroDeNotificaciones)> _montarApp(
+Future<(ApiFalsa, SistemaConToques, NotificationCenter)> _montarApp(
   WidgetTester tester,
   List<String> avisos,
 ) async {
   final api = ApiFalsa()
     ..avisos = avisos
-    ..noLeidas = avisos.length;
+    ..unread = avisos.length;
   final sistema = SistemaConToques();
   addTearDown(sistema.toques.close);
-  late CentroDeNotificaciones centro;
+  late NotificationCenter centro;
   await montarUsuario(
     tester,
     inicio: '/inicio',
@@ -83,13 +83,13 @@ void main() {
           tester,
           avisos: [recordatorio],
         );
-        expect(centro.noLeidas, 1);
+        expect(centro.unread, 1);
 
         await _salir(tester);
 
         expect(api.de('POST', '/notificaciones/leer-todas'), hasLength(1));
-        expect(centro.noLeidas, 0);
-        expect(centro.lista.every((n) => n.leida), isTrue);
+        expect(centro.unread, 0);
+        expect(centro.list.every((n) => n.read), isTrue);
       },
     );
 
@@ -103,7 +103,7 @@ void main() {
         );
 
         expect(find.bySemanticsLabel(RegExp('sin leer')), findsOneWidget);
-        expect(centro.noLeidas, 1);
+        expect(centro.unread, 1);
         expect(api.de('POST', '/notificaciones/leer-todas'), isEmpty);
         semantica.dispose();
       },
@@ -120,12 +120,12 @@ void main() {
 
         await _salir(tester);
 
-        expect(centro.noLeidas, 0);
-        expect(centro.lista.every((n) => n.leida), isTrue);
+        expect(centro.unread, 0);
+        expect(centro.list.every((n) => n.read), isTrue);
 
         api.caida = false;
-        await tester.runAsync(centro.cargar);
-        expect(centro.noLeidas, 1);
+        await tester.runAsync(centro.load);
+        expect(centro.unread, 1);
       },
     );
   });
@@ -152,10 +152,7 @@ void main() {
         ]);
 
         sistema.toques.add(
-          AvisoTocado(
-            tipo: TipoDeNotificacion.recordatorio,
-            reservaId: _reserva1,
-          ),
+          NoticeTapped(kind: NotificationKind.reminder, bookingId: _reserva1),
         );
         await tester.pumpAndSettle();
 
@@ -164,7 +161,7 @@ void main() {
             .map((p) => p.url.path)
             .toList();
         expect(leidas, ['/notificaciones/$_idRecordatorio/leer']);
-        expect(centro.sinLeer, hasLength(2));
+        expect(centro.unreadList, hasLength(2));
         expect(find.text('Mis reservas'), findsOneWidget);
       },
     );
@@ -174,7 +171,7 @@ void main() {
       (tester) async {
         final (api, _, centro) = await _montarApp(tester, [recordatorio]);
 
-        expect(centro.noLeidas, 1);
+        expect(centro.unread, 1);
         expect(
           api.de('POST', '/notificaciones/$_idRecordatorio/leer'),
           isEmpty,

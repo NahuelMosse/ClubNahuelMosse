@@ -2,10 +2,12 @@ import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/sedes/sede.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
+import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
+import 'package:clubnahuelmosse/features/venues/domain/venue_exceptions.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -16,34 +18,40 @@ import 'soporte/montar.dart';
 void main() {
   group('días de la semana', () {
     test('los tramos seguidos desde el lunes se nombran', () {
-      expect(diasDeLaSemana([7, 6, 5, 4, 3, 2, 1]), 'Lunes a domingo');
-      expect(diasDeLaSemana([1, 2, 3, 4, 5, 6]), 'Lunes a sábado');
-      expect(diasDeLaSemana([1, 2, 3, 4, 5]), 'Lunes a viernes');
+      expect(weekdaysLabel([7, 6, 5, 4, 3, 2, 1]), 'Lunes a domingo');
+      expect(weekdaysLabel([1, 2, 3, 4, 5, 6]), 'Lunes a sábado');
+      expect(weekdaysLabel([1, 2, 3, 4, 5]), 'Lunes a viernes');
     });
 
     test('los días sueltos van abreviados y en orden', () {
-      expect(diasDeLaSemana([5, 1, 3]), 'Lun, Mié, Vie');
-      expect(diasDeLaSemana([6, 7]), 'Sáb, Dom');
+      expect(weekdaysLabel([5, 1, 3]), 'Lun, Mié, Vie');
+      expect(weekdaysLabel([6, 7]), 'Sáb, Dom');
     });
   });
 
   group('Sedes', () {
-    Sedes sedes(ClienteApi api) =>
-        Sedes(api: api, sesion: SesionFalsa(perfilAdmin));
+    Venues sedes(ClienteApi api) => Venues(
+      repository: VenuesRepository(api: api, session: SesionFalsa(perfilAdmin)),
+    );
 
     test('lee las sedes activas', () async {
       final api = apiRutas({
         'GET /sedes': (200, '{"sedes": [$sedeMoronJson, $sedeHaedoJson]}'),
       });
-      final leidas = await sedes(api).activas();
-      expect([for (final s in leidas) s.nombre], ['Sede Morón', 'Sede Haedo']);
-      expect(leidas.first.diasLegibles, 'Lunes a sábado');
-      expect(leidas.first.canchas, 1);
+      final leidas = await sedes(api).repository.active();
+      expect([for (final s in leidas) s.name], ['Sede Morón', 'Sede Haedo']);
+      expect(leidas.first.daysLabel, 'Lunes a sábado');
+      expect(leidas.first.spaceCount, 1);
     });
 
     test('una respuesta que no se entiende es un error del servidor', () {
-      final api = apiRutas({'GET /sedes': (200, '{"sedes": [{"id": "00000000-0000-7000-8000-000000000001"}]}')});
-      expect(sedes(api).activas(), throwsA(isA<ErrorDelServidor>()));
+      final api = apiRutas({
+        'GET /sedes': (
+          200,
+          '{"sedes": [{"id": "00000000-0000-7000-8000-000000000001"}]}',
+        ),
+      });
+      expect(sedes(api).repository.active(), throwsA(isA<ErrorDelServidor>()));
     });
 
     test('el alta manda los datos y devuelve la sede guardada', () async {
@@ -51,12 +59,12 @@ void main() {
       final api = apiRutas({
         'POST /sedes': (201, sedeHaedoJson),
       }, pedidos: pedidos);
-      final sede = await sedes(api).darDeAlta(
-        nombre: 'Sede Haedo',
-        direccion: 'Av. Vergara 1850',
-        apertura: '08:00',
-        cierre: '23:00',
-        dias: const [1, 2, 3, 4, 5, 6, 7],
+      final sede = await sedes(api).create(
+        name: 'Sede Haedo',
+        address: 'Av. Vergara 1850',
+        opening: '08:00',
+        closing: '23:00',
+        days: const [1, 2, 3, 4, 5, 6, 7],
       );
       expect(sede.id, '00000000-0000-7000-8000-000000000005');
       expect(pedidos.single.headers['authorization'], 'Bearer token-falso');
@@ -69,12 +77,12 @@ void main() {
       });
     });
 
-    Future<Sede> alta(ClienteApi api) => sedes(api).darDeAlta(
-      nombre: 'Sede Haedo',
-      direccion: 'Av. Vergara 1850',
-      apertura: '08:00',
-      cierre: '23:00',
-      dias: const [1, 2, 3, 4, 5, 6, 7],
+    Future<Venue> alta(ClienteApi api) => sedes(api).create(
+      name: 'Sede Haedo',
+      address: 'Av. Vergara 1850',
+      opening: '08:00',
+      closing: '23:00',
+      days: const [1, 2, 3, 4, 5, 6, 7],
     );
 
     test('un nombre repetido vuelve con el mensaje del campo', () {
@@ -87,7 +95,7 @@ void main() {
       expect(
         alta(api),
         throwsA(
-          isA<SedeRechazada>().having((e) => e.errores, 'errores', {
+          isA<VenueRejected>().having((e) => e.errors, 'errores', {
             'nombre': 'Ya existe una sede con ese nombre',
           }),
         ),
@@ -96,7 +104,7 @@ void main() {
 
     test('sin sesión válida avisa que venció', () {
       final api = apiRutas({'POST /sedes': (401, '{}')});
-      expect(alta(api), throwsA(isA<SesionVencida>()));
+      expect(alta(api), throwsA(isA<SessionExpired>()));
     });
 
     test('un 403 no es un alta: es un error', () {
@@ -439,9 +447,9 @@ void main() {
     await tester.pumpWidget(
       App(
         api: apiRutas({}),
-        sesion: SesionFalsa(perfilUsuario),
-        apariencia: Apariencia.enMemoria(),
-        inicio: '/admin/sedes/nueva',
+        session: SesionFalsa(perfilUsuario),
+        appearance: Appearance.inMemory(),
+        initialLocation: '/admin/sedes/nueva',
       ),
     );
     await tester.pumpAndSettle();

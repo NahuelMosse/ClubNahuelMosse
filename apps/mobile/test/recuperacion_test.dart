@@ -1,9 +1,9 @@
-import 'package:clubnahuelmosse/comun/apariencia.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/recuperacion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/session/data/password_recovery.dart';
+import 'package:clubnahuelmosse/features/session/presentation/forgot_password_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/new_password_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -31,14 +31,14 @@ void main() {
     );
     addTearDown(rutas.dispose);
     await tester.pumpWidget(
-      MaterialApp.router(theme: temaOscuro, routerConfig: rutas),
+      MaterialApp.router(theme: darkTheme, routerConfig: rutas),
     );
     await tester.pumpAndSettle();
   }
 
-  Recuperacion recuperacion(Map<String, (int, String)> respuestas) {
+  PasswordRecovery recuperacion(Map<String, (int, String)> respuestas) {
     pedidos = [];
-    return Recuperacion(apiRutas(respuestas, pedidos: pedidos));
+    return PasswordRecovery(apiRutas(respuestas, pedidos: pedidos));
   }
 
   bool habilitado(WidgetTester tester, String boton) =>
@@ -54,8 +54,8 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montarEnRutas(
           tester,
-          PantallaRecuperarContrasena(
-            recuperacion: recuperacion({'POST /recuperacion': (202, '')}),
+          ForgotPasswordScreen(
+            recovery: recuperacion({'POST /recuperacion': (202, '')}),
           ),
         );
         await tester.enterText(
@@ -79,8 +79,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        PantallaRecuperarContrasena(
-          recuperacion: recuperacion({'POST /recuperacion': (202, '')}),
+        ForgotPasswordScreen(
+          recovery: recuperacion({'POST /recuperacion': (202, '')}),
         ),
       );
       await tester.enterText(
@@ -92,7 +92,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Revisá tu correo'), findsOneWidget);
-      expect(find.text(avisoEnlaceEnviado), findsOneWidget);
+      expect(find.text(linkSentNotice), findsOneWidget);
       expect(pedidos.single.body, '{"correo":"nahuel@correo.com"}');
 
       await tester.tap(find.text('Reenviar el correo'));
@@ -111,8 +111,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        PantallaRecuperarContrasena(
-          recuperacion: recuperacion({'POST /recuperacion': (500, '')}),
+        ForgotPasswordScreen(
+          recovery: recuperacion({'POST /recuperacion': (500, '')}),
         ),
       );
       await tester.enterText(
@@ -129,12 +129,11 @@ void main() {
   });
 
   group('crear la contraseña nueva', () {
-    Widget pantalla(Map<String, (int, String)> respuestas) =>
-        PantallaNuevaContrasena(
-          recuperacion: recuperacion(respuestas),
-          sesion: SesionFalsa(null),
-          codigo: 'abc',
-        );
+    Widget pantalla(Map<String, (int, String)> respuestas) => NewPasswordScreen(
+      recovery: recuperacion(respuestas),
+      session: SesionFalsa(null),
+      code: 'abc',
+    );
 
     testWidgets('un enlace que ya no sirve lleva a pedir otro', (tester) async {
       final semantica = tester.ensureSemantics();
@@ -153,10 +152,10 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        PantallaNuevaContrasena(
-          recuperacion: recuperacion({}),
-          sesion: SesionFalsa(null),
-          codigo: '',
+        NewPasswordScreen(
+          recovery: recuperacion({}),
+          session: SesionFalsa(null),
+          code: '',
         ),
       );
       expect(find.text('El enlace no es válido'), findsOneWidget);
@@ -260,9 +259,9 @@ void main() {
         await tester.pumpWidget(
           App(
             api: api,
-            sesion: SesionFalsa(null),
-            apariencia: Apariencia.enMemoria(),
-            inicio: '/recuperar?codigo=viejo',
+            session: SesionFalsa(null),
+            appearance: Appearance.inMemory(),
+            initialLocation: '/recuperar?codigo=viejo',
           ),
         );
         await tester.pumpAndSettle();
@@ -287,9 +286,9 @@ void main() {
             'POST /recuperacion/consulta': (204, ''),
             'PUT /recuperacion': (204, ''),
           }),
-          sesion: sesion,
-          apariencia: Apariencia.enMemoria(),
-          inicio: '/recuperar?codigo=abc',
+          session: sesion,
+          appearance: Appearance.inMemory(),
+          initialLocation: '/recuperar?codigo=abc',
         ),
       );
       await tester.pumpAndSettle();

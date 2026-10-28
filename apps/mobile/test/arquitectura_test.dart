@@ -23,7 +23,11 @@ Map<String, Set<String>> _archivos() {
   final salida = <String, Set<String>>{};
   for (final f in lib.listSync(recursive: true).whereType<File>()) {
     if (!f.path.endsWith('.dart')) continue;
-    final ruta = f.path.replaceAll('\\', '/').split('lib/').skip(1).join('lib/');
+    final ruta = f.path
+        .replaceAll('\\', '/')
+        .split('lib/')
+        .skip(1)
+        .join('lib/');
     final destinos = <String>{};
     for (final m in _importacion.allMatches(f.readAsStringSync())) {
       final uso = m.group(1)!;
@@ -80,10 +84,9 @@ List<String>? _ciclo(Map<String, Set<String>> grafo) {
 }
 
 /// El texto de [ruta] (relativa a `lib/`) sin los comentarios de línea.
-String _codigo(String ruta) => File('lib/$ruta')
-    .readAsLinesSync()
-    .map((l) => l.replaceFirst(RegExp(r'//.*'), ''))
-    .join('\n');
+String _codigo(String ruta) => File(
+  'lib/$ruta',
+).readAsLinesSync().map((l) => l.replaceFirst(RegExp(r'//.*'), '')).join('\n');
 
 void main() {
   test(
@@ -121,12 +124,12 @@ void main() {
     () {
       final grafo = _grafo();
       expect(
-        grafo['comun']!.difference({'api', 'tema'}),
+        grafo['common']!.difference({'api', 'theme'}),
         isEmpty,
         reason: 'comun sólo puede importar api y tema',
       );
       expect(grafo['api'] ?? <String>{}, isEmpty);
-      expect(grafo['tema'] ?? <String>{}, isEmpty);
+      expect(grafo['theme'] ?? <String>{}, isEmpty);
     },
   );
 
@@ -134,7 +137,12 @@ void main() {
     'historial_reservas.dart no fuerza nulos con el operador ! @REV-06-S7 @assumption:REV-06-ASM-06',
     () {
       final forzados = RegExp(r'[\w)\]]!(?!=)');
-      expect(forzados.hasMatch(_codigo('admin/historial_reservas.dart')), isFalse);
+      expect(
+        forzados.hasMatch(
+          _codigo('features/admin/domain/booking_history_entry.dart'),
+        ),
+        isFalse,
+      );
     },
   );
 
@@ -146,7 +154,7 @@ void main() {
         for (final ruta in _archivos().keys)
           if (desfase.hasMatch(_codigo(ruta))) ruta,
       ];
-      expect(donde, ['comun/zona_club.dart']);
+      expect(donde, ['common/club_timezone.dart']);
     },
   );
 }

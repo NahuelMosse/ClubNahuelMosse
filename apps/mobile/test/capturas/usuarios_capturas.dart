@@ -1,8 +1,9 @@
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_cambiar_contrasena.dart';
+import 'package:clubnahuelmosse/common/error_dialog.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/users/presentation/change_password_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -14,17 +15,19 @@ void main() {
   setUpAll(cargarFuentes);
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
-  final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
+  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
 
-  Future<Sesion> sesionCon((int, String) cambio) async {
-    final sesion = Sesion(
-      credenciales: CredencialesFalsas(),
-      api: apiRutas({
-        'GET /yo': (200, perfilJson()),
-        'PUT /yo/contrasena': cambio,
-      }),
+  Future<Session> sesionCon((int, String) cambio) async {
+    final sesion = Session(
+      repository: SessionRepository(
+        credentials: CredencialesFalsas(),
+        api: apiRutas({
+          'GET /yo': (200, perfilJson()),
+          'PUT /yo/contrasena': cambio,
+        }),
+      ),
     );
-    await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+    await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
     return sesion;
   }
 
@@ -53,7 +56,7 @@ void main() {
         final sesion = await sesionCon(cambio);
         await montar(
           tester,
-          PantallaCambiarContrasena(sesion: sesion),
+          ChangePasswordScreen(session: sesion),
           tema: tema,
           tamano: tamano,
         );
@@ -114,13 +117,13 @@ void main() {
       for (final (nombre, abrir) in [
         (
           'error_conexion',
-          (BuildContext c) => mostrarErrorDeRed(c, const SinConexion()),
+          (BuildContext c) => showNetworkError(c, const SinConexion()),
         ),
         (
           'error_servidor',
-          (BuildContext c) => mostrarErrorDeRed(c, const ErrorDelServidor(500)),
+          (BuildContext c) => showNetworkError(c, const ErrorDelServidor(500)),
         ),
-        ('sesion_vencida', mostrarSesionVencida),
+        ('sesion_vencida', showSessionExpired),
       ]) {
         testWidgets('overlay $nombre $ancho $modo', (tester) async {
           await montar(

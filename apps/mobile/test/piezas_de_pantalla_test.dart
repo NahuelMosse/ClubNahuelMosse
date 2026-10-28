@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:clubnahuelmosse/comun/tarjeta_reserva.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/booking_card.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -54,39 +54,43 @@ void main() {
 
   test(
     'el sobretítulo del inicio usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('inicio/pantalla_inicio.dart'),
+    () => _acentoSobreFoto('features/home/presentation/home_screen.dart'),
   );
 
   test(
     'el sobretítulo de la sede usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('sedes/pantalla_sede.dart'),
+    () => _acentoSobreFoto('features/venues/presentation/venue_screen.dart'),
   );
 
   test(
     'el sobretítulo de confirmar reserva usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('reservas/pantalla_confirmar_reserva.dart'),
+    () => _acentoSobreFoto(
+      'features/bookings/presentation/confirm_booking_screen.dart',
+    ),
   );
 
   test(
     'el sobretítulo de horarios usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('reservas/pantalla_horarios.dart'),
+    () => _acentoSobreFoto(
+      'features/bookings/presentation/availability_screen.dart',
+    ),
   );
 
   test(
     'el acento del login usa accentOnMedia en la pantalla o sus piezas @RED-01-S2 @ARQ-03-S3',
-    () => _acentoSobreFoto('sesion/pantalla_inicio_sesion.dart'),
+    () => _acentoSobreFoto('features/session/presentation/login_screen.dart'),
   );
 
   test(
     'el texto sobre foto de cada pantalla y sus piezas sale de los tokens on-media @RED-01-S3 @ARQ-03-S3',
     () {
       for (final pantalla in [
-        'inicio/pantalla_inicio.dart',
-        'sedes/pantalla_sede.dart',
-        'sedes/pantalla_sedes.dart',
-        'reservas/pantalla_confirmar_reserva.dart',
-        'reservas/pantalla_horarios.dart',
-        'sesion/pantalla_inicio_sesion.dart',
+        'features/home/presentation/home_screen.dart',
+        'features/venues/presentation/venue_screen.dart',
+        'features/venues/presentation/venues_screen.dart',
+        'features/bookings/presentation/confirm_booking_screen.dart',
+        'features/bookings/presentation/availability_screen.dart',
+        'features/session/presentation/login_screen.dart',
       ]) {
         _sinTonosFijos(pantalla);
         expect(_todo(pantalla), contains('textOnMedia'), reason: pantalla);
@@ -98,7 +102,7 @@ void main() {
     'la cabecera del perfil va de bgHeroFrom a bgHeroTo @RED-01-S5 @ARQ-03-S3',
     () {
       expect(
-        _todo('usuarios/pantalla_mi_perfil.dart'),
+        _todo('features/users/presentation/my_profile_screen.dart'),
         contains('[p.bgHeroFrom, p.bgHeroTo]'),
       );
     },
@@ -109,11 +113,11 @@ void main() {
     (tester) async {
       await montar(
         tester,
-        const FechaYHorario(
-          fecha: 'sábado 7 de junio',
-          horario: '18:00 – 19:00',
+        const BookingDateAndTime(
+          date: 'sábado 7 de junio',
+          time: '18:00 – 19:00',
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       expect(find.text('sábado 7 de junio'), findsOneWidget);
       expect(find.text('18:00 – 19:00'), findsOneWidget);
@@ -121,16 +125,12 @@ void main() {
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
 
       for (final pantalla in [
-        'admin/pantalla_panel_admin.dart',
-        'reservas/pantalla_mis_reservas.dart',
+        'features/admin/presentation/admin_panel_screen.dart',
+        'features/bookings/presentation/my_bookings_screen.dart',
       ]) {
         final codigo = _todo(pantalla);
-        expect(
-          codigo,
-          contains('comun/tarjeta_reserva.dart'),
-          reason: pantalla,
-        );
-        expect(codigo, contains('FechaYHorario('), reason: pantalla);
+        expect(codigo, contains('common/booking_card.dart'), reason: pantalla);
+        expect(codigo, contains('BookingDateAndTime('), reason: pantalla);
         expect(
           codigo,
           isNot(contains('Icons.schedule_rounded')),
@@ -150,10 +150,14 @@ void main() {
           .where((f) => f.readAsStringSync().contains('DateTime.now()'))
           .map((f) => f.path.replaceAll('\\', '/').substring('lib/'.length))
           .toSet();
-      expect(conReloj, {'notificaciones/sistema.dart'});
+      expect(conReloj, {
+        'features/notifications/data/simulated_notification_system.dart',
+      });
 
-      final perfil = _conPiezas('usuarios/pantalla_mi_perfil.dart');
-      expect(perfil.values.join('\n'), contains('ahoraEnElClub'));
+      final perfil = _conPiezas(
+        'features/users/presentation/my_profile_screen.dart',
+      );
+      expect(perfil.values.join('\n'), contains('clubNow'));
       for (final MapEntry(:key, :value) in perfil.entries) {
         expect(value, isNot(contains('DateTime.now()')), reason: key);
       }

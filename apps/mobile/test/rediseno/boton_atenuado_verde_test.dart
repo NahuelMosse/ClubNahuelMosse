@@ -1,8 +1,8 @@
 import 'dart:math' as math;
 
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -22,8 +22,8 @@ void main() {
     'el botón atenuado baja sólo el fondo del lima, deja el texto principal y acepta el toque @RED-05-ASM-03',
     (tester) async {
       for (final (tema, p) in [
-        (temaOscuro, Paleta.oscura),
-        (temaClaro, Paleta.clara),
+        (darkTheme, Palette.dark),
+        (lightTheme, Palette.light),
       ]) {
         var toques = 0;
         await montar(
@@ -31,10 +31,10 @@ void main() {
           Scaffold(
             body: Padding(
               padding: const EdgeInsets.all(24),
-              child: BotonPrimario(
-                texto: 'CONFIRMAR',
-                alTocar: () => toques++,
-                atenuado: true,
+              child: PrimaryButton(
+                label: 'CONFIRMAR',
+                onTap: () => toques++,
+                dimmed: true,
               ),
             ),
           ),

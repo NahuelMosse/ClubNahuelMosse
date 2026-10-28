@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:clubnahuelmosse/comun/tarjeta_reserva.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/booking_card.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -15,8 +15,11 @@ void main() {
     (tester) async {
       await montar(
         tester,
-        const FechaYHorario(fecha: 'sábado 7 de junio', horario: '18:00 – 19:00'),
-        tema: temaOscuro,
+        const BookingDateAndTime(
+          date: 'sábado 7 de junio',
+          time: '18:00 – 19:00',
+        ),
+        tema: darkTheme,
       );
       expect(find.text('sábado 7 de junio'), findsOneWidget);
       expect(find.text('18:00 – 19:00'), findsOneWidget);
@@ -24,12 +27,12 @@ void main() {
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
 
       for (final ruta in [
-        'lib/admin/pantalla_panel_admin.dart',
-        'lib/reservas/pantalla_mis_reservas.dart',
+        'lib/features/admin/presentation/booking_detail.dart',
+        'lib/features/bookings/presentation/booking_detail.dart',
       ]) {
         final codigo = File(ruta).readAsStringSync();
-        expect(codigo, contains('comun/tarjeta_reserva.dart'), reason: ruta);
-        expect(codigo, contains('FechaYHorario('), reason: ruta);
+        expect(codigo, contains('common/booking_card.dart'), reason: ruta);
+        expect(codigo, contains('BookingDateAndTime('), reason: ruta);
         expect(codigo, isNot(contains('Icons.schedule_rounded')), reason: ruta);
       }
     },

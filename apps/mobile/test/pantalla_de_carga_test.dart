@@ -2,9 +2,9 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:clubnahuelmosse/comun/isotipo.dart';
-import 'package:clubnahuelmosse/comun/pantalla_de_carga.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/loading_screen.dart';
+import 'package:clubnahuelmosse/common/logo_mark.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -119,21 +119,21 @@ void main() {
     'la espera de arranque muestra el isotipo sobre verde eléctrico y un indicador de progreso @VIS-01-S2 @assumption:VIS-01-ASM-03',
     (tester) async {
       await tester.pumpWidget(
-        MaterialApp(theme: temaClaro, home: const PantallaDeCarga()),
+        MaterialApp(theme: lightTheme, home: const LoadingScreen()),
       );
       final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
       expect(scaffold.backgroundColor, const Color(0xFFD4FF3D));
-      expect(find.byType(Isotipo), findsOneWidget);
+      expect(find.byType(LogoMark), findsOneWidget);
       final pintor =
           tester
                   .widget<CustomPaint>(
                     find.descendant(
-                      of: find.byType(Isotipo),
+                      of: find.byType(LogoMark),
                       matching: find.byType(CustomPaint),
                     ),
                   )
                   .painter!
-              as PintorIsotipo;
+              as LogoMarkPainter;
       expect(pintor.color, const Color(0xFF0A0A0B));
       final progreso = tester.widget<CircularProgressIndicator>(
         find.byType(CircularProgressIndicator),
@@ -141,7 +141,7 @@ void main() {
       expect(progreso.color, const Color(0xFF0A0A0B));
       expect(
         tester.getCenter(find.byType(CircularProgressIndicator)).dy,
-        greaterThan(tester.getCenter(find.byType(Isotipo)).dy),
+        greaterThan(tester.getCenter(find.byType(LogoMark)).dy),
       );
     },
   );

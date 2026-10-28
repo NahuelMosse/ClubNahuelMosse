@@ -1,8 +1,8 @@
+import 'package:clubnahuelmosse/features/session/presentation/account_card.dart';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/comun/fechas.dart';
-import 'package:clubnahuelmosse/sesion/tarjeta_cuenta.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/dates.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,19 +27,19 @@ class _SesionQueNoCierra extends SesionFalsa {
   _SesionQueNoCierra() : super(perfilUsuario);
 
   @override
-  Future<void> cerrar() async => throw Exception('Firebase no respondió');
+  Future<void> close() async => throw Exception('Firebase no respondió');
 }
 
 void main() {
   test(
     'sólo fallo_de_carga.dart, el cierre de sesión y las pantallas sin sesión avisan la sesión vencida y el error de red @ARQ-03-S2 @ARQ-03-ASM-02',
     () {
-      final llamadas = RegExp(r'mostrar(SesionVencida|ErrorDeRed)\(context');
+      final llamadas = RegExp(r'show(SessionExpired|NetworkError)\(context');
       expect(_queContienen(llamadas), {
-        'sesion/fallo_de_carga.dart',
-        'sesion/tarjeta_cuenta.dart',
-        'usuarios/pantalla_registro.dart',
-        'sesion/pantalla_recuperar_contrasena.dart',
+        'features/session/presentation/load_failure.dart',
+        'features/session/presentation/account_card.dart',
+        'features/users/presentation/registration_screen.dart',
+        'features/session/presentation/forgot_password_screen.dart',
       });
     },
   );
@@ -53,29 +53,30 @@ void main() {
         Scaffold(
           body: Builder(
             builder: (context) => TextButton(
-              onPressed: () => cerrarSesion(context, sesion),
+              onPressed: () => signOut(context, sesion),
               child: const Text('Cerrar sesión'),
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
 
       await tester.tap(find.text('Cerrar sesión'));
       await tester.pumpAndSettle();
 
       expect(find.text('Error del servidor'), findsOneWidget);
-      expect(sesion.perfil, isNotNull);
+      expect(sesion.profile, isNotNull);
     },
   );
 
   test(
     'mi perfil cierra la sesión vencida aunque ya no esté en pantalla @ARQ-03-ASM-05',
     () {
-      final perfil = _lib()['usuarios/pantalla_mi_perfil.dart']!;
+      final perfil =
+          _lib()['features/users/presentation/my_profile_screen.dart']!;
       expect(
         perfil,
-        matches(RegExp(r'if \(!mounted\) \{[\s\S]{0,400}?sesion\.cerrar\(\)')),
+        matches(RegExp(r'if \(!mounted\) \{[\s\S]{0,400}?session\.close\(\)')),
       );
     },
   );
@@ -99,41 +100,43 @@ void main() {
       expect(_queContienen(RegExp("'[Mm]iércoles'")), isEmpty);
       expect(_queContienen(RegExp("'[Nn]oviembre'")), isEmpty);
       final jueves = DateTime(2026, 11, 12);
-      expect(diaCorto(jueves), 'Jue 12');
-      expect(fechaLarga(jueves), 'Jue 12 de noviembre');
-      expect(diaDeLaSemana(DateTime(2026, 11, 11)), 'Miércoles');
-      expect(diaAbreviado(DateTime(2026, 11, 14)), 'SÁB');
-      expect(horaCorta(DateTime(2026, 11, 12, 9, 5)), '09:05');
-      expect(fechaIso(jueves), '2026-11-12');
+      expect(shortDay(jueves), 'Jue 12');
+      expect(longDate(jueves), 'Jue 12 de noviembre');
+      expect(weekdayName(DateTime(2026, 11, 11)), 'Miércoles');
+      expect(weekdayAbbreviation(DateTime(2026, 11, 14)), 'SÁB');
+      expect(shortTime(DateTime(2026, 11, 12, 9, 5)), '09:05');
+      expect(isoDate(jueves), '2026-11-12');
     },
   );
 
   test(
     'el DNI se agrupa con intl y uno que no es número se muestra como llega @ARQ-03-ASM-07',
     () {
-      expect(dniLegible('30111222'), '30.111.222');
-      expect(dniLegible('X12'), 'X12');
-      expect(dniLegible(''), '');
+      expect(readableDni('30111222'), '30.111.222');
+      expect(readableDni('X12'), 'X12');
+      expect(readableDni(''), '');
     },
   );
 
   test(
     'sólo el token simulado de notificaciones usa DateTime.now @ARQ-03-ASM-04',
     () {
-      expect(_queContienen('DateTime.now()'), {'notificaciones/sistema.dart'});
+      expect(_queContienen('DateTime.now()'), {
+        'features/notifications/data/simulated_notification_system.dart',
+      });
       expect(
-        _lib()['usuarios/pantalla_mi_perfil.dart'],
-        contains('ahoraEnElClub'),
+        _lib()['features/users/presentation/my_profile_screen.dart'],
+        contains('clubNow'),
       );
     },
   );
 
   test(
-    'los cinco chips usan ChipElegible, cada indicador en curso usa EnCurso y los errores por campo se leen en un solo lugar @ARQ-03-S2 @ARQ-03-ASM-03',
+    'los cinco chips usan SelectableChip, cada indicador en curso usa InProgress y los errores por campo se leen en un solo lugar @ARQ-03-S2 @ARQ-03-ASM-03',
     () {
-      expect(_queContienen('ChipElegible(').length, greaterThanOrEqualTo(6));
-      expect(_queContienen('EnCurso(').length, greaterThanOrEqualTo(6));
-      expect(_queContienen("'errores'"), {'comun/errores_de_campo.dart'});
+      expect(_queContienen('SelectableChip(').length, greaterThanOrEqualTo(6));
+      expect(_queContienen('InProgress(').length, greaterThanOrEqualTo(6));
+      expect(_queContienen("'errores'"), {'common/field_errors.dart'});
       expect(_queContienen('class _Elegible '), isEmpty);
     },
   );
@@ -141,8 +144,9 @@ void main() {
   test(
     'el registro exitoso conserva su pulso y sus separaciones @ARQ-03-ASM-08',
     () {
-      final registro = _lib()['usuarios/pantalla_registro_exitoso.dart']!;
-      expect(registro, contains('PantallaResultado('));
+      final registro =
+          _lib()['features/users/presentation/registration_done_screen.dart']!;
+      expect(registro, contains('ResultScreen('));
       for (final medida in ['100', '44', '20', '36']) {
         expect(registro, contains(medida), reason: medida);
       }

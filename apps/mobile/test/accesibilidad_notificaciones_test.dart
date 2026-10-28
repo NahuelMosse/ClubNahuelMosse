@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notifications_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,7 +27,7 @@ void main() {
 
   for (final oscuro in [true, false]) {
     final modo = oscuro ? 'oscuro' : 'claro';
-    final tema = oscuro ? temaOscuro : temaClaro;
+    final tema = oscuro ? darkTheme : lightTheme;
 
     Future<void> centro(
       WidgetTester tester, {
@@ -36,19 +36,19 @@ void main() {
     }) async {
       final api = ApiFalsa()
         ..avisos = avisos
-        ..noLeidas = avisos.length;
+        ..unread = avisos.length;
       final sesion = SesionFalsa(perfilUsuario);
       await montar(
         tester,
-        PantallaNotificaciones(
-          centro: centroDe(
+        NotificationsScreen(
+          center: centroDe(
             api,
             sesion,
             sistema: SistemaFalso(concedido: permiso),
           ),
-          sesion: sesion,
-          ahora: () => ahoraClub,
-          alAbrir: (_, _) {},
+          session: sesion,
+          now: () => ahoraClub,
+          onOpen: (_, _) {},
         ),
         tema: tema,
       );
@@ -93,19 +93,15 @@ void main() {
         Stack(
           children: [
             const Scaffold(body: SizedBox.expand()),
-            PanelDeAvisos(
-              centro: avisos,
-              ahora: () => ahoraClub,
-              alAbrir: (_) {},
-            ),
+            NoticePanel(center: avisos, now: () => ahoraClub, onOpen: (_) {}),
           ],
         ),
         tema: tema,
       );
       api
         ..avisos = [recordatorio]
-        ..noLeidas = 1;
-      await tester.runAsync(avisos.cargar);
+        ..unread = 1;
+      await tester.runAsync(avisos.load);
       await tester.pumpAndSettle();
       await cumpleLasGuias(tester);
       semantica.dispose();
@@ -117,7 +113,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final api = ApiFalsa()
         ..avisos = [confirmacion, alerta]
-        ..noLeidas = 2;
+        ..unread = 2;
       await montarUsuario(
         tester,
         oscuro: oscuro,

@@ -1,13 +1,17 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_detalle_reserva.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/history_filters.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_json.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/booking_detail_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/montar.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
 String reservaJson({
   String estado = 'anulada',
@@ -33,21 +37,23 @@ void main() {
     Size tamano = const Size(360, 800),
     double escala = 1,
   }) async {
-    final reserva = ReservaHistorial.desdeJson(jsonDecode(json));
+    final reserva = parseBookingHistoryEntry(jsonDecode(json));
     if (reserva == null) fail('la reserva de prueba no se lee');
     final sesion = SesionFalsa(perfilAdmin);
     final api = apiRutas({});
     await montar(
       tester,
-      PantallaDetalleReserva(
-        reserva: reserva,
-        historial: HistorialDeReservas(api: api, sesion: sesion),
-        sesion: sesion,
-        espacios: Espacios(api: api, sesion: sesion),
-        filtros: const FiltrosDeHistorial(),
-        pendientes: FiltrosDePanelPendientes(),
+      BookingDetailScreen(
+        booking: reserva,
+        history: BookingHistory(api: api, sesion: sesion),
+        session: sesion,
+        spaces: Spaces(
+          repository: SpacesRepository(api: api, session: sesion),
+        ),
+        filters: const HistoryFilters(),
+        pending: PendingPanelFilters(),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
       tamano: tamano,
       escalaTexto: escala,
     );

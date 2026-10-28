@@ -1,11 +1,13 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/spaces/domain/space_exceptions.dart';
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
 import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/comun/formato_precio.dart';
-import 'package:clubnahuelmosse/espacios/espacio.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/common/price_format.dart';
+import 'package:clubnahuelmosse/features/spaces/domain/space.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -16,12 +18,12 @@ import 'soporte/montar.dart';
 void main() {
   group('precio', () {
     test('se escribe en pesos con punto de miles', () {
-      expect(pesos(38000), '\$\u00A038.000');
-      expect(pesos(1500000), '\$\u00A01.500.000');
+      expect(formatPesos(38000), '\$\u00A038.000');
+      expect(formatPesos(1500000), '\$\u00A01.500.000');
     });
 
     test('el campo deja sólo dígitos y los agrupa', () {
-      const formato = FormatoPrecio();
+      const formato = PriceInputFormatter();
       TextEditingValue escribir(String texto) => formato.formatEditUpdate(
         TextEditingValue.empty,
         TextEditingValue(text: texto),
@@ -29,12 +31,12 @@ void main() {
       expect(escribir('38000').text, '\$\u00A038.000');
       expect(escribir('\$\u00A03a8.0 00').text, '\$\u00A038.000');
       expect(escribir('').text, '');
-      expect(leerPrecio('\$\u00A038.000'), 38000);
-      expect(leerPrecio('\$ '), isNull);
+      expect(readPrice('\$\u00A038.000'), 38000);
+      expect(readPrice('\$ '), isNull);
     });
 
     test('escribir en el medio deja el cursor donde se escribió', () {
-      const formato = FormatoPrecio();
+      const formato = PriceInputFormatter();
       const antes = TextEditingValue(
         text: '\$ 38.000',
         selection: TextSelection.collapsed(offset: 3),
@@ -52,7 +54,7 @@ void main() {
     });
 
     test('borrar sobre el punto de miles borra el dígito anterior', () {
-      const formato = FormatoPrecio();
+      const formato = PriceInputFormatter();
       const antes = TextEditingValue(
         text: '\$ 38.000',
         selection: TextSelection.collapsed(offset: 5),
@@ -68,7 +70,7 @@ void main() {
     });
 
     test('lo pegado con centavos se corta en la coma', () {
-      const formato = FormatoPrecio();
+      const formato = PriceInputFormatter();
       final despues = formato.formatEditUpdate(
         TextEditingValue.empty,
         const TextEditingValue(text: '1.500,00'),
@@ -77,7 +79,7 @@ void main() {
     });
 
     test('más de siete dígitos no entra', () {
-      const formato = FormatoPrecio();
+      const formato = PriceInputFormatter();
       const antes = TextEditingValue(text: '\$\u00A09.999.999');
       final despues = formato.formatEditUpdate(
         antes,
@@ -88,42 +90,43 @@ void main() {
   });
 
   group('catálogo', () {
-    final catalogo = Catalogo.desdeJson(jsonDecode(catalogoJson));
+    final catalogo = Catalog.fromJson(jsonDecode(catalogoJson));
 
     test('se lee de la API', () {
-      expect(catalogo?.deportes.map((d) => d.nombre), ['Fútbol', 'Tenis']);
+      expect(catalogo?.sports.map((d) => d.name), ['Fútbol', 'Tenis']);
     });
 
     test('el tipo se nombra solo si ya dice el deporte', () {
-      expect(catalogo?.tipoLegible('Futbol', 'F5'), 'Fútbol 5');
+      expect(catalogo?.readableKind('Futbol', 'F5'), 'Fútbol 5');
       expect(
-        catalogo?.tipoLegible('Tenis', 'PDL'),
+        catalogo?.readableKind('Tenis', 'PDL'),
         'Tenis · Polvo de ladrillo',
       );
     });
 
     test('la descripción del espacio lleva tipo, condición y precio', () {
-      final espacio = Espacio.desdeJson(jsonDecode(espacioTenisJson));
+      final espacio = Space.fromJson(jsonDecode(espacioTenisJson));
       final c = catalogo;
       expect(espacio, isNotNull);
       expect(c, isNotNull);
       if (espacio == null || c == null) return;
       expect(
-        espacio.descripcion(c),
+        espacio.description(c),
         'Tenis · Polvo de ladrillo · Al aire libre · \$\u00A032.000 por hora',
       );
     });
   });
 
   group('Espacios', () {
-    Espacios espacios(ClienteApi api) =>
-        Espacios(api: api, sesion: SesionFalsa(perfilAdmin));
+    Spaces espacios(ClienteApi api) => Spaces(
+      repository: SpacesRepository(api: api, session: SesionFalsa(perfilAdmin)),
+    );
 
     test('pide el catálogo una sola vez', () async {
       final pedidos = <http.Request>[];
       final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
-      await e.catalogo();
-      await e.catalogo();
+      await e.repository.catalog();
+      await e.repository.catalog();
       expect(
         pedidos.where((p) => p.url.path == '/espacios/catalogo'),
         hasLength(1),
@@ -133,10 +136,10 @@ void main() {
     test('el nombre sugerido va con la sede, el deporte y el tipo', () async {
       final pedidos = <http.Request>[];
       final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
-      final (nombre, numero) = await e.nombreSugerido(
-        sedeId: '00000000-0000-7000-8000-000000000001',
-        deporte: 'Futbol',
-        tipo: 'F5',
+      final (nombre, numero) = await e.suggestedName(
+        venueId: '00000000-0000-7000-8000-000000000001',
+        sport: 'Futbol',
+        kind: 'F5',
       );
       expect((nombre, numero), ('Moron_Rivadavia_19850_Futbol_F5_1', 1));
       expect(pedidos.single.url.queryParameters, {
@@ -146,21 +149,21 @@ void main() {
       });
     });
 
-    Future<Espacio> alta(Espacios e) => e.darDeAlta(
-      sedeId: '00000000-0000-7000-8000-000000000001',
-      deporte: 'Futbol',
-      tipo: 'F5',
-      techada: false,
-      iluminada: true,
-      precioPorHora: 38000,
-      numero: 1,
+    Future<Space> alta(Spaces e) => e.create(
+      venueId: '00000000-0000-7000-8000-000000000001',
+      sport: 'Futbol',
+      kind: 'F5',
+      covered: false,
+      lit: true,
+      pricePerHour: 38000,
+      number: 1,
     );
 
     test('el alta manda el número que se vio', () async {
       final pedidos = <http.Request>[];
       final e = espacios(apiRutas(rutasDeEspacios(), pedidos: pedidos));
       final espacio = await alta(e);
-      expect(espacio.nombre, 'Moron_Rivadavia_19850_Futbol_F5_1');
+      expect(espacio.name, 'Moron_Rivadavia_19850_Futbol_F5_1');
       expect(jsonDecode(pedidos.single.body), {
         'sede_id': '00000000-0000-7000-8000-000000000001',
         'deporte': 'Futbol',
@@ -187,13 +190,13 @@ void main() {
       expect(
         alta(e),
         throwsA(
-          isA<NombreOcupado>()
+          isA<NameTaken>()
               .having(
-                (x) => x.nombre,
+                (x) => x.name,
                 'nombre',
                 'Moron_Rivadavia_19850_Futbol_F5_2',
               )
-              .having((x) => x.numero, 'numero', 2),
+              .having((x) => x.number, 'numero', 2),
         ),
       );
     });
@@ -209,7 +212,7 @@ void main() {
           ),
         ),
       );
-      expect(alta(e), throwsA(isA<EspacioRechazado>()));
+      expect(alta(e), throwsA(isA<SpaceRejected>()));
     });
   });
 
@@ -452,9 +455,9 @@ void main() {
     await tester.pumpWidget(
       App(
         api: apiRutas({}),
-        sesion: SesionFalsa(perfilUsuario),
-        apariencia: Apariencia.enMemoria(),
-        inicio: '/admin/espacios/nuevo',
+        session: SesionFalsa(perfilUsuario),
+        appearance: Appearance.inMemory(),
+        initialLocation: '/admin/espacios/nuevo',
       ),
     );
     await tester.pumpAndSettle();

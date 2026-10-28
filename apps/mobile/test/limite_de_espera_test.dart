@@ -10,19 +10,21 @@ void main() {
     (tester) async {
       Object? error;
       ClienteApi(
-        'http://api.falsa',
-        cliente: MockClient(
-          (_) => Future.delayed(
-            const Duration(seconds: 90),
-            () => http.Response('{}', 200),
-          ),
-        ),
-      ).get('/espacios').then(
-        (_) {},
-        onError: (Object e) {
-          error = e;
-        },
-      );
+            'http://api.falsa',
+            cliente: MockClient(
+              (_) => Future.delayed(
+                const Duration(seconds: 90),
+                () => http.Response('{}', 200),
+              ),
+            ),
+          )
+          .get('/espacios')
+          .then(
+            (_) {},
+            onError: (Object e) {
+              error = e;
+            },
+          );
 
       await tester.pump(const Duration(milliseconds: 29500));
       expect(error, isNull);

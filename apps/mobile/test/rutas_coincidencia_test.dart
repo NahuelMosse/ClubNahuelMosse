@@ -13,9 +13,12 @@ void main() {
     expect(ruta.coincideCon('GET', ['', 'a', 'y}']), isFalse);
   });
 
-  test('un parámetro `{id}` acepta cualquier valor no vacío y rechaza el vacío', () {
-    const ruta = RutaDeLaApi('GET', '/a/{id}');
-    expect(ruta.coincideCon('GET', ['', 'a', '7']), isTrue);
-    expect(ruta.coincideCon('GET', ['', 'a', '']), isFalse);
-  });
+  test(
+    'un parámetro `{id}` acepta cualquier valor no vacío y rechaza el vacío',
+    () {
+      const ruta = RutaDeLaApi('GET', '/a/{id}');
+      expect(ruta.coincideCon('GET', ['', 'a', '7']), isTrue);
+      expect(ruta.coincideCon('GET', ['', 'a', '']), isFalse);
+    },
+  );
 }

@@ -1,34 +1,41 @@
-import 'package:clubnahuelmosse/comun/reserva_pendiente.dart';
-import 'package:clubnahuelmosse/comun/apariencia.dart';
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_inicio_sesion.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_nueva_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/pantalla_recuperar_contrasena.dart';
-import 'package:clubnahuelmosse/sesion/recuperacion.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_cambiar_contrasena.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_mi_perfil.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
+import 'package:clubnahuelmosse/common/pending_booking.dart';
+import 'package:clubnahuelmosse/common/appearance.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/montar.dart';
+import 'package:clubnahuelmosse/features/session/data/password_recovery.dart';
+import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/features/session/presentation/forgot_password_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/new_password_screen.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/users/presentation/change_password_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 void main() {
   setUpAll(cargarFuentes);
 
-  Widget login({bool rechaza = false}) => PantallaInicioSesion(
-    pendiente: ReservaPendiente(),
-    sesion: Sesion(
-      credenciales: CredencialesFalsas(
-        alIngresar: rechaza
-            ? (_, _) async => throw const CredencialesInvalidas()
-            : null,
+  Widget login({bool rechaza = false}) => LoginScreen(
+    pending: PendingBooking(),
+    session: Session(
+      repository: SessionRepository(
+        credentials: CredencialesFalsas(
+          alIngresar: rechaza
+              ? (_, _) async => throw const InvalidCredentials()
+              : null,
+        ),
+        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
       ),
-      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
     ),
   );
 
@@ -38,7 +45,7 @@ void main() {
     await expectLater(tester, meetsGuideline(textContrastGuideline));
   }
 
-  final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
+  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
   final pantallas = <String, Widget Function()>{
     'el login': login,
     'el Home': () => inicioFalso(SesionFalsa(perfilUsuario)),
@@ -52,33 +59,37 @@ void main() {
               ' "anuladas": 0}}',
         ),
       });
-      return PantallaPanelAdmin(
-        historial: HistorialDeReservas(api: api, sesion: sesion),
-        sedes: Sedes(api: api, sesion: sesion),
-        espacios: Espacios(api: api, sesion: sesion),
-        sesion: sesion,
-        pendientes: FiltrosDePanelPendientes(),
+      return AdminPanelScreen(
+        history: BookingHistory(api: api, sesion: sesion),
+        venues: Venues(
+          repository: VenuesRepository(api: api, session: sesion),
+        ),
+        spaces: Spaces(
+          repository: SpacesRepository(api: api, session: sesion),
+        ),
+        session: sesion,
+        pending: PendingPanelFilters(),
       );
     },
-    'recuperar contraseña': () => PantallaRecuperarContrasena(
-      recuperacion: Recuperacion(apiFalsa(codigo: 202, cuerpo: '')),
+    'recuperar contraseña': () => ForgotPasswordScreen(
+      recovery: PasswordRecovery(apiFalsa(codigo: 202, cuerpo: '')),
     ),
-    'Mi perfil': () => PantallaMiPerfil(
-      sesion: SesionFalsa(perfilUsuario),
-      apariencia: Apariencia.enMemoria(),
+    'Mi perfil': () => MyProfileScreen(
+      session: SesionFalsa(perfilUsuario),
+      appearance: Appearance.inMemory(),
     ),
-    'la contraseña nueva': () => PantallaNuevaContrasena(
-      recuperacion: Recuperacion(apiFalsa(codigo: 204, cuerpo: '')),
-      sesion: SesionFalsa(null),
-      codigo: 'abc',
+    'la contraseña nueva': () => NewPasswordScreen(
+      recovery: PasswordRecovery(apiFalsa(codigo: 204, cuerpo: '')),
+      session: SesionFalsa(null),
+      code: 'abc',
     ),
-    'el enlace inválido': () => PantallaNuevaContrasena(
-      recuperacion: Recuperacion(apiFalsa(codigo: 410, cuerpo: '')),
-      sesion: SesionFalsa(null),
-      codigo: 'abc',
+    'el enlace inválido': () => NewPasswordScreen(
+      recovery: PasswordRecovery(apiFalsa(codigo: 410, cuerpo: '')),
+      session: SesionFalsa(null),
+      code: 'abc',
     ),
     'cambiar contraseña': () =>
-        PantallaCambiarContrasena(sesion: SesionFalsa(perfilUsuario)),
+        ChangePasswordScreen(session: SesionFalsa(perfilUsuario)),
   };
 
   for (final MapEntry(key: modo, value: tema) in temas.entries) {
@@ -105,7 +116,7 @@ void main() {
       await tester.enterText(find.bySemanticsLabel('Contraseña'), 'Mala1234');
       await tester.tap(find.text('INICIAR SESIÓN'));
       await tester.pumpAndSettle();
-      expect(find.text(mensajeCredencialesInvalidas), findsOneWidget);
+      expect(find.text(invalidCredentialsMessage), findsOneWidget);
       await cumpleLasGuias(tester);
       semantica.dispose();
     });
@@ -118,9 +129,9 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montar(
         tester,
-        PantallaMiPerfil(
-          sesion: SesionFalsa(perfilUsuario),
-          apariencia: Apariencia.enMemoria(),
+        MyProfileScreen(
+          session: SesionFalsa(perfilUsuario),
+          appearance: Appearance.inMemory(),
         ),
         tema: tema,
       );
@@ -138,9 +149,9 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montar(
         tester,
-        PantallaMiPerfil(
-          sesion: SesionFalsa(perfilUsuario),
-          apariencia: Apariencia.enMemoria(),
+        MyProfileScreen(
+          session: SesionFalsa(perfilUsuario),
+          appearance: Appearance.inMemory(),
         ),
         tema: tema,
       );
@@ -155,7 +166,7 @@ void main() {
 
   testWidgets('los campos del login anuncian su nombre', (tester) async {
     final semantica = tester.ensureSemantics();
-    await montar(tester, login(), tema: temaOscuro);
+    await montar(tester, login(), tema: darkTheme);
     expect(find.bySemanticsLabel('Correo'), findsOneWidget);
     expect(find.bySemanticsLabel('Contraseña'), findsOneWidget);
     expect(find.bySemanticsLabel('Club Nahuel Mosse'), findsOneWidget);
@@ -167,7 +178,7 @@ void main() {
       await montar(
         tester,
         pantalla(),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
         escalaTexto: 2,
       );

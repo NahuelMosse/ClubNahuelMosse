@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,7 +27,10 @@ Future<void> _montar(WidgetTester tester, ThemeData tema, Widget boton) =>
 /// Ninguna opacidad por debajo de 1 entre el botón y la raíz.
 void _sinOpacidad(WidgetTester tester) {
   final opacidades = tester.widgetList<Opacity>(
-    find.ancestor(of: find.byType(FilledButton), matching: find.byType(Opacity)),
+    find.ancestor(
+      of: find.byType(FilledButton),
+      matching: find.byType(Opacity),
+    ),
   );
   for (final o in opacidades) {
     expect(o.opacity, 1);
@@ -39,13 +42,13 @@ void main() {
     'el botón principal deshabilitado es gris, con texto secundario y sin opacidad @RED-05-S3',
     (tester) async {
       for (final (tema, p) in [
-        (temaOscuro, Paleta.oscura),
-        (temaClaro, Paleta.clara),
+        (darkTheme, Palette.dark),
+        (lightTheme, Palette.light),
       ]) {
         await _montar(
           tester,
           tema,
-          const BotonPrimario(texto: 'CONFIRMAR', alTocar: null),
+          const PrimaryButton(label: 'CONFIRMAR', onTap: null),
         );
         expect(_colores(tester, {WidgetState.disabled}), (
           p.stateDisabled,
@@ -60,17 +63,17 @@ void main() {
     'el botón atenuado usa el mismo gris y acepta el toque @RED-05-ASM-03',
     (tester) async {
       for (final (tema, p) in [
-        (temaOscuro, Paleta.oscura),
-        (temaClaro, Paleta.clara),
+        (darkTheme, Palette.dark),
+        (lightTheme, Palette.light),
       ]) {
         var toques = 0;
         await _montar(
           tester,
           tema,
-          BotonPrimario(
-            texto: 'CONFIRMAR',
-            alTocar: () => toques++,
-            atenuado: true,
+          PrimaryButton(
+            label: 'CONFIRMAR',
+            onTap: () => toques++,
+            dimmed: true,
           ),
         );
         expect(_colores(tester, {}), (p.stateDisabled, p.textSecondary));

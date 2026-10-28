@@ -1,11 +1,12 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
+import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_panel_admin.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/sedes/sedes.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -15,6 +16,8 @@ import 'mis_reservas_test.dart' show reservaJson;
 import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 void main() {
   setUpAll(cargarFuentes);
@@ -53,7 +56,7 @@ void main() {
     await montar(
       tester,
       inicioFalso(SesionFalsa(perfilUsuario)),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
 
     await kitA11y(tester);
@@ -82,14 +85,18 @@ void main() {
       final sesion = SesionFalsa(perfilAdmin);
       await montar(
         tester,
-        PantallaPanelAdmin(
-          historial: HistorialDeReservas(api: api, sesion: sesion),
-          sedes: Sedes(api: api, sesion: sesion),
-          espacios: Espacios(api: api, sesion: sesion),
-          sesion: sesion,
-          pendientes: FiltrosDePanelPendientes(),
+        AdminPanelScreen(
+          history: BookingHistory(api: api, sesion: sesion),
+          venues: Venues(
+            repository: VenuesRepository(api: api, session: sesion),
+          ),
+          spaces: Spaces(
+            repository: SpacesRepository(api: api, session: sesion),
+          ),
+          session: sesion,
+          pending: PendingPanelFilters(),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
 
       await kitA11y(tester);

@@ -179,7 +179,10 @@ void main() {
           tamano: tamano,
           api: apiRutas({
             'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-            'DELETE /sedes/00000000-0000-7000-8000-000000000001': (409, '{"errores": {"sede": "x"}}'),
+            'DELETE /sedes/00000000-0000-7000-8000-000000000001': (
+              409,
+              '{"errores": {"sede": "x"}}',
+            ),
           }),
         );
         await tester.tap(find.bySemanticsLabel('Dar de baja Sede Morón'));

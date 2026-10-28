@@ -22,10 +22,10 @@ void main() {
     'las fechas, las horas y el DNI salen de intl y ningún archivo usa padLeft @ARQ-03-S1',
     () {
       expect(_queContienen('padLeft('), isEmpty);
-      expect(_lib()['comun/fechas.dart'], contains('DateFormat'));
+      expect(_lib()['common/dates.dart'], contains('DateFormat'));
       expect(
         _queContienen('package:intl/intl.dart'),
-        contains('comun/fechas.dart'),
+        contains('common/dates.dart'),
       );
     },
   );
@@ -33,40 +33,42 @@ void main() {
   test(
     'sólo fallo_de_carga.dart avisa la sesión vencida y el error de red @ARQ-03-S2 @ARQ-03-ASM-02',
     () {
-      final llamadas = RegExp(r'mostrar(SesionVencida|ErrorDeRed)\(context');
-      expect(_queContienen(llamadas), {'sesion/fallo_de_carga.dart'});
+      final llamadas = RegExp(r'show(SessionExpired|NetworkError)\(context');
+      expect(_queContienen(llamadas), {
+        'features/session/presentation/load_failure.dart',
+      });
     },
   );
 
   test(
-    'los chips y pestañas seleccionables son un solo ChipElegible @ARQ-03-S2 @ARQ-03-ASM-03',
+    'los chips y pestañas seleccionables son un solo SelectableChip @ARQ-03-S2 @ARQ-03-ASM-03',
     () {
       final copias = RegExp(r'class _(Chip|ChipCondicion|Pestanas|Elegible) ');
       expect(_queContienen(copias), isEmpty);
       expect(
-        _lib()['comun/chip_elegible.dart'],
-        contains('class ChipElegible '),
+        _lib()['common/selectable_chip.dart'],
+        contains('class SelectableChip '),
       );
-      expect(_queContienen('ChipElegible(').length, greaterThanOrEqualTo(5));
+      expect(_queContienen('SelectableChip(').length, greaterThanOrEqualTo(5));
     },
   );
 
   test(
-    'el registro exitoso es una PantallaResultado y las bajas en curso usan EnCurso @ARQ-03-S2',
+    'el registro exitoso es una ResultScreen y las bajas en curso usan InProgress @ARQ-03-S2',
     () {
       expect(
-        _lib()['usuarios/pantalla_registro_exitoso.dart'],
-        contains('PantallaResultado('),
+        _lib()['features/users/presentation/registration_done_screen.dart'],
+        contains('ResultScreen('),
       );
-      expect(_lib()['comun/en_curso.dart'], contains('class EnCurso '));
-      expect(_queContienen('EnCurso(').length, greaterThanOrEqualTo(4));
+      expect(_lib()['common/in_progress.dart'], contains('class InProgress '));
+      expect(_queContienen('InProgress(').length, greaterThanOrEqualTo(4));
     },
   );
 
   test(
     'los errores por campo que manda el servidor se leen sólo en errores_de_campo.dart @ARQ-03-S2',
     () {
-      expect(_queContienen("['errores']"), {'comun/errores_de_campo.dart'});
+      expect(_queContienen("['errores']"), {'common/field_errors.dart'});
     },
   );
 
@@ -105,8 +107,8 @@ void main() {
     'mi perfil valida el nacimiento con el reloj del club y nadie usa DateTime.now @ARQ-03-ASM-04',
     () {
       expect(
-        _lib()['usuarios/pantalla_mi_perfil.dart'],
-        contains('ahoraEnElClub'),
+        _lib()['features/users/presentation/my_profile_screen.dart'],
+        contains('clubNow'),
       );
       expect(_queContienen('DateTime.now()'), isEmpty);
     },

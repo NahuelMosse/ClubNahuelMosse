@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:clubnahuelmosse/comun/movimiento.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/motion.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,7 +18,7 @@ Future<void> _montar(WidgetTester tester, Widget hijo) async {
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
-      theme: temaOscuro,
+      theme: darkTheme,
       home: Scaffold(
         body: Align(alignment: Alignment.topLeft, child: hijo),
       ),
@@ -43,7 +43,7 @@ double _opacidad(WidgetTester tester, Finder aparecer) => tester
     .value;
 
 Finder _aparecerDe(Finder hijo) =>
-    find.ancestor(of: hijo, matching: find.byType(Aparecer)).first;
+    find.ancestor(of: hijo, matching: find.byType(FadeIn)).first;
 
 Offset _posicion(WidgetTester tester, Finder f) => tester.getTopLeft(f);
 
@@ -99,31 +99,31 @@ class _Piezas {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Aparecer(
-            retraso: Duration(milliseconds: 200),
-            desdeY: 30,
+          const FadeIn(
+            delay: Duration(milliseconds: 200),
+            fromY: 30,
             child: SizedBox(key: aparecer, width: 100, height: 30),
           ),
-          const EntradaEscalonada(
-            hijos: [
+          const StaggeredEntrance(
+            children: [
               SizedBox(key: bloque0, width: 100, height: 30),
               SizedBox(key: bloque1, width: 100, height: 30),
             ],
           ),
-          Temblor(
-            disparador: disparador,
+          Shake(
+            trigger: disparador,
             child: const SizedBox(key: temblor, width: 100, height: 30),
           ),
-          const PulsoDeExito(
-            icono: Icons.check_rounded,
-            fondo: Color(0xFF1B5E20),
-            tinta: Color(0xFFFFFFFF),
+          const SuccessPulse(
+            icon: Icons.check_rounded,
+            background: Color(0xFF1B5E20),
+            ink: Color(0xFFFFFFFF),
           ),
-          Latido(
-            disparador: disparador,
+          Heartbeat(
+            trigger: disparador,
             child: const SizedBox(key: latido, width: 100, height: 30),
           ),
-          const Presionable(
+          const Pressable(
             child: ColoredBox(
               color: Color(0xFFFF0000),
               child: SizedBox(key: presion, width: 100, height: 30),
@@ -159,19 +159,19 @@ void main() {
       const hijo = Key('hijo');
       await _montar(
         tester,
-        const Aparecer(
-          desdeX: 30,
-          desdeY: 20,
-          duracion: Duration(milliseconds: 400),
+        const FadeIn(
+          fromX: 30,
+          fromY: 20,
+          duration: Duration(milliseconds: 400),
           child: SizedBox(key: hijo, width: 100, height: 40),
         ),
       );
       final inicial = _posicion(tester, find.byKey(hijo));
-      expect(_opacidad(tester, find.byType(Aparecer)), 0);
+      expect(_opacidad(tester, find.byType(FadeIn)), 0);
 
       await tester.pump(_ms(200));
       final medio = _posicion(tester, find.byKey(hijo));
-      final opacidadMedia = _opacidad(tester, find.byType(Aparecer));
+      final opacidadMedia = _opacidad(tester, find.byType(FadeIn));
 
       await tester.pumpAndSettle();
       final fin = _posicion(tester, find.byKey(hijo));
@@ -182,17 +182,17 @@ void main() {
       expect(medio.dx - fin.dx, closeTo(30 * (1 - avance), 0.05));
       expect(medio.dy - fin.dy, closeTo(20 * (1 - avance), 0.05));
       expect(opacidadMedia, allOf(greaterThan(0), lessThan(1)));
-      expect(_opacidad(tester, find.byType(Aparecer)), _uno);
+      expect(_opacidad(tester, find.byType(FadeIn)), _uno);
       expect(fin.dx, _cero);
       expect(fin.dy, _cero);
 
       await _montar(tester, const SizedBox.shrink());
       await _montar(
         tester,
-        const Aparecer(
-          giro: 0.25,
-          escalaDesde: 0.5,
-          desdeY: 0,
+        const FadeIn(
+          turn: 0.25,
+          scaleFrom: 0.5,
+          fromY: 0,
           child: SizedBox(key: hijo, width: 100, height: 40),
         ),
       );
@@ -217,10 +217,10 @@ void main() {
       const bloques = [Key('b0'), Key('b1'), Key('b2')];
       await _montar(
         tester,
-        const EntradaEscalonada(
-          inicio: Duration(milliseconds: 100),
-          paso: Duration(milliseconds: 50),
-          hijos: [
+        const StaggeredEntrance(
+          start: Duration(milliseconds: 100),
+          step: Duration(milliseconds: 50),
+          children: [
             SizedBox(key: Key('b0'), width: 100, height: 30),
             SizedBox(key: Key('b1'), width: 100, height: 30),
             SizedBox(key: Key('b2'), width: 100, height: 30),
@@ -232,7 +232,7 @@ void main() {
 
       for (var i = 0; i < bloques.length; i++) {
         expect(
-          tester.widget<Aparecer>(_aparecerDe(find.byKey(bloques[i]))).retraso,
+          tester.widget<FadeIn>(_aparecerDe(find.byKey(bloques[i]))).delay,
           _ms(100 + 50 * i),
         );
         expect(opacidad(i), 0, reason: 'bloque $i en 0 ms');
@@ -267,8 +267,8 @@ void main() {
         StatefulBuilder(
           builder: (context, set) {
             reconstruir = set;
-            return Temblor(
-              disparador: disparador,
+            return Shake(
+              trigger: disparador,
               child: const SizedBox(key: hijo, width: 100, height: 40),
             );
           },
@@ -324,13 +324,13 @@ void main() {
     (tester) async {
       await _montar(
         tester,
-        const PulsoDeExito(
-          icono: Icons.check_rounded,
-          fondo: Color(0xFF1B5E20),
-          tinta: Color(0xFFFFFFFF),
+        const SuccessPulse(
+          icon: Icons.check_rounded,
+          background: Color(0xFF1B5E20),
+          ink: Color(0xFFFFFFFF),
         ),
       );
-      final pulso = find.byType(PulsoDeExito);
+      final pulso = find.byType(SuccessPulse);
       double escala() => tester
           .widget<ScaleTransition>(
             find
@@ -375,8 +375,8 @@ void main() {
       StatefulBuilder(
         builder: (context, set) {
           reconstruir = set;
-          return Latido(
-            disparador: disparador,
+          return Heartbeat(
+            trigger: disparador,
             child: const SizedBox(key: hijo, width: 100, height: 40),
           );
         },
@@ -417,7 +417,7 @@ void main() {
       const hijo = Key('hijo');
       await _montar(
         tester,
-        const Presionable(
+        const Pressable(
           child: ColoredBox(
             color: Color(0xFFFF0000),
             child: SizedBox(key: hijo, width: 120, height: 40),
@@ -458,7 +458,7 @@ void main() {
           .widget<ScaleTransition>(
             find
                 .descendant(
-                  of: find.byType(PulsoDeExito),
+                  of: find.byType(SuccessPulse),
                   matching: find.byType(ScaleTransition),
                 )
                 .first,
@@ -467,13 +467,13 @@ void main() {
           .value;
 
       // El primer cuadro ya es el final de cada pieza.
-      expect(_opacidad(tester, find.byType(Aparecer).first), 1);
+      expect(_opacidad(tester, find.byType(FadeIn).first), 1);
       expect(_opacidad(tester, _aparecerDe(find.byKey(_Piezas.bloque0))), 1);
       expect(_opacidad(tester, _aparecerDe(find.byKey(_Piezas.bloque1))), 1);
       expect(escalaDelPulso(), 1);
       final radioEnElPrimerCuadro = _radioDeRecorte(
         tester,
-        find.byType(PulsoDeExito),
+        find.byType(SuccessPulse),
       );
       final desplazadas = piezas.posiciones(tester);
 
@@ -487,7 +487,7 @@ void main() {
       expect(piezas.posiciones(tester), desplazadas);
       expect(escalaDelPulso(), 1);
       expect(
-        _radioDeRecorte(tester, find.byType(PulsoDeExito)),
+        _radioDeRecorte(tester, find.byType(SuccessPulse)),
         closeTo(radioEnElPrimerCuadro, 1e-6),
       );
       expect(radioEnElPrimerCuadro, greaterThan(0));
@@ -511,7 +511,7 @@ void main() {
     expect(tester.binding.hasScheduledFrame, isFalse);
     final quietas = piezas.posiciones(tester);
     final anchos = piezas.anchos(tester);
-    expect(_opacidad(tester, find.byType(Aparecer).first), 1);
+    expect(_opacidad(tester, find.byType(FadeIn).first), 1);
 
     await tester.pump(const Duration(seconds: 5));
     expect(piezas.posiciones(tester), quietas);
@@ -524,27 +524,27 @@ void main() {
     await tester.pump(_ms(1000));
     expect(piezas.posiciones(tester), quietas);
     expect(piezas.anchos(tester), anchos);
-    expect(_opacidad(tester, find.byType(Aparecer).first), 1);
+    expect(_opacidad(tester, find.byType(FadeIn).first), 1);
     expect(tester.binding.hasScheduledFrame, isFalse);
   });
 
   test(
     'las curvas son easeOut, easeOutCubic, easeOutQuart y easeOutBack @RED-04-ASM-02',
     () {
-      expect(Movimiento.salida, same(Curves.easeOut));
-      expect(Movimiento.suave, same(Curves.easeOutCubic));
-      expect(Movimiento.rapida, same(Curves.easeOutQuart));
-      expect(Movimiento.rebote, same(Curves.easeOutBack));
+      expect(AppMotion.out, same(Curves.easeOut));
+      expect(AppMotion.smooth, same(Curves.easeOutCubic));
+      expect(AppMotion.fast, same(Curves.easeOutQuart));
+      expect(AppMotion.bounce, same(Curves.easeOutBack));
 
-      expect(Movimiento.avanzar, _ms(320));
-      expect(Movimiento.volver, _ms(280));
-      expect(Movimiento.fundido, _ms(250));
-      expect(Movimiento.cambioDeLista, _ms(150));
-      expect(Movimiento.temblor, _ms(360));
-      expect(Movimiento.latido, _ms(500));
-      expect(Movimiento.presion, _ms(80));
-      expect(Movimiento.entrada, _ms(400));
-      expect(Movimiento.paso, _ms(80));
+      expect(AppMotion.forward, _ms(320));
+      expect(AppMotion.back, _ms(280));
+      expect(AppMotion.fade, _ms(250));
+      expect(AppMotion.listChange, _ms(150));
+      expect(AppMotion.shake, _ms(360));
+      expect(AppMotion.heartbeat, _ms(500));
+      expect(AppMotion.press, _ms(80));
+      expect(AppMotion.entrance, _ms(400));
+      expect(AppMotion.step, _ms(80));
     },
   );
 
@@ -579,8 +579,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await _montar(
         tester,
-        Aparecer(
-          retraso: const Duration(milliseconds: 500),
+        FadeIn(
+          delay: const Duration(milliseconds: 500),
           child: Semantics(
             label: 'Bloque de prueba',
             child: SizedBox(width: 100, height: 40),
@@ -589,7 +589,7 @@ void main() {
       );
 
       // Transparente y todavía sin empezar, pero el lector ya lo ve.
-      expect(_opacidad(tester, find.byType(Aparecer)), 0);
+      expect(_opacidad(tester, find.byType(FadeIn)), 0);
       expect(find.bySemanticsLabel('Bloque de prueba'), findsOneWidget);
       expect(
         tester.getSemantics(find.bySemanticsLabel('Bloque de prueba')).label,
@@ -597,11 +597,11 @@ void main() {
       );
 
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, find.byType(Aparecer)), 0);
+      expect(_opacidad(tester, find.byType(FadeIn)), 0);
       expect(find.bySemanticsLabel('Bloque de prueba'), findsOneWidget);
 
       await tester.pump(_ms(400));
-      expect(_opacidad(tester, find.byType(Aparecer)), greaterThan(0));
+      expect(_opacidad(tester, find.byType(FadeIn)), greaterThan(0));
       expect(find.bySemanticsLabel('Bloque de prueba'), findsOneWidget);
       semantica.dispose();
     },

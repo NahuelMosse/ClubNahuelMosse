@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:clubnahuelmosse/reservas/pantalla_mis_reservas.dart';
+import 'package:clubnahuelmosse/features/bookings/presentation/my_bookings_screen.dart';
 
 import 'mis_reservas_test.dart' show reservaJson;
 import 'soporte/montar.dart';
@@ -36,7 +36,7 @@ void main() {
       // sale casi todo antialiasing y la guía lo toma como el color del texto: mide 1,5:1
       // hasta con textPrimary. Ese color se verifica en paleta_test.dart.
       if (texto.style?.fontFamily == 'JetBrains Mono' &&
-          elemento.findAncestorWidgetOfExactType<TarjetaReserva>() != null) {
+          elemento.findAncestorWidgetOfExactType<BookingCard>() != null) {
         return false;
       }
       final caja = elemento.renderObject;
@@ -101,7 +101,8 @@ void main() {
       await montarUsuario(
         tester,
         oscuro: oscuro,
-        inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+        inicio:
+            '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
         api: apiRutas(rutasDeSedes()),
       );
       await cumpleLasGuias(tester);

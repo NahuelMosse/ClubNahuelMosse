@@ -1,6 +1,7 @@
-import 'package:clubnahuelmosse/notificaciones/notificacion.dart';
-import 'package:clubnahuelmosse/notificaciones/tarjeta_aviso.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/app_notification.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/notification_kind.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_card.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -8,7 +9,7 @@ import 'soporte/montar.dart';
 
 const _reserva = '00000000-0000-7000-8000-000000000007';
 
-Notificacion _aviso(String tipo) => Notificacion.desdeJson({
+AppNotification _aviso(String tipo) => AppNotification.fromJson({
   'id': '00000000-0000-7000-8000-000000000001',
   'tipo': tipo,
   'titulo': 'Tu reserva empieza en 5 minutos',
@@ -23,25 +24,25 @@ void main() {
     'el aviso de 5 minutos se muestra con el ícono del recordatorio y abre la reserva @NOT-05-S2',
     (tester) async {
       final cinco = _aviso('recordatorio_cinco');
-      expect(cinco.tipo, TipoDeNotificacion.recordatorioCinco);
+      expect(cinco.kind, NotificationKind.fiveMinuteReminder);
       expect(
-        rutaDelAviso(cinco.tipo, cinco.reservaId),
-        rutaDelAviso(TipoDeNotificacion.recordatorio, _reserva),
+        noticeRoute(cinco.kind, cinco.bookingId),
+        noticeRoute(NotificationKind.reminder, _reserva),
       );
       var toques = 0;
       await montar(
         tester,
         Scaffold(
-          body: TarjetaAviso(
-            notificacion: cinco,
-            ahora: DateTime.utc(2026, 11, 12, 20),
-            alTocar: () => toques++,
+          body: NoticeCard(
+            notification: cinco,
+            now: DateTime.utc(2026, 11, 12, 20),
+            onTap: () => toques++,
           ),
         ),
-        tema: temaClaro,
+        tema: lightTheme,
       );
       expect(find.byIcon(Icons.schedule_rounded), findsOneWidget);
-      await tester.tap(find.byType(TarjetaAviso));
+      await tester.tap(find.byType(NoticeCard));
       expect(toques, 1);
     },
   );

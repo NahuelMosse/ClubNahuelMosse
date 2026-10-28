@@ -1,21 +1,26 @@
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro_exitoso.dart';
+import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_done_screen.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/montar.dart';
 
 void main() {
-  final temas = {'oscuro': temaOscuro, 'claro': temaClaro};
+  final temas = {'oscuro': darkTheme, 'claro': lightTheme};
 
   for (final MapEntry(key: modo, value: tema) in temas.entries) {
     testWidgets('el registro cumple las guías de accesibilidad en modo $modo', (
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(tester, PantallaRegistro(api: apiFalsa()), tema: tema);
+      await montar(
+        tester,
+        RegistrationScreen(registration: RegistrationService(apiFalsa())),
+        tema: tema,
+      );
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -26,7 +31,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      await montar(tester, const PantallaRegistroExitoso(), tema: tema);
+      await montar(tester, const RegistrationDoneScreen(), tema: tema);
       await expectLater(tester, meetsGuideline(androidTapTargetGuideline));
       await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
       await expectLater(tester, meetsGuideline(textContrastGuideline));
@@ -38,7 +43,11 @@ void main() {
     'cada campo anuncia su nombre y el formulario avisa que todo es obligatorio',
     (tester) async {
       final semantica = tester.ensureSemantics();
-      await montar(tester, PantallaRegistro(api: apiFalsa()), tema: temaOscuro);
+      await montar(
+        tester,
+        RegistrationScreen(registration: RegistrationService(apiFalsa())),
+        tema: darkTheme,
+      );
       for (final campo in [
         'Nombre',
         'Apellido',
@@ -57,15 +66,15 @@ void main() {
   testWidgets('con el texto al 200 % nada se desborda', (tester) async {
     await montar(
       tester,
-      PantallaRegistro(api: apiFalsa()),
-      tema: temaOscuro,
+      RegistrationScreen(registration: RegistrationService(apiFalsa())),
+      tema: darkTheme,
       escalaTexto: 2,
     );
     expect(tester.takeException(), isNull);
     await montar(
       tester,
-      const PantallaRegistroExitoso(),
-      tema: temaOscuro,
+      const RegistrationDoneScreen(),
+      tema: darkTheme,
       escalaTexto: 2,
     );
     expect(tester.takeException(), isNull);
@@ -79,8 +88,8 @@ void main() {
     }
 
     for (final MapEntry(key: modo, value: p) in {
-      'oscuro': Paleta.oscura,
-      'claro': Paleta.clara,
+      'oscuro': Palette.dark,
+      'claro': Palette.light,
     }.entries) {
       test('modo $modo', () {
         final pares = {

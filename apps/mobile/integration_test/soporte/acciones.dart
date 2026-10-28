@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/comun/configuracion.dart';
+import 'package:clubnahuelmosse/common/config.dart';
+import 'package:clubnahuelmosse/features/session/data/firebase.dart';
 import 'package:clubnahuelmosse/main.dart' as app;
-import 'package:clubnahuelmosse/sesion/firebase.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -33,20 +33,20 @@ Future<void> abrirApp(
   String? apiUrl,
   String? authEmulador,
 }) async {
-  final configuracion = Configuracion.desdeEntorno().con(
+  final configuracion = AppConfig.fromEnvironment().copyWith(
     apiUrl: apiUrl,
-    authEmulador: authEmulador,
+    authEmulator: authEmulador,
   );
   // Cada escenario arranca sin la sesión ni el tema que haya dejado el anterior.
-  await (await iniciarFirebase(configuracion)).signOut();
+  await (await initFirebase(configuracion)).signOut();
   await (await SharedPreferences.getInstance()).clear();
-  await app.arrancar(configuracion);
+  await app.bootstrap(configuracion);
   await tester.pumpAndSettle();
 }
 
-/// Vuelve a arrancar la app como al reabrirla: con la sesión que haya quedado guardada.
+/// Vuelve a bootstrap la app como al reabrirla: con la sesión que haya quedado guardada.
 Future<void> reabrirApp(WidgetTester tester) async {
-  await app.arrancar(Configuracion.desdeEntorno());
+  await app.bootstrap(AppConfig.fromEnvironment());
   await tester.pumpAndSettle();
 }
 
@@ -120,7 +120,7 @@ Future<void> crearCuenta({
   String nombre = 'Nahuel',
 }) async {
   final r = await http.post(
-    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/registro'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
       'nombre': nombre,

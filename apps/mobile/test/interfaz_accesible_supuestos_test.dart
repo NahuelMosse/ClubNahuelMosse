@@ -1,9 +1,9 @@
 import 'package:clock/clock.dart';
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/comun/formato_fecha.dart';
-import 'package:clubnahuelmosse/comun/formato_precio.dart';
-import 'package:clubnahuelmosse/comun/reloj.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/common/clock.dart';
+import 'package:clubnahuelmosse/common/date_format.dart';
+import 'package:clubnahuelmosse/common/price_format.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -18,12 +18,12 @@ void main() {
   test(
     'fechas y precios salen con el formato del club, es-AR con punto de miles y la hora a −3 h @REV-04-S10 @assumption:REV-04-ASM-06',
     () {
-      expect(pesos(38000).replaceAll(' ', ' '), '\$ 38.000');
-      expect(pesos(1250000).replaceAll(' ', ' '), '\$ 1.250.000');
-      expect(formatearFecha(DateTime(2026, 3, 4)), '04 / 03 / 2026');
+      expect(formatPesos(38000).replaceAll(' ', ' '), '\$ 38.000');
+      expect(formatPesos(1250000).replaceAll(' ', ' '), '\$ 1.250.000');
+      expect(formatDate(DateTime(2026, 3, 4)), '04 / 03 / 2026');
       final ahora = withClock(
         Clock.fixed(DateTime.utc(2026, 1, 1, 2)),
-        ahoraEnElClub,
+        clubNow,
       );
       expect(
         (ahora.year, ahora.month, ahora.day, ahora.hour),
@@ -40,12 +40,12 @@ void main() {
         Scaffold(
           body: Column(
             children: [
-              BotonPrimario(texto: 'ACTIVO', alTocar: () {}),
-              BotonPrimario(texto: 'APAGADO', alTocar: () {}, atenuado: true),
+              PrimaryButton(label: 'ACTIVO', onTap: () {}),
+              PrimaryButton(label: 'APAGADO', onTap: () {}, dimmed: true),
             ],
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       FilledButton boton(String texto) =>
           tester.widget<FilledButton>(find.widgetWithText(FilledButton, texto));
@@ -59,7 +59,7 @@ void main() {
       );
       final fondo = Color.alphaBlend(
         apagado.backgroundColor!.resolve(s)!,
-        temaOscuro.scaffoldBackgroundColor,
+        darkTheme.scaffoldBackgroundColor,
       );
       expect(
         contraste(apagado.foregroundColor!.resolve(s)!, fondo),
@@ -71,7 +71,7 @@ void main() {
   test(
     'las capturas corren con el reloj fijo el 12 de noviembre de 2026 a las 15:00 del club @REV-04-S11 @assumption:REV-04-ASM-09',
     () {
-      final ahora = withClock(relojDeLasCapturas, ahoraEnElClub);
+      final ahora = withClock(relojDeLasCapturas, clubNow);
 
       expect(
         (ahora.year, ahora.month, ahora.day, ahora.hour, ahora.minute),

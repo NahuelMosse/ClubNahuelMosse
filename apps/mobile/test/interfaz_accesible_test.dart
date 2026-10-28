@@ -1,16 +1,16 @@
+import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/barra_inferior.dart';
-import 'package:clubnahuelmosse/comun/boton.dart';
-import 'package:clubnahuelmosse/comun/calendario.dart';
-import 'package:clubnahuelmosse/comun/campo_texto.dart';
-import 'package:clubnahuelmosse/admin/dialogos_de_baja.dart';
-import 'package:clubnahuelmosse/comun/selector.dart';
-import 'package:clubnahuelmosse/comun/reloj.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/usuarios/pantalla_registro.dart';
+import 'package:clubnahuelmosse/common/bottom_bar.dart';
+import 'package:clubnahuelmosse/common/button.dart';
+import 'package:clubnahuelmosse/common/calendar.dart';
+import 'package:clubnahuelmosse/common/text_field.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/deactivation_dialogs.dart';
+import 'package:clubnahuelmosse/common/selector.dart';
+import 'package:clubnahuelmosse/common/clock.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -22,6 +22,7 @@ import 'mis_reservas_test.dart' show reservaJson;
 import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
+import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
 
 /// El contraste de WCAG entre dos colores opacos.
 double contraste(Color a, Color b) {
@@ -57,8 +58,10 @@ void main() {
         final pedidos = <http.Request>[];
         await montar(
           tester,
-          PantallaRegistro(api: apiRutas({}, pedidos: pedidos)),
-          tema: temaOscuro,
+          RegistrationScreen(
+            registration: RegistrationService(apiRutas({}, pedidos: pedidos)),
+          ),
+          tema: darkTheme,
         );
 
         await tocar(tester, find.text('CREAR CUENTA'));
@@ -76,8 +79,8 @@ void main() {
       (tester) async {
         await montar(
           tester,
-          PantallaRegistro(api: apiRutas({})),
-          tema: temaOscuro,
+          RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+          tema: darkTheme,
         );
 
         await tester.tap(find.bySemanticsLabel('Nombre'));
@@ -95,8 +98,8 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montar(
           tester,
-          PantallaRegistro(api: apiRutas({})),
-          tema: temaOscuro,
+          RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+          tema: darkTheme,
         );
 
         final nodo = tester.getSemantics(
@@ -118,12 +121,12 @@ void main() {
       final semantica = tester.ensureSemantics();
       await tester.pumpWidget(
         MaterialApp(
-          theme: temaOscuro,
+          theme: darkTheme,
           home: Scaffold(
-            body: CampoTexto(
-              etiqueta: 'NOMBRE',
-              etiquetaAccesible: 'Nombre',
-              controlador: TextEditingController(),
+            body: FormTextField(
+              label: 'NOMBRE',
+              semanticLabel: 'Nombre',
+              controller: TextEditingController(),
               placeholder: 'Tu nombre',
               error: 'El nombre es obligatorio',
             ),
@@ -156,7 +159,10 @@ void main() {
             pedidos.add(pedido);
             final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
               ('GET', '/sedes') => (200, '{"sedes": [$sedeMoronJson]}'),
-              ('PUT', '/sedes/00000000-0000-7000-8000-000000000001') => (200, sedeMoronJson),
+              ('PUT', '/sedes/00000000-0000-7000-8000-000000000001') => (
+                200,
+                sedeMoronJson,
+              ),
               _ => (404, '{}'),
             };
             return http.Response.bytes(
@@ -195,7 +201,8 @@ void main() {
   Future<void> hastaConfirmarReserva(WidgetTester tester) async {
     await montarUsuario(
       tester,
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+      inicio:
+          '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas({
         ...rutasDeSedes(),
         'POST /reservas': (
@@ -301,7 +308,7 @@ void main() {
           ),
         ),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
     await tocar(tester, find.text('ABRIR'));
   }
@@ -312,7 +319,10 @@ void main() {
   testWidgets(
     'al dar de baja una sede el foco empieza en CANCELAR @REV-04-S7 @assumption:REV-04-ASM-03',
     (tester) async {
-      await abrirDialogo(tester, (c) => confirmarBajaDeSede(c, 'Sede Morón'));
+      await abrirDialogo(
+        tester,
+        (c) => confirmVenueDeactivation(c, 'Sede Morón'),
+      );
 
       expect(enfocado(tester, 'CANCELAR'), isTrue);
       expect(
@@ -327,7 +337,7 @@ void main() {
     (tester) async {
       await abrirDialogo(
         tester,
-        (c) => confirmarBajaDeEspacio(c, 'Moron_Rivadavia_19850_Futbol_F5_1'),
+        (c) => confirmSpaceDeactivation(c, 'Moron_Rivadavia_19850_Futbol_F5_1'),
       );
 
       expect(enfocado(tester, 'CANCELAR'), isTrue);
@@ -341,17 +351,17 @@ void main() {
       await montar(
         tester,
         Scaffold(
-          body: CampoSelector(
-            etiqueta: 'DEPORTE',
-            etiquetaAccesible: 'Deporte',
-            valor: null,
+          body: SelectorField(
+            label: 'DEPORTE',
+            semanticLabel: 'Deporte',
+            value: null,
             placeholder: 'Elegí un deporte',
-            icono: Icons.sports_soccer,
-            alTocar: () {},
+            icon: Icons.sports_soccer,
+            onTap: () {},
             error: 'Elegí un deporte',
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
 
       final nodo = tester.getSemantics(
@@ -373,8 +383,8 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montar(
         tester,
-        PantallaRegistro(api: apiRutas({})),
-        tema: temaOscuro,
+        RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+        tema: darkTheme,
       );
 
       await tocar(tester, find.text('CREAR CUENTA'));
@@ -398,12 +408,17 @@ void main() {
       final pedidos = <http.Request>[];
       await montar(
         tester,
-        PantallaRegistro(
-          api: apiRutas({
-            'POST /registro': (201, '{"id": "00000000-0000-7000-8000-000000000001"}'),
-          }, pedidos: pedidos),
+        RegistrationScreen(
+          registration: RegistrationService(
+            apiRutas({
+              'POST /registro': (
+                201,
+                '{"id": "00000000-0000-7000-8000-000000000001"}',
+              ),
+            }, pedidos: pedidos),
+          ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       await tester.enterText(find.bySemanticsLabel('Nombre'), 'Ana');
       await tester.enterText(find.bySemanticsLabel('Apellido'), 'Pérez');
@@ -441,8 +456,8 @@ void main() {
       await withClock(Clock.fixed(DateTime.utc(2026, 11, 13, 2, 30)), () async {
         await montar(
           tester,
-          PantallaRegistro(api: apiRutas({})),
-          tema: temaOscuro,
+          RegistrationScreen(registration: RegistrationService(apiRutas({}))),
+          tema: darkTheme,
         );
         await tester.enterText(
           find.bySemanticsLabel('Fecha de nacimiento'),
@@ -475,9 +490,9 @@ void main() {
         await montar(
           tester,
           const Scaffold(
-            bottomNavigationBar: BarraInferior(actual: Seccion.reservas),
+            bottomNavigationBar: BottomBar(current: Section.bookings),
           ),
-          tema: temaOscuro,
+          tema: darkTheme,
           tamano: Size(ancho, 800),
           escalaTexto: 2,
         );
@@ -509,9 +524,9 @@ void main() {
       await montar(
         tester,
         const Scaffold(
-          bottomNavigationBar: BarraInferior(actual: Seccion.reservas),
+          bottomNavigationBar: BottomBar(current: Section.bookings),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
         escalaTexto: 2,
       );
@@ -530,9 +545,9 @@ void main() {
       await montar(
         tester,
         const Scaffold(
-          bottomNavigationBar: BarraAdmin(actual: SeccionAdmin.espacios),
+          bottomNavigationBar: AdminBar(current: AdminSection.spaces),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
         escalaTexto: 2,
       );
@@ -555,14 +570,14 @@ void main() {
         tester,
         Scaffold(
           body: Center(
-            child: BotonPrimario(
-              texto: 'GUARDAR SEDE',
-              alTocar: () {},
-              atenuado: true,
+            child: PrimaryButton(
+              label: 'GUARDAR SEDE',
+              onTap: () {},
+              dimmed: true,
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       final estilo = tester
           .widget<FilledButton>(find.byType(FilledButton))
@@ -570,7 +585,7 @@ void main() {
       // El fondo atenuado es translúcido: lo que ve la persona es la mezcla con la pantalla.
       final fondo = Color.alphaBlend(
         estilo.backgroundColor!.resolve(<WidgetState>{})!,
-        temaOscuro.scaffoldBackgroundColor,
+        darkTheme.scaffoldBackgroundColor,
       );
       final texto = estilo.foregroundColor!.resolve(<WidgetState>{})!;
 
@@ -592,10 +607,8 @@ void main() {
             localizationsDelegates: GlobalMaterialLocalizations.delegates,
             home: Builder(
               builder: (contexto) => TextButton(
-                onPressed: () async => elegida = await elegirFechaDeNacimiento(
-                  contexto,
-                  DateTime(2030),
-                ),
+                onPressed: () async =>
+                    elegida = await pickBirthDate(contexto, DateTime(2030)),
                 child: const Text('ABRIR'),
               ),
             ),
@@ -617,7 +630,7 @@ void main() {
     () {
       final ahora = withClock(
         Clock.fixed(DateTime.utc(2026, 11, 13, 2, 30)),
-        ahoraEnElClub,
+        clubNow,
       );
 
       expect(

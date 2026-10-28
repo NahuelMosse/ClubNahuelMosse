@@ -1,5 +1,5 @@
-import 'package:clubnahuelmosse/sesion/pantalla_acceso_denegado.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/session/presentation/access_denied_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -233,8 +233,8 @@ void main() {
       testWidgets('acceso denegado $ancho $modo', (tester) async {
         await montar(
           tester,
-          PantallaAccesoDenegado(sesion: SesionFalsa(perfilUsuario)),
-          tema: oscuro ? temaOscuro : temaClaro,
+          AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
+          tema: oscuro ? darkTheme : lightTheme,
           tamano: tamano,
         );
         await capturar(tester, 'admin/acceso_denegado_${ancho}_$modo.png');

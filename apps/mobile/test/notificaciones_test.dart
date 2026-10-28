@@ -2,14 +2,16 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/notificaciones/centro.dart';
-import 'package:clubnahuelmosse/notificaciones/notificacion.dart';
-import 'package:clubnahuelmosse/notificaciones/notificaciones.dart';
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
-import 'package:clubnahuelmosse/notificaciones/sistema.dart';
-import 'package:clubnahuelmosse/sesion/sesion.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/data/notifications_repository.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/app_notification.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/notification_kind.dart';
+import 'package:clubnahuelmosse/features/notifications/domain/notification_system.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notifications_screen.dart';
+import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
+import 'package:clubnahuelmosse/features/session/presentation/session.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -37,7 +39,10 @@ String notif({
     '"creada_en": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
     '"leida": $leida}';
 
-final recordatorio = notif(id: '00000000-0000-7000-8000-000000000003', club: DateTime.utc(2026, 11, 12, 19, 58));
+final recordatorio = notif(
+  id: '00000000-0000-7000-8000-000000000003',
+  club: DateTime.utc(2026, 11, 12, 19, 58),
+);
 final confirmacion = notif(
   id: '00000000-0000-7000-8000-000000000002',
   club: DateTime.utc(2026, 11, 12, 17),
@@ -59,7 +64,7 @@ final alerta = notif(
 Map<String, Object?> cuerpoDe(http.Request pedido) =>
     jsonDecode(pedido.body) as Map<String, Object?>;
 
-class SistemaFalso implements SistemaDeNotificaciones {
+class SistemaFalso implements NotificationSystem {
   SistemaFalso({this.concedido = true});
 
   bool concedido;
@@ -67,16 +72,16 @@ class SistemaFalso implements SistemaDeNotificaciones {
   int olvidos = 0;
 
   @override
-  String get plataforma => 'android';
+  String get platform => 'android';
 
   @override
-  Future<bool> permitido() async => concedido;
+  Future<bool> isAllowed() async => concedido;
 
   @override
-  Future<bool> preguntado() async => true;
+  Future<bool> wasAsked() async => true;
 
   @override
-  Future<bool> solicitarPermiso() async {
+  Future<bool> requestPermission() async {
     solicitudes++;
     concedido = true;
     return true;
@@ -86,16 +91,16 @@ class SistemaFalso implements SistemaDeNotificaciones {
   Future<String?> token() async => 'token-del-telefono';
 
   @override
-  Future<void> olvidarToken() async => olvidos++;
+  Future<void> forgetToken() async => olvidos++;
 
   @override
-  Stream<void> get alLlegar => const Stream.empty();
+  Stream<void> get onArrive => const Stream.empty();
 
   @override
-  Stream<AvisoTocado> get alTocar => const Stream.empty();
+  Stream<NoticeTapped> get onTap => const Stream.empty();
 
   @override
-  Future<AvisoTocado?> abiertaPor() async => null;
+  Future<NoticeTapped?> openedBy() async => null;
 }
 
 /// Un sistema cuyo permiso tarda lo que el test decida en contestar.
@@ -103,7 +108,7 @@ class SistemaLento extends SistemaFalso {
   final respuesta = Completer<bool>();
 
   @override
-  Future<bool> permitido() => respuesta.future;
+  Future<bool> isAllowed() => respuesta.future;
 }
 
 /// Firebase con un cierre de sesión que tarda, como en un teléfono de verdad.
@@ -120,16 +125,16 @@ class CredencialesLentas extends CredencialesFalsas {
       sinToken ? Completer<String?>().future : super.token();
 
   @override
-  Future<void> salir() async {
+  Future<void> signOut() async {
     await Future<void>.delayed(tarda);
-    await super.salir();
+    await super.signOut();
   }
 }
 
 /// La API de notificaciones, con lo que devuelve el centro y cada pedido anotado.
 class ApiFalsa {
   List<String> avisos = [];
-  int noLeidas = 0;
+  int unread = 0;
   bool caida = false;
   final pedidos = <http.Request>[];
   void Function(http.Request)? alPedir;
@@ -143,7 +148,7 @@ class ApiFalsa {
       final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
         ('GET', '/notificaciones') => (
           200,
-          '{"notificaciones": [${avisos.join(', ')}], "no_leidas": $noLeidas}',
+          '{"notificaciones": [${avisos.join(', ')}], "no_leidas": $unread}',
         ),
         ('GET', '/yo') => (200, perfilJson()),
         ('DELETE', '/yo') => (204, ''),
@@ -173,17 +178,17 @@ class ApiFalsa {
 
 /// Por defecto el teléfono está en las 21:00 del club del 12 de noviembre: lo que ya estaba sin
 /// leer a las 19:58 no llegó mientras la app arrancaba.
-CentroDeNotificaciones centroDe(
+NotificationCenter centroDe(
   ApiFalsa api,
-  Sesion sesion, {
-  SistemaDeNotificaciones? sistema,
+  Session sesion, {
+  NotificationSystem? sistema,
   DateTime Function()? ahora,
-}) => CentroDeNotificaciones(
-  notificaciones: Notificaciones(api: api.cliente, sesion: sesion),
-  sesion: sesion,
-  sistema: sistema ?? SistemaFalso(),
-  cada: Duration.zero,
-  ahora: ahora ?? () => DateTime.utc(2026, 11, 13),
+}) => NotificationCenter(
+  notifications: NotificationsRepository(api: api.cliente, session: sesion),
+  session: sesion,
+  system: sistema ?? SistemaFalso(),
+  every: Duration.zero,
+  now: ahora ?? () => DateTime.utc(2026, 11, 13),
 );
 
 void main() {
@@ -193,32 +198,35 @@ void main() {
     final hoy = DateTime.utc(2026, 11, 12, 20);
 
     test('el rótulo del día es HOY, AYER o la fecha', () {
-      expect(rotuloDeDia(DateTime.utc(2026, 11, 12, 0, 5), hoy), 'HOY');
-      expect(rotuloDeDia(DateTime.utc(2026, 11, 11, 23, 59), hoy), 'AYER');
-      expect(rotuloDeDia(DateTime.utc(2026, 11, 9, 9), hoy), '09/11');
+      expect(dayLabel(DateTime.utc(2026, 11, 12, 0, 5), hoy), 'HOY');
+      expect(dayLabel(DateTime.utc(2026, 11, 11, 23, 59), hoy), 'AYER');
+      expect(dayLabel(DateTime.utc(2026, 11, 9, 9), hoy), '09/11');
     });
 
     test('cuándo llegó se cuenta desde ahora hasta ayer', () {
-      expect(cuandoLlego(DateTime.utc(2026, 11, 12, 19, 59, 30), hoy), 'AHORA');
       expect(
-        cuandoLlego(DateTime.utc(2026, 11, 12, 19, 58), hoy),
+        arrivedLabel(DateTime.utc(2026, 11, 12, 19, 59, 30), hoy),
+        'AHORA',
+      );
+      expect(
+        arrivedLabel(DateTime.utc(2026, 11, 12, 19, 58), hoy),
         'HACE 2 MIN',
       );
-      expect(cuandoLlego(DateTime.utc(2026, 11, 12, 17), hoy), 'HACE 3 H');
-      expect(cuandoLlego(DateTime.utc(2026, 11, 11, 15), hoy), 'AYER');
-      expect(cuandoLlego(DateTime.utc(2026, 11, 3, 15), hoy), '03/11');
+      expect(arrivedLabel(DateTime.utc(2026, 11, 12, 17), hoy), 'HACE 3 H');
+      expect(arrivedLabel(DateTime.utc(2026, 11, 11, 15), hoy), 'AYER');
+      expect(arrivedLabel(DateTime.utc(2026, 11, 3, 15), hoy), '03/11');
     });
 
     test('agrupa por día conservando de la más nueva a la más vieja', () {
       final lista = [
         for (final json in [recordatorio, confirmacion, alerta])
-          Notificacion.desdeJson(jsonDecode(json))!,
+          AppNotification.fromJson(jsonDecode(json))!,
       ];
 
-      final grupos = agruparPorDia(lista, hoy);
+      final grupos = groupByDay(lista, hoy);
 
-      expect(grupos.map((g) => g.rotulo), ['HOY', 'AYER']);
-      expect(grupos.first.notificaciones.map((n) => n.id), [
+      expect(grupos.map((g) => g.label), ['HOY', 'AYER']);
+      expect(grupos.first.notifications.map((n) => n.id), [
         '00000000-0000-7000-8000-000000000003',
         '00000000-0000-7000-8000-000000000002',
       ]);
@@ -228,29 +236,41 @@ void main() {
       'cada aviso lleva a la pestaña de Mis reservas que le corresponde',
       () {
         expect(
-          rutaDelAviso(TipoDeNotificacion.recordatorio, '00000000-0000-7000-8000-000000000007'),
+          noticeRoute(
+            NotificationKind.reminder,
+            '00000000-0000-7000-8000-000000000007',
+          ),
           '/reservas?reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
-          rutaDelAviso(TipoDeNotificacion.cancelacionForzosa, '00000000-0000-7000-8000-000000000007'),
+          noticeRoute(
+            NotificationKind.forcedCancellation,
+            '00000000-0000-7000-8000-000000000007',
+          ),
           '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
-          rutaDelAviso(TipoDeNotificacion.cancelacionUsuario, '00000000-0000-7000-8000-000000000007'),
+          noticeRoute(
+            NotificationKind.userCancellation,
+            '00000000-0000-7000-8000-000000000007',
+          ),
           '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
         );
-        expect(
-          rutaDelAviso(TipoDeNotificacion.recordatorio, null),
-          '/reservas',
-        );
-        expect(rutaDelAviso(null, null), '/reservas');
+        expect(noticeRoute(NotificationKind.reminder, null), '/reservas');
+        expect(noticeRoute(null, null), '/reservas');
       },
     );
 
     test('un tipo que la app no conoce no se lee', () {
       expect(
-        Notificacion.desdeJson(
-          jsonDecode(notif(id: '00000000-0000-7000-8000-000000000009', club: hoy, tipo: 'otra')),
+        AppNotification.fromJson(
+          jsonDecode(
+            notif(
+              id: '00000000-0000-7000-8000-000000000009',
+              club: hoy,
+              tipo: 'otra',
+            ),
+          ),
         ),
         isNull,
       );
@@ -258,19 +278,19 @@ void main() {
   });
 
   group('el centro', () {
-    Future<(ApiFalsa, CentroDeNotificaciones)> abrir(
+    Future<(ApiFalsa, NotificationCenter)> abrir(
       WidgetTester tester, {
       List<String> avisos = const [],
-      int noLeidas = 0,
+      int unread = 0,
       bool permiso = true,
       Size tamano = const Size(393, 852),
       double escala = 1,
       bool oscuro = true,
-      void Function(Notificacion)? alAbrir,
+      void Function(AppNotification)? alAbrir,
     }) async {
       final api = ApiFalsa()
         ..avisos = [...avisos]
-        ..noLeidas = noLeidas;
+        ..unread = unread;
       final sesion = SesionFalsa(perfilUsuario);
       final centro = centroDe(
         api,
@@ -279,13 +299,13 @@ void main() {
       );
       await montar(
         tester,
-        PantallaNotificaciones(
-          centro: centro,
-          sesion: sesion,
-          ahora: () => ahoraClub,
-          alAbrir: (_, n) => alAbrir?.call(n),
+        NotificationsScreen(
+          center: centro,
+          session: sesion,
+          now: () => ahoraClub,
+          onOpen: (_, n) => alAbrir?.call(n),
         ),
-        tema: oscuro ? temaOscuro : temaClaro,
+        tema: oscuro ? darkTheme : lightTheme,
         tamano: tamano,
         escalaTexto: escala,
       );
@@ -299,7 +319,7 @@ void main() {
       await abrir(
         tester,
         avisos: [recordatorio, confirmacion, alerta],
-        noLeidas: 1,
+        unread: 1,
       );
 
       expect(find.text('HOY'), findsOneWidget);
@@ -372,12 +392,7 @@ void main() {
     testWidgets(
       'sin permiso pero con avisos, los muestra debajo de la franja',
       (tester) async {
-        await abrir(
-          tester,
-          avisos: [recordatorio],
-          noLeidas: 1,
-          permiso: false,
-        );
+        await abrir(tester, avisos: [recordatorio], unread: 1, permiso: false);
 
         expect(find.text('Notificaciones desactivadas'), findsOneWidget);
         expect(find.text('ACTIVAR NOTIFICACIONES'), findsOneWidget);
@@ -387,19 +402,25 @@ void main() {
     );
 
     testWidgets('tocar un aviso lo marca leído y lo abre', (tester) async {
-      Notificacion? abierta;
+      AppNotification? abierta;
       final (api, _) = await abrir(
         tester,
         avisos: [recordatorio],
-        noLeidas: 1,
+        unread: 1,
         alAbrir: (n) => abierta = n,
       );
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abierta?.reservaId, '00000000-0000-7000-8000-000000000001');
-      expect(api.de('POST', '/notificaciones/00000000-0000-7000-8000-000000000003/leer'), hasLength(1));
+      expect(abierta?.bookingId, '00000000-0000-7000-8000-000000000001');
+      expect(
+        api.de(
+          'POST',
+          '/notificaciones/00000000-0000-7000-8000-000000000003/leer',
+        ),
+        hasLength(1),
+      );
     });
 
     testWidgets(
@@ -407,18 +428,18 @@ void main() {
       (tester) async {
         final api = ApiFalsa()
           ..avisos = [recordatorio]
-          ..noLeidas = 1
+          ..unread = 1
           ..caida = true;
         final sesion = SesionFalsa(perfilUsuario);
         await montar(
           tester,
-          PantallaNotificaciones(
-            centro: centroDe(api, sesion),
-            sesion: sesion,
-            ahora: () => ahoraClub,
-            alAbrir: (_, _) {},
+          NotificationsScreen(
+            center: centroDe(api, sesion),
+            session: sesion,
+            now: () => ahoraClub,
+            onOpen: (_, _) {},
           ),
-          tema: temaOscuro,
+          tema: darkTheme,
         );
 
         expect(find.text('Error de conexión'), findsOneWidget);
@@ -437,17 +458,17 @@ void main() {
         final api = ApiFalsa();
         final sesion = SesionFalsa(perfilUsuario);
         final centro = centroDe(api, sesion);
-        await tester.runAsync(centro.cargar);
+        await tester.runAsync(centro.load);
         api.caida = true;
         await montar(
           tester,
-          PantallaNotificaciones(
-            centro: centro,
-            sesion: sesion,
-            ahora: () => ahoraClub,
-            alAbrir: (_, _) {},
+          NotificationsScreen(
+            center: centro,
+            session: sesion,
+            now: () => ahoraClub,
+            onOpen: (_, _) {},
           ),
-          tema: temaOscuro,
+          tema: darkTheme,
         );
 
         expect(find.text('Error de conexión'), findsOneWidget);
@@ -462,7 +483,7 @@ void main() {
           await abrir(
             tester,
             avisos: [recordatorio, confirmacion, alerta],
-            noLeidas: 1,
+            unread: 1,
             tamano: const Size(360, 800),
             escala: 2,
             oscuro: oscuro,
@@ -497,7 +518,7 @@ void main() {
   });
 
   group('el panel con la app abierta', () {
-    Future<(ApiFalsa, CentroDeNotificaciones, List<Notificacion>)> abrir(
+    Future<(ApiFalsa, NotificationCenter, List<AppNotification>)> abrir(
       WidgetTester tester, {
       bool permiso = true,
       Size tamano = const Size(393, 852),
@@ -510,20 +531,20 @@ void main() {
         sesion,
         sistema: SistemaFalso(concedido: permiso),
       );
-      final abiertas = <Notificacion>[];
+      final abiertas = <AppNotification>[];
       await montar(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            PanelDeAvisos(
-              centro: centro,
-              ahora: () => ahoraClub,
-              alAbrir: abiertas.add,
+            NoticePanel(
+              center: centro,
+              now: () => ahoraClub,
+              onOpen: abiertas.add,
             ),
           ],
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: tamano,
         escalaTexto: escala,
       );
@@ -533,13 +554,13 @@ void main() {
     Future<void> llega(
       WidgetTester tester,
       ApiFalsa api,
-      CentroDeNotificaciones centro,
+      NotificationCenter centro,
       List<String> avisos,
     ) async {
       api
         ..avisos = avisos
-        ..noLeidas = avisos.length;
-      await tester.runAsync(centro.cargar);
+        ..unread = avisos.length;
+      await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
     }
 
@@ -548,16 +569,16 @@ void main() {
     ) async {
       final api = ApiFalsa()
         ..avisos = [recordatorio]
-        ..noLeidas = 1;
+        ..unread = 1;
       final sesion = SesionFalsa(perfilUsuario);
       final centro = centroDe(api, sesion);
       await montar(
         tester,
-        PanelDeAvisos(centro: centro, alAbrir: (_) {}),
-        tema: temaOscuro,
+        NoticePanel(center: centro, onOpen: (_) {}),
+        tema: darkTheme,
       );
 
-      expect(centro.noLeidas, 1);
+      expect(centro.unread, 1);
       expect(find.text('MARCAR TODAS'), findsNothing);
     });
 
@@ -582,7 +603,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(centro.noLeidas, 0);
+      expect(centro.unread, 0);
       expect(api.de('POST', '/notificaciones/leer-todas'), hasLength(1));
     });
 
@@ -597,7 +618,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(centro.noLeidas, 1);
+      expect(centro.unread, 1);
       expect(api.de('POST', '/notificaciones/leer-todas'), isEmpty);
     });
 
@@ -608,7 +629,9 @@ void main() {
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abiertas.map((n) => n.id), ['00000000-0000-7000-8000-000000000003']);
+      expect(abiertas.map((n) => n.id), [
+        '00000000-0000-7000-8000-000000000003',
+      ]);
     });
 
     testWidgets('sin permiso del sistema no abre el panel', (tester) async {
@@ -617,7 +640,7 @@ void main() {
       await llega(tester, api, centro, [recordatorio]);
 
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(centro.noLeidas, 1);
+      expect(centro.unread, 1);
     });
 
     testWidgets(
@@ -631,7 +654,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('MARCAR TODAS'), findsNothing);
-        expect(centro.noLeidas, 1);
+        expect(centro.unread, 1);
         expect(find.text('la pantalla de abajo'), findsOneWidget);
       },
     );
@@ -677,7 +700,10 @@ void main() {
 
           await llega(tester, api, centro, [
             recordatorio,
-            recordatorio.replaceFirst('"id": "00000000-0000-7000-8000-000000000003"', '"id": "00000000-0000-7000-8000-000000000004"'),
+            recordatorio.replaceFirst(
+              '"id": "00000000-0000-7000-8000-000000000003"',
+              '"id": "00000000-0000-7000-8000-000000000004"',
+            ),
           ]);
 
           expect(tester.takeException(), isNull);
@@ -692,13 +718,13 @@ void main() {
   });
 
   group('cuándo abre el panel', () {
-    Future<(ApiFalsa, CentroDeNotificaciones)> montarPanel(
+    Future<(ApiFalsa, NotificationCenter)> montarPanel(
       WidgetTester tester,
       List<String> avisos,
     ) async {
       final api = ApiFalsa()
         ..avisos = avisos
-        ..noLeidas = avisos.length;
+        ..unread = avisos.length;
       final centro = centroDe(
         api,
         SesionFalsa(perfilUsuario),
@@ -709,10 +735,10 @@ void main() {
         Stack(
           children: [
             const Scaffold(body: SizedBox.expand()),
-            PanelDeAvisos(centro: centro, alAbrir: (_) {}),
+            NoticePanel(center: centro, onOpen: (_) {}),
           ],
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
       return (api, centro);
     }
@@ -720,22 +746,25 @@ void main() {
     Future<void> llega(
       WidgetTester tester,
       ApiFalsa api,
-      CentroDeNotificaciones centro,
+      NotificationCenter centro,
       List<String> avisos,
     ) async {
       api
         ..avisos = avisos
-        ..noLeidas = avisos.length;
-      await tester.runAsync(centro.cargar);
+        ..unread = avisos.length;
+      await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
     }
 
-    String reciente(String id) => notif(id: id, club: enDelClub(DateTime.now()));
+    String reciente(String id) =>
+        notif(id: id, club: inClubTime(DateTime.now()));
 
     testWidgets('lo que llega mientras la app arranca abre el panel', (
       tester,
     ) async {
-      await montarPanel(tester, [reciente('00000000-0000-7000-8000-000000000005')]);
+      await montarPanel(tester, [
+        reciente('00000000-0000-7000-8000-000000000005'),
+      ]);
 
       expect(find.text('MARCAR TODAS'), findsOneWidget);
     });
@@ -744,7 +773,9 @@ void main() {
       'si se cerró el panel sin leer, lo que llega después no lo reabre',
       (tester) async {
         final (api, centro) = await montarPanel(tester, []);
-        await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000005')]);
+        await llega(tester, api, centro, [
+          reciente('00000000-0000-7000-8000-000000000005'),
+        ]);
         expect(find.text('MARCAR TODAS'), findsOneWidget);
 
         await tester.tap(
@@ -752,10 +783,13 @@ void main() {
           warnIfMissed: false,
         );
         await tester.pumpAndSettle();
-        await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000006'), reciente('00000000-0000-7000-8000-000000000005')]);
+        await llega(tester, api, centro, [
+          reciente('00000000-0000-7000-8000-000000000006'),
+          reciente('00000000-0000-7000-8000-000000000005'),
+        ]);
 
         expect(find.text('MARCAR TODAS'), findsNothing);
-        expect(centro.noLeidas, 2);
+        expect(centro.unread, 2);
       },
     );
 
@@ -763,11 +797,15 @@ void main() {
       tester,
     ) async {
       final (api, centro) = await montarPanel(tester, []);
-      await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000005')]);
+      await llega(tester, api, centro, [
+        reciente('00000000-0000-7000-8000-000000000005'),
+      ]);
       await tester.tap(find.text('MARCAR TODAS'));
       await tester.pumpAndSettle();
 
-      await llega(tester, api, centro, [reciente('00000000-0000-7000-8000-000000000006')]);
+      await llega(tester, api, centro, [
+        reciente('00000000-0000-7000-8000-000000000006'),
+      ]);
 
       expect(find.text('MARCAR TODAS'), findsOneWidget);
     });
@@ -777,15 +815,17 @@ void main() {
     testWidgets('cerrar borra el token del teléfono', (tester) async {
       final api = ApiFalsa();
       final sistema = SistemaFalso();
-      final sesion = Sesion(
-        credenciales: CredencialesFalsas(),
-        api: api.cliente,
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: CredencialesFalsas(),
+          api: api.cliente,
+        ),
       );
       centroDe(api, sesion, sistema: sistema);
       await tester.runAsync(() async {
-        await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+        await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
         await Future<void>.delayed(const Duration(milliseconds: 100));
-        await sesion.cerrar();
+        await sesion.close();
       });
 
       expect(sistema.olvidos, 1);
@@ -798,10 +838,15 @@ void main() {
       final sistema = SistemaFalso();
       final credenciales = CredencialesFalsas(conCuenta: true)
         ..tokenFalla = true;
-      final sesion = Sesion(credenciales: credenciales, api: api.cliente);
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: credenciales,
+          api: api.cliente,
+        ),
+      );
       centroDe(api, sesion, sistema: sistema);
 
-      final perfil = await tester.runAsync(sesion.retomar);
+      final perfil = await tester.runAsync(sesion.resume);
 
       expect(perfil, isNull);
       expect(credenciales.salidas, 1);
@@ -813,18 +858,20 @@ void main() {
     ) async {
       final api = ApiFalsa();
       final sistema = SistemaFalso();
-      final sesion = Sesion(
-        credenciales: CredencialesFalsas(),
-        api: ClienteApi(
-          'http://api.falsa',
-          cliente: MockClient((_) async => http.Response('{}', 500)),
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: CredencialesFalsas(),
+          api: ClienteApi(
+            'http://api.falsa',
+            cliente: MockClient((_) async => http.Response('{}', 500)),
+          ),
         ),
       );
       centroDe(api, sesion, sistema: sistema);
 
       await tester.runAsync(() async {
         await expectLater(
-          sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+          sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
           throwsA(isA<ErrorDelServidor>()),
         );
       });
@@ -835,14 +882,16 @@ void main() {
     testWidgets('dar de baja la cuenta borra el token', (tester) async {
       final api = ApiFalsa();
       final sistema = SistemaFalso();
-      final sesion = Sesion(
-        credenciales: CredencialesFalsas(),
-        api: api.cliente,
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: CredencialesFalsas(),
+          api: api.cliente,
+        ),
       );
       centroDe(api, sesion, sistema: sistema);
       await tester.runAsync(() async {
-        await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
-        await sesion.darDeBaja();
+        await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
+        await sesion.deactivate();
       });
 
       expect(sistema.olvidos, 1);
@@ -852,16 +901,18 @@ void main() {
       tester,
     ) async {
       final credenciales = CredencialesLentas(tarda: Duration.zero);
-      final sesion = Sesion(
-        credenciales: credenciales,
-        api: ApiFalsa().cliente,
+      final sesion = Session(
+        repository: SessionRepository(
+          credentials: credenciales,
+          api: ApiFalsa().cliente,
+        ),
       );
       await tester.runAsync(
-        () => sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+        () => sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
       );
       credenciales.sinToken = true;
 
-      await tester.runAsync(sesion.cerrar);
+      await tester.runAsync(sesion.close);
 
       expect(credenciales.salidas, 1);
     });
@@ -870,18 +921,20 @@ void main() {
       'con el token colgado, cerrar espera dos segundos y sale igual',
       (tester) async {
         final credenciales = CredencialesLentas(tarda: Duration.zero);
-        final sesion = Sesion(
-          credenciales: credenciales,
-          api: ApiFalsa().cliente,
+        final sesion = Session(
+          repository: SessionRepository(
+            credentials: credenciales,
+            api: ApiFalsa().cliente,
+          ),
         );
-        sesion.alCerrar.add((_) async => fail('no había token que dar'));
+        sesion.onClose.add((_) async => fail('no había token que dar'));
         await tester.runAsync(
-          () => sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+          () => sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
         );
         credenciales.sinToken = true;
         var cerro = false;
 
-        unawaited(sesion.cerrar().then((_) => cerro = true));
+        unawaited(sesion.close().then((_) => cerro = true));
         await tester.pump(const Duration(seconds: 1));
         expect(cerro, isFalse);
         await tester.pump(const Duration(seconds: 2));
@@ -896,22 +949,24 @@ void main() {
       'si la baja falla antes de que termine de salir, no queda un error sin atrapar',
       (tester) async {
         final credenciales = CredencialesLentas();
-        final sesion = Sesion(
-          credenciales: credenciales,
-          api: ApiFalsa().cliente,
+        final sesion = Session(
+          repository: SessionRepository(
+            credentials: credenciales,
+            api: ApiFalsa().cliente,
+          ),
         );
-        sesion.alCerrar.add(
+        sesion.onClose.add(
           (_) => Future<void>.error(StateError('la API se cayó')),
         );
         await tester.runAsync(
-          () => sesion.iniciar('nahuel@correo.com', 'ClubNahuel1'),
+          () => sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
         );
 
-        await tester.runAsync(sesion.cerrar);
+        await tester.runAsync(sesion.close);
 
         expect(tester.takeException(), isNull);
         expect(credenciales.salidas, 1);
-        expect(sesion.perfil, isNull);
+        expect(sesion.profile, isNull);
       },
     );
   });
@@ -924,14 +979,14 @@ void main() {
     ) async {
       final api = ApiFalsa();
       final sistema = SistemaLento();
-      final centro = CentroDeNotificaciones(
-        notificaciones: Notificaciones(
+      final centro = NotificationCenter(
+        notifications: NotificationsRepository(
           api: api.cliente,
-          sesion: SesionFalsa(perfilUsuario),
+          session: SesionFalsa(perfilUsuario),
         ),
-        sesion: SesionFalsa(perfilUsuario),
-        sistema: sistema,
-        cada: const Duration(seconds: 5),
+        session: SesionFalsa(perfilUsuario),
+        system: sistema,
+        every: const Duration(seconds: 5),
       );
 
       centro.dispose();
@@ -948,14 +1003,14 @@ void main() {
       tester,
     ) async {
       final api = ApiFalsa();
-      final centro = CentroDeNotificaciones(
-        notificaciones: Notificaciones(
+      final centro = NotificationCenter(
+        notifications: NotificationsRepository(
           api: api.cliente,
-          sesion: SesionFalsa(perfilUsuario),
+          session: SesionFalsa(perfilUsuario),
         ),
-        sesion: SesionFalsa(perfilUsuario),
-        sistema: SistemaFalso(),
-        cada: const Duration(seconds: 10),
+        session: SesionFalsa(perfilUsuario),
+        system: SistemaFalso(),
+        every: const Duration(seconds: 10),
       );
       await tester.pump(const Duration(seconds: 1));
       final alArrancar = lecturas(api);
@@ -1025,7 +1080,12 @@ void main() {
       (tester) async {
         final api = ApiFalsa();
         final credenciales = CredencialesFalsas();
-        final sesion = Sesion(credenciales: credenciales, api: api.cliente);
+        final sesion = Session(
+          repository: SessionRepository(
+            credentials: credenciales,
+            api: api.cliente,
+          ),
+        );
         String? autorizacionDeLaBaja;
         api.alPedir = (p) {
           if (p.url.path == '/dispositivos/baja') {
@@ -1034,13 +1094,13 @@ void main() {
         };
         final centro = centroDe(api, sesion);
         await tester.runAsync(() async {
-          await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+          await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
         await tester.pumpAndSettle();
         expect(api.de('PUT', '/dispositivos'), hasLength(1));
 
-        await tester.runAsync(sesion.cerrar);
+        await tester.runAsync(sesion.close);
         await tester.pumpAndSettle();
 
         expect(api.de('POST', '/dispositivos/baja'), hasLength(1));
@@ -1050,7 +1110,7 @@ void main() {
         // La baja va con la sesión que se cerró, tomada antes de cerrarla.
         expect(autorizacionDeLaBaja, 'Bearer token-falso');
         expect(credenciales.salidas, 1);
-        expect(centro.lista, isEmpty);
+        expect(centro.list, isEmpty);
       },
     );
 
@@ -1059,19 +1119,24 @@ void main() {
       (tester) async {
         final api = ApiFalsa();
         final credenciales = CredencialesFalsas();
-        final sesion = Sesion(credenciales: credenciales, api: api.cliente);
+        final sesion = Session(
+          repository: SessionRepository(
+            credentials: credenciales,
+            api: api.cliente,
+          ),
+        );
         centroDe(api, sesion);
         await tester.runAsync(() async {
-          await sesion.iniciar('nahuel@correo.com', 'ClubNahuel1');
+          await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
         await tester.pumpAndSettle();
 
         api.caida = true;
-        await tester.runAsync(sesion.cerrar);
+        await tester.runAsync(sesion.close);
 
         expect(credenciales.salidas, 1);
-        expect(sesion.perfil, isNull);
+        expect(sesion.profile, isNull);
       },
     );
   });
@@ -1083,7 +1148,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         final api = ApiFalsa()
           ..avisos = [recordatorio, confirmacion]
-          ..noLeidas = 2;
+          ..unread = 2;
         await montarUsuario(
           tester,
           inicio: '/inicio',
@@ -1149,9 +1214,12 @@ void main() {
       final semantica = tester.ensureSemantics();
       final api = ApiFalsa()
         ..avisos = [
-          recordatorio.replaceFirst('"reserva_id": "00000000-0000-7000-8000-000000000001"', '"reserva_id": "00000000-0000-7000-8000-000000000002"'),
+          recordatorio.replaceFirst(
+            '"reserva_id": "00000000-0000-7000-8000-000000000001"',
+            '"reserva_id": "00000000-0000-7000-8000-000000000002"',
+          ),
         ]
-        ..noLeidas = 1;
+        ..unread = 1;
       await montarUsuario(
         tester,
         inicio: '/notificaciones',
@@ -1188,7 +1256,7 @@ void main() {
               reservaId: '00000000-0000-7000-8000-000000000002',
             ),
           ]
-          ..noLeidas = 1;
+          ..unread = 1;
         await montarUsuario(
           tester,
           inicio: '/notificaciones',

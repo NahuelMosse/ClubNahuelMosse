@@ -1,4 +1,4 @@
-/// Una ruta de la API que la app pide: método y plantilla (`/reservas/{reserva_id}`),
+/// Una ruta de la API que la app pide: método y plantilla (`/reservas/{reserva_id}`; `/reservas` queda en castellano porque es el contrato de la API),
 /// con los mismos nombres que el contrato que publica la API.
 class RutaDeLaApi {
   const RutaDeLaApi(this.metodo, this.ruta);

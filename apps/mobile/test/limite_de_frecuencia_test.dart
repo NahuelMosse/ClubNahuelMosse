@@ -1,6 +1,6 @@
 import 'package:clubnahuelmosse/api/cliente_api.dart';
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/common/error_dialog.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -34,7 +34,7 @@ void main() {
                   try {
                     await api.post('/recuperacion', {'correo': 'a@b.com'});
                   } on Exception catch (e) {
-                    if (context.mounted) await mostrarErrorDeRed(context, e);
+                    if (context.mounted) await showNetworkError(context, e);
                   }
                 },
                 child: const Text('ABRIR'),
@@ -42,7 +42,7 @@ void main() {
             ),
           ),
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
         tamano: const Size(360, 800),
       );
 

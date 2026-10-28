@@ -1,14 +1,18 @@
+import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/admin/historial_reservas.dart';
-import 'package:clubnahuelmosse/admin/pantalla_detalle_reserva.dart';
-import 'package:clubnahuelmosse/espacios/espacios.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
+import 'package:clubnahuelmosse/features/admin/domain/history_filters.dart';
+import 'package:clubnahuelmosse/features/admin/data/booking_history_json.dart';
+import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
+import 'package:clubnahuelmosse/features/admin/presentation/booking_detail_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
 import 'soporte/montar.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
 String _reserva({
   String estado = 'activa',
@@ -44,22 +48,27 @@ void main() {
       anuladaPor: 'Ana Díaz',
     );
     final api = apiRutas({
-      'POST /reservas/00000000-0000-7000-8000-000000000001/anular': (200, anulada),
+      'POST /reservas/00000000-0000-7000-8000-000000000001/anular': (
+        200,
+        anulada,
+      ),
     }, pedidos: pedidos);
     final sesion = SesionFalsa(perfilAdmin);
-    final leida = ReservaHistorial.desdeJson(jsonDecode(reserva));
+    final leida = parseBookingHistoryEntry(jsonDecode(reserva));
     expect(leida, isNotNull);
     await montar(
       tester,
-      PantallaDetalleReserva(
-        reserva: leida!,
-        historial: HistorialDeReservas(api: api, sesion: sesion),
-        sesion: sesion,
-        espacios: Espacios(api: api, sesion: sesion),
-        filtros: const FiltrosDeHistorial(),
-        pendientes: FiltrosDePanelPendientes(),
+      BookingDetailScreen(
+        booking: leida!,
+        history: BookingHistory(api: api, sesion: sesion),
+        session: sesion,
+        spaces: Spaces(
+          repository: SpacesRepository(api: api, session: sesion),
+        ),
+        filters: const HistoryFilters(),
+        pending: PendingPanelFilters(),
       ),
-      tema: temaOscuro,
+      tema: darkTheme,
     );
     await tester.pumpAndSettle();
   }
@@ -71,8 +80,13 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Iterable<http.Request> anulaciones(List<http.Request> pedidos) => pedidos
-      .where((p) => p.method == 'POST' && p.url.path == '/reservas/00000000-0000-7000-8000-000000000001/anular');
+  Iterable<http.Request> anulaciones(List<http.Request> pedidos) =>
+      pedidos.where(
+        (p) =>
+            p.method == 'POST' &&
+            p.url.path ==
+                '/reservas/00000000-0000-7000-8000-000000000001/anular',
+      );
 
   testWidgets(
     'el administrador anula una reserva desde el detalle del historial '

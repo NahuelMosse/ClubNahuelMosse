@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/comun/linea_del_dia.dart';
+import 'package:clubnahuelmosse/common/day_timeline.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -8,13 +8,16 @@ import '../soporte/usuario.dart';
 
 /// Cada grilla se monta en su propio test: montar la app dos veces en el mismo test reusa la
 /// API del primer montaje.
-Future<void> _abrirHorarios(WidgetTester tester, String grilla) =>
-    montarUsuario(
-      tester,
-      inicio: '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
-      tamano: const Size(393, 2400),
-      api: apiRutas(rutasDeSedes(grilla: grilla)),
-    );
+Future<void> _abrirHorarios(
+  WidgetTester tester,
+  String grilla,
+) => montarUsuario(
+  tester,
+  inicio:
+      '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
+  tamano: const Size(393, 2400),
+  api: apiRutas(rutasDeSedes(grilla: grilla)),
+);
 
 void main() {
   testWidgets(
@@ -23,7 +26,7 @@ void main() {
       await _abrirHorarios(tester, grillaJson(abre: false));
 
       expect(find.text('No hay horarios disponibles'), findsOneWidget);
-      expect(find.byType(LineaDelDia), findsNothing);
+      expect(find.byType(DayTimeline), findsNothing);
     },
   );
 
@@ -36,7 +39,7 @@ void main() {
       );
 
       expect(find.text('No hay horarios disponibles'), findsOneWidget);
-      expect(find.byType(LineaDelDia), findsNothing);
+      expect(find.byType(DayTimeline), findsNothing);
     },
   );
 }

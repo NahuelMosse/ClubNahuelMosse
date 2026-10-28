@@ -43,7 +43,11 @@ void main() {
       await crearSede(nombreSede, 'Av. Vergara 1850');
       final cancha = await crearEspacio(nombreSede);
       final correo = 'socio.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: 'ClubNahuel1', nombre: 'Nahuel');
+      await crearCuenta(
+        correo: correo,
+        contrasena: 'ClubNahuel1',
+        nombre: 'Nahuel',
+      );
       await ocupar(cancha, manana, 21, correo: correo);
       await entrarComoAdmin(tester);
       await escribir(tester, 'Buscar reserva', nombreSede);
@@ -89,7 +93,13 @@ void main() {
       final anulado = await crearEspacio(nombreSede);
       await ocupar(activo, manana, 9);
       await ocupar(completo, ayer, 9);
-      await ocupar(anulado, manana, 15, estado: 'anulada', motivo: 'mantenimiento');
+      await ocupar(
+        anulado,
+        manana,
+        15,
+        estado: 'anulada',
+        motivo: 'mantenimiento',
+      );
       await entrarComoAdmin(tester);
       await escribir(tester, 'Buscar reserva', nombreSede);
       await esperarA(tester, find.textContaining('3 RESULTADOS'));
@@ -114,7 +124,11 @@ void main() {
       final nombreSede = 'Sede San Justo ${unico()}';
       await crearSede(nombreSede, 'Av. Rivadavia 5000');
       final futbol = await crearEspacio(nombreSede);
-      final tenis = await crearEspacio(nombreSede, deporte: 'Tenis', tipo: 'PDL');
+      final tenis = await crearEspacio(
+        nombreSede,
+        deporte: 'Tenis',
+        tipo: 'PDL',
+      );
       final futbolViejo = await crearEspacio(nombreSede);
       await ocupar(futbol, manana, 10);
       await ocupar(tenis, manana, 10);
@@ -149,8 +163,16 @@ void main() {
       final canchaDos = await crearEspacio(nombreSede);
       final correoUno = 'valentina.${unico()}@correo.com';
       final correoDos = 'bruno.${unico()}@correo.com';
-      await crearCuenta(correo: correoUno, contrasena: 'ClubNahuel1', nombre: 'Valentina');
-      await crearCuenta(correo: correoDos, contrasena: 'ClubNahuel1', nombre: 'Bruno');
+      await crearCuenta(
+        correo: correoUno,
+        contrasena: 'ClubNahuel1',
+        nombre: 'Valentina',
+      );
+      await crearCuenta(
+        correo: correoDos,
+        contrasena: 'ClubNahuel1',
+        nombre: 'Bruno',
+      );
       await ocupar(canchaUno, manana, 9, correo: correoUno);
       await ocupar(canchaDos, manana, 9, correo: correoDos);
       await entrarComoAdmin(tester);
@@ -177,7 +199,11 @@ void main() {
       await crearSede(nombreSede, 'Av. Vergara 1850');
       final cancha = await crearEspacio(nombreSede);
       final correo = 'camila.${unico()}@correo.com';
-      await crearCuenta(correo: correo, contrasena: 'ClubNahuel1', nombre: 'Camila');
+      await crearCuenta(
+        correo: correo,
+        contrasena: 'ClubNahuel1',
+        nombre: 'Camila',
+      );
       await ocupar(cancha, manana, 11, correo: correo);
       await entrarComoAdmin(tester);
       await escribir(tester, 'Buscar reserva', nombreSede);
@@ -289,36 +315,44 @@ void main() {
     },
   );
 
-  testWidgets('pone «desde» después de «hasta» y no puede aplicar @CU-14-H04-01', (
-    tester,
-  ) async {
-    final semantica = tester.ensureSemantics();
-    await entrarComoAdmin(tester);
-    await tocar(tester, 'Filtros');
-    await esperarA(tester, find.text('APLICAR'));
-    // Con las sedes de la corrida el rango de fechas queda debajo de lo que arma el listado.
-    await tester.scrollUntilVisible(
-      find.text('RANGO DE FECHAS'),
-      300,
-      maxScrolls: 100,
-      scrollable: find
-          .descendant(
-            of: find.byType(ListView),
-            matching: find.byType(Scrollable),
-          )
-          .first,
-    );
+  testWidgets(
+    'pone «desde» después de «hasta» y no puede aplicar @CU-14-H04-01',
+    (tester) async {
+      final semantica = tester.ensureSemantics();
+      await entrarComoAdmin(tester);
+      await tocar(tester, 'Filtros');
+      await esperarA(tester, find.text('APLICAR'));
+      // Con las sedes de la corrida el rango de fechas queda debajo de lo que arma el listado.
+      await tester.scrollUntilVisible(
+        find.text('RANGO DE FECHAS'),
+        300,
+        maxScrolls: 100,
+        scrollable: find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
 
-    await escribir(tester, 'Desde', fechaTexto(manana.add(const Duration(days: 10))));
-    await escribir(tester, 'Hasta', fechaTexto(manana));
+      await escribir(
+        tester,
+        'Desde',
+        fechaTexto(manana.add(const Duration(days: 10))),
+      );
+      await escribir(tester, 'Hasta', fechaTexto(manana));
 
-    expect(find.text('Desde no puede ser posterior a Hasta'), findsOneWidget);
-    expect(
-      tester.getSemantics(find.bySemanticsLabel('APLICAR')).flagsCollection.isEnabled,
-      isFalse,
-    );
-    semantica.dispose();
-  });
+      expect(find.text('Desde no puede ser posterior a Hasta'), findsOneWidget);
+      expect(
+        tester
+            .getSemantics(find.bySemanticsLabel('APLICAR'))
+            .flagsCollection
+            .isEnabled,
+        isFalse,
+      );
+      semantica.dispose();
+    },
+  );
 
   testWidgets(
     'un usuario sin rol de administrador no ve el panel y, si entra por enlace, ve «Acceso denegado» @CU-14-H05-01',

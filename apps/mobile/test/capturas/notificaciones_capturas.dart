@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/notificaciones/pantalla_notificaciones.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notifications_screen.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
@@ -34,27 +34,27 @@ void main() {
       Future<void> centro(
         WidgetTester tester, {
         List<String> avisos = const [],
-        int noLeidas = 0,
+        int unread = 0,
         bool permiso = true,
         double escala = 1,
       }) async {
         final api = ApiFalsa()
           ..avisos = avisos
-          ..noLeidas = noLeidas;
+          ..unread = unread;
         final sesion = SesionFalsa(perfilUsuario);
         await montar(
           tester,
-          PantallaNotificaciones(
-            centro: centroDe(
+          NotificationsScreen(
+            center: centroDe(
               api,
               sesion,
               sistema: SistemaFalso(concedido: permiso),
             ),
-            sesion: sesion,
-            ahora: () => ahoraClub,
-            alAbrir: (_, _) {},
+            session: sesion,
+            now: () => ahoraClub,
+            onOpen: (_, _) {},
           ),
-          tema: oscuro ? temaOscuro : temaClaro,
+          tema: oscuro ? darkTheme : lightTheme,
           tamano: tamano,
           escalaTexto: escala,
         );
@@ -64,7 +64,7 @@ void main() {
         await centro(
           tester,
           avisos: [recordatorio, confirmacion, alerta],
-          noLeidas: 1,
+          unread: 1,
         );
         await capturar(tester, 'notificaciones/centro_${ancho}_$modo.png');
       });
@@ -73,7 +73,7 @@ void main() {
         await centro(
           tester,
           avisos: [recordatorio, confirmacion, alerta],
-          noLeidas: 1,
+          unread: 1,
           escala: 2,
         );
         await capturar(tester, 'notificaciones/centro_200_${ancho}_$modo.png');
@@ -93,12 +93,7 @@ void main() {
       });
 
       testWidgets('desactivadas con avisos $ancho $modo', (tester) async {
-        await centro(
-          tester,
-          avisos: [recordatorio],
-          noLeidas: 1,
-          permiso: false,
-        );
+        await centro(tester, avisos: [recordatorio], unread: 1, permiso: false);
         await capturar(
           tester,
           'notificaciones/desactivadas_con_avisos_${ancho}_$modo.png',
@@ -108,7 +103,7 @@ void main() {
       testWidgets('home con la campana $ancho $modo', (tester) async {
         final api = ApiFalsa()
           ..avisos = [recordatorio, confirmacion]
-          ..noLeidas = 2;
+          ..unread = 2;
         await montarUsuario(
           tester,
           oscuro: oscuro,
@@ -128,14 +123,14 @@ void main() {
           Stack(
             children: [
               const Scaffold(body: SizedBox.expand()),
-              PanelDeAvisos(
-                centro: centroDeAvisos,
-                ahora: () => ahoraClub,
-                alAbrir: (_) {},
+              NoticePanel(
+                center: centroDeAvisos,
+                now: () => ahoraClub,
+                onOpen: (_) {},
               ),
             ],
           ),
-          tema: oscuro ? temaOscuro : temaClaro,
+          tema: oscuro ? darkTheme : lightTheme,
           tamano: tamano,
         );
         api
@@ -144,8 +139,8 @@ void main() {
             confirmacion.replaceFirst('"leida": true', '"leida": false'),
             alerta.replaceFirst('"leida": true', '"leida": false'),
           ]
-          ..noLeidas = 3;
-        await tester.runAsync(centroDeAvisos.cargar);
+          ..unread = 3;
+        await tester.runAsync(centroDeAvisos.load);
         await capturar(tester, 'notificaciones/panel_${ancho}_$modo.png');
       });
     }

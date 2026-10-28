@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:clubnahuelmosse/comun/dialogo_error.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/common/error_dialog.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -16,8 +16,8 @@ double contraste(Color a, Color b) {
 
 void main() {
   for (final (modo, p) in [
-    ('oscuro', Paleta.oscura),
-    ('claro', Paleta.clara),
+    ('oscuro', Palette.dark),
+    ('claro', Palette.light),
   ]) {
     test('los textos llegan a 4,5:1 sobre las superficies en modo $modo', () {
       for (final (nombre, texto) in [
@@ -40,7 +40,7 @@ void main() {
     });
 
     test('el texto de un botón rojo llega a 4,5:1 en modo $modo', () {
-      final texto = textoSobre(p.stateDanger, p);
+      final texto = textOn(p.stateDanger, p);
       expect(contraste(texto, p.stateDanger), greaterThanOrEqualTo(4.5));
     });
   }

@@ -1,3 +1,5 @@
+import 'package:clubnahuelmosse/common/club_timezone.dart';
+import 'package:clubnahuelmosse/features/home/presentation/home_greeting.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
@@ -20,21 +22,18 @@ void main() {
     expect(find.text(texto), findsNothing);
   }
 
-  testWidgets(
-    'al iniciar sesión ve el Home con el saludo y su nombre'
-    ' @TP-01-H01-01 @supuesto:TP-01-SUP-07',
-    (tester) async {
-      await entrarComoUsuario(
-        tester,
-        correo: 'socio.${unico()}@correo.com',
-        nombre: 'Valentina',
-      );
+  testWidgets('al iniciar sesión ve el Home con el saludo y su nombre'
+      ' @TP-01-H01-01', (tester) async {
+    await entrarComoUsuario(
+      tester,
+      correo: 'socio.${unico()}@correo.com',
+      nombre: 'Valentina',
+    );
 
-      // Verifica: el saludo fijo y el nombre de quien inició sesión.
-      expect(find.text('BUENOS DÍAS,'), findsOneWidget);
-      expect(find.text('Valentina'), findsOneWidget);
-    },
-  );
+    // Verifica: el saludo de la hora del club y el nombre de quien inició sesión.
+    expect(find.text(HomeGreeting.forHour(clubNow())), findsOneWidget);
+    expect(find.text('Valentina'), findsOneWidget);
+  });
 
   testWidgets(
     'el Home muestra su próxima reserva activa, la más cercana, con fecha,'
@@ -61,30 +60,31 @@ void main() {
     },
   );
 
-  testWidgets('desde la próxima reserva puede modificarla o cancelarla @TP-01-H01-03', (
-    tester,
-  ) async {
-    final sede = 'Sede Haedo ${unico()}';
-    await crearSede(sede, 'Av. Vergara 1850');
-    final cancha = await crearEspacio(sede);
-    final correo = 'socio.${unico()}@correo.com';
-    await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
-    await ocupar(cancha, manana, 21, correo: correo);
+  testWidgets(
+    'desde la próxima reserva puede modificarla o cancelarla @TP-01-H01-03',
+    (tester) async {
+      final sede = 'Sede Haedo ${unico()}';
+      await crearSede(sede, 'Av. Vergara 1850');
+      final cancha = await crearEspacio(sede);
+      final correo = 'socio.${unico()}@correo.com';
+      await crearCuenta(correo: correo, contrasena: 'ClubNahuel1');
+      await ocupar(cancha, manana, 21, correo: correo);
 
-    await entrarComoUsuario(tester, correo: correo);
-    await esperarA(tester, find.text('MODIFICAR'));
-    expect(find.text('CANCELAR'), findsOneWidget);
+      await entrarComoUsuario(tester, correo: correo);
+      await esperarA(tester, find.text('MODIFICAR'));
+      expect(find.text('CANCELAR'), findsOneWidget);
 
-    await tocar(tester, 'CANCELAR');
-    await esperarA(tester, find.text('¿Cancelar la reserva?'));
-    await tocar(tester, 'CANCELAR RESERVA');
+      await tocar(tester, 'CANCELAR');
+      await esperarA(tester, find.text('¿Cancelar la reserva?'));
+      await tocar(tester, 'CANCELAR RESERVA');
 
-    // Verifica: el éxito y que el bloque de la próxima reserva desaparece del Home.
-    await esperarA(tester, find.text('Reserva cancelada con éxito'));
-    await tocar(tester, 'ACEPTAR');
-    await esperarQueDesaparezca(tester, 'TU PRÓXIMA RESERVA');
-    expect(await reservasDe(correo), isEmpty);
-  });
+      // Verifica: el éxito y que el bloque de la próxima reserva desaparece del Home.
+      await esperarA(tester, find.text('Reserva cancelada con éxito'));
+      await tocar(tester, 'ACEPTAR');
+      await esperarQueDesaparezca(tester, 'TU PRÓXIMA RESERVA');
+      expect(await reservasDe(correo), isEmpty);
+    },
+  );
 
   testWidgets('«Ver todas» lleva a Mis reservas @TP-01-H01-04', (tester) async {
     final sede = 'Sede Haedo ${unico()}';
@@ -107,7 +107,10 @@ void main() {
     (tester) async {
       final correo = 'socio.${unico()}@correo.com';
       await entrarComoUsuario(tester, correo: correo);
-      await esperarA(tester, find.textContaining('disponibilidad en tiempo real'));
+      await esperarA(
+        tester,
+        find.textContaining('disponibilidad en tiempo real'),
+      );
 
       final sedes = await sedesQueVeUnUsuario();
       final total = sedes.values.fold(0, (a, b) => a + b);

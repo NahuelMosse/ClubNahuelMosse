@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/comun/configuracion.dart';
+import 'package:clubnahuelmosse/common/config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
@@ -31,7 +31,7 @@ class ApiIntermedia {
     final servidor = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
     final api = ApiIntermedia._(
       servidor,
-      Uri.parse(Configuracion.desdeEntorno().apiUrl),
+      Uri.parse(AppConfig.fromEnvironment().apiUrl),
     );
     addTearDown(() => servidor.close(force: true));
     return api;
@@ -198,7 +198,7 @@ Future<void> cambiarDesdeOtroDispositivo(
 Future<Map<String, int>> sedesQueVeUnUsuario() async {
   final correo = 'mirada.${DateTime.now().microsecondsSinceEpoch}@correo.com';
   const contrasena = 'ClubNahuel1';
-  final api = Configuracion.desdeEntorno().apiUrl;
+  final api = AppConfig.fromEnvironment().apiUrl;
   final alta = await http.post(
     Uri.parse('$api/registro'),
     headers: {'content-type': 'application/json'},
@@ -234,7 +234,7 @@ Future<Map<String, int>> sedesQueVeUnUsuario() async {
 Future<List<String>> espaciosQueVeUnUsuario() async {
   final correo = 'mira.${DateTime.now().microsecondsSinceEpoch}@correo.com';
   const contrasena = 'ClubNahuel1';
-  final api = Configuracion.desdeEntorno().apiUrl;
+  final api = AppConfig.fromEnvironment().apiUrl;
   final alta = await http.post(
     Uri.parse('$api/registro'),
     headers: {'content-type': 'application/json'},
@@ -282,7 +282,7 @@ Future<Map<String, Object?>> _comoAdmin(
 ) async {
   final token = await _tokenAdmin();
   final r = await http.post(
-    Uri.parse('${Configuracion.desdeEntorno().apiUrl}$ruta'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}$ruta'),
     headers: {
       'content-type': 'application/json',
       'authorization': 'Bearer $token',
@@ -360,7 +360,7 @@ Future<String> crearEspacio(
   String deporte = 'Futbol',
   String tipo = 'F5',
 }) async {
-  final api = Configuracion.desdeEntorno().apiUrl;
+  final api = AppConfig.fromEnvironment().apiUrl;
   final r = await http.get(
     Uri.parse('$api/sedes'),
     headers: {'authorization': 'Bearer ${await _tokenAdmin()}'},
@@ -391,7 +391,7 @@ Future<String> crearEspacio(
 }
 
 Uri _pruebas(String ruta) =>
-    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/_pruebas/$ruta');
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/_pruebas/$ruta');
 
 /// Los correos que la API de la corrida dejó en su buzón para [para], del más viejo al
 /// más nuevo. En la corrida los correos no salen: quedan en el buzón.
@@ -433,9 +433,7 @@ Future<List<(String, String)>> reservasDe(
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
   final r = await http.get(
-    Uri.parse(
-      '${Configuracion.desdeEntorno().apiUrl}/reservas?cuando=proximas',
-    ),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas?cuando=proximas'),
     headers: {'authorization': 'Bearer $token'},
   );
   if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
@@ -534,9 +532,7 @@ Future<List<String>> numerosDeReservas(
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
   final r = await http.get(
-    Uri.parse(
-      '${Configuracion.desdeEntorno().apiUrl}/reservas?cuando=proximas',
-    ),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas?cuando=proximas'),
     headers: {'authorization': 'Bearer $token'},
   );
   if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
@@ -564,7 +560,7 @@ Future<String> _tokenDeOtraPersona() async {
   final correo = 'otra.${DateTime.now().microsecondsSinceEpoch}@correo.com';
   const contrasena = 'ClubNahuel1';
   final alta = await http.post(
-    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/registro'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
       'nombre': 'Mirada',
@@ -584,7 +580,7 @@ Future<String> _tokenDeOtraPersona() async {
 
 Future<Object?> _leer(String ruta, String token) async {
   final r = await http.get(
-    Uri.parse('${Configuracion.desdeEntorno().apiUrl}$ruta'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}$ruta'),
     headers: {'authorization': 'Bearer $token'},
   );
   if (r.statusCode != 200) throw StateError('$ruta: ${r.statusCode}');
@@ -676,7 +672,7 @@ Future<int> reservarPorLaApi(
   };
   if (id == null) throw StateError('no está el espacio $nombreEspacio');
   final r = await http.post(
-    Uri.parse('${Configuracion.desdeEntorno().apiUrl}/reservas'),
+    Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas'),
     headers: {
       'content-type': 'application/json',
       'authorization': 'Bearer $token',
@@ -732,7 +728,7 @@ Future<void> cancelarProximasDe(
   if (token == null) throw StateError('la cuenta $correo no entra');
   for (final id in await numerosDeReservas(correo, contrasena: contrasena)) {
     final r = await http.post(
-      Uri.parse('${Configuracion.desdeEntorno().apiUrl}/reservas/$id/cancelar'),
+      Uri.parse('${AppConfig.fromEnvironment().apiUrl}/reservas/$id/cancelar'),
       headers: {'authorization': 'Bearer $token'},
     );
     if (r.statusCode != 200) throw StateError('cancelar: ${r.statusCode}');
@@ -790,7 +786,7 @@ Future<void> cancelarDesdeOtroTelefono(
   if (numeros.length != 1) throw StateError('cancelar: hay ${numeros.length}');
   final r = await http.post(
     Uri.parse(
-      '${Configuracion.desdeEntorno().apiUrl}/reservas/${numeros.single}/cancelar',
+      '${AppConfig.fromEnvironment().apiUrl}/reservas/${numeros.single}/cancelar',
     ),
     headers: {'authorization': 'Bearer $token'},
   );
@@ -828,7 +824,7 @@ Future<int> anularDesdeElAdmin(
 }) async {
   final r = await http.post(
     Uri.parse(
-      '${Configuracion.desdeEntorno().apiUrl}/reservas/${reserva.id}/anular',
+      '${AppConfig.fromEnvironment().apiUrl}/reservas/${reserva.id}/anular',
     ),
     headers: {
       'content-type': 'application/json',

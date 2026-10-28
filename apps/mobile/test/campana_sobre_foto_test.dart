@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/notificaciones/campana.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
-import 'package:clubnahuelmosse/tema/tokens.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/bell_button.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
+import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -14,11 +14,11 @@ Future<void> _montarCampana(
 }) async {
   final api = ApiFalsa()
     ..avisos = []
-    ..noLeidas = noLeidas;
+    ..unread = noLeidas;
   final centro = centroDe(api, SesionFalsa(perfilUsuario));
   await montar(
     tester,
-    Material(child: BotonNotificaciones(centro: centro)),
+    Material(child: NotificationsButton(center: centro)),
     tema: tema,
   );
   await tester.pumpAndSettle();
@@ -31,24 +31,24 @@ void main() {
   testWidgets(
     'en modo claro y oscuro la campana de la portada se pinta con el color sobre foto @NOT-04-S1',
     (tester) async {
-      await _montarCampana(tester, tema: temaClaro);
-      expect(_colorDelIcono(tester), Paleta.clara.textOnMedia);
+      await _montarCampana(tester, tema: lightTheme);
+      expect(_colorDelIcono(tester), Palette.light.textOnMedia);
 
-      await _montarCampana(tester, tema: temaOscuro);
-      expect(_colorDelIcono(tester), Paleta.oscura.textOnMedia);
+      await _montarCampana(tester, tema: darkTheme);
+      expect(_colorDelIcono(tester), Palette.dark.textOnMedia);
     },
   );
 
   testWidgets(
     'con avisos sin leer el contador sigue en el acento @assumption:NOT-04-ASM-01',
     (tester) async {
-      await _montarCampana(tester, tema: temaClaro, noLeidas: 2);
+      await _montarCampana(tester, tema: lightTheme, noLeidas: 2);
 
       final contador = tester.widget<Container>(
         find.ancestor(of: find.text('2'), matching: find.byType(Container)),
       );
       final decoracion = contador.decoration! as BoxDecoration;
-      expect(decoracion.color, Paleta.clara.accentBase);
+      expect(decoracion.color, Palette.light.accentBase);
     },
   );
 }

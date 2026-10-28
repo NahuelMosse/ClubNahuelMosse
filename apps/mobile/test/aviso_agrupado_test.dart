@@ -1,6 +1,6 @@
-import 'package:clubnahuelmosse/notificaciones/centro.dart';
-import 'package:clubnahuelmosse/notificaciones/panel_avisos.dart';
-import 'package:clubnahuelmosse/tema/tema.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
+import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
+import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -35,36 +35,32 @@ void main() {
     (tester) async {
       final api = ApiFalsa()
         ..avisos = [leida]
-        ..noLeidas = 0;
+        ..unread = 0;
       final sesion = SesionFalsa(perfilUsuario);
-      final CentroDeNotificaciones centro = centroDe(api, sesion)
-        ..ubicacion = () => '/inicio';
+      final NotificationCenter centro = centroDe(api, sesion)
+        ..location = () => '/inicio';
       await montar(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            PanelDeAvisos(
-              centro: centro,
-              ahora: () => ahoraClub,
-              alAbrir: (_) {},
-            ),
+            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
           ],
         ),
-        tema: temaOscuro,
+        tema: darkTheme,
       );
-      await tester.runAsync(centro.cargar);
+      await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
       expect(find.text('MARCAR TODAS'), findsNothing);
 
       api
         ..avisos = [agrupado, leida]
-        ..noLeidas = 1;
-      await tester.runAsync(centro.cargar);
+        ..unread = 1;
+      await tester.runAsync(centro.load);
       await tester.pumpAndSettle();
 
       expect(find.text('El club anuló 2 de tus reservas'), findsOneWidget);
-      expect(centro.noLeidas, 1);
+      expect(centro.unread, 1);
     },
   );
 }
