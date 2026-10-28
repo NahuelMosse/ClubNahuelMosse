@@ -9,7 +9,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 // The bench runs each card in a subagent that acts as the main thread: for permissions and thresholds it is the main thread.
-export const actsAsMain = (input) => !input?.agent_id || /^sdd-corrida-/.test(String(input.agent_type ?? '')) || input.agent_type === 'sdd-control-experimento';
+export const actsAsMain = (input) => !input?.agent_id || /^sdd-corrida-/.test(String(input.agent_type ?? '')) || ['sdd-control-experimento', 'card-runner'].includes(input.agent_type);
 
 // The component set's gallery server and page come from the kit's template: they are the set's
 // harness, not the product. Measured: mutating serve.mjs took 33 of a card's 61 minutes.

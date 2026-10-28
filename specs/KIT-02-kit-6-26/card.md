@@ -15,6 +15,7 @@ not_read:
 ## Tasks
 
 - T1 · S1 · tests/kit.test.mjs (rule) · tests: tests/kit.test.mjs "el kit instalado es el 6.26.0 @KIT-02-S1"
+  también: CLAUDE.md, .claude/METHOD.md, .claude/ORCHESTRATE.md, .claude/agents/card-runner.md, .claude/hooks/guard-shell.mjs, .claude/hooks/no-pending-close.mjs, .claude/hooks/publish.mjs, .claude/kit-files.json, .claude/kit.json, .claude/modules.json, .claude/settings.json, .claude/tools/card-cost.mjs, .claude/tools/card.mjs, .claude/tools/wait.mjs · los escribió `install.mjs --update` del kit 6.26.0; settings.json suma a mano el `env` nuevo y conserva los plugins del equipo
 
 ## Changes to existing behavior
 
@@ -35,3 +36,4 @@ no-visual: no toca pantallas
 - L2 · 2026-10-28 · declared · fault-db · la card no toca la base
 - L3 · 2026-10-28 · declared · attacks · la card no toca la API
 - L4 · 2026-10-28 · replaces: tests/kit.test.mjs "el kit instalado es el 6.24.0 @KIT-01-S1" · el kit pasa a 6.26.0 · by: tests/kit.test.mjs "el kit instalado es el 6.26.0 @KIT-02-S1"
+- L5 · 2026-10-28 · kit updated 1bcd38601faeaa92ff754e53ddaee28ff8684713 → 2b775258e85573d025d94f4f2e20b34961a4a3c9 · la card KIT-02 es la actualización del kit

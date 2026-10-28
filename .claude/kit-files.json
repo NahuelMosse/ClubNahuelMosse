@@ -5,7 +5,7 @@
   },
   ".claude/METHOD.md": {
     "module": "core",
-    "sha256": "c36da86ccff1ab583df2d3780ddcab3784e5d54a2e0ea2ef078b22741c2b0d00"
+    "sha256": "e3805d1b2ee644c0a97ddb471807f93a1bd859ad7eba5b685844fe1430f3773f"
   },
   ".claude/agents/archivist.md": {
     "module": "core",
@@ -65,7 +65,7 @@
   },
   ".claude/hooks/guard-shell.mjs": {
     "module": "core",
-    "sha256": "790e6207b41f9ae3c82b47413f0e00ff6a8eefcc0fe19fddea20ac784d301856"
+    "sha256": "530451ed126d5f40d45f81e6e7ea73a278dca4e339ba5c3c73a5c061da014e39"
   },
   ".claude/hooks/guard.mjs": {
     "module": "core",
@@ -77,11 +77,11 @@
   },
   ".claude/hooks/no-pending-close.mjs": {
     "module": "core",
-    "sha256": "9751c75b0f440776786283bceb446b623c1b25791a23e7f8c1996c9a1f5b0de4"
+    "sha256": "39c0adade88299f53c66a99e9e2f02c7bef53ebceec9df1674a452f94436d1c9"
   },
   ".claude/hooks/publish.mjs": {
     "module": "core",
-    "sha256": "822c6624e47dcb8caa2b1aa71676fe2ee62f19968b6b50b10c4776e93828fae1"
+    "sha256": "23e9fbb372064fbcd799e4be04413784facb95b811d8d6c60fbafe5fe565ea56"
   },
   ".claude/hooks/require-at-close.mjs": {
     "module": "core",
@@ -113,7 +113,7 @@
   },
   ".claude/modules.json": {
     "module": "core",
-    "sha256": "e7f48d57e0e77546e48fe46c5993a17599a627b42d67d9c688c48fbcaee19e92"
+    "sha256": "5953f4cd61cef4da9c3fdb611107a4ef85b8931d8a5fca33ff65a7ddb7e27cd4"
   },
   ".claude/reference/accessibility.md": {
     "module": "ui",
@@ -1317,7 +1317,7 @@
   },
   ".claude/tools/card.mjs": {
     "module": "core",
-    "sha256": "004c49c0b526b820f2027ffee03aee6b7cf9f25c5f4f920b0e1e38ec14972425"
+    "sha256": "a60f322e497032c6e3caad7cf7d94a74415c68f41c46cd94fa0a0dfd8c1b2e79"
   },
   ".claude/tools/close.mjs": {
     "module": "core",
@@ -1425,7 +1425,7 @@
   },
   ".claude/tools/wait.mjs": {
     "module": "core",
-    "sha256": "bb5dce4ee8c7e5fe24f4f4e2e4e443499099de7af5c9091d12d7f0dd0a1db5ca"
+    "sha256": "6c3ca7101bcce54cf60feb86ca006c5289e36acf6a558031619feb63598703ba"
   },
   ".claude/agents/builder.md": {
     "module": "core",
@@ -1461,7 +1461,7 @@
   },
   ".claude/tools/card-cost.mjs": {
     "module": "core",
-    "sha256": "dfca1bdc23d9142a28559fedd3cdeb78afaaba22368b439d9e0454e6b2e05ed9"
+    "sha256": "65a786ff7bc2fe691fa0dd5994db17d00fa0f45cab5c71e89ae1ee1b4c4f4736"
   },
   ".claude/tools/card-doc.mjs": {
     "module": "core",
@@ -1898,5 +1898,13 @@
   ".claude/tools/code-language.mjs": {
     "module": "core",
     "sha256": "f9cea586c3a9988513ddd758207f82aa5231abe435403fdb92f0fe7d7c3f72ba"
+  },
+  ".claude/ORCHESTRATE.md": {
+    "module": "core",
+    "sha256": "53ce96fb9f719f2f325360549d1b5461f1809488f8a2c85534c650eac4109909"
+  },
+  ".claude/agents/card-runner.md": {
+    "module": "core",
+    "sha256": "838fd1cba626f1999ea30767d243ee17216fbbd23479341632994675797dd209"
   }
 }

@@ -55,6 +55,26 @@ if (input.agent_id) {
 let last = '';
 try { last = lastTextOf(input.transcript_path); } catch { process.exit(0); }
 
+// In an interactive session (no SDD_UNATTENDED=1) the main thread may end its turn with work running when this turn armed
+// what wakes it: a `Monitor`, or a command or agent launched with `run_in_background`, whose end is notified. The person
+// can talk meanwhile. Unattended, nothing wakes it: the rule below holds.
+const armedThisTurn = (path) => {
+  const lines = readFileSync(path, 'utf8').trim().split('\n');
+  for (let i = lines.length - 1; i >= 0; i--) {
+    let j;
+    try { j = JSON.parse(lines[i]); } catch { continue; }
+    const content = j.message?.content;
+    // A background task's notice is stored as a user message, but it is not one: the turn it opens keeps what was armed before.
+    if (j.type === 'user' && !j.isMeta && typeof content === 'string' && !content.startsWith('<task-notification>')) return false;
+    if (j.message?.role !== 'assistant' || !Array.isArray(content)) continue;
+    if (content.some((b) => b.type === 'tool_use' && (b.name === 'Monitor' || b.input?.run_in_background === true))) return true;
+  }
+  return false;
+};
+if (process.env.SDD_UNATTENDED !== '1') {
+  try { if (armedThisTurn(input.transcript_path)) process.exit(0); } catch { /* the rule below decides */ }
+}
+
 // What is quoted is not a promise: it is talking about one. Measured: the hook blocked a message
 // that described what the hook blocks, quoting the phrase.
 // The way to bring something down is searched for in the original: it usually goes in backticks.
@@ -90,7 +110,9 @@ if (pending) {
   process.stderr.write(
     'You are about to end by promising to continue when something finishes. There will be no “when it ' +
     'finishes”: the turn ends here and whatever was left running goes with it. If the close depends ' +
-    'on that result, wait for it in the foreground or dispatch it to a subagent that waits for it, ' +
+    "on that result, watch it with a `Monitor` (`node .claude/tools/wait.mjs <log> --until '<regex>' [--fail '<regex>'] --monitor --max 1790`, " +
+    '`timeout_ms: 1800000`) or launch it with `run_in_background`, and end the turn: its events wake you. Unattended ' +
+    '(SDD_UNATTENDED=1) nothing wakes you: wait for it in the foreground or dispatch it to a subagent that waits for it, ' +
     'and report with the real output. If it does not depend, say what was left running, its PID and ' +
     'how to bring it down. A subagent launched in the foreground, such as a builder, has already returned: ' +
     'its report is in the conversation, so there is nothing to wait for or to poll. One that came back as running in the background ' +

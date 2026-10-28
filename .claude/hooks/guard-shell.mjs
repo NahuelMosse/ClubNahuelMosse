@@ -374,7 +374,13 @@ const hourCache = await (async () => {
 const MAX_WAIT_S = hourCache ? 570 : 270;
 const MAX_CALL_MS = MAX_WAIT_S * 1000 + 30000;
 const MIN_POLL_S = 120;
-const WAIT_WITH = 'Wait in one process that ends on the line you need: ' +
+// The main thread of an interactive session (no agent_id, no SDD_UNATTENDED=1) does not hold its turn at all: it watches.
+const watches = !input.agent_id && process.env.SDD_UNATTENDED !== '1';
+const WAIT_WITH = (watches
+  ? 'Run it in the background and watch it without holding the turn, so the person can talk meanwhile: a `Monitor` whose command is ' +
+    "`node .claude/tools/wait.mjs <log> --until '<regex>' [--fail '<regex>'] --monitor --max 1790`, with `timeout_ms: 1800000`; " +
+    'end the turn: the final line wakes you, and so does its expiry after 30 minutes (re-arm it then). Otherwise ' : '') +
+  'Wait in one process that ends on the line you need: ' +
   (hourCache
     ? "`node .claude/tools/wait.mjs <log> --until '<regex>' [--fail '<regex>'] --max 570` (exit 0 found, 1 failed, 2 timed out; "
     : "`node .claude/tools/wait.mjs <log> --until '<regex>' [--fail '<regex>'] --max 270` (exit 0 found, 1 failed, 2 timed out; ") +
@@ -398,20 +404,20 @@ const waitsForEndpoint = /\b(curl|wget|nc|ncat|netcat|Test-NetConnection|Invoke-
 const pacing = /\bwhile\s+(?:IFS=\S*\s+)?read\b/.test(cmd) || (!/\b(until|while)\b/.test(cmd) &&
   [...cmd.matchAll(/\bfor\s+(\w+)\s+in\b/g)].some((m) => new RegExp(`\\$\\{?${m[1]}\\b`).test(cmd)));
 const polling = loop && wait > 0 && !waitsForEndpoint && !pacing;
-if (polling && cap > 0 && cap < MIN_POLL_S) {
+if (!background && polling && cap > 0 && cap < MIN_POLL_S) {
   reject(
     `This loop polls for at most ${cap} s: too short to be worth a loop, and the agent that sees it unmet polls again, each ` +
     'time a turn. ' + WAIT_WITH + 'A loop that waits for a port or a URL (curl, nc, Test-NetConnection) is the exception.'
   );
 }
-if (polling && cap === 0 && !boundedSubagent) {
+if (!background && polling && cap === 0 && !boundedSubagent) {
   reject(
     'This loop polls with no ceiling: nothing says when it stops, so it holds the turn for as long as what it waits for takes. ' +
     WAIT_WITH + 'A loop that waits for a port or a URL (curl, nc, Test-NetConnection) is the exception.'
   );
 }
 // A `timeout N` on each command of a loop that does not sleep bounds that command, not a wait.
-if (loop && (wait > 0 || watchesAgent) && !boundedSubagent && cap >= 60) {
+if (!background && loop && (wait > 0 || watchesAgent) && !boundedSubagent && cap >= 60) {
   reject(
     `This loop can hold the turn for ${cap} s waiting in the foreground. ` +
     'A long process runs in the background and notifies when it ends, or a subagent waits for it; ' +
@@ -419,7 +425,7 @@ if (loop && (wait > 0 || watchesAgent) && !boundedSubagent && cap >= 60) {
     `A subagent may also wait in the foreground up to ${MAX_WAIT_S} s with an explicit \`timeout\` on the call or a loop with a ceiling of at most ${MAX_WAIT_S} s.`
   );
 }
-if (loop && !boundedSubagent && (watchesAgent || wait >= 20)) {
+if (!background && loop && !boundedSubagent && (watchesAgent || wait >= 20)) {
   reject(
     'This loop waits blind: ' + (watchesAgent ? 'it asks whether another agent finished' : `it sleeps ${wait} s per turn`) +
     '. A subagent that what follows depends on is launched in the foreground —several in a single ' +

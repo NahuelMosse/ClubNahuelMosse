@@ -27,8 +27,8 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
 3. **Build.**
    - **small:** you do it inline, no subagents. RED first: the planned tests, tag `@<ID>-S<n>` (an assumption: `@<ID>-ASM-NN`) in the title,
      failing for the right reason, **committed before any code**; then the code; then the gate.
-   - **large:** one `builder` per group of `## Tasks`, prompted with only the path of `card.md`, its task IDs and `S#`, and the gate command. Wait with **one**
-     call, `node .claude/tools/wait.mjs --agent <id> --max 570`, repeated only if it expires; meanwhile run nothing.
+   - **large:** one `builder` per group of `## Tasks`, prompted with only the path of `card.md`, its task IDs and `S#`, and the gate command. Launch it in the
+     background; its notification wakes you (unattended or a subagent: `wait.mjs --agent <id>`).
    - Visual lens: with the tests green, one `designer` does 2-3 capture rounds against `ref/` (`rondas.md`), or the gate fails.
    - An `S#` over a set («un campo», «cada», «todos») gets one planned test per member the card names.
    - Validate what comes from outside on the way in; a missing key of a closed enumeration is an error, not a default. The scope is the
@@ -50,12 +50,12 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
 ## Cost rules
 
 - **One `Write` per file, not ten `Edit`s.** Never `sed -i` or `node -e` to change a file: the guards do not see them.
-- **One wait per agent or process** (`wait.mjs`; its last line `<tool>: exit <N> in <X> min` ends it).
-  Nothing over ~30 s runs in the foreground: background, log, `Grep`.
+- **Nothing over ~30 s runs in the foreground:** background, log, `Grep`. A `Monitor` runs `node .claude/tools/wait.mjs <log> --monitor --max 1790`
+  (ends on `<tool>: exit <N>`); the turn ends; unattended or in a subagent, `wait.mjs`.
 - **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
 - **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
-- **Context caps:** `context-cap` warns a builder, grunt or designer at 90k, stops it at 120k: commit, `specs/<card>/handoff.md`, a fresh one. Never the main thread.
+- **Context caps:** `context-cap` warns builder, grunt and designer at 90k, stops at 120k: commit, `specs/<card>/handoff.md`, a fresh one. The main thread compacts at 200k.
 
 ## Who does what
 
