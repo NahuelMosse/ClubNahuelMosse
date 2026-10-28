@@ -1,7 +1,7 @@
 # SDD method
 
 **The Jira card is the specification. Nothing is assumed in silence: what is assumed is declared, numbered (`<ID>-ASM-NN`) and tied to a test.**
-The kit is in English; the work (card, tests, commits, PR) speaks the repo's language. Headings, IDs and tags stay in English.
+The kit and the code are in English unless CLAUDE.md declares `Code language:`; the rest speaks the team's.
 ## The flow
 
 1. **`/card <ID>`.** Before `card.md`, one batch of at most 3 parallel calls, ~10k tokens (`git ls-files`, `Grep`, the files the card names); no test or whole file. Bring the whole requirement: Jira over MCP (description, comments, attachments, links; or the `archivist`),
@@ -9,7 +9,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
    from `.claude/templates/card.md`:
    - header: `status: proposed`, `cap: <N> min`, `sources:`, `not_read:`;
    - `## Specs`: every sentence of the card as `S<n> · "<verbatim quote>"`; an assumption as `<ID>-ASM-NN · <reading> · S<n>`;
-   - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test; each production task gets an indented `reuses:`/`new:` line, a new layer or pattern a `why-layer:`;
+   - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test; each production task gets an indented `reuses:`/`new:` line, a new pattern a `why-layer:`; each file sits in its slice's layer folder;
    - `## Gate`: one command per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), and the plan's own: a `probe <state>:` for each state `## Specs` names, `attacks:` with the card's limits, `migrate-upgrade:` if it touches data;
    - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
    - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`, profile web; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`, `copy:`;
@@ -36,7 +36,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 4. **Gate.** `node .claude/tools/verify.mjs` runs each line of `## Gate` once, checks every `S#` has a test, and
    prints what fails. What a formatter or generator writes runs before the gate and is committed: a line that changes versioned files fails. Fix and rerun until green, or two rounds without progress: then log it and stop; the close lists it in `## Could not run`.
 5. **`/close`.** `node .claude/tools/close.mjs` runs nine checks and writes `closing.md` (`## Passed`, `## Failed`, `## Could not run`,
-   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes the branch, a ready PR, the CI result and one card comment; never main, `--force` or a merge.
+   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes branch, PR, CI and card comment, and merges once CI passed with nothing for a person; never main, `--force`, `--admin`.
 
 ## The invariants
 
@@ -44,7 +44,7 @@ The kit is in English; the work (card, tests, commits, PR) speaks the repo's lan
 - **Never resolve an ambiguity on your own.** It is an AMB, asked once, and if unanswered an ASM tied to a test. *Silently filling a gap is the worst failure.*
 - **Tagged tests are frozen once committed.** A wrong one is replaced, never edited: write the fixed test in a new file with the same tag and add to the Log `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate then says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.
 - **Three states: passed · failed · could not run.** What did not run is never "passed". A check that stops you is not turned off. An uncorrected finding stops the close.
-- **Nothing waits for a person.** The review is the PR; what only a person decides is not yours (`.claude/AUTONOMY.md`).
+- **Nothing waits for a person.** A person's call goes in `## Needs a person`; it is not yours (`.claude/AUTONOMY.md`).
 - **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). **Modules** add lenses and gate lines, not steps. The method is the base; a **profile** (`web`, `backend`) brings the screen or API instruments.
 
 ## Cost rules

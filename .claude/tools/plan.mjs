@@ -7,8 +7,9 @@ import { spawnSync } from 'node:child_process';
 import { basename, join, resolve } from 'node:path';
 import { asmsOf, cardIdOf, plannedTestsOf, reuseOf, rolesOf, sectionOf, specTagsIn, specsOf, tasksOf, whyLayerOf } from './card-doc.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION } from './card.mjs';
-import { gateLinesOf, hasAttacksLine, removeOnlyOf, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
+import { gateLinesOf, hasAttacksLine, misplacedLayer, removeOnlyOf, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
+import { codeLanguageOf, declaresCodeLanguage, isSpanish } from './code-language.mjs';
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -164,13 +165,15 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
   return out;
 };
 
-// Feature first: a production file under a top-level `domain|application|infrastructure` folder (directly under the repo, `src/`, `app/`,
-// `lib/` or a workspace's `src/`) spans every feature; it belongs in `modules/<feature>/<layer>/` or `shared/`.
-export const LAYER_FIRST = /^(?:(?:src|app|lib|apps\/[^/]+(?:\/src)?|packages\/[^/]+(?:\/src)?)\/)?(domain|application|infrastructure)\//;
+// Feature first: a production file under a top-level folder of a layer or of a kind of file (`domain/`, `data/`, `screens/`,
+// `services/`, `models/`… directly under the repo, `src/`, `app/`, `lib/` or a workspace's `src/`) spans every feature; it belongs
+// in its slice, `modules/<feature>/<layer>/` (`lib/features/<feature>/<layer>/` in Flutter), or in `shared/`. A file the repo already
+// has (`root` given) stays where it is: moving it is a card of its own. `components/ui/` is where shadcn installs the UI primitives.
+export const LAYER_FIRST = /^(?:(?:src|app|lib|apps\/[^/]+(?:\/src)?|packages\/[^/]+(?:\/src)?)\/)?(domain|application|infrastructure|presentation|data|screens|pages|views|widgets|components(?!\/ui\/)|services|models|entities|repositories|providers|controllers|blocs?|cubits?|viewmodels|use_?cases)\//i;
 const posix = (f) => f.split('\\').join('/').replace(/^\.\//, '');
-export const layerFirstProblems = (doc) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
-  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && LAYER_FIRST.test(posix(f)))
-  .map((f) => { const layer = posix(f).match(LAYER_FIRST)[1]; return `${f}: a top-level \`${layer}/\` folder spans every feature · place it in \`src/modules/<feature>/${layer}/\` (or \`shared/\` for the kernel)`; });
+export const layerFirstProblems = (doc, root) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
+  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && LAYER_FIRST.test(posix(f)) && !(root && existsSync(join(root, f))))
+  .map((f) => { const folder = posix(f).match(LAYER_FIRST)[1]; return `${f}: a top-level \`${folder}/\` folder spans every feature · place it in its feature's slice, \`src/modules/<feature>/<layer>/\` (\`lib/features/<feature>/<layer>/\` in Flutter), or in \`shared/\` if every feature uses it`; });
 
 export const GRAB_BAG_NAME = /(^|\/)(utils?|helpers?|managers?|misc|common)(\.[a-z]+)*\.[a-z]+$/i;
 export const grabBagProblems = (doc) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
@@ -195,10 +198,9 @@ export const reuseProblems = (doc, root) => {
   });
 };
 
-// The simplest structure that works: a task that adds a `domain/` or `application/` folder to a module, or a factory, strategy, adapter,
-// builder, bus, mediator, container, registry, locator or `I<Name>` interface file, says in `why-layer:` which business rule it isolates or
-// which second variant it serves; without it the layer or pattern is dropped. Checked against the repo, so it needs `root`.
-export const NEW_LAYER = /^(.*?(?:^|\/)modules\/[^/]+\/(?:domain|application))\//;
+// The simplest structure that works: the layer folders of a slice are its shape, but a task that adds a factory, strategy, adapter,
+// builder, bus, mediator, container, registry, locator or `I<Name>` interface file says in `why-layer:` which second variant or business
+// rule it serves; without it the pattern is dropped. Checked against the repo, so it needs `root`.
 export const isPatternFile = (file) => {
   const name = file.split('/').pop();
   return /(?:^|[-_.])(?:factory|strategy|adapter|builder|bus|mediator|container|registry|locator)(?:[-_.]|$)/i.test(name)
@@ -208,19 +210,27 @@ export const isPatternFile = (file) => {
 export const whyLayerProblems = (doc, root) => {
   if (!root) return [];
   const why = whyLayerOf(doc);
-  const inRepo = (path) => (spawnSync('git', ['ls-files', '--', path], { cwd: root, encoding: 'utf8' }).stdout ?? '').trim() !== '';
   return tasksOf(doc).flatMap((t) => {
     const files = t.files.map(posix).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f));
-    const layer = files.find((f) => { const dir = f.match(NEW_LAYER)?.[1]; return dir && !inRepo(dir); });
-    const pattern = files.find((f) => isPatternFile(f) && !existsSync(join(root, f)));
-    const found = layer ?? pattern;
+    const found = files.find((f) => isPatternFile(f) && !existsSync(join(root, f)));
     if (!found) return [];
     const text = why.get(t.id);
-    const kind = layer ? 'adds a `domain/` or `application/` folder to a module' : 'adds a factory, strategy, adapter, builder, bus, mediator, container, registry or interface file';
-    if (text === undefined) return [`${t.id}: ${found} ${kind} and has no \`why-layer:\` · under its T line write \`  why-layer: <the business rule it isolates, or the second variant it serves>\`, or drop it and keep the code in the module's own files`];
-    if (!text || NO_REASON.test(text) || text.split(/\s+/).length < 3) return [`${t.id}: \`why-layer:\` says nothing · name the business rule the layer isolates or the second variant the pattern serves`];
+    if (text === undefined) return [`${t.id}: ${found} adds a factory, strategy, adapter, builder, bus, mediator, container, registry or interface file and has no \`why-layer:\` · under its T line write \`  why-layer: <the second variant it serves, or the test fake that needs it>\`, or drop it and use the concrete class`];
+    if (!text || NO_REASON.test(text) || text.split(/\s+/).length < 3) return [`${t.id}: \`why-layer:\` says nothing · name the second variant or the test fake the pattern serves`];
     return [];
   });
+};
+
+// The code is in English unless CLAUDE.md declares `Code language:`. A repo whose code is already mostly in another language and
+// declares none is asked to declare it once, so new files do not mix two languages.
+const codeLanguageProblems = (newFiles, root) => {
+  if (!root || codeLanguageOf(root) !== 'en') return [];
+  const tracked = (spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).stdout ?? '').split('\n').filter((f) => IS_CODE.test(f) && !/^(?:\.claude|specs)\//.test(f));
+  const spanish = tracked.filter((f) => isSpanish(f.split('/').pop())).length;
+  if (!declaresCodeLanguage(root) && tracked.length >= 5 && spanish / tracked.length > 0.3) {
+    return [`${spanish} of the repo's ${tracked.length} code files have Spanish names and CLAUDE.md declares no code language · add \`Code language: es\` to keep the repo's language, or \`Code language: en\` to write new code in English (the default), so new files do not mix the two`];
+  }
+  return newFiles.filter((f) => f.split('/').some(isSpanish)).map((f) => `${f}: a Spanish name in the code · the code is in English (identifiers, file names, comments, test names); the UI text, commits and the PR speak the team's language. Another language is declared in CLAUDE.md as \`Code language: <lang>\``);
 };
 
 // What is missing from the plan, one line each; an empty list is a complete plan.
@@ -240,7 +250,11 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   const roles = rolesOf(doc);
   const unmarked = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !roleFor(roles, f));
   for (const f of unmarked) out.push(`${f}: no layer · mark it \`${f} (presentation|rule|data)\` in ## Tasks`);
-  out.push(...layerFirstProblems(doc));
+  // A new file of a slice is planned in the folder of its layer; one the repo already has stays where it is.
+  const newFiles = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !(root && existsSync(join(root, f))));
+  for (const f of newFiles) { const p = misplacedLayer(f, roleFor(roles, f)); if (p) out.push(p); }
+  out.push(...codeLanguageProblems(newFiles, root));
+  out.push(...layerFirstProblems(doc, root));
   out.push(...grabBagProblems(doc));
   out.push(...reuseProblems(doc, root));
   out.push(...whyLayerProblems(doc, root));

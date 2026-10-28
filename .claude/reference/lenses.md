@@ -63,10 +63,10 @@ A card that edits a code file with markup in it and does not change the screen d
 
 Always read by the plan `judge` at high, whatever the lenses of `risk.json`. The plan wins by being the simplest structure that works (`rules/architecture.md`).
 
-- Does a `domain/` or `application/` folder in `## Tasks` isolate a business rule that its `why-layer:` names, or is it a folder for one CRUD (`customers/domain/customer.ts` with only fields)?
+- Does each file of `## Tasks` sit in its slice's layer folder (`presentation/`, `domain/`, `data/`), and does an `application/` file orchestrate more than one thing, or does it only forward to the repository?
 - Is a use case, service or controller method only forwarding to the repository with the same arguments (`findById(id) { return this.repo.findById(id) }`)?
 - Does an interface, abstract class or `I<Name>` file have a second implementation or a test fake in the plan, or only one class behind it?
-- Is there a factory, strategy, adapter, builder, bus or mediator whose second variant or second consumer is named in the plan?
+- Is there a factory, strategy, adapter, builder, bus or mediator whose second variant or second consumer its `why-layer:` names?
 - Is a container, registry or service locator planned where the framework's DI or constructor parameters would do?
 - Is there a config key, option or flag for a value the card fixes and nobody will change?
 - Does the plan create a folder for one wrapper file under 20 lines, or a module with layer folders it does not fill?
