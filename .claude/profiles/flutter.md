@@ -19,7 +19,7 @@ Mobile screens in Flutter. The base method does not name a framework; this profi
 - Mutation over `.dart` is `could not run: mutate.mjs has no Dart operators`.
 
 ## Libraries and structure
-- Features are folders: `lib/features/<feature>/{domain,application,infrastructure,presentation}`; `lib/shared/` holds the kernel.
+- Features are folders, layers inside from the first file: `lib/features/<feature>/{presentation,domain,data}` (`application/` for a use case that orchestrates), the feature's door `<feature>.dart` at its root; `lib/shared/` holds the kernel. Never `lib/screens/`, `lib/widgets/`, `lib/models/` or `lib/services/` across features (`.claude/reference/structure.md`, «Flutter»).
 - Solved problems use a library, the repo's choice first: persistence **drift**, DI **get_it** or **riverpod**, HTTP **dio**; the full list is in `stacks/others.md`.
 
 ## How to turn it on

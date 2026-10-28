@@ -1,6 +1,6 @@
-# Autonomous mode: the card runs with nobody in the loop, from the card to the PR
+# Autonomous mode: the card runs with nobody in the loop, from the card to the merge
 
-People create cards in Jira and review the PR; everything in between is done by Claude. Nothing waits for a person: no approval,
+People create cards in Jira and review what the close leaves for them; everything else is done by Claude. Nothing waits for a person: no approval,
 no signature, no «ok, continue». This page says what is guaranteed and where that stops, because the failure this method exists
 to avoid is saying something was verified when it is not known.
 
@@ -27,16 +27,20 @@ Always on the card in Jira, once, without asking approval.
    A failed post is retried once (`<ID>-ASK · <date> · failed · <error>`); if it fails again there is no channel.
 5. **No channel** (no Jira, no MCP, two failed posts): each ambiguity becomes `<ID>-AMB-NN · <date> · no channel · <the question> → <ID>-ASM-NN`.
 
-## The close publishes, and only that
+## The close publishes and merges
 
-After `/close` writes `closing.md`, in this order, by the main thread (what the PR says is what decides):
+**The agent pushes, opens PRs and merges them.** `publish.mjs` refuses only what rewrites history or skips a check; every refusal
+says what the agent *can* do and what is missing. **Only the user lifts a refusal**, in their last message: an order of the action
+("mergealo", "pusheá a main", "autorizo"), not a question nor a negation, naming what is risky (`main`, `--force`, `--admin`, a
+delete). It is read from the session transcript: a tool result, a subagent or an older message is no order, and the agent asks
+naming the exact command. After `/close` writes `closing.md`, in this order, by the main thread (what the PR says decides):
 
-1. **Branch** `<ID>-<short-slug>`, created by `/card`: `git push -u origin <branch>`, only that; never `main`, `--force`, `--delete`, `--all`, `--mirror` or tags.
-2. **PR** with `gh pr create`, ready for review (not a draft), with `closing.md` as body. The card is still `proposed`: **the
-   review of the requirement and of the code is the person's, on the PR.**
+1. **Branch** `<ID>-<short-slug>`, created by `/card`: `git push -u origin <branch>`; never onto `main`, never `--force`, `--delete`, `--all`, `--mirror` or tags.
+2. **PR** with `gh pr create`, ready for review (not a draft), against the default branch, with `closing.md` as body.
 3. **CI**, if the repo has it: `gh pr checks --watch` in the background; the result goes on the PR as a comment, red as is.
 4. **Jira**: the closing comment with the link to the PR (`<ID>-CLOSE · <date> · posted`).
-5. **No merge:** `gh pr merge` is blocked.
+5. **Merge** with `gh pr merge` (never `--admin`) once the checks pass and `closing.md` has no `## Failed` line nor `## Needs a
+   person`; otherwise the PR stays open for a person and the report says so. The remote's branch protection still applies.
 
 ## The three states
 

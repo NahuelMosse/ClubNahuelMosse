@@ -1,0 +1,12 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/mobile/lib/inicio/saludo_de_inicio.dart"
+  ],
+  "tasks": 1
+}

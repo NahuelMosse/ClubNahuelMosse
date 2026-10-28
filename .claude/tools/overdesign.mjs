@@ -115,15 +115,18 @@ const isWrapper = (file, text) => {
 };
 
 // Layer folders (or any folder inside a module) whose only file is a wrapper of fewer than TINY_LINES lines: [{ dir, file }].
-// A small file alone in the folder of a new module is not flagged: only a wrapper is.
+// A small file alone in the folder of a new module is not flagged: only a wrapper is. The layer folders of a slice
+// (`presentation/`, `domain/`, `application/`, `data/`) are its shape and hold one file as well as ten.
+const SLICE_LAYER = /(?:^|\/)(?:modules|features)\/[^/]+\/(?:presentation|domain|application|data)$/;
 export const tinyFolders = (repo, readText) => {
   const byDir = new Map();
   for (const f of repo) { const dir = f.slice(0, f.lastIndexOf('/')); if (dir) byDir.set(dir, [...(byDir.get(dir) ?? []), f]); }
   const out = [];
   for (const [dir, list] of byDir) {
     const name = dir.split('/').at(-1);
-    const inModule = /(?:^|\/)modules\/[^/]+\//.test(`${dir}/`);
-    if (!(LAYER_DIRS.test(name) || (inModule && !/(?:^|\/)modules\/[^/]+$/.test(dir)))) continue;
+    const inModule = /(?:^|\/)(?:modules|features)\/[^/]+\//.test(`${dir}/`);
+    if (SLICE_LAYER.test(dir)) continue;
+    if (!(LAYER_DIRS.test(name) || (inModule && !/(?:^|\/)(?:modules|features)\/[^/]+$/.test(dir)))) continue;
     if (list.length !== 1 || repo.some((f) => f !== list[0] && f.startsWith(`${dir}/`))) continue;
     const [file] = list;
     if (!isProduction(file)) continue;

@@ -1,0 +1,9 @@
+# Handoff VIS-02 T1 (2)
+
+Hecho y commiteado: `comun/esqueleto.dart` (Esqueleto, ZonaDeEsqueletos, FormaDeEsqueleto, EsqueletoDeLista con SingleChildScrollView sin scroll para no desbordar), `EsperaDeLista` borrada, los 5 llamadores y los 8 spinners de pantalla reemplazados, imports ordenados, `flutter analyze` limpio, `refactor-tests:` en el Gate, tests de `pantalla_panel_admin_test.dart` y `movimiento_pantallas_test.dart` (3 asserts) cambiados a `Esqueleto`. `tarjeta_aviso.dart` solo reformateado por `dart format`.
+
+## Falta
+1. `test/esqueletos_de_carga_test.dart`: 8 de 12 pasan; fallan los 4 `cada pantalla que carga ... /sedes /reservas /inicio /admin/sedes` con "A Timer is still pending after the widget tree was disposed" (el `.timeout(limite)` de `ClienteApi._enviar` con la API colgada; no es del código nuevo). El test commiteado no se puede editar: crear un archivo nuevo con el mismo tag `@VIS-02-S1 @assumption:VIS-02-ASM-02` que al final haga `pumpWidget(SizedBox())` y `pump(Duration(minutes: 2))` (o espere el límite), y anotar en `## Log`: `- L<n> · <date> · replaces: apps/mobile/test/esqueletos_de_carga_test.dart "cada pantalla que carga ... <ruta>" · deja un Timer pendiente de ClienteApi · by: <nuevo>`. Verificar que el original sigue fallando por eso y decidir con el main thread si se retira.
+2. `movimiento_pantallas_test.dart` falla `@RED-04-S14 ... festejo, aviso y entrada ... primer cuadro` (línea ~1071): comprobar si fallaba antes en main (`git stash`/worktree de main) o si lo causa el brillo (`tester.hasRunningAnimations`/pumpAndSettle).
+3. Gate completo en background: `sh D:/Temp/w/herramientas/flutter-mobile.sh > /tmp/vis02.log 2>&1`, luego `node .claude/tools/verify.mjs`, Log `- L<n> · <date> · T1 · <evidencia>`, `node .claude/tools/close.mjs`. No push.
+Nota: `dart format` sobre `apps/mobile/test` reformatea tests ajenos; formatear solo `apps/mobile/lib` y el test propio.

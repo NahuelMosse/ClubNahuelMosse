@@ -21,26 +21,25 @@ not open.**
 
 ## Simplest structure that works
 
-**This section wins over every other one.** The kit's first duty is to avoid overengineering: structure grows with the problem,
-and a layer, folder, interface or pattern exists only where today's code needs it. Every later section says *where things go
-when they exist*, never *that they must exist*.
+**This section wins over every other one when it comes to abstractions.** The kit's first duty is to avoid overengineering:
+an interface, a pattern or a class exists only where today's code needs it. The *folders* are another matter: every feature is
+a slice with its layers as folders (see «Structure»), because a feature that reads by layer at a glance is the readable one,
+and a folder costs nothing to keep.
 
-- **A CRUD feature** is one module: a route or controller, a repository on the stack's ORM and a schema. No `domain/` or
-  `application/` folder, no use-case class that only forwards to the repository.
-- **Layers appear inside a module when it has business rules worth isolating** (calculations, state transitions, invariants a
-  test should reach without a database). The card says which rule in `why-layer:` under its task; without one the layer is dropped.
+- **A CRUD feature** is one slice with the layers it has: `presentation/` (route or screen), `domain/` (the entity and its
+  rules), `data/` (the repository on the stack's ORM). No use-case class that only forwards to the repository.
+- **`application/`** appears for a use case that orchestrates more than one thing (two repositories, a payment and an email).
 - **Dependency injection** is the framework's DI or plain constructor parameters. A container (awilix, tsyringe) only when the
   app wires many services and the framework has none; never a hand-rolled container or service locator.
 - **No** interface with a single implementation (unless a test needs the fake), generic repository, event bus with one consumer,
   factory, strategy or adapter without a second variant, or config for a value that never changes.
-- Extracting duplicated logic (see «Duplicated logic») is not abstraction; a **new layer or pattern** is, and it is justified or removed.
+- Extracting duplicated logic (see «Duplicated logic») is not abstraction; a **new pattern** is, and it is justified or removed.
 
 The gate checks it: `overdesign` fails a pass-through method, an interface or abstract class with one implementation, a folder with one
-tiny file and an empty layer folder that the card added, and reports the ones already in the repo; `plan.mjs` asks `why-layer:` for a
-new `domain/` or `application/` folder and for a factory, strategy, adapter, bus or `I<Name>` interface file. A finding the card
-keeps on purpose (the port a use case depends on so it does not import the repository, in a module whose layers have their
-`why-layer:`) goes in the Log as `declared · overdesign · <file> · <the rule that asks for it>`: it stays a note and the close
-lists it for a person.
+tiny file outside the layer folders and an empty layer folder that the card added, and reports the ones already in the repo;
+`plan.mjs` asks `why-layer:` for a factory, strategy, adapter, bus or `I<Name>` interface file. A finding the card keeps on
+purpose (the port a use case depends on so it does not import the repository) goes in the Log as
+`declared · overdesign · <file> · <the rule that asks for it>`: it stays a note and the close lists it for a person.
 
 ## The five that matter
 
@@ -74,34 +73,46 @@ They are the ones that cost the most and that no generic linter catches.
 
 ## Structure: vertical slices, clean-architecture layers inside
 
-The code is cut by **functionality first**: each feature is a vertical slice, a folder
-`src/modules/<feature>/` (or the stack's equivalent: a Nest module, a .NET project or namespace per
-feature, a Python package, a Flutter `features/<feature>/`) that holds everything the feature needs, from
-the route to the table. A developer reads one folder to understand one feature, and a large project grows
-by adding slices, not by thickening four shared layers. **The clean-architecture layers live inside each
-slice**: as files in a small slice (`customers.controller.ts` is the interface, `customers.repository.ts`
-the infrastructure) and as folders (`domain/`, `application/`, `infrastructure/`, `interface/`) when the
-slice has rules worth isolating, each only if it holds something. At the top there is only a small `shared/` kernel (config,
-logging, the base error types, a few pure utilities) and the composition root.
+Both halves weigh the same. The code is cut by **functionality first**: each feature is a vertical slice, a folder
+`src/modules/<feature>/` (or the stack's equivalent: a Nest module, a .NET project or namespace per feature, a Python package,
+a Flutter `lib/features/<feature>/`) that holds everything the feature needs, from the screen or route to the table. A
+developer reads one folder to understand one feature, and a large project grows by adding slices, not by thickening shared
+layers. **Inside each slice, the clean-architecture layers are folders from its first file:**
+
+| Folder | Holds | Role in `## Tasks` |
+|---|---|---|
+| `presentation/` | routes, controllers, request schemas; in a front end the screens, widgets and their state | `(presentation)` |
+| `domain/` | entities, value objects and the rules, pure: no I/O, no framework | `(rule)` |
+| `application/` | use cases that orchestrate, only when one does | `(rule)` |
+| `data/` | repositories on the ORM, API clients, DTOs and their mapping | `(data)` |
+
+Each folder exists when it holds something; the slice's public index (`index.ts`, `<feature>.dart`) stays at its root. Imports
+point inward: `domain/` imports neither `presentation/` nor `data/`, and `data/` does not import `presentation/`.
+`presentation/` may call `data/` directly while there is one implementation; the interface in `domain/` is born with the
+second one or the test fake. A repo that already names a layer otherwise (`infrastructure/`, `interface/`, `ui/`, `api/`)
+keeps its name. At the top there is only a small `shared/` kernel (config, logging, the base error types, a few pure
+utilities, UI primitives) and the composition root.
 
 ```
-src/
-  modules/
-    customers/  { customers.controller.ts customers.repository.ts customers.schema.ts index.ts }   a CRUD
-    orders/     { domain/ infrastructure/ interface/ index.ts }   pricing rules isolated in domain/
-  shared/
+src/modules/                                   lib/features/                       (Flutter)
+  customers/                                     bookings/
+    presentation/  customers.routes.ts             presentation/  bookings_page.dart  booking_tile.dart
+    domain/        customer.ts                     domain/        booking.dart  booking_window.dart
+    data/          customers.repository.ts         data/          bookings_repository.dart  booking_dto.dart
+    index.ts                                       bookings.dart
+src/shared/                                    lib/shared/
 ```
 
-**A top-level `domain/`, `application/` or `infrastructure/` folder that spans features is a failure**:
-adding a feature touches four distant folders, nothing says which tables or rules belong together, and the
-module boundaries below cannot be asserted. `plan.mjs` refuses a `## Tasks` file placed there. A CRUD of a
-single entity is one module with the files it needs, not four folders.
+**A top-level folder by layer or by kind** (`domain/`, `data/`, `screens/`, `widgets/`, `services/`, `models/`, `providers/`)
+**that spans features is a failure**: adding a feature touches distant folders, nothing says which screens, rules and tables
+belong together, and the module boundaries below cannot be asserted. `plan.mjs` refuses a new `## Tasks` file placed there or
+outside its layer folder, and the gate's `layers` check refuses a created file outside its layer folder and an import that
+points outward.
 
-**A slice grows one step at a time, each only on its signal**: flat files → a layer folder (`why-layer:`) → a folder per
-use case (past ~5) → named sub-slices, one level → a workspace package (own build, owner or publication). Two slices that
-import each other both ways are one. In the front end, `features/<feature>/` the same way, split by screen, never by kind; a
-full-stack feature keeps its name in every root and shares only the contract. Trees, names, tests and what `shared/` may
-hold: `.claude/reference/structure.md`.
+**A slice grows one step at a time, each only on its signal**: layer folders → a folder per use case (past ~5) → named
+sub-slices, one level → a workspace package (own build, owner or publication). Two slices that import each other both ways
+are one. In the front end, `features/<feature>/` the same way; a full-stack feature keeps its name in every root and shares
+only the contract. Trees, names, tests and what `shared/` may hold: `.claude/reference/structure.md`.
 
 ## APIs: REST over resources, not over tables
 
@@ -154,11 +165,11 @@ tables, compute fields or hide others; that assembly happens behind the route, i
 
 ## Dependency direction
 
-Inside each module, for the layers it has:
+Inside each slice, between its layer folders:
 
 ```
-interface (controllers, pages) → application (use cases) → domain (entities, rules)
-infrastructure (ORM, HTTP, queues) → domain
+presentation (routes, screens) → application (use cases) → domain (entities, rules)
+data (ORM, HTTP clients, DTOs) → domain
 ```
 
 The arrows point inward and **never the other way round**. The domain knows nobody. Between modules the
@@ -250,8 +261,8 @@ undo than that of underdesigning.
   *of design*: no interface, base class, generic repository or configuration layer for them. That is
   not permission to copy logic (next section).
 - **Do not turn a CRUD into hexagonal.** If the card is a CRUD, deliver a CRUD.
-- **Do not add a layer, folder or pattern the card does not need today.** «Simplest structure that works» decides; the
-  rest of this file is where things go if they exist.
+- **Do not add an interface, pattern or use case the card does not need today.** «Simplest structure that works» decides; the
+  layer folders of a slice are its shape, not an addition.
 
 ## Duplicated logic is not a premature abstraction
 

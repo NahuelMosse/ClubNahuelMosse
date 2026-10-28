@@ -1,13 +1,15 @@
+<p align="center"><img src="docs/logo.png" width="96" alt="Logo de ClubNahuelMosse"></p>
+
 <h1 align="center">ClubNahuelMosse</h1>
 
 <p align="center"><strong>Reservá la cancha en tres pasos, sin llamar ni escribir al club.</strong><br>
 App móvil para reservar espacios deportivos, ver su disponibilidad y recibir avisos. Electiva General, Universidad de Morón.</p>
 
 <p align="center">
-  <img src="docs/capturas/02-inicio.jpg" width="200" alt="Inicio">
+  <img src="docs/capturas/01-login.jpg" width="200" alt="Inicio de sesión">
+  <img src="docs/capturas/03-sedes.jpg" width="200" alt="Sedes">
   <img src="docs/capturas/05-horarios.jpg" width="200" alt="Horarios disponibles">
   <img src="docs/capturas/07-listo.jpg" width="200" alt="Reserva confirmada">
-  <img src="docs/capturas/09-avisos.jpg" width="200" alt="Notificaciones">
 </p>
 
 ## Qué hace
