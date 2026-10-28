@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import 'api/cliente_api.dart';
+import 'api/api_client.dart';
 import 'common/appearance.dart';
 import 'common/pending_booking.dart';
 import 'common/transitions.dart';
@@ -54,7 +54,7 @@ import 'redirect.dart';
 /// Las rutas de la app, con lo que cada pantalla recibe.
 class AppRouter {
   const AppRouter({
-    required ValueGetter<ClienteApi> api,
+    required ValueGetter<ApiClient> api,
     required ValueGetter<Session> session,
     required ValueGetter<Appearance> appearance,
     required ValueGetter<NotificationCenter?> center,
@@ -73,7 +73,7 @@ class AppRouter {
 
   // Se leen de la app en cada uso: si el widget se reemplaza con la misma `State`,
   // las rutas siguen con lo que trae el widget nuevo.
-  final ValueGetter<ClienteApi> _api;
+  final ValueGetter<ApiClient> _api;
   final ValueGetter<Session> _session;
   final ValueGetter<Appearance> _appearance;
   final ValueGetter<NotificationCenter?> _center;
@@ -86,7 +86,7 @@ class AppRouter {
   final PendingBooking<BookingChoice> pending;
   final PendingPanelFilters pendingFilters;
 
-  ClienteApi get api => _api();
+  ApiClient get api => _api();
   Session get session => _session();
   Appearance get appearance => _appearance();
   NotificationCenter? get center => _center();
@@ -179,7 +179,7 @@ class AppRouter {
           sesion: session,
           reservas: bookings,
           espacios: spaces,
-          sedes: venues,
+          venues: venues,
           centro: center,
         ),
       ),
@@ -190,7 +190,7 @@ class AppRouter {
             context,
             state,
             SpaceSearchScreen(
-              sedes: venues,
+              venues: venues,
               espacios: spaces,
               horarios: availability,
               sesion: session,
@@ -265,13 +265,13 @@ class AppRouter {
                   key: ValueKey(state.pathParameters['cancha']),
                   sedeId: state.pathParameters['sede'] ?? '',
                   espacioId: state.pathParameters['cancha'] ?? '',
-                  sedes: venues,
+                  venues: venues,
                   espacios: spaces,
                   horarios: availability,
                   sesion: session,
-                  fecha: _day(state.uri.queryParameters['fecha']),
-                  horas: int.tryParse(state.uri.queryParameters['horas'] ?? ''),
-                  inicio: state.uri.queryParameters['inicio'],
+                  date: _day(state.uri.queryParameters['fecha']),
+                  hours: int.tryParse(state.uri.queryParameters['horas'] ?? ''),
+                  start: state.uri.queryParameters['inicio'],
                 ),
               ),
               routes: [
@@ -356,7 +356,7 @@ class AppRouter {
           final Booking reserva => AvailabilityScreen(
             sedeId: reserva.venueId,
             espacioId: reserva.spaceId,
-            sedes: venues,
+            venues: venues,
             espacios: spaces,
             horarios: availability,
             sesion: session,

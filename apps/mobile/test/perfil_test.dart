@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
@@ -36,7 +36,7 @@ void main() {
     ediciones.clear();
     bajas = 0;
     var consultas = 0;
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
         if (pedido.method == 'DELETE') {
@@ -415,7 +415,7 @@ void main() {
       final sesion = Session(
         repository: SessionRepository(
           credentials: credenciales,
-          api: ClienteApi(
+          api: ApiClient(
             'http://api.falsa',
             cliente: MockClient((pedido) async {
               if (pedido.method == 'DELETE') return respuesta.future;
@@ -442,7 +442,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       var intentos = 0;
       credenciales = CredencialesFalsas();
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           if (pedido.method == 'DELETE') {

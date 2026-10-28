@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
-import 'api/cliente_api.dart';
+import 'api/api_client.dart';
 import 'common/appearance.dart';
 import 'common/pending_booking.dart';
 import 'features/admin/data/booking_history_api.dart';
@@ -36,7 +36,7 @@ class App extends StatefulWidget {
     this.initialLocation = '/',
   });
 
-  final ClienteApi api;
+  final ApiClient api;
   final Session session;
   final Appearance appearance;
 

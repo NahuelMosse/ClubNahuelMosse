@@ -14,19 +14,19 @@ class BookingDetail extends StatelessWidget {
   const BookingDetail({
     super.key,
     required this.reserva,
-    required this.cuenta,
+    required this.account,
     required this.porque,
   });
 
   final Booking reserva;
-  final String? cuenta;
+  final String? account;
   final String? porque;
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     final r = reserva;
-    final cuenta = this.cuenta;
+    final account = this.account;
     final porque = this.porque;
     final anulada = r.status == BookingStatus.voided;
     return Padding(
@@ -34,9 +34,9 @@ class BookingDetail extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (cuenta != null) ...[
+          if (account != null) ...[
             Text(
-              cuenta,
+              account,
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontWeight: FontWeight.w700,

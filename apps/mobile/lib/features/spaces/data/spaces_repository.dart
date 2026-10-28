@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../../common/field_errors.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/domain/token_source.dart';
@@ -8,11 +8,11 @@ import '../domain/space_exceptions.dart';
 /// Los espacios deportivos, leídos, dados de alta, editados y dados de baja en la API
 /// con la sesión abierta.
 class SpacesRepository {
-  SpacesRepository({required ClienteApi api, required TokenSource session})
+  SpacesRepository({required ApiClient api, required TokenSource session})
     : _api = api,
       _session = session;
 
-  final ClienteApi _api;
+  final ApiClient _api;
   final TokenSource _session;
   Catalog? _catalog;
 

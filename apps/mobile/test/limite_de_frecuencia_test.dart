@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/error_dialog.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -14,7 +14,7 @@ void main() {
   testWidgets(
     'la app muestra el 429 con el mensaje del servidor en su diálogo de error @REV-01-S6 @assumption:REV-01-ASM-14',
     (tester) async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient(
           (_) async => http.Response(

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -29,7 +29,7 @@ void main() {
     await montarUsuario(
       tester,
       inicio: '/reservas',
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);

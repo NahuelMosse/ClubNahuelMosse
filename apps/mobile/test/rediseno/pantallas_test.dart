@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/bib.dart';
 import 'package:clubnahuelmosse/common/member_profile.dart';
 import 'package:clubnahuelmosse/common/logo_mark.dart';
@@ -122,7 +122,7 @@ Future<void> _montarInicio(
       espacios: Spaces(
         repository: SpacesRepository(api: api, session: sesion),
       ),
-      sedes: Venues(
+      venues: Venues(
         repository: VenuesRepository(api: api, session: sesion),
       ),
     ),
@@ -144,7 +144,7 @@ Future<void> _montarMisReservas(
     inicio: inicio,
     oscuro: oscuro,
     tamano: const Size(393, 1600),
-    api: ClienteApi(
+    api: ApiClient(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
         final (c, cuerpo) = pedido.url.path == '/reservas'

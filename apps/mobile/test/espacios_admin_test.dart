@@ -2,7 +2,7 @@ import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
 import 'package:clubnahuelmosse/features/spaces/domain/space_exceptions.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/price_format.dart';
@@ -118,7 +118,7 @@ void main() {
   });
 
   group('Espacios', () {
-    Spaces espacios(ClienteApi api) => Spaces(
+    Spaces espacios(ApiClient api) => Spaces(
       repository: SpacesRepository(api: api, session: SesionFalsa(perfilAdmin)),
     );
 

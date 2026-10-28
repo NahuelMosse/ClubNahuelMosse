@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/domain/token_source.dart';
 import '../domain/app_notification.dart';
@@ -7,12 +7,12 @@ import '../domain/center_reading.dart';
 /// Las notificaciones y los dispositivos de quien inició sesión, en la API.
 class NotificationsRepository {
   NotificationsRepository({
-    required ClienteApi api,
+    required ApiClient api,
     required TokenSource session,
   }) : _api = api,
        _session = session;
 
-  final ClienteApi _api;
+  final ApiClient _api;
   final TokenSource _session;
 
   /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].

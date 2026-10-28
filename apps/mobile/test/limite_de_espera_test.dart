@@ -1,5 +1,5 @@
 // ignore_for_file: unawaited_futures
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -9,7 +9,7 @@ void main() {
     'a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04',
     (tester) async {
       Object? error;
-      ClienteApi(
+      ApiClient(
             'http://api.falsa',
             cliente: MockClient(
               (_) => Future.delayed(

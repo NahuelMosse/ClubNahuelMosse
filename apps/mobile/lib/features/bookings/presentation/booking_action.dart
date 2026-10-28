@@ -17,7 +17,7 @@ class BookingAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final boton = Semantics(
+    final button = Semantics(
       label: etiqueta,
       excludeSemantics: true,
       button: true,
@@ -25,6 +25,6 @@ class BookingAction extends StatelessWidget {
       onTap: alTocar,
       child: child,
     );
-    return expandir ? Expanded(child: boton) : boton;
+    return expandir ? Expanded(child: button) : button;
   }
 }

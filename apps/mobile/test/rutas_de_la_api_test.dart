@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/api/rutas.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -37,7 +37,7 @@ void main() {
     'un pedido a una ruta que la app no declara falla en sus propios tests @REV-08-S4 '
     '@assumption:REV-08-ASM-04',
     () async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((_) async => http.Response('{}', 200)),
       );
@@ -59,7 +59,7 @@ void main() {
   test('en release un pedido a una ruta no declarada sale como hoy @REV-08-S4 '
       '@assumption:REV-08-ASM-07', () async {
     final pedidos = <http.Request>[];
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       verificarRutas: false,
       cliente: MockClient((p) async {

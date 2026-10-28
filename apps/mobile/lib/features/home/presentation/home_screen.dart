@@ -32,7 +32,7 @@ typedef _Datos = ({
   Booking? proxima,
   int cuantas,
   Catalog catalogo,
-  List<Venue> sedes,
+  List<Venue> venues,
 });
 
 /// El Home de quien inicia sesión como usuario: su próxima reserva, cuánto hay para
@@ -43,14 +43,14 @@ class HomeScreen extends StatefulWidget {
     required this.sesion,
     required this.reservas,
     required this.espacios,
-    required this.sedes,
+    required this.venues,
     this.centro,
   });
 
   final Session sesion;
   final Bookings reservas;
   final Spaces espacios;
-  final Venues sedes;
+  final Venues venues;
 
   /// Sin él no hay campana: la pantalla no avisa de notificaciones.
   final NotificationCenter? centro;
@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (anterior.reservas != widget.reservas ||
         anterior.espacios != widget.espacios ||
-        anterior.sedes != widget.sedes) {
+        anterior.venues != widget.venues) {
       _cargar();
     }
   }
@@ -109,19 +109,19 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<_Datos> _leer() async {
     final catalogo = await widget.espacios.repository.catalog();
     final proximas = await widget.reservas.mine(history: false);
-    final sedes = await widget.sedes.repository.active();
+    final venues = await widget.venues.repository.active();
     return (
       proxima: proximas.firstOrNull,
       cuantas: proximas.length,
       catalogo: catalogo,
-      sedes: sedes,
+      venues: venues,
     );
   }
 
   /// Con [deCero] la pantalla se vacía mientras llega la lectura; al refrescar queda lo que
   /// había hasta que llega lo nuevo, y se quita si la lectura falla.
   Future<void> _cargar({bool deCero = true}) async {
-    final pedido = ++_pedido;
+    final request = ++_pedido;
     setState(() {
       if (deCero) _datos = null;
       _fallo = false;
@@ -129,15 +129,15 @@ class _HomeScreenState extends State<HomeScreen> {
     Object? fallo;
     var vencida = false;
     try {
-      final datos = await _leer();
-      if (mounted && pedido == _pedido) setState(() => _datos = datos);
+      final data = await _leer();
+      if (mounted && request == _pedido) setState(() => _datos = data);
       return;
     } on SessionExpired {
       vencida = true;
     } on FalloDeRed catch (e) {
       fallo = e;
     }
-    if (!mounted || pedido != _pedido) return;
+    if (!mounted || request != _pedido) return;
     setState(() {
       _datos = null;
       _fallo = true;
@@ -153,10 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Vuelve a leer sin avisos: si no se puede, queda lo que había.
   Future<void> _releerSinAvisar() async {
-    final pedido = ++_pedido;
+    final request = ++_pedido;
     try {
-      final datos = await _leer();
-      if (mounted && pedido == _pedido) setState(() => _datos = datos);
+      final data = await _leer();
+      if (mounted && request == _pedido) setState(() => _datos = data);
     } on Exception catch (e, pila) {
       // Sin red o con el servidor caído, lo que había sigue siendo lo mejor que hay.
       logError(e, pila);
@@ -181,12 +181,12 @@ class _HomeScreenState extends State<HomeScreen> {
       reserva: r,
       marcar: (id) => setState(() => _cancelando = id),
       alCancelar: () => setState(() {
-        if (_datos case final datos?) {
+        if (_datos case final data?) {
           _datos = (
             proxima: null,
-            cuantas: datos.cuantas > 0 ? datos.cuantas - 1 : 0,
-            catalogo: datos.catalogo,
-            sedes: datos.sedes,
+            cuantas: data.cuantas > 0 ? data.cuantas - 1 : 0,
+            catalogo: data.catalogo,
+            venues: data.venues,
           );
         }
         _cancelando = null;
@@ -206,10 +206,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final datos = _datos;
-    final proxima = datos?.proxima;
+    final data = _datos;
+    final proxima = data?.proxima;
     final yaEntro = _yaEntro;
-    if (datos != null) _yaEntro = true;
+    if (data != null) _yaEntro = true;
     return PopScope(
       canPop: _cancelando == null,
       child: Scaffold(
@@ -230,16 +230,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   HomeHero(
                     sesion: widget.sesion,
                     centro: widget.centro,
-                    celdas: datos == null ? null : _celdas(datos),
+                    celdas: data == null ? null : _celdas(data),
                     yaEntro: yaEntro,
                   ),
-                  if (datos == null && !_fallo)
+                  if (data == null && !_fallo)
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: Spacing.s24),
                       child: SkeletonList(shape: SkeletonShape.booking),
                     ),
-                  if (datos == null && _fallo) ListRetry(onTap: _cargar),
-                  if (datos != null) ...[
+                  if (data == null && _fallo) ListRetry(onTap: _cargar),
+                  if (data != null) ...[
                     if (proxima != null)
                       FadeIn(
                         delay: const Duration(milliseconds: 450),
@@ -247,21 +247,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         alreadyEntered: yaEntro,
                         child: NextBooking(
                           reserva: proxima,
-                          catalogo: datos.catalogo,
+                          catalogo: data.catalogo,
                           cancelando: _cancelando == proxima.id,
                           alCancelar: _cancelando == null
-                              ? () => _cancelar(proxima, datos.catalogo)
+                              ? () => _cancelar(proxima, data.catalogo)
                               : null,
                           alModificar: _cancelando == null
                               ? () => _modificar(proxima)
                               : null,
                         ),
                       ),
-                    HomeSports(catalogo: datos.catalogo, yaEntro: yaEntro),
+                    HomeSports(catalogo: data.catalogo, yaEntro: yaEntro),
                     HomeShortcuts(
                       primero:
-                          tileEntrance +
-                          tileStep * datos.catalogo.sports.length,
+                          tileEntrance + tileStep * data.catalogo.sports.length,
                       yaEntro: yaEntro,
                     ),
                   ],
@@ -275,13 +274,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-List<MarkerCell> _celdas(_Datos datos) {
-  final canchas = datos.sedes.fold(0, (total, s) => total + s.spaceCount);
+List<MarkerCell> _celdas(_Datos data) {
+  final canchas = data.venues.fold(0, (total, s) => total + s.spaceCount);
   return [
-    MarkerCell(figure: twoDigits(datos.sedes.length), label: 'SEDES'),
+    MarkerCell(figure: twoDigits(data.venues.length), label: 'SEDES'),
     MarkerCell(figure: twoDigits(canchas), label: 'CANCHAS'),
     MarkerCell(
-      figure: twoDigits(datos.cuantas),
+      figure: twoDigits(data.cuantas),
       label: 'PRÓXIMAS',
       highlighted: true,
     ),

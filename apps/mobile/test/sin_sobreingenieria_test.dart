@@ -1,7 +1,7 @@
 // ignore_for_file: unawaited_futures
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/unhandled_errors.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,7 +19,7 @@ void main() {
       expect(errores, isNot(contains('instalarCapturaDeErrores')));
       expect(errores, isNot(contains('correrProtegido')));
       expect(errores, isNot(contains('registroDeErrores')));
-      final cliente = _fuente('lib/api/cliente_api.dart');
+      final cliente = _fuente('lib/api/api_client.dart');
       expect(cliente, isNot(contains('despertando')));
       expect(cliente, isNot(contains('referencia')));
       final main = _fuente('lib/main.dart');
@@ -31,7 +31,7 @@ void main() {
   testWidgets(
     'a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04',
     (tester) async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient(
           (_) => Future.delayed(
@@ -51,7 +51,7 @@ void main() {
   );
 
   testWidgets('sin conexión la app lo avisa @SIM-01-S4', (tester) async {
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       cliente: MockClient((_) async => throw http.ClientException('sin red')),
     );

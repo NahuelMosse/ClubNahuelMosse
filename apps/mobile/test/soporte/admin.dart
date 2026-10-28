@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ const sedeCastelarJson =
 /// La app entera con la sesión de un administrador, abierta en [inicio].
 Future<void> montarAdmin(
   WidgetTester tester, {
-  required ClienteApi api,
+  required ApiClient api,
   String inicio = '/admin/sedes',
   bool oscuro = true,
   Size tamano = const Size(393, 852),

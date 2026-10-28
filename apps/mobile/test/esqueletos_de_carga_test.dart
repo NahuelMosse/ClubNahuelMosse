@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/button.dart';
@@ -15,7 +15,7 @@ import 'package:http/testing.dart';
 import 'soporte/montar.dart';
 
 /// Una API que nunca contesta: la pantalla se queda cargando.
-ClienteApi _apiColgada() => ClienteApi(
+ApiClient _apiColgada() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) => Completer<http.Response>().future),
 );

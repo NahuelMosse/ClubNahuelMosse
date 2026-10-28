@@ -64,8 +64,8 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     final e = widget.eleccion;
     Object? fallo;
     try {
-      final reserva = await widget.reservas.book(e);
-      if (mounted) context.go('/reservas/confirmada', extra: reserva);
+      final booking = await widget.reservas.book(e);
+      if (mounted) context.go('/reservas/confirmada', extra: booking);
       return;
     } on SlotTaken {
       if (!mounted) return;
@@ -92,8 +92,8 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       if (mounted) _volver(ConfirmResult.ocupado);
       return;
     } on SessionExpired {
-      final correo = widget.sesion.profile?.email;
-      if (correo != null) widget.pendiente.save(e, correo);
+      final email = widget.sesion.profile?.email;
+      if (email != null) widget.pendiente.save(e, email);
       if (!mounted) return;
       setState(() => _enviando = false);
       await avisarSesionVencida(context, widget.sesion);

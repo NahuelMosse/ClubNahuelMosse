@@ -17,8 +17,8 @@ class BookingReceipt extends StatelessWidget {
 
   String get _horario {
     final r = reserva;
-    final horas = r.endsAt.difference(r.startsAt).inHours;
-    return '${timeRange(r.startsAt, r.endsAt)} · ${duration(horas)}';
+    final hours = r.endsAt.difference(r.startsAt).inHours;
+    return '${timeRange(r.startsAt, r.endsAt)} · ${duration(hours)}';
   }
 
   @override

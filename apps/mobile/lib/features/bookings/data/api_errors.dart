@@ -1,3 +1,3 @@
 // The API failures that presentation handles; it never imports `api/` itself.
-export '../../../api/cliente_api.dart'
+export '../../../api/api_client.dart'
     show ErrorDelServidor, FalloDeRed, SinConexion;

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/notifications/data/notifications_repository.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/app_notification.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/notification_kind.dart';
@@ -139,7 +139,7 @@ class ApiFalsa {
   final pedidos = <http.Request>[];
   void Function(http.Request)? alPedir;
 
-  ClienteApi get cliente => ClienteApi(
+  ApiClient get cliente => ApiClient(
     'http://api.falsa',
     cliente: MockClient((pedido) async {
       pedidos.add(pedido);
@@ -861,7 +861,7 @@ void main() {
       final sesion = Session(
         repository: SessionRepository(
           credentials: CredencialesFalsas(),
-          api: ClienteApi(
+          api: ApiClient(
             'http://api.falsa',
             cliente: MockClient((_) async => http.Response('{}', 500)),
           ),

@@ -117,7 +117,7 @@ void main() {
         espacios: Spaces(
           repository: SpacesRepository(api: api, session: sesion),
         ),
-        sedes: Venues(
+        venues: Venues(
           repository: VenuesRepository(api: api, session: sesion),
         ),
       ),

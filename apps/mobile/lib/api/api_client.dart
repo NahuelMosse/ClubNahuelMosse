@@ -37,8 +37,8 @@ class Respuesta {
   final Map<String, Object?> cuerpo;
 }
 
-class ClienteApi {
-  ClienteApi(
+class ApiClient {
+  ApiClient(
     String base, {
     http.Client? cliente,
     this.limite = const Duration(seconds: 30),

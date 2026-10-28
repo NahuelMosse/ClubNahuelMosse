@@ -14,12 +14,12 @@ class Grow extends StatefulWidget {
 }
 
 class _GrowState extends State<Grow> with SingleTickerProviderStateMixin {
-  late final _controlador = AnimationController(
+  late final _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 400),
     value: 1,
   );
-  late final Animation<double> _escala = _controlador.drive(
+  late final Animation<double> _escala = _controller.drive(
     Tween<double>(
       begin: 0.88,
       end: 1,
@@ -31,12 +31,12 @@ class _GrowState extends State<Grow> with SingleTickerProviderStateMixin {
     super.didUpdateWidget(anterior);
     if (!widget.activo || anterior.activo) return;
     if (MediaQuery.disableAnimationsOf(context)) return;
-    unawaited(_controlador.forward(from: 0));
+    unawaited(_controller.forward(from: 0));
   }
 
   @override
   void dispose() {
-    _controlador.dispose();
+    _controller.dispose();
     super.dispose();
   }
 

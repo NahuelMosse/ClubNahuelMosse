@@ -86,7 +86,7 @@ class BookingCard extends StatelessWidget {
 
   /// La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
   /// botones propios.
-  String _etiqueta(String? porque, String? cuenta) {
+  String _etiqueta(String? porque, String? account) {
     final r = reserva;
     return [
       catalogo.shortKind(r.sport, r.kind),
@@ -97,19 +97,19 @@ class BookingCard extends StatelessWidget {
       '${formatPesos(r.total).replaceFirst('\$ ', '')} pesos',
       r.space,
       ?porque,
-      ?cuenta?.toLowerCase(),
+      ?account?.toLowerCase(),
     ].join(', ');
   }
 
   Widget _datos(Palette p, bool grande) {
     final r = reserva;
     final porque = _porque;
-    final cuenta = _cuenta;
+    final account = _cuenta;
     return Semantics(
       container: true,
       selected: resaltada,
       excludeSemantics: true,
-      label: _etiqueta(porque, cuenta),
+      label: _etiqueta(porque, account),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -125,7 +125,7 @@ class BookingCard extends StatelessWidget {
               child: BookingPriceAndStatus(reserva: r, grande: grande),
             ),
           DieCut(background: p.bgBase),
-          BookingDetail(reserva: r, cuenta: cuenta, porque: porque),
+          BookingDetail(reserva: r, account: account, porque: porque),
         ],
       ),
     );
@@ -140,7 +140,7 @@ class BookingCard extends StatelessWidget {
     final deQue =
         '${catalogo.shortKind(r.sport, r.kind)}, '
         '${shortDay(r.startsAt)}, $_horario';
-    final datos = _datos(p, grande);
+    final data = _datos(p, grande);
     final borde = resaltada ? 2.0 : 1.0;
     return Container(
       decoration: BoxDecoration(
@@ -158,7 +158,7 @@ class BookingCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                datos,
+                data,
                 if (cancelable)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(

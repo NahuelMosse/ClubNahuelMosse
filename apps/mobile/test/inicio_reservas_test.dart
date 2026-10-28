@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,8 +24,8 @@ class _Servidor {
       .where((p) => p.method == 'GET' && p.url.path == '/reservas')
       .length;
 
-  ClienteApi get api =>
-      ClienteApi('http://api.falsa', cliente: MockClient(_responder));
+  ApiClient get api =>
+      ApiClient('http://api.falsa', cliente: MockClient(_responder));
 
   Future<http.Response> _responder(http.Request pedido) async {
     pedidos.add(pedido);

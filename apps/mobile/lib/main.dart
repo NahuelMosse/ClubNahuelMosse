@@ -2,7 +2,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'api/cliente_api.dart';
+import 'api/api_client.dart';
 import 'app.dart';
 import 'common/appearance.dart';
 import 'common/config.dart';
@@ -26,7 +26,7 @@ Future<void> bootstrap(AppConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
   final auth = await initFirebase(config);
-  final api = ClienteApi(config.apiUrl);
+  final api = ApiClient(config.apiUrl);
   final session = Session(
     repository: SessionRepository(
       credentials: FirebaseCredentials(auth),

@@ -9,7 +9,7 @@ import 'package:clubnahuelmosse/features/admin/domain/booking_history_entry.dart
 import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/booking_detail_screen.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/booking_filters_screen.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/button.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -43,7 +43,7 @@ void main() {
 
   final sesion = SesionFalsa(perfilAdmin);
 
-  Widget detalle(BookingHistoryEntry reserva, ClienteApi api) =>
+  Widget detalle(BookingHistoryEntry reserva, ApiClient api) =>
       BookingDetailScreen(
         booking: reserva,
         history: BookingHistory(api: api, sesion: sesion),
@@ -109,7 +109,7 @@ void main() {
 
     testWidgets('con la anulación en camino no se puede salir', (tester) async {
       final respuesta = Completer<http.Response>();
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           if (pedido.method == 'POST') return respuesta.future;

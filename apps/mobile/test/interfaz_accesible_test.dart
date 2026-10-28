@@ -2,7 +2,7 @@ import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
 import 'dart:convert';
 
 import 'package:clock/clock.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/bottom_bar.dart';
 import 'package:clubnahuelmosse/common/button.dart';
 import 'package:clubnahuelmosse/common/calendar.dart';
@@ -153,7 +153,7 @@ void main() {
       final pedidos = <http.Request>[];
       await montarAdmin(
         tester,
-        api: ClienteApi(
+        api: ApiClient(
           'http://api.falsa',
           cliente: MockClient((pedido) async {
             pedidos.add(pedido);

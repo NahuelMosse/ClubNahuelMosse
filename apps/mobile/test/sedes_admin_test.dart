@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
@@ -30,7 +30,7 @@ void main() {
   });
 
   group('Sedes', () {
-    Venues sedes(ClienteApi api) => Venues(
+    Venues sedes(ApiClient api) => Venues(
       repository: VenuesRepository(api: api, session: SesionFalsa(perfilAdmin)),
     );
 
@@ -77,7 +77,7 @@ void main() {
       });
     });
 
-    Future<Venue> alta(ClienteApi api) => sedes(api).create(
+    Future<Venue> alta(ApiClient api) => sedes(api).create(
       name: 'Sede Haedo',
       address: 'Av. Vergara 1850',
       opening: '08:00',
@@ -146,7 +146,7 @@ void main() {
 
     testWidgets('sin conexión avisa y deja reintentar', (tester) async {
       var intentos = 0;
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((_) async {
           intentos++;
@@ -356,7 +356,7 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       var guardada = false;
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           if (pedido.method == 'POST') {
@@ -385,7 +385,7 @@ void main() {
     ) async {
       final semantica = tester.ensureSemantics();
       var lecturas = 0;
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           if (pedido.method == 'POST') return http.Response(sedeHaedoJson, 201);
@@ -406,7 +406,7 @@ void main() {
       (tester) async {
         final semantica = tester.ensureSemantics();
         var altas = 0;
-        final api = ClienteApi(
+        final api = ApiClient(
           'http://api.falsa',
           cliente: _Cliente((pedido) async {
             if (pedido.method == 'POST') {

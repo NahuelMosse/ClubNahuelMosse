@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
 import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/main.dart';
@@ -16,7 +16,7 @@ void main() {
   testWidgets(
     'al arrancar sin conexión la app muestra el diálogo de error con Reintentar @SIM-01-S4 @assumption:SIM-01-ASM-08 (widget)',
     (tester) async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((_) async => throw http.ClientException('sin red')),
       );

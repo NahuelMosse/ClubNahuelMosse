@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../domain/session_exceptions.dart';
 
 /// Quién comprueba el correo y la contraseña, y guarda la sesión en el dispositivo.

@@ -8,18 +8,18 @@ class BookingSteps extends StatelessWidget {
 
   final int actual;
 
-  static const _nombres = ['Elegí cancha', 'Confirmás', '¡Listo!'];
+  static const _names = ['Elegí cancha', 'Confirmás', '¡Listo!'];
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
     return Semantics(
-      label: 'Paso ${actual + 1} de ${_nombres.length}: ${_nombres[actual]}',
+      label: 'Paso ${actual + 1} de ${_names.length}: ${_names[actual]}',
       excludeSemantics: true,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var i = 0; i < _nombres.length; i++) ...[
+          for (var i = 0; i < _names.length; i++) ...[
             if (i > 0) const SizedBox(width: Spacing.s8),
             Expanded(
               child: Column(
@@ -33,7 +33,7 @@ class BookingSteps extends StatelessWidget {
                   ),
                   const SizedBox(height: Spacing.s8),
                   Text(
-                    _nombres[i],
+                    _names[i],
                     textAlign: TextAlign.center,
                     style: Texts.caption.copyWith(
                       color: i == actual ? p.textPrimary : p.textMuted,

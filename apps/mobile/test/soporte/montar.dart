@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
 import 'package:clubnahuelmosse/features/session/data/credentials.dart';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
 import 'package:clubnahuelmosse/features/bookings/presentation/bookings.dart';
 import 'package:clubnahuelmosse/features/bookings/data/bookings_api.dart';
@@ -22,10 +22,10 @@ import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
-ClienteApi apiFalsa({
+ApiClient apiFalsa({
   int codigo = 201,
   String cuerpo = '{"id": "00000000-0000-7000-8000-000000000001"}',
-}) => ClienteApi(
+}) => ApiClient(
   'http://api.falsa',
   cliente: MockClient(
     (_) async => http.Response.bytes(
@@ -38,10 +38,10 @@ ClienteApi apiFalsa({
 
 /// Un cliente de la API que responde según `MÉTODO /ruta`; lo que no está es un 404.
 /// Guarda cada pedido en [pedidos] para afirmar qué se mandó.
-ClienteApi apiRutas(
+ApiClient apiRutas(
   Map<String, (int, String)> respuestas, {
   List<http.Request>? pedidos,
-}) => ClienteApi(
+}) => ApiClient(
   'http://api.falsa',
   cliente: MockClient((pedido) async {
     pedidos?.add(pedido);
@@ -82,7 +82,7 @@ const _proximaJson =
 
 /// Una API con lo que lee el Home: 4 sedes con 17 canchas (o, con [unaSede], una sede con
 /// una cancha), el catálogo de deportes y, con [conReserva], una próxima reserva.
-ClienteApi apiInicio({
+ApiClient apiInicio({
   bool conReserva = true,
   bool unaSede = false,
 }) => apiRutas({
@@ -112,7 +112,7 @@ Widget inicioFalso(
     espacios: Spaces(
       repository: SpacesRepository(api: api, session: sesion),
     ),
-    sedes: Venues(
+    venues: Venues(
       repository: VenuesRepository(api: api, session: sesion),
     ),
   );

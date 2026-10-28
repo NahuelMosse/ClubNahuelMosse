@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../../common/field_errors.dart';
 import '../domain/profile.dart';
 import '../domain/role.dart';
@@ -9,12 +9,12 @@ import 'credentials.dart';
 /// Los pedidos de la sesión a la API y a Firebase. Los que necesitan el token lo reciben
 /// ya resuelto: quién lo pide decide el orden.
 class SessionRepository implements TokenSource {
-  SessionRepository({required this.credentials, required ClienteApi api})
+  SessionRepository({required this.credentials, required ApiClient api})
     : _api = api;
 
   /// Entrar y salir de la cuenta de Firebase: quien lo necesita llama directo.
   final Credentials credentials;
-  final ClienteApi _api;
+  final ApiClient _api;
 
   bool get hasAccount => credentials.hasAccount;
 

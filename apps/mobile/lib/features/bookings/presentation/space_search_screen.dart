@@ -35,14 +35,14 @@ import 'space_search_bar.dart';
 class SpaceSearchScreen extends StatefulWidget {
   const SpaceSearchScreen({
     super.key,
-    required this.sedes,
+    required this.venues,
     required this.espacios,
     required this.horarios,
     required this.sesion,
     this.deporte,
   });
 
-  final Venues sedes;
+  final Venues venues;
   final Spaces espacios;
   final AvailabilityApi horarios;
   final Session sesion;
@@ -56,7 +56,7 @@ class SpaceSearchScreen extends StatefulWidget {
 
 /// Lo que se consultó, para el encabezado y para seguir a los horarios.
 typedef _Consulta = ({
-  Venue sede,
+  Venue venue,
   String deporte,
   String? tipo,
   DateTime fecha,
@@ -71,7 +71,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   Venue? _sede;
   String? _deporte;
   String? _tipo;
-  final _fecha = TextEditingController();
+  final _date = TextEditingController();
 
   /// El texto de FECHA la última vez que cambió: el controlador avisa también cuando
   /// cambian el cursor o el foco, y eso no es cambiar el filtro.
@@ -92,13 +92,13 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   void initState() {
     super.initState();
     _deporte = widget.deporte;
-    _fecha.addListener(_alEscribirFecha);
+    _date.addListener(_alEscribirFecha);
     _cargar();
   }
 
   @override
   void dispose() {
-    _fecha.dispose();
+    _date.dispose();
     super.dispose();
   }
 
@@ -107,9 +107,9 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     Object? fallo;
     var vencida = false;
     try {
-      final sedes = await widget.sedes.repository.active();
+      final venues = await widget.venues.repository.active();
       final catalogo = await widget.espacios.repository.catalog();
-      if (mounted) setState(() => _opciones = (sedes, catalogo));
+      if (mounted) setState(() => _opciones = (venues, catalogo));
       return;
     } on SessionExpired {
       vencida = true;
@@ -128,12 +128,12 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   }
 
   void _alEscribirFecha() {
-    if (_fecha.text == _textoDeFecha) return;
-    _textoDeFecha = _fecha.text;
+    if (_date.text == _textoDeFecha) return;
+    _textoDeFecha = _date.text;
     _alCambiarFiltro();
   }
 
-  DateTime? get _dia => switch (readDate(_fecha.text)) {
+  DateTime? get _dia => switch (readDate(_date.text)) {
     final d? => DateTime.utc(d.year, d.month, d.day),
     null => null,
   };
@@ -143,17 +143,17 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   Map<String, String> get _errores {
     final errores = <String, String>{};
     final dia = _dia;
-    if (_fecha.text.length >= 'DD / MM / AAAA'.length && dia == null) {
+    if (_date.text.length >= 'DD / MM / AAAA'.length && dia == null) {
       errores['fecha'] = 'Escribí la fecha como DD / MM / AAAA';
     }
-    final sede = _sede;
-    if (dia != null && sede == null) {
+    final venue = _sede;
+    if (dia != null && venue == null) {
       errores.addAll(dateErrors(day: dia, now: clubNow()));
     }
-    if (sede != null && dia != null) {
+    if (venue != null && dia != null) {
       errores.addAll(
         rangeErrors(
-          venue: sede,
+          venue: venue,
           day: dia,
           from: _desde,
           to: _hasta,
@@ -185,13 +185,13 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   }
 
   Future<void> _consultar() async {
-    final sede = _sede;
+    final venue = _sede;
     final deporte = _deporte;
     final dia = _dia;
-    if (sede == null || deporte == null || dia == null) return;
+    if (venue == null || deporte == null || dia == null) return;
     if (!_completo || _consultando) return;
     final consulta = (
-      sede: sede,
+      venue: venue,
       deporte: deporte,
       tipo: _tipo,
       fecha: dia,
@@ -207,7 +207,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     var vencida = false;
     try {
       final libres = await widget.horarios.freeSpaces(
-        venueId: sede.id,
+        venueId: venue.id,
         sport: deporte,
         kind: _tipo,
         date: dia,
@@ -228,7 +228,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         _rechazo = e.errors;
       });
       if (e.errors.containsKey('sede_id')) {
-        widget.sedes.notifyChange();
+        widget.venues.notifyChange();
         await _cargar();
       }
       return;
@@ -246,7 +246,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   }
 
   void _limpiar() {
-    _fecha.clear();
+    _date.clear();
     _cambiar(() {
       _sede = null;
       _deporte = null;
@@ -256,12 +256,12 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     });
   }
 
-  Future<void> _elegirSede(List<Venue> sedes) async {
+  Future<void> _elegirSede(List<Venue> venues) async {
     final elegida = await pickOption<Venue>(
       context,
       title: 'Sede',
       options: [
-        for (final s in sedes)
+        for (final s in venues)
           if (s.spaceCount > 0) (s, s.name),
       ],
       selected: _sede,
@@ -315,13 +315,13 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   }
 
   Future<void> _elegirHora({required bool inicio}) async {
-    final horas = inicio
+    final hours = inicio
         ? [for (var h = 0; h < 24; h++) h]
         : [for (var h = 1; h < 24; h++) h, 0];
     final elegida = await pickOption<int>(
       context,
       title: inicio ? 'Desde' : 'Hasta',
-      options: [for (final h in horas) (h, hhmm(h))],
+      options: [for (final h in hours) (h, hhmm(h))],
       selected: inicio ? _desde : _hasta,
       columns: 3,
     );
@@ -344,7 +344,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       days: daysInView,
       proposed: _dia,
     );
-    if (elegida != null && mounted) _fecha.text = formatDate(elegida);
+    if (elegida != null && mounted) _date.text = formatDate(elegida);
   }
 
   @override
@@ -435,7 +435,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       return 'Elegí sede, deporte y rango horario. Solo horas completas, de '
           '$minHours a $maxHours horas.';
     }
-    return '${c.sede.name} · ${_queSeBusco(c, catalogo)} · ${shortDate(c.fecha)} · '
+    return '${c.venue.name} · ${_queSeBusco(c, catalogo)} · ${shortDate(c.fecha)} · '
         '${hhmm(c.desde)} a ${hhmm(c.hasta)}';
   }
 
@@ -446,7 +446,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         : catalogo.shortKind(c.deporte, tipo);
   }
 
-  List<Widget> _filtros(List<Venue> sedes, Catalog catalogo) {
+  List<Widget> _filtros(List<Venue> venues, Catalog catalogo) {
     final errores = _errores;
     final deporte = catalogo.sport(_deporte ?? '');
     final tipo = _tipo;
@@ -457,7 +457,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         value: _sede?.name,
         placeholder: 'Seleccioná una sede',
         icon: Icons.expand_more_rounded,
-        onTap: _consultando ? null : () => _elegirSede(sedes),
+        onTap: _consultando ? null : () => _elegirSede(venues),
         error: errores['sede_id'],
       ),
       const SizedBox(height: Spacing.s12),
@@ -488,7 +488,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       FormTextField(
         label: 'FECHA',
         semanticLabel: 'Fecha',
-        controller: _fecha,
+        controller: _date,
         placeholder: 'DD / MM / AAAA',
         error: errores['fecha'],
         keyboardType: TextInputType.number,
@@ -522,7 +522,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     Palette p,
   ) {
     final techada = _techada;
-    final vistas = [
+    final views = [
       for (final c in resultado)
         if (techada == null || c.covered == techada) c,
     ];
@@ -562,7 +562,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
           action: 'LIMPIAR FILTROS',
           onTap: _limpiar,
         ),
-      for (final cancha in vistas) ...[
+      for (final cancha in views) ...[
         SpaceCard(
           space: cancha,
           catalog: catalogo,
@@ -576,7 +576,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   void _aLosHorarios(_Consulta consulta, Space cancha) {
     final fin = consulta.hasta == 0 ? 24 : consulta.hasta;
     final ruta = Uri(
-      path: '/sedes/${consulta.sede.id}/canchas/${cancha.id}',
+      path: '/sedes/${consulta.venue.id}/canchas/${cancha.id}',
       queryParameters: {
         'fecha': isoDate(consulta.fecha),
         'horas': '${fin - consulta.desde}',

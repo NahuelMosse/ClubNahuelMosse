@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../../common/dates.dart';
 import '../../../common/field_errors.dart';
 import '../../session/domain/session_exceptions.dart';
@@ -10,11 +10,11 @@ import 'availability_json.dart';
 
 /// The availability of the spaces, read from the API with the session open.
 class AvailabilityApi {
-  AvailabilityApi({required ClienteApi api, required TokenSource sesion})
+  AvailabilityApi({required ApiClient api, required TokenSource sesion})
     : _api = api,
       _sesion = sesion;
 
-  final ClienteApi _api;
+  final ApiClient _api;
   final TokenSource _sesion;
 
   /// Reads [query] with the session token; a 401 is an expired session.

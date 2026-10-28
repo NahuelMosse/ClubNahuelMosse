@@ -3,7 +3,7 @@ import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/button.dart';
 import 'package:clubnahuelmosse/common/club_timezone.dart';
@@ -226,9 +226,9 @@ Future<void> _tocarSinEsperar(WidgetTester tester, Finder f) async {
 
 // ---- las apis ----
 
-ClienteApi _apiMisReservas(Completer<void>? esperaHistorial) {
+ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
   final rutas = rutasDeSedes();
-  return ClienteApi(
+  return ApiClient(
     'http://api.falsa',
     cliente: MockClient((pedido) async {
       final historial = pedido.url.queryParameters['cuando'] == 'historial';
@@ -250,9 +250,9 @@ ClienteApi _apiMisReservas(Completer<void>? esperaHistorial) {
   );
 }
 
-ClienteApi _apiSede(Completer<void>? espera) {
+ApiClient _apiSede(Completer<void>? espera) {
   final rutas = rutasDeSedes();
-  return ClienteApi(
+  return ApiClient(
     'http://api.falsa',
     cliente: MockClient((pedido) async {
       final filtrado =

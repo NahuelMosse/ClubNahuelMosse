@@ -84,9 +84,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   void _traerALaVista() {
     if (widget.reservaId == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final tarjeta = _resaltada.currentContext;
-      if (mounted && tarjeta != null) {
-        Scrollable.ensureVisible(tarjeta, alignment: 0.1);
+      final card = _resaltada.currentContext;
+      if (mounted && card != null) {
+        Scrollable.ensureVisible(card, alignment: 0.1);
       }
     });
   }
@@ -94,7 +94,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   /// Con [deCero] (otra pestaña) la lista se vacía mientras llega la nueva; al refrescar
   /// queda la que había hasta que llega la nueva, y se quita si la lectura falla.
   Future<void> _cargar({bool deCero = true}) async {
-    final pedido = ++_pedido;
+    final request = ++_pedido;
     setState(() {
       if (deCero) _datos = null;
       _fallo = false;
@@ -103,9 +103,9 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     var vencida = false;
     try {
       final catalogo = await widget.espacios.repository.catalog();
-      final lista = await widget.reservas.mine(history: _historial);
-      if (mounted && pedido == _pedido) {
-        setState(() => _datos = (lista, catalogo));
+      final items = await widget.reservas.mine(history: _historial);
+      if (mounted && request == _pedido) {
+        setState(() => _datos = (items, catalogo));
         _traerALaVista();
       }
       return;
@@ -114,7 +114,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     } on FalloDeRed catch (e) {
       fallo = e;
     }
-    if (!mounted || pedido != _pedido) return;
+    if (!mounted || request != _pedido) return;
     setState(() {
       _datos = null;
       _fallo = true;
@@ -150,8 +150,8 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
       marcar: (id) => setState(() => _cancelando = id),
       // Sale de Próximas ya, así no se puede tocar de nuevo mientras llega la lista.
       alCancelar: () => setState(() {
-        if (_datos case (final lista, final catalogo)) {
-          _datos = ([...lista.where((x) => x.id != r.id)], catalogo);
+        if (_datos case (final items, final catalogo)) {
+          _datos = ([...items.where((x) => x.id != r.id)], catalogo);
         }
         _cancelando = null;
       }),
@@ -167,12 +167,12 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 
   /// Vuelve a leer la lista sin avisos: si no se puede, queda la que había.
   Future<void> _releerSinAvisar() async {
-    final pedido = ++_pedido;
+    final request = ++_pedido;
     try {
-      final lista = await widget.reservas.mine(history: _historial);
+      final items = await widget.reservas.mine(history: _historial);
       final catalogo = await widget.espacios.repository.catalog();
-      if (mounted && pedido == _pedido) {
-        setState(() => _datos = (lista, catalogo));
+      if (mounted && request == _pedido) {
+        setState(() => _datos = (items, catalogo));
       }
     } on Exception {
       // Sin red o con el servidor caído, la lista vieja sigue siendo lo mejor que hay.
@@ -188,7 +188,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final datos = _datos;
+    final data = _datos;
     return PopScope(
       canPop: _cancelando == null,
       child: Scaffold(
@@ -212,13 +212,13 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                   const SizedBox(height: Spacing.s16),
                   ListSwitcher(
                     child: Column(
-                      key: ValueKey((datos == null, _fallo, _historial)),
+                      key: ValueKey((data == null, _fallo, _historial)),
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        if (datos == null && !_fallo)
+                        if (data == null && !_fallo)
                           const SkeletonList(shape: SkeletonShape.booking),
-                        if (datos == null && _fallo) ListRetry(onTap: _cargar),
-                        if (datos != null && datos.$1.isEmpty)
+                        if (data == null && _fallo) ListRetry(onTap: _cargar),
+                        if (data != null && data.$1.isEmpty)
                           EmptyState(
                             title: _historial
                                 ? 'No hay reservas pasadas'
@@ -227,17 +227,17 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                                 ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
                                 : 'No se encontraron próximas reservas asociadas a tu cuenta.',
                           ),
-                        if (datos != null)
-                          for (final r in datos.$1) ...[
+                        if (data != null)
+                          for (final r in data.$1) ...[
                             BookingCard(
                               reserva: r,
-                              catalogo: datos.$2,
+                              catalogo: data.$2,
                               key: r.id == widget.reservaId ? _resaltada : null,
                               resaltada: r.id == widget.reservaId,
                               cancelable: !_historial && r.cancelable,
                               cancelando: _cancelando == r.id,
                               alCancelar: _cancelando == null
-                                  ? () => _cancelar(r, datos.$2)
+                                  ? () => _cancelar(r, data.$2)
                                   : null,
                               alModificar: _cancelando == null
                                   ? () => _modificar(r)

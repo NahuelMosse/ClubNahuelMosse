@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/error_dialog.dart';
 import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
 import 'package:clubnahuelmosse/features/session/presentation/session.dart';

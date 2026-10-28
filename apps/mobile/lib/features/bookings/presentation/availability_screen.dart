@@ -47,29 +47,29 @@ class AvailabilityScreen extends StatefulWidget {
     super.key,
     required this.sedeId,
     required this.espacioId,
-    required this.sedes,
+    required this.venues,
     required this.espacios,
     required this.horarios,
     required this.sesion,
-    this.fecha,
-    this.horas,
-    this.inicio,
+    this.date,
+    this.hours,
+    this.start,
     this.modificando,
     this.volverA = 'Mis reservas',
   });
 
   final String sedeId;
   final String espacioId;
-  final Venues sedes;
+  final Venues venues;
   final Spaces espacios;
   final AvailabilityApi horarios;
   final Session sesion;
 
   /// Lo que ya viene elegido desde la consulta de canchas: el día, la duración y la hora
   /// de inicio (`HH:MM`). La hora queda elegida si está disponible.
-  final DateTime? fecha;
-  final int? horas;
-  final String? inicio;
+  final DateTime? date;
+  final int? hours;
+  final String? start;
 
   /// La reserva que se está modificando: se mantiene su duración, su franja se ve libre y
   /// marcada, y CONTINUAR CON EL CAMBIO lleva a «Confirmá el cambio».
@@ -87,9 +87,9 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   late String _elegida = widget.espacioId;
   late DateTime? _fecha = switch (widget.modificando) {
     final r? => _diaDe(r.startsAt),
-    null => widget.fecha,
+    null => widget.date,
   };
-  late int _horas = switch ((widget.modificando, widget.horas)) {
+  late int _horas = switch ((widget.modificando, widget.hours)) {
     (final r?, _) => r.endsAt.difference(r.startsAt).inHours,
     (_, final h?) when h >= minHours && h <= maxHours => h,
     _ => minHours,
@@ -105,7 +105,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   DateTime? _hoy;
   late String? _inicio = switch (widget.modificando) {
     final r? => shortTime(r.startsAt),
-    null => widget.inicio,
+    null => widget.start,
   };
   bool _consultando = false;
   bool _fallo = false;
@@ -126,17 +126,17 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   /// La franja de [inicio] en la cancha y el día elegidos es la de la reserva que se
   /// modifica.
-  bool _esLaActual(String inicio) => switch (widget.modificando) {
+  bool _esLaActual(String start) => switch (widget.modificando) {
     final r? =>
       r.spaceId == _elegida &&
           _fecha == _diaDe(r.startsAt) &&
-          inicio == shortTime(r.startsAt),
+          start == shortTime(r.startsAt),
     null => false,
   };
 
   bool get _puedeSeguir {
-    final inicio = _inicio;
-    return inicio != null && !_consultando && !_esLaActual(inicio);
+    final start = _inicio;
+    return start != null && !_consultando && !_esLaActual(start);
   }
 
   Future<void> _cargar() async {
@@ -145,8 +145,8 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     var vencida = false;
     try {
       final catalogo = await widget.espacios.repository.catalog();
-      final sedes = await widget.sedes.repository.active();
-      final sede = sedes.where((s) => s.id == widget.sedeId).firstOrNull;
+      final venues = await widget.venues.repository.active();
+      final venue = venues.where((s) => s.id == widget.sedeId).firstOrNull;
       final canchas = await widget.espacios.repository.active(
         venueId: widget.sedeId,
       );
@@ -154,13 +154,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           .where((c) => c.id == widget.espacioId)
           .firstOrNull;
       if (!mounted) return;
-      if (sede == null || elegida == null) {
-        await _yaNoEsta(sede == null);
+      if (venue == null || elegida == null) {
+        await _yaNoEsta(venue == null);
         return;
       }
       setState(() {
         _datos = (
-          sede,
+          venue,
           [
             for (final c in canchas)
               if (c.sport == elegida.sport && c.kind == elegida.kind) c,
@@ -181,7 +181,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   /// Pide la grilla de la cancha, la fecha y la duración elegidas. La hora de inicio
   /// elegida queda si sigue disponible.
   Future<void> _consultar() async {
-    final pedido = ++_pedido;
+    final request = ++_pedido;
     setState(() {
       _consultando = true;
       _fallo = false;
@@ -196,7 +196,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         hours: _horas,
         bookingId: widget.modificando?.id,
       );
-      if (!mounted || pedido != _pedido) return;
+      if (!mounted || request != _pedido) return;
       setState(() {
         _consultando = false;
         _grilla = grilla;
@@ -210,11 +210,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       });
       return;
     } on SpaceUnavailable {
-      if (mounted && pedido == _pedido) await _yaNoEsta(false);
+      if (mounted && request == _pedido) await _yaNoEsta(false);
       return;
     } on DateExpired {
       // El día elegido ya pasó (la pantalla quedó abierta de un día para otro): vuelve a hoy.
-      if (!mounted || pedido != _pedido || _fecha == null) return;
+      if (!mounted || request != _pedido || _fecha == null) return;
       _fecha = null;
       _inicio = null;
       await _consultar();
@@ -224,7 +224,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     } on FalloDeRed catch (e) {
       fallo = e;
     }
-    if (!mounted || pedido != _pedido) return;
+    if (!mounted || request != _pedido) return;
     setState(() {
       _consultando = false;
       _grilla = null;
@@ -266,7 +266,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     await showChangedMeanwhile(context);
     if (!mounted) return;
     if (laSede) {
-      widget.sedes.notifyChange();
+      widget.venues.notifyChange();
     } else {
       widget.espacios.notifyChange();
     }
@@ -285,32 +285,32 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     _consultar();
   }
 
-  void _cambiarHoras(int horas) {
-    setState(() => _horas = horas);
+  void _cambiarHoras(int hours) {
+    setState(() => _horas = hours);
     _consultar();
   }
 
   Future<void> _continuar() async {
-    final datos = _datos;
+    final data = _datos;
     final cancha = _cancha;
-    final fecha = _fecha;
+    final date = _fecha;
     final franja = _grilla?.slots.where((f) => f.start == _inicio).firstOrNull;
-    if (datos == null || cancha == null || fecha == null || franja == null) {
+    if (data == null || cancha == null || date == null || franja == null) {
       return;
     }
     final eleccion = BookingChoice(
-      venue: datos.$1,
+      venue: data.$1,
       space: cancha,
-      kind: datos.$3.shortKind(cancha.sport, cancha.kind),
-      date: fecha,
+      kind: data.$3.shortKind(cancha.sport, cancha.kind),
+      date: date,
       start: franja.start,
       end: franja.end,
       hours: _horas,
     );
-    if (widget.modificando case final reserva?) {
+    if (widget.modificando case final booking?) {
       final resultado = await context.push<ModifyResult>(
-        '/reservas/${reserva.id}/modificar/confirmar',
-        extra: (reserva, eleccion),
+        '/reservas/${booking.id}/modificar/confirmar',
+        extra: (booking, eleccion),
       );
       if (!mounted) return;
       if (resultado == ModifyResult.ocupado) {
@@ -343,12 +343,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final datos = _datos;
+    final data = _datos;
     final cancha = _cancha;
     final modificando = widget.modificando;
     return Scaffold(
       backgroundColor: p.bgBase,
-      bottomNavigationBar: datos == null
+      bottomNavigationBar: data == null
           ? null
           : AvailabilityActionBar(
               texto: modificando == null
@@ -356,7 +356,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                   : 'CONTINUAR CON EL CAMBIO',
               alContinuar: _puedeSeguir ? _continuar : null,
             ),
-      body: datos == null || cancha == null
+      body: data == null || cancha == null
           ? SafeArea(
               child: _cambio
                   ? const SizedBox.shrink()
@@ -376,7 +376,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _portada(datos, cancha),
+                  _portada(data, cancha),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       Spacing.s24,
@@ -386,7 +386,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: _secciones(datos, cancha, p),
+                      children: _secciones(data, cancha, p),
                     ),
                   ),
                 ],
@@ -396,7 +396,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   List<Widget> _secciones(
-    (Venue, List<Space>, Catalog) datos,
+    (Venue, List<Space>, Catalog) data,
     Space cancha,
     Palette p,
   ) {
@@ -407,7 +407,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         const SizedBox(height: Spacing.s24),
       ],
       SpaceSelection(
-        canchas: datos.$2,
+        canchas: data.$2,
         elegida: _elegida,
         alElegir: _elegirCancha,
       ),
@@ -419,30 +419,30 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         if (modificando == null)
           DurationSection(
             horas: _horas,
-            cierre: datos.$1.closing,
+            cierre: data.$1.closing,
             alCambiar: _cambiarHoras,
           ),
       ],
       _grillaOAviso(p),
       if ((_grilla, _deLaGrilla) case (
         final grilla?,
-        (final id, final horas)?,
+        (final id, final hours)?,
       )) ...[
         const SizedBox(height: Spacing.s8),
-        _resumen(datos, cancha, grilla, id, horas),
+        _resumen(data, cancha, grilla, id, hours),
       ],
     ];
   }
 
-  Widget _portada((Venue, List<Space>, Catalog) datos, Space cancha) {
+  Widget _portada((Venue, List<Space>, Catalog) data, Space cancha) {
     final modificando = widget.modificando;
     return AvailabilityCover(
-      sede: datos.$1,
-      tipo: datos.$3.shortKind(cancha.sport, cancha.kind),
+      sede: data.$1,
+      tipo: data.$3.shortKind(cancha.sport, cancha.kind),
       deporte: cancha.sport,
       volverA: modificando != null
           ? widget.volverA
-          : widget.fecha == null
+          : widget.date == null
           ? 'Sedes'
           : 'Buscar cancha',
       alVolver: modificando != null
@@ -454,17 +454,17 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   Widget _resumen(
-    (Venue, List<Space>, Catalog) datos,
+    (Venue, List<Space>, Catalog) data,
     Space cancha,
     AvailabilityGrid grilla,
     String id,
-    int horas,
+    int hours,
   ) {
     return BookingSummary(
-      tipo: datos.$3.shortKind(cancha.sport, cancha.kind),
-      precio: (datos.$2.where((c) => c.id == id).firstOrNull ?? cancha)
-          .pricePerHour,
-      horas: horas,
+      tipo: data.$3.shortKind(cancha.sport, cancha.kind),
+      precio:
+          (data.$2.where((c) => c.id == id).firstOrNull ?? cancha).pricePerHour,
+      horas: hours,
       franja: grilla.slots.where((f) => f.start == _inicio).firstOrNull,
       fecha: grilla.date,
     );
@@ -472,7 +472,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   Widget _grillaOAviso(Palette p) {
     final grilla = _grilla;
-    final horas = _deLaGrilla?.$2 ?? _horas;
+    final hours = _deLaGrilla?.$2 ?? _horas;
     if (grilla == null) {
       return Padding(
         padding: const EdgeInsets.all(Spacing.s24),
@@ -495,14 +495,14 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
             child: _consultando ? const LinearProgressIndicator() : null,
           ),
           const SizedBox(height: Spacing.s8),
-          _contenidoDeLaGrilla(grilla, horas),
+          _contenidoDeLaGrilla(grilla, hours),
         ],
       ),
     );
   }
 
   /// Mientras llega otra grilla, la anterior queda atenuada y no se puede tocar.
-  Widget _contenidoDeLaGrilla(AvailabilityGrid grilla, int horas) {
+  Widget _contenidoDeLaGrilla(AvailabilityGrid grilla, int hours) {
     return IgnorePointer(
       ignoring: _consultando,
       child: AnimatedOpacity(
@@ -511,15 +511,15 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
         child: !grilla.hasFree
             ? EmptyState(
                 title: 'No hay horarios disponibles',
-                text: _porQueNoHay(grilla, horas),
+                text: _porQueNoHay(grilla, hours),
               )
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_datos?.$1 case final sede?) ...[
+                  if (_datos?.$1 case final venue?) ...[
                     Heartbeat(
                       trigger: _horas,
-                      child: _lineaDelDia(sede, grilla, horas),
+                      child: _lineaDelDia(venue, grilla, hours),
                     ),
                     const SizedBox(height: Spacing.s12),
                   ],
@@ -540,10 +540,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
                   if (grilla.unavailableCount > 0) ...[
                     const SizedBox(height: Spacing.s12),
                     AvailabilityNote(
-                      texto: horas == 1
+                      texto: hours == 1
                           ? 'Algunos horarios ya están ocupados · '
                                 '${grilla.unavailableCount} no disponibles'
-                          : 'Con ${duration(horas)} hay menos inicios posibles · '
+                          : 'Con ${duration(hours)} hay menos inicios posibles · '
                                 '${grilla.unavailableCount} no disponibles',
                     ),
                   ],
@@ -555,14 +555,14 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
 
   /// Una celda por hora, de la apertura a la última antes del cierre: libre si alguna
   /// franja libre la cubre, elegida si la cubre la franja elegida.
-  Widget _lineaDelDia(Venue sede, AvailabilityGrid grilla, int horas) {
+  Widget _lineaDelDia(Venue venue, AvailabilityGrid grilla, int hours) {
     int hora(String hhmm) => int.parse(hhmm.split(':').first);
-    final desde = hora(sede.opening);
-    final cierre = hora(sede.closing);
+    final desde = hora(venue.opening);
+    final cierre = hora(venue.closing);
     final hasta = cierre == 0 ? 24 : cierre;
     bool cubre(Slot f, int h) {
-      final inicio = hora(f.start);
-      return inicio <= h && h < inicio + horas;
+      final start = hora(f.start);
+      return start <= h && h < start + hours;
     }
 
     final elegida = grilla.slots.where((f) => f.start == _inicio);
@@ -580,10 +580,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  String _porQueNoHay(AvailabilityGrid grilla, int horas) {
+  String _porQueNoHay(AvailabilityGrid grilla, int hours) {
     if (!grilla.opens) return 'La sede no abre ese día. Probá con otra fecha.';
-    if (horas > 1) {
-      return 'Con ${duration(horas)} seguidas no entra ningún turno antes del '
+    if (hours > 1) {
+      return 'Con ${duration(hours)} seguidas no entra ningún turno antes del '
           'cierre. Probá con una duración menor, otra fecha u otra cancha.';
     }
     return 'Ya no quedan turnos libres ese día. Probá con otra fecha u otra cancha.';

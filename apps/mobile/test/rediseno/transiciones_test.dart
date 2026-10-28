@@ -11,7 +11,7 @@ import 'package:clubnahuelmosse/features/admin/presentation/venue_form_screen.da
 import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/venue_created_screen.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/admin_venues_screen.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/bottom_bar.dart';
 import 'package:clubnahuelmosse/features/home/presentation/home_screen.dart';
 import 'package:clubnahuelmosse/features/bookings/presentation/space_search_screen.dart';
@@ -186,7 +186,7 @@ List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
 
 // ---- las apps ----
 
-ClienteApi _apiUsuario() => apiRutas({
+ApiClient _apiUsuario() => apiRutas({
   ...rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12})),
   'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
 });
@@ -200,7 +200,7 @@ const _reservaAdmin =
     ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
     ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
-ClienteApi _apiAdmin() => apiRutas({
+ApiClient _apiAdmin() => apiRutas({
   ...rutasDeEspacios(),
   'GET /reservas/todas': (
     200,

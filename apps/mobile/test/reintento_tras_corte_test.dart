@@ -7,7 +7,7 @@ import 'dart:io';
 import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
 import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -78,7 +78,7 @@ void main() {
             path: '/registro',
             builder: (context, _) => RegistrationScreen(
               registration: RegistrationService(
-                ClienteApi(
+                ApiClient(
                   'http://api.falsa',
                   cliente: _conCorte(
                     '/registro',
@@ -161,7 +161,7 @@ void main() {
     await montarUsuario(
       tester,
       inicio: '/reservas',
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: _conCorte(
           '/reservas/00000000-0000-7000-8000-000000000001/cancelar',
@@ -198,7 +198,7 @@ void main() {
   testWidgets('anular: un 409 después de un corte cuenta como anulada', (
     tester,
   ) async {
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       cliente: _conCorte(
         '/reservas/00000000-0000-7000-8000-000000000001/anular',

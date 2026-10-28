@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
 import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -29,7 +29,7 @@ void main() {
     await montarUsuario(
       tester,
       inicio: '/reservas',
-      api: ClienteApi(
+      api: ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           final (c, cuerpo) = pedido.url.path == '/reservas'

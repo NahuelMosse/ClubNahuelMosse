@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../../common/dates.dart';
 import '../../../common/field_errors.dart';
 import '../../session/domain/session_exceptions.dart';
@@ -11,11 +11,11 @@ import 'booking_json.dart';
 
 /// The bookings of the signed-in person, read and written through the API.
 class BookingsApi {
-  BookingsApi({required ClienteApi api, required TokenSource sesion})
+  BookingsApi({required ApiClient api, required TokenSource sesion})
     : _api = api,
       _sesion = sesion;
 
-  final ClienteApi _api;
+  final ApiClient _api;
   final TokenSource _sesion;
 
   /// All the upcoming ones (nearest first) or the whole history (most recent first).

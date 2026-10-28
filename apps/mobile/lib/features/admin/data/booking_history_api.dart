@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../../common/club_timezone.dart';
 import '../../../common/dates.dart';
 import '../../../common/field_errors.dart';
@@ -29,11 +29,11 @@ String _query(HistoryFilters filters) {
 
 /// The global booking history (CU-14), for an administrator only.
 class BookingHistory {
-  BookingHistory({required ClienteApi api, required TokenSource sesion})
+  BookingHistory({required ApiClient api, required TokenSource sesion})
     : _api = api,
       _session = sesion;
 
-  final ClienteApi _api;
+  final ApiClient _api;
   final TokenSource _session;
 
   /// The page [page] (starts at 1) that satisfies [filters].

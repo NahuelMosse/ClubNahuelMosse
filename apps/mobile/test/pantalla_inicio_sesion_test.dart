@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/pending_booking.dart';
 import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
 import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
@@ -19,7 +19,7 @@ void main() {
   Future<void> montarLogin(
     WidgetTester tester,
     CredencialesFalsas credenciales, {
-    ClienteApi? api,
+    ApiClient? api,
   }) async {
     final sesion = Session(
       repository: SessionRepository(

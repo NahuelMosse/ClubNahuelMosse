@@ -1,4 +1,4 @@
-import '../../../api/cliente_api.dart';
+import '../../../api/api_client.dart';
 import '../../../common/field_errors.dart';
 import '../domain/recovery_exceptions.dart';
 import '../domain/session_exceptions.dart';
@@ -7,7 +7,7 @@ import '../domain/session_exceptions.dart';
 class PasswordRecovery {
   const PasswordRecovery(this._api);
 
-  final ClienteApi _api;
+  final ApiClient _api;
 
   /// Lanza [EmailRejected], [SinConexion] o [ErrorDelServidor]. La respuesta es la misma
   /// tenga o no cuenta el correo.

@@ -1,4 +1,4 @@
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
@@ -54,7 +54,7 @@ Map<String, (int, String)> rutasDeSedes({
 /// La app entera con la sesión de un usuario, abierta en [inicio].
 Future<void> montarUsuario(
   WidgetTester tester, {
-  required ClienteApi api,
+  required ApiClient api,
   String inicio = '/sedes',
   bool oscuro = true,
   Size tamano = const Size(393, 852),

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,7 +156,7 @@ void main() {
 
     testWidgets('sin conexión avisa y reintenta', (tester) async {
       var intentos = 0;
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           final ruta = pedido.url.path;
@@ -189,36 +189,35 @@ void main() {
         '"techada": false, "iluminada": true, "precio_por_hora": 55000}';
 
     /// Una API que responde a `GET /espacios` según el deporte y el tipo del pedido.
-    ClienteApi api({
-      List<http.Request>? pedidos,
-      bool fallaAlFiltrar = false,
-    }) => ClienteApi(
-      'http://api.falsa',
-      cliente: _Cliente((pedido) async {
-        pedidos?.add(pedido as http.Request);
-        final ruta = pedido.url.path;
-        final q = pedido.url.queryParameters;
-        if (ruta == '/espacios') {
-          if (fallaAlFiltrar && q.containsKey('deporte')) {
-            return http.Response('{}', 500);
-          }
-          final todas = [espacioF5Json, f7, espacioTenisJson];
-          final quedan = [
-            for (final e in todas)
-              if ((q['deporte'] == null ||
-                      e.contains('"deporte": "${q['deporte']}"')) &&
-                  (q['tipo'] == null || e.contains('"tipo": "${q['tipo']}"')))
-                e,
-          ];
-          return http.Response.bytes(
-            utf8.encode('{"espacios": [${quedan.join(', ')}]}'),
-            200,
-          );
-        }
-        final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
-        return http.Response.bytes(utf8.encode(cuerpo), codigo);
-      }),
-    );
+    ApiClient api({List<http.Request>? pedidos, bool fallaAlFiltrar = false}) =>
+        ApiClient(
+          'http://api.falsa',
+          cliente: _Cliente((pedido) async {
+            pedidos?.add(pedido as http.Request);
+            final ruta = pedido.url.path;
+            final q = pedido.url.queryParameters;
+            if (ruta == '/espacios') {
+              if (fallaAlFiltrar && q.containsKey('deporte')) {
+                return http.Response('{}', 500);
+              }
+              final todas = [espacioF5Json, f7, espacioTenisJson];
+              final quedan = [
+                for (final e in todas)
+                  if ((q['deporte'] == null ||
+                          e.contains('"deporte": "${q['deporte']}"')) &&
+                      (q['tipo'] == null ||
+                          e.contains('"tipo": "${q['tipo']}"')))
+                    e,
+              ];
+              return http.Response.bytes(
+                utf8.encode('{"espacios": [${quedan.join(', ')}]}'),
+                200,
+              );
+            }
+            final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
+            return http.Response.bytes(utf8.encode(cuerpo), codigo);
+          }),
+        );
 
     Future<void> tocarChip(WidgetTester tester, String etiqueta) async {
       await tester.ensureVisible(find.bySemanticsLabel(etiqueta));
@@ -265,7 +264,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final datos = [espacioF5Json, espacioTenisJson];
       final pedidos = <http.Request>[];
-      final cliente = ClienteApi(
+      final cliente = ApiClient(
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           pedidos.add(pedido as http.Request);

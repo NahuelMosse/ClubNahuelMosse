@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/error_dialog.dart';
@@ -17,7 +17,7 @@ import 'soporte/admin.dart';
 import 'soporte/montar.dart';
 
 /// La API respondiendo siempre 403, como con un rol que ya no alcanza.
-ClienteApi _api403() => ClienteApi(
+ApiClient _api403() => ApiClient(
   'http://api.falsa',
   cliente: MockClient((_) async => http.Response('{}', 403)),
 );
@@ -180,7 +180,7 @@ void main() {
       final sesion = _SesionDegradada();
       await tester.pumpWidget(
         App(
-          api: ClienteApi(
+          api: ApiClient(
             'http://api.falsa',
             cliente: MockClient(
               (pedido) async => switch (pedido.url.path) {
@@ -300,7 +300,7 @@ void main() {
   test(
     'una API que no responde en el límite se trata como sin respuesta del servidor',
     () async {
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         limite: const Duration(milliseconds: 50),
         cliente: MockClient((_) => Completer<http.Response>().future),

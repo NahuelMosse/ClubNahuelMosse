@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/users/data/registration_service.dart';
 import 'package:clubnahuelmosse/features/users/domain/registration_rules.dart';
 import 'package:clubnahuelmosse/features/users/presentation/registration_screen.dart';
@@ -43,7 +43,7 @@ void main() {
     final semantica = tester.ensureSemantics();
     var pedidos = 0;
     final segundo = Completer<http.Response>();
-    final api = ClienteApi(
+    final api = ApiClient(
       'http://api.falsa',
       cliente: MockClient((_) {
         pedidos++;

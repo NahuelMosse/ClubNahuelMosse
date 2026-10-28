@@ -17,4 +17,7 @@ Worktree D:/Temp/w/eng16, branch ENG-16-app-en-ingles. Not pushed. origin/main (
 5. required: ~60 K4 `declared · K4 · <file> · bloque repetido por el renombre, ya en main` lines (Grep `K4 ·` in D:/Temp/v16.log or run `node .claude/tools/required.mjs`); re-check "judge.md: review high" after Tasks edits (judge.md exists with ACTs closed; the message appeared before it was closed).
 6. Rerun `node .claude/tools/verify.mjs > D:/Temp/v16.log 2>&1` in background + `node .claude/tools/wait.mjs D:/Temp/v16.log --until 'verify: exit' --max 570`, then `node .claude/tools/close.mjs` until 9/9; commit closing.md.
 
+## Update (code-language decision)
+Decision: rename every identifier `node D:/Temp/cl16.mjs` lists (ClienteApi->ApiClient, RutaDeLaApi->ApiRoute, params to English) in lib and tests. A grunt (agent a1686b009bd121809) was launched for it and had not reported when this was written; check `node D:/Temp/cl16.mjs` prints nothing, `git status`, and that no frozen test was blocked (if so: replacement in a new file with the same title and tags + a `replaces:` Log line). Then items 1-3, 5, 6 above. verify accepts no per-red declaration for `suite`: the Log lines name each red (model ENG-15 L4); `attacks`: add an `attacks:` Gate line like ENG-15 card line 45 (API unchanged).
+
 Env: PATH=/d/projects/flutter/bin; firebase emulator :9099; gate `sh D:/Temp/w/herramientas/flutter-mobile.sh`. Scripts in D:/Temp: gen16.mjs/gen16b.mjs (already run), cl16.mjs (code-language scan).

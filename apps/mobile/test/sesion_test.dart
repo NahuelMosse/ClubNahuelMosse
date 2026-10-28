@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
 import 'package:clubnahuelmosse/features/session/domain/role.dart';
 import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
@@ -110,7 +110,7 @@ void main() {
       final sesion = Session(
         repository: SessionRepository(
           credentials: CredencialesFalsas(),
-          api: ClienteApi(
+          api: ApiClient(
             'http://api.falsa',
             cliente: MockClient((pedido) async {
               pedidos++;

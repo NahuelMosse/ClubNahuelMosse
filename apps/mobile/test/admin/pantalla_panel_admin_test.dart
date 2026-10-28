@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
 import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/admin_panel_screen.dart';
-import 'package:clubnahuelmosse/api/cliente_api.dart';
+import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/skeleton.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +34,7 @@ void main() {
       ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
       ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
 
-  Widget pantalla({required ClienteApi api}) {
+  Widget pantalla({required ApiClient api}) {
     final sesion = SesionFalsa(perfilAdmin);
     return AdminPanelScreen(
       history: BookingHistory(api: api, sesion: sesion),
@@ -143,7 +143,7 @@ void main() {
     'y la página siguiente no repite reservas',
     (tester) async {
       final segundas = <Completer<http.Response>>[];
-      final api = ClienteApi(
+      final api = ApiClient(
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           final cabeceras = {'content-type': 'application/json; charset=utf-8'};

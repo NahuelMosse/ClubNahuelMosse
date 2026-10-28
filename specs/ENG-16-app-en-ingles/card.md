@@ -37,6 +37,8 @@ not_read:
 suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/app_en_ingles_verde_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+app: sh D:/Temp/w/herramientas/arq01-app.sh eng16_app
+attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh eng16_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
 refactor-tests: los tests de la app siguen a las carpetas y nombres en inglés: cambian sólo imports, símbolos y rutas de archivo
 no-docs: nombres internos de la app
 no-visual: las pantallas se ven igual
