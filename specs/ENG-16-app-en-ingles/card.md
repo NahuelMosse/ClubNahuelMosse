@@ -130,3 +130,5 @@ no-visual: las pantallas se ven igual
 - L82 · 2026-10-28 · declared · K4 · apps/mobile/test/accesibilidad_notificaciones_test.dart · the repeated block comes from main unchanged; the rename only moved it
 - L83 · 2026-10-28 · declared · K4 · apps/mobile/test/bookings_in_english_test.dart · the repeated block comes from main unchanged; the rename only moved it
 - L84 · 2026-10-28 · declared · shape/boundaries · apps/mobile/lib/** · the files carry `kit-shape:`/`kit-boundary:`: screens and error families keep their private classes together, and features import each other's domain types directly; one class per file and public indexes per feature are a later card
+- L85 · 2026-10-28 · uncovered · ENG-16-ASM-02 · the layers test of S2 exempts `features/home` by name; no test of its own carries the tag
+- L86 · 2026-10-28 · uncovered · ENG-16-ASM-03 · the scope of S2 is checked by the layers test over `lib/features`; nothing asserts that `lib/common` stays out
