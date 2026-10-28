@@ -1,19 +1,12 @@
-# Handoff ENG-14 (builder, T1) - tercera tanda
+# Handoff ENG-14 (cuarta tanda)
 
-Worktree D:/Temp/w/ingles-api, branch `ingles-api`. Never push/PR/touch main. Env: UV_PROJECT_ENVIRONMENT=".../app-tp/apps/api/.venv", FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099. Unit: `uv run --no-sync pytest -q -p no:cacheprovider --tb=short tests/unit/<file>` from apps/api. DB tests: `sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider --tb=short tests/escenarios/<file>` from the worktree root. Full gate ~11 min: `node .claude/tools/verify.mjs > D:/Temp/w/verify.log` in background + `node .claude/tools/wait.mjs D:/Temp/w/verify.log --max 570`. Main for comparison: D:/Temp/w/main (88d1a9c).
+Hecho
+- Gate: `publish:` fuera; `lint:` usa `D:/Temp/w/herramientas/eng14-ruff-mypy-flutter-analyze.sh` con los archivos tocados (ruff, mypy estricto, flutter analyze: pasan; `flutter pub get --offline` ya corrido en apps/mobile); tres líneas `mutate ...: sh D:/Temp/w/herramientas/eng14-notif-tests.sh`.
+- Tests nuevos: apps/api/tests/unit/test_notificaciones_reglas_bordes.py y test_notificaciones_casos_de_uso_bordes.py. Mutación: rules 18/19, use_cases 17/18, equivalentes en equivalents.md; store.py es un Protocol (exit 3, aceptado).
+- `node .claude/tools/required.mjs`: sólo falta K4 (2 pares). Log L20-L27 escrito.
+- verify (10.6 min): suite sólo falla los 2 de L11; attacks, lint, mutate, specs, layers, shape, overdesign, migrations, boundaries pasan; `required` falla sólo por K4.
 
-## Done (committed; Log L6-L12 written)
-- Replacements (same title/tag, old tests removed): *_actual.py for test_api_en_ingles, test_modulos_cuenta_en_ingles, test_arquitectura_funcionalidades, test_base_en_ingles, test_capas_funcionalidades, tests/escenarios/test_repositorios_propios.
-- `_due_of` split (`_reminder_of`), `email.py` in mapa-del-codigo.md, specs/asvs.md paths in English, forced-cancellation test `.read`, suite_confiable path to bookings/use_cases.py.
-- Passing now: ruff on app (the 7 E501/F811 in tests are the same as on main), test_mapa, test_codigo_legible, test_documentacion_supuestos_vigente, test_repositorios_propios_actual, attacks, specs, shape, overdesign, migrations, boundaries.
-
-## Last verify.log (D:/Temp/w/verify.log): suite `4 failed, 738 passed`
-Only 2 failing names were shown: tests/escenarios/test_suite_confiable_reemplazos.py::test_cada_funcion_publica_de_reservas_tiene_su_unitario_con_la_llamada_en_el_codigo and ::test_los_unitarios_de_reservas_pasan_sin_base_ni_emulador_y_cubren_cada_caso_de_uso (find the other 2: `grep "^FAILED" ` in a rerun with `-rf`). Run each alone, and on main; fix here if main passes.
-
-## Left (gate lines failing)
-1. lint: ruff reports 3 F811 (`token_usuario`/`token_admin` redefined in tests/escenarios/test_basquet_3x3.py, same on main) and E501 in test_capas_funcionalidades.py; plus "linter on <file>" required lines for the *_actual.py files, test_aviso_por_correo*.py, test_brevo_email.py, test_integraciones_documentadas.py, test_modulos_cuenta_en_ingles.py, test_readme_conciso.py, test_recordatorio_cinco.py and two Dart tests: run `sh D:/Temp/w/herramientas/sim01-ruff-mypy-flutter-analyze.sh apps/api/app <files>` to see what each says (probably the pre-existing E501 titles; if equal on main, Log `declared`).
-2. layers: notifications/repository.py:63 and migraciones/versions/0011_recordatorio_cinco_minutos.py:43 "SQL outside a data file" (the repository is a data file by name `repository.py`; check main's `repositorio.py` result: main passes? the card Tasks must mark `notifications/repository.py (data)`; the migration needs a `(data)` mark or Log declared).
-3. required: `## Tasks` must name apps/api/app/modules/notifications/{email,repository,rules,store,use_cases}.py, migraciones/versions/0011_recordatorio_cinco_minutos.py, pyproject.toml, apps/mobile/lib/notificaciones/{campana,notificacion,tarjeta_aviso}.dart (they came from merging NOT-05) with layer marks and reason (Edit card.md Tasks line, layout only).
-4. K4 clones: test_api_en_ingles_contrato_actual.py:34-44 == test_arquitectura_funcionalidades_actual.py:17-27 (extract the shared comparison into one function in test_api_en_ingles_contrato_actual.py and import it); two others come from NOT-05 tests (test_recordatorio_cinco_base.py/test_recordatorio_cinco.py; test_notificaciones_api.py/test_reservas_api.py): Log `declared · K4 · <file> · from main (NOT-05)`.
-5. judge.md: risk.json says high (escalated by the diff as the merge touches shared code): the plan judge must run (main thread; `judge` agent with PLAN prompt).
-6. Then `node .claude/tools/close.mjs` (offline, no push).
+Pendiente
+1. K4: los Log `declared · K4 · <file> · ...` (L22-L27) no los reconoce required.mjs. Ver en `.claude/tools/required.mjs` / `verify.mjs` (Grep `K4`, `declared`) qué formato exacto espera (¿ruta con `:líneas`? ¿un solo archivo con ambos?) y ajustar la línea del Log (append) o, si no, extraer el bloque duplicado a un módulo común importado por ambos tests (son tests de main; preferible declarar).
+2. Rerun `node .claude/tools/verify.mjs` (fondo, log, `node .claude/tools/wait.mjs <log> --until 'vdone' --max 570`), luego `node .claude/tools/close.mjs` y commit de closing.md. Nunca push ni PR.
+Env: UV_PROJECT_ENVIRONMENT="D:/desktop folders/estudio/Universidad de moron/Electiva general/app-tp/apps/api/.venv".
