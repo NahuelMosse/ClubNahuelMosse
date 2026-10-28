@@ -1,0 +1,23 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [
+    "screen"
+  ],
+  "words": [],
+  "files": [
+    "sitio-docs/scripts/copiar.mjs"
+  ],
+  "tasks": 1,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "suma una página con el tema del sitio",
+      "files": [
+        "sitio-docs/scripts/copiar.mjs"
+      ]
+    }
+  ]
+}
