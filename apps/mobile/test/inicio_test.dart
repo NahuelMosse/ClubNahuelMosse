@@ -1,3 +1,5 @@
+import 'package:clubnahuelmosse/comun/zona_club.dart';
+import 'package:clubnahuelmosse/inicio/saludo_de_inicio.dart';
 import 'package:clubnahuelmosse/comun/marcador.dart';
 import 'package:clubnahuelmosse/espacios/espacios.dart';
 import 'package:clubnahuelmosse/inicio/pantalla_inicio.dart';
@@ -24,7 +26,10 @@ void main() {
       tema: temaOscuro,
     );
 
-    expect(find.text('BUENOS DÍAS,'), findsOneWidget);
+    expect(
+      find.text(SaludoDeInicio.paraLaHora(ahoraEnElClub())),
+      findsOneWidget,
+    );
     expect(find.text('Nahuel'), findsOneWidget);
     expect(_enElMarcador('04'), findsOneWidget);
     expect(_enElMarcador('SEDES'), findsOneWidget);
