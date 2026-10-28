@@ -364,70 +364,70 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
               alConsultar: _completo && !_consultando ? _consultar : null,
               consultando: _consultando,
             ),
-      body: opciones == null
-          ? _falloAlCargar
-                ? Center(
-                    child: TextActionButton(
-                      label: 'REINTENTAR',
-                      onTap: _cargar,
-                    ),
-                  )
-                : const SafeArea(
-                    child: Padding(
-                      padding: Spacing.listPagePadding,
-                      child: SkeletonList(shape: SkeletonShape.grid),
-                    ),
-                  )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                Spacing.s24,
-                Spacing.s8,
-                Spacing.s24,
-                Spacing.s40,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Semantics(
-                    header: true,
-                    child: Text(
-                      'Consultar canchas',
-                      style: Texts.h1.copyWith(color: p.textPrimary),
-                    ),
-                  ),
-                  const SizedBox(height: Spacing.s4),
-                  Text(
-                    _subtitulo(opciones.$2),
-                    style: Texts.body.copyWith(color: p.textSecondary),
-                  ),
-                  if (_falla case final falla?) ...[
-                    const SizedBox(height: Spacing.s16),
-                    SearchErrorCard(
-                      sinConexion: falla is SinConexion,
-                      alVolver: () => setState(() {
-                        _falla = null;
-                        _consulta = null;
-                      }),
-                      alReintentar: _consultar,
-                    ),
-                  ],
-                  const SizedBox(height: Spacing.s16),
-                  ..._filtros(opciones.$1, opciones.$2),
-                  if (_consultando)
-                    const Padding(
-                      padding: EdgeInsets.only(top: Spacing.s24),
-                      child: SkeletonList(shape: SkeletonShape.space),
-                    ),
-                  if ((_consulta, _resultado) case (
-                    final consulta?,
-                    final resultado?,
-                  ))
-                    ..._resultados(consulta, resultado, opciones.$2, p),
-                ],
-              ),
-            ),
+      body: opciones == null ? _bodyWithoutOptions() : _form(opciones, p),
     );
   }
+
+  Widget _bodyWithoutOptions() => _falloAlCargar
+      ? Center(
+          child: TextActionButton(label: 'REINTENTAR', onTap: _cargar),
+        )
+      : const SafeArea(
+          child: Padding(
+            padding: Spacing.listPagePadding,
+            child: SkeletonList(shape: SkeletonShape.grid),
+          ),
+        );
+
+  Widget _form((List<Venue>, Catalog) opciones, Palette p) =>
+      SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.s24,
+          Spacing.s8,
+          Spacing.s24,
+          Spacing.s40,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Semantics(
+              header: true,
+              child: Text(
+                'Consultar canchas',
+                style: Texts.h1.copyWith(color: p.textPrimary),
+              ),
+            ),
+            const SizedBox(height: Spacing.s4),
+            Text(
+              _subtitulo(opciones.$2),
+              style: Texts.body.copyWith(color: p.textSecondary),
+            ),
+            if (_falla case final falla?) ...[
+              const SizedBox(height: Spacing.s16),
+              SearchErrorCard(
+                sinConexion: falla is SinConexion,
+                alVolver: () => setState(() {
+                  _falla = null;
+                  _consulta = null;
+                }),
+                alReintentar: _consultar,
+              ),
+            ],
+            const SizedBox(height: Spacing.s16),
+            ..._filtros(opciones.$1, opciones.$2),
+            if (_consultando)
+              const Padding(
+                padding: EdgeInsets.only(top: Spacing.s24),
+                child: SkeletonList(shape: SkeletonShape.space),
+              ),
+            if ((_consulta, _resultado) case (
+              final consulta?,
+              final resultado?,
+            ))
+              ..._resultados(consulta, resultado, opciones.$2, p),
+          ],
+        ),
+      );
 
   String _subtitulo(Catalog catalogo) {
     final c = _consulta;
