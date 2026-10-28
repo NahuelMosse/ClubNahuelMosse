@@ -13,12 +13,7 @@ PRUEBA_RNF = RAIZ_API / "tests" / "escenarios" / "test_requisitos_no_funcionales
 
 
 def _casos_de_uso() -> list[str]:
-    fuente = CASOS_DE_USO.read_text(encoding="utf-8")
-    return [
-        n.name
-        for n in ast.parse(fuente).body
-        if isinstance(n, ast.FunctionDef) and not n.name.startswith("_")
-    ]
+    return re.findall(r"^def ([a-z]\w*)\(", CASOS_DE_USO.read_text(encoding="utf-8"), re.M)
 
 
 def _cuerpo_de(fuente: str, nombre: str) -> str:
