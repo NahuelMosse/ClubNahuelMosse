@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 /// El enlace del correo venció, ya se usó o quedó reemplazado por uno más nuevo.
 class InvalidLink implements Exception {
   const InvalidLink();

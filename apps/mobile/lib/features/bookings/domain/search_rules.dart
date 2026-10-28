@@ -1,3 +1,4 @@
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 /// The rules of a queried range that the API also validates
 /// (`GET /espacios/disponibles`), to block the query before calling it. The messages are
 /// the same.

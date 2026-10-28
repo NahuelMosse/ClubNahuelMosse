@@ -1,3 +1,4 @@
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import '../../spaces/domain/space.dart';
 import '../../spaces/presentation/spaces.dart';
 import '../../venues/domain/venue.dart';

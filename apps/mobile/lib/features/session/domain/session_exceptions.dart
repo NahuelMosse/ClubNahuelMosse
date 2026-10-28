@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 /// Correo o contraseña que no corresponden a una cuenta activa. No dice cuál de los dos.
 class InvalidCredentials implements Exception {
   const InvalidCredentials();

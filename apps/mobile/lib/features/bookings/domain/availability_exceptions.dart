@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 /// The space or its venue can no longer be booked.
 class SpaceUnavailable implements Exception {
   const SpaceUnavailable();

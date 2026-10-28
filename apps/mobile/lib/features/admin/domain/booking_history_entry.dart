@@ -1,3 +1,4 @@
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import '../../bookings/domain/booking_status.dart';
 
 /// A booking as an administrator sees it (CU-14): who made it and its traceability.

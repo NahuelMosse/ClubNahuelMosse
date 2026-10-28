@@ -1,3 +1,4 @@
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
 import '../../../common/marker.dart';

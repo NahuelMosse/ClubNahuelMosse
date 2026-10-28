@@ -1,3 +1,5 @@
+// kit-shape: a screen or error family kept with its private parts.
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
 import '../../../common/bottom_bar.dart';

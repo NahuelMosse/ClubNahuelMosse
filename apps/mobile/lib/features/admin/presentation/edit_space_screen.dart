@@ -1,3 +1,4 @@
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 // kit-shape: the widget and its State are a single Flutter piece
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

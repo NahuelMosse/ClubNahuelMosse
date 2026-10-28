@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 import 'package:flutter/material.dart';
 
 import '../../../common/clock.dart';

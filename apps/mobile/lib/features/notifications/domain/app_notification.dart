@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 import '../../../common/club_timezone.dart';
 import '../../../common/dates.dart';
 import 'notification_kind.dart';

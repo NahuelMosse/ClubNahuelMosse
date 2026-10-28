@@ -1,3 +1,4 @@
+// kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';

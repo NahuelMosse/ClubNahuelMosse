@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 import '../../../common/price_format.dart';
 
 class SpaceKind {

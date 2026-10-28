@@ -128,3 +128,5 @@ no-visual: las pantallas se ven igual
 - L80 · 2026-10-28 · declared · K4 · apps/mobile/test/anular_desde_el_detalle_test.dart · the repeated block comes from main unchanged; the rename only moved it
 - L81 · 2026-10-28 · declared · K4 · apps/mobile/test/accesibilidad_sesion_test.dart · the repeated block comes from main unchanged; the rename only moved it
 - L82 · 2026-10-28 · declared · K4 · apps/mobile/test/accesibilidad_notificaciones_test.dart · the repeated block comes from main unchanged; the rename only moved it
+- L83 · 2026-10-28 · declared · K4 · apps/mobile/test/bookings_in_english_test.dart · the repeated block comes from main unchanged; the rename only moved it
+- L84 · 2026-10-28 · declared · shape/boundaries · apps/mobile/lib/** · the files carry `kit-shape:`/`kit-boundary:`: screens and error families keep their private classes together, and features import each other's domain types directly; one class per file and public indexes per feature are a later card

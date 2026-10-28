@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 /// El espacio o su sede ya no están activos: los dio de baja otra sesión.
 class SpaceUnavailable implements Exception {
   const SpaceUnavailable();

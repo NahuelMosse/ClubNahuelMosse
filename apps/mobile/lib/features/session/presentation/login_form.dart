@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

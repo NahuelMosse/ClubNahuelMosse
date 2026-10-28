@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 /// La API rechazó la sede: cada campo con su mensaje.
 class VenueRejected implements Exception {
   const VenueRejected(this.errors, {this.duplicate = false});

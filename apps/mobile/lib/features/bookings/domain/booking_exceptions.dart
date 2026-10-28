@@ -1,3 +1,4 @@
+// kit-shape: a screen or error family kept with its private parts.
 /// Another active booking took that slot first.
 class SlotTaken implements Exception {
   const SlotTaken();
