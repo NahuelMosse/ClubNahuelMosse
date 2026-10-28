@@ -1,0 +1,22 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [
+    "migraciones",
+    "migracion"
+  ],
+  "files": [
+    "docs/technical/glosario-ingles.md",
+    "apps/api/tests/unit/test_glosario_ingles.py"
+  ],
+  "tasks": 1
+}

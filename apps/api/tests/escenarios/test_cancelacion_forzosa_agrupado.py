@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, un_socio
 
-from app.modules.notificaciones.repositorio import NotificacionesSql, encolar_cancelacion_forzosa
+from app.modules.notifications.repository import NotificationsSql, enqueue_forced_cancellation
 
 admin = base.admin
 canal = base.canal
@@ -52,7 +52,7 @@ def _en_paralelo(motor: Engine, usuario_id: UUID, lotes: Sequence[Sequence[UUID]
     def primera() -> None:
         try:
             with motor.begin() as conn:
-                encolar_cancelacion_forzosa(conn, usuario_id, lotes[0])
+                enqueue_forced_cancellation(conn, usuario_id, lotes[0])
                 primera_dentro.set()
                 soltar.wait(10)
         except BaseException as e:
@@ -63,7 +63,7 @@ def _en_paralelo(motor: Engine, usuario_id: UUID, lotes: Sequence[Sequence[UUID]
         try:
             primera_dentro.wait(10)
             with motor.begin() as conn:
-                encolar_cancelacion_forzosa(conn, usuario_id, lotes[1])
+                enqueue_forced_cancellation(conn, usuario_id, lotes[1])
         except BaseException as e:
             errores.append(e)
 
@@ -120,9 +120,9 @@ def test_un_aviso_que_no_salio_pasa_sus_reservas_al_que_lo_reemplaza(
     reservas = [socio.reservar("20:00"), socio.reservar("21:00")]
     _anular_en_la_base(motor, socio, reservas)
     with motor.begin() as conn:
-        encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reservas[0]["id"])])
+        enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(reservas[0]["id"])])
     with motor.begin() as conn:
-        encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(reservas[1]["id"])])
+        enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(reservas[1]["id"])])
 
     with motor.connect() as conn:
         vinculos = conn.execute(
@@ -156,7 +156,9 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
     if con_aviso_previo:
         _anular_en_la_base(motor, socio, simultaneas)
 
-    _en_paralelo(motor, socio.usuario_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]])
+    _en_paralelo(
+        motor, socio.usuario_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]]
+    )
 
     [visible] = socio.centro()["notificaciones"]
     assert visible["titulo"] == f"El club anuló {total} de tus reservas"
@@ -191,7 +193,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
 
     def leyendo() -> None:
         with motor.connect() as conn:
-            NotificacionesSql(conn).leer(socio.usuario_id, UUID(leido["id"]))
+            NotificationsSql(conn).read(socio.usuario_id, UUID(leido["id"]))
 
     lectura = threading.Thread(target=leyendo)
 
@@ -199,7 +201,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
 
     def encolando() -> None:
         with motor.begin() as conn:
-            encolar_cancelacion_forzosa(conn, socio.usuario_id, [UUID(segunda["id"])])
+            enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(segunda["id"])])
             primera_dentro.set()
             soltar.wait(10)
 

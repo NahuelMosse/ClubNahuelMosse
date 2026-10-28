@@ -8,15 +8,15 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, app_de, un_socio
 
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.push import push_channel
 
 
 @pytest.fixture
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     canal = CanalDePrueba()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
 @pytest.fixture

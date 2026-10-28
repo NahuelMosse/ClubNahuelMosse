@@ -8,30 +8,30 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from test_recordatorio import CanalDePrueba, Socio, app_de, un_socio
 
-from app.modules.notificaciones.casos_de_uso import despachar_pendientes
-from app.modules.notificaciones.repositorio import NotificacionesSql
-from app.modules.notificaciones.push import canal_push
-from app.modules.notificaciones import barrido
+from app.modules.notifications.use_cases import dispatch_pending
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.push import push_channel
+from app.modules.notifications import sweep
 
 
 @pytest.fixture
 def canal(api: TestClient) -> Iterator[CanalDePrueba]:
     canal = CanalDePrueba()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
-class FallaLaPrimeraVez(NotificacionesSql):
+class FallaLaPrimeraVez(NotificationsSql):
     """La base se cae justo al buscar los dispositivos del primer aviso."""
 
     llamadas = 0
 
-    def tokens_con_permiso(self, usuario_id: UUID) -> list[str]:
+    def tokens_with_permission(self, usuario_id: UUID) -> list[str]:
         FallaLaPrimeraVez.llamadas += 1
         if FallaLaPrimeraVez.llamadas == 1:
             raise OSError("la base no contesta")
-        return super().tokens_con_permiso(usuario_id)
+        return super().tokens_with_permission(usuario_id)
 
 
 def _tres_cancelaciones_pendientes(socio: Socio) -> None:
@@ -74,7 +74,7 @@ def test_un_fallo_en_el_primer_aviso_no_deja_el_resto_en_enviando(
     FallaLaPrimeraVez.llamadas = 0
 
     with motor.connect() as conn:
-        despachados = despachar_pendientes(FallaLaPrimeraVez(conn), canal, socio.usuario_id)
+        despachados = dispatch_pending(FallaLaPrimeraVez(conn), canal, socio.usuario_id)
 
     assert despachados == 3
     assert _envios(socio) == ["fallida", "enviada", "enviada"]
@@ -94,8 +94,8 @@ def test_si_el_despacho_de_pendientes_falla_los_recordatorios_salen_igual(
         corridos.append("recordatorios")
         return 0
 
-    monkeypatch.setattr(barrido, "despachar_pendientes", cae)
-    monkeypatch.setattr(barrido, "enviar_recordatorios", recordatorios)
+    monkeypatch.setattr(sweep, "dispatch_pending", cae)
+    monkeypatch.setattr(sweep, "send_reminders", recordatorios)
 
-    assert barrido.barrer_una_vez() == 0
+    assert sweep.sweep_once() == 0
     assert corridos == ["recordatorios"]

@@ -7,8 +7,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine
 from test_recordatorio import CanalDePrueba, app_de, un_socio
 
-from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
-from app.modules.notificaciones.push import canal_push
+from app.modules.notifications.rules import Notice, DeliveryResult
+from app.modules.notifications.push import push_channel
 
 admin = base.admin
 
@@ -21,9 +21,9 @@ class CanalQueRetieneElPrimero(CanalDePrueba):
         self.saliendo = threading.Event()
         self.soltar = threading.Event()
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         primero = not self.enviados
-        resultado = super().enviar(tokens, aviso)
+        resultado = super().send(tokens, aviso)
         if primero:
             self.saliendo.set()
             assert self.soltar.wait(timeout=30)
@@ -33,10 +33,10 @@ class CanalQueRetieneElPrimero(CanalDePrueba):
 @pytest.fixture
 def canal_lento(api: TestClient) -> Iterator[CanalQueRetieneElPrimero]:
     canal = CanalQueRetieneElPrimero()
-    app_de(api).dependency_overrides[canal_push] = lambda: canal
+    app_de(api).dependency_overrides[push_channel] = lambda: canal
     yield canal
     canal.soltar.set()
-    app_de(api).dependency_overrides.pop(canal_push, None)
+    app_de(api).dependency_overrides.pop(push_channel, None)
 
 
 def test_la_anulacion_que_llega_con_el_aviso_anterior_saliendo_se_agrupa_igual(

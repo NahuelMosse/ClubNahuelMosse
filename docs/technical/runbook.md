@@ -90,7 +90,7 @@ No hay alertas definidas ni `runbook_url`. Lo que sigue es por síntoma, para qu
   el servicio. En la tabla `notificacion`, el `envio` del aviso dice qué pasó: `sin_permiso` (la persona no dio permiso),
   `sin_canal` (falta `FIREBASE_CREDENCIALES_JSON`), `fallida` (FCM falló; el log trae `aviso_sin_enviar` con el número del
   aviso).
-- **Mitigate:** disparar el barrido desde afuera con `uv run python -m app.modules.notificaciones.barrido --una-vez` (por ejemplo, con un
+- **Mitigate:** disparar el barrido desde afuera con `uv run python -m app.modules.notifications.sweep --una-vez` (por ejemplo, con un
   cron externo), o mantener el servicio despierto en la hora previa a los turnos.
 - **Verify:** el aviso pasa a `enviada`.
 - **Escalate:** el arreglo de fondo es un cron que llame al barrido; el plan free de Render no tiene cron jobs.

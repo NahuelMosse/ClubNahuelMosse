@@ -6,8 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.main import crear_app
-from app.modules.usuarios.sembrar_admin import main as sembrar
+from app.main import create_app
+from app.modules.users.seed_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
 
@@ -36,7 +36,7 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
         "dias": [1, 2, 3, 4, 5],
     }
 
-    alta = TestClient(crear_app(), base_url="http://localhost").post(
+    alta = TestClient(create_app(), base_url="http://localhost").post(
         "/sedes", json=sede, headers={"Authorization": f"Bearer {token}"}
     )
     assert alta.status_code == 201
@@ -46,6 +46,6 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
             text("SELECT nombre FROM sede WHERE id = :id"), {"id": alta.json()["id"]}
         ).scalar_one()
     assert guardada == sede["nombre"]
-    otra_api = TestClient(crear_app(), base_url="http://localhost")
+    otra_api = TestClient(create_app(), base_url="http://localhost")
     listado = otra_api.get("/sedes", headers={"Authorization": f"Bearer {token}"}).json()
     assert sede["nombre"] in [x["nombre"] for x in listado["sedes"]]

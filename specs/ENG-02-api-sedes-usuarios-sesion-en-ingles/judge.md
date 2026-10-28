@@ -1,0 +1,13 @@
+- ACT-01 · H · S2 pide cada «atributo» en inglés y a la vez que «las claves JSON no cambian», pero en los modelos Pydantic el atributo es la clave (`sedes/rutas.py`: `SedeVista.nombre`, `PedidoDeSede.direccion`, `ErroresDeSede.errores`); no hay AMB/ASM que diga si esos campos se excluyen del test de S2 o se traducen con `alias` (que puede mover los `loc` de los 422 y las claves de `errores`) · card.md S2 «cada clase, función, parámetro, atributo… está en inglés… las claves JSON no cambian» · lenses interpretation «Which reading works with any answer to the open question, and is that the one assumed?» · card.md · plan · closed · ENG-02-ASM-05
+- ACT-02 · M · archivos fuera de Tasks y de ASM-02 que importan o invocan estos módulos: `scripts/e2e.sh:88` (`python -m app.modules.usuarios.sembrar_admin --correo`, ruta de módulo y flag de CLI) y `apps/api/app/e2e_support.py:18` (`from app.modules.recuperacion import hash_de`); ASM-02 sólo cubre «los demás módulos… y app/main.py», y S2 («parámetro») no dice si los flags de CLI cambian · card.md ENG-02-ASM-02 · lenses contract «Does an existing client keep working: which route, field or status of main changes?» · card.md · plan · closed · ENG-02-ASM-06
+- ACT-03 · M · S3 compara rutas, métodos, códigos, campos y `operationId`, pero no los parámetros (path, query, header de autorización) ni `security`: al renombrar `usuario_actual.py` → `current_user.py` una ruta de admins/baja/perfil puede perder o cambiar su dependencia de auth sin que el test de S3 lo vea; los ataques sólo leen `/reservas` y `/yo` sin credenciales · card.md S3 · lenses security «Who may call each route, and what does the call without credentials answer, 401 or 403?» · card.md · plan · closed · ENG-02-ASM-07
+- ACT-04 · L · `no-docs` dice que sólo cambian nombres internos, pero `docs/technical/mapa-del-codigo.md`, `arquitectura.md`, `system-design.md` y `apps/api/README.md` nombran las rutas `app/modules/{sedes,usuarios,sesion,recuperacion}` y quedan desactualizados · card.md Gate «no-docs: nombres internos» · lenses interpretation «Does each S# say the same as the sentence it quotes, no less and no more?» · card.md · plan · closed · ENG-02-ASM-08
+
+## Verified
+
+- interpretation · fails (ACT-01, ACT-04)
+- contract · fails (ACT-02, ACT-03)
+- security · fails (ACT-03)
+- overdesign · meets: renombre 1 a 1 de archivos existentes, sin capas, interfaces ni patrones nuevos
+- quantifiers · meets: S1 lista los 14 archivos y los 4 directorios; S2 nombra los miembros (tipos de identificador y palabras)
+- parallel (L3) · not verified · `openapi.json` y las líneas de import de los otros módulos los tocan también ENG-03/04/05; el conflicto es de merge, no del plan

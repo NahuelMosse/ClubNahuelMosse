@@ -12,7 +12,7 @@ from alembic.config import Config as AlembicConfig
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 
-from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
+from app.modules.notifications.rules import Notice, DeliveryResult
 from tests.integracion.test_uuid_y_auditoria import base_nueva  # noqa: F401  (fixture)
 
 RAIZ_API = Path(__file__).resolve().parents[2]
@@ -93,12 +93,12 @@ def test_una_reserva_sobrevive_a_reiniciar_la_api(
     api: TestClient, token_admin: str, token_usuario: str, sede: tuple[str, str]
 ) -> None:
     """una reserva sobrevive a reiniciar la API sobre la misma base @SIM-01-S2"""
-    from app.main import crear_app
+    from app.main import create_app
 
     espacio = _espacio(api, token_admin, sede[0])
     creada = _reservar(api, token_usuario, espacio, 1, 10)["id"]
 
-    with TestClient(crear_app()) as otra:
+    with TestClient(create_app()) as otra:
         r = otra.get("/reservas", headers=_con(token_usuario))
     assert creada in [x["id"] for x in r.json()["reservas"]]
 
@@ -106,15 +106,15 @@ def test_una_reserva_sobrevive_a_reiniciar_la_api(
 class _CanalQueFalla:
     llamadas = 0
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         type(self).llamadas += 1
         raise ConnectionError("FCM no responde")
 
 
 def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> None:
     """un aviso que falla queda fallido y no se vuelve a intentar @SIM-01-S1 @assumption:SIM-01-ASM-02"""
-    from app.modules.notificaciones.casos_de_uso import despachar_pendientes
-    from app.modules.notificaciones.repositorio import NotificacionesSql
+    from app.modules.notifications.use_cases import dispatch_pending
+    from app.modules.notifications.repository import NotificationsSql
 
     with motor.begin() as conn:
         id_: UUID = conn.execute(
@@ -134,9 +134,9 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
         )
     canal = _CanalQueFalla()
     with motor.connect() as conn:
-        despachar_pendientes(NotificacionesSql(conn), canal)
+        dispatch_pending(NotificationsSql(conn), canal)
         tras_el_primero = _CanalQueFalla.llamadas
-        despachar_pendientes(NotificacionesSql(conn), canal)
+        dispatch_pending(NotificationsSql(conn), canal)
     with motor.connect() as conn:
         envio: str = conn.execute(
             text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}

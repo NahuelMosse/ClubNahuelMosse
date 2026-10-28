@@ -1,0 +1,2 @@
+apps/api/app/modules/notifications/rules.py:141 · “None” → “0” · “.key==sport),None)t=@@ifdisNoneelsenext((t” · con el deporte desconocido `t` vale 0 en lugar de None, pero la línea siguiente sale por `d is None` antes de leer `t`
+apps/api/app/modules/notifications/use_cases.py:49 · “None” → “0” · “ient:Recipient|None=@@,)->None:"""Sendsana” · el valor por omisión sólo se usa en `recipient or notifications.recipient(...)`: 0 y None son falsos y dan la misma búsqueda

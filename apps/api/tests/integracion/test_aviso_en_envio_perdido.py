@@ -5,18 +5,18 @@ from uuid import UUID
 
 from sqlalchemy import Engine, text
 
-from app.modules.notificaciones.casos_de_uso import despachar_pendientes
-from app.modules.notificaciones.reglas import Aviso, ResultadoDeEnvio
-from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.rules import DeliveryResult, Notice
+from app.modules.notifications.use_cases import dispatch_pending
 
 
 class _CanalQueCuenta:
     def __init__(self) -> None:
         self.llamadas = 0
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
+    def send(self, tokens: Sequence[str], aviso: Notice) -> DeliveryResult:
         self.llamadas += 1
-        return ResultadoDeEnvio(enviados=1, invalidos=[])
+        return DeliveryResult(sent=1, invalid=())
 
 
 def _enviando(motor: Engine, minutos: int) -> UUID:
@@ -49,7 +49,7 @@ def test_un_aviso_con_mas_de_10_minutos_en_enviando_pasa_a_fallida_y_no_se_reenv
     reciente = _enviando(motor, 1)
     canal = _CanalQueCuenta()
     with motor.connect() as conn:
-        despachar_pendientes(NotificacionesSql(conn), canal)
+        dispatch_pending(NotificationsSql(conn), canal)
     assert _envio(motor, viejo) == "fallida"
     assert _envio(motor, reciente) == "enviando"
     assert canal.llamadas == 0

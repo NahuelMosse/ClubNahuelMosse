@@ -5,8 +5,8 @@ from uuid import UUID
 
 from sqlalchemy import Engine, text
 
-from app.modules.notificaciones.reglas import Destinatario
-from app.modules.notificaciones.repositorio import NotificacionesSql
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.rules import Recipient
 
 
 def _crear_usuario(motor: Engine, sufijo: str) -> UUID:
@@ -37,8 +37,8 @@ def test_el_destinatario_de_un_aviso_sale_de_la_base_y_una_cuenta_de_baja_no_tie
     sufijo = "".join(c for c in unico() if c.isdigit()) or "1"
     usuario = _crear_usuario(motor, sufijo)
     with motor.connect() as conn:
-        assert NotificacionesSql(conn).destinatario(usuario) == Destinatario(
-            correo=f"ana-{sufijo}@correo.com", nombre="Ana"
+        assert NotificationsSql(conn).recipient(usuario) == Recipient(
+            email=f"ana-{sufijo}@correo.com", name="Ana"
         )
     with motor.begin() as conn:
         conn.execute(
@@ -46,4 +46,4 @@ def test_el_destinatario_de_un_aviso_sale_de_la_base_y_una_cuenta_de_baja_no_tie
             {"u": usuario},
         )
     with motor.connect() as conn:
-        assert NotificacionesSql(conn).destinatario(usuario) is None
+        assert NotificationsSql(conn).recipient(usuario) is None

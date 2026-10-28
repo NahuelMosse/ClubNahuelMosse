@@ -320,7 +320,7 @@ def test_el_readme_del_backend_alcanza_para_configurar_ejecutar_y_desplegar() ->
 
     for seccion in ("configurar", "ejecutar", "probar", "desplegar"):
         assert seccion in _secciones(readme), seccion
-    assert variables >= {"DATABASE_URL", "FIREBASE_PROJECT_ID", "URL_PUBLICA"}
+    assert variables >= {"DATABASE_URL", "FIREBASE_PROJECT_ID", "PUBLIC_URL"}
     assert not {v for v in variables if v not in readme}, "variables sin documentar"
     for comando in _comandos(readme):
         for guion in re.findall(r"scripts/[\w.]+", comando):

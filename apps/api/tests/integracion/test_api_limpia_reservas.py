@@ -1,4 +1,4 @@
-"""Lo que `ReservasSql` decide dentro de `en_transaccion`, contra la base real."""
+"""Lo que `BookingsSql` decide dentro de `en_transaccion`, contra la base real."""
 
 import uuid
 from datetime import date, datetime, time, timedelta
@@ -9,9 +9,9 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
-from app.modules.horarios.reglas import Agenda
-from app.modules.reservas.repositorio import ReservasSql
-from app.shared.errores import AgendaCambiada, Cambiado, NoDisponible
+from app.modules.availability.rules import OpeningHours
+from app.modules.bookings.repository import BookingsSql
+from app.shared.errors import ConcurrentChange, OpeningHoursChanged, Unavailable
 
 CLUB = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -37,9 +37,9 @@ def _a_las(dias: int, hora: int) -> datetime:
     return datetime.combine(date.today() + timedelta(days=dias), time(hora), tzinfo=CLUB)
 
 
-def _agenda(motor: Engine, espacio: UUID) -> Agenda:
+def _agenda(motor: Engine, espacio: UUID) -> OpeningHours:
     with motor.connect() as conn:
-        agenda = ReservasSql(conn).agenda(espacio)
+        agenda = BookingsSql(conn).opening_hours(espacio)
     assert agenda is not None
     return agenda
 
@@ -67,13 +67,13 @@ def test_una_reserva_ajena_o_inexistente_no_se_encuentra(
     _, espacio_api, yo = cancha
     espacio = UUID(espacio_api)
     with motor.connect() as conn:
-        reserva = ReservasSql(conn).insertar(
+        reserva = BookingsSql(conn).insert(
             yo, espacio, _a_las(1, 10), _a_las(1, 11), _agenda(motor, espacio)
         )
-        repositorio = ReservasSql(conn)
+        repositorio = BookingsSql(conn)
 
-        assert repositorio.propia(uuid.uuid4(), reserva.id) is None
-        assert repositorio.una_de_cualquiera(uuid.uuid4()) is None
+        assert repositorio.own(uuid.uuid4(), reserva.id) is None
+        assert repositorio.any_one(uuid.uuid4()) is None
 
 
 def test_mover_con_el_horario_viejo_de_la_sede_no_cambia_nada(
@@ -84,13 +84,19 @@ def test_mover_con_el_horario_viejo_de_la_sede_no_cambia_nada(
     espacio = UUID(espacio_api)
     vieja = _agenda(motor, espacio)
     with motor.connect() as conn:
-        reserva = ReservasSql(conn).insertar(yo, espacio, _a_las(1, 10), _a_las(1, 11), vieja)
+        reserva = BookingsSql(conn).insert(yo, espacio, _a_las(1, 10), _a_las(1, 11), vieja)
     with motor.begin() as conn:
         conn.execute(text("UPDATE sede SET apertura = '09:00' WHERE id = :s"), {"s": sede_id})
 
-    with motor.connect() as conn, pytest.raises(AgendaCambiada):
-        ReservasSql(conn).mover(
-            yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13), vieja
+    with motor.connect() as conn, pytest.raises(OpeningHoursChanged):
+        BookingsSql(conn).move(
+            yo,
+            reserva.id,
+            (espacio, reserva.starts_at),
+            espacio,
+            _a_las(1, 12),
+            _a_las(1, 13),
+            vieja,
         )
 
 
@@ -100,12 +106,18 @@ def test_una_reserva_cancelada_no_se_mueve(motor: Engine, cancha: tuple[str, str
     espacio = UUID(espacio_api)
     agenda = _agenda(motor, espacio)
     with motor.connect() as conn:
-        reserva = ReservasSql(conn).insertar(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
-        ReservasSql(conn).cancelar(yo, reserva.id)
+        reserva = BookingsSql(conn).insert(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
+        BookingsSql(conn).cancel(yo, reserva.id)
 
-    with motor.connect() as conn, pytest.raises(Cambiado):
-        ReservasSql(conn).mover(
-            yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13), agenda
+    with motor.connect() as conn, pytest.raises(ConcurrentChange):
+        BookingsSql(conn).move(
+            yo,
+            reserva.id,
+            (espacio, reserva.starts_at),
+            espacio,
+            _a_las(1, 12),
+            _a_las(1, 13),
+            agenda,
         )
 
 
@@ -119,17 +131,17 @@ def test_no_se_reserva_ni_se_mueve_a_una_cancha_de_baja(
     espacio = UUID(espacio_api)
     agenda = _agenda(motor, espacio)
     with motor.connect() as conn:
-        reserva = ReservasSql(conn).insertar(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
+        reserva = BookingsSql(conn).insert(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
     if de_baja == "sede":
         _dar_de_baja(motor, "sede", "activa", UUID(sede_id))
     else:
         _dar_de_baja(motor, "espacio", "activo", espacio)
 
     with motor.connect() as conn:
-        with pytest.raises(NoDisponible):
-            ReservasSql(conn).insertar(yo, espacio, _a_las(2, 10), _a_las(2, 11), agenda)
-        with pytest.raises(NoDisponible):
-            ReservasSql(conn).mover(
-                yo, reserva.id, (espacio, reserva.inicio), espacio, _a_las(1, 12), _a_las(1, 13),
+        with pytest.raises(Unavailable):
+            BookingsSql(conn).insert(yo, espacio, _a_las(2, 10), _a_las(2, 11), agenda)
+        with pytest.raises(Unavailable):
+            BookingsSql(conn).move(
+                yo, reserva.id, (espacio, reserva.starts_at), espacio, _a_las(1, 12), _a_las(1, 13),
                 agenda,
             )  # fmt: skip

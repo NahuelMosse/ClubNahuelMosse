@@ -59,8 +59,7 @@ def test_un_id_mal_formado_responde_422_y_uno_que_no_existe_404(
     assert api.put("/sedes/no-es-un-uuid", headers=admin, json={}).status_code == 422
     assert api.post("/espacios", headers=admin, json=_espacio("no-es-un-uuid")).status_code == 422
     assert (
-        api.get("/espacios", headers=admin, params={"sede_id": "no-es-un-uuid"}).status_code
-        == 422
+        api.get("/espacios", headers=admin, params={"sede_id": "no-es-un-uuid"}).status_code == 422
     )
     assert api.delete(f"/espacios/{inexistente}", headers=admin).status_code == 404
     assert api.delete(f"/sedes/{inexistente}", headers=admin).status_code == 404

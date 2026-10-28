@@ -9,13 +9,13 @@ from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
 
-from app.modules.notificaciones.casos_de_uso import (
-    ResultadoDeEnvio,
-    despachar_pendientes,
-    enviar_recordatorios,
+from app.modules.notifications.repository import NotificationsSql
+from app.modules.notifications.rules import Notice
+from app.modules.notifications.use_cases import (
+    DeliveryResult,
+    dispatch_pending,
+    send_reminders,
 )
-from app.modules.notificaciones.reglas import Aviso
-from app.modules.notificaciones.repositorio import NotificacionesSql
 from tests.integracion.test_notificaciones_api import (
     _espacio,
     _manana_a_las,
@@ -27,16 +27,16 @@ from tests.integracion.test_notificaciones_api import (
 
 class _Canal:
     def __init__(self) -> None:
-        self.avisos: list[Aviso] = []
+        self.avisos: list[Notice] = []
 
-    def enviar(self, tokens: Sequence[str], aviso: Aviso) -> ResultadoDeEnvio:
-        self.avisos.append(aviso)
-        return ResultadoDeEnvio(enviados=len(tokens))
+    def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
+        self.avisos.append(notice)
+        return DeliveryResult(sent=len(tokens))
 
 
 def _barrer(motor: Engine, usuario: UUID, canal: _Canal, ahora: datetime) -> int:
     with motor.connect() as conn:
-        return enviar_recordatorios(NotificacionesSql(conn), canal, ahora, usuario)
+        return send_reminders(NotificationsSql(conn), canal, ahora, usuario)
 
 
 def _cinco(motor: Engine, usuario: UUID) -> list[tuple[str, str]]:
@@ -104,7 +104,7 @@ def test_un_aviso_de_5_minutos_de_una_reserva_cancelada_antes_de_despacharlo_no_
         conn.execute(text("UPDATE reserva SET estado = 'cancelada' WHERE id = :r"), {"r": reserva})
     canal = _Canal()
     with motor.connect() as conn:
-        despachar_pendientes(NotificacionesSql(conn), canal, usuario)
+        dispatch_pending(NotificationsSql(conn), canal, usuario)
     assert canal.avisos == []
     assert [e for _, e in _cinco(motor, usuario)] == ["fallida"]
 

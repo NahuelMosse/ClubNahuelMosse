@@ -1,0 +1,25 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "docs"
+  ],
+  "words": [],
+  "files": [
+    "apps/api/app/modules/bookings/__init__.py",
+    "apps/api/app/modules/bookings/use_cases.py",
+    "apps/api/app/modules/bookings/rules.py",
+    "apps/api/app/modules/bookings/store.py",
+    "apps/api/app/modules/bookings/repository.py",
+    "apps/api/app/modules/bookings/routes.py",
+    "apps/api/openapi.json",
+    "docs/technical/glosario-ingles.md"
+  ],
+  "tasks": 1
+}

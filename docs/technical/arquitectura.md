@@ -80,7 +80,7 @@ flowchart TB
 - **`casos_de_uso.py`** orquesta: pide datos por un `Protocol` («algo que sepa insertar una reserva»), aplica las reglas
   y lanza errores del negocio (`Prohibido`, `HorarioOcupado`, `DatosInvalidos`…). No sabe que existe FastAPI ni
   Postgres, y por eso sus tests usan dobles en memoria.
-- **`repositorio.py`** cumple ese `Protocol` sin heredarlo: `ReservasSql`, `UsuariosSql`, etc. escriben SQL con
+- **`repositorio.py`** cumple ese `Protocol` sin heredarlo: `BookingsSql`, `UsuariosSql`, etc. escriben SQL con
   `text()` sobre la conexión del pedido. Cada repositorio escribe sólo sus tablas.
 - **`rutas.py`** traduce HTTP a casos de uso y errores a códigos: arma el repositorio con la conexión del pedido, llama
   al caso de uso y convierte `Prohibido` en 403, `NoEncontrada` en 404, `DatosInvalidos` en 422 con
@@ -97,10 +97,10 @@ FastAPI publica siempre `/docs`, `/redoc` y `/openapi.json`.
 ```mermaid
 sequenceDiagram
   participant App
-  participant Ruta as modules/reservas/rutas.py
+  participant Ruta as modules/bookings/routes.py
   participant Auth as usuario_actual
-  participant CU as modules/reservas/casos_de_uso.py
-  participant Repo as ReservasSql
+  participant CU as modules/bookings/use_cases.py
+  participant Repo as BookingsSql
   participant PG as PostgreSQL
   App->>Ruta: POST /reservas (Bearer token)
   Ruta->>Auth: token
@@ -134,7 +134,7 @@ Detalles que importan:
 
 | Tema | Cómo está resuelto | Dónde |
 |---|---|---|
-| Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `usuario` | `modules/sesion/usuario_actual.py` (`usuario_actual`), `shared/identidad.py` |
+| Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `usuario` | `modules/session/current_user.py`, `shared/identity.py` |
 | Autorización | por rol, dentro de cada caso de uso (`perfil.rol`); por dueño en las consultas (`WHERE usuario_id = …`): una reserva ajena da 404 | `modules/*/casos_de_uso.py` |
 | Validación de entrada | tipos de pydantic; un cuerpo que no es JSON da 400 sin repetirlo | `shared/entradas.py` |
 | Errores | errores del negocio → 403, 404, 409 y 422 con `{"errores": …}` | `main.py`, `shared/errores_http.py`, `shared/respuestas.py` |
@@ -159,15 +159,15 @@ stateDiagram-v2
   enviando --> fallida: FCM falló
 ```
 
-- **Cancelación y anulación.** `ReservasSql.cancelar` y `ReservasSql.anular` cambian la reserva y encolan el aviso en la
+- **Cancelación y anulación.** `BookingsSql.cancel` y `BookingsSql.void` cambian la reserva y encolan el aviso en la
   misma transacción. Al responder, la ruta agrega una tarea de fondo (`despachar_de`) que entrega los pendientes de esa
   persona. Si a una persona le anulan otra reserva mientras tiene un aviso de anulación sin leer, se abre un aviso nuevo
   con la cantidad total y el anterior queda reemplazado (`reemplazada_por`); `notificacion_reserva` liga cada reserva
   con el aviso que se la informó.
-- **Recordatorios.** El barrido (`modules/notificaciones/barrido.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
+- **Recordatorios.** El barrido (`modules/notifications/sweep.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
   segundos: primero despacha los pendientes y después busca las reservas activas que empiezan dentro de la próxima hora
   y no tienen recordatorio. El índice único `notificacion_recordatorio_unico` impide el duplicado aunque dos barridos se
-  crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notificaciones.barrido --una-vez`) para un cron.
+  crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notifications.sweep --una-vez`) para un cron.
 - **En el teléfono.** `CentroDeNotificaciones` registra el token de FCM con `PUT /dispositivos` al iniciar sesión, lo da
   de baja al cerrarla, consulta `GET /notificaciones` cada 20 s mientras la app está abierta y en primer plano, y lleva
   a la reserva cuando se toca un aviso (`rutaDelAviso`). Con la app cerrada, el aviso lo muestra la bandeja del sistema.

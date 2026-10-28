@@ -20,7 +20,11 @@ def _usuario(db: Connection, sufijo: str) -> uuid.UUID:
             "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni, fecha_nacimiento)"
             " VALUES (:uid, :correo, 'Ana', 'Pérez', :dni, '2000-03-14') RETURNING id"
         ),
-        {"uid": f"uid-{sufijo}", "correo": f"ana.{sufijo}@correo.com", "dni": str(int(sufijo, 16) % 90_000_000 + 10_000_000)},
+        {
+            "uid": f"uid-{sufijo}",
+            "correo": f"ana.{sufijo}@correo.com",
+            "dni": str(int(sufijo, 16) % 90_000_000 + 10_000_000),
+        },
     ).scalar_one()
 
 
@@ -40,17 +44,29 @@ def _espacio(db: Connection, sede_id: uuid.UUID, sufijo: str, numero: int = 1) -
             "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada, iluminada, precio_por_hora)"
             " VALUES (:sede, 'Futbol', 'F5', :numero, :nombre, false, true, 38000) RETURNING id"
         ),
-        {"sede": sede_id, "numero": numero, "nombre": f"Prueba{sufijo}_Rivadavia_19850_Futbol_F5_{numero}"},
+        {
+            "sede": sede_id,
+            "numero": numero,
+            "nombre": f"Prueba{sufijo}_Rivadavia_19850_Futbol_F5_{numero}",
+        },
     ).scalar_one()
 
 
-def _reserva(db: Connection, usuario_id: uuid.UUID, espacio_id: uuid.UUID, inicio: datetime, horas: int = 1) -> uuid.UUID:
+def _reserva(
+    db: Connection, usuario_id: uuid.UUID, espacio_id: uuid.UUID, inicio: datetime, horas: int = 1
+) -> uuid.UUID:
     return db.execute(
         text(
             "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
             " VALUES (:u, :e, :inicio, :fin, 38000, :total) RETURNING id"
         ),
-        {"u": usuario_id, "e": espacio_id, "inicio": inicio, "fin": inicio + timedelta(hours=horas), "total": 38000 * horas},
+        {
+            "u": usuario_id,
+            "e": espacio_id,
+            "inicio": inicio,
+            "fin": inicio + timedelta(hours=horas),
+            "total": 38000 * horas,
+        },
     ).scalar_one()
 
 
@@ -63,16 +79,24 @@ def test_el_usuario_se_guarda_con_sus_datos_y_el_correo_no_cambia(db: Connection
     sufijo = _unico()
     uid = _usuario(db, sufijo)
     fila = db.execute(
-        text("SELECT correo, nombre, apellido, fecha_nacimiento, creado_en FROM usuario WHERE id = :id"),
+        text(
+            "SELECT correo, nombre, apellido, fecha_nacimiento, creado_en FROM usuario WHERE id = :id"
+        ),
         {"id": uid},
     ).one()
     assert fila.correo == f"ana.{sufijo}@correo.com"
-    assert (fila.nombre, fila.apellido, fila.fecha_nacimiento) == ("Ana", "Pérez", date(2000, 3, 14))
+    assert (fila.nombre, fila.apellido, fila.fecha_nacimiento) == (
+        "Ana",
+        "Pérez",
+        date(2000, 3, 14),
+    )
     assert fila.creado_en is not None
 
     with pytest.raises(DBAPIError, match="correo"):
         with db.begin_nested():
-            db.execute(text("UPDATE usuario SET correo = 'otro@correo.com' WHERE id = :id"), {"id": uid})
+            db.execute(
+                text("UPDATE usuario SET correo = 'otro@correo.com' WHERE id = :id"), {"id": uid}
+            )
 
 
 def test_la_sede_se_guarda_con_nombre_direccion_y_horario(db: Connection) -> None:
@@ -84,7 +108,9 @@ def test_la_sede_se_guarda_con_nombre_direccion_y_horario(db: Connection) -> Non
     sufijo = _unico()
     sid = _sede(db, sufijo)
     fila = db.execute(
-        text("SELECT nombre, calle, altura, apertura, cierre, dias, activa FROM sede WHERE id = :id"),
+        text(
+            "SELECT nombre, calle, altura, apertura, cierre, dias, activa FROM sede WHERE id = :id"
+        ),
         {"id": sid},
     ).one()
     assert fila.nombre == f"Sede Prueba {sufijo}"
@@ -101,22 +127,24 @@ def test_el_espacio_pertenece_a_una_sede_y_tiene_nombre_compuesto(db: Connection
     número, sin tildes ni espacios, como en el prototipo; y no hay dos espacios con el mismo número
     del mismo tipo en una sede. Si falla, dos canchas se confunden en una reserva.
     """
-    from app.modules.espacios.reglas import nombre_compuesto
+    from app.modules.spaces.rules import composite_name
 
-    assert nombre_compuesto("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "F5", 1) == (
+    assert composite_name("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "F5", 1) == (
         "Moron_Rivadavia_19850_Futbol_F5_1"
     )
-    assert nombre_compuesto("Sede Ramos Mejía", "Calle Belgrano", 1240, "Hockey", "H7", 1) == (
+    assert composite_name("Sede Ramos Mejía", "Calle Belgrano", 1240, "Hockey", "H7", 1) == (
         "RamosMejia_Belgrano_1240_Hockey_H7_1"
     )
-    assert nombre_compuesto("Sede San Justo", "Av. Casanova", 320, "Golf", "CORTO", 2) == (
+    assert composite_name("Sede San Justo", "Av. Casanova", 320, "Golf", "CORTO", 2) == (
         "SanJusto_Casanova_320_Golf_CORTO_2"
     )
 
     sufijo = _unico()
     sid = _sede(db, sufijo)
     eid = _espacio(db, sid, sufijo)
-    fila = db.execute(text("SELECT sede_id, tipo, nombre FROM espacio WHERE id = :id"), {"id": eid}).one()
+    fila = db.execute(
+        text("SELECT sede_id, tipo, nombre FROM espacio WHERE id = :id"), {"id": eid}
+    ).one()
     assert (fila.sede_id, fila.tipo) == (sid, "F5")
     assert fila.nombre == f"Prueba{sufijo}_Rivadavia_19850_Futbol_F5_1"
 
@@ -137,7 +165,9 @@ def test_la_reserva_tiene_usuario_espacio_fecha_inicio_y_fin(db: Connection) -> 
     inicio = datetime(2030, 11, 14, 18, tzinfo=AR)
     rid = _reserva(db, uid, eid, inicio, horas=2)
     fila = db.execute(
-        text("SELECT usuario_id, espacio_id, inicio, fin, precio_por_hora, total, estado, creado_en FROM reserva WHERE id = :id"),
+        text(
+            "SELECT usuario_id, espacio_id, inicio, fin, precio_por_hora, total, estado, creado_en FROM reserva WHERE id = :id"
+        ),
         {"id": rid},
     ).one()
     assert (fila.usuario_id, fila.espacio_id) == (uid, eid)

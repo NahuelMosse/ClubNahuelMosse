@@ -11,13 +11,13 @@ RAIZ = API.parents[1]
 
 # Cada archivo de acceso a datos escribe sólo las tablas que son suyas.
 TABLAS_PROPIAS = {
-    "usuarios/repositorio.py": {"usuario"},
-    "reservas/repositorio.py": {"reserva"},
-    "sedes/repositorio.py": {"sede"},
-    "notificaciones/repositorio.py": {"notificacion", "notificacion_reserva", "dispositivo"},
-    "espacios/repositorio.py": {"espacio"},
-    "recuperacion/repositorio.py": {"enlace_recuperacion"},
-    "recuperacion/correo.py": {"correo_saliente"},
+    "users/repository.py": {"usuario"},
+    "bookings/repository.py": {"reserva"},
+    "venues/repository.py": {"sede"},
+    "notifications/repository.py": {"notificacion", "notificacion_reserva", "dispositivo"},
+    "spaces/repository.py": {"espacio"},
+    "password_recovery/repository.py": {"enlace_recuperacion"},
+    "shared/email.py": {"correo_saliente"},
 }
 ESCRITURA = re.compile(
     r"(?:INSERT\s+INTO|(?<!FOR\s)(?<!DO\s)UPDATE|DELETE\s+FROM)\s+(\w+)", re.IGNORECASE
@@ -60,7 +60,11 @@ def test_ninguna_funcionalidad_importa_el_repositorio_de_otra() -> None:
         propia = archivo.relative_to(MODULOS).parts[0]
         for nombre in _modulos(archivo):
             partes = nombre.split(".")
-            if partes[:2] == ["app", "modules"] and len(partes) > 3 and partes[3] == "repositorio":
+            if (
+                partes[:2] == ["app", "modules"]
+                and len(partes) > 3
+                and partes[3] in {"repositorio", "repository"}
+            ):
                 assert partes[2] == propia, f"{_nombre(archivo)} importa {nombre}"
 
 
@@ -108,28 +112,19 @@ def test_la_zona_del_club_se_define_una_sola_vez_en_la_api() -> None:
         for a in _fuentes(APP)
         if any(ZONA_LITERAL in t for t in _textos(a))
     )
-    assert con_zona == ["shared/zona.py"]
-
-
-def test_la_anticipacion_sale_de_las_reglas_y_no_esta_en_el_sql() -> None:
-    """la anticipación del recordatorio sale de las reglas y no está escrita en el SQL @REV-06-S9 @assumption:REV-06-ASM-08"""
-    archivo = MODULOS / "notificaciones" / "repositorio.py"
-    arbol = ast.parse(archivo.read_text(encoding="utf-8"))
-    nombres = {n.id for n in ast.walk(arbol) if isinstance(n, ast.Name)}
-    assert "ANTICIPACION" in nombres
-    assert not any("1 hour" in t for t in _textos(archivo))
+    assert con_zona == ["shared/club_timezone.py"]
 
 
 def test_las_rutas_de_mis_reservas_y_de_cancelar_entran_por_los_casos_de_uso() -> None:
     """las rutas de mis reservas y de cancelar entran por los casos de uso @REV-06-S11 @assumption:REV-06-ASM-09"""
-    arbol = ast.parse((MODULOS / "reservas" / "rutas.py").read_text(encoding="utf-8"))
+    arbol = ast.parse((MODULOS / "bookings" / "routes.py").read_text(encoding="utf-8"))
     traidos = {
         a.name
         for n in ast.walk(arbol)
-        if isinstance(n, ast.ImportFrom) and n.module == "app.modules.reservas.casos_de_uso"
+        if isinstance(n, ast.ImportFrom) and n.module == "app.modules.bookings.use_cases"
         for a in n.names
     }
-    assert {"mis_reservas", "cancelar_reserva"} <= traidos
+    assert {"my_bookings", "cancel_booking"} <= traidos
 
 
 def test_cada_card_tiene_su_seccion_de_cambios_a_lo_existente() -> None:

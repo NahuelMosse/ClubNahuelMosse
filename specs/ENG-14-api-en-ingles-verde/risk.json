@@ -1,0 +1,30 @@
+{
+  "size": "large",
+  "review": "medium",
+  "lenses": [
+    "contract"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [],
+  "words": [],
+  "files": [
+    "apps/api/app",
+    "apps/api/tests/unit/test_api_en_ingles_verde.py"
+  ],
+  "tasks": 1,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract"
+    ],
+    "why": [
+      "apps/api/app/modules/notifications/email.py is shared code (imported by apps/api/app/modules/bookings/routes.py, apps/api/app/modules/notifications/use_cases.py, apps/api/app/modules/password_recovery/routes.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/notifications/repository.py is shared code (imported by apps/api/app/modules/availability/__init__.py, apps/api/app/modules/availability/routes.py, apps/api/app/modules/bookings/__init__.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/notifications/rules.py is shared code (imported by apps/api/app/modules/availability/__init__.py, apps/api/app/modules/availability/repository.py, apps/api/app/modules/availability/routes.py, …) and `## Tasks` does not name it",
+      "apps/api/app/modules/notifications/store.py is shared code (imported by apps/api/app/modules/bookings/use_cases.py, apps/api/app/modules/notifications/use_cases.py) and `## Tasks` does not name it",
+      "apps/api/app/modules/notifications/use_cases.py is shared code (imported by apps/api/app/modules/availability/routes.py, apps/api/app/modules/bookings/routes.py, apps/api/app/modules/notifications/__init__.py, …) and `## Tasks` does not name it"
+    ]
+  }
+}

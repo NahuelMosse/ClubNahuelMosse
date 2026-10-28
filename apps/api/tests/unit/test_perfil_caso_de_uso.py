@@ -3,21 +3,22 @@ from uuid import UUID
 
 import pytest
 
-from app.modules.sesion.perfil import Perfil
-from app.modules.usuarios.perfil import editar_perfil
-from app.modules.usuarios.reglas import DatosPersonales, PerfilEditado
-from app.shared.errores import DatosInvalidos
+from app.modules.session.profile import Profile
+from app.modules.users.profile import update_profile as editar_perfil
+from app.modules.users.rules import EditedProfile as PerfilEditado
+from app.modules.users.rules import PersonalData as DatosPersonales
+from app.shared.errors import InvalidData
 
 HOY = date(2026, 9, 27)
-PERFIL = Perfil(
+PERFIL = Profile(
     id=UUID(int=7),
     uid="u7",
-    nombre="Lucía",
-    apellido="Gómez",
-    correo="lucia@correo.com",
-    rol="usuario",
+    first_name="Lucía",
+    last_name="Gómez",
+    email="lucia@correo.com",
+    role="usuario",
     dni="30111222",
-    fecha_nacimiento=date(1998, 11, 2),
+    birth_date=date(1998, 11, 2),
 )
 
 
@@ -25,7 +26,7 @@ class Perfiles:
     def __init__(self) -> None:
         self.guardados: list[tuple[UUID, PerfilEditado]] = []
 
-    def actualizar(self, id_usuario: UUID, editado: PerfilEditado) -> None:
+    def update(self, id_usuario: UUID, editado: PerfilEditado) -> None:
         self.guardados.append((id_usuario, editado))
 
 
@@ -52,7 +53,7 @@ def test_guarda_los_datos_normalizados() -> None:
 def test_un_dato_invalido_no_guarda_nada(datos: DatosPersonales, campos: set[str]) -> None:
     """Verifica CU-06-SUP-01 y CU-06-SUP-04."""
     perfiles = Perfiles()
-    with pytest.raises(DatosInvalidos) as error:
+    with pytest.raises(InvalidData) as error:
         editar_perfil(PERFIL, datos, HOY, perfiles)
-    assert set(error.value.errores) == campos
+    assert set(error.value.errors) == campos
     assert perfiles.guardados == []

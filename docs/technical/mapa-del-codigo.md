@@ -8,16 +8,16 @@ nombre, no por línea: buscalos con el buscador del editor.
 
 | Busco | Está en |
 |---|---|
-| Las reglas de una reserva (1 a 4 horas, 7 días a la vista, horario de la sede) | `apps/api/app/modules/horarios/reglas.py` (`validar_reserva`, `error_de_duracion`, `MIN_HORAS`, `MAX_HORAS`, `DIAS_A_LA_VISTA`) |
-| Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `ReservasSql.insertar` en `apps/api/app/modules/reservas/repositorio.py`, que traduce el error `23P01` a `HorarioOcupado` |
-| El caso de uso «reservar» | `apps/api/app/modules/reservas/casos_de_uso.py` (`reservar`) |
+| Las reglas de una reserva (1 a 4 horas, 7 días a la vista, horario de la sede) | `apps/api/app/modules/availability/rules.py` (`validate_booking`, `duration_error`, `MIN_HOURS`, `MAX_HOURS`, `DAYS_IN_VIEW`) |
+| Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `BookingsSql.insert` en `apps/api/app/modules/bookings/repository.py`, que traduce el error `23P01` a `HorarioOcupado` |
+| El caso de uso «reservar» | `apps/api/app/modules/bookings/use_cases.py` (`book`) |
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
 | Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
-| Cómo se valida el token de Firebase | `apps/api/app/modules/sesion/usuario_actual.py` (`usuario_actual`) → `sesion/casos_de_uso.py` (`perfil_autenticado`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
-| La hora y la zona del club | API: `apps/api/app/shared/zona.py` (`ZONA_CLUB`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
-| Los recordatorios de una hora antes | `apps/api/app/modules/notificaciones/barrido.py` (el reloj) → `casos_de_uso.py` (`enviar_recordatorios`, `entregar`) → `push.py` (FCM) |
-| Los avisos de cancelación | se encolan en la misma transacción que cancela (`ReservasSql.cancelar` y `ReservasSql.anular`) y salen con `despachar_pendientes` |
-| El correo de recuperación de contraseña | `apps/api/app/modules/recuperacion/casos_de_uso.py` (código, vigencia, tope por hora) y `correo.py` (SMTP o buzón) |
+| Cómo se valida el token de Firebase | `apps/api/app/modules/session/current_user.py` (`current_user`) → `session/use_cases.py` (`authenticated_profile`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
+| La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
+| Los recordatorios de una hora antes | `apps/api/app/modules/notifications/sweep.py` (el reloj) → `use_cases.py` (`send_reminders`, `deliver`) → `push.py` (FCM) |
+| Los avisos de cancelación | se encolan en la misma transacción que cancela (`BookingsSql.cancel` y `BookingsSql.void`) y salen con `dispatch_pending` |
+| El correo de recuperación de contraseña | `apps/api/app/modules/password_recovery/use_cases.py` (código, vigencia, tope por hora); el envío (SMTP, Brevo o buzón) está en `shared/email.py` |
 | Las variables de entorno de la API | `apps/api/app/shared/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
 | El motor de la base y la conexión por pedido | `apps/api/app/shared/db.py` |
 | El esquema de la base | `apps/api/migraciones/versions/0001` a `0009`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
@@ -71,13 +71,13 @@ app-tp/
 El código se agrupa por funcionalidad: una carpeta por funcionalidad bajo `app/modules/`, plana, con los archivos que
 necesita entre `rutas.py` (HTTP), `casos_de_uso.py` (orquestación), `reglas.py` (reglas puras) y `repositorio.py`
 (SQL con `text()` sobre una `Connection` de SQLAlchemy, sin ORM). Lo compartido está en `app/shared/` y arriba quedan
-`main.py`, `salud.py` y `pruebas.py`.
+`main.py`, `health.py` y `e2e_support.py`.
 
 - Una funcionalidad importa a otra sólo por su `__init__.py`, y no hay ciclos.
 - `shared/` no importa funcionalidades; `reglas.py` no importa base de datos ni web; los casos de uso no importan
   `repositorio` ni `rutas`.
 - Las rutas reciben el repositorio con `Depends` desde el proveedor de su propio `repositorio.py`
-  (`repositorio_reservas`, …); un test lo reemplaza con `app.dependency_overrides`. Los comandos (`barrido.py`,
+  (`bookings_repository`, …); un test lo reemplaza con `app.dependency_overrides`. Los comandos (`barrido.py`,
   `sembrar_admin.py`) arman sus piezas ellos mismos.
 - Cada repositorio escribe sólo sus tablas.
 
@@ -91,18 +91,18 @@ Archivos de cada funcionalidad (bajo `apps/api/app/modules/<funcionalidad>/`) y 
 
 | Funcionalidad | Archivos | App |
 |---|---|---|
-| `reservas` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py` | `reservas/` |
-| `horarios` | `rutas.py`, `casos_de_uso.py`, `disponibilidad.py`, `reglas.py`, `repositorio.py` | `reservas/` |
-| `sedes` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `sedes/`, `admin/` |
-| `espacios` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py` | `espacios/`, `admin/` |
-| `usuarios` | `rutas_registro.py`, `rutas_cuenta.py`, `registro.py`, `perfil.py`, `contrasena.py`, `baja.py`, `administradores.py`, `sembrar_admin.py`, `reglas.py`, `repositorio.py` | `usuarios/` |
-| `sesion` | `casos_de_uso.py`, `perfil.py`, `usuario_actual.py`, `repositorio.py` | `sesion/` |
-| `recuperacion` | `rutas.py`, `casos_de_uso.py`, `reglas.py`, `repositorio.py`, `correo.py` | `sesion/` |
-| `notificaciones` | `rutas.py`, `casos_de_uso.py`, `almacen.py`, `reglas.py`, `repositorio.py`, `barrido.py`, `push.py` | `notificaciones/` |
+| `bookings` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `email.py` | `reservas/` |
+| `availability` | `routes.py`, `use_cases.py`, `slots.py`, `rules.py`, `repository.py` | `reservas/` |
+| `venues` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sedes/`, `admin/` |
+| `spaces` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `espacios/`, `admin/` |
+| `users` | `registration_routes.py`, `account_routes.py`, `registration.py`, `profile.py`, `password.py`, `deactivation.py`, `admins.py`, `seed_admin.py`, `rules.py`, `repository.py` | `usuarios/` |
+| `session` | `use_cases.py`, `profile.py`, `current_user.py`, `repository.py` | `sesion/` |
+| `password_recovery` | `routes.py`, `use_cases.py`, `rules.py`, `repository.py` | `sesion/` |
+| `notifications` | `routes.py`, `use_cases.py`, `store.py`, `rules.py`, `repository.py`, `sweep.py`, `push.py`, `email.py` | `notifications/` |
 
-Compartido en `app/shared/`: `config.py`, `db.py` (motor, `conexion()`, `en_transaccion`), `errores.py` (todos los
-errores del negocio), `errores_http.py`, `respuestas.py`, `entradas.py`, `cuerpo.py`, `zona.py` (`ZONA_CLUB`),
-`identidad.py` (`ProveedorFirebase`) y `credencial_firebase.py`.
+Compartido en `app/shared/`: `config.py`, `db.py` (`engine`, `connection()`, `in_transaction`), `errors.py` (todos los
+errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `body_limit.py`, `club_timezone.py` (`CLUB_TIMEZONE`),
+`identity.py` (`FirebaseProvider`), `firebase_credential.py`, `email.py`, `message.py` y `email_template.py`.
 
 ### Archivo por archivo
 
@@ -110,37 +110,40 @@ errores del negocio), `errores_http.py`, `respuestas.py`, `entradas.py`, `cuerpo
 
 | Archivo | Qué tiene |
 |---|---|
-| `main.py` | `crear_app()`: arma la app, los handlers de error y los routers; `_ciclo_de_vida` (el barrido en segundo plano) |
-| `salud.py` | `/health` (el proceso vive) |
-| `pruebas.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
+| `main.py` | `create_app()`: arma la app, los handlers de error y los routers; `_lifespan` (el barrido en segundo plano) |
+| `health.py` | `/health` (el proceso vive) |
+| `e2e_support.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
 
 **`shared/`**
 
 | Archivo | Qué tiene |
 |---|---|
-| `config.py` | `Config` (pydantic-settings), lee el entorno y `apps/api/.env` |
-| `db.py` | el motor, `conexion()` (una conexión por pedido), `en_transaccion`, `restriccion_violada` |
-| `errores.py` | las excepciones del negocio: `DatosInvalidos`, `Duplicado`, `NoAutenticado`, `Demorado`, `CuentaExistente`, `Prohibido`, `NoDisponible`, `NumeroOcupado`, `HorarioOcupado`, `NoEncontrada`, `Cambiado`, `ReservasAfuera`, `AgendaCambiada`, `ConReservasFuturas` |
-| `errores_http.py` | handlers de `DatosInvalidos` (422 con `errores`), `Prohibido` (403) y `NoEncontrada` (404), los tres iguales en toda la API |
-| `respuestas.py` | `conflicto`: el 409 con `errores` que cada ruta elige |
-| `entradas.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identificador`…), `leer_hora` y el handler de 422 y 400 |
-| `cuerpo.py` | `CuerpoAcotado`: tope de tamaño y de tiempo del cuerpo |
-| `zona.py` | `ZONA_CLUB`, la única definición de `America/Argentina/Buenos_Aires` |
-| `identidad.py` | `ProveedorFirebase`: verificar tokens, comprobar contraseñas, crear y borrar cuentas |
-| `credencial_firebase.py` | `credencial_de_servicio`: la cuenta de servicio desde el JSON o el archivo |
+| `config.py` | `Settings` (pydantic-settings), lee el entorno y `apps/api/.env` |
+| `db.py` | `engine`, `connection()` (una conexión por pedido), `DbConnection`, `in_transaction`, `violated_constraint` |
+| `errors.py` | las excepciones del negocio: `InvalidData`, `Duplicate`, `NotAuthenticated`, `RateLimited`, `AccountExists`, `Forbidden`, `Unavailable`, `NumberTaken`, `SlotTaken`, `NotFound`, `ConcurrentChange`, `BookingsOutsideHours`, `OpeningHoursChanged`, `HasFutureBookings` |
+| `http_errors.py` | handlers de `InvalidData` (422 con `errores`), `Forbidden` (403) y `NotFound` (404), los tres iguales en toda la API |
+| `responses.py` | `conflict`: el 409 con `errores` que cada ruta elige |
+| `input_validation.py` | tipos acotados para los cuerpos (`Texto40`, `Clave`, `Identifier`…), `parse_time` y el handler de 422 y 400 |
+| `body_limit.py` | `BodyLimit`: tope de tamaño y de tiempo del cuerpo |
+| `club_timezone.py` | `CLUB_TIMEZONE`, la única definición de `America/Argentina/Buenos_Aires` |
+| `identity.py` | `FirebaseProvider`: verificar tokens, comprobar contraseñas, crear y borrar cuentas |
+| `firebase_credential.py` | `service_credential`: la cuenta de servicio desde el JSON o el archivo |
+| `email.py` | `send`: SMTP con STARTTLS verificado, Brevo, o el buzón de desarrollo |
+| `message.py` | `Message`: destinatario, asunto y cuerpo |
+| `email_template.py` | `html_email`: la plantilla HTML de los correos |
 
 **`modules/`** (cada archivo `rutas*.py` lleva las rutas HTTP; `repositorio.py` el SQL y su proveedor `repositorio_*`)
 
 | Funcionalidad | Qué tiene | Tablas que escribe |
 |---|---|---|
-| `sesion` | `Perfil`, `perfil_autenticado` (del token al `Perfil`), `usuario_actual` (la dependencia de autenticación), `PerfilesSql` | — (lee `usuario`) |
-| `usuarios` | `registrar`, `editar_perfil`, `cambiar_contrasena`, `dar_de_baja` (la cuenta), `sembrar_admin` (y su comando), reglas de registro y perfil, `UsuariosSql` | `usuario` |
-| `sedes` | `sedes_activas`, `dar_de_alta_sede`, `editar_sede`, `dar_de_baja_sede`, `validar_sede`, `SedesSql` | `sede` |
-| `espacios` | el catálogo fijo (`Deporte`, `Tipo`), `nombre_sugerido`, alta, edición y baja de espacios, `EspaciosSql` | `espacio` |
-| `horarios` | `Agenda`, `grilla`, `validar_reserva`, `horarios_disponibles`, `canchas_disponibles` (`disponibilidad.py`), `HorariosSql` (lecturas) | — |
-| `reservas` | `reservar`, `mis_reservas`, `cancelar_reserva`, `modificar_reserva`, `historial_global`, `detalle_admin`, `anular_reserva`, `ReservasSql` (historial paginado por cursor) | `reserva` |
-| `notificaciones` | `ANTICIPACION` (1 h), `enviar_recordatorios`, `despachar_pendientes`, dispositivos y centro de avisos, `NotificacionesSql`, `canal_push` (`push.py`: `CanalFcm`, `CanalNulo`), `barrido.py` (en proceso con `barrer_cada` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
-| `recuperacion` | `pedir_enlace`, `enlace_vigente`, `usar_enlace`, `hash_de`, `EnlacesSql`, `correo.py` (`enviar`: SMTP con STARTTLS verificado, o el buzón de desarrollo) | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
+| `session` | `Profile`, `authenticated_profile` (del token al `Profile`), `current_user` (la dependencia de autenticación), `ProfilesSql` | — (lee `usuario`) |
+| `users` | `register`, `update_profile`, `change_password`, `deactivate` (la cuenta), `seed_admin` (y su comando), reglas de registro y perfil, `UsersSql` | `usuario` |
+| `venues` | `active_venues`, `create_venue`, `update_venue`, `deactivate_venue`, `validate_venue`, `VenuesSql` | `sede` |
+| `spaces` | el catálogo fijo (`Sport`, `Kind`), `suggested_name`, alta, edición y baja de espacios, `SpacesSql` | `espacio` |
+| `availability` | `OpeningHours`, `slot_grid`, `validate_booking`, `available_slots`, `available_spaces` (`slots.py`), `AvailabilitySql` (lecturas) | — |
+| `bookings` | `book`, `my_bookings`, `cancel_booking`, `modify_booking`, `global_history`, `admin_detail`, `void_booking`, `BookingsSql` (historial paginado por cursor) | `reserva` |
+| `notifications` | `LEAD_TIME` (1 h), `send_reminders`, `dispatch_pending`, dispositivos y centro de avisos, `NotificationsSql`, `push_channel` (`push.py`: `FcmChannel`, `NullChannel`), `sweep.py` (en proceso con `sweep_every` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
+| `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql` | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
 
 ### Rutas de la API
 
@@ -149,41 +152,41 @@ si el rol no es `admin`.
 
 | Método y ruta | Archivo | Caso de uso | Quién |
 |---|---|---|---|
-| GET `/health` | `salud.py` | — | cualquiera |
+| GET `/health` | `health.py` | — | cualquiera |
 | GET `/openapi.json` | FastAPI | — | cualquiera (también `/docs` y `/redoc`) |
-| POST `/registro` | `usuarios/rutas_registro.py` | `registrar` | cualquiera |
-| POST `/recuperacion` | `recuperacion/rutas.py` | `pedir_enlace` | cualquiera |
-| POST `/recuperacion/consulta` | `recuperacion/rutas.py` | `enlace_vigente` | cualquiera |
-| PUT `/recuperacion` | `recuperacion/rutas.py` | `usar_enlace` | cualquiera |
-| GET `/enlace/recuperar` | `recuperacion/rutas.py` | página que abre la app desde el correo | cualquiera |
-| GET `/yo` | `usuarios/rutas_cuenta.py` | — | sesión |
-| PUT `/yo` | `usuarios/rutas_cuenta.py` | `editar_perfil` | sesión |
-| PUT `/yo/contrasena` | `usuarios/rutas_cuenta.py` | `cambiar_contrasena` | sesión |
-| DELETE `/yo` | `usuarios/rutas_cuenta.py` | `dar_de_baja` | sesión |
-| GET `/sedes` | `sedes/rutas.py` | `sedes_activas` | sesión |
-| POST `/sedes` | `sedes/rutas.py` | `dar_de_alta_sede` | admin |
-| PUT `/sedes/{sede_id}` | `sedes/rutas.py` | `editar_sede` | admin |
-| DELETE `/sedes/{sede_id}` | `sedes/rutas.py` | `dar_de_baja_sede` | admin |
-| GET `/espacios/catalogo` | `espacios/rutas.py` | `catalogo` | sesión |
-| GET `/espacios` | `espacios/rutas.py` | `espacios_activos` | sesión |
-| GET `/espacios/nombre` | `espacios/rutas.py` | `nombre_sugerido` | admin |
-| POST `/espacios` | `espacios/rutas.py` | `dar_de_alta_espacio` | admin |
-| PUT `/espacios/{espacio_id}` | `espacios/rutas.py` | `editar_espacio` | admin |
-| DELETE `/espacios/{espacio_id}` | `espacios/rutas.py` | `dar_de_baja_espacio` | admin |
-| GET `/espacios/{espacio_id}/horarios` | `horarios/rutas.py` | `horarios_disponibles` | sesión |
-| GET `/espacios/disponibles` | `horarios/rutas.py` | `canchas_disponibles` | sesión |
+| POST `/registro` | `users/registration_routes.py` | `register` | cualquiera |
+| POST `/recuperacion` | `password_recovery/routes.py` | `request_link` | cualquiera |
+| POST `/recuperacion/consulta` | `password_recovery/routes.py` | `link_is_valid` | cualquiera |
+| PUT `/recuperacion` | `password_recovery/routes.py` | `use_link` | cualquiera |
+| GET `/enlace/recuperar` | `password_recovery/routes.py` | página que abre la app desde el correo | cualquiera |
+| GET `/yo` | `users/account_routes.py` | — | sesión |
+| PUT `/yo` | `users/account_routes.py` | `update_profile` | sesión |
+| PUT `/yo/contrasena` | `users/account_routes.py` | `change_password` | sesión |
+| DELETE `/yo` | `users/account_routes.py` | `deactivate` | sesión |
+| GET `/sedes` | `venues/routes.py` | `active_venues` | sesión |
+| POST `/sedes` | `venues/routes.py` | `create_venue` | admin |
+| PUT `/sedes/{sede_id}` | `venues/routes.py` | `update_venue` | admin |
+| DELETE `/sedes/{sede_id}` | `venues/routes.py` | `deactivate_venue` | admin |
+| GET `/espacios/catalogo` | `spaces/routes.py` | `catalog` | sesión |
+| GET `/espacios` | `spaces/routes.py` | `active_spaces` | sesión |
+| GET `/espacios/nombre` | `spaces/routes.py` | `suggested_name` | admin |
+| POST `/espacios` | `spaces/routes.py` | `create_space` | admin |
+| PUT `/espacios/{espacio_id}` | `spaces/routes.py` | `update_space` | admin |
+| DELETE `/espacios/{espacio_id}` | `spaces/routes.py` | `deactivate_space` | admin |
+| GET `/espacios/{espacio_id}/horarios` | `availability/routes.py` | `available_slots` | sesión |
+| GET `/espacios/disponibles` | `availability/routes.py` | `available_spaces` | sesión |
 | GET `/reservas` | `reservas/rutas.py` | `mis_reservas` | sesión |
-| POST `/reservas` | `reservas/rutas.py` | `reservar` | usuario (admin: 403) |
+| POST `/reservas` | `reservas/rutas.py` | `book` | usuario (admin: 403) |
 | POST `/reservas/{id}/cancelar` | `reservas/rutas.py` | `cancelar_reserva`, después despacha el aviso | usuario, sólo sus reservas (una ajena da 404) |
 | POST `/reservas/{id}/modificar` | `reservas/rutas.py` | `modificar_reserva` | usuario |
 | GET `/reservas/todas` | `reservas/rutas.py` | `historial_global` | admin |
 | GET `/reservas/todas/{id}` | `reservas/rutas.py` | `detalle_admin` | admin |
 | POST `/reservas/{id}/anular` | `reservas/rutas.py` | `anular_reserva`, después despacha el aviso | admin |
-| PUT `/dispositivos` | `notificaciones/rutas.py` | `registrar_dispositivo` | usuario |
-| POST `/dispositivos/baja` | `notificaciones/rutas.py` | `dar_de_baja_dispositivo` | sesión |
-| GET `/notificaciones` | `notificaciones/rutas.py` | `mis_notificaciones` | sesión |
-| POST `/notificaciones/leer-todas` | `notificaciones/rutas.py` | `marcar_todas` | sesión |
-| POST `/notificaciones/{id}/leer` | `notificaciones/rutas.py` | `marcar_leida` | sesión |
+| PUT `/dispositivos` | `notifications/routes.py` | `register_device` | usuario |
+| POST `/dispositivos/baja` | `notifications/routes.py` | `deactivate_device` | sesión |
+| GET `/notificaciones` | `notifications/routes.py` | `my_notifications` | sesión |
+| POST `/notificaciones/leer-todas` | `notifications/routes.py` | `mark_all_read` | sesión |
+| POST `/notificaciones/{id}/leer` | `notifications/routes.py` | `mark_read` | sesión |
 
 ### Configuración de la API
 
@@ -202,7 +205,7 @@ si el rol no es `admin`.
 | `PRUEBAS` | false | montar `/_pruebas` (sólo junto al emulador) |
 | `VERSION` | la del `pyproject.toml` | lo que informan `/health` y el log |
 
-Fuera de `Config`: `FIREBASE_AUTH_EMULATOR_HOST` (emulador de Auth), `GOOGLE_APPLICATION_CREDENTIALS` (cuenta de servicio
+Fuera de `Settings`: `FIREBASE_AUTH_EMULATOR_HOST` (emulador de Auth), `GOOGLE_APPLICATION_CREDENTIALS` (cuenta de servicio
 por archivo), `ADMIN_CONTRASENA` (sólo `sembrar_admin`) y `TEST_DATABASE_URL` (sólo tests).
 
 ### Migraciones
@@ -451,8 +454,8 @@ tiene una API intermedia para simular cortes.
 | `test.sh` | ruff, mypy y pytest de la API; `flutter analyze`, `dart format` y `flutter test` de la app |
 | `e2e.sh` | levanta el emulador de Auth y la API sobre una base `*_test` propia, migra, siembra un admin y corre `integration_test` en el emulador Android |
 
-Comandos de la API: `python -m app.modules.usuarios.sembrar_admin` (crear o promover el primer administrador) y
-`python -m app.modules.notificaciones.barrido --una-vez` (una pasada de recordatorios y avisos).
+Comandos de la API: `python -m app.modules.users.seed_admin` (crear o promover el primer administrador) y
+`python -m app.modules.notifications.sweep --una-vez` (una pasada de recordatorios y avisos).
 
 ## `specs/` y el método de trabajo
 

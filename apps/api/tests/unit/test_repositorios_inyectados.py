@@ -5,11 +5,11 @@ from uuid import UUID
 
 from fastapi.testclient import TestClient
 
-from app.main import crear_app
-from app.modules.sedes.reglas import Sede
-from app.modules.sedes.repositorio import repositorio_sedes
-from app.modules.sesion.perfil import Perfil
-from app.modules.sesion.usuario_actual import usuario_actual
+from app.main import create_app
+from app.modules.session.current_user import current_user as usuario_actual
+from app.modules.session.profile import Profile as Perfil
+from app.modules.venues.repository import venue_repository as repositorio_sedes
+from app.modules.venues.rules import Venue as Sede
 
 INTERFAZ = Path(__file__).resolve().parents[2] / "app" / "interfaz"
 # Los comandos de consola no tienen pedido HTTP: arman sus piezas ellos mismos.
@@ -17,14 +17,14 @@ COMANDOS = {"barrido.py", "sembrar_admin.py"}
 
 
 def _construcciones(archivo: Path) -> list[str]:
-    """Lo que el archivo construye de infraestructura: `…Sql(…)` y `ProveedorFirebase(…)`."""
+    """Lo que el archivo construye de infraestructura: `…Sql(…)` y `FirebaseProvider(…)`."""
     arbol = ast.parse(archivo.read_text(encoding="utf-8"))
     return [
         f"{archivo.name}:{nodo.lineno} {nodo.func.id}"
         for nodo in ast.walk(arbol)
         if isinstance(nodo, ast.Call)
         and isinstance(nodo.func, ast.Name)
-        and (nodo.func.id.endswith("Sql") or nodo.func.id == "ProveedorFirebase")
+        and (nodo.func.id.endswith("Sql") or nodo.func.id == "FirebaseProvider")
     ]
 
 
@@ -37,34 +37,34 @@ def test_ninguna_ruta_construye_un_repositorio_ni_un_servicio_de_infraestructura
 
 
 class _SedesDePrueba:
-    def activas(self) -> list[Sede]:
+    def active(self) -> list[Sede]:
         return [
             Sede(
                 id=UUID(int=7),
-                nombre="Sede de prueba",
-                calle="Calle",
-                altura=123,
-                apertura=time(8),
-                cierre=time(22),
-                dias=(1, 2, 3, 4, 5),
-                canchas=2,
-                deportes=("futbol",),
+                name="Sede de prueba",
+                street="Calle",
+                street_number=123,
+                opens_at=time(8),
+                closes_at=time(22),
+                open_days=(1, 2, 3, 4, 5),
+                space_count=2,
+                sports=("futbol",),
             )
         ]
 
 
 def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza() -> None:
     """una ruta recibe su repositorio por dependencia y un test lo reemplaza @ARQ-01-S2"""
-    app = crear_app()
+    app = create_app()
     app.dependency_overrides[usuario_actual] = lambda: Perfil(
         id=UUID(int=1),
         uid="uid-prueba",
-        nombre="Ana",
-        apellido="Díaz",
-        correo="ana@club.test",
-        rol="usuario",
+        first_name="Ana",
+        last_name="Díaz",
+        email="ana@club.test",
+        role="usuario",
         dni="30111222",
-        fecha_nacimiento=date(1990, 1, 1),
+        birth_date=date(1990, 1, 1),
     )
     app.dependency_overrides[repositorio_sedes] = _SedesDePrueba
 
@@ -80,9 +80,9 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     from fastapi import Depends, FastAPI
 
-    from app.modules.notificaciones.repositorio import NotificacionesSql, repositorio_notificaciones
-    from app.modules.reservas.repositorio import ReservasSql, repositorio_reservas
-    from app.shared.db import conexion
+    from app.modules.bookings.repository import BookingsSql, bookings_repository
+    from app.modules.notifications.repository import NotificationsSql, notifications_repository
+    from app.shared.db import connection
 
     app = FastAPI()
     conexiones: list[object] = []
@@ -94,12 +94,12 @@ def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> Non
 
     @app.get("/dos")
     def dos(
-        reservas: Annotated[ReservasSql, Depends(repositorio_reservas)],
-        avisos: Annotated[NotificacionesSql, Depends(repositorio_notificaciones)],
+        reservas: Annotated[BookingsSql, Depends(bookings_repository)],
+        avisos: Annotated[NotificationsSql, Depends(notifications_repository)],
     ) -> bool:
         return reservas._conn is avisos._conn
 
-    app.dependency_overrides[conexion] = conexion_de_prueba
+    app.dependency_overrides[connection] = conexion_de_prueba
 
     respuesta = TestClient(app).get("/dos")
 

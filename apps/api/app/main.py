@@ -5,52 +5,60 @@ from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 
-from app import pruebas, salud
-from app.modules import espacios, horarios, notificaciones, recuperacion, reservas, sedes, usuarios
-from app.modules.notificaciones import barrer_cada
-from app.shared import entradas, errores_http
+from app import e2e_support, health
+from app.modules import (
+    availability,
+    bookings,
+    notifications,
+    password_recovery,
+    spaces,
+    users,
+    venues,
+)
+from app.modules.notifications import sweep_every
+from app.shared import http_errors, input_validation
+from app.shared.body_limit import BodyLimit
 from app.shared.config import config
-from app.shared.cuerpo import CuerpoAcotado
 
 
 @asynccontextmanager
-async def _ciclo_de_vida(_: FastAPI) -> AsyncIterator[None]:
-    barrido = (
-        asyncio.create_task(barrer_cada(config.recordatorios_cada))
-        if config.recordatorios_cada > 0
+async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
+    sweep = (
+        asyncio.create_task(sweep_every(config.reminders_every))
+        if config.reminders_every > 0
         else None
     )
     try:
         yield
     finally:
-        if barrido is not None:
-            barrido.cancel()
+        if sweep is not None:
+            sweep.cancel()
             with suppress(asyncio.CancelledError):
-                await barrido
+                await sweep
 
 
-def crear_app() -> FastAPI:
+def create_app() -> FastAPI:
     app = FastAPI(
         title="ClubNahuelMosse API",
         version=config.version,
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
-        lifespan=_ciclo_de_vida,
+        lifespan=_lifespan,
     )
-    app.add_middleware(CuerpoAcotado)
-    entradas.instalar(app)
-    errores_http.instalar(app)
-    app.include_router(salud.router)
-    app.include_router(usuarios.router)
-    app.include_router(recuperacion.router)
-    app.include_router(sedes.router)
-    app.include_router(espacios.router)
-    app.include_router(horarios.router)
-    app.include_router(reservas.router)
-    app.include_router(notificaciones.router)
-    # El buzón sólo se abre contra el emulador, nunca en producción.
-    if config.pruebas and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
-        app.include_router(pruebas.router)
+    app.add_middleware(BodyLimit)
+    input_validation.install(app)
+    http_errors.install(app)
+    app.include_router(health.router)
+    app.include_router(users.router)
+    app.include_router(password_recovery.router)
+    app.include_router(venues.router)
+    app.include_router(spaces.router)
+    app.include_router(availability.router)
+    app.include_router(bookings.router)
+    app.include_router(notifications.router)
+    # The outbox only opens against the emulator, never in production.
+    if config.e2e_testing and os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
+        app.include_router(e2e_support.router)
     return app
 
 
-app = crear_app()
+app = create_app()

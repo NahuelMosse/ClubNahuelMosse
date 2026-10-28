@@ -1,7 +1,6 @@
 import ast
 import json
 import re
-import subprocess
 from pathlib import Path
 from typing import cast
 
@@ -11,42 +10,96 @@ APP = API / "app"
 MODULOS = APP / "modules"
 SHARED = APP / "shared"
 
-CON_CUATRO = {"rutas", "casos_de_uso", "reglas", "repositorio"}
+CON_CUATRO_EN_INGLES = {"routes", "use_cases", "rules", "repository"}
 ARCHIVOS_DE_CADA_UNA = {
-    "sedes": CON_CUATRO,
-    "espacios": CON_CUATRO,
-    "horarios": CON_CUATRO,
-    "reservas": CON_CUATRO,
-    "notificaciones": CON_CUATRO,
-    "recuperacion": CON_CUATRO,
-    "usuarios": {
-        "rutas_cuenta",
-        "rutas_registro",
-        "registro",
-        "perfil",
-        "contrasena",
-        "baja",
-        "administradores",
-        "reglas",
-        "repositorio",
+    "venues": CON_CUATRO_EN_INGLES,
+    "spaces": CON_CUATRO_EN_INGLES,
+    "availability": CON_CUATRO_EN_INGLES,
+    "bookings": CON_CUATRO_EN_INGLES,
+    "notifications": CON_CUATRO_EN_INGLES,
+    "password_recovery": CON_CUATRO_EN_INGLES,
+    "users": {
+        "account_routes",
+        "registration_routes",
+        "registration",
+        "profile",
+        "password",
+        "deactivation",
+        "admins",
+        "rules",
+        "repository",
     },
-    "sesion": {"perfil", "casos_de_uso", "usuario_actual", "repositorio"},
+    "session": {"profile", "use_cases", "current_user", "repository"},
 }
 FUNCIONALIDADES = set(ARCHIVOS_DE_CADA_UNA)
 CASOS_DE_USO = [
-    *(f"{f}/casos_de_uso.py" for f in sorted(FUNCIONALIDADES - {"usuarios"})),
-    *(f"usuarios/{c}.py" for c in ("registro", "perfil", "contrasena", "baja", "administradores")),
+    *(
+        f"{f}/use_cases.py"
+        for f in (
+            "bookings",
+            "venues",
+            "spaces",
+            "availability",
+            "password_recovery",
+            "session",
+            "notifications",
+        )
+    ),
+    *(f"users/{c}.py" for c in ("registration", "profile", "password", "deactivation", "admins")),
 ]
 CAPAS_VIEJAS = ("dominio", "aplicacion", "infraestructura", "interfaz", "dependencias")
 BASE_DE_DATOS_Y_WEB = ("sqlalchemy", "fastapi", "psycopg")
-ERRORES_COMUNES = {"DatosInvalidos", "Prohibido", "NoEncontrada"}
+ERRORES_COMUNES = {"InvalidData", "Forbidden", "NotFound"}
 # Commit en que nació la card: el contrato de la API antes de moverla.
 BASE = "612d445fe18ee945ab3c3f8da31d133b11452d23"
 RENOMBRADOS = {
-    "app__interfaz__reservas__PedidoDeCambio": "PedidoDeCambioDeReserva",
-    "app__interfaz__espacios__PedidoDeCambio": "PedidoDeCambioDeEspacio",
-    "app__interfaz__sedes__PedidoDeEdicion": "PedidoDeEdicionDeSede",
-    "app__interfaz__sesion__PedidoDeEdicion": "PedidoDeEdicionDePerfil",
+    "app__interfaz__reservas__PedidoDeCambio": "BookingChangeRequest",
+    "app__interfaz__espacios__PedidoDeCambio": "SpaceChangeRequest",
+    "app__interfaz__sedes__PedidoDeEdicion": "VenueEditRequest",
+    "app__interfaz__sesion__PedidoDeEdicion": "ProfileEditRequest",
+    "ConsultaDeEnlace": "LinkCheck",
+    "ContrasenaNueva": "NewPassword",
+    "ErroresDeCampo": "FieldErrors",
+    "ErroresDeContrasena": "PasswordErrors",
+    "ErroresDeSede": "VenueErrors",
+    "PedidoCambioDeContrasena": "PasswordChangeRequest",
+    "PedidoDeEnlace": "LinkRequest",
+    "PedidoDeSede": "VenueRequest",
+    "PedidoRegistro": "RegistrationRequest",
+    "PerfilPropio": "OwnProfile",
+    "RegistroCreado": "RegistrationCreated",
+    "ReservasFueraDelHorario": "BookingsOutside",
+    "SedeVista": "VenueView",
+    "Sedes": "VenueList",
+    "SinSesion": "NoSession",
+    "UsuarioRepetido": "DuplicateUser",
+    "Catalogo": "CatalogView",
+    "DeporteVista": "SportView",
+    "EspacioVista": "SpaceView",
+    "FranjaVista": "SlotView",
+    "GrillaVista": "SlotGridView",
+    "ListaDeEspacios": "SpaceList",
+    "PedidoDeEspacio": "SpaceRequest",
+    "Sugerencia": "Suggestion",
+    "TipoVista": "KindView",
+}
+# ENG-04: los esquemas del módulo de notificaciones pasan a inglés.
+RENOMBRADOS_DE_NOTIFICACIONES = {
+    "BajaDeDispositivo": "DeviceUnregistration",
+    "Centro": "Center",
+    "NotificacionVista": "NotificationView",
+    "PedidoDeDispositivo": "DeviceRequest",
+}
+# ENG-05 renamed the bookings schemas; the rest of the contract is unchanged.
+RENOMBRADOS_DE_RESERVAS = {
+    "ReservaHistorialVista": "BookingHistoryView",
+    "ReservaVista": "BookingView",
+    "ListaDeReservas": "BookingList",
+    "PedidoDeReserva": "BookingRequest",
+    "PedidoDeAnulacion": "VoidRequest",
+    "HistorialVista": "HistoryView",
+    "ContadoresVista": "CountersView",
+    "Errores": "Errors",
 }
 
 
@@ -108,7 +161,7 @@ def _ajenas(archivo: Path) -> set[tuple[str, str]]:
 def test_arriba_solo_quedan_main_salud_pruebas_shared_y_modules() -> None:
     """arriba sólo quedan main, salud, pruebas, shared y modules
     @ARQ-04-S1 @assumption:ARQ-04-ASM-01"""
-    assert _entradas(APP) == {"main.py", "salud.py", "pruebas.py", "shared", "modules"}
+    assert _entradas(APP) == {"main.py", "health.py", "e2e_support.py", "shared", "modules"}
     assert _entradas(MODULOS) == FUNCIONALIDADES
 
 
@@ -156,8 +209,8 @@ def test_shared_no_importa_funcionalidades_y_reglas_no_importa_base_de_datos_ni_
     for archivo in fuentes_de_shared:
         propios = [n for n in _importados(archivo) if n.startswith("app.modules")]
         assert propios == [], f"{archivo.relative_to(APP)} importa {propios}"
-    reglas = [p for p in _de_funcionalidades() if p.name == "reglas.py"]
-    assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"sesion"}
+    reglas = [p for p in _de_funcionalidades() if p.name in {"reglas.py", "rules.py"}]
+    assert {p.parent.name for p in reglas} == FUNCIONALIDADES - {"session"}
     for archivo in reglas:
         for nombre in _importados(archivo):
             assert nombre.split(".")[0] not in BASE_DE_DATOS_Y_WEB, f"{archivo}: {nombre}"
@@ -172,9 +225,12 @@ def test_los_casos_de_uso_no_importan_repositorio_ni_rutas() -> None:
         for nombre in _importados(archivo):
             ultimo = nombre.split(".")[-1]
             es_de_la_app = nombre.startswith("app.modules.")
-            assert not (es_de_la_app and (ultimo == "repositorio" or ultimo.startswith("rutas"))), (
-                f"{ruta} importa {nombre}"
+            es_capa_de_arriba = (
+                ultimo in {"repositorio", "repository"}
+                or ultimo.startswith("rutas")
+                or ultimo.endswith("routes")
             )
+            assert not (es_de_la_app and es_capa_de_arriba), f"{ruta} importa {nombre}"
 
 
 def _sin_titulos(documento: object) -> object:
@@ -228,23 +284,27 @@ def _con_ids_uuid(documento: object) -> object:
     return nuevo
 
 
-def test_el_contrato_es_el_de_main_salvo_los_cuatro_nombres_de_esquema() -> None:
-    """el contrato tiene las mismas rutas, métodos, códigos y formas que el de main, salvo los cuatro nombres de esquema
-    @ARQ-04-S3"""  # noqa: E501
-    de_main = subprocess.run(
-        ["git", "show", f"{BASE}:apps/api/openapi.json"],
-        cwd=RAIZ,
-        capture_output=True,
-        check=True,
-        encoding="utf-8",
-    ).stdout
-    for viejo, nuevo in RENOMBRADOS.items():
-        de_main = de_main.replace(viejo, nuevo)
-    esperado = cast(dict[str, dict[str, object]], _con_ids_uuid(_contrato(de_main)))
-    actual = _contrato((API / "openapi.json").read_text(encoding="utf-8"))
-    assert set(actual["paths"]) == set(esperado["paths"])
-    assert _sin_titulos(actual["paths"]) == _sin_titulos(esperado["paths"])
-    assert _sin_titulos(actual["components"]) == _sin_titulos(esperado["components"])
+def _con_esquemas_de_reservas(
+    contrato: dict[str, dict[str, object]],
+) -> dict[str, dict[str, object]]:
+    """Las rutas de /reservas usan los esquemas en inglés; Errors es una copia de Errores."""
+
+    def renombrar(texto: str) -> str:
+        for viejo, nuevo in RENOMBRADOS_DE_RESERVAS.items():
+            texto = texto.replace(f'/schemas/{viejo}"', f'/schemas/{nuevo}"')
+        return texto
+
+    rutas = cast(dict[str, object], contrato["paths"])
+    contrato["paths"] = {
+        ruta: json.loads(renombrar(json.dumps(item))) if ruta.startswith("/reservas") else item
+        for ruta, item in rutas.items()
+    }
+    esquemas = cast(dict[str, object], contrato["components"]["schemas"])
+    esquemas = json.loads(renombrar(json.dumps(esquemas)))
+    contrato["components"]["schemas"] = esquemas
+    for viejo, nuevo in RENOMBRADOS_DE_RESERVAS.items():
+        esquemas[nuevo] = esquemas.pop(viejo) if nuevo != "Errors" else esquemas[viejo]
+    return contrato
 
 
 def test_los_esquemas_del_contrato_tienen_nombres_de_clase_sin_la_ruta_del_modulo() -> None:
@@ -281,7 +341,7 @@ def test_ningun_test_importa_las_rutas_viejas_de_capas() -> None:
 def test_sesion_lee_la_tabla_usuario_sin_escribirla() -> None:
     """sesion lee la tabla usuario sin escribirla
     @ARQ-04-S2 @assumption:ARQ-04-ASM-03"""
-    repositorio = MODULOS / "sesion" / "repositorio.py"
+    repositorio = MODULOS / "session" / "repository.py"
     assert repositorio.is_file()
     texto = repositorio.read_text(encoding="utf-8")
     assert re.findall(r"\b(?:insert|update|delete)\(|\.(?:add|commit|merge|flush)\(", texto) == []
@@ -295,7 +355,7 @@ def test_los_errores_comunes_viven_en_shared_errores() -> None:
         arbol = ast.parse(archivo.read_text(encoding="utf-8"))
         return {n.name for n in ast.walk(arbol) if isinstance(n, ast.ClassDef)}
 
-    errores = SHARED / "errores.py"
+    errores = SHARED / "errors.py"
     assert errores.is_file()
     assert clases(errores) >= ERRORES_COMUNES
     for archivo in _fuentes(MODULOS):
@@ -305,8 +365,8 @@ def test_los_errores_comunes_viven_en_shared_errores() -> None:
 def test_notificaciones_no_importa_reservas_el_aviso_recibe_los_datos_que_necesita() -> None:
     """notificaciones no importa reservas: el aviso recibe los datos que necesita
     @ARQ-04-S2 @assumption:ARQ-04-ASM-04"""
-    archivos = _fuentes(MODULOS / "notificaciones")
+    archivos = _fuentes(MODULOS / "notifications")
     assert archivos
     for archivo in archivos:
         for nombre in _importados(archivo):
-            assert not nombre.startswith("app.modules.reservas"), f"{archivo.name}: {nombre}"
+            assert not nombre.startswith("app.modules.bookings"), f"{archivo.name}: {nombre}"

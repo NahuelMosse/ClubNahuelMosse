@@ -19,7 +19,7 @@ uv sync
 
 La configuración llega por variables de entorno. `app/shared/config.py` también lee un archivo `.env`
 local, que no se versiona; `.env.example` lista las variables. `FIREBASE_AUTH_EMULATOR_HOST`,
-`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_CONTRASENA` y `TEST_DATABASE_URL` se leen sólo del
+`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_PASSWORD` y `TEST_DATABASE_URL` se leen sólo del
 entorno del proceso: en el `.env` no tienen efecto.
 
 | Variable | Qué es |
@@ -27,17 +27,17 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `DATABASE_URL` | Conexión a PostgreSQL, `postgresql+psycopg://<usuario>:<contraseña>@host:puerto/base`. Por defecto, usuario, contraseña y base `club` en `localhost:5432` |
 | `FIREBASE_PROJECT_ID` | Identificador del proyecto de Firebase que emite los tokens |
 | `FIREBASE_API_KEY` | Clave web del proyecto; la API la usa para comprobar contraseñas. No hace falta con el emulador |
-| `URL_PUBLICA` | Dirección pública de esta API; los enlaces de los correos apuntan ahí |
-| `CORREO_MODO` | `smtp` (por defecto) envía los correos por SMTP; `brevo` los envía por la API de Brevo; `buzon` los deja en la tabla `correo_saliente` y sólo sirve para desarrollo |
-| `BREVO_API_KEY` | Clave de la API de Brevo; hace falta con `CORREO_MODO=brevo` |
-| `FIREBASE_CREDENCIALES_JSON` | Contenido del JSON de la cuenta de servicio de Firebase, alternativa a `GOOGLE_APPLICATION_CREDENTIALS` |
-| `SMTP_HOST`, `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | Servidor de correo saliente con `CORREO_MODO=smtp` |
-| `PRUEBAS` | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
-| `RECORDATORIOS_CADA` | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
+| `PUBLIC_URL` (o `URL_PUBLICA`) | Dirección pública de esta API; los enlaces de los correos apuntan ahí |
+| `EMAIL_MODE` (o `CORREO_MODO`) | `smtp` (por defecto) envía los correos por SMTP; `brevo` los envía por la API de Brevo; `buzon` los deja en la tabla `correo_saliente` y sólo sirve para desarrollo |
+| `BREVO_API_KEY` | Clave de la API de Brevo; hace falta con `EMAIL_MODE=brevo` |
+| `FIREBASE_CREDENTIALS_JSON` (o `FIREBASE_CREDENCIALES_JSON`) | Contenido del JSON de la cuenta de servicio de Firebase, alternativa a `GOOGLE_APPLICATION_CREDENTIALS` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Servidor de correo saliente con `EMAIL_MODE=smtp`; cada uno también se lee como `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` |
+| `E2E_TESTING` (o `PRUEBAS`) | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
+| `REMINDERS_EVERY` (o `RECORDATORIOS_CADA`) | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. En producción hace falta ésta o `FIREBASE_CREDENCIALES_JSON`: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
 | `FIREBASE_CREDENCIALES_JSON` | El contenido del JSON de la cuenta de servicio, para plataformas que no montan archivos (Render, con un Blueprint). Si `GOOGLE_APPLICATION_CREDENTIALS` también está definida, manda el JSON |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
-| `ADMIN_CONTRASENA` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
+| `ADMIN_PASSWORD` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
 | `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
 | `VERSION` | Versión que informa `/health` y que lleva cada línea del log; por defecto sale del `pyproject.toml` |
 
@@ -50,7 +50,7 @@ uv run alembic upgrade head
 La cuenta de administrador no se registra desde la app; se siembra:
 
 ```sh
-ADMIN_CONTRASENA=<contraseña> uv run python -m app.modules.usuarios.sembrar_admin \
+ADMIN_PASSWORD=<contraseña> uv run python -m app.modules.users.seed_admin \
   --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
 ```
 
@@ -79,12 +79,12 @@ después de cualquier cambio de rutas o modelos:
 
 ```sh
 cd apps/api
-FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import crear_app; pathlib.Path('openapi.json').write_text(json.dumps(crear_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
+FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import create_app; pathlib.Path('openapi.json').write_text(json.dumps(create_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
 ```
 
 ## Catálogo de deportes
 
-El catálogo es fijo y vive en `app/modules/espacios/reglas.py`; la app lo pide con `GET /espacios/catalogo`.
+El catálogo es fijo y vive en `app/modules/spaces/rules.py`; la app lo pide con `GET /espacios/catalogo`.
 Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
 (B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
 
@@ -127,7 +127,7 @@ barrido corre como un comando de una pasada, para que lo dispare un cron o una t
 
 ```sh
 cd apps/api
-uv run python -m app.modules.notificaciones.barrido --una-vez
+uv run python -m app.modules.notifications.sweep --una-vez
 ```
 
 Termina con código 0 si el barrido corrió y 1 si falló. Quién lo dispara no está decidido:
@@ -183,7 +183,7 @@ El `render.yaml` de la raíz del repo describe todo: un web service de Python pa
    base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_CONTRASENA=<contraseña>    uv run python -m app.modules.usuarios.sembrar_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_PASSWORD=<contraseña>    uv run python -m app.modules.users.seed_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
    ```
 
 6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y

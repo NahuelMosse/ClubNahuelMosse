@@ -85,7 +85,7 @@ echo "e2e: administrador $ADMIN_CORREO"
 cd "$raiz/apps/api"
 DATABASE_URL="$E2E_DATABASE_URL" FIREBASE_AUTH_EMULATOR_HOST="127.0.0.1:$AUTH_PORT" \
   FIREBASE_PROJECT_ID=demo-clubnahuelmosse ADMIN_CONTRASENA="$ADMIN_CONTRASENA" \
-  uv run python -m app.modules.usuarios.sembrar_admin --correo "$ADMIN_CORREO" \
+  uv run python -m app.modules.users.seed_admin --correo "$ADMIN_CORREO" \
   --nombre Administración --apellido Club --dni 20000001 --nacimiento 1980-01-01 >/dev/null
 
 echo "e2e: API en $API_PORT"

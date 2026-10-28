@@ -45,7 +45,7 @@ Dentro de la API (`apps/api/app`): una carpeta por funcionalidad en `modules/` (
 de capas la hacen cumplir `tests/unit/test_arquitectura_funcionalidades.py` y
 `tests/unit/test_capas_funcionalidades.py`. El barrido de recordatorios corre como tarea de
 fondo dentro del proceso web (`app/main.py`, `_ciclo_de_vida`) y también como comando de una pasada
-(`python -m app.modules.notificaciones.barrido --una-vez`).
+(`python -m app.modules.notifications.sweep --una-vez`).
 
 ## Data
 
@@ -67,7 +67,7 @@ flowchart LR
 - **Environments:** hay dos, local y Render; no hay staging.
   - **local:** la API con `uvicorn` contra una Postgres local y el emulador de Firebase Auth (`firebase.json`, puerto 9099,
     `npm run emuladores`), `CORREO_MODO=buzon`, sin credenciales de Firebase: el canal push es el nulo
-    (`modules/notificaciones/push.py`, `CanalNulo`). La app apunta a `http://10.0.2.2:8000` con `AUTH_EMULADOR`. Los tests usan
+    (`modules/notifications/push.py`, `NullChannel`). La app apunta a `http://10.0.2.2:8000` con `AUTH_EMULADOR`. Los tests usan
     una base `*_test` (`apps/api/README.md`, «Probar»).  - **Render:** `render.yaml` define el web service Python `clubnahuelmosse-api` y la base `clubnahuelmosse-db`, ambos
     `plan: free`, y es la única fuente de la configuración del despliegue. El despliegue no se hizo todavía: el
     escenario RNF-01-H06-01 se saltea sin `API_URL_NUBE`. El health check es `/health`, que no toca la base ni Firebase (`salud.py`).
@@ -125,7 +125,7 @@ Una fila por llamada externa. Los tiempos salen del código; lo que el código n
 | PostgreSQL (`app/shared/db.py`) | los valores por defecto del driver y del pool | sin reintentos; `pool_pre_ping=True` comprueba la conexión antes de usarla | no | ninguno | si falla, el pedido responde 500 |
 | Firebase Authentication: SDK de administración y API REST de Identity Toolkit (`identidad.py`) | SDK: `httpTimeout` de 4 s; REST: `timeout=4` s de `urllib`; la verificación de la firma de un token, `not verified` | SDK: el cliente de `firebase-admin` reintenta una vez ante errores de conexión o de lectura y hasta 4 veces ante 500 o 503, con espera exponencial; REST: ninguno | no | ninguno | si falla, un token inválido, vencido o revocado da 401; si Firebase no responde, el pedido da 500; `TOO_MANY_ATTEMPTS` da 429; crear cuenta o cambiar contraseña falla el pedido |
 | Firebase Cloud Messaging (`push.py`) | `httpTimeout` de 10 s | el cliente de `firebase-admin` (arriba); un aviso `fallida` no se reintenta | no | sin credenciales, el canal nulo deja el aviso como `sin_canal` | si falla, el aviso queda `fallida` y la persona lo ve igual en el centro de avisos de la app; el token que FCM rechaza como inválido se da de baja; la reserva no cambia |
-| SMTP (`app/modules/recuperacion/correo.py`) | 10 s | sin reintentos | no | ninguno | si falla, el error va al log sin la dirección y la respuesta es la misma que para un correo sin cuenta; la persona no recibe el enlace y puede pedir otro. STARTTLS con `ssl.create_default_context()`: verifica certificado y nombre |
+| SMTP (`app/shared/email.py`) | 10 s | sin reintentos | no | ninguno | si falla, el error va al log sin la dirección y la respuesta es la misma que para un correo sin cuenta; la persona no recibe el enlace y puede pedir otro. STARTTLS con `ssl.create_default_context()`: verifica certificado y nombre |
 | Firebase Authentication desde la app (`firebase_auth`) | la app corta cada pedido a la API a los 30 s (`lib/api/cliente_api.dart`); al retomar la sesión, 3 s (`lib/sesion/sesion.dart`) | ninguno automático; cada pantalla ofrece reintentar | no | ninguno | si falla, se ve el aviso de error de red con reintento; retomar la sesión sin red no la cierra |
 
 ## Threat model
@@ -147,7 +147,7 @@ Cuatro superficies.
 
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
-| T-07 | Spoofing | otra app abre el enlace de recuperación del correo | mitigate: el código va después del «#» y no llega al servidor; vigencia de 30 minutos y un solo uso (`modules/recuperacion/casos_de_uso.py`) | autor del repo | `tests/integracion/test_recuperacion_api.py` |
+| T-07 | Spoofing | otra app abre el enlace de recuperación del correo | mitigate: el código va después del «#» y no llega al servidor; vigencia de 30 minutos y un solo uso (`modules/password_recovery/use_cases.py`) | autor del repo | `tests/integracion/test_recuperacion_api.py` |
 | T-08 | Tampering | modificar el APK o las claves que lleva | accept: las `--dart-define` de Firebase son identificadores públicos del proyecto, no secretos; el APK `release` se firma con la clave de depuración mientras no se configure otra (`apps/mobile/README.md`) | autor del repo | `not verified` |
 | T-09 | Repudiation | la app no deja rastro de sus fallos | mitigate en parte: `errores_no_manejados.dart` captura los errores no manejados, pero sólo los imprime en el teléfono | autor del repo | `not verified` |
 | T-10 | Information disclosure | datos de la sesión en el teléfono | mitigate: `shared_preferences` guarda sólo la apariencia, el permiso de avisos y el token de FCM; el perfil no se guarda; la sesión la guarda `firebase_auth` | autor del repo | `not verified` (no se inspeccionó el almacenamiento del teléfono) |
@@ -209,7 +209,7 @@ una persona; lo que sigue es lo que el sistema hace hoy.
 | nombre, apellido (`usuario.nombre`, `usuario.apellido`) | socios y administradores | identifying | identificar a la persona en el club | pendiente de una persona (consentimiento al registrarse: `not verified`) | `usuario`; Firebase no los guarda | sin plazo | no se borra: baja lógica |
 | DNI (`usuario.dni`) | socios y administradores | identifying | impedir cuentas duplicadas y buscar socios | pendiente de una persona | `usuario`; el log no lo guarda (sin query string) | sin plazo; la baja libera el DNI para otra cuenta | no se borra: baja lógica |
 | fecha de nacimiento (`usuario.fecha_nacimiento`) | socios y administradores | identifying | requisito del perfil del enunciado | pendiente de una persona | `usuario` | sin plazo | no se borra |
-| correo (`usuario.correo`) | socios y administradores | identifying | iniciar sesión y recuperar la contraseña | pendiente de una persona | `usuario`, Firebase Authentication, el servidor de correo y `correo_saliente` en modo buzón; no va al log | sin plazo | la baja borra la cuenta de Firebase (`modules/usuarios/baja.py`); en la base queda |
+| correo (`usuario.correo`) | socios y administradores | identifying | iniciar sesión y recuperar la contraseña | pendiente de una persona | `usuario`, Firebase Authentication, el servidor de correo y `correo_saliente` en modo buzón; no va al log | sin plazo | la baja borra la cuenta de Firebase (`modules/users/deactivation.py`); en la base queda |
 | contraseña | socios y administradores | sensitive | autenticar | pendiente de una persona | sólo en Firebase Authentication; la base guarda `contrasena_cambiada_en` | la gestiona Firebase | la baja borra la cuenta de Firebase |
 | token de dispositivo (`dispositivo.token`) | socios | identifying | enviar avisos | permiso del sistema operativo guardado en `dispositivo.permiso` | `dispositivo`; Firebase Cloud Messaging | sin plazo; se da de baja al cerrar sesión | baja lógica |
 | reservas y avisos (`reserva`, `notificacion`) | socios | identifying | historial y recordatorios | pendiente de una persona | `reserva`, `notificacion`, `notificacion_reserva` | sin plazo; el historial se conserva a propósito | no se borra |
