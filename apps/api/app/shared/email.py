@@ -20,8 +20,11 @@ SENDER_NAME = "Club Nahuel Mosse"
 def _to_outbox(message: Message) -> None:
     with engine().begin() as conn:
         conn.execute(
-            text("INSERT INTO correo_saliente (para, asunto, cuerpo) VALUES (:p, :a, :c)"),
-            {"p": message.recipient, "a": message.subject, "c": message.body},
+            text(
+                "INSERT INTO outgoing_email (recipient, subject, body)"
+                " VALUES (:recipient, :subject, :body)"
+            ),
+            {"recipient": message.recipient, "subject": message.subject, "body": message.body},
         )
 
 

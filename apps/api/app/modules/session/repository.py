@@ -6,10 +6,11 @@ from sqlalchemy import Connection, text
 
 from app.modules.session.profile import Profile
 from app.shared.db import DbConnection
+from app.shared.stored_values import contract
 
 
 class ProfilesSql:
-    """Reads the profile from the `usuario` table; does not write it."""
+    """Reads the profile from the `app_user` table; does not write it."""
 
     def __init__(self, conn: Connection) -> None:
         self._conn = conn
@@ -17,9 +18,9 @@ class ProfilesSql:
     def active_profile(self, uid: str) -> Profile | None:
         row = self._conn.execute(
             text(
-                "SELECT id, firebase_uid, nombre, apellido, correo, rol, dni, fecha_nacimiento"
-                " FROM usuario"
-                " WHERE firebase_uid = :uid AND activo"
+                "SELECT id, firebase_uid, first_name, last_name, email, role, dni, birth_date"
+                " FROM app_user"
+                " WHERE firebase_uid = :uid AND active"
             ),
             {"uid": uid},
         ).first()
@@ -29,12 +30,12 @@ class ProfilesSql:
         return Profile(
             id=row.id,
             uid=row.firebase_uid,
-            first_name=row.nombre,
-            last_name=row.apellido,
-            email=row.correo,
-            role=row.rol,
+            first_name=row.first_name,
+            last_name=row.last_name,
+            email=row.email,
+            role=contract(row.role),
             dni=row.dni,
-            birth_date=row.fecha_nacimiento,
+            birth_date=row.birth_date,
         )
 
 
