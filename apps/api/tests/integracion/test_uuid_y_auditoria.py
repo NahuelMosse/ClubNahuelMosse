@@ -16,10 +16,10 @@ from sqlalchemy.engine import make_url
 RAIZ_API = Path(__file__).resolve().parents[2]
 
 TABLAS_CON_ID = (
-    "usuario",
-    "sede",
-    "espacio",
-    "reserva",
+    "user",
+    "venue",
+    "space",
+    "booking",
     "enlace_recuperacion",
     "correo_saliente",
     "dispositivo",
@@ -27,23 +27,23 @@ TABLAS_CON_ID = (
 )
 
 REFERENCIAS = {
-    ("sede", "creado_por", "usuario"),
-    ("sede", "modificado_por", "usuario"),
-    ("sede", "dado_de_baja_por", "usuario"),
-    ("espacio", "sede_id", "sede"),
-    ("espacio", "creado_por", "usuario"),
-    ("espacio", "modificado_por", "usuario"),
-    ("espacio", "dado_de_baja_por", "usuario"),
-    ("reserva", "usuario_id", "usuario"),
-    ("reserva", "espacio_id", "espacio"),
-    ("reserva", "cancelada_por", "usuario"),
-    ("enlace_recuperacion", "usuario_id", "usuario"),
-    ("dispositivo", "usuario_id", "usuario"),
-    ("notificacion", "usuario_id", "usuario"),
-    ("notificacion", "reserva_id", "reserva"),
+    ("venue", "creado_por", "user"),
+    ("venue", "modificado_por", "user"),
+    ("venue", "dado_de_baja_por", "user"),
+    ("space", "venue_id", "venue"),
+    ("space", "creado_por", "user"),
+    ("space", "modificado_por", "user"),
+    ("space", "dado_de_baja_por", "user"),
+    ("booking", "user_id", "user"),
+    ("booking", "space_id", "space"),
+    ("booking", "cancelada_por", "user"),
+    ("enlace_recuperacion", "user_id", "user"),
+    ("dispositivo", "user_id", "user"),
+    ("notificacion", "user_id", "user"),
+    ("notificacion", "booking_id", "booking"),
     ("notificacion", "reemplazada_por", "notificacion"),
     ("notificacion_reserva", "notificacion_id", "notificacion"),
-    ("notificacion_reserva", "reserva_id", "reserva"),
+    ("notificacion_reserva", "booking_id", "booking"),
 }
 
 TABLAS_CON_ID_ACTUAL = (
@@ -106,7 +106,7 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
         ),
         {
             "uid": f"uid-{s}",
-            "correo": f"{s}@correo.com",
+            "email": f"{s}@correo.com",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
         },
     ).scalar_one()
@@ -124,7 +124,7 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
             " precio_por_hora, creado_por, modificado_por, dado_de_baja_por)"
             " VALUES (:sede, 'Tenis', 'Polvo', 1, :n, true, true, 1000, :u, :u, :u) RETURNING id"
         ),
-        {"sede": sede, "n": f"Cancha {s}", "u": usuario},
+        {"venue": sede, "n": f"Cancha {s}", "u": usuario},
     ).scalar_one()
     reserva: Any = conn.execute(
         text(
@@ -171,12 +171,12 @@ def _sembrar_0009(conn: Connection) -> dict[str, Any]:
         {"n": notificacion, "r": reserva},
     )
     return {
-        "usuario": usuario,
-        "sede": sede,
-        "espacio": espacio,
-        "reserva": reserva,
+        "user": usuario,
+        "venue": sede,
+        "space": espacio,
+        "booking": reserva,
         "enlace": enlace,
-        "correo": correo,
+        "email": correo,
         "dispositivo": dispositivo,
         "notificacion": notificacion,
     }
@@ -363,9 +363,9 @@ def test_migracion_con_filas_existentes(base_nueva: tuple[AlembicConfig, str]) -
         despues = _foto(conn)
         for clave, valores in antes.items():
             assert despues[clave] == {heredado(v) for v in valores}, clave
-        assert {u.version for u in despues[("usuario", "id")]} == {7}
+        assert {u.version for u in despues[("user", "id")]} == {7}
         vista: Any = conn.execute(text("SELECT estado_actual FROM reserva_con_estado")).scalar_one()
-        assert vista == "activa"
+        assert vista == "active"
         assert conn.execute(text("SELECT to_regproc('id_heredado')")).scalar_one() is None
         nuevo: Any = conn.execute(
             text(
@@ -445,8 +445,8 @@ def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, st
     command.upgrade(config, "0009")
     viejas = {
         "enlace_recuperacion": ("emitido_en", datetime(2020, 1, 1, tzinfo=UTC)),
-        "correo_saliente": ("creado_en", datetime(2020, 2, 1, tzinfo=UTC)),
-        "notificacion": ("creada_en", datetime(2020, 3, 1, tzinfo=UTC)),
+        "correo_saliente": ("created_at", datetime(2020, 2, 1, tzinfo=UTC)),
+        "notificacion": ("created_at", datetime(2020, 3, 1, tzinfo=UTC)),
         "dispositivo": ("registrado_en", datetime(2020, 4, 1, tzinfo=UTC)),
     }
     with motor.begin() as conn:

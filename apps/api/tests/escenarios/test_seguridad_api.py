@@ -240,7 +240,7 @@ def test_una_reserva_de_cuatro_horas_se_acepta(
     assert r.status_code == 201
 
 
-@pytest.mark.parametrize(("desde", "horas"), [("23:00", 4), ("23:00", 1), ("10:00", 1)])
+@pytest.mark.parametrize(("desde", "hours"), [("23:00", 4), ("23:00", 1), ("10:00", 1)])
 def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
     api: TestClient, token_usuario: str, cancha: str, desde: str, horas: int
 ) -> None:
