@@ -43,6 +43,11 @@ def contrato_distinto_del_de_main() -> dict[str, Any]:
     return {k: v for k, v in actual.items() if v != esperado[k]}
 
 
+def operaciones_distintas_en(*prefijos: str) -> list[tuple[str, str]]:
+    """Las operaciones bajo esas rutas cuya forma difiere de la de main."""
+    return [clave for clave in contrato_distinto_del_de_main() if clave[1].startswith(prefijos)]
+
+
 def test_el_contrato_tiene_las_mismas_rutas_codigos_campos_operation_id_y_security_que_main_en_1ee70de() -> (
     None
 ):

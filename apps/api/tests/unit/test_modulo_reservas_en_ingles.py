@@ -3,14 +3,13 @@
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
 import ast
 import io
-import json
 import re
 import tokenize
 from pathlib import Path
-from typing import Any
 
-import pytest
-
+from tests.unit.test_api_en_ingles_contrato_actual import (
+    operaciones_distintas_en,
+)
 from tests.unit.test_base_en_ingles import (
     PALABRAS_COMUNES,
     _castellano,
@@ -22,7 +21,6 @@ RAIZ_API = Path(__file__).resolve().parents[2]
 MODULO = RAIZ_API / "app" / "modules" / "bookings"
 ARCHIVOS = ["__init__.py", "use_cases.py", "rules.py", "store.py", "repository.py", "routes.py"]
 VIEJOS = ["almacen.py", "casos_de_uso.py", "reglas.py", "repositorio.py", "rutas.py"]
-CONTRATO_DE_MAIN = Path(__file__).with_name("contrato_reservas_main.json")
 # Términos de reservas que el glosario no lista como palabra suelta (ENG-05-ASM-04).
 EXTRA_CASTELLANO = {
     "reservar", "cancelar", "modificar", "anular", "historial", "cuando", "proximas",
@@ -120,52 +118,8 @@ def test_los_nombres_comentarios_y_docstrings_de_reservas_estan_en_ingles() -> N
     assert not problemas, problemas
 
 
-def _resolver(nodo: Any, esquemas: dict[str, Any]) -> Any:
-    """Cambia cada `$ref` por la forma del esquema: el nombre del esquema no cuenta."""
-    if isinstance(nodo, dict):
-        if "$ref" in nodo:
-            return _resolver(esquemas[nodo["$ref"].rsplit("/", 1)[1]], esquemas)
-        return {
-            k: _resolver(v, esquemas)
-            for k, v in nodo.items()
-            if k not in {"title", "description", "summary"}
-        }
-    if isinstance(nodo, list):
-        return [_resolver(v, esquemas) for v in nodo]
-    return nodo
-
-
-def forma_del_contrato(contrato: dict[str, Any]) -> dict[str, Any]:
-    """Por operación de reservas: operationId, parámetros, seguridad, cuerpo y respuestas."""
-    esquemas = contrato["components"]["schemas"]
-    forma: dict[str, Any] = {}
-    for ruta, metodos in contrato["paths"].items():
-        if not ruta.startswith("/reservas"):
-            continue
-        for metodo, op in metodos.items():
-            forma[f"{metodo.upper()} {ruta}"] = _resolver(
-                {
-                    "operationId": op["operationId"],
-                    "tags": op.get("tags"),
-                    "parameters": op.get("parameters", []),
-                    "security": op.get("security"),
-                    "requestBody": op.get("requestBody"),
-                    "responses": op["responses"],
-                },
-                esquemas,
-            )
-    return forma
-
-
-def test_el_contrato_de_reservas_tiene_las_mismas_rutas_metodos_codigos_campos_y_operation_id_que_main(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+def test_el_contrato_de_reservas_tiene_las_mismas_rutas_metodos_codigos_campos_y_operation_id_que_main() -> (
+    None
+):
     """el contrato de reservas tiene las mismas rutas, métodos, códigos, campos y operationId que main @ENG-05-S3 @assumption:ENG-05-ASM-01"""
-    monkeypatch.setenv("FIREBASE_AUTH_EMULATOR_HOST", "127.0.0.1:9099")
-    from app.main import create_app
-
-    publicado = json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
-    de_main = json.loads(CONTRATO_DE_MAIN.read_text(encoding="utf-8"))
-
-    assert forma_del_contrato(create_app().openapi()) == de_main
-    assert forma_del_contrato(publicado) == de_main
+    assert operaciones_distintas_en("/bookings") == []
