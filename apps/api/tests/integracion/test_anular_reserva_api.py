@@ -220,7 +220,8 @@ def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
         fila = conn.execute(
             text(
                 "SELECT status, starts_at <= now() AS empezo,"
-                " starts_at = CAST(:starts_at AS timestamptz) AS coincide FROM booking WHERE id = :id"
+                " starts_at = CAST(:starts_at AS timestamptz) AS coincide"
+                " FROM booking WHERE id = :id"
             ),
             {"id": empezada["id"], "starts_at": vigente["inicio"]},
         ).one()

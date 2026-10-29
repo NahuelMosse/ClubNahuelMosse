@@ -69,7 +69,7 @@ def _nombres_del_contrato() -> set[str]:
 
 def _columnas() -> set[str]:
     """Las columnas que existen después de aplicar las migraciones de main, en orden."""
-    carpeta = "apps/api/migrations/versions"
+    carpeta = "apps/api/migraciones/versions"
     columnas: set[str] = set()
     for archivo in sorted(
         n for n in _git("ls-tree", "--name-only", f"{BASE}:{carpeta}").split() if n.endswith(".py")

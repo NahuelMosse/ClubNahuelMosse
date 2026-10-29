@@ -45,7 +45,8 @@ def _mover_a(motor: Engine, id_: UUID, dia: str, hora: int) -> None:
     with motor.begin() as conn:
         conn.execute(
             text(
-                "UPDATE booking SET starts_at = x.starts_at, ends_at = x.starts_at + interval '1 hour'"
+                "UPDATE booking"
+                " SET starts_at = x.starts_at, ends_at = x.starts_at + interval '1 hour'"
                 " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :hora))"
                 "       AT TIME ZONE 'America/Argentina/Buenos_Aires' AS starts_at) x"
                 " WHERE id = :id"
