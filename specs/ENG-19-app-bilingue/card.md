@@ -1,0 +1,66 @@
+# ENG-19 · la app bilingüe: inglés de base, castellano de segundo idioma
+
+status: proposed
+cap: 5 h
+sources:
+  - "pedido (texto) · mensajes del usuario (2026-10-27): «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · «porque quiero que este en ingles, igual que absolutamente todo en el repo»"
+  - "pedido (texto) · mensajes del usuario (2026-10-29): «despues ponete a laburar todo» · «no frenes hasta terminar»"
+  - "preferencia guardada del usuario (memoria): «la app bilingüe castellano + inglés»"
+  - "sesión que lanzó la card · el corte acordado: apps/mobile pasa a bilingüe con l10n de Flutter (flutter_localizations + .arb, gen-l10n); inglés es el idioma base (plantilla) y castellano el segundo; todo texto de interfaz de apps/mobile/lib va a los .arb; el idioma sigue al del dispositivo y cae a inglés; fuera de alcance: los textos de la API (ENG-20), el contrato HTTP (ENG-18) y apps/api (ENG-17 en curso); no se saca funcionalidad"
+not_read:
+  - "Jira: no hay ticket; el pedido llegó como texto"
+
+## Specs
+
+- S1 · "quiero que todo pase a ingles" · acceptance: en un dispositivo en inglés la app muestra en inglés cada texto de interfaz de apps/mobile/lib (textos, títulos, botones, mensajes, validaciones, tooltips y etiquetas de semántica); ningún texto de interfaz queda escrito en el código: vive en `app_en.arb`, la plantilla de gen-l10n
+- S2 · "la app bilingüe castellano + inglés" · acceptance: en un dispositivo en castellano la app muestra el mismo texto que hoy, desde `app_es.arb`, que trae cada clave de `app_en.arb`
+- ENG-19-ASM-01 · el idioma sale del dispositivo, sin selector dentro de la app: cualquier variante de castellano (es-AR, es-ES, es-MX…) muestra castellano y cualquier otro idioma muestra inglés · S2
+- ENG-19-ASM-02 · los nombres de días y meses y el formato de fecha siguen al idioma de la app («Thursday», «Thu 12 Nov» en inglés; «Jueves», «Jue 12 nov» en castellano) · S1
+- ENG-19-ASM-03 · el precio conserva su formato de pesos en los dos idiomas (`$ 38.000`): es la moneda del club, no un texto · S1
+- ENG-19-ASM-04 · los textos que manda la API (mensajes de error del servidor, nombres de sedes, espacios y deportes del catálogo, títulos y cuerpos de avisos) se muestran como llegan: traducirlos es ENG-20 · S1
+
+## Tasks
+
+- T1 · S1,S2,ENG-19-ASM-01,ENG-19-ASM-02,ENG-19-ASM-03,ENG-19-ASM-04 · apps/mobile/l10n.yaml, apps/mobile/pubspec.yaml, apps/mobile/lib/l10n/app_en.arb (presentation), apps/mobile/lib/l10n/app_es.arb (presentation), apps/mobile/lib/l10n/app_localizations*.dart (presentation), apps/mobile/lib/common/app_language.dart (rule), apps/mobile/lib/app.dart (presentation), apps/mobile/lib/main.dart (presentation), apps/mobile/lib/common/dates.dart (rule), apps/mobile/test/flutter_test_config.dart, apps/mobile/test/soporte/montar.dart, apps/mobile/test/bilingual_app_test.dart · tests: apps/mobile/test/bilingual_app_test.dart "an English device sees the login in English @ENG-19-S1"; apps/mobile/test/bilingual_app_test.dart "a Spanish device sees the login in Spanish, as before @ENG-19-S2"; apps/mobile/test/bilingual_app_test.dart "every key of app_en.arb has its Spanish translation in app_es.arb @ENG-19-S2"; apps/mobile/test/bilingual_app_test.dart "es-AR, es-ES and es-MX resolve to Spanish @ENG-19-ASM-01"; apps/mobile/test/bilingual_app_test.dart "a device in another language sees the app in English @ENG-19-ASM-01"; apps/mobile/test/bilingual_app_test.dart "day and month names follow the language: Thursday and Thu 12 Nov in English, Jueves and Jue 12 nov in Spanish @ENG-19-ASM-02"; apps/mobile/test/bilingual_app_test.dart "the price keeps the pesos format in both languages @ENG-19-ASM-03"; apps/mobile/test/bilingual_app_test.dart "a message the API sends is shown as it arrives, in both languages @ENG-19-ASM-04"
+  reuses: apps/mobile/lib/app.dart MaterialApp.router (locale, supportedLocales, localizationsDelegates); apps/mobile/lib/common/dates.dart the `_locale` the formats read; apps/mobile/test/soporte/montar.dart montar; flutter_localizations, intl (ya en pubspec)
+  why-layer: gen-l10n es la herramienta de Flutter para textos por idioma; el código generado vive junto a sus .arb en lib/l10n
+- T2 · S1 · apps/mobile/lib/features/session/** (presentation, rule), apps/mobile/lib/features/users/** (presentation, rule), apps/mobile/lib/features/home/** (presentation), apps/mobile/lib/router.dart (presentation), apps/mobile/lib/redirect.dart (rule), apps/mobile/test/bilingual_account_test.dart · tests: apps/mobile/test/bilingual_account_test.dart "login, registration and password recovery show English @ENG-19-S1"; apps/mobile/test/bilingual_account_test.dart "profile, edit profile, change password and account closure show English @ENG-19-S1"; apps/mobile/test/bilingual_account_test.dart "the home shows English @ENG-19-S1"
+  new: AppLocalizations, generado por T1 desde lib/l10n/*.arb; en lib no hay otro mecanismo de textos por idioma (Grep AppLocalizations|Intl.message|arb)
+- T3 · S1 · apps/mobile/lib/features/bookings/** (presentation, rule), apps/mobile/lib/features/venues/** (presentation, rule), apps/mobile/lib/features/spaces/** (presentation, rule), apps/mobile/test/bilingual_bookings_test.dart · tests: apps/mobile/test/bilingual_bookings_test.dart "booking, availability, space search and my bookings show English @ENG-19-S1"; apps/mobile/test/bilingual_bookings_test.dart "venues and their spaces show English @ENG-19-S1"
+  new: AppLocalizations, generado por T1 desde lib/l10n/*.arb; en lib no hay otro mecanismo de textos por idioma (Grep AppLocalizations|Intl.message|arb)
+- T4 · S1 · apps/mobile/lib/features/admin/** (presentation, rule), apps/mobile/lib/features/notifications/** (presentation, rule), apps/mobile/lib/common/** (presentation, rule), apps/mobile/test/bilingual_admin_test.dart · tests: apps/mobile/test/bilingual_admin_test.dart "the admin panel, its lists and its forms show English @ENG-19-S1"; apps/mobile/test/bilingual_admin_test.dart "notifications, the bell and the notice panel show English @ENG-19-S1"; apps/mobile/test/bilingual_admin_test.dart "shared errors, offline and validation messages show English @ENG-19-S1"
+  new: AppLocalizations, generado por T1 desde lib/l10n/*.arb; en lib no hay otro mecanismo de textos por idioma (Grep AppLocalizations|Intl.message|arb)
+- T5 · S1 · apps/mobile/test/bilingual_app_test.dart · tests: apps/mobile/test/bilingual_app_test.dart "no user-facing string literal is left in lib outside lib/l10n @ENG-19-S1"
+
+## Changes to existing behavior
+
+- toda pantalla de la app: en un dispositivo que no está en castellano pasa a mostrarse en inglés; en castellano se ve como hoy
+- `lib/app.dart` deja de fijar es-AR: el idioma sale del dispositivo (inglés y castellano soportados, inglés por defecto)
+- `lib/common/dates.dart`: días, meses y patrones de fecha siguen al idioma de la app
+- los labels en castellano de `BookingStatus`, `Role` y `NotificationKind` salen del dominio y se leen de los .arb · `bookings_in_english_test.dart` @ENG-10-ASM-01 y `account_in_english_test.dart` @ENG-11-ASM-01 se reemplazan en `test/bilingual_replacements_test.dart` (Log)
+- `bookings_in_english_test.dart` @ENG-10-S3 busca el texto `'Reserva modificada'` en el código: el texto pasa a `app_es.arb` · se reemplaza en `test/bilingual_replacements_test.dart` (Log)
+- la suite de widgets corre con el dispositivo en castellano (`flutter_test_config.dart` y `montar`): los tests congelados que afirman texto en castellano siguen valiendo sin tocarse; los que montan su propio `MaterialApp` sin los delegados de la app se reemplazan, montados en castellano (Log)
+
+## Gate
+
+```
+suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
+fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/bilingual_app_test.dart apps/mobile/test/bilingual_account_test.dart apps/mobile/test/bilingual_bookings_test.dart apps/mobile/test/bilingual_admin_test.dart apps/mobile/test/bilingual_replacements_test.dart
+lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+mutate apps/mobile/lib/common/app_language.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/bilingual_app_test.dart
+mutate apps/mobile/lib/common/dates.dart: sh D:/Temp/w/herramientas/flutter-mobile.sh test/bilingual_app_test.dart
+declared · mutate · app_localizations*.dart es código generado por gen-l10n; app.dart, main.dart y router.dart sólo cablean el idioma y los textos: la lógica que decide el idioma vive en common/app_language.dart, mutada arriba
+declared · S2 · los nombres de días y meses que el lector cuenta como conjunto son ejemplos de ENG-19-ASM-02, y su test los nombra a los cuatro
+no-docs: los textos de la interfaz cambian de lugar, no de comportamiento; el idioma sigue al dispositivo
+no-visual: las pantallas conservan su forma; en castellano se ven igual y en inglés cambia sólo el texto, cubierto por los tests de S1 en 393 px
+```
+
+## Log
+
+- L1 · 2026-10-27: «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27: «porque quiero que este en ingles, igual que absolutamente todo en el repo» · 2026-10-29: «despues ponete a laburar todo» · «no frenes hasta terminar» · preferencia guardada (memoria): «la app bilingüe castellano + inglés» · corte de esta card (sesión): apps/mobile bilingüe con l10n de Flutter (flutter_localizations + .arb, gen-l10n); inglés idioma base/plantilla y castellano el segundo; todo texto de interfaz de apps/mobile/lib a los .arb; el idioma sigue al del dispositivo, con inglés por defecto; los tests de widgets que afirman texto en castellano están congelados y se reemplazan por METHOD, montados en castellano donde el comportamiento es el mismo; fuera de alcance: textos de la API (ENG-20), contrato HTTP (ENG-18), apps/api (ENG-17); no se saca funcionalidad
+- L2 · 2026-10-29 · sin Jira: las dudas van directo a ASM (ENG-19-ASM-01..04), sin ronda de preguntas
+- L3 · 2026-10-29 · replaces: apps/mobile/test/bookings_in_english_test.dart "BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01" · el label de interfaz sale del dominio y se lee de app_es.arb · by: apps/mobile/test/bilingual_replacements_test.dart "BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01"
+- L4 · 2026-10-29 · replaces: apps/mobile/test/account_in_english_test.dart "Role y NotificationKind muestran su label en castellano y leen el valor de la API de siempre @assumption:ENG-11-ASM-01" · el label de interfaz sale del dominio y se lee de app_es.arb · by: apps/mobile/test/bilingual_replacements_test.dart "Role y NotificationKind muestran su label en castellano y leen el valor de la API de siempre @assumption:ENG-11-ASM-01"
+- L5 · 2026-10-29 · replaces: apps/mobile/test/bookings_in_english_test.dart "los textos, rutas de la API, claves JSON y rutas de pantalla de reservas e inicio son los de antes @ENG-10-S3" · `'Reserva modificada'` ya no está en el código sino en app_es.arb · by: apps/mobile/test/bilingual_replacements_test.dart "los textos, rutas de la API, claves JSON y rutas de pantalla de reservas e inicio son los de antes @ENG-10-S3"
+- L6 · 2026-10-29 · decisión de prueba: `test/flutter_test_config.dart` fija el dispositivo de la suite en es-AR (e `Intl.defaultLocale` en es) y `montar` sigue montando en es-AR con los delegados de la app; los tests de esta card montan explícitamente en inglés, en castellano o en otro idioma
+- L7 · 2026-10-29 · decisión de prueba: `integration_test/flutter_test_config.dart` fija también en es-AR el dispositivo de los escenarios de integration_test, que afirman texto en castellano
