@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -17,7 +18,10 @@ class TotalRow extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       spacing: Spacing.s8,
       children: [
-        Text('TOTAL', style: Texts.overline.copyWith(color: p.textMuted)),
+        Text(
+          AppLocalizations.of(context).bookingTotal,
+          style: Texts.overline.copyWith(color: p.textMuted),
+        ),
         Text(formatPesos(total), style: Texts.h1.copyWith(color: p.accentInk)),
       ],
     );

@@ -18,6 +18,7 @@ class VenueCardCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return ConstrainedBox(
       // Un nombre largo pasa a dos líneas y la portada crece con él.
       constraints: const BoxConstraints(minHeight: 158),
@@ -28,30 +29,7 @@ class VenueCardCover extends StatelessWidget {
             Positioned(
               top: Spacing.s12,
               right: Spacing.s16,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  GiantBib(
-                    text: twoDigits(venue.spaceCount),
-                    size: 92,
-                    color: p.textOnMedia,
-                  ),
-                  Text(
-                    // The number is the giant bib above: only the noun is left.
-                    AppLocalizations.of(context)
-                        .venueSpaceCount(venue.spaceCount)
-                        .replaceFirst(RegExp(r'^\d+\s*'), '')
-                        .toUpperCase(),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                      letterSpacing: 11 * 0.08,
-                      color: p.textOnMedia,
-                    ),
-                  ),
-                ],
-              ),
+              child: _SpaceCount(count: venue.spaceCount),
             ),
             Padding(
               padding: const EdgeInsets.all(Spacing.s16),
@@ -76,12 +54,9 @@ class VenueCardCover extends StatelessWidget {
                         ),
                         Text(
                           // El rango no se parte entre líneas.
-                          AppLocalizations.of(context).venueDaysHours(
+                          l.venueDaysHours(
                             venue.closing,
-                            weekdaysText(
-                              AppLocalizations.of(context),
-                              venue.daysLabel,
-                            ),
+                            weekdaysText(l, venue.daysLabel),
                             venue.opening,
                           ),
                           style: Texts.caption.copyWith(
@@ -98,6 +73,38 @@ class VenueCardCover extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The giant number of courts with its noun under it.
+class _SpaceCount extends StatelessWidget {
+  const _SpaceCount({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        GiantBib(text: twoDigits(count), size: 92, color: p.textOnMedia),
+        Text(
+          // The number is the giant bib above: only the noun is left.
+          AppLocalizations.of(context)
+              .venueSpaceCount(count)
+              .replaceFirst(RegExp(r'^\d+\s*'), '')
+              .toUpperCase(),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+            letterSpacing: 11 * 0.08,
+            color: p.textOnMedia,
+          ),
+        ),
+      ],
     );
   }
 }

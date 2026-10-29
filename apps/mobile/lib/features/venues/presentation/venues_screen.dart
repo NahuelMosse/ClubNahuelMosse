@@ -126,9 +126,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                   const SizedBox(height: Spacing.s4),
                   Text(
                     AppLocalizations.of(context).venuesSummary(
-                      AppLocalizations.of(
-                        context,
-                      ).venueSpaceCount(
+                      AppLocalizations.of(context).venueSpaceCount(
                         data.$1.fold(0, (n, s) => n + s.spaceCount),
                       ),
                       AppLocalizations.of(context).venueCount(data.$1.length),

@@ -12,6 +12,7 @@ import '../../../common/empty_state.dart';
 import '../../../common/selector.dart';
 import '../../../common/text_field.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
@@ -28,6 +29,7 @@ import '../domain/availability_exceptions.dart';
 import '../domain/search_rules.dart';
 import 'covered_filter.dart';
 import 'search_error_card.dart';
+import 'search_problem_texts.dart';
 import 'search_time_range.dart';
 import 'space_search_bar.dart';
 import 'space_search_skeleton.dart';
@@ -263,7 +265,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   Future<void> _elegirSede(List<Venue> venues) async {
     final elegida = await pickOption<Venue>(
       context,
-      title: 'Sede',
+      title: AppLocalizations.of(context).spaceSearchVenue,
       options: [
         for (final s in venues)
           if (s.spaceCount > 0) (s, s.name),
@@ -284,7 +286,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   Future<void> _elegirDeporte(Catalog catalogo) async {
     final elegido = await pickOption<String>(
       context,
-      title: 'Deporte',
+      title: AppLocalizations.of(context).spaceSearchSport,
       options: [
         for (final d in catalogo.sports)
           if (_sede?.sports.contains(d.key) ?? true) (d.key, d.name),
@@ -305,9 +307,9 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     const todos = '';
     final elegido = await pickOption<String>(
       context,
-      title: 'Tipo de cancha',
+      title: AppLocalizations.of(context).spaceSearchKind,
       options: [
-        (todos, 'Todos los tipos'),
+        (todos, AppLocalizations.of(context).spaceSearchAllKinds),
         for (final t in deporte.kinds) (t.key, t.name),
       ],
       selected: _tipo ?? todos,
@@ -324,7 +326,9 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         : [for (var h = 1; h < 24; h++) h, 0];
     final elegida = await pickOption<int>(
       context,
-      title: inicio ? 'Desde' : 'Hasta',
+      title: inicio
+          ? AppLocalizations.of(context).spaceSearchFrom
+          : AppLocalizations.of(context).spaceSearchTo,
       options: [for (final h in hours) (h, hhmm(h))],
       selected: inicio ? _desde : _hasta,
       columns: 3,
@@ -358,7 +362,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     return Scaffold(
       backgroundColor: p.bgBase,
       appBar: TopBar(
-        title: 'Buscar cancha',
+        title: AppLocalizations.of(context).spaceSearchTitle,
         onBack: () => context.go('/inicio'),
       ),
       bottomNavigationBar: opciones == null
@@ -374,19 +378,23 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
 
   Widget _bodyWithoutOptions() => _falloAlCargar
       ? Center(
-          child: TextActionButton(label: 'REINTENTAR', onTap: _cargar),
+          child: TextActionButton(
+            label: AppLocalizations.of(context).bookingRetry,
+            onTap: _cargar,
+          ),
         )
       : SpaceSearchSkeleton(header: _encabezado(_introduccion));
 
   Widget _encabezado(String subtitulo) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Semantics(
           header: true,
           child: Text(
-            'Consultar canchas',
+            l.spaceSearchHeading,
             style: Texts.h1.copyWith(color: p.textPrimary),
           ),
         ),
@@ -431,15 +439,19 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         ),
       );
 
-  static const _introduccion =
-      'Elegí sede, deporte y rango horario. Solo horas completas, de '
-      '$minHours a $maxHours horas.';
+  String get _introduccion =>
+      AppLocalizations.of(context).spaceSearchIntro(maxHours, minHours);
 
   String _subtitulo(Catalog catalogo) {
     final c = _consulta;
     if (c == null) return _introduccion;
-    return '${c.venue.name} · ${_queSeBusco(c, catalogo)} · ${shortDate(c.fecha)} · '
-        '${hhmm(c.desde)} a ${hhmm(c.hasta)}';
+    return AppLocalizations.of(context).spaceSearchSubtitle(
+      shortDate(c.fecha),
+      hhmm(c.desde),
+      hhmm(c.hasta),
+      c.venue.name,
+      _queSeBusco(c, catalogo),
+    );
   }
 
   String _queSeBusco(_Consulta c, Catalog catalogo) {
@@ -450,38 +462,39 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   }
 
   List<Widget> _filtros(List<Venue> venues, Catalog catalogo) {
+    final l = AppLocalizations.of(context);
     final errores = _errores;
     final deporte = catalogo.sport(_deporte ?? '');
     final tipo = _tipo;
     return [
       SelectorField(
-        label: 'SEDE',
-        semanticLabel: 'Sede',
+        label: l.spaceSearchVenue.toUpperCase(),
+        semanticLabel: l.spaceSearchVenue,
         value: _sede?.name,
-        placeholder: 'Seleccioná una sede',
+        placeholder: l.spaceSearchPickVenue,
         icon: Icons.expand_more_rounded,
         onTap: _consultando ? null : () => _elegirSede(venues),
         error: errores['sede_id'],
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
-        label: 'DEPORTE',
-        semanticLabel: 'Deporte',
+        label: l.spaceSearchSport.toUpperCase(),
+        semanticLabel: l.spaceSearchSport,
         value: deporte?.name,
-        placeholder: 'Seleccioná un deporte',
+        placeholder: l.spaceSearchPickSport,
         icon: Icons.expand_more_rounded,
         onTap: _consultando ? null : () => _elegirDeporte(catalogo),
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
-        label: 'TIPO DE CANCHA',
-        semanticLabel: 'Tipo de cancha',
+        label: l.spaceSearchKind.toUpperCase(),
+        semanticLabel: l.spaceSearchKind,
         value: deporte == null
             ? null
             : tipo == null
-            ? 'Todos los tipos'
+            ? l.spaceSearchAllKinds
             : catalogo.shortKind(deporte.key, tipo),
-        placeholder: 'Todos los tipos',
+        placeholder: l.spaceSearchAllKinds,
         icon: Icons.expand_more_rounded,
         onTap: deporte == null || _consultando
             ? null
@@ -489,16 +502,16 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       ),
       const SizedBox(height: Spacing.s12),
       FormTextField(
-        label: 'FECHA',
-        semanticLabel: 'Fecha',
+        label: l.spaceSearchDate.toUpperCase(),
+        semanticLabel: l.spaceSearchDate,
         controller: _date,
-        placeholder: 'DD / MM / AAAA',
+        placeholder: l.spaceSearchDatePlaceholder,
         error: errores['fecha'],
         keyboardType: TextInputType.number,
         inputFormatters: const [DateInputFormatter()],
         enabled: !_consultando,
         trailing: IconButton(
-          tooltip: 'Elegir la fecha en el calendario',
+          tooltip: l.spaceSearchPickDate,
           onPressed: _consultando ? null : _elegirFecha,
           icon: Icon(
             Icons.calendar_today_outlined,
@@ -524,6 +537,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     Catalog catalogo,
     Palette p,
   ) {
+    final l = AppLocalizations.of(context);
     final techada = _techada;
     final views = [
       for (final c in resultado)
@@ -532,10 +546,8 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     final rango = '${hhmm(consulta.desde)} – ${hhmm(consulta.hasta)}';
     final que = _queSeBusco(consulta, catalogo).toUpperCase();
     final encabezado = resultado.isEmpty
-        ? 'SIN DISPONIBILIDAD · $que · $rango'
-        : resultado.length == 1
-        ? '1 CANCHA DISPONIBLE · $que · $rango'
-        : '${resultado.length} CANCHAS DISPONIBLES · $que · $rango';
+        ? l.spaceSearchNoAvailability(rango, que)
+        : l.spaceSearchResults(resultado.length, rango, que);
     final aireLibre = resultado.where((c) => !c.covered).length;
     return [
       const SizedBox(height: Spacing.s24),
@@ -558,11 +570,9 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       const SizedBox(height: Spacing.s12),
       if (resultado.isEmpty)
         EmptyState(
-          title: 'No hay canchas disponibles',
-          text:
-              'Ninguna cancha coincide con ese horario. Probá con otro rango o '
-              'otra sede.',
-          action: 'LIMPIAR FILTROS',
+          title: l.spaceSearchEmptyTitle,
+          text: l.spaceSearchEmptyText,
+          action: l.spaceSearchClearFilters,
           onTap: _limpiar,
         ),
       for (final cancha in views) ...[

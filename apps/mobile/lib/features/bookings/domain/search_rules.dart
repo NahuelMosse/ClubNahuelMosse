@@ -60,7 +60,9 @@ Map<String, RangeProblem> dateErrors({
     return {'fecha': const RangeProblem(RangeProblemKind.datePast)};
   }
   if (!date.isBefore(today.add(const Duration(days: daysInView)))) {
-    return {'fecha': const RangeProblem(RangeProblemKind.dateTooFar, daysInView)};
+    return {
+      'fecha': const RangeProblem(RangeProblemKind.dateTooFar, daysInView),
+    };
   }
   return {};
 }

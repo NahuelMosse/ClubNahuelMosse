@@ -8,6 +8,7 @@ import '../../../common/list_loading.dart';
 import '../../../common/marker.dart';
 import '../../../common/motion.dart';
 import '../../../common/unhandled_errors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/data/api_errors.dart';
 import '../../bookings/domain/booking.dart';
@@ -171,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_cancelando != null) return;
     final confirmo = await confirmarCancelacion(
       context,
-      textoDeCancelacion(r, catalogo),
+      textoDeCancelacion(AppLocalizations.of(context), r, catalogo),
     );
     if (!confirmo || !mounted) return;
     // Una lectura que venía en camino (deslizar para refrescar) ya no vale.

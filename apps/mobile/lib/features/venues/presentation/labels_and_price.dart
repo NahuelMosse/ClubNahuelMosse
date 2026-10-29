@@ -40,7 +40,10 @@ class LabelsAndPrice extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(price, style: Texts.h2.copyWith(color: p.accentInk)),
-        Text(l.spacePerHourBadge, style: Texts.overline.copyWith(color: p.textMuted)),
+        Text(
+          l.spacePerHourBadge,
+          style: Texts.overline.copyWith(color: p.textMuted),
+        ),
       ],
     );
     if (MediaQuery.textScalerOf(context).scale(10) > 13) {

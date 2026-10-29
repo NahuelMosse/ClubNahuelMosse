@@ -1,6 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../spaces/domain/space.dart';
 import 'availability_space_card.dart';
 import 'paired_grid.dart';
@@ -22,7 +23,7 @@ class SpaceSelection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SlotsSection(
-      titulo: 'SELECCIONÁ CANCHA',
+      titulo: AppLocalizations.of(context).availabilitySelectSpace,
       child: PairedGrid(
         hijos: [
           for (final c in canchas)

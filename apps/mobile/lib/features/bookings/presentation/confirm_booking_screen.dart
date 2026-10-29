@@ -8,10 +8,10 @@ import '../../../common/error_dialog.dart';
 import '../../../common/pending_booking.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
-import '../../spaces/presentation/space_texts.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
+import '../../spaces/presentation/space_texts.dart';
 import '../data/api_errors.dart';
 import '../domain/availability_exceptions.dart';
 import '../domain/booking_choice.dart';
@@ -76,12 +76,9 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       setState(() => _enviando = false);
       await showTimeSlotTaken(
         context,
-        AppLocalizations.of(context).bookingTaken(
-          shortDay(e.date),
-          e.end,
-          e.space.number,
-          e.start,
-        ),
+        AppLocalizations.of(
+          context,
+        ).bookingTaken(shortDay(e.date), e.end, e.space.number, e.start),
       );
       if (mounted) _volver(ConfirmResult.ocupado);
       return;

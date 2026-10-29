@@ -13,7 +13,11 @@ class BookingSteps extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final l = AppLocalizations.of(context);
-    final names = [l.bookingStepChoose, l.bookingStepConfirm, l.bookingStepDone];
+    final names = [
+      l.bookingStepChoose,
+      l.bookingStepConfirm,
+      l.bookingStepDone,
+    ];
     return Semantics(
       label: l.bookingStepLabel(names[actual], actual + 1, names.length),
       excludeSemantics: true,
