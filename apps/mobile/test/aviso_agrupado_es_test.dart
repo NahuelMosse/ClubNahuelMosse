@@ -4,7 +4,8 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notificaciones_es_test.dart' show ApiFalsa, ahoraClub, centroDe, notif;
+import 'notifications_spanish_test.dart'
+    show ApiFalsa, ahoraClub, centroDe, notif;
 import 'soporte/montar.dart';
 
 final leida = notif(
@@ -36,8 +37,8 @@ void main() {
       final api = ApiFalsa()
         ..avisos = [leida]
         ..unread = 0;
-      final sesion = SesionFalsa(perfilUsuario);
-      final NotificationCenter centro = centroDe(api, sesion)
+      final session = SesionFalsa(perfilUsuario);
+      final NotificationCenter centro = centroDe(api, session)
         ..location = () => '/inicio';
       await montar(
         tester,

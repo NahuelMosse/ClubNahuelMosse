@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notificaciones_es_test.dart'
+import 'notifications_spanish_test.dart'
     show
         ApiFalsa,
         SistemaFalso,
@@ -37,16 +37,16 @@ void main() {
       final api = ApiFalsa()
         ..avisos = avisos
         ..unread = avisos.length;
-      final sesion = SesionFalsa(perfilUsuario);
+      final session = SesionFalsa(perfilUsuario);
       await montar(
         tester,
         NotificationsScreen(
           center: centroDe(
             api,
-            sesion,
+            session,
             sistema: SistemaFalso(concedido: permiso),
           ),
-          session: sesion,
+          session: session,
           now: () => ahoraClub,
           onOpen: (_, _) {},
         ),
@@ -119,7 +119,7 @@ void main() {
         oscuro: oscuro,
         inicio: '/inicio',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (session) => centroDe(api, session),
       );
       await cumpleLasGuias(tester);
       semantica.dispose();

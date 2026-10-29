@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notificaciones_es_test.dart'
+import 'notifications_spanish_test.dart'
     show ApiFalsa, ahoraClub, centroDe, notif, recordatorio;
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
@@ -29,8 +29,8 @@ void main() {
       double escala = 1,
     }) async {
       final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion)..location = () => ubicacion;
+      final session = SesionFalsa(perfilUsuario);
+      final centro = centroDe(api, session)..location = () => ubicacion;
       await montar(
         tester,
         Stack(
@@ -144,9 +144,9 @@ void main() {
         tester,
         inicio: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (session) => centroDe(api, session),
       );
-      api.pedidos.clear();
+      api.requests.clear();
 
       await tester.tap(find.text('Reserva cancelada'));
       await tester.pumpAndSettle();
@@ -166,9 +166,9 @@ void main() {
         tester,
         inicio: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (session) => centroDe(api, session),
       );
-      api.pedidos.clear();
+      api.requests.clear();
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();

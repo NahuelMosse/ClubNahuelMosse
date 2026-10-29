@@ -11,7 +11,7 @@ import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../mis_reservas_test.dart' show reservaJson;
-import '../notificaciones_es_test.dart'
+import '../notifications_spanish_test.dart'
     show ApiFalsa, ahoraClub, centroDe, recordatorio;
 import '../soporte/montar.dart';
 import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
@@ -85,9 +85,9 @@ double _ancho(WidgetTester tester, Finder f) =>
     tester.getBottomRight(f).dx - tester.getTopLeft(f).dx;
 
 Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(reservaJson()));
-  if (reserva == null) fail('la reserva de prueba no se lee');
-  return reserva;
+  final booking = bookingFromJson(jsonDecode(reservaJson()));
+  if (booking == null) fail('la reserva de prueba no se lee');
+  return booking;
 }
 
 void main() {
@@ -117,8 +117,8 @@ void main() {
 
       // El aviso dentro de la app.
       final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion);
+      final session = SesionFalsa(perfilUsuario);
+      final centro = centroDe(api, session);
       await _montarLibre(
         tester,
         Stack(

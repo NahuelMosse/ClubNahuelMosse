@@ -40,13 +40,13 @@ void main() {
     tester,
   ) async {
     final semantica = tester.ensureSemantics();
-    var pedidos = 0;
+    var requests = 0;
     final segundo = Completer<http.Response>();
     final api = ApiClient(
       'http://api.falsa',
       cliente: MockClient((_) {
-        pedidos++;
-        if (pedidos == 1) throw const SocketException('sin red');
+        requests++;
+        if (requests == 1) throw const SocketException('sin red');
         return segundo.future;
       }),
     );
@@ -64,7 +64,7 @@ void main() {
     await tester.tap(find.text('REINTENTAR'));
     await tester.pump();
     await tester.pump();
-    expect(pedidos, 2);
+    expect(requests, 2);
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     await tocar(
       tester,
@@ -74,14 +74,14 @@ void main() {
       ),
     );
     await tester.pump();
-    expect(pedidos, 2);
+    expect(requests, 2);
 
     segundo.complete(
       http.Response('{"errores": {"dni": "El DNI tiene 7 u 8 numeros"}}', 422),
     );
     await tester.pumpAndSettle();
     expect(find.text('El DNI tiene 7 u 8 numeros'), findsOneWidget);
-    expect(pedidos, 2);
+    expect(requests, 2);
     semantica.dispose();
   });
 

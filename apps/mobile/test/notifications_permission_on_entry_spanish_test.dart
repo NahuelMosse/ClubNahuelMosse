@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/features/notifications/data/simulated_notificati
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'notificaciones_es_test.dart'
+import 'notifications_spanish_test.dart'
     show ApiFalsa, SistemaFalso, centroDe, cuerpoDe;
 import 'soporte/montar.dart';
 
@@ -37,8 +37,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(sistema.solicitudes, 1);
-      final pedido = cuerpoDe(api.de('PUT', '/dispositivos').last);
-      expect(pedido['permiso'], isTrue);
+      final request = cuerpoDe(api.de('PUT', '/dispositivos').last);
+      expect(request['permiso'], isTrue);
     },
   );
 
@@ -82,18 +82,18 @@ void main() {
     (tester) async {
       final api = ApiFalsa();
       final sistema = SistemaSinPreguntar(respuesta: false);
-      final sesion = SesionFalsa(perfilUsuario);
-      centroDe(api, sesion, sistema: sistema);
+      final session = SesionFalsa(perfilUsuario);
+      centroDe(api, session, sistema: sistema);
       await tester.pumpAndSettle();
 
       expect(sistema.solicitudes, 1);
-      final pedido = cuerpoDe(api.de('PUT', '/dispositivos').last);
-      expect(pedido['permiso'], isFalse);
+      final request = cuerpoDe(api.de('PUT', '/dispositivos').last);
+      expect(request['permiso'], isFalse);
 
-      centroDe(api, sesion, sistema: sistema);
+      centroDe(api, session, sistema: sistema);
       await tester.pumpAndSettle();
       expect(sistema.solicitudes, 1);
-      expect(jsonEncode(pedido), contains('token-del-telefono'));
+      expect(jsonEncode(request), contains('token-del-telefono'));
     },
   );
 

@@ -34,17 +34,17 @@ void main() {
       expect(retrasos(find.text('INICIAR SESIÓN')), contains(_ms(540)));
       expect(retrasos(find.text('¿No tenés cuenta?')), contains(_ms(620)));
 
-      final formulario = _aparecerQue(
+      final form = _aparecerQue(
         find.byType(FormTextField).first,
         (a) => a.delay == _ms(460),
       ).first;
-      expect(_opacidad(tester, formulario), 0);
+      expect(_opacidad(tester, form), 0);
       await tester.pump(_ms(400));
-      expect(_opacidad(tester, formulario), 0);
+      expect(_opacidad(tester, form), 0);
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, formulario), allOf(greaterThan(0), lessThan(1)));
+      expect(_opacidad(tester, form), allOf(greaterThan(0), lessThan(1)));
       await tester.pumpAndSettle();
-      expect(_opacidad(tester, formulario), 1);
+      expect(_opacidad(tester, form), 1);
     },
   );
 

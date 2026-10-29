@@ -20,7 +20,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final sesion = Session(
+      final session = Session(
         repository: SessionRepository(
           credentials: CredencialesFalsas(),
           api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
@@ -31,7 +31,7 @@ void main() {
           GoRoute(
             path: '/',
             builder: (_, _) =>
-                LoginScreen(session: sesion, pending: PendingBooking()),
+                LoginScreen(session: session, pending: PendingBooking()),
           ),
         ],
       );

@@ -16,7 +16,7 @@ import 'soporte/montar.dart';
 void main() {
   setUpAll(cargarFuentes);
 
-  late List<http.Request> pedidos;
+  late List<http.Request> requests;
 
   /// Monta [pantalla] dentro de rutas mínimas, para ver adónde lleva cada botón.
   Future<void> montarEnRutas(WidgetTester tester, Widget pantalla) async {
@@ -45,13 +45,13 @@ void main() {
   }
 
   PasswordRecovery recuperacion(Map<String, (int, String)> respuestas) {
-    pedidos = [];
-    return PasswordRecovery(apiRutas(respuestas, pedidos: pedidos));
+    requests = [];
+    return PasswordRecovery(apiRutas(respuestas, pedidos: requests));
   }
 
-  bool habilitado(WidgetTester tester, String boton) =>
+  bool habilitado(WidgetTester tester, String button) =>
       tester
-          .widget<FilledButton>(find.widgetWithText(FilledButton, boton))
+          .widget<FilledButton>(find.widgetWithText(FilledButton, button))
           .onPressed !=
       null;
 
@@ -76,7 +76,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('Revisá el formato del correo'), findsOneWidget);
         expect(habilitado(tester, 'ENVIAR ENLACE'), isFalse);
-        expect(pedidos, isEmpty);
+        expect(requests, isEmpty);
         semantica.dispose();
       },
     );
@@ -106,11 +106,11 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(pedidos.single.body, '{"correo":"nahuel@correo.com"}');
+      expect(requests.single.body, '{"correo":"nahuel@correo.com"}');
 
       await tester.tap(find.text('Reenviar el correo'));
       await tester.pumpAndSettle();
-      expect(pedidos, hasLength(2));
+      expect(requests, hasLength(2));
 
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
@@ -172,7 +172,7 @@ void main() {
         ),
       );
       expect(find.text('El enlace no es válido'), findsOneWidget);
-      expect(pedidos, isEmpty);
+      expect(requests, isEmpty);
       semantica.dispose();
     });
 
@@ -201,7 +201,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Contraseña actualizada'), findsOneWidget);
-      expect(pedidos.last.body, '{"codigo":"abc","nueva":"ClubNahuel2"}');
+      expect(requests.last.body, '{"codigo":"abc","nueva":"ClubNahuel2"}');
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
       expect(find.text('LOGIN'), findsOneWidget);
@@ -265,10 +265,10 @@ void main() {
     testWidgets(
       'un enlace nuevo con la pantalla abierta se vuelve a comprobar',
       (tester) async {
-        final pedidos = <http.Request>[];
+        final requests = <http.Request>[];
         final api = apiRutas({
           'POST /recuperacion/consulta': (410, ''),
-        }, pedidos: pedidos);
+        }, pedidos: requests);
         await tester.pumpWidget(
           App(
             api: api,
@@ -281,7 +281,7 @@ void main() {
         expect(find.text('El enlace no es válido'), findsOneWidget);
 
         await abrir(tester, '/recuperar?codigo=nuevo');
-        expect(pedidos.map((p) => p.body), [
+        expect(requests.map((p) => p.body), [
           '{"codigo":"viejo"}',
           '{"codigo":"nuevo"}',
         ]);
@@ -292,14 +292,14 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final sesion = SesionFalsa(perfilUsuario);
+      final session = SesionFalsa(perfilUsuario);
       await tester.pumpWidget(
         App(
           api: apiRutas({
             'POST /recuperacion/consulta': (204, ''),
             'PUT /recuperacion': (204, ''),
           }),
-          session: sesion,
+          session: session,
           appearance: Appearance.inMemory(),
           initialLocation: '/recuperar?codigo=abc',
         ),
@@ -319,7 +319,7 @@ void main() {
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
 
-      expect(sesion.cierres, 1);
+      expect(session.cierres, 1);
       expect(find.text('INICIAR SESIÓN'), findsOneWidget);
       semantica.dispose();
     });

@@ -26,7 +26,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 import '../mis_reservas_test.dart' show reservaJson;
-import '../notificaciones_es_test.dart' show ApiFalsa, centroDe;
+import '../notifications_spanish_test.dart' show ApiFalsa, centroDe;
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
 import '../soporte/usuario.dart';
@@ -191,7 +191,7 @@ ApiClient _apiUsuario() => apiRutas({
   'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
 });
 
-const _reservaAdmin =
+const _adminBooking =
     '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
     ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
@@ -204,20 +204,20 @@ ApiClient _apiAdmin() => apiRutas({
   ...rutasDeEspacios(),
   'GET /reservas/todas': (
     200,
-    '{"reservas": [$_reservaAdmin], "total": 1, "pagina": 1, "por_pagina": 20,'
+    '{"reservas": [$_adminBooking], "total": 1, "pagina": 1, "por_pagina": 20,'
         ' "contadores": {"todas": 1, "activas": 1, "completadas": 0,'
         ' "anuladas": 0}}',
   ),
 });
 
 /// Alto para que el inicio construya todos sus bloques, también los de abajo.
-const _telefonoAlto = Size(393, 1600);
+const _tallPhone = Size(393, 1600);
 
 Future<void> _usuarioEn(WidgetTester tester, String inicio) => montarUsuario(
   tester,
   api: _apiUsuario(),
   inicio: inicio,
-  tamano: _telefonoAlto,
+  tamano: _tallPhone,
 );
 
 Future<void> _adminEn(WidgetTester tester, String inicio) =>
@@ -229,8 +229,8 @@ Future<void> _usuarioConCentro(WidgetTester tester, String inicio) {
     tester,
     api: api.cliente,
     inicio: inicio,
-    tamano: _telefonoAlto,
-    centro: (sesion) => centroDe(api, sesion),
+    tamano: _tallPhone,
+    centro: (session) => centroDe(api, session),
   );
 }
 
@@ -433,9 +433,9 @@ class _Resultado {
 }
 
 Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(reservaJson()));
-  if (reserva == null) fail('la reserva de prueba no se lee');
-  return reserva;
+  final booking = bookingFromJson(jsonDecode(reservaJson()));
+  if (booking == null) fail('la reserva de prueba no se lee');
+  return booking;
 }
 
 final _resultados = <_Resultado>[

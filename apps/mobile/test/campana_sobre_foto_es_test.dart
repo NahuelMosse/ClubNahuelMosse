@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/theme/tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notificaciones_es_test.dart' show ApiFalsa, centroDe;
+import 'notifications_spanish_test.dart' show ApiFalsa, centroDe;
 import 'soporte/montar.dart';
 
 Future<void> _montarCampana(

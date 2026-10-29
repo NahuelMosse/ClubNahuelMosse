@@ -19,7 +19,7 @@ void main() {
     es = await AppLocalizations.delegate.load(const Locale('es'));
   });
 
-  final sede = Venue.fromJson({
+  final venue = Venue.fromJson({
     'id': '00000000-0000-7000-8000-000000000001',
     'nombre': 'Sede Morón',
     'direccion': 'Av. Rivadavia 19850',
@@ -35,7 +35,7 @@ void main() {
 
   Map<String, String> errores(DateTime dia, int desde, int hasta) => {
     for (final e in rangeErrors(
-      venue: sede,
+      venue: venue,
       day: dia,
       from: desde,
       to: hasta,
@@ -97,7 +97,7 @@ void main() {
     }) async {
       tester.platformDispatcher.textScaleFactorTestValue = escala;
       addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      final pedidos = <http.Request>[];
+      final requests = <http.Request>[];
       await montarUsuario(
         tester,
         inicio: '/inicio/buscar',
@@ -105,9 +105,9 @@ void main() {
         api: apiRutas({
           ...rutasDeSedes(),
           'GET /espacios/disponibles': respuesta,
-        }, pedidos: pedidos),
+        }, pedidos: requests),
       );
-      return pedidos;
+      return requests;
     }
 
     Future<void> elegir(
@@ -119,13 +119,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.bySemanticsLabel(campo));
       await tester.pumpAndSettle();
-      final boton = find.descendant(
+      final button = find.descendant(
         of: find.byType(Dialog),
         matching: find.text(opcion),
       );
-      await tester.ensureVisible(boton);
+      await tester.ensureVisible(button);
       await tester.pumpAndSettle();
-      await tester.tap(boton);
+      await tester.tap(button);
       await tester.pumpAndSettle();
     }
 
@@ -161,14 +161,14 @@ void main() {
       'consultar pide sede, deporte, fecha y rango, y lista las libres',
       (tester) async {
         final semantica = tester.ensureSemantics();
-        final pedidos = await abrir(tester);
+        final requests = await abrir(tester);
         expect(habilitado(tester, 'CONSULTAR'), isFalse);
 
         await completar(tester);
         await tester.tap(find.text('CONSULTAR'));
         await tester.pumpAndSettle();
 
-        final consulta = pedidos.last.url;
+        final consulta = requests.last.url;
         expect(consulta.path, '/espacios/disponibles');
         expect(
           consulta.queryParameters['sede_id'],
@@ -220,7 +220,7 @@ void main() {
       tester,
     ) async {
       final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
+      final requests = await abrir(tester);
       await completar(tester);
 
       await elegir(tester, 'Hasta', '18:00');
@@ -228,7 +228,7 @@ void main() {
       expect(find.text('La duración mínima es de una hora'), findsOneWidget);
       expect(habilitado(tester, 'CONSULTAR'), isFalse);
       expect(
-        pedidos.where((p) => p.url.path == '/espacios/disponibles'),
+        requests.where((p) => p.url.path == '/espacios/disponibles'),
         isEmpty,
       );
       semantica.dispose();

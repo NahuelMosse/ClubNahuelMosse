@@ -8,13 +8,13 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'notificaciones_es_test.dart'
+import 'notifications_spanish_test.dart'
     show ApiFalsa, SistemaFalso, centroDe, notif, recordatorio, ahoraClub;
 import 'soporte/montar.dart';
 import 'soporte/usuario.dart';
 
-const _reserva1 = '00000000-0000-7000-8000-000000000001';
-const _reserva2 = '00000000-0000-7000-8000-000000000002';
+const _booking1 = '00000000-0000-7000-8000-000000000001';
+const _booking2 = '00000000-0000-7000-8000-000000000002';
 const _idRecordatorio = '00000000-0000-7000-8000-000000000003';
 
 /// Un sistema donde el test decide cuándo la persona toca un aviso de la bandeja.
@@ -32,13 +32,13 @@ Future<(ApiFalsa, NotificationCenter)> _abrirCentro(
   final api = ApiFalsa()
     ..avisos = avisos
     ..unread = avisos.length;
-  final sesion = SesionFalsa(perfilUsuario);
-  final centro = centroDe(api, sesion);
+  final session = SesionFalsa(perfilUsuario);
+  final centro = centroDe(api, session);
   await montar(
     tester,
     NotificationsScreen(
       center: centro,
-      session: sesion,
+      session: session,
       now: () => ahoraClub,
       onOpen: (_, _) {},
     ),
@@ -62,7 +62,7 @@ Future<(ApiFalsa, SistemaConToques, NotificationCenter)> _montarApp(
     tester,
     inicio: '/inicio',
     api: api.cliente,
-    centro: (sesion) => centro = centroDe(api, sesion, sistema: sistema),
+    centro: (session) => centro = centroDe(api, session, sistema: sistema),
   );
   return (api, sistema, centro);
 }
@@ -134,10 +134,10 @@ void main() {
     testWidgets(
       'tocar un push marca leídas las de ese tipo y reserva y abre la reserva @NOT-03-S2',
       (tester) async {
-        final otraReserva = notif(
+        final otherBooking = notif(
           id: '00000000-0000-7000-8000-000000000005',
           club: DateTime.utc(2026, 11, 12, 19, 50),
-          reservaId: _reserva2,
+          reservaId: _booking2,
         );
         final otroTipo = notif(
           id: '00000000-0000-7000-8000-000000000006',
@@ -147,16 +147,16 @@ void main() {
         );
         final (api, sistema, centro) = await _montarApp(tester, [
           recordatorio,
-          otraReserva,
+          otherBooking,
           otroTipo,
         ]);
 
         sistema.toques.add(
-          NoticeTapped(kind: NotificationKind.reminder, bookingId: _reserva1),
+          NoticeTapped(kind: NotificationKind.reminder, bookingId: _booking1),
         );
         await tester.pumpAndSettle();
 
-        final leidas = api.pedidos
+        final leidas = api.requests
             .where((p) => p.method == 'POST' && p.url.path.endsWith('/leer'))
             .map((p) => p.url.path)
             .toList();

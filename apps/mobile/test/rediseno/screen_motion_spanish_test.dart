@@ -34,7 +34,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import '../mis_reservas_test.dart' show reservaJson;
-import '../notificaciones_es_test.dart'
+import '../notifications_spanish_test.dart'
     show ApiFalsa, ahoraClub, centroDe, recordatorio;
 import '../soporte/admin.dart';
 import '../soporte/montar.dart';
@@ -230,17 +230,17 @@ ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
   final rutas = rutasDeSedes();
   return ApiClient(
     'http://api.falsa',
-    cliente: MockClient((pedido) async {
-      final historial = pedido.url.queryParameters['cuando'] == 'historial';
-      if (pedido.url.path == '/reservas' && historial) {
+    cliente: MockClient((request) async {
+      final historial = request.url.queryParameters['cuando'] == 'historial';
+      if (request.url.path == '/reservas' && historial) {
         await esperaHistorial?.future;
       }
-      final (codigo, cuerpo) = pedido.url.path == '/reservas'
+      final (codigo, cuerpo) = request.url.path == '/reservas'
           ? (
               200,
               '{"reservas": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completada') : reservaJson()}]}',
             )
-          : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+          : rutas['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
         utf8.encode(cuerpo),
         codigo,
@@ -254,14 +254,14 @@ ApiClient _apiSede(Completer<void>? espera) {
   final rutas = rutasDeSedes();
   return ApiClient(
     'http://api.falsa',
-    cliente: MockClient((pedido) async {
+    cliente: MockClient((request) async {
       final filtrado =
-          pedido.url.path == '/espacios' &&
-          pedido.url.queryParameters.containsKey('deporte');
+          request.url.path == '/espacios' &&
+          request.url.queryParameters.containsKey('deporte');
       if (filtrado) await espera?.future;
       final (codigo, cuerpo) = filtrado
           ? (200, '{"espacios": [$espacioF5Json]}')
-          : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
+          : rutas['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
         utf8.encode(cuerpo),
         codigo,
@@ -295,9 +295,9 @@ Widget _resultado(ResultTone tono) => ResultScreen(
 );
 
 Booking _reservaConfirmada() {
-  final reserva = bookingFromJson(jsonDecode(reservaJson()));
-  if (reserva == null) fail('la reserva de prueba no se lee');
-  return reserva;
+  final booking = bookingFromJson(jsonDecode(reservaJson()));
+  if (booking == null) fail('la reserva de prueba no se lee');
+  return booking;
 }
 
 /// Un botón que abre lo que haga [abrir].
@@ -340,20 +340,20 @@ void main() {
       );
       final titulo = tester.element(find.text('Mis reservas'));
       final selector = tester.element(find.text('Historial'));
-      final lista = _fundidoDeLaLista;
+      final items = _fundidoDeLaLista;
 
       // El fundido es de la lista: el título y el selector quedan afuera.
-      expect(lista, findsOneWidget);
+      expect(items, findsOneWidget);
       expect(
-        find.ancestor(of: find.text('Mis reservas'), matching: lista),
+        find.ancestor(of: find.text('Mis reservas'), matching: items),
         findsNothing,
       );
       expect(
-        find.ancestor(of: find.text('Historial'), matching: lista),
+        find.ancestor(of: find.text('Historial'), matching: items),
         findsNothing,
       );
       expect(
-        find.descendant(of: lista, matching: find.text('ACTIVA')),
+        find.descendant(of: items, matching: find.text('ACTIVA')),
         findsOneWidget,
       );
 
@@ -363,7 +363,7 @@ void main() {
       expect(tester.element(find.text('Mis reservas')), same(titulo));
       expect(tester.element(find.text('Historial')), same(selector));
       expect(
-        find.descendant(of: lista, matching: find.byType(Skeleton)),
+        find.descendant(of: items, matching: find.byType(Skeleton)),
         findsWidgets,
       );
 
@@ -371,7 +371,7 @@ void main() {
       await _arrancar(tester);
       await tester.pump(_ms(75));
       final nueva = find.text('COMPLETADA');
-      expect(find.descendant(of: lista, matching: nueva), findsOneWidget);
+      expect(find.descendant(of: items, matching: nueva), findsOneWidget);
       expect(_visibilidad(tester, nueva), allOf(greaterThan(0), lessThan(1)));
       await tester.pump(_ms(200));
       expect(_visibilidad(tester, nueva), _uno);
@@ -394,19 +394,19 @@ void main() {
       const futbol = 'Moron_Rivadavia_19850_Futbol_F5_1';
       final titulo = tester.element(find.text('SEDE MORÓN'));
       final filtro = tester.element(find.text('DEPORTE'));
-      final lista = _fundidoDeLaLista;
+      final items = _fundidoDeLaLista;
 
-      expect(lista, findsOneWidget);
+      expect(items, findsOneWidget);
       expect(
-        find.ancestor(of: find.text('SEDE MORÓN'), matching: lista),
+        find.ancestor(of: find.text('SEDE MORÓN'), matching: items),
         findsNothing,
       );
       expect(
-        find.ancestor(of: find.text('DEPORTE'), matching: lista),
+        find.ancestor(of: find.text('DEPORTE'), matching: items),
         findsNothing,
       );
       expect(
-        find.descendant(of: lista, matching: find.text(tenis)),
+        find.descendant(of: items, matching: find.text(tenis)),
         findsOneWidget,
       );
 
@@ -422,7 +422,7 @@ void main() {
       await tester.pump(_ms(200));
       expect(find.text(tenis), findsNothing);
       expect(
-        find.descendant(of: lista, matching: find.text(futbol)),
+        find.descendant(of: items, matching: find.text(futbol)),
         findsOneWidget,
       );
       expect(tester.element(find.text('SEDE MORÓN')), same(titulo));
@@ -501,17 +501,17 @@ void main() {
       expect(retrasos(find.text('INICIAR SESIÓN')), contains(_ms(540)));
       expect(retrasos(find.text('¿No tenés cuenta?')), contains(_ms(620)));
 
-      final formulario = _aparecerQue(
+      final form = _aparecerQue(
         find.byType(FormTextField).first,
         (a) => a.delay == _ms(460),
       ).first;
-      expect(_opacidad(tester, formulario), 0);
+      expect(_opacidad(tester, form), 0);
       await tester.pump(_ms(400));
-      expect(_opacidad(tester, formulario), 0);
+      expect(_opacidad(tester, form), 0);
       await tester.pump(_ms(300));
-      expect(_opacidad(tester, formulario), allOf(greaterThan(0), lessThan(1)));
+      expect(_opacidad(tester, form), allOf(greaterThan(0), lessThan(1)));
       await tester.pumpAndSettle();
-      expect(_opacidad(tester, formulario), 1);
+      expect(_opacidad(tester, form), 1);
     },
   );
 
@@ -620,14 +620,15 @@ void main() {
   testWidgets(
     'recargar el inicio desde cero no repite la entrada @RED-04-ASM-04',
     (tester) async {
-      final datos = ValueNotifier<int>(0);
-      addTearDown(datos.dispose);
-      final sesion = SesionFalsa(perfilUsuario);
+      final data = ValueNotifier<int>(0);
+      addTearDown(data.dispose);
+      final session = SesionFalsa(perfilUsuario);
       await _montarLibre(
         tester,
         ValueListenableBuilder<int>(
-          valueListenable: datos,
-          builder: (context, n, _) => inicioFalso(sesion, conReserva: n.isEven),
+          valueListenable: data,
+          builder: (context, n, _) =>
+              inicioFalso(session, conReserva: n.isEven),
         ),
       );
       await _hastaQue(
@@ -643,7 +644,7 @@ void main() {
       expect(_todasEnSuFinal(tester), isTrue);
 
       // Otros datos: la pantalla se vacía y vuelve a leer.
-      datos.value = 1;
+      data.value = 1;
       await tester.pump();
       expect(find.byType(SportTile), findsNothing);
       await _hastaQue(
@@ -661,8 +662,8 @@ void main() {
   testWidgets(
     'un campo de texto que pasa a tener error tiembla una vez @RED-04-S7',
     (tester) async {
-      final controlador = TextEditingController();
-      addTearDown(controlador.dispose);
+      final controller = TextEditingController();
+      addTearDown(controller.dispose);
       String? error;
       late StateSetter reconstruir;
       await _montarLibre(
@@ -674,7 +675,7 @@ void main() {
               reconstruir = set;
               return FormTextField(
                 semanticLabel: 'Correo',
-                controller: controlador,
+                controller: controller,
                 error: error,
               );
             },
@@ -972,8 +973,8 @@ void main() {
     tester,
   ) async {
     final api = ApiFalsa();
-    final sesion = SesionFalsa(perfilUsuario);
-    final centro = centroDe(api, sesion);
+    final session = SesionFalsa(perfilUsuario);
+    final centro = centroDe(api, session);
     await montar(
       tester,
       Stack(
@@ -1140,21 +1141,21 @@ void main() {
       await tester.tap(find.byType(AccountButton));
       await tester.pump();
 
-      final nombre = find.text('Nahuel Mosse');
-      expect(nombre, findsOneWidget);
+      final name = find.text('Nahuel Mosse');
+      expect(name, findsOneWidget);
       final entrada = _aparecerQue(
-        nombre,
+        name,
         (a) => a.fromY == -16 && a.duration == _ms(350),
       );
       expect(entrada, findsOneWidget);
 
-      final arriba = tester.getTopLeft(nombre).dy;
+      final arriba = tester.getTopLeft(name).dy;
       expect(_opacidad(tester, entrada), 0);
       await tester.pump(_ms(175));
-      final aMitad = tester.getTopLeft(nombre).dy;
+      final aMitad = tester.getTopLeft(name).dy;
       expect(_opacidad(tester, entrada), allOf(greaterThan(0), lessThan(1)));
       await tester.pump(_ms(175));
-      final abajo = tester.getTopLeft(nombre).dy;
+      final abajo = tester.getTopLeft(name).dy;
       expect(abajo - arriba, closeTo(16, 0.01));
       expect(aMitad, allOf(greaterThan(arriba), lessThan(abajo)));
       expect(_opacidad(tester, entrada), 1);
@@ -1216,7 +1217,7 @@ void main() {
   testWidgets(
     'las capturas se toman con las animaciones terminadas @RED-04-ASM-12',
     (tester) async {
-      final pantallas = <String, Widget>{
+      final screens = <String, Widget>{
         'login': _login(),
         'inicio': inicioFalso(SesionFalsa(perfilUsuario)),
         'mi perfil': MyProfileScreen(
@@ -1227,12 +1228,12 @@ void main() {
           reserva: _reservaConfirmada(),
         ),
       };
-      for (final MapEntry(key: nombre, value: pantalla) in pantallas.entries) {
+      for (final MapEntry(key: name, value: pantalla) in screens.entries) {
         // Como los helpers de test/capturas: `montar` termina con pumpAndSettle.
         await montar(tester, pantalla, tema: darkTheme);
-        expect(find.byType(FadeIn), findsWidgets, reason: nombre);
-        expect(_todasEnSuFinal(tester), isTrue, reason: nombre);
-        expect(tester.binding.hasScheduledFrame, isFalse, reason: nombre);
+        expect(find.byType(FadeIn), findsWidgets, reason: name);
+        expect(_todasEnSuFinal(tester), isTrue, reason: name);
+        expect(tester.binding.hasScheduledFrame, isFalse, reason: name);
         await _desmontar(tester);
       }
     },

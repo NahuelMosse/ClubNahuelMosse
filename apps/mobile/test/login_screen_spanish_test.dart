@@ -23,7 +23,7 @@ void main() {
     CredencialesFalsas credenciales, {
     ApiClient? api,
   }) async {
-    final sesion = Session(
+    final session = Session(
       repository: SessionRepository(
         credentials: credenciales,
         api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
@@ -34,7 +34,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (_, _) =>
-              LoginScreen(session: sesion, pending: PendingBooking()),
+              LoginScreen(session: session, pending: PendingBooking()),
         ),
         GoRoute(path: '/inicio', builder: (_, _) => const Text('HOME')),
         GoRoute(path: '/admin', builder: (_, _) => const Text('PANEL')),

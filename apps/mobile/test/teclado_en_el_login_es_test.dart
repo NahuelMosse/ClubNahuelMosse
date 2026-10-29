@@ -12,7 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/montar.dart';
 
-const _pantalla = Size(393, 852);
+const _screenSize = Size(393, 852);
 const _alturaTeclado = 300.0;
 const _arribaDelTeclado = 852.0 - _alturaTeclado;
 
@@ -23,7 +23,7 @@ void main() {
     WidgetTester tester, {
     CredencialesFalsas? credenciales,
   }) async {
-    tester.view.physicalSize = _pantalla * 3;
+    tester.view.physicalSize = _screenSize * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     addTearDown(tester.view.resetViewInsets);

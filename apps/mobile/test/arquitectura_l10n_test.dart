@@ -20,7 +20,7 @@ final _importacion = RegExp(
 /// relativas a `lib/`).
 Map<String, Set<String>> _archivos() {
   final lib = Directory('lib');
-  final salida = <String, Set<String>>{};
+  final imports = <String, Set<String>>{};
   for (final f in lib.listSync(recursive: true).whereType<File>()) {
     if (!f.path.endsWith('.dart')) continue;
     final ruta = f.path
@@ -30,16 +30,16 @@ Map<String, Set<String>> _archivos() {
         .join('lib/');
     final destinos = <String>{};
     for (final m in _importacion.allMatches(f.readAsStringSync())) {
-      final uso = m.group(1)!;
-      if (uso.startsWith('package:clubnahuelmosse/')) {
-        destinos.add(uso.substring('package:clubnahuelmosse/'.length));
-      } else if (!uso.contains(':')) {
-        destinos.add(Uri.parse(ruta).resolve(uso).path);
+      final usage = m.group(1)!;
+      if (usage.startsWith('package:clubnahuelmosse/')) {
+        destinos.add(usage.substring('package:clubnahuelmosse/'.length));
+      } else if (!usage.contains(':')) {
+        destinos.add(Uri.parse(ruta).resolve(usage).path);
       }
     }
-    salida[ruta] = destinos;
+    imports[ruta] = destinos;
   }
-  return salida;
+  return imports;
 }
 
 /// Las dependencias entre carpetas de `lib/`, sin las de una carpeta consigo misma.

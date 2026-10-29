@@ -65,8 +65,8 @@ final alerta = notif(
   leida: true,
 );
 
-Map<String, Object?> cuerpoDe(http.Request pedido) =>
-    jsonDecode(pedido.body) as Map<String, Object?>;
+Map<String, Object?> cuerpoDe(http.Request request) =>
+    jsonDecode(request.body) as Map<String, Object?>;
 
 class SistemaFalso implements NotificationSystem {
   SistemaFalso({this.concedido = true});
@@ -140,16 +140,16 @@ class ApiFalsa {
   List<String> avisos = [];
   int unread = 0;
   bool caida = false;
-  final pedidos = <http.Request>[];
+  final requests = <http.Request>[];
   void Function(http.Request)? alPedir;
 
   ApiClient get cliente => ApiClient(
     'http://api.falsa',
-    cliente: MockClient((pedido) async {
-      pedidos.add(pedido);
-      alPedir?.call(pedido);
+    cliente: MockClient((request) async {
+      requests.add(request);
+      alPedir?.call(request);
       if (caida) throw http.ClientException('sin red');
-      final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+      final (codigo, cuerpo) = switch ((request.method, request.url.path)) {
         ('GET', '/notificaciones') => (
           200,
           '{"notificaciones": [${avisos.join(', ')}], "no_leidas": $unread}',
@@ -177,19 +177,19 @@ class ApiFalsa {
   );
 
   Iterable<http.Request> de(String metodo, String ruta) =>
-      pedidos.where((p) => p.method == metodo && p.url.path == ruta);
+      requests.where((p) => p.method == metodo && p.url.path == ruta);
 }
 
 /// Por defecto el teléfono está en las 21:00 del club del 12 de noviembre: lo que ya estaba sin
 /// leer a las 19:58 no llegó mientras la app arrancaba.
 NotificationCenter centroDe(
   ApiFalsa api,
-  Session sesion, {
+  Session session, {
   NotificationSystem? sistema,
   DateTime Function()? ahora,
 }) => NotificationCenter(
-  notifications: NotificationsRepository(api: api.cliente, session: sesion),
-  session: sesion,
+  notifications: NotificationsRepository(api: api.cliente, session: session),
+  session: session,
   system: sistema ?? SistemaFalso(),
   every: Duration.zero,
   now: ahora ?? () => DateTime.utc(2026, 11, 13),
@@ -222,12 +222,12 @@ void main() {
     });
 
     test('agrupa por día conservando de la más nueva a la más vieja', () {
-      final lista = [
+      final items = [
         for (final json in [recordatorio, confirmacion, alerta])
           AppNotification.fromJson(jsonDecode(json))!,
       ];
 
-      final grupos = groupByDay(lista, hoy);
+      final grupos = groupByDay(items, hoy);
 
       expect(grupos.map((g) => arrivalText(_es, g.arrival)), ['HOY', 'AYER']);
       expect(grupos.first.notifications.map((n) => n.id), [
@@ -295,17 +295,17 @@ void main() {
       final api = ApiFalsa()
         ..avisos = [...avisos]
         ..unread = unread;
-      final sesion = SesionFalsa(perfilUsuario);
+      final session = SesionFalsa(perfilUsuario);
       final centro = centroDe(
         api,
-        sesion,
+        session,
         sistema: SistemaFalso(concedido: permiso),
       );
       await montar(
         tester,
         NotificationsScreen(
           center: centro,
-          session: sesion,
+          session: session,
           now: () => ahoraClub,
           onOpen: (_, n) => alAbrir?.call(n),
         ),
@@ -434,12 +434,12 @@ void main() {
           ..avisos = [recordatorio]
           ..unread = 1
           ..caida = true;
-        final sesion = SesionFalsa(perfilUsuario);
+        final session = SesionFalsa(perfilUsuario);
         await montar(
           tester,
           NotificationsScreen(
-            center: centroDe(api, sesion),
-            session: sesion,
+            center: centroDe(api, session),
+            session: session,
             now: () => ahoraClub,
             onOpen: (_, _) {},
           ),
@@ -460,15 +460,15 @@ void main() {
       'si la lectura falla no muestra un centro vacío que quedó de antes',
       (tester) async {
         final api = ApiFalsa();
-        final sesion = SesionFalsa(perfilUsuario);
-        final centro = centroDe(api, sesion);
+        final session = SesionFalsa(perfilUsuario);
+        final centro = centroDe(api, session);
         await tester.runAsync(centro.load);
         api.caida = true;
         await montar(
           tester,
           NotificationsScreen(
             center: centro,
-            session: sesion,
+            session: session,
             now: () => ahoraClub,
             onOpen: (_, _) {},
           ),
@@ -529,10 +529,10 @@ void main() {
       double escala = 1,
     }) async {
       final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
+      final session = SesionFalsa(perfilUsuario);
       final centro = centroDe(
         api,
-        sesion,
+        session,
         sistema: SistemaFalso(concedido: permiso),
       );
       final abiertas = <AppNotification>[];
@@ -574,8 +574,8 @@ void main() {
       final api = ApiFalsa()
         ..avisos = [recordatorio]
         ..unread = 1;
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion);
+      final session = SesionFalsa(perfilUsuario);
+      final centro = centroDe(api, session);
       await montar(
         tester,
         NoticePanel(center: centro, onOpen: (_) {}),
@@ -819,17 +819,17 @@ void main() {
     testWidgets('cerrar borra el token del teléfono', (tester) async {
       final api = ApiFalsa();
       final sistema = SistemaFalso();
-      final sesion = Session(
+      final session = Session(
         repository: SessionRepository(
           credentials: CredencialesFalsas(),
           api: api.cliente,
         ),
       );
-      centroDe(api, sesion, sistema: sistema);
+      centroDe(api, session, sistema: sistema);
       await tester.runAsync(() async {
-        await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
+        await session.signIn('nahuel@correo.com', 'ClubNahuel1');
         await Future<void>.delayed(const Duration(milliseconds: 100));
-        await sesion.close();
+        await session.close();
       });
 
       expect(sistema.olvidos, 1);
@@ -842,15 +842,15 @@ void main() {
       final sistema = SistemaFalso();
       final credenciales = CredencialesFalsas(conCuenta: true)
         ..tokenFalla = true;
-      final sesion = Session(
+      final session = Session(
         repository: SessionRepository(
           credentials: credenciales,
           api: api.cliente,
         ),
       );
-      centroDe(api, sesion, sistema: sistema);
+      centroDe(api, session, sistema: sistema);
 
-      final perfil = await tester.runAsync(sesion.resume);
+      final perfil = await tester.runAsync(session.resume);
 
       expect(perfil, isNull);
       expect(credenciales.salidas, 1);
@@ -862,7 +862,7 @@ void main() {
     ) async {
       final api = ApiFalsa();
       final sistema = SistemaFalso();
-      final sesion = Session(
+      final session = Session(
         repository: SessionRepository(
           credentials: CredencialesFalsas(),
           api: ApiClient(
@@ -871,11 +871,11 @@ void main() {
           ),
         ),
       );
-      centroDe(api, sesion, sistema: sistema);
+      centroDe(api, session, sistema: sistema);
 
       await tester.runAsync(() async {
         await expectLater(
-          sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
+          session.signIn('nahuel@correo.com', 'ClubNahuel1'),
           throwsA(isA<ErrorDelServidor>()),
         );
       });
@@ -886,16 +886,16 @@ void main() {
     testWidgets('dar de baja la cuenta borra el token', (tester) async {
       final api = ApiFalsa();
       final sistema = SistemaFalso();
-      final sesion = Session(
+      final session = Session(
         repository: SessionRepository(
           credentials: CredencialesFalsas(),
           api: api.cliente,
         ),
       );
-      centroDe(api, sesion, sistema: sistema);
+      centroDe(api, session, sistema: sistema);
       await tester.runAsync(() async {
-        await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
-        await sesion.deactivate();
+        await session.signIn('nahuel@correo.com', 'ClubNahuel1');
+        await session.deactivate();
       });
 
       expect(sistema.olvidos, 1);
@@ -905,18 +905,18 @@ void main() {
       tester,
     ) async {
       final credenciales = CredencialesLentas(tarda: Duration.zero);
-      final sesion = Session(
+      final session = Session(
         repository: SessionRepository(
           credentials: credenciales,
           api: ApiFalsa().cliente,
         ),
       );
       await tester.runAsync(
-        () => sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
+        () => session.signIn('nahuel@correo.com', 'ClubNahuel1'),
       );
       credenciales.sinToken = true;
 
-      await tester.runAsync(sesion.close);
+      await tester.runAsync(session.close);
 
       expect(credenciales.salidas, 1);
     });
@@ -925,20 +925,20 @@ void main() {
       'con el token colgado, cerrar espera dos segundos y sale igual',
       (tester) async {
         final credenciales = CredencialesLentas(tarda: Duration.zero);
-        final sesion = Session(
+        final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
             api: ApiFalsa().cliente,
           ),
         );
-        sesion.onClose.add((_) async => fail('no había token que dar'));
+        session.onClose.add((_) async => fail('no había token que dar'));
         await tester.runAsync(
-          () => sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
+          () => session.signIn('nahuel@correo.com', 'ClubNahuel1'),
         );
         credenciales.sinToken = true;
         var cerro = false;
 
-        unawaited(sesion.close().then((_) => cerro = true));
+        unawaited(session.close().then((_) => cerro = true));
         await tester.pump(const Duration(seconds: 1));
         expect(cerro, isFalse);
         await tester.pump(const Duration(seconds: 2));
@@ -953,24 +953,24 @@ void main() {
       'si la baja falla antes de que termine de salir, no queda un error sin atrapar',
       (tester) async {
         final credenciales = CredencialesLentas();
-        final sesion = Session(
+        final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
             api: ApiFalsa().cliente,
           ),
         );
-        sesion.onClose.add(
+        session.onClose.add(
           (_) => Future<void>.error(StateError('la API se cayó')),
         );
         await tester.runAsync(
-          () => sesion.signIn('nahuel@correo.com', 'ClubNahuel1'),
+          () => session.signIn('nahuel@correo.com', 'ClubNahuel1'),
         );
 
-        await tester.runAsync(sesion.close);
+        await tester.runAsync(session.close);
 
         expect(tester.takeException(), isNull);
         expect(credenciales.salidas, 1);
-        expect(sesion.profile, isNull);
+        expect(session.profile, isNull);
       },
     );
   });
@@ -1048,9 +1048,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final pedido = cuerpoDe(api.de('PUT', '/dispositivos').single);
-      expect(pedido['permiso'], isFalse);
-      expect(pedido['token'], 'token-del-telefono');
+      final request = cuerpoDe(api.de('PUT', '/dispositivos').single);
+      expect(request['permiso'], isFalse);
+      expect(request['token'], 'token-del-telefono');
     });
 
     testWidgets(
@@ -1076,7 +1076,7 @@ void main() {
       centroDe(api, SesionFalsa(perfilAdmin));
       await tester.pumpAndSettle();
 
-      expect(api.pedidos, isEmpty);
+      expect(api.requests, isEmpty);
     });
 
     testWidgets(
@@ -1084,7 +1084,7 @@ void main() {
       (tester) async {
         final api = ApiFalsa();
         final credenciales = CredencialesFalsas();
-        final sesion = Session(
+        final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
             api: api.cliente,
@@ -1096,15 +1096,15 @@ void main() {
             autorizacionDeLaBaja = p.headers['authorization'];
           }
         };
-        final centro = centroDe(api, sesion);
+        final centro = centroDe(api, session);
         await tester.runAsync(() async {
-          await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
+          await session.signIn('nahuel@correo.com', 'ClubNahuel1');
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
         await tester.pumpAndSettle();
         expect(api.de('PUT', '/dispositivos'), hasLength(1));
 
-        await tester.runAsync(sesion.close);
+        await tester.runAsync(session.close);
         await tester.pumpAndSettle();
 
         expect(api.de('POST', '/dispositivos/baja'), hasLength(1));
@@ -1123,24 +1123,24 @@ void main() {
       (tester) async {
         final api = ApiFalsa();
         final credenciales = CredencialesFalsas();
-        final sesion = Session(
+        final session = Session(
           repository: SessionRepository(
             credentials: credenciales,
             api: api.cliente,
           ),
         );
-        centroDe(api, sesion);
+        centroDe(api, session);
         await tester.runAsync(() async {
-          await sesion.signIn('nahuel@correo.com', 'ClubNahuel1');
+          await session.signIn('nahuel@correo.com', 'ClubNahuel1');
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
         await tester.pumpAndSettle();
 
         api.caida = true;
-        await tester.runAsync(sesion.close);
+        await tester.runAsync(session.close);
 
         expect(credenciales.salidas, 1);
-        expect(sesion.profile, isNull);
+        expect(session.profile, isNull);
       },
     );
   });
@@ -1157,7 +1157,7 @@ void main() {
           tester,
           inicio: '/inicio',
           api: api.cliente,
-          centro: (sesion) => centroDe(api, sesion),
+          centro: (session) => centroDe(api, session),
         );
 
         expect(
@@ -1183,7 +1183,7 @@ void main() {
         tester,
         inicio: '/inicio',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (session) => centroDe(api, session),
       );
 
       expect(find.bySemanticsLabel('Notificaciones'), findsOneWidget);
@@ -1228,7 +1228,7 @@ void main() {
         tester,
         inicio: '/notificaciones',
         api: api.cliente,
-        centro: (sesion) => centroDe(api, sesion),
+        centro: (session) => centroDe(api, session),
       );
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
@@ -1265,14 +1265,14 @@ void main() {
           tester,
           inicio: '/notificaciones',
           api: api.cliente,
-          centro: (sesion) => centroDe(api, sesion),
+          centro: (session) => centroDe(api, session),
         );
 
         await tester.tap(find.text('Reserva cancelada'));
         await tester.pumpAndSettle();
 
         expect(
-          api.pedidos.any(
+          api.requests.any(
             (p) =>
                 p.url.path == '/reservas' &&
                 p.url.queryParameters['cuando'] == 'historial',

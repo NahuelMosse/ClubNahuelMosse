@@ -6,7 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'notificaciones_es_test.dart' show ApiFalsa, SistemaFalso, centroDe;
+import 'notifications_spanish_test.dart' show ApiFalsa, SistemaFalso, centroDe;
 import 'soporte/montar.dart';
 
 /// Un sistema que no contestó la pregunta del permiso hasta que el test lo decide.
