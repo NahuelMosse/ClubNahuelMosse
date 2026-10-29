@@ -5,7 +5,7 @@ import ast
 import re
 from pathlib import Path
 
-from tests.esquema_vigente import nombres, valor, vigentes
+from tests.current_schema import current, names, value
 
 RAIZ = Path(__file__).resolve().parents[4]
 MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migrations" / "versions").glob("0*.py"))
@@ -76,13 +76,13 @@ def _tablas() -> dict[str, set[str]]:
     # tests/integracion/test_uuid_y_auditoria.py.
     for columnas in tablas.values():
         columnas |= {"creado_en", "modificado_en"}
-    return vigentes(tablas)
+    return current(tablas)
 
 
 def _palabras_de_las_migraciones() -> set[str]:
     """Todo nombre que aparece en las migraciones, también los de las constantes de módulo."""
     escritas = set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_texto(m) for m in MIGRACIONES)))
-    return escritas | nombres()
+    return escritas | names()
 
 
 def _secciones(texto: str, nivel: str) -> dict[str, str]:
@@ -152,9 +152,9 @@ def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_
     sql = "\n".join(_sql(m) for m in MIGRACIONES)
     por_estado = re.search(r"estado IN \(([^)]*)\)", sql)
     assert por_estado is not None
-    reserva = {valor(v) for v in re.findall(r"'(\w+)'", por_estado.group(1))}
+    reserva = {value(v) for v in re.findall(r"'(\w+)'", por_estado.group(1))}
     envio = {
-        valor(v)
+        value(v)
         for v in re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1])
     }
     estados = _secciones(_texto(MODELO), "##")["Estados"]

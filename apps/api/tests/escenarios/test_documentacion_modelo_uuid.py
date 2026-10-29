@@ -2,7 +2,7 @@
 
 import re
 
-from tests.esquema_vigente import columna, tabla as tabla_vigente
+from tests.current_schema import column, table as current_table
 from tests.escenarios.test_documentacion_vigente import (
     API,
     DISENO,
@@ -22,8 +22,8 @@ def _columnas_vigentes() -> dict[str, set[str]]:
     migracion = next((API / "migrations" / "versions").glob("0010_*.py"))
     subida = _texto(migracion).split("def _auditoria_abajo")[0]
     for tabla, viejo, nuevo in RENOMBRES.findall(subida):
-        tablas[tabla_vigente(tabla)].discard(columna(tabla, viejo))
-        tablas[tabla_vigente(tabla)].add(columna(tabla, nuevo))
+        tablas[current_table(tabla)].discard(column(tabla, viejo))
+        tablas[current_table(tabla)].add(column(tabla, nuevo))
     return tablas
 
 
