@@ -21,10 +21,11 @@ from app.shared.errors import (
     NumberTaken,
     Unavailable,
 )
+from app.shared.stored_values import stored
 
 SPACE_COLUMNS = (
-    "e.id, e.nombre, e.sede_id, s.nombre AS sede, e.deporte, e.tipo, e.numero, e.techada,"
-    " e.iluminada, e.precio_por_hora"
+    "e.id, e.name, e.venue_id, s.name AS venue, e.sport, e.kind, e.number, e.covered,"
+    " e.lit, e.price_per_hour"
 )
 # First argument of this table's advisory locks: keeps its key space apart from the other
 # locks of the database.
@@ -34,15 +35,15 @@ _NUMBERING_LOCK = 21
 def space_of_row(row: Any) -> Space:
     return Space(
         id=row.id,
-        name=row.nombre,
-        venue_id=row.sede_id,
-        venue=row.sede,
-        sport=row.deporte,
-        kind=row.tipo,
-        number=int(row.numero),
-        covered=bool(row.techada),
-        lit=bool(row.iluminada),
-        price_per_hour=int(row.precio_por_hora),
+        name=row.name,
+        venue_id=row.venue_id,
+        venue=row.venue,
+        sport=row.sport,
+        kind=row.kind,
+        number=int(row.number),
+        covered=bool(row.covered),
+        lit=bool(row.lit),
+        price_per_hour=int(row.price_per_hour),
     )
 
 
@@ -58,14 +59,14 @@ class SpacesSql:
     ) -> list[Space]:
         rows = self._conn.execute(
             text(
-                f"SELECT {SPACE_COLUMNS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
-                " WHERE e.activo AND s.activa"
-                " AND (CAST(:sede AS uuid) IS NULL OR e.sede_id = :sede)"
-                " AND (CAST(:deporte AS text) IS NULL OR e.deporte = :deporte)"
-                " AND (CAST(:tipo AS text) IS NULL OR e.tipo = :tipo)"
-                " ORDER BY lower(s.nombre), s.id, e.deporte, e.tipo, e.numero"
+                f"SELECT {SPACE_COLUMNS} FROM space e JOIN venue s ON s.id = e.venue_id"
+                " WHERE e.active AND s.active"
+                " AND (CAST(:venue AS uuid) IS NULL OR e.venue_id = :venue)"
+                " AND (CAST(:sport AS text) IS NULL OR e.sport = :sport)"
+                " AND (CAST(:kind AS text) IS NULL OR e.kind = :kind)"
+                " ORDER BY lower(s.name), s.id, e.sport, e.kind, e.number"
             ),
-            {"sede": venue_id, "deporte": sport, "tipo": kind},
+            {"venue": venue_id, "sport": sport, "kind": kind},
         ).all()
         self._conn.rollback()
         return [space_of_row(r) for r in rows]
@@ -73,12 +74,12 @@ class SpacesSql:
     def _venue(self, venue_id: UUID, *, lock: bool) -> SpaceVenue | None:
         row = self._conn.execute(
             text(
-                "SELECT nombre, calle, altura FROM sede WHERE id = :id AND activa"
+                "SELECT name, street, street_number FROM venue WHERE id = :id AND active"
                 + (" FOR SHARE" if lock else "")
             ),
             {"id": venue_id},
         ).first()
-        return None if row is None else SpaceVenue(row.nombre, row.calle, int(row.altura))
+        return None if row is None else SpaceVenue(row.name, row.street, int(row.street_number))
 
     def _compute(
         self,
@@ -90,16 +91,16 @@ class SpacesSql:
         number = int(
             self._conn.execute(
                 text(
-                    "SELECT coalesce(max(numero), 0) + 1 FROM espacio"
-                    " WHERE sede_id = :sede AND deporte = :deporte AND tipo = :tipo"
+                    "SELECT coalesce(max(number), 0) + 1 FROM space"
+                    " WHERE venue_id = :venue AND sport = :sport AND kind = :kind"
                 ),
-                {"sede": venue_id, "deporte": sport, "tipo": kind},
+                {"venue": venue_id, "sport": sport, "kind": kind},
             ).scalar_one()
         )
         # Another venue can build the same composite name (one deactivated and created again
         # identically, or "Haedo" and "Sede Haedo" on the same street): that number is skipped.
         while self._conn.execute(
-            text("SELECT 1 FROM espacio WHERE nombre = :n"), {"n": name(number)}
+            text("SELECT 1 FROM space WHERE name = :n"), {"n": name(number)}
         ).first():
             number += 1
         return SuggestedName(name(number), number)
@@ -122,22 +123,22 @@ class SpacesSql:
     def _repeated(self, new: NewSpace, number: int, author: UUID) -> Space | None:
         row = self._conn.execute(
             text(
-                f"SELECT {SPACE_COLUMNS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
-                " WHERE e.sede_id = :sede AND e.deporte = :deporte AND e.tipo = :tipo"
-                " AND e.numero = :numero AND e.activo AND e.creado_por = :autor"
-                " AND e.techada = :techada AND e.iluminada = :iluminada"
-                " AND e.precio_por_hora = :precio"
-                f" AND e.creado_en > now() - interval '{RETRY_WINDOW}'"
+                f"SELECT {SPACE_COLUMNS} FROM space e JOIN venue s ON s.id = e.venue_id"
+                " WHERE e.venue_id = :venue AND e.sport = :sport AND e.kind = :kind"
+                " AND e.number = :number AND e.active AND e.created_by = :author"
+                " AND e.covered = :covered AND e.lit = :lit"
+                " AND e.price_per_hour = :price"
+                f" AND e.created_at > now() - interval '{RETRY_WINDOW}'"
             ),
             {
-                "sede": new.venue_id,
-                "deporte": new.sport,
-                "tipo": new.kind,
-                "numero": number,
-                "autor": author,
-                "techada": new.covered,
-                "iluminada": new.lit,
-                "precio": new.price_per_hour,
+                "venue": new.venue_id,
+                "sport": new.sport,
+                "kind": new.kind,
+                "number": number,
+                "author": author,
+                "covered": new.covered,
+                "lit": new.lit,
+                "price": new.price_per_hour,
             },
         ).first()
         return None if row is None else space_of_row(row)
@@ -162,7 +163,7 @@ class SpacesSql:
             index = violated_constraint(e)
             # A creation in another venue took the same name between the computation and the
             # INSERT.
-            if index == "espacio_nombre_key":
+            if index == "space_name_key":
                 raise Duplicate(["nombre"]) from e
             raise
         return space_of_row(row)
@@ -175,9 +176,9 @@ class SpacesSql:
         if venue is None:
             raise Unavailable("la sede no está activa")
         self._conn.execute(
-            text("SELECT pg_advisory_xact_lock(:espacio, hashtext(:c))"),
+            text("SELECT pg_advisory_xact_lock(:space, hashtext(:c))"),
             {
-                "espacio": _NUMBERING_LOCK,
+                "space": _NUMBERING_LOCK,
                 "c": f"{new.venue_id}:{new.sport}:{new.kind}",
             },
         )
@@ -195,41 +196,41 @@ class SpacesSql:
     def _insert_row(self, new: NewSpace, following: SuggestedName, author: UUID) -> Row[Any]:
         return self._conn.execute(
             text(
-                "WITH nuevo AS ("
-                " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora, creado_por, modificado_por)"
-                " VALUES (:sede, :deporte, :tipo, :numero, :nombre, :techada, :iluminada,"
-                " :precio, :autor, :autor) RETURNING *)"
-                f" SELECT {SPACE_COLUMNS} FROM nuevo e"
-                " JOIN sede s ON s.id = e.sede_id"
+                "WITH created AS ("
+                " INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour, created_by, updated_by)"
+                " VALUES (:venue, :sport, :kind, :number, :name, :covered, :lit,"
+                " :price, :author, :author) RETURNING *)"
+                f" SELECT {SPACE_COLUMNS} FROM created e"
+                " JOIN venue s ON s.id = e.venue_id"
             ),
             {
-                "sede": new.venue_id,
-                "deporte": new.sport,
-                "tipo": new.kind,
-                "numero": following.number,
-                "nombre": following.name,
-                "techada": new.covered,
-                "iluminada": new.lit,
-                "precio": new.price_per_hour,
-                "autor": author,
+                "venue": new.venue_id,
+                "sport": new.sport,
+                "kind": new.kind,
+                "number": following.number,
+                "name": following.name,
+                "covered": new.covered,
+                "lit": new.lit,
+                "price": new.price_per_hour,
+                "author": author,
             },
         ).one()
 
     def update(self, space_id: UUID, change: SpaceChange, author: UUID) -> Space:
         params = {
             "id": space_id,
-            "techada": change.covered,
-            "iluminada": change.lit,
-            "precio": change.price_per_hour,
-            "autor": author,
+            "covered": change.covered,
+            "lit": change.lit,
+            "price": change.price_per_hour,
+            "author": author,
         }
         with in_transaction(self._conn):
             self._lock_space_venue(params)
             self._modify(params)
             row = self._conn.execute(
                 text(
-                    f"SELECT {SPACE_COLUMNS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
+                    f"SELECT {SPACE_COLUMNS} FROM space e JOIN venue s ON s.id = e.venue_id"
                     " WHERE e.id = :id"
                 ),
                 params,
@@ -241,10 +242,10 @@ class SpacesSql:
         # saved takes the price from before or from now, whole.
         venue = self._conn.execute(
             text(
-                "SELECT s.id FROM sede s JOIN espacio e ON e.sede_id = s.id"
-                " WHERE e.id = :id AND e.activo AND s.activa FOR SHARE OF s"
+                "SELECT s.id FROM venue s JOIN space e ON e.venue_id = s.id"
+                " WHERE e.id = :id AND e.active AND s.active FOR SHARE OF s"
             ),
-            params,
+            {"id": params["id"]},
         ).first()
         if venue is None:
             raise NotFound("el espacio ya no está activo")
@@ -254,12 +255,12 @@ class SpacesSql:
         # touched, nothing was saved.
         touched = self._conn.execute(
             text(
-                "UPDATE espacio SET"
-                " techada = coalesce(CAST(:techada AS boolean), techada),"
-                " iluminada = coalesce(CAST(:iluminada AS boolean), iluminada),"
-                " precio_por_hora = coalesce(CAST(:precio AS integer), precio_por_hora),"
-                " modificado_por = :autor, modificado_en = now()"
-                " WHERE id = :id AND activo RETURNING id"
+                "UPDATE space SET"
+                " covered = coalesce(CAST(:covered AS boolean), covered),"
+                " lit = coalesce(CAST(:lit AS boolean), lit),"
+                " price_per_hour = coalesce(CAST(:price AS integer), price_per_hour),"
+                " updated_by = :author, updated_at = now()"
+                " WHERE id = :id AND active RETURNING id"
             ),
             params,
         ).first()
@@ -267,33 +268,33 @@ class SpacesSql:
             raise NotFound("el espacio se dio de baja mientras tanto")
 
     def deactivate(self, space_id: UUID, author: UUID) -> None:
-        params = {"id": space_id, "autor": author}
+        params = {"id": space_id, "author": author}
         with in_transaction(self._conn):
             # The shared venue and then the exclusive space, the order of a booking: the one
             # being made finishes first and is seen here, or waits and finds the space
             # deactivated.
             row = self._conn.execute(
                 text(
-                    "SELECT e.id FROM espacio e JOIN sede s ON s.id = e.sede_id"
-                    " WHERE e.id = :id AND e.activo FOR SHARE OF s FOR UPDATE OF e"
+                    "SELECT e.id FROM space e JOIN venue s ON s.id = e.venue_id"
+                    " WHERE e.id = :id AND e.active FOR SHARE OF s FOR UPDATE OF e"
                 ),
-                params,
+                {"id": space_id},
             ).first()
             if row is None:
                 raise NotFound("el espacio ya no está activo")
             pending: int = self._conn.execute(
                 text(
-                    "SELECT count(*) FROM reserva WHERE espacio_id = :id"
-                    " AND estado = 'activa' AND fin > now()"
+                    "SELECT count(*) FROM booking WHERE space_id = :id"
+                    " AND status = :active_status AND ends_at > now()"
                 ),
-                params,
+                {"id": space_id, "active_status": stored("activa")},
             ).scalar_one()
             if pending:
                 raise HasFutureBookings("el espacio tiene reservas que todavía no terminaron")
             self._conn.execute(
                 text(
-                    "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
-                    " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
+                    "UPDATE space SET active = false, deactivated_at = now(),"
+                    " deactivated_by = :author, updated_by = :author, updated_at = now()"
                     " WHERE id = :id"
                 ),
                 params,
@@ -304,11 +305,11 @@ class SpacesSql:
         no commit."""
         self._conn.execute(
             text(
-                "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
-                " dado_de_baja_por = :autor, modificado_por = :autor, modificado_en = now()"
-                " WHERE sede_id = :id AND activo"
+                "UPDATE space SET active = false, deactivated_at = now(),"
+                " deactivated_by = :author, updated_by = :author, updated_at = now()"
+                " WHERE venue_id = :id AND active"
             ),
-            {"id": venue_id, "autor": author},
+            {"id": venue_id, "author": author},
         )
 
 
