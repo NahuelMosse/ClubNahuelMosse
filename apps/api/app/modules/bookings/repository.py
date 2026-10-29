@@ -1,5 +1,5 @@
 # kit-shape: the bookings repository and the function that hands it to the routes go together
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
@@ -33,57 +33,68 @@ from app.shared.errors import (
     SlotTaken,
     Unavailable,
 )
+from app.shared.stored_values import contract, stored
 
 # SQLSTATE of the exclusion constraint: another active booking overlaps the slot.
 EXCLUSION_VIOLATION = "23P01"
 
 # The total of a booking: the price times the whole hours between the start and the end.
 _TOTAL_SQL = (
-    ":precio * (extract(epoch FROM CAST(:fin AS timestamptz)"
-    " - CAST(:inicio AS timestamptz))::integer / 3600)"
+    ":price * (extract(epoch FROM CAST(:ends_at AS timestamptz)"
+    " - CAST(:starts_at AS timestamptz))::integer / 3600)"
 )
 
 _COMMON_COLUMNS = (
-    "r.id, r.espacio_id AS space_id, e.sede_id AS venue_id, e.nombre AS space,"
-    " e.deporte AS sport, e.tipo AS kind, s.nombre AS venue,"
-    " s.calle || ' ' || s.altura AS address, r.inicio AS starts_at, r.fin AS ends_at,"
-    " r.precio_por_hora AS price_per_hour, r.total, r.estado_actual AS status,"
-    " r.motivo AS reason,"
+    "r.id, r.space_id, e.venue_id, e.name AS space,"
+    " e.sport, e.kind, s.name AS venue,"
+    " s.street || ' ' || s.street_number AS address, r.starts_at, r.ends_at,"
+    " r.price_per_hour, r.total, r.current_status AS status,"
+    " r.reason,"
 )
-_COLUMNS = f"{_COMMON_COLUMNS} (r.estado_actual = 'activa' AND r.inicio > now()) AS cancelable"
+_CANCELABLE = "(r.current_status = 'active' AND r.starts_at > now())"
+_COLUMNS = f"{_COMMON_COLUMNS} {_CANCELABLE} AS cancelable"
 _HISTORY_COLUMNS = (
     f"{_COMMON_COLUMNS}"
-    " r.usuario_id AS user_id, u.nombre || ' ' || u.apellido AS user,"
-    " r.creado_en AS created_at, r.cancelada_en AS canceled_at,"
-    " administrador.nombre || ' ' || administrador.apellido AS canceled_by_name,"
-    " (NOT e.activo OR NOT s.activa) AS space_deactivated,"
-    " (r.estado_actual = 'activa' AND r.inicio > now()) AS voidable,"
+    " r.user_id, u.first_name || ' ' || u.last_name AS user,"
+    " r.created_at, r.canceled_at,"
+    " canceler.first_name || ' ' || canceler.last_name AS canceled_by_name,"
+    " (NOT e.active OR NOT s.active) AS space_deactivated,"
+    f" {_CANCELABLE} AS voidable,"
     # A pending notice is not yet part of the traceability.
-    " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL ELSE aviso.envio END"
+    " CASE WHEN notice.delivery IN ('pending', 'sending') THEN NULL ELSE notice.delivery END"
     " AS notice_delivery,"
-    " CASE WHEN aviso.envio IN ('pendiente', 'enviando') THEN NULL"
-    " WHEN aviso.envio = 'enviada' THEN aviso.enviada_en ELSE aviso.creado_en END AS notice_at"
+    " CASE WHEN notice.delivery IN ('pending', 'sending') THEN NULL"
+    " WHEN notice.delivery = 'sent' THEN notice.sent_at ELSE notice.created_at END AS notice_at"
 )
 _FROM_BOOKING = (
-    " FROM reserva_con_estado r"
-    " JOIN espacio e ON e.id = r.espacio_id"
-    " JOIN sede s ON s.id = e.sede_id"
+    " FROM booking_with_status r"
+    " JOIN space e ON e.id = r.space_id"
+    " JOIN venue s ON s.id = e.venue_id"
 )
 # What the filters of the global history look at: enough to count.
-_FILTER_JOIN = f"{_FROM_BOOKING} JOIN usuario u ON u.id = r.usuario_id"
+_FILTER_JOIN = f"{_FROM_BOOKING} JOIN app_user u ON u.id = r.user_id"
 _HISTORY_JOIN = (
     f"{_FILTER_JOIN}"
-    " LEFT JOIN usuario administrador ON administrador.id = r.cancelada_por"
-    " LEFT JOIN notificacion_reserva vinculo ON vinculo.reserva_id = r.id"
-    " LEFT JOIN notificacion aviso ON aviso.id = vinculo.notificacion_id"
+    " LEFT JOIN app_user canceler ON canceler.id = r.canceled_by"
+    " LEFT JOIN notification_booking link ON link.booking_id = r.id"
+    " LEFT JOIN notification notice ON notice.id = link.notification_id"
 )
 _SHARED_VENUE = (
-    "SELECT s.apertura, s.cierre, s.dias FROM sede s JOIN espacio e"
-    " ON e.sede_id = s.id WHERE e.id = :espacio AND s.activa FOR SHARE OF s"
+    "SELECT s.opens_at, s.closes_at, s.open_days FROM venue s JOIN space e"
+    " ON e.venue_id = s.id WHERE e.id = :space_id AND s.active FOR SHARE OF s"
 )
 
 # The days of the filter are cut at midnight of the club, not of the Postgres session (UTC).
 _CLUB_ZONE = f"'{CLUB_TIMEZONE_NAME}'"
+
+
+def _booking_values(mapping: Mapping[str, Any]) -> dict[str, Any]:
+    """The columns of a row with the enumerations spoken as the contract does."""
+    values = dict(mapping)
+    values["status"] = contract(values["status"])
+    if values.get("notice_delivery") is not None:
+        values["notice_delivery"] = contract(values["notice_delivery"])
+    return values
 
 
 @contextmanager
@@ -102,25 +113,25 @@ def _common_conditions(filters: HistoryFilters) -> tuple[list[str], dict[str, An
     conditions: list[str] = []
     params: dict[str, Any] = {}
     if filters.venue_id is not None:
-        conditions.append("e.sede_id = :sede_id")
-        params["sede_id"] = filters.venue_id
+        conditions.append("e.venue_id = :venue_id")
+        params["venue_id"] = filters.venue_id
     if filters.sport is not None:
-        conditions.append("e.deporte = :deporte")
-        params["deporte"] = filters.sport
+        conditions.append("e.sport = :sport")
+        params["sport"] = filters.sport
     if filters.since is not None:
         conditions.append(
-            f"r.inicio >= (CAST(:desde AS date)::timestamp AT TIME ZONE {_CLUB_ZONE})"
+            f"r.starts_at >= (CAST(:since AS date)::timestamp AT TIME ZONE {_CLUB_ZONE})"
         )
-        params["desde"] = filters.since
+        params["since"] = filters.since
     if filters.until is not None:
         conditions.append(
-            f"r.inicio < ((CAST(:hasta AS date) + 1)::timestamp AT TIME ZONE {_CLUB_ZONE})"
+            f"r.starts_at < ((CAST(:until AS date) + 1)::timestamp AT TIME ZONE {_CLUB_ZONE})"
         )
-        params["hasta"] = filters.until
+        params["until"] = filters.until
     if filters.q is not None and filters.q.strip():
         conditions.append(
-            "(u.nombre || ' ' || u.apellido ILIKE :q ESCAPE '\\'"
-            " OR s.nombre ILIKE :q ESCAPE '\\' OR e.nombre ILIKE :q ESCAPE '\\')"
+            "(u.first_name || ' ' || u.last_name ILIKE :q ESCAPE '\\'"
+            " OR s.name ILIKE :q ESCAPE '\\' OR e.name ILIKE :q ESCAPE '\\')"
         )
         literal = filters.q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         params["q"] = f"%{literal}%"
@@ -133,16 +144,16 @@ class BookingsSql:
 
     def of_user(self, user_id: UUID, when: When) -> list[Booking]:
         order = (
-            " AND r.estado_actual = 'activa' ORDER BY r.inicio, r.id"
+            " AND r.current_status = 'active' ORDER BY r.starts_at, r.id"
             if when == "proximas"
-            else " AND r.estado_actual <> 'activa' ORDER BY r.inicio DESC, r.id DESC"
+            else " AND r.current_status <> 'active' ORDER BY r.starts_at DESC, r.id DESC"
         )
         rows = self._conn.execute(
-            text(f"SELECT {_COLUMNS}{_FROM_BOOKING} WHERE r.usuario_id = :usuario{order}"),
-            {"usuario": user_id},
+            text(f"SELECT {_COLUMNS}{_FROM_BOOKING} WHERE r.user_id = :user_id{order}"),
+            {"user_id": user_id},
         ).all()
         self._conn.rollback()
-        return [Booking(**r._mapping) for r in rows]
+        return [Booking(**_booking_values(r._mapping)) for r in rows]
 
     def opening_hours(self, space_id: UUID) -> OpeningHours | None:
         return AvailabilitySql(self._conn).opening_hours(space_id)
@@ -151,10 +162,10 @@ class BookingsSql:
         """The active booking that the same request already made a moment ago, if any."""
         row = self._conn.execute(
             text(
-                "SELECT id FROM reserva WHERE usuario_id = :usuario"
-                " AND espacio_id = :espacio AND inicio = :inicio AND fin = :fin"
-                " AND estado = 'activa'"
-                f" AND creado_en > now() - interval '{RETRY_WINDOW}'"
+                "SELECT id FROM booking WHERE user_id = :user_id"
+                " AND space_id = :space_id AND starts_at = :starts_at AND ends_at = :ends_at"
+                " AND status = 'active'"
+                f" AND created_at > now() - interval '{RETRY_WINDOW}'"
             ),
             params,
         ).first()
@@ -164,7 +175,12 @@ class BookingsSql:
         self, user_id: UUID, space_id: UUID, starts_at: datetime, ends_at: datetime
     ) -> Booking | None:
         repeated_id = self._repeated_id(
-            {"usuario": user_id, "espacio": space_id, "inicio": starts_at, "fin": ends_at}
+            {
+                "user_id": user_id,
+                "space_id": space_id,
+                "starts_at": starts_at,
+                "ends_at": ends_at,
+            }
         )
         booking = None if repeated_id is None else self._one(repeated_id)
         self._conn.rollback()
@@ -174,23 +190,23 @@ class BookingsSql:
         row = self._conn.execute(
             text(f"SELECT {_COLUMNS}{_FROM_BOOKING} WHERE r.id = :id"), {"id": booking_id}
         ).one()
-        return Booking(**row._mapping)
+        return Booking(**_booking_values(row._mapping))
 
     def own(self, user_id: UUID, booking_id: UUID) -> Booking | None:
         row = self._conn.execute(
-            text(f"SELECT {_COLUMNS}{_FROM_BOOKING} WHERE r.id = :id AND r.usuario_id = :usuario"),
-            {"id": booking_id, "usuario": user_id},
+            text(f"SELECT {_COLUMNS}{_FROM_BOOKING} WHERE r.id = :id AND r.user_id = :user_id"),
+            {"id": booking_id, "user_id": user_id},
         ).first()
         self._conn.rollback()
-        return None if row is None else Booking(**row._mapping)
+        return None if row is None else Booking(**_booking_values(row._mapping))
 
     def space_kind(self, space_id: UUID) -> tuple[UUID, str, str] | None:
         row = self._conn.execute(
-            text("SELECT sede_id, deporte, tipo FROM espacio WHERE id = :id"),
+            text("SELECT venue_id, sport, kind FROM space WHERE id = :id"),
             {"id": space_id},
         ).first()
         self._conn.rollback()
-        return None if row is None else (row.sede_id, row.deporte, row.tipo)
+        return None if row is None else (row.venue_id, row.sport, row.kind)
 
     def _current_venue(
         self, params: dict[str, Any], opening_hours: OpeningHours
@@ -213,13 +229,13 @@ class BookingsSql:
         opening_hours: OpeningHours,
     ) -> Booking:
         params = {
-            "usuario": user_id,
+            "user_id": user_id,
             "id": booking_id,
-            "antes": before[0],
-            "desde_antes": before[1],
-            "espacio": space_id,
-            "inicio": starts_at,
-            "fin": ends_at,
+            "before_space_id": before[0],
+            "before_starts_at": before[1],
+            "space_id": space_id,
+            "starts_at": starts_at,
+            "ends_at": ends_at,
         }
         with _slot_taken(), in_transaction(self._conn):
             # As when booking: shared venue, exclusive spaces (by number: two crossed changes
@@ -228,16 +244,17 @@ class BookingsSql:
             spaces = self._lock_spaces(params)
             self._require_movable_booking(params)
             space = spaces.get(space_id)
-            if venue is None or space is None or not space.activo:
+            if venue is None or space is None or not space.active:
                 raise Unavailable("el espacio nuevo ya no está activo")
             # The previous slot is released in the same transaction that takes the new one: if
             # the new one collides with another booking, nothing changes.
             self._conn.execute(
                 text(
-                    "UPDATE reserva SET espacio_id = :espacio, inicio = :inicio, fin = :fin,"
-                    f" precio_por_hora = :precio, total = {_TOTAL_SQL} WHERE id = :id"
+                    "UPDATE booking SET space_id = :space_id, starts_at = :starts_at,"
+                    f" ends_at = :ends_at, price_per_hour = :price, total = {_TOTAL_SQL}"
+                    " WHERE id = :id"
                 ),
-                params | {"precio": int(space.precio_por_hora)},
+                params | {"price": int(space.price_per_hour)},
             )
         booking = self._one(booking_id)
         self._conn.rollback()
@@ -246,8 +263,8 @@ class BookingsSql:
     def _lock_spaces(self, params: dict[str, Any]) -> dict[UUID, Row[Any]]:
         rows = self._conn.execute(
             text(
-                "SELECT id, precio_por_hora, activo FROM espacio"
-                " WHERE id IN (:antes, :espacio) ORDER BY id FOR NO KEY UPDATE"
+                "SELECT id, price_per_hour, active FROM space"
+                " WHERE id IN (:before_space_id, :space_id) ORDER BY id FOR NO KEY UPDATE"
             ),
             params,
         )
@@ -256,38 +273,38 @@ class BookingsSql:
     def _require_movable_booking(self, params: dict[str, Any]) -> None:
         row = self._conn.execute(
             text(
-                "SELECT estado, inicio <= now() AS empezo,"
-                " espacio_id = :antes AND inicio = :desde_antes AS donde_estaba"
-                " FROM reserva WHERE id = :id AND usuario_id = :usuario FOR UPDATE"
+                "SELECT status, starts_at <= now() AS started,"
+                " space_id = :before_space_id AND starts_at = :before_starts_at AS was_there"
+                " FROM booking WHERE id = :id AND user_id = :user_id FOR UPDATE"
             ),
             params,
         ).first()
         if row is None:
             raise NotFound("no hay una reserva suya con ese número")
-        if row.estado != "activa" or row.empezo or not row.donde_estaba:
+        if row.status != stored("activa") or row.started or not row.was_there:
             raise ConcurrentChange("la reserva ya no está activa, ya empezó o ya se movió")
 
     def cancel(self, user_id: UUID, booking_id: UUID) -> Booking:
-        params = {"usuario": user_id, "id": booking_id}
+        params = {"user_id": user_id, "id": booking_id}
         with in_transaction(self._conn):
             row = self._conn.execute(
                 text(
-                    "SELECT estado, cancelada_por, inicio <= now() AS empezo FROM reserva"
-                    " WHERE id = :id AND usuario_id = :usuario FOR UPDATE"
+                    "SELECT status, canceled_by, starts_at <= now() AS started FROM booking"
+                    " WHERE id = :id AND user_id = :user_id FOR UPDATE"
                 ),
                 params,
             ).first()
             if row is None:
                 raise NotFound("no hay una reserva suya con ese número")
-            if row.estado == "cancelada" and row.cancelada_por == user_id:
+            if row.status == stored("cancelada") and row.canceled_by == user_id:
                 self._conn.rollback()
                 return self._one(booking_id)
-            if row.estado != "activa" or row.empezo:
+            if row.status != stored("activa") or row.started:
                 raise ConcurrentChange("la reserva ya no está activa o ya empezó")
             self._conn.execute(
                 text(
-                    "UPDATE reserva SET estado = 'cancelada', cancelada_en = now(),"
-                    " cancelada_por = :usuario WHERE id = :id"
+                    "UPDATE booking SET status = 'canceled', canceled_at = now(),"
+                    " canceled_by = :user_id WHERE id = :id"
                 ),
                 params,
             )
@@ -307,9 +324,9 @@ class BookingsSql:
         deactivated, inside the transaction of the caller: no commit."""
         self._conn.execute(
             text(
-                "UPDATE reserva SET estado = 'cancelada', cancelada_en = clock_timestamp(),"
-                " cancelada_por = :id WHERE usuario_id = :id AND estado = 'activa'"
-                " AND inicio > clock_timestamp()"
+                "UPDATE booking SET status = 'canceled', canceled_at = clock_timestamp(),"
+                " canceled_by = :id WHERE user_id = :id AND status = 'active'"
+                " AND starts_at > clock_timestamp()"
             ),
             {"id": user_id},
         )
@@ -321,12 +338,12 @@ class BookingsSql:
         and the database aborts one by deadlock instead of rejecting it as an overlap. The
         venue goes before the space, the order of a venue deactivation. Returns the space."""
         account = self._conn.execute(
-            text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), params
+            text("SELECT 1 FROM app_user WHERE id = :user_id AND active FOR SHARE"), params
         ).first()
         venue = self._current_venue(params, opening_hours)
         space = self._conn.execute(
             text(
-                "SELECT precio_por_hora FROM espacio WHERE id = :espacio AND activo"
+                "SELECT price_per_hour FROM space WHERE id = :space_id AND active"
                 " FOR NO KEY UPDATE"
             ),
             params,
@@ -343,7 +360,12 @@ class BookingsSql:
         ends_at: datetime,
         opening_hours: OpeningHours,
     ) -> Booking:
-        params = {"usuario": user_id, "espacio": space_id, "inicio": starts_at, "fin": ends_at}
+        params = {
+            "user_id": user_id,
+            "space_id": space_id,
+            "starts_at": starts_at,
+            "ends_at": ends_at,
+        }
         with _slot_taken(), in_transaction(self._conn):
             space = self._lock_for_insert(params, opening_hours)
             repeated_id = self._repeated_id(params)
@@ -352,11 +374,11 @@ class BookingsSql:
                 return self._one(repeated_id)
             new_id: UUID = self._conn.execute(
                 text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    f" total) VALUES (:usuario, :espacio, :inicio, :fin, :precio, {_TOTAL_SQL})"
-                    " RETURNING id"
+                    "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                    " total) VALUES (:user_id, :space_id, :starts_at, :ends_at, :price,"
+                    f" {_TOTAL_SQL}) RETURNING id"
                 ),
-                params | {"precio": int(space.precio_por_hora)},
+                params | {"price": int(space.price_per_hour)},
             ).scalar_one()
         booking = self._one(new_id)
         self._conn.rollback()
@@ -370,32 +392,32 @@ class BookingsSql:
         account, the venue and the space and returns the row of the booking."""
         previous = self._conn.execute(
             text(
-                "SELECT r.usuario_id, r.espacio_id, e.sede_id FROM reserva r"
-                " JOIN espacio e ON e.id = r.espacio_id WHERE r.id = :id"
+                "SELECT r.user_id, r.space_id, e.venue_id FROM booking r"
+                " JOIN space e ON e.id = r.space_id WHERE r.id = :id"
             ),
             params,
         ).first()
         if previous is None:
             raise NotFound("no hay una reserva con ese número")
         params |= {
-            "usuario": previous.usuario_id,
-            "sede": previous.sede_id,
-            "espacio_previo": previous.espacio_id,
+            "user_id": previous.user_id,
+            "venue_id": previous.venue_id,
+            "previous_space_id": previous.space_id,
         }
-        self._conn.execute(text("SELECT 1 FROM usuario WHERE id = :usuario FOR SHARE"), params)
-        self._conn.execute(text("SELECT 1 FROM sede WHERE id = :sede FOR SHARE"), params)
+        self._conn.execute(text("SELECT 1 FROM app_user WHERE id = :user_id FOR SHARE"), params)
+        self._conn.execute(text("SELECT 1 FROM venue WHERE id = :venue_id FOR SHARE"), params)
         self._conn.execute(
-            text("SELECT 1 FROM espacio WHERE id = :espacio_previo FOR NO KEY UPDATE"), params
+            text("SELECT 1 FROM space WHERE id = :previous_space_id FOR NO KEY UPDATE"), params
         )
         return previous
 
     def _lock_booking_to_void(self, params: dict[str, Any]) -> Row[Any]:
         row = self._conn.execute(
             text(
-                "SELECT estado, motivo, cancelada_por, inicio <= now() AS empezo,"
-                " espacio_id = :espacio_previo AND espacio_id = :espacio"
-                " AND inicio = CAST(:inicio AS timestamptz) AS como_se_vio"
-                " FROM reserva WHERE id = :id FOR UPDATE"
+                "SELECT status, reason, canceled_by, starts_at <= now() AS started,"
+                " space_id = :previous_space_id AND space_id = :space_id"
+                " AND starts_at = CAST(:starts_at AS timestamptz) AS as_seen"
+                " FROM booking WHERE id = :id FOR UPDATE"
             ),
             params,
         ).first()
@@ -407,29 +429,33 @@ class BookingsSql:
         self, admin_id: UUID, booking_id: UUID, reason: str, space_id: UUID, starts_at: datetime
     ) -> BookingHistoryEntry:
         params: dict[str, Any] = {
-            "admin": admin_id,
+            "admin_id": admin_id,
             "id": booking_id,
-            "motivo": reason,
-            "espacio": space_id,
-            "inicio": starts_at,
+            "reason": reason,
+            "space_id": space_id,
+            "starts_at": starts_at,
         }
         with in_transaction(self._conn):
             previous = self._lock_for_void(params)
             row = self._lock_booking_to_void(params)
-            if row.estado == "anulada" and row.cancelada_por == admin_id and row.motivo == reason:
+            if (
+                row.status == stored("anulada")
+                and row.canceled_by == admin_id
+                and row.reason == reason
+            ):
                 self._conn.rollback()
                 return self._detail(booking_id)
-            if row.estado != "activa" or row.empezo or not row.como_se_vio:
+            if row.status != stored("activa") or row.started or not row.as_seen:
                 raise ConcurrentChange("la reserva ya no está activa, ya empezó o cambió")
             self._conn.execute(
                 text(
-                    "UPDATE reserva SET estado = 'anulada', motivo = :motivo,"
-                    " cancelada_en = now(), cancelada_por = :admin WHERE id = :id"
+                    "UPDATE booking SET status = 'voided', reason = :reason,"
+                    " canceled_at = now(), canceled_by = :admin_id WHERE id = :id"
                 ),
                 params,
             )
             # The notice is queued in the same transaction, after the usual locks.
-            enqueue_forced_cancellation(self._conn, previous.usuario_id, [booking_id])
+            enqueue_forced_cancellation(self._conn, previous.user_id, [booking_id])
         return self._detail(booking_id)
 
     def _detail(self, booking_id: UUID) -> BookingHistoryEntry:
@@ -446,9 +472,9 @@ class BookingsSql:
         row = self._conn.execute(
             text(
                 f"SELECT {total_of} AS total, count(*) AS all_count,"
-                " count(*) FILTER (WHERE r.estado_actual = 'activa') AS active_count,"
-                " count(*) FILTER (WHERE r.estado_actual = 'completada') AS completed_count,"
-                " count(*) FILTER (WHERE r.estado_actual = 'anulada') AS voided_count"
+                " count(*) FILTER (WHERE r.current_status = 'active') AS active_count,"
+                " count(*) FILTER (WHERE r.current_status = 'completed') AS completed_count,"
+                " count(*) FILTER (WHERE r.current_status = 'voided') AS voided_count"
                 f"{_FILTER_JOIN} WHERE {' AND '.join(['true', *common])}"
             ),
             params,
@@ -466,22 +492,22 @@ class BookingsSql:
         conditions = list(common)
         total_of = "count(*)"
         if filters.status is not None:
-            conditions.append("r.estado_actual = :estado")
-            params["estado"] = filters.status
-            total_of = "count(*) FILTER (WHERE r.estado_actual = :estado)"
+            conditions.append("r.current_status = :status")
+            params["status"] = stored(filters.status)
+            total_of = "count(*) FILTER (WHERE r.current_status = :status)"
         total, counters = self._count(common, total_of, params)
         page = max(1, filters.page)
         rows = self._conn.execute(
             text(
                 f"SELECT {_HISTORY_COLUMNS}{_HISTORY_JOIN}"
                 f" WHERE {' AND '.join(['true', *conditions])}"
-                " ORDER BY r.inicio DESC, r.id DESC LIMIT :limite OFFSET :offset"
+                " ORDER BY r.starts_at DESC, r.id DESC LIMIT :page_size OFFSET :offset"
             ),
-            params | {"limite": PAGE_SIZE, "offset": (page - 1) * PAGE_SIZE},
+            params | {"page_size": PAGE_SIZE, "offset": (page - 1) * PAGE_SIZE},
         ).all()
         self._conn.rollback()
         return BookingHistory(
-            bookings=[BookingHistoryEntry(**r._mapping) for r in rows],
+            bookings=[BookingHistoryEntry(**_booking_values(r._mapping)) for r in rows],
             total=total,
             page=page,
             per_page=PAGE_SIZE,
@@ -494,7 +520,7 @@ class BookingsSql:
             {"id": booking_id},
         ).first()
         self._conn.rollback()
-        return None if row is None else BookingHistoryEntry(**row._mapping)
+        return None if row is None else BookingHistoryEntry(**_booking_values(row._mapping))
 
 
 def bookings_repository(conn: DbConnection) -> BookingsSql:

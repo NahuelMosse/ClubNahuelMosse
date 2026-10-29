@@ -8,13 +8,16 @@ from sqlalchemy import Connection, text
 from app.modules.availability.rules import OpeningHours
 from app.modules.spaces import SPACE_COLUMNS, Space, space_of_row
 from app.shared.db import DbConnection
+from app.shared.stored_values import stored
 
 
 def opening_hours_of_row(row: Any) -> OpeningHours:
     """The days go in a tuple: the opening hours are compared with `!=` against another to
     know whether they changed."""
     return OpeningHours(
-        opens_at=row.apertura, closes_at=row.cierre, open_days=tuple(int(d) for d in row.dias)
+        opens_at=row.opens_at,
+        closes_at=row.closes_at,
+        open_days=tuple(int(d) for d in row.open_days),
     )
 
 
@@ -25,9 +28,9 @@ class AvailabilitySql:
     def opening_hours(self, space_id: UUID) -> OpeningHours | None:
         row = self._conn.execute(
             text(
-                "SELECT s.apertura, s.cierre, s.dias FROM espacio e"
-                " JOIN sede s ON s.id = e.sede_id"
-                " WHERE e.id = :id AND e.activo AND s.activa"
+                "SELECT s.opens_at, s.closes_at, s.open_days FROM space e"
+                " JOIN venue s ON s.id = e.venue_id"
+                " WHERE e.id = :id AND e.active AND s.active"
             ),
             {"id": space_id},
         ).one_or_none()
@@ -36,7 +39,7 @@ class AvailabilitySql:
 
     def venue_opening_hours(self, venue_id: UUID) -> OpeningHours | None:
         row = self._conn.execute(
-            text("SELECT apertura, cierre, dias FROM sede WHERE id = :id AND activa"),
+            text("SELECT opens_at, closes_at, open_days FROM venue WHERE id = :id AND active"),
             {"id": venue_id},
         ).one_or_none()
         self._conn.rollback()
@@ -47,14 +50,21 @@ class AvailabilitySql:
     ) -> list[Space]:
         rows = self._conn.execute(
             text(
-                f"SELECT {SPACE_COLUMNS} FROM espacio e JOIN sede s ON s.id = e.sede_id"
-                " WHERE e.activo AND s.activa AND e.sede_id = :sede AND e.deporte = :deporte"
-                " AND (CAST(:tipo AS text) IS NULL OR e.tipo = :tipo)"
-                " AND NOT EXISTS (SELECT 1 FROM reserva r WHERE r.espacio_id = e.id"
-                " AND r.estado = 'activa' AND r.inicio < :fin AND r.fin > :inicio)"
-                " ORDER BY e.deporte, e.tipo, e.numero"
+                f"SELECT {SPACE_COLUMNS} FROM space e JOIN venue s ON s.id = e.venue_id"
+                " WHERE e.active AND s.active AND e.venue_id = :venue_id AND e.sport = :sport"
+                " AND (CAST(:kind AS text) IS NULL OR e.kind = :kind)"
+                " AND NOT EXISTS (SELECT 1 FROM booking r WHERE r.space_id = e.id"
+                " AND r.status = :active AND r.starts_at < :ends_at AND r.ends_at > :starts_at)"
+                " ORDER BY e.sport, e.kind, e.number"
             ),
-            {"sede": venue_id, "deporte": sport, "tipo": kind, "inicio": start, "fin": end},
+            {
+                "venue_id": venue_id,
+                "sport": sport,
+                "kind": kind,
+                "starts_at": start,
+                "ends_at": end,
+                "active": stored("activa"),
+            },
         ).all()
         self._conn.rollback()
         return [space_of_row(r) for r in rows]
@@ -69,22 +79,23 @@ class AvailabilitySql:
         booking, user = excluding or (None, None)
         rows = self._conn.execute(
             text(
-                "SELECT inicio, fin FROM reserva"
-                " WHERE espacio_id = :id AND estado = 'activa'"
-                " AND inicio < :hasta AND fin > :desde"
-                " AND (CAST(:reserva AS uuid) IS NULL"
-                "      OR NOT (id = :reserva AND usuario_id = CAST(:usuario AS uuid)))"
+                "SELECT starts_at, ends_at FROM booking"
+                " WHERE space_id = :id AND status = :active"
+                " AND starts_at < :until AND ends_at > :since"
+                " AND (CAST(:booking_id AS uuid) IS NULL"
+                "      OR NOT (id = :booking_id AND user_id = CAST(:user_id AS uuid)))"
             ),
             {
                 "id": space_id,
-                "desde": since,
-                "hasta": until,
-                "reserva": booking,
-                "usuario": user,
+                "since": since,
+                "until": until,
+                "booking_id": booking,
+                "user_id": user,
+                "active": stored("activa"),
             },
         ).all()
         self._conn.rollback()
-        return [(r.inicio, r.fin) for r in rows]
+        return [(r.starts_at, r.ends_at) for r in rows]
 
 
 def availability_repository(conn: DbConnection) -> AvailabilitySql:
