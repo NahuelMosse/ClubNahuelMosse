@@ -16,8 +16,8 @@ const EDITED_BY_THE_TEAM = new Set([
   'apps/mobile/test/kit/kit_states.dart',
 ]);
 
-test('el kit instalado es el 6.29.0 @KIT-03-S1', () => {
-  assert.equal(kit.kit, '6.29.0');
+test('el kit instalado es el 6.33.0 @KIT-04-S1', () => {
+  assert.equal(kit.kit, '6.33.0');
 });
 
 test('cada archivo del kit está como lo instaló la actualización, salvo settings.json y el formato de los ayudantes de Flutter @KIT-03-S1', () => {
