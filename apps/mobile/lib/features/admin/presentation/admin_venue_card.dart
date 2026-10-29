@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../venues/domain/venue.dart';
@@ -34,16 +35,15 @@ class AdminVenueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final courts = venue.spaceCount == 1
-        ? '1 cancha'
-        : '${venue.spaceCount} canchas';
+    final l10n = AppLocalizations.of(context);
+    final courts = l10n.adminCourtsCount(venue.spaceCount);
     // The data is read as one; the buttons stay outside, each with its own name.
     final details = Semantics(
       container: true,
       excludeSemantics: true,
       label:
           '${venue.name}, ${venue.address}, $courts, '
-          '${venue.daysLabel} de ${venue.opening} a ${venue.closing}',
+          '${l10n.adminVenueSchedule(venue.daysLabel, venue.opening, venue.closing)}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -55,7 +55,11 @@ class AdminVenueCard extends StatelessWidget {
               const SizedBox(width: Spacing.s8),
               Expanded(
                 child: Text(
-                  '${venue.daysLabel} · ${venue.opening} a ${venue.closing}',
+                  l10n.adminVenueScheduleShort(
+                    venue.daysLabel,
+                    venue.opening,
+                    venue.closing,
+                  ),
                   style: Texts.caption.copyWith(color: p.textMuted),
                 ),
               ),
@@ -67,11 +71,11 @@ class AdminVenueCard extends StatelessWidget {
     return AdminCard(
       details: details,
       name: venue.name,
-      editText: 'Editar sede',
-      editLabel: 'Editar sede ${venue.name}',
+      editText: l10n.adminEditVenue,
+      editLabel: l10n.adminEditVenueNamed(venue.name),
       onEdit: enabled ? () => _edit(context) : null,
-      deactivateText: 'Dar de baja',
-      deactivateLabel: 'Dar de baja ${venue.name}',
+      deactivateText: l10n.adminDeactivateVenue,
+      deactivateLabel: l10n.adminDeactivateVenueNamed(venue.name),
       onDeactivate: enabled ? onDeactivate : null,
       deactivating: deactivating,
     );

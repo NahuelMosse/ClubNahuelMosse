@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/bottom_bar.dart';
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/session.dart';
 import 'admin_card_skeleton.dart';
@@ -73,7 +74,7 @@ class AdminListingTemplate extends StatelessWidget {
                   if (!hasData && failed)
                     Center(
                       child: TextActionButton(
-                        label: 'REINTENTAR',
+                        label: AppLocalizations.of(context).adminRetry,
                         onTap: onRefresh,
                       ),
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/price_format.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 
 /// The price-per-hour field of a space.
 class PricePerHourField extends StatelessWidget {
@@ -18,9 +19,10 @@ class PricePerHourField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return FormTextField(
-      label: 'PRECIO POR HORA',
-      semanticLabel: 'Precio por hora',
+      label: l10n.adminPricePerHourUpper,
+      semanticLabel: l10n.adminPricePerHour,
       controller: controller,
       placeholder: '\$ 0',
       error: error,

@@ -1,6 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../session/presentation/session.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/domain/venue_exceptions.dart';
@@ -17,27 +18,29 @@ Future<void> deactivateVenue(
   required Session session,
   required ValueChanged<bool> submitting,
   bool returnToList = false,
-}) => deactivate(
-  context,
-  confirm: () => confirmVenueDeactivation(
+}) {
+  final l10n = AppLocalizations.of(context);
+  return deactivate(
     context,
-    '${venue.name} · ${venue.address}. Sus espacios deportivos dejan de '
-    'estar disponibles.',
-  ),
-  request: () async {
-    try {
-      await venues.deactivate(venue.id);
-      return DeactivationResult.done;
-    } on VenueUnavailable {
-      return DeactivationResult.gone;
-    } on VenueHasBookings {
-      return DeactivationResult.withBookings;
-    }
-  },
-  showWithBookings: () => showVenueWithBookings(context),
-  success: 'La sede fue dada de baja correctamente',
-  notifyChange: venues.notifyChange,
-  session: session,
-  submitting: submitting,
-  returnTo: returnToList ? '/admin/sedes' : null,
-);
+    confirm: () => confirmVenueDeactivation(
+      context,
+      l10n.adminDeactivateVenueText(venue.name, venue.address),
+    ),
+    request: () async {
+      try {
+        await venues.deactivate(venue.id);
+        return DeactivationResult.done;
+      } on VenueUnavailable {
+        return DeactivationResult.gone;
+      } on VenueHasBookings {
+        return DeactivationResult.withBookings;
+      }
+    },
+    showWithBookings: () => showVenueWithBookings(context),
+    success: l10n.adminVenueDeactivated,
+    notifyChange: venues.notifyChange,
+    session: session,
+    submitting: submitting,
+    returnTo: returnToList ? '/admin/sedes' : null,
+  );
+}

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/card_frame.dart';
 import '../../../common/dates.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
@@ -17,39 +18,47 @@ class Traceability extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final b = booking;
     final reason = b.reason;
     final second = switch (b.cancelledAt) {
       null => null,
       final at => switch (b.status) {
         BookingStatus.voided => (
-          'Anulada por el administrador',
+          l10n.adminTraceVoided,
           Icons.error_outline_rounded,
           p.stateDangerInk,
-          'Por ${b.cancelledByName ?? 'un administrador'} · '
-              '${_dateTime(at)}'
-              '${reason != null && reason.trim().isNotEmpty ? ' · $reason' : ''}',
+          reason != null && reason.trim().isNotEmpty
+              ? l10n.adminTraceByReason(
+                  b.cancelledByName ?? l10n.adminTraceAnAdmin,
+                  _dateTime(at),
+                  reason,
+                )
+              : l10n.adminTraceBy(
+                  b.cancelledByName ?? l10n.adminTraceAnAdmin,
+                  _dateTime(at),
+                ),
         ),
         _ => (
-          'Cancelada por el usuario',
+          l10n.adminTraceCanceled,
           Icons.cancel_outlined,
           p.textSecondary,
-          'Por ${b.cancelledByName ?? b.user} · ${_dateTime(at)}',
+          l10n.adminTraceBy(b.cancelledByName ?? b.user, _dateTime(at)),
         ),
       },
     };
     final notice = switch ((b.status, b.noticeDelivery, b.noticeAt)) {
       (BookingStatus.voided, 'enviada', final at?) => (
-        'Notificación enviada al usuario',
+        l10n.adminTraceNoticeSent,
         Icons.notifications_active_outlined,
         p.stateSuccessInk,
         _dateTime(at),
       ),
       (BookingStatus.voided, final String _, _?) => (
-        'Aviso en el centro del usuario',
+        l10n.adminTraceNoticeInbox,
         Icons.notifications_off_outlined,
         p.textSecondary,
-        'El push no salió',
+        l10n.adminTracePushFailed,
       ),
       _ => null,
     };
@@ -60,15 +69,15 @@ class Traceability extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TRAZABILIDAD',
+            l10n.adminTraceTitle,
             style: Texts.overline.copyWith(color: p.textMuted),
           ),
           const SizedBox(height: Spacing.s16),
           TraceStep(
             icon: Icons.check_circle_outline_rounded,
             color: p.stateSuccessInk,
-            title: 'Reserva creada',
-            subtitle: 'Por ${b.user} · ${_dateTime(b.createdAt)}',
+            title: l10n.adminTraceCreated,
+            subtitle: l10n.adminTraceBy(b.user, _dateTime(b.createdAt)),
           ),
           if (second != null) ...[
             const SizedBox(height: Spacing.s12),

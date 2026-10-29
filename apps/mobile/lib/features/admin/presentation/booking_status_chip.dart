@@ -2,8 +2,10 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/badge.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
+import 'booking_status_text.dart';
 
 /// `Badge-Estado` of the admin history: same color code as «Mis reservas».
 class BookingStatusChip extends StatelessWidget {
@@ -21,7 +23,7 @@ class BookingStatusChip extends StatelessWidget {
       BookingStatus.completed => (p.bgSurface, p.textSecondary),
     };
     return StatusBadge(
-      label: status.apiValue.toUpperCase(),
+      label: statusChipText(AppLocalizations.of(context), status),
       background: background,
       ink: ink,
     );

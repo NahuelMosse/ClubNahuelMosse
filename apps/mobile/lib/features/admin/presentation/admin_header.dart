@@ -1,6 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/account_card.dart';
@@ -23,7 +24,7 @@ class AdminHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'PANEL ADMIN',
+                AppLocalizations.of(context).adminPanelTitle,
                 style: Texts.overline.copyWith(color: p.accentInk),
               ),
               const SizedBox(height: Spacing.s4),

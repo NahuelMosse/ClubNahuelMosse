@@ -5,6 +5,7 @@ import '../../../common/button.dart';
 import '../../../common/dates.dart';
 import '../../../common/error_dialog.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/booking_history_entry.dart';
@@ -13,8 +14,6 @@ import 'reason_field.dart';
 
 /// The maximum length of a voiding reason: the same the API accepts.
 const reasonMaxLength = 500;
-
-const reasonRequired = 'El motivo es obligatorio para anular';
 
 /// The «¿Anular esta reserva?» confirmation: the data of [booking] and the reason.
 /// Returns the typed reason (trimmed) if confirmed, or `null` if VOLVER was chosen.
@@ -61,6 +60,7 @@ class _VoidDialogState extends State<_VoidDialog> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return DialogFrame(
       maxWidth: 360,
       children: [
@@ -73,7 +73,7 @@ class _VoidDialogState extends State<_VoidDialog> {
         Semantics(
           header: true,
           child: Text(
-            '¿Anular esta reserva?',
+            l10n.adminVoidDialogTitle,
             textAlign: TextAlign.center,
             style: Texts.h2.copyWith(color: p.textPrimary),
           ),
@@ -83,7 +83,7 @@ class _VoidDialogState extends State<_VoidDialog> {
         const SizedBox(height: Spacing.s16),
         ExcludeSemantics(
           child: Text(
-            'MOTIVO DE LA ANULACIÓN',
+            l10n.adminVoidReasonLabel,
             style: Texts.overline.copyWith(color: p.textSecondary),
           ),
         ),
@@ -98,13 +98,13 @@ class _VoidDialogState extends State<_VoidDialog> {
         ),
         if (_missingReason) ...[
           const SizedBox(height: Spacing.s8),
-          const FieldMessage(reasonRequired),
+          FieldMessage(l10n.adminVoidReasonRequired),
         ],
         const SizedBox(height: Spacing.s16),
-        DangerButton(label: 'CONFIRMAR ANULACIÓN', onTap: _confirm),
+        DangerButton(label: l10n.adminVoidConfirm, onTap: _confirm),
         const SizedBox(height: Spacing.s8),
         OutlineButton(
-          label: 'VOLVER',
+          label: l10n.adminBackUpper,
           onTap: () => Navigator.of(context).pop(),
         ),
       ],

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/error_dialog.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
@@ -152,7 +153,7 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
       canPop: !_form.submitting,
       child: Scaffold(
         backgroundColor: context.palette.bgBase,
-        appBar: const TopBar(title: 'Nuevo espacio'),
+        appBar: TopBar(title: AppLocalizations.of(context).adminNewSpaceTitle),
         body: SafeArea(
           top: false,
           child: _form.loading && _form.venueOptions == null

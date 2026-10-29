@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/date_format.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// The «Desde» and «Hasta» fields of the filter panel: side by side, or stacked if they do not fit.
@@ -28,12 +29,13 @@ class FilterDateRange extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return LayoutBuilder(
       builder: (context, box) {
         final sinceField = FormTextField(
-          label: 'Desde',
-          semanticLabel: 'Desde',
-          placeholder: 'DD / MM / AAAA',
+          label: l10n.adminSince,
+          semanticLabel: l10n.adminSince,
+          placeholder: l10n.adminDatePlaceholder,
           controller: since,
           keyboardType: TextInputType.number,
           inputFormatters: const [DateInputFormatter()],
@@ -43,15 +45,15 @@ class FilterDateRange extends StatelessWidget {
             color: p.textMuted,
           ),
           error: invalidSince
-              ? 'Fecha inválida'
+              ? l10n.adminInvalidDate
               : invalidRange
-              ? 'Desde no puede ser posterior a Hasta'
+              ? l10n.adminSinceAfterUntil
               : null,
         );
         final untilField = FormTextField(
-          label: 'Hasta',
-          semanticLabel: 'Hasta',
-          placeholder: 'DD / MM / AAAA',
+          label: l10n.adminUntil,
+          semanticLabel: l10n.adminUntil,
+          placeholder: l10n.adminDatePlaceholder,
           controller: until,
           keyboardType: TextInputType.number,
           inputFormatters: const [DateInputFormatter()],
@@ -61,11 +63,9 @@ class FilterDateRange extends StatelessWidget {
             color: p.textMuted,
           ),
           error: invalidUntil
-              ? 'Fecha inválida'
+              ? l10n.adminInvalidDate
               : invalidRange
-              ? (box.maxWidth < 330
-                    ? 'Hasta no puede ser anterior a Desde'
-                    : ' ')
+              ? (box.maxWidth < 330 ? l10n.adminUntilBeforeSince : ' ')
               : null,
         );
         if (box.maxWidth < 330) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -27,7 +28,7 @@ class ReasonField extends StatelessWidget {
     );
     return Semantics(
       container: true,
-      label: 'Motivo de la anulación',
+      label: AppLocalizations.of(context).adminVoidReasonSemantics,
       child: TextField(
         controller: controller,
         minLines: 3,

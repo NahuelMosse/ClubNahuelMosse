@@ -6,6 +6,7 @@ import '../../../common/button.dart';
 import '../../../common/dates.dart';
 import '../../../common/in_progress.dart';
 import '../../../common/unhandled_errors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/session.dart';
 import '../../spaces/domain/space.dart';
@@ -90,6 +91,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final b = booking;
     return PopScope(
       canPop: !_voiding,
@@ -126,17 +128,17 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       const SizedBox(height: Spacing.s24),
                       if (b.voidable) ...[
                         _voiding
-                            ? const InProgress('Anulando la reserva')
+                            ? InProgress(l10n.adminVoidingBooking)
                             : OutlineButton(
-                                label: 'ANULAR RESERVA',
+                                label: l10n.adminVoidBooking,
                                 danger: true,
-                                semanticLabel: 'Anular la reserva de ${b.user}',
+                                semanticLabel: l10n.adminVoidBookingFor(b.user),
                                 onTap: _void,
                               ),
                         const SizedBox(height: Spacing.s12),
                       ],
                       OutlineButton(
-                        label: 'VOLVER AL LISTADO',
+                        label: l10n.adminBackToList,
                         onTap: _voiding
                             ? null
                             : () => Navigator.of(context).pop(),

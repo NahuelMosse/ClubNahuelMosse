@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
 import '../../../common/in_progress.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'venue_form.dart';
 
@@ -21,9 +22,10 @@ class VenueFormButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final f = form;
+    final l10n = AppLocalizations.of(context);
     if (!f.isEditing) {
       return PrimaryButton(
-        label: 'GUARDAR SEDE',
+        label: l10n.adminSaveVenue,
         loading: f.submitting,
         dimmed: !f.isComplete,
         onTap: onSave,
@@ -34,17 +36,17 @@ class VenueFormButtons extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         PrimaryButton(
-          label: 'GUARDAR CAMBIOS',
+          label: l10n.adminSaveChanges,
           loading: f.submitting,
           dimmed: !f.isComplete,
           onTap: f.deactivating ? null : onSave,
         ),
         const SizedBox(height: Spacing.s12),
         if (f.deactivating)
-          const InProgress('Dando de baja la sede')
+          InProgress(l10n.adminDeactivatingVenue)
         else
           OutlineButton(
-            label: 'DAR DE BAJA LA SEDE',
+            label: l10n.adminDeactivateVenueButton,
             danger: true,
             onTap: f.submitting ? null : onDeactivate,
           ),

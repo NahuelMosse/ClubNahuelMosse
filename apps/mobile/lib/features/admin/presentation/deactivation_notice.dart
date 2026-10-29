@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -25,7 +26,7 @@ class DeactivationNotice extends StatelessWidget {
           const SizedBox(width: Spacing.s8),
           Expanded(
             child: Text(
-              'Baja del espacio deportivo',
+              AppLocalizations.of(context).adminSpaceDeactivated,
               style: Texts.caption.copyWith(color: p.textMuted),
             ),
           ),

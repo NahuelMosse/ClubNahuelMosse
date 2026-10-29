@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 import '../../../common/button.dart';
 import '../../../common/dates.dart';
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import '../domain/booking_history_entry.dart';
 import 'admin_booking_body.dart';
+import 'booking_status_text.dart';
 
 class AdminBookingCard extends StatelessWidget {
   const AdminBookingCard({
@@ -30,13 +32,14 @@ class AdminBookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final b = booking;
     final sportName = catalog?.sport(b.sport)?.name ?? b.sport;
     final semantics =
         '$sportName, ${b.venue}, ${b.user}, '
         '${longDate(b.startsAt)}, $_schedule, ${formatPesos(b.total)}, '
-        '${b.status.apiValue}'
-        '${b.spaceDeactivated ? ', baja del espacio deportivo' : ''}';
+        '${statusChipText(l10n, b.status).toLowerCase()}'
+        '${b.spaceDeactivated ? ', ${l10n.adminSpaceDeactivated.toLowerCase()}' : ''}';
     final voidBooking = onVoid;
     return Material(
       color: p.bgSurfaceRaised,
@@ -70,11 +73,14 @@ class AdminBookingCard extends StatelessWidget {
                 Spacing.s16,
               ),
               child: OutlineButton(
-                label: 'ANULAR RESERVA',
+                label: l10n.adminVoidBooking,
                 danger: true,
-                semanticLabel:
-                    'Anular la reserva de ${b.user}, $sportName, '
-                    '${longDate(b.startsAt)}, $_schedule',
+                semanticLabel: l10n.adminVoidBookingLabel(
+                  b.user,
+                  sportName,
+                  longDate(b.startsAt),
+                  _schedule,
+                ),
                 onTap: voidBooking,
               ),
             ),

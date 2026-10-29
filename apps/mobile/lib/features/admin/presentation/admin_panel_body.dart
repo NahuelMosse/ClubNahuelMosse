@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import '../domain/booking_history_entry.dart';
@@ -14,6 +15,7 @@ import 'admin_bookings_loading.dart';
 /// What goes below the panel header: loading, the retry, the list or that there are no
 /// bookings, and the indicator of the page being requested.
 List<Widget> adminPanelBody({
+  required AppLocalizations l10n,
   required HistoryPage? result,
   required bool failed,
   required bool loadingMore,
@@ -32,7 +34,7 @@ List<Widget> adminPanelBody({
         child: Padding(
           padding: const EdgeInsets.all(Spacing.s24),
           child: Center(
-            child: TextActionButton(label: 'REINTENTAR', onTap: onRetry),
+            child: TextActionButton(label: l10n.adminRetry, onTap: onRetry),
           ),
         ),
       ),

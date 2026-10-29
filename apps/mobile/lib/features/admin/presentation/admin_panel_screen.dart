@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/bottom_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
 import '../../session/presentation/load_failure.dart';
@@ -208,6 +209,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 onClearFilters: _clearFilters,
               ),
               ...adminPanelBody(
+                l10n: AppLocalizations.of(context),
                 result: result,
                 failed: _pages.failed,
                 loadingMore: _pages.loadingMore,
