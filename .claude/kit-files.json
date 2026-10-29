@@ -1918,5 +1918,9 @@
   ".claude/tools/log.mjs": {
     "module": "core",
     "sha256": "25b9bc9de8e21c5f180869c0047bfd1d0270f33fc842d8f4c189ff3a17ef2652"
+  },
+  ".claude/reference/i18n.md": {
+    "module": "i18n",
+    "sha256": "4665860aef9dc5d62b181a74a243265be17055bb236a6d50116a9cf1e88cfff1"
   }
 }

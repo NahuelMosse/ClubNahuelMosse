@@ -1,0 +1,14 @@
+{
+  "@@locale": "en",
+  "loginWelcome": "WELCOME TO",
+  "loginTagline": "Sports facility management",
+  "loginEmailLabel": "Email",
+  "loginPasswordLabel": "Password",
+  "loginForgotPassword": "Forgot your password?",
+  "loginNoAccount": "Don't have an account?",
+  "loginStart": "GET STARTED",
+  "loginSignIn": "SIGN IN",
+  "loginEmailRequired": "Enter your email address",
+  "loginPasswordRequired": "Enter your password",
+  "loginInvalidCredentials": "Could not sign in. Check your details and try again."
+}

@@ -1,0 +1,14 @@
+{
+  "@@locale": "es",
+  "loginWelcome": "BIENVENIDO A",
+  "loginTagline": "Gestión de espacios deportivos",
+  "loginEmailLabel": "Correo",
+  "loginPasswordLabel": "Contraseña",
+  "loginForgotPassword": "¿Olvidaste tu contraseña?",
+  "loginNoAccount": "¿No tenés cuenta?",
+  "loginStart": "COMENZAR",
+  "loginSignIn": "INICIAR SESIÓN",
+  "loginEmailRequired": "Completá tu correo electrónico",
+  "loginPasswordRequired": "Completá tu contraseña",
+  "loginInvalidCredentials": "No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo."
+}

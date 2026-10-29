@@ -83,23 +83,9 @@
       ]
     },
     "i18n": {
-      "state": "off",
-      "reason": "not chosen at install: no signal found in the repo",
-      "by": "person",
-      "at": "2026-10-20",
-      "signalsAtDecision": [
-        "the card asks for a language, a translation or a locale"
-      ],
-      "confirmed": [
-        {
-          "at": "2026-10-21",
-          "card": "REV-01-seguridad-api",
-          "reason": "La app es sólo en español rioplatense; el enunciado y los CU no piden otro idioma ni locale, y esta card no agrega textos en otro idioma.",
-          "signals": [
-            "the card asks for a language, a translation or a locale"
-          ]
-        }
-      ]
+      "state": "on",
+      "version": "1.0.0",
+      "since": "kit.mjs on 2026-10-29"
     },
     "security-l2": {
       "state": "on",
