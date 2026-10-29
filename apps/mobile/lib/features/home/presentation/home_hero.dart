@@ -87,7 +87,9 @@ class HomeHero extends StatelessWidget {
                       child: AppMarker(cells: marcador),
                     ),
                   ),
-                ],
+                ] else
+                  // El lugar del marcador mientras llega, para que lo de abajo no salte.
+                  const SizedBox(height: _markerSpace),
               ],
             ),
           ),
@@ -96,3 +98,6 @@ class HomeHero extends StatelessWidget {
     );
   }
 }
+
+/// Lo que ocupa el marcador con su separación: lo reserva mientras no hay datos.
+const _markerSpace = 136.0;

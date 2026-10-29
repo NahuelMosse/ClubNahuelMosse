@@ -9,7 +9,6 @@ import '../../../common/button.dart';
 import '../../../common/clock.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/network_failure.dart';
-import '../../../common/skeleton.dart';
 import '../../../common/top_bar.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
@@ -18,6 +17,7 @@ import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import '../domain/app_notification.dart';
 import 'notice_card.dart';
+import 'notice_card_skeleton.dart';
 import 'notification_center.dart';
 import 'notifications_disabled.dart';
 
@@ -138,12 +138,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     bool noNotices,
   ) {
     if (!_read && center.list.isEmpty) {
-      if (_loading) {
-        return const Padding(
-          padding: EdgeInsets.all(Spacing.s24),
-          child: SkeletonList(shape: SkeletonShape.notice, count: 5),
-        );
-      }
+      if (_loading) return const NoticeCardSkeleton();
       // Con el aviso de error abierto no hay nada más que mostrar: el reintento es el del aviso.
       return _failed
           ? Center(

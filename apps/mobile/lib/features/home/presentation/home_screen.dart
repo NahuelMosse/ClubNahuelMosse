@@ -7,7 +7,6 @@ import '../../../common/dates.dart';
 import '../../../common/list_loading.dart';
 import '../../../common/marker.dart';
 import '../../../common/motion.dart';
-import '../../../common/skeleton.dart';
 import '../../../common/unhandled_errors.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/data/api_errors.dart';
@@ -27,6 +26,7 @@ import '../../venues/presentation/venues.dart';
 import '../domain/tile_animation.dart';
 import 'home_hero.dart';
 import 'home_shortcuts.dart';
+import 'home_skeleton.dart';
 import 'home_sports.dart';
 import 'next_booking.dart';
 
@@ -235,11 +235,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     celdas: data == null ? null : _celdas(data),
                     yaEntro: yaEntro,
                   ),
-                  if (data == null && !_fallo)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: Spacing.s24),
-                      child: SkeletonList(shape: SkeletonShape.booking),
-                    ),
+                  if (data == null && !_fallo) const HomeSkeleton(),
                   if (data == null && _fallo) ListRetry(onTap: _cargar),
                   if (data != null) ...[
                     if (proxima != null)
