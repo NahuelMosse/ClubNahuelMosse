@@ -131,7 +131,7 @@ def test_la_declaracion_de_accesibilidad_y_el_registro_por_pantalla_estan_public
 
 def _columnas_por_tabla() -> dict[str, set[str]]:
     migraciones = "".join(
-        _texto(m) for m in sorted((API / "migraciones" / "versions").glob("*.py"))
+        _texto(m) for m in sorted((API / "migrations" / "versions").glob("*.py"))
     )
     tablas: dict[str, set[str]] = {}
     for tabla, cuerpo in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", migraciones, re.S):
@@ -140,7 +140,7 @@ def _columnas_por_tabla() -> dict[str, set[str]]:
         rf"ALTER TABLE (\w+)\s+ADD COLUMN (\w+) (?:{TIPOS})", migraciones
     ):
         tablas.setdefault(tabla, set()).add(columna)
-    for migracion in sorted((API / "migraciones" / "versions").glob("*.py")):
+    for migracion in sorted((API / "migrations" / "versions").glob("*.py")):
         for tabla, vieja, nueva in re.findall(
             r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", _subida(migracion)
         ):
