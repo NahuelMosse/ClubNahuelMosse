@@ -11,7 +11,6 @@ import '../../../common/day_timeline.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/error_dialog.dart';
 import '../../../common/motion.dart';
-import '../../../common/skeleton.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
@@ -31,6 +30,7 @@ import '../domain/slot.dart';
 import 'availability_action_bar.dart';
 import 'availability_cover.dart';
 import 'availability_note.dart';
+import 'availability_skeleton.dart';
 import 'booking_summary.dart';
 import 'confirm_booking_screen.dart';
 import 'confirm_change_screen.dart';
@@ -359,21 +359,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
               alContinuar: _puedeSeguir ? _continuar : null,
             ),
       body: data == null || cancha == null
-          ? SafeArea(
-              child: _cambio
-                  ? const SizedBox.shrink()
-                  : _fallo
-                  ? Center(
-                      child: TextActionButton(
-                        label: 'REINTENTAR',
-                        onTap: _cargar,
-                      ),
-                    )
-                  : const Padding(
-                      padding: Spacing.listPagePadding,
-                      child: SkeletonList(shape: SkeletonShape.grid, count: 6),
-                    ),
-            )
+          ? _sinDatos()
           : SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -436,22 +422,37 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     ];
   }
 
+  Widget _sinDatos() {
+    if (_cambio) return const SafeArea(child: SizedBox.shrink());
+    if (_fallo) {
+      return SafeArea(
+        child: Center(
+          child: TextActionButton(label: 'REINTENTAR', onTap: _cargar),
+        ),
+      );
+    }
+    return AvailabilitySkeleton(volverA: _volverA, alVolver: _alVolver);
+  }
+
+  String get _volverA => widget.modificando != null
+      ? widget.volverA
+      : widget.date == null
+      ? 'Sedes'
+      : 'Buscar cancha';
+
+  VoidCallback get _alVolver => widget.modificando != null
+      ? _salir
+      : () => context.canPop()
+            ? context.pop()
+            : context.go('/sedes/${widget.sedeId}');
+
   Widget _portada((Venue, List<Space>, Catalog) data, Space cancha) {
-    final modificando = widget.modificando;
     return AvailabilityCover(
       sede: data.$1,
       tipo: data.$3.shortKind(cancha.sport, cancha.kind),
       deporte: cancha.sport,
-      volverA: modificando != null
-          ? widget.volverA
-          : widget.date == null
-          ? 'Sedes'
-          : 'Buscar cancha',
-      alVolver: modificando != null
-          ? _salir
-          : () => context.canPop()
-                ? context.pop()
-                : context.go('/sedes/${widget.sedeId}'),
+      volverA: _volverA,
+      alVolver: _alVolver,
     );
   }
 
@@ -476,15 +477,21 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     final grilla = _grilla;
     final hours = _deLaGrilla?.$2 ?? _horas;
     if (grilla == null) {
+      if (_cambio) return const SizedBox(height: Spacing.s48);
+      if (_consultando || !_fallo) {
+        return const SlotsSection(
+          titulo: 'HORARIO DISPONIBLE',
+          child: Padding(
+            padding: EdgeInsets.only(top: Spacing.s8 + 2),
+            child: AvailabilityGridSkeleton(),
+          ),
+        );
+      }
       return Padding(
         padding: const EdgeInsets.all(Spacing.s24),
-        child: _cambio
-            ? const SizedBox.shrink()
-            : _consultando || !_fallo
-            ? const SkeletonList(shape: SkeletonShape.grid, count: 4)
-            : Center(
-                child: TextActionButton(label: 'REINTENTAR', onTap: _consultar),
-              ),
+        child: Center(
+          child: TextActionButton(label: 'REINTENTAR', onTap: _consultar),
+        ),
       );
     }
     return SlotsSection(
@@ -503,55 +510,47 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     );
   }
 
-  /// Mientras llega otra grilla, la anterior queda atenuada y no se puede tocar.
+  /// Mientras llega otra grilla, sus lugares se muestran como bloques.
   Widget _contenidoDeLaGrilla(AvailabilityGrid grilla, int hours) {
-    return IgnorePointer(
-      ignoring: _consultando,
-      child: AnimatedOpacity(
-        opacity: _consultando ? 0.5 : 1,
-        duration: const Duration(milliseconds: 150),
-        child: !grilla.hasFree
-            ? EmptyState(
-                title: 'No hay horarios disponibles',
-                text: _porQueNoHay(grilla, hours),
-              )
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_datos?.$1 case final venue?) ...[
-                    Heartbeat(
-                      trigger: _horas,
-                      child: _lineaDelDia(venue, grilla, hours),
-                    ),
-                    const SizedBox(height: Spacing.s12),
-                  ],
-                  PairedGrid(
-                    alto: Spacing.controlHeight,
-                    hijos: [
-                      for (final f in grilla.slots)
-                        SlotCard(
-                          franja: f,
-                          actual: _esLaActual(f.start),
-                          elegida: f.start == _inicio,
-                          alTocar: f.available
-                              ? () => setState(() => _inicio = f.start)
-                              : null,
-                        ),
-                    ],
-                  ),
-                  if (grilla.unavailableCount > 0) ...[
-                    const SizedBox(height: Spacing.s12),
-                    AvailabilityNote(
-                      texto: hours == 1
-                          ? 'Algunos horarios ya están ocupados · '
-                                '${grilla.unavailableCount} no disponibles'
-                          : 'Con ${duration(hours)} hay menos inicios posibles · '
-                                '${grilla.unavailableCount} no disponibles',
-                    ),
-                  ],
-                ],
+    if (_consultando) return const AvailabilityGridSkeleton();
+    if (!grilla.hasFree) {
+      return EmptyState(
+        title: 'No hay horarios disponibles',
+        text: _porQueNoHay(grilla, hours),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_datos?.$1 case final venue?) ...[
+          Heartbeat(trigger: _horas, child: _lineaDelDia(venue, grilla, hours)),
+          const SizedBox(height: Spacing.s12),
+        ],
+        PairedGrid(
+          alto: Spacing.controlHeight,
+          hijos: [
+            for (final f in grilla.slots)
+              SlotCard(
+                franja: f,
+                actual: _esLaActual(f.start),
+                elegida: f.start == _inicio,
+                alTocar: f.available
+                    ? () => setState(() => _inicio = f.start)
+                    : null,
               ),
-      ),
+          ],
+        ),
+        if (grilla.unavailableCount > 0) ...[
+          const SizedBox(height: Spacing.s12),
+          AvailabilityNote(
+            texto: hours == 1
+                ? 'Algunos horarios ya están ocupados · '
+                      '${grilla.unavailableCount} no disponibles'
+                : 'Con ${duration(hours)} hay menos inicios posibles · '
+                      '${grilla.unavailableCount} no disponibles',
+          ),
+        ],
+      ],
     );
   }
 

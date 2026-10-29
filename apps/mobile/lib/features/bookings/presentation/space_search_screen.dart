@@ -10,7 +10,6 @@ import '../../../common/date_format.dart';
 import '../../../common/dates.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/selector.dart';
-import '../../../common/skeleton.dart';
 import '../../../common/text_field.dart';
 import '../../../common/top_bar.dart';
 import '../../../theme/theme.dart';
@@ -31,6 +30,7 @@ import 'covered_filter.dart';
 import 'search_error_card.dart';
 import 'search_time_range.dart';
 import 'space_search_bar.dart';
+import 'space_search_skeleton.dart';
 
 /// «Consultar canchas»: las canchas de una sede y un deporte libres en todo un rango de un
 /// día. Consultar no reserva nada; cada cancha lleva a sus horarios con el rango elegido.
@@ -364,7 +364,6 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
           : SpaceSearchBar(
               alLimpiar: _consultando ? null : _limpiar,
               alConsultar: _completo && !_consultando ? _consultar : null,
-              consultando: _consultando,
             ),
       body: opciones == null ? _bodyWithoutOptions() : _form(opciones, p),
     );
@@ -374,12 +373,25 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       ? Center(
           child: TextActionButton(label: 'REINTENTAR', onTap: _cargar),
         )
-      : const SafeArea(
-          child: Padding(
-            padding: Spacing.listPagePadding,
-            child: SkeletonList(shape: SkeletonShape.grid),
+      : SpaceSearchSkeleton(header: _encabezado(_introduccion));
+
+  Widget _encabezado(String subtitulo) {
+    final p = context.palette;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Semantics(
+          header: true,
+          child: Text(
+            'Consultar canchas',
+            style: Texts.h1.copyWith(color: p.textPrimary),
           ),
-        );
+        ),
+        const SizedBox(height: Spacing.s4),
+        Text(subtitulo, style: Texts.body.copyWith(color: p.textSecondary)),
+      ],
+    );
+  }
 
   Widget _form((List<Venue>, Catalog) opciones, Palette p) =>
       SingleChildScrollView(
@@ -392,18 +404,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Semantics(
-              header: true,
-              child: Text(
-                'Consultar canchas',
-                style: Texts.h1.copyWith(color: p.textPrimary),
-              ),
-            ),
-            const SizedBox(height: Spacing.s4),
-            Text(
-              _subtitulo(opciones.$2),
-              style: Texts.body.copyWith(color: p.textSecondary),
-            ),
+            _encabezado(_subtitulo(opciones.$2)),
             if (_falla case final falla?) ...[
               const SizedBox(height: Spacing.s16),
               SearchErrorCard(
@@ -417,11 +418,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
             ],
             const SizedBox(height: Spacing.s16),
             ..._filtros(opciones.$1, opciones.$2),
-            if (_consultando)
-              const Padding(
-                padding: EdgeInsets.only(top: Spacing.s24),
-                child: SkeletonList(shape: SkeletonShape.space),
-              ),
+            if (_consultando) const SpaceResultsSkeleton(),
             if ((_consulta, _resultado) case (
               final consulta?,
               final resultado?,
@@ -431,12 +428,13 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         ),
       );
 
+  static const _introduccion =
+      'Elegí sede, deporte y rango horario. Solo horas completas, de '
+      '$minHours a $maxHours horas.';
+
   String _subtitulo(Catalog catalogo) {
     final c = _consulta;
-    if (c == null) {
-      return 'Elegí sede, deporte y rango horario. Solo horas completas, de '
-          '$minHours a $maxHours horas.';
-    }
+    if (c == null) return _introduccion;
     return '${c.venue.name} · ${_queSeBusco(c, catalogo)} · ${shortDate(c.fecha)} · '
         '${hhmm(c.desde)} a ${hhmm(c.hasta)}';
   }

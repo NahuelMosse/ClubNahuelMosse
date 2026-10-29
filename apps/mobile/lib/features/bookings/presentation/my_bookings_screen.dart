@@ -7,7 +7,7 @@ import '../../../common/dates.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/list_loading.dart';
 import '../../../common/price_format.dart';
-import '../../../common/skeleton.dart';
+import 'booking_card_skeleton.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
@@ -218,7 +218,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         if (data == null && !_fallo)
-                          const SkeletonList(shape: SkeletonShape.booking),
+                          const BookingCardSkeletons(),
                         if (data == null && _fallo) ListRetry(onTap: _cargar),
                         if (data != null && data.$1.isEmpty)
                           EmptyState(

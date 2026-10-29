@@ -9,12 +9,10 @@ class SpaceSearchBar extends StatelessWidget {
     super.key,
     required this.alLimpiar,
     required this.alConsultar,
-    required this.consultando,
   });
 
   final VoidCallback? alLimpiar;
   final VoidCallback? alConsultar;
-  final bool consultando;
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +24,7 @@ class SpaceSearchBar extends StatelessWidget {
           TextActionButton(label: 'LIMPIAR', onTap: alLimpiar),
           const SizedBox(width: Spacing.s12),
           Expanded(
-            child: PrimaryButton(
-              label: 'CONSULTAR',
-              onTap: alConsultar,
-              loading: consultando,
-            ),
+            child: PrimaryButton(label: 'CONSULTAR', onTap: alConsultar),
           ),
         ],
       ),
