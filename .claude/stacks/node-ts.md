@@ -15,18 +15,23 @@ whole profile would be re-read on every request of the card.
   the verification commands live once as `verify:*` scripts of `package.json`.
 - `node --test` lines run with `--test-concurrency=1`, or 4 (or half the cores) when the tests isolate their own port and database
   and a stable ×3 run (`tools/repeat.mjs`) confirms it. Playwright and axe are development dependencies; browsers install with
-  `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`. Several tags: `--grep "@A|@B"` with double quotes.
-- The `## Gate` lines of `card.md`, one per check, run by `verify.mjs`: `suite: npm test`, `lint: npx eslint <src test e2e>`,
+  `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`.
+- The `## Gate` lines of `card.md`, one per check, run by `verify.mjs`: `suite: node --test {affected}`, `lint: npx eslint <src test e2e>`,
   `mutate <file>: node --test <that file's unit tests>` (production: every logic file; mvp: the domain; poc: none),
-  `attacks: npm run attacks`, `motion: npm run motion`, `app: node src/main.mjs` (takes `PORT` and `DATA_DIR` from the environment).
+  `attacks: node .claude/tools/attack.mjs --json <flags>` (profile backend; url from `APP_URL`), `motion: npm run motion`, `app: node src/main.mjs` (takes `PORT` and `DATA_DIR` from the environment).
 - Before committing the RED tests: `npx tsc --noEmit`; the linter (eslint-plugin-playwright, no loops or conditionals in tests); the
   new tests ×3 stable (`npx playwright test --grep "@$ID" --repeat-each=3`, or
   `node .claude/tools/repeat.mjs 3 -- node --test --test-concurrency=1 <files>`); the red run with `--timeout=5000 --retries=0`
   (Node: `timeout 30 node --test --test-timeout=5000 --test-force-exit <files>`), never in the final suite.
 - Mutation of a logic file: `node .claude/tools/mutate.mjs <file> --since <card-start> --equivalents specs/<card>/equivalents.md -- <unit suite>`,
   never over the browser suite. ZAP: once per card, at the end.
+- `node --test` takes a glob (`"test/**/*.test.mjs"`), never a folder: Node 24 runs a folder as if it were a test file, and fails.
+- A test file that starts a server (the repo's own too) ends with `await new Promise((done) => { server.close(done); server.closeAllConnections(); })` and then the database closed; never a
+  sleep. A handle left open makes Windows abort `--test-force-exit` with `UV_HANDLE_CLOSING`.
+- A static server sends `.mjs` and `.js` as `text/javascript` and serves only its public folder.
+- The logic of a screen (validation, messages, the payload) lives in an ES module the page and `node --test` both import: mutation runs node tests only.
 
-Read the rest only when a criterion of `bar.mjs` needs a command not listed here (read just its section, by line range),
+Read the rest only when a criterion of `bar.mjs` needs a command not listed here (its section, by line range),
 or the card has a screen (`## Screen: states and motion`).
 
 ## Configuration the profile requires
@@ -69,6 +74,13 @@ lives in the module's `infrastructure/` (or the composition root for DI), behind
 A module per feature maps to `src/modules/<feature>/` (Nest: the feature module folder), with its layer folders inside
 (`presentation/`, `domain/`, `data/`, `application/` when a use case orchestrates); `shared/` holds the kernel. The architecture test of D2 reads those paths.
 
+## Recipes
+
+- **SQLite with `node:sqlite`:** `import { DatabaseSync } from 'node:sqlite'`; `db.exec(sql)`, `db.prepare(sql).run/get/all(...params)`; `new DatabaseSync(file, { readOnly: true })` for a read-only open; `PRAGMA foreign_keys = ON` and `PRAGMA busy_timeout = 5000` on open. It prints `ExperimentalWarning: SQLite is an experimental feature` on stderr: harmless; `node --disable-warning=ExperimentalWarning` in `app:` and in `node --test` lines silences it.
+- **Migrations:** numbered, applied in order, the applied number in `PRAGMA user_version`. Each one: `BEGIN IMMEDIATE`, read `user_version` inside the transaction and skip if applied, run the statements, set `user_version`, `COMMIT`; a throw is `ROLLBACK` and the start exits ≠ 0. Tests: two simultaneous opens of the same file apply each migration once; a migration that throws leaves the database as before.
+- **Unique violation:** `err.errcode === 2067` (`SQLITE_CONSTRAINT_UNIQUE`; 1555 is the primary key) answers 409; never a regex on the message.
+- **A public function with an object parameter** validates it, and its tests call `fn(null)`, `fn({})` and `fn()`, at any risk, each with the error or default the function states.
+
 ## Readability limits
 
 The `lint:` line enforces them: spread `readability` from `.claude/templates/eslint-readability.mjs` into `eslint.config.mjs`
@@ -89,12 +101,12 @@ What `verify.mjs` runs in parallel. An example for a card with a domain module, 
 screen:
 
 ```
-suite: npm test
+suite: node --test {affected}
 lint: npx eslint src test e2e
 # production grade: every logic file; at mvp only the domain one (src/telefono.mjs), at poc none
 mutate src/telefono.mjs: node --test test/telefono.test.mjs
 mutate src/app.mjs: node --test test/app.http.test.mjs
-attacks: npm run attacks
+attacks: node .claude/tools/attack.mjs --json --write "POST /api/x name=Ana" --read "/api/x"
 motion: npm run motion
 app: node src/main.mjs
 seed: node scripts/seed.mjs
@@ -106,16 +118,16 @@ vitals: npm run verify:vitals
 load: npm run verify:load
 ```
 
-`npm run attacks` starts the app on a free port, runs `attack.mjs` against the card's routes and
-stops it by PID. `npm run motion` does the same with `node .claude/tools/motion-audit.mjs <url>
+`attacks:` runs `attack.mjs` against `APP_URL`, the app `verify.mjs` started with `app:`. `npm run motion` starts its own app on a free port, runs
+the audit and stops it by PID, with `node .claude/tools/motion-audit.mjs <url>
 --only <selectors of what the card added> --cpu 4`, or over `design/components/gallery.html` when
 the card changed the set. What uses a browser or starts the app goes one at a time; the rest, in
 parallel. The commands named `p95`, `budget`, `vitals` or `load` run alone, after everything else.
 
 `app:` (`node src/main.mjs`, or `npm start`) is not a check: `node .claude/tools/app.mjs up` runs it
 with `PORT` and `DATA_DIR` in the environment, so the app must take both from there; the optional
-`seed:` loads data once and sees `APP_URL`. The `visual` lens of the judge uses that one app. `npm run attacks`
-and `npm run motion` may point at `APP_URL` when it is set and start their own app only without it.
+`seed:` loads data once and sees `APP_URL`. The probes, the designer and the design-critic use that one app. `npm run motion`
+may point at `APP_URL` when it is set and start its own app only without it.
 `attack.mjs --json` sends the bodies as JSON (it also switches by itself when the form gets a 415).
 
 ## Screen: states and motion
@@ -171,7 +183,7 @@ thousand tokens; a long full page, ten.
 | K1 | `grep -rnE "\)!\|\]!\|\bas any\b\|as unknown as\|@ts-(ignore\|expect-error)\|eslint-disable\|catch *\([^)]*\) *\{ *\}" $(git diff --name-only <card-base>)`; and for a closed enumeration, `Record<StageId, …>`, not `Record<string, …>`; a member list written twice: by name `grep -rln -E "'(member1\|member2\|…)'" --exclude-dir=node_modules .`, by count `grep -rn -E "repeat\( *N\|\.length *[=!]== *N\|Array\( *N" --include=*.css --include=*.ts .` |
 | K5 | `node -e "const p=require('./package.json');const s=Object.values(p.scripts\|\|{}).join(' ');for(const d of Object.keys(p.devDependencies\|\|{}))if(!s.includes(d.split('/').pop().replace('@','')))console.log('nobody runs:',d)"` — empty; and for every production `export`, `git grep -wl <name> \| wc -l` greater than 1 |
 | D2 · D11 · D15 | an `architecture.test` that parses the imports of each layer; or **dependency-cruiser** with `forbidden` rules: the domain and application folders to `node_modules` except the allow-list, deep imports into another module (`only-public-index`), and a table touched outside its owner module. Untested on this machine |
-| K4 | `npx -y jscpd@4 --min-lines 5 --min-tokens 50 <production-folder>` — blocking for a clone with a side in lines the card wrote (`verify.mjs`, every grade); a clone already in the repo is a note; it finds exact copies, not renamed ones |
+| K4 | `npx -y jscpd@4 --min-lines 10 --min-tokens 50 <production-folder>` — blocking for a clone with a side in lines the card wrote (`verify.mjs`, every grade); a clone already in the repo is a note; it finds exact copies, not renamed ones |
 | D3 | `npx madge --circular --extensions ts,tsx,js,mjs <src>`, or dependency-cruiser with the `no-circular` rule — no cycles (the `cycles:` line). Untested on this machine |
 | E6 · E12 · E13 | **eslint** with `sonarjs`, `@typescript-eslint/no-floating-promises` and `no-misused-promises`, a `no-restricted-syntax` over a `CatchClause` whose only statement is a call to `console` or the logger, and `preserve-caught-error` if the version ships it [NV]. Untested on this machine |
 | D6 | the loop of `reference/code-patterns.md` over `src`: exported interfaces with at most one implementation and no fake in tests; abstract classes with at most one subclass. Informative |

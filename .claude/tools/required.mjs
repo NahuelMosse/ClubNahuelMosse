@@ -52,7 +52,7 @@ export const sessionRecords = (root, cardDir) => {
   // Only the records the hook tagged with this card: another card's session is not this card's.
   return existsSync(log)
     ? readFileSync(log, 'utf8').split('\n').filter((l) => l.includes(` · card ${cardName(cardDir)} · `))
-      .flatMap((l) => [...l.matchAll(/record: (\S+\.jsonl)/g)].map((m) => m[1]))
+      .flatMap((l) => [...l.matchAll(/record: (.+?\.jsonl)\s*$/gm)].map((m) => m[1]))
     : [];
 };
 export const sessionLine = (record) => `${today()} · ${modelsOf(record).join(', ') || '<model>'} · cost not available · ${record}`;

@@ -48,7 +48,7 @@ try {
   // A session that comes back after a compaction or a crash starts with the card's state in its
   // context (SessionStart adds this stdout): the summary may be out of date, the disk is not.
   if (cardDir && ['compact', 'resume'].includes(input.source)) {
-    process.stdout.write(`Card ${name} in progress: read specs/${name}/card.md (its Log is the state) and .claude/METHOD.md, then \`git status\` and \`git log -5\`.\n`);
+    process.stdout.write(`Card ${name} in progress: read specs/${name}/card.md (its Log is the state) with \`node .claude/tools/card-view.mjs specs/${name}\`, which folds the verbatim L1, and .claude/METHOD.md, then \`git status\` and \`git log -5\`.\n`);
   }
 } catch {}
 process.exit(0);

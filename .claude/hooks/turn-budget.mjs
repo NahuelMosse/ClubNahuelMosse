@@ -54,9 +54,9 @@ try {
     if (writesDoc || commits) process.exit(0);
     process.stderr.write(
       `This ${input.agent_type} has used ${used} of its ${max} turns (${left} left): the limit cuts it and the work not written is lost. ` +
-      'Return now with the complete report of what you covered, written in your report file, and a section `Not covered (turn budget)` ' +
+      'Return now with the complete report of what you covered, written in handoff.md (or judge.md), and a section `Not covered (turn budget)` ' +
       'with what you did not get to review, each item as *could not run*, so the main thread launches another agent of the same type for only that. ' +
-      'Allowed now: Write or Edit of a `.md` file, git add, git commit, git status.\n'
+      'Allowed now: Write or Edit of a `.md` file, and a shell command made only of git add, git commit and git status, chained with `&&`, optionally after `cd <path> &&` (no `export` or other prefix).\n'
     );
     process.exit(2);
   }
@@ -66,7 +66,7 @@ try {
   if (existsSync(warned)) process.exit(0);
   mkdirSync(marker, { recursive: true });
   writeFileSync(warned, `${used}`);
-  const message = `Turns of this ${input.agent_type}: ${used} of ${max}, ${left} left. Write now in your report file what you verified so far, so nothing is lost, and go on. ` +
+  const message = `Turns of this ${input.agent_type}: ${used} of ${max}, ${left} left. Write now in handoff.md (or judge.md) what you verified so far, so nothing is lost, and go on. ` +
     `From ${Math.ceil(max * STOP_AT)} turns only a Write or Edit of a .md and the commit are allowed: return then with a \`Not covered (turn budget)\` section.`;
   process.stdout.write(JSON.stringify({
     systemMessage: message,

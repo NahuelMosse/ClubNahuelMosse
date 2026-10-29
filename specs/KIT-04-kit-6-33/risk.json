@@ -1,0 +1,12 @@
+{
+  "size": "small",
+  "review": "low",
+  "lenses": [],
+  "modules": [],
+  "signals": [],
+  "words": [],
+  "files": [
+    "tests/kit.test.mjs"
+  ],
+  "tasks": 1
+}

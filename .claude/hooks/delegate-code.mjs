@@ -28,8 +28,10 @@ try {
   if (designing) {
     const { readCard, rolesOf } = await import('../tools/card-doc.mjs');
     const { roleFor } = await import('../tools/gate-checks.mjs');
-    if (roleFor(rolesOf(readCard(cardDir) ?? ''), path.replaceAll('\\', '/')) === 'presentation') process.exit(0);
-    process.stderr.write('The `designer` writes only the files `## Tasks` marks `(presentation)`: not rules, data or tests. A change that needs one goes to the Log as `OUT · <what>`.\n');
+    const roles = rolesOf(readCard(cardDir) ?? '');
+    if (roleFor(roles, path.replaceAll('\\', '/')) === 'presentation') process.exit(0);
+    const allowed = [...roles].filter(([, role]) => role === 'presentation').map(([file]) => file);
+    process.stderr.write(`The \`designer\` writes only the files \`## Tasks\` marks \`(presentation)\`: ${allowed.length ? allowed.join(', ') : 'none is marked yet'}. Not rules, data or tests. Tokens and new styles go inside a presentation file already listed; a change that needs another file goes to the Log as \`OUT · <what>\`.\n`);
     process.exit(2);
   }
   if (card.actsAsMain(input)) {

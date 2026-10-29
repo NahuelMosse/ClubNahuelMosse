@@ -16,9 +16,9 @@
 // Contract: exit 0 lets it through; exit 2 blocks and Claude reads stderr. If it cannot read what is being asked, it
 // blocks: a cap that crashes and lets things through is not a cap.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { delegateToRepo } from '../tools/card.mjs';
+import { gitDirOf } from '../tools/browser-lock.mjs';
 import { riskOf } from '../tools/card-doc.mjs';
 import { critiqueOf } from '../tools/close.mjs';
 
@@ -79,16 +79,16 @@ if (tool === 'Skill') {
   if (REVIEWS.has(name)) review = name;
 } else if (agent === 'judge') {
   if (!/^\s*PLAN\b/.test(prompt))
-    refuse('The `judge` reads the plan only: its prompt starts with `PLAN`. There is no judge of the code. What a code judge found is checked by the gate: `plan.mjs` (rules over card.md), `attack.mjs` and `probe.mjs` (the card\'s limits and states) and the questions of `.claude/reference/lenses.md`, which `/card` walks before `## Specs` closes.');
+    refuse('The `judge` reads the plan only: its prompt starts with `PLAN`. There is no judge of the code. What a code judge found is checked by the gate: `node .claude/tools/risk.mjs <card-dir>` (rules over card.md), `attack.mjs` and `probe.mjs` (the card\'s limits and states) and the questions of `.claude/reference/lenses.md`, which `/card` walks before `## Specs` closes.');
   review = 'judge-plan';
 } else if (agent === 'design-critic') review = 'design-critic';
 else if (agent === 'builder' && /^\s*FIX\b/.test(prompt))
-  refuse('There is no `FIX` round. A red gate after two rounds without progress is written in the `## Log` and the close lists it in `## Could not run`. What a finding round caught is checked earlier: `plan.mjs`, the gate (`attack.mjs`, `probe.mjs`) and `.claude/reference/lenses.md`.');
+  refuse('There is no `FIX` round. A red gate after two rounds without progress is written in the `## Log` and the close lists it in `## Could not run`. What a finding round caught is checked earlier: `node .claude/tools/risk.mjs <card-dir>`, the gate (`attack.mjs`, `probe.mjs`) and `.claude/reference/lenses.md`.');
 if (!review || !live) finish();
 
 const { root, card } = live;
 const cardName = card.split(/[\\/]/).pop();
-const gitDir = spawnSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: root, encoding: 'utf8' }).stdout?.trim();
+const gitDir = gitDirOf(root);
 const dir = gitDir || join(root, '.validation');
 const file = join(dir, 'sdd-reviews.json');
 let counts = {};
@@ -99,7 +99,7 @@ const done = counts[key] ?? 0;
 const risk = riskOf(card);
 if (review === 'judge-plan') {
   if (!risk) refuse(`No judge without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first. The classification decides whether the card gets a judge.`);
-  if (risk.review !== 'high') refuse(`risk.json of ${cardName} says review: ${risk.review}: no judge. Only high gets the plan judge; the plan rules (\`plan.mjs\`), the gate and \`.claude/reference/lenses.md\` are the whole review of this card.`);
+  if (risk.review !== 'high') refuse(`risk.json of ${cardName} says review: ${risk.review}: no judge. Only high gets the plan judge; the plan rules (\`node .claude/tools/risk.mjs <card-dir>\`), the gate and \`.claude/reference/lenses.md\` are the whole review of this card.`);
 }
 if (review === 'design-critic') {
   if (!risk) refuse(`No design-critic without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first.`);

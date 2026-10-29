@@ -7,7 +7,8 @@ A screen that marketing or a campaign asks for (a landing, a newsletter or launc
 «Landing or marketing» and from the section of its genre, not from the product forms: it has to sell, not only work.
 
 **A landing declares its genre.** `## Look` carries `ref-genre: <genre>` (`drink-food`, `cosmetics`, `local-service`, `saas`, `app`) and a
-`ref:` from that genre's section: the same-genre reference is mandatory, it gives the structure and the ceiling of level. One or two
+`ref:` from that genre's section: the same-genre reference is mandatory, it gives the structure and the conventions people expect. The level
+is set by the **first** `ref:`, the one of award level, of the genre or lateral; a store of the genre is not the ceiling. One or two
 `### Lateral` references of other genres give the trait of excellence. Every URL below answered with a real page when it was fetched; a
 reference that later answers a bot wall or an error is retried once (fresh context, longer wait) and, if it still fails, replaced by the next one of its section: the substitute is of the same product genre (another drink for a drink, never a cooking oil for a soda). The retry is recorded in `rondas.md`.
 
@@ -115,16 +116,16 @@ Not to copy: https://status.twin.sh (a list as a grid of cards), the gauges of N
 
 Inner pages to capture: the product page and the collection or flavor page.
 
-- https://drinkolipop.com · flavor as the system: each product carries its own color pair, the CTA label names the flavor.
+- https://en.manayerbamate.com · a drink of award level: a 3D slider of the flavors as the variant selector instead of a grid.
 - https://liquiddeath.com · a single light block over footage, a brand voice that never breaks.
-- https://www.graza.co · the pack's lime as the only accent; the PDP button carries the price.
+- https://drinkolipop.com · a store: flavor as the system, each product carries its own color pair; structure, not level.
 - https://brightland.co · half photo, half calm text; a gift-set grid that stays editorial.
 - https://flybyjing.com · a dense plane of small same-weight pieces: the dense exception, with one point of entry.
 
 ### Lateral
 
 - https://oryzo.ai · a humble object told as an engineering product: a serious spec sheet and a demo handled inside the page.
-- https://en.manayerbamate.com · a 3D slider of the flavors as the variant selector instead of a grid.
+- https://www.graza.co · a flavor selector on the product page that changes pack, color and copy together.
 
 ## Landing: cosmetics or personal care
 

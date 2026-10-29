@@ -187,7 +187,7 @@ two to four signature interactions carry the personality.
 the DOM in the event's own task: no exit animation on that node, no `hidden`, no deferred
 `remove()`. The motion goes on what enters and on the neighbors (FLIP). Item 7 of the screen audit
 for it is `not applicable · the card pins it`; a brief line that contradicts the card is a `fails`
-of the plan against the snapshot, and the visual judge raises no `ACT` against the removal.
+of the plan against the snapshot.
 
 `verify.mjs` checks that there is motion and its reduced version; `motion-audit.mjs`, in the
 browser, that every element and every inventoried change responds, in range, without layout
@@ -196,4 +196,4 @@ animation and without long frames. How it looks is step 9.
 ## After writing the screen
 
 Looking at it —captures, verdict against the brief, `design-deslop`, the data, the material, what
-year it looks like— is the `judge`'s lens `visual` (`node .claude/tools/help.mjs judge`).
+year it looks like— is the `designer`'s rounds and, at grade `production`, the `design-critic`'s.

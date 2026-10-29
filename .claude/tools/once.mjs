@@ -34,7 +34,7 @@ export const DIR = join('.validation', 'once');
 const FORCE_EXIT = Number(process.versions.node.split('.')[0]) >= 22;
 export const testTimeoutMs = () => (Number(process.env.KIT_TEST_TIMEOUT_MS) > 0 ? Number(process.env.KIT_TEST_TIMEOUT_MS) : 30000);
 export const withTestTimeout = (command, ms = testTimeoutMs()) => (/--test-timeout\b/.test(command) ? command
-  : command.replace(/\bnode((?:\s+--?[\w-]+(?:=\S+)?)*?)\s+--test(?=\s|$)/g, `node$1 --test --test-timeout=${ms}${FORCE_EXIT && !/--test-force-exit/.test(command) ? ' --test-force-exit' : ''}`));
+  : command.replace(/\bnode((?:\s+--?[\w-]+(?:=\S+|\s+(?!--test(?:\s|$))[^\s-]\S*)?)*?)\s+--test(?=\s|$)/g, `node$1 --test --test-timeout=${ms}${FORCE_EXIT && !/--test-force-exit/.test(command) ? ' --test-force-exit' : ''}`));
 
 // `$APP_URL`, `${APP_URL}` and `%APP_URL%` (and the same for PORT and DATA_DIR) are replaced by their value in the
 // environment before the shell sees the line: cmd.exe does not expand `$X` and sh does not expand `%X%`, so the same

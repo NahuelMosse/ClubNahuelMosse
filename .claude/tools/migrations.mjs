@@ -250,7 +250,9 @@ const targetsOf = (command, cwd, depth) => {
 // protected file that exists in the base. Null when it does neither.
 export const shellViolation = (text, cwd) => {
   let here = cwd;
-  const mine = cardTop(cwd);
+  // The top costs a git call: it is asked only when a command names a target (most commands name none).
+  let top;
+  const mine = () => (top === undefined ? (top = cardTop(cwd)) : top);
   for (const command of splitCommands(text)) {
     const raw = tokensOf(command);
     const toks = raw.map(bare);
@@ -263,7 +265,7 @@ export const shellViolation = (text, cwd) => {
     }
     for (const target of targetsOf(command, here, 0)) {
       const loc = locate(resolve(target.cwd, native(target.path)));
-      if (!loc || outside(loc, mine) || (target.exact && !isProtected(loc.rel))) continue;
+      if (!loc || outside(loc, mine()) || (target.exact && !isProtected(loc.rel))) continue;
       const file = appliedUnder(loc, target.exact);
       if (file) return { file, label: loc.base.label };
     }

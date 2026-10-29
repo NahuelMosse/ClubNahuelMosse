@@ -11,7 +11,7 @@ import { git } from './card.mjs';
 const OWN = /^(\.validation|specs|node_modules|test-results|\.playwright-mcp)\//;
 
 export const snapshot = (root) => {
-  const status = git(root, ['status', '--porcelain', '-uall']).stdout ?? '';
+  const status = git(root, ['-c', 'core.quotepath=false', 'status', '--porcelain', '-uall']).stdout ?? '';
   const files = new Map();
   for (const line of status.split('\n').filter(Boolean)) {
     const code = line.slice(0, 2);
