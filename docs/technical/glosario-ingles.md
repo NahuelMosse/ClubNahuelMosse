@@ -10,7 +10,7 @@ Criterios: `reserva`→`booking` (no reservation); `sede`→`venue`; `espacio`�
 ## Carpetas y archivos
 | Español | Inglés |
 |---|---|
-| `apps/api/migraciones/` | `migrations/` (0001–0010 conservan su contenido) |
+| `apps/api/migraciones/` | `migrations/` (0001–0011 conservan su contenido) |
 | `app/modules/` | `espacios`→`spaces`, `horarios`→`availability`, `notificaciones`→`notifications`, `recuperacion`→`password_recovery` |
 | `app/modules/` | `reservas`→`bookings`, `sedes`→`venues`, `sesion`→`session`, `usuarios`→`users` |
 | `casos_de_uso.py` / `reglas.py` / `repositorio.py` / `rutas.py` | `use_cases.py` / `rules.py` / `repository.py` / `routes.py` |
@@ -193,4 +193,4 @@ Env: `FIREBASE_CREDENCIALES_JSON`→`FIREBASE_CREDENTIALS_JSON`, `URL_PUBLICA`�
 ## Queda en castellano
 
 Todo texto que ve el usuario, contenidos (títulos y cuerpos de avisos, correos), claves del catálogo y `space.name`, `dni`,
-migraciones 0001–0010, `specs/` y registros, títulos y archivos de test (R4), la prosa de docs (cambian sólo los nombres citados).
+migraciones 0001–0011, `specs/` y registros, títulos y archivos de test (R4), la prosa de docs (cambian sólo los nombres citados).
