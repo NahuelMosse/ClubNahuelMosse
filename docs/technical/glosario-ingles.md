@@ -10,7 +10,7 @@ Criterios: `reserva`→`booking` (no reservation); `sede`→`venue`; `espacio`�
 ## Carpetas y archivos
 | Español | Inglés |
 |---|---|
-| `apps/api/migraciones/` | `migrations/` (0001–0010 se mueven sin tocar contenido) |
+| `apps/api/migraciones/` | `migrations/` (0001–0011 conservan su contenido) |
 | `app/modules/` | `espacios`→`spaces`, `horarios`→`availability`, `notificaciones`→`notifications`, `recuperacion`→`password_recovery` |
 | `app/modules/` | `reservas`→`bookings`, `sedes`→`venues`, `sesion`→`session`, `usuarios`→`users` |
 | `casos_de_uso.py` / `reglas.py` / `repositorio.py` / `rutas.py` | `use_cases.py` / `rules.py` / `repository.py` / `routes.py` |
@@ -54,18 +54,19 @@ vista `reserva_con_estado`→`booking_with_status` (`estado_actual`→`current_s
 ## Índices y restricciones con nombre
 `usuario_correo_unico`→`app_user_email_unique`, `usuario_dni_unico`→`app_user_dni_unique`, `sede_nombre_activa_unico`→`venue_name_active_unique`,
 `dispositivo_token_activo`→`device_token_active`, `dispositivo_usuario`→`device_user`, `notificacion_recordatorio_unico`→`notification_reminder_unique`,
+`notificacion_recordatorio_cinco_unico`→`notification_five_minute_reminder_unique`,
 `notificacion_cancelacion_unica`→`notification_cancellation_unique`, `notificacion_usuario`→`notification_user`,
 `notificacion_forzosa_sin_leer`→`notification_forced_unread`, `notificacion_por_despachar`→`notification_to_dispatch`,
 `notificacion_por_reemplazada_por`→`notification_by_replaced_by`, `reserva_activa_inicio`→`booking_active_starts_at`,
 `reserva_por_usuario_inicio`→`booking_by_user_starts_at`, `reserva_por_inicio`→`booking_by_starts_at`,
 `reserva_por_cancelada_por`→`booking_by_canceled_by`, `enlace_recuperacion_por_usuario`→`recovery_link_by_user`,
 `notificacion_envio_check`→`notification_delivery_check`, `notificacion_cancelacion_con_reserva`→`notification_cancellation_has_booking`;
-autogenerados (`_pkey`, `_fkey`, `_check`, `_key`, `_excl`): el nombre que Postgres daría con tabla/columna nuevas, leído de `pg_constraint` en 0010.
+autogenerados (`_pkey`, `_fkey`, `_check`, `_key`, `_excl`): el nombre que Postgres daría con tabla/columna nuevas, leído de `pg_constraint` por la migración 0012 (`apps/api/migrations/versions/0012_english_schema.py`), que aplica todo este esquema.
 
 ## Valores de enum guardados (se traducen)
 `booking.status`: `activa`→`active`, `cancelada`→`canceled`, `anulada`→`voided`, calculado `completada`→`completed`.
 `notification.delivery`: `pendiente`→`pending`, `enviando`→`sending`, `enviada`→`sent`, `sin_permiso`→`no_permission`, `sin_canal`→`no_channel`, `fallida`→`failed`.
-`notification.kind`: `recordatorio`→`reminder`, `cancelacion_forzosa`→`forced_cancellation`, `cancelacion_usuario`→`user_cancellation`.
+`notification.kind`: `recordatorio`→`reminder`, `recordatorio_cinco`→`five_minute_reminder`, `cancelacion_forzosa`→`forced_cancellation`, `cancelacion_usuario`→`user_cancellation`.
 `app_user.role`: `usuario`→`user`, `admin` igual. `device.platform` igual. Parámetro `cuando`: `proximas`→`upcoming`, `historial`→`history`.
 Config `correo_modo`: `buzon`→`outbox`, `smtp` igual.
 
@@ -192,4 +193,4 @@ Env: `FIREBASE_CREDENCIALES_JSON`→`FIREBASE_CREDENTIALS_JSON`, `URL_PUBLICA`�
 ## Queda en castellano
 
 Todo texto que ve el usuario, contenidos (títulos y cuerpos de avisos, correos), claves del catálogo y `space.name`, `dni`,
-migraciones 0001–0010, `specs/` y registros, títulos y archivos de test (R4), la prosa de docs (cambian sólo los nombres citados).
+migraciones 0001–0010 y 0011, `specs/` y registros, títulos y archivos de test (R4), la prosa de docs (cambian sólo los nombres citados).

@@ -29,7 +29,7 @@ def _registrar(api: TestClient, s: str) -> str:
 def _codigos(motor: Engine, correo: str) -> list[str]:
     with motor.connect() as conn:
         cuerpos: Any = conn.execute(
-            text("SELECT cuerpo FROM correo_saliente WHERE para = :p ORDER BY id"), {"p": correo}
+            text("SELECT body FROM outgoing_email WHERE recipient = :p ORDER BY id"), {"p": correo}
         ).scalars()
         return [m.group(1) for c in cuerpos if (m := re.search(r"#codigo=([\w-]+)", c))]
 
@@ -75,7 +75,7 @@ def test_una_cuenta_dada_de_baja_no_recibe_enlace(
     correo = _registrar(api, unico())
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE correo = :c"),
+            text("UPDATE app_user SET active = false, deactivated_at = now() WHERE email = :c"),
             {"c": correo},
         )
     assert api.post("/recuperacion", json={"correo": correo}).status_code == 202
@@ -150,7 +150,7 @@ def test_el_enlace_del_correo_es_https_y_el_codigo_no_llega_al_servidor(
     api.post("/recuperacion", json={"correo": correo})
     with motor.connect() as conn:
         cuerpo: Any = conn.execute(
-            text("SELECT cuerpo FROM correo_saliente WHERE para = :p"), {"p": correo}
+            text("SELECT body FROM outgoing_email WHERE recipient = :p"), {"p": correo}
         ).scalar_one()
     enlace = re.search(r"(\S+/enlace/recuperar)#codigo=", cuerpo)
     assert enlace is not None and enlace.group(1).startswith("http")

@@ -142,7 +142,7 @@ def test_la_api_guarda_los_datos_en_postgresql(motor: Engine) -> None:
     with motor.connect() as conn:
         version: Any = conn.execute(text("SELECT version()")).scalar_one()
         tablas: Any = conn.execute(
-            text("SELECT count(*) FROM information_schema.tables WHERE table_name = 'reserva'")
+            text("SELECT count(*) FROM information_schema.tables WHERE table_name = 'booking'")
         ).scalar_one()
 
     assert str(version).startswith("PostgreSQL")
@@ -220,7 +220,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
         with motor.connect() as conn:
             ids.append(
                 conn.execute(
-                    text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
+                    text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
                 ).scalar_one()
             )
     ana, beto = sesiones
@@ -229,11 +229,11 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     with motor.begin() as conn:
         espacio: Any = conn.execute(
             text(
-                "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
                 " RETURNING id)"
-                " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
+                " INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
                 " 38000 FROM s RETURNING id"
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
@@ -262,17 +262,17 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     assert (de_beto.status_code, de_ana.status_code) == (201, 201)
     with motor.connect() as conn:
         dueno = {
-            str(r.id): r.usuario_id
+            str(r.id): r.user_id
             for r in conn.execute(
-                text("SELECT id, usuario_id FROM reserva WHERE espacio_id = :e"), {"e": espacio}
+                text("SELECT id, user_id FROM booking WHERE space_id = :e"), {"e": espacio}
             )
         }
         estado: Any = conn.execute(
-            text("SELECT estado FROM reserva WHERE id = :i"), {"i": de_beto.json()["id"]}
+            text("SELECT status FROM booking WHERE id = :i"), {"i": de_beto.json()["id"]}
         ).scalar_one()
     assert dueno == {de_beto.json()["id"]: id_beto, de_ana.json()["id"]: id_ana}
     assert intento.status_code in (403, 404)
-    assert estado == "activa"
+    assert estado == "active"
     mias = api.get("/reservas", headers=ana).json()["reservas"]
     assert [r["id"] for r in mias] == [de_ana.json()["id"]]
 

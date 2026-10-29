@@ -19,6 +19,7 @@ from app.modules.password_recovery import hash_of
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection
 from app.shared.errors import NotFound
+from app.shared.stored_values import stored
 
 router = APIRouter(prefix="/_pruebas", include_in_schema=False)
 
@@ -39,10 +40,10 @@ class Outbox(_Wire):
 @router.get("/correos", response_model_by_alias=True)
 def outbox(conn: DbConnection, recipient: Annotated[str, Query(alias="para")]) -> Outbox:
     rows = conn.execute(
-        text("SELECT asunto, cuerpo FROM correo_saliente WHERE para = :p ORDER BY id"),
+        text("SELECT subject, body FROM outgoing_email WHERE recipient = :p ORDER BY id"),
         {"p": recipient.strip().lower()},
     ).all()
-    return Outbox(emails=[Email(subject=r.asunto, body=r.cuerpo) for r in rows])
+    return Outbox(emails=[Email(subject=r.subject, body=r.body) for r in rows])
 
 
 class Occupation(_Wire):
@@ -59,25 +60,29 @@ class Occupation(_Wire):
 @router.post("/reservas", status_code=status.HTTP_204_NO_CONTENT)
 def occupy(occupation: Occupation, conn: DbConnection) -> Response:
     """A booking loaded outside the app, for [email] or for someone else."""
+    values = occupation.model_dump() | {
+        "status": stored(occupation.status),
+        "active_status": stored("activa"),
+    }
     inserted = conn.execute(
         text(
-            "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total,"
-            " estado, motivo, cancelada_en)"
-            " SELECT u.id, e.id, x.inicio,"
-            "        x.inicio + make_interval(hours => :horas),"
-            "        e.precio_por_hora, e.precio_por_hora * :horas, :estado, :motivo,"
-            "        CASE WHEN CAST(:estado AS text) <> 'activa' THEN now() END"
-            " FROM espacio e,"
-            "      LATERAL (SELECT (CAST(:fecha AS date) + make_interval(hours => :hora))"
-            f"               AT TIME ZONE '{CLUB_TIMEZONE_NAME}' AS inicio) x,"
-            "      (SELECT id FROM usuario WHERE CAST(:correo AS text) IS NULL"
-            "         AND id = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
+            "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total,"
+            " status, reason, canceled_at)"
+            " SELECT u.id, e.id, x.starts_at,"
+            "        x.starts_at + make_interval(hours => :hours),"
+            "        e.price_per_hour, e.price_per_hour * :hours, :status, :reason,"
+            "        CASE WHEN CAST(:status AS text) <> :active_status THEN now() END"
+            " FROM space e,"
+            "      LATERAL (SELECT (CAST(:day AS date) + make_interval(hours => :hour))"
+            f"               AT TIME ZONE '{CLUB_TIMEZONE_NAME}' AS starts_at) x,"
+            "      (SELECT id FROM app_user WHERE CAST(:email AS text) IS NULL"
+            "         AND id = (SELECT id FROM app_user ORDER BY id LIMIT 1)"
             "       UNION ALL"
-            "       SELECT id FROM usuario WHERE activo"
-            "         AND lower(correo) = lower(CAST(:correo AS text))) u"
-            " WHERE e.nombre = :espacio"
+            "       SELECT id FROM app_user WHERE active"
+            "         AND lower(email) = lower(CAST(:email AS text))) u"
+            " WHERE e.name = :space"
         ),
-        occupation.model_dump(by_alias=True),
+        values,
     ).rowcount
     conn.commit()
     if inserted != 1:
@@ -89,7 +94,7 @@ def occupy(occupation: Occupation, conn: DbConnection) -> Response:
 def clear_bookings(conn: DbConnection) -> Response:
     """The system is left with no bookings, nor the notices that mention them: the run
     database is a single one and the global-history scenarios start from zero."""
-    conn.execute(text("TRUNCATE notificacion_reserva, notificacion, reserva"))
+    conn.execute(text("TRUNCATE notification_booking, notification, booking"))
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -104,14 +109,15 @@ def start(request: SpaceName, conn: DbConnection) -> Response:
     had run while the app was open."""
     conn.execute(
         text(
-            "UPDATE reserva r SET fin = x.ahora + (r.fin - r.inicio), inicio = x.ahora"
+            "UPDATE booking b SET ends_at = x.current_hour + (b.ends_at - b.starts_at),"
+            " starts_at = x.current_hour"
             f" FROM (SELECT date_trunc('hour', now(), '{CLUB_TIMEZONE_NAME}')"
-            "                  AS ahora) x"
-            " WHERE r.id = (SELECT r2.id FROM reserva r2 JOIN espacio e ON e.id = r2.espacio_id"
-            "               WHERE e.nombre = :espacio AND r2.estado = 'activa'"
-            "               ORDER BY r2.inicio LIMIT 1)"
+            "                  AS current_hour) x"
+            " WHERE b.id = (SELECT b2.id FROM booking b2 JOIN space e ON e.id = b2.space_id"
+            "               WHERE e.name = :space AND b2.status = :active_status"
+            "               ORDER BY b2.starts_at LIMIT 1)"
         ),
-        request.model_dump(by_alias=True),
+        request.model_dump() | {"active_status": stored("activa")},
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -122,12 +128,12 @@ def cancel(request: SpaceName, conn: DbConnection) -> Response:
     """The club cancels the active bookings of [space], as an administrator would."""
     conn.execute(
         text(
-            "UPDATE reserva r SET estado = 'anulada', motivo = 'mantenimiento de la cancha',"
-            " cancelada_en = now(), cancelada_por = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
-            " FROM espacio e WHERE e.id = r.espacio_id AND e.nombre = :espacio"
-            " AND r.estado = 'activa'"
+            "UPDATE booking b SET status = :voided, reason = 'mantenimiento de la cancha',"
+            " canceled_at = now(), canceled_by = (SELECT id FROM app_user ORDER BY id LIMIT 1)"
+            " FROM space e WHERE e.id = b.space_id AND e.name = :space"
+            " AND b.status = :active_status"
         ),
-        request.model_dump(by_alias=True),
+        request.model_dump() | {"voided": stored("anulada"), "active_status": stored("activa")},
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -142,11 +148,11 @@ def deactivate_branch(request: BranchName, conn: DbConnection) -> Response:
     """The branch [name] stops being active, as if another administrator deactivated it."""
     conn.execute(
         text(
-            "UPDATE sede SET activa = false, dado_de_baja_en = now(),"
-            " dado_de_baja_por = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
-            " WHERE nombre = :nombre AND activa"
+            "UPDATE venue SET active = false, deactivated_at = now(),"
+            " deactivated_by = (SELECT id FROM app_user ORDER BY id LIMIT 1)"
+            " WHERE name = :name AND active"
         ),
-        request.model_dump(by_alias=True),
+        request.model_dump(),
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -157,11 +163,11 @@ def deactivate_space(request: SpaceName, conn: DbConnection) -> Response:
     """The space [space] stops being active, as if another administrator deactivated it."""
     conn.execute(
         text(
-            "UPDATE espacio SET activo = false, dado_de_baja_en = now(),"
-            " dado_de_baja_por = (SELECT id FROM usuario ORDER BY id LIMIT 1)"
-            " WHERE nombre = :espacio AND activo"
+            "UPDATE space SET active = false, deactivated_at = now(),"
+            " deactivated_by = (SELECT id FROM app_user ORDER BY id LIMIT 1)"
+            " WHERE name = :space AND active"
         ),
-        request.model_dump(by_alias=True),
+        request.model_dump(),
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -171,8 +177,8 @@ def deactivate_space(request: SpaceName, conn: DbConnection) -> Response:
 def expire(code: str, conn: DbConnection) -> Response:
     conn.execute(
         text(
-            "UPDATE enlace_recuperacion SET creado_en = clock_timestamp() - interval '1 hour',"
-            " vence_en = clock_timestamp() - interval '30 minutes' WHERE codigo_hash = :h"
+            "UPDATE recovery_link SET created_at = clock_timestamp() - interval '1 hour',"
+            " expires_at = clock_timestamp() - interval '30 minutes' WHERE code_hash = :h"
         ),
         {"h": hash_of(code)},
     )
@@ -201,7 +207,7 @@ def sweep(
     user = None
     if request.email is not None:
         user = conn.execute(
-            text("SELECT id FROM usuario WHERE activo AND lower(correo) = lower(:c)"),
+            text("SELECT id FROM app_user WHERE active AND lower(email) = lower(:c)"),
             {"c": request.email},
         ).scalar_one_or_none()
         conn.rollback()
@@ -224,10 +230,10 @@ def devices(conn: DbConnection, email: Annotated[str, Query(alias="correo")]) ->
     """The phones the account [email] has registered today, with their permission."""
     rows = conn.execute(
         text(
-            "SELECT d.permiso FROM dispositivo d JOIN usuario u ON u.id = d.usuario_id"
-            " WHERE d.activo AND u.activo AND lower(u.correo) = lower(:c) ORDER BY d.id"
+            "SELECT d.permission_granted FROM device d JOIN app_user u ON u.id = d.user_id"
+            " WHERE d.active AND u.active AND lower(u.email) = lower(:c) ORDER BY d.id"
         ),
         {"c": email.strip()},
     ).all()
     conn.rollback()
-    return Devices(devices=[Device(permission=r.permiso) for r in rows])
+    return Devices(devices=[Device(permission=r.permission_granted) for r in rows])

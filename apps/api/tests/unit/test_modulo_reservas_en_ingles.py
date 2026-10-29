@@ -83,7 +83,7 @@ def test_el_modulo_de_reservas_se_llama_como_dice_el_glosario() -> None:
     viejos = [a for a in VIEJOS if (MODULO / a).exists()]
     importes = [
         str(p.relative_to(RAIZ_API))
-        for carpeta in ("app", "tests", "migraciones")
+        for carpeta in ("app", "tests", "migrations")
         for p in (RAIZ_API / carpeta).rglob("*.py")
         if p.resolve() != Path(__file__).resolve()
         and ".venv" not in p.parts

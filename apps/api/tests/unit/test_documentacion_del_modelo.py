@@ -5,8 +5,10 @@ import ast
 import re
 from pathlib import Path
 
+from tests.current_schema import current, names, value
+
 RAIZ = Path(__file__).resolve().parents[4]
-MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migraciones" / "versions").glob("0*.py"))
+MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migrations" / "versions").glob("0*.py"))
 APP_DART = RAIZ / "apps" / "mobile" / "lib" / "rutas.dart"
 MODELO = RAIZ / "docs" / "technical" / "modelo-de-datos.md"
 NAVEGACION = RAIZ / "docs" / "technical" / "navegacion-de-la-app.md"
@@ -74,12 +76,13 @@ def _tablas() -> dict[str, set[str]]:
     # tests/integracion/test_uuid_y_auditoria.py.
     for columnas in tablas.values():
         columnas |= {"creado_en", "modificado_en"}
-    return tablas
+    return current(tablas)
 
 
 def _palabras_de_las_migraciones() -> set[str]:
     """Todo nombre que aparece en las migraciones, también los de las constantes de módulo."""
-    return set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_texto(m) for m in MIGRACIONES)))
+    escritas = set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_texto(m) for m in MIGRACIONES)))
+    return escritas | names()
 
 
 def _secciones(texto: str, nivel: str) -> dict[str, str]:
@@ -129,14 +132,14 @@ def test_la_pagina_del_modelo_de_datos_explica_cada_tabla_de_las_migraciones() -
     texto = _texto(MODELO)
 
     assert entidades.keys() == tablas.keys()
-    assert "reserva_con_estado" in texto
+    assert "booking_with_status" in texto
     assert "erDiagram" in texto and set(_diagrama_er(texto)) == set(tablas)
     for tabla, columnas in tablas.items():
         cuerpo = entidades[tabla]
         assert len(cuerpo.split()) > 15, tabla
-        assert "firebase_uid" in cuerpo or tabla != "usuario"
+        assert "firebase_uid" in cuerpo or tabla != "app_user"
         nombradas = set(re.findall(r"`([a-z_][a-z_0-9]*)`", cuerpo))
-        assert columnas - {"id", "creado_en", "modificado_en"} <= nombradas, (
+        assert columnas - {"id", "created_at", "updated_at"} <= nombradas, (
             tabla,
             sorted(columnas - nombradas),
         )
@@ -149,8 +152,11 @@ def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_
     sql = "\n".join(_sql(m) for m in MIGRACIONES)
     por_estado = re.search(r"estado IN \(([^)]*)\)", sql)
     assert por_estado is not None
-    reserva = set(re.findall(r"'(\w+)'", por_estado.group(1)))
-    envio = set(re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1]))
+    reserva = {value(v) for v in re.findall(r"'(\w+)'", por_estado.group(1))}
+    envio = {
+        value(v)
+        for v in re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1])
+    }
     estados = _secciones(_texto(MODELO), "##")["Estados"]
     por_diagrama = _secciones(estados, "###")
 
@@ -158,10 +164,10 @@ def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_
         bloque = por_diagrama[titulo].split("```mermaid", 1)[1].split("```", 1)[0]
         return set(re.findall(r"(?:\[\*\]|\w+) --> (\w+)", bloque))
 
-    assert reserva == {"activa", "cancelada", "anulada"}
-    assert envio >= {"pendiente", "enviando", "enviada", "fallida", "sin_permiso", "sin_canal"}
-    assert en_diagrama("reserva") == reserva | {"completada"}
-    assert en_diagrama("notificacion.envio") == envio
+    assert reserva == {"active", "canceled", "voided"}
+    assert envio >= {"pending", "sending", "sent", "failed", "no_permission", "no_channel"}
+    assert en_diagrama("booking") == reserva | {"completed"}
+    assert en_diagrama("notification.delivery") == envio
 
 
 def test_la_seccion_data_de_system_design_remite_a_la_pagina_del_modelo_de_datos_sin_repetir_sus_columnas() -> (

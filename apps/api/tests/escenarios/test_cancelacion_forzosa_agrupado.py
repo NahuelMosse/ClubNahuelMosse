@@ -23,8 +23,8 @@ def _anular_en_la_base(motor: Engine, socio: Socio, reservas: Sequence[dict[str,
         for r in reservas:
             conn.execute(
                 text(
-                    "UPDATE reserva SET estado = 'anulada', motivo = 'Baja de la sede',"
-                    " cancelada_en = now(), cancelada_por = :u WHERE id = :id"
+                    "UPDATE booking SET status = 'voided', reason = 'Baja de la sede',"
+                    " canceled_at = now(), canceled_by = :u WHERE id = :id"
                 ),
                 {"u": socio.usuario_id, "id": r["id"]},
             )
@@ -35,8 +35,8 @@ def _avisos(motor: Engine, socio: Socio) -> list[Any]:
         return list(
             conn.execute(
                 text(
-                    "SELECT id, titulo, cantidad, reemplazada_por, envio, enviada_en"
-                    " FROM notificacion WHERE usuario_id = :u ORDER BY id"
+                    "SELECT id, title, count, replaced_by, delivery, sent_at"
+                    " FROM notification WHERE user_id = :u ORDER BY id"
                 ),
                 {"u": socio.usuario_id},
             )
@@ -104,8 +104,8 @@ def test_agrupar_abre_un_aviso_nuevo_y_cada_reserva_conserva_el_envio_del_suyo(
     assert base.para_el_admin(socio, admin, primera["id"])["aviso_en"] == trazabilidad["aviso_en"]
     assert base.para_el_admin(socio, admin, segunda["id"])["aviso_envio"] == "enviada"
     anterior, nuevo = _avisos(motor, socio)
-    assert anterior.reemplazada_por == nuevo.id
-    assert anterior.enviada_en < nuevo.enviada_en
+    assert anterior.replaced_by == nuevo.id
+    assert anterior.sent_at < nuevo.sent_at
 
 
 def test_un_aviso_que_no_salio_pasa_sus_reservas_al_que_lo_reemplaza(
@@ -126,11 +126,11 @@ def test_un_aviso_que_no_salio_pasa_sus_reservas_al_que_lo_reemplaza(
 
     with motor.connect() as conn:
         vinculos = conn.execute(
-            text("SELECT notificacion_id FROM notificacion_reserva WHERE reserva_id = ANY(:ids)"),
+            text("SELECT notification_id FROM notification_booking WHERE booking_id = ANY(:ids)"),
             {"ids": [UUID(r["id"]) for r in reservas]},
         ).all()
     *_, nuevo = _avisos(motor, socio)
-    assert {v.notificacion_id for v in vinculos} == {nuevo.id}
+    assert {v.notification_id for v in vinculos} == {nuevo.id}
 
 
 @pytest.mark.parametrize("con_aviso_previo", [False, True])
@@ -162,13 +162,13 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
 
     [visible] = socio.centro()["notificaciones"]
     assert visible["titulo"] == f"El club anuló {total} de tus reservas"
-    sin_reemplazar = [a for a in _avisos(motor, socio) if a.reemplazada_por is None]
-    assert [a.cantidad for a in sin_reemplazar] == [total]
+    sin_reemplazar = [a for a in _avisos(motor, socio) if a.replaced_by is None]
+    assert [a.count for a in sin_reemplazar] == [total]
     with motor.connect() as conn:
         vinculadas: Any = conn.execute(
             text(
-                "SELECT count(*) FROM notificacion_reserva nr JOIN notificacion n"
-                " ON n.id = nr.notificacion_id WHERE n.usuario_id = :u"
+                "SELECT count(*) FROM notification_booking nr JOIN notification n"
+                " ON n.id = nr.notification_id WHERE n.user_id = :u"
             ),
             {"u": socio.usuario_id},
         ).scalar_one()
@@ -225,7 +225,7 @@ def test_el_despacho_toma_los_pendientes_por_un_indice_parcial(motor: Engine) ->
     """la consulta del despacho tiene su índice"""
     with motor.connect() as conn:
         definicion: Any = conn.execute(
-            text("SELECT indexdef FROM pg_indexes WHERE indexname = 'notificacion_por_despachar'")
+            text("SELECT indexdef FROM pg_indexes WHERE indexname = 'notification_to_dispatch'")
         ).scalar_one()
-    assert "envio = 'pendiente'" in definicion
-    assert "tipo <> 'recordatorio'" in definicion
+    assert "delivery = 'pending'" in definicion
+    assert "kind <> 'reminder'" in definicion

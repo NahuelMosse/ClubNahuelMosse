@@ -42,8 +42,8 @@ def _tres_cancelaciones_pendientes(socio: Socio) -> None:
     with socio.motor.begin() as conn:
         conn.execute(
             text(
-                "UPDATE notificacion SET envio = 'pendiente', enviada_en = NULL"
-                " WHERE usuario_id = :u"
+                "UPDATE notification SET delivery = 'pending', sent_at = NULL"
+                " WHERE user_id = :u"
             ),
             {"u": socio.usuario_id},
         )
@@ -52,9 +52,9 @@ def _tres_cancelaciones_pendientes(socio: Socio) -> None:
 def _envios(socio: Socio) -> list[str]:
     with socio.motor.connect() as conn:
         return [
-            f.envio
+            f.delivery
             for f in conn.execute(
-                text("SELECT envio FROM notificacion WHERE usuario_id = :u ORDER BY id"),
+                text("SELECT delivery FROM notification WHERE user_id = :u ORDER BY id"),
                 {"u": socio.usuario_id},
             )
         ]
@@ -77,7 +77,7 @@ def test_un_fallo_en_el_primer_aviso_no_deja_el_resto_en_enviando(
         despachados = dispatch_pending(FallaLaPrimeraVez(conn), canal, socio.usuario_id)
 
     assert despachados == 3
-    assert _envios(socio) == ["fallida", "enviada", "enviada"]
+    assert _envios(socio) == ["failed", "sent", "sent"]
     assert len(canal.enviados) == 2
 
 

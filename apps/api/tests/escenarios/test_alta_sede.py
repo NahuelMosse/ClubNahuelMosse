@@ -48,7 +48,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_una_sede(
     with motor.connect() as conn:
         assert (
             conn.execute(
-                text("SELECT count(*) FROM sede WHERE nombre = :n"), {"n": nombre}
+                text("SELECT count(*) FROM venue WHERE name = :n"), {"n": nombre}
             ).scalar_one()
             == 0
         )

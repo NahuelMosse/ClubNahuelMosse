@@ -23,9 +23,9 @@ def _enviando(motor: Engine, minutos: int) -> UUID:
     with motor.begin() as conn:
         id_: UUID = conn.execute(
             text(
-                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio, enviando_desde)"
-                " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'enviando',"
-                " now() - make_interval(mins => :m) FROM usuario WHERE activo LIMIT 1"
+                "INSERT INTO notification (user_id, kind, title, body, delivery, sending_since)"
+                " SELECT id, 'forced_cancellation', 'Cancelaron', 'Fútbol 5', 'sending',"
+                " now() - make_interval(mins => :m) FROM app_user WHERE active LIMIT 1"
                 " RETURNING id"
             ),
             {"m": minutos},
@@ -36,7 +36,7 @@ def _enviando(motor: Engine, minutos: int) -> UUID:
 def _envio(motor: Engine, id_: UUID) -> str:
     with motor.connect() as conn:
         envio: str = conn.execute(
-            text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
+            text("SELECT delivery FROM notification WHERE id = :id"), {"id": id_}
         ).scalar_one()
     return envio
 
@@ -50,6 +50,6 @@ def test_un_aviso_con_mas_de_10_minutos_en_enviando_pasa_a_fallida_y_no_se_reenv
     canal = _CanalQueCuenta()
     with motor.connect() as conn:
         dispatch_pending(NotificationsSql(conn), canal)
-    assert _envio(motor, viejo) == "fallida"
-    assert _envio(motor, reciente) == "enviando"
+    assert _envio(motor, viejo) == "failed"
+    assert _envio(motor, reciente) == "sending"
     assert canal.llamadas == 0

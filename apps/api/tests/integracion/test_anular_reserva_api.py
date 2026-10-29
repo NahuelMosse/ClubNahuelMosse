@@ -85,10 +85,10 @@ def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repe
     assert distinto.status_code == 409
     with motor.connect() as conn:
         fila = conn.execute(
-            text("SELECT estado, cancelada_por IS NOT NULL FROM reserva WHERE id = :id"),
+            text("SELECT status, canceled_by IS NOT NULL FROM booking WHERE id = :id"),
             {"id": reserva["id"]},
         ).one()
-    assert tuple(fila) == ("anulada", True)
+    assert tuple(fila) == ("voided", True)
     # El horario vuelve a estar libre y el usuario la ve anulada, con el motivo.
     fecha = (date.today() + timedelta(days=1)).isoformat()
     assert (
@@ -119,7 +119,7 @@ def test_anular_rechaza_lo_que_no_corresponde(
     with motor.begin() as conn:
         conn.execute(
             text(
-                "UPDATE reserva SET inicio = date_trunc('hour', now()), fin ="
+                "UPDATE booking SET starts_at = date_trunc('hour', now()), ends_at ="
                 " date_trunc('hour', now()) + interval '1 hour' WHERE id = :id"
             ),
             {"id": empezada["id"]},
@@ -141,9 +141,9 @@ def test_anular_rechaza_lo_que_no_corresponde(
     assert api.post(f"/reservas/{reserva['id']}/anular", json=_pedido(reserva)).status_code == 401
     with motor.connect() as conn:
         estado: Any = conn.execute(
-            text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
+            text("SELECT status FROM booking WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()
-    assert estado == "activa"
+    assert estado == "active"
 
 
 def test_el_listado_ofrece_anular_solo_lo_activo_que_no_empezo(
@@ -187,9 +187,9 @@ def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
             a, c = (f.result() for f in (hilos.submit(anular), hilos.submit(cancelar)))
         with motor.connect() as conn:
             estado: Any = conn.execute(
-                text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
+                text("SELECT status FROM booking WHERE id = :id"), {"id": reserva["id"]}
             ).scalar_one()
-        assert (a, c, estado) in {(200, 409, "anulada"), (409, 200, "cancelada")}
+        assert (a, c, estado) in {(200, 409, "voided"), (409, 200, "canceled")}
 
 
 def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
@@ -201,7 +201,7 @@ def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
     with motor.begin() as conn:
         conn.execute(
             text(
-                "UPDATE reserva SET inicio = date_trunc('hour', now()), fin ="
+                "UPDATE booking SET starts_at = date_trunc('hour', now()), ends_at ="
                 " date_trunc('hour', now()) + interval '1 hour' WHERE id = :id"
             ),
             {"id": empezada["id"]},
@@ -219,9 +219,10 @@ def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT estado, inicio <= now() AS empezo,"
-                " inicio = CAST(:inicio AS timestamptz) AS coincide FROM reserva WHERE id = :id"
+                "SELECT status, starts_at <= now() AS empezo,"
+                " starts_at = CAST(:starts_at AS timestamptz) AS coincide"
+                " FROM booking WHERE id = :id"
             ),
-            {"id": empezada["id"], "inicio": vigente["inicio"]},
+            {"id": empezada["id"], "starts_at": vigente["inicio"]},
         ).one()
-    assert (fila.estado, fila.empezo, fila.coincide) == ("activa", True, True)
+    assert (fila.status, fila.empezo, fila.coincide) == ("active", True, True)

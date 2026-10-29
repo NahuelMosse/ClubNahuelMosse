@@ -56,7 +56,7 @@ def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
     }
     with motor.connect() as conn:
         creado, modificado = conn.execute(
-            text("SELECT creado_en, modificado_en FROM usuario WHERE correo = :c"), {"c": correo}
+            text("SELECT created_at, updated_at FROM app_user WHERE email = :c"), {"c": correo}
         ).one()
     # El rastro de la modificación lo estampa la base.
     assert modificado > creado

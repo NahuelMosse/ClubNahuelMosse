@@ -136,8 +136,8 @@ def test_si_la_cancelacion_falla_no_se_confirma_nada(
     with motor.begin() as conn:
         conn.execute(
             text(
-                "UPDATE reserva SET estado = 'anulada', motivo = 'mantenimiento',"
-                " cancelada_en = now(), cancelada_por = :u WHERE id = :id"
+                "UPDATE booking SET status = 'voided', reason = 'mantenimiento',"
+                " canceled_at = now(), canceled_by = :u WHERE id = :id"
             ),
             {"u": socio.usuario_id, "id": anulada["id"]},
         )

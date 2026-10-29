@@ -63,8 +63,8 @@ def test_un_token_invalido_cuenta_como_sin_sesion(api: TestClient) -> None:
 def _usuario(conn: Connection, correo: str, dni: str) -> UUID:
     return conn.execute(
         text(
-            "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
-            " fecha_nacimiento) VALUES (:uid, :c, 'Ana', 'Rios', :d, '1990-01-01')"
+            "INSERT INTO app_user (firebase_uid, email, first_name, last_name, dni,"
+            " birth_date) VALUES (:uid, :c, 'Ana', 'Rios', :d, '1990-01-01')"
             " RETURNING id"
         ),
         {"uid": f"uid-{correo}-{dni}", "c": correo, "d": dni},
@@ -74,11 +74,11 @@ def _usuario(conn: Connection, correo: str, dni: str) -> UUID:
 def _espacio(conn: Connection, s: str) -> UUID:
     return conn.execute(
         text(
-            "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+            "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
             " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
             " RETURNING id)"
-            " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-            " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
+            " INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+            " lit, price_per_hour) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
             " 38000 FROM s RETURNING id"
         ),
         {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
@@ -89,7 +89,7 @@ def _reserva(conn: Connection, usuario: UUID, espacio: UUID, horas: int) -> None
     inicio = datetime(2030, 11, 14, 8, tzinfo=ZONA)
     conn.execute(
         text(
-            "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+            "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
             " VALUES (:u, :e, :i, :f, 38000, :t)"
         ),
         {
@@ -114,7 +114,7 @@ def test_la_base_acepta_reservas_de_una_a_cuatro_horas(
 
     assert (
         db.execute(
-            text("SELECT count(*) FROM reserva WHERE usuario_id = :u"), {"u": usuario}
+            text("SELECT count(*) FROM booking WHERE user_id = :u"), {"u": usuario}
         ).scalar_one()
         == 1
     )
@@ -144,7 +144,7 @@ def test_la_baja_libera_el_dni_que_antes_estaba_bloqueado(
     with pytest.raises(IntegrityError), db.begin_nested():
         _usuario(db, f"otro.{s}@correo.com", dni)
     db.execute(
-        text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
+        text("UPDATE app_user SET active = false, deactivated_at = now() WHERE id = :id"),
         {"id": usuario},
     )
     nuevo = _usuario(db, f"otro.{s}@correo.com", dni)
@@ -163,7 +163,7 @@ def test_la_baja_libera_el_correo_que_antes_estaba_bloqueado(
     with pytest.raises(IntegrityError), db.begin_nested():
         _usuario(db, correo.lower(), str(int(s, 16) % 90_000_000 + 10_000_001))
     db.execute(
-        text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
+        text("UPDATE app_user SET active = false, deactivated_at = now() WHERE id = :id"),
         {"id": usuario},
     )
     nuevo = _usuario(db, correo.upper(), str(int(s, 16) % 90_000_000 + 10_000_001))
@@ -288,15 +288,15 @@ def _proximas(motor: Engine, correo: str, espacio: UUID, cantidad: int) -> None:
     with motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT u.id, :e, h + make_interval(days => n), h + make_interval(days => n)"
-                " + interval '1 hour', 38000, 38000 FROM usuario u,"
+                " + interval '1 hour', 38000, 38000 FROM app_user u,"
                 " generate_series(1, :c) AS n,"
                 " (SELECT date_trunc('day', now(), 'America/Argentina/Buenos_Aires')"
                 " + interval '13 hours' + make_interval(days => 400) AS h) AS t"
-                " WHERE u.correo = :correo AND u.activo"
+                " WHERE u.email = :email AND u.active"
             ),
-            {"e": espacio, "c": cantidad, "correo": correo},
+            {"e": espacio, "c": cantidad, "email": correo},
         )
 
 

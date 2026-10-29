@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from tests.current_schema import current
 from tests.unit.test_documentacion_del_modelo import _sql as _subida
 
 RAIZ = Path(__file__).resolve().parents[4]
@@ -131,7 +132,7 @@ def test_la_declaracion_de_accesibilidad_y_el_registro_por_pantalla_estan_public
 
 def _columnas_por_tabla() -> dict[str, set[str]]:
     migraciones = "".join(
-        _texto(m) for m in sorted((API / "migraciones" / "versions").glob("*.py"))
+        _texto(m) for m in sorted((API / "migrations" / "versions").glob("*.py"))
     )
     tablas: dict[str, set[str]] = {}
     for tabla, cuerpo in re.findall(r"CREATE TABLE (\w+) \((.*?)\n\s*\)", migraciones, re.S):
@@ -140,13 +141,13 @@ def _columnas_por_tabla() -> dict[str, set[str]]:
         rf"ALTER TABLE (\w+)\s+ADD COLUMN (\w+) (?:{TIPOS})", migraciones
     ):
         tablas.setdefault(tabla, set()).add(columna)
-    for migracion in sorted((API / "migraciones" / "versions").glob("*.py")):
+    for migracion in sorted((API / "migrations" / "versions").glob("*.py")):
         for tabla, vieja, nueva in re.findall(
             r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)", _subida(migracion)
         ):
             tablas.setdefault(tabla, set()).discard(vieja)
             tablas[tabla].add(nueva)
-    return tablas
+    return current(tablas)
 
 
 def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:

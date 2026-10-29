@@ -38,7 +38,7 @@ def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
         return UUID(
             str(
                 conn.execute(
-                    text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
+                    text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
                 ).scalar_one()
             )
         )
@@ -151,10 +151,10 @@ def test_un_token_registrado_por_otra_cuenta_no_cambia_de_dueno(
 
     with motor.connect() as conn:
         duenos = conn.execute(
-            text("SELECT usuario_id FROM dispositivo WHERE token = :t AND activo"),
+            text("SELECT user_id FROM device WHERE token = :t AND active"),
             {"t": dispositivo},
         ).all()
-    assert [d.usuario_id for d in duenos] == [_yo(api, motor, token_usuario)]
+    assert [d.user_id for d in duenos] == [_yo(api, motor, token_usuario)]
 
 
 def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_recibir(
@@ -203,8 +203,8 @@ def test_una_reserva_hecha_con_menos_de_una_hora_de_anticipacion_no_recibe_recor
     with motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total,"
-                " creado_en, modificado_en) VALUES (:u, :e, :i, :f, 38000, 38000, :c, :c)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total,"
+                " created_at, updated_at) VALUES (:u, :e, :i, :f, 38000, 38000, :c, :c)"
             ),
             {
                 "u": usuario,
@@ -291,9 +291,9 @@ def test_un_envio_fallido_deja_el_aviso_en_el_centro_marcado_como_fallido(
 
     with motor.connect() as conn:
         envio: Any = conn.execute(
-            text("SELECT envio FROM notificacion WHERE usuario_id = :u"), {"u": usuario}
+            text("SELECT delivery FROM notification WHERE user_id = :u"), {"u": usuario}
         ).scalar_one()
-    assert envio == "fallida"
+    assert envio == "failed"
     assert api.get("/notificaciones", headers=_con(token_usuario)).json()["no_leidas"] == 1
 
 
@@ -316,27 +316,27 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     with motor.connect() as conn:
         antes = conn.execute(
             text(
-                "SELECT creado_en AS creada_en, enviada_en, leida_en"
-                " FROM notificacion WHERE id = :i"
+                "SELECT created_at AS creada_en, sent_at, read_at"
+                " FROM notification WHERE id = :i"
             ),
             {"i": aviso["id"]},
         ).one()
     assert antes.creada_en is not None
-    assert antes.enviada_en is not None
-    assert antes.leida_en is None
+    assert antes.sent_at is not None
+    assert antes.read_at is None
 
     leida = api.post(f"/notificaciones/{aviso['id']}/leer", headers=_con(token_usuario))
     assert leida.status_code == 204
     with motor.connect() as conn:
         despues: Any = conn.execute(
-            text("SELECT leida_en FROM notificacion WHERE id = :i"), {"i": aviso["id"]}
+            text("SELECT read_at FROM notification WHERE id = :i"), {"i": aviso["id"]}
         ).scalar_one()
     assert despues is not None
     # Leerla de nuevo responde igual y no cambia cuándo se leyó.
     api.post(f"/notificaciones/{aviso['id']}/leer", headers=_con(token_usuario))
     with motor.connect() as conn:
         igual: Any = conn.execute(
-            text("SELECT leida_en FROM notificacion WHERE id = :i"), {"i": aviso["id"]}
+            text("SELECT read_at FROM notification WHERE id = :i"), {"i": aviso["id"]}
         ).scalar_one()
     assert igual == despues
 
@@ -437,8 +437,8 @@ def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:
         return (
             conn.execute(
                 text(
-                    "SELECT count(*) FROM notificacion WHERE usuario_id = :u"
-                    " AND tipo = 'recordatorio'"
+                    "SELECT count(*) FROM notification WHERE user_id = :u"
+                    " AND kind = 'reminder'"
                 ),
                 {"u": usuario},
             ).scalar_one()
@@ -517,7 +517,7 @@ def test_una_cuenta_dada_de_baja_entre_la_lectura_y_el_registro_no_recibe_aviso(
     def dar_de_baja() -> None:
         with motor.begin() as conn:
             conn.execute(
-                text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE id = :u"),
+                text("UPDATE app_user SET active = false, deactivated_at = now() WHERE id = :u"),
                 {"u": usuario},
             )
 

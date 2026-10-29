@@ -24,6 +24,7 @@ from app.modules.notifications.rules import (
     notice_data,
 )
 from app.shared.db import DbConnection, in_transaction
+from app.shared.stored_values import contract, stored
 
 # How many notifications the center brings: the newest ones.
 CENTER_LIMIT = 100
@@ -53,17 +54,17 @@ def enqueue_forced_cancellation(
     previous = _unread_notice(conn, user_id)
     # One that is going out is also replaced: it goes out anyway and its push is overwritten by
     # the new one in the tray, but the center has to show only one.
-    total = len(fresh) + (0 if previous is None else int(previous.cantidad))
+    total = len(fresh) + (0 if previous is None else int(previous.total))
     notification_id = _open_notice(conn, user_id, fresh, total)
     if previous is not None:
         _replace_notice(conn, previous, notification_id)
     for r in fresh:
         conn.execute(
             text(
-                "INSERT INTO notificacion_reserva (notificacion_id, reserva_id)"
-                " VALUES (:notificacion, :reserva)"
+                "INSERT INTO notification_booking (notification_id, booking_id)"
+                " VALUES (:notification, :booking)"
             ),
-            {"notificacion": notification_id, "reserva": r.booking_id},
+            {"notification": notification_id, "booking": r.booking_id},
         )
 
 
@@ -71,8 +72,8 @@ def _lock_voidings(conn: Connection, user_id: UUID) -> None:
     # It is the last lock of the transaction: simultaneous voidings of the same person wait
     # here, after the locks of the account, the venue, the space and the booking.
     conn.execute(
-        text("SELECT pg_advisory_xact_lock(:ns, hashtext(CAST(:usuario AS text)))"),
-        {"ns": _VOIDING_LOCK, "usuario": user_id},
+        text("SELECT pg_advisory_xact_lock(:ns, hashtext(CAST(:user_id AS text)))"),
+        {"ns": _VOIDING_LOCK, "user_id": user_id},
     )
 
 
@@ -81,23 +82,23 @@ def _voided_without_notice(
 ) -> list[VoidedBooking]:
     rows = conn.execute(
         text(
-            "SELECT r.id, r.inicio, e.deporte, e.tipo, s.nombre AS sede, r.motivo"
-            " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
-            " JOIN sede s ON s.id = e.sede_id"
-            " WHERE r.id = ANY(:ids) AND r.usuario_id = :usuario AND r.estado = 'anulada'"
-            " AND NOT EXISTS (SELECT 1 FROM notificacion_reserva nr WHERE nr.reserva_id = r.id)"
-            " ORDER BY r.inicio, r.id"
+            "SELECT b.id, b.starts_at, s.sport, s.kind, v.name AS venue, b.reason"
+            " FROM booking b JOIN space s ON s.id = b.space_id"
+            " JOIN venue v ON v.id = s.venue_id"
+            " WHERE b.id = ANY(:ids) AND b.user_id = :user_id AND b.status = :voided"
+            " AND NOT EXISTS (SELECT 1 FROM notification_booking nb WHERE nb.booking_id = b.id)"
+            " ORDER BY b.starts_at, b.id"
         ),
-        {"ids": list(booking_ids), "usuario": user_id},
+        {"ids": list(booking_ids), "user_id": user_id, "voided": stored("anulada")},
     ).all()
     return [
         VoidedBooking(
             booking_id=row.id,
-            starts_at=row.inicio,
-            sport=row.deporte,
-            kind=row.tipo,
-            venue=row.sede,
-            reason=row.motivo or "",
+            starts_at=row.starts_at,
+            sport=row.sport,
+            kind=row.kind,
+            venue=row.venue,
+            reason=row.reason or "",
         )
         for row in rows
     ]
@@ -106,12 +107,12 @@ def _voided_without_notice(
 def _unread_notice(conn: Connection, user_id: UUID) -> Row[Any] | None:
     return conn.execute(
         text(
-            "SELECT n.id, n.envio, coalesce(n.cantidad, 1) AS cantidad FROM notificacion n"
-            " WHERE n.usuario_id = :usuario AND n.tipo = 'cancelacion_forzosa'"
-            " AND n.leida_en IS NULL AND n.reemplazada_por IS NULL"
+            "SELECT n.id, n.delivery, coalesce(n.count, 1) AS total FROM notification n"
+            " WHERE n.user_id = :user_id AND n.kind = :kind"
+            " AND n.read_at IS NULL AND n.replaced_by IS NULL"
             " ORDER BY n.id DESC LIMIT 1 FOR UPDATE"
         ),
-        {"usuario": user_id},
+        {"user_id": user_id, "kind": stored("cancelacion_forzosa")},
     ).first()
 
 
@@ -122,17 +123,19 @@ def _open_notice(conn: Connection, user_id: UUID, fresh: list[VoidedBooking], to
     single = fresh[0] if total == 1 else None
     notification_id: UUID = conn.execute(
         text(
-            "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-            " reserva_inicio, envio, cantidad) VALUES (:usuario, 'cancelacion_forzosa',"
-            " :titulo, :cuerpo, :reserva, :inicio, 'pendiente', :cantidad) RETURNING id"
+            "INSERT INTO notification (user_id, kind, title, body, booking_id,"
+            " booking_starts_at, delivery, count) VALUES (:user_id, :kind,"
+            " :title, :body, :booking, :starts_at, :delivery, :total) RETURNING id"
         ),
         {
-            "usuario": user_id,
-            "titulo": notice.title,
-            "cuerpo": notice.body,
-            "reserva": None if single is None else single.booking_id,
-            "inicio": None if single is None else single.starts_at,
-            "cantidad": total,
+            "user_id": user_id,
+            "kind": stored("cancelacion_forzosa"),
+            "title": notice.title,
+            "body": notice.body,
+            "booking": None if single is None else single.booking_id,
+            "starts_at": None if single is None else single.starts_at,
+            "delivery": stored("pendiente"),
+            "total": total,
         },
     ).scalar_one()
     return notification_id
@@ -140,30 +143,30 @@ def _open_notice(conn: Connection, user_id: UUID, fresh: list[VoidedBooking], to
 
 def _replace_notice(conn: Connection, previous: Row[Any], notification_id: UUID) -> None:
     conn.execute(
-        text("UPDATE notificacion SET reemplazada_por = :nuevo WHERE id = :id"),
-        {"nuevo": notification_id, "id": previous.id},
+        text("UPDATE notification SET replaced_by = :replacement WHERE id = :id"),
+        {"replacement": notification_id, "id": previous.id},
     )
-    if previous.envio == "pendiente":
+    if contract(previous.delivery) == "pendiente":
         conn.execute(
             text(
-                "UPDATE notificacion_reserva SET notificacion_id = :nuevo"
-                " WHERE notificacion_id = :id"
+                "UPDATE notification_booking SET notification_id = :replacement"
+                " WHERE notification_id = :id"
             ),
-            {"nuevo": notification_id, "id": previous.id},
+            {"replacement": notification_id, "id": previous.id},
         )
 
 
 def _reminder_of(row: Row[Any], kind: ReminderKind) -> Reminder:
     return Reminder(
         booking_id=row.id,
-        user_id=row.usuario_id,
-        starts_at=row.inicio,
-        ends_at=row.fin,
-        sport=row.deporte,
-        kind=row.tipo,
-        venue=row.sede,
-        email=row.correo,
-        name=row.nombre_usuario,
+        user_id=row.user_id,
+        starts_at=row.starts_at,
+        ends_at=row.ends_at,
+        sport=row.sport,
+        kind=row.kind,
+        venue=row.venue,
+        email=row.email,
+        name=row.user_name,
         reminder_kind=kind,
     )
 
@@ -179,17 +182,19 @@ class NotificationsSql:
         transaction: no commit. The unique index avoids repeating it."""
         self._conn.execute(
             text(
-                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                " reserva_inicio, envio) VALUES (:usuario, 'cancelacion_usuario', :titulo,"
-                " :cuerpo, :id, :inicio, 'pendiente')"
-                " ON CONFLICT (reserva_id) WHERE tipo = 'cancelacion_usuario' DO NOTHING"
+                "INSERT INTO notification (user_id, kind, title, body, booking_id,"
+                " booking_starts_at, delivery) VALUES (:user_id, :kind, :title,"
+                " :body, :id, :starts_at, :delivery)"
+                " ON CONFLICT (booking_id) WHERE kind = 'user_cancellation' DO NOTHING"
             ),
             {
-                "usuario": user_id,
+                "user_id": user_id,
+                "kind": stored("cancelacion_usuario"),
                 "id": booking_id,
-                "titulo": notice.title,
-                "cuerpo": notice.body,
-                "inicio": starts_at,
+                "title": notice.title,
+                "body": notice.body,
+                "starts_at": starts_at,
+                "delivery": stored("pendiente"),
             },
         )
 
@@ -199,26 +204,27 @@ class NotificationsSql:
     def _due_of(self, kind: ReminderKind, now: datetime, user_id: UUID | None) -> list[Reminder]:
         rows = self._conn.execute(
             text(
-                "SELECT r.id, r.usuario_id, r.inicio, r.fin, e.deporte, e.tipo, s.nombre AS sede,"
-                " u.correo, u.nombre AS nombre_usuario"
-                " FROM reserva r JOIN espacio e ON e.id = r.espacio_id"
-                " JOIN sede s ON s.id = e.sede_id JOIN usuario u ON u.id = r.usuario_id"
-                " WHERE r.estado = 'activa' AND u.activo"
-                " AND r.inicio > :ahora"
-                " AND r.inicio <= :ahora + CAST(:anticipacion AS interval)"
+                "SELECT b.id, b.user_id, b.starts_at, b.ends_at, s.sport, s.kind, v.name AS venue,"
+                " u.email, u.first_name AS user_name"
+                " FROM booking b JOIN space s ON s.id = b.space_id"
+                " JOIN venue v ON v.id = s.venue_id JOIN app_user u ON u.id = b.user_id"
+                " WHERE b.status = :active AND u.active"
+                " AND b.starts_at > :now"
+                " AND b.starts_at <= :now + CAST(:lead_time AS interval)"
                 # A booking made or moved with less lead time than the notice gets no notice.
-                " AND greatest(r.creado_en, r.modificado_en)"
-                " <= r.inicio - CAST(:anticipacion AS interval)"
-                " AND (CAST(:usuario AS uuid) IS NULL OR r.usuario_id = :usuario)"
-                " AND NOT EXISTS (SELECT 1 FROM notificacion n WHERE n.reserva_id = r.id"
-                " AND n.tipo = :clase AND n.reserva_inicio = r.inicio)"
-                " ORDER BY r.inicio, r.id"
+                " AND greatest(b.created_at, b.updated_at)"
+                " <= b.starts_at - CAST(:lead_time AS interval)"
+                " AND (CAST(:user_id AS uuid) IS NULL OR b.user_id = :user_id)"
+                " AND NOT EXISTS (SELECT 1 FROM notification n WHERE n.booking_id = b.id"
+                " AND n.kind = :notice_kind AND n.booking_starts_at = b.starts_at)"
+                " ORDER BY b.starts_at, b.id"
             ),
             {
-                "ahora": now,
-                "usuario": user_id,
-                "anticipacion": LEAD_TIME_BY_KIND[kind],
-                "clase": kind,
+                "now": now,
+                "user_id": user_id,
+                "lead_time": LEAD_TIME_BY_KIND[kind],
+                "notice_kind": stored(kind),
+                "active": stored("activa"),
             },
         ).all()
         self._conn.rollback()
@@ -226,13 +232,15 @@ class NotificationsSql:
 
     def register(self, reminder: Reminder, notice: Notice) -> UUID | None:
         params = {
-            "usuario": reminder.user_id,
-            "titulo": notice.title,
-            "cuerpo": notice.body,
-            "reserva": reminder.booking_id,
-            "inicio": reminder.starts_at,
-            "anticipacion": LEAD_TIME_BY_KIND[reminder.reminder_kind],
-            "clase": reminder.reminder_kind,
+            "user_id": reminder.user_id,
+            "title": notice.title,
+            "body": notice.body,
+            "booking": reminder.booking_id,
+            "starts_at": reminder.starts_at,
+            "lead_time": LEAD_TIME_BY_KIND[reminder.reminder_kind],
+            "notice_kind": stored(reminder.reminder_kind),
+            "active": stored("activa"),
+            "delivery": stored("pendiente"),
         }
         with in_transaction(self._conn):
             # Between `due` looking and here, the booking may have been cancelled, voided or
@@ -243,10 +251,10 @@ class NotificationsSql:
                 return None
             row = self._conn.execute(
                 text(
-                    "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, reserva_id,"
-                    " reserva_inicio, envio) VALUES (:usuario, :clase, :titulo, :cuerpo,"
-                    " :reserva, :inicio, 'pendiente')"
-                    # No target: each class has its own partial unique index, and one whose
+                    "INSERT INTO notification (user_id, kind, title, body, booking_id,"
+                    " booking_starts_at, delivery) VALUES (:user_id, :notice_kind, :title, :body,"
+                    " :booking, :starts_at, :delivery)"
+                    # No target: each kind has its own partial unique index, and one whose
                     # predicate has a parameter cannot be inferred.
                     " ON CONFLICT DO NOTHING RETURNING id"
                 ),
@@ -256,47 +264,51 @@ class NotificationsSql:
 
     def _still_current(self, params: dict[str, Any]) -> bool:
         account = self._conn.execute(
-            text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), params
+            text("SELECT 1 FROM app_user WHERE id = :user_id AND active FOR SHARE"),
+            {"user_id": params["user_id"]},
         ).first()
         if account is None:
             return False
         current = self._conn.execute(
             text(
-                "SELECT 1 FROM reserva WHERE id = :reserva AND estado = 'activa'"
-                " AND inicio = :inicio AND inicio > now()"
-                " AND greatest(creado_en, modificado_en)"
-                " <= inicio - CAST(:anticipacion AS interval)"
+                "SELECT 1 FROM booking WHERE id = :booking AND status = :active"
+                " AND starts_at = :starts_at AND starts_at > now()"
+                " AND greatest(created_at, updated_at)"
+                " <= starts_at - CAST(:lead_time AS interval)"
                 " FOR SHARE"
             ),
-            params,
+            {
+                "booking": params["booking"],
+                "active": params["active"],
+                "starts_at": params["starts_at"],
+                "lead_time": params["lead_time"],
+            },
         ).first()
         return current is not None
 
     def recipient(self, user_id: UUID) -> Recipient | None:
         row = self._conn.execute(
-            text("SELECT correo, nombre FROM usuario WHERE id = :usuario AND activo"),
-            {"usuario": user_id},
+            text("SELECT email, first_name FROM app_user WHERE id = :user_id AND active"),
+            {"user_id": user_id},
         ).first()
         self._conn.rollback()
-        return None if row is None else Recipient(email=row.correo, name=row.nombre)
+        return None if row is None else Recipient(email=row.email, name=row.first_name)
 
     def tokens_with_permission(self, user_id: UUID) -> list[str]:
         rows = self._conn.execute(
             text(
-                "SELECT token FROM dispositivo WHERE usuario_id = :usuario AND activo"
-                " AND permiso ORDER BY id"
+                "SELECT token FROM device WHERE user_id = :user_id AND active"
+                " AND permission_granted ORDER BY id"
             ),
-            {"usuario": user_id},
+            {"user_id": user_id},
         ).all()
         self._conn.rollback()
         return [row.token for row in rows]
 
     def has_devices(self, user_id: UUID) -> bool:
         exists: bool = self._conn.execute(
-            text(
-                "SELECT EXISTS (SELECT 1 FROM dispositivo WHERE usuario_id = :usuario AND activo)"
-            ),
-            {"usuario": user_id},
+            text("SELECT EXISTS (SELECT 1 FROM device WHERE user_id = :user_id AND active)"),
+            {"user_id": user_id},
         ).scalar_one()
         self._conn.rollback()
         return bool(exists)
@@ -306,67 +318,88 @@ class NotificationsSql:
             # A registered reminder whose slot already started or was cancelled never goes out.
             dead = self._conn.execute(
                 text(
-                    "UPDATE notificacion n SET envio = 'fallida' WHERE n.envio = 'pendiente'"
-                    " AND n.tipo IN ('recordatorio', 'recordatorio_cinco')"
-                    " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
-                    " AND NOT EXISTS (SELECT 1 FROM reserva r WHERE r.id = n.reserva_id"
-                    " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio"
-                    " AND r.inicio > now()) RETURNING n.id, n.tipo"
+                    "UPDATE notification n SET delivery = :failed WHERE n.delivery = :pending"
+                    " AND n.kind IN (:reminder, :five_minute_reminder)"
+                    " AND (CAST(:user_id AS uuid) IS NULL OR n.user_id = :user_id)"
+                    " AND NOT EXISTS (SELECT 1 FROM booking b WHERE b.id = n.booking_id"
+                    " AND b.status = :active AND b.starts_at = n.booking_starts_at"
+                    " AND b.starts_at > now()) RETURNING n.id, n.kind"
                 ),
-                {"usuario": user_id},
+                {
+                    "user_id": user_id,
+                    "failed": stored("fallida"),
+                    "pending": stored("pendiente"),
+                    "reminder": stored("recordatorio"),
+                    "five_minute_reminder": stored("recordatorio_cinco"),
+                    "active": stored("activa"),
+                },
             ).all()
-            # One that stays `enviando` too long was left mid-send: it is not sent again.
+            # One that stays `sending` too long was left mid-send: it is not sent again.
             stuck = self._conn.execute(
                 text(
-                    "UPDATE notificacion SET envio = 'fallida' WHERE envio = 'enviando'"
-                    " AND enviando_desde < now() - CAST(:espera AS interval)"
-                    " AND (CAST(:usuario AS uuid) IS NULL OR usuario_id = :usuario)"
-                    " RETURNING id, tipo"
+                    "UPDATE notification SET delivery = :failed WHERE delivery = :sending"
+                    " AND sending_since < now() - CAST(:timeout AS interval)"
+                    " AND (CAST(:user_id AS uuid) IS NULL OR user_id = :user_id)"
+                    " RETURNING id, kind"
                 ),
-                {"usuario": user_id, "espera": SENDING_TIMEOUT},
+                {
+                    "user_id": user_id,
+                    "timeout": SENDING_TIMEOUT,
+                    "failed": stored("fallida"),
+                    "sending": stored("enviando"),
+                },
             ).all()
-        return [LostNotice(row.id, row.tipo) for row in [*dead, *stuck]]
+        return [LostNotice(row.id, contract(row.kind)) for row in [*dead, *stuck]]
 
     def take_next(self, user_id: UUID | None) -> PendingNotice | None:
         # The ones that go out: the pending ones, and reminders only if still current and the
-        # minute of whoever registered them has passed. `enviando` is the claim: it avoids
+        # minute of whoever registered them has passed. `sending` is the claim: it avoids
         # sending it twice.
         row = self._conn.execute(
             text(
-                "UPDATE notificacion SET envio = 'enviando', enviando_desde = now() WHERE id = ("
-                " SELECT n.id FROM notificacion n LEFT JOIN reserva r ON r.id = n.reserva_id"
-                " WHERE n.reemplazada_por IS NULL"
-                " AND (CAST(:usuario AS uuid) IS NULL OR n.usuario_id = :usuario)"
-                " AND n.envio = 'pendiente'"
-                " AND (n.tipo NOT IN ('recordatorio', 'recordatorio_cinco')"
-                " OR (n.creado_en < now() - CAST(:espera AS interval)"
-                " AND r.estado = 'activa' AND r.inicio = n.reserva_inicio AND r.inicio > now()))"
+                "UPDATE notification SET delivery = :sending, sending_since = now() WHERE id = ("
+                " SELECT n.id FROM notification n LEFT JOIN booking b ON b.id = n.booking_id"
+                " WHERE n.replaced_by IS NULL"
+                " AND (CAST(:user_id AS uuid) IS NULL OR n.user_id = :user_id)"
+                " AND n.delivery = :pending"
+                " AND (n.kind NOT IN (:reminder, :five_minute_reminder)"
+                " OR (n.created_at < now() - CAST(:grace AS interval)"
+                " AND b.status = :active AND b.starts_at = n.booking_starts_at"
+                " AND b.starts_at > now()))"
                 " ORDER BY n.id LIMIT 1 FOR UPDATE OF n SKIP LOCKED)"
-                " RETURNING id, usuario_id, tipo, titulo, cuerpo, reserva_id"
+                " RETURNING id, user_id, kind, title, body, booking_id"
             ),
-            {"usuario": user_id, "espera": REMINDER_GRACE},
+            {
+                "user_id": user_id,
+                "grace": REMINDER_GRACE,
+                "sending": stored("enviando"),
+                "pending": stored("pendiente"),
+                "reminder": stored("recordatorio"),
+                "five_minute_reminder": stored("recordatorio_cinco"),
+                "active": stored("activa"),
+            },
         ).first()
         self._conn.commit()
         if row is None:
             return None
         return PendingNotice(
             notification_id=row.id,
-            user_id=row.usuario_id,
+            user_id=row.user_id,
             notice=Notice(
-                title=row.titulo,
-                body=row.cuerpo,
-                data=notice_data(row.tipo, None if row.reserva_id is None else row.reserva_id),
+                title=row.title,
+                body=row.body,
+                data=notice_data(contract(row.kind), row.booking_id),
             ),
         )
 
     def mark_delivery(self, notification_id: UUID, delivery: Delivery) -> None:
         self._conn.execute(
             text(
-                "UPDATE notificacion SET envio = CAST(:envio AS text),"
-                " enviada_en = CASE WHEN CAST(:envio AS text) = 'enviada' THEN now() END"
+                "UPDATE notification SET delivery = CAST(:delivery AS text),"
+                " sent_at = CASE WHEN CAST(:delivery AS text) = :sent THEN now() END"
                 " WHERE id = :id"
             ),
-            {"envio": delivery, "id": notification_id},
+            {"delivery": stored(delivery), "sent": stored("enviada"), "id": notification_id},
         )
         self._conn.commit()
 
@@ -375,8 +408,8 @@ class NotificationsSql:
             return
         self._conn.execute(
             text(
-                "UPDATE dispositivo SET activo = false, dado_de_baja_en = now()"
-                " WHERE token = ANY(:tokens) AND activo"
+                "UPDATE device SET active = false, deactivated_at = now()"
+                " WHERE token = ANY(:tokens) AND active"
             ),
             {"tokens": list(tokens)},
         )
@@ -390,27 +423,28 @@ class NotificationsSql:
         permission: bool,  # noqa: FBT001
     ) -> bool:
         params = {
-            "usuario": user_id,
+            "user_id": user_id,
             "token": token,
-            "plataforma": platform,
-            "permiso": permission,
+            "platform": platform,
+            "permission": permission,
         }
         with in_transaction(self._conn):
             # The account is taken shared, as when booking: it is not closed in between.
             account = self._conn.execute(
-                text("SELECT 1 FROM usuario WHERE id = :usuario AND activo FOR SHARE"), params
+                text("SELECT 1 FROM app_user WHERE id = :user_id AND active FOR SHARE"),
+                {"user_id": user_id},
             ).first()
             if account is None:
                 self._conn.rollback()
                 return False
             self._conn.execute(
                 text(
-                    "INSERT INTO dispositivo (usuario_id, token, plataforma, permiso)"
-                    " VALUES (:usuario, :token, :plataforma, :permiso)"
-                    " ON CONFLICT (token) WHERE activo DO UPDATE SET"
-                    " usuario_id = EXCLUDED.usuario_id, plataforma = EXCLUDED.plataforma,"
-                    " permiso = EXCLUDED.permiso, modificado_en = now()"
-                    " WHERE dispositivo.usuario_id = EXCLUDED.usuario_id"
+                    "INSERT INTO device (user_id, token, platform, permission_granted)"
+                    " VALUES (:user_id, :token, :platform, :permission)"
+                    " ON CONFLICT (token) WHERE active DO UPDATE SET"
+                    " user_id = EXCLUDED.user_id, platform = EXCLUDED.platform,"
+                    " permission_granted = EXCLUDED.permission_granted, updated_at = now()"
+                    " WHERE device.user_id = EXCLUDED.user_id"
                 ),
                 params,
             )
@@ -419,41 +453,41 @@ class NotificationsSql:
     def unregister_device(self, user_id: UUID, token: str) -> None:
         self._conn.execute(
             text(
-                "UPDATE dispositivo SET activo = false, dado_de_baja_en = now()"
-                " WHERE usuario_id = :usuario AND token = :token AND activo"
+                "UPDATE device SET active = false, deactivated_at = now()"
+                " WHERE user_id = :user_id AND token = :token AND active"
             ),
-            {"usuario": user_id, "token": token},
+            {"user_id": user_id, "token": token},
         )
         self._conn.commit()
 
     def of_user(self, user_id: UUID) -> tuple[list[Notification], int]:
         rows = self._conn.execute(
             text(
-                "SELECT id, tipo, titulo, cuerpo, reserva_id, creado_en AS creada_en,"
-                " leida_en IS NOT NULL AS leida FROM notificacion WHERE usuario_id = :usuario"
-                " AND reemplazada_por IS NULL"
-                f" ORDER BY creado_en DESC, id DESC LIMIT {CENTER_LIMIT}"
+                "SELECT id, kind, title, body, booking_id, created_at,"
+                " read_at IS NOT NULL AS is_read FROM notification WHERE user_id = :user_id"
+                " AND replaced_by IS NULL"
+                f" ORDER BY created_at DESC, id DESC LIMIT {CENTER_LIMIT}"
             ),
-            {"usuario": user_id},
+            {"user_id": user_id},
         ).all()
         unread: int = self._conn.execute(
             text(
-                "SELECT count(*) FROM notificacion WHERE usuario_id = :usuario AND leida_en IS NULL"
-                " AND reemplazada_por IS NULL"
+                "SELECT count(*) FROM notification WHERE user_id = :user_id AND read_at IS NULL"
+                " AND replaced_by IS NULL"
             ),
-            {"usuario": user_id},
+            {"user_id": user_id},
         ).scalar_one()
         self._conn.rollback()
         return (
             [
                 Notification(
                     id=row.id,
-                    kind=row.tipo,
-                    title=row.titulo,
-                    body=row.cuerpo,
-                    booking_id=None if row.reserva_id is None else row.reserva_id,
-                    created_at=row.creada_en,
-                    read=bool(row.leida),
+                    kind=contract(row.kind),
+                    title=row.title,
+                    body=row.body,
+                    booking_id=row.booking_id,
+                    created_at=row.created_at,
+                    read=bool(row.is_read),
                 )
                 for row in rows
             ],
@@ -463,10 +497,10 @@ class NotificationsSql:
     def read(self, user_id: UUID, notification_id: UUID) -> bool:
         row = self._conn.execute(
             text(
-                "UPDATE notificacion SET leida_en = coalesce(leida_en, now())"
-                " WHERE id = :id AND usuario_id = :usuario RETURNING id"
+                "UPDATE notification SET read_at = coalesce(read_at, now())"
+                " WHERE id = :id AND user_id = :user_id RETURNING id"
             ),
-            {"id": notification_id, "usuario": user_id},
+            {"id": notification_id, "user_id": user_id},
         ).first()
         self._conn.commit()
         return row is not None
@@ -474,10 +508,10 @@ class NotificationsSql:
     def read_all(self, user_id: UUID) -> None:
         self._conn.execute(
             text(
-                "UPDATE notificacion SET leida_en = now()"
-                " WHERE usuario_id = :usuario AND leida_en IS NULL"
+                "UPDATE notification SET read_at = now()"
+                " WHERE user_id = :user_id AND read_at IS NULL"
             ),
-            {"usuario": user_id},
+            {"user_id": user_id},
         )
         self._conn.commit()
 

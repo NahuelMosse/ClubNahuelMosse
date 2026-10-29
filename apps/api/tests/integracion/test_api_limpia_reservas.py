@@ -19,7 +19,7 @@ CLUB = ZoneInfo("America/Argentina/Buenos_Aires")
 def _usuario(api: TestClient, motor: Engine, token: str) -> UUID:
     correo = api.get("/yo", headers={"Authorization": f"Bearer {token}"}).json()["correo"]
     with motor.connect() as conn:
-        fila = conn.execute(text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo})
+        fila = conn.execute(text("SELECT id FROM app_user WHERE email = :c"), {"c": correo})
         return UUID(str(fila.scalar_one()))
 
 
@@ -47,7 +47,7 @@ def _agenda(motor: Engine, espacio: UUID) -> OpeningHours:
 def _dar_de_baja(motor: Engine, tabla: str, columna: str, id_: UUID) -> None:
     with motor.begin() as conn:
         conn.execute(
-            text(f"UPDATE {tabla} SET {columna} = false, dado_de_baja_en = now() WHERE id = :id"),
+            text(f"UPDATE {tabla} SET {columna} = false, deactivated_at = now() WHERE id = :id"),
             {"id": id_},
         )
 
@@ -86,7 +86,7 @@ def test_mover_con_el_horario_viejo_de_la_sede_no_cambia_nada(
     with motor.connect() as conn:
         reserva = BookingsSql(conn).insert(yo, espacio, _a_las(1, 10), _a_las(1, 11), vieja)
     with motor.begin() as conn:
-        conn.execute(text("UPDATE sede SET apertura = '09:00' WHERE id = :s"), {"s": sede_id})
+        conn.execute(text("UPDATE venue SET opens_at = '09:00' WHERE id = :s"), {"s": sede_id})
 
     with motor.connect() as conn, pytest.raises(OpeningHoursChanged):
         BookingsSql(conn).move(
@@ -133,9 +133,9 @@ def test_no_se_reserva_ni_se_mueve_a_una_cancha_de_baja(
     with motor.connect() as conn:
         reserva = BookingsSql(conn).insert(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
     if de_baja == "sede":
-        _dar_de_baja(motor, "sede", "activa", UUID(sede_id))
+        _dar_de_baja(motor, "venue", "active", UUID(sede_id))
     else:
-        _dar_de_baja(motor, "espacio", "activo", espacio)
+        _dar_de_baja(motor, "space", "active", espacio)
 
     with motor.connect() as conn:
         with pytest.raises(Unavailable):

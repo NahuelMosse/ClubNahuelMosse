@@ -173,8 +173,8 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
         for socio, reserva in ((uno, de_uno), (otro, de_otro)):
             conn.execute(
                 text(
-                    "UPDATE reserva SET estado = 'anulada', motivo = 'Baja de la sede',"
-                    " cancelada_en = now(), cancelada_por = :u WHERE id = :id"
+                    "UPDATE booking SET status = 'voided', reason = 'Baja de la sede',"
+                    " canceled_at = now(), canceled_by = :u WHERE id = :id"
                 ),
                 {"u": socio.usuario_id, "id": reserva["id"]},
             )

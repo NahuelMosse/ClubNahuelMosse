@@ -9,10 +9,10 @@ nombre, no por línea: buscalos con el buscador del editor.
 | Busco | Está en |
 |---|---|
 | Las reglas de una reserva (1 a 4 horas, 7 días a la vista, horario de la sede) | `apps/api/app/modules/availability/rules.py` (`validate_booking`, `duration_error`, `MIN_HOURS`, `MAX_HOURS`, `DAYS_IN_VIEW`) |
-| Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migraciones/versions/0001_modelo_inicial.py`, y `BookingsSql.insert` en `apps/api/app/modules/bookings/repository.py`, que traduce el error `23P01` a `HorarioOcupado` |
+| Que dos reservas no se pisen | la restricción `EXCLUDE USING gist` de `apps/api/migrations/versions/0001_modelo_inicial.py`, y `BookingsSql.insert` en `apps/api/app/modules/bookings/repository.py`, que traduce el error `23P01` a `HorarioOcupado` |
 | El caso de uso «reservar» | `apps/api/app/modules/bookings/use_cases.py` (`book`) |
 | Una ruta HTTP | `apps/api/app/modules/<funcionalidad>/rutas.py`; la tabla completa está en [Rutas de la API](#rutas-de-la-api) |
-| Quién es admin y dónde se controla | el rol viene de la tabla `usuario`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
+| Quién es admin y dónde se controla | el rol viene de la tabla `app_user`; cada caso de uso de admin lanza `Prohibido`; en la app, el `redirect` de `apps/mobile/lib/redireccion.dart` sólo oculta pantallas |
 | Cómo se valida el token de Firebase | `apps/api/app/modules/session/current_user.py` (`current_user`) → `session/use_cases.py` (`authenticated_profile`) → `shared/identidad.py` (`ProveedorFirebase.uid_del_token`) |
 | La hora y la zona del club | API: `apps/api/app/shared/club_timezone.py` (`CLUB_TIMEZONE`); app: `apps/mobile/lib/comun/zona_club.dart` (`ahoraEnElClub`, `enElClub`) |
 | Los recordatorios de una hora antes | `apps/api/app/modules/notifications/sweep.py` (el reloj) → `use_cases.py` (`send_reminders`, `deliver`) → `push.py` (FCM) |
@@ -20,7 +20,7 @@ nombre, no por línea: buscalos con el buscador del editor.
 | El correo de recuperación de contraseña | `apps/api/app/modules/password_recovery/use_cases.py` (código, vigencia, tope por hora); el envío (SMTP, Brevo o buzón) está en `shared/email.py` |
 | Las variables de entorno de la API | `apps/api/app/shared/config.py`; la tabla está en [Configuración de la API](#configuración-de-la-api) |
 | El motor de la base y la conexión por pedido | `apps/api/app/shared/db.py` |
-| El esquema de la base | `apps/api/migraciones/versions/0001` a `0009`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
+| El esquema de la base | `apps/api/migrations/versions/0001` a `0012`; el modelo explicado está en [`system-design.md`](system-design.md#data) |
 | Una pantalla de la app | `apps/mobile/lib/<dominio>/pantalla_*.dart`; la tabla completa está en [Rutas de la app](#rutas-de-la-app) |
 | Los colores, las fuentes y el tema | `apps/mobile/lib/tema/tokens.dart` (`Paleta.oscura`, `Paleta.clara`) y `tema/tema.dart` |
 | Las animaciones y transiciones | `apps/mobile/lib/comun/movimiento.dart` y `comun/transiciones.dart` |
@@ -40,7 +40,7 @@ app-tp/
 ├── apps/
 │   ├── api/                 API REST: FastAPI + SQL a mano sobre PostgreSQL
 │   │   ├── app/             código: main.py, shared/ y modules/ (una carpeta por funcionalidad)
-│   │   ├── migraciones/     Alembic, 0001 a 0009
+│   │   ├── migrations/      Alembic, 0001 a 0012
 │   │   ├── tests/           unit, integracion, escenarios
 │   │   ├── openapi.json     el contrato publicado, versionado (un test lo compara con la API)
 │   │   ├── pyproject.toml   dependencias (uv), ruff y mypy
@@ -136,14 +136,14 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 
 | Funcionalidad | Qué tiene | Tablas que escribe |
 |---|---|---|
-| `session` | `Profile`, `authenticated_profile` (del token al `Profile`), `current_user` (la dependencia de autenticación), `ProfilesSql` | — (lee `usuario`) |
-| `users` | `register`, `update_profile`, `change_password`, `deactivate` (la cuenta), `seed_admin` (y su comando), reglas de registro y perfil, `UsersSql` | `usuario` |
-| `venues` | `active_venues`, `create_venue`, `update_venue`, `deactivate_venue`, `validate_venue`, `VenuesSql` | `sede` |
-| `spaces` | el catálogo fijo (`Sport`, `Kind`), `suggested_name`, alta, edición y baja de espacios, `SpacesSql` | `espacio` |
+| `session` | `Profile`, `authenticated_profile` (del token al `Profile`), `current_user` (la dependencia de autenticación), `ProfilesSql` | — (lee `app_user`) |
+| `users` | `register`, `update_profile`, `change_password`, `deactivate` (la cuenta), `seed_admin` (y su comando), reglas de registro y perfil, `UsersSql` | `app_user` |
+| `venues` | `active_venues`, `create_venue`, `update_venue`, `deactivate_venue`, `validate_venue`, `VenuesSql` | `venue` |
+| `spaces` | el catálogo fijo (`Sport`, `Kind`), `suggested_name`, alta, edición y baja de espacios, `SpacesSql` | `space` |
 | `availability` | `OpeningHours`, `slot_grid`, `validate_booking`, `available_slots`, `available_spaces` (`slots.py`), `AvailabilitySql` (lecturas) | — |
-| `bookings` | `book`, `my_bookings`, `cancel_booking`, `modify_booking`, `global_history`, `admin_detail`, `void_booking`, `BookingsSql` (historial paginado por cursor) | `reserva` |
-| `notifications` | `LEAD_TIME` (1 h), `send_reminders`, `dispatch_pending`, dispositivos y centro de avisos, `NotificationsSql`, `push_channel` (`push.py`: `FcmChannel`, `NullChannel`), `sweep.py` (en proceso con `sweep_every` o una pasada con `--una-vez`) | `notificacion`, `notificacion_reserva`, `dispositivo` |
-| `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql` | `enlace_recuperacion`, `correo_saliente` (sólo en modo buzón) |
+| `bookings` | `book`, `my_bookings`, `cancel_booking`, `modify_booking`, `global_history`, `admin_detail`, `void_booking`, `BookingsSql` (historial paginado por cursor) | `booking` |
+| `notifications` | `LEAD_TIME` (1 h), `send_reminders`, `dispatch_pending`, dispositivos y centro de avisos, `NotificationsSql`, `push_channel` (`push.py`: `FcmChannel`, `NullChannel`), `sweep.py` (en proceso con `sweep_every` o una pasada con `--una-vez`) | `notification`, `notification_booking`, `device` |
+| `password_recovery` | `request_link`, `link_is_valid`, `use_link`, `hash_of`, `LinksSql` | `recovery_link`, `outgoing_email` (sólo en modo buzón) |
 
 ### Rutas de la API
 
@@ -199,7 +199,7 @@ si el rol no es `admin`.
 | `FIREBASE_API_KEY` | vacío | comprobar contraseñas por REST (el emulador no la necesita) |
 | `FIREBASE_CREDENCIALES_JSON` | vacío | la cuenta de servicio; sin ella el push queda en el canal nulo |
 | `URL_PUBLICA` | `http://localhost:8000` | el host de los enlaces del correo |
-| `CORREO_MODO` | `smtp` | `buzon` guarda los correos en la tabla `correo_saliente` (sólo desarrollo) |
+| `CORREO_MODO` | `smtp` | `buzon` guarda los correos en la tabla `outgoing_email` (sólo desarrollo) |
 | `SMTP_HOST`, `SMTP_PUERTO` (587), `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | vacíos | el correo saliente |
 | `RECORDATORIOS_CADA` | 30 | segundos entre barridos; 0 apaga el barrido en proceso |
 | `PRUEBAS` | false | montar `/_pruebas` (sólo junto al emulador) |
@@ -212,15 +212,18 @@ por archivo), `ADMIN_CONTRASENA` (sólo `sembrar_admin`) y `TEST_DATABASE_URL` (
 
 | N.º | Qué hace |
 |---|---|
-| 0001 | `usuario`, `sede`, `espacio`, `reserva`, la vista `reserva_con_estado`, la exclusión de superposición y los triggers de baja lógica e inmutabilidad |
-| 0002 | `usuario.contrasena_cambiada_en` |
-| 0003 | `enlace_recuperacion` y `correo_saliente` |
+| 0001 | `app_user`, `venue`, `space`, `booking`, la vista `booking_with_status`, la exclusión de superposición y los triggers de baja lógica e inmutabilidad |
+| 0002 | `app_user.password_changed_at` |
+| 0003 | `recovery_link` y `outgoing_email` |
 | 0004 | nombre de sede único entre las activas |
-| 0005 | `dispositivo`, `notificacion` y el índice de reservas activas por inicio |
+| 0005 | `device`, `notification` y el índice de reservas activas por inicio |
 | 0006 | estados de envío y un aviso de cancelación por reserva |
-| 0007 | `notificacion_reserva` (avisos agrupados), `cantidad` y `reemplazada_por` |
+| 0007 | `notification_booking` (avisos agrupados), `count` y `replaced_by` |
 | 0008 | índices de historial creados con `CONCURRENTLY`, e `intentos` y `tomada_en` para retomar avisos varados |
-| 0009 | quita `intentos` y `tomada_en` (los avisos no se reintentan), agrega `enviando_desde` y los que estaban `enviando` pasan a `fallida` |
+| 0009 | quita `intentos` y `tomada_en` (los avisos no se reintentan), agrega `sending_since` y los que estaban `sending` pasan a `failed` |
+| 0010 | identificadores `uuid` con `uuid_v7()` y columnas de auditoría |
+| 0011 | el recordatorio de cinco minutos (`five_minute_reminder`) |
+| 0012 | el esquema en inglés: tablas, columnas, restricciones, índices, triggers, funciones, la vista y los valores guardados |
 
 Se corren con `uv run alembic upgrade head` desde `apps/api`. Una migración que ya está en `main` no se edita: se agrega
 otra.

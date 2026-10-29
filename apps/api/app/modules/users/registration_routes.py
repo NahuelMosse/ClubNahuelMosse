@@ -15,7 +15,7 @@ from app.shared.errors import Duplicate
 from app.shared.identity import FirebaseProvider, identity
 
 router = APIRouter(tags=["usuarios"])
-DUPLICATE_MESSAGE = "El usuario ya está registrado. Modificá el correo o el DNI."
+DUPLICATE_MESSAGE: str = "El usuario ya está registrado. Modificá el correo o el DNI."
 FIELD_MESSAGES = {
     "correo": "Este correo ya está registrado",
     "dni": "Este DNI ya está registrado",

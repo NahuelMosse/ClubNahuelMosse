@@ -17,19 +17,19 @@ def _reserva_en_la_proxima_hora(motor: Engine, correo: str, s: str) -> UUID:
     with motor.begin() as conn:
         return conn.execute(
             text(
-                "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '00:00', '00:00', ARRAY[1,2,3,4,5,6,7])"
                 " RETURNING id),"
-                " e AS (INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
+                " e AS (INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
                 " 38000 FROM s RETURNING id)"
-                " INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                " total, creado_en, modificado_en)"
+                " INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                " total, created_at, updated_at)"
                 " SELECT u.id, e.id, h, h + interval '1 hour', 38000, 38000,"
-                " now() - interval '2 hours', now() - interval '2 hours' FROM usuario u, e,"
+                " now() - interval '2 hours', now() - interval '2 hours' FROM app_user u, e,"
                 " (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires')"
-                " + interval '1 hour' AS h) AS t WHERE u.correo = :c AND u.activo"
-                " RETURNING reserva.id"
+                " + interval '1 hour' AS h) AS t WHERE u.email = :c AND u.active"
+                " RETURNING booking.id"
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1", "c": correo},
         ).scalar_one()
@@ -65,7 +65,7 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
     with motor.connect() as conn:
         avisos = conn.execute(
             text(
-                "SELECT count(*) FROM notificacion WHERE tipo = 'recordatorio' AND reserva_id = :r"
+                "SELECT count(*) FROM notification WHERE kind = 'reminder' AND booking_id = :r"
             ),
             {"r": reserva},
         ).scalar_one()

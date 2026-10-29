@@ -29,7 +29,7 @@ def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice
         for carpeta in (
             anterior.APP,
             anterior.RAIZ_API / "tests",
-            anterior.RAIZ_API / "migraciones",
+            anterior.RAIZ_API / "migrations",
         )
         for p in carpeta.rglob("*.py")
         if p.resolve() != Path(anterior.__file__).resolve()

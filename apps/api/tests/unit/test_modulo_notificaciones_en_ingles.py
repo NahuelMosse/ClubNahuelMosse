@@ -65,7 +65,7 @@ def test_el_modulo_de_notificaciones_se_llama_como_dice_el_glosario() -> None:
     raiz = APP.parent
     viejos = [
         str(p.relative_to(raiz))
-        for carpeta in (APP, raiz / "tests", raiz / "migraciones")
+        for carpeta in (APP, raiz / "tests", raiz / "migrations")
         for p in carpeta.rglob("*.py")
         if p.resolve() != Path(__file__).resolve()
         and ".venv" not in p.parts

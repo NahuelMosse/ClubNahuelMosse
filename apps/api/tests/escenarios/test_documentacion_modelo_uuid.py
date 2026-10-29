@@ -2,6 +2,7 @@
 
 import re
 
+from tests.current_schema import column, table as current_table
 from tests.escenarios.test_documentacion_vigente import (
     API,
     DISENO,
@@ -11,18 +12,18 @@ from tests.escenarios.test_documentacion_vigente import (
 )
 from tests.escenarios.test_documentacion_modelo_vigente import MODELO
 
-COMUNES = {"id", "creado_en", "modificado_en"}
+COMUNES = {"id", "created_at", "updated_at"}
 RENOMBRES = re.compile(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)")
 
 
 def _columnas_vigentes() -> dict[str, set[str]]:
     """Las columnas de cada tabla tras los RENAME COLUMN de `upgrade()` de la 0010."""
     tablas = _columnas_por_tabla()
-    migracion = next((API / "migraciones" / "versions").glob("0010_*.py"))
+    migracion = next((API / "migrations" / "versions").glob("0010_*.py"))
     subida = _texto(migracion).split("def _auditoria_abajo")[0]
     for tabla, viejo, nuevo in RENOMBRES.findall(subida):
-        tablas[tabla].discard(viejo)
-        tablas[tabla].add(nuevo)
+        tablas[current_table(tabla)].discard(column(tabla, viejo))
+        tablas[current_table(tabla)].add(column(tabla, nuevo))
     return tablas
 
 

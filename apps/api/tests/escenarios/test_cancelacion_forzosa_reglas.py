@@ -26,7 +26,7 @@ def test_un_aviso_que_esta_saliendo_se_agrupa_con_la_anulacion_siguiente(
     assert base.anular(socio, admin, primera) == 200
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE notificacion SET envio = 'enviando' WHERE usuario_id = :u"),
+            text("UPDATE notification SET delivery = 'sending' WHERE user_id = :u"),
             {"u": socio.usuario_id},
         )
 

@@ -36,7 +36,7 @@ def _espacio(motor: Engine, s: str) -> UUID:
     with motor.begin() as conn:
         sede: Any = conn.execute(
             text(
-                "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Belgrano', 1240, '00:00', '00:00', ARRAY[1,2,3,4,5,6,7])"
                 " RETURNING id"
             ),
@@ -46,11 +46,11 @@ def _espacio(motor: Engine, s: str) -> UUID:
             str(
                 conn.execute(
                     text(
-                        "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre,"
-                        " precio_por_hora, techada, iluminada)"
-                        " VALUES (:sede, 'Voley', 'IND', 1, :n, 33000, true, true) RETURNING id"
+                        "INSERT INTO space (venue_id, sport, kind, number, name,"
+                        " price_per_hour, covered, lit)"
+                        " VALUES (:venue, 'Voley', 'IND', 1, :n, 33000, true, true) RETURNING id"
                     ),
-                    {"sede": sede, "n": f"RamosMejia_Belgrano_1240_Voley_IND_1_{s}"},
+                    {"venue": sede, "n": f"RamosMejia_Belgrano_1240_Voley_IND_1_{s}"},
                 ).scalar_one()
             )
         )
@@ -62,10 +62,10 @@ def _reservar(motor: Engine, correo: str, espacio: UUID, inicio: datetime) -> UU
             str(
                 conn.execute(
                     text(
-                        "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin,"
-                        " precio_por_hora, total)"
-                        " SELECT id, :e, :i, :f, 33000, 33000 FROM usuario"
-                        " WHERE correo = :c AND activo RETURNING id"
+                        "INSERT INTO booking (user_id, space_id, starts_at, ends_at,"
+                        " price_per_hour, total)"
+                        " SELECT id, :e, :i, :f, 33000, 33000 FROM app_user"
+                        " WHERE email = :c AND active RETURNING id"
                     ),
                     {"c": correo, "e": espacio, "i": inicio, "f": inicio + timedelta(hours=1)},
                 ).scalar_one()
@@ -93,15 +93,15 @@ def test_la_baja_es_logica_conserva_el_historial_y_libera_el_correo(
     with motor.connect() as conn:
         estados: dict[UUID, str] = dict(
             conn.execute(
-                text("SELECT id, estado FROM reserva WHERE id IN (:a, :b, :c)"),
+                text("SELECT id, status FROM booking WHERE id IN (:a, :b, :c)"),
                 {"a": pasada, "b": en_curso, "c": futura},
             ).all()
         )
         activo: Any = conn.execute(
-            text("SELECT activo FROM usuario WHERE correo = :c"), {"c": correo}
+            text("SELECT active FROM app_user WHERE email = :c"), {"c": correo}
         ).scalar_one()
     # Verifica CU-07-SUP-04: la futura se cancela; la pasada y la que está en curso quedan.
-    assert estados == {pasada: "activa", en_curso: "activa", futura: "cancelada"}
+    assert estados == {pasada: "active", en_curso: "active", futura: "canceled"}
     assert activo is False
     # La sesión ya no vale y con esa contraseña no se entra.
     assert api.get("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 401
@@ -165,6 +165,6 @@ def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
     assert codigos[0] == 204 and codigos[1] in (204, 401)
     with motor.connect() as conn:
         activo: Any = conn.execute(
-            text("SELECT activo FROM usuario WHERE correo = :c"), {"c": correo}
+            text("SELECT active FROM app_user WHERE email = :c"), {"c": correo}
         ).scalar_one()
     assert activo is False

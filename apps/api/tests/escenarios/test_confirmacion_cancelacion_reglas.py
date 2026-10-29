@@ -33,9 +33,9 @@ def _cancelar(socio: Socio, reserva_id: str) -> int:
 def _envios(socio: Socio) -> list[str]:
     with socio.motor.connect() as conn:
         return [
-            f.envio
+            f.delivery
             for f in conn.execute(
-                text("SELECT envio FROM notificacion WHERE usuario_id = :u ORDER BY id"),
+                text("SELECT delivery FROM notification WHERE user_id = :u ORDER BY id"),
                 {"u": socio.usuario_id},
             )
         ]
@@ -95,7 +95,7 @@ def test_si_el_servicio_push_cae_la_confirmacion_queda_en_el_centro_como_fallida
     finally:
         app_de(api).dependency_overrides.pop(push_channel, None)
 
-    assert _envios(socio) == ["fallida"]
+    assert _envios(socio) == ["failed"]
     assert len(socio.centro()["notificaciones"]) == 1
 
 
@@ -114,7 +114,7 @@ def test_lo_que_quedo_pendiente_se_despacha_una_sola_vez(
     # Como si el servidor se hubiera caído antes de despachar.
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE notificacion SET envio = 'pendiente' WHERE usuario_id = :u"),
+            text("UPDATE notification SET delivery = 'pending' WHERE user_id = :u"),
             {"u": socio.usuario_id},
         )
 
@@ -125,4 +125,4 @@ def test_lo_que_quedo_pendiente_se_despacha_una_sola_vez(
 
     assert (primero, segundo) == (1, 0)
     assert len(canal.enviados) == 1
-    assert _envios(socio) == ["enviada"]
+    assert _envios(socio) == ["sent"]

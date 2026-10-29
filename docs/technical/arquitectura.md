@@ -40,7 +40,7 @@ Las razones del stack están en [ADR-0001](../adr/0001-stack.md) y las del hosti
 1. **La API decide, la app muestra.** El rol, la disponibilidad, los límites de una reserva y quién ve qué se resuelven
    en la API. El `redirect` de la app sólo esconde pantallas; si la app se salteara una regla, la API igual la rechaza.
 2. **La base es la última defensa.** Lo que no puede pasar nunca está escrito como restricción: dos reservas activas del
-   mismo espacio no se superponen (`EXCLUDE USING gist`), nada se borra (trigger `prohibir_borrado`, las bajas son
+   mismo espacio no se superponen (`EXCLUDE USING gist`), nada se borra (trigger `forbid_delete`, las bajas son
    lógicas), el correo de una cuenta y la identidad de un espacio no cambian (triggers de inmutabilidad), un recordatorio
    no se duplica (índice único).
 3. **Capas con flechas en un solo sentido**, en la API y en la app, vigiladas por tests.
@@ -134,7 +134,7 @@ Detalles que importan:
 
 | Tema | Cómo está resuelto | Dónde |
 |---|---|---|
-| Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `usuario` | `modules/session/current_user.py`, `shared/identity.py` |
+| Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `app_user` | `modules/session/current_user.py`, `shared/identity.py` |
 | Autorización | por rol, dentro de cada caso de uso (`perfil.rol`); por dueño en las consultas (`WHERE usuario_id = …`): una reserva ajena da 404 | `modules/*/casos_de_uso.py` |
 | Validación de entrada | tipos de pydantic; un cuerpo que no es JSON da 400 sin repetirlo | `shared/entradas.py` |
 | Errores | errores del negocio → 403, 404, 409 y 422 con `{"errores": …}` | `main.py`, `shared/errores_http.py`, `shared/respuestas.py` |
@@ -147,26 +147,26 @@ Detalles que importan:
 Hay tres tipos de aviso: el **recordatorio** una hora antes de una reserva, la **confirmación** de una cancelación hecha
 por la persona y la **cancelación forzosa** cuando un admin anula una reserva. Una sede o un espacio con reservas por
 delante no se pueden dar de baja (`ConReservasFuturas`): primero se anulan esas reservas. Todos
-pasan por la tabla `notificacion`, que es a la vez la cola de envío y el centro de avisos que ve la persona.
+pasan por la tabla `notification`, que es a la vez la cola de envío y el centro de avisos que ve la persona.
 
 ```mermaid
 stateDiagram-v2
-  [*] --> pendiente: se encola junto con el cambio
-  pendiente --> enviando: el despachador lo toma (SKIP LOCKED)
-  enviando --> enviada: FCM lo aceptó
-  enviando --> sin_permiso: la persona no tiene un teléfono con permiso
-  enviando --> sin_canal: la API no tiene credenciales de FCM
-  enviando --> fallida: FCM falló
+  [*] --> pending: se encola junto con el cambio
+  pending --> sending: el despachador lo toma (SKIP LOCKED)
+  sending --> sent: FCM lo aceptó
+  sending --> no_permission: la persona no tiene un teléfono con permiso
+  sending --> no_channel: la API no tiene credenciales de FCM
+  sending --> failed: FCM falló
 ```
 
 - **Cancelación y anulación.** `BookingsSql.cancel` y `BookingsSql.void` cambian la reserva y encolan el aviso en la
   misma transacción. Al responder, la ruta agrega una tarea de fondo (`despachar_de`) que entrega los pendientes de esa
   persona. Si a una persona le anulan otra reserva mientras tiene un aviso de anulación sin leer, se abre un aviso nuevo
-  con la cantidad total y el anterior queda reemplazado (`reemplazada_por`); `notificacion_reserva` liga cada reserva
+  con la cantidad total y el anterior queda reemplazado (`replaced_by`); `notification_booking` liga cada reserva
   con el aviso que se la informó.
 - **Recordatorios.** El barrido (`modules/notifications/sweep.py`) corre dentro del proceso web cada `RECORDATORIOS_CADA`
   segundos: primero despacha los pendientes y después busca las reservas activas que empiezan dentro de la próxima hora
-  y no tienen recordatorio. El índice único `notificacion_recordatorio_unico` impide el duplicado aunque dos barridos se
+  y no tienen recordatorio. El índice único `notification_reminder_unique` impide el duplicado aunque dos barridos se
   crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notifications.sweep --una-vez`) para un cron.
 - **En el teléfono.** `CentroDeNotificaciones` registra el token de FCM con `PUT /dispositivos` al iniciar sesión, lo da
   de baja al cerrarla, consulta `GET /notificaciones` cada 20 s mientras la app está abierta y en primer plano, y lleva
@@ -195,7 +195,7 @@ sequenceDiagram
   API->>FB: cambia la contraseña y revoca las sesiones
 ```
 
-- El **registro** (`POST /registro`) crea la cuenta en Firebase y la fila en `usuario`; si la fila falla, borra la
+- El **registro** (`POST /registro`) crea la cuenta en Firebase y la fila en `app_user`; si la fila falla, borra la
   cuenta de Firebase para no dejarla huérfana.
 - La **baja de la cuenta** (`DELETE /yo`) cancela las reservas futuras, marca el usuario inactivo y borra la cuenta de
   Firebase. El historial queda en la base.
@@ -275,7 +275,7 @@ flowchart LR
 | API | `uvicorn app.main:app --reload` | build: `uv sync` y `alembic upgrade head`; start: `uvicorn` |
 | Base | Postgres en la máquina o en Docker | Postgres de Render, plan free |
 | Firebase | emulador de Auth, push simulado | proyecto real, con cuenta de servicio |
-| Correo | `CORREO_MODO=buzon` (tabla `correo_saliente`) | SMTP |
+| Correo | `CORREO_MODO=buzon` (tabla `outgoing_email`) | SMTP |
 
 No hay staging. La API y la base corren en Render; las cuentas, los secretos y el primer despliegue están en el runbook.
 

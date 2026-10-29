@@ -48,8 +48,8 @@ def test_el_alta_arma_el_nombre_y_guarda_el_rastro(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT e.activo, e.creado_por IS NOT NULL, e.precio_por_hora"
-                " FROM espacio e WHERE e.id = :id"
+                "SELECT e.active, e.created_by IS NOT NULL, e.price_per_hour"
+                " FROM space e WHERE e.id = :id"
             ),
             {"id": r.json()["id"]},
         ).one()
@@ -63,7 +63,7 @@ def test_los_numeros_no_se_reutilizan_despues_de_una_baja(
     primero = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE espacio SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": primero["id"]},
         )
     r = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id))
@@ -131,7 +131,7 @@ def test_una_sede_dada_de_baja_no_recibe_espacios(
     sede_id, _ = sede
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE sede SET activa = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede_id},
         )
     r = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id))
@@ -151,7 +151,7 @@ def test_los_usuarios_ven_los_espacios_activos_y_el_catalogo(
     api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id))
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE espacio SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": f7.json()["id"]},
         )
 
@@ -189,10 +189,10 @@ def test_el_numero_saltea_un_nombre_que_ya_uso_otra_sede(
     assert api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).is_success
     with motor.begin() as conn:
         nombre, calle, altura = conn.execute(
-            text("SELECT nombre, calle, altura FROM sede WHERE id = :id"), {"id": sede_id}
+            text("SELECT name, street, street_number FROM venue WHERE id = :id"), {"id": sede_id}
         ).one()
         conn.execute(
-            text("UPDATE sede SET activa = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede_id},
         )
     # La misma sede vuelve a crearse igual: su primer Fútbol 5 no puede llamarse como el
@@ -330,18 +330,18 @@ def test_los_horarios_de_un_espacio_marcan_las_reservas_activas(
     hoy = api.get(f"/espacios/{espacio['id']}/horarios", headers=_con(token_usuario)).json()
     manana = date.fromisoformat(hoy["hoy"]) + timedelta(days=1)
     with motor.begin() as conn:
-        for hora, estado in ((10, "activa"), (12, "cancelada")):
+        for hora, estado in ((10, "active"), (12, "canceled")):
             conn.execute(
                 text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total, estado, cancelada_en)"
-                    " SELECT (SELECT id FROM usuario ORDER BY id LIMIT 1), :e, x.i,"
-                    " x.i + interval '1 hour', 38000, 38000, :estado,"
-                    " CASE WHEN :estado = 'cancelada' THEN now() END FROM"
+                    "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                    " total, status, canceled_at)"
+                    " SELECT (SELECT id FROM app_user ORDER BY id LIMIT 1), :e, x.i,"
+                    " x.i + interval '1 hour', 38000, 38000, :status,"
+                    " CASE WHEN :status = 'canceled' THEN now() END FROM"
                     " (SELECT (CAST(:dia AS date) + make_interval(hours => :hora))"
                     " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
                 ),
-                {"e": espacio["id"], "dia": manana, "hora": hora, "estado": estado},
+                {"e": espacio["id"], "dia": manana, "hora": hora, "status": estado},
             )
 
     r = api.get(
@@ -389,8 +389,8 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
         for espacio, hora in ((ids[0], 9), (ids[1], 11)):
             conn.execute(
                 text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total) SELECT (SELECT id FROM usuario ORDER BY id LIMIT 1), :e, x.i,"
+                    "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                    " total) SELECT (SELECT id FROM app_user ORDER BY id LIMIT 1), :e, x.i,"
                     " x.i + interval '1 hour', 38000, 38000"
                     " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
                     " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
@@ -456,10 +456,10 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
     sede_id, _ = sede
     alta = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT :u, :e, i, i + interval '1 hour', :p, :p"
                 " FROM (SELECT date_trunc('hour', now()) + interval '1 day' AS i) x"
             ),
@@ -474,8 +474,8 @@ def test_editar_cambia_condicion_iluminacion_y_precio_sin_tocar_el_nombre_ni_las
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT e.modificado_por IS NOT NULL, r.total FROM espacio e"
-                " JOIN reserva r ON r.espacio_id = e.id WHERE e.id = :id"
+                "SELECT e.updated_by IS NOT NULL, r.total FROM space e"
+                " JOIN booking r ON r.space_id = e.id WHERE e.id = :id"
             ),
             {"id": alta["id"]},
         ).one()
@@ -507,7 +507,7 @@ def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
         assert r.json()["errores"] == {"precio_por_hora": mensaje}
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE espacio SET activo = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": alta["id"]},
         )
     valido = {"techada": True, "iluminada": True, "precio_por_hora": 45000}
@@ -548,8 +548,8 @@ def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT activo, dado_de_baja_en IS NOT NULL, dado_de_baja_por IS NOT NULL"
-                " FROM espacio WHERE id = :id"
+                "SELECT active, deactivated_at IS NOT NULL, deactivated_by IS NOT NULL"
+                " FROM space WHERE id = :id"
             ),
             {"id": uno["id"]},
         ).one()
@@ -565,11 +565,11 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
     sede_id, _ = sede
     uno = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT :u, :e, i, i + interval '2 hours', 38000, 76000"
                 " FROM (SELECT date_trunc('hour', now()) AS i) x"
             ),
@@ -584,7 +584,7 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
     }
     with motor.connect() as conn:
         assert conn.execute(
-            text("SELECT activo FROM espacio WHERE id = :id"), {"id": uno["id"]}
+            text("SELECT active FROM space WHERE id = :id"), {"id": uno["id"]}
         ).scalar_one()
 
 
@@ -597,23 +597,23 @@ def test_la_baja_mira_solo_reservas_activas_que_no_terminaron(
         espacio = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede_id)).json()
         with motor.begin() as conn:
             dueno: Any = conn.execute(
-                text("SELECT id FROM usuario ORDER BY id LIMIT 1")
+                text("SELECT id FROM app_user ORDER BY id LIMIT 1")
             ).scalar_one()
             conn.execute(
                 text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total, estado, cancelada_en)"
-                    " SELECT :u, :e, i, i + interval '1 hour', 38000, 38000, :estado,"
-                    " CASE WHEN :estado <> 'activa' THEN now() END"
+                    "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                    " total, status, canceled_at)"
+                    " SELECT :u, :e, i, i + interval '1 hour', 38000, 38000, :status,"
+                    " CASE WHEN :status <> 'active' THEN now() END"
                     f" FROM (SELECT date_trunc('hour', now()) + interval '{desde}' AS i) x"
                 ),
-                {"u": dueno, "e": espacio["id"], "estado": estado},
+                {"u": dueno, "e": espacio["id"], "status": estado},
             )
         return str(espacio["id"])
 
-    futura = con_reserva("1 day", "activa")
-    terminada = con_reserva("-1 day", "activa")
-    cancelada = con_reserva("1 day", "cancelada")
+    futura = con_reserva("1 day", "active")
+    terminada = con_reserva("-1 day", "active")
+    cancelada = con_reserva("1 day", "canceled")
 
     assert api.delete(f"/espacios/{futura}", headers=_con(token_admin)).status_code == 409
     assert api.delete(f"/espacios/{terminada}", headers=_con(token_admin)).status_code == 204

@@ -1,270 +1,271 @@
 # Modelo de datos
 
-La base es PostgreSQL (con la extensión `btree_gist`). Tiene nueve tablas y una vista, `reserva_con_estado`, que agrega el
+La base es PostgreSQL (con la extensión `btree_gist`). Tiene nueve tablas y una vista, `booking_with_status`, que agrega el
 estado «completada» a las reservas. Las cuentas, sedes, espacios y reservas no se borran: sus bajas son lógicas y un
 trigger impide cualquier `DELETE` en ellas. Las reglas del negocio que pueden romper los datos las hace cumplir la propia base, no sólo la API.
 
 Todas las claves primarias son `id uuid` con valor por defecto `uuid_v7()`, una función de la base. Un UUIDv7 lleva en sus
 primeros bits la hora de creación en milisegundos, así que los identificadores nuevos salen ordenados por tiempo. La
-excepción es `notificacion_reserva`, que conserva su clave primaria compuesta. Las referencias entre tablas (17 en total)
+excepción es `notification_booking`, que conserva su clave primaria compuesta. Las referencias entre tablas (17 en total)
 son `uuid`. Las fechas son `timestamptz`; la zona del club es `America/Argentina/Buenos_Aires`.
 
 ## Diagrama
 
 ```mermaid
 erDiagram
-    usuario ||--o{ reserva : "reserva"
-    usuario ||--o{ dispositivo : "tiene"
-    usuario ||--o{ notificacion : "recibe"
-    usuario ||--o{ enlace_recuperacion : "pide"
-    usuario |o--o{ sede : "creado_por / modificado_por / dado_de_baja_por"
-    usuario |o--o{ espacio : "creado_por / modificado_por / dado_de_baja_por"
-    usuario |o--o{ reserva : "cancelada_por"
-    sede ||--o{ espacio : "contiene"
-    espacio ||--o{ reserva : "se reserva"
-    reserva |o--o{ notificacion : "origina"
-    notificacion |o--o{ notificacion : "reemplazada_por"
-    notificacion ||--o{ notificacion_reserva : "cubre"
-    reserva |o--o| notificacion_reserva : "informada en"
+    app_user ||--o{ booking : "reserva"
+    app_user ||--o{ device : "tiene"
+    app_user ||--o{ notification : "recibe"
+    app_user ||--o{ recovery_link : "pide"
+    app_user |o--o{ venue : "created_by / updated_by / deactivated_by"
+    app_user |o--o{ space : "created_by / updated_by / deactivated_by"
+    app_user |o--o{ booking : "canceled_by"
+    venue ||--o{ space : "contiene"
+    space ||--o{ booking : "se reserva"
+    booking |o--o{ notification : "origina"
+    notification |o--o{ notification : "replaced_by"
+    notification ||--o{ notification_booking : "cubre"
+    booking |o--o| notification_booking : "informada en"
 
-    usuario {
+    app_user {
         uuid id PK
         text firebase_uid UK
-        text correo
+        text email
         text dni
-        text rol
-        boolean activo
-        timestamptz creado_en
-        timestamptz modificado_en
+        text role
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
     }
-    sede {
+    venue {
         uuid id PK
-        text nombre
-        time apertura
-        time cierre
-        smallint[] dias
-        boolean activa
-        uuid creado_por FK
-        timestamptz creado_en
-        timestamptz modificado_en
+        text name
+        time opens_at
+        time closes_at
+        smallint[] open_days
+        boolean active
+        uuid created_by FK
+        timestamptz created_at
+        timestamptz updated_at
     }
-    espacio {
+    space {
         uuid id PK
-        uuid sede_id FK
-        text nombre UK
-        integer precio_por_hora
-        boolean activo
-        timestamptz creado_en
-        timestamptz modificado_en
+        uuid venue_id FK
+        text name UK
+        integer price_per_hour
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
     }
-    reserva {
+    booking {
         uuid id PK
-        uuid usuario_id FK
-        uuid espacio_id FK
-        timestamptz inicio
-        timestamptz fin
+        uuid user_id FK
+        uuid space_id FK
+        timestamptz starts_at
+        timestamptz ends_at
         integer total
-        text estado
-        uuid cancelada_por FK
-        timestamptz creado_en
-        timestamptz modificado_en
+        text status
+        uuid canceled_by FK
+        timestamptz created_at
+        timestamptz updated_at
     }
-    enlace_recuperacion {
+    recovery_link {
         uuid id PK
-        uuid usuario_id FK
-        text codigo_hash UK
-        timestamptz vence_en
-        timestamptz creado_en
-        timestamptz modificado_en
+        uuid user_id FK
+        text code_hash UK
+        timestamptz expires_at
+        timestamptz created_at
+        timestamptz updated_at
     }
-    correo_saliente {
+    outgoing_email {
         uuid id PK
-        text para
-        text asunto
-        timestamptz creado_en
-        timestamptz modificado_en
+        text recipient
+        text subject
+        timestamptz created_at
+        timestamptz updated_at
     }
-    dispositivo {
+    device {
         uuid id PK
-        uuid usuario_id FK
+        uuid user_id FK
         text token
-        boolean permiso
-        boolean activo
-        timestamptz creado_en
-        timestamptz modificado_en
+        boolean permission_granted
+        boolean active
+        timestamptz created_at
+        timestamptz updated_at
     }
-    notificacion {
+    notification {
         uuid id PK
-        uuid usuario_id FK
-        uuid reserva_id FK
-        uuid reemplazada_por FK
-        text tipo
-        text envio
-        timestamptz creado_en
-        timestamptz modificado_en
+        uuid user_id FK
+        uuid booking_id FK
+        uuid replaced_by FK
+        text kind
+        text delivery
+        timestamptz created_at
+        timestamptz updated_at
     }
-    notificacion_reserva {
-        uuid notificacion_id PK, FK
-        uuid reserva_id PK, FK
-        timestamptz creado_en
-        timestamptz modificado_en
+    notification_booking {
+        uuid notification_id PK, FK
+        uuid booking_id PK, FK
+        timestamptz created_at
+        timestamptz updated_at
     }
 ```
 
-`reserva_con_estado` es una vista sobre `reserva` con una columna extra, `estado_actual`: vale `completada` cuando la reserva
-está `activa` y su `fin` ya pasó; en los demás casos repite `estado`. `correo_saliente` no se relaciona con ninguna tabla.
+`booking_with_status` es una vista sobre `booking` con una columna extra, `current_status`: vale `completed` cuando la reserva
+está `active` y su `ends_at` ya pasó; en los demás casos repite `status`. `outgoing_email` no se relaciona con ninguna tabla.
 
 ## Entidades
 
-Las nueve tablas tienen `creado_en` y `modificado_en` (timestamptz, no nulos): cuándo se creó la fila y cuándo cambió por
-última vez. Los triggers `<tabla>_modificado`, uno por tabla, conservan `creado_en` y actualizan `modificado_en` en cada
-cambio.
+Las nueve tablas tienen `created_at` y `updated_at` (timestamptz, no nulos): cuándo se creó la fila y cuándo cambió por
+última vez. Los triggers `<tabla>_updated`, uno por tabla (por ejemplo `app_user_updated`), conservan `created_at` y
+actualizan `updated_at` en cada cambio.
 
-### usuario
+### app_user
 
 Una persona con cuenta: socio o administrador. La contraseña vive en Firebase; acá queda sólo el rastro.
 
-- `firebase_uid` text, único. `correo` text. `nombre`, `apellido` text, no vacíos. `dni` text. `fecha_nacimiento` date.
-- `rol` text: `usuario` (por defecto) o `admin`.
-- `activo` boolean y `dado_de_baja_en` timestamptz. `contrasena_cambiada_en` timestamptz: cuándo cambió la contraseña.
-- `creado_en`: cuándo se registró la cuenta. `modificado_en`: el último cambio de la fila (perfil, rol, baja).
+- `firebase_uid` text, único. `email` text. `first_name`, `last_name` text, no vacíos. `dni` text. `birth_date` date.
+- `role` text: `user` (por defecto) o `admin`.
+- `active` boolean y `deactivated_at` timestamptz. `password_changed_at` timestamptz: cuándo cambió la contraseña.
+- `created_at`: cuándo se registró la cuenta. `updated_at`: el último cambio de la fila (perfil, rol, baja).
 
 Reglas de la base: el DNI tiene 7 u 8 dígitos. Correo (sin distinguir mayúsculas) y DNI son únicos **sólo entre cuentas
-activas**: una cuenta dada de baja libera ambos. El correo no se puede modificar (trigger `usuario_correo_inmutable`).
+activas**: una cuenta dada de baja libera ambos. El correo no se puede modificar (trigger `app_user_email_immutable`).
 
-### sede
+### venue
 
 Un local del club con su horario.
 
-- `nombre`, `calle` text, no vacíos. `altura` integer.
-- `apertura`, `cierre` time. `dias` smallint[]: días de la semana abiertos, 1 a 7.
-- `activa`, `dado_de_baja_en`, `creado_por`, `modificado_por`, `dado_de_baja_por` (los tres últimos apuntan a `usuario`).
-- `creado_en`: cuándo se dio de alta la sede. `modificado_en`: su última edición o su baja.
+- `name`, `street` text, no vacíos. `street_number` integer.
+- `opens_at`, `closes_at` time. `open_days` smallint[]: días de la semana abiertos, 1 a 7.
+- `active`, `deactivated_at`, `created_by`, `updated_by`, `deactivated_by` (los tres últimos apuntan a `app_user`).
+- `created_at`: cuándo se dio de alta la sede. `updated_at`: su última edición o su baja.
 
-Reglas: el nombre es único entre sedes activas (sin distinguir mayúsculas); `altura` mayor que 0; apertura y cierre en horas
-completas, con `apertura < cierre` o `cierre = 00:00` (medianoche); `dias` tiene de 1 a 7 valores entre 1 y 7.
+Reglas: el nombre es único entre sedes activas (sin distinguir mayúsculas); `street_number` mayor que 0; apertura y cierre en horas
+completas, con `opens_at < closes_at` o `closes_at = 00:00` (medianoche); `open_days` tiene de 1 a 7 valores entre 1 y 7.
 
-### espacio
+### space
 
 Una cancha o sala reservable dentro de una sede.
 
-- `sede_id` FK a `sede`. `deporte`, `tipo` text, no vacíos. `numero` integer. `nombre` text.
-- `techada`, `iluminada` boolean. `precio_por_hora` integer.
-- `activo`, `dado_de_baja_en` y los campos de auditoría (`creado_por`, `modificado_por`, `dado_de_baja_por`).
-- `creado_en`: cuándo se dio de alta el espacio. `modificado_en`: su última edición o su baja.
+- `venue_id` FK a `venue`. `sport`, `kind` text, no vacíos. `number` integer. `name` text.
+- `covered`, `lit` boolean. `price_per_hour` integer.
+- `active`, `deactivated_at` y los campos de auditoría (`created_by`, `updated_by`, `deactivated_by`).
+- `created_at`: cuándo se dio de alta el espacio. `updated_at`: su última edición o su baja.
 
-Reglas: `nombre` único en toda la tabla; `(sede_id, deporte, tipo, numero)` único; `numero` y `precio_por_hora` mayores que
-0. La identidad del espacio (`nombre`, `sede_id`, `deporte`, `tipo`, `numero`) no cambia nunca (trigger
-`espacio_nombre_inmutable`).
+Reglas: `name` único en toda la tabla; `(venue_id, sport, kind, number)` único; `number` y `price_per_hour` mayores que
+0. La identidad del espacio (`name`, `venue_id`, `sport`, `kind`, `number`) no cambia nunca (trigger
+`space_name_immutable`, que ejecuta `space_identity_immutable()`).
 
-### reserva
+### booking
 
 El turno que un socio toma sobre un espacio.
 
-- `usuario_id`, `espacio_id` FK. `inicio`, `fin` timestamptz.
-- `precio_por_hora` integer: copia del precio al reservar. `total` integer.
-- `estado` text: `activa` (por defecto), `cancelada` o `anulada`.
-- `cancelada_en`, `cancelada_por` (FK a `usuario`), `motivo` text.
-- `creado_en`: cuándo se hizo la reserva. `modificado_en`: su último cambio (modificación, cancelación o anulación).
+- `user_id`, `space_id` FK. `starts_at`, `ends_at` timestamptz.
+- `price_per_hour` integer: copia del precio al reservar. `total` integer.
+- `status` text: `active` (por defecto), `canceled` o `voided`.
+- `canceled_at`, `canceled_by` (FK a `app_user`), `reason` text.
+- `created_at`: cuándo se hizo la reserva. `updated_at`: su último cambio (modificación, cancelación o anulación).
 
 Reglas de la base:
 
-- `inicio` y `fin` caen en horas completas de la zona del club.
+- `starts_at` y `ends_at` caen en horas completas de la zona del club.
 - Dura entre 1 y 4 horas.
-- `total = precio_por_hora × horas`.
-- Una reserva `anulada` exige `motivo` no vacío.
-- **Sin superposición:** `EXCLUDE USING gist (espacio_id WITH =, tstzrange(inicio, fin) WITH &&) WHERE (estado = 'activa')`.
+- `total = price_per_hour × horas`.
+- Una reserva `voided` exige `reason` no vacío.
+- **Sin superposición:** `EXCLUDE USING gist (space_id WITH =, tstzrange(starts_at, ends_at) WITH &&) WHERE (status = 'active')`.
   Dos reservas activas del mismo espacio no pueden pisarse; las canceladas o anuladas liberan el horario.
 
-### enlace_recuperacion
+### recovery_link
 
 Un pedido de recuperar la contraseña.
 
-- `usuario_id` FK. `codigo_hash` text, único: se guarda sólo el hash, nunca el código.
-- `creado_en` (por defecto `clock_timestamp()`): cuándo se pidió. `vence_en`, `usado_en`, `invalidado_en`.
-- `modificado_en`: cuándo se usó o se invalidó por última vez.
+- `user_id` FK. `code_hash` text, único: se guarda sólo el hash, nunca el código.
+- `created_at` (por defecto `clock_timestamp()`): cuándo se pidió. `expires_at`, `used_at`, `invalidated_at`.
+- `updated_at`: cuándo se usó o se invalidó por última vez.
 
-Regla: `vence_en > creado_en`.
+Regla: `expires_at > created_at`.
 
-### correo_saliente
+### outgoing_email
 
 Buzón de correos para desarrollo y pruebas (`CORREO_MODO=buzon`); en producción el correo sale por SMTP y la tabla queda
-vacía. Columnas: `para`, `asunto`, `cuerpo` (text, no nulos), `creado_en` y `modificado_en`. Sin relaciones.
+vacía. Columnas: `recipient`, `subject`, `body` (text, no nulos), `created_at` y `updated_at`. Sin relaciones.
 
-### dispositivo
+### device
 
 Un teléfono con la app instalada, para enviarle avisos push.
 
-- `usuario_id` FK. `token` text (token de FCM), no vacío. `plataforma` text: `android` o `ios`.
-- `permiso` boolean: lo que el sistema operativo contestó sobre las notificaciones.
-- `activo`, `creado_en`, `modificado_en`, `dado_de_baja_en`.
+- `user_id` FK. `token` text (token de FCM), no vacío. `platform` text: `android` o `ios`.
+- `permission_granted` boolean: lo que el sistema operativo contestó sobre las notificaciones.
+- `active`, `created_at`, `updated_at`, `deactivated_at`.
 
 Regla: un `token` activo pertenece a una sola cuenta; si otra inicia sesión en ese teléfono, el registro pasa a ella.
 
-### notificacion
+### notification
 
 Un aviso que ve la persona en el centro de avisos y que, si puede, también llega al teléfono.
 
-- `usuario_id` FK. `tipo` text: `recordatorio`, `cancelacion_forzosa` o `cancelacion_usuario`.
-- `titulo`, `cuerpo` text, no vacíos. `reserva_id` FK a `reserva`; `reserva_inicio` timestamptz (el horario al que refiere).
-- `envio` text: estado del envío (ver más abajo). `creado_en`: cuándo se generó el aviso. `enviada_en`, `leida_en`.
-- `modificado_en`: el último cambio del aviso (envío, lectura o reemplazo).
-- `enviando_desde` timestamptz: cuándo se tomó el aviso para enviarlo.
-- `reemplazada_por` FK a `notificacion`; `cantidad` integer mayor que 0: cuántas reservas cubre un aviso agrupado.
+- `user_id` FK. `kind` text: `reminder`, `five_minute_reminder`, `forced_cancellation` o `user_cancellation`.
+- `title`, `body` text, no vacíos. `booking_id` FK a `booking`; `booking_starts_at` timestamptz (el horario al que refiere).
+- `delivery` text: estado del envío (ver más abajo). `created_at`: cuándo se generó el aviso. `sent_at`, `read_at`.
+- `updated_at`: el último cambio del aviso (envío, lectura o reemplazo).
+- `sending_since` timestamptz: cuándo se tomó el aviso para enviarlo.
+- `replaced_by` FK a `notification`; `count` integer mayor que 0: cuántas reservas cubre un aviso agrupado.
 
-Reglas: un recordatorio exige `reserva_id` y `reserva_inicio`, y hay a lo sumo uno por `(reserva_id, reserva_inicio)`; una
-`cancelacion_usuario` exige `reserva_id` y hay a lo sumo una por reserva (repetir la cancelación no repite el aviso).
-Cuando se agrupan anulaciones, se abre un aviso nuevo y el anterior queda con `reemplazada_por`: el centro no lo lista pero
+Reglas: un recordatorio exige `booking_id` y `booking_starts_at`, y hay a lo sumo uno por `(booking_id, booking_starts_at)`
+(índice `notification_reminder_unique`; el de cinco minutos tiene el suyo, `notification_five_minute_reminder_unique`); una
+`user_cancellation` exige `booking_id` y hay a lo sumo una por reserva (repetir la cancelación no repite el aviso).
+Cuando se agrupan anulaciones, se abre un aviso nuevo y el anterior queda con `replaced_by`: el centro no lo lista pero
 conserva cómo salió.
 
-### notificacion_reserva
+### notification_booking
 
-Une un aviso agrupado de anulación con las reservas que informa. Columnas `notificacion_id` y `reserva_id`, ambas FK `uuid`,
-más `creado_en` y `modificado_en`. No tiene `id` propio: su clave primaria es compuesta por las dos FK; `reserva_id` es
+Une un aviso agrupado de anulación con las reservas que informa. Columnas `notification_id` y `booking_id`, ambas FK `uuid`,
+más `created_at` y `updated_at`. No tiene `id` propio: su clave primaria es compuesta por las dos FK; `booking_id` es
 único: una reserva tiene a lo sumo un aviso.
 
 ## Estados
 
-### reserva
+### booking
 
 ```mermaid
 stateDiagram-v2
-    [*] --> activa
-    activa --> cancelada: la cancela el socio o se da de baja su cuenta
-    activa --> anulada: el administrador la anula (con motivo)
-    activa --> completada: pasa su fin (calculado por la vista)
+    [*] --> active
+    active --> canceled: la cancela el socio o se da de baja su cuenta
+    active --> voided: el administrador la anula (con motivo)
+    active --> completed: pasa su fin (calculado por la vista)
 ```
 
-`completada` no se guarda: la calcula `reserva_con_estado` (`estado_actual`). `cancelada` y `anulada` son finales y dejan
-`cancelada_en` / `cancelada_por` (y `motivo` en la anulación) para la trazabilidad.
+`completed` no se guarda: la calcula `booking_with_status` (`current_status`). `canceled` y `voided` son finales y dejan
+`canceled_at` / `canceled_by` (y `reason` en la anulación) para la trazabilidad.
 
-### notificacion.envio
+### notification.delivery
 
 ```mermaid
 stateDiagram-v2
-    [*] --> pendiente
-    pendiente --> enviando: el despacho toma el aviso (enviando_desde = now())
-    enviando --> enviada: el servicio de push entregó a algún teléfono
-    enviando --> fallida: error, nadie recibió, o más de 10 min en enviando
-    enviando --> sin_permiso: hay dispositivos pero ninguno dio permiso
-    enviando --> sin_canal: no hay dispositivos o no hay servicio de envío
-    pendiente --> fallida: recordatorio que ya no corresponde
+    [*] --> pending
+    pending --> sending: el despacho toma el aviso (sending_since = now())
+    sending --> sent: el servicio de push entregó a algún teléfono
+    sending --> failed: error, nadie recibió, o más de 10 min en sending
+    sending --> no_permission: hay dispositivos pero ninguno dio permiso
+    sending --> no_channel: no hay dispositivos o no hay servicio de envío
+    pending --> failed: recordatorio que ya no corresponde
 ```
 
-No hay reintentos: un envío que falla queda `fallida`. Si la API se cae a mitad de un envío, el aviso queda en `enviando`;
-al despachar, el que lleva más de 10 minutos desde `enviando_desde` pasa a `fallida` y se registra en el log como
-«aviso_sin_enviar». `sin_permiso` y `sin_canal` dejan el aviso sólo en el centro de avisos. Un recordatorio `pendiente`
-cuya reserva se canceló, se movió o ya empezó pasa a `fallida` sin enviarse.
+No hay reintentos: un envío que falla queda `failed`. Si la API se cae a mitad de un envío, el aviso queda en `sending`;
+al despachar, el que lleva más de 10 minutos desde `sending_since` pasa a `failed` y se registra en el log como
+«aviso_sin_enviar». `no_permission` y `no_channel` dejan el aviso sólo en el centro de avisos. Un recordatorio `pending`
+cuya reserva se canceló, se movió o ya empezó pasa a `failed` sin enviarse.
 
 ## Bajas lógicas y trazabilidad
 
-- **Cuentas, sedes, espacios y reservas no se borran.** `usuario`, `sede`, `espacio` y `reserva` tienen un trigger
-  `BEFORE DELETE` (`prohibir_borrado`) que rechaza todo `DELETE`.
-- **Baja = bandera + fecha.** `activo` (o `activa`) y `dado_de_baja_en` van siempre juntos: un `CHECK` obliga a que la
-  bandera sea verdadera si y sólo si `dado_de_baja_en` es nulo. Lo mismo vale para `dispositivo`.
-- **Quién hizo qué.** `sede` y `espacio` guardan `creado_por`, `modificado_por` y `dado_de_baja_por` (FK a `usuario`);
-  `reserva` guarda `cancelada_por`. Cuándo: `creado_en` y `modificado_en` en las nueve tablas (el segundo, mantenido por el
-  trigger `<tabla>_modificado`) y `dado_de_baja_en` donde hay baja.
+- **Cuentas, sedes, espacios y reservas no se borran.** `app_user`, `venue`, `space` y `booking` tienen un trigger
+  `BEFORE DELETE` (`<tabla>_no_delete`, que ejecuta `forbid_delete()`) que rechaza todo `DELETE`.
+- **Baja = bandera + fecha.** `active` y `deactivated_at` van siempre juntos: un `CHECK` obliga a que la
+  bandera sea verdadera si y sólo si `deactivated_at` es nulo. Lo mismo vale para `device`.
+- **Quién hizo qué.** `venue` y `space` guardan `created_by`, `updated_by` y `deactivated_by` (FK a `app_user`);
+  `booking` guarda `canceled_by`. Cuándo: `created_at` y `updated_at` en las nueve tablas (el segundo, mantenido por el
+  trigger `<tabla>_updated`) y `deactivated_at` donde hay baja.
 - **Las bajas liberan.** Como los únicos de correo, DNI y nombre de sede valen sólo entre activos, un registro dado de baja
   deja libre su correo, DNI o nombre.
 - Los enlaces de recuperación, correos y avisos no se borran ni tienen vencimiento automático.
@@ -276,19 +277,19 @@ consultas principales:
 
 | Consulta | Tabla | Índice |
 |---|---|---|
-| Superposición al reservar | `reserva` | la restricción de exclusión gist |
-| Barrido: reservas activas que empiezan en la hora que viene | `reserva` | `reserva_activa_inicio` |
-| Historial propio, `GET /reservas?cuando=historial` | `reserva` | `reserva_por_usuario_inicio` |
-| Historial global del administrador | `reserva` | `reserva_por_inicio` |
-| Centro de avisos de una persona | `notificacion` | `notificacion_usuario` |
-| Despacho del pendiente más viejo | `notificacion` | `notificacion_por_despachar` |
+| Superposición al reservar | `booking` | la restricción de exclusión gist |
+| Barrido: reservas activas que empiezan en la hora que viene | `booking` | `booking_active_starts_at` |
+| Historial propio, `GET /reservas?cuando=historial` | `booking` | `booking_by_user_starts_at` |
+| Historial global del administrador | `booking` | `booking_by_starts_at` |
+| Centro de avisos de una persona | `notification` | `notification_user` |
+| Despacho del pendiente más viejo | `notification` | `notification_to_dispatch` |
 
 Los tests de `tests/escenarios/test_datos*.py` verifican que los planes del historial no recorren la tabla entera. El plan
 del resto de las consultas no se midió.
 
 ## Migraciones, retención y respaldo
 
-- **Migraciones:** Alembic (`apps/api/alembic.ini`, `migraciones/`), diez revisiones lineales, 0001 a 0010. Corren dentro del
+- **Migraciones:** Alembic (`apps/api/alembic.ini`, `migrations/`), doce revisiones lineales, 0001 a 0012. Corren dentro del
   build de Render (`render.yaml`, `buildCommand`), cada una en su transacción. `tests/escenarios/test_datos*.py` vigila la
   ida y vuelta.
 - **Retención:** no hay política. Ningún `DELETE` pasa en las tablas principales y los avisos, enlaces y correos no vencen.
@@ -302,12 +303,12 @@ mediante el de reservas).
 
 | Tabla | Módulo |
 |---|---|
-| `usuario` | `usuarios.py` |
-| `sede` | `sedes.py` |
-| `espacio` | `espacios.py` |
-| `reserva` | `reservas.py` |
-| `enlace_recuperacion` | `enlaces.py` |
-| `correo_saliente` | `correo.py` |
-| `dispositivo` | `notificaciones.py` |
-| `notificacion` | `notificaciones.py` |
-| `notificacion_reserva` | `notificaciones.py` |
+| `app_user` | `usuarios.py` |
+| `venue` | `sedes.py` |
+| `space` | `espacios.py` |
+| `booking` | `reservas.py` |
+| `recovery_link` | `enlaces.py` |
+| `outgoing_email` | `correo.py` |
+| `device` | `notificaciones.py` |
+| `notification` | `notificaciones.py` |
+| `notification_booking` | `notificaciones.py` |

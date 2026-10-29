@@ -14,7 +14,7 @@ def test_el_modelo_de_datos_documenta_todas_las_tablas() -> None:
     tablas = _columnas_por_tabla()
 
     assert len(tablas) >= 9
-    comunes = {"id", "creado_en", "modificado_en"}
+    comunes = {"id", "created_at", "updated_at"}
     faltan = [
         f"{tabla}.{columna}"
         for tabla, columnas in sorted(tablas.items())
@@ -51,4 +51,4 @@ def test_cada_tabla_del_esquema_migrado_figura_en_el_modelo_de_datos_con_sus_col
         assert len(trozos) > 1, tabla
         seccion = re.split(r"^#+ ", trozos[1], flags=re.M)[0]
         omitidas = [c for c in sorted(columnas) if f"`{c}`" not in seccion]
-        assert set(omitidas) <= {"id", "creado_en", "modificado_en"}, (tabla, omitidas)
+        assert set(omitidas) <= {"id", "created_at", "updated_at"}, (tabla, omitidas)

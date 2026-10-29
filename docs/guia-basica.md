@@ -65,7 +65,7 @@ apps/
                           sesion, recuperacion, notificaciones): sus rutas, casos de uso, reglas y SQL
       shared/             lo que usan varias: base, errores, zona horaria, Firebase, configuración
       main.py             arma la aplicación
-    migraciones/versions/ los cambios de tablas, numerados 0001, 0002…
+    migrations/versions/  los cambios de tablas, numerados 0001, 0002…
     tests/                tests del servidor
   mobile/                 la app
     lib/
@@ -100,7 +100,7 @@ lo rompe.
 | Cambiar un texto de una pantalla | La pantalla en `apps/mobile/lib/<tema>/pantalla_*.dart`; buscá el texto con el buscador del editor |
 | Cambiar un color | `apps/mobile/lib/tema/tokens.dart`. Ninguna pantalla escribe colores a mano |
 | Agregar una regla de negocio (por ejemplo, un máximo de horas) | `reglas.py` de la funcionalidad en `apps/api/app/modules/` y su test en `apps/api/tests/unit/` |
-| Agregar un dato a una tabla | Una migración nueva en `apps/api/migraciones/versions/` (copiá la forma de la última), el SQL del `repositorio.py` y la ruta en `rutas.py`, ambos en la carpeta de la funcionalidad |
+| Agregar un dato a una tabla | Una migración nueva en `apps/api/migrations/versions/` (copiá la forma de la última), el SQL del `repositorio.py` y la ruta en `rutas.py`, ambos en la carpeta de la funcionalidad |
 | Agregar una pantalla | Un archivo `pantalla_*.dart` en la carpeta del tema y su ruta en `lib/app.dart` |
 | Agregar una ruta de la API | La función en `app/modules/<funcionalidad>/rutas.py`, registrarla en `lib/api/rutas.dart` de la app y regenerar `openapi.json` (ver el README de la API) |
 

@@ -188,7 +188,7 @@ def test_ningun_archivo_de_la_api_importa_un_modulo_de_la_base_con_su_nombre_en_
     None
 ):
     """ningún archivo de la API importa un módulo de la base con su nombre en castellano @assumption:ENG-01-ASM-06"""
-    asunto = [*_importes_viejos(APP), *_importes_viejos(RAIZ_API / "migraciones")]
+    asunto = [*_importes_viejos(APP), *_importes_viejos(RAIZ_API / "migrations")]
 
     assert asunto == []
 
