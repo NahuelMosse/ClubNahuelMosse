@@ -12,6 +12,11 @@ class MyProfileSkeleton extends StatelessWidget {
   /// Lo que mide el contenido de `ProfileHeader` sin sus márgenes.
   static const _headerContent = 166.0;
 
+  /// Lo que miden DATOS PERSONALES, SEGURIDAD y APARIENCIA una vez cargadas.
+  static const _dataHeight = 320.0;
+  static const _securityHeight = 108.0;
+  static const _appearanceHeight = 100.0;
+
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
@@ -69,11 +74,11 @@ class MyProfileSkeleton extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Card(rows: 4, border: p.borderDefault),
+                  _Card(height: _dataHeight, border: p.borderDefault),
                   const SizedBox(height: Spacing.s16),
-                  _Card(rows: 1, border: p.borderDefault),
+                  _Card(height: _securityHeight, border: p.borderDefault),
                   const SizedBox(height: Spacing.s16),
-                  _Card(rows: 1, border: p.borderDefault),
+                  _Card(height: _appearanceHeight, border: p.borderDefault),
                   const SizedBox(height: Spacing.s20),
                   const Skeleton(height: 48, radius: Spacing.radiusLg),
                 ],
@@ -87,14 +92,19 @@ class MyProfileSkeleton extends StatelessWidget {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.rows, required this.border});
+  const _Card({required this.height, required this.border});
 
-  final int rows;
+  final double height;
   final Color border;
+
+  /// Alto de una fila de dato con su separación.
+  static const _row = 32.0;
+  static const _titleSpace = 60.0;
 
   @override
   Widget build(BuildContext context) => Container(
     key: const ValueKey('skeleton-card'),
+    height: height,
     padding: const EdgeInsets.all(Spacing.s16),
     decoration: BoxDecoration(
       border: Border.all(color: border),
@@ -107,7 +117,7 @@ class _Card extends StatelessWidget {
           alignment: Alignment.centerLeft,
           child: Skeleton(width: 120, height: 12),
         ),
-        for (var i = 0; i < rows; i++) ...[
+        for (var i = 0; i < ((height - _titleSpace) / _row).floor(); i++) ...[
           const SizedBox(height: Spacing.s12),
           const Skeleton(height: 20),
         ],

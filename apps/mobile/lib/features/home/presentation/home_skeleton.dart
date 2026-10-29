@@ -9,11 +9,11 @@ import 'home_title.dart';
 class HomeSkeleton extends StatelessWidget {
   const HomeSkeleton({super.key});
 
-  static const _bookingHeight = 190.0;
+  static const _bookingHeight = 280.0;
   static const _tileWidth = 124.0;
   static const _tileHeight = 148.0;
   static const _tileRadius = 20.0;
-  static const _shortcutHeight = 120.0;
+  static const _shortcutHeight = 134.0;
   static const _tileCount = 3;
 
   @override
