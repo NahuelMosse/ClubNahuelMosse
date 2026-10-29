@@ -10,7 +10,7 @@ import 'soporte/montar.dart';
 final leida = notif(
   id: '00000000-0000-7000-8000-000000000005',
   club: DateTime.utc(2026, 11, 12, 19, 50),
-  tipo: 'cancelacion_forzosa',
+  tipo: 'forced_cancellation',
   titulo: 'El club anuló tu reserva',
   cuerpo: 'Fútbol 5 · Sede Morón · Mié 11, 20:00. Motivo: lluvia.',
   reservaId: '00000000-0000-7000-8000-000000000002',
@@ -20,7 +20,7 @@ final leida = notif(
 final agrupado = notif(
   id: '00000000-0000-7000-8000-000000000006',
   club: DateTime.utc(2026, 11, 12, 19, 59),
-  tipo: 'cancelacion_forzosa',
+  tipo: 'forced_cancellation',
   titulo: 'El club anuló 2 de tus reservas',
   cuerpo:
       'Tenés 2 reservas anuladas por el club. Mirá el detalle en tu historial.',

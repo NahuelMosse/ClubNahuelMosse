@@ -18,7 +18,7 @@ void main() {
         'http://api.falsa',
         cliente: MockClient(
           (_) async => http.Response(
-            '{"mensaje": "Hiciste demasiados intentos. Esperá un minuto y volvé a probar."}',
+            '{"message": "Hiciste demasiados intentos. Esperá un minuto y volvé a probar."}',
             429,
             headers: {'content-type': 'application/json; charset=utf-8'},
           ),
@@ -32,7 +32,7 @@ void main() {
               child: TextButton(
                 onPressed: () async {
                   try {
-                    await api.post('/recuperacion', {'correo': 'a@b.com'});
+                    await api.post('/password-recovery', {'email': 'a@b.com'});
                   } on Exception catch (e) {
                     if (context.mounted) await showNetworkError(context, e);
                   }

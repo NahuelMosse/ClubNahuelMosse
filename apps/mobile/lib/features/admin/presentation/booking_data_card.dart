@@ -28,7 +28,7 @@ class BookingDataCard extends StatelessWidget {
       excludeSemantics: true,
       label:
           '$sportName, sede ${b.venue}, ${b.address}, ${formatPesos(b.total)}, '
-          '${b.status.apiValue}, usuario ${b.user}, ${b.space}, '
+          '${b.status.label.toLowerCase()}, usuario ${b.user}, ${b.space}, '
           '${longDate(b.startsAt)}, $schedule',
       child: CardFrame(
         clip: Clip.none,

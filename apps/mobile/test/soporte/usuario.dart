@@ -10,13 +10,13 @@ import 'admin.dart';
 import 'montar.dart';
 
 const sedeMoronConDeportes =
-    '{"id": "00000000-0000-7000-8000-000000000001", "nombre": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
-    '"apertura": "08:00", "cierre": "23:00", "dias": [1,2,3,4,5,6,7], '
-    '"canchas": 2, "deportes": ["Futbol", "Tenis"]}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "name": "Sede Morón", "address": "Av. Rivadavia 19850", '
+    '"opens_at": "08:00", "closes_at": "23:00", "open_days": [1,2,3,4,5,6,7], '
+    '"space_count": 2, "sports": ["Futbol", "Tenis"]}';
 const sedeHaedoSinCanchas =
-    '{"id": "00000000-0000-7000-8000-000000000005", "nombre": "Sede Haedo", "direccion": "Av. Vergara 1850", '
-    '"apertura": "08:00", "cierre": "22:00", "dias": [1,2,3,4,5,6,7], '
-    '"canchas": 0, "deportes": []}';
+    '{"id": "00000000-0000-7000-8000-000000000005", "name": "Sede Haedo", "address": "Av. Vergara 1850", '
+    '"opens_at": "08:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6,7], '
+    '"space_count": 0, "sports": []}';
 
 /// La grilla del prototipo: jueves 12 de noviembre, 1 hora, seis horarios ocupados.
 String grillaJson({
@@ -28,12 +28,12 @@ String grillaJson({
   final franjas = [
     if (abre)
       for (var h = 8; h < 23; h++)
-        '{"inicio": "${hora(h)}", "fin": "${hora(h + 1)}", '
-            '"disponible": ${!ocupadas.contains(h)}}',
+        '{"starts_at": "${hora(h)}", "ends_at": "${hora(h + 1)}", '
+            '"available": ${!ocupadas.contains(h)}}',
   ];
-  return '{"fecha": "$fecha", "hoy": "2026-11-12", "abre": $abre, '
-      '"franjas": [${franjas.join(', ')}], '
-      '"no_disponibles": ${abre ? ocupadas.length : 0}}';
+  return '{"date": "$fecha", "today": "2026-11-12", "opens": $abre, '
+      '"slots": [${franjas.join(', ')}], '
+      '"unavailable": ${abre ? ocupadas.length : 0}}';
 }
 
 /// Las respuestas de la API para recorrer las sedes como usuario.
@@ -42,10 +42,10 @@ Map<String, (int, String)> rutasDeSedes({
   String espacios = '[$espacioF5Json, $espacioTenisJson]',
   String? grilla,
 }) => {
-  'GET /espacios/catalogo': (200, catalogoJson),
-  'GET /sedes': (200, '{"sedes": $sedes}'),
-  'GET /espacios': (200, '{"espacios": $espacios}'),
-  'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+  'GET /spaces/catalog': (200, catalogoJson),
+  'GET /venues': (200, '{"venues": $sedes}'),
+  'GET /spaces': (200, '{"spaces": $espacios}'),
+  'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
     200,
     grilla ?? grillaJson(),
   ),
@@ -55,7 +55,7 @@ Map<String, (int, String)> rutasDeSedes({
 Future<void> montarUsuario(
   WidgetTester tester, {
   required ApiClient api,
-  String inicio = '/sedes',
+  String inicio = '/venues',
   bool oscuro = true,
   Size tamano = const Size(393, 852),
   NotificationCenter Function(Session)? centro,

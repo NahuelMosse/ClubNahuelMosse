@@ -18,17 +18,17 @@ String reservaJson({
   String? envio,
   String? envioEn,
 }) =>
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-    ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-    ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-    ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "$estado", "motivo": "mantenimiento de la cancha",'
-    ' "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-    ' "creado_en": "2026-11-02T18:42:00-03:00",'
-    ' "cancelada_en": "2026-11-03T10:00:00-03:00",'
-    ' "cancelada_por_nombre": "Ana Díaz", "espacio_de_baja": false,'
-    ' "anulable": false, "aviso_envio": ${envio == null ? 'null' : '"$envio"'},'
-    ' "aviso_en": ${envioEn == null ? 'null' : '"$envioEn"'}}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+    ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+    ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+    ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+    ' "status": "$estado", "reason": "mantenimiento de la cancha",'
+    ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+    ' "created_at": "2026-11-02T18:42:00-03:00",'
+    ' "canceled_at": "2026-11-03T10:00:00-03:00",'
+    ' "canceled_by_name": "Ana Díaz", "space_deactivated": false,'
+    ' "voidable": false, "notice_delivery": ${envio == null ? 'null' : '"$envio"'},'
+    ' "notice_at": ${envioEn == null ? 'null' : '"$envioEn"'}}';
 
 void main() {
   Future<void> abrir(
@@ -63,7 +63,7 @@ void main() {
     testWidgets('enviado: dice que se envió y cuándo', (tester) async {
       await abrir(
         tester,
-        reservaJson(envio: 'enviada', envioEn: '2026-11-03T10:00:05-03:00'),
+        reservaJson(envio: 'sent', envioEn: '2026-11-03T10:00:05-03:00'),
       );
 
       expect(find.text('Notificación enviada al usuario'), findsOneWidget);
@@ -97,7 +97,7 @@ void main() {
       testWidgets('al 200 % en $ancho de ancho no se corta', (tester) async {
         await abrir(
           tester,
-          reservaJson(envio: 'sin_canal', envioEn: '2026-11-03T10:00:05-03:00'),
+          reservaJson(envio: 'no_channel', envioEn: '2026-11-03T10:00:05-03:00'),
           tamano: Size(ancho, alto),
           escala: 2,
         );

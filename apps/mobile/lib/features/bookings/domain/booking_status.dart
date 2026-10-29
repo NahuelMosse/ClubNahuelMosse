@@ -1,9 +1,9 @@
 /// The state of a booking. [apiValue] is what the API sends; [label] is what people read.
 enum BookingStatus {
-  active('activa', 'Activa'),
-  completed('completada', 'Completada'),
-  canceled('cancelada', 'Cancelada'),
-  voided('anulada', 'Anulada');
+  active('active', 'Activa'),
+  completed('completed', 'Completada'),
+  canceled('canceled', 'Cancelada'),
+  voided('voided', 'Anulada');
 
   const BookingStatus(this.apiValue, this.label);
 

@@ -1,11 +1,11 @@
 /// The fields of a new space.
 enum NewSpaceField {
-  venue('sede_id'),
-  sport('deporte'),
-  type('tipo'),
-  roofing('techada'),
-  lighting('iluminada'),
-  price('precio_por_hora');
+  venue('venue_id'),
+  sport('sport'),
+  type('kind'),
+  roofing('covered'),
+  lighting('lit'),
+  price('price_per_hour');
 
   const NewSpaceField(this.apiKey);
 

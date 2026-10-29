@@ -47,15 +47,15 @@ const _skeletonShortcut = ValueKey('skeleton-shortcut');
 const _skeletonHeader = ValueKey('skeleton-header');
 
 final _homeAnswers = {
-  'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
-  'GET /espacios/catalogo': (200, catalogoJson),
-  'GET /sedes': (200, '{"sedes": [$sedeMoronConDeportes]}'),
+  'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+  'GET /spaces/catalog': (200, catalogoJson),
+  'GET /venues': (200, '{"venues": [$sedeMoronConDeportes]}'),
 };
 
 final _noticeAnswers = {
-  'GET /notificaciones': (
+  'GET /notifications': (
     200,
-    '{"notificaciones": [$recordatorio, $confirmacion], "no_leidas": 1}',
+    '{"notifications": [$recordatorio, $confirmacion], "unread": 1}',
   ),
 };
 
@@ -135,8 +135,8 @@ void main() {
   testWidgets(
     'Notificaciones carga con la forma de la tarjeta de aviso @VIS-03-S1',
     (tester) async {
-      final api = HeldApi(_noticeAnswers, held: {'GET /notificaciones'});
-      await _open(tester, api, '/notificaciones');
+      final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
+      await _open(tester, api, '/notifications');
 
       final frames = tester.widgetList(find.byKey(_skeletonCard)).length;
       final first = tester.getRect(find.byKey(_skeletonCard).first);
@@ -201,8 +201,8 @@ void main() {
       final screens = <(String, HeldApi, Session?)>[
         ('/inicio', HeldApi(_homeAnswers), null),
         (
-          '/notificaciones',
-          HeldApi(_noticeAnswers, held: {'GET /notificaciones'}),
+          '/notifications',
+          HeldApi(_noticeAnswers, held: {'GET /notifications'}),
           null,
         ),
         ('/perfil', HeldApi({}), _HeldSession()),

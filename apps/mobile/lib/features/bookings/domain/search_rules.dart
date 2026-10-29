@@ -25,14 +25,14 @@ String hhmm(int hour) => wholeHour(hour);
 Map<String, String> dateErrors({required DateTime day, required DateTime now}) {
   final today = DateTime.utc(now.year, now.month, now.day);
   final date = DateTime.utc(day.year, day.month, day.day);
-  if (date.isBefore(today)) return {'fecha': 'La fecha tiene que ser futura'};
+  if (date.isBefore(today)) return {'date': 'La fecha tiene que ser futura'};
   if (!date.isBefore(today.add(const Duration(days: daysInView)))) {
-    return {'fecha': 'Elegí un día de los próximos $daysInView'};
+    return {'date': 'Elegí un día de los próximos $daysInView'};
   }
   return {};
 }
 
-/// The errors per field (`fecha`, `desde`, `hasta`) of the range [from] to [to] (whole
+/// The errors per field (`date`, `start_hour`, `until`) of the range [from] to [to] (whole
 /// hours; [to] 0 is midnight) on [day] at [venue], with [now] in club time.
 Map<String, String> rangeErrors({
   required Venue venue,
@@ -45,7 +45,7 @@ Map<String, String> rangeErrors({
   final today = DateTime.utc(now.year, now.month, now.day);
   final date = DateTime.utc(day.year, day.month, day.day);
   if (errors.isEmpty && !venue.days.contains(date.weekday)) {
-    errors['fecha'] = 'La sede no abre ese día';
+    errors['date'] = 'La sede no abre ese día';
   }
   final end = to == 0 ? 24 : to;
   final opening = onTheHour(venue.opening) ?? 0;
@@ -54,18 +54,16 @@ Map<String, String> rangeErrors({
     final h => h,
   };
   if (end - from < minHours) {
-    errors['hasta'] = 'La duración mínima es de una hora';
+    errors['until'] = 'La duración mínima es de una hora';
   } else if (end - from > maxHours) {
-    errors['hasta'] = 'La duración máxima es de $maxHours horas';
+    errors['until'] = 'La duración máxima es de $maxHours horas';
   } else if (end > closing) {
-    errors['hasta'] = 'La sede cierra a las ${venue.closing}';
+    errors['until'] = 'La sede cierra a las ${venue.closing}';
   }
   if (from < opening) {
-    errors['desde'] = 'La sede abre a las ${venue.opening}';
-  } else if (!errors.containsKey('fecha') &&
-      date == today &&
-      from <= now.hour) {
-    errors['desde'] = 'El horario tiene que ser futuro';
+    errors['start_hour'] = 'La sede abre a las ${venue.opening}';
+  } else if (!errors.containsKey('date') && date == today && from <= now.hour) {
+    errors['start_hour'] = 'El horario tiene que ser futuro';
   }
   return errors;
 }

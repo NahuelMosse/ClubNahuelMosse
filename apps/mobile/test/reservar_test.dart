@@ -21,7 +21,7 @@ void main() {
       tamano: tamano,
       api: apiRutas({
         ...rutasDeSedes(),
-        'POST /reservas': (codigo, cuerpo.isEmpty ? reservaJson() : cuerpo),
+        'POST /bookings': (codigo, cuerpo.isEmpty ? reservaJson() : cuerpo),
       }, pedidos: pedidos),
     );
     final franja = find.bySemanticsLabel('18:00 – 19:00');
@@ -44,13 +44,13 @@ void main() {
     await tester.pumpAndSettle();
 
     final pedido = pedidos.lastWhere((p) => p.method == 'POST');
-    expect(pedido.url.path, '/reservas');
+    expect(pedido.url.path, '/bookings');
     expect(
       pedido.body,
-      contains('"espacio_id":"00000000-0000-7000-8000-000000000009"'),
+      contains('"space_id":"00000000-0000-7000-8000-000000000009"'),
     );
-    expect(pedido.body, contains('"desde":"18:00"'));
-    expect(pedido.body, contains('"horas":1'));
+    expect(pedido.body, contains('"start_hour":"18:00"'));
+    expect(pedido.body, contains('"hours":1'));
     expect(find.text('¡Reserva confirmada!'), findsOneWidget);
     expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
     expect(find.text('21:00 – 22:00 · 1 hora'), findsOneWidget);
@@ -66,7 +66,7 @@ void main() {
   ) async {
     final pedidos = await hastaConfirmar(
       tester,
-      respuesta: (409, '{"errores": {"horario": "Ese horario se ocupó"}}'),
+      respuesta: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
     );
 
     await tester.tap(find.text('CONFIRMAR RESERVA'));

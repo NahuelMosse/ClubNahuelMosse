@@ -16,7 +16,7 @@ void main() {
         tester,
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /reservas': (200, '{"reservas": []}'),
+          'GET /bookings': (200, '{"bookings": []}'),
         }),
         inicio: '/inicio',
         tamano: const Size(393, 1400),

@@ -133,7 +133,7 @@ void main() {
         inicio: '/inicio',
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
+          'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
         }),
       );
       await cumpleLasGuias(tester);
@@ -148,7 +148,7 @@ void main() {
         inicio: '/reservas',
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
+          'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
         }),
       );
       await conFotos(tester);

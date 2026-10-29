@@ -36,7 +36,7 @@ void main() {
 
     test('lee las sedes activas', () async {
       final api = apiRutas({
-        'GET /sedes': (200, '{"sedes": [$sedeMoronJson, $sedeHaedoJson]}'),
+        'GET /venues': (200, '{"venues": [$sedeMoronJson, $sedeHaedoJson]}'),
       });
       final leidas = await sedes(api).repository.active();
       expect([for (final s in leidas) s.name], ['Sede Morón', 'Sede Haedo']);
@@ -46,9 +46,9 @@ void main() {
 
     test('una respuesta que no se entiende es un error del servidor', () {
       final api = apiRutas({
-        'GET /sedes': (
+        'GET /venues': (
           200,
-          '{"sedes": [{"id": "00000000-0000-7000-8000-000000000001"}]}',
+          '{"venues": [{"id": "00000000-0000-7000-8000-000000000001"}]}',
         ),
       });
       expect(sedes(api).repository.active(), throwsA(isA<ErrorDelServidor>()));
@@ -57,7 +57,7 @@ void main() {
     test('el alta manda los datos y devuelve la sede guardada', () async {
       final pedidos = <http.Request>[];
       final api = apiRutas({
-        'POST /sedes': (201, sedeHaedoJson),
+        'POST /venues': (201, sedeHaedoJson),
       }, pedidos: pedidos);
       final sede = await sedes(api).create(
         name: 'Sede Haedo',
@@ -69,11 +69,11 @@ void main() {
       expect(sede.id, '00000000-0000-7000-8000-000000000005');
       expect(pedidos.single.headers['authorization'], 'Bearer token-falso');
       expect(jsonDecode(pedidos.single.body), {
-        'nombre': 'Sede Haedo',
-        'direccion': 'Av. Vergara 1850',
-        'apertura': '08:00',
-        'cierre': '23:00',
-        'dias': [1, 2, 3, 4, 5, 6, 7],
+        'name': 'Sede Haedo',
+        'address': 'Av. Vergara 1850',
+        'opens_at': '08:00',
+        'closes_at': '23:00',
+        'open_days': [1, 2, 3, 4, 5, 6, 7],
       });
     });
 
@@ -87,28 +87,28 @@ void main() {
 
     test('un nombre repetido vuelve con el mensaje del campo', () {
       final api = apiRutas({
-        'POST /sedes': (
+        'POST /venues': (
           409,
-          '{"errores": {"nombre": "Ya existe una sede con ese nombre"}}',
+          '{"errors": {"name": "Ya existe una sede con ese nombre"}}',
         ),
       });
       expect(
         alta(api),
         throwsA(
           isA<VenueRejected>().having((e) => e.errors, 'errores', {
-            'nombre': 'Ya existe una sede con ese nombre',
+            'name': 'Ya existe una sede con ese nombre',
           }),
         ),
       );
     });
 
     test('sin sesión válida avisa que venció', () {
-      final api = apiRutas({'POST /sedes': (401, '{}')});
+      final api = apiRutas({'POST /venues': (401, '{}')});
       expect(alta(api), throwsA(isA<SessionExpired>()));
     });
 
     test('un 403 no es un alta: es un error', () {
-      final api = apiRutas({'POST /sedes': (403, '')});
+      final api = apiRutas({'POST /venues': (403, '')});
       expect(alta(api), throwsA(isA<ErrorDelServidor>()));
     });
   });
@@ -117,7 +117,7 @@ void main() {
     testWidgets('sin sedes lo dice y deja agregar la primera', (tester) async {
       await montarAdmin(
         tester,
-        api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
       );
       expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
@@ -129,7 +129,7 @@ void main() {
       await montarAdmin(
         tester,
         api: apiRutas({
-          'GET /sedes': (200, '{"sedes": [$sedeMoronJson, $sedeHaedoJson]}'),
+          'GET /venues': (200, '{"venues": [$sedeMoronJson, $sedeHaedoJson]}'),
         }),
       );
       expect(find.text('2 SEDES ACTIVAS'), findsOneWidget);
@@ -151,7 +151,7 @@ void main() {
         cliente: _Cliente((_) async {
           intentos++;
           if (intentos == 1) throw const _Corte();
-          return http.Response('{"sedes": []}', 200);
+          return http.Response('{"venues": []}', 200);
         }),
       );
       await montarAdmin(tester, api: api);
@@ -177,8 +177,8 @@ void main() {
         tester,
         inicio: '/admin/sedes/nueva',
         api: apiRutas({
-          'POST /sedes': respuesta,
-          'GET /sedes': (200, '{"sedes": [$sedeHaedoJson]}'),
+          'POST /venues': respuesta,
+          'GET /venues': (200, '{"venues": [$sedeHaedoJson]}'),
         }, pedidos: pedidos),
       );
       return pedidos;
@@ -285,11 +285,11 @@ void main() {
       await tester.pumpAndSettle();
       final alta = pedidos.singleWhere((p) => p.method == 'POST');
       expect(jsonDecode(alta.body), {
-        'nombre': 'Sede Haedo',
-        'direccion': 'Av. Vergara 1850',
-        'apertura': '08:00',
-        'cierre': '23:00',
-        'dias': [1, 2, 3, 4, 5],
+        'name': 'Sede Haedo',
+        'address': 'Av. Vergara 1850',
+        'opens_at': '08:00',
+        'closes_at': '23:00',
+        'open_days': [1, 2, 3, 4, 5],
       });
       expect(find.text('¡Sede creada!'), findsOneWidget);
       expect(find.text('Sede Haedo · Av. Vergara 1850'), findsOneWidget);
@@ -304,7 +304,7 @@ void main() {
         tester,
         respuesta: (
           409,
-          '{"errores": {"nombre": "Ya existe una sede con ese nombre"}}',
+          '{"errors": {"name": "Ya existe una sede con ese nombre"}}',
         ),
       );
       await completar(tester);
@@ -326,7 +326,7 @@ void main() {
       await montarAdmin(
         tester,
         inicio: '/admin/sedes/creada',
-        api: apiRutas({'GET /sedes': (200, '{"sedes": [$sedeHaedoJson]}')}),
+        api: apiRutas({'GET /venues': (200, '{"venues": [$sedeHaedoJson]}')}),
       );
       expect(find.text('¡Sede creada!'), findsNothing);
       expect(find.text('1 SEDE ACTIVA'), findsOneWidget);
@@ -364,7 +364,7 @@ void main() {
             return http.Response(sedeHaedoJson, 201);
           }
           return http.Response(
-            guardada ? '{"sedes": [$sedeHaedoJson]}' : '{"sedes": []}',
+            guardada ? '{"venues": [$sedeHaedoJson]}' : '{"venues": []}',
             200,
           );
         }),
@@ -391,7 +391,7 @@ void main() {
           if (pedido.method == 'POST') return http.Response(sedeHaedoJson, 201);
           lecturas++;
           if (lecturas > 1) throw const _Corte();
-          return http.Response('{"sedes": []}', 200);
+          return http.Response('{"venues": []}', 200);
         }),
       );
       await montarAdmin(tester, api: api);
@@ -413,12 +413,12 @@ void main() {
               altas++;
               if (altas == 1) throw const _Corte();
               return http.Response(
-                '{"errores": {"nombre": "Ya existe una sede con ese nombre"}}',
+                '{"errors": {"name": "Ya existe una sede con ese nombre"}}',
                 409,
               );
             }
             return http.Response(
-              altas == 0 ? '{"sedes": []}' : '{"sedes": [$sedeHaedoJson]}',
+              altas == 0 ? '{"venues": []}' : '{"venues": [$sedeHaedoJson]}',
               200,
             );
           }),

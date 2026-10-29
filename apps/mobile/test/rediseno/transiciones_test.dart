@@ -188,25 +188,25 @@ List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
 
 ApiClient _apiUsuario() => apiRutas({
   ...rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12})),
-  'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
+  'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
 });
 
 const _reservaAdmin =
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-    ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-    ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-    ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-    ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-    ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+    ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+    ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+    ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+    ' "status": "active", "reason": null, "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+    ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
+    ' "canceled_by_name": null, "space_deactivated": false}';
 
 ApiClient _apiAdmin() => apiRutas({
   ...rutasDeEspacios(),
-  'GET /reservas/todas': (
+  'GET /bookings/all': (
     200,
-    '{"reservas": [$_reservaAdmin], "total": 1, "pagina": 1, "por_pagina": 20,'
-        ' "contadores": {"todas": 1, "activas": 1, "completadas": 0,'
-        ' "anuladas": 0}}',
+    '{"bookings": [$_reservaAdmin], "total": 1, "page": 1, "per_page": 20,'
+        ' "counters": {"all": 1, "active": 1, "completed": 0,'
+        ' "voided": 0}}',
   ),
 });
 
@@ -261,13 +261,13 @@ class _Hija {
 final _hijas = <_Hija>[
   _Hija(
     'sede',
-    (t) => _usuarioEn(t, '/sedes'),
-    (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/venues'),
+    (t) => _ir(t, '/venues/00000000-0000-7000-8000-000000000001'),
     VenueScreen,
   ),
   _Hija(
     'horarios',
-    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/venues/00000000-0000-7000-8000-000000000001'),
     (t) => _ir(
       t,
       '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
@@ -288,14 +288,14 @@ final _hijas = <_Hija>[
   ),
   _Hija(
     'modificar',
-    (t) => _usuarioEn(t, '/reservas'),
+    (t) => _usuarioEn(t, '/bookings'),
     (t) => _tocar(t, find.text('MODIFICAR').first),
     AvailabilityScreen,
   ),
   _Hija(
     'confirmar cambio',
     (t) async {
-      await _usuarioEn(t, '/reservas');
+      await _usuarioEn(t, '/bookings');
       await _tocarYEsperar(t, find.text('MODIFICAR').first);
       await _tocarYEsperar(t, find.text('19:00 – 20:00'));
     },
@@ -383,15 +383,15 @@ class _Raiz {
 final _raices = <_Raiz>[
   _Raiz(
     'inicio',
-    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/venues/00000000-0000-7000-8000-000000000001'),
     '/inicio',
     HomeScreen,
   ),
-  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/sedes', VenuesScreen),
+  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/venues', VenuesScreen),
   _Raiz(
     'reservas',
     (t) => _usuarioEn(t, '/inicio'),
-    '/reservas',
+    '/bookings',
     MyBookingsScreen,
   ),
   _Raiz('perfil', (t) => _usuarioEn(t, '/inicio'), '/perfil', MyProfileScreen),
@@ -415,7 +415,7 @@ final _raices = <_Raiz>[
   ),
   _Raiz(
     'login',
-    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/venues/00000000-0000-7000-8000-000000000001'),
     '/',
     LoginScreen,
   ),
@@ -441,14 +441,14 @@ Booking _reservaConfirmada() {
 final _resultados = <_Resultado>[
   _Resultado(
     'registro exitoso',
-    (t) => _usuarioEn(t, '/registro'),
-    (t) => _ir(t, '/registro/exitoso'),
+    (t) => _usuarioEn(t, '/register'),
+    (t) => _ir(t, '/register/exitoso'),
     RegistrationDoneScreen,
   ),
   _Resultado(
     'reserva confirmada',
-    (t) => _usuarioEn(t, '/reservas'),
-    (t) => _ir(t, '/reservas/confirmada', extra: _reservaConfirmada()),
+    (t) => _usuarioEn(t, '/bookings'),
+    (t) => _ir(t, '/bookings/confirmada', extra: _reservaConfirmada()),
     BookingConfirmedScreen,
   ),
   _Resultado(
@@ -584,8 +584,8 @@ void main() {
       _reducirMovimiento(tester);
 
       // Avanzar: la hija ya está en su lugar.
-      await _usuarioEn(tester, '/sedes');
-      await _ir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _usuarioEn(tester, '/venues');
+      await _ir(tester, '/venues/00000000-0000-7000-8000-000000000001');
       await _arrancar(tester);
       _sinTransicionDeEmpuje(tester, VenueScreen);
 
@@ -597,15 +597,15 @@ void main() {
       await _reiniciar(tester);
 
       // Resultado: el fundido ya terminó.
-      await _usuarioEn(tester, '/reservas');
-      await _ir(tester, '/reservas/confirmada', extra: _reservaConfirmada());
+      await _usuarioEn(tester, '/bookings');
+      await _ir(tester, '/bookings/confirmada', extra: _reservaConfirmada());
       await _arrancar(tester);
       expect(find.byType(BookingConfirmedScreen), findsOneWidget);
       expect(_opacidadesDe(tester, BookingConfirmedScreen), everyElement(1));
       await _reiniciar(tester);
 
       // Raíz de pestaña.
-      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _usuarioEn(tester, '/venues/00000000-0000-7000-8000-000000000001');
       await _ir(tester, '/inicio');
       await _arrancar(tester);
       await _quieta(tester, HomeScreen);
@@ -623,7 +623,7 @@ void main() {
     'tocar la pestaña activa dentro de una sede o «VER TODAS» y «Ver sedes» del inicio llegan sin animación @RED-04-ASM-05',
     (tester) async {
       // La pestaña activa, desde adentro de una sede, lleva al listado.
-      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
+      await _usuarioEn(tester, '/venues/00000000-0000-7000-8000-000000000001');
       await _tocar(
         tester,
         find.descendant(

@@ -232,13 +232,13 @@ ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
     'http://api.falsa',
     cliente: MockClient((pedido) async {
       final historial = pedido.url.queryParameters['cuando'] == 'historial';
-      if (pedido.url.path == '/reservas' && historial) {
+      if (pedido.url.path == '/bookings' && historial) {
         await esperaHistorial?.future;
       }
-      final (codigo, cuerpo) = pedido.url.path == '/reservas'
+      final (codigo, cuerpo) = pedido.url.path == '/bookings'
           ? (
               200,
-              '{"reservas": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completada') : reservaJson()}]}',
+              '{"bookings": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed') : reservaJson()}]}',
             )
           : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
@@ -256,11 +256,11 @@ ApiClient _apiSede(Completer<void>? espera) {
     'http://api.falsa',
     cliente: MockClient((pedido) async {
       final filtrado =
-          pedido.url.path == '/espacios' &&
+          pedido.url.path == '/spaces' &&
           pedido.url.queryParameters.containsKey('deporte');
       if (filtrado) await espera?.future;
       final (codigo, cuerpo) = filtrado
-          ? (200, '{"espacios": [$espacioF5Json]}')
+          ? (200, '{"spaces": [$espacioF5Json]}')
           : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
         utf8.encode(cuerpo),
@@ -1274,7 +1274,7 @@ void main() {
     (tester) async {
       final pantallas = <String, Widget>{
         'login': _login(),
-        'inicio': inicioFalso(SesionFalsa(perfilUsuario)),
+        'starts_at': inicioFalso(SesionFalsa(perfilUsuario)),
         'mi perfil': MyProfileScreen(
           session: SesionFalsa(perfilUsuario),
           appearance: Appearance.inMemory(),

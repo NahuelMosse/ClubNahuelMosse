@@ -97,8 +97,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         setState(() {
           for (final MapEntry(:key, :value) in e.errors.entries) {
             final field = switch (key) {
-              'actual' => _Field.current,
-              'nueva' => _Field.newPassword,
+              'current_password' => _Field.current,
+              'new_password' => _Field.newPassword,
               _ => null,
             };
             if (field != null) _serverErrors[field] = value;

@@ -155,7 +155,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         return;
       }
       final errors = fieldErrors(r.cuerpo);
-      final message = r.cuerpo['mensaje'];
+      final message = r.cuerpo['message'];
       if (errors.isEmpty) {
         failure = ErrorDelServidor(r.codigo);
       } else {

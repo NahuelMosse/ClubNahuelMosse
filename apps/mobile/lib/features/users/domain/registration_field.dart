@@ -1,11 +1,11 @@
 /// Los campos del formulario de registro, con el nombre que usa la API.
 enum RegistrationField {
-  firstName('nombre'),
-  lastName('apellido'),
+  firstName('first_name'),
+  lastName('last_name'),
   dni('dni'),
-  birthDate('fecha_nacimiento'),
-  email('correo'),
-  password('contrasena');
+  birthDate('birth_date'),
+  email('email'),
+  password('password');
 
   const RegistrationField(this.key);
   final String key;

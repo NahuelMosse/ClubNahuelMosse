@@ -39,17 +39,17 @@ class Catalog {
   }
 
   static Catalog? fromJson(Object? json) {
-    if (json case {'deportes': final List<Object?> sports}) {
+    if (json case {'sports': final List<Object?> sports}) {
       final parsed = [
         for (final d in sports)
           if (d case {
-            'clave': final String key,
-            'nombre': final String name,
-            'tipos': final List<Object?> kinds,
+            'key': final String key,
+            'name': final String name,
+            'kinds': final List<Object?> kinds,
           })
             Sport(key, name, [
               for (final t in kinds)
-                if (t case {'clave': final String c, 'nombre': final String n})
+                if (t case {'key': final String c, 'name': final String n})
                   SpaceKind(c, n),
             ]),
       ];
@@ -101,15 +101,15 @@ class Space {
   static Space? fromJson(Object? json) {
     if (json case {
       'id': final String id,
-      'nombre': final String name,
-      'sede_id': final String venueId,
-      'sede': final String venue,
-      'deporte': final String sport,
-      'tipo': final String kind,
-      'numero': final int number,
-      'techada': final bool covered,
-      'iluminada': final bool lit,
-      'precio_por_hora': final int price,
+      'name': final String name,
+      'venue_id': final String venueId,
+      'venue': final String venue,
+      'sport': final String sport,
+      'kind': final String kind,
+      'number': final int number,
+      'covered': final bool covered,
+      'lit': final bool lit,
+      'price_per_hour': final int price,
     }) {
       return Space(
         id: id,
@@ -127,9 +127,9 @@ class Space {
     return null;
   }
 
-  /// Los espacios de un cuerpo `{'espacios': [...]}`, o `null` si alguno no se puede leer.
+  /// Los espacios de un cuerpo `{'spaces': [...]}`, o `null` si alguno no se puede leer.
   static List<Space>? listFromBody(Map<String, Object?> cuerpo) {
-    if (cuerpo case {'espacios': final List<Object?> items}) {
+    if (cuerpo case {'spaces': final List<Object?> items}) {
       final parsed = [for (final e in items) Space.fromJson(e)];
       if (!parsed.contains(null)) return [...parsed.nonNulls];
     }

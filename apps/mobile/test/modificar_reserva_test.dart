@@ -32,7 +32,7 @@ void main() {
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
             (
               'POST',
-              '/reservas/00000000-0000-7000-8000-000000000001/modificar',
+              '/bookings/00000000-0000-7000-8000-000000000001/modify',
             ) =>
               () {
                 final r =
@@ -47,9 +47,9 @@ void main() {
                 modificada = r.$1 == 200;
                 return r;
               }(),
-            ('GET', '/reservas') => (
+            ('GET', '/bookings') => (
               200,
-              '{"reservas": [${modificada ? reservaJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : reservaJson()}]}',
+              '{"bookings": [${modificada ? reservaJson(inicio: '2026-11-12T22:00:00+00:00', fin: '2026-11-12T23:00:00+00:00') : reservaJson()}]}',
             ),
             _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
           };
@@ -88,14 +88,14 @@ void main() {
       final consulta = pedidos.last.url;
       expect(
         consulta.path,
-        '/espacios/00000000-0000-7000-8000-000000000009/horarios',
+        '/spaces/00000000-0000-7000-8000-000000000009/slots',
       );
       expect(
-        consulta.queryParameters['reserva_id'],
+        consulta.queryParameters['booking_id'],
         '00000000-0000-7000-8000-000000000001',
       );
-      expect(consulta.queryParameters['fecha'], '2026-11-12');
-      expect(consulta.queryParameters['horas'], '1');
+      expect(consulta.queryParameters['date'], '2026-11-12');
+      expect(consulta.queryParameters['hours'], '1');
       expect(
         find.textContaining(
           'Estás modificando tu reserva del Jue 12, 21:00 – 22:00',
@@ -130,9 +130,9 @@ void main() {
 
     final post = pedidos.singleWhere((p) => p.method == 'POST');
     expect(jsonDecode(post.body), {
-      'espacio_id': '00000000-0000-7000-8000-000000000009',
-      'fecha': '2026-11-12',
-      'desde': '19:00',
+      'space_id': '00000000-0000-7000-8000-000000000009',
+      'date': '2026-11-12',
+      'start_hour': '19:00',
     });
     expect(find.text('Reserva modificada'), findsOneWidget);
     expect(find.text('19:00 – 20:00'), findsOneWidget);
@@ -157,7 +157,7 @@ void main() {
   ) async {
     final pedidos = await abrir(
       tester,
-      alModificar: (409, '{"errores": {"horario": "Ese horario se ocupó"}}'),
+      alModificar: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
     );
     await hastaConfirmar(tester);
     final antes = pedidos.where((p) => p.url.path.endsWith('/horarios')).length;
@@ -180,7 +180,7 @@ void main() {
       tester,
       alModificar: (
         409,
-        '{"errores": {"reserva": "Esto cambió mientras tanto"}}',
+        '{"errors": {"reserva": "Esto cambió mientras tanto"}}',
       ),
     );
     await hastaConfirmar(tester);

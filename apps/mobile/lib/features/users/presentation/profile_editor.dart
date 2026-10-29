@@ -17,10 +17,10 @@ import '../../session/presentation/session.dart';
 import '../domain/registration_rules.dart';
 
 enum _Field {
-  firstName('nombre'),
-  lastName('apellido'),
+  firstName('first_name'),
+  lastName('last_name'),
   dni('dni'),
-  birthDate('fecha_nacimiento');
+  birthDate('birth_date');
 
   const _Field(this.key);
 

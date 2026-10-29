@@ -18,11 +18,11 @@ String _query(HistoryFilters filters) {
   final until = filters.until;
   final search = filters.searchText;
   final parts = <String>[
-    if (status != null) 'estado=${status.apiValue}',
-    if (filters.venueId != null) 'sede_id=${filters.venueId}',
-    if (sport != null) 'deporte=${Uri.encodeQueryComponent(sport)}',
-    if (since != null) 'desde=${isoDate(since)}',
-    if (until != null) 'hasta=${isoDate(until)}',
+    if (status != null) 'status=${status.apiValue}',
+    if (filters.venueId != null) 'venue_id=${filters.venueId}',
+    if (sport != null) 'sport=${Uri.encodeQueryComponent(sport)}',
+    if (since != null) 'since=${isoDate(since)}',
+    if (until != null) 'until=${isoDate(until)}',
     if (search != null) 'q=${Uri.encodeQueryComponent(search)}',
   ];
   return parts.join('&');
@@ -43,20 +43,20 @@ class BookingHistory {
   Future<HistoryPage> page(HistoryFilters filters, {int page = 1}) async {
     final query = [
       _query(filters),
-      'pagina=$page',
+      'page=$page',
     ].where((s) => s.isNotEmpty).join('&');
     final r = await _api.get(
-      '/reservas/todas?$query',
+      '/bookings/all?$query',
       token: await _session.token(),
     );
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 200) {
       if (r.cuerpo case {
-        'reservas': final List<Object?> list,
+        'bookings': final List<Object?> list,
         'total': final int total,
-        'pagina': final int pageNumber,
-        'por_pagina': final int perPage,
-        'contadores': final Object? countersJson,
+        'page': final int pageNumber,
+        'per_page': final int perPage,
+        'counters': final Object? countersJson,
       }) {
         final parsed = [for (final e in list) parseBookingHistoryEntry(e)];
         final counters = parseCounters(countersJson);
@@ -79,7 +79,7 @@ class BookingHistory {
   /// Throws [SesionVencida], [SinConexion] or [ErrorDelServidor].
   Future<BookingHistoryEntry?> detail(String id) async {
     final r = await _api.get(
-      '/reservas/todas/$id',
+      '/bookings/all/$id',
       token: await _session.token(),
     );
     if (r.codigo == 401) throw const SessionExpired();
@@ -101,10 +101,10 @@ class BookingHistory {
     BookingHistoryEntry booking,
     String reason,
   ) async {
-    final r = await _api.post('/reservas/${booking.id}/anular', {
-      'motivo': reason,
-      'espacio_id': booking.spaceId,
-      'inicio': fromClubTime(booking.startsAt).toIso8601String(),
+    final r = await _api.post('/bookings/${booking.id}/void', {
+      'reason': reason,
+      'space_id': booking.spaceId,
+      'starts_at': fromClubTime(booking.startsAt).toIso8601String(),
     }, token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 404 || r.codigo == 409) throw const BookingChanged();

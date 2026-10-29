@@ -41,7 +41,7 @@ void main() {
         ),
       );
       Object? error;
-      api.get('/espacios').then((_) {}, onError: (Object e) => error = e);
+      api.get('/spaces').then((_) {}, onError: (Object e) => error = e);
       await tester.pump(const Duration(seconds: 29));
       expect(error, isNull);
       await tester.pump(const Duration(seconds: 2));
@@ -55,7 +55,7 @@ void main() {
       'http://api.falsa',
       cliente: MockClient((_) async => throw http.ClientException('sin red')),
     );
-    await expectLater(api.get('/espacios'), throwsA(isA<SinConexion>()));
+    await expectLater(api.get('/spaces'), throwsA(isA<SinConexion>()));
   });
 
   test(

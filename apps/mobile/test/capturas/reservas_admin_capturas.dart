@@ -20,36 +20,36 @@ void main() {
   }
 
   const contadores =
-      '"contadores": {"todas": 49, "activas": 12, "completadas": 31, "anuladas": 5}';
+      '"counters": {"all": 49, "active": 12, "completed": 31, "voided": 5}';
 
   const reservaActivaJson =
-      '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-      ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-      ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-      ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-      ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-      ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-      ' "cancelada_por_nombre": null, "espacio_de_baja": false, "anulable": true}';
+      '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+      ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+      ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+      ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+      ' "status": "active", "reason": null, "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+      ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
+      ' "canceled_by_name": null, "space_deactivated": false, "voidable": true}';
 
   const reservaCompletadaJson =
-      '{"id": "00000000-0000-7000-8000-000000000002", "espacio_id": "00000000-0000-7000-8000-000000000010", "sede_id": "00000000-0000-7000-8000-000000000002", "espacio":'
-      ' "RamosMejia_Belgrano_1240_Voley_IND_1", "deporte": "Voley", "tipo": "IND", "sede":'
-      ' "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", "inicio":'
-      ' "2026-11-04T20:00:00-03:00", "fin": "2026-11-04T21:00:00-03:00", "total": 33000,'
-      ' "estado": "completada", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-      ' "creado_en": "2026-10-20T09:10:00-03:00", "cancelada_en": null,'
-      ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
+      '{"id": "00000000-0000-7000-8000-000000000002", "space_id": "00000000-0000-7000-8000-000000000010", "venue_id": "00000000-0000-7000-8000-000000000002", "space":'
+      ' "RamosMejia_Belgrano_1240_Voley_IND_1", "sport": "Voley", "kind": "IND", "venue":'
+      ' "Sede Ramos Mejía", "address": "Calle Belgrano 1240", "starts_at":'
+      ' "2026-11-04T20:00:00-03:00", "ends_at": "2026-11-04T21:00:00-03:00", "total": 33000,'
+      ' "status": "completed", "reason": null, "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+      ' "created_at": "2026-10-20T09:10:00-03:00", "canceled_at": null,'
+      ' "canceled_by_name": null, "space_deactivated": false}';
 
   const reservaAnuladaJson =
-      '{"id": "00000000-0000-7000-8000-000000000003", "espacio_id": "00000000-0000-7000-8000-000000000011", "sede_id": "00000000-0000-7000-8000-000000000002", "espacio":'
-      ' "RamosMejia_Belgrano_1240_Hockey_H7_1", "deporte": "Hockey", "tipo": "H7", "sede":'
-      ' "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", "inicio":'
-      ' "2026-10-30T19:00:00-03:00", "fin": "2026-10-30T20:00:00-03:00", "total": 48000,'
-      ' "estado": "anulada", "motivo": "mantenimiento de la cancha", "usuario_id": "00000000-0000-7000-8000-000000000001",'
-      ' "usuario": "Nahuel Mosse", "creado_en": "2026-10-21T11:07:00-03:00",'
-      ' "cancelada_en": "2026-10-28T09:15:00-03:00", "cancelada_por_nombre":'
-      ' "Admin Sistema", "espacio_de_baja": false, "aviso_envio": "enviada",'
-      ' "aviso_en": "2026-10-28T09:15:00-03:00"}';
+      '{"id": "00000000-0000-7000-8000-000000000003", "space_id": "00000000-0000-7000-8000-000000000011", "venue_id": "00000000-0000-7000-8000-000000000002", "space":'
+      ' "RamosMejia_Belgrano_1240_Hockey_H7_1", "sport": "Hockey", "kind": "H7", "venue":'
+      ' "Sede Ramos Mejía", "address": "Calle Belgrano 1240", "starts_at":'
+      ' "2026-10-30T19:00:00-03:00", "ends_at": "2026-10-30T20:00:00-03:00", "total": 48000,'
+      ' "status": "voided", "reason": "mantenimiento de la cancha", "user_id": "00000000-0000-7000-8000-000000000001",'
+      ' "user": "Nahuel Mosse", "created_at": "2026-10-21T11:07:00-03:00",'
+      ' "canceled_at": "2026-10-28T09:15:00-03:00", "canceled_by_name":'
+      ' "Admin Sistema", "space_deactivated": false, "notice_delivery": "sent",'
+      ' "notice_at": "2026-10-28T09:15:00-03:00"}';
 
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: oscuro) in modos.entries) {
@@ -60,13 +60,13 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [$reservaActivaJson, $reservaCompletadaJson,'
-                  ' $reservaAnuladaJson], "total": 49, "pagina": 1, "por_pagina": 20,'
+              '{"bookings": [$reservaActivaJson, $reservaCompletadaJson,'
+                  ' $reservaAnuladaJson], "total": 49, "page": 1, "per_page": 20,'
                   ' $contadores}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         await capturar(tester, 'admin/reservas_${ancho}_$modo.png');
@@ -79,11 +79,11 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20, $contadores}',
+              '{"bookings": [], "total": 0, "page": 1, "per_page": 20, $contadores}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         // Un solo cuadro, antes de que el pedido vuelva.
@@ -101,13 +101,13 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
-                  ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
-                  ' "anuladas": 0}}',
+              '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
+                  ' "counters": {"all": 0, "active": 0, "completed": 0,'
+                  ' "voided": 0}}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         await tester.enterText(
@@ -127,13 +127,13 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
-                  ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
-                  ' "anuladas": 0}}',
+              '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
+                  ' "counters": {"all": 0, "active": 0, "completed": 0,'
+                  ' "voided": 0}}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         await capturar(tester, 'admin/reservas_vacio_${ancho}_$modo.png');
@@ -146,15 +146,15 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [$reservaActivaJson], "total": 49, "pagina": 1,'
-                  ' "por_pagina": 20, $contadores}',
+              '{"bookings": [$reservaActivaJson], "total": 49, "page": 1,'
+                  ' "per_page": 20, $contadores}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
-            'GET /sedes': (
+            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /venues': (
               200,
-              '{"sedes": [$sedeMoronJson, $sedeCastelarJson]}',
+              '{"venues": [$sedeMoronJson, $sedeCastelarJson]}',
             ),
           }),
         );
@@ -169,14 +169,14 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
-                  ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
-                  ' "anuladas": 0}}',
+              '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
+                  ' "counters": {"all": 0, "active": 0, "completed": 0,'
+                  ' "voided": 0}}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
-            'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
+            'GET /spaces/catalog': (200, catalogoJson),
+            'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
           }),
         );
         await tester.tap(find.text('Filtros'));
@@ -196,12 +196,12 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [$reservaActivaJson], "total": 1, "pagina": 1,'
-                  ' "por_pagina": 20, $contadores}',
+              '{"bookings": [$reservaActivaJson], "total": 1, "page": 1,'
+                  ' "per_page": 20, $contadores}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         await tester.tap(find.text('Moron_Rivadavia_19850_Futbol_F5_1'));
@@ -215,12 +215,12 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [$reservaAnuladaJson], "total": 1, "pagina": 1,'
-                  ' "por_pagina": 20, $contadores}',
+              '{"bookings": [$reservaAnuladaJson], "total": 1, "page": 1,'
+                  ' "per_page": 20, $contadores}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         await tester.tap(find.text('RamosMejia_Belgrano_1240_Hockey_H7_1'));

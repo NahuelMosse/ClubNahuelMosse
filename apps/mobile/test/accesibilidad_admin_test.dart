@@ -25,9 +25,9 @@ void main() {
         inicio: '/admin/espacios',
         api: apiRutas({
           ...rutasDeEspacios(),
-          'GET /espacios': (
+          'GET /spaces': (
             200,
-            '{"espacios": [$espacioF5Json, $espacioTenisJson, $espacioCastelarJson]}',
+            '{"spaces": [$espacioF5Json, $espacioTenisJson, $espacioCastelarJson]}',
           ),
         }),
       );
@@ -82,7 +82,7 @@ void main() {
         tester,
         oscuro: oscuro,
         api: apiRutas({
-          'GET /sedes': (200, '{"sedes": [$sedeMoronJson, $sedeHaedoJson]}'),
+          'GET /venues': (200, '{"venues": [$sedeMoronJson, $sedeHaedoJson]}'),
         }),
       );
       await cumpleLasGuias(tester);
@@ -97,7 +97,7 @@ void main() {
         tester,
         oscuro: oscuro,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
@@ -113,7 +113,7 @@ void main() {
         tester,
         oscuro: oscuro,
         inicio: '/admin/sedes/nueva',
-        api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+        api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
       );
       await tester.tap(find.bySemanticsLabel('Horario de apertura'));
       await tester.pumpAndSettle();
@@ -130,8 +130,8 @@ void main() {
         oscuro: oscuro,
         inicio: '/admin/sedes/nueva',
         api: apiRutas({
-          'POST /sedes': (201, sedeHaedoJson),
-          'GET /sedes': (200, '{"sedes": [$sedeHaedoJson]}'),
+          'POST /venues': (201, sedeHaedoJson),
+          'GET /venues': (200, '{"venues": [$sedeHaedoJson]}'),
         }),
       );
       await tester.enterText(

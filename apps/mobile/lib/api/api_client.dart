@@ -146,7 +146,7 @@ class ApiClient {
         ? datos
         : const {};
     if (r.statusCode == 429) {
-      final mensaje = cuerpo['mensaje'];
+      final mensaje = cuerpo['message'];
       throw ErrorDelServidor(429, mensaje: mensaje is String ? mensaje : null);
     }
     return Respuesta(r.statusCode, cuerpo);

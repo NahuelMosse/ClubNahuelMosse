@@ -39,9 +39,9 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /sedes': (
+            'GET /venues': (
               200,
-              '{"sedes": [$sedeCastelarJson, $sedeHaedoJson, $sedeMoronJson]}',
+              '{"venues": [$sedeCastelarJson, $sedeHaedoJson, $sedeMoronJson]}',
             ),
           }),
         );
@@ -53,7 +53,7 @@ void main() {
           tester,
           oscuro: oscuro,
           tamano: tamano,
-          api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
         );
         await capturar(tester, 'admin/sedes_vacio_${ancho}_$modo.png');
       });
@@ -64,7 +64,7 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
         );
         await capturar(tester, 'admin/alta_vacia_${ancho}_$modo.png');
       });
@@ -76,7 +76,7 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
         );
         await completar(tester);
         await capturar(tester, 'admin/alta_completa_${ancho}_$modo.png');
@@ -90,7 +90,7 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.enterText(
           find.bySemanticsLabel('Nombre de la sede'),
@@ -110,7 +110,7 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
         );
         await tester.tap(find.bySemanticsLabel('Horario de cierre'));
         await capturar(tester, 'admin/selector_hora_${ancho}_$modo.png');
@@ -126,8 +126,8 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-            'PUT /sedes/00000000-0000-7000-8000-000000000001': alGuardar,
+            'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
+            'PUT /venues/00000000-0000-7000-8000-000000000001': alGuardar,
           }),
         );
         await tester.tap(find.bySemanticsLabel('Editar sede Sede Morón'));
@@ -156,7 +156,7 @@ void main() {
         tester,
       ) async {
         final semantica = tester.ensureSemantics();
-        await abrirEdicion(tester, alGuardar: (409, '{"reservas_afuera": 3}'));
+        await abrirEdicion(tester, alGuardar: (409, '{"bookings_outside": 3}'));
         await elegir(tester, 'Horario de apertura', '10:00');
         await tester.tap(find.text('GUARDAR CAMBIOS'));
         await capturar(tester, 'admin/editar_afuera_${ancho}_$modo.png');
@@ -178,10 +178,10 @@ void main() {
           oscuro: oscuro,
           tamano: tamano,
           api: apiRutas({
-            'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-            'DELETE /sedes/00000000-0000-7000-8000-000000000001': (
+            'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
+            'DELETE /venues/00000000-0000-7000-8000-000000000001': (
               409,
-              '{"errores": {"sede": "x"}}',
+              '{"errors": {"venue": "x"}}',
             ),
           }),
         );
@@ -200,8 +200,8 @@ void main() {
           tamano: tamano,
           inicio: '/admin/espacios',
           api: apiRutas({
-            'GET /espacios': (200, '{"espacios": [$espacioF5Json]}'),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces': (200, '{"spaces": [$espacioF5Json]}'),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         );
         await tester.tap(
@@ -222,8 +222,8 @@ void main() {
           tamano: tamano,
           inicio: '/admin/sedes/nueva',
           api: apiRutas({
-            'POST /sedes': (201, sedeHaedoJson),
-            'GET /sedes': (200, '{"sedes": [$sedeHaedoJson]}'),
+            'POST /venues': (201, sedeHaedoJson),
+            'GET /venues': (200, '{"venues": [$sedeHaedoJson]}'),
           }),
         );
         await completar(tester);

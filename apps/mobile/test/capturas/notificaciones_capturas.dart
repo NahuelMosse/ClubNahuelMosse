@@ -136,8 +136,8 @@ void main() {
         api
           ..avisos = [
             recordatorio,
-            confirmacion.replaceFirst('"leida": true', '"leida": false'),
-            alerta.replaceFirst('"leida": true', '"leida": false'),
+            confirmacion.replaceFirst('"read": true', '"read": false'),
+            alerta.replaceFirst('"read": true', '"read": false'),
           ]
           ..unread = 3;
         await tester.runAsync(centroDeAvisos.load);

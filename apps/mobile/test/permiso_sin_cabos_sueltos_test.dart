@@ -105,7 +105,7 @@ void main() {
       sistema.respuesta.complete(true);
       await tester.pumpAndSettle();
 
-      expect(api.de('PUT', '/dispositivos'), isEmpty);
+      expect(api.de('PUT', '/devices'), isEmpty);
     },
   );
 }

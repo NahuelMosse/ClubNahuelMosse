@@ -42,8 +42,8 @@ Future<void> _cargando(
 void main() {
   group('esqueletos de carga con la API colgada', () {
     for (final (ruta, admin) in [
-      ('/sedes', false),
-      ('/reservas', false),
+      ('/venues', false),
+      ('/bookings', false),
       ('/inicio', false),
       ('/admin/sedes', true),
     ]) {

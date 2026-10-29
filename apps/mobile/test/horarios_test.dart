@@ -11,12 +11,12 @@ import 'soporte/usuario.dart';
 
 void main() {
   const espacios =
-      '[{"id": "00000000-0000-7000-8000-000000000009", "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
-      '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 1, '
-      '"techada": false, "iluminada": true, "precio_por_hora": 38000}, '
-      '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
-      '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
-      '"techada": true, "iluminada": true, "precio_por_hora": 38000}]';
+      '[{"id": "00000000-0000-7000-8000-000000000009", "name": "Moron_Rivadavia_19850_Futbol_F5_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
+      '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 1, '
+      '"covered": false, "lit": true, "price_per_hour": 38000}, '
+      '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
+      '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
+      '"covered": true, "lit": true, "price_per_hour": 38000}]';
 
   Future<List<http.Request>> abrir(
     WidgetTester tester, {
@@ -29,7 +29,7 @@ void main() {
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas({
         ...rutasDeSedes(espacios: espacios),
-        'GET /espacios/00000000-0000-7000-8000-000000000011/horarios': (
+        'GET /spaces/00000000-0000-7000-8000-000000000011/slots': (
           200,
           grillaJson(ocupadas: {18}),
         ),
@@ -117,7 +117,7 @@ void main() {
 
       expect(
         pedidos.last.url.path,
-        '/espacios/00000000-0000-7000-8000-000000000011/horarios',
+        '/spaces/00000000-0000-7000-8000-000000000011/slots',
       );
       expect(elegido(tester, 'Cancha 2, Techada'), isTrue);
       expect(habilitado(tester, '18:00 – 19:00'), isFalse);
@@ -131,10 +131,10 @@ void main() {
     final pedidos = await abrir(tester);
 
     await tocar(tester, 'Viernes 13');
-    expect(pedidos.last.url.queryParameters['fecha'], '2026-11-13');
+    expect(pedidos.last.url.queryParameters['date'], '2026-11-13');
 
     await tocar(tester, 'Una hora más');
-    expect(pedidos.last.url.queryParameters['horas'], '2');
+    expect(pedidos.last.url.queryParameters['hours'], '2');
     expect(find.text('2 horas'), findsOneWidget);
     expect(habilitado(tester, 'Una hora menos'), isTrue);
     semantica.dispose();
@@ -146,7 +146,7 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+        'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           200,
           grillaJson(abre: false),
         ),
@@ -166,7 +166,7 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+        'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           200,
           grillaJson(ocupadas: {for (var h = 8; h < 23; h++) h}),
         ),
@@ -186,7 +186,7 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+        'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           500,
           '{}',
         ),
@@ -204,9 +204,9 @@ void main() {
     await abrir(
       tester,
       cambios: {
-        'GET /espacios/00000000-0000-7000-8000-000000000009/horarios': (
+        'GET /spaces/00000000-0000-7000-8000-000000000009/slots': (
           404,
-          '{"errores": {"espacio_id": "Esta cancha ya no está disponible"}}',
+          '{"errors": {"space_id": "Esta cancha ya no está disponible"}}',
         ),
       },
     );
@@ -270,12 +270,12 @@ void main() {
           final rutas = rutasDeSedes(espacios: espacios);
           final vencida =
               pedido.url.path ==
-                  '/espacios/00000000-0000-7000-8000-000000000009/horarios' &&
+                  '/spaces/00000000-0000-7000-8000-000000000009/slots' &&
               pedido.url.queryParameters.containsKey('fecha');
           final (codigo, cuerpo) = vencida
               ? (
                   422,
-                  '{"errores": {"fecha": "Elegí un día de los próximos 7"}}',
+                  '{"errors": {"date": "Elegí un día de los próximos 7"}}',
                 )
               : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
           return http.Response.bytes(

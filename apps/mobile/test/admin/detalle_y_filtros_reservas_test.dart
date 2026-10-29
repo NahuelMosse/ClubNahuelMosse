@@ -27,16 +27,16 @@ String _reserva({
   String estado = 'activa',
   String aviso = '',
 }) =>
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-    ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-    ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-    ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "$estado", "motivo": ${estado == 'anulada' ? '"lluvia"' : 'null'},'
-    ' "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-    ' "creado_en": "2026-11-02T18:42:00-03:00",'
-    ' "cancelada_en": ${estado == 'anulada' ? '"2026-11-03T10:00:00-03:00"' : 'null'},'
-    ' "cancelada_por_nombre": ${estado == 'anulada' ? '"Ana Díaz"' : 'null'},'
-    ' "espacio_de_baja": false, "anulable": $anulable$aviso}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+    ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+    ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+    ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+    ' "status": "$estado", "reason": ${estado == 'anulada' ? '"lluvia"' : 'null'},'
+    ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+    ' "created_at": "2026-11-02T18:42:00-03:00",'
+    ' "canceled_at": ${estado == 'anulada' ? '"2026-11-03T10:00:00-03:00"' : 'null'},'
+    ' "canceled_by_name": ${estado == 'anulada' ? '"Ana Díaz"' : 'null'},'
+    ' "space_deactivated": false, "voidable": $anulable$aviso}';
 
 void main() {
   setUpAll(cargarFuentes);
@@ -66,16 +66,16 @@ void main() {
       tester,
     ) async {
       final api = apiRutas({
-        'GET /reservas/todas/00000000-0000-7000-8000-000000000001': (
+        'GET /bookings/all/00000000-0000-7000-8000-000000000001': (
           200,
           _reserva(
             anulable: false,
-            estado: 'anulada',
+            estado: 'voided',
             aviso:
-                ', "aviso_envio": "enviada", "aviso_en": "2026-11-03T10:00:05-03:00"',
+                ', "notice_delivery": "sent", "notice_at": "2026-11-03T10:00:05-03:00"',
           ),
         ),
-        'GET /espacios/catalogo': (200, catalogoJson),
+        'GET /spaces/catalog': (200, catalogoJson),
       });
       await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
@@ -88,7 +88,7 @@ void main() {
     testWidgets('nombra el deporte como el catálogo, con tilde', (
       tester,
     ) async {
-      final api = apiRutas({'GET /espacios/catalogo': (200, catalogoJson)});
+      final api = apiRutas({'GET /spaces/catalog': (200, catalogoJson)});
       await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
@@ -98,7 +98,7 @@ void main() {
 
     testWidgets('la flecha tiene nombre accesible', (tester) async {
       final semantica = tester.ensureSemantics();
-      final api = apiRutas({'GET /espacios/catalogo': (200, catalogoJson)});
+      final api = apiRutas({'GET /spaces/catalog': (200, catalogoJson)});
       await montar(tester, detalle(leida(_reserva()), api), tema: darkTheme);
       await tester.pumpAndSettle();
 
@@ -115,9 +115,9 @@ void main() {
           if (pedido.method == 'POST') return respuesta.future;
           return http.Response.bytes(
             utf8.encode(
-              pedido.url.path == '/espacios/catalogo' ? catalogoJson : '{}',
+              pedido.url.path == '/spaces/catalog' ? catalogoJson : '{}',
             ),
-            pedido.url.path == '/espacios/catalogo' ? 200 : 404,
+            pedido.url.path == '/spaces/catalog' ? 200 : 404,
             headers: {'content-type': 'application/json; charset=utf-8'},
           );
         }),
@@ -163,7 +163,7 @@ void main() {
 
       respuesta.complete(
         http.Response.bytes(
-          utf8.encode(_reserva(anulable: false, estado: 'anulada')),
+          utf8.encode(_reserva(anulable: false, estado: 'voided')),
           200,
           headers: {'content-type': 'application/json; charset=utf-8'},
         ),

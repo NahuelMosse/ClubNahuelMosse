@@ -39,19 +39,19 @@ class AvailabilityApi {
   }) async {
     final day = date;
     final query = Uri(
-      path: '/espacios/$spaceId/horarios',
+      path: '/spaces/$spaceId/slots',
       queryParameters: {
-        'horas': '$hours',
-        'reserva_id': ?bookingId,
-        if (day != null) 'fecha': isoDate(day),
+        'hours': '$hours',
+        'booking_id': ?bookingId,
+        if (day != null) 'date': isoDate(day),
       },
     );
     final r = await _fetch(query);
     final errors = fieldErrors(r.cuerpo);
-    if (r.codigo == 404 && errors.containsKey('espacio_id')) {
+    if (r.codigo == 404 && errors.containsKey('space_id')) {
       throw const SpaceUnavailable();
     }
-    if (r.codigo == 422 && errors.containsKey('fecha')) {
+    if (r.codigo == 422 && errors.containsKey('date')) {
       throw const DateExpired();
     }
     final grid = r.codigo == 200 ? availabilityGridFromJson(r.cuerpo) : null;
@@ -72,14 +72,14 @@ class AvailabilityApi {
     required String to,
   }) async {
     final query = Uri(
-      path: '/espacios/disponibles',
+      path: '/spaces/available',
       queryParameters: {
-        'sede_id': venueId,
-        'deporte': sport,
-        'tipo': ?kind,
-        'fecha': isoDate(date),
-        'desde': from,
-        'hasta': to,
+        'venue_id': venueId,
+        'sport': sport,
+        'kind': ?kind,
+        'date': isoDate(date),
+        'since': from,
+        'until': to,
       },
     );
     final r = await _fetch(query);

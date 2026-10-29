@@ -116,7 +116,7 @@ void main() {
       final total = sedes.values.fold(0, (a, b) => a + b);
 
       // Verifica: el hero muestra exactamente lo que la API devuelve, no un valor fijo.
-      final cuantasSedes = sedes.length == 1 ? 'sede' : 'sedes';
+      final cuantasSedes = sedes.length == 1 ? 'venue' : 'sedes';
       final cuantasCanchas = total == 1 ? 'cancha' : 'canchas';
       expect(
         find.text(

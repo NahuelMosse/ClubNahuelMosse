@@ -59,8 +59,8 @@ void main() {
 
   group('registro', () {
     const yaRegistrado =
-        '{"errores": {"correo": "Ese correo ya está registrado"}, '
-        '"mensaje": "Ese correo ya está registrado"}';
+        '{"errors": {"email": "Ese correo ya está registrado"}, '
+        '"message": "Ese correo ya está registrado"}';
 
     Future<void> abrirRegistro(
       WidgetTester tester,
@@ -75,13 +75,13 @@ void main() {
                 const Scaffold(body: Text('Iniciar sesión')),
           ),
           GoRoute(
-            path: '/registro',
+            path: '/register',
             builder: (context, _) => RegistrationScreen(
               registration: RegistrationService(
                 ApiClient(
                   'http://api.falsa',
                   cliente: _conCorte(
-                    '/registro',
+                    '/register',
                     respuestas,
                     (_) => (404, '{}'),
                   ),
@@ -164,14 +164,14 @@ void main() {
       api: ApiClient(
         'http://api.falsa',
         cliente: _conCorte(
-          '/reservas/00000000-0000-7000-8000-000000000001/cancelar',
+          '/bookings/00000000-0000-7000-8000-000000000001/cancel',
           [
             null,
-            (409, '{"errores": {"reserva": "Esto cambió mientras tanto"}}'),
+            (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}'),
           ],
           (pedido) {
-            if (pedido.method == 'GET' && pedido.url.path == '/reservas') {
-              return (200, '{"reservas": ${cancelada ? '[]' : '[$proxima]'}}');
+            if (pedido.method == 'GET' && pedido.url.path == '/bookings') {
+              return (200, '{"bookings": ${cancelada ? '[]' : '[$proxima]'}}');
             }
             return rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
           },
@@ -201,11 +201,11 @@ void main() {
     final api = ApiClient(
       'http://api.falsa',
       cliente: _conCorte(
-        '/reservas/00000000-0000-7000-8000-000000000001/anular',
-        [null, (409, '{"errores": {"reserva": "Esto cambió mientras tanto"}}')],
+        '/bookings/00000000-0000-7000-8000-000000000001/void',
+        [null, (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}')],
         (pedido) => switch (pedido.url.path) {
-          '/reservas/todas' => (200, anular.listado(anular.reservaJson())),
-          '/espacios/catalogo' => (200, catalogoJson),
+          '/bookings/all' => (200, anular.listado(anular.reservaJson())),
+          '/spaces/catalog' => (200, catalogoJson),
           _ => (404, '{}'),
         },
       ),

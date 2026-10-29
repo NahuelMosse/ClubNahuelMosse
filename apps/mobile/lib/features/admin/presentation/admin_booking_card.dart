@@ -35,7 +35,7 @@ class AdminBookingCard extends StatelessWidget {
     final semantics =
         '$sportName, ${b.venue}, ${b.user}, '
         '${longDate(b.startsAt)}, $_schedule, ${formatPesos(b.total)}, '
-        '${b.status.apiValue}'
+        '${b.status.label.toLowerCase()}'
         '${b.spaceDeactivated ? ', baja del espacio deportivo' : ''}';
     final voidBooking = onVoid;
     return Material(

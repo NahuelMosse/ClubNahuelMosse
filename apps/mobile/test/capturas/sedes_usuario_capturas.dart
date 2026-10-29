@@ -22,20 +22,20 @@ void main() {
   const idHaedo = '00000000-0000-7000-8000-000000000005';
   final sedes =
       '[${sedeMoronConDeportes.replaceAll(idMoron, sedeMoron)}, '
-      '{"id": "$sedeRamos", "nombre": "Sede Ramos Mejía", "direccion": "Calle Belgrano 1240", '
-      '"apertura": "09:00", "cierre": "22:00", "dias": [1,2,3,4,5,6], '
-      '"canchas": 2, "deportes": ["Hockey", "Voley"]}, '
+      '{"id": "$sedeRamos", "name": "Sede Ramos Mejía", "address": "Calle Belgrano 1240", '
+      '"opens_at": "09:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6], '
+      '"space_count": 2, "sports": ["Hockey", "Voley"]}, '
       '${sedeHaedoSinCanchas.replaceAll(idHaedo, sedeHaedo)}]';
   const catalogoCompleto =
-      '{"deportes": ['
-      '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
-      '{"clave": "F5", "nombre": "Fútbol 5"}]},'
-      '{"clave": "Tenis", "nombre": "Tenis", "tipos": ['
-      '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]},'
-      '{"clave": "Voley", "nombre": "Vóley", "tipos": ['
-      '{"clave": "IND", "nombre": "Indoor"}]},'
-      '{"clave": "Hockey", "nombre": "Hockey", "tipos": ['
-      '{"clave": "H7", "nombre": "Hockey 7"}]}]}';
+      '{"sports": ['
+      '{"key": "Futbol", "name": "Fútbol", "kinds": ['
+      '{"key": "F5", "name": "Fútbol 5"}]},'
+      '{"key": "Tenis", "name": "Tenis", "kinds": ['
+      '{"key": "PDL", "name": "Polvo de ladrillo"}]},'
+      '{"key": "Voley", "name": "Vóley", "kinds": ['
+      '{"key": "IND", "name": "Indoor"}]},'
+      '{"key": "Hockey", "name": "Hockey", "kinds": ['
+      '{"key": "H7", "name": "Hockey 7"}]}]}';
 
   Future<void> capturar(WidgetTester tester, String archivo) async {
     await tester.runAsync(() async {
@@ -69,8 +69,8 @@ void main() {
                   sedeMoron,
                 ),
           ),
-          'GET /espacios/catalogo': (200, catalogoCompleto),
-          'POST /reservas': (
+          'GET /spaces/catalog': (200, catalogoCompleto),
+          'POST /bookings': (
             201,
             reservaJson(
               inicio: '2026-11-12T21:00:00+00:00',
@@ -142,7 +142,7 @@ void main() {
               '/sedes/$sedeMoron/canchas/00000000-0000-7000-8000-000000000009',
           api: apiRutas({
             ...rutasDeSedes(sedes: sedes, grilla: grillaJson(abre: false)),
-            'GET /espacios/catalogo': (200, catalogoCompleto),
+            'GET /spaces/catalog': (200, catalogoCompleto),
           }),
         );
         await capturar(tester, 'sedes/horarios_vacio_${ancho}_$modo.png');

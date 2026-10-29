@@ -48,11 +48,11 @@ void main() {
       );
       await expectLater(
         () =>
-            api.post('/sedes/00000000-0000-7000-8000-000000000001/anular', {}),
+            api.post('/venues/00000000-0000-7000-8000-000000000001/void', {}),
         throwsA(isA<AssertionError>()),
       );
-      await expectLater(api.get('/sedes', token: 'token'), completes);
-      await expectLater(api.get('/reservas?cuando=proximas'), completes);
+      await expectLater(api.get('/venues', token: 'token'), completes);
+      await expectLater(api.get('/bookings?when=upcoming'), completes);
     },
   );
 
@@ -79,14 +79,14 @@ void main() {
     expect(
       rutaDeclarada(
         'GET',
-        '/reservas/todas/00000000-0000-7000-8000-000000000007',
+        '/bookings/all/00000000-0000-7000-8000-000000000007',
       ),
       isTrue,
     );
     expect(
       rutaDeclarada(
         'POST',
-        '/reservas/00000000-0000-7000-8000-000000000007/anular',
+        '/bookings/00000000-0000-7000-8000-000000000007/void',
       ),
       isTrue,
     );
@@ -96,7 +96,7 @@ void main() {
     expect(
       rutaDeclarada(
         'GET',
-        '/reservas/00000000-0000-7000-8000-000000000007/anular',
+        '/bookings/00000000-0000-7000-8000-000000000007/void',
       ),
       isFalse,
     );
@@ -104,14 +104,14 @@ void main() {
     expect(
       rutaDeclarada(
         'POST',
-        '/reservas/00000000-0000-7000-8000-000000000007/8/anular',
+        '/bookings/00000000-0000-7000-8000-000000000007/8/void',
       ),
       isFalse,
     );
     expect(
       rutaDeclarada(
         'GET',
-        '/reservas/todas/00000000-0000-7000-8000-000000000007/x',
+        '/bookings/all/00000000-0000-7000-8000-000000000007/x',
       ),
       isFalse,
     );

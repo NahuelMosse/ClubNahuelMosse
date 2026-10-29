@@ -10,9 +10,9 @@ import 'soporte/admin.dart';
 
 void main() {
   const editado =
-      '{"id": "00000000-0000-7000-8000-000000000009", "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
-      '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 1, '
-      '"techada": false, "iluminada": true, "precio_por_hora": 45000}';
+      '{"id": "00000000-0000-7000-8000-000000000009", "name": "Moron_Rivadavia_19850_Futbol_F5_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
+      '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 1, '
+      '"covered": false, "lit": true, "price_per_hour": 45000}';
 
   Future<List<http.Request>> abrir(
     WidgetTester tester, {
@@ -30,16 +30,16 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('PUT', '/espacios/00000000-0000-7000-8000-000000000009') => () {
+            ('PUT', '/spaces/00000000-0000-7000-8000-000000000009') => () {
               guardado = alGuardar.$1 == 200;
               return alGuardar;
             }(),
-            ('GET', '/espacios') => (
+            ('GET', '/spaces') => (
               200,
-              '{"espacios": [${guardado ? editado : espacioF5Json}]}',
+              '{"spaces": [${guardado ? editado : espacioF5Json}]}',
             ),
-            ('GET', '/espacios/catalogo') => (200, catalogoJson),
-            ('GET', '/sedes') => (200, '{"sedes": [$sedeMoronJson]}'),
+            ('GET', '/spaces/catalog') => (200, catalogoJson),
+            ('GET', '/venues') => (200, '{"venues": [$sedeMoronJson]}'),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
@@ -111,7 +111,7 @@ void main() {
 
     final put = pedidos.singleWhere((p) => p.method == 'PUT');
     // Sólo lo que cambió.
-    expect(jsonDecode(put.body), {'precio_por_hora': 45000});
+    expect(jsonDecode(put.body), {'price_per_hour': 45000});
     expect(find.text('Los cambios se guardaron correctamente'), findsOneWidget);
     expect(find.text('ALTA ESPACIO'), findsOneWidget);
     expect(find.textContaining('45.000 por hora'), findsOneWidget);

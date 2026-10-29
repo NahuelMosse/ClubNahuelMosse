@@ -92,7 +92,7 @@ class BookingCard extends StatelessWidget {
     return [
       catalogo.shortKind(r.sport, r.kind),
       '${r.venue}, ${r.address}',
-      r.status.apiValue,
+      r.status.label.toLowerCase(),
       longDate(r.startsAt),
       _horario,
       '${formatPesos(r.total).replaceFirst('\$ ', '')} pesos',

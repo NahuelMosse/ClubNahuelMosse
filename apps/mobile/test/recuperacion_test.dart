@@ -55,7 +55,7 @@ void main() {
         await montarEnRutas(
           tester,
           ForgotPasswordScreen(
-            recovery: recuperacion({'POST /recuperacion': (202, '')}),
+            recovery: recuperacion({'POST /password-recovery': (202, '')}),
           ),
         );
         await tester.enterText(
@@ -80,7 +80,7 @@ void main() {
       await montarEnRutas(
         tester,
         ForgotPasswordScreen(
-          recovery: recuperacion({'POST /recuperacion': (202, '')}),
+          recovery: recuperacion({'POST /password-recovery': (202, '')}),
         ),
       );
       await tester.enterText(
@@ -93,7 +93,7 @@ void main() {
 
       expect(find.text('Revisá tu correo'), findsOneWidget);
       expect(find.text(linkSentNotice), findsOneWidget);
-      expect(pedidos.single.body, '{"correo":"nahuel@correo.com"}');
+      expect(pedidos.single.body, '{"email":"nahuel@correo.com"}');
 
       await tester.tap(find.text('Reenviar el correo'));
       await tester.pumpAndSettle();
@@ -112,7 +112,7 @@ void main() {
       await montarEnRutas(
         tester,
         ForgotPasswordScreen(
-          recovery: recuperacion({'POST /recuperacion': (500, '')}),
+          recovery: recuperacion({'POST /password-recovery': (500, '')}),
         ),
       );
       await tester.enterText(
@@ -139,7 +139,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        pantalla({'POST /recuperacion/consulta': (410, '')}),
+        pantalla({'POST /password-recovery/check': (410, '')}),
       );
       expect(find.text('El enlace no es válido'), findsOneWidget);
       await tester.tap(find.text('PEDIR UN ENLACE NUEVO'));
@@ -170,8 +170,8 @@ void main() {
       await montarEnRutas(
         tester,
         pantalla({
-          'POST /recuperacion/consulta': (204, ''),
-          'PUT /recuperacion': (204, ''),
+          'POST /password-recovery/check': (204, ''),
+          'PUT /password-recovery': (204, ''),
         }),
       );
       expect(habilitado(tester, 'GUARDAR CONTRASEÑA'), isFalse);
@@ -188,7 +188,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Contraseña actualizada'), findsOneWidget);
-      expect(pedidos.last.body, '{"codigo":"abc","nueva":"ClubNahuel2"}');
+      expect(pedidos.last.body, '{"code":"abc","new_password":"ClubNahuel2"}');
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
       expect(find.text('LOGIN'), findsOneWidget);
@@ -202,8 +202,8 @@ void main() {
       await montarEnRutas(
         tester,
         pantalla({
-          'POST /recuperacion/consulta': (204, ''),
-          'PUT /recuperacion': (410, ''),
+          'POST /password-recovery/check': (204, ''),
+          'PUT /password-recovery': (410, ''),
         }),
       );
       await tester.enterText(
@@ -225,7 +225,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        pantalla({'POST /recuperacion/consulta': (204, '')}),
+        pantalla({'POST /password-recovery/check': (204, '')}),
       );
       await tester.enterText(
         find.bySemanticsLabel('Contraseña nueva'),
@@ -254,7 +254,7 @@ void main() {
       (tester) async {
         final pedidos = <http.Request>[];
         final api = apiRutas({
-          'POST /recuperacion/consulta': (410, ''),
+          'POST /password-recovery/check': (410, ''),
         }, pedidos: pedidos);
         await tester.pumpWidget(
           App(
@@ -269,8 +269,8 @@ void main() {
 
         await abrir(tester, '/recuperar?codigo=nuevo');
         expect(pedidos.map((p) => p.body), [
-          '{"codigo":"viejo"}',
-          '{"codigo":"nuevo"}',
+          '{"code":"viejo"}',
+          '{"code":"nuevo"}',
         ]);
       },
     );
@@ -283,8 +283,8 @@ void main() {
       await tester.pumpWidget(
         App(
           api: apiRutas({
-            'POST /recuperacion/consulta': (204, ''),
-            'PUT /recuperacion': (204, ''),
+            'POST /password-recovery/check': (204, ''),
+            'PUT /password-recovery': (204, ''),
           }),
           session: sesion,
           appearance: Appearance.inMemory(),

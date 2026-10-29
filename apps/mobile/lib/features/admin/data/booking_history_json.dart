@@ -6,10 +6,10 @@ import '../domain/counters.dart';
 
 Counters? parseCounters(Object? json) => switch (json) {
   {
-    'todas': final int all,
-    'activas': final int active,
-    'completadas': final int completed,
-    'anuladas': final int voided,
+    'all': final int all,
+    'active': final int active,
+    'completed': final int completed,
+    'voided': final int voided,
   } =>
     Counters(all: all, active: active, completed: completed, voided: voided),
   _ => null,
@@ -23,24 +23,24 @@ DateTime? _inClubTime(String iso) {
 BookingHistoryEntry? parseBookingHistoryEntry(Object? json) {
   if (json case {
     'id': final String id,
-    'espacio_id': final String spaceId,
-    'sede_id': final String venueId,
-    'espacio': final String space,
-    'deporte': final String sport,
-    'tipo': final String type,
-    'sede': final String venue,
-    'direccion': final String address,
-    'inicio': final String startsAt,
-    'fin': final String endsAt,
+    'space_id': final String spaceId,
+    'venue_id': final String venueId,
+    'space': final String space,
+    'sport': final String sport,
+    'kind': final String type,
+    'venue': final String venue,
+    'address': final String address,
+    'starts_at': final String startsAt,
+    'ends_at': final String endsAt,
     'total': final int total,
-    'estado': final String status,
-    'motivo': final Object? reason,
-    'usuario_id': final String userId,
-    'usuario': final String user,
-    'creado_en': final String createdAt,
-    'cancelada_en': final Object? cancelledAt,
-    'cancelada_por_nombre': final Object? cancelledByName,
-    'espacio_de_baja': final bool spaceDeactivated,
+    'status': final String status,
+    'reason': final Object? reason,
+    'user_id': final String userId,
+    'user': final String user,
+    'created_at': final String createdAt,
+    'canceled_at': final Object? cancelledAt,
+    'canceled_by_name': final Object? cancelledByName,
+    'space_deactivated': final bool spaceDeactivated,
   }) {
     final start = _inClubTime(startsAt);
     final end = _inClubTime(endsAt);
@@ -69,12 +69,12 @@ BookingHistoryEntry? parseBookingHistoryEntry(Object? json) {
       cancelledAt: cancelledAt is String ? _inClubTime(cancelledAt) : null,
       cancelledByName: cancelledByName is String ? cancelledByName : null,
       spaceDeactivated: spaceDeactivated,
-      voidable: json['anulable'] == true,
-      noticeDelivery: json['aviso_envio'] is String
-          ? json['aviso_envio'] as String
+      voidable: json['voidable'] == true,
+      noticeDelivery: json['notice_delivery'] is String
+          ? json['notice_delivery'] as String
           : null,
-      noticeAt: json['aviso_en'] is String
-          ? _inClubTime(json['aviso_en'] as String)
+      noticeAt: json['notice_at'] is String
+          ? _inClubTime(json['notice_at'] as String)
           : null,
     );
   }

@@ -18,11 +18,11 @@ String reservaJson({
   String? motivo,
   bool? cancelable,
 }) =>
-    '{"id": "$id", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio": "Moron_Rivadavia_19850_Futbol_F5_1", '
-    '"deporte": "Futbol", "tipo": "F5", "sede": "Sede Morón", '
-    '"direccion": "Av. Rivadavia 19850", "inicio": "$inicio", "fin": "$fin", '
-    '"precio_por_hora": 38000, "total": 38000, "estado": "$estado", '
-    '"motivo": ${motivo == null ? 'null' : '"$motivo"'}, '
+    '{"id": "$id", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space": "Moron_Rivadavia_19850_Futbol_F5_1", '
+    '"sport": "Futbol", "kind": "F5", "venue": "Sede Morón", '
+    '"address": "Av. Rivadavia 19850", "starts_at": "$inicio", "ends_at": "$fin", '
+    '"price_per_hour": 38000, "total": 38000, "status": "$estado", '
+    '"reason": ${motivo == null ? 'null' : '"$motivo"'}, '
     '"cancelable": ${cancelable ?? estado == 'activa'}}';
 
 void main() {
@@ -45,10 +45,10 @@ void main() {
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
-          final (c, cuerpo) = pedido.url.path == '/reservas'
+          final (c, cuerpo) = pedido.url.path == '/bookings'
               ? (
                   codigo,
-                  '{"reservas": ${pedido.url.queryParameters['cuando'] == 'historial' ? historial : proximas}}',
+                  '{"bookings": ${pedido.url.queryParameters['cuando'] == 'historial' ? historial : proximas}}',
                 )
               : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
           return http.Response.bytes(
@@ -83,9 +83,9 @@ void main() {
     final pedidos = await abrir(
       tester,
       historial:
-          '[${reservaJson(estado: 'cancelada')}, '
-          '${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'anulada', motivo: 'lluvia')}, '
-          '${reservaJson(id: '00000000-0000-7000-8000-000000000003', estado: 'completada')}]',
+          '[${reservaJson(estado: 'canceled')}, '
+          '${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'lluvia')}, '
+          '${reservaJson(id: '00000000-0000-7000-8000-000000000003', estado: 'completed')}]',
     );
 
     await tester.tap(find.text('Historial'));
@@ -128,7 +128,7 @@ void main() {
     await abrir(
       tester,
       tamano: const Size(360, 800),
-      proximas: '[${reservaJson(estado: 'activa')}]',
+      proximas: '[${reservaJson(estado: 'active')}]',
     );
     expect(tester.takeException(), isNull);
   });
@@ -140,7 +140,7 @@ void main() {
         tester,
         proximas: '[${reservaJson()}]',
         historial:
-            '[${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'anulada', motivo: 'Lluvia')}]',
+            '[${reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'Lluvia')}]',
       );
       expect(find.text('ACTIVA'), findsOneWidget);
 

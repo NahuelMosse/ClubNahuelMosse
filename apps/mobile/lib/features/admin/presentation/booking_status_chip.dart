@@ -21,7 +21,7 @@ class BookingStatusChip extends StatelessWidget {
       BookingStatus.completed => (p.bgSurface, p.textSecondary),
     };
     return StatusBadge(
-      label: status.apiValue.toUpperCase(),
+      label: status.label.toUpperCase(),
       background: background,
       ink: ink,
     );
