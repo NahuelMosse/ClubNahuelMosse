@@ -85,9 +85,9 @@ void main() {
       tester,
       '/inicio/buscar',
       extra: {
-        'GET /espacios/disponibles': (
+        'GET /spaces/available': (
           200,
-          '{"espacios": [$espacioF5Json, $f5TechadaJson]}',
+          '{"spaces": [$espacioF5Json, $f5TechadaJson]}',
         ),
       },
     );
@@ -105,9 +105,9 @@ void main() {
     final second = reservaJson(id: '00000000-0000-7000-8000-000000000002');
     final held = await mount(
       tester,
-      '/reservas',
+      '/bookings',
       extra: {
-        'GET /reservas': (200, '{"reservas": [${reservaJson()}, $second]}'),
+        'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
       },
     );
     await _capture(tester, 'skeletons/reservas_cargando.png');

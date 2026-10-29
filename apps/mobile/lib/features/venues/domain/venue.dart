@@ -37,12 +37,12 @@ class Venue {
   static Venue? fromJson(Object? json) {
     if (json case {
       'id': final String id,
-      'nombre': final String name,
-      'direccion': final String address,
-      'apertura': final String opening,
-      'cierre': final String closing,
-      'dias': final List<Object?> days,
-      'canchas': final int spaceCount,
+      'name': final String name,
+      'address': final String address,
+      'opens_at': final String opening,
+      'closes_at': final String closing,
+      'open_days': final List<Object?> days,
+      'space_count': final int spaceCount,
     }) {
       return Venue(
         id: id,
@@ -52,7 +52,7 @@ class Venue {
         closing: closing,
         days: [...days.whereType<int>()],
         spaceCount: spaceCount,
-        sports: switch (json['deportes']) {
+        sports: switch (json['sports']) {
           final List<Object?> items => [...items.whereType<String>()],
           _ => const [],
         },

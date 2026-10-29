@@ -11,12 +11,12 @@ const _reserva = '00000000-0000-7000-8000-000000000007';
 
 AppNotification _aviso(String tipo) => AppNotification.fromJson({
   'id': '00000000-0000-7000-8000-000000000001',
-  'tipo': tipo,
-  'titulo': 'Tu reserva empieza en 5 minutos',
-  'cuerpo': 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
-  'reserva_id': _reserva,
-  'creada_en': '2026-11-12T23:55:00Z',
-  'leida': false,
+  'kind': tipo,
+  'title': 'Tu reserva empieza en 5 minutos',
+  'body': 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
+  'booking_id': _reserva,
+  'created_at': '2026-11-12T23:55:00Z',
+  'read': false,
 })!;
 
 void main() {

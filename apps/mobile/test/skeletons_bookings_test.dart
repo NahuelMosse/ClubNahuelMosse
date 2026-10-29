@@ -27,9 +27,9 @@ import 'soporte/usuario.dart';
 const _moron = '00000000-0000-7000-8000-000000000001';
 const _f5 = '00000000-0000-7000-8000-000000000009';
 const _f5Techada =
-    '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "$_moron", '
-    '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
-    '"techada": true, "iluminada": true, "precio_por_hora": 43000}';
+    '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "$_moron", '
+    '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
+    '"covered": true, "lit": true, "price_per_hour": 43000}';
 const _gridBlocks = 12;
 
 /// Mounts the app in 393x852 on [route] with every request held.
@@ -236,9 +236,9 @@ void main() {
         tester,
         '/inicio/buscar',
         extra: {
-          'GET /espacios/disponibles': (
+          'GET /spaces/available': (
             200,
-            '{"espacios": [$espacioF5Json, $_f5Techada]}',
+            '{"spaces": [$espacioF5Json, $_f5Techada]}',
           ),
         },
       );
@@ -279,9 +279,9 @@ void main() {
       final second = reservaJson(id: '00000000-0000-7000-8000-000000000002');
       final held = await _mount(
         tester,
-        '/reservas',
+        '/bookings',
         extra: {
-          'GET /reservas': (200, '{"reservas": [${reservaJson()}, $second]}'),
+          'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
         },
       );
       expect(find.byType(BookingCardSkeleton), findsAtLeastNWidgets(2));

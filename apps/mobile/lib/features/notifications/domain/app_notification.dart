@@ -51,11 +51,11 @@ class AppNotification {
   static AppNotification? fromJson(Object? json) {
     if (json case {
       'id': final String id,
-      'tipo': final String kind,
-      'titulo': final String title,
-      'cuerpo': final String body,
-      'creada_en': final String createdAt,
-      'leida': final bool read,
+      'kind': final String kind,
+      'title': final String title,
+      'body': final String body,
+      'created_at': final String createdAt,
+      'read': final bool read,
     }) {
       final parsedKind = NotificationKind.fromApi(kind);
       final when = DateTime.tryParse(createdAt);
@@ -65,8 +65,8 @@ class AppNotification {
         kind: parsedKind,
         title: title,
         body: body,
-        bookingId: json['reserva_id'] is String
-            ? json['reserva_id'] as String
+        bookingId: json['booking_id'] is String
+            ? json['booking_id'] as String
             : null,
         createdAt: inClubTime(when),
         read: read,

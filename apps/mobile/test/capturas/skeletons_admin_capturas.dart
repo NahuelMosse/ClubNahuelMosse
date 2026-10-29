@@ -10,22 +10,22 @@ String _booking(int n) {
   final start = DateTime.utc(2026, 12, 1, 18);
   final end = start.add(const Duration(hours: 1));
   return '{"id": "00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}",'
-      ' "espacio_id": "00000000-0000-7000-8000-000000000009",'
-      ' "sede_id": "00000000-0000-7000-8000-000000000001",'
-      ' "espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol",'
-      ' "tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850",'
-      ' "inicio": "${start.toIso8601String()}", "fin": "${end.toIso8601String()}",'
-      ' "total": 38000, "estado": "activa", "motivo": null,'
-      ' "usuario_id": "00000000-0000-7000-8000-000000000001",'
-      ' "usuario": "Socio $n", "creado_en": "2026-11-02T18:42:00-03:00",'
-      ' "cancelada_en": null, "cancelada_por_nombre": null,'
-      ' "espacio_de_baja": false}';
+      ' "space_id": "00000000-0000-7000-8000-000000000009",'
+      ' "venue_id": "00000000-0000-7000-8000-000000000001",'
+      ' "space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol",'
+      ' "kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850",'
+      ' "starts_at": "${start.toIso8601String()}", "ends_at": "${end.toIso8601String()}",'
+      ' "total": 38000, "status": "active", "reason": null,'
+      ' "user_id": "00000000-0000-7000-8000-000000000001",'
+      ' "user": "Socio $n", "created_at": "2026-11-02T18:42:00-03:00",'
+      ' "canceled_at": null, "canceled_by_name": null,'
+      ' "space_deactivated": false}';
 }
 
 final _history =
-    '{"reservas": [${_booking(1)}, ${_booking(2)}, ${_booking(3)}], "total": 3,'
-    ' "pagina": 1, "por_pagina": 20, "contadores": {"todas": 3,'
-    ' "activas": 3, "completadas": 0, "anuladas": 0}}';
+    '{"bookings": [${_booking(1)}, ${_booking(2)}, ${_booking(3)}], "total": 3,'
+    ' "page": 1, "per_page": 20, "counters": {"all": 3,'
+    ' "active": 3, "completed": 0, "voided": 0}}';
 
 /// Asserts nothing: it produces each loading state of the admin screens next to the same
 /// screen loaded, dark, 393x852.
@@ -64,7 +64,7 @@ void main() {
 
   final spaces = {
     ...rutasDeEspacios(),
-    'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
+    'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
   };
 
   testWidgets('admin spaces loading and loaded', (tester) async {
@@ -77,8 +77,8 @@ void main() {
 
   testWidgets('admin history loading and loaded', (tester) async {
     await loadingAndLoaded(tester, '/admin', {
-      'GET /reservas/todas': (200, _history),
-      'GET /espacios/catalogo': (200, catalogoJson),
+      'GET /bookings/all': (200, _history),
+      'GET /spaces/catalog': (200, catalogoJson),
     }, 'admin_historial');
   });
 

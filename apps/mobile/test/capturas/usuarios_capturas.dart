@@ -22,8 +22,8 @@ void main() {
       repository: SessionRepository(
         credentials: CredencialesFalsas(),
         api: apiRutas({
-          'GET /yo': (200, perfilJson()),
-          'PUT /yo/contrasena': cambio,
+          'GET /me': (200, perfilJson()),
+          'PUT /me/password': cambio,
         }),
       ),
     );
@@ -95,7 +95,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         await montarCon(tester, (
           422,
-          '{"errores": {"actual": "La contraseña actual no coincide"}}',
+          '{"errors": {"current_password": "La contraseña actual no coincide"}}',
         ));
         await escribir(tester);
         await tester.tap(find.text('GUARDAR CONTRASEÑA'));

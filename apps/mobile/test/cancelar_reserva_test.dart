@@ -36,18 +36,18 @@ void main() {
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
             (
               'POST',
-              '/reservas/00000000-0000-7000-8000-000000000001/cancelar',
+              '/bookings/00000000-0000-7000-8000-000000000001/cancel',
             ) =>
               () {
                 final respuesta =
-                    alCancelar ?? (200, reservaJson(estado: 'cancelada'));
+                    alCancelar ?? (200, reservaJson(estado: 'canceled'));
                 // Un 409 también deja la lista sin esa reserva: ya no estaba activa.
                 cancelada = respuesta.$1 == 200 || respuesta.$1 == 409;
                 return respuesta;
               }(),
-            ('GET', '/reservas') => (
+            ('GET', '/bookings') => (
               200,
-              '{"reservas": ${cancelada ? proximasDespues : '[$proxima]'}}',
+              '{"bookings": ${cancelada ? proximasDespues : '[$proxima]'}}',
             ),
             _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
           };
@@ -105,7 +105,7 @@ void main() {
       tester,
       alCancelar: (
         409,
-        '{"errores": {"reserva": "Esto cambió mientras tanto"}}',
+        '{"errors": {"reserva": "Esto cambió mientras tanto"}}',
       ),
     );
 
@@ -146,7 +146,7 @@ void main() {
         inicio: '/reservas',
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /reservas': (200, '{"reservas": [$empezada]}'),
+          'GET /bookings': (200, '{"bookings": [$empezada]}'),
         }),
       );
 

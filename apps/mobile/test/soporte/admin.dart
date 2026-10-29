@@ -7,17 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'montar.dart';
 
 const sedeHaedoJson =
-    '{"id": "00000000-0000-7000-8000-000000000005", "nombre": "Sede Haedo", "direccion": "Av. Vergara 1850", '
-    '"apertura": "08:00", "cierre": "23:00", "dias": [1,2,3,4,5,6,7], '
-    '"canchas": 0}';
+    '{"id": "00000000-0000-7000-8000-000000000005", "name": "Sede Haedo", "address": "Av. Vergara 1850", '
+    '"opens_at": "08:00", "closes_at": "23:00", "open_days": [1,2,3,4,5,6,7], '
+    '"space_count": 0}';
 const sedeMoronJson =
-    '{"id": "00000000-0000-7000-8000-000000000001", "nombre": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
-    '"apertura": "09:00", "cierre": "00:00", "dias": [1,2,3,4,5,6], '
-    '"canchas": 1}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "name": "Sede Morón", "address": "Av. Rivadavia 19850", '
+    '"opens_at": "09:00", "closes_at": "00:00", "open_days": [1,2,3,4,5,6], '
+    '"space_count": 1}';
 const sedeCastelarJson =
-    '{"id": "00000000-0000-7000-8000-000000000002", "nombre": "Sede Castelar", "direccion": "Av. Rivadavia 23500", '
-    '"apertura": "08:00", "cierre": "22:00", "dias": [1,2,3,4,5,6,7], '
-    '"canchas": 4}';
+    '{"id": "00000000-0000-7000-8000-000000000002", "name": "Sede Castelar", "address": "Av. Rivadavia 23500", '
+    '"opens_at": "08:00", "closes_at": "22:00", "open_days": [1,2,3,4,5,6,7], '
+    '"space_count": 4}';
 
 /// La app entera con la sesión de un administrador, abierta en [inicio].
 Future<void> montarAdmin(
@@ -58,36 +58,36 @@ Future<void> elegir(WidgetTester tester, String campo, String opcion) async {
 }
 
 const catalogoJson =
-    '{"deportes": ['
-    '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
-    '{"clave": "F5", "nombre": "Fútbol 5"}, {"clave": "F7", "nombre": "Fútbol 7"}]},'
-    '{"clave": "Tenis", "nombre": "Tenis", "tipos": ['
-    '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}]}';
+    '{"sports": ['
+    '{"key": "Futbol", "name": "Fútbol", "kinds": ['
+    '{"key": "F5", "name": "Fútbol 5"}, {"key": "F7", "name": "Fútbol 7"}]},'
+    '{"key": "Tenis", "name": "Tenis", "kinds": ['
+    '{"key": "PDL", "name": "Polvo de ladrillo"}]}]}';
 
 const espacioF5Json =
-    '{"id": "00000000-0000-7000-8000-000000000009", "nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
-    '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 1, "techada": false, '
-    '"iluminada": true, "precio_por_hora": 38000}';
+    '{"id": "00000000-0000-7000-8000-000000000009", "name": "Moron_Rivadavia_19850_Futbol_F5_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
+    '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 1, "covered": false, '
+    '"lit": true, "price_per_hour": 38000}';
 const espacioTenisJson =
-    '{"id": "00000000-0000-7000-8000-000000000010", "nombre": "Moron_Rivadavia_19850_Tenis_PDL_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
-    '"sede": "Sede Morón", "deporte": "Tenis", "tipo": "PDL", "numero": 1, "techada": false, '
-    '"iluminada": false, "precio_por_hora": 32000}';
+    '{"id": "00000000-0000-7000-8000-000000000010", "name": "Moron_Rivadavia_19850_Tenis_PDL_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
+    '"venue": "Sede Morón", "sport": "Tenis", "kind": "PDL", "number": 1, "covered": false, '
+    '"lit": false, "price_per_hour": 32000}';
 const espacioCastelarJson =
-    '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Castelar_Rivadavia_23500_Futbol_F7_1", "sede_id": "00000000-0000-7000-8000-000000000002", '
-    '"sede": "Sede Castelar", "deporte": "Futbol", "tipo": "F7", "numero": 1, "techada": true, '
-    '"iluminada": true, "precio_por_hora": 55000}';
+    '{"id": "00000000-0000-7000-8000-000000000011", "name": "Castelar_Rivadavia_23500_Futbol_F7_1", "venue_id": "00000000-0000-7000-8000-000000000002", '
+    '"venue": "Sede Castelar", "sport": "Futbol", "kind": "F7", "number": 1, "covered": true, '
+    '"lit": true, "price_per_hour": 55000}';
 
 /// Las respuestas de la API que usa el alta de espacio, con [alta] para el POST.
 Map<String, (int, String)> rutasDeEspacios({
   (int, String) alta = (201, espacioF5Json),
   String sedes = '[$sedeMoronJson, $sedeCastelarJson]',
 }) => {
-  'GET /espacios/catalogo': (200, catalogoJson),
-  'GET /espacios': (200, '{"espacios": [$espacioF5Json]}'),
-  'GET /espacios/nombre': (
+  'GET /spaces/catalog': (200, catalogoJson),
+  'GET /spaces': (200, '{"spaces": [$espacioF5Json]}'),
+  'GET /spaces/name': (
     200,
-    '{"nombre": "Moron_Rivadavia_19850_Futbol_F5_1", "numero": 1}',
+    '{"name": "Moron_Rivadavia_19850_Futbol_F5_1", "number": 1}',
   ),
-  'GET /sedes': (200, '{"sedes": $sedes}'),
-  'POST /espacios': alta,
+  'GET /venues': (200, '{"venues": $sedes}'),
+  'POST /spaces': alta,
 };

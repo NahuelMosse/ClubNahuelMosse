@@ -19,10 +19,10 @@ class VenuesRepository {
   ///
   /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
   Future<List<Venue>> active() async {
-    final r = await _api.get('/sedes', token: await _session.token());
+    final r = await _api.get('/venues', token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
-    if (r.cuerpo case {'sedes': final List<Object?> venues}) {
+    if (r.cuerpo case {'venues': final List<Object?> venues}) {
       final parsed = [for (final s in venues) Venue.fromJson(s)];
       if (!parsed.contains(null)) return [...parsed.nonNulls];
     }
@@ -39,12 +39,12 @@ class VenuesRepository {
     required String closing,
     required List<int> days,
   }) async {
-    final r = await _api.post('/sedes', {
-      'nombre': name,
-      'direccion': address,
-      'apertura': opening,
-      'cierre': closing,
-      'dias': days,
+    final r = await _api.post('/venues', {
+      'name': name,
+      'address': address,
+      'opens_at': opening,
+      'closes_at': closing,
+      'open_days': days,
     }, token: await _session.token());
     return _saved(r, 201);
   }
@@ -63,17 +63,17 @@ class VenuesRepository {
     required List<int> days,
     bool confirm = false,
   }) async {
-    final r = await _api.put('/sedes/$id', {
-      'nombre': name,
-      'direccion': address,
-      'apertura': opening,
-      'cierre': closing,
-      'dias': days,
-      'confirmar': confirm,
+    final r = await _api.put('/venues/$id', {
+      'name': name,
+      'address': address,
+      'opens_at': opening,
+      'closes_at': closing,
+      'open_days': days,
+      'confirm': confirm,
     }, token: await _session.token());
     if (r.codigo == 404) throw const VenueUnavailable();
     if (r.cuerpo case {
-      'reservas_afuera': final int count,
+      'bookings_outside': final int count,
     } when r.codigo == 409) {
       throw BookingsOutsideHours(count);
     }
@@ -85,7 +85,7 @@ class VenuesRepository {
   /// Lanza [VenueUnavailable], [VenueHasBookings], [SessionExpired], [SinConexion] o
   /// [ErrorDelServidor].
   Future<void> deactivate(String id) async {
-    final r = await _api.delete('/sedes/$id', token: await _session.token());
+    final r = await _api.delete('/venues/$id', token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 404) throw const VenueUnavailable();
     if (r.codigo == 409) throw const VenueHasBookings();

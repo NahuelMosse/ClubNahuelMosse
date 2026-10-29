@@ -6,13 +6,13 @@ import 'notification_kind.dart';
 class NoticeTapped {
   const NoticeTapped({this.kind, this.bookingId, this.legacy = false});
 
-  /// Lee los datos del mensaje push. Un `reserva_id` que no es un UUID (un aviso numérico
+  /// Lee los datos del mensaje push. Un `booking_id` que no es un UUID (un aviso numérico
   /// anterior a los UUID) marca el aviso como [legacy]: no se puede resaltar esa reserva.
   factory NoticeTapped.fromData(Map<String, Object?> data) {
-    final id = data['reserva_id']?.toString() ?? '';
+    final id = data['booking_id']?.toString() ?? '';
     final isUuid = _uuid.hasMatch(id);
     return NoticeTapped(
-      kind: NotificationKind.fromApi(data['tipo']?.toString() ?? ''),
+      kind: NotificationKind.fromApi(data['kind']?.toString() ?? ''),
       bookingId: isUuid ? id : null,
       legacy: id.isNotEmpty && !isUuid,
     );

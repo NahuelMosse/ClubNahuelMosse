@@ -21,7 +21,7 @@ class _Servidor {
   var _activa = true;
 
   int get lecturas => pedidos
-      .where((p) => p.method == 'GET' && p.url.path == '/reservas')
+      .where((p) => p.method == 'GET' && p.url.path == '/bookings')
       .length;
 
   ApiClient get api =>
@@ -31,11 +31,11 @@ class _Servidor {
     pedidos.add(pedido);
     final rutas = rutasDeSedes();
     final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-      ('GET', '/reservas') => (
+      ('GET', '/bookings') => (
         200,
-        '{"reservas": [${_activa ? reservaJson() : ''}]}',
+        '{"bookings": [${_activa ? reservaJson() : ''}]}',
       ),
-      ('POST', '/reservas/00000000-0000-7000-8000-000000000001/cancelar') =>
+      ('POST', '/bookings/00000000-0000-7000-8000-000000000001/cancel') =>
         await _cancelar(),
       _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
     };
@@ -49,7 +49,7 @@ class _Servidor {
   Future<(int, String)> _cancelar() async {
     await frenar;
     _activa = false;
-    return (200, reservaJson(estado: 'cancelada'));
+    return (200, reservaJson(estado: 'canceled'));
   }
 }
 

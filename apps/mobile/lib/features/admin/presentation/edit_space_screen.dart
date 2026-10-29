@@ -142,7 +142,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       if (mounted) {
         setState(
           () => _serverError =
-              e.errors['precio_por_hora'] ?? e.errors.values.firstOrNull,
+              e.errors['price_per_hour'] ?? e.errors.values.firstOrNull,
         );
       }
     } on SessionExpired {

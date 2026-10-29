@@ -87,7 +87,7 @@ void main() {
 
         await _salir(tester);
 
-        expect(api.de('POST', '/notificaciones/leer-todas'), hasLength(1));
+        expect(api.de('POST', '/notifications/read-all'), hasLength(1));
         expect(centro.unread, 0);
         expect(centro.list.every((n) => n.read), isTrue);
       },
@@ -104,7 +104,7 @@ void main() {
 
         expect(find.bySemanticsLabel(RegExp('sin leer')), findsOneWidget);
         expect(centro.unread, 1);
-        expect(api.de('POST', '/notificaciones/leer-todas'), isEmpty);
+        expect(api.de('POST', '/notifications/read-all'), isEmpty);
         semantica.dispose();
       },
     );
@@ -142,7 +142,7 @@ void main() {
         final otroTipo = notif(
           id: '00000000-0000-7000-8000-000000000006',
           club: DateTime.utc(2026, 11, 12, 19, 40),
-          tipo: 'cancelacion_usuario',
+          tipo: 'user_cancellation',
           titulo: 'Reserva cancelada',
         );
         final (api, sistema, centro) = await _montarApp(tester, [
@@ -160,7 +160,7 @@ void main() {
             .where((p) => p.method == 'POST' && p.url.path.endsWith('/leer'))
             .map((p) => p.url.path)
             .toList();
-        expect(leidas, ['/notificaciones/$_idRecordatorio/leer']);
+        expect(leidas, ['/notifications/$_idRecordatorio/read']);
         expect(centro.unreadList, hasLength(2));
         expect(find.text('Mis reservas'), findsOneWidget);
       },
@@ -173,10 +173,10 @@ void main() {
 
         expect(centro.unread, 1);
         expect(
-          api.de('POST', '/notificaciones/$_idRecordatorio/leer'),
+          api.de('POST', '/notifications/$_idRecordatorio/read'),
           isEmpty,
         );
-        expect(api.de('POST', '/notificaciones/leer-todas'), isEmpty);
+        expect(api.de('POST', '/notifications/read-all'), isEmpty);
       },
     );
   });

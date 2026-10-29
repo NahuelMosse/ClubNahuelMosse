@@ -61,29 +61,29 @@ ApiClient apiRutas(
 );
 
 const _catalogoJson =
-    '{"deportes": ['
-    '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
-    '{"clave": "F5", "nombre": "Fútbol 5"}, {"clave": "F7", "nombre": "Fútbol 7"}]}, '
-    '{"clave": "Tenis", "nombre": "Tenis", "tipos": ['
-    '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}, '
-    '{"clave": "Padel", "nombre": "Pádel", "tipos": [{"clave": "PAD", "nombre": "Pádel"}]}, '
-    '{"clave": "Voley", "nombre": "Vóley", "tipos": [{"clave": "IND", "nombre": "Indoor"}]}, '
-    '{"clave": "Basquet", "nombre": "Básquet", "tipos": [{"clave": "B5", "nombre": "Básquet 5"}]}, '
-    '{"clave": "Hockey", "nombre": "Hockey", "tipos": [{"clave": "H7", "nombre": "Hockey 7"}]}, '
-    '{"clave": "Golf", "nombre": "Golf", "tipos": [{"clave": "DR", "nombre": "Driving range"}]}'
+    '{"sports": ['
+    '{"key": "Futbol", "name": "Fútbol", "kinds": ['
+    '{"key": "F5", "name": "Fútbol 5"}, {"key": "F7", "name": "Fútbol 7"}]}, '
+    '{"key": "Tenis", "name": "Tenis", "kinds": ['
+    '{"key": "PDL", "name": "Polvo de ladrillo"}]}, '
+    '{"key": "Padel", "name": "Pádel", "kinds": [{"key": "PAD", "name": "Pádel"}]}, '
+    '{"key": "Voley", "name": "Vóley", "kinds": [{"key": "IND", "name": "Indoor"}]}, '
+    '{"key": "Basquet", "name": "Básquet", "kinds": [{"key": "B5", "name": "Básquet 5"}]}, '
+    '{"key": "Hockey", "name": "Hockey", "kinds": [{"key": "H7", "name": "Hockey 7"}]}, '
+    '{"key": "Golf", "name": "Golf", "kinds": [{"key": "DR", "name": "Driving range"}]}'
     ']}';
 
 String _sedeJson(String id, String nombre, String direccion, int canchas) =>
-    '{"id": "$id", "nombre": "$nombre", "direccion": "$direccion", '
-    '"apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7], '
-    '"canchas": $canchas, "deportes": ["Futbol", "Tenis"]}';
+    '{"id": "$id", "name": "$nombre", "address": "$direccion", '
+    '"opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7], '
+    '"space_count": $canchas, "sports": ["Futbol", "Tenis"]}';
 
 const _proximaJson =
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000003", "sede_id": "00000000-0000-7000-8000-000000000002", '
-    '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
-    '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
-    '"inicio": "2026-11-13T00:00:00Z", "fin": "2026-11-13T01:00:00Z", '
-    '"total": 38000, "estado": "activa", "motivo": null, "cancelable": true}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000003", "venue_id": "00000000-0000-7000-8000-000000000002", '
+    '"space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", '
+    '"kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850", '
+    '"starts_at": "2026-11-13T00:00:00Z", "ends_at": "2026-11-13T01:00:00Z", '
+    '"total": 38000, "status": "active", "reason": null, "cancelable": true}';
 
 /// Una API con lo que lee el Home: 4 sedes con 17 canchas (o, con [unaSede], una sede con
 /// una cancha), el catálogo de deportes y, con [conReserva], una próxima reserva.
@@ -91,13 +91,13 @@ ApiClient apiInicio({
   bool conReserva = true,
   bool unaSede = false,
 }) => apiRutas({
-  'GET /reservas': (200, '{"reservas": [${conReserva ? _proximaJson : ''}]}'),
-  'GET /espacios/catalogo': (200, _catalogoJson),
-  'GET /sedes': (
+  'GET /bookings': (200, '{"bookings": [${conReserva ? _proximaJson : ''}]}'),
+  'GET /spaces/catalog': (200, _catalogoJson),
+  'GET /venues': (
     200,
     unaSede
-        ? '{"sedes": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
-        : '{"sedes": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+        ? '{"venues": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 1)}]}'
+        : '{"venues": [${_sedeJson('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
               '${_sedeJson('00000000-0000-7000-8000-000000000002', 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
               '${_sedeJson('00000000-0000-7000-8000-000000000003', 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
               '${_sedeJson('00000000-0000-7000-8000-000000000004', 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}',
@@ -217,8 +217,8 @@ class CredencialesFalsas implements Credentials {
 
 /// El perfil que devuelve `GET /yo` en los tests.
 String perfilJson({String rol = 'usuario'}) =>
-    '{"nombre": "Nahuel", "apellido": "Mosse", "correo": "nahuel@correo.com", '
-    '"rol": "$rol", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}';
+    '{"name": "Nahuel", "last_name": "Mosse", "email": "nahuel@correo.com", '
+    '"role": "$rol", "dni": "42118507", "birth_date": "2000-03-14"}';
 
 final perfilUsuario = Profile(
   firstName: 'Nahuel',

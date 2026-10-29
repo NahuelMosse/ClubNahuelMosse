@@ -41,15 +41,15 @@ const _skeletonCard = ValueKey('skeleton-card');
 const _skeletonHeader = ValueKey('skeleton-header');
 
 final _homeAnswers = {
-  'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
-  'GET /espacios/catalogo': (200, catalogoJson),
-  'GET /sedes': (200, '{"sedes": [$sedeMoronConDeportes]}'),
+  'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+  'GET /spaces/catalog': (200, catalogoJson),
+  'GET /venues': (200, '{"venues": [$sedeMoronConDeportes]}'),
 };
 
 final _noticeAnswers = {
-  'GET /notificaciones': (
+  'GET /notifications': (
     200,
-    '{"notificaciones": [$recordatorio, $confirmacion], "no_leidas": 1}',
+    '{"notifications": [$recordatorio, $confirmacion], "unread": 1}',
   ),
 };
 
@@ -136,8 +136,8 @@ void main() {
       final screens = <(String, HeldApi, Session?)>[
         ('/inicio', HeldApi(_homeAnswers), null),
         (
-          '/notificaciones',
-          HeldApi(_noticeAnswers, held: {'GET /notificaciones'}),
+          '/notifications',
+          HeldApi(_noticeAnswers, held: {'GET /notifications'}),
           null,
         ),
         ('/perfil', HeldApi({}), _HeldSession()),

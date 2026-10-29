@@ -111,7 +111,7 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
         App(
-          api: apiRutas({'GET /reservas': (200, '{"reservas": []}')}),
+          api: apiRutas({'GET /bookings': (200, '{"bookings": []}')}),
           session: SesionFalsa(perfilUsuario),
           appearance: Appearance.inMemory(),
           initialLocation: '/admin',
@@ -141,8 +141,8 @@ void main() {
             'http://api.falsa',
             cliente: MockClient(
               (pedido) async => switch (pedido.url.path) {
-                '/reservas' => http.Response('{"reservas": []}', 200),
-                '/espacios/catalogo' => http.Response(catalogoJson, 200),
+                '/bookings' => http.Response('{"bookings": []}', 200),
+                '/spaces/catalog' => http.Response(catalogoJson, 200),
                 _ => http.Response('{}', 403),
               },
             ),
@@ -231,7 +231,7 @@ void main() {
       );
 
       await expectLater(
-        api.get('/sedes'),
+        api.get('/venues'),
         throwsA(isA<ServidorSinRespuesta>()),
       );
     },

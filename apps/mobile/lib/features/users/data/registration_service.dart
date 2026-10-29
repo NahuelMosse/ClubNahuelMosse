@@ -9,5 +9,5 @@ class RegistrationService {
 
   /// Lanza [SinConexion] o [ErrorDelServidor] si el pedido no llega a tener respuesta.
   Future<Respuesta> register(RegistrationData data) =>
-      _api.post('/registro', data.toJson());
+      _api.post('/register', data.toJson());
 }

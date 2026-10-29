@@ -298,7 +298,7 @@ void main() {
     () {
       expect(
         fieldErrors({
-          'errores': {'dni': 'El DNI ya existe', 'edad': 3},
+          'errors': {'dni': 'El DNI ya existe', 'edad': 3},
         }),
         {'dni': 'El DNI ya existe'},
       );

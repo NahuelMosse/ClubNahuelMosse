@@ -171,9 +171,9 @@ void main() {
       repository: SessionRepository(
         credentials: CredencialesFalsas(),
         api: apiRutas({
-          'GET /yo': (
+          'GET /me': (
             200,
-            '{"nombre": "N", "apellido": "M", "correo": "a@b.com", "rol": "usuario"}',
+            '{"name": "N", "last_name": "M", "email": "a@b.com", "role": "user"}',
           ),
         }),
       ),
@@ -205,8 +205,8 @@ void main() {
         tester,
         edicion: (
           200,
-          '{"nombre": "Agustín", "apellido": "Mosse", "correo": "nahuel@correo.com", '
-              '"rol": "usuario", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}',
+          '{"name": "Agustín", "last_name": "Mosse", "email": "nahuel@correo.com", '
+              '"role": "user", "dni": "42118507", "birth_date": "2000-03-14"}',
         ),
       );
       await editar(tester);
@@ -214,8 +214,8 @@ void main() {
       await guardar(tester);
 
       expect(ediciones, [
-        '{"nombre":"Agustín","apellido":"Mosse","dni":"42118507",'
-            '"fecha_nacimiento":"2000-03-14"}',
+        '{"name":"Agustín","last_name":"Mosse","dni":"42118507",'
+            '"birth_date":"2000-03-14"}',
       ]);
       expect(find.text('GUARDAR'), findsNothing);
       expect(find.text('Agustín Mosse'), findsOneWidget);
@@ -260,7 +260,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarPerfil(
         tester,
-        edicion: (409, '{"errores": {"dni": "Este DNI ya está registrado"}}'),
+        edicion: (409, '{"errors": {"dni": "Este DNI ya está registrado"}}'),
       );
       await editar(tester);
       await tester.enterText(find.bySemanticsLabel('DNI'), '30111222');
@@ -317,11 +317,11 @@ void main() {
       repository: SessionRepository(
         credentials: CredencialesFalsas(),
         api: apiRutas({
-          'GET /yo': (200, perfilJson()),
-          'PUT /yo': (
+          'GET /me': (200, perfilJson()),
+          'PUT /me': (
             200,
-            '{"nombre": "Agustín", "apellido": "Paz", "correo": "nahuel@correo.com", '
-                '"rol": "usuario", "dni": "42118507", "fecha_nacimiento": "2000-03-14"}',
+            '{"name": "Agustín", "last_name": "Paz", "email": "nahuel@correo.com", '
+                '"role": "user", "dni": "42118507", "birth_date": "2000-03-14"}',
           ),
         }),
       ),

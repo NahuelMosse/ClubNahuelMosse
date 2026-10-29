@@ -68,7 +68,7 @@ void main() {
   test(
     'los errores por campo que manda el servidor se leen sólo en errores_de_campo.dart @ARQ-03-S2',
     () {
-      expect(_queContienen("['errores']"), {'common/field_errors.dart'});
+      expect(_queContienen("['errors']"), {'common/field_errors.dart'});
     },
   );
 

@@ -119,7 +119,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     } on InvalidLink {
       if (mounted) setState(() => _stage = _Stage.invalid);
     } on PasswordRejected catch (e) {
-      if (mounted) setState(() => _serverError = e.errors['nueva']);
+      if (mounted) setState(() => _serverError = e.errors['new_password']);
     } on FalloDeRed catch (e) {
       failure = e;
     } finally {

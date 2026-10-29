@@ -18,12 +18,12 @@ class NotificationsRepository {
 
   /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
   Future<CenterReading> center() async {
-    final r = await _api.get('/notificaciones', token: await _session.token());
+    final r = await _api.get('/notifications', token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 200) {
       if (r.cuerpo case {
-        'notificaciones': final List<Object?> list,
-        'no_leidas': final int unread,
+        'notifications': final List<Object?> list,
+        'unread': final int unread,
       }) {
         final parsed = [for (final e in list) AppNotification.fromJson(e)];
         if (!parsed.contains(null)) {
@@ -37,7 +37,7 @@ class NotificationsRepository {
   /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
   Future<void> read(String id) async {
     final r = await _api.post(
-      '/notificaciones/$id/leer',
+      '/notifications/$id/read',
       const {},
       token: await _session.token(),
     );
@@ -47,7 +47,7 @@ class NotificationsRepository {
   /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
   Future<void> readAll() async {
     final r = await _api.post(
-      '/notificaciones/leer-todas',
+      '/notifications/read-all',
       const {},
       token: await _session.token(),
     );
@@ -63,10 +63,10 @@ class NotificationsRepository {
     required String platform,
     required bool permission,
   }) async {
-    final r = await _api.put('/dispositivos', {
+    final r = await _api.put('/devices', {
       'token': token,
-      'plataforma': platform,
-      'permiso': permission,
+      'platform': platform,
+      'permission_granted': permission,
     }, token: await _session.token());
     _expect204(r);
   }
@@ -77,7 +77,7 @@ class NotificationsRepository {
   ///
   /// [session] es el token de la sesión que se está cerrando, tomado antes de que se cierre.
   Future<void> unregisterDevice(String token, {required String session}) async {
-    final r = await _api.post('/dispositivos/baja', {
+    final r = await _api.post('/devices/unregister', {
       'token': token,
     }, token: session);
     _expect204(r);

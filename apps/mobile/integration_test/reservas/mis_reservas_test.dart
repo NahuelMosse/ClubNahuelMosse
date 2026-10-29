@@ -142,13 +142,13 @@ void main() {
     (tester) async {
       final (_, f5, tenis) = await sedeConCanchas();
       final correo = await cuenta();
-      await ocupar(f5, dia(2), 20, correo: correo, estado: 'cancelada');
+      await ocupar(f5, dia(2), 20, correo: correo, estado: 'canceled');
       await ocupar(
         tenis,
         dia(-1),
         19,
         correo: correo,
-        estado: 'anulada',
+        estado: 'voided',
         motivo: 'mantenimiento de la cancha',
       );
       await entrar(tester, correo);

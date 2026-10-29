@@ -49,7 +49,7 @@ void main() {
   testWidgets(
     'la sede carga con la forma de su portada, filtros y tarjetas de cancha en 393 por 852, bordes a 1 px y alto a 8 px @VIS-03-S1 @assumption:VIS-03-ASM-01',
     (tester) async {
-      final held = await _mount(tester, '/sedes/$_moron');
+      final held = await _mount(tester, '/venues/$_moron');
       expect(find.byType(VenueSkeleton), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
       final blocks = skeletonRects(tester);
@@ -85,7 +85,7 @@ void main() {
   testWidgets(
     'la sede al filtrar carga tarjetas de cancha bajo los filtros @VIS-03-S1',
     (tester) async {
-      final held = await _mount(tester, '/sedes/$_moron');
+      final held = await _mount(tester, '/venues/$_moron');
       held.release();
       await tester.pumpAndSettle();
       held.holdAgain();
@@ -112,7 +112,7 @@ void main() {
   testWidgets('Sedes carga con la forma de la tarjeta de sede @VIS-03-S1', (
     tester,
   ) async {
-    final held = await _mount(tester, '/sedes');
+    final held = await _mount(tester, '/venues');
     expect(find.byType(VenueCardSkeleton), findsWidgets);
     expect(find.text('Sedes'), findsWidgets);
     final card = _rect(tester, find.byType(VenueCardSkeleton));
@@ -144,7 +144,7 @@ void main() {
       addTearDown(
         tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
       );
-      await _mount(tester, '/sedes');
+      await _mount(tester, '/venues');
       await tester.pump(const Duration(milliseconds: 100));
       expect(tester.hasRunningAnimations, isFalse);
       expect(find.bySemanticsLabel('Cargando'), findsOneWidget);

@@ -20,19 +20,19 @@ import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
 String reservaJson({bool anulable = true, String estado = 'activa'}) =>
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-    ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-    ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-    ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "$estado", "motivo": ${estado == 'anulada' ? '"lluvia"' : 'null'},'
-    ' "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-    ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-    ' "cancelada_por_nombre": null, "espacio_de_baja": false,'
-    ' "anulable": $anulable}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+    ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+    ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+    ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+    ' "status": "$estado", "reason": ${estado == 'anulada' ? '"lluvia"' : 'null'},'
+    ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+    ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
+    ' "canceled_by_name": null, "space_deactivated": false,'
+    ' "voidable": $anulable}';
 
 String listado(String reserva) =>
-    '{"reservas": [$reserva], "total": 1, "pagina": 1, "por_pagina": 20,'
-    ' "contadores": {"todas": 1, "activas": 1, "completadas": 0, "anuladas": 0}}';
+    '{"bookings": [$reserva], "total": 1, "page": 1, "per_page": 20,'
+    ' "counters": {"all": 1, "active": 1, "completed": 0, "voided": 0}}';
 
 void main() {
   setUpAll(cargarFuentes);
@@ -46,10 +46,10 @@ void main() {
   }) async {
     final pedidos = <http.Request>[];
     final api = apiRutas({
-      'GET /reservas/todas': (200, listado(reservaJson(anulable: anulable))),
-      'GET /espacios/catalogo': (200, catalogoJson),
-      'POST /reservas/00000000-0000-7000-8000-000000000001/anular':
-          alAnular ?? (200, reservaJson(anulable: false, estado: 'anulada')),
+      'GET /bookings/all': (200, listado(reservaJson(anulable: anulable))),
+      'GET /spaces/catalog': (200, catalogoJson),
+      'POST /bookings/00000000-0000-7000-8000-000000000001/void':
+          alAnular ?? (200, reservaJson(anulable: false, estado: 'voided')),
     }, pedidos: pedidos);
     final sesion = SesionFalsa(perfilAdmin);
     await montar(
@@ -118,9 +118,9 @@ void main() {
 
       final pedido = anulaciones(pedidos).single;
       expect(jsonDecode(pedido.body), {
-        'motivo': 'Mantenimiento',
-        'espacio_id': '00000000-0000-7000-8000-000000000009',
-        'inicio': '2026-11-13T00:00:00.000Z',
+        'reason': 'Mantenimiento',
+        'space_id': '00000000-0000-7000-8000-000000000009',
+        'starts_at': '2026-11-13T00:00:00.000Z',
       });
       expect(find.text('Reserva anulada correctamente'), findsOneWidget);
       await tocarTexto(tester, 'ACEPTAR');
@@ -162,7 +162,7 @@ void main() {
   ) async {
     final pedidos = await abrirPanel(
       tester,
-      alAnular: (409, '{"errores": {"reserva": "Esto cambió mientras tanto"}}'),
+      alAnular: (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}'),
     );
 
     await pedirAnular(tester);
@@ -208,9 +208,9 @@ void main() {
     (tester) async {
       final pedidos = <http.Request>[];
       final api = apiRutas({
-        'POST /reservas/00000000-0000-7000-8000-000000000001/anular': (
+        'POST /bookings/00000000-0000-7000-8000-000000000001/void': (
           200,
-          reservaJson(anulable: false, estado: 'anulada'),
+          reservaJson(anulable: false, estado: 'voided'),
         ),
       }, pedidos: pedidos);
       final sesion = SesionFalsa(perfilAdmin);

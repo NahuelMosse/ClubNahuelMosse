@@ -21,16 +21,16 @@ String _reserva({
   String? anuladaEn,
   String? anuladaPor,
 }) =>
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-    ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-    ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-    ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "$estado", "motivo": ${motivo == null ? 'null' : '"$motivo"'},'
-    ' "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-    ' "creado_en": "2026-11-02T18:42:00-03:00",'
-    ' "cancelada_en": ${anuladaEn == null ? 'null' : '"$anuladaEn"'},'
-    ' "cancelada_por_nombre": ${anuladaPor == null ? 'null' : '"$anuladaPor"'},'
-    ' "espacio_de_baja": false, "anulable": $anulable}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+    ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+    ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+    ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+    ' "status": "$estado", "reason": ${motivo == null ? 'null' : '"$motivo"'},'
+    ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+    ' "created_at": "2026-11-02T18:42:00-03:00",'
+    ' "canceled_at": ${anuladaEn == null ? 'null' : '"$anuladaEn"'},'
+    ' "canceled_by_name": ${anuladaPor == null ? 'null' : '"$anuladaPor"'},'
+    ' "space_deactivated": false, "voidable": $anulable}';
 
 void main() {
   setUpAll(cargarFuentes);
@@ -41,14 +41,14 @@ void main() {
     List<http.Request> pedidos,
   ) async {
     final anulada = _reserva(
-      estado: 'anulada',
+      estado: 'voided',
       anulable: false,
       motivo: 'Lluvia',
       anuladaEn: '2026-11-12T18:30:00-03:00',
       anuladaPor: 'Ana Díaz',
     );
     final api = apiRutas({
-      'POST /reservas/00000000-0000-7000-8000-000000000001/anular': (
+      'POST /bookings/00000000-0000-7000-8000-000000000001/void': (
         200,
         anulada,
       ),
@@ -85,7 +85,7 @@ void main() {
         (p) =>
             p.method == 'POST' &&
             p.url.path ==
-                '/reservas/00000000-0000-7000-8000-000000000001/anular',
+                '/bookings/00000000-0000-7000-8000-000000000001/void',
       );
 
   testWidgets(
@@ -116,7 +116,7 @@ void main() {
       await abrirDetalle(
         tester,
         _reserva(
-          estado: 'anulada',
+          estado: 'voided',
           anulable: false,
           motivo: 'Lluvia',
           anuladaEn: '2026-11-12T18:30:00-03:00',

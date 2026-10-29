@@ -21,42 +21,42 @@ const _aviso = '0192f3c4-7a10-7b2e-9c11-5d8e2a6f0005';
 
 Map<String, Object?> _sedeJson() => {
   'id': _sede,
-  'nombre': 'Sede Morón',
-  'direccion': 'Av. Rivadavia 19850',
-  'apertura': '08:00',
-  'cierre': '23:00',
-  'dias': [1, 2, 3, 4, 5, 6, 7],
-  'canchas': 1,
-  'deportes': ['Futbol'],
+  'name': 'Sede Morón',
+  'address': 'Av. Rivadavia 19850',
+  'opens_at': '08:00',
+  'closes_at': '23:00',
+  'open_days': [1, 2, 3, 4, 5, 6, 7],
+  'space_count': 1,
+  'sports': ['Futbol'],
 };
 
 Map<String, Object?> _espacioJson() => {
   'id': _espacio,
-  'nombre': 'Moron_Rivadavia_19850_Futbol_F5_1',
-  'sede_id': _sede,
-  'sede': 'Sede Morón',
-  'deporte': 'Futbol',
-  'tipo': 'F5',
-  'numero': 1,
-  'techada': false,
-  'iluminada': true,
-  'precio_por_hora': 38000,
+  'name': 'Moron_Rivadavia_19850_Futbol_F5_1',
+  'venue_id': _sede,
+  'venue': 'Sede Morón',
+  'sport': 'Futbol',
+  'kind': 'F5',
+  'number': 1,
+  'covered': false,
+  'lit': true,
+  'price_per_hour': 38000,
 };
 
 Map<String, Object?> _reservaJson() => {
   'id': _reserva,
-  'espacio_id': _espacio,
-  'sede_id': _sede,
-  'espacio': 'Moron_Rivadavia_19850_Futbol_F5_1',
-  'deporte': 'Futbol',
-  'tipo': 'F5',
-  'sede': 'Sede Morón',
-  'direccion': 'Av. Rivadavia 19850',
-  'inicio': '2026-11-13T00:00:00Z',
-  'fin': '2026-11-13T01:00:00Z',
+  'space_id': _espacio,
+  'venue_id': _sede,
+  'space': 'Moron_Rivadavia_19850_Futbol_F5_1',
+  'sport': 'Futbol',
+  'kind': 'F5',
+  'venue': 'Sede Morón',
+  'address': 'Av. Rivadavia 19850',
+  'starts_at': '2026-11-13T00:00:00Z',
+  'ends_at': '2026-11-13T01:00:00Z',
   'total': 38000,
-  'estado': 'activa',
-  'motivo': null,
+  'status': 'active',
+  'reason': null,
   'cancelable': true,
 };
 
@@ -75,23 +75,23 @@ void main() {
       expect(reserva?.venueId, _sede);
       final historial = parseBookingHistoryEntry({
         ..._reservaJson(),
-        'usuario_id': _usuario,
-        'usuario': 'Nahuel Mosse',
-        'creado_en': '2026-11-01T10:00:00Z',
-        'cancelada_en': null,
-        'cancelada_por_nombre': null,
-        'espacio_de_baja': false,
+        'user_id': _usuario,
+        'user': 'Nahuel Mosse',
+        'created_at': '2026-11-01T10:00:00Z',
+        'canceled_at': null,
+        'canceled_by_name': null,
+        'space_deactivated': false,
       });
       expect(historial?.id, _reserva);
       expect(historial?.userId, _usuario);
       final aviso = AppNotification.fromJson({
         'id': _aviso,
-        'tipo': 'recordatorio',
-        'titulo': 'Tu reserva es pronto',
-        'cuerpo': 'Hoy',
-        'creada_en': '2026-11-12T20:00:00Z',
-        'leida': false,
-        'reserva_id': _reserva,
+        'kind': 'reminder',
+        'title': 'Tu reserva es pronto',
+        'body': 'Hoy',
+        'created_at': '2026-11-12T20:00:00Z',
+        'read': false,
+        'booking_id': _reserva,
       });
       expect(aviso?.id, _aviso);
       expect(aviso?.bookingId, _reserva);
@@ -99,7 +99,7 @@ void main() {
 
     test('un id numérico ya no es un id', () {
       expect(Venue.fromJson({..._sedeJson(), 'id': 1}), isNull);
-      expect(Space.fromJson({..._espacioJson(), 'sede_id': 2}), isNull);
+      expect(Space.fromJson({..._espacioJson(), 'venue_id': 2}), isNull);
     });
 
     testWidgets('la ruta de una sede pide sus canchas con el UUID', (
@@ -110,14 +110,14 @@ void main() {
         tester,
         inicio: '/sedes/$_sede',
         api: apiRutas({
-          'GET /espacios/catalogo': (200, catalogoJson),
-          'GET /sedes': (200, '{"sedes": [${_json(_sedeJson())}]}'),
-          'GET /espacios': (200, '{"espacios": [${_json(_espacioJson())}]}'),
+          'GET /spaces/catalog': (200, catalogoJson),
+          'GET /venues': (200, '{"venues": [${_json(_sedeJson())}]}'),
+          'GET /spaces': (200, '{"spaces": [${_json(_espacioJson())}]}'),
         }, pedidos: pedidos),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
-      final canchas = pedidos.where((p) => p.url.path == '/espacios').single;
-      expect(canchas.url.queryParameters, {'sede_id': _sede});
+      final canchas = pedidos.where((p) => p.url.path == '/spaces').single;
+      expect(canchas.url.queryParameters, {'venue_id': _sede});
     });
   });
 
@@ -126,24 +126,24 @@ void main() {
       '@assumption:DAT-01-ASM-05', () {
     test('un aviso con reserva_id UUID abre la reserva', () {
       final aviso = NoticeTapped.fromData({
-        'tipo': 'recordatorio',
-        'reserva_id': _reserva,
+        'kind': 'reminder',
+        'booking_id': _reserva,
       });
       expect(aviso.route, '/reservas?reserva=$_reserva');
     });
 
     test('uno con reserva_id numérico abre el centro de notificaciones', () {
       final aviso = NoticeTapped.fromData({
-        'tipo': 'recordatorio',
-        'reserva_id': '7',
+        'kind': 'reminder',
+        'booking_id': '7',
       });
       expect(aviso.route, '/notificaciones');
     });
 
     test('uno sin reserva_id abre Mis reservas', () {
       expect(
-        NoticeTapped.fromData({'tipo': 'recordatorio'}).route,
-        '/reservas',
+        NoticeTapped.fromData({'kind': 'reminder'}).route,
+        '/bookings',
       );
     });
   });
