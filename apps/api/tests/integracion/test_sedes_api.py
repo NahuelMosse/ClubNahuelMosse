@@ -131,9 +131,7 @@ def test_no_hay_dos_sedes_activas_con_el_mismo_nombre(
 ) -> None:
     nombre = f"Sede Haedo {unico()}"
     assert api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
-    r = api.post(
-        "/venues", headers=_con(token_admin), json=_sede(nombre.upper(), address="Otra 1")
-    )
+    r = api.post("/venues", headers=_con(token_admin), json=_sede(nombre.upper(), address="Otra 1"))
     assert r.status_code == 409
     assert r.json() == {"errors": {"name": "Ya existe una sede con ese nombre"}}
 
@@ -188,7 +186,9 @@ def test_sin_sesion_no_hay_sedes(api: TestClient) -> None:
 def test_una_hora_que_no_es_hh_mm_es_un_error_del_campo(
     api: TestClient, token_admin: str, unico: Callable[[], str], hora: str
 ) -> None:
-    r = api.post("/venues", headers=_con(token_admin), json=_sede(f"Sede {unico()}", closes_at=hora))
+    r = api.post(
+        "/venues", headers=_con(token_admin), json=_sede(f"Sede {unico()}", closes_at=hora)
+    )
     assert r.status_code == 422
     assert r.json() == {"errors": {"closes_at": "El horario de cierre es obligatorio"}}
 
@@ -206,12 +206,19 @@ def test_editar_guarda_los_datos_nuevos_con_su_rastro(
 ) -> None:
     nombre = f"Sede Haedo {unico()}"
     sede = _alta(api, token_admin, nombre)
-    cambios = _sede(f"{nombre} Norte", address="Av. Vergara 1900", closes_at="00:00", open_days=[1, 2])
+    cambios = _sede(
+        f"{nombre} Norte", address="Av. Vergara 1900", closes_at="00:00", open_days=[1, 2]
+    )
 
     r = api.put(f"/venues/{sede}", headers=_con(token_admin), json=cambios)
 
     assert r.status_code == 200
-    assert (r.json()["name"], r.json()["address"], r.json()["closes_at"], r.json()["open_days"]) == (
+    assert (
+        r.json()["name"],
+        r.json()["address"],
+        r.json()["closes_at"],
+        r.json()["open_days"],
+    ) == (
         f"{nombre} Norte",
         "Av. Vergara 1900",
         "00:00",
@@ -317,7 +324,10 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
     todos = [1, 2, 3, 4, 5, 6, 7]
     # Las pasadas y las canceladas no cuentan.
     assert editar(opens_at="09:00", open_days=todos) == (409, {"bookings_outside": 1})
-    assert editar(opens_at="09:00", closes_at="22:00", open_days=todos) == (409, {"bookings_outside": 2})
+    assert editar(opens_at="09:00", closes_at="22:00", open_days=todos) == (
+        409,
+        {"bookings_outside": 2},
+    )
     sin_manana = [d for d in todos if d != manana.isoweekday()]
     assert editar(open_days=sin_manana) == (409, {"bookings_outside": 2})
     assert editar(opens_at="09:00", open_days=todos, confirm=True)[0] == 200

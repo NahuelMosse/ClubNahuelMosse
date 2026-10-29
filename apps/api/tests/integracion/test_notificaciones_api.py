@@ -185,7 +185,9 @@ def test_con_varios_dispositivos_llega_a_todos_y_al_cerrar_sesion_uno_deja_de_re
     assert [t for t, _ in segundo.enviados] == [[f"b-{s}"]]
     assert segundo.enviados[0][1].data["booking_id"] == str(otra_reserva["id"])
     # Dar de baja uno que ya no está responde igual.
-    repetida = api.post("/devices/unregister", headers=_con(token_usuario), json={"token": f"a-{s}"})
+    repetida = api.post(
+        "/devices/unregister", headers=_con(token_usuario), json={"token": f"a-{s}"}
+    )
     assert repetida.status_code == 204
 
 
@@ -316,8 +318,7 @@ def test_el_aviso_guarda_cuando_se_creo_se_envio_y_se_leyo(
     with motor.connect() as conn:
         antes = conn.execute(
             text(
-                "SELECT created_at AS creada_en, sent_at, read_at"
-                " FROM notification WHERE id = :i"
+                "SELECT created_at AS creada_en, sent_at, read_at FROM notification WHERE id = :i"
             ),
             {"i": aviso["id"]},
         ).one()
@@ -389,7 +390,9 @@ def test_el_borde_de_dispositivos_y_notificaciones_responde_con_un_codigo(
     base = {"token": "fcm-x", "platform": "android", "permission_granted": True}
 
     assert (
-        api.put("/devices", headers=sesion, json=base | {"permission_granted": "quizás"}).status_code
+        api.put(
+            "/devices", headers=sesion, json=base | {"permission_granted": "quizás"}
+        ).status_code
         == 422
     )
     assert api.put("/devices", headers=sesion, json={"token": "fcm-x"}).status_code == 422
@@ -436,10 +439,7 @@ def _sin_recordatorios(motor: Engine, usuario: UUID) -> bool:
     with motor.connect() as conn:
         return (
             conn.execute(
-                text(
-                    "SELECT count(*) FROM notification WHERE user_id = :u"
-                    " AND kind = 'reminder'"
-                ),
+                text("SELECT count(*) FROM notification WHERE user_id = :u AND kind = 'reminder'"),
                 {"u": usuario},
             ).scalar_one()
             == 0

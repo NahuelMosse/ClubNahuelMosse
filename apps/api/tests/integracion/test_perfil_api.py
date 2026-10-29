@@ -89,7 +89,9 @@ def test_datos_invalidos_no_guardan_nada(
     )
     assert codigo == 422
     assert set(cuerpo["errors"]) == {"last_name", "dni", "birth_date"}
-    assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).json()["first_name"] == "Lucía"
+    assert (
+        api.get("/me", headers={"Authorization": f"Bearer {token}"}).json()["first_name"] == "Lucía"
+    )
 
 
 def test_un_dni_de_otra_cuenta_se_rechaza(
