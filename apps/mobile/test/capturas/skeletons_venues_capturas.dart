@@ -11,11 +11,6 @@ const _moron = '00000000-0000-7000-8000-000000000001';
 
 /// Asserts nothing: it produces each loading state of the venues screens next to the same
 /// screen loaded, dark, 393x852.
-Future<void> _capture(WidgetTester tester, String file) async {
-  await decodeImages(tester);
-  await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
-}
-
 void main() {
   Future<HeldApi> mount(WidgetTester tester, String route) async {
     final held = HeldApi(rutasDeSedes());
@@ -60,4 +55,9 @@ void main() {
     await _capture(tester, 'skeletons/sede_filtrada.png');
     await drainApp(tester);
   });
+}
+
+Future<void> _capture(WidgetTester tester, String file) async {
+  await decodeImages(tester);
+  await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
 }
