@@ -44,11 +44,7 @@ String _pagina(Iterable<int> ids, int numero) =>
     ' "pagina": $numero, "por_pagina": 20, "contadores": {"todas": 40,'
     ' "activas": 40, "completadas": 0, "anuladas": 0}}';
 
-Future<void> _abrir(
-  WidgetTester tester,
-  ApiClient api,
-  String inicio,
-) async {
+Future<void> _abrir(WidgetTester tester, ApiClient api, String inicio) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
   tester.view.devicePixelRatio = 3;
   addTearDown(tester.view.reset);
@@ -98,20 +94,14 @@ void main() {
 
   testWidgets(
     'Espacios del admin carga con la forma de su tarjeta @VIS-03-S1',
-    (tester) => _cardShape(
-      tester,
-      inicio: '/admin/espacios',
-      card: AdminSpaceCard,
-    ),
+    (tester) =>
+        _cardShape(tester, inicio: '/admin/espacios', card: AdminSpaceCard),
   );
 
   testWidgets(
     'Sedes del admin carga con la forma de su tarjeta @VIS-03-S1',
-    (tester) => _cardShape(
-      tester,
-      inicio: '/admin/sedes',
-      card: AdminVenueCard,
-    ),
+    (tester) =>
+        _cardShape(tester, inicio: '/admin/sedes', card: AdminVenueCard),
   );
 
   testWidgets(

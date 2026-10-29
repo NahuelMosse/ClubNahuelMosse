@@ -14,6 +14,7 @@ import '../domain/new_space_field.dart';
 import 'new_space_body.dart';
 import 'new_space_form.dart';
 import 'new_space_options.dart';
+import 'new_space_skeleton.dart';
 import 'space_form_fields.dart';
 
 /// Alta de espacio deportivo: sede, deporte, tipo, condición, iluminación y precio, con el
@@ -155,7 +156,7 @@ class _NewSpaceScreenState extends State<NewSpaceScreen> {
         body: SafeArea(
           top: false,
           child: _form.loading && _form.venueOptions == null
-              ? const Center(child: CircularProgressIndicator())
+              ? const NewSpaceSkeleton()
               : NewSpaceBody(
                   form: _form,
                   onPickVenue: _pickVenue,
