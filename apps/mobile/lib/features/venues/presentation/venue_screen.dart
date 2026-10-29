@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../common/bottom_bar.dart';
 import '../../../common/error_dialog.dart';
 import '../../../common/network_failure.dart';
-import '../../../common/skeleton.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
@@ -15,6 +14,7 @@ import '../../spaces/domain/space.dart';
 import '../../spaces/presentation/spaces.dart';
 import '../domain/venue.dart';
 import 'venue_content.dart';
+import 'venue_skeleton.dart';
 import 'venues.dart';
 
 /// Una sede con todas sus canchas, cada una con sus datos y el paso a los horarios.
@@ -220,14 +220,9 @@ class _VenueScreenState extends State<VenueScreen> {
         atRoot: false,
       ),
       body: data == null
-          ? SafeArea(
-              child: _loading
-                  ? const Padding(
-                      padding: Spacing.listPagePadding,
-                      child: SkeletonList(shape: SkeletonShape.space),
-                    )
-                  : const SizedBox.shrink(),
-            )
+          ? (_loading
+                ? VenueSkeleton(onBack: () => context.go('/sedes'))
+                : const SafeArea(child: SizedBox.shrink()))
           : VenueContent(
               venue: data.$1,
               spaces: _filtered ?? data.$2,

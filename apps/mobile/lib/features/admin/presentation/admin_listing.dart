@@ -4,9 +4,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/bottom_bar.dart';
 import '../../../common/button.dart';
-import '../../../common/skeleton.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/session.dart';
+import 'admin_card_skeleton.dart';
 import 'admin_header.dart';
 
 /// The skeleton of «Gestionar espacios» and «Gestionar sedes»: header, create button and
@@ -23,6 +23,7 @@ class AdminListingTemplate extends StatelessWidget {
     required this.absorbing,
     required this.hasData,
     required this.failed,
+    required this.cardShape,
     required this.items,
   });
 
@@ -37,6 +38,9 @@ class AdminListingTemplate extends StatelessWidget {
   final bool absorbing;
   final bool hasData;
   final bool failed;
+
+  /// The card the skeleton imitates while there is no data.
+  final AdminCardShape cardShape;
   final List<Widget> items;
 
   @override
@@ -65,8 +69,7 @@ class AdminListingTemplate extends StatelessWidget {
                   ),
                   const SizedBox(height: Spacing.s16),
                   ...items,
-                  if (!hasData && !failed)
-                    const SkeletonList(shape: SkeletonShape.venue),
+                  if (!hasData && !failed) AdminCardSkeletons(shape: cardShape),
                   if (!hasData && failed)
                     Center(
                       child: TextActionButton(

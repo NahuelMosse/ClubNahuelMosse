@@ -13,6 +13,7 @@ import '../domain/venue_summary.dart';
 import 'cover_with_title.dart';
 import 'light_label.dart';
 import 'photos.dart';
+import 'space_card_skeleton.dart';
 import 'space_filter.dart';
 import 'space_list.dart';
 
@@ -155,9 +156,9 @@ class VenueContent extends StatelessWidget {
                 const SizedBox(height: Spacing.s12),
                 ListSwitcher(
                   child: filtering
-                      ? const SkeletonList(
+                      ? const SkeletonZone(
                           key: ValueKey('carga'),
-                          shape: SkeletonShape.space,
+                          child: SpaceCardSkeletons(),
                         )
                       : SpaceList(
                           key: ValueKey((sport, kind)),

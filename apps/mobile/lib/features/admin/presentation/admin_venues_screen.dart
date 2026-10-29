@@ -9,6 +9,7 @@ import '../../session/presentation/session.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/presentation/venues.dart';
 import '../data/api_failures.dart';
+import 'admin_card_skeleton.dart';
 import 'admin_listing.dart';
 import 'admin_listing_header.dart';
 import 'admin_venue_card.dart';
@@ -89,6 +90,7 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
       absorbing: _deactivatingId != null,
       hasData: venues != null,
       failed: _failed,
+      cardShape: AdminCardShape.venue,
       items: venues == null ? const [] : _items(venues, p),
     );
   }

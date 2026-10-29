@@ -9,6 +9,7 @@ import '../../session/presentation/session.dart';
 import '../../spaces/domain/space.dart';
 import '../../spaces/presentation/spaces.dart';
 import '../data/api_failures.dart';
+import 'admin_card_skeleton.dart';
 import 'admin_listing.dart';
 import 'admin_listing_header.dart';
 import 'admin_space_card.dart';
@@ -89,6 +90,7 @@ class _AdminSpacesScreenState extends State<AdminSpacesScreen> {
       absorbing: _deactivatingId != null,
       hasData: data != null,
       failed: _failed,
+      cardShape: AdminCardShape.space,
       items: data == null ? const [] : _items(data.$1, data.$2, p),
     );
   }

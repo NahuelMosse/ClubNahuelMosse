@@ -2,11 +2,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
-import '../../../common/skeleton.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import '../domain/booking_history_entry.dart';
 import '../domain/history_page.dart';
+import 'admin_booking_card_skeleton.dart';
 import 'admin_bookings_empty.dart';
 import 'admin_bookings_list.dart';
 import 'admin_bookings_loading.dart';
@@ -52,7 +52,7 @@ List<Widget> adminPanelBody({
       const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: Spacing.s16),
-          child: SkeletonList(shape: SkeletonShape.booking, count: 1),
+          child: NextPageSkeleton(),
         ),
       ),
   ];

@@ -14,6 +14,7 @@ import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import 'confirm_deactivation.dart';
 import 'my_profile_content.dart';
+import 'my_profile_skeleton.dart';
 
 /// Mi perfil: todos los datos de la cuenta, pedidos a la API cada vez que se abre, y los
 /// accesos a lo que se puede hacer con ella.
@@ -141,14 +142,7 @@ class _MyProfileScreenState extends State<MyProfileScreen> {
       backgroundColor: p.bgBase,
       bottomNavigationBar: const BottomBar(current: Section.profile),
       body: profile == null
-          ? (_loading
-                ? Center(
-                    child: Semantics(
-                      label: 'Cargando tu perfil',
-                      child: CircularProgressIndicator(color: p.accentInk),
-                    ),
-                  )
-                : const SizedBox.shrink())
+          ? (_loading ? const MyProfileSkeleton() : const SizedBox.shrink())
           : MyProfileContent(
               profile: profile,
               session: widget.session,
