@@ -10,6 +10,7 @@ Revision ID: 0012
 Revises: 0011
 """
 
+# kit-shape: an Alembic revision is one self-contained file: its class and its functions cannot move to other modules
 import re
 from dataclasses import dataclass, field
 from typing import Any
