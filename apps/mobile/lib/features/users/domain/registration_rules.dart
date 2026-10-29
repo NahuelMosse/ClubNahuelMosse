@@ -46,12 +46,15 @@ FieldProblem? validateEmail(String value) {
   return null;
 }
 
+/// Code points of the accented capitals of Spanish: A, E, I, O, U with acute and N with tilde.
+const _accentedCapitals = [0xC1, 0xC9, 0xCD, 0xD3, 0xDA, 0xD1];
+final _uppercase = RegExp('[A-Z${String.fromCharCodes(_accentedCapitals)}]');
+
 /// The rules the password does not meet, in the order the app shows them.
 List<FieldProblem> passwordProblems(String password) => [
   if (password.runes.length < 8) FieldProblem.passwordLength,
   // The uppercase letters of Spanish (A, E, I, O, U with acute, and N with tilde) count too.
-  if (!RegExp(r'[A-ZÁÉÍÓÚÑ]').hasMatch(password))
-    FieldProblem.passwordUppercase,
+  if (!_uppercase.hasMatch(password)) FieldProblem.passwordUppercase,
   if (!RegExp(r'[0-9]').hasMatch(password)) FieldProblem.passwordNumber,
 ];
 
