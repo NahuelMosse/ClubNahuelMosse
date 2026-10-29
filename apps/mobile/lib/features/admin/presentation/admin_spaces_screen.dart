@@ -6,7 +6,6 @@ import '../../../common/bottom_bar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
-import '../../session/presentation/request_failure.dart';
 import '../../session/presentation/session.dart';
 import '../../spaces/domain/space.dart';
 import '../../spaces/presentation/spaces.dart';
@@ -54,20 +53,16 @@ class _AdminSpacesScreenState extends State<AdminSpacesScreen> {
 
   Future<void> _load() async {
     setState(() => _failed = false);
-    final failure = await captureRequestFailure(() async {
-      final catalog = await widget.spaces.repository.catalog();
-      final spaces = await widget.spaces.repository.active();
-      if (mounted) setState(() => _data = (spaces, catalog));
-    });
-    if (failure.expired == false && failure.error == null) return;
-    if (!mounted) return;
-    setState(() => _failed = true);
-    await avisarFalloDeCarga(
+    await loadOrNotify(
       context,
       session: widget.session,
-      expired: failure.expired,
-      error: failure.error,
-      reintentar: _load,
+      load: () async {
+        final catalog = await widget.spaces.repository.catalog();
+        final spaces = await widget.spaces.repository.active();
+        if (mounted) setState(() => _data = (spaces, catalog));
+      },
+      onFailed: () => setState(() => _failed = true),
+      retry: _load,
     );
   }
 
