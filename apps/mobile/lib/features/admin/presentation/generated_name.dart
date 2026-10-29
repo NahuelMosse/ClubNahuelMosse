@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -23,6 +24,7 @@ class GeneratedName extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final ready = name;
     return Semantics(
       container: true,
@@ -43,7 +45,7 @@ class GeneratedName extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'NOMBRE GENERADO AUTOMÁTICAMENTE',
+              l10n.adminGeneratedName,
               textAlign: TextAlign.center,
               style: Texts.overline.copyWith(color: p.accentInk),
             ),
@@ -55,11 +57,11 @@ class GeneratedName extends StatelessWidget {
               )
             else if (onRetry case final retry?) ...[
               Text(
-                'No se pudo calcular el nombre',
+                l10n.adminNameFailed,
                 textAlign: TextAlign.center,
                 style: Texts.caption.copyWith(color: p.stateDangerInk),
               ),
-              TextActionButton(label: 'REINTENTAR', onTap: retry),
+              TextActionButton(label: l10n.adminRetry, onTap: retry),
             ] else
               Text(
                 ready ?? missing,

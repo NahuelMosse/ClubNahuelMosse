@@ -1,3 +1,5 @@
+import 'venue_problem.dart';
+
 const venueNameMaxLength = 60;
 const venueAddressMaxLength = 80;
 final _streetAndNumber = RegExp(r'^.*\S\s+(\d{1,6})$');
@@ -8,26 +10,29 @@ int? parseWholeHour(String hhmm) => switch (hhmm.split(':')) {
   _ => null,
 };
 
-String? venueNameError(String name) =>
-    name.trim().isEmpty ? 'El nombre es obligatorio' : null;
+VenueProblem? venueNameProblem(String name) =>
+    name.trim().isEmpty ? VenueProblem.nameRequired : null;
 
-String? venueAddressError(String text) {
+VenueProblem? venueAddressProblem(String text) {
   final address = text.trim();
-  if (address.isEmpty) return 'La dirección es obligatoria';
+  if (address.isEmpty) return VenueProblem.addressRequired;
   final number = _streetAndNumber.firstMatch(address)?.group(1);
   return number != null && int.parse(number) > 0
       ? null
-      : 'Escribí la calle y la altura';
+      : VenueProblem.addressStreetAndNumber;
 }
 
-String? opensAtError(int? opensAt) =>
-    opensAt == null ? 'El horario de apertura es obligatorio' : null;
+VenueProblem? opensAtProblem(int? opensAt) =>
+    opensAt == null ? VenueProblem.opensAtRequired : null;
 
-String? closesAtError({required int? closesAt, required int? opensAt}) {
-  if (closesAt == null) return 'El horario de cierre es obligatorio';
+VenueProblem? closesAtProblem({
+  required int? closesAt,
+  required int? opensAt,
+}) {
+  if (closesAt == null) return VenueProblem.closesAtRequired;
   // Closing at 00:00 means closing at midnight.
   if (opensAt != null && closesAt != 0 && closesAt <= opensAt) {
-    return 'El cierre tiene que ser después de la apertura';
+    return VenueProblem.closesBeforeOpens;
   }
   return null;
 }

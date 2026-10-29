@@ -1,0 +1,1 @@
+- replaces: apps/mobile/test/bilingual_admin_test.dart "the admin panel, its lists and its forms show English @ENG-19-S1" · it expects the text '1 ACTIVE SPACE' alone, but the spaces summary joins spaces and venues in one text ('1 ACTIVE SPACE · 1 VENUE') · by: apps/mobile/test/bilingual_admin_panel_test.dart "the admin panel, its lists and its forms show English @ENG-19-S1"

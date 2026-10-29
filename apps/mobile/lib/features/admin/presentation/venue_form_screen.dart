@@ -9,13 +9,15 @@ import '../../../common/error_dialog.dart';
 import '../../../common/missing_fields.dart';
 import '../../../common/selector.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/presentation/venues.dart';
-import '../domain/outside_hours_text.dart';
+import '../domain/outside_hours.dart';
 import '../domain/venue_field.dart';
+import 'outside_hours_message.dart';
 import 'venue_deactivation.dart';
 import 'venue_form.dart';
 import 'venue_form_body.dart';
@@ -62,7 +64,9 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
         : [for (var h = 0; h < 24; h++) h];
     final picked = await pickOption<int>(
       context,
-      title: isClosing ? 'Horario de cierre' : 'Horario de apertura',
+      title: isClosing
+          ? AppLocalizations.of(context).adminClosing
+          : AppLocalizations.of(context).adminOpening,
       options: [for (final h in hours) (h, wholeHour(h))],
       columns: 4,
       selected: isClosing ? _form.closesAt : _form.opensAt,
@@ -74,7 +78,7 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
   Future<void> _pickDays() async {
     final picked = await pickOption<OpenDays>(
       context,
-      title: 'Días que abre',
+      title: AppLocalizations.of(context).adminOpenDays,
       options: [for (final d in OpenDays.values) (d, d.text)],
       selected: OpenDays.values
           .where((d) => weekdaysLabel(d.days) == weekdaysLabel(_form.openDays))
@@ -91,7 +95,7 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Los cambios se guardaron correctamente')),
+      SnackBar(content: Text(AppLocalizations.of(context).adminChangesSaved)),
     );
     context.go('/admin/sedes');
   }
@@ -102,7 +106,7 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
     if (_form.busy) return;
     if (!_form.isComplete || opensAt == null || closesAt == null) {
       _form.markSaveAttempt();
-      focusFirstMissing(_form.missing);
+      focusFirstMissing(_form.missing(AppLocalizations.of(context)));
       return;
     }
     FocusScope.of(context).unfocus();
@@ -116,12 +120,15 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
     if (pending.outside case final count?) {
       final saveAnyway = await confirmNewSchedule(
         context,
-        bookingsOutsideHoursText(
-          count,
-          before: widget.editing,
-          opensAt: opensAt,
-          closesAt: closesAt,
-          openDays: _form.openDays,
+        outsideHoursMessage(
+          AppLocalizations.of(context),
+          OutsideHours.of(
+            count,
+            before: widget.editing,
+            opensAt: opensAt,
+            closesAt: closesAt,
+            openDays: _form.openDays,
+          ),
         ),
       );
       if (saveAnyway && mounted) await _save(confirm: true);
@@ -163,7 +170,9 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
       child: Scaffold(
         backgroundColor: context.palette.bgBase,
         appBar: TopBar(
-          title: widget.editing == null ? 'Agregar sede' : 'Editar sede',
+          title: widget.editing == null
+              ? AppLocalizations.of(context).adminAddVenueTitle
+              : AppLocalizations.of(context).adminEditVenue,
         ),
         body: SafeArea(
           top: false,

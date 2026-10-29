@@ -375,6 +375,333 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adminUntilBeforeSince => 'To cannot be earlier than From';
 
   @override
+  String get adminRequiredField => 'This field is required';
+
+  @override
+  String get adminPriceRange => 'Enter a price between \$ 1 and \$ 9.999.999';
+
+  @override
+  String get adminMissingAll => 'Complete venue, sport and type';
+
+  @override
+  String get adminMissingVenue => 'The venue is missing';
+
+  @override
+  String get adminMissingSport => 'The sport is missing';
+
+  @override
+  String get adminMissingType => 'The court type is missing';
+
+  @override
+  String get adminSpaceFormHint =>
+      'The name is built from the venue, the address, the sport, the type and the number.';
+
+  @override
+  String get adminCondition => 'Condition';
+
+  @override
+  String get adminConditionUpper => 'CONDITION';
+
+  @override
+  String get adminLighting => 'Lighting';
+
+  @override
+  String get adminLightingUpper => 'LIGHTING';
+
+  @override
+  String get adminCovered => 'Covered';
+
+  @override
+  String get adminOpenAir => 'Open air';
+
+  @override
+  String get adminLit => 'Lit';
+
+  @override
+  String get adminUnlit => 'Unlit';
+
+  @override
+  String get adminSelect => 'Select';
+
+  @override
+  String get adminSelectVenue => 'Select a venue';
+
+  @override
+  String get adminSelectSport => 'Select a sport';
+
+  @override
+  String get adminSelectType => 'Select the type';
+
+  @override
+  String get adminSport => 'Sport';
+
+  @override
+  String get adminType => 'Type';
+
+  @override
+  String get adminTypeUpper => 'TYPE';
+
+  @override
+  String get adminNewSpaceTitle => 'New space';
+
+  @override
+  String get adminNewSpaceHeading => 'New sports space';
+
+  @override
+  String get adminEditSpaceTitle => 'Edit space';
+
+  @override
+  String get adminEditSpaceHeading => 'Edit sports space';
+
+  @override
+  String get adminSaveSpace => 'SAVE SPACE';
+
+  @override
+  String get adminChangesSaved => 'The changes were saved';
+
+  @override
+  String get adminGeneratedName => 'AUTOMATICALLY GENERATED NAME';
+
+  @override
+  String get adminNameFailed => 'The name could not be computed';
+
+  @override
+  String get adminPricePerHour => 'Price per hour';
+
+  @override
+  String get adminPricePerHourUpper => 'PRICE PER HOUR';
+
+  @override
+  String get adminGoToList => 'GO TO THE LIST';
+
+  @override
+  String get adminSpaceCreatedTitle => 'Sports space created!';
+
+  @override
+  String get adminSpaceCreatedText => 'It is now available for users to book.';
+
+  @override
+  String get adminCreateAnother => 'Create another';
+
+  @override
+  String get adminVenueCreatedTitle => 'Venue created!';
+
+  @override
+  String get adminVenueCreatedText =>
+      'The venue now shows in the list and you can start adding sports spaces to it.';
+
+  @override
+  String get adminCreateAnotherVenue => 'Create another venue';
+
+  @override
+  String get adminDeactivatingSpace => 'Deactivating the space';
+
+  @override
+  String get adminDeactivateSpaceButton => 'DEACTIVATE THE SPACE';
+
+  @override
+  String get adminTraceTitle => 'TRACEABILITY';
+
+  @override
+  String get adminTraceCreated => 'Booking created';
+
+  @override
+  String adminTraceBy(Object date, Object who) {
+    return 'By $who · $date';
+  }
+
+  @override
+  String adminTraceByReason(Object date, Object reason, Object who) {
+    return 'By $who · $date · $reason';
+  }
+
+  @override
+  String get adminTraceVoided => 'Voided by the administrator';
+
+  @override
+  String get adminTraceAnAdmin => 'an administrator';
+
+  @override
+  String get adminTraceCanceled => 'Canceled by the user';
+
+  @override
+  String get adminTraceNoticeSent => 'Notification sent to the user';
+
+  @override
+  String get adminTraceNoticeInbox => 'Notice in the inbox of the user';
+
+  @override
+  String get adminTracePushFailed => 'The push was not sent';
+
+  @override
+  String get adminVoidReasonSemantics => 'Reason for voiding';
+
+  @override
+  String get adminVoidReasonLabel => 'REASON FOR VOIDING';
+
+  @override
+  String get adminVoidReasonRequired => 'The reason is required to void';
+
+  @override
+  String get adminVoidDialogTitle => 'Void this booking?';
+
+  @override
+  String get adminVoidConfirm => 'CONFIRM VOIDING';
+
+  @override
+  String get adminBackUpper => 'BACK';
+
+  @override
+  String get adminNewVenueHeading => 'New venue';
+
+  @override
+  String get adminAddVenueTitle => 'Add venue';
+
+  @override
+  String get adminVenueFormHint => 'Name, address and hours are required.';
+
+  @override
+  String get adminVenueNameUpper => 'VENUE NAME';
+
+  @override
+  String get adminVenueName => 'Venue name';
+
+  @override
+  String get adminVenueNamePlaceholder => 'E.g. Haedo venue';
+
+  @override
+  String get adminAddressUpper => 'ADDRESS';
+
+  @override
+  String get adminAddress => 'Address';
+
+  @override
+  String get adminAddressPlaceholderNew => 'Street and number';
+
+  @override
+  String get adminAddressPlaceholderEdit => 'Write the address';
+
+  @override
+  String get adminOpeningUpper => 'OPENING TIME';
+
+  @override
+  String get adminOpening => 'Opening time';
+
+  @override
+  String get adminClosingUpper => 'CLOSING TIME';
+
+  @override
+  String get adminClosing => 'Closing time';
+
+  @override
+  String get adminOpenDaysUpper => 'OPEN DAYS';
+
+  @override
+  String get adminOpenDays => 'Open days';
+
+  @override
+  String get adminSaveVenue => 'SAVE VENUE';
+
+  @override
+  String get adminSaveChanges => 'SAVE CHANGES';
+
+  @override
+  String get adminDeactivatingVenue => 'Deactivating the venue';
+
+  @override
+  String get adminDeactivateVenueButton => 'DEACTIVATE THE VENUE';
+
+  @override
+  String get adminVenueNameRequired => 'The name is required';
+
+  @override
+  String get adminVenueAddressRequired => 'The address is required';
+
+  @override
+  String get adminVenueAddressStreet => 'Write the street and number';
+
+  @override
+  String get adminOpensAtRequired => 'The opening time is required';
+
+  @override
+  String get adminClosesAtRequired => 'The closing time is required';
+
+  @override
+  String get adminClosesBeforeOpens =>
+      'The closing time must be after the opening time';
+
+  @override
+  String adminOutsideSubject(num count, Object venue) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count future bookings at $venue',
+      one: '1 future booking at $venue',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String adminOutsideStartsBefore(num count, Object hour) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'start',
+      one: 'starts',
+    );
+    return '$_temp0 before $hour';
+  }
+
+  @override
+  String adminOutsideEndsAfter(num count, Object hour) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'end',
+      one: 'ends',
+    );
+    return '$_temp0 after $hour';
+  }
+
+  @override
+  String adminOutsideClosedDay(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'fall',
+      one: 'falls',
+    );
+    return '$_temp0 on a day the venue stops opening';
+  }
+
+  @override
+  String adminOutsideNewSchedule(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'fall',
+      one: 'falls',
+    );
+    return '$_temp0 outside the new schedule';
+  }
+
+  @override
+  String adminOutsideKeeps(num count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'they stay at their original time',
+      one: 'it stays at its original time',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String adminOutsideNotice(Object keeps, Object reason, Object subject) {
+    return '$subject $reason. If you save, $keeps: the change applies to new bookings.';
+  }
+
+  @override
   String get loginSignIn => 'SIGN IN';
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../../../common/dates.dart';
 import '../../../common/selector.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../venues/domain/venue.dart';
@@ -28,6 +29,7 @@ class VenueFormBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final f = form;
     final editing = f.editing;
     return SingleChildScrollView(
@@ -38,23 +40,23 @@ class VenueFormBody extends StatelessWidget {
           Semantics(
             header: true,
             child: Text(
-              editing?.name ?? 'Nueva sede',
+              editing?.name ?? l10n.adminNewVenueHeading,
               style: Texts.h1.copyWith(color: p.textPrimary),
             ),
           ),
           const SizedBox(height: Spacing.s4),
           Text(
-            'Nombre, dirección y horarios son obligatorios.',
+            l10n.adminVenueFormHint,
             style: Texts.body.copyWith(color: p.textSecondary),
           ),
           const SizedBox(height: Spacing.s16),
           FormTextField(
-            label: 'NOMBRE DE LA SEDE',
-            semanticLabel: 'Nombre de la sede',
+            label: l10n.adminVenueNameUpper,
+            semanticLabel: l10n.adminVenueName,
             controller: f.name,
             focusNode: f.nameFocus,
-            placeholder: 'Ej. Sede Haedo',
-            error: f.error(VenueField.name),
+            placeholder: l10n.adminVenueNamePlaceholder,
+            error: f.error(VenueField.name, l10n),
             enabled: !f.busy,
             textInputAction: TextInputAction.next,
             inputFormatters: [
@@ -63,14 +65,14 @@ class VenueFormBody extends StatelessWidget {
           ),
           const SizedBox(height: Spacing.s12),
           FormTextField(
-            label: 'DIRECCIÓN',
-            semanticLabel: 'Dirección',
+            label: l10n.adminAddressUpper,
+            semanticLabel: l10n.adminAddress,
             controller: f.address,
             focusNode: f.addressFocus,
             placeholder: editing == null
-                ? 'Calle y altura'
-                : 'Escribí la dirección',
-            error: f.error(VenueField.address),
+                ? l10n.adminAddressPlaceholderNew
+                : l10n.adminAddressPlaceholderEdit,
+            error: f.error(VenueField.address, l10n),
             enabled: !f.busy,
             keyboardType: TextInputType.streetAddress,
             autofillHints: const [AutofillHints.streetAddressLine1],
@@ -80,44 +82,44 @@ class VenueFormBody extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Spacing.s12),
-          ..._schedule(),
+          ..._schedule(l10n),
         ],
       ),
     );
   }
 
-  List<Widget> _schedule() {
+  List<Widget> _schedule(AppLocalizations l10n) {
     final f = form;
     final opensAt = f.opensAt;
     final closesAt = f.closesAt;
     return [
       SelectorField(
-        label: 'HORARIO DE APERTURA',
-        semanticLabel: 'Horario de apertura',
+        label: l10n.adminOpeningUpper,
+        semanticLabel: l10n.adminOpening,
         value: opensAt == null ? null : wholeHour(opensAt),
         placeholder: '08:00',
         icon: Icons.schedule_rounded,
-        error: f.error(VenueField.opensAt),
+        error: f.error(VenueField.opensAt, l10n),
         onTap: f.submitting ? null : () => onPickHour(VenueField.opensAt),
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
-        label: 'HORARIO DE CIERRE',
-        semanticLabel: 'Horario de cierre',
+        label: l10n.adminClosingUpper,
+        semanticLabel: l10n.adminClosing,
         value: closesAt == null ? null : wholeHour(closesAt),
         placeholder: '23:00',
         icon: Icons.schedule_rounded,
-        error: f.error(VenueField.closesAt),
+        error: f.error(VenueField.closesAt, l10n),
         onTap: f.busy ? null : () => onPickHour(VenueField.closesAt),
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
-        label: 'DÍAS QUE ABRE',
-        semanticLabel: 'Días que abre',
+        label: l10n.adminOpenDaysUpper,
+        semanticLabel: l10n.adminOpenDays,
         value: weekdaysLabel(f.openDays),
         placeholder: OpenDays.mondayToSunday.text,
         icon: Icons.expand_more_rounded,
-        error: f.error(VenueField.openDays),
+        error: f.error(VenueField.openDays, l10n),
         onTap: f.busy ? null : onPickDays,
       ),
     ];

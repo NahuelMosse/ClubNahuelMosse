@@ -8,6 +8,7 @@ import '../../../common/error_dialog.dart';
 import '../../../common/price_format.dart';
 import '../../../common/top_bar.dart';
 import '../../../common/unhandled_errors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
@@ -15,6 +16,7 @@ import '../../spaces/domain/space.dart';
 import '../../spaces/domain/space_exceptions.dart';
 import '../../spaces/presentation/spaces.dart';
 import '../data/api_failures.dart';
+import '../domain/space_price.dart';
 import 'fixed_space_fields.dart';
 import 'generated_name.dart';
 import 'price_per_hour_field.dart';
@@ -91,7 +93,9 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
   }
 
   bool get _canSave =>
-      _changed && priceError(_price.text) == null && _serverError == null;
+      _changed &&
+      validPricePerHour(readPrice(_price.text)) &&
+      _serverError == null;
 
   Future<void> _pickYesNo({required bool roofing}) async {
     final chosen = await pickYesNo(
@@ -128,7 +132,9 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Los cambios se guardaron correctamente')),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).adminChangesSaved),
+        ),
       );
       context.go('/admin/espacios');
       return;
@@ -182,18 +188,19 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       _serverError ??
       (readPrice(_price.text) == widget.space.pricePerHour
           ? null
-          : priceError(_price.text));
+          : priceError(AppLocalizations.of(context), _price.text));
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final s = widget.space;
     return PopScope(
       // Mientras se guarda no se sale: el cambio quedaría hecho sin que se viera.
       canPop: !_busy,
       child: Scaffold(
         backgroundColor: p.bgBase,
-        appBar: const TopBar(title: 'Editar espacio'),
+        appBar: TopBar(title: l10n.adminEditSpaceTitle),
         body: SafeArea(
           top: false,
           child: SingleChildScrollView(
@@ -201,8 +208,8 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                ...spaceFormHeading(context, 'Editar espacio deportivo'),
-                ...fixedSpaceFields(s, _catalog),
+                ...spaceFormHeading(context, l10n.adminEditSpaceHeading),
+                ...fixedSpaceFields(context, s, _catalog),
                 SpaceConditionsPair(
                   roofed: _roofed,
                   lit: _lit,
@@ -221,13 +228,13 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
                 GeneratedName(name: s.name),
                 const SizedBox(height: Spacing.s16),
                 PrimaryButton(
-                  label: 'GUARDAR ESPACIO',
+                  label: l10n.adminSaveSpace,
                   loading: _submitting,
                   onTap: _canSave && !_deactivating ? _save : null,
                 ),
                 const SizedBox(height: Spacing.s12),
                 OutlineButton(
-                  label: 'CANCELAR',
+                  label: l10n.adminCancel,
                   onTap: _busy ? null : () => Navigator.of(context).maybePop(),
                 ),
                 const SizedBox(height: Spacing.s12),

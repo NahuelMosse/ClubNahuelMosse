@@ -3,12 +3,15 @@ import 'package:flutter/material.dart';
 
 import '../../../common/dates.dart';
 import '../../../common/missing_fields.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/domain/venue_exceptions.dart';
 import '../../venues/presentation/venues.dart';
 import '../data/api_failures.dart';
 import '../domain/venue_field.dart';
+import '../domain/venue_problem.dart';
 import '../domain/venue_rules.dart';
+import 'venue_problem_text.dart';
 
 /// What is left to handle after a submit that did not save the venue.
 typedef PendingVenue = ({
@@ -107,31 +110,39 @@ class VenueForm extends ChangeNotifier {
   TextEditingController _controller(VenueField field) =>
       field == VenueField.name ? name : address;
 
-  String? ruleError(VenueField field) => switch (field) {
-    VenueField.name => venueNameError(name.text),
-    VenueField.address => venueAddressError(address.text),
-    VenueField.opensAt => opensAtError(opensAt),
-    VenueField.closesAt => closesAtError(closesAt: closesAt, opensAt: opensAt),
+  VenueProblem? _problem(VenueField field) => switch (field) {
+    VenueField.name => venueNameProblem(name.text),
+    VenueField.address => venueAddressProblem(address.text),
+    VenueField.opensAt => opensAtProblem(opensAt),
+    VenueField.closesAt => closesAtProblem(
+      closesAt: closesAt,
+      opensAt: opensAt,
+    ),
     VenueField.openDays => null,
   };
 
-  String? error(VenueField field) => errorToShow(
+  String? _ruleError(VenueField field, AppLocalizations l10n) {
+    final problem = _problem(field);
+    return problem == null ? null : venueProblemText(l10n, problem);
+  }
+
+  String? error(VenueField field, AppLocalizations l10n) => errorToShow(
     serverError: serverErrors[field],
-    ruleError: ruleError(field),
+    ruleError: _ruleError(field, l10n),
     attempted: attemptedSave,
     touched: touched.contains(field),
   );
 
   bool get isComplete =>
-      VenueField.values.every((f) => ruleError(f) == null) &&
+      VenueField.values.every((f) => _problem(f) == null) &&
       serverErrors.isEmpty;
 
   /// The fields that can be focused or not, with their error, in the order they show.
-  List<(FocusNode?, String?)> get missing => [
-    (nameFocus, ruleError(VenueField.name)),
-    (addressFocus, ruleError(VenueField.address)),
-    (null, ruleError(VenueField.opensAt)),
-    (null, ruleError(VenueField.closesAt)),
+  List<(FocusNode?, String?)> missing(AppLocalizations l10n) => [
+    (nameFocus, _ruleError(VenueField.name, l10n)),
+    (addressFocus, _ruleError(VenueField.address, l10n)),
+    (null, _ruleError(VenueField.opensAt, l10n)),
+    (null, _ruleError(VenueField.closesAt, l10n)),
   ];
 
   void markSaveAttempt() {

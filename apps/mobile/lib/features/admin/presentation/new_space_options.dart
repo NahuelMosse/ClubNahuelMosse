@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/selector.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../spaces/domain/space.dart';
 import '../../venues/domain/venue.dart';
 import 'new_space_form.dart';
@@ -11,7 +12,7 @@ Future<Venue?> pickVenueForNewSpace(BuildContext context, NewSpaceForm form) {
   final options = form.venueOptions ?? const <Venue>[];
   return pickOption<Venue>(
     context,
-    title: 'Sede',
+    title: AppLocalizations.of(context).adminVenue,
     options: [for (final v in options) (v, v.name)],
     selected: form.venue,
   );
@@ -26,7 +27,7 @@ Future<Sport?> pickSportForNewSpace(
   if (catalog == null) return null;
   return pickOption<Sport>(
     context,
-    title: 'Deporte',
+    title: AppLocalizations.of(context).adminSport,
     options: [for (final d in catalog.sports) (d, d.name)],
     selected: form.sport,
   );
@@ -42,7 +43,7 @@ Future<SpaceKind?> pickTypeForNewSpace(
   if (sport == null) return null;
   return pickOption<SpaceKind>(
     context,
-    title: 'Tipo',
+    title: AppLocalizations.of(context).adminType,
     options: [for (final t in sport.kinds) (t, t.name)],
     selected: form.type,
   );

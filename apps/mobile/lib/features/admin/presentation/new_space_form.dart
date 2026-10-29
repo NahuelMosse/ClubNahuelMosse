@@ -2,13 +2,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../spaces/domain/space.dart';
 import '../../spaces/domain/space_exceptions.dart';
 import '../../spaces/presentation/spaces.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/presentation/venues.dart';
 import '../data/api_failures.dart';
+import '../domain/name_missing.dart';
 import '../domain/new_space_field.dart';
+import '../domain/space_price.dart';
 import 'space_form_fields.dart';
 
 /// What is still pending to report after a request: the session expired, or the network failed.
@@ -157,38 +160,37 @@ class NewSpaceForm extends ChangeNotifier {
     notifyListeners();
   }
 
-  String? ruleError(NewSpaceField field) {
-    switch (field) {
-      case NewSpaceField.venue:
-        return venue == null ? requiredMessage : null;
-      case NewSpaceField.sport:
-        return sport == null ? requiredMessage : null;
-      case NewSpaceField.type:
-        return type == null ? requiredMessage : null;
-      case NewSpaceField.roofing:
-        return roofed == null ? requiredMessage : null;
-      case NewSpaceField.lighting:
-        return lit == null ? requiredMessage : null;
-      case NewSpaceField.price:
-        return priceError(price.text);
-    }
+  bool _isMissing(NewSpaceField field) => switch (field) {
+    NewSpaceField.venue => venue == null,
+    NewSpaceField.sport => sport == null,
+    NewSpaceField.type => type == null,
+    NewSpaceField.roofing => roofed == null,
+    NewSpaceField.lighting => lit == null,
+    NewSpaceField.price => !validPricePerHour(readPrice(price.text)),
+  };
+
+  String? _ruleError(NewSpaceField field, AppLocalizations l10n) {
+    if (!_isMissing(field)) return null;
+    return field == NewSpaceField.price
+        ? priceError(l10n, price.text)
+        : l10n.adminRequiredField;
   }
 
-  String? error(NewSpaceField field) =>
-      serverErrors[field] ?? (attemptedSave ? ruleError(field) : null);
+  String? error(NewSpaceField field, AppLocalizations l10n) =>
+      serverErrors[field] ?? (attemptedSave ? _ruleError(field, l10n) : null);
 
   bool get isComplete =>
-      NewSpaceField.values.every((c) => ruleError(c) == null) &&
+      !NewSpaceField.values.any(_isMissing) &&
       serverErrors.isEmpty &&
       suggested != null;
 
-  String get missingForName {
+  NameMissing get missingForName {
     if (venue == null && sport == null && type == null) {
-      return 'Completá sede, deporte y tipo';
+      return NameMissing.venueSportAndType;
     }
-    if (venue == null) return 'Falta la sede';
-    if (sport == null) return 'Falta el deporte';
-    return 'Falta el tipo de cancha';
+    if (venue == null) return NameMissing.venue;
+    if (sport == null) return NameMissing.sport;
+    return NameMissing.type;
   }
 
   Future<bool> pickVenue(Venue chosen) {
