@@ -79,44 +79,55 @@ class AppNotification {
 /// Los días se cuentan en el club, sea cual sea la zona del teléfono.
 DateTime inClubTime(DateTime moment) => toClubTime(moment);
 
-/// Las notificaciones de un mismo día, con su rótulo: HOY, AYER o `dd/mm`.
+/// Cuándo llegó un aviso, sin texto: la pantalla lo escribe en el idioma de la app.
+enum ArrivalWhen { today, yesterday, date, now, minutesAgo, hoursAgo }
+
+/// [amount] cuenta los minutos u horas de `minutesAgo` y `hoursAgo`; [date] (`dd/mm`) sólo
+/// la lleva `date`.
+typedef Arrival = ({ArrivalWhen when, int amount, String date});
+
+/// Las notificaciones de un mismo día, con su rótulo: hoy, ayer o `dd/mm`.
 class DayGroup {
-  const DayGroup(this.label, this.notifications);
-  final String label;
+  const DayGroup(this.arrival, this.notifications);
+  final Arrival arrival;
   final List<AppNotification> notifications;
 }
 
 DateTime _day(DateTime d) => DateTime.utc(d.year, d.month, d.day);
 
-/// HOY, AYER o `dd/mm`, según [now] en la hora del club.
-String dayLabel(DateTime createdAt, DateTime now) {
+/// Hoy, ayer o `dd/mm`, según [now] en la hora del club.
+Arrival dayOf(DateTime createdAt, DateTime now) {
   final days = _day(now).difference(_day(createdAt)).inDays;
   return switch (days) {
-    0 => 'HOY',
-    1 => 'AYER',
-    _ => dayAndMonth(createdAt),
+    0 => (when: ArrivalWhen.today, amount: 0, date: ''),
+    1 => (when: ArrivalWhen.yesterday, amount: 0, date: ''),
+    _ => (when: ArrivalWhen.date, amount: 0, date: dayAndMonth(createdAt)),
   };
 }
 
-/// Cuándo llegó: AHORA, HACE 2 MIN, HACE 3 H, AYER o `dd/mm`.
-String arrivedLabel(DateTime createdAt, DateTime now) {
+/// Cuándo llegó: ahora, hace 2 minutos, hace 3 horas, ayer o `dd/mm`.
+Arrival arrivalOf(DateTime createdAt, DateTime now) {
   final elapsed = now.difference(createdAt);
-  final label = dayLabel(createdAt, now);
-  if (label != 'HOY') return label;
-  if (elapsed.inMinutes < 1) return 'AHORA';
-  if (elapsed.inMinutes < 60) return 'HACE ${elapsed.inMinutes} MIN';
-  return 'HACE ${elapsed.inHours} H';
+  final day = dayOf(createdAt, now);
+  if (day.when != ArrivalWhen.today) return day;
+  if (elapsed.inMinutes < 1) {
+    return (when: ArrivalWhen.now, amount: 0, date: '');
+  }
+  if (elapsed.inMinutes < 60) {
+    return (when: ArrivalWhen.minutesAgo, amount: elapsed.inMinutes, date: '');
+  }
+  return (when: ArrivalWhen.hoursAgo, amount: elapsed.inHours, date: '');
 }
 
 /// Agrupa por día conservando el orden de [list], de la más nueva a la más vieja.
 List<DayGroup> groupByDay(List<AppNotification> list, DateTime now) {
   final groups = <DayGroup>[];
   for (final n in list) {
-    final label = dayLabel(n.createdAt, now);
-    if (groups.isNotEmpty && groups.last.label == label) {
+    final day = dayOf(n.createdAt, now);
+    if (groups.isNotEmpty && groups.last.arrival == day) {
       groups.last.notifications.add(n);
     } else {
-      groups.add(DayGroup(label, [n]));
+      groups.add(DayGroup(day, [n]));
     }
   }
   return groups;

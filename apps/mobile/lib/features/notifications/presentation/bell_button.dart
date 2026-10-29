@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'notification_center.dart';
@@ -17,14 +18,15 @@ class NotificationsButton extends StatelessWidget {
     listenable: center,
     builder: (context, _) {
       final p = context.palette;
+      final l10n = AppLocalizations.of(context);
       final unread = center.unread;
       void open() => context.push('/notificaciones');
       return Semantics(
         container: true,
         button: true,
         label: unread == 0
-            ? 'Notificaciones'
-            : 'Notificaciones, $unread sin leer',
+            ? l10n.notificationsTitle
+            : l10n.notificationsBellUnread(unread),
         onTap: open,
         excludeSemantics: true,
         child: InkResponse(

@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'dates.dart';
@@ -20,6 +21,7 @@ class DayTimeline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -37,16 +39,16 @@ class DayTimeline extends StatelessWidget {
             runSpacing: 4,
             children: [
               Text(
-                'TU DÍA EN LA CANCHA',
+                l10n.commonYourDay,
                 style: Texts.overline.copyWith(
                   fontSize: 11,
                   letterSpacing: 0.88,
                   color: p.textSecondary,
                 ),
               ),
-              _LegendItem(color: p.accentFree, text: 'Libre'),
-              _LegendItem(color: p.stateDisabled, text: 'Ocupado'),
-              _LegendItem(color: p.accentInk, text: 'Elegido'),
+              _LegendItem(color: p.accentFree, text: l10n.commonSlotFree),
+              _LegendItem(color: p.stateDisabled, text: l10n.commonSlotTaken),
+              _LegendItem(color: p.accentInk, text: l10n.commonSlotChosen),
             ],
           ),
           const SizedBox(height: 8),
@@ -58,12 +60,17 @@ class DayTimeline extends StatelessWidget {
                   child: KeyedSubtree(
                     key: ValueKey('franja-${twoDigits(from + i)}'),
                     child: Semantics(
-                      label:
-                          '${twoDigits(from + i)} h ${switch (slots[i]) {
-                            SlotState.free => 'libre',
-                            SlotState.taken => 'ocupada',
-                            SlotState.chosen => 'elegida',
-                          }}',
+                      label: switch (slots[i]) {
+                        SlotState.free => l10n.commonSlotFreeSemantics(
+                          twoDigits(from + i),
+                        ),
+                        SlotState.taken => l10n.commonSlotTakenSemantics(
+                          twoDigits(from + i),
+                        ),
+                        SlotState.chosen => l10n.commonSlotChosenSemantics(
+                          twoDigits(from + i),
+                        ),
+                      },
                       child: ExcludeSemantics(
                         child: AspectRatio(
                           aspectRatio: 1,
