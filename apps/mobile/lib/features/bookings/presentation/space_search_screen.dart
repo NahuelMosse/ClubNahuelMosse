@@ -143,26 +143,28 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
   /// Los errores de los filtros que ya se pueden juzgar: una fecha completa que no existe,
   /// la fecha fuera de los próximos días, y las reglas del rango cuando hay sede.
   Map<String, String> get _errores {
+    final l = AppLocalizations.of(context);
     final errores = <String, String>{};
     final dia = _dia;
-    if (_date.text.length >= 'DD / MM / AAAA'.length && dia == null) {
-      errores['fecha'] = 'Escribí la fecha como DD / MM / AAAA';
+    if (_date.text.length >= l.spaceSearchDatePlaceholder.length &&
+        dia == null) {
+      errores['fecha'] = l.spaceSearchDateFormat;
     }
     final venue = _sede;
-    if (dia != null && venue == null) {
-      errores.addAll(dateErrors(day: dia, now: clubNow()));
-    }
-    if (venue != null && dia != null) {
-      errores.addAll(
-        rangeErrors(
+    final problems = <String, RangeProblem>{
+      if (dia != null && venue == null) ...dateErrors(day: dia, now: clubNow()),
+      if (venue != null && dia != null)
+        ...rangeErrors(
           venue: venue,
           day: dia,
           from: _desde,
           to: _hasta,
           now: clubNow(),
         ),
-      );
-    }
+    };
+    errores.addAll({
+      for (final e in problems.entries) e.key: rangeProblemText(l, e.value),
+    });
     return {...errores, ..._rechazo};
   }
 

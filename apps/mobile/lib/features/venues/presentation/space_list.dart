@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/empty_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import 'space_card.dart';
@@ -24,19 +25,14 @@ class SpaceList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (allSpaces.isEmpty)
-          const EmptyState(
-            title: 'Todavía no hay canchas',
-            text: 'Esta sede no tiene canchas disponibles por el momento.',
-          )
+          EmptyState(title: l.spaceNoneTitle, text: l.spaceNoneText)
         else if (spaces.isEmpty)
-          const EmptyState(
-            title: 'No hay canchas con este filtro',
-            text: 'Probá con otro deporte o con otro tipo.',
-          ),
+          EmptyState(title: l.spaceNoMatchTitle, text: l.spaceNoMatchText),
         for (final space in spaces) ...[
           SpaceCard(
             space: space,

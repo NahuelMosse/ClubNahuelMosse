@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/label.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -26,7 +27,7 @@ class VenueCardFooter extends StatelessWidget {
           ),
           const SizedBox(width: Spacing.s8),
           Text(
-            'Ver canchas',
+            AppLocalizations.of(context).venueSeeCourts,
             style: Texts.bodyStrong.copyWith(color: p.accentInk),
           ),
           Icon(Icons.chevron_right_rounded, size: 20, color: p.accentInk),

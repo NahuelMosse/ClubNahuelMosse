@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/error_dialog.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
@@ -89,9 +90,9 @@ Future<bool> abrirModificar(
   );
   if (!context.mounted) return false;
   if (resultado == ModifyResult.modificada) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Reserva modificada')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(AppLocalizations.of(context).bookingModified)),
+    );
   }
   return true;
 }

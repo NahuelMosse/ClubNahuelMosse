@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -8,18 +9,18 @@ class BookingSteps extends StatelessWidget {
 
   final int actual;
 
-  static const _names = ['Elegí cancha', 'Confirmás', '¡Listo!'];
-
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
+    final names = [l.bookingStepChoose, l.bookingStepConfirm, l.bookingStepDone];
     return Semantics(
-      label: 'Paso ${actual + 1} de ${_names.length}: ${_names[actual]}',
+      label: l.bookingStepLabel(names[actual], actual + 1, names.length),
       excludeSemantics: true,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (var i = 0; i < _names.length; i++) ...[
+          for (var i = 0; i < names.length; i++) ...[
             if (i > 0) const SizedBox(width: Spacing.s8),
             Expanded(
               child: Column(
@@ -33,7 +34,7 @@ class BookingSteps extends StatelessWidget {
                   ),
                   const SizedBox(height: Spacing.s8),
                   Text(
-                    _names[i],
+                    names[i],
                     textAlign: TextAlign.center,
                     style: Texts.caption.copyWith(
                       color: i == actual ? p.textPrimary : p.textMuted,

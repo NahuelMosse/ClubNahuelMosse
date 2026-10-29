@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'booking_action.dart';
 
@@ -22,6 +23,7 @@ class BookingActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Flex(
       direction: grande ? Axis.vertical : Axis.horizontal,
       crossAxisAlignment: grande
@@ -30,10 +32,10 @@ class BookingActions extends StatelessWidget {
       children: [
         BookingAction(
           expandir: !grande,
-          etiqueta: 'Modificar la reserva de $deQue',
+          etiqueta: l.bookingModifyLabel(deQue),
           alTocar: alModificar,
           child: OutlineButton(
-            label: 'MODIFICAR',
+            label: l.bookingModify,
             onTap: alModificar,
             compact: true,
           ),
@@ -41,10 +43,10 @@ class BookingActions extends StatelessWidget {
         const SizedBox(width: Spacing.s8, height: Spacing.s8),
         BookingAction(
           expandir: !grande,
-          etiqueta: 'Cancelar la reserva de $deQue',
+          etiqueta: l.bookingCancelLabel(deQue),
           alTocar: alCancelar,
           child: OutlineButton(
-            label: 'CANCELAR',
+            label: l.bookingCancel,
             onTap: alCancelar,
             danger: true,
             compact: true,

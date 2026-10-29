@@ -1,7 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 /// The rules of a queried range that the API also validates
-/// (`GET /espacios/disponibles`), to block the query before calling it. The messages are
-/// the same.
+/// (`GET /espacios/disponibles`), to block the query before calling it. Each broken rule
+/// is a [RangeProblem]; the screen writes it in the language of the device.
 library;
 
 import '../../../common/dates.dart';
@@ -10,6 +10,34 @@ import '../../venues/domain/venue.dart';
 const minHours = 1;
 const maxHours = 4;
 const daysInView = 7;
+
+/// What is wrong with a queried range.
+enum RangeProblemKind {
+  datePast,
+  dateTooFar,
+  venueClosedThatDay,
+  tooShort,
+  tooLong,
+  venueCloses,
+  venueOpens,
+  timePast,
+}
+
+/// A broken rule of the range and the datum its message needs: the number of days in
+/// view, the longest duration or the `HH:MM` the venue opens or closes at.
+class RangeProblem {
+  const RangeProblem(this.kind, [this.value]);
+
+  final RangeProblemKind kind;
+  final Object? value;
+
+  @override
+  bool operator ==(Object other) =>
+      other is RangeProblem && other.kind == kind && other.value == value;
+
+  @override
+  int get hashCode => Object.hash(kind, value);
+}
 
 /// The on-the-hour value of `HH:MM`; `null` if it is not on the hour.
 int? onTheHour(String hhmm) {
@@ -22,19 +50,24 @@ int? onTheHour(String hhmm) {
 String hhmm(int hour) => wholeHour(hour);
 
 /// The error of [day] that does not depend on the venue: past or beyond the next days.
-Map<String, String> dateErrors({required DateTime day, required DateTime now}) {
+Map<String, RangeProblem> dateErrors({
+  required DateTime day,
+  required DateTime now,
+}) {
   final today = DateTime.utc(now.year, now.month, now.day);
   final date = DateTime.utc(day.year, day.month, day.day);
-  if (date.isBefore(today)) return {'fecha': 'La fecha tiene que ser futura'};
+  if (date.isBefore(today)) {
+    return {'fecha': const RangeProblem(RangeProblemKind.datePast)};
+  }
   if (!date.isBefore(today.add(const Duration(days: daysInView)))) {
-    return {'fecha': 'Elegí un día de los próximos $daysInView'};
+    return {'fecha': const RangeProblem(RangeProblemKind.dateTooFar, daysInView)};
   }
   return {};
 }
 
 /// The errors per field (`fecha`, `desde`, `hasta`) of the range [from] to [to] (whole
 /// hours; [to] 0 is midnight) on [day] at [venue], with [now] in club time.
-Map<String, String> rangeErrors({
+Map<String, RangeProblem> rangeErrors({
   required Venue venue,
   required DateTime day,
   required int from,
@@ -45,7 +78,7 @@ Map<String, String> rangeErrors({
   final today = DateTime.utc(now.year, now.month, now.day);
   final date = DateTime.utc(day.year, day.month, day.day);
   if (errors.isEmpty && !venue.days.contains(date.weekday)) {
-    errors['fecha'] = 'La sede no abre ese día';
+    errors['fecha'] = const RangeProblem(RangeProblemKind.venueClosedThatDay);
   }
   final end = to == 0 ? 24 : to;
   final opening = onTheHour(venue.opening) ?? 0;
@@ -54,18 +87,18 @@ Map<String, String> rangeErrors({
     final h => h,
   };
   if (end - from < minHours) {
-    errors['hasta'] = 'La duración mínima es de una hora';
+    errors['hasta'] = const RangeProblem(RangeProblemKind.tooShort);
   } else if (end - from > maxHours) {
-    errors['hasta'] = 'La duración máxima es de $maxHours horas';
+    errors['hasta'] = const RangeProblem(RangeProblemKind.tooLong, maxHours);
   } else if (end > closing) {
-    errors['hasta'] = 'La sede cierra a las ${venue.closing}';
+    errors['hasta'] = RangeProblem(RangeProblemKind.venueCloses, venue.closing);
   }
   if (from < opening) {
-    errors['desde'] = 'La sede abre a las ${venue.opening}';
+    errors['desde'] = RangeProblem(RangeProblemKind.venueOpens, venue.opening);
   } else if (!errors.containsKey('fecha') &&
       date == today &&
       from <= now.hour) {
-    errors['desde'] = 'El horario tiene que ser futuro';
+    errors['desde'] = const RangeProblem(RangeProblemKind.timePast);
   }
   return errors;
 }

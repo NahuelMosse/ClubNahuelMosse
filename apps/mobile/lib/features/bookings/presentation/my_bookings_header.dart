@@ -1,6 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/account_card.dart';
@@ -21,7 +22,7 @@ class MyBookingsHeader extends StatelessWidget {
           child: Semantics(
             header: true,
             child: Text(
-              'Mis reservas',
+              AppLocalizations.of(context).bookingMyBookings,
               style: Texts.h1.copyWith(color: p.textPrimary),
             ),
           ),

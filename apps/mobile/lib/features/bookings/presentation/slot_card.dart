@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/slot.dart';
@@ -25,11 +26,14 @@ class SlotCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final tinta = elegida ? p.accentOn : p.textPrimary;
     return Grow(
       activo: elegida,
       child: SelectableFrame(
-        etiqueta: actual ? '${franja.text} (actual)' : franja.text,
+        etiqueta: actual
+            ? '${franja.text} ${l.availabilityCurrent}'
+            : franja.text,
         elegido: elegida,
         alTocar: alTocar,
         atenuado: !franja.available,
@@ -40,7 +44,7 @@ class SlotCard extends StatelessWidget {
               Text(franja.text, style: Texts.bodyStrong.copyWith(color: tinta)),
               if (actual)
                 Text(
-                  '(actual)',
+                  l.availabilityCurrent,
                   style: Texts.caption.copyWith(
                     color: elegida ? p.accentOn : p.textSecondary,
                   ),

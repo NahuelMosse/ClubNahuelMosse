@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../common/dates.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
@@ -20,6 +20,7 @@ class DurationSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return Container(
       height: Spacing.controlHeight,
       padding: const EdgeInsets.all(2),
@@ -31,14 +32,14 @@ class DurationSelector extends StatelessWidget {
         children: [
           RoundButton(
             icono: Icons.remove_rounded,
-            etiqueta: 'Una hora menos',
+            etiqueta: l.availabilityLessHour,
             alTocar: horas > minHours ? () => alCambiar(horas - 1) : null,
           ),
           Expanded(
             child: Semantics(
               liveRegion: true,
               child: Text(
-                duration(horas),
+                l.bookingDuration(horas),
                 textAlign: TextAlign.center,
                 style: Texts.bodyStrong.copyWith(color: p.textPrimary),
               ),
@@ -46,7 +47,7 @@ class DurationSelector extends StatelessWidget {
           ),
           RoundButton(
             icono: Icons.add_rounded,
-            etiqueta: 'Una hora más',
+            etiqueta: l.availabilityMoreHour,
             alTocar: horas < maxHours ? () => alCambiar(horas + 1) : null,
           ),
         ],

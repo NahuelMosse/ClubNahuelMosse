@@ -1,0 +1,2 @@
+replaces: apps/mobile/test/bookings_in_english_test.dart "(tests using BookingStatus.label)" · the domain no longer carries text, the status label comes from bookingStatusText · by: apps/mobile/test/bookings_in_english_es_test.dart (PENDING, not written)
+replaces: apps/mobile/test/buscar_cancha_test.dart "(tests using the errores helper)" · rangeErrors now returns RangeProblem values, the text comes from rangeProblemText · by: apps/mobile/test/buscar_cancha_es_test.dart (PENDING, not written)

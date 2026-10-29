@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// VER MIS RESERVAS y «Volver al inicio», al pie del comprobante.
@@ -10,6 +11,7 @@ class BookingExitBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
@@ -23,13 +25,13 @@ class BookingExitBar extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             PrimaryButton(
-              label: 'VER MIS RESERVAS',
+              label: l.bookingSeeMine,
               onTap: () => context.go('/reservas'),
             ),
             const SizedBox(height: Spacing.s8),
             Center(
               child: TextActionButton(
-                label: 'Volver al inicio',
+                label: l.bookingBackHome,
                 onTap: () => context.go('/inicio'),
               ),
             ),

@@ -1,9 +1,11 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
+import '../../spaces/presentation/space_texts.dart';
 import 'selectable_frame.dart';
 
 class AvailabilitySpaceCard extends StatelessWidget {
@@ -21,8 +23,10 @@ class AvailabilitySpaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
+    final condition = conditionText(l, cancha);
     return SelectableFrame(
-      etiqueta: 'Cancha ${cancha.number}, ${cancha.condition}',
+      etiqueta: l.availabilityCourtLabel(condition, cancha.number),
       elegido: elegida,
       alTocar: alTocar,
       child: Padding(
@@ -31,14 +35,14 @@ class AvailabilitySpaceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Cancha ${cancha.number}',
+              l.availabilityCourt(cancha.number),
               style: Texts.bodyStrong.copyWith(
                 color: elegida ? p.accentOn : p.textPrimary,
               ),
             ),
             const SizedBox(height: Spacing.s4),
             Text(
-              cancha.condition,
+              condition,
               style: Texts.caption.copyWith(
                 color: elegida ? p.accentOn : p.textSecondary,
               ),

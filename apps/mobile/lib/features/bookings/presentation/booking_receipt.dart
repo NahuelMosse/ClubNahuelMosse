@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../common/card_frame.dart';
 import '../../../common/dates.dart';
 import '../../../common/die_cut.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/booking.dart';
@@ -15,15 +16,16 @@ class BookingReceipt extends StatelessWidget {
 
   final Booking reserva;
 
-  String get _horario {
+  String _horario(AppLocalizations l) {
     final r = reserva;
     final hours = r.endsAt.difference(r.startsAt).inHours;
-    return '${timeRange(r.startsAt, r.endsAt)} · ${duration(hours)}';
+    return '${timeRange(r.startsAt, r.endsAt)} · ${l.bookingDuration(hours)}';
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final r = reserva;
     return SizedBox(
       width: double.infinity,
@@ -31,7 +33,7 @@ class BookingReceipt extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Te esperamos. Te vamos a avisar una hora antes.',
+            l.bookingReceiptNote,
             textAlign: TextAlign.center,
             style: Texts.body.copyWith(color: p.textSecondary),
           ),
@@ -45,9 +47,16 @@ class BookingReceipt extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      DetailRow(dato: 'Espacio', valor: r.space, codigo: true),
-                      DetailRow(dato: 'Fecha', valor: longDate(r.startsAt)),
-                      DetailRow(dato: 'Horario', valor: _horario),
+                      DetailRow(
+                        dato: l.bookingRowSpace,
+                        valor: r.space,
+                        codigo: true,
+                      ),
+                      DetailRow(
+                        dato: l.bookingRowDate,
+                        valor: longDate(r.startsAt),
+                      ),
+                      DetailRow(dato: l.bookingRowTime, valor: _horario(l)),
                     ],
                   ),
                 ),

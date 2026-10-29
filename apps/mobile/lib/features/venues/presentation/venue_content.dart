@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/list_loading.dart';
 import '../../../common/skeleton.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
@@ -59,25 +60,25 @@ class VenueContent extends StatelessWidget {
       key;
 
   /// «4 CANCHAS · FÚTBOL · TODOS LOS TIPOS», como el prototipo.
-  String _counter() {
-    final count = spaceCountLabel(spaces.length);
+  String _counter(AppLocalizations l) {
+    final count = l.venueSpaceCount(spaces.length);
     final d = sport;
     final t = kind;
     if (allSpaces.isEmpty) return count.toUpperCase();
-    if (d == null) return '$count · todos los deportes'.toUpperCase();
+    if (d == null) return '$count · ${l.venueAllSports}'.toUpperCase();
     if (t != null) return '$count · ${_kindName(t)}'.toUpperCase();
     final sportName = catalog.sport(d)?.name ?? d;
     if (sportKinds.length > 1) {
-      return '$count · $sportName · todos los tipos'.toUpperCase();
+      return '$count · $sportName · ${l.venueAllKinds}'.toUpperCase();
     }
     return '$count · $sportName'.toUpperCase();
   }
 
-  Widget _filters() => Column(
+  Widget _filters(AppLocalizations l) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       SpaceFilter(
-        title: 'DEPORTE',
+        title: l.venueSportTitle,
         options: [
           for (final d in catalog.sports)
             if (allSpaces.any((c) => c.sport == d.key))
@@ -85,7 +86,7 @@ class VenueContent extends StatelessWidget {
         ],
         selected: sport,
         enabled: enabled,
-        prefix: 'Deporte',
+        prefix: l.venueSportPrefix,
         onSelected: (key) {
           if (key != null) onSportSelected(key);
         },
@@ -93,14 +94,14 @@ class VenueContent extends StatelessWidget {
       if (sport != null && sportKinds.length > 1) ...[
         const SizedBox(height: Spacing.s16),
         SpaceFilter(
-          title: 'TIPO DE CANCHA',
+          title: l.venueKindTitle,
           options: [
-            (null, 'Todos', null),
+            (null, l.venueKindAll, null),
             for (final t in sportKinds) (t, _kindName(t), null),
           ],
           selected: kind,
           enabled: enabled,
-          prefix: 'Tipo',
+          prefix: l.venueKindPrefix,
           onSelected: onKindSelected,
         ),
       ],
@@ -111,6 +112,7 @@ class VenueContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final sports = sportsOf(venue, catalog);
     return SingleChildScrollView(
       child: Column(
@@ -118,10 +120,11 @@ class VenueContent extends StatelessWidget {
         children: [
           CoverWithTitle(
             image: venueCover(venue.id),
-            backTo: 'Todas las sedes',
+            backTo: l.venueBack,
             onBack: () => context.go('/sedes'),
             gap: Spacing.s40,
-            overline: '${venue.address} · ${venue.opening} a ${venue.closing}'
+            overline: l
+                .venueAddressHours(venue.address, venue.closing, venue.opening)
                 .toUpperCase(),
             name: venue.name,
             extra: [
@@ -145,11 +148,11 @@ class VenueContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                if (allSpaces.isNotEmpty) _filters(),
+                if (allSpaces.isNotEmpty) _filters(l),
                 Semantics(
                   liveRegion: true,
                   child: Text(
-                    _counter(),
+                    _counter(l),
                     style: Texts.overline.copyWith(color: p.accentInk),
                   ),
                 ),

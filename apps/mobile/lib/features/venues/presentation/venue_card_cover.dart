@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../common/bib.dart';
 import '../../../common/dates.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/venue.dart';
 import 'photos.dart';
+import 'venue_texts.dart';
 
 /// La portada de la sede con su cantidad de canchas, el nombre, la dirección y el horario.
 class VenueCardCover extends StatelessWidget {
@@ -35,7 +37,11 @@ class VenueCardCover extends StatelessWidget {
                     color: p.textOnMedia,
                   ),
                   Text(
-                    venue.spaceCount == 1 ? 'CANCHA' : 'CANCHAS',
+                    // The number is the giant bib above: only the noun is left.
+                    AppLocalizations.of(context)
+                        .venueSpaceCount(venue.spaceCount)
+                        .replaceFirst(RegExp(r'^\d+\s*'), '')
+                        .toUpperCase(),
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontWeight: FontWeight.w700,
@@ -70,8 +76,14 @@ class VenueCardCover extends StatelessWidget {
                         ),
                         Text(
                           // El rango no se parte entre líneas.
-                          '${venue.daysLabel} · '
-                          '${venue.opening} a ${venue.closing}',
+                          AppLocalizations.of(context).venueDaysHours(
+                            venue.closing,
+                            weekdaysText(
+                              AppLocalizations.of(context),
+                              venue.daysLabel,
+                            ),
+                            venue.opening,
+                          ),
                           style: Texts.caption.copyWith(
                             fontSize: 12,
                             color: p.textOnMediaMuted,
