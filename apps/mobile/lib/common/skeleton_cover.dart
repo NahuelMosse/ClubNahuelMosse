@@ -1,3 +1,4 @@
+// kit-boundary: the loading pieces live with skeleton.dart, skeleton_list.dart and skeleton_zone.dart in common/.
 import 'package:flutter/material.dart';
 
 import '../theme/theme.dart';
