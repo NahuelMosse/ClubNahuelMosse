@@ -58,7 +58,8 @@ void main() {
       expect(validPricePerHour(0), isFalse);
       expect(validPricePerHour(1), isTrue);
       expect(validPricePerHour(maxPricePerHour), isTrue);
-      expect(validPricePerHour(maxPricePerHour + 1), isFalse);
+      expect(validPricePerHour(9999999), isTrue);
+      expect(validPricePerHour(10000000), isFalse);
     });
 
     test('the sports of a venue follow the catalog order @ENG-19-S1', () {
@@ -128,6 +129,16 @@ void main() {
         openDays: [1, 2, 3, 4, 5, 6, 7],
       );
       expect(closesEarlier.reasons, [OutsideReason.endsAfter]);
+
+      // A midnight closing counts as hour 24, not more.
+      final pastMidnight = OutsideHours.of(
+        1,
+        before: _venue(closing: '25:00'),
+        opensAt: 8,
+        closesAt: 0,
+        openDays: [1, 2, 3, 4, 5, 6, 7],
+      );
+      expect(pastMidnight.reasons, [OutsideReason.endsAfter]);
 
       final unknown = OutsideHours.of(
         1,
