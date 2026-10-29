@@ -24,6 +24,10 @@ it will have to redo your work to trust it.
 show up, that is a fact about your search. Before claiming that something is not there, search by
 content. If it still does not show up, say exactly what you searched for and where.
 
+**Search where the code is.** `Glob` and `Grep` take a `path` inside the source folders; a `**` from the repo root walks
+`node_modules`, builds and caches and times out, and `/tmp` is not a folder on Windows. An image or a PDF is read once, a PDF by
+the `pages` it needs. *Measured: 16 Globs from the root timed out; 161 image and PDF reads, 403k characters, one PDF read whole.*
+
 **If the question has an uncomfortable answer, give it.** “It is implemented in two places that do
 not match” or “this does not exist, what there is is something else” are useful answers. Filling
 in with the closest thing you found is not.

@@ -17,7 +17,12 @@ try {
   await (await import('../tools/card.mjs')).delegateToRepo(import.meta.url, raw, input);
   if (!input.agent_id) process.exit(0);
   const command = String(input.tool_input?.command ?? '');
-  if (/^\s*(?:cd\s+\S+\s*&&\s*)?git(?:\.exe)?\s/.test(command)) process.exit(0);
+  const unquoted = command.replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, '""');
+  // One git command, after an optional `cd`: it changes the tree by design.
+  if (/^\s*(?:cd\s+\S+\s*&&\s*)?git(?:\.exe)?\s/.test(unquoted) && !/&&|;|\||\n/.test(unquoted.replace(/^\s*cd\s+\S+\s*&&/, ''))) process.exit(0);
+  // A chain made only of `cd` and the git commands that change the tree by design (`git add -A && git commit`).
+  const gitOnly = /^\s*(?:cd\s+\S+|git(?:\.exe)?\s+(?:-C\s+\S+\s+)?(?:add|commit|rm|mv)\b[^;&|]*)\s*$/;
+  if (unquoted.split(/&&|;|\n/).filter((p) => p.trim()).every((p) => gitOnly.test(p))) process.exit(0);
   const { hookCard, isProductionPath } = await import('../tools/card.mjs');
   const { isSourceFile } = await import('../tools/shell-writes.mjs');
   const cwd = input.cwd ?? process.cwd();

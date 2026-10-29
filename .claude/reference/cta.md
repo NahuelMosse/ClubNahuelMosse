@@ -9,7 +9,7 @@ happens after the tap. Evidence: findability and size are measured studies; the 
 - **Isolated by position or by treatment** (`*`: 2 of 23 winners have a treatment no other control shares; the rest stand out by position, type or an accent pill): a place of its own, or no other control with the same fill, radius and border; a fill is at least 3:1 against its surroundings.
 - **In the first viewport at 390** (844 tall), and repeated after each objection, at most every 3 screens. A phone thumb reaches it; the lower half is a recommendation, never a failure.
 - **Size:** at least 48 px tall at 390 (56 desirable), 44 px is the floor of any touch target.
-- **Label with a verb and data:** verb plus object plus a datum (flavor, price): «Order Watermelon · $4.20». Never «Ver más» or «Click here». This is a deliberate choice of the kit, not observed in the winners (0 of 23 carry a datum).
+- **Label with a verb:** verb plus object («Order Watermelon»). Never «Ver más» or «Click here». A label with verb and data (flavor, price: «Order Watermelon · $4.20») is optional, never required: 0 of 23 winners carry a datum, and a price in the hero button reads as a store, not as a brand.
 
 ## The gesture after the tap (taste, no conversion study)
 

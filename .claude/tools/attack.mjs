@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// attack.mjs [<base-url>] [--json] [--no-ambient] [--header "Name: value"]... [--auth-env <VAR>] [--write "<METHOD> <path> [body]"]... [--read "<path>"]...
+// attack.mjs [<base-url>] [--json] [--no-ambient] [--header "Name: value"]... [--auth-env <VAR>] [--write "<METHOD> <path> [body]"]... [--read "<path>"]... [--search "<path> <param>"]...
 //
 // The same attacks against any app, on every card. Measured: runs tried “request from another site”
 // and called the matter closed, but a request from another port of the same host —same site,
@@ -29,6 +29,7 @@
 // --fault-db <sqlite file>: opens the file with `node:sqlite`, holds `BEGIN EXCLUSIVE` and sends the first `--write` as it
 //           is; the answer must be a 5xx and the app must still answer a GET afterwards. `$DATA_DIR/...` takes the DATA_DIR of
 //           the environment. Without `node:sqlite`, without a `--write` or with a missing file the row is `COULD NOT RUN`.
+// --search "<path> <param>": a read with a free-text search parameter; its text must be taken literally (see the rows below).
 // --openapi <file.yaml|json>: the status of every response of every row, per method and path (ids normalized to the contract's
 //           template), must be one the contract documents for that operation (`default` and `2XX` style keys count); each
 //           status the app answered and the contract does not list fails. An operation or path the contract lacks is not judged.
@@ -62,6 +63,15 @@
 //     - with a 50 MB text/plain body (streamed): a 4xx before it is all out, or in under 2 s; never read whole first
 //   every path given (write or read) and `/`, last:
 //     - (double slashes in the path): `GET //` and `GET //<path>` never answer 5xx nor drop the connection
+//   always (a repo file the app must not serve): `/.git/config`, `/.env`, `/package.json` and `/.claude/settings.json` never
+//     come back with their content; an app that answers every path with its index page passes
+//   --read with a numeric query value (a number past any integer): each one sent as 30 nines and as minus 30 nines; a 4xx or a
+//     clamped 2xx, never a 5xx nor a dropped connection
+//   every path given and `/` (a malformed percent-encoding): `<path>/%` and `<path>?pct=%FF%`, never a 5xx nor a dropped connection
+//   --write with a JSON body (POST): with no content type never a 5xx nor a dropped connection;
+//     with Application/JSON; charset=utf-8 (still JSON) never a 415
+//   --search "<path> <param>" (the search text taken literally): `%`, `_`, quotes, a backslash and `' OR 1=1 --`; never a 5xx,
+//     and `%` or `_` never answer the same as no search at all
 //   always, raw over a socket to the host of the URL: `GARBAGE`, a request line with a non-ASCII path that is not encoded, and a
 //   20 KB header. Each must be answered with a 4xx (or the connection closed cleanly), never a 5xx, and a legitimate GET must
 //   still be answered afterwards.
@@ -93,7 +103,7 @@ if (!base || !/^https?:\/\//.test(base)) {
 const toPath = (r) => '/' + r.replace(/^[A-Za-z]:[\\/].*?[\\/]Git[\\/]/, '').replace(/^\/+/, '');
 const writes = [], reads = [];
 let jsonFlag = false, noAmbient = false, bodyLimit = 0, strictHost = false, faultDb = null, openapi = null;
-const commonHeaders = [], uniques = [];
+const commonHeaders = [], uniques = [], searches = [];
 let rawHeadersExempt = '';
 let varyKey = null;
 const extra = {};
@@ -132,6 +142,11 @@ for (let i = given ? 1 : 0; i < args.length; i++) {
   else if (args[i] === '--fault-db') {
     faultDb = (args[++i] ?? '').replace(/\$\{DATA_DIR\}|\$DATA_DIR(?![\w])|%DATA_DIR%/g, process.env.DATA_DIR ?? '$&');
     if (!faultDb) { console.error('--fault-db wants the path of the SQLite file.'); process.exit(2); }
+  }
+  else if (args[i] === '--search') {
+    const [r, param] = (args[++i] ?? '').split(' ');
+    if (!r || !param) { console.error('--search wants "<path> <param>", the read and the name of its search parameter.'); process.exit(2); }
+    searches.push({ path: toPath(r), param });
   }
   else if (args[i] === '--openapi') openapi = args[++i] ?? '';
   else if (args[i] === '--no-ambient') noAmbient = true;
@@ -177,8 +192,9 @@ const exchange = (method, r, headers, body, type = 'application/x-www-form-urlen
     hostname: target.hostname, port: target.port, path: r.startsWith('//') ? r : target.pathname + target.search, method,
     headers: { ...extra, ...headers, ...(data ? { 'content-type': type, 'content-length': data.length } : {}) },
   }, (res) => {
-    res.resume();
-    res.on('end', () => { if (check) { noteMissing(`${method} ${r} answered ${res.statusCode}`, res.headers); noteSeen(method, r, res.statusCode); } done({ s: res.statusCode, headers: res.headers }); });
+    let text = '';
+    res.on('data', (d) => { if (text.length < 20_000) text += d; });
+    res.on('end', () => { if (check) { noteMissing(`${method} ${r} answered ${res.statusCode}`, res.headers); noteSeen(method, r, res.statusCode); } done({ s: res.statusCode, headers: res.headers, text }); });
   });
   req.setTimeout(10_000, () => req.destroy(new Error('timeout')));
   req.on('error', (e) => done({ s: `no response (${e.code ?? e.message})`, headers: {} }));
@@ -439,6 +455,13 @@ for (const { method, path: r, body } of writes) {
   if (json && method === 'POST') { await hardening(r, body); await hang(r, true); jsonPosts.push(r); }
   if (json) await bigPlain(method, r);
 }
+// HEAD and OPTIONS on every known route: a 2xx is fine (HEAD has no body), a 405 must say which methods the route takes (`Allow`).
+for (const r of new Set([...writes.map((w) => w.path), ...reads])) for (const method of ['HEAD', 'OPTIONS']) {
+  const { s, headers } = await exchange(method, r, BROWSER);
+  const answered = typeof s === 'number';
+  const noAllow = s === 405 && headers.allow === undefined;
+  rows.push({ name: `${method} ${r} (method probe)`, s: answered ? s : '-', bad: !answered || s >= 500 || noAllow, evidence: noAllow ? '405 without an Allow header' : answered ? undefined : s });
+}
 for (const r of reads) {
   await legitimate(`GET ${r} legitimate, from the page itself`, 'GET', r);
   if (!noAmbient) for (const [name, headers] of ORIGINS.slice(0, 2)) await attack(`GET ${r} ${name}`, 'GET', r, headers, undefined, true);
@@ -452,6 +475,72 @@ for (const r of ['/', ...writes.map((w) => w.path), ...reads]) {
   const answered = typeof s === 'number';
   if (typeof before !== 'number') rows.push({ name: `GET ${path} (double slashes in the path)`, s: '-', bad: false, invalid: true, evidence: 'the app was already down' });
   else rows.push({ name: `GET ${path} (double slashes in the path)`, s: answered ? s : '-', bad: !answered || s >= 500, evidence: answered ? `answered ${s}` : `the app answered / and then did not answer this path: ${s}` });
+}
+// A static server rooted at the repo serves its insides (measured: `/design/` and the repo's own files answered 200). A file
+// counts as served only when its content comes back: an app that answers every path with its index page is not leaking.
+// `specs/` and `/design/line.md` are the repo's own text: an HTML answer (an SPA index) never counts.
+const currentCard = (() => { try { return readFileSync('specs/.current', 'utf8').trim(); } catch { return ''; } })();
+const INTERNAL = [['/.git/config', /\[core\]/], ['/.env', /^[A-Z][A-Z0-9_]*=/m], ['/package.json', /"(dependencies|devDependencies|scripts)"\s*:/], ['/.claude/settings.json', /"(hooks|permissions)"\s*:/],
+  ['/specs/.current', /^[a-z0-9]+(?:[-_.][a-z0-9]+)+\s*$/i], ...(/^[\w.-]+$/.test(currentCard) ? [[`/specs/${currentCard}/card.md`, /^(#\s|status:|id:|## )/m]] : []), ['/design/line.md', /^(#\s|[-*]\s)/m]];
+for (const [path, marker] of INTERNAL) {
+  const { s, text } = await exchange('GET', path, BROWSER, undefined, undefined, false);
+  const answered = typeof s === 'number';
+  const leaked = answered && s < 300 && !/^\s*<(!doctype|html)/i.test(text) && marker.test(text);
+  rows.push({ name: `GET ${path} (a repo file the app must not serve)`, s: answered ? s : '-', bad: leaked, evidence: leaked ? `answered ${s} with the file's content` : answered ? undefined : s });
+}
+// A number the parser cannot hold (`Number('9'.repeat(30))` is 1e30, `parseInt` past 2^53 loses digits, SQLite's integer overflows):
+// each numeric query value of a read is sent huge and negative; a 4xx or a clamped 2xx is fine, a 5xx or a dropped connection is not.
+for (const r of reads) {
+  const [path, query] = r.split('?');
+  const numeric = [...new URLSearchParams(query ?? '')].filter(([, v]) => /^-?\d+$/.test(v));
+  for (const [key] of numeric) for (const huge of ['9'.repeat(30), '-' + '9'.repeat(30)]) {
+    const params = new URLSearchParams(query);
+    params.set(key, huge);
+    const { s } = await exchange('GET', `${path}?${params}`, BROWSER);
+    const answered = typeof s === 'number';
+    rows.push({ name: `GET ${path}?${key}=${huge.slice(0, 4)}… (a number past any integer)`, s: answered ? s : '-', bad: !answered || s >= 500, evidence: answered ? undefined : `no response: ${s}` });
+  }
+}
+// A `%` that starts no escape makes `decodeURIComponent` throw; an app that does not catch it answers 500 (measured twice on
+// mc2). The path and the query are tried apart: each is decoded by a different piece.
+for (const r of [...new Set(['/', ...writes.map((w) => w.path), ...reads])]) {
+  const [path, query] = r.split('?');
+  for (const bad of [`${path.replace(/\/$/, '')}/%`, `${path}?${query ? `${query}&` : ''}pct=%FF%`]) {
+    const { s } = await exchange('GET', bad, BROWSER);
+    const answered = typeof s === 'number';
+    rows.push({ name: `GET ${bad} (a malformed percent-encoding)`, s: answered ? s : '-', bad: !answered || s >= 500, evidence: answered ? `answered ${s}` : `no response: ${s}` });
+  }
+}
+// The content type of a JSON write: a missing header must not crash the handler (`headers['content-type'].split` is a 500);
+// capitals and a charset are still JSON (RFC 9110: the type is case-insensitive) and must not get a 415.
+for (const r of jsonPosts) {
+  const { text } = wire(writes.find((w) => w.path === r).body, true, ++count);
+  const req = await new Promise((done) => {
+    const target = new URL(r, base);
+    const data = Buffer.from(text);
+    const q = request({ hostname: target.hostname, port: target.port, path: target.pathname + target.search, method: 'POST', headers: { ...extra, ...BROWSER, 'content-length': data.length } }, (res) => { res.resume(); res.on('end', () => { noteMissing(`POST ${r} answered ${res.statusCode}`, res.headers); noteSeen('POST', r, res.statusCode); done(res.statusCode); }); });
+    q.setTimeout(10_000, () => q.destroy(new Error('timeout')));
+    q.on('error', (e) => done(`no response (${e.code ?? e.message})`));
+    q.end(data);
+  });
+  const answered = typeof req === 'number';
+  rows.push({ name: `POST ${r} with no content type`, s: answered ? req : '-', bad: !answered || req >= 500, evidence: answered ? `answered ${req}` : req });
+  const variant = wire(writes.find((w) => w.path === r).body, true, ++count);
+  const s = await send('POST', r, BROWSER, variant.text, 'Application/JSON; charset=utf-8');
+  rows.push({ name: `POST ${r} with Application/JSON; charset=utf-8 (still JSON)`, s, bad: s === 415 || typeof s !== 'number' || s >= 500, control: true, evidence: s === 415 ? 'a media type is case-insensitive and may carry a charset: 415 refuses legitimate clients' : `answered ${s}` });
+}
+// A search parameter (`--search "<path> <param>"`) takes its text literally: `%` and `_` are LIKE wildcards, and a search for
+// either that answers the same as no search at all lists every row. Quotes and backslashes must not break the query.
+for (const { path: r, param } of searches) {
+  const [path, query] = r.split('?');
+  const at = (v) => { const p = new URLSearchParams(query ?? ''); if (v === null) p.delete(param); else p.set(param, v); const q = p.toString(); return q ? `${path}?${q}` : path; };
+  const all = await exchange('GET', at(null), BROWSER);
+  for (const v of ['%', '_', "'", '"', '\\', "' OR 1=1 --"]) {
+    const got = await exchange('GET', at(v), BROWSER);
+    const answered = typeof got.s === 'number';
+    const wildcard = answered && got.s < 300 && (v === '%' || v === '_') && all.s < 300 && got.text.length > 2 && got.text === all.text;
+    rows.push({ name: `GET ${at(v)} (the search text taken literally)`, s: answered ? got.s : '-', bad: !answered || got.s >= 500 || wildcard, evidence: wildcard ? `the same answer as no search at all: ${v} worked as a wildcard` : answered ? `answered ${got.s}` : got.s });
+  }
 }
 await rawRows();
 for (const r of jsonPosts) await hang(r, false);

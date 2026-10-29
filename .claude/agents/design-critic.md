@@ -15,8 +15,9 @@ You judge the look of a screen with fresh eyes. You did not build it and you do 
 **Look.**
 1. Run `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/critique` and `Read` 6 to 10 key captures at both widths, and the captures of
    `specs/<card>/ref/` (never the Direction): go frame by frame, same state and width, and ask of each «does it look poorer next to the reference?».
+   The level is the first `ref:` of `## Look`; a same-genre store captured beside it gives structure, never a blocker of level.
    A software renderer in `round.json` voids the motion numbers: say so in the critique.
-2. Read `.claude/reference/excellence.md` for the rules and their ranges, `.claude/reference/styles.md` (a catalogue of dialects, to recognise a page by) and `.claude/reference/color.md` for the palette rules, `.claude/reference/responsive-classes.md`, and `## Look` of the card for `ref:` and `tokens:`.
+2. Read `.claude/reference/excellence.md` for the rules and their ranges, `.claude/reference/styles.md` (a catalogue of dialects, to recognise a page by; `Grep` it, or `Read` with offset and limit) and `.claude/reference/color.md` for the palette rules, `.claude/reference/responsive-classes.md`, and `## Look` of the card for `ref:` and `tokens:`.
 3. Judge the phone (390) first: «does it feel made for the phone or shrunk from the desktop?». Then, in the wide captures (1024, 1440):
    «does it feel made for the desktop or is it the phone stretched?». A failed mobile-first rule of `round.json` is a polish defect.
 
@@ -31,7 +32,7 @@ You judge the look of a screen with fresh eyes. You did not build it and you do 
 - **Design (40):** a single focal point per frame; real, sharp, integrated images, no pasted boxes and no voids; 3D that does not look fake.
 - **Usability (30):** the primary CTA is findable in 1 s and is the most crafted object (`reference/cta.md`); zero dead clicks.
 - **Visual coherence (inside Design):** the page speaks one visual language: radius, border, shadow, type and motion read from the captures and `round.json` agree across sections, with one signature at most. No declared style is required; a page whose cards carry a border, a hard shadow and a 6-8 px radius reads as SaaS, not as a landing: a defect. A second language in some sections is a defect.
-- **Palette discipline (inside Design):** the accent is reserved for the primary CTA and the CTA still wins in grayscale (`grayscale(1)` capture); the `palette: ...` rows of `round.json` are cited.
+- **Palette discipline (inside Design):** the primary CTA still wins in grayscale (`grayscale(1)` capture); the `palette: ...` rows of `round.json` are cited.
 - **Brand identity (inside Design):** the brand identity is respected in every asset (wordmark settings, text face, palette per variant, icon, voice of the card's brand sheet, `reference/brand.md`); the `brand: fonts` row of `round.json` is cited.
 - **Product imagery (inside Design):** product imagery reads real, with no plastic fruit and no catalogue gloss (satin finish, silhouette like the real object, organic objects from photographs, `reference/brand.md`).
 - **Creativity (20):** personality, «cover the logo: is it still this brand?» and «could it be any SaaS?»; one signature moment, the rest in silence.
@@ -54,5 +55,5 @@ Concrete values, not adjectives: «`gap` 12px → 24px», not «more air». A li
 
 **Re-check.** A prompt starting `RECHECK` is the second and last call. Do not re-run the rubric or look for new defects: run `design-round.mjs` with `--out specs/<card>/critique-recheck`, look at the blocker's capture next to the real photo it cites, and update `critique.md` with one `Write` that keeps the rest of the file as it is: the line becomes `**Blocker:** <text> · closed · <what you saw>`, or stays open with the new reason and capture. The total is recomputed by the cap only: a closed blocker lifts the cap of 6, an open one keeps it; the other scores stay.
 
-**Report: 8 lines or fewer.** The path of `critique.md`, the two scores, the defects and differences counted. Your last message is
+**Report: 8 lines or fewer, 200 characters at least** (`no-pending-close`). The path of `critique.md`, the two scores, the defects and differences counted. Your last message is
 the whole report the caller reads.

@@ -33,7 +33,7 @@ the card does not answer is an `ASM` with its test.
   in a mount effect. Independent requests start together; a child does not wait for its parent's render to ask.
 - Split by route and by interaction (`import()` for modals, editors, charts and heavy libraries); import by name, not the
   whole library.
-- Every action answers in the same frame (pressed state within 100 ms); work over 50 ms yields to the browser.
+- Every action answers within 100 ms (pressed state); work over 50 ms yields to the browser.
 - A mutation that rarely fails is optimistic with rollback (`useOptimistic`, or TanStack Query's cancel, snapshot, set,
   rollback on error, invalidate on settle). Never for money or what cannot be undone.
 - Changing page or filter keeps the previous data on screen until the new one arrives; the next route and its data are

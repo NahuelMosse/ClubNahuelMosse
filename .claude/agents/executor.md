@@ -1,6 +1,6 @@
 ---
 name: executor
-description: Runs a list of commands and returns the exit code of each one, without interpreting. Use for the mechanical checks of step 8 — greps, counts, suites, attacks against the running app. If someone has to decide what a result means, this is not the agent: it is runner.
+description: Runs a list of commands and returns the exit code of each one, without interpreting. Use for the mechanical checks of the gate lines — greps, counts, suites, attacks against the running app. If someone has to decide what a result means, this is not the agent: it is runner.
 tools: Bash, Read, Grep, Glob
 model: haiku
 effort: low

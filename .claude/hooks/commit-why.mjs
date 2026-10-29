@@ -80,7 +80,7 @@ for (let i = 0; i < words.length; i++) {
 
 // The kit's source repo: its commits are Conventional Commits, which tools/release.mjs reads to set the version.
 if (messages.length > 0 && isKitSource(cwd) && !CONVENTIONAL.test(messages[0].split('\n')[0])) {
-  reject('Commits of the kit repo are Conventional Commits: `type(scope)!: subject`, with type feat | fix | perf | refactor | docs | test | chore | style | build | ci | revert.\n'
+  reject('Commits in this repo are Conventional Commits: `type(scope)!: subject`, with type feat | fix | perf | refactor | docs | test | chore | style | build | ci | revert.\n'
     + 'feat raises the minor, fix and perf the patch. A major is marked with `!` after the type (`feat(card)!: ...`) or a `BREAKING CHANGE: ...` line in the body.\n'
     + 'tools/release.mjs sets the kit version from them. Example: git commit -m "feat(release): the version follows the commits" -m "why".');
 }
@@ -91,4 +91,4 @@ if (/\n\s*\n\s*\S/.test(messages[0])) process.exit(0);
 // Only a card in progress asks for it.
 if (!hookCard(cwd, process.env, { tool_name: 'Bash', tool_input: { command: cmd } })) process.exit(0);
 
-reject('The commit needs the why in its body: a second -m with what the change decides and why.');
+reject('The commit needs the why in its body: a second -m with what the change decides and why. Example: git commit -m "<subject>" -m "<why>"');

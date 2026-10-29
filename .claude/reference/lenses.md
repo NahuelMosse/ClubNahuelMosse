@@ -4,9 +4,6 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 
 ## interpretation
 
-- What counts as a space when trimming? Only ASCII, or also a non-breaking space and tabs (`" Ana"`)?
-- Do equality and search use the same case rule, ASCII or Unicode (`Ñandú` against `ñandú`)?
-- Which characters and how long may an id be when it is returned in a header (`X-Request-Id` with a newline)?
 - Does the product add text, routes or behavior the card does not ask for (a «welcome» line, a `/health`)? Each one is `OUT`.
 - Does each `S#` say the same as the sentence it quotes, no less and no more («at least 3» is not «more than 3»)?
 - Is there a sentence of `L1` that no `S#` covers (a second paragraph, a comment of Jira)?
@@ -14,19 +11,25 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 - Which reading works with any answer to the open question, and is that the one assumed?
 - What does the card leave to the default of a library (sort order, time zone, rounding), and is it written down?
 - What does «empty» mean here: missing, `null`, `""` or only spaces?
+- What does a public function do with a missing argument, `null` or `{}` (`total(null)`), and does a test say it?
+- Is the input normalized before it is compared or stored: NFC against NFD (`José`), a leading zero (`011 4555`), U+0000?
+- What will the person type that the card's examples do not (the surname first, two spaces, a pasted line break)?
+- Where is a computed amount rounded: once at the end, never per line (`3 × 0.335`)?
+- A scenario with «first», «or» or «any» has a case per branch: which is the second test?
 
 ## contract
 
-- What does an unsupported method answer on an invalid id, 405 or 404 (`DELETE /items/xyz`)?
+The questions every HTTP card leaves open (content type, byte limit, ids, query integers, text fields, case, search, order, request id,
+405, `//path`, percent-encoding, 431, 500, extra keys, client success) have their default in `reference/http-defaults.md` (profile backend): assumed from there as an `ASM` with its test, not deliberated.
+
 - Is a `+` in the query a space or a plus (`?q=a+b`)?
 - What happens in a partial case, one valid field and one invalid (`{"name":"Ana","age":-1}`)?
-- Is the cap of an integer in the query said for every parameter, and what does it answer when passed (`?limit=1000000`)?
+- Are bytes that decoding would repair silently refused instead (invalid UTF-8 turned into `�`)?
 - Which statuses does the contract (openapi) document that the app returns: 400, 404, 408, 413, 415, 431, 500?
 - What does a repeated or duplicate value answer, 409 or 200 with the existing one (`POST` of the same email twice)?
 - Which headers does every response carry (`content-type`, `cache-control`, the card's own), errors included?
-- What is the order of the fields and of the list when the card does not say (`name, email`; by creation)?
-- What answers a body of another content-type, empty, or with extra keys?
-- What does the client see on an error: a stable shape (`{error, message}`) and no stack?
+- What is the order of the fields of a response when the card does not say (`name, email`)?
+- Do the 4xx errors carry the same `error` shape as the 500 body of `http-defaults.md`?
 - Does an existing client keep working: which route, field or status of main changes?
 - Is each route a resource the client understands (`/orders/42` with its lines, totals and status), or a table exposed as is (`/order_lines?order_id=42`, foreign keys, internal columns)?
 
@@ -47,8 +50,13 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 
 A card that edits a code file with markup in it and does not change the screen declares `no-visual: <why>` in `## Gate`; a view file in `## Tasks` (`.css`, `.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`) voids it.
 
-- Does Enter submit from each control of the form, not only from the last one?
-- Where does focus go after an error and after a submit?
+- Does Enter submit from each control of the form, not only from the last one, and from each type (text, `select`, checkbox) in a real browser?
+- Where does focus go after an error and after a submit, and is it never left on `body` in any step?
+- Is the focus ring visible on the invalid field and on the status message that takes focus?
+- Does the sending indicator stay visible, with contrast, while the request is held?
+- Does a `select` placeholder read as a placeholder, not in the color of a chosen value?
+- Does what enters also leave with a transition, and does reduced motion leave no transform behind?
+- Do the gaps between blocks come from the spacing tokens (`design/line.md` from mvp; at poc the card's `tokens:`), not loose values?
 - Does a long text with no spaces overflow at 320 px (`aaaaaaaaaaaaaaaaaaaaaaaa`)?
 - Is a disabled control still legible, with contrast and a visible reason?
 - Does each state that can appear (loading, empty, error, sending, and the notice of a server error) have its `probe`?
@@ -75,12 +83,12 @@ Always read by the plan `judge` at high, whatever the lenses of `risk.json`. The
 ## security
 
 - Is the person's text inserted as text, never as HTML (`<img onerror=…>`)?
-- Does the search escape the wildcards `%` and `_` (`?q=100%`)?
 - Is a huge body with another content-type cut without reading it all?
-- Does an internal error leave the process alive and answer 500 without a stack?
+- Does an internal error leave the process alive?
 - Who may call each route, and what does the call without credentials answer, 401 or 403?
 - Does a value of the request reach a header, a path or a command without being checked (`../`, `\r\n`)?
 - Does a log line or an error echo personal data or a secret?
 - Is the host or origin checked when the card names one (`Host`, CORS)?
 - Does anything sensitive travel in the query string?
 - Which limit stops a loop of requests (size, count, time), and what does it answer?
+- Does the static server serve only the public folder (`/.git/config`, `/.env`, `/package.json`, `/specs/`, `/design/` give 404)?

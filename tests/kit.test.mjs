@@ -8,14 +8,19 @@ import assert from 'node:assert/strict';
 const repo = resolve(import.meta.dirname, '..');
 const kit = JSON.parse(readFileSync(join(repo, '.claude', 'kit.json'), 'utf8'));
 const files = JSON.parse(readFileSync(join(repo, '.claude', 'kit-files.json'), 'utf8'));
-// The team adds its plugins to settings.json; the installer keeps that edit instead of overwriting it.
-const EDITED_BY_THE_TEAM = new Set(['.claude/settings.json']);
+// The team adds its plugins to settings.json, and `dart format` rewraps the Flutter test helpers; the installer keeps those edits.
+const EDITED_BY_THE_TEAM = new Set([
+  '.claude/settings.json',
+  'apps/mobile/test/kit/kit_a11y.dart',
+  'apps/mobile/test/kit/kit_motion.dart',
+  'apps/mobile/test/kit/kit_states.dart',
+]);
 
-test('el kit instalado es el 6.26.0 @KIT-02-S1', () => {
-  assert.equal(kit.kit, '6.26.0');
+test('el kit instalado es el 6.33.0 @KIT-04-S1', () => {
+  assert.equal(kit.kit, '6.33.0');
 });
 
-test('cada archivo del kit está como lo instaló la actualización, salvo settings.json @KIT-01-S1 @assumption:KIT-01-ASM-01', () => {
+test('cada archivo del kit está como lo instaló la actualización, salvo settings.json y el formato de los ayudantes de Flutter @KIT-03-S1', () => {
   const changed = Object.entries(files)
     .filter(([path]) => !EDITED_BY_THE_TEAM.has(path))
     .filter(([path, { sha256 }]) => createHash('sha256').update(readFileSync(join(repo, path))).digest('hex') !== sha256)

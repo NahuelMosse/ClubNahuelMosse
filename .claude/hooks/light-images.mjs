@@ -18,7 +18,7 @@ try {
   await (await import('../tools/card.mjs')).delegateToRepo(import.meta.url, raw, input);
   const path = String(input.tool_input?.file_path ?? '');
   // The criteria table read whole is re-read on every request until the close.
-  // Measured: close to a million tokens per card, after step 5 said to use bar.mjs.
+  // Measured: close to a million tokens per card, when the criteria table is read whole instead of through bar.mjs.
   if (/[\\/]reference[\\/]criteria\.md$/i.test(path) && !input.tool_input?.limit) {
     process.stderr.write('criteria.md is not read whole: `node .claude/tools/bar.mjs` lists every criterion in one line each, and `node .claude/tools/bar.mjs <ID>…` gives the complete rows of the ones that apply.\n');
     process.exit(2);
@@ -48,7 +48,7 @@ try {
   const width = head.readUInt32BE(16);
   const height = head.readUInt32BE(20);
   if (height <= MAX_HEIGHT && width * height <= MAX_PIXELS) process.exit(0);
-  // Read has no way to read an image by parts, and the judge needs the design references whole.
+  // Read has no way to read an image by parts, and the designer and the critic need the design references whole.
   if (/[\\/]design[\\/]references[\\/]/i.test(path) && height <= MAX_REFERENCE_HEIGHT && width * height <= MAX_PIXELS) process.exit(0);
   const tokens = Math.round((Math.min(width, 1568) * Math.min(height, 1568 * (height / width))) / 750 / 1000);
   process.stderr.write(

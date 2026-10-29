@@ -249,9 +249,20 @@ const parallel = Math.max(1, Number(option('--parallel') ?? 1) || 1);
 // (its lock is younger than two hours) is not shared: that run gets a throwaway copy, deleted at the end.
 const KEEP = join(tmpdir(), `mutate-${createHash('sha1').update(resolve(root).toLowerCase()).digest('hex').slice(0, 10)}`);
 const lockOf = (dir) => `${dir}.lock`;
+// The lock holds its owner's pid: a lock whose process is dead is free at once (an orphan used to force full copies for 2 h).
+const claim = (dir) => { mkdirSync(lockOf(dir)); try { writeFileSync(join(lockOf(dir), 'pid'), String(process.pid)); } catch {} return true; };
+const ownerAlive = (dir) => {
+  let pid;
+  try { pid = Number(readFileSync(join(lockOf(dir), 'pid'), 'utf8')); } catch { return null; }
+  if (!(pid > 0)) return null;
+  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+};
 const takeSlot = (dir) => {
-  try { mkdirSync(lockOf(dir)); return true; } catch {}
-  try { if (Date.now() - statSync(lockOf(dir)).mtimeMs > 2 * 3600_000) { rmSync(lockOf(dir), { recursive: true, force: true }); mkdirSync(lockOf(dir)); return true; } } catch {}
+  try { return claim(dir); } catch {}
+  try {
+    const stale = ownerAlive(dir) === false || (ownerAlive(dir) === null && Date.now() - statSync(lockOf(dir)).mtimeMs > 2 * 3600_000);
+    if (stale) { rmSync(lockOf(dir), { recursive: true, force: true }); return claim(dir); }
+  } catch {}
   return false;
 };
 // A project that itself lives in the temporary folder (a test's throwaway repo) gets throwaway copies: keeping them would pile up.

@@ -91,6 +91,7 @@ export const judge = (el) => {
   if (t.easings.some((e) => /^ease-in$|cubic-bezier\(0\.[4-9]\d*, 0, 1, 1\)/.test(e))) problems.push(`${name}: ease-in on an interaction: it delays the response`);
   if (t.easings.some((e) => e === 'linear')) problems.push(`${name}: linear curve on an interaction`);
   if (el.reduced?.moves) problems.push(`${name}: with prefers-reduced-motion it still moves (${el.reduced.moves})`);
+  if (el.reduced?.residue) problems.push(`${name}: with prefers-reduced-motion a transform stays after the press ends (${el.reduced.residue})`);
   return problems;
 };
 
@@ -397,10 +398,24 @@ export const audit = async () => {
     const now = await snapshotIn(h, ['transform', 'translate', 'scale']);
     await rpage.mouse.move(1, 1);
     await rpage.mouse.up();
+    await rpage.waitForTimeout(300);
+    const after = await snapshotIn(h, ['transform', 'translate', 'scale']);
     const moved = diff(rest, now);
-    elements[ri].reduced = { moves: moved.length ? moved.map((k) => `${k}: ${now[k]}`).join(', ') : '' };
+    const kept = diff(rest, after);
+    elements[ri].reduced = { moves: moved.length ? moved.map((k) => `${k}: ${now[k]}`).join(', ') : '', residue: kept.map((k) => `${k}: ${after[k]}`).join(', ') };
     ri++;
   }
+  // An entrance that waits for an animation the reduced mode skips leaves its content at opacity 0: the text is there and
+  // nobody sees it. Scrolled end to end first, so that scroll-triggered entrances had their chance.
+  await rpage.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } window.scrollTo(0, 0); });
+  await rpage.waitForTimeout(600);
+  const hiddenReduced = await rpage.evaluate(() => [...document.querySelectorAll('h1, h2, h3, p')].filter((n) => {
+    const r = n.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return false;
+    let shown = true;
+    for (let e = n; e; e = e.parentElement) { const c = getComputedStyle(e); if (c.display === 'none' || c.visibility === 'hidden') return false; if (c.opacity === '0') shown = false; }
+    return !shown && !n.closest('[aria-hidden="true"]');
+  }).slice(0, 8).map((n) => `${n.tagName.toLowerCase()} “${(n.textContent || n.getAttribute('alt') || '').trim().slice(0, 30)}”`));
   const infinite = await rpage.evaluate(() => document.getAnimations().filter((a) => {
     const t = a.effect?.target;
     if (a.effect?.getTiming?.().iterations !== Infinity || !t) return false;
@@ -459,9 +474,10 @@ export const audit = async () => {
     ...sections.filter((s) => !s.animated).map((s) => `section “${s.section}”: appears without an entrance the first time it is scrolled to`),
     ...(long?.length ? [`${long.length} animation frames over 50 ms while scrolling${cpu > 1 ? ` with the CPU ${cpu}× slower` : ''}: ${long.slice(0, 6).join(', ')} ms`] : []),
     ...(infinite ? [`${infinite} infinite animations remain with prefers-reduced-motion`] : []),
+    ...(hiddenReduced.length ? [`with prefers-reduced-motion ${hiddenReduced.length} elements stay at opacity 0 after scrolling: ${hiddenReduced.join(', ')}`] : []),
   ];
   return {
-    url, cpu, elements, sections, longFrames: long, infiniteReduced: infinite, sheets: sheets.flat().filter(Boolean),
+    url, cpu, elements, sections, longFrames: long, infiniteReduced: infinite, hiddenReduced, sheets: sheets.flat().filter(Boolean),
     load: load.slice(0, CAP), scrollEntrances: scroll.slice(0, CAP), click: clickReport, interrupt: interruptReport, scrollStory: storyReport,
     roles, grammar: grammarOf, problems,
   };

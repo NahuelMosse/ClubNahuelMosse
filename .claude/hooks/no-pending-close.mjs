@@ -8,7 +8,7 @@
 // Contract: exit 0 lets it end; exit 2 prevents it and Claude reads stderr.
 // It is the only hook that lets things through on its own error: without being able to read the turn
 // it does not know whether it already blocked once, and blocking the close blindly jams the session forever.
-import { readFileSync } from 'node:fs';
+import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
 import { delegateToRepo } from '../tools/card.mjs';
 
 let input;
@@ -19,9 +19,27 @@ await delegateToRepo(import.meta.url, raw, input);
 // If it was already blocked once and still wants to end, it is let through: blocking in a loop is worse.
 if (input.stop_hook_active) process.exit(0);
 
+// The end of the transcript first: a whole read costs about 6 ms per MB, and a long session's passes 100 MB.
+const TAIL_BYTES = 1024 * 1024;
+const linesOf = (path, whole) => {
+  const fd = openSync(path, 'r');
+  try {
+    const size = fstatSync(fd).size;
+    const length = whole ? size : Math.min(size, TAIL_BYTES);
+    const buffer = Buffer.alloc(length);
+    readSync(fd, buffer, 0, length, size - length);
+    const lines = buffer.toString('utf8').trim().split('\n');
+    if (length < size) lines.shift();
+    return { lines, whole: length === size };
+  } finally { closeSync(fd); }
+};
 const lastTextOf = (path) => {
+  const tail = linesOf(path, false);
+  const text = lastTextIn(tail.lines);
+  return text || tail.whole ? text : lastTextIn(linesOf(path, true).lines);
+};
+const lastTextIn = (lines) => {
   let text = '';
-  const lines = readFileSync(path, 'utf8').trim().split('\n');
   for (let i = lines.length - 1; i >= 0 && !text; i--) {
     let j;
     try { j = JSON.parse(lines[i]); } catch { continue; }
@@ -52,14 +70,14 @@ if (input.agent_id) {
   process.exit(0);
 }
 
-let last = '';
-try { last = lastTextOf(input.transcript_path); } catch { process.exit(0); }
+let last = typeof input.last_assistant_message === 'string' ? input.last_assistant_message : '';
+if (!last) { try { last = lastTextOf(input.transcript_path); } catch { process.exit(0); } }
 
 // In an interactive session (no SDD_UNATTENDED=1) the main thread may end its turn with work running when this turn armed
 // what wakes it: a `Monitor`, or a command or agent launched with `run_in_background`, whose end is notified. The person
 // can talk meanwhile. Unattended, nothing wakes it: the rule below holds.
 const armedThisTurn = (path) => {
-  const lines = readFileSync(path, 'utf8').trim().split('\n');
+  const { lines } = linesOf(path, true);
   for (let i = lines.length - 1; i >= 0; i--) {
     let j;
     try { j = JSON.parse(lines[i]); } catch { continue; }
@@ -71,9 +89,21 @@ const armedThisTurn = (path) => {
   }
   return false;
 };
-if (process.env.SDD_UNATTENDED !== '1') {
-  try { if (armedThisTurn(input.transcript_path)) process.exit(0); } catch { /* the rule below decides */ }
-}
+// Armed in an earlier turn and not yet ended wakes it all the same: a background task whose end notice (`<tool-use-id>` with a
+// `<status>`) is not in the transcript is still running. Measured: the hook fired on every turn of a session that watched a
+// suite armed two turns before.
+const liveArmed = (lines) => {
+  const armed = new Set(), ended = new Set();
+  for (const line of lines) {
+    if (line.includes('task-notification')) for (const m of line.matchAll(/<tool-use-id>([^<]+)<\/tool-use-id>(?=[\s\S]*?<status>)/g)) ended.add(m[1]);
+    let j;
+    try { j = JSON.parse(line); } catch { continue; }
+    const content = j.message?.content;
+    if (j.message?.role !== 'assistant' || !Array.isArray(content)) continue;
+    for (const b of content) if (b.type === 'tool_use' && (b.name === 'Monitor' || b.input?.run_in_background === true)) armed.add(b.id);
+  }
+  return [...armed].some((id) => !ended.has(id));
+};
 
 // What is quoted is not a promise: it is talking about one. Measured: the hook blocked a message
 // that described what the hook blocks, quoting the phrase.
@@ -106,6 +136,9 @@ const asserted = (re) => [...last.matchAll(new RegExp(re.source, 'gi'))].some((m
 const alive = asserted(ALIVE);
 const pending = asserted(PROMISE) || asserted(WAITING) || (alive && DEFERRED.test(last)) || (alive && !DECLARED.test(original));
 
+if (pending && process.env.SDD_UNATTENDED !== '1') {
+  try { if (armedThisTurn(input.transcript_path) || liveArmed(linesOf(input.transcript_path, true).lines)) process.exit(0); } catch { /* the rule below decides */ }
+}
 if (pending) {
   process.stderr.write(
     'You are about to end by promising to continue when something finishes. There will be no “when it ' +

@@ -1,5 +1,5 @@
 {
-  "kit": "6.26.0",
+  "kit": "6.33.0",
   "stacks": {
     "node-ts": [".claude/stacks/node-ts.md"],
     "react-shadcn": [".claude/stacks/node-ts.md", ".claude/stacks/react-shadcn.md"],
@@ -32,8 +32,8 @@
       "stacks": [],
       "tools": ["attack", "migrations", "migrate-upgrade"],
       "agents": [],
-      "gate": ["attacks:", "--common-headers", "--unique", "--fault-db", "--openapi", "migrate-upgrade:"],
-      "files": [".claude/profiles/backend.md", ".claude/tools/attack.mjs"],
+      "gate": ["attacks:", "--common-headers", "--unique", "--fault-db", "--openapi", "--search", "migrate-upgrade:"],
+      "files": [".claude/profiles/backend.md", ".claude/tools/attack.mjs", ".claude/reference/http-defaults.md"],
       "mcp": {}
     },
     "flutter": {

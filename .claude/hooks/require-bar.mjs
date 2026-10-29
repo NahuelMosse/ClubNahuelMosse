@@ -52,7 +52,8 @@ try {
   }
   if (problems.length)
     block(`Not writing ${rel} yet: the card in progress (${relative(root, doc)}) is missing ${problems.join(' and ')}. ` +
-      'It is what the code is gated against: written beforehand, it does not come back as a finding. The format is in .claude/templates/card.md.');
+      'It is what the code is gated against: written beforehand, it does not come back as a finding. Skeleton:\n' +
+      'cap: 30 min\n## Specs\nS1 · "<quote of the card>"\n## Tasks\nT1 · S1 · <files>\n## Gate\n(a ``` block, one command per line: `suite: …`, `lint: …`)');
 } catch (e) {
   block(`Could not check the card (${e.message}). It blocks when in doubt: retry.`);
 }
