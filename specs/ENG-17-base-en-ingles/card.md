@@ -1,0 +1,70 @@
+# ENG-17 · la base de Postgres en inglés
+
+status: proposed
+cap: 4 h
+sources:
+  - "pedido (texto) · mensajes del usuario: 2026-10-27 «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27 «porque quiero que este en ingles, igual que absolutamente todo en el repo» · 2026-10-29 «despues ponete a laburar todo» · «no frenes hasta terminar»"
+  - "alcance (texto) · la porción del pedido que es esta card, del plan acordado en la sesión: la base de Postgres en inglés (ver L1)"
+  - "glosario · docs/technical/glosario-ingles.md (ENG-00): el nombre en inglés de cada tabla, columna, valor, índice, restricción, función, disparador y de la vista"
+  - "base de Render · dump de la base de pruebas de Render en la revisión 0011 (pg_dump 18, 2026-10-29): 3 usuarios, 3 sedes, 11 espacios, 12 reservas, 11 notificaciones, 13 dispositivos, 11 enlaces, 1 vínculo; guardado fuera del repo"
+not_read:
+  - "Jira: no hay ticket; el pedido llegó como texto"
+
+## Specs
+
+- S1 · "A new migration, numbered after the last one in the apps/api migrations folder (`migraciones/`), renames in place: tables, columns, text/enum values (activa→active, etc.), constraints, partial indexes, functions and the view." · acceptance: la migración 0012 renombra en el lugar, según docs/technical/glosario-ingles.md, cada tabla, cada columna, cada valor de texto guardado (estado, envío, tipo, rol), cada restricción con nombre, cada índice parcial, cada función con su disparador y la vista; después de `alembic upgrade head` no queda ningún identificador ni valor guardado en castellano (quedan `dni`, `firebase_uid`, `token`, `total`, `id`, `uuid_v7` y `alembic_version`, como dice el glosario)
+- S2 · "The double-booking exclusion constraint is rebuilt with the new value. Without that it silently stops working." · acceptance: después de la migración, dos reservas `active` superpuestas del mismo espacio se rechazan con 23P01, y una `canceled` superpuesta convive con una `active`
+- S3 · "The folder `migraciones/` becomes `migrations/`." · acceptance: `apps/api/migrations/` tiene 0001 a 0012, `apps/api/migraciones/` no existe y `alembic.ini` apunta a `migrations`
+- S4 · "The SQLAlchemy models and API code, already English identifiers since ENG-14, map to the new names." · acceptance: cada SQL de `apps/api/app` nombra sólo tablas, columnas, valores y parámetros en inglés, y la suite de la API pasa contra el esquema nuevo
+- S5 · "The HTTP contract (routes, JSON fields) does NOT change here; that is ENG-18." · acceptance: `apps/api/openapi.json` es el de main y la API responde los mismos valores de main (`"estado": "activa"`, `"rol": "usuario"`, `"tipo": "recordatorio"`, `"aviso_envio": "enviada"`) aunque la base guarde los valores en inglés
+- S6 · "Rehearse the migration against a dump of the Render database." · acceptance: el dump de Render (0011) restaurado en un Postgres 18 local sube a 0012 con cada fila traducida y la misma cantidad por tabla, y vuelve a 0011 con los datos de antes
+- S7 · "Do not remove functionality." · acceptance: el esquema de 0012 tiene, renombradas, cada restricción, índice, disparador y función de 0011 con la misma definición salvo los nombres y los valores traducidos; ninguna fila se pierde
+- ENG-17-ASM-01 · el dominio de la API (los `Literal` de `bookings/rules.py`, `notifications/rules.py`, `session/profile.py`) sigue con los valores del contrato de main mientras el contrato no pase a inglés; la capa de datos traduce entre ese valor y el guardado en inglés en las dos direcciones (lo más barato de deshacer: la card del contrato cambia el dominio y borra la traducción) · S5
+- ENG-17-ASM-02 · `recordatorio_cinco`, que el glosario no cubre (llegó después del glosario), es `five_minute_reminder`, y su índice `notificacion_recordatorio_cinco_unico` es `notification_five_minute_reminder_unique` (glosario R3) · S1
+- ENG-17-ASM-03 · una restricción con nombre autogenerado toma el nombre que Postgres le daría con la tabla y columnas nuevas (`reserva_check1`→`booking_check1`, `reserva_espacio_id_tstzrange_excl`→`booking_space_id_tstzrange_excl`, `espacio_nombre_key`→`space_name_key`), como dice el glosario · S1
+- ENG-17-ASM-04 · los mensajes de las funciones de la base (`la identidad de un espacio no cambia`, `las bajas son lógicas…`, `el correo de un usuario no se puede cambiar`) y las variables internas de `uuid_v7()` pasan a inglés: no llegan al usuario (la API no los muestra) y son código · S1
+- ENG-17-ASM-05 · traducir los valores no es modificar la fila: la migración no toca `updated_at` (los disparadores de usuario se apagan mientras traduce) · S1
+- ENG-17-ASM-06 · el contenido guardado sigue como está (títulos y cuerpos de avisos, correos, motivos, nombres de sedes y espacios, claves del catálogo): el glosario lo deja en castellano y traducirlo es la card de textos · S1
+- ENG-17-ASM-07 · la migración corta por `lock_timeout` si una transacción de la API vieja tiene tomada una tabla, y se puede volver a correr; en Render la instancia vieja falla mientras dura el paso del build a la nueva (segundos), aceptado porque Render es de pruebas · S1
+- ENG-17-ASM-08 · 0001 a 0011 se mueven a `migrations/versions/` sin tocar su contenido (ya aplicadas, su SQL nombra el esquema de su momento); `env.py` y `script.py.mako`, que son código, pasan a inglés · S3
+- ENG-17-ASM-09 · la cadena de conexión de Render y el dump viven fuera del repo (`D:/Temp/w/`); el ensayo los lee de ahí y ningún archivo versionado ni salida de test los muestra · S6
+
+## Tasks
+
+- T1 · S1,S2,S6,S7,ENG-17-ASM-02,ENG-17-ASM-03,ENG-17-ASM-04,ENG-17-ASM-05,ENG-17-ASM-06,ENG-17-ASM-07 · apps/api/migrations/versions/0012_english_schema.py (data), apps/api/tests/escenarios/test_english_schema.py, apps/api/tests/escenarios/test_render_rehearsal.py · tests: apps/api/tests/escenarios/test_english_schema.py "every table is named in English after the migration @ENG-17-S1"; apps/api/tests/escenarios/test_english_schema.py "every column is named in English after the migration @ENG-17-S1"; apps/api/tests/escenarios/test_english_schema.py "every stored text value is in English and the old ones are rejected @ENG-17-S1 @assumption:ENG-17-ASM-02"; apps/api/tests/escenarios/test_english_schema.py "every named constraint is in English @ENG-17-S1 @assumption:ENG-17-ASM-03"; apps/api/tests/escenarios/test_english_schema.py "every partial index is in English and filters on the English value @ENG-17-S1"; apps/api/tests/escenarios/test_english_schema.py "every function and trigger is in English and keeps its behavior @ENG-17-S1 @assumption:ENG-17-ASM-04"; apps/api/tests/escenarios/test_english_schema.py "the view is booking_with_status and computes completed @ENG-17-S1"; apps/api/tests/escenarios/test_english_schema.py "the double-booking exclusion rejects two overlapping active bookings after the migration @ENG-17-S2"; apps/api/tests/escenarios/test_english_schema.py "the migration translates the rows of 0011 without touching them otherwise and goes back to 0011 @ENG-17-S1 @assumption:ENG-17-ASM-05 @assumption:ENG-17-ASM-06"; apps/api/tests/escenarios/test_english_schema.py "the schema of 0012 keeps every constraint, index, trigger and function of 0011 @ENG-17-S7"; apps/api/tests/escenarios/test_english_schema.py "the migration gives up on a held lock and can run again @assumption:ENG-17-ASM-07"; apps/api/tests/escenarios/test_render_rehearsal.py "the migration runs on the Render dump, translates every row and goes back @ENG-17-S6"; apps/api/tests/escenarios/test_render_rehearsal.py "no versioned file holds the Render connection string @assumption:ENG-17-ASM-09"
+  new: no había migración de renombre; se buscó en migraciones/versions (0001–0011) y tests/escenarios/test_datos*.py: se reusa la forma de base propia por corrida de test_datos_migraciones.py y el corte por lock de 0008
+- T2 · S3,ENG-17-ASM-08 · apps/api/migrations/env.py (data), apps/api/migrations/script.py.mako (data), apps/api/alembic.ini (data), apps/api/tests/escenarios/test_migrations_folder.py · tests: apps/api/tests/escenarios/test_migrations_folder.py "the migrations live in migrations/ and 0001 to 0011 are unchanged @ENG-17-S3 @assumption:ENG-17-ASM-08"
+  reuses: apps/api/migraciones/env.py (se mueve y se traduce; misma transacción por migración)
+- T3 · S4,S5,ENG-17-ASM-01 · apps/api/app/shared/stored_values.py (data), apps/api/app/modules/availability/repository.py (data), apps/api/app/modules/bookings/repository.py (data), apps/api/app/modules/notifications/repository.py (data), apps/api/app/modules/password_recovery/repository.py (data), apps/api/app/modules/session/repository.py (data), apps/api/app/modules/spaces/repository.py (data), apps/api/app/modules/users/repository.py (data), apps/api/app/modules/venues/repository.py (data), apps/api/app/shared/email.py (data), apps/api/app/e2e_support.py (data), apps/api/tests/unit/test_sql_in_english.py, apps/api/tests/integracion/test_contract_over_english_schema.py · tests: apps/api/tests/unit/test_sql_in_english.py "every SQL text of the API names only English tables, columns and parameters @ENG-17-S4"; apps/api/tests/integracion/test_contract_over_english_schema.py "the API answers with the contract values of main while the database stores English ones @ENG-17-S5 @assumption:ENG-17-ASM-01"; apps/api/tests/integracion/test_contract_over_english_schema.py "the published contract is the same as main's @ENG-17-S5"; apps/api/tests/integracion/test_contract_over_english_schema.py "a booking survives restarting the app on the migrated database @ENG-17-S4"
+  reuses: el SQL de cada repository.py (ENG-14) y `violated_constraint` de apps/api/app/shared/db.py; new: apps/api/app/shared/stored_values.py, la traducción valor del contrato ↔ valor guardado, porque no existía (se buscó estado|status|role|delivery|kind en app/shared y en cada repository.py)
+- T4 · S3,S4 · apps/api/tests/** · los tests de la API con SQL propio o con la ruta `migraciones/` siguen al esquema nuevo
+  new: no escribe lógica: cambian sólo nombres de tabla, columna, valor y parámetro en el SQL de los tests, y la ruta `migraciones/`→`migrations/`
+- T5 · S1,S3 · docs/technical/modelo-de-datos.md (presentation), docs/technical/system-design.md (presentation), docs/technical/mapa-del-codigo.md (presentation), docs/technical/arquitectura.md (presentation), docs/technical/runbook.md (presentation), docs/technical/glosario-ingles.md (presentation), docs/guia-basica.md (presentation) · los nombres de tablas, columnas, valores, funciones y de la carpeta `migrations/` que citan los docs; la prosa sigue en castellano (ENG-21)
+  new: no escribe lógica
+
+## Changes to existing behavior
+
+- la base de Postgres: cada tabla, columna, valor guardado, restricción, índice, función, disparador y la vista cambian de nombre; un cliente SQL o script que nombre el esquema viejo deja de andar
+- `apps/api/migraciones/` pasa a `apps/api/migrations/`
+- los tests de la API con SQL propio (T4) cambian su SQL; lo que verifican no cambia
+- el contrato HTTP no cambia (S5)
+
+## Gate
+
+```
+suite [timeout 1 h]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider
+lint: sh D:/Temp/w/herramientas/eng17-lint.sh
+app: sh D:/Temp/w/herramientas/arq01-app.sh eng17_app
+attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh eng17_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /sedes {"nombre": "Sede Ataque", "direccion": "Calle 1", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7]}' --read /reservas --read /yo --unique 'POST /sedes {"nombre": "Sede Unica Ataque", "direccion": "Calle 2", "apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5]}'
+migrate-upgrade [timeout 30 min]: sh D:/Temp/w/herramientas/eng17-render-rehearsal.sh
+refactor-tests: los tests de la API siguen al esquema en inglés: en su SQL cambian sólo nombres de tabla, columna, valor guardado y parámetro, y la ruta `migraciones/`→`migrations/`; lo que verifican no cambia
+no-visual: la card no toca la app
+```
+
+## Log
+
+- L1 · 2026-10-27 «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27 «porque quiero que este en ingles, igual que absolutamente todo en el repo» · 2026-10-29 «despues ponete a laburar todo» · «no frenes hasta terminar» · Scope of this card, a slice of that requirement from the plan agreed in session: the Postgres database in English. - A new migration, numbered after the last one in the apps/api migrations folder (`migraciones/`), renames in place: tables, columns, text/enum values (activa→active, etc.), constraints, partial indexes, functions and the view. - The double-booking exclusion constraint is rebuilt with the new value. Without that it silently stops working. - The folder `migraciones/` becomes `migrations/`. - The SQLAlchemy models and API code, already English identifiers since ENG-14, map to the new names. - The HTTP contract (routes, JSON fields) does NOT change here; that is ENG-18. - Rehearse the migration against a dump of the Render database. Render is a test environment, not production, and DB access is authorized. If you cannot reach it, declare it could not run. - Do not remove functionality.
+- L2 · 2026-10-29 · sin Jira: las dudas van directo a ASM (ENG-17-ASM-01..08), sin ronda de preguntas
+- L3 · 2026-10-29 · OUT · el contrato HTTP, el payload FCM y los valores de `cuando` y `CORREO_MODO` (no se guardan en la base): ENG-18 y ENG-20
+- L4 · 2026-10-29 · declared · fault-db · la base es Postgres, no un archivo
+- L5 · 2026-10-29 · la API no tiene modelos de SQLAlchemy declarativos: el esquema vive en las migraciones y el SQL en `text()` de cada repository.py; «models» del alcance es ese SQL (S4)
