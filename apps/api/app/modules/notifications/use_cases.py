@@ -63,7 +63,8 @@ def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     tokens = notifications.tokens_with_permission(user_id)
     if not tokens:
         has_devices = notifications.has_devices(user_id)
-        notifications.mark_delivery(notification_id, "no_permission" if has_devices else "no_channel")
+        outcome = "no_permission" if has_devices else "no_channel"
+        notifications.mark_delivery(notification_id, outcome)
         return
     try:
         result = channel.send(tokens, notice)

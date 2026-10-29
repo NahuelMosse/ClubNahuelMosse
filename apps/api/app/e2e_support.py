@@ -5,7 +5,7 @@ Wire names (routes, JSON keys, query parameters) are English, like the public co
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import BaseModel
 from sqlalchemy import text
 
@@ -33,10 +33,10 @@ class Outbox(BaseModel):
 
 
 @router.get("/emails")
-def outbox(conn: DbConnection, to: str) -> Outbox:
+def outbox(conn: DbConnection, recipient: Annotated[str, Query(alias="to")]) -> Outbox:
     rows = conn.execute(
         text("SELECT subject, body FROM outgoing_email WHERE recipient = :p ORDER BY id"),
-        {"p": to.strip().lower()},
+        {"p": recipient.strip().lower()},
     ).all()
     return Outbox(emails=[Email(subject=r.subject, body=r.body) for r in rows])
 
