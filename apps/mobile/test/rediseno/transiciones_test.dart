@@ -261,13 +261,13 @@ class _Hija {
 final _hijas = <_Hija>[
   _Hija(
     'sede',
-    (t) => _usuarioEn(t, '/venues'),
-    (t) => _ir(t, '/venues/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/sedes'),
+    (t) => _ir(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     VenueScreen,
   ),
   _Hija(
     'horarios',
-    (t) => _usuarioEn(t, '/venues/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     (t) => _ir(
       t,
       '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
@@ -288,14 +288,14 @@ final _hijas = <_Hija>[
   ),
   _Hija(
     'modificar',
-    (t) => _usuarioEn(t, '/bookings'),
+    (t) => _usuarioEn(t, '/reservas'),
     (t) => _tocar(t, find.text('MODIFICAR').first),
     AvailabilityScreen,
   ),
   _Hija(
     'confirmar cambio',
     (t) async {
-      await _usuarioEn(t, '/bookings');
+      await _usuarioEn(t, '/reservas');
       await _tocarYEsperar(t, find.text('MODIFICAR').first);
       await _tocarYEsperar(t, find.text('19:00 – 20:00'));
     },
@@ -383,15 +383,15 @@ class _Raiz {
 final _raices = <_Raiz>[
   _Raiz(
     'inicio',
-    (t) => _usuarioEn(t, '/venues/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     '/inicio',
     HomeScreen,
   ),
-  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/venues', VenuesScreen),
+  _Raiz('sedes', (t) => _usuarioEn(t, '/inicio'), '/sedes', VenuesScreen),
   _Raiz(
     'reservas',
     (t) => _usuarioEn(t, '/inicio'),
-    '/bookings',
+    '/reservas',
     MyBookingsScreen,
   ),
   _Raiz('perfil', (t) => _usuarioEn(t, '/inicio'), '/perfil', MyProfileScreen),
@@ -415,7 +415,7 @@ final _raices = <_Raiz>[
   ),
   _Raiz(
     'login',
-    (t) => _usuarioEn(t, '/venues/00000000-0000-7000-8000-000000000001'),
+    (t) => _usuarioEn(t, '/sedes/00000000-0000-7000-8000-000000000001'),
     '/',
     LoginScreen,
   ),
@@ -447,8 +447,8 @@ final _resultados = <_Resultado>[
   ),
   _Resultado(
     'reserva confirmada',
-    (t) => _usuarioEn(t, '/bookings'),
-    (t) => _ir(t, '/bookings/confirmada', extra: _reservaConfirmada()),
+    (t) => _usuarioEn(t, '/reservas'),
+    (t) => _ir(t, '/reservas/confirmada', extra: _reservaConfirmada()),
     BookingConfirmedScreen,
   ),
   _Resultado(
@@ -584,8 +584,8 @@ void main() {
       _reducirMovimiento(tester);
 
       // Avanzar: la hija ya está en su lugar.
-      await _usuarioEn(tester, '/venues');
-      await _ir(tester, '/venues/00000000-0000-7000-8000-000000000001');
+      await _usuarioEn(tester, '/sedes');
+      await _ir(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _arrancar(tester);
       _sinTransicionDeEmpuje(tester, VenueScreen);
 
@@ -597,15 +597,15 @@ void main() {
       await _reiniciar(tester);
 
       // Resultado: el fundido ya terminó.
-      await _usuarioEn(tester, '/bookings');
-      await _ir(tester, '/bookings/confirmada', extra: _reservaConfirmada());
+      await _usuarioEn(tester, '/reservas');
+      await _ir(tester, '/reservas/confirmada', extra: _reservaConfirmada());
       await _arrancar(tester);
       expect(find.byType(BookingConfirmedScreen), findsOneWidget);
       expect(_opacidadesDe(tester, BookingConfirmedScreen), everyElement(1));
       await _reiniciar(tester);
 
       // Raíz de pestaña.
-      await _usuarioEn(tester, '/venues/00000000-0000-7000-8000-000000000001');
+      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _ir(tester, '/inicio');
       await _arrancar(tester);
       await _quieta(tester, HomeScreen);
@@ -623,7 +623,7 @@ void main() {
     'tocar la pestaña activa dentro de una sede o «VER TODAS» y «Ver sedes» del inicio llegan sin animación @RED-04-ASM-05',
     (tester) async {
       // La pestaña activa, desde adentro de una sede, lleva al listado.
-      await _usuarioEn(tester, '/venues/00000000-0000-7000-8000-000000000001');
+      await _usuarioEn(tester, '/sedes/00000000-0000-7000-8000-000000000001');
       await _tocar(
         tester,
         find.descendant(

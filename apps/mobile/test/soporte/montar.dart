@@ -216,8 +216,8 @@ class CredencialesFalsas implements Credentials {
 }
 
 /// El perfil que devuelve `GET /yo` en los tests.
-String perfilJson({String rol = 'usuario'}) =>
-    '{"name": "Nahuel", "last_name": "Mosse", "email": "nahuel@correo.com", '
+String perfilJson({String rol = 'user'}) =>
+    '{"first_name": "Nahuel", "last_name": "Mosse", "email": "nahuel@correo.com", '
     '"role": "$rol", "dni": "42118507", "birth_date": "2000-03-14"}';
 
 final perfilUsuario = Profile(

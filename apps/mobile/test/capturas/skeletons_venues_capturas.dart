@@ -24,7 +24,7 @@ void main() {
   }
 
   testWidgets('venues loading and loaded', (tester) async {
-    final held = await mount(tester, '/venues');
+    final held = await mount(tester, '/sedes');
     await _capture(tester, 'skeletons/sedes_cargando.png');
     held.release();
     await tester.pumpAndSettle();
@@ -33,7 +33,7 @@ void main() {
   });
 
   testWidgets('venue loading and loaded', (tester) async {
-    final held = await mount(tester, '/venues/$_moron');
+    final held = await mount(tester, '/sedes/$_moron');
     await _capture(tester, 'skeletons/sede_cargando.png');
     held.release();
     await tester.pumpAndSettle();
@@ -42,7 +42,7 @@ void main() {
   });
 
   testWidgets('venue filtering and filtered', (tester) async {
-    final held = await mount(tester, '/venues/$_moron');
+    final held = await mount(tester, '/sedes/$_moron');
     held.release();
     await tester.pumpAndSettle();
     held.holdAgain();

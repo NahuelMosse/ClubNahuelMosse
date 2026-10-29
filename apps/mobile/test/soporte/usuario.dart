@@ -55,7 +55,7 @@ Map<String, (int, String)> rutasDeSedes({
 Future<void> montarUsuario(
   WidgetTester tester, {
   required ApiClient api,
-  String inicio = '/venues',
+  String inicio = '/sedes',
   bool oscuro = true,
   Size tamano = const Size(393, 852),
   NotificationCenter Function(Session)? centro,

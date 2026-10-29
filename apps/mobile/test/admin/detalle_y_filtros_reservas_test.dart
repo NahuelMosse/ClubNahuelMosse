@@ -24,18 +24,18 @@ import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
 String _reserva({
   bool anulable = true,
-  String estado = 'activa',
+  String estado = 'active',
   String aviso = '',
 }) =>
     '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
     ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
     ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
     ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "status": "$estado", "reason": ${estado == 'anulada' ? '"lluvia"' : 'null'},'
+    ' "status": "$estado", "reason": ${estado == 'voided' ? '"lluvia"' : 'null'},'
     ' "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
     ' "created_at": "2026-11-02T18:42:00-03:00",'
-    ' "canceled_at": ${estado == 'anulada' ? '"2026-11-03T10:00:00-03:00"' : 'null'},'
-    ' "canceled_by_name": ${estado == 'anulada' ? '"Ana Díaz"' : 'null'},'
+    ' "canceled_at": ${estado == 'voided' ? '"2026-11-03T10:00:00-03:00"' : 'null'},'
+    ' "canceled_by_name": ${estado == 'voided' ? '"Ana Díaz"' : 'null'},'
     ' "space_deactivated": false, "voidable": $anulable$aviso}';
 
 void main() {

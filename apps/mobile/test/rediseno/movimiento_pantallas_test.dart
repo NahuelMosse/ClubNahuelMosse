@@ -231,7 +231,7 @@ ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
   return ApiClient(
     'http://api.falsa',
     cliente: MockClient((pedido) async {
-      final historial = pedido.url.queryParameters['cuando'] == 'historial';
+      final historial = pedido.url.queryParameters['when'] == 'history';
       if (pedido.url.path == '/bookings' && historial) {
         await esperaHistorial?.future;
       }

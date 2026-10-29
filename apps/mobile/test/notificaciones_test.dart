@@ -28,7 +28,7 @@ final ahoraClub = DateTime.utc(2026, 11, 12, 20);
 String notif({
   required String id,
   required DateTime club,
-  String tipo = 'recordatorio',
+  String tipo = 'reminder',
   String titulo = 'Tu reserva es en 1 hora',
   String cuerpo = 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
   String? reservaId = '00000000-0000-7000-8000-000000000001',
@@ -161,7 +161,7 @@ class ApiFalsa {
         ('PUT', '/devices') ||
         ('POST', '/devices/unregister') ||
         ('POST', '/notifications/read-all') => (204, ''),
-        ('POST', final ruta) when ruta.endsWith('/leer') => (204, ''),
+        ('POST', final ruta) when ruta.endsWith('/read') => (204, ''),
         _ => (404, '{}'),
       };
       return http.Response.bytes(
@@ -240,21 +240,21 @@ void main() {
             NotificationKind.reminder,
             '00000000-0000-7000-8000-000000000007',
           ),
-          '/bookings?reserva=00000000-0000-7000-8000-000000000007',
+          '/reservas?reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
           noticeRoute(
             NotificationKind.forcedCancellation,
             '00000000-0000-7000-8000-000000000007',
           ),
-          '/bookings?historial=1&reserva=00000000-0000-7000-8000-000000000007',
+          '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(
           noticeRoute(
             NotificationKind.userCancellation,
             '00000000-0000-7000-8000-000000000007',
           ),
-          '/bookings?historial=1&reserva=00000000-0000-7000-8000-000000000007',
+          '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
         );
         expect(noticeRoute(NotificationKind.reminder, null), '/reservas');
         expect(noticeRoute(null, null), '/reservas');
@@ -1271,7 +1271,7 @@ void main() {
           api.pedidos.any(
             (p) =>
                 p.url.path == '/bookings' &&
-                p.url.queryParameters['cuando'] == 'historial',
+                p.url.queryParameters['when'] == 'history',
           ),
           isTrue,
         );

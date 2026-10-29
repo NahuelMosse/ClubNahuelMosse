@@ -143,7 +143,7 @@ void main() {
     test('uno sin reserva_id abre Mis reservas', () {
       expect(
         NoticeTapped.fromData({'kind': 'reminder'}).route,
-        '/bookings',
+        '/reservas',
       );
     });
   });

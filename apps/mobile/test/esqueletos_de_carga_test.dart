@@ -55,8 +55,8 @@ Future<void> _forma(
 void main() {
   group('esqueletos de carga', () {
     for (final (ruta, admin) in [
-      ('/venues', false),
-      ('/bookings', false),
+      ('/sedes', false),
+      ('/reservas', false),
       ('/inicio', false),
       ('/admin/sedes', true),
     ]) {

@@ -42,7 +42,7 @@ void main() {
       expect(pedidos, hasLength(1));
       expect(pedidos.single.url.path, '/register');
       expect(jsonDecode(pedidos.single.body), {
-        'name': 'Ana',
+        'first_name': 'Ana',
         'last_name': 'Pérez',
         'dni': '12.345.678',
         'birth_date': '1990-05-07',

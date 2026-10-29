@@ -81,7 +81,7 @@ String _uuid(int n) =>
 String _reserva({
   String id = '00000000-0000-7000-8000-000000000001',
   DateTime? inicio,
-  String estado = 'activa',
+  String estado = 'active',
   String? motivo,
 }) {
   final desde = inicio ?? _delClub(12, 21);
@@ -92,7 +92,7 @@ String _reserva({
       '"starts_at": "${desde.toIso8601String()}", "ends_at": "${hasta.toIso8601String()}", '
       '"price_per_hour": 38000, "total": 38000, "status": "$estado", '
       '"reason": ${motivo == null ? 'null' : '"$motivo"'}, '
-      '"cancelable": ${estado == 'activa'}}';
+      '"cancelable": ${estado == 'active'}}';
 }
 
 Future<void> _montarInicio(
@@ -135,7 +135,7 @@ Future<void> _montarMisReservas(
   WidgetTester tester, {
   String proximas = '[]',
   String historial = '[]',
-  String inicio = '/bookings',
+  String inicio = '/reservas',
   bool oscuro = true,
 }) {
   final rutas = rutasDeSedes();
@@ -150,7 +150,7 @@ Future<void> _montarMisReservas(
         final (c, cuerpo) = pedido.url.path == '/bookings'
             ? (
                 200,
-                '{"bookings": ${pedido.url.queryParameters['cuando'] == 'historial' ? historial : proximas}}',
+                '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? historial : proximas}}',
               )
             : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
         return http.Response.bytes(
