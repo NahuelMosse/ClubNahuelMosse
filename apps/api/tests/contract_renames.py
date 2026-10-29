@@ -133,7 +133,14 @@ FIELDS = {
     "campos": "fields",
 }
 # `nombre` is the first name of a person and the name of a venue, a space or a sport.
-PERSON_SCHEMAS = {"OwnProfile", "RegistrationRequest", "ProfileEditRequest"}
+PERSON_SCHEMAS = {
+    "OwnProfile",
+    "RegistrationRequest",
+    "ProfileEditRequest",
+    "PerfilPropio",
+    "PedidoRegistro",
+    "PedidoDeEdicionDePerfil",
+}
 
 VALUES = {
     "activa": "active",

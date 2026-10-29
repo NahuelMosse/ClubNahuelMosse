@@ -2,13 +2,12 @@
 
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
 import ast
-import hashlib
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 
+from tests.unit.test_api_en_ingles_contrato_actual import operaciones_distintas_en
 from tests.unit.test_base_en_ingles import (
     PALABRAS_COMUNES,
     _castellano,
@@ -39,43 +38,6 @@ EXTRA_CASTELLANO = {
 
 # Los campos de las clases Pydantic son claves JSON: se quedan en castellano (ASM-05).
 BASE_PYDANTIC = {"BaseModel"}
-
-# operationId y huella del contrato de cada operación en main (ASM-07, ASM-09).
-OPERACIONES = {
-    "GET /espacios/catalogo": ("ver_catalogo_espacios_catalogo_get", "85ad774a64ec0a63"),
-    "GET /espacios": ("listar_espacios_espacios_get", "72ae8f6b2ff23811"),
-    "POST /espacios": ("alta_de_espacio_espacios_post", "c121f2c39c32dad8"),
-    "GET /espacios/nombre": ("sugerir_nombre_espacios_nombre_get", "c55a9cfe03da7b74"),
-    "PUT /espacios/{espacio_id}": ("edicion_de_espacio_espacios__espacio_id__put", "497144da1b22dac8"),
-    "DELETE /espacios/{espacio_id}": ("baja_de_espacio_espacios__espacio_id__delete", "0a0a581c2daa9a3c"),
-    "GET /espacios/{espacio_id}/horarios": (
-        "ver_horarios_espacios__espacio_id__horarios_get",
-        "184cb629ae4992c9",
-    ),
-    "GET /espacios/disponibles": ("ver_disponibles_espacios_disponibles_get", "fac4791ddd9510f6"),
-}  # fmt: skip
-
-
-def _sin_nombres_de_esquema(nodo: Any, esquemas: dict[str, Any]) -> Any:
-    if isinstance(nodo, dict):
-        if "$ref" in nodo:
-            esquema = esquemas[nodo["$ref"].rsplit("/", 1)[-1]]
-            return _sin_nombres_de_esquema(esquema, esquemas)
-        return {
-            k: _sin_nombres_de_esquema(v, esquemas)
-            for k, v in nodo.items()
-            if k not in ("title", "description", "operationId")
-        }
-    if isinstance(nodo, list):
-        return [_sin_nombres_de_esquema(x, esquemas) for x in nodo]
-    return nodo
-
-
-def huella(contrato: dict[str, Any], ruta: str, metodo: str) -> str:
-    operacion = contrato["paths"][ruta][metodo.lower()]
-    normal = _sin_nombres_de_esquema(operacion, contrato["components"]["schemas"])
-    return hashlib.sha256(json.dumps(normal, sort_keys=True).encode()).hexdigest()[:16]
-
 
 def test_los_modulos_de_espacios_y_horarios_se_llaman_como_dice_el_glosario() -> None:
     """los módulos de espacios y horarios se llaman como dice el glosario @ENG-03-S1 @assumption:ENG-03-ASM-02 @assumption:ENG-03-ASM-03"""
@@ -149,11 +111,6 @@ def test_el_contrato_de_espacios_y_horarios_tiene_lo_mismo_que_main(
 
     contrato = create_app().openapi()
     publicado = (RAIZ_API / "openapi.json").read_text(encoding="utf-8")
-    actual = {}
-    for clave in OPERACIONES:
-        metodo, ruta = clave.split(" ", 1)
-        operacion = contrato["paths"][ruta][metodo.lower()]
-        actual[clave] = (operacion["operationId"], huella(contrato, ruta, metodo))
 
-    assert actual == OPERACIONES
+    assert operaciones_distintas_en("/spaces") == []
     assert json.dumps(contrato, indent=2, ensure_ascii=False) + "\n" == publicado
