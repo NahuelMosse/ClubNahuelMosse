@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/tokens.dart';
 
 /// The club's logo mark: a court seen from above with the club's N and the ball, in the
@@ -33,7 +34,11 @@ class LogoMark extends StatelessWidget {
       ),
     );
     if (decorative) return drawing;
-    return Semantics(label: 'Club Nahuel Mosse', image: true, child: drawing);
+    return Semantics(
+      label: AppLocalizations.of(context).appName,
+      image: true,
+      child: drawing,
+    );
   }
 }
 

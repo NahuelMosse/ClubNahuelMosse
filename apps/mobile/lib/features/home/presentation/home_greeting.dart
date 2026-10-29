@@ -1,7 +1,9 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../common/app_language.dart';
 import '../../../common/club_timezone.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/session.dart';
@@ -16,11 +18,16 @@ class HomeGreeting extends StatelessWidget {
   static const _nightStarts = 20;
   static const _nightEnds = 6;
 
-  /// «BUENOS DÍAS,», «BUENAS TARDES,» o «BUENAS NOCHES,» para una [clubHour].
+  /// The greeting of a [clubHour] in the language the app is showing.
   static String forHour(DateTime clubHour) {
+    final l10n = lookupAppLocalizations(Locale(currentLanguage()));
     final hour = clubHour.hour;
-    if (hour < _nightEnds || hour >= _nightStarts) return 'BUENAS NOCHES,';
-    return hour < _afternoonStarts ? 'BUENOS DÍAS,' : 'BUENAS TARDES,';
+    if (hour < _nightEnds || hour >= _nightStarts) {
+      return l10n.homeGreetingNight;
+    }
+    return hour < _afternoonStarts
+        ? l10n.homeGreetingMorning
+        : l10n.homeGreetingAfternoon;
   }
 
   @override

@@ -8,6 +8,7 @@ import '../../../common/list_loading.dart';
 import '../../../common/marker.dart';
 import '../../../common/motion.dart';
 import '../../../common/unhandled_errors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/data/api_errors.dart';
 import '../../bookings/domain/booking.dart';
@@ -171,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_cancelando != null) return;
     final confirmo = await confirmarCancelacion(
       context,
-      textoDeCancelacion(r, catalogo),
+      textoDeCancelacion(AppLocalizations.of(context), r, catalogo),
     );
     if (!confirmo || !mounted) return;
     // Una lectura que venía en camino (deslizar para refrescar) ya no vale.
@@ -232,7 +233,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   HomeHero(
                     sesion: widget.sesion,
                     centro: widget.centro,
-                    celdas: data == null ? null : _celdas(data),
+                    celdas: data == null
+                        ? null
+                        : _celdas(AppLocalizations.of(context), data),
                     yaEntro: yaEntro,
                   ),
                   if (data == null && !_fallo) const HomeSkeleton(),
@@ -272,14 +275,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-List<MarkerCell> _celdas(_Datos data) {
+List<MarkerCell> _celdas(AppLocalizations l10n, _Datos data) {
   final canchas = data.venues.fold(0, (total, s) => total + s.spaceCount);
   return [
-    MarkerCell(figure: twoDigits(data.venues.length), label: 'SEDES'),
-    MarkerCell(figure: twoDigits(canchas), label: 'CANCHAS'),
+    MarkerCell(
+      figure: twoDigits(data.venues.length),
+      label: l10n.homeMarkerVenues,
+    ),
+    MarkerCell(figure: twoDigits(canchas), label: l10n.homeMarkerCourts),
     MarkerCell(
       figure: twoDigits(data.cuantas),
-      label: 'PRÓXIMAS',
+      label: l10n.homeMarkerUpcoming,
       highlighted: true,
     ),
   ];

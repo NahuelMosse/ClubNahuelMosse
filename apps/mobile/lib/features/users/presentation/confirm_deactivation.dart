@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
 import '../../../common/error_dialog.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -11,6 +12,7 @@ class ConfirmDeactivation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return DialogFrame(
       children: [
         IconCircle(
@@ -20,25 +22,24 @@ class ConfirmDeactivation extends StatelessWidget {
         ),
         const SizedBox(height: Spacing.s12),
         Text(
-          '¿Eliminar tu cuenta?',
+          l10n.profileDeleteTitle,
           textAlign: TextAlign.center,
           style: Texts.h2.copyWith(color: p.textPrimary),
         ),
         const SizedBox(height: Spacing.s12),
         Text(
-          'Esta acción es permanente. Se eliminarán tus datos y tus reservas '
-          'vigentes.',
+          l10n.profileDeleteBody,
           textAlign: TextAlign.center,
           style: Texts.body.copyWith(color: p.textSecondary),
         ),
         const SizedBox(height: Spacing.s12),
         DangerButton(
-          label: 'ELIMINAR CUENTA',
+          label: l10n.accountDeleteUpper,
           onTap: () => Navigator.of(context).pop(true),
         ),
         const SizedBox(height: Spacing.s8),
         OutlineButton(
-          label: 'CANCELAR',
+          label: l10n.accountCancel,
           onTap: () => Navigator.of(context).pop(false),
         ),
       ],

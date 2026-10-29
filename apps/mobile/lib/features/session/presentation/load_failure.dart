@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/error_dialog.dart';
 import 'account_card.dart';
+import 'request_failure.dart';
 import 'session.dart';
 
 /// Avisa el fallo de una carga de pantalla: la sesión vencida cierra la sesión; un error
@@ -28,6 +29,29 @@ Future<void> avisarFalloDeCarga(
   alVencer: alVencer,
   alNoReintentar: alNoReintentar,
 );
+
+/// Runs the screen load [load]; when it ends in an expired session or a network failure,
+/// calls [onFailed] so the screen stops waiting and then gives the load-failure notice,
+/// which retries with [retry].
+Future<void> loadOrNotify(
+  BuildContext context, {
+  required Session session,
+  required Future<void> Function() load,
+  required VoidCallback onFailed,
+  required Future<void> Function() retry,
+}) async {
+  final failure = await captureRequestFailure(load);
+  if (failure.expired == false && failure.error == null) return;
+  if (!context.mounted) return;
+  onFailed();
+  await avisarFalloDeCarga(
+    context,
+    session: session,
+    expired: failure.expired,
+    error: failure.error,
+    reintentar: retry,
+  );
+}
 
 /// Avisa el fallo de un pedido: la sesión vencida cierra la sesión; un error de red
 /// ofrece reintentar con [reintentar]. Sin fallo ni vencimiento no hace nada.

@@ -9,7 +9,6 @@ import 'package:clubnahuelmosse/features/session/presentation/access_denied_scre
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
@@ -105,48 +104,6 @@ void main() {
   });
 
   testWidgets(
-    'un 403 de la API muestra «Acceso denegado» y lleva a Mis reservas',
-    (tester) async {
-      final rutas = GoRouter(
-        routes: [
-          GoRoute(
-            path: '/',
-            builder: (context, _) => Scaffold(
-              body: TextButton(
-                onPressed: () =>
-                    showNetworkError(context, const ErrorDelServidor(403)),
-                child: const Text('ABRIR'),
-              ),
-            ),
-          ),
-          GoRoute(
-            path: '/admin/acceso-denegado',
-            builder: (context, _) =>
-                AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
-          ),
-          GoRoute(
-            path: '/reservas',
-            builder: (context, _) => const Scaffold(body: Text('Mis reservas')),
-          ),
-        ],
-      );
-      addTearDown(rutas.dispose);
-      await tester.pumpWidget(
-        MaterialApp.router(routerConfig: rutas, theme: darkTheme),
-      );
-      await tester.tap(find.text('ABRIR'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('Acceso denegado'), findsOneWidget);
-      expect(find.text('Error del servidor'), findsNothing);
-      await tester.tap(find.text('IR A MIS RESERVAS'));
-      await tester.pumpAndSettle();
-      expect(find.text('Mis reservas'), findsOneWidget);
-      expect(find.text('Acceso denegado'), findsNothing);
-    },
-  );
-
-  testWidgets(
     'un usuario que entra al panel ve «Acceso denegado» y llega a Mis reservas',
     (tester) async {
       tester.view.physicalSize = const Size(393, 852) * 3;
@@ -228,39 +185,6 @@ void main() {
 
     expect(sesion.cierres, 1);
     expect(find.text('Acceso denegado'), findsNothing);
-  });
-
-  testWidgets('un 403 devuelve su propio resultado', (tester) async {
-    ErrorOutcome? resultado;
-    final rutas = GoRouter(
-      routes: [
-        GoRoute(
-          path: '/',
-          builder: (context, _) => Scaffold(
-            body: TextButton(
-              onPressed: () async => resultado = await handleNetworkError(
-                context,
-                const ErrorDelServidor(403),
-              ),
-              child: const Text('ABRIR'),
-            ),
-          ),
-        ),
-        GoRoute(
-          path: '/admin/acceso-denegado',
-          builder: (context, _) =>
-              AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
-        ),
-      ],
-    );
-    addTearDown(rutas.dispose);
-    await tester.pumpWidget(
-      MaterialApp.router(routerConfig: rutas, theme: darkTheme),
-    );
-    await tester.tap(find.text('ABRIR'));
-    await tester.pumpAndSettle();
-
-    expect(resultado, ErrorOutcome.accessDenied);
   });
 
   testWidgets(

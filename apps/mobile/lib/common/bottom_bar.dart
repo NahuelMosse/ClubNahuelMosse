@@ -3,32 +3,44 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'fixed_bar.dart';
 
 enum Section {
-  home('INICIO', Icons.home_outlined, '/inicio'),
-  venues('SEDES', Icons.place_outlined, '/sedes'),
-  bookings('RESERVAS', Icons.calendar_today_outlined, '/reservas'),
-  profile('PERFIL', Icons.person_outline_rounded, '/perfil');
+  home(Icons.home_outlined, '/inicio'),
+  venues(Icons.place_outlined, '/sedes'),
+  bookings(Icons.calendar_today_outlined, '/reservas'),
+  profile(Icons.person_outline_rounded, '/perfil');
 
-  const Section(this.title, this.icon, this.route);
-  final String title;
+  const Section(this.icon, this.route);
   final IconData icon;
   final String route;
+
+  String title(AppLocalizations l10n) => switch (this) {
+    home => l10n.navHome,
+    venues => l10n.navVenues,
+    bookings => l10n.navBookings,
+    profile => l10n.navProfile,
+  };
 }
 
 /// The three tabs of the admin panel (`BottomNav-Admin`).
 enum AdminSection {
-  bookings('RESERVAS', Icons.calendar_today_outlined, '/admin'),
-  venues('SEDES', Icons.place_outlined, '/admin/sedes'),
-  spaces('ESPACIOS', Icons.grid_view_outlined, '/admin/espacios');
+  bookings(Icons.calendar_today_outlined, '/admin'),
+  venues(Icons.place_outlined, '/admin/sedes'),
+  spaces(Icons.grid_view_outlined, '/admin/espacios');
 
-  const AdminSection(this.title, this.icon, this.route);
-  final String title;
+  const AdminSection(this.icon, this.route);
   final IconData icon;
   final String route;
+
+  String title(AppLocalizations l10n) => switch (this) {
+    bookings => l10n.navBookings,
+    venues => l10n.navVenues,
+    spaces => l10n.navSpaces,
+  };
 }
 
 /// The user `BottomNav`: four fixed tabs, the current section in lime.
@@ -46,7 +58,7 @@ class BottomBar extends StatelessWidget {
     tabs: [
       for (final s in Section.values)
         _Tab(
-          title: s.title,
+          title: s.title(AppLocalizations.of(context)),
           icon: s.icon,
           active: s == current,
           tappable: s != current || !atRoot,
@@ -67,7 +79,7 @@ class AdminBar extends StatelessWidget {
     tabs: [
       for (final s in AdminSection.values)
         _Tab(
-          title: s.title,
+          title: s.title(AppLocalizations.of(context)),
           icon: s.icon,
           active: s == current,
           tappable: s != current,

@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/bottom_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/presentation/venues.dart';
-import '../data/api_failures.dart';
 import 'admin_card_skeleton.dart';
 import 'admin_listing.dart';
 import 'admin_listing_header.dart';
@@ -53,56 +53,45 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
 
   Future<void> _load() async {
     setState(() => _failed = false);
-    Object? error;
-    var expired = false;
-    try {
-      final venues = await widget.venues.repository.active();
-      if (mounted) setState(() => _venues = venues);
-      return;
-    } on SessionExpired {
-      expired = true;
-    } on FalloDeRed catch (e) {
-      error = e;
-    }
-    if (!mounted) return;
-    // Sin datos que mostrar, la pantalla deja de esperar antes del aviso.
-    setState(() => _failed = true);
-    await avisarFalloDeCarga(
+    await loadOrNotify(
       context,
       session: widget.session,
-      expired: expired,
-      error: error,
-      reintentar: _load,
+      load: () async {
+        final venues = await widget.venues.repository.active();
+        if (mounted) setState(() => _venues = venues);
+      },
+      // With nothing to show, the screen stops waiting before the notice.
+      onFailed: () => setState(() => _failed = true),
+      retry: _load,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final venues = _venues;
     return AdminListingTemplate(
       section: AdminSection.venues,
-      title: 'Sedes',
+      title: l10n.adminVenuesTitle,
       session: widget.session,
-      createText: 'AGREGAR SEDE',
+      createText: l10n.adminAddVenue,
       createRoute: '/admin/sedes/nueva',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: venues != null,
       failed: _failed,
       cardShape: AdminCardShape.venue,
-      items: venues == null ? const [] : _items(venues, p),
+      items: venues == null ? const [] : _items(venues, p, l10n),
     );
   }
 
-  List<Widget> _items(List<Venue> venues, Palette p) => [
+  List<Widget> _items(List<Venue> venues, Palette p, AppLocalizations l10n) => [
     ...adminListingHeader(
       p,
-      count: venues.length == 1
-          ? '1 SEDE ACTIVA'
-          : '${venues.length} SEDES ACTIVAS',
+      count: l10n.adminActiveVenues(venues.length),
       empty: venues.isEmpty,
-      emptyText: 'Todavía no hay sedes',
+      emptyText: l10n.adminNoVenues,
     ),
     for (final venue in venues) ...[
       AdminVenueCard(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -12,6 +13,7 @@ class PanelHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Row(
       children: [
         Expanded(
@@ -22,7 +24,7 @@ class PanelHeader extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(left: Spacing.s4),
               child: Text(
-                'NOTIFICACIONES',
+                l10n.notificationsPanelTitle,
                 style: Texts.overline.copyWith(color: p.textMuted),
               ),
             ),
@@ -30,7 +32,7 @@ class PanelHeader extends StatelessWidget {
         ),
         Semantics(
           button: true,
-          label: 'MARCAR TODAS',
+          label: l10n.notificationsMarkAll,
           excludeSemantics: true,
           onTap: onMarkAll,
           child: InkWell(
@@ -44,7 +46,7 @@ class PanelHeader extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: Spacing.s8),
                 child: Center(
                   child: Text(
-                    'MARCAR TODAS',
+                    l10n.notificationsMarkAll,
                     style: Texts.overline.copyWith(color: p.accentInk),
                   ),
                 ),

@@ -7,6 +7,7 @@ import '../../../common/dates.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/list_loading.dart';
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
@@ -140,7 +141,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
     if (_cancelando != null) return;
     final confirmo = await confirmarCancelacion(
       context,
-      textoDeCancelacion(r, catalogo),
+      textoDeCancelacion(AppLocalizations.of(context), r, catalogo),
     );
     if (!confirmo || !mounted) return;
     await cancelWithNotices(
@@ -190,6 +191,7 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final data = _datos;
     return PopScope(
       canPop: _cancelando == null,
@@ -223,11 +225,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
                         if (data != null && data.$1.isEmpty)
                           EmptyState(
                             title: _historial
-                                ? 'No hay reservas pasadas'
-                                : 'No hay próximas reservas',
+                                ? l.bookingNoPastTitle
+                                : l.bookingNoUpcomingTitle,
                             text: _historial
-                                ? 'No se encontraron reservas pasadas asociadas a tu cuenta.'
-                                : 'No se encontraron próximas reservas asociadas a tu cuenta.',
+                                ? l.bookingNoPastText
+                                : l.bookingNoUpcomingText,
                           ),
                         if (data != null)
                           for (final r in data.$1) ...[
@@ -261,7 +263,11 @@ class _MyBookingsScreenState extends State<MyBookingsScreen> {
 }
 
 /// Lo que se le pide confirmar a quien va a cancelar [r].
-String textoDeCancelacion(Booking r, Catalog catalogo) =>
-    '${catalogo.shortKind(r.sport, r.kind)} · ${r.venue} · '
-    '${shortDay(r.startsAt)}, ${horarioDe(r)} · '
-    '${formatPesos(r.total)}. El horario vuelve a quedar libre.';
+String textoDeCancelacion(AppLocalizations l, Booking r, Catalog catalogo) =>
+    l.bookingCancelNotice(
+      shortDay(r.startsAt),
+      catalogo.shortKind(r.sport, r.kind),
+      formatPesos(r.total),
+      horarioDe(r),
+      r.venue,
+    );

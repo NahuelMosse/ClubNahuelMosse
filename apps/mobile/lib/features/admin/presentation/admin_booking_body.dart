@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/booking_history_entry.dart';
@@ -50,7 +51,7 @@ class AdminBookingBody extends StatelessWidget {
                 const SizedBox(width: Spacing.s4),
                 Flexible(
                   child: Text(
-                    'Baja del espacio deportivo',
+                    AppLocalizations.of(context).adminSpaceDeactivated,
                     style: Texts.caption.copyWith(color: p.textMuted),
                   ),
                 ),

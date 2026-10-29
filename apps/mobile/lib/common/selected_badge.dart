@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 
@@ -18,7 +19,10 @@ class SelectedBadge extends StatelessWidget {
         color: p.accentBase,
         borderRadius: BorderRadius.circular(Spacing.radiusPill),
       ),
-      child: Text('ELEGIDO', style: Texts.overline.copyWith(color: p.accentOn)),
+      child: Text(
+        AppLocalizations.of(context).commonSelected,
+        style: Texts.overline.copyWith(color: p.accentOn),
+      ),
     );
   }
 }

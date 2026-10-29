@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
 import '../../../common/skeleton_cover.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'space_card_skeleton.dart';
 
@@ -27,7 +28,7 @@ class VenueSkeleton extends StatelessWidget {
       Spacing.s40,
     ),
     body: const _Body(),
-    backLabel: 'Todas las sedes',
+    backLabel: AppLocalizations.of(context).venueBack,
     onBack: onBack,
   );
 }

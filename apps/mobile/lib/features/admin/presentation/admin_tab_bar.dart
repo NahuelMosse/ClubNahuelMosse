@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/selectable_chip.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
 import '../domain/counters.dart';
+import 'booking_status_text.dart';
 
 class AdminTabBar extends StatelessWidget {
   const AdminTabBar({
@@ -21,8 +23,10 @@ class AdminTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = counters;
-    Widget tab(String text, BookingStatus? value, int? count) {
+    final l10n = AppLocalizations.of(context);
+    Widget tab(BookingStatus? value, int? count) {
       final active = selected == value;
+      final text = statusFilterText(l10n, value);
       final label = count == null ? text : '$text ($count)';
       final p = context.palette;
       return Padding(
@@ -44,10 +48,10 @@ class AdminTabBar extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          tab('Todas', null, c?.all),
-          tab('Activas', BookingStatus.active, c?.active),
-          tab('Completadas', BookingStatus.completed, c?.completed),
-          tab('Anuladas', BookingStatus.voided, c?.voided),
+          tab(null, c?.all),
+          tab(BookingStatus.active, c?.active),
+          tab(BookingStatus.completed, c?.completed),
+          tab(BookingStatus.voided, c?.voided),
         ],
       ),
     );

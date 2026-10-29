@@ -10,7 +10,8 @@ import 'package:clubnahuelmosse/features/bookings/presentation/bookings.dart';
 import 'package:clubnahuelmosse/features/bookings/data/bookings_api.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:clubnahuelmosse/common/app_language.dart';
+import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -20,6 +21,10 @@ import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart'
 import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
+
+/// El aviso del login cuando las credenciales no sirven, en castellano.
+const invalidCredentialsMessage =
+    'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
 
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
 ApiClient apiFalsa({
@@ -133,16 +138,20 @@ Future<void> montar(
     MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: tema,
-      locale: const Locale('es', 'AR'),
-      supportedLocales: const [Locale('es', 'AR')],
-      localizationsDelegates: GlobalMaterialLocalizations.delegates,
-      builder: (context, hijo) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(escalaTexto)),
-        child: hijo ?? const SizedBox.shrink(),
-      ),
-      home: pantalla,
+      localeListResolutionCallback: resolveLanguage,
+      supportedLocales: AppLocalizations.supportedLocales,
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      builder: (context, hijo) {
+        useLanguage(Localizations.localeOf(context));
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(escalaTexto)),
+          child: hijo ?? const SizedBox.shrink(),
+        );
+      },
+      // A new key makes a second mount in the same test start from a fresh state.
+      home: KeyedSubtree(key: UniqueKey(), child: pantalla),
     ),
   );
   await tester.pumpAndSettle();

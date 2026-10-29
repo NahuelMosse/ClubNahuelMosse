@@ -7,12 +7,13 @@ import '../../../common/button.dart';
 import '../../../common/calendar.dart';
 import '../../../common/clock.dart';
 import '../../../common/date_format.dart';
-import '../../../common/network_failure.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/profile.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
+import '../../session/presentation/request_failure.dart';
 import '../../session/presentation/session.dart';
 import '../domain/registration_rules.dart';
 
@@ -46,8 +47,6 @@ class ProfileEditor extends StatefulWidget {
 }
 
 class _ProfileEditorState extends State<ProfileEditor> {
-  static const _invalidMessage = 'El formato de los datos no es válido';
-
   late final _controllers = [
     for (final field in _Field.values)
       TextEditingController(
@@ -94,9 +93,7 @@ class _ProfileEditorState extends State<ProfileEditor> {
     final today = clubNow();
     return {
       for (final field in [_Field.firstName, _Field.lastName])
-        if (validateName(_valueOf(field), requiredMessage: _invalidMessage) !=
-            null)
-          field,
+        if (validateName(_valueOf(field)) != null) field,
       if (validateDni(_valueOf(_Field.dni)) != null) _Field.dni,
       if (validateBirthDate(_valueOf(_Field.birthDate), today) != null)
         _Field.birthDate,
@@ -106,49 +103,47 @@ class _ProfileEditorState extends State<ProfileEditor> {
   Future<void> _save() async {
     if (_submitting) return;
     FocusScope.of(context).unfocus();
+    final invalidMessage = AppLocalizations.of(context).profileInvalidData;
     final invalidFields = _invalidFields();
     final date = readDate(_valueOf(_Field.birthDate));
     if (invalidFields.isNotEmpty || date == null) {
       setState(() {
         _errors
           ..clear()
-          ..addEntries(invalidFields.map((c) => MapEntry(c, _invalidMessage)));
+          ..addEntries(invalidFields.map((c) => MapEntry(c, invalidMessage)));
       });
       return;
     }
     setState(() => _submitting = true);
-    Object? failure;
-    var expired = false;
-    try {
-      final profile = await widget.session.updateProfile(
-        firstName: _valueOf(_Field.firstName).trim(),
-        lastName: _valueOf(_Field.lastName).trim(),
-        dni: normalizeDni(_valueOf(_Field.dni)),
-        birthDate: isoDate(date),
-      );
-      if (mounted) widget.onSave(profile);
-      return;
-    } on DataRejected catch (e) {
-      if (mounted) {
-        setState(() {
-          for (final field in _Field.values) {
-            final message = e.errors[field.key];
-            if (message == null) continue;
-            // El dato de otra cuenta tiene su propio mensaje; lo demás es de formato.
-            _errors[field] = e.duplicate ? message : _invalidMessage;
-          }
-        });
+    var saved = false;
+    final outcome = await captureRequestFailure(() async {
+      try {
+        final profile = await widget.session.updateProfile(
+          firstName: _valueOf(_Field.firstName).trim(),
+          lastName: _valueOf(_Field.lastName).trim(),
+          dni: normalizeDni(_valueOf(_Field.dni)),
+          birthDate: isoDate(date),
+        );
+        saved = true;
+        if (mounted) widget.onSave(profile);
+      } on DataRejected catch (e) {
+        if (mounted) {
+          setState(() {
+            for (final field in _Field.values) {
+              final message = e.errors[field.key];
+              if (message == null) continue;
+              // El dato de otra cuenta tiene su propio mensaje; lo demás es de formato.
+              _errors[field] = e.duplicate ? message : invalidMessage;
+            }
+          });
+        }
       }
-    } on SessionExpired {
-      expired = true;
-    } on FalloDeRed catch (e) {
-      failure = e;
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+    });
+    if (mounted) setState(() => _submitting = false);
+    if (saved) return;
     if (!mounted) {
       // Salió de la pantalla mientras guardaba: la sesión vencida se cierra igual.
-      if (expired) {
+      if (outcome.expired) {
         try {
           await widget.session.close();
         } on Exception {
@@ -160,8 +155,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
     await avisarFalloDeEnvio(
       context,
       session: widget.session,
-      expired: expired,
-      error: failure,
+      expired: outcome.expired,
+      error: outcome.error,
       reintentar: _save,
     );
   }
@@ -197,29 +192,38 @@ class _ProfileEditorState extends State<ProfileEditor> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _field(_Field.firstName, label: 'NOMBRE', accessible: 'Nombre'),
+        _field(
+          _Field.firstName,
+          label: l10n.profileFirstNameUpper,
+          accessible: l10n.profileFirstName,
+        ),
         const SizedBox(height: Spacing.s12),
-        _field(_Field.lastName, label: 'APELLIDO', accessible: 'Apellido'),
+        _field(
+          _Field.lastName,
+          label: l10n.profileLastNameUpper,
+          accessible: l10n.profileLastName,
+        ),
         const SizedBox(height: Spacing.s12),
         _field(
           _Field.dni,
-          label: 'DNI',
-          accessible: 'DNI',
+          label: l10n.profileDni,
+          accessible: l10n.profileDni,
           keyboard: TextInputType.number,
           formatters: [dniInputFormatter],
         ),
         const SizedBox(height: Spacing.s12),
         _field(
           _Field.birthDate,
-          label: 'FECHA DE NACIMIENTO',
-          accessible: 'Fecha de nacimiento',
+          label: l10n.profileBirthUpper,
+          accessible: l10n.profileBirth,
           keyboard: TextInputType.number,
           formatters: const [DateInputFormatter()],
           trailingAction: IconButton(
-            tooltip: 'Elegir la fecha en el calendario',
+            tooltip: l10n.profilePickDate,
             onPressed: _submitting ? null : _pickDate,
             icon: Icon(Icons.calendar_today_outlined, color: p.textSecondary),
           ),
@@ -229,8 +233,8 @@ class _ProfileEditorState extends State<ProfileEditor> {
         Opacity(
           opacity: 0.4,
           child: FormTextField(
-            label: 'CORREO ELECTRÓNICO',
-            semanticLabel: 'Correo electrónico',
+            label: l10n.profileEmailUpper,
+            semanticLabel: l10n.profileEmail,
             controller: _email,
             enabled: false,
             trailing: Padding(
@@ -240,7 +244,11 @@ class _ProfileEditorState extends State<ProfileEditor> {
           ),
         ),
         const SizedBox(height: Spacing.s16),
-        PrimaryButton(label: 'GUARDAR', loading: _submitting, onTap: _save),
+        PrimaryButton(
+          label: l10n.profileSave,
+          loading: _submitting,
+          onTap: _save,
+        ),
       ],
     );
   }

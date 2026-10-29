@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
+import '../../spaces/presentation/space_texts.dart';
 import '../../spaces/presentation/sport_icons.dart';
 import 'admin_card.dart';
 
@@ -33,7 +35,8 @@ class AdminSpaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final description = space.description(catalog);
+    final l10n = AppLocalizations.of(context);
+    final description = spaceDescription(l10n, space, catalog);
     // The data is read as one; the buttons stay outside, each with its own name.
     final details = Semantics(
       container: true,
@@ -74,13 +77,13 @@ class AdminSpaceCard extends StatelessWidget {
     return AdminCard(
       details: details,
       name: space.name,
-      editText: 'Editar',
-      editLabel: 'Editar ${space.name}',
+      editText: l10n.adminEditSpace,
+      editLabel: l10n.adminEditSpaceNamed(space.name),
       onEdit: enabled
           ? () => context.go('/admin/espacios/${space.id}/editar', extra: space)
           : null,
-      deactivateText: 'Baja',
-      deactivateLabel: 'Baja ${space.name}',
+      deactivateText: l10n.adminDeactivateSpace,
+      deactivateLabel: l10n.adminDeactivateSpaceNamed(space.name),
       onDeactivate: enabled ? onDeactivate : null,
       deactivating: deactivating,
     );

@@ -3,11 +3,15 @@ import 'package:flutter/material.dart';
 
 import '../../../common/card_frame.dart';
 import '../../../common/dates.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
 import '../domain/booking_history_entry.dart';
 import 'trace_step.dart';
+
+/// What a step of the history shows: its title, icon, color and subtitle.
+typedef _Step = (String, IconData, Color, String);
 
 class Traceability extends StatelessWidget {
   const Traceability({super.key, required this.booking});
@@ -17,42 +21,10 @@ class Traceability extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final b = booking;
-    final reason = b.reason;
-    final second = switch (b.cancelledAt) {
-      null => null,
-      final at => switch (b.status) {
-        BookingStatus.voided => (
-          'Anulada por el administrador',
-          Icons.error_outline_rounded,
-          p.stateDangerInk,
-          'Por ${b.cancelledByName ?? 'un administrador'} · '
-              '${_dateTime(at)}'
-              '${reason != null && reason.trim().isNotEmpty ? ' · $reason' : ''}',
-        ),
-        _ => (
-          'Cancelada por el usuario',
-          Icons.cancel_outlined,
-          p.textSecondary,
-          'Por ${b.cancelledByName ?? b.user} · ${_dateTime(at)}',
-        ),
-      },
-    };
-    final notice = switch ((b.status, b.noticeDelivery, b.noticeAt)) {
-      (BookingStatus.voided, 'enviada', final at?) => (
-        'Notificación enviada al usuario',
-        Icons.notifications_active_outlined,
-        p.stateSuccessInk,
-        _dateTime(at),
-      ),
-      (BookingStatus.voided, final String _, _?) => (
-        'Aviso en el centro del usuario',
-        Icons.notifications_off_outlined,
-        p.textSecondary,
-        'El push no salió',
-      ),
-      _ => null,
-    };
+    final second = _cancellationStep(l10n, p, b);
+    final notice = _noticeStep(l10n, p, b);
     return CardFrame(
       clip: Clip.none,
       padding: const EdgeInsets.all(Spacing.s16),
@@ -60,15 +32,15 @@ class Traceability extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'TRAZABILIDAD',
+            l10n.adminTraceTitle,
             style: Texts.overline.copyWith(color: p.textMuted),
           ),
           const SizedBox(height: Spacing.s16),
           TraceStep(
             icon: Icons.check_circle_outline_rounded,
             color: p.stateSuccessInk,
-            title: 'Reserva creada',
-            subtitle: 'Por ${b.user} · ${_dateTime(b.createdAt)}',
+            title: l10n.adminTraceCreated,
+            subtitle: l10n.adminTraceBy(b.user, _dateTime(b.createdAt)),
           ),
           if (second != null) ...[
             const SizedBox(height: Spacing.s12),
@@ -93,5 +65,49 @@ class Traceability extends StatelessWidget {
     );
   }
 }
+
+_Step? _cancellationStep(
+  AppLocalizations l10n,
+  Palette p,
+  BookingHistoryEntry b,
+) {
+  final at = b.cancelledAt;
+  if (at == null) return null;
+  if (b.status != BookingStatus.voided) {
+    return (
+      l10n.adminTraceCanceled,
+      Icons.cancel_outlined,
+      p.textSecondary,
+      l10n.adminTraceBy(b.cancelledByName ?? b.user, _dateTime(at)),
+    );
+  }
+  final who = b.cancelledByName ?? l10n.adminTraceAnAdmin;
+  final reason = b.reason;
+  return (
+    l10n.adminTraceVoided,
+    Icons.error_outline_rounded,
+    p.stateDangerInk,
+    reason != null && reason.trim().isNotEmpty
+        ? l10n.adminTraceByReason(who, _dateTime(at), reason)
+        : l10n.adminTraceBy(who, _dateTime(at)),
+  );
+}
+
+_Step? _noticeStep(AppLocalizations l10n, Palette p, BookingHistoryEntry b) =>
+    switch ((b.status, b.noticeDelivery, b.noticeAt)) {
+      (BookingStatus.voided, 'enviada', final at?) => (
+        l10n.adminTraceNoticeSent,
+        Icons.notifications_active_outlined,
+        p.stateSuccessInk,
+        _dateTime(at),
+      ),
+      (BookingStatus.voided, final String _, _?) => (
+        l10n.adminTraceNoticeInbox,
+        Icons.notifications_off_outlined,
+        p.textSecondary,
+        l10n.adminTracePushFailed,
+      ),
+      _ => null,
+    };
 
 String _dateTime(DateTime d) => '${readableDate(d)} ${shortTime(d)}';

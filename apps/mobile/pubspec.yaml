@@ -30,6 +30,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
   assets:
     - assets/imagenes/
     - assets/imagenes/sedes/

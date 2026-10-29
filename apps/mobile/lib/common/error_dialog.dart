@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../api/api_client.dart';
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'motion.dart';
@@ -32,6 +33,7 @@ Future<ErrorOutcome> handleNetworkError(
     context.go('/admin/acceso-denegado');
     return ErrorOutcome.accessDenied;
   }
+  final l10n = AppLocalizations.of(context);
   final noConnection = error is SinConexion;
   final message = error is ErrorDelServidor && error.codigo == 429
       ? error.mensaje
@@ -41,18 +43,15 @@ Future<ErrorOutcome> handleNetworkError(
     barrierColor: context.palette.bgScrim,
     builder: (context) => NoticeModal(
       icon: noConnection ? Icons.wifi_off_rounded : Icons.cloud_off_rounded,
-      title: noConnection ? 'Error de conexión' : 'Error del servidor',
+      title: noConnection ? l10n.errorConnectionTitle : l10n.errorServerTitle,
       text: switch (error) {
-        SinConexion() =>
-          'No pudimos conectarnos. Revisá tu conexión a internet y volvé a intentar.',
-        ServidorSinRespuesta() =>
-          'El servidor no responde. Probá de nuevo en unos minutos.',
+        SinConexion() => l10n.errorConnectionText,
+        ServidorSinRespuesta() => l10n.errorNoResponseText,
         _ when message != null => message,
-        _ =>
-          'No pudimos procesar la operación en este momento. Intentá más tarde.',
+        _ => l10n.errorGenericText,
       },
-      primary: noConnection ? 'REINTENTAR' : null,
-      secondary: noConnection ? 'Volver' : 'ACEPTAR',
+      primary: noConnection ? l10n.commonRetry : null,
+      secondary: noConnection ? l10n.commonBack : l10n.commonOk,
     ),
   );
   return retry == true ? ErrorOutcome.retry : ErrorOutcome.closed;
@@ -65,12 +64,20 @@ Future<bool> showNetworkError(BuildContext context, Object error) async =>
 /// The notice that someone else took the time slot while it was being confirmed ([text] says
 /// which). The only way out is to choose another.
 Future<void> showTimeSlotTaken(BuildContext context, String text) =>
-    _showTimeSlotNotice(context, 'Ese horario se ocupó', text);
+    _showTimeSlotNotice(
+      context,
+      AppLocalizations.of(context).errorTimeSlotTakenTitle,
+      text,
+    );
 
 /// The notice that the club rejected the chosen time slot ([text] is the reason it gave). It
 /// does not close by itself: the person reads it and chooses another.
 Future<void> showTimeSlotRejected(BuildContext context, String text) =>
-    _showTimeSlotNotice(context, 'No se pudo confirmar el horario', text);
+    _showTimeSlotNotice(
+      context,
+      AppLocalizations.of(context).errorTimeSlotRejectedTitle,
+      text,
+    );
 
 Future<void> _showTimeSlotNotice(
   BuildContext context,
@@ -83,7 +90,7 @@ Future<void> _showTimeSlotNotice(
     icon: Icons.schedule_rounded,
     title: title,
     text: text,
-    primary: 'ELEGIR OTRO HORARIO',
+    primary: AppLocalizations.of(context).errorChooseAnotherTime,
   ),
 );
 
@@ -92,14 +99,17 @@ Future<bool> confirmNewSchedule(BuildContext context, String text) async =>
     await showDialog<bool>(
       context: context,
       barrierColor: context.palette.bgScrim,
-      builder: (context) => NoticeModal(
-        icon: Icons.warning_amber_rounded,
-        title: '¿Guardar el horario nuevo?',
-        text: text,
-        primary: 'GUARDAR IGUAL',
-        secondary: 'REVISAR EL HORARIO',
-        secondaryOutlined: true,
-      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context);
+        return NoticeModal(
+          icon: Icons.warning_amber_rounded,
+          title: l10n.errorSaveNewScheduleTitle,
+          text: text,
+          primary: l10n.errorSaveAnyway,
+          secondary: l10n.errorReviewSchedule,
+          secondaryOutlined: true,
+        );
+      },
     ) ??
     false;
 
@@ -107,26 +117,32 @@ Future<bool> confirmNewSchedule(BuildContext context, String text) async =>
 Future<void> showBookingCanceled(BuildContext context) => showDialog<void>(
   context: context,
   barrierColor: context.palette.bgScrim,
-  builder: (context) => const NoticeModal(
-    icon: Icons.check_circle_outline_rounded,
-    success: true,
-    title: 'Reserva cancelada con éxito',
-    text: 'El horario quedó liberado y la reserva pasó a tu historial.',
-    primary: 'ACEPTAR',
-  ),
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    return NoticeModal(
+      icon: Icons.check_circle_outline_rounded,
+      success: true,
+      title: l10n.errorBookingCanceledTitle,
+      text: l10n.errorBookingCanceledText,
+      primary: l10n.commonOk,
+    );
+  },
 );
 
 /// The administrator voided the booking.
 Future<void> showBookingVoided(BuildContext context) => showDialog<void>(
   context: context,
   barrierColor: context.palette.bgScrim,
-  builder: (context) => const NoticeModal(
-    icon: Icons.check_circle_outline_rounded,
-    success: true,
-    title: 'Reserva anulada correctamente',
-    text: 'El horario quedó liberado y la reserva pasó a las anuladas.',
-    primary: 'ACEPTAR',
-  ),
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    return NoticeModal(
+      icon: Icons.check_circle_outline_rounded,
+      success: true,
+      title: l10n.errorBookingVoidedTitle,
+      text: l10n.errorBookingVoidedText,
+      primary: l10n.commonOk,
+    );
+  },
 );
 
 /// The shared «Esto cambió mientras tanto» overlay: what was on screen is no longer that
@@ -134,14 +150,15 @@ Future<void> showBookingVoided(BuildContext context) => showDialog<void>(
 Future<void> showChangedMeanwhile(BuildContext context) => showDialog<void>(
   context: context,
   barrierColor: context.palette.bgScrim,
-  builder: (context) => const NoticeModal(
-    icon: Icons.sync_problem_rounded,
-    title: 'Esto cambió mientras tanto',
-    text:
-        'Otra persona modificó estos datos mientras los estabas viendo. Los '
-        'actualizamos para que veas el estado real.',
-    primary: 'VER LO ACTUALIZADO',
-  ),
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    return NoticeModal(
+      icon: Icons.sync_problem_rounded,
+      title: l10n.errorChangedTitle,
+      text: l10n.errorChangedText,
+      primary: l10n.errorChangedAction,
+    );
+  },
 );
 
 /// The shared expired-session overlay. It cannot be dismissed: the only way out is to sign
@@ -150,16 +167,18 @@ Future<void> showSessionExpired(BuildContext context) => showDialog<void>(
   context: context,
   barrierDismissible: false,
   barrierColor: context.palette.bgScrim,
-  builder: (context) => const PopScope(
-    canPop: false,
-    child: NoticeModal(
-      icon: Icons.cloud_off_rounded,
-      title: 'Tu sesión expiró',
-      text:
-          'Por seguridad cerramos tu sesión. Volvé a iniciar sesión para continuar.',
-      primary: 'IR AL INICIO DE SESIÓN',
-    ),
-  ),
+  builder: (context) {
+    final l10n = AppLocalizations.of(context);
+    return PopScope(
+      canPop: false,
+      child: NoticeModal(
+        icon: Icons.cloud_off_rounded,
+        title: l10n.errorSessionExpiredTitle,
+        text: l10n.errorSessionExpiredText,
+        primary: l10n.errorSessionExpiredAction,
+      ),
+    );
+  },
 );
 
 /// The text that gives the most contrast over [background]: white or the app background.

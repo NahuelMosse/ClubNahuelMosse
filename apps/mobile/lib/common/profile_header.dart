@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'logo_mark.dart';
@@ -22,7 +23,7 @@ class ProfileHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'FICHA DE SOCIO',
+              AppLocalizations.of(context).commonMemberCard,
               style: Texts.overline.copyWith(color: p.accentOnMedia),
             ),
             if (numberText != null)

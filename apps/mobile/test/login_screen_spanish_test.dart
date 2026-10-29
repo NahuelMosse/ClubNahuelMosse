@@ -1,3 +1,5 @@
+import 'package:clubnahuelmosse/common/app_language.dart';
+import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'dart:async';
 
 import 'package:clubnahuelmosse/api/api_client.dart';
@@ -21,7 +23,7 @@ void main() {
     CredencialesFalsas credenciales, {
     ApiClient? api,
   }) async {
-    final sesion = Session(
+    final session = Session(
       repository: SessionRepository(
         credentials: credenciales,
         api: api ?? apiFalsa(codigo: 200, cuerpo: perfilJson()),
@@ -32,7 +34,7 @@ void main() {
         GoRoute(
           path: '/',
           builder: (_, _) =>
-              LoginScreen(session: sesion, pending: PendingBooking()),
+              LoginScreen(session: session, pending: PendingBooking()),
         ),
         GoRoute(path: '/inicio', builder: (_, _) => const Text('HOME')),
         GoRoute(path: '/admin', builder: (_, _) => const Text('PANEL')),
@@ -47,7 +49,13 @@ void main() {
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(
-      MaterialApp.router(theme: darkTheme, routerConfig: rutas),
+      MaterialApp.router(
+        theme: darkTheme,
+        localeListResolutionCallback: resolveLanguage,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        routerConfig: rutas,
+      ),
     );
     await tester.pumpAndSettle();
   }

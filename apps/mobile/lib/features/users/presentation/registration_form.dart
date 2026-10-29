@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/date_format.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/registration_field.dart';
 
@@ -63,43 +64,44 @@ class RegistrationForm extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _field(
           RegistrationField.firstName,
-          label: 'NOMBRE',
-          accessible: 'Nombre',
-          placeholder: 'Tu nombre',
+          label: l10n.profileFirstNameUpper,
+          accessible: l10n.profileFirstName,
+          placeholder: l10n.registerFirstNamePlaceholder,
           keyboard: TextInputType.name,
           autofill: const [AutofillHints.givenName],
         ),
         const SizedBox(height: Spacing.s16),
         _field(
           RegistrationField.lastName,
-          label: 'APELLIDO',
-          accessible: 'Apellido',
-          placeholder: 'Tu apellido',
+          label: l10n.profileLastNameUpper,
+          accessible: l10n.profileLastName,
+          placeholder: l10n.registerLastNamePlaceholder,
           keyboard: TextInputType.name,
           autofill: const [AutofillHints.familyName],
         ),
         const SizedBox(height: Spacing.s16),
         _field(
           RegistrationField.dni,
-          label: 'DNI',
-          accessible: 'DNI',
+          label: l10n.profileDni,
+          accessible: l10n.profileDni,
           placeholder: '00.000.000',
           keyboard: TextInputType.number,
         ),
         const SizedBox(height: Spacing.s16),
         _field(
           RegistrationField.birthDate,
-          label: 'FECHA DE NACIMIENTO',
-          accessible: 'Fecha de nacimiento',
-          placeholder: 'DD / MM / AAAA',
+          label: l10n.profileBirthUpper,
+          accessible: l10n.profileBirth,
+          placeholder: l10n.registerBirthPlaceholder,
           keyboard: TextInputType.number,
           trailingAction: IconButton(
-            tooltip: 'Elegir fecha',
+            tooltip: l10n.registerPickDate,
             onPressed: submitting ? null : onPickDate,
             icon: Icon(Icons.calendar_today_outlined, color: p.textSecondary),
           ),
@@ -107,18 +109,18 @@ class RegistrationForm extends StatelessWidget {
         const SizedBox(height: Spacing.s16),
         _field(
           RegistrationField.email,
-          label: 'CORREO ELECTRÓNICO',
-          accessible: 'Correo electrónico',
-          placeholder: 'tu@correo.com',
+          label: l10n.profileEmailUpper,
+          accessible: l10n.profileEmail,
+          placeholder: l10n.profileEmailPlaceholder,
           keyboard: TextInputType.emailAddress,
           autofill: const [AutofillHints.email],
         ),
         const SizedBox(height: Spacing.s16),
         _field(
           RegistrationField.password,
-          label: 'CONTRASEÑA',
-          accessible: 'Contraseña',
-          placeholder: '8+ caracteres, mayúscula y número',
+          label: l10n.profilePasswordUpper,
+          accessible: l10n.profilePassword,
+          placeholder: l10n.registerPasswordPlaceholder,
           hidden: !passwordVisible,
           autofill: const [AutofillHints.newPassword],
           trailingAction: PasswordToggle(

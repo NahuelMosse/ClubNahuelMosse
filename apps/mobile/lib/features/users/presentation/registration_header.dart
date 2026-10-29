@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'registration_notice.dart';
@@ -20,18 +21,15 @@ class RegistrationHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final notice = this.notice;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (alreadyExists) ...[
-          const RegistrationNotice(
-            text:
-                'Tu cuenta ya existe: el registro se completó antes del corte. '
-                'Iniciá sesión con tu correo y tu contraseña.',
-          ),
+          RegistrationNotice(text: l10n.registerAlreadyExists),
           TextActionButton(
-            label: 'INICIAR SESIÓN',
+            label: l10n.loginSignIn,
             onTap: () => context.go('/'),
           ),
           const SizedBox(height: Spacing.s16),
@@ -39,10 +37,13 @@ class RegistrationHeader extends StatelessWidget {
           RegistrationNotice(text: notice),
           const SizedBox(height: Spacing.s16),
         ],
-        Text('Creá tu cuenta', style: Texts.h1.copyWith(color: p.textPrimary)),
+        Text(
+          l10n.registerHeading,
+          style: Texts.h1.copyWith(color: p.textPrimary),
+        ),
         const SizedBox(height: Spacing.s4),
         Text(
-          'Todos los campos son obligatorios.',
+          l10n.registerAllRequired,
           style: Texts.caption.copyWith(color: p.textSecondary),
         ),
         const SizedBox(height: Spacing.s16),

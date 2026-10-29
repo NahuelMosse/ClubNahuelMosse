@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'space_form_fields.dart';
 
@@ -19,7 +20,10 @@ class NewSpaceSkeleton extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ...spaceFormHeading(context, 'Nuevo espacio deportivo'),
+        ...spaceFormHeading(
+          context,
+          AppLocalizations.of(context).adminNewSpaceHeading,
+        ),
         const SkeletonZone(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

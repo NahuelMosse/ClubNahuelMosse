@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/dates.dart';
 import '../../../common/error_dialog.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
+import '../../spaces/presentation/space_texts.dart';
 import '../data/api_errors.dart';
 import '../domain/availability_exceptions.dart';
 import '../domain/booking.dart';
@@ -119,29 +121,33 @@ class _ConfirmChangeScreenState extends State<ConfirmChangeScreen> {
     final p = context.palette;
     final r = widget.reserva;
     final e = widget.eleccion;
+    final l = AppLocalizations.of(context);
     final antes =
         '${shortDay(r.startsAt)} · ${timeRange(r.startsAt, r.endsAt)}';
     final ahora = '${shortDay(e.date)} · ${e.start} – ${e.end}';
     // Mientras se guarda no se sale: el cambio podría quedar hecho sin que se vea.
     return ConfirmationSkeleton(
-      titulo: 'Confirmá el cambio',
+      titulo: l.bookingChangeTitle,
       enviando: _enviando,
       alVolver: _volver,
-      textoPrimario: 'GUARDAR EL CAMBIO',
+      textoPrimario: l.bookingChangeSave,
       alPrimario: _guardar,
-      textoSecundario: 'DEJAR LA RESERVA COMO ESTÁ',
+      textoSecundario: l.bookingChangeKeep,
       alSecundario: () => _volver(ModifyResult.desistida),
       tarjeta: BookingChoiceCard(
         eleccion: e,
         filas: [
-          ChangeSlot(titulo: 'ANTES', valor: antes, nuevo: false),
-          ChangeSlot(titulo: 'AHORA', valor: ahora, nuevo: true),
+          ChangeSlot(titulo: l.bookingBefore, valor: antes, nuevo: false),
+          ChangeSlot(titulo: l.bookingNow, valor: ahora, nuevo: true),
           Divider(height: Spacing.s16, color: p.borderDefault),
           DetailRow(
-            dato: 'Cancha',
-            valor: 'Cancha ${e.space.number} · ${e.space.condition}',
+            dato: l.bookingRowCourt,
+            valor: l.bookingCourtValue(
+              conditionText(l, e.space),
+              e.space.number,
+            ),
           ),
-          DetailRow(dato: 'Fecha', valor: longDate(e.date)),
+          DetailRow(dato: l.bookingRowDate, valor: longDate(e.date)),
           const SizedBox(height: Spacing.s8),
         ],
       ),

@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 
@@ -18,6 +19,7 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final back = AppLocalizations.of(context).commonBack;
     final goBack = onBack ?? () => Navigator.of(context).maybePop();
     return AppBar(
       backgroundColor: p.bgBase,
@@ -29,14 +31,14 @@ class TopBar extends StatelessWidget implements PreferredSizeWidget {
       leading: Padding(
         padding: const EdgeInsets.only(left: Spacing.s12),
         // The Flutter tooltip is not the button label: without this, the screen reader
-        // announces it as «Volver» but it cannot be found by name.
+        // announces it as «Back» but it cannot be found by name.
         child: Semantics(
           button: true,
-          label: 'Volver',
+          label: back,
           onTap: goBack,
           excludeSemantics: true,
           child: IconButton(
-            tooltip: 'Volver',
+            tooltip: back,
             onPressed: goBack,
             icon: Icon(
               Icons.chevron_left_rounded,

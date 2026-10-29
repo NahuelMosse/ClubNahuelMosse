@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
 import '../../../common/fixed_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 class SpaceSearchBar extends StatelessWidget {
@@ -19,15 +20,16 @@ class SpaceSearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return FixedBar(
       color: p.bgSurface,
       child: Row(
         children: [
-          TextActionButton(label: 'LIMPIAR', onTap: alLimpiar),
+          TextActionButton(label: l.spaceSearchClear, onTap: alLimpiar),
           const SizedBox(width: Spacing.s12),
           Expanded(
             child: PrimaryButton(
-              label: 'CONSULTAR',
+              label: l.spaceSearchRun,
               onTap: alConsultar,
               loading: consultando,
             ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -14,16 +15,17 @@ class RegisterLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          '¿No tenés cuenta?',
+          l10n.loginNoAccount,
           style: Texts.caption.copyWith(color: p.textOnMediaMuted),
         ),
         TextActionButton(
-          label: 'COMENZAR',
+          label: l10n.loginStart,
           icon: Icons.arrow_forward_rounded,
           overPhoto: true,
           onTap: submitting ? null : () => context.go('/registro'),

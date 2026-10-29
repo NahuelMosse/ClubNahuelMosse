@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
@@ -36,6 +37,7 @@ class BookingsHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final result = this.result;
     return SliverPadding(
       padding: const EdgeInsets.fromLTRB(
@@ -48,7 +50,7 @@ class BookingsHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AdminHeader(title: 'Reservas', session: session),
+            AdminHeader(title: l10n.adminBookingsTitle, session: session),
             const SizedBox(height: Spacing.s16),
             BookingSearch(controller: search, onOpenFilters: onOpenFilters),
             const SizedBox(height: Spacing.s16),
@@ -64,10 +66,8 @@ class BookingsHeader extends StatelessWidget {
                   Expanded(
                     child: Text(
                       filters.hasFilters
-                          ? '${result.total} '
-                                '${result.total == 1 ? 'RESULTADO' : 'RESULTADOS'}'
-                          : '${result.total} '
-                                '${result.total == 1 ? 'RESERVA EN TOTAL' : 'RESERVAS EN TOTAL'}',
+                          ? l10n.adminResultsCount(result.total)
+                          : l10n.adminTotalBookings(result.total),
                       style: Texts.overline.copyWith(color: p.textMuted),
                     ),
                   ),
@@ -75,7 +75,7 @@ class BookingsHeader extends StatelessWidget {
                   // state below: the button is not duplicated.
                   if (filters.hasFilters && result.total > 0)
                     TextActionButton(
-                      label: 'LIMPIAR FILTROS',
+                      label: l10n.adminClearFilters,
                       onTap: onClearFilters,
                     ),
                 ],

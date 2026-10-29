@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/account_card.dart';
 import '../../session/presentation/session.dart';
@@ -21,16 +22,17 @@ class AccountActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         OutlineButton(
-          label: 'CERRAR SESIÓN',
+          label: l10n.accountSignOutUpper,
           onTap: deactivating ? null : () => signOut(context, session),
         ),
         const SizedBox(height: Spacing.s8),
         OutlineButton(
-          label: deactivating ? 'ELIMINANDO TU CUENTA…' : 'ELIMINAR CUENTA',
+          label: deactivating ? l10n.accountDeleting : l10n.accountDeleteUpper,
           danger: true,
           onTap: deactivating ? null : onConfirmDeactivation,
         ),

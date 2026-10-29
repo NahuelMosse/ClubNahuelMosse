@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/appearance.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -12,6 +13,7 @@ class DarkMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: appearance,
       builder: (context, _) {
@@ -19,7 +21,7 @@ class DarkMode extends StatelessWidget {
         // Toda la fila alterna el tema, no sólo el interruptor.
         return Semantics(
           container: true,
-          label: 'Modo oscuro',
+          label: l10n.profileDarkMode,
           toggled: appearance.dark,
           onTap: toggle,
           excludeSemantics: true,
@@ -40,7 +42,7 @@ class DarkMode extends StatelessWidget {
                   const SizedBox(width: Spacing.s12),
                   Expanded(
                     child: Text(
-                      'Modo oscuro',
+                      l10n.profileDarkMode,
                       style: Texts.bodyStrong.copyWith(color: p.textPrimary),
                     ),
                   ),

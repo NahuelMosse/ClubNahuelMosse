@@ -1,0 +1,47 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "interpretation",
+    "security"
+  ],
+  "modules": [],
+  "signals": [
+    "i18n"
+  ],
+  "words": [
+    "migracion",
+    "sesión"
+  ],
+  "files": [
+    "apps/mobile/l10n.yaml",
+    "apps/mobile/pubspec.yaml",
+    "apps/mobile/lib/l10n/app_en.arb",
+    "apps/mobile/lib/l10n/app_es.arb",
+    "apps/mobile/lib/l10n/app_localizations*.dart",
+    "apps/mobile/lib/common/app_language.dart",
+    "apps/mobile/lib/app.dart",
+    "apps/mobile/lib/main.dart",
+    "apps/mobile/lib/common/dates.dart",
+    "apps/mobile/test/flutter_test_config.dart",
+    "apps/mobile/test/soporte/montar.dart",
+    "apps/mobile/test/bilingual_app_test.dart",
+    "apps/mobile/lib/features/session/**",
+    "(presentation",
+    "rule)",
+    "apps/mobile/lib/features/users/**",
+    "apps/mobile/lib/features/home/**",
+    "apps/mobile/lib/router.dart",
+    "apps/mobile/lib/redirect.dart",
+    "apps/mobile/test/bilingual_account_test.dart",
+    "apps/mobile/lib/features/bookings/**",
+    "apps/mobile/lib/features/venues/**",
+    "apps/mobile/lib/features/spaces/**",
+    "apps/mobile/test/bilingual_bookings_test.dart",
+    "apps/mobile/lib/features/admin/**",
+    "apps/mobile/lib/features/notifications/**",
+    "apps/mobile/lib/common/**",
+    "apps/mobile/test/bilingual_admin_test.dart"
+  ],
+  "tasks": 5
+}

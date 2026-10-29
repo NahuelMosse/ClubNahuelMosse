@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/appearance.dart';
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/profile.dart';
 import '../../session/presentation/session.dart';
@@ -41,6 +42,7 @@ class MyProfileContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     // Una pantalla corta y fija: todo queda armado aunque salga de la vista.
     return SingleChildScrollView(
       child: Column(
@@ -60,11 +62,11 @@ class MyProfileContent extends StatelessWidget {
                 FadeIn(
                   delay: const Duration(milliseconds: 100),
                   child: ProfileCard(
-                    title: 'DATOS PERSONALES',
+                    title: l10n.profilePersonalUpper,
                     action: editing
                         ? null
                         : SmallButton(
-                            text: 'Editar',
+                            text: l10n.profileEdit,
                             icon: Icons.edit_outlined,
                             onTap: onEdit,
                           ),
@@ -81,10 +83,10 @@ class MyProfileContent extends StatelessWidget {
                 FadeIn(
                   delay: const Duration(milliseconds: 180),
                   child: ProfileCard(
-                    title: 'SEGURIDAD',
+                    title: l10n.profileSecurityUpper,
                     child: ProfileRow(
                       icon: Icons.lock_outline_rounded,
-                      text: 'Cambiar contraseña',
+                      text: l10n.changePasswordTitle,
                       onTap: () => context.push('/perfil/contrasena'),
                     ),
                   ),
@@ -93,7 +95,7 @@ class MyProfileContent extends StatelessWidget {
                 FadeIn(
                   delay: const Duration(milliseconds: 260),
                   child: ProfileCard(
-                    title: 'APARIENCIA',
+                    title: l10n.profileAppearanceUpper,
                     child: DarkMode(appearance: appearance),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../common/button.dart';
 import '../../../common/card_frame.dart';
 import '../../../common/in_progress.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// The card of a list item: its [details] and the edit and deactivate buttons, which under
@@ -47,7 +48,7 @@ class AdminCard extends StatelessWidget {
       onTap: onEdit,
     );
     final Widget deactivate = deactivating
-        ? InProgress('Dando de baja $name')
+        ? InProgress(AppLocalizations.of(context).adminDeactivatingNamed(name))
         : OutlineButton(
             label: deactivateText,
             icon: Icons.delete_outline_rounded,

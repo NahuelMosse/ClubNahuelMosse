@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -12,6 +13,7 @@ class BookingDetailHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.s8,
@@ -23,7 +25,7 @@ class BookingDetailHeader extends StatelessWidget {
         children: [
           IconButton(
             onPressed: onBack,
-            tooltip: 'Volver',
+            tooltip: l10n.adminBack,
             icon: const Icon(Icons.arrow_back_rounded),
             color: p.textPrimary,
           ),
@@ -31,7 +33,7 @@ class BookingDetailHeader extends StatelessWidget {
             child: Semantics(
               header: true,
               child: Text(
-                'Detalle de reserva',
+                l10n.adminBookingDetailTitle,
                 style: Texts.h2.copyWith(color: p.textPrimary),
               ),
             ),

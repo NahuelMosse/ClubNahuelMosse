@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
@@ -24,16 +25,16 @@ class DurationSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return SlotsSection(
-      titulo: 'DURACIÓN',
+      titulo: l.availabilityDuration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DurationSelector(horas: horas, alCambiar: alCambiar),
           const SizedBox(height: Spacing.s8),
           Text(
-            'Horas completas, de $minHours a $maxHours h. '
-            'La sede cierra a las $cierre.',
+            l.availabilityDurationHint(cierre, maxHours, minHours),
             style: Texts.caption.copyWith(color: p.textSecondary),
           ),
         ],

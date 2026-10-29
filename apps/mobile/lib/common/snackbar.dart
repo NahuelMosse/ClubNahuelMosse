@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 
@@ -48,7 +49,7 @@ class ErrorSnackbar extends StatelessWidget {
               ),
             ),
             IconButton(
-              tooltip: 'Cerrar aviso',
+              tooltip: AppLocalizations.of(context).commonCloseNotice,
               onPressed: onClose,
               icon: Icon(
                 Icons.close_rounded,

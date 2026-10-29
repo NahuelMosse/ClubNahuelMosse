@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking.dart';
 import '../../bookings/presentation/booking_card.dart';
@@ -27,36 +28,39 @@ class NextBooking extends StatelessWidget {
   final VoidCallback? alModificar;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      Spacing.s24,
-      Spacing.s24,
-      Spacing.s24,
-      0,
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Expanded(child: HomeTitle('TU PRÓXIMA RESERVA')),
-            TextActionButton(
-              label: 'VER TODAS →',
-              onTap: () => context.go('/reservas'),
-            ),
-          ],
-        ),
-        const SizedBox(height: Spacing.s12),
-        BookingCard(
-          reserva: reserva,
-          catalogo: catalogo,
-          cancelable: reserva.cancelable,
-          cancelando: cancelando,
-          cuentaRegresiva: true,
-          alCancelar: alCancelar,
-          alModificar: alModificar,
-        ),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.s24,
+        Spacing.s24,
+        Spacing.s24,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(child: HomeTitle(l10n.homeNextBooking)),
+              TextActionButton(
+                label: l10n.homeViewAll,
+                onTap: () => context.go('/reservas'),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.s12),
+          BookingCard(
+            reserva: reserva,
+            catalogo: catalogo,
+            cancelable: reserva.cancelable,
+            cancelando: cancelando,
+            cuentaRegresiva: true,
+            alCancelar: alCancelar,
+            alModificar: alModificar,
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/dates.dart';
+import '../../../l10n/app_localizations.dart';
 import '../domain/booking.dart';
 import 'availability_note.dart';
 
@@ -17,13 +18,13 @@ class ModificationNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return AvailabilityNote(
-      texto:
-          'Estás modificando tu reserva del '
-          '${shortDay(reserva.startsAt)}, '
-          '${timeRange(reserva.startsAt, reserva.endsAt)}. '
-          'Mantenés la misma duración de ${duration(horas)} '
-          'y el horario anterior se libera al guardar.',
+      texto: l.bookingModifyNote(
+        shortDay(reserva.startsAt),
+        l.bookingDuration(horas),
+        timeRange(reserva.startsAt, reserva.endsAt),
+      ),
     );
   }
 }

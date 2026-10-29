@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'field_input.dart';
@@ -175,8 +176,9 @@ class PasswordToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return IconButton(
-      tooltip: visible ? 'Ocultar contraseña' : 'Mostrar contraseña',
+      tooltip: visible ? l10n.commonHidePassword : l10n.commonShowPassword,
       onPressed: onChanged,
       icon: Icon(
         visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,

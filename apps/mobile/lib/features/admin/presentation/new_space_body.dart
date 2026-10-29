@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../common/button.dart';
 import '../../../common/selector.dart';
 import '../../../common/snackbar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/new_space_field.dart';
 import 'field_pair.dart';
@@ -36,6 +37,7 @@ class NewSpaceBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final f = form;
+    final l10n = AppLocalizations.of(context);
     final notice = f.notice;
     return SingleChildScrollView(
       padding: Spacing.formPagePadding,
@@ -50,30 +52,30 @@ class NewSpaceBody extends StatelessWidget {
             ),
             const SizedBox(height: Spacing.s16),
           ],
-          ...spaceFormHeading(context, 'Nuevo espacio deportivo'),
-          ..._selectors(),
+          ...spaceFormHeading(context, l10n.adminNewSpaceHeading),
+          ..._selectors(l10n),
           PricePerHourField(
             controller: f.price,
-            error: f.error(NewSpaceField.price),
+            error: f.error(NewSpaceField.price, l10n),
             enabled: !f.submitting && !f.loading,
           ),
           const SizedBox(height: Spacing.s16),
           GeneratedName(
             name: f.suggested?.$1,
             computing: f.computing,
-            missing: f.missingForName,
+            missing: nameMissingText(l10n, f.missingForName),
             onRetry: f.nameFailure == null || f.submitting ? null : onRetryName,
           ),
           const SizedBox(height: Spacing.s16),
           PrimaryButton(
-            label: 'GUARDAR ESPACIO',
+            label: l10n.adminSaveSpace,
             loading: f.submitting,
             dimmed: !f.isComplete,
             onTap: onSave,
           ),
           const SizedBox(height: Spacing.s12),
           OutlineButton(
-            label: 'CANCELAR',
+            label: l10n.adminCancel,
             onTap: f.submitting ? null : () => Navigator.of(context).maybePop(),
           ),
         ],
@@ -81,68 +83,68 @@ class NewSpaceBody extends StatelessWidget {
     );
   }
 
-  List<Widget> _selectors() {
+  List<Widget> _selectors(AppLocalizations l10n) {
     final f = form;
     final venues = f.venueOptions;
     final enabled = !f.submitting && !f.loading;
     return [
       SelectorField(
-        label: 'SEDE',
-        semanticLabel: 'Sede',
+        label: l10n.adminVenueUpper,
+        semanticLabel: l10n.adminVenue,
         value: f.venue?.name,
         placeholder: venues == null || venues.isNotEmpty
-            ? 'Seleccioná una sede'
-            : 'Todavía no hay sedes',
+            ? l10n.adminSelectVenue
+            : l10n.adminNoVenues,
         icon: Icons.expand_more_rounded,
-        error: f.error(NewSpaceField.venue),
+        error: f.error(NewSpaceField.venue, l10n),
         onTap: enabled && (venues?.isNotEmpty ?? false) ? onPickVenue : null,
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
-        label: 'DEPORTE',
-        semanticLabel: 'Deporte',
+        label: l10n.adminSportUpper,
+        semanticLabel: l10n.adminSport,
         value: f.sport?.name,
-        placeholder: 'Seleccioná un deporte',
+        placeholder: l10n.adminSelectSport,
         icon: Icons.expand_more_rounded,
-        error: f.error(NewSpaceField.sport),
+        error: f.error(NewSpaceField.sport, l10n),
         onTap: enabled ? onPickSport : null,
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
-        label: 'TIPO',
-        semanticLabel: 'Tipo',
+        label: l10n.adminTypeUpper,
+        semanticLabel: l10n.adminType,
         value: f.type?.name,
-        placeholder: 'Seleccioná el tipo',
+        placeholder: l10n.adminSelectType,
         icon: Icons.expand_more_rounded,
-        error: f.error(NewSpaceField.type),
+        error: f.error(NewSpaceField.type, l10n),
         onTap: enabled && f.sport != null ? onPickType : null,
       ),
       const SizedBox(height: Spacing.s12),
       FieldPair(
         left: SelectorField(
-          label: 'CONDICIÓN',
-          semanticLabel: 'Condición',
+          label: l10n.adminConditionUpper,
+          semanticLabel: l10n.adminCondition,
           value: switch (f.roofed) {
-            true => 'Techada',
-            false => 'Al aire libre',
+            true => l10n.adminCovered,
+            false => l10n.adminOpenAir,
             null => null,
           },
-          placeholder: 'Seleccioná',
+          placeholder: l10n.adminSelect,
           icon: Icons.expand_more_rounded,
-          error: f.error(NewSpaceField.roofing),
+          error: f.error(NewSpaceField.roofing, l10n),
           onTap: enabled ? () => onPickYesNo(NewSpaceField.roofing) : null,
         ),
         right: SelectorField(
-          label: 'ILUMINACIÓN',
-          semanticLabel: 'Iluminación',
+          label: l10n.adminLightingUpper,
+          semanticLabel: l10n.adminLighting,
           value: switch (f.lit) {
-            true => 'Iluminada',
-            false => 'Sin iluminación',
+            true => l10n.adminLit,
+            false => l10n.adminUnlit,
             null => null,
           },
-          placeholder: 'Seleccioná',
+          placeholder: l10n.adminSelect,
           icon: Icons.expand_more_rounded,
-          error: f.error(NewSpaceField.lighting),
+          error: f.error(NewSpaceField.lighting, l10n),
           onTap: enabled ? () => onPickYesNo(NewSpaceField.lighting) : null,
         ),
       ),

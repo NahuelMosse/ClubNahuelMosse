@@ -1,6 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../session/presentation/session.dart';
 import '../../spaces/domain/space.dart';
 import '../../spaces/domain/space_exceptions.dart';
@@ -17,23 +18,26 @@ Future<void> deactivateSpace(
   required Session session,
   required ValueChanged<bool> submitting,
   bool returnToList = false,
-}) => deactivate(
-  context,
-  confirm: () => confirmSpaceDeactivation(context, space.name),
-  request: () async {
-    try {
-      await spaces.deactivate(space.id);
-      return DeactivationResult.done;
-    } on SpaceUnavailable {
-      return DeactivationResult.gone;
-    } on SpaceHasBookings {
-      return DeactivationResult.withBookings;
-    }
-  },
-  showWithBookings: () => showSpaceWithBookings(context),
-  success: 'El espacio fue dado de baja correctamente',
-  notifyChange: spaces.notifyChange,
-  session: session,
-  submitting: submitting,
-  returnTo: returnToList ? '/admin/espacios' : null,
-);
+}) {
+  final l10n = AppLocalizations.of(context);
+  return deactivate(
+    context,
+    confirm: () => confirmSpaceDeactivation(context, space.name),
+    request: () async {
+      try {
+        await spaces.deactivate(space.id);
+        return DeactivationResult.done;
+      } on SpaceUnavailable {
+        return DeactivationResult.gone;
+      } on SpaceHasBookings {
+        return DeactivationResult.withBookings;
+      }
+    },
+    showWithBookings: () => showSpaceWithBookings(context),
+    success: l10n.adminSpaceDeactivatedDone,
+    notifyChange: spaces.notifyChange,
+    session: session,
+    submitting: submitting,
+    returnTo: returnToList ? '/admin/espacios' : null,
+  );
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/avatar.dart';
 import '../../../common/badge.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/profile.dart';
@@ -43,7 +44,9 @@ class AccountHeader extends StatelessWidget {
                 ),
                 if (isUser) ...[
                   const SizedBox(height: Spacing.s4),
-                  const AccentBadge(label: 'MIEMBRO ACTIVO'),
+                  AccentBadge(
+                    label: AppLocalizations.of(context).accountActiveMember,
+                  ),
                 ],
               ],
             ),

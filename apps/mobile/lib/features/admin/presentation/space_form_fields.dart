@@ -2,20 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../../../common/price_format.dart';
 import '../../../common/selector.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
-
-const requiredMessage = 'Este campo es obligatorio';
-const _maxPrice = 9999999;
+import '../domain/name_missing.dart';
+import '../domain/space_price.dart';
 
 /// The error of the price-per-hour [text]: required and between $ 1 and $ 9.999.999.
-String? priceError(String text) {
+String? priceError(AppLocalizations l10n, String text) {
   final price = readPrice(text);
-  if (price == null) return requiredMessage;
-  return price < 1 || price > _maxPrice
-      ? 'Ingresá un precio entre \$ 1 y \$ 9.999.999'
-      : null;
+  if (price == null) return l10n.adminRequiredField;
+  return validPricePerHour(price) ? null : l10n.adminPriceRange;
 }
+
+/// What is missing to compute the name of a space, in words.
+String nameMissingText(AppLocalizations l10n, NameMissing missing) =>
+    switch (missing) {
+      NameMissing.venueSportAndType => l10n.adminMissingAll,
+      NameMissing.venue => l10n.adminMissingVenue,
+      NameMissing.sport => l10n.adminMissingSport,
+      NameMissing.type => l10n.adminMissingType,
+    };
 
 /// The title of a space form, with the explanation of how the name is built.
 List<Widget> spaceFormHeading(BuildContext context, String title) {
@@ -27,8 +34,7 @@ List<Widget> spaceFormHeading(BuildContext context, String title) {
     ),
     const SizedBox(height: Spacing.s4),
     Text(
-      'El nombre se arma solo con la sede, la dirección, el deporte, '
-      'el tipo y el número.',
+      AppLocalizations.of(context).adminSpaceFormHint,
       style: Texts.body.copyWith(color: p.textSecondary),
     ),
     const SizedBox(height: Spacing.s16),
@@ -41,11 +47,14 @@ Future<bool?> pickYesNo(
   BuildContext context, {
   required bool roofing,
   required bool? selected,
-}) => pickOption<bool>(
-  context,
-  title: roofing ? 'Condición' : 'Iluminación',
-  options: roofing
-      ? const [(false, 'Al aire libre'), (true, 'Techada')]
-      : const [(true, 'Iluminada'), (false, 'Sin iluminación')],
-  selected: selected,
-);
+}) {
+  final l10n = AppLocalizations.of(context);
+  return pickOption<bool>(
+    context,
+    title: roofing ? l10n.adminCondition : l10n.adminLighting,
+    options: roofing
+        ? [(false, l10n.adminOpenAir), (true, l10n.adminCovered)]
+        : [(true, l10n.adminLit), (false, l10n.adminUnlit)],
+    selected: selected,
+  );
+}

@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/theme.dart';
 import '../theme/tokens.dart';
 import 'button.dart';
@@ -52,16 +53,17 @@ class PasswordUpdated extends StatelessWidget {
   final VoidCallback onPrimaryTap;
 
   @override
-  Widget build(BuildContext context) => ResultScreen(
-    icon: Icons.check_circle_outline_rounded,
-    tone: ResultTone.success,
-    title: 'Contraseña actualizada',
-    text:
-        'Tu contraseña se cambió correctamente. Usala la próxima vez que '
-        'inicies sesión.',
-    primary: primary,
-    onPrimaryTap: onPrimaryTap,
-  );
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ResultScreen(
+      icon: Icons.check_circle_outline_rounded,
+      tone: ResultTone.success,
+      title: l10n.commonPasswordUpdatedTitle,
+      text: l10n.commonPasswordUpdatedText,
+      primary: primary,
+      onPrimaryTap: onPrimaryTap,
+    );
+  }
 }
 
 /// A password form: bar, title, explanation, [fields] and the save button, which is
@@ -119,7 +121,7 @@ class PasswordFormTemplate extends StatelessWidget {
       ),
       bottomNavigationBar: ActionBar(
         child: PrimaryButton(
-          label: 'GUARDAR CONTRASEÑA',
+          label: AppLocalizations.of(context).commonSavePassword,
           loading: submitting,
           onTap: onSave,
         ),

@@ -6,10 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../../../common/dates.dart';
 import '../../../common/error_dialog.dart';
 import '../../../common/pending_booking.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
+import '../../spaces/presentation/space_texts.dart';
 import '../data/api_errors.dart';
 import '../domain/availability_exceptions.dart';
 import '../domain/booking_choice.dart';
@@ -74,9 +76,9 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
       setState(() => _enviando = false);
       await showTimeSlotTaken(
         context,
-        'Mientras confirmabas, otra persona reservó Cancha ${e.space.number} · '
-        '${shortDay(e.date)}, ${e.start} – ${e.end}. '
-        'Elegí otro horario disponible.',
+        AppLocalizations.of(
+          context,
+        ).bookingTaken(shortDay(e.date), e.end, e.space.number, e.start),
       );
       if (mounted) _volver(ConfirmResult.ocupado);
       return;
@@ -117,25 +119,33 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
   @override
   Widget build(BuildContext context) {
     final e = widget.eleccion;
+    final l = AppLocalizations.of(context);
     // Mientras se guarda no se sale: la reserva podría quedar hecha sin comprobante.
     return ConfirmationSkeleton(
-      titulo: 'Confirmá tu reserva',
+      titulo: l.bookingConfirmTitle,
       enviando: _enviando,
       alVolver: _volver,
-      textoPrimario: 'CONFIRMAR RESERVA',
+      textoPrimario: l.bookingConfirmButton,
       alPrimario: _confirmar,
-      textoSecundario: 'CANCELAR',
+      textoSecundario: l.bookingCancel,
       alSecundario: _volver,
       peligro: true,
       tarjeta: BookingChoiceCard(
         eleccion: e,
         filas: [
           DetailRow(
-            dato: 'Cancha',
-            valor: 'Cancha ${e.space.number} · ${e.space.condition}',
+            dato: l.bookingRowCourt,
+            valor: l.bookingCourtValue(
+              conditionText(l, e.space),
+              e.space.number,
+            ),
           ),
-          DetailRow(dato: 'Fecha', valor: longDate(e.date)),
-          DetailRow(dato: 'Horario', valor: e.timeRange, destacado: true),
+          DetailRow(dato: l.bookingRowDate, valor: longDate(e.date)),
+          DetailRow(
+            dato: l.bookingRowTime,
+            valor: e.timeRange,
+            destacado: true,
+          ),
           const SizedBox(height: Spacing.s8),
         ],
       ),

@@ -49,6 +49,7 @@ import 'features/venues/domain/venue.dart';
 import 'features/venues/presentation/venue_screen.dart';
 import 'features/venues/presentation/venues.dart';
 import 'features/venues/presentation/venues_screen.dart';
+import 'l10n/app_localizations.dart';
 import 'redirect.dart';
 
 /// Las rutas de la app, con lo que cada pantalla recibe.
@@ -362,8 +363,8 @@ class AppRouter {
             sesion: session,
             modificando: reserva,
             volverA: state.uri.queryParameters['desde'] == 'inicio'
-                ? 'Inicio'
-                : 'Mis reservas',
+                ? AppLocalizations.of(context).homeBackLabel
+                : AppLocalizations.of(context).accountMyBookings,
           ),
           _ => const SizedBox.shrink(),
         }),

@@ -3,12 +3,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/bottom_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import '../../spaces/domain/space.dart';
 import '../../spaces/presentation/spaces.dart';
-import '../data/api_failures.dart';
 import 'admin_card_skeleton.dart';
 import 'admin_listing.dart';
 import 'admin_listing_header.dart';
@@ -53,59 +53,52 @@ class _AdminSpacesScreenState extends State<AdminSpacesScreen> {
 
   Future<void> _load() async {
     setState(() => _failed = false);
-    Object? error;
-    var expired = false;
-    try {
-      final catalog = await widget.spaces.repository.catalog();
-      final spaces = await widget.spaces.repository.active();
-      if (mounted) setState(() => _data = (spaces, catalog));
-      return;
-    } on SessionExpired {
-      expired = true;
-    } on FalloDeRed catch (e) {
-      error = e;
-    }
-    if (!mounted) return;
-    setState(() => _failed = true);
-    await avisarFalloDeCarga(
+    await loadOrNotify(
       context,
       session: widget.session,
-      expired: expired,
-      error: error,
-      reintentar: _load,
+      load: () async {
+        final catalog = await widget.spaces.repository.catalog();
+        final spaces = await widget.spaces.repository.active();
+        if (mounted) setState(() => _data = (spaces, catalog));
+      },
+      onFailed: () => setState(() => _failed = true),
+      retry: _load,
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final data = _data;
     return AdminListingTemplate(
       section: AdminSection.spaces,
-      title: 'Espacios',
+      title: l10n.adminSpacesTitle,
       session: widget.session,
-      createText: 'ALTA ESPACIO',
+      createText: l10n.adminAddSpace,
       createRoute: '/admin/espacios/nuevo',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: data != null,
       failed: _failed,
       cardShape: AdminCardShape.space,
-      items: data == null ? const [] : _items(data.$1, data.$2, p),
+      items: data == null ? const [] : _items(data.$1, data.$2, p, l10n),
     );
   }
 
-  List<Widget> _items(List<Space> spaces, Catalog catalog, Palette p) {
+  List<Widget> _items(
+    List<Space> spaces,
+    Catalog catalog,
+    Palette p,
+    AppLocalizations l10n,
+  ) {
     final venues = {for (final e in spaces) e.venueId}.length;
-    final howMany = spaces.length == 1
-        ? '1 ESPACIO ACTIVO'
-        : '${spaces.length} ESPACIOS ACTIVOS';
     return [
       ...adminListingHeader(
         p,
-        count: '$howMany · ${venues == 1 ? '1 SEDE' : '$venues SEDES'}',
+        count: l10n.adminSpacesSummary(spaces.length, venues),
         empty: spaces.isEmpty,
-        emptyText: 'Todavía no hay espacios',
+        emptyText: l10n.adminNoSpaces,
       ),
       for (final space in spaces) ...[
         AdminSpaceCard(

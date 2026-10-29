@@ -1,4 +1,7 @@
-import '../../../common/dates.dart';
+import 'weekdays_label.dart';
+
+export 'open_days.dart';
+export 'weekdays_label.dart';
 
 /// Una sede activa, como la devuelve la API.
 class Venue {
@@ -29,7 +32,7 @@ class Venue {
   final List<String> sports;
 
   /// «Lunes a sábado», o los días sueltos si no son seguidos desde el lunes.
-  String get daysLabel => weekdaysLabel(days);
+  WeekdaysLabel get daysLabel => weekdaysLabel(days);
 
   static Venue? fromJson(Object? json) {
     if (json case {
@@ -57,29 +60,4 @@ class Venue {
     }
     return null;
   }
-}
-
-/// Las opciones de «DÍAS QUE ABRE» del alta de sede.
-enum OpenDays {
-  mondayToSunday('Lunes a domingo', [1, 2, 3, 4, 5, 6, 7]),
-  mondayToSaturday('Lunes a sábado', [1, 2, 3, 4, 5, 6]),
-  mondayToFriday('Lunes a viernes', [1, 2, 3, 4, 5]);
-
-  const OpenDays(this.text, this.days);
-  final String text;
-  final List<int> days;
-}
-
-String weekdaysLabel(List<int> days) {
-  final sorted = {...days}.toList()..sort();
-  for (final option in OpenDays.values) {
-    if (sorted.length == option.days.length &&
-        sorted.indexed.every((e) => e.$2 == option.days[e.$1])) {
-      return option.text;
-    }
-  }
-  return [
-    for (final d in sorted)
-      if (d >= 1 && d <= 7) shortWeekdayName(d),
-  ].join(', ');
 }

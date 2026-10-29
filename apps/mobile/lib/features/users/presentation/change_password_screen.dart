@@ -2,12 +2,13 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
-import '../../../common/network_failure.dart';
 import '../../../common/password_form.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
+import '../../session/presentation/request_failure.dart';
 import '../../session/presentation/session.dart';
 import '../domain/registration_rules.dart';
 import 'password_rules.dart';
@@ -61,7 +62,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   String _valueOf(_Field field) => _controllers[field.index].text;
 
-  List<String> get _missing => passwordProblems(_valueOf(_Field.newPassword));
+  List<FieldProblem> get _missing =>
+      passwordProblems(_valueOf(_Field.newPassword));
 
   bool get _match => _valueOf(_Field.repeat) == _valueOf(_Field.newPassword);
 
@@ -71,7 +73,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     final finishedTyping =
         !_repeatFocus.hasFocus ||
         repeat.length >= _valueOf(_Field.newPassword).length;
-    return finishedTyping ? 'Las contraseñas no coinciden' : null;
+    return finishedTyping
+        ? AppLocalizations.of(context).rulePasswordMismatch
+        : null;
   }
 
   bool get _complete =>
@@ -84,40 +88,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (_submitting || !_complete) return;
     FocusScope.of(context).unfocus();
     setState(() => _submitting = true);
-    Object? failure;
-    var expired = false;
-    try {
-      await widget.session.changePassword(
-        _valueOf(_Field.current),
-        _valueOf(_Field.newPassword),
-      );
-      if (mounted) setState(() => _done = true);
-    } on PasswordRejected catch (e) {
-      if (mounted) {
-        setState(() {
-          for (final MapEntry(:key, :value) in e.errors.entries) {
-            final field = switch (key) {
-              'actual' => _Field.current,
-              'nueva' => _Field.newPassword,
-              _ => null,
-            };
-            if (field != null) _serverErrors[field] = value;
-          }
-        });
+    final outcome = await captureRequestFailure(() async {
+      try {
+        await widget.session.changePassword(
+          _valueOf(_Field.current),
+          _valueOf(_Field.newPassword),
+        );
+        if (mounted) setState(() => _done = true);
+      } on PasswordRejected catch (e) {
+        if (mounted) {
+          setState(() {
+            for (final MapEntry(:key, :value) in e.errors.entries) {
+              final field = switch (key) {
+                'actual' => _Field.current,
+                'nueva' => _Field.newPassword,
+                _ => null,
+              };
+              if (field != null) _serverErrors[field] = value;
+            }
+          });
+        }
       }
-    } on SessionExpired {
-      expired = true;
-    } on FalloDeRed catch (e) {
-      failure = e;
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+    });
+    if (mounted) setState(() => _submitting = false);
     if (!mounted) return;
     await avisarFalloDeEnvio(
       context,
       session: widget.session,
-      expired: expired,
-      error: failure,
+      expired: outcome.expired,
+      error: outcome.error,
       reintentar: _save,
     );
   }
@@ -152,39 +151,39 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_done) {
       return PasswordUpdated(
-        primary: 'VOLVER AL PERFIL',
+        primary: l10n.changePasswordBack,
         onPrimaryTap: () => Navigator.of(context).maybePop(),
       );
     }
     final newPassword = _valueOf(_Field.newPassword);
     return PasswordFormTemplate(
-      bar: const TopBar(title: 'Cambiar contraseña'),
-      title: 'Cambiá tu contraseña',
-      explanation:
-          'Necesitamos tu contraseña actual para confirmar que sos vos.',
+      bar: TopBar(title: l10n.changePasswordTitle),
+      title: l10n.changePasswordHeading,
+      explanation: l10n.changePasswordExplanation,
       fields: [
         _field(
           _Field.current,
-          label: 'CONTRASEÑA ACTUAL',
-          accessible: 'Contraseña actual',
-          placeholder: 'Tu contraseña de hoy',
+          label: l10n.passwordCurrentUpper,
+          accessible: l10n.passwordCurrent,
+          placeholder: l10n.passwordCurrentPlaceholder,
         ),
         const SizedBox(height: Spacing.s16),
         _field(
           _Field.newPassword,
-          label: 'CONTRASEÑA NUEVA',
-          accessible: 'Contraseña nueva',
-          placeholder: 'Mínimo 8 caracteres',
+          label: l10n.passwordNewUpper,
+          accessible: l10n.passwordNew,
+          placeholder: l10n.passwordNewPlaceholder,
         ),
         PasswordRules(password: newPassword),
         const SizedBox(height: Spacing.s16),
         _field(
           _Field.repeat,
-          label: 'REPETIR CONTRASEÑA',
-          accessible: 'Repetir contraseña',
-          placeholder: 'Volvé a escribirla',
+          label: l10n.passwordRepeatUpper,
+          accessible: l10n.passwordRepeat,
+          placeholder: l10n.passwordRepeatPlaceholder,
           error: _repeatError,
           focusNode: _repeatFocus,
         ),

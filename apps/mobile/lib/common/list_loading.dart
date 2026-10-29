@@ -2,6 +2,7 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import '../theme/tokens.dart';
 import 'button.dart';
 import 'motion.dart';
@@ -16,7 +17,10 @@ class ListRetry extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.all(Spacing.s24),
     child: Center(
-      child: TextActionButton(label: 'REINTENTAR', onTap: onTap),
+      child: TextActionButton(
+        label: AppLocalizations.of(context).commonRetry,
+        onTap: onTap,
+      ),
     ),
   );
 }
