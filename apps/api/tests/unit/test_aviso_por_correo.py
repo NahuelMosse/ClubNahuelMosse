@@ -17,7 +17,7 @@ USUARIO = UUID(int=7)
 AVISO = Notice(
     title="El club canceló tu reserva",
     body="Fútbol 5 · Sede Morón · Mié 11, 20:00",
-    data={"tipo": "cancelacion_forzosa"},
+    data={"kind": "forced_cancellation"},
 )
 
 
@@ -115,7 +115,7 @@ def test_el_correo_sale_aunque_no_haya_push_y_si_falla_el_aviso_queda_como_estab
     repo = _Repositorio([])
     _entregar(repo, _Canal())
     assert len(enviados) == 1
-    assert repo.envios == ["sin_canal"]
+    assert repo.envios == ["no_channel"]
 
     def roto(mensaje: Message) -> None:
         raise RuntimeError(f"no se pudo enviar a {mensaje.recipient}")
@@ -124,7 +124,7 @@ def test_el_correo_sale_aunque_no_haya_push_y_si_falla_el_aviso_queda_como_estab
     repo, canal = _Repositorio(["token"]), _Canal()
     with caplog.at_level(logging.WARNING):
         _entregar(repo, canal)
-    assert repo.envios == ["enviada"]
+    assert repo.envios == ["sent"]
     assert len(canal.avisos) == 1
     assert "RuntimeError" in caplog.text
     assert DIRECCION not in caplog.text

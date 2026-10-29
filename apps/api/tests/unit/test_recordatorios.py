@@ -104,7 +104,7 @@ def test_el_mensaje_lleva_deporte_sede_y_horario_del_club() -> None:
 
     assert notice.title == "Tu reserva es en 1 hora"
     assert notice.body == "Fútbol 5 · Sede Morón · 21:00 – 22:00"
-    assert notice.data == {"tipo": "recordatorio", "reserva_id": str(_id(7))}
+    assert notice.data == {"kind": "reminder", "booking_id": str(_id(7))}
 
 
 @pytest.mark.parametrize(
@@ -129,7 +129,7 @@ def test_un_envio_que_falla_queda_fallido_sin_reintento_y_no_corta_el_barrido() 
     registrados = send_reminders(repo, CanalQueFalla(), AHORA)
 
     assert registrados == 2
-    assert repo.envios == {_id(1): "fallida", _id(2): "fallida"}
+    assert repo.envios == {_id(1): "failed", _id(2): "failed"}
 
 
 def test_un_token_que_el_servicio_rechaza_se_da_de_baja() -> None:
@@ -139,7 +139,7 @@ def test_un_token_que_el_servicio_rechaza_se_da_de_baja() -> None:
     send_reminders(repo, CanalQueRechaza(("viejo",), enviados=1), AHORA)
 
     assert repo.bajas == ["viejo"]
-    assert repo.envios == {_id(1): "enviada"}
+    assert repo.envios == {_id(1): "sent"}
 
 
 def test_si_el_servicio_no_acepta_ningun_dispositivo_el_envio_es_fallido() -> None:
@@ -147,14 +147,14 @@ def test_si_el_servicio_no_acepta_ningun_dispositivo_el_envio_es_fallido() -> No
 
     send_reminders(repo, CanalQueRechaza(("viejo",), enviados=0), AHORA)
 
-    assert repo.envios == {_id(1): "fallida"}
+    assert repo.envios == {_id(1): "failed"}
 
 
 def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
     repo = RepositorioEnMemoria([_recordatorio()], [])
 
     assert send_reminders(repo, CanalQueFalla(), AHORA) == 1
-    assert repo.envios == {_id(1): "sin_permiso"}
+    assert repo.envios == {_id(1): "no_permission"}
 
 
 def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
@@ -162,7 +162,7 @@ def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
     repo.hay_dispositivos = False
 
     assert send_reminders(repo, CanalQueFalla(), AHORA) == 1
-    assert repo.envios == {_id(1): "sin_canal"}
+    assert repo.envios == {_id(1): "no_channel"}
 
 
 def test_un_aviso_que_otro_barrido_ya_registro_no_se_envia_de_nuevo() -> None:
@@ -192,4 +192,4 @@ def test_sin_canal_configurado_el_aviso_no_figura_como_enviado() -> None:
     repo = RepositorioEnMemoria([_recordatorio()], ["t"])
 
     assert send_reminders(repo, push.NullChannel(), AHORA) == 1
-    assert repo.envios == {_id(1): "sin_canal"}
+    assert repo.envios == {_id(1): "no_channel"}

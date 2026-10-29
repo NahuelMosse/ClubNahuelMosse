@@ -56,7 +56,7 @@ class _Channel:
         return DeliveryResult(sent=len(tokens))
 
 
-def _profile(role: str = "usuario") -> Profile:
+def _profile(role: str = "user") -> Profile:
     return Profile(
         id=UUID(int=1),
         uid="uid",

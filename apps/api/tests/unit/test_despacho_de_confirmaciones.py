@@ -51,7 +51,7 @@ class RepositorioEnMemoria:
         if not self.pendientes:
             return None
         siguiente = self.pendientes.pop(0)
-        self.envios[siguiente.notification_id] = "enviando"
+        self.envios[siguiente.notification_id] = "sending"
         return siguiente
 
     def tokens_with_permission(self, usuario_id: UUID) -> list[str]:
@@ -109,7 +109,7 @@ class CanalQueAcepta:
 
 def _pendiente(numero: int) -> PendingNotice:
     return PendingNotice(
-        _id(numero), _id(3), Notice("Reserva cancelada", "cuerpo", {"tipo": "cancelacion_usuario"})
+        _id(numero), _id(3), Notice("Reserva cancelada", "body", {"kind": "user_cancellation"})
     )
 
 
@@ -121,7 +121,7 @@ def test_el_mensaje_nombra_la_reserva_con_el_dia_y_la_hora_del_club() -> None:
     assert notice.body == (
         "Fútbol 5 · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado."
     )
-    assert notice.data == {"tipo": "cancelacion_usuario", "reserva_id": str(_id(12))}
+    assert notice.data == {"kind": "user_cancellation", "booking_id": str(_id(12))}
 
 
 def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
@@ -130,7 +130,7 @@ def test_sin_dispositivos_con_permiso_el_aviso_queda_sin_permiso() -> None:
 
     assert dispatch_pending(repo, canal) == 1
 
-    assert repo.envios == {_id(1): "sin_permiso"}
+    assert repo.envios == {_id(1): "no_permission"}
     assert canal.enviados == []
 
 
@@ -140,7 +140,7 @@ def test_sin_ningun_dispositivo_registrado_el_aviso_queda_sin_canal() -> None:
 
     assert dispatch_pending(repo, CanalQueAcepta()) == 1
 
-    assert repo.envios == {_id(1): "sin_canal"}
+    assert repo.envios == {_id(1): "no_channel"}
 
 
 def test_un_envio_que_falla_queda_fallido_sin_reintento_y_no_corta_el_despacho() -> None:
@@ -149,7 +149,7 @@ def test_un_envio_que_falla_queda_fallido_sin_reintento_y_no_corta_el_despacho()
 
     assert dispatch_pending(repo, CanalQueFalla()) == 2
 
-    assert repo.envios == {_id(1): "fallida", _id(2): "fallida"}
+    assert repo.envios == {_id(1): "failed", _id(2): "failed"}
 
 
 def test_un_token_rechazado_se_da_de_baja_y_el_aviso_sale_enviado() -> None:
@@ -159,7 +159,7 @@ def test_un_token_rechazado_se_da_de_baja_y_el_aviso_sale_enviado() -> None:
     dispatch_pending(repo, CanalQueAcepta(invalidos=("viejo",)))
 
     assert repo.bajas == ["viejo"]
-    assert repo.envios == {_id(1): "enviada"}
+    assert repo.envios == {_id(1): "sent"}
 
 
 def test_un_despacho_no_repite_lo_que_otro_ya_tomó() -> None:
@@ -177,7 +177,7 @@ def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> No
     """el aviso en curso pasa a fallido y los siguientes salen @supuesto:CU-24.3-SUP-04"""
     repo = RepositorioEnMemoria(
         [
-            PendingNotice(_id(1), _id(7), Notice("t", "c", {"tipo": "cancelacion_usuario"})),
+            PendingNotice(_id(1), _id(7), Notice("t", "c", {"kind": "user_cancellation"})),
             _pendiente(2),
             _pendiente(3),
         ],
@@ -188,7 +188,7 @@ def test_un_fallo_en_el_primer_aviso_lo_deja_fallido_y_no_traba_el_resto() -> No
 
     assert dispatch_pending(repo, canal) == 3
 
-    assert repo.envios == {_id(1): "fallida", _id(2): "enviada", _id(3): "enviada"}
+    assert repo.envios == {_id(1): "failed", _id(2): "sent", _id(3): "sent"}
     assert len(canal.enviados) == 2
 
 
@@ -198,16 +198,16 @@ def test_cada_aviso_dado_por_fallido_queda_en_el_log_con_su_numero_y_su_tipo(
     """el aviso perdido se ve en el log como `aviso_sin_enviar` @REV-03-S5"""
     repo = RepositorioEnMemoria([], ["t"])
     repo.perdidos = [
-        LostNotice(_id(8), "cancelacion_forzosa"),
-        LostNotice(_id(9), "recordatorio"),
+        LostNotice(_id(8), "forced_cancellation"),
+        LostNotice(_id(9), "reminder"),
     ]
 
     with caplog.at_level("ERROR"):
         dispatch_pending(repo, CanalQueAcepta())
 
     assert [(r.levelname, r.getMessage()) for r in caplog.records] == [
-        ("ERROR", f"aviso_sin_enviar notificacion_id={_id(8)} tipo=cancelacion_forzosa"),
-        ("ERROR", f"aviso_sin_enviar notificacion_id={_id(9)} tipo=recordatorio"),
+        ("ERROR", f"aviso_sin_enviar notificacion_id={_id(8)} tipo=forced_cancellation"),
+        ("ERROR", f"aviso_sin_enviar notificacion_id={_id(9)} tipo=reminder"),
     ]
 
 

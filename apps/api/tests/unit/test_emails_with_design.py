@@ -61,7 +61,7 @@ def test_el_correo_de_recuperacion_sale_en_html_con_la_plantilla_el_saludo_el_bo
     assert "<img" not in html
     assert "Hola Ana" in html
     assert "Crear contraseña nueva" in html
-    assert f'href="{BASE_LINK}/enlace/recuperar#codigo=' in html
+    assert f'href="{BASE_LINK}/link/recover#code=' in html
     assert "30 minutos" in html
     assert "una sola vez" in html
     assert "ignorá" in html
@@ -82,7 +82,7 @@ def _booking(**changes: Any) -> Booking:
         "ends_at": starts_at + timedelta(hours=1),
         "price_per_hour": 12000,
         "total": 12000,
-        "status": "activa",
+        "status": "active",
         "reason": None,
         "cancelable": True,
     }
@@ -90,7 +90,7 @@ def _booking(**changes: Any) -> Booking:
 
 
 def _profile(name: str = "Ana") -> Profile:
-    return Profile(_id(1), "uid", name, "Pérez", ADDRESS, "usuario", "30111222", date(1990, 1, 1))
+    return Profile(_id(1), "uid", name, "Pérez", ADDRESS, "user", "30111222", date(1990, 1, 1))
 
 
 def _reminder(venue: str = "Sede Morón") -> Reminder:
@@ -126,7 +126,7 @@ def test_cada_correo_sigue_llevando_su_texto_y_el_html_repite_el_enlace_del_boto
         patch.setattr(routes, "book", lambda *a, **k: _booking())
         routes.create_booking(
             routes.BookingRequest(
-                espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1
+                space_id=cast(Any, _id(2)), date=date(2026, 10, 28), start_hour="20:00", hours=1
             ),
             _profile(),
             cast(Any, None),
@@ -164,7 +164,7 @@ def test_brevo_recibe_htmlcontent_solo_si_hay_html_smtp_la_alternativa_y_el_buzo
         return response()
 
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
-    monkeypatch.setattr(config, "brevo_api_key", "clave")
+    monkeypatch.setattr(config, "brevo_api_key", "key")
     monkeypatch.setattr(config, "email_sender", "club@correo.com")
     email._by_brevo(Message(ADDRESS, "Asunto", "texto", "<p>hola</p>"))
     email._by_brevo(Message(ADDRESS, "Asunto", "texto"))
@@ -205,7 +205,7 @@ def test_brevo_recibe_htmlcontent_solo_si_hay_html_smtp_la_alternativa_y_el_buzo
 
     monkeypatch.setattr(email, "engine", lambda: FakeEngine())
     email._to_outbox(Message(ADDRESS, "Asunto", "texto", "<p>hola</p>"))
-    assert saved == [{"p": ADDRESS, "a": "Asunto", "c": "texto"}]
+    assert saved == [{"recipient": ADDRESS, "subject": "Asunto", "body": "texto"}]
 
 
 def test_un_nombre_o_una_sede_con_marcado_salen_escapados_en_el_html() -> None:
@@ -240,7 +240,7 @@ def test_al_hacer_una_reserva_sale_el_correo_de_confirmacion_con_deporte_sede_di
     tasks = BackgroundTasks()
     response = routes.create_booking(
         routes.BookingRequest(
-            espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1
+            space_id=cast(Any, _id(2)), date=date(2026, 10, 28), start_hour="20:00", hours=1
         ),
         _profile(),
         cast(Any, None),
@@ -276,7 +276,7 @@ def test_si_el_correo_de_confirmacion_falla_la_reserva_responde_igual_y_queda_en
     tasks = BackgroundTasks()
     response = routes.create_booking(
         routes.BookingRequest(
-            espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00", horas=1
+            space_id=cast(Any, _id(2)), date=date(2026, 10, 28), start_hour="20:00", hours=1
         ),
         _profile(),
         cast(Any, None),
@@ -298,13 +298,13 @@ def test_modificar_cancelar_o_anular_no_mandan_correo(monkeypatch: pytest.Monkey
     sent: list[Message] = []
     monkeypatch.setattr(routes, "send", sent.append)
     monkeypatch.setattr(routes, "dispatch_for", lambda *a: None)
-    monkeypatch.setattr(routes, "cancel_booking", lambda *a: _booking(status="cancelada"))
+    monkeypatch.setattr(routes, "cancel_booking", lambda *a: _booking(status="canceled"))
     monkeypatch.setattr(routes, "modify_booking", lambda *a: _booking())
     tasks = BackgroundTasks()
     routes.cancel(_profile(), cast(Any, None), _id(9), tasks, cast(Any, None))
     routes.modify(
         routes.BookingChangeRequest(
-            espacio_id=cast(Any, _id(2)), fecha=date(2026, 10, 28), desde="20:00"
+            space_id=cast(Any, _id(2)), date=date(2026, 10, 28), start_hour="20:00"
         ),
         _profile(),
         cast(Any, None),

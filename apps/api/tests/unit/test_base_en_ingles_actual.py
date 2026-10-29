@@ -26,5 +26,5 @@ def test_el_contrato_la_salud_y_la_ruta_de_pruebas_responden_igual_que_en_main(
     salud = TestClient(app).get("/health")
 
     assert esperado == publicado
-    assert salud.json() == {"estado": "vivo", "version": salud.json()["version"]}
+    assert salud.json() == {"status": "ok", "version": salud.json()["version"]}
     assert e2e_support.router in incluidos

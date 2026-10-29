@@ -77,7 +77,7 @@ def test_la_sede_no_abre_ese_dia() -> None:
 
 @pytest.mark.parametrize(
     ("dias", "horas", "campos"),
-    [(0, 1, set()), (6, 4, set()), (7, 1, {"fecha"}), (-1, 1, {"fecha"}), (0, 5, {"horas"})],
+    [(0, 1, set()), (6, 4, set()), (7, 1, {"date"}), (-1, 1, {"date"}), (0, 5, {"hours"})],
 )
 def test_se_consulta_de_hoy_a_seis_dias_y_de_1_a_4_horas(
     dias: int, horas: int, campos: set[str]
@@ -131,11 +131,11 @@ def test_una_fecha_fuera_de_la_semana_se_rechaza() -> None:
     ("desde", "hasta", "errores"),
     [
         (10, 12, {}),
-        (22, 0, {"hasta": "La sede cierra a las 23:00"}),
-        (18, 18, {"hasta": "La duración mínima es de una hora"}),
-        (20, 18, {"hasta": "La duración mínima es de una hora"}),
-        (10, 15, {"hasta": "La duración máxima es de 4 horas"}),
-        (7, 9, {"desde": "La sede abre a las 08:00"}),
+        (22, 0, {"until": "La sede cierra a las 23:00"}),
+        (18, 18, {"until": "La duración mínima es de una hora"}),
+        (20, 18, {"until": "La duración mínima es de una hora"}),
+        (10, 15, {"until": "La duración máxima es de 4 horas"}),
+        (7, 9, {"start_hour": "La sede abre a las 08:00"}),
     ],
 )
 def test_un_rango_se_valida_contra_el_horario_de_la_sede(
@@ -151,28 +151,28 @@ def test_un_rango_que_ya_empezo_o_de_otro_dia_no_se_consulta() -> None:
     agenda = OpeningHours(time(8), time(23), (1, 2, 3, 4))
     ahora = datetime.combine(JUEVES, time(18, 20), tzinfo=ZONA)
     assert validate_range(agenda, JUEVES, time(18), time(19), ahora) == {
-        "desde": "El horario tiene que ser futuro"
+        "start_hour": "El horario tiene que ser futuro"
     }
     assert validate_range(agenda, JUEVES - timedelta(1), time(18), time(19), ahora) == {
-        "fecha": "La fecha tiene que ser futura"
+        "date": "La fecha tiene que ser futura"
     }
     assert validate_range(agenda, JUEVES + timedelta(1), time(18), time(19), ahora) == {
-        "fecha": "La sede no abre ese día"
+        "date": "La sede no abre ese día"
     }
     assert validate_range(agenda, JUEVES + timedelta(7), time(18), time(19), ahora) == {
-        "fecha": "Elegí un día de los próximos 7"
+        "date": "Elegí un día de los próximos 7"
     }
     assert validate_range(agenda, JUEVES, time(19, 30), time(21), ahora) == {
-        "desde": "Elegí una hora en punto"
+        "start_hour": "Elegí una hora en punto"
     }
 
 
 @pytest.mark.parametrize(
     ("desde", "horas", "campo", "mensaje"),
     [
-        (10, 0, "hasta", "La duración mínima es de una hora"),
-        (10, 5, "hasta", "La duración máxima es de 4 horas"),
-        (22, 3, "hasta", "La sede cierra a las 23:00"),
+        (10, 0, "until", "La duración mínima es de una hora"),
+        (10, 5, "until", "La duración máxima es de 4 horas"),
+        (22, 3, "until", "La sede cierra a las 23:00"),
         (21, 2, None, None),
     ],
 )

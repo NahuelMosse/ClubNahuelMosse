@@ -36,7 +36,7 @@ def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api()
     comunes = re.compile(
         r"sin_permiso\(|no_encontrado\(|datos_invalidos\("
         r"|HTTP_403_FORBIDDEN\)|HTTP_404_NOT_FOUND\)"
-        r'|HTTP_422_UNPROCESSABLE_CONTENT,\s*content=\{"errores": e\.errors\}'
+        r'|HTTP_422_UNPROCESSABLE_CONTENT,\s*content=\{"errors": e\.errors\}'
     )
     rutas = [a for a in _fuentes(MODULOS) if a.name.startswith("routes")]
     assert rutas
@@ -54,7 +54,7 @@ def test_ninguna_ruta_atrapa_los_errores_que_se_responden_igual_en_toda_la_api()
         (
             InvalidData({"nombre": "Falta el nombre"}),
             422,
-            b'{"errores":{"nombre":"Falta el nombre"}}',
+            b'{"errors":{"nombre":"Falta el nombre"}}',
         ),
         (Forbidden("no"), 403, b""),
         (NotFound(), 404, b""),
