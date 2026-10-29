@@ -160,7 +160,7 @@ void main() {
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           final ruta = pedido.url.path;
-          if (ruta == '/espacios' && intentos++ == 0) throw const _Corte();
+          if (ruta == '/spaces' && intentos++ == 0) throw const _Corte();
           final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
@@ -196,8 +196,8 @@ void main() {
             pedidos?.add(pedido as http.Request);
             final ruta = pedido.url.path;
             final q = pedido.url.queryParameters;
-            if (ruta == '/espacios') {
-              if (fallaAlFiltrar && q.containsKey('deporte')) {
+            if (ruta == '/spaces') {
+              if (fallaAlFiltrar && q.containsKey('sport')) {
                 return http.Response('{}', 500);
               }
               final todas = [espacioF5Json, f7, espacioTenisJson];
@@ -270,7 +270,7 @@ void main() {
           pedidos.add(pedido as http.Request);
           final ruta = pedido.url.path;
           final q = pedido.url.queryParameters;
-          if (ruta == '/espacios') {
+          if (ruta == '/spaces') {
             final quedan = [
               for (final e in datos)
                 if ((q['sport'] == null ||

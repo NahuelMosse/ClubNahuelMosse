@@ -136,7 +136,7 @@ void main() {
     'Notificaciones carga con la forma de la tarjeta de aviso @VIS-03-S1',
     (tester) async {
       final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
-      await _open(tester, api, '/notifications');
+      await _open(tester, api, '/notificaciones');
 
       final frames = tester.widgetList(find.byKey(_skeletonCard)).length;
       final first = tester.getRect(find.byKey(_skeletonCard).first);
@@ -201,7 +201,7 @@ void main() {
       final screens = <(String, HeldApi, Session?)>[
         ('/inicio', HeldApi(_homeAnswers), null),
         (
-          '/notifications',
+          '/notificaciones',
           HeldApi(_noticeAnswers, held: {'GET /notifications'}),
           null,
         ),

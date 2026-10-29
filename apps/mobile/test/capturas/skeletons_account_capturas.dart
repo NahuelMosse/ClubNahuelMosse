@@ -91,7 +91,7 @@ void main() {
 
   testWidgets('notifications loading and loaded', (tester) async {
     final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
-    await mount(tester, api, '/notifications');
+    await mount(tester, api, '/notificaciones');
     await capture(tester, 'skeletons/notificaciones_cargando.png');
     api.release();
     await tester.pumpAndSettle();

@@ -14,7 +14,7 @@ import 'soporte/montar.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
 String reservaJson({
-  String estado = 'anulada',
+  String estado = 'voided',
   String? envio,
   String? envioEn,
 }) =>
@@ -70,7 +70,7 @@ void main() {
       expect(find.text('03/11/2026 10:00'), findsWidgets);
     });
 
-    for (final envio in ['sin_permiso', 'sin_canal', 'fallida']) {
+    for (final envio in ['no_permission', 'no_channel', 'failed']) {
       testWidgets('$envio: queda en el centro y el push no salió', (
         tester,
       ) async {

@@ -335,7 +335,7 @@ void main() {
       await tester.tap(find.text('GUARDAR ESPACIO'));
       await tester.pumpAndSettle();
       final alta = pedidos.singleWhere((p) => p.method == 'POST');
-      expect(jsonDecode(alta.body), containsPair('numero', 1));
+      expect(jsonDecode(alta.body), containsPair('number', 1));
       expect(find.text('¡Espacio deportivo creado!'), findsOneWidget);
       expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
       semantica.dispose();

@@ -61,7 +61,7 @@ void main() {
       await esperarA(tester, find.text('ANULADA'));
       expect(find.text('ANULAR RESERVA'), findsNothing);
       final reserva = await reservaQueVeElAdmin(cancha);
-      expect(reserva?['status'], 'anulada');
+      expect(reserva?['status'], 'voided');
       expect(reserva?['reason'], motivo);
       expect(reserva?['canceled_at'], isNotNull);
       expect(reserva?['canceled_by_name'], isNotNull);
@@ -111,7 +111,7 @@ void main() {
       await esperarA(tester, find.text('ANULADA'));
       expect(find.text(cancha), findsOneWidget);
       expect(find.textContaining(motivo), findsOneWidget);
-      expect(await historialDe(correo), [(cancha, 'anulada', motivo)]);
+      expect(await historialDe(correo), [(cancha, 'voided', motivo)]);
     },
   );
 
@@ -128,7 +128,7 @@ void main() {
       expect(find.text('¿Anular esta reserva?'), findsNothing);
       expect(find.text('ACTIVA'), findsOneWidget);
       expect(find.text('ANULAR RESERVA'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'activa');
+      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
     },
   );
 
@@ -144,7 +144,7 @@ void main() {
       // Verifica: el aviso del campo, la confirmación sigue abierta y la API no vio nada.
       await esperarA(tester, find.text('El motivo es obligatorio para anular'));
       expect(find.text('¿Anular esta reserva?'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'activa');
+      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
     },
   );
 
@@ -164,7 +164,7 @@ void main() {
       await esperarA(tester, find.text('CANCELADA'));
       expect(find.text('ANULAR RESERVA'), findsNothing);
       final reserva = await reservaQueVeElAdmin(cancha);
-      expect(reserva?['status'], 'cancelada');
+      expect(reserva?['status'], 'canceled');
       expect(reserva?['reason'], isNull);
     },
   );
@@ -184,7 +184,7 @@ void main() {
     await tocar(tester, 'VER LO ACTUALIZADO');
     await esperarA(tester, find.text('ACTIVA'));
     expect(find.text('ANULAR RESERVA'), findsNothing);
-    expect((await reservaQueVeElAdmin(cancha))?['status'], 'activa');
+    expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
   });
 
   testWidgets(
@@ -203,7 +203,7 @@ void main() {
       expect(find.text('REINTENTAR'), findsOneWidget);
       await tocar(tester, 'Volver');
       expect(find.text('ACTIVA'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'activa');
+      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
     },
   );
 
@@ -222,7 +222,7 @@ void main() {
       await esperarA(tester, find.text('Error del servidor'));
       await tocar(tester, 'ACEPTAR');
       expect(find.text('ACTIVA'), findsOneWidget);
-      expect((await reservaQueVeElAdmin(cancha))?['status'], 'activa');
+      expect((await reservaQueVeElAdmin(cancha))?['status'], 'active');
     },
   );
 
@@ -245,7 +245,7 @@ void main() {
       await tocar(tester, 'ACEPTAR');
       await esperarA(tester, find.text('ANULADA'));
       final reserva = await reservaQueVeElAdmin(cancha);
-      expect(reserva?['status'], 'anulada');
+      expect(reserva?['status'], 'voided');
       expect(reserva?['reason'], motivo);
     },
   );

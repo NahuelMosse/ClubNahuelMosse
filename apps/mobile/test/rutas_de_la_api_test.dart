@@ -90,9 +90,9 @@ void main() {
       ),
       isTrue,
     );
-    expect(rutaDeclarada('GET', '/reservas?cuando=historial'), isTrue);
+    expect(rutaDeclarada('GET', '/bookings?when=history'), isTrue);
     // El método cuenta: la ruta existe pero con otro método.
-    expect(rutaDeclarada('DELETE', '/reservas'), isFalse);
+    expect(rutaDeclarada('DELETE', '/bookings'), isFalse);
     expect(
       rutaDeclarada(
         'GET',

@@ -75,7 +75,7 @@ void main() {
                 const Scaffold(body: Text('Iniciar sesión')),
           ),
           GoRoute(
-            path: '/register',
+            path: '/registro',
             builder: (context, _) => RegistrationScreen(
               registration: RegistrationService(
                 ApiClient(

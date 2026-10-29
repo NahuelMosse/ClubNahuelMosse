@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('una ruta sin la barra inicial no coincide con la declarada', () {
-    expect(rutaDeclarada('GET', '/yo'), isTrue);
-    expect(rutaDeclarada('GET', 'x/yo'), isFalse);
+    expect(rutaDeclarada('GET', '/me'), isTrue);
+    expect(rutaDeclarada('GET', 'x/me'), isFalse);
   });
 
   test('una llave suelta no hace de parámetro: solo `{nombre}` completo', () {

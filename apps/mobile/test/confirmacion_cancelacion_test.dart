@@ -153,8 +153,8 @@ void main() {
 
       expect(find.text('Mis reservas'), findsOneWidget);
       expect(
-        api.de('GET', '/bookings').map((p) => p.url.queryParameters['cuando']),
-        ['historial'],
+        api.de('GET', '/bookings').map((p) => p.url.queryParameters['when']),
+        ['history'],
       );
     });
 
@@ -174,8 +174,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        api.de('GET', '/bookings').map((p) => p.url.queryParameters['cuando']),
-        ['proximas'],
+        api.de('GET', '/bookings').map((p) => p.url.queryParameters['when']),
+        ['upcoming'],
       );
     });
   });

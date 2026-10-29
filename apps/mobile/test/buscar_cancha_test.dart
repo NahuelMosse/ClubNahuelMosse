@@ -158,9 +158,9 @@ void main() {
           '00000000-0000-7000-8000-000000000001',
         );
         expect(consulta.queryParameters['sport'], 'Futbol');
-        expect(consulta.queryParameters['start_hour'], '18:00');
+        expect(consulta.queryParameters['since'], '18:00');
         expect(consulta.queryParameters['until'], '19:00');
-        expect(consulta.queryParameters.containsKey('tipo'), isFalse);
+        expect(consulta.queryParameters.containsKey('kind'), isFalse);
         expect(
           find.text('2 CANCHAS DISPONIBLES · FÚTBOL · 18:00 – 19:00'),
           findsOneWidget,

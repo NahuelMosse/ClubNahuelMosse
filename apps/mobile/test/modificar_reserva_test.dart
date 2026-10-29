@@ -160,7 +160,7 @@ void main() {
       alModificar: (409, '{"errors": {"slot": "Ese horario se ocupó"}}'),
     );
     await hastaConfirmar(tester);
-    final antes = pedidos.where((p) => p.url.path.endsWith('/horarios')).length;
+    final antes = pedidos.where((p) => p.url.path.endsWith('/slots')).length;
 
     await tocar(tester, find.text('GUARDAR EL CAMBIO'));
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
@@ -168,7 +168,7 @@ void main() {
 
     expect(find.textContaining('Estás modificando tu reserva'), findsOneWidget);
     expect(
-      pedidos.where((p) => p.url.path.endsWith('/horarios')).length,
+      pedidos.where((p) => p.url.path.endsWith('/slots')).length,
       antes + 1,
     );
   });

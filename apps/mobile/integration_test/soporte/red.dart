@@ -331,7 +331,7 @@ Future<void> ocupar(
   int hora, {
   int horas = 1,
   String? correo,
-  String estado = 'activa',
+  String estado = 'active',
   String? motivo,
 }) async {
   final fecha =

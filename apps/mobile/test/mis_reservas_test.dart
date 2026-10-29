@@ -14,7 +14,7 @@ String reservaJson({
   String id = '00000000-0000-7000-8000-000000000001',
   String inicio = '2026-11-13T00:00:00+00:00',
   String fin = '2026-11-13T01:00:00+00:00',
-  String estado = 'activa',
+  String estado = 'active',
   String? motivo,
   bool? cancelable,
 }) =>
@@ -23,7 +23,7 @@ String reservaJson({
     '"address": "Av. Rivadavia 19850", "starts_at": "$inicio", "ends_at": "$fin", '
     '"price_per_hour": 38000, "total": 38000, "status": "$estado", '
     '"reason": ${motivo == null ? 'null' : '"$motivo"'}, '
-    '"cancelable": ${cancelable ?? estado == 'activa'}}';
+    '"cancelable": ${cancelable ?? estado == 'active'}}';
 
 void main() {
   const proximas = '[{"id": "00000000-0000-7000-8000-000000000001"}]';
@@ -48,7 +48,7 @@ void main() {
           final (c, cuerpo) = pedido.url.path == '/bookings'
               ? (
                   codigo,
-                  '{"bookings": ${pedido.url.queryParameters['cuando'] == 'historial' ? historial : proximas}}',
+                  '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? historial : proximas}}',
                 )
               : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
           return http.Response.bytes(
@@ -91,7 +91,7 @@ void main() {
     await tester.tap(find.text('Historial'));
     await tester.pumpAndSettle();
 
-    expect(pedidos.last.url.queryParameters['cuando'], 'historial');
+    expect(pedidos.last.url.queryParameters['when'], 'history');
     expect(find.text('CANCELADA'), findsOneWidget);
     expect(find.text('ANULADA'), findsOneWidget);
     expect(find.text('COMPLETADA'), findsOneWidget);
@@ -149,7 +149,7 @@ void main() {
       ).go('/reservas?historial=1');
       await tester.pumpAndSettle();
 
-      expect(pedidos.last.url.queryParameters['cuando'], 'historial');
+      expect(pedidos.last.url.queryParameters['when'], 'history');
       expect(find.text('ANULADA'), findsOneWidget);
       expect(find.text('ACTIVA'), findsNothing);
     },

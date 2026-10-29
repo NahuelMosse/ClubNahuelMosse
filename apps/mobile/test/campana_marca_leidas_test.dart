@@ -157,7 +157,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final leidas = api.pedidos
-            .where((p) => p.method == 'POST' && p.url.path.endsWith('/leer'))
+            .where((p) => p.method == 'POST' && p.url.path.endsWith('/read'))
             .map((p) => p.url.path)
             .toList();
         expect(leidas, ['/notifications/$_idRecordatorio/read']);

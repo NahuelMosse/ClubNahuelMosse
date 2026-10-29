@@ -39,7 +39,7 @@ class Traceability extends StatelessWidget {
       },
     };
     final notice = switch ((b.status, b.noticeDelivery, b.noticeAt)) {
-      (BookingStatus.voided, 'enviada', final at?) => (
+      (BookingStatus.voided, 'sent', final at?) => (
         'Notificación enviada al usuario',
         Icons.notifications_active_outlined,
         p.stateSuccessInk,

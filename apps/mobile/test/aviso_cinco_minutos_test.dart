@@ -23,7 +23,7 @@ void main() {
   testWidgets(
     'el aviso de 5 minutos se muestra con el ícono del recordatorio y abre la reserva @NOT-05-S2',
     (tester) async {
-      final cinco = _aviso('recordatorio_cinco');
+      final cinco = _aviso('five_minute_reminder');
       expect(cinco.kind, NotificationKind.fiveMinuteReminder);
       expect(
         noticeRoute(cinco.kind, cinco.bookingId),

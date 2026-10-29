@@ -83,7 +83,7 @@ void main() {
     expect(find.text('HORARIO DISPONIBLE'), findsOneWidget);
     expect(find.text('Sin horario elegido'), findsOneWidget);
     expect(
-      pedidos.skip(antes).where((p) => p.url.path.endsWith('/horarios')),
+      pedidos.skip(antes).where((p) => p.url.path.endsWith('/slots')),
       isNotEmpty,
     );
   });

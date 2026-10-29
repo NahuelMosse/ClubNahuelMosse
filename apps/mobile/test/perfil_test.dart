@@ -173,7 +173,7 @@ void main() {
         api: apiRutas({
           'GET /me': (
             200,
-            '{"name": "N", "last_name": "M", "email": "a@b.com", "role": "user"}',
+            '{"first_name": "N", "last_name": "M", "email": "a@b.com", "role": "user"}',
           ),
         }),
       ),
@@ -205,7 +205,7 @@ void main() {
         tester,
         edicion: (
           200,
-          '{"name": "Agustín", "last_name": "Mosse", "email": "nahuel@correo.com", '
+          '{"first_name": "Agustín", "last_name": "Mosse", "email": "nahuel@correo.com", '
               '"role": "user", "dni": "42118507", "birth_date": "2000-03-14"}',
         ),
       );
@@ -214,7 +214,7 @@ void main() {
       await guardar(tester);
 
       expect(ediciones, [
-        '{"name":"Agustín","last_name":"Mosse","dni":"42118507",'
+        '{"first_name":"Agustín","last_name":"Mosse","dni":"42118507",'
             '"birth_date":"2000-03-14"}',
       ]);
       expect(find.text('GUARDAR'), findsNothing);
@@ -320,7 +320,7 @@ void main() {
           'GET /me': (200, perfilJson()),
           'PUT /me': (
             200,
-            '{"name": "Agustín", "last_name": "Paz", "email": "nahuel@correo.com", '
+            '{"first_name": "Agustín", "last_name": "Paz", "email": "nahuel@correo.com", '
                 '"role": "user", "dni": "42118507", "birth_date": "2000-03-14"}',
           ),
         }),

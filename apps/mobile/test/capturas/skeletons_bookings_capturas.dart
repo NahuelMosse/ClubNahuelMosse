@@ -105,7 +105,7 @@ void main() {
     final second = reservaJson(id: '00000000-0000-7000-8000-000000000002');
     final held = await mount(
       tester,
-      '/bookings',
+      '/reservas',
       extra: {
         'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
       },

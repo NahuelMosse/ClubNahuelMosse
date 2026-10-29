@@ -15,7 +15,7 @@ import 'soporte/montar.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 
 String _reserva({
-  String estado = 'activa',
+  String estado = 'active',
   bool anulable = true,
   String? motivo,
   String? anuladaEn,
@@ -103,7 +103,7 @@ void main() {
       expect(anulaciones(pedidos), hasLength(1));
       expect(
         jsonDecode(anulaciones(pedidos).single.body),
-        containsPair('motivo', 'Lluvia'),
+        containsPair('reason', 'Lluvia'),
       );
       expect(find.text('Reserva anulada correctamente'), findsOneWidget);
     },

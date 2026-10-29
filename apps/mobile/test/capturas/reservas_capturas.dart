@@ -58,7 +58,7 @@ void main() {
               final (c, cuerpo) = pedido.url.path == '/bookings'
                   ? (
                       200,
-                      '{"bookings": ${pedido.url.queryParameters['cuando'] == 'historial' ? historialJson : proximasJson}}',
+                      '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? historialJson : proximasJson}}',
                     )
                   : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
               return http.Response.bytes(

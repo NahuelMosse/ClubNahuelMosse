@@ -125,7 +125,7 @@ void main() {
                 AccessDeniedScreen(session: SesionFalsa(perfilUsuario)),
           ),
           GoRoute(
-            path: '/bookings',
+            path: '/reservas',
             builder: (context, _) => const Scaffold(body: Text('Mis reservas')),
           ),
         ],

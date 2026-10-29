@@ -136,7 +136,7 @@ void main() {
       final screens = <(String, HeldApi, Session?)>[
         ('/inicio', HeldApi(_homeAnswers), null),
         (
-          '/notifications',
+          '/notificaciones',
           HeldApi(_noticeAnswers, held: {'GET /notifications'}),
           null,
         ),
