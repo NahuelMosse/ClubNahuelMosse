@@ -26,14 +26,14 @@ def _socio(
     s = unico()
     correo_socio = f"socio.{s}@correo.com"
     alta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": correo_socio,
-            "contrasena": CONTRASENA,
+            "birth_date": "1994-07-21",
+            "email": correo_socio,
+            "password": CONTRASENA,
         },
     )
     assert alta.status_code == 201
@@ -44,12 +44,12 @@ def _socio(
 
 def _registro(**cambios: str) -> dict[str, str]:
     base = {
-        "nombre": "Martín",
-        "apellido": "Ferreyra",
+        "first_name": "Martín",
+        "last_name": "Ferreyra",
         "dni": "31000001",
-        "fecha_nacimiento": "1994-07-21",
-        "correo": "nadie@correo.com",
-        "contrasena": CONTRASENA,
+        "birth_date": "1994-07-21",
+        "email": "nadie@correo.com",
+        "password": CONTRASENA,
     }
     return {**base, **cambios}
 
@@ -66,10 +66,10 @@ def test_la_baja_de_un_token_ajeno_no_hace_nada_y_responde_204(
     duenia = _socio(api, iniciar_sesion, unico)
     intruso = _socio(api, iniciar_sesion, unico)
     token = f"fcm-{unico()}"
-    pedido = {"token": token, "plataforma": "android", "permiso": True}
-    assert api.put("/dispositivos", headers=duenia, json=pedido).status_code == 204
+    pedido = {"token": token, "platform": "android", "permission_granted": True}
+    assert api.put("/devices", headers=duenia, json=pedido).status_code == 204
 
-    baja = api.post("/dispositivos/baja", headers=intruso, json={"token": token})
+    baja = api.post("/devices/unregister", headers=intruso, json={"token": token})
 
     with motor.connect() as conn:
         activo = conn.execute(

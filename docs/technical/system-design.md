@@ -107,13 +107,13 @@ Taxonomía de la API. Las excepciones del negocio están en `app/shared/errores.
 
 | Error | Class (domain, operational, bug) | Comes from | Translated to | What the user sees | Reference id |
 |---|---|---|---|---|---|
-| `DatosInvalidos`, `NoDisponible` | domain | casos de uso | 422 con `{"errores": {campo: mensaje}}` | el mensaje junto al campo | no |
-| `Duplicado`, `HorarioOcupado`, `Cambiado`, `NumeroOcupado`, `ConReservasFuturas`, `ReservasAfuera` | domain | casos de uso | 409 con `{"errores": ...}` | el mensaje del conflicto | no |
+| `DatosInvalidos`, `NoDisponible` | domain | casos de uso | 422 con `{"errors": {field: message}}` | el mensaje junto al campo | no |
+| `Duplicado`, `HorarioOcupado`, `Cambiado`, `NumeroOcupado`, `ConReservasFuturas`, `ReservasAfuera` | domain | casos de uso | 409 con `{"errors": ...}` | el mensaje del conflicto | no |
 | `Prohibido` | domain | casos de uso (`perfil.rol`) | 403 sin cuerpo | acceso denegado | no |
 | `NoEncontrada` | domain | casos de uso | 404 sin cuerpo | no encontrado | no |
 | `NoAutenticado` | domain | `perfil_autenticado` | 401 con `WWW-Authenticate: Bearer` | vuelve al inicio de sesión | no |
 | `Demorado` | operational | Firebase (`TOO_MANY_ATTEMPTS`) | 429 | pedir que reintente más tarde | no |
-| JSON mal formado, dato fuera de rango o faltante | domain | validación de FastAPI (`shared/entradas.py`) | 422 con `{"errores": {campo: mensaje}}`, sin repetir lo recibido | el mensaje junto al campo | no |
+| JSON mal formado, dato fuera de rango o faltante | domain | validación de FastAPI (`shared/entradas.py`) | 422 con `{"errors": {field: message}}`, sin repetir lo recibido | el mensaje junto al campo | no |
 | Base caída, cualquier otra excepción | bug | cualquier capa | 500 | «Ocurrió un error.» | no |
 
 ## External dependencies

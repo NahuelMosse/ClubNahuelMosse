@@ -20,7 +20,7 @@ def canal(api: TestClient) -> Iterator[CanalDePrueba]:
 
 
 def cancelar(socio: Socio, reserva_id: str) -> int:
-    return socio.api.post(f"/reservas/{reserva_id}/cancelar", headers=socio.sesion).status_code
+    return socio.api.post(f"/bookings/{reserva_id}/cancel", headers=socio.sesion).status_code
 
 
 def cuerpo_esperado(sede: str, hora: str) -> str:
@@ -52,8 +52,8 @@ def test_al_cancelar_una_reserva_se_envia_la_confirmacion_con_la_reserva_y_el_ho
     assert tokens == [socio.dispositivo]
     assert aviso.title == "Reserva cancelada"
     assert aviso.body == cuerpo_esperado(socio.sede, "21:00")
-    assert aviso.data["reserva_id"] == str(reserva["id"])
-    assert aviso.data["tipo"] == "cancelacion_usuario"
+    assert aviso.data["booking_id"] == str(reserva["id"])
+    assert aviso.data["kind"] == "user_cancellation"
 
 
 def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
@@ -71,11 +71,11 @@ def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
     # Verifica: el push y el centro llevan el número de la reserva, que el historial lista
     # como cancelada.
     [(_, aviso)] = canal.enviados
-    assert aviso.data["reserva_id"] == str(reserva["id"])
-    [entrada] = socio.centro()["notificaciones"]
-    assert entrada["reserva_id"] == reserva["id"]
-    historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
-    assert [(r["id"], r["estado"]) for r in historial["reservas"]] == [(reserva["id"], "cancelada")]
+    assert aviso.data["booking_id"] == str(reserva["id"])
+    [entrada] = socio.centro()["notifications"]
+    assert entrada["booking_id"] == reserva["id"]
+    historial = socio.api.get("/bookings?when=historial", headers=socio.sesion).json()
+    assert [(r["id"], r["status"]) for r in historial["bookings"]] == [(reserva["id"], "canceled")]
 
 
 def test_la_confirmacion_queda_en_el_centro_de_notificaciones(
@@ -88,18 +88,18 @@ def test_la_confirmacion_queda_en_el_centro_de_notificaciones(
     """la confirmación queda en el centro de notificaciones @CU-24.3-H01-03"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    assert socio.centro() == {"notificaciones": [], "no_leidas": 0}
+    assert socio.centro() == {"notifications": [], "unread": 0}
 
     assert cancelar(socio, reserva["id"]) == 200
 
     # Verifica: queda una entrada sin leer, de confirmación, con el texto del CU.
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    [entrada] = centro["notificaciones"]
-    assert entrada["tipo"] == "cancelacion_usuario"
-    assert entrada["titulo"] == "Reserva cancelada"
-    assert entrada["cuerpo"] == cuerpo_esperado(socio.sede, "21:00")
-    assert entrada["leida"] is False
+    assert centro["unread"] == 1
+    [entrada] = centro["notifications"]
+    assert entrada["kind"] == "user_cancellation"
+    assert entrada["title"] == "Reserva cancelada"
+    assert entrada["body"] == cuerpo_esperado(socio.sede, "21:00")
+    assert entrada["read"] is False
 
 
 def test_sin_permiso_de_notificaciones_no_se_envia_pero_la_confirmacion_queda_en_el_centro(
@@ -117,8 +117,8 @@ def test_sin_permiso_de_notificaciones_no_se_envia_pero_la_confirmacion_queda_en
 
     # Verifica: nada sale hacia el teléfono y la confirmación está en el centro.
     assert canal.enviados == []
-    [entrada] = socio.centro()["notificaciones"]
-    assert entrada["titulo"] == "Reserva cancelada"
+    [entrada] = socio.centro()["notifications"]
+    assert entrada["title"] == "Reserva cancelada"
 
 
 def test_si_la_cancelacion_falla_no_se_confirma_nada(
@@ -147,5 +147,5 @@ def test_si_la_cancelacion_falla_no_se_confirma_nada(
     assert cancelar(socio, de_otro["id"]) == 404
     assert cancelar(socio, anulada["id"]) == 409
     assert canal.enviados == []
-    assert socio.centro() == {"notificaciones": [], "no_leidas": 0}
-    assert ajeno.centro() == {"notificaciones": [], "no_leidas": 0}
+    assert socio.centro() == {"notifications": [], "unread": 0}
+    assert ajeno.centro() == {"notifications": [], "unread": 0}

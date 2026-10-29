@@ -55,7 +55,7 @@ def test_si_falla_el_aviso_la_reserva_sigue_activa_y_no_queda_ningun_aviso(
     reserva = socio.reservar("21:00")
 
     try:
-        respuesta = api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
+        respuesta = api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
         assert respuesta.status_code >= 500
     except Exception as e:
         # El cliente de pruebas propaga el error del servidor en vez de responder 500.

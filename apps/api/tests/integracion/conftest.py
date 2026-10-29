@@ -40,14 +40,14 @@ def token_usuario(
 ) -> str:
     s = unico()
     pedido = {
-        "nombre": "Martín",
-        "apellido": "Ferreyra",
+        "first_name": "Martín",
+        "last_name": "Ferreyra",
         "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-        "fecha_nacimiento": "1994-07-21",
-        "correo": f"socio.{s}@correo.com",
-        "contrasena": CONTRASENA,
+        "birth_date": "1994-07-21",
+        "email": f"socio.{s}@correo.com",
+        "password": CONTRASENA,
     }
-    assert api.post("/registro", json=pedido).status_code == 201
+    assert api.post("/register", json=pedido).status_code == 201
     token = iniciar_sesion(f"socio.{s}@correo.com", CONTRASENA)
     assert token is not None
     return token
@@ -57,14 +57,14 @@ def token_usuario(
 def sede(api: TestClient, token_admin: str, unico: Callable[[], str]) -> tuple[str, str]:
     s = unico()
     r = api.post(
-        "/sedes",
+        "/venues",
         headers=_con(token_admin),
         json={
-            "nombre": f"Sede Haedo {s}",
-            "direccion": "Av. Vergara 1850",
-            "apertura": "08:00",
-            "cierre": "23:00",
-            "dias": [1, 2, 3, 4, 5, 6, 7],
+            "name": f"Sede Haedo {s}",
+            "address": "Av. Vergara 1850",
+            "opens_at": "08:00",
+            "closes_at": "23:00",
+            "open_days": [1, 2, 3, 4, 5, 6, 7],
         },
     )
     assert r.status_code == 201

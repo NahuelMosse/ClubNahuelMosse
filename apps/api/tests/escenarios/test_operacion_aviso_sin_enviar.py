@@ -25,14 +25,14 @@ def test_un_aviso_que_no_salio_queda_a_la_vista(
 
     s = unico()
     api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": f"socio.{s}@correo.com",
-            "contrasena": "ClubNahuel1",
+            "birth_date": "1994-07-21",
+            "email": f"socio.{s}@correo.com",
+            "password": "ClubNahuel1",
         },
     )
     with motor.begin() as conn:

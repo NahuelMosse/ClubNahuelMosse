@@ -14,20 +14,20 @@ CONTRASENA = "ClubNahuel1"
 def _registrar(api: TestClient, s: str) -> str:
     correo = f"socia.{s}@correo.com"
     pedido = {
-        "nombre": "Lucía",
-        "apellido": "Gómez",
+        "first_name": "Lucía",
+        "last_name": "Gómez",
         "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-        "fecha_nacimiento": "1998-11-02",
-        "correo": correo,
-        "contrasena": CONTRASENA,
+        "birth_date": "1998-11-02",
+        "email": correo,
+        "password": CONTRASENA,
     }
-    assert api.post("/registro", json=pedido).status_code == 201
+    assert api.post("/register", json=pedido).status_code == 201
     return correo
 
 
 def _yo(api: TestClient, token: str | None) -> tuple[int, dict[str, object]]:
     cabeceras = {"Authorization": f"Bearer {token}"} if token else {}
-    r = api.get("/yo", headers=cabeceras)
+    r = api.get("/me", headers=cabeceras)
     return r.status_code, r.json()
 
 
@@ -38,19 +38,19 @@ def test_con_el_token_de_la_cuenta_devuelve_su_perfil_y_su_rol(
     codigo, cuerpo = _yo(api, iniciar_sesion(correo, CONTRASENA))
     assert codigo == 200
     assert cuerpo == {
-        "nombre": "Lucía",
-        "apellido": "Gómez",
-        "correo": correo,
-        "rol": "usuario",
+        "first_name": "Lucía",
+        "last_name": "Gómez",
+        "email": correo,
+        "role": "user",
         "dni": cuerpo["dni"],
-        "fecha_nacimiento": "1998-11-02",
+        "birth_date": "1998-11-02",
     }
     assert isinstance(cuerpo["dni"], str) and len(cuerpo["dni"]) == 8
 
 
 @pytest.mark.parametrize("cabecera", [None, "Bearer ", "Bearer basura", "Basic dXNlcjpwYXNz"])
 def test_sin_un_token_valido_no_hay_sesion(api: TestClient, cabecera: str | None) -> None:
-    r = api.get("/yo", headers={"Authorization": cabecera} if cabecera is not None else {})
+    r = api.get("/me", headers={"Authorization": cabecera} if cabecera is not None else {})
     assert r.status_code == 401
     assert r.headers["www-authenticate"] == "Bearer"
     assert r.json() == {"detail": "Sesión inválida o vencida"}
@@ -106,7 +106,7 @@ def test_la_siembra_crea_un_admin_que_inicia_sesion_con_rol_admin(
     assert sembrar(argumentos) == 1
     assert sembrar([*argumentos, "--promover"]) == 0
     codigo, cuerpo = _yo(api, iniciar_sesion(correo, CONTRASENA))
-    assert (codigo, cuerpo["rol"]) == (200, "admin")
+    assert (codigo, cuerpo["role"]) == (200, "admin")
 
 
 def test_la_siembra_no_asciende_una_cuenta_ajena_sin_pedirlo(
@@ -122,7 +122,7 @@ def test_la_siembra_no_asciende_una_cuenta_ajena_sin_pedirlo(
         "--dni", "30111224", "--nacimiento", "1985-06-01",
     ]  # fmt: skip
     assert sembrar(argumentos) == 1
-    assert _yo(api, iniciar_sesion(correo, CONTRASENA))[1]["rol"] == "usuario"
+    assert _yo(api, iniciar_sesion(correo, CONTRASENA))[1]["role"] == "user"
 
 
 def test_la_siembra_promueve_una_cuenta_que_ya_existe(
@@ -139,7 +139,7 @@ def test_la_siembra_promueve_una_cuenta_que_ya_existe(
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
     # La cuenta conserva su contraseña: la siembra sólo le cambia el rol.
-    assert _yo(api, iniciar_sesion(correo, CONTRASENA))[1]["rol"] == "admin"
+    assert _yo(api, iniciar_sesion(correo, CONTRASENA))[1]["role"] == "admin"
 
 
 def test_la_siembra_sin_contrasena_no_toca_nada(

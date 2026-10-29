@@ -27,7 +27,7 @@ def canal(api: TestClient) -> Iterator[CanalDePrueba]:
 
 
 def _cancelar(socio: Socio, reserva_id: str) -> int:
-    return socio.api.post(f"/reservas/{reserva_id}/cancelar", headers=socio.sesion).status_code
+    return socio.api.post(f"/bookings/{reserva_id}/cancel", headers=socio.sesion).status_code
 
 
 def _envios(socio: Socio) -> list[str]:
@@ -56,7 +56,7 @@ def test_repetir_la_cancelacion_no_repite_la_confirmacion(
     assert _cancelar(socio, reserva["id"]) == 200
 
     assert len(canal.enviados) == 1
-    assert len(socio.centro()["notificaciones"]) == 1
+    assert len(socio.centro()["notifications"]) == 1
 
 
 def test_cada_reserva_cancelada_tiene_su_confirmacion(
@@ -76,8 +76,8 @@ def test_cada_reserva_cancelada_tiene_su_confirmacion(
 
     assert len(canal.enviados) == 2
     centro = socio.centro()
-    assert centro["no_leidas"] == 2
-    assert {n["reserva_id"] for n in centro["notificaciones"]} == {primera["id"], segunda["id"]}
+    assert centro["unread"] == 2
+    assert {n["booking_id"] for n in centro["notifications"]} == {primera["id"], segunda["id"]}
 
 
 def test_si_el_servicio_push_cae_la_confirmacion_queda_en_el_centro_como_fallida(
@@ -96,7 +96,7 @@ def test_si_el_servicio_push_cae_la_confirmacion_queda_en_el_centro_como_fallida
         app_de(api).dependency_overrides.pop(push_channel, None)
 
     assert _envios(socio) == ["failed"]
-    assert len(socio.centro()["notificaciones"]) == 1
+    assert len(socio.centro()["notifications"]) == 1
 
 
 def test_lo_que_quedo_pendiente_se_despacha_una_sola_vez(

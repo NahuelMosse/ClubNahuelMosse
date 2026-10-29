@@ -45,13 +45,13 @@ class Socio:
 
     def reservar(self, desde: str) -> dict[str, Any]:
         r = self.api.post(
-            "/reservas",
+            "/bookings",
             headers=self.sesion,
             json={
-                "espacio_id": str(self.espacio_id),
-                "fecha": manana().isoformat(),
-                "desde": desde,
-                "horas": 1,
+                "space_id": str(self.espacio_id),
+                "date": manana().isoformat(),
+                "start_hour": desde,
+                "hours": 1,
             },
         )
         assert r.status_code == 201
@@ -68,7 +68,7 @@ class Socio:
             return send_reminders(NotificationsSql(conn), canal, ahora, self.usuario_id)
 
     def centro(self) -> dict[str, Any]:
-        r = self.api.get("/notificaciones", headers=self.sesion)
+        r = self.api.get("/notifications", headers=self.sesion)
         assert r.status_code == 200
         centro: dict[str, Any] = r.json()
         return centro
@@ -95,14 +95,14 @@ def un_socio(
     s = unico()
     correo = f"socio.{s}@correo.com"
     alta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": correo,
-            "contrasena": CONTRASENA,
+            "birth_date": "1994-07-21",
+            "email": correo,
+            "password": CONTRASENA,
         },
     )
     assert alta.status_code == 201
@@ -127,9 +127,9 @@ def un_socio(
     sesion = {"Authorization": f"Bearer {token}"}
     dispositivo = f"fcm-{s}"
     registro = api.put(
-        "/dispositivos",
+        "/devices",
         headers=sesion,
-        json={"token": dispositivo, "plataforma": "android", "permiso": permiso},
+        json={"token": dispositivo, "platform": "android", "permission_granted": permiso},
     )
     assert registro.status_code == 204
     return Socio(api, motor, correo, sesion, usuario, espacio, sede, dispositivo)
@@ -157,7 +157,7 @@ def test_una_hora_antes_del_inicio_se_envia_una_sola_vez_el_recordatorio_con_dep
     assert tokens == [socio.dispositivo]
     assert aviso.title == "Tu reserva es en 1 hora"
     assert aviso.body == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
-    assert aviso.data["reserva_id"] == str(reserva["id"])
+    assert aviso.data["booking_id"] == str(reserva["id"])
 
     # Verifica: se envía una sola vez, aunque el barrido vuelva a pasar antes del turno.
     assert socio.barrer(canal, a_las(20, 30)) == 0
@@ -181,8 +181,8 @@ def test_sin_permiso_de_notificaciones_no_se_envia_pero_el_aviso_queda_en_el_cen
     assert registrados == 1
     assert canal.enviados == []
     centro = socio.centro()
-    assert [n["titulo"] for n in centro["notificaciones"]] == ["Tu reserva es en 1 hora"]
-    assert centro["no_leidas"] == 1
+    assert [n["title"] for n in centro["notifications"]] == ["Tu reserva es en 1 hora"]
+    assert centro["unread"] == 1
 
 
 def test_un_recordatorio_que_no_se_tocó_queda_como_no_leído(
@@ -194,18 +194,18 @@ def test_un_recordatorio_que_no_se_tocó_queda_como_no_leído(
     """un recordatorio que no se tocó queda como no leído @CU-24.1-H04-01"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    assert socio.centro() == {"notificaciones": [], "no_leidas": 0}
+    assert socio.centro() == {"notifications": [], "unread": 0}
 
     socio.barrer(CanalDePrueba(), a_las(20, 0))
 
     # Verifica: el aviso figura en el centro, sin leer, con su reserva y su cuerpo.
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    [aviso] = centro["notificaciones"]
-    assert aviso["tipo"] == "recordatorio"
-    assert aviso["leida"] is False
-    assert aviso["reserva_id"] == reserva["id"]
-    assert aviso["cuerpo"] == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
+    assert centro["unread"] == 1
+    [aviso] = centro["notifications"]
+    assert aviso["kind"] == "reminder"
+    assert aviso["read"] is False
+    assert aviso["booking_id"] == reserva["id"]
+    assert aviso["body"] == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
 
 
 def test_marcar_todas_deja_todas_las_notificaciones_como_leidas(
@@ -221,15 +221,15 @@ def test_marcar_todas_deja_todas_las_notificaciones_como_leidas(
     canal = CanalDePrueba()
     socio.barrer(canal, a_las(20, 30))
     socio.barrer(canal, a_las(21, 30))
-    assert socio.centro()["no_leidas"] == 2
+    assert socio.centro()["unread"] == 2
 
-    r = socio.api.post("/notificaciones/leer-todas", headers=socio.sesion)
+    r = socio.api.post("/notifications/read-all", headers=socio.sesion)
 
     # Verifica: ninguna queda sin leer, y cada una guarda que fue leída.
     assert r.status_code == 204
     centro = socio.centro()
-    assert centro["no_leidas"] == 0
-    assert [n["leida"] for n in centro["notificaciones"]] == [True, True]
+    assert centro["unread"] == 0
+    assert [n["read"] for n in centro["notifications"]] == [True, True]
 
 
 def test_una_reserva_cancelada_antes_no_recibe_recordatorio(
@@ -241,7 +241,7 @@ def test_una_reserva_cancelada_antes_no_recibe_recordatorio(
     """la reserva se canceló antes y el recordatorio no llega @CU-24.1-H05-01"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    cancelada = socio.api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
+    cancelada = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
     assert cancelada.status_code == 200
     canal = CanalDePrueba()
 
@@ -251,7 +251,7 @@ def test_una_reserva_cancelada_antes_no_recibe_recordatorio(
     assert registrados == 0
     assert socio.barrer(canal, a_las(20, 45)) == 0
     assert canal.enviados == []
-    assert [n for n in socio.centro()["notificaciones"] if n["tipo"] == "recordatorio"] == []
+    assert [n for n in socio.centro()["notifications"] if n["kind"] == "reminder"] == []
 
 
 def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horario_nuevo(
@@ -264,9 +264,9 @@ def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horari
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
     cambio = socio.api.post(
-        f"/reservas/{reserva['id']}/modificar",
+        f"/bookings/{reserva['id']}/modify",
         headers=socio.sesion,
-        json={"espacio_id": str(socio.espacio_id), "fecha": manana().isoformat(), "desde": "22:00"},
+        json={"space_id": str(socio.espacio_id), "date": manana().isoformat(), "start_hour": "22:00"},
     )
     assert cambio.status_code == 200
     canal = CanalDePrueba()

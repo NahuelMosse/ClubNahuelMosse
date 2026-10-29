@@ -15,14 +15,14 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_una_sede(
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
-            "/registro",
+            "/register",
             json={
-                "nombre": "Martín",
-                "apellido": "Ferreyra",
+                "first_name": "Martín",
+                "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-                "fecha_nacimiento": "1994-07-21",
-                "correo": correo,
-                "contrasena": "ClubNahuel1",
+                "birth_date": "1994-07-21",
+                "email": correo,
+                "password": "ClubNahuel1",
             },
         ).status_code
         == 201
@@ -31,14 +31,14 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_una_sede(
     nombre = f"Sede Haedo {s}"
 
     r = api.post(
-        "/sedes",
+        "/venues",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "nombre": nombre,
-            "direccion": "Av. Vergara 1850",
-            "apertura": "08:00",
-            "cierre": "23:00",
-            "dias": [1, 2, 3, 4, 5, 6, 7],
+            "name": nombre,
+            "address": "Av. Vergara 1850",
+            "opens_at": "08:00",
+            "closes_at": "23:00",
+            "open_days": [1, 2, 3, 4, 5, 6, 7],
         },
     )
 

@@ -13,14 +13,14 @@ def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administra
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
-            "/registro",
+            "/register",
             json={
-                "nombre": "Martín",
-                "apellido": "Ferreyra",
+                "first_name": "Martín",
+                "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-                "fecha_nacimiento": "1994-07-21",
-                "correo": correo,
-                "contrasena": "ClubNahuel1",
+                "birth_date": "1994-07-21",
+                "email": correo,
+                "password": "ClubNahuel1",
             },
         ).status_code
         == 201
@@ -28,12 +28,12 @@ def test_la_api_rechaza_la_anulacion_pedida_por_un_usuario_sin_rol_de_administra
     token = iniciar_sesion(correo, "ClubNahuel1")
 
     r = api.post(
-        "/reservas/00000000-0000-7000-8000-000000000001/anular",
+        "/bookings/00000000-0000-7000-8000-000000000001/void",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "motivo": "mantenimiento de la cancha",
-            "espacio_id": "00000000-0000-7000-8000-000000000002",
-            "inicio": "2030-01-01T21:00:00-03:00",
+            "reason": "mantenimiento de la cancha",
+            "space_id": "00000000-0000-7000-8000-000000000002",
+            "starts_at": "2030-01-01T21:00:00-03:00",
         },
     )
 
