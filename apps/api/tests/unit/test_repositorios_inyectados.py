@@ -62,7 +62,7 @@ def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza()
         first_name="Ana",
         last_name="Díaz",
         email="ana@club.test",
-        role="usuario",
+        role="user",
         dni="30111222",
         birth_date=date(1990, 1, 1),
     )
@@ -71,7 +71,7 @@ def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza()
     respuesta = TestClient(app, base_url="http://localhost").get("/venues")
 
     assert respuesta.status_code == 200
-    assert [s["nombre"] for s in respuesta.json()["sedes"]] == ["Sede de prueba"]
+    assert [s["name"] for s in respuesta.json()["venues"]] == ["Sede de prueba"]
 
 
 def test_una_ruta_con_dos_repositorios_los_arma_sobre_la_misma_conexion() -> None:
