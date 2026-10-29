@@ -14,6 +14,7 @@ import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import '../../venues/domain/venue.dart';
+import '../../venues/presentation/venue_texts.dart';
 import '../../venues/presentation/venues.dart';
 import '../domain/outside_hours.dart';
 import '../domain/venue_field.dart';
@@ -79,7 +80,10 @@ class _VenueFormScreenState extends State<VenueFormScreen> {
     final picked = await pickOption<OpenDays>(
       context,
       title: AppLocalizations.of(context).adminOpenDays,
-      options: [for (final d in OpenDays.values) (d, d.text)],
+      options: [
+        for (final d in OpenDays.values)
+          (d, openDaysText(AppLocalizations.of(context), d)),
+      ],
       selected: OpenDays.values
           .where((d) => weekdaysLabel(d.days) == weekdaysLabel(_form.openDays))
           .firstOrNull,

@@ -6,6 +6,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
+import '../../spaces/presentation/space_texts.dart';
 import '../../spaces/presentation/sport_icons.dart';
 import 'admin_card.dart';
 
@@ -35,7 +36,7 @@ class AdminSpaceCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final l10n = AppLocalizations.of(context);
-    final description = space.description(catalog);
+    final description = spaceDescription(l10n, space, catalog);
     // The data is read as one; the buttons stay outside, each with its own name.
     final details = Semantics(
       container: true,

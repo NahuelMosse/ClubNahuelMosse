@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../venues/domain/venue.dart';
+import '../../venues/presentation/venue_texts.dart';
 import '../domain/venue_field.dart';
 import '../domain/venue_rules.dart';
 import 'venue_form.dart';
@@ -116,8 +117,8 @@ class VenueFormBody extends StatelessWidget {
       SelectorField(
         label: l10n.adminOpenDaysUpper,
         semanticLabel: l10n.adminOpenDays,
-        value: weekdaysLabel(f.openDays),
-        placeholder: OpenDays.mondayToSunday.text,
+        value: weekdaysText(l10n, weekdaysLabel(f.openDays)),
+        placeholder: openDaysText(l10n, OpenDays.mondayToSunday),
         icon: Icons.expand_more_rounded,
         error: f.error(VenueField.openDays, l10n),
         onTap: f.busy ? null : onPickDays,

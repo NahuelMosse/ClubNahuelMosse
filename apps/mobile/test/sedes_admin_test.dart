@@ -7,7 +7,9 @@ import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart'
 import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
 import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 import 'package:clubnahuelmosse/features/venues/domain/venue_exceptions.dart';
+import 'package:clubnahuelmosse/features/venues/presentation/venue_texts.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
+import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -17,15 +19,22 @@ import 'soporte/montar.dart';
 
 void main() {
   group('días de la semana', () {
+    late AppLocalizations es;
+    String texto(List<int> dias) => weekdaysText(es, weekdaysLabel(dias));
+
+    setUpAll(() async {
+      es = await AppLocalizations.delegate.load(const Locale('es'));
+    });
+
     test('los tramos seguidos desde el lunes se nombran', () {
-      expect(weekdaysLabel([7, 6, 5, 4, 3, 2, 1]), 'Lunes a domingo');
-      expect(weekdaysLabel([1, 2, 3, 4, 5, 6]), 'Lunes a sábado');
-      expect(weekdaysLabel([1, 2, 3, 4, 5]), 'Lunes a viernes');
+      expect(texto([7, 6, 5, 4, 3, 2, 1]), 'Lunes a domingo');
+      expect(texto([1, 2, 3, 4, 5, 6]), 'Lunes a sábado');
+      expect(texto([1, 2, 3, 4, 5]), 'Lunes a viernes');
     });
 
     test('los días sueltos van abreviados y en orden', () {
-      expect(weekdaysLabel([5, 1, 3]), 'Lun, Mié, Vie');
-      expect(weekdaysLabel([6, 7]), 'Sáb, Dom');
+      expect(texto([5, 1, 3]), 'Lun, Mié, Vie');
+      expect(texto([6, 7]), 'Sáb, Dom');
     });
   });
 
@@ -40,7 +49,13 @@ void main() {
       });
       final leidas = await sedes(api).repository.active();
       expect([for (final s in leidas) s.name], ['Sede Morón', 'Sede Haedo']);
-      expect(leidas.first.daysLabel, 'Lunes a sábado');
+      expect(
+        weekdaysText(
+          await AppLocalizations.delegate.load(const Locale('es')),
+          leidas.first.daysLabel,
+        ),
+        'Lunes a sábado',
+      );
       expect(leidas.first.spaceCount, 1);
     });
 

@@ -6,6 +6,7 @@ import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../venues/domain/venue.dart';
+import '../../venues/presentation/venue_texts.dart';
 import 'admin_card.dart';
 import 'venue_header.dart';
 
@@ -43,7 +44,7 @@ class AdminVenueCard extends StatelessWidget {
       excludeSemantics: true,
       label:
           '${venue.name}, ${venue.address}, $courts, '
-          '${l10n.adminVenueSchedule(venue.daysLabel, venue.opening, venue.closing)}',
+          '${l10n.adminVenueSchedule(weekdaysText(l10n, venue.daysLabel), venue.opening, venue.closing)}',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -56,7 +57,7 @@ class AdminVenueCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.adminVenueScheduleShort(
-                    venue.daysLabel,
+                    weekdaysText(l10n, venue.daysLabel),
                     venue.opening,
                     venue.closing,
                   ),

@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../mis_reservas_test.dart' show reservaJson;
-import '../notificaciones_test.dart'
+import '../notificaciones_es_test.dart'
     show SistemaFalso, confirmacion, recordatorio;
 import '../soporte/admin.dart';
 import '../soporte/held_api.dart';

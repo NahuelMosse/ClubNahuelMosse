@@ -1,5 +1,4 @@
 import '../../../l10n/app_localizations.dart';
-import '../domain/field_problem.dart';
 import '../domain/registration_rules.dart';
 
 /// The text of what a rule found wrong, in the language of [l10n]. [nameRequired] words the

@@ -22,8 +22,9 @@ class HomeGreeting extends StatelessWidget {
   static String forHour(DateTime clubHour) {
     final l10n = lookupAppLocalizations(Locale(currentLanguage()));
     final hour = clubHour.hour;
-    if (hour < _nightEnds || hour >= _nightStarts)
+    if (hour < _nightEnds || hour >= _nightStarts) {
       return l10n.homeGreetingNight;
+    }
     return hour < _afternoonStarts
         ? l10n.homeGreetingMorning
         : l10n.homeGreetingAfternoon;

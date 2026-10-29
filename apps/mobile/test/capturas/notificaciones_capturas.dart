@@ -4,7 +4,7 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 
-import '../notificaciones_test.dart'
+import '../notificaciones_es_test.dart'
     show
         ApiFalsa,
         SistemaFalso,
