@@ -82,7 +82,7 @@ const starts = new Map();
 let rounds = 0;
 export const oneRound = (fn) => {
   rounds++;
-  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); renames.clear(); owns.clear(); } }
+  try { return fn(); } finally { if (--rounds === 0) { changedFiles.clear(); starts.clear(); renames.clear(); owns.clear(); existed.clear(); } }
 };
 const remembered = (cache, key, compute) => {
   if (!rounds) return compute();
@@ -359,7 +359,9 @@ export const redCommitted = (root, cardDir) => {
   return git(root, ['grep', '-q', '-I', '-E', `@${id}-S[0-9]+`, 'HEAD', '--', ':(exclude)specs', ':(exclude).claude']).status === 0;
 };
 
-export const existedAt = (root, ref, rel) => git(root, ['cat-file', '-e', `${ref}:${rel}`]).status === 0;
+// The gate asks the same file from gate-checks, overdesign and verify in one process: one git call per file.
+const existed = new Map();
+export const existedAt = (root, ref, rel) => remembered(existed, `${root}\0${ref}\0${rel}`, () => git(root, ['cat-file', '-e', `${ref}:${rel}`]).status === 0);
 
 // What the card touched: the diff since its start plus whatever has not entered git yet. The kit is
 // not part of the card: measured, in a repo where the kit arrived unversioned, it asked to lint its

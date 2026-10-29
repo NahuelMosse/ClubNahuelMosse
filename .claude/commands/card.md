@@ -27,5 +27,5 @@ Card: `$1`.
    `$1-ASM-NN` line of `## Specs`, in the reading cheapest to undo, with its planned test. Never a second round.
 5. `node .claude/tools/risk.mjs specs/$1-<slug>` checks the plan (a test per `S#` and `ASM`, a layer per file, a `probe` per state, `attacks:`, the migration), lists what is missing without writing anything, and when complete writes `risk.json` (size, review, lenses) and freezes it. Complete the card and rerun.
    With review `high` only, launch the `judge` with a prompt starting `PLAN` and the path of `card.md`: it writes `judge.md` with ACT lines marked `plan`. Close each one in the card before RED (a new `ASM-NN` with its planned test, a Gate line, or `declared · <why>`), write `closed · <ASM-NN, T<n> or Gate line>` on its line of `judge.md`, and rerun `risk.mjs`.
-6. Commit `card.md` alone. **Closes with:** `git diff --name-only <hash>..HEAD -- specs/$1-<slug>/card.md` lists nothing you
+6. Commit `card.md` alone. **Closes with:** `git diff --name-only <hash>..HEAD -- specs/$1-<slug>/card.md` (`<hash>`, the commit of `card.md`) lists nothing you
    did not mean; report the specs, the open questions, `not_read:` and the `risk:` line.

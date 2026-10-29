@@ -35,9 +35,12 @@ export const measureCopy = () => {
 
 const found = (re, text) => [...new Set([...text.matchAll(re)].map((m) => m[0].toLowerCase()))];
 
-export const lintCopy = ({ sections = [], ctas = [], text = '' }) => {
+// `fixed`: the texts the card quotes verbatim. A label the requirement fixes is not the screen's to reword.
+export const lintCopy = ({ sections = [], ctas: shown = [], text = '' }, fixed = []) => {
   const out = [];
   const add = (rule, detail) => out.push({ rule, detail });
+  const given = new Set(fixed.map((f) => f.trim().toLowerCase()));
+  const ctas = shown.filter((l) => !given.has(l.toLowerCase()));
   const hype = found(HYPE, text); if (hype.length) add('hype', hype.slice(0, 5).join(', '));
   const tpl = found(TEMPLATE, text); if (tpl.length) add('template phrase', tpl.slice(0, 5).join(', '));
   const ai = found(AI, text); if (ai.length) add('AI tell', ai.slice(0, 5).join(', '));

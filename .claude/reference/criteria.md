@@ -71,9 +71,9 @@ research could not read in the source is marked “unverified”.
 
 | ID | Criterion | How | Grade | Today | Source |
 |---|---|---|---|---|---|
-| R1 | The acceptance criterion is met **in real use**, the way whoever asked for it would use it, not only in the test | A | poc | mechanism (judge) | ISO 25010 functional suitability |
+| R1 | The acceptance criterion is met **in real use**, the way whoever asked for it would use it, not only in the test | A | poc | command (gate) | ISO 25010 functional suitability |
 | R2 | Every gap in the card —what it does not say and has to be decided— is identified in writing, with its question | J | poc | command (10 questions) | SSDF PO.1.2 · Ambig-SWE |
-| R3 | Every decision on a gap picks, if it exists, the option that works with any answer, and says so | J | poc | mechanism (judge) | own, measured |
+| R3 | Every decision on a gap picks, if it exists, the option that works with any answer, and says so | J | poc | command (gate) | own, measured |
 | R4 | The decisions that affect whoever uses or operates the product are in the README, with one `- <ID>-ASM-NN: <plain text>` line per assumption of the plan (`required.mjs` checks it) | J | mvp | prose | Google review: documentation |
 | R5 | The questions for the business can be answered without extra explanation: in the business's language, without criteria IDs, ASVS IDs or method jargon | C | poc | command (`/close` check 7) | — |
 | R6 | Every acceptance criterion has an identifiable test that proves it | C | poc | command (tags) | SSDF PW.8.2 |
@@ -311,7 +311,7 @@ Prioritized with the WebAIM Million 2026: 96% of errors fall in the first six.
 | A3 | Ambiguities are asked, not resolved silently | J | poc | prose (10 questions) | Ambig-SWE: asking improves up to 74% |
 | A4 | The project's constraints are respected, verified with executable checks | C | mvp | mechanism (hooks) | 38.33% of symptoms are constraint violations (unverified) |
 | A5 | The size of the **production** diff —without `specs/` or tests— is proportional to the request and to the criteria that apply | C | poc | — | Google small CLs · agent PRs rejected for size |
-| A6 | The feature is wired end to end, not only what the test checks | A | poc | mechanism (judge) | agents deliver what the test looks at |
+| A6 | The feature is wired end to end, not only what the test checks | A | poc | command (gate) | agents deliver what the test looks at |
 | A7 | If a language model evaluates or reviews, it is repeated and its output does not replace a command | C | production | prose | 13.6% of judgments flip between runs |
 | A8 | If the code calls a model: its output is validated as untrusted input, the system prompt is separated from the user input, least permissions, consumption limits | J | mvp | — | OWASP Top 10 for LLM 2025 · SEC-LLM-* |
 | A9 | The agent never disables a test, adds continue-on-error or skips hooks to make the pipeline pass | C | poc | mechanism (required · guard-shell) | CI-AI-* · TEST-IA-07 · ImpossibleBench (arXiv 2510.20270) |
@@ -357,7 +357,7 @@ required and was not before: that is the debt to close.
 | Grade | The bar |
 |---|---|
 | `poc` | The invariants: the whole requirement read, ambiguities to the queue, a test per scenario, the three states, one round of questions, a push of the card's branch only and no merge, a migration already applied untouched. No mutation, no accessibility sweep, no performance budgets, no modules `docs`, `i18n`, `observability`, `api`, `ci` or `infra`, no judge; the time cap is at most 5× the likely time (goal 3×). |
-| `mvp` | Adds basic security (OWASP top 10), accessibility AA on what is touched, the `judge` on screens and routes that write, the API documented (W8, W9), the pipeline, health and visibility of failures, and mutation of the domain only (files under `domain/` or marked `rule`); cap at most 8× (goal 4×). |
+| `mvp` | Adds basic security (OWASP top 10), accessibility AA on what is touched, the plan judge only when `risk.json` says high, the API documented (W8, W9), the pipeline, health and visibility of failures, and mutation of the domain only (files under `domain/` or marked `rule`); cap at most 8× (goal 4×). |
 | `production` | Everything in this list. `security-l2` stays opt-in on top. |
 
 **What a grade leaves out is never removed in silence.** `modules.json` defines it —per module a `grades`

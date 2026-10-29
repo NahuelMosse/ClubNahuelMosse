@@ -61,7 +61,7 @@ export const CAPPED = new Set(['builder', 'grunt', 'designer', 'design-critic'])
 // Never when another kit's version of the hook would take the call over (`delegationTarget`).
 export const skips = (name, input, card, hookUrl) => {
   try {
-    if (!['shell-writes', 'commit-why', 'time-cap', 'context-cap', 'turn-budget', 'require-at-close'].includes(name)) return false;
+    if (!['shell-writes', 'commit-why', 'time-cap', 'context-cap', 'turn-budget', 'require-at-close', 'publish', 'trim-output'].includes(name)) return false;
     if (card.delegationTarget(hookUrl, input)) return false;
     const data = input.tool_input ?? {};
     const command = String(data.command ?? '');
@@ -71,6 +71,10 @@ export const skips = (name, input, card, hookUrl) => {
       // reads writes nothing (it is skipped before and after, so no snapshot is left behind).
       case 'shell-writes': return !input.agent_id || READ_ONLY.test(command);
       case 'commit-why': return !/\bgit\s+(?:[^|;&\n"']*?\s)?commit\b/.test(command);
+      // publish judges a shell line only where a `git push` or a `gh` call sits, bare or inside a wrapper; a Jira comment always.
+      case 'publish': return ['Bash', 'PowerShell'].includes(input.tool_name) && !/\bgh\b|\bpush\b/i.test(command);
+      // trim-output leaves alone what runs in the background and what only reads.
+      case 'trim-output': return Boolean(data.run_in_background) || READ_ONLY.test(command);
       case 'time-cap': {
         const found = cardOf();
         return !found?.card || existsSync(join(found.card, 'closing.md')) || !['card.md', 'plan.md'].some((f) => existsSync(join(found.card, f)));
@@ -145,7 +149,10 @@ export const dispatch = async (event, raw, dir, deadline) => {
   // of an import that failed, which lets the call through.
   const card = await import('./card.mjs');
   const { SOFT } = card;
-  const names = hooksFor(event, tool).filter((name) => !(input && typeof input === 'object' && skips(name, input, card, pathToFileURL(join(dir, `${name}.mjs`)).href)));
+  // Every hook of the call lives in `dir`, so the kit that governs the call is the same for all: asked once.
+  let target;
+  const once = { ...card, delegationTarget: (url, call) => (target === undefined ? (target = card.delegationTarget(url, call)) : target) };
+  const names = hooksFor(event, tool).filter((name) => !(input && typeof input === 'object' && skips(name, input, once, pathToFileURL(join(dir, `${name}.mjs`)).href)));
   const results = await Promise.all(names.map((name) => runHook(dir, name, raw, deadline)));
   const blocked = [];
   const notes = [];

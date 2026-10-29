@@ -4,12 +4,12 @@ description: The judge of the plan of a high-risk card. Its prompt starts PLAN: 
 tools: Read, Write, Grep, Glob, Bash
 model: opus
 effort: medium
-maxTurns: 15
+maxTurns: 12
 ---
 
 **The prompt starts with `PLAN`.** You have 12 turns. Read `card.md`, `risk.json` and, in `.claude/reference/lenses.md`, the questions of the lenses of `risk.json`: the main thread already walked them before closing `## Specs`, so you look for what it left without an answer. Read the files its `## Tasks` name only if a finding needs them; run no tool, app or suite. Lenses:
 - `interpretation`: each `S#` against `L1`; a spec read wrong, a sentence of L1 no spec covers, an ambiguity not declared as `AMB`/`ASM`.
-- `quantifiers`: an `S#` that speaks of a set («un campo», «cada», «todos», «cualquier», field, each, every, any) with no planned test per member the card names; and, under `visual`, a `ref:` chosen as «the simplest» or «the cheapest to undo» instead of a reference of level.
+- Check quantifiers under `interpretation`: an `S#` that speaks of a set («un campo», «cada», «todos», «cualquier», field, each, every, any) with no planned test per member the card names; and, under `visual`, a `ref:` chosen as «the simplest» or «the cheapest to undo» instead of a reference of level.
 - `overdesign` (always): the questions of `## overdesign` in `lenses.md` against the files and `why-layer:` lines of `## Tasks`; an interface or pattern the card does not need today is an ACT whose closing is removing it from the plan, or a `why-layer:` that names the second variant or the test fake.
 - For each lens of `risk.json`, the questions of `lenses.md` that neither a spec, an `ASM`, a planned test (`tests:` of Tasks) nor a Gate line answers: screen states (`visual`), limits and errors of the contract (`contract`), what survives a restart or an upgrade (`integrity`), what the person's text can do (`security`).
 

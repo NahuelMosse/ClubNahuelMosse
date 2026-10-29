@@ -20,7 +20,6 @@ const reject = (reason) => {
 try {
   const { IS_TEST, IS_VERIFICATION_CONFIG, isSecret, isSecretGlob, rootOf, relativeTo, currentCard, cardStart, existedAt } =
     await import('../tools/card.mjs');
-  const { applyEdit, cardIdOf, logViolation } = await import('../tools/card-doc.mjs');
   const raw = readFileSync(0, 'utf8');
   const input = JSON.parse(raw);
   await (await import('../tools/card.mjs')).delegateToRepo(import.meta.url, raw, input);
@@ -40,6 +39,8 @@ try {
 
   const path = (data.file_path ?? data.notebook_path ?? '').replaceAll('\\', '/');
   if (!path) process.exit(0);
+  // Loaded only for a write: a Read or a Grep ends above without it.
+  const { applyEdit, cardIdOf, logViolation } = await import('../tools/card-doc.mjs');
 
   // The manifest of the modules is written by `kit.mjs` and `install.mjs` only: a module is turned off
   // as a decision with its reason, never by editing a file.
@@ -102,6 +103,7 @@ try {
       reject(
         `${relativeTo(root, path)} has tests tagged ${mine ? 'by this card' : 'by another card'} and a commit already holds them: frozen. ` +
         'Whoever implements does not edit them. If one is wrong, say so in the `## Log` of card.md (a new line) and in judge.md or your report: a person decides; ' +
+        'a test can be replaced: a new file with the same tag and a `replaces:` line in the Log; ' +
         'a new behavior is a new test with its own tag. A mechanical change that has to touch many of them (a type or a path that changes everywhere) ' +
         'declares `refactor-tests: <why>` in ## Gate: they are edited in place and the close lists each one for review.'
       );

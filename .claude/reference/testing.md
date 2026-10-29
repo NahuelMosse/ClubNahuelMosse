@@ -35,7 +35,7 @@ smell planted, a clean sample and five real spec files (false positives are revi
 | TEST-E2E-01, TEST-E2E-04 | T12 |
 
 The rules outside this table are judgment or guidance, with no criterion of their own. The detector D18 of the
-last topic (no test weakened in the card's diff) is read by the `judge` from the diff.
+last topic (no test weakened in the card's diff) is checked by the gate; the plan judge reads `card.md` and runs only at high risk.
 
 ## 1. Strategy and shape of the suite (EST)
 

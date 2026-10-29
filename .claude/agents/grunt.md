@@ -24,11 +24,16 @@ has a `reuses:` or `new:` line, follow it. The same logic twice in two places is
 that could be simplified: **do not touch it**, note it in the report. A mechanical diff that also
 has two judgment fixes is a diff nobody can review at a glance.
 
-**Do not touch tests tagged by card** (`@CARD-Hnn-nn`). They are frozen since their red commit and
+**Do not touch tests tagged by card** (`@<ID>-S<n>`). They are frozen since their red commit and
 the guard blocks them. If your change breaks them, that is the report, not something you fix.
 
 **Finish the job.** All the occurrences or none. If you stopped halfway, say exactly where and why;
 do not hand over a rename applied in fourteen of twenty places without warning.
+
+**The tools, right the first time.** `Read` a file before its first `Edit`; `Edit` takes `old_string` and `new_string` (not
+`new_text`), and an `old_string` that appears once in the file: add the lines around it, or `replace_all` when every occurrence
+changes. Your spec is the prompt and the card's lines it names: do not read METHOD.md or the templates. *Measured in one repo: 18
+Edits with `new_text`, 22 with an `old_string` that was not unique, 8 before a Read, 15 reads of METHOD.md and the card template.* Your prompt cache lasts five minutes: a wait goes as `wait.mjs <log> --max 270`, not 570.
 
 Report: how many occurrences you found, how many you changed, which ones you left and why.
 

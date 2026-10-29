@@ -4,8 +4,8 @@
 // guard-shell refuses a command that launches Playwright while that PID lives. The file is in the git folder: it is
 // not committed, and `.validation/` cleanups do not erase it. A PID that is dead means a run that was killed: ignored.
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { currentCard } from './card.mjs';
 
 // A command with the package.json scripts it runs written out: `npm test` becomes the body of the `test` script,
@@ -24,9 +24,25 @@ export const launchesPlaywright = (command, root) => {
   return PLAYWRIGHT_TEST.test(expandScripts(String(command).replace(/^.*\bonce\.mjs\s+\S+\s+--\s+/, ''), scripts));
 };
 
-export const lockFile =(root) => {
-  const r = spawnSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: root, encoding: 'utf8' });
-  return r.status === 0 && r.stdout.trim() ? join(r.stdout.trim(), 'sdd-browser-run.json') : null;
+// The git folder is read from the nearest `.git` up from `folder` (a folder, or in a worktree a file `gitdir: <path>`)
+// without spawning git: guard-shell asks for it on every shell command of a card, edit-count on every Edit. Anything
+// else asks git.
+export const gitDirOf = (folder) => {
+  for (let dir = resolve(folder); ; dir = dirname(dir)) {
+    const dotGit = join(dir, '.git');
+    try {
+      if (statSync(dotGit).isDirectory()) return dotGit;
+      const pointer = readFileSync(dotGit, 'utf8').match(/^gitdir:\s*(.+?)\s*$/m)?.[1];
+      if (pointer) return resolve(dir, pointer);
+    } catch { /* no .git here: one folder up */ }
+    if (dirname(dir) === dir) break;
+  }
+  const r = spawnSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: folder, encoding: 'utf8' });
+  return r.status === 0 && r.stdout.trim() ? r.stdout.trim() : null;
+};
+export const lockFile = (root) => {
+  const dir = gitDirOf(root);
+  return dir ? join(dir, 'sdd-browser-run.json') : null;
 };
 
 const alive = (pid) => {

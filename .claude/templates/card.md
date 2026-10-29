@@ -49,7 +49,7 @@ Only with the lens `visual`, 15 lines or fewer; plan.mjs refuses the plan withou
 
 One command per line, as verify.mjs runs them: `suite:`, `lint:`, `mutate <file>: <suite>`, `app:`, `probe:`, `attacks:`. `suite:` runs the tests the card can break, `{affected}` standing for them (`node --test {affected}`, `npx vitest run {affected}`, `pytest {affected}`, `flutter test {affected}`); the whole suite runs once in the CI of the PR, which `/close` waits for. `refactor-tests: <why>` lets a mechanical change edit frozen tests in place; the close lists each for a person. With `app:`, verify.mjs starts the app once and brings it down at the end; every line gets `APP_URL`, `PORT` and `DATA_DIR` in its environment (`$APP_URL`, `${APP_URL}` and `%APP_URL%` also work in the text, in any shell), and `attack.mjs`, `overflow.mjs`, `motion-audit.mjs` and `app.mjs probe` take the URL from `APP_URL` when none is given.
 `no-visual: <why>` declares that the card touches code files that build markup (an HTML string in a `.py`) without changing what a screen shows: the `visual` lens stays off while no `## Tasks` file is a view, and the gate fails if the card's diff changes a markup line of those files. `no-docs: <why>` declares a card that changes no behavior: without it, from mvp the `docs` check wants the feature page, the contract and the data model the card touched (`templates/docs.md`, module docs).
-Planned here, before the code, so the gate and the judge find them done: a screen (lens `visual`) has one `probe <state>:` line for each state a spec names (`state: …`), the transient ones with the route held (`--route "GET /api/x=hold"`). An API (lens `contract`) must have the `attacks:` line; `--body-limit` is the limit the card sets, in bytes; `--common-headers` the headers every response carries, `--unique` the write that must answer a duplicate, `--fault-db` the database file to damage, `--openapi` the contract to compare.
+Planned here, before the code, so the gate and the judge find them done: a screen (lens `visual`) has one `probe <state>:` line for each state a spec names (`state: …`), the transient ones with the route held (`--route "GET /api/x=hold"`). An API (lens `contract`) must have the `attacks:` line; `--body-limit` is the limit the card sets, in bytes; `--common-headers` the headers every response carries, `--unique` the write that must answer a duplicate, `--search` a read with a free-text parameter, `--fault-db` the database file to damage, `--openapi` the contract to compare.
 The steps of a `probe` can press Enter from each control and type markup: `[{ "enter-each": "form" }, { "type-markup": "input[name=q]" }]`; `--enter-skip` lists the controls where Enter does not submit.
 
 ```
@@ -61,13 +61,13 @@ app: node src/main.mjs
 probe loading: node .claude/tools/app.mjs probe steps/loading.json --axe --contrast "[role=status]" --route "GET /api/customers=hold" --out .validation/probe/loading
 probe empty: node .claude/tools/app.mjs probe steps/empty.json --axe --contrast "[role=status]" --out .validation/probe/empty
 probe typed: node .claude/tools/app.mjs probe steps/typed.json --enter-skip "textarea" --out .validation/probe/typed
-attacks: node .claude/tools/attack.mjs --json --body-limit 1024 --write "POST /api/customers name=Ana" --read "/api/customers" --common-headers "content-type, cache-control" --unique "POST /api/customers name=Ana" --fault-db $DATA_DIR/customers.db --openapi openapi.json
+attacks: node .claude/tools/attack.mjs --json --body-limit 1024 --write "POST /api/customers name=Ana" --read "/api/customers" --common-headers "content-type, cache-control" --unique "POST /api/customers name=Ana" --search "/api/customers q" --fault-db $DATA_DIR/customers.db --openapi openapi.json
 overflow: node .claude/tools/overflow.mjs
 ```
 
 ## Log
 
-L1 is the requirement, verbatim and whole. Then one line per answer from Jira, decision or evidence. A frozen test of an earlier card that this card contradicts is declared before building: `Grep` its `@<ID>-S` tags in the files the Tasks touch.
+L1 is the requirement, verbatim and whole. Then one line per answer from Jira, decision or evidence. A frozen test of an earlier card that this card contradicts is declared before building: `Grep` its `@<ID>-S` tags in the files the Tasks touch. A line is appended with `node .claude/tools/log.mjs specs/<card> "<text>"`, which numbers and dates it.
 
 - L1 · Search customers by partial company name. Results show tax ID and status. <rest of the card as written>
 - L2 · 2026-08-31 · Jira answer: …

@@ -11,7 +11,7 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
    - `## Specs`: every sentence of the card as `S<n> · "<verbatim quote>"`; an assumption as `<ID>-ASM-NN · <reading> · S<n>`;
    - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test; each production task gets an indented `reuses:`/`new:` line, a new pattern a `why-layer:`; each file sits in its slice's layer folder;
    - `## Gate`: one command per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), and the plan's own: a `probe <state>:` for each state `## Specs` names, `attacks:` with the card's limits, `migrate-upgrade:` if it touches data;
-   - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
+   - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows, by `node .claude/tools/log.mjs specs/<card> "<line>"`. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
    - `## Look` (visual lens): `ref:` (the card, the repo's design system or `reference/design-refs.md`, profile web; never «the simplest»; an `ASM` with the reference of level), `behavior:` per moment, `tokens:`, `copy:`;
 
    - `## Changes to existing behavior`: a route, screen or file of main the card changes (`none` if it only adds).
@@ -22,7 +22,7 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
    concurrency, trail) is `<ID>-AMB-NN` in `ambiguities.md` (append-only; `publish` reads it). With Jira, all of them go in **one** comment, posted without asking approval,
    each with the option assumed if nobody answers; the unanswered become ASM lines of `## Specs` (cheapest reading to undo, with its test). Never a second round. Without Jira: straight to ASM.
 2. **`node .claude/tools/risk.mjs specs/<card>`** checks the plan, then classifies with code and freezes `risk.json`: `size` (small | large), `review`
-   (low | medium | high) and the `lenses` (visual, contract, integrity, interpretation, security). A gap in the plan (an `S#` or `ASM` with no test, a file with no layer, a state with no `probe`, no `## Look` under visual, no `attacks:` under contract, no migration line under integrity) is listed and nothing is written: complete the card, rerun. You do not reclassify.
+   (low | medium | high) and the `lenses` (visual, contract, integrity, interpretation, security). A gap in the plan is listed with the line that closes it, and nothing is written: complete the card, rerun. You do not reclassify.
    **Plan judge** (`high` only; `low` and `medium` have no judge, the gate is the review): a `judge` with a prompt starting `PLAN` reads only `card.md` and writes `judge.md`, its ACT marked `plan`. Close each in the card before RED: a new `ASM-NN` with its planned test, a Gate line or `declared · <why>`; the line of `judge.md` says `closed · <ASM-NN, T<n> or Gate line>`; rerun `risk.mjs`.
 3. **Build.**
    - **small:** you do it inline, no subagents. RED first: the planned tests, tag `@<ID>-S<n>` (an assumption: `@<ID>-ASM-NN`) in the title,
@@ -34,9 +34,9 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
    - Validate what comes from outside on the way in; a missing key of a closed enumeration is an error, not a default. The scope is the
      card's: an unasked control, endpoint or header is a Log line `OUT · <what>`, not built.
 4. **Gate.** `node .claude/tools/verify.mjs` runs each line of `## Gate` once, checks every `S#` has a test, and
-   prints what fails. What a formatter or generator writes runs before the gate and is committed: a line that changes versioned files fails. Fix and rerun until green, or two rounds without progress: then log it and stop; the close lists it in `## Could not run`.
+   prints what fails. Formatters and generators run before the gate, committed: a line that changes versioned files fails. Fix and rerun until green, or two rounds without progress: log it and stop; the close lists it in `## Could not run`.
 5. **`/close`.** `node .claude/tools/close.mjs` runs nine checks and writes `closing.md` (`## Passed`, `## Failed`, `## Could not run`,
-   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes branch, PR, CI and card comment, and merges once CI passed with nothing for a person; never main, `--force`, `--admin`.
+   `## Judge`, `## Assumptions`, `Cost:`). Then it publishes branch, PR, CI and card comment, and merges once CI passed with nothing for a person; never main, `--force`, `--admin` unless the user orders it.
 
 ## The invariants
 
@@ -45,7 +45,7 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
 - **Tagged tests are frozen once committed.** A wrong one is replaced, never edited: write the fixed test in a new file with the same tag and add to the Log `- L<n> · <date> · replaces: <file> "<test>" · <why wrong> · by: <file> "<test>"`; the gate then says `passed with replaced` and the close sends it to «Needs a person». A new behavior is a new test.
 - **Three states: passed · failed · could not run.** What did not run is never "passed". A check that stops you is not turned off. An uncorrected finding stops the close.
 - **Nothing waits for a person.** A person's call goes in `## Needs a person`; it is not yours (`.claude/AUTONOMY.md`).
-- **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). **Modules** add lenses and gate lines, not steps. The method is the base; a **profile** (`web`, `backend`) brings the screen or API instruments.
+- **Grade** (`poc`, `mvp`, `production`): how much of the bar the repo asks (`kit.mjs status`). **Modules** add lenses and gate lines, not steps. The method is the base; a **profile** (`web`, `backend`, `flutter`) brings the screen or API instruments.
 
 ## Cost rules
 
@@ -53,9 +53,9 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
 - **Nothing over ~30 s runs in the foreground:** background, log, `Grep`. A `Monitor` runs `node .claude/tools/wait.mjs <log> --monitor --max 1790`
   (ends on `<tool>: exit <N>`); the turn ends; unattended or in a subagent, `wait.mjs`.
 - **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
-- **Read in depth only what an `S#` touches;** the rest by `Grep`. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
-- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are the gate's. `node --test` always carries `--test-force-exit`.
-- **Context caps:** `context-cap` warns builder, grunt and designer at 90k, stops at 120k: commit, `specs/<card>/handoff.md`, a fresh one. The main thread compacts at 200k.
+- **Read in depth only what an `S#` touches;** the rest by `Grep`. To look at the card again, `node .claude/tools/card-view.mjs specs/<card> [S<n> T<n>…]` (L1 folded); `Read` it only to edit it. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
+- **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are CI's. `node --test` always carries `--test-force-exit`.
+- **Context caps:** `context-cap` warns builder, grunt, designer and design-critic at 150k, stops at 200k: commit, `specs/<card>/handoff.md`, a fresh one. The main thread compacts at 200k.
 
 ## Who does what
 

@@ -8,7 +8,7 @@ One line: category, 3 personality adjectives, and the 5 competitors or reference
 
 ## 1. Value structure first (no hue)
 Fix the OKLCH L ladder of 7 roles: background, surface 1, surface 2, border, muted text, text, accent. Dark example: .18 / .23 / .28 / .38 / .72 / .93 / accent .68-.80.
-- Check: ΔL >= .10 between neighboring surfaces and >= .25 between background and muted text (*); the grayscale test: a capture with `filter: grayscale(1)` (and blur 8px) keeps CTA, headline and background separated; the accent is >= .10 ΔL from muted text. The CTA separates from its adjacent background and from body and muted text by OKLCH distance, not by L alone: ΔL >= .15, or ΔC >= .08, or hue >= 40° when both have chroma >= .04 (*). A lime and a cream of the same luminance separate by chroma (landonorris.com: #d2ff00 on #f4f4ed, L .96 and .97, ΔC .22).
+- Check: ΔL >= .10 between neighboring surfaces and >= .25 between background and muted text (*); the grayscale test: a capture with `filter: grayscale(1)` (and blur 8px) keeps CTA, headline and background separated; the accent is >= .10 ΔL from muted text. The CTA separates from its adjacent background and from body and muted text by OKLCH distance, not by L alone: ΔL >= .15, or ΔC >= .08, or hue >= 40° when both have chroma >= .04 (*). A saturated accent and a pale background of the same luminance separate by chroma (landonorris.com: L .96 and .97, ΔC .22).
 
 ## 2. Hue harmony by the brand concept
 Pick the main hue, then the scheme by personality: energy/CTA = complementary (dominant 60-70%, complement 10-15%, never equal parts); calm/content = analogous; many hues = triadic with one dominant; safe default = split-complementary; sophistication = monochrome + neutral.
@@ -23,7 +23,7 @@ Neutrals carry the brand or accent hue: OKLCH chroma .005-.03, one hue across th
 - Check: chroma and hue of each neutral measured; the L curve is monotone.
 
 ## 5. One accent
-Chroma hierarchy: neutrals and backgrounds low, one action color high. The accent is reserved for the primary CTA when it also colors non-actions (headings, labels, decoration); an accent that is the action color of the whole page (every button, link and wipe in one lime) is valid. A second accent only for one moment. Secondary colors are never headline, button or body text; no color on color. Ramps shift hue (shadows cooler, lights warmer, 5-15 degrees per step (*)).
+Chroma hierarchy: neutrals and backgrounds low, one action color high. The action color comes from the brand or the product (a flavor, the pack), never a hue that exists only for the CTA. The accent is reserved for the primary CTA when it also colors non-actions (headings, labels, decoration); an accent that is the action color of the whole page (every button, link and wipe in one lime) is valid. A second accent only for one moment. Secondary colors are never headline, button or body text; no color on color. Ramps shift hue (shadows cooler, lights warmer, 5-15 degrees per step (*)).
 - Check: at most 2 accent tokens besides the primary in a view; the CTA has the largest ΔE of its surroundings; accent area <= 10-15%; `design-round` row `palette: accent reserved` (applies only when the accent also colors non-actions).
 
 ## 6. Proportions as a range

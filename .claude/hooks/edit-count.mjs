@@ -3,7 +3,6 @@
 // Measured: one agent made 67 Edits and 25 Writes; every edit stays in the context and is re-read on each request.
 // Files of more than 200 lines or 6000 characters are not warned about. It is a warning, never a block. The count lives in the git folder of the file's repo, like review-cap's.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 
 const AT = 4;
@@ -17,9 +16,7 @@ try {
   if (!target) process.exit(0);
   const file = resolve(input.cwd ?? process.cwd(), target);
   const folder = dirname(file);
-  const gitDir = existsSync(folder)
-    ? spawnSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: folder, encoding: 'utf8' }).stdout?.trim()
-    : '';
+  const gitDir = existsSync(folder) ? (await import('../tools/browser-lock.mjs')).gitDirOf(folder) : '';
   const dir = gitDir || join(input.cwd ?? process.cwd(), '.validation');
   const store = join(dir, 'sdd-edit-count.json');
   let counts = {};

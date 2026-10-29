@@ -117,15 +117,28 @@ const snapshotPage = () => {
   const el = document.activeElement;
   const aria = {};
   if (el && el !== document.body) for (const a of el.attributes) if (a.name.startsWith('aria-')) aria[a.name] = a.value;
+  // The browser decides when a ring is due (`:focus-visible`); then an outline or a box-shadow has to draw it.
+  const cs = el && el !== document.body ? getComputedStyle(el) : null;
+  const visible = cs ? el.matches(':focus-visible') : false;
+  const drawn = (p) => !['none', 'normal'].includes(getComputedStyle(el, p).content);
+  const ring = cs ? (cs.outlineStyle !== 'none' && parseFloat(cs.outlineWidth) > 0) || cs.boxShadow !== 'none' || drawn('::before') || drawn('::after') : false;
   const focus = el && el !== document.body
-    ? { tag: el.tagName.toLowerCase(), id: el.id, role: el.getAttribute('role'), name: (el.getAttribute('aria-label') || el.innerText || el.value || '').trim().slice(0, 60), aria }
+    ? { tag: el.tagName.toLowerCase(), id: el.id, role: el.getAttribute('role'), name: (el.getAttribute('aria-label') || el.innerText || el.value || '').trim().slice(0, 60), aria, ringDue: visible, ring }
     : null;
   const announcements = [...document.querySelectorAll('[role=status],[role=alert]')]
     .map((e) => ({ role: e.getAttribute('role'), text: e.textContent.trim() })).filter((a) => a.text);
   const animations = document.getAnimations().filter((a) => a.playState === 'running')
     .map((a) => ({ name: a.animationName ?? a.transitionProperty ?? 'unnamed', type: a.constructor.name }));
   const doc = document.documentElement;
-  return { activeElement: focus, announcements, scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, animations };
+  const label = (e) => `${e.tagName.toLowerCase()}${e.id ? `#${e.id}` : ''}`;
+  // `aria-busy=""` or "false" on a control the page keeps busy is read as not busy.
+  const busyNotTrue = [...document.querySelectorAll('[aria-busy]')].filter((e) => e.getAttribute('aria-busy') !== 'true' && e.getAttribute('aria-busy') !== 'false').map(label);
+  // A spinner inside a busy control that takes no box is never seen.
+  const hiddenSpinners = [...document.querySelectorAll('[aria-busy=true], [aria-disabled=true], button:disabled')]
+    .flatMap((c) => [...c.querySelectorAll('svg, [role=progressbar], [class*=spin], [class*=loader]')])
+    .filter((s) => { const r = s.getBoundingClientRect(); return r.width === 0 || r.height === 0 || getComputedStyle(s).visibility === 'hidden'; })
+    .map(label);
+  return { activeElement: focus, announcements, scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, animations, lang: doc.getAttribute('lang') || '', text: (document.body?.innerText ?? '').slice(0, 600), busyNotTrue, hiddenSpinners };
 };
 
 // Runs in the page: the colors, size and weight of the first element of each selector. The background is the
@@ -204,7 +217,15 @@ const measureDesign = () => {
     const s = getComputedStyle(e);
     return !((secs(s.transitionDuration) > 0 && s.transitionProperty !== 'none') || (s.animationName !== 'none' && secs(s.animationDuration) > 0));
   }).map(label);
-  return { families: [...families].sort(), sizes: [...sizes].sort((a, b) => a - b), controls: controls.length, unanimated: [...new Set(unanimated)].slice(0, 8), unanimatedCount: unanimated.length };
+  // A select still on its placeholder option («Elegí un plan», value "") painted in the color of typed text reads as chosen,
+  // when the page's inputs draw their own placeholder in another color.
+  const inputs = [...document.querySelectorAll('input[placeholder]')].filter(shown);
+  const typedColor = inputs[0] && getComputedStyle(inputs[0]).color;
+  const hintColor = inputs[0] && getComputedStyle(inputs[0], '::placeholder').color;
+  const selectHints = typedColor && hintColor !== typedColor
+    ? [...document.querySelectorAll('select')].filter((s) => shown(s) && s.value === '' && getComputedStyle(s).color === typedColor).map(label)
+    : [];
+  return { families: [...families].sort(), sizes: [...sizes].sort((a, b) => a - b), controls: controls.length, unanimated: [...new Set(unanimated)].slice(0, 8), unanimatedCount: unanimated.length, selectHints };
 };
 
 // Runs in the page with prefers-reduced-motion emulated: the large or continuous movement still running: CSS or WAAPI

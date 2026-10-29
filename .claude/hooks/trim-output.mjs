@@ -11,9 +11,9 @@ import { join } from 'node:path';
 
 const HEAVY = /(^|[\s;&|(])(npm (run )?test\b|npm run [\w:-]+|pnpm (run )?[\w:-]+|yarn [\w:-]+|npx (playwright|vitest|jest|eslint|tsc|stryker|c8|jscpd)\b|node (--test|[^\s]*(mutate|verify|required)\.mjs)\b|pytest\b|go (test|build|vet)\b|dotnet (test|build)\b|mvn\b|gradle\b|\.\/gradlew\b|cargo (test|build|clippy)\b|ruff\b|mypy\b)/;
 const ALREADY = /[|>]|\btee\b|2>&1|&\s*$|\bnohup\b/;
-// The kit's tools print long reports, except the ones whose output is the answer: `bar.mjs <IDs>`, help and trim itself.
+// The kit's tools print long reports, except the ones whose output is the answer: `bar.mjs <IDs>`, help, log and trim itself.
 const TOOL = /(^|[\s;&|(])node\s+\S*\.claude[\\/]tools[\\/]([\w-]+)\.mjs\b(\s+\S)?/g;
-const toolIsHeavy = (cmd) => [...cmd.matchAll(TOOL)].some(([, , name, args]) => !['help', 'trim'].includes(name) && !(name === 'bar' && args));
+const toolIsHeavy = (cmd) => [...cmd.matchAll(TOOL)].some(([, , name, args]) => !['help', 'trim', 'log'].includes(name) && !(name === 'bar' && args));
 // git log, diff and show are long unless the command already limits them.
 const GIT_LONG = /(^|[\s;&|(])git\s+(log|diff|show)\b/;
 const GIT_LIMITED = /--(stat|shortstat|numstat|name-only|name-status|max-count|quiet)\b|\s-n\s*\d+|\s-\d+\b/;

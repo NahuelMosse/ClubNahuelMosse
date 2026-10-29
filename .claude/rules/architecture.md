@@ -16,7 +16,7 @@ simply nothing happens.
 
 *What did work, and why the critical content does not live only here:* the dependency-direction
 test was written anyway by the runs where this rule was not loaded, because the obligation is also
-in the gate and the `judge`, which always run. **What rests on a single door is lost when that door does
+in the gate and in the plan judge, which reads `card.md` and runs only at high risk. **What rests on a single door is lost when that door does
 not open.**
 
 ## Simplest structure that works

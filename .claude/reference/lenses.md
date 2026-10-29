@@ -14,13 +14,23 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 - Which reading works with any answer to the open question, and is that the one assumed?
 - What does the card leave to the default of a library (sort order, time zone, rounding), and is it written down?
 - What does «empty» mean here: missing, `null`, `""` or only spaces?
+- What does a public function do with a missing argument, `null` or `{}` (`total(null)`), and does a test say it?
+- Is the input normalized before it is compared or stored: NFC against NFD (`José`), a leading zero (`011 4555`), U+0000?
+- What will the person type that the card's examples do not (the surname first, two spaces, a pasted line break)?
+- Where is a computed amount rounded: once at the end, never per line (`3 × 0.335`)?
+- A scenario with «first», «or» or «any» has a case per branch: which is the second test?
 
 ## contract
+
+The questions every HTTP card leaves open (content type, byte limit, ids, query integers, search, order, request id, 405, 500)
+have their default in `reference/http-defaults.md` (profile backend): assumed from there as an `ASM` with its test, not deliberated.
 
 - What does an unsupported method answer on an invalid id, 405 or 404 (`DELETE /items/xyz`)?
 - Is a `+` in the query a space or a plus (`?q=a+b`)?
 - What happens in a partial case, one valid field and one invalid (`{"name":"Ana","age":-1}`)?
-- Is the cap of an integer in the query said for every parameter, and what does it answer when passed (`?limit=1000000`)?
+- Is the cap of an integer in the query said for every parameter, and what does it answer when passed (`?limit=1000000`, `?page=` and 30 nines)?
+- Does a malformed path answer 4xx, never 5xx (`//items`, `/items/..%2f`, `/items/%`)?
+- Are bytes that decoding would repair silently refused instead (invalid UTF-8 turned into `�`)?
 - Which statuses does the contract (openapi) document that the app returns: 400, 404, 408, 413, 415, 431, 500?
 - What does a repeated or duplicate value answer, 409 or 200 with the existing one (`POST` of the same email twice)?
 - Which headers does every response carry (`content-type`, `cache-control`, the card's own), errors included?
@@ -47,8 +57,13 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 
 A card that edits a code file with markup in it and does not change the screen declares `no-visual: <why>` in `## Gate`; a view file in `## Tasks` (`.css`, `.html`, `.jsx`, `.tsx`, `.vue`, `.svelte`) voids it.
 
-- Does Enter submit from each control of the form, not only from the last one?
-- Where does focus go after an error and after a submit?
+- Does Enter submit from each control of the form, not only from the last one, and from each type (text, `select`, checkbox) in a real browser?
+- Where does focus go after an error and after a submit, and is it never left on `body` in any step?
+- Is the focus ring visible on the invalid field and on the status message that takes focus?
+- Does the sending indicator stay visible, with contrast, while the request is held?
+- Does a `select` placeholder read as a placeholder, not in the color of a chosen value?
+- Does what enters also leave with a transition, and does reduced motion leave no transform behind?
+- Do the gaps between blocks come from the spacing tokens of `design/line.md`, not loose values?
 - Does a long text with no spaces overflow at 320 px (`aaaaaaaaaaaaaaaaaaaaaaaa`)?
 - Is a disabled control still legible, with contrast and a visible reason?
 - Does each state that can appear (loading, empty, error, sending, and the notice of a server error) have its `probe`?
@@ -84,3 +99,4 @@ Always read by the plan `judge` at high, whatever the lenses of `risk.json`. The
 - Is the host or origin checked when the card names one (`Host`, CORS)?
 - Does anything sensitive travel in the query string?
 - Which limit stops a loop of requests (size, count, time), and what does it answer?
+- Does the static server serve only the public folder (`/.git/config`, `/.env`, `/package.json`, `/specs/`, `/design/` give 404)?

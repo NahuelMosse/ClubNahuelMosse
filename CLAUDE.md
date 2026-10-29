@@ -26,7 +26,7 @@ orchestrate** them, one `card-runner` per card in its worktree, and never build 
 **The kit and the code are in English** (identifiers, file names, comments, test names) unless this file declares `Code language: <lang>`.
 Commits, UI text, the PR and the Jira comments speak the team's language. Headings, IDs and tags stay in English: the hooks read them.
 
-**The kit is a base plus profiles** (`web`, `backend`; `flutter` is planned): the screen and API instruments come with the profile, and `node .claude/tools/kit.mjs profile on|off <p> --reason "…"` turns one on or off.
+**The kit is a base plus profiles** (`web`, `backend`, `flutter`): the screen and API instruments come with the profile, and `node .claude/tools/kit.mjs profile on|off <p> --reason "…"` turns one on or off.
 
 ## The invariants
 
@@ -58,7 +58,7 @@ Hooks block, and block also when they fail; they reach subagents too. If one sto
 - `guard`: L1 and the Log of `card.md` (append-only), `risk.json`, committed tagged tests, migrations already in main, `kit.json`.
 - `delegate-code`: production code is written by the `builder`, the `grunt`, or the main thread on a small card after the RED commit.
 - `review-cap`: judges by `risk.json` (none in low and medium; one plan judge before building in high), no code judge and no correction round. `require-bar`: cap, Specs, Tasks, Gate.
-- `time-cap`: warns, then stops new agents and suites. `context-cap`: caps the builder, grunt and designer (commit, `handoff.md`, a fresh one); the main thread compacts at 200k.
+- `time-cap`: warns, then stops new agents and suites. `context-cap`: caps the builder, grunt, designer and design-critic (commit, `handoff.md`, a fresh one); the main thread compacts at 200k.
 - `require-at-close` and `publish`: no close without gate, mutation, at high `judge.md` with its ACT closed; publish pushes any branch but main and merges a PR whose checks passed; never force or `--admin` unless the user's last message orders it.
 
 ## If the task is, it goes to

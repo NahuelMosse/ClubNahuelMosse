@@ -62,6 +62,17 @@ export const quantifierProblems = (doc, id, planned) => {
     return count < members.length ? [`${s.id}: speaks of a set and the card names ${members.length} members (${members.map((x) => `«${x}»`).join(', ')}) but ${count} planned tests carry its tag · one test per member in its T line, or \`declared · ${s.id} · <why>\``] : [];
   });
 };
+// A spec with two branches («name or email», «the first one», «otherwise») tested once covers one of them: measured, the
+// judge's findings on a single-test «or» repeated across cards.
+export const BRANCH = /(?<![\p{L}\d])(?:o|u|or|either|otherwise|si no|sino|en cambio|primer|primera|primero|first)(?![\p{L}\d])/iu;
+export const branchProblems = (doc, id, planned) => {
+  if (!id) return [];
+  return specsOf(doc).flatMap((s) => {
+    if (!BRANCH.test(s.text) || new RegExp(`declared[^\\n]*\\b${s.id}\\b`, 'i').test(doc)) return [];
+    const count = planned.filter((t) => specTagsIn(id, t.title).includes(s.id)).length;
+    return count === 1 ? [`${s.id}: has two branches («${s.text.match(BRANCH)[0]}») and one planned test · a test per branch in its T line, or \`declared · ${s.id} · <why>\``] : [];
+  });
+};
 
 const wordsOf = (s) => new RegExp(`(?<![\\p{L}\\d])(?:${s})(?![\\p{L}\\d])`, 'iu');
 const PROMISES_RESPONSE = /\b[1-5]\d\d\b|\bdevuelv\w*|\bresponde\w*|\breturns?\b|\bresponds?\b|\bse (?:guarda|devuelve)\b|\b(?:saved|stored|returned)\b/i;
@@ -83,7 +94,17 @@ const stepsTextOf = (doc, cardDir, root) => probeLinesOf(doc).flatMap((l) => l.m
   [join(root, p), join(cardDir, p), join(cardDir, 'steps', basename(p))].filter(existsSync).slice(0, 1)).map((p) => readFileSync(p, 'utf8')).join('\n');
 
 // The behavior a card already has: a file of `## Tasks` that exists in main, in a card that touches a route or a screen.
-const existsInMain = (root, file) => ['origin/main', 'main', 'master'].some((ref) => spawnSync('git', ['cat-file', '-e', `${ref}:${file}`], { cwd: root }).status === 0);
+// One listing per ref, not one git call per file and ref.
+const filesAt = new Map();
+const filesOf = (root, ref) => {
+  const key = `${root}\n${ref}`;
+  if (!filesAt.has(key)) {
+    const r = spawnSync('git', ['ls-tree', '-r', '-z', '--full-tree', '--name-only', ref], { cwd: root, encoding: 'utf8', maxBuffer: 1 << 28 });
+    filesAt.set(key, r.status === 0 ? new Set(r.stdout.split('\0')) : new Set());
+  }
+  return filesAt.get(key);
+};
+const existsInMain = (root, file) => ['origin/main', 'main', 'master'].some((ref) => filesOf(root, ref).has(file));
 
 // The plan rules that read what a spec or an assumption promises against the layer of its test, the flags of `attacks:` and the steps of `probe`.
 export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
@@ -112,27 +133,37 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
     if (declaredFor(doc, escape(a.id))) continue;
     const titles = planned.filter((t) => new RegExp(`@(?:assumption:)?${escape(a.id)}(?!\\d)`).test(t.title)).map((t) => t.title.toLowerCase());
     const body = a.text.replace(/·\s*S\d+\s*$/, '');
-    const values = [...new Set([...(body.match(/\b\d+\b/g) ?? []), ...[...body.matchAll(/«([^»\n]+)»/g)].map((m) => m[1].trim())])];
+    // A number inside a name (CU-18, a date, v2) is not a value of the assumption.
+    const values = [...new Set([...(body.match(/(?<![\w./-])\d+(?![\w/-])/g) ?? []), ...[...body.matchAll(/«([^»\n]+)»/g)].map((m) => m[1].trim())])];
     const ordered = /\b(?:orden|order)\b/i.test(body) ? [...body.matchAll(/`([^`\n]+)`/g)].map((m) => m[1].trim()) : [];
-    const missing = [...values, ...ordered].filter((v) => !titles.some((t) => t.includes(v.toLowerCase())));
-    if (titles.length && missing.length) out.push(`${a.id}: its literal values (${missing.map((v) => `«${v}»`).join(', ')}) are in no title of its planned tests · name them in the title of its test, or \`declared · ${a.id} · <why>\``);
+    const all = [...values, ...ordered];
+    const missing = all.filter((v) => !titles.some((t) => t.includes(v.toLowerCase())));
+    // The rule is for an assumption of several clauses, where a test can cover one and skip the rest; a single value is
+    // one clause, and its tagged test already covers it (measured: 20 of 35 refusals were of one value).
+    if (titles.length && all.length >= 2 && missing.length) out.push(`${a.id}: its literal values (${missing.map((v) => `«${v}»`).join(', ')}) are in no title of its planned tests · name them in the title of its test, or \`declared · ${a.id} · <why>\``);
   }
 
   if (specs.some((s) => EVERY_RESPONSE.test(s.text)) && !hasFlag(attacks, '--common-headers'))
     out.push(`${specs.find((s) => EVERY_RESPONSE.test(s.text)).id}: speaks of every response and \`attacks:\` has no \`--common-headers "<A, B>"\``);
   if (lenses.includes('contract')) {
     const unique = items.find((s) => UNIQUENESS.test(s.text));
-    if (unique && !hasFlag(attacks, '--unique')) out.push(`${unique.id}: speaks of a duplicate or a unique value and \`attacks:\` has no \`--unique "<METHOD> <path> <body>"\``);
+    const search = specs.find((s) => /\b(?:buscar|busca|búsqueda|search|contiene|contains)\b/i.test(s.text));
+    if (search && !hasFlag(attacks, '--search') && !declaredFor(doc, 'search'))
+      out.push(`${search.id}: filters by free text and \`attacks:\` has no \`--search "<path> <param>"\` (\`%\`, \`_\` and a quote are literal) · append it, or \`declared · search · <why>\``);
+    if (unique && !hasFlag(attacks, '--unique')) out.push(`${unique.id}: speaks of a duplicate or a unique value and \`attacks:\` has no \`--unique "<METHOD> <path> <body>"\` · append it to the \`attacks:\` line, e.g. \`--unique "POST /<path> <field>=<value>"\``);
   }
   const hasData = tasks.some((t) => t.files.some((f) => IS_MIGRATION.test(f) || roleFor(roles, f) === 'data'));
   if ((lenses.includes('contract') || lenses.includes('integrity')) && hasData && !hasFlag(attacks, '--fault-db') && !declaredFor(doc, 'fault-db'))
     out.push('a migration or a `(data)` file in ## Tasks and `attacks:` has no `--fault-db <file>` · add it, or `declared · fault-db · <why>`');
   const mutated = gate.filter((l) => /^mutate\b/i.test(l)).join('\n');
-  const unmutated = [...new Set(tasks.flatMap((t) => t.files))].filter((f) => !IS_TEST.test(f) && !IS_MIGRATION.test(f) && ['presentation', 'data'].includes(roleFor(roles, f)) && !mutated.includes(f));
-  if (lenses.includes('contract') && mutated && unmutated.length && !declaredFor(doc, 'mutate'))
-    out.push(`${unmutated[0]} carries behavior of the contract and no \`mutate\` line names it · add \`mutate ${unmutated[0]}: <test command>\`, or \`declared · mutate · <why>\``);
-  if (lenses.includes('integrity') && gate.some((l) => /^app\s*:/i.test(l)) && !planned.some((t) => /reinici|restart|sobrevive/i.test(t.title)))
-    out.push('integrity lens with an `app:` line and no planned test whose title says reinici, restart or sobrevive (a record survives restarting the app on the same database)');
+  const unmutated = [...new Set(tasks.flatMap((t) => t.files))].filter((f) => !IS_TEST.test(f) && !IS_MIGRATION.test(f) && IS_CODE.test(f) && ['presentation', 'data'].includes(roleFor(roles, f)) && !mutated.includes(f));
+  // A screen's script is mutated too: measured, a form whose logic only browser tests reached left every mutant alive.
+  if ((lenses.includes('contract') || lenses.includes('visual')) && mutated && unmutated.length && !declaredFor(doc, 'mutate'))
+    out.push(`${unmutated[0]} carries behavior the card promises and no \`mutate\` line names it · add \`mutate ${unmutated[0]}: <node test command>\` with a node test that imports its logic, or \`declared · mutate · <why>\``);
+  // Measured: 9 refusals in one repo repeated this rule, whose message gave no form to close it.
+  if (lenses.includes('integrity') && gate.some((l) => /^app\s*:/i.test(l)) && !planned.some((t) => /reinici|restart|sobrevive/i.test(t.title)) && !declaredFor(doc, 'restart'))
+    out.push('integrity lens with an `app:` line and no planned test whose title says reinici, restart or sobrevive (a record survives restarting the app on the same database) · ' +
+      'add that test to a T line, or `declared · restart · <why>` when the card keeps nothing a restart can lose');
 
   const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'), doc);
   if (lenses.includes('visual') && instruments.golden) {
@@ -246,6 +277,7 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
     for (const t of planned) if (!new RegExp(`@(?:assumption:)?${escape(id)}-(?:S|ASM-)\\d+(?!\\d)`).test(t.title)) out.push(`${t.task}: the test "${t.title}" carries no tag @${id}-S<n> or @${id}-ASM-NN`);
   }
   out.push(...quantifierProblems(doc, id, planned));
+  out.push(...branchProblems(doc, id, planned));
   out.push(...promiseProblems(doc, { cardDir, lenses, root }));
   const roles = rolesOf(doc);
   const unmarked = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !roleFor(roles, f));
@@ -264,12 +296,13 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
     for (const x of statesLacking(doc, instruments)) out.push(`state ${x}: no \`${kind} ${x}:\` line in ## Gate (visual lens)`);
   }
   if (lenses.includes('visual')) out.push(...lookProblems(doc, cardDir));
-  if (lenses.includes('contract') && !hasAttacksLine(doc)) out.push('no `attacks:` line in ## Gate (contract lens), with `--body-limit` if the card sets a limit');
+  if (lenses.includes('contract') && !hasAttacksLine(doc)) out.push('no `attacks:` line in ## Gate (contract lens) · add `attacks: node .claude/tools/attack.mjs --write "POST /<path> <field>=<value>" --read "/<path>"`, with `--body-limit <bytes>` if the card sets a limit');
   if (lenses.includes('integrity') || tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)))) {
     const upgrade = gateLinesOf(doc).some((l) => /^migrate-upgrade\b/i.test(l));
     const migration = tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)));
-    if (!migration && !upgrade) out.push('no migration file in ## Tasks and no `migrate-upgrade:` line in ## Gate (integrity lens)');
-    if (migration && !upgrade) out.push('a migration in ## Tasks and no `migrate-upgrade: <command>` line in ## Gate (the upgrade from main with seeded data)');
+    const form = '`migrate-upgrade: <the stack\'s command that upgrades a copy of main\'s database with seeded data>` (reference/database.md)';
+    if (!migration && !upgrade) out.push(`no migration file in ## Tasks and no \`migrate-upgrade:\` line in ## Gate (integrity lens) · add the migration to a T line, or ${form}`);
+    if (migration && !upgrade) out.push(`a migration in ## Tasks and no \`migrate-upgrade:\` line in ## Gate · add ${form}`);
   }
   return out;
 };

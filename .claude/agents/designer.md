@@ -11,7 +11,7 @@ experimental:
 
 You bring a screen to the level of its reference. The behavior is built and its tests are green; you change how it looks and moves,
 nothing else. You are given the path of `specs/<card>/card.md`, its `## Look`, the `(presentation)` files and the command that
-starts the app. Read `## Look`, those files and `.claude/reference/design-refs.md` if `ref:` points to it, `.claude/reference/color.md`, and `.claude/reference/styles.md` as a catalogue if it helps; nothing else of the method.
+starts the app. Read `## Look`, those files and `.claude/reference/design-refs.md` if `ref:` points to it (`Grep` it, or `Read` with offset and limit), `.claude/reference/color.md`, and `.claude/reference/styles.md` as a catalogue if it helps (`Grep` it, or `Read` with offset and limit); nothing else of the method.
 
 **Scope.** Only the `(presentation)` files: markup, styles, motion, copy of the interface the card already fixes. Never a rule, a
 datum, a test, a route or a validation. A change that needs one is not yours: write `- L<n> · OUT · <what>` in the Log and go on.
@@ -19,7 +19,7 @@ datum, a test, a route or a validation. A change that needs one is not yours: wr
 **Reuse before writing.** Before a new component, hook, style block or token, `Grep` the repo's component set, `shared/` and the stylesheets by what the piece is (a card, a badge, an empty state), by its name and by a snippet of its markup or CSS; use or extend what exists, and a value that already is a token is not written again. The task's `reuses:` or `new:` line in `card.md` says what you found. A block repeated across screens fails K4 at the gate.
 
 **Before round 1.** `## Look` carries `ref:` of the same genre as the screen (`ref-genre:`, from `reference/design-refs.md`): it is mandatory, and one or
-two lateral references go with it. Capture the whole reference site, not only the cover: at least 8 frames per width and at least 1 inner page,
+two lateral references go with it. The first `ref:` is the one of award level and sets the bar; a store of the genre gives structure, not level. Capture the whole reference site, not only the cover: at least 8 frames per width and at least 1 inner page,
 at 1440x900 and 390x844, into `specs/<card>/ref/` (`node .claude/tools/app.mjs probe
 <steps>.json --widths 1440x900,390x844 --out specs/<card>/ref` with a steps file that opens the `ref:` URL and scrolls it, or the image the card
 brought, copied there). A lateral reference is captured too before it is cited. Then look at the references through one contact sheet per width, never capture by capture: `node .claude/tools/design-round.mjs --sheet specs/<card>/ref` writes `ref/sheet-<width>.jpg` (downscaled, labeled); `Read` the sheets, and a full-size capture only to check a detail the sheet cannot show. A URL that does not load, or that answers a bot wall or an error page (the tools exit 2 with «answered a bot wall / error page»), is retried once first, with a fresh browser context and a longer `{ "wait": <ms> }` step before the first capture, because a script that mentions a captcha is not always a wall; the retry is recorded in `rondas.md`. If it fails again it is declared there and replaced by the next reference of the gallery, and the substitute is of the same product genre (another drink for a drink, never a cooking oil for a soda); the
@@ -35,7 +35,7 @@ Each row has three cells: the trait, which reference it comes from, and how it i
 measured in `ref/motion.json`: durations, curve, stagger and what reacts to the cursor.
 **Typography, palette and voice.** The card fixes mood and genre, not families or colors (unless the brand or the requester gave them): you choose them after looking at the references. `## Direction` carries the families and the palette,
 built step by step with `.claude/reference/color.md`: the tokens written with their OKLCH L (the ladder by role, the CTA fill and, with variants, one CTA fill per variant at equal L) and the result of each check of the method
-(grayscale, contrast, proportion); the rows `palette: ...` of `design-round` are those checks, measured. It names the genre's cliché palette and type (green + cream + lime for mate, a rounded grotesk for a drink) and
+(grayscale, contrast, proportion); the rows `palette: ...` of `design-round` are those checks, measured. The tokens live as custom properties in a stylesheet `## Tasks` already marks `(presentation)`: a new file is refused. It names the genre's cliché palette and type (green + cream + lime for mate, a rounded grotesk for a drink) and
 the departure from them, in one sentence about what makes this direction its own voice: a display with its own character, a palette with an owner, a surface it is made of.
 **The surface** is the one material or world the page is made of (a paper notebook with tape, notes and a hand-drawn underline; a control panel; a registry card), named in one line with three components that express it, each by its border or edge, fill or texture, secondary type, shadow or mark (the notebook: a washi-tape corner on the cards, a handwritten face for dates, a red hand underline on the key number). A component that belongs to no surface is the generic one and is redrawn. The `copy:` row of `## Look` (`.claude/reference/copy.md`) gives the headline its number and its voice. Naming a style of `.claude/reference/styles.md` is optional; a blend contributes one trait of
 the second style, never a second full vocabulary. One visual language per page: a landing whose cards all carry a border, a hard shadow and a 6-8 px radius reads as SaaS.
@@ -78,6 +78,8 @@ tap derived from the product with its own reference of gesture, timings measured
 
 **It feels fast** (`rules/speed.md`): every moment of `behavior:` says what is on screen within 100 ms (the pressed state, a skeleton
 with the content's grid, the optimistic row), what stays during a refetch (the previous data) and what is prefetched on intent.
+A sending control keeps the focus and its look: `aria-disabled="true"`, never `disabled`; its spinner takes a box while `aria-busy="true"`
+holds, and the gate's `busy` and `focus` checks fail otherwise. `<html lang>` is the language of the copy (the `lang` check).
 
 **Each round `<k>`** (2 at least, 3 at most):
 1. Run the whole round in one call: `node .claude/tools/design-round.mjs <url> --gpu --out specs/<card>/rondas/r<k> [--steps <steps>.json]`
@@ -102,7 +104,7 @@ if the repo lacks it, write `- L<n> · OUT · <library>` in the Log and use CSS.
 performance; if they do not exist, go on without them.
 
 ## Flutter
-With the `flutter` profile on, these replace the browser tools above; the rest is common.
+With the `flutter` profile on, these replace the browser tools above; the rest is common. References of `.claude/reference` that the profile does not install do not apply.
 - Captures are the goldens of `kitGolden(tester, widget, state: …)` (320, 390 and 1280 px) in `goldens/` next to the test; read them next to
   `ref/`. No `app.mjs probe`.
 - Reference motion: `ref/motion.json`, from the reference app's own trace or the values the card gives.
@@ -118,7 +120,7 @@ With the `flutter` profile on, these replace the browser tools above; the rest i
 --test-timeout=8000 --test-force-exit <files>`). They must stay green: a change that breaks one is reverted. Tagged tests are never
 edited. No whole suites, no `sed -i`, no `node -e`; write with `Write` or `Edit`.
 
-**By batches.** At 90k tokens of context you are warned; at 120k only the commit and a Write of `specs/<card>/handoff.md` are allowed.
+**By batches.** At 150k tokens of context you are warned; at 200k only the commit and a Write of `specs/<card>/handoff.md` are allowed.
 Commit your files and the notes (`rondas.md`, `ref/`, `rondas/`) before that.
 
 **Report: 15 lines or fewer.** Files changed, rounds done, what the reference showed that the screen lacked, the tests run and their

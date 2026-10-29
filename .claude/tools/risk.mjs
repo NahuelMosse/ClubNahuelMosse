@@ -3,7 +3,8 @@
 // `<card-dir>/risk.json`: `{ size, review, lenses }` plus what it was read from. Run once; a second run prints the
 // frozen file and does not rewrite it.
 // Inputs: the files `## Tasks` of card.md names, the signals of signals.mjs over them (the content of those that
-// exist, their path for the rest) and the words of `## Specs` and of L1 that bring risk (auth, password, payment…).
+// exist, their path for the rest) and the words of `## Specs` and of L1 that bring risk (auth, password, payment…),
+// which count only when `## Tasks` names a production code file.
 // - size: `small` when no file marks ui, api or data, no risk word appears and there are 1 or 2 tasks; else `large`.
 // - review: `high` with risk words, security-l2 on and touched, or two or more of ui/api/data; `medium` with exactly
 //   one of them; `low` with none.
@@ -49,7 +50,9 @@ export const classify = ({ files, taskCount, text, root, securityL2On = false, n
     api: Boolean(found.route || found.listen || found['http-dependency'] || files.some((f) => API_PATH.test(f))),
     data: Boolean(found.schema || found['data-dependency'] || files.some((f) => DATA_PATH.test(f))),
   };
-  const words = [...new Set(riskWordsIn(text).map((w) => w.toLowerCase()))];
+  // A risk word weighs only on a card that writes production code: docs, specs and tests do not log anyone in.
+  const writesCode = files.some((f) => IS_CODE.test(f) && !IS_TEST.test(f) && !NOT_PRODUCTION.test(f));
+  const words = writesCode ? [...new Set(riskWordsIn(text).map((w) => w.toLowerCase()))] : [];
   const touched = Object.keys(modules).filter((m) => modules[m]);
   const securityTouched = securityL2On && Boolean(found['auth-dependency']);
   const size = !touched.length && !words.length && taskCount >= 1 && taskCount <= 2 ? 'small' : 'large';

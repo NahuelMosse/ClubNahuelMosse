@@ -285,7 +285,10 @@ export const wantsStrictHost = (doc) => {
   return grade === 'production' || HOST_WORDS.test(`${sectionOf(doc, 'Specs') ?? ''}\n${requirementOf(doc)}`);
 };
 
-export const mutationWorkers = (cores = cpus().length) => Math.max(1, Math.floor(cores / 2));
+// os.cpus() costs about 15 ms on Windows, and the hooks parse the gate on every shell command: it is read once.
+let coreCount;
+const cores = () => (coreCount ??= cpus().length);
+export const mutationWorkers = (n = cores()) => Math.max(1, Math.floor(n / 2));
 
 // The tests the card's files can break, quoted for the shell; empty when the card touched no code a test reaches.
 // A command that starts with `cd <dir> &&` gets them from that folder, and only those inside it.
@@ -664,9 +667,16 @@ export const SET = 'design/components';
 const HIDDEN_INPUT = /<input\b[^>]*?(?<![\w-])type\s*=\s*["'`{]?hidden\b[^>]*>?/gi;
 const withoutHidden = (lines) => lines.join('\n').replace(HIDDEN_INPUT, '');
 
+// A file's diff is asked once per design check: it reads the same file up to five times. `design` empties it.
+const diffs = new Map();
+const diffText = (root, base, f) => {
+  const key = `${root}\n${base}\n${f}`;
+  if (!diffs.has(key)) diffs.set(key, spawnSync('git', ['diff', '-U0', base, '--', f], { cwd: root, encoding: 'utf8' }).stdout ?? '');
+  return diffs.get(key);
+};
 // The lines the card added and removed in a file; a file new to git counts as all added.
 const diffOf = (root, base, f) => {
-  const d = spawnSync('git', ['diff', '-U0', base, '--', f], { cwd: root, encoding: 'utf8' }).stdout ?? '';
+  const d = diffText(root, base, f);
   if (!d) return { added: readFileSync(join(root, f), 'utf8').split('\n'), removed: [] };
   const lines = d.split('\n');
   const pick = (sign) => lines.filter((l) => l.startsWith(sign) && !l.startsWith(sign.repeat(3))).map((l) => l.slice(1));
@@ -675,7 +685,7 @@ const diffOf = (root, base, f) => {
 const added = (root, base, f) => diffOf(root, base, f).added;
 // The added lines with their number in the file, from the hunk headers; a file new to git is all added.
 const addedAt = (root, base, f) => {
-  const d = spawnSync('git', ['diff', '-U0', base, '--', f], { cwd: root, encoding: 'utf8' }).stdout ?? '';
+  const d = diffText(root, base, f);
   if (!d) return readFileSync(join(root, f), 'utf8').split('\n').map((text, i) => ({ n: i + 1, text }));
   const out = [];
   let n = 0;
@@ -696,6 +706,7 @@ const controls = (lines) => withoutHidden(lines).match(CONTROL)?.length ?? 0;
 // `off` are the procedures the grade leaves out (kit.mjs `exemption`): at poc there is no design line
 // and no component set to check against.
 export const design = (root, cardDir, off = new Set()) => {
+  diffs.clear();
   // A card that declared `no-visual:` changes no markup (its gate check verifies the diff): it owes no design line.
   if (riskOf(cardDir)?.declared?.some((d) => d.lens === 'visual')) return [];
   // A remove-only card adds no look: no design line is owed for it (its `remove-only` check fails if it adds any).
@@ -780,7 +791,9 @@ const cardCode = (root, cardDir) => cardFiles(root, cardStart(root, cardDir))
 // copy is found and a copy with renamed identifiers is not (measured): the plan's `reuses:`/`new:` line is what stops that one.
 // A clone that cannot be extracted —one copy is a frozen test— is declared in the Log: `declared · K4 · <file>[:<lines>] · <why>`.
 // A clone with a declared file on either side is not reported; close.mjs lists the declaration for a person.
-export const K4_MIN_LINES = 5;
+// The floor is Sonar's, 10 lines: under it jscpd mostly finds framework boilerplate (measured: 53 of 249 clones in a Flutter
+// and FastAPI repo were 6 to 9 lines, 33 of them Dart widget trees), and extracting those costs more than it saves.
+export const K4_MIN_LINES = 10;
 export const K4_MIN_TOKENS = 50;
 export const DECLARED_K4 = /declared\s*·\s*K4\s*·\s*([^\s·:]+)(?::[\d-]+)?\s*·\s*(.+?)\s*$/;
 export const declaredClones = (cardDir) => {
@@ -1119,7 +1132,7 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
   const alone = fast.filter(serialOf);
   const together = fast.filter((c) => !alone.includes(c));
   const slowAlone = slow.filter(serialOf);
-  const limit = Math.max(2, Math.floor(cpus().length / 2));
+  const limit = Math.max(2, Math.floor(cores() / 2));
   const results = [];
   const treeBefore = snapshot(root);
   // A mutation that exits 3 found nothing to mutate in the file: required.mjs accepts it as well.

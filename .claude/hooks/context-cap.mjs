@@ -1,21 +1,23 @@
 #!/usr/bin/env node
 // PreToolUse on every tool: the context of a `builder`, a `grunt` and a `designer` is capped, because every request re-reads
 // it. The context is estimated from the `usage` of the last assistant message of its own transcript —input, cache read and
-// cache creation tokens—: the agent is warned once at 90k and, past 120k, refused every tool but a `git add`, `git commit`
+// cache creation tokens—: the agent is warned once at 150k and, past 200k (where the main thread compacts), refused every tool but a `git add`, `git commit`
 // or `git status` and a Write of `specs/<card>/handoff*.md`, and returns so the main thread launches a fresh one with that handoff.
 // The main thread is never capped: it is where the person manages the work, and `/compact` is theirs to call.
 // The subagent's transcript is `agent_transcript_path` when the input has it, else the one next to the session transcript:
 // `<session>/subagents/agent-<agent_id>.jsonl`. Without a readable transcript the hook says nothing: it is a saving, the guards
 // that protect the card are others.
-// Measured: an agent that reached 303 thousand tokens re-read on every request.
+// Measured: an agent that reached 303 thousand tokens re-read on every request. And the other way: a cap of 120k forced 46
+// handoffs in one repo, each a commit, a handoff.md and a fresh agent re-reading the card, against about USD 0.016 of cache
+// read per request for the 80k it saves.
 // Contract: exit 0 lets it through (stdout JSON carries the warning); exit 2 blocks and Claude reads stderr.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { contextTokens, onlyCommit, transcriptOf } from '../tools/transcript.mjs';
 
-const WARN = 90_000;
-const STOP = 120_000;
+const WARN = 150_000;
+const STOP = 200_000;
 const CAPPED = new Set(['builder', 'grunt', 'designer', 'design-critic']);
 
 const HANDOFF = /(^|[\\/])specs[\\/][^\\/]+[\\/]handoff[^\\/]*\.md$/;

@@ -275,7 +275,7 @@ export const rulesOf = (m, grainDecl = false) => {
     { ...row('display/body ratio', m.ratio, 'report only: winners median 2.9x, 2-9x', true), report: true },
     { ...row('display line height', m.displayLineHeight, 'report only: winners median 1.0', true), report: true },
     row('display tracking (em)', m.displayTrackingEm, '-0.03..-0.02', m.displayTrackingEm <= -0.02 && m.displayTrackingEm >= -0.05),
-    row('body tracking (em)', m.bodyTrackingEm, '-0.03..-0.01', m.bodyTrackingEm <= -0.01 && m.bodyTrackingEm >= -0.05),
+    row('body tracking (em)', m.bodyTrackingEm, '0..0.02', m.bodyTrackingEm >= 0 && m.bodyTrackingEm <= 0.02),
     row('font sizes, first viewport', m.sizeCount, '<= 9', m.sizeCount <= 9),
     row('grain or noise', m.grain ? 'yes' : grainBaked ? 'baked (declared)' : grainDecl === 'none' ? 'none (declared)' : 'no', 'a texture, or none declared', m.grain || grainBaked || grainDecl === 'none'),
   ];

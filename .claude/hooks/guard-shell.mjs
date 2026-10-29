@@ -30,18 +30,20 @@ if (!cmd) process.exit(0);
 // Redirection, sed -i, tee, mv/cp onto a destination: the ways to write without Edit/Write.
 // The operator and the file go on the same line: if the search crosses line breaks, a `>` from any
 // text and a mention of the file ten lines later count as a write.
-// PowerShell reaches the same files with its own cmdlets: they are matched alongside.
+// PowerShell reaches the same files with its own cmdlets: they are matched alongside. Three `>` or more are a conflict marker
+// a `sed -n`/`grep` looks for, not a redirect.
 const POWERSHELL_WRITE = 'Set-Content|Add-Content|Out-File|Tee-Object|Move-Item|Copy-Item';
 const writesTo = (filePattern) =>
   new RegExp(
-    `(>>?|\\btee\\b(\\s+-a)?|\\bsed\\b[^|;\\n]*\\s-i|\\bmv\\b|\\bcp\\b|\\b(?:${POWERSHELL_WRITE})\\b)[^|;&\\n]*${filePattern}`, 'i',
+    `((?<!>)>>?(?!>)|\\btee\\b(\\s+-a)?|\\bsed\\b[^|;\\n]*\\s-i|\\bmv\\b|\\bcp\\b|\\b(?:${POWERSHELL_WRITE})\\b)[^|;&\\n]*${filePattern}`, 'i',
   ).test(cmd);
 
 // card.md is frozen at L1 and append-only in its Log by guard.mjs, which compares before and after: through the shell it cannot.
 if (writesTo('specs[/\\\\][^/\\\\\\s]+[/\\\\]card\\.md') || writesTo('specs[/\\\\][^/\\\\\\s]+[/\\\\]risk\\.json')) {
   reject(
     'Writing card.md or risk.json through the shell dodges the guard that keeps L1 and the Log of the card. ' +
-    'Create card.md with one Write; a later line goes at the end of `## Log` with Edit.'
+    'Create card.md with one Write; a later line goes at the end of `## Log` with ' +
+    '`node .claude/tools/log.mjs specs/<card> "<line>" ["<line>" ...]` (it numbers and dates each line), or with Edit.'
   );
 }
 
@@ -129,7 +131,7 @@ if (secretReach || writtenSecret) {
 // A check is never skipped to make a commit or a push go through.
 if (/\bgit\s+(commit|push)\b[^|;&\n]*--no-verify\b/.test(cmd)) {
   reject('`--no-verify` skips the hooks that protect the card. Fix what the hook reports; if the hook is ' +
-         'wrong, record it in ambiguities.md as an `OUT` and it goes to the PR; the hook stays.');
+         'wrong, record it in the card\'s `## Log` as `- L<n> · OUT · <what>` and it goes to the PR; the hook stays.');
 }
 
 // A stash changes the tree under the runs in the background (verify, a suite): measured, a false red on a
@@ -156,8 +158,8 @@ if (stashes) {
 // `npm run <script>` of a line that is a script) is refused: a bounded run (`npx playwright test --grep @X`,
 // `node --test one.test.mjs`) is not that line.
 // Inside a subagent the rule is wider: what is equivalent to a whole line (an npm script a line reaches, its body,
-// `playwright test -c <config>` or `node --test <globs>` with no filter) is refused as well, and a builder or a
-// grunt runs neither verify.mjs nor a line through once.mjs: the first whole run is the main thread's, in step 8.
+// `playwright test -c <config>` or `node --test <globs>` with no filter) is refused as well, and a grunt
+// runs no verify.mjs: the first whole run is the builder's or the main thread's, in step 4.
 // For a subagent a parser that fails refuses; for the main thread it does not stop the shell, the rule is about cost.
 const agentType = String(input.agent_type ?? '');
 const noSuites = Boolean(input.agent_id) && /^(?:builder|grunt)$/.test(agentType);
@@ -294,7 +296,10 @@ try {
 // background blocks no one: it notifies when it finishes.
 // A shell loop has its `do`; a `for` inside a script passed to `node -e` is not one.
 // A PowerShell loop has its block: `while (…) { … }`, `for (…) { … }` or `do { … } while (…)`.
-const loop = !background && (/\b(for|while|until)\b[^\n]*?[;\n]\s*do\b/.test(cmd) || /\b(while|until|for)\s*\([^\n]*\)\s*\{|\bdo\s*\{/i.test(cmd));
+// What `cat` or `tee` writes from a heredoc is a file's text, not something this command runs: a script written for later
+// is not a wait (measured: two scripts of mutations refused while being written).
+const run = cmd.replace(/\b(?:cat|tee)\b[^\n]*<<-?\s*(['"]?)(\w+)\1[^\n]*\n[\s\S]*?\n\s*\2\s*(?=\n|$)/g, ' ');
+const loop =!background && (/\b(for|while|until)\b[^\n]*?[;\n]\s*do\b/.test(run) || /\b(while|until|for)\s*\([^\n]*\)\s*\{|\bdo\s*\{/i.test(run));
 // The seconds a command sleeps: `sleep N`, PowerShell's `Start-Sleep [-Seconds|-s] N` and `-Milliseconds|-m N`,
 // and cmd's `timeout /t N`.
 const sleepsOf = (text) => [
@@ -303,14 +308,14 @@ const sleepsOf = (text) => [
   ...[...text.matchAll(/\bStart-Sleep\s+-(?:Milliseconds|m|ms)\s+(\d+)/gi)].map((m) => Number(m[1]) / 1000),
   ...[...text.matchAll(/\btimeout(?:\.exe)?\s+\/t\s+(\d+)/gi)].map((m) => Number(m[1])),
 ];
-const wait = Math.max(0, ...sleepsOf(cmd));
+const wait = Math.max(0, ...sleepsOf(run));
 // A sleep before or after a loop, outside its `do … done`, is a wait of its own: `sleep 100; for f in *.log; do tail $f; done`.
-const waitOutsideLoop = Math.max(0, ...sleepsOf(cmd.replace(/\b(?:for|while|until)\b[\s\S]*?\bdone\b/g, ' ')));
-const watchesAgent = /tasks[\\/][^\s"']*\.output\b|stop_reason/.test(cmd);
+const waitOutsideLoop = Math.max(0, ...sleepsOf(run.replace(/\b(?:for|while|until)\b[\s\S]*?\bdone\b/g, ' ')));
+const watchesAgent = /tasks[\\/][^\s"']*\.output\b|stop_reason/.test(run);
 // A short sleep repeated for minutes is the same wait. The loop's ceiling —a `timeout N` around it,
 // or a counter times its sleep— says how long it can hold the turn. Measured: a card ran
 // `timeout 285 sh -c 'until …; do sleep 0.5; done'` 288 times, nine of its ten hours.
-const timeoutCap = Math.max(0, ...[...cmd.matchAll(/\btimeout\s+(\d+)/g)].map((m) => Number(m[1])));
+const timeoutCap = Math.max(0, ...[...run.matchAll(/\btimeout\s+(\d+)/g)].map((m) => Number(m[1])));
 // The other ways to say how many times it goes round: `for i in $(seq 1 30)`, `{1..30}`, `for i in 1 2 3`
 // and `for ((i=0; i<30; i++))`. A list it cannot count (`$(ls)`, a glob, a variable) says nothing.
 const seqCount = (args) => {
@@ -341,7 +346,7 @@ const iterationsOf = (text) => {
     counts.push(Number(m[3]) - Number(m[1]) + (m[2] === '<=' ? 1 : 0));
   return Math.max(0, ...counts);
 };
-const counterCap = Math.max(0, ...[...cmd.matchAll(/-(?:ge|gt|lt|le)\s+(\d+)/g)].map((m) => Number(m[1])), iterationsOf(cmd)) * wait;
+const counterCap = Math.max(0, ...[...run.matchAll(/-(?:ge|gt|lt|le)\s+(\d+)/g)].map((m) => Number(m[1])), iterationsOf(run)) * wait;
 // A wait inside the prompt cache costs one turn; every wake-up past it rewrites the whole context. The main
 // thread and the agents that wait on suites (builder, runner, executor) keep a one-hour cache, so one
 // wait of up to 10 minutes is a single turn. Measured: a card polled every 25 s for 949 turns, USD 85 of 175.
@@ -353,7 +358,12 @@ const counterCap = Math.max(0, ...[...cmd.matchAll(/-(?:ge|gt|lt|le)\s+(\d+)/g)]
 // transcript (1-hour tokens written: the agent may not be defined in the repo at all, as the main thread of a run
 // is not); from its frontmatter (`experimental: cacheTtl: 1h`) in the repo's `.claude/agents`, the home's and the
 // kit's own; and by default the main thread has one hour and a subagent five minutes (the old ceiling of 270 s).
-const hourCache = await (async () => {
+// wait.mjs does not know which agent runs it: the guard holds a five-minute agent to its ceiling.
+const waitMax = [...run.matchAll(/\bwait\.mjs\b[^|;&\n]*?--max[=\s]+(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
+const toolTimeout = Number(input.tool_input?.timeout);
+// Only a command that waits is judged by the cache it keeps; the rest skip reading the transcript.
+const waits = waitMax.length > 0 || loop || wait > 0 || toolTimeout > 300000;
+const hourCache = waits && await (async () => {
   try {
     const { transcriptOf, lastUsage } = await import('../tools/transcript.mjs');
     const file = transcriptOf(input) ?? (input.agent_id ? null : input.transcript_path);
@@ -385,24 +395,22 @@ const WAIT_WITH = (watches
     ? "`node .claude/tools/wait.mjs <log> --until '<regex>' [--fail '<regex>'] --max 570` (exit 0 found, 1 failed, 2 timed out; "
     : "`node .claude/tools/wait.mjs <log> --until '<regex>' [--fail '<regex>'] --max 270` (exit 0 found, 1 failed, 2 timed out; ") +
   `give the call \`timeout: ${MAX_CALL_MS}\`). ` +
+  'Alternatives go as repeated `--until` (or `--fail`), not a `|` inside one regex, which the Windows shell cuts. ' +
   'For a subagent launched in the background: `node .claude/tools/wait.mjs --agent <agentId> [--max 570]` (its `tasks/<id>.output` stays at 0 bytes, so it cannot be waited on through the output). ' +
   (hourCache ? '' : 'This agent keeps a five-minute prompt cache (its frontmatter has no `cacheTtl: 1h`): a wait past 270 s rewrites its whole context. ');
-// wait.mjs does not know which agent runs it: the guard holds a five-minute agent to its ceiling.
-const waitMax = [...cmd.matchAll(/\bwait\.mjs\b[^|;&\n]*?--max[=\s]+(\d+(?:\.\d+)?)/g)].map((m) => Number(m[1]));
 if (!hourCache && waitMax.some((n) => n > MAX_WAIT_S)) {
   reject(`wait.mjs --max ${Math.max(...waitMax)} is over ${MAX_WAIT_S} s, and this agent keeps a five-minute prompt cache (its frontmatter has no \`cacheTtl: 1h\`): ` +
     `a longer wait rewrites its whole context. Wait ${MAX_WAIT_S} s at most and ask again, or launch the work in the background and let it notify.`);
 }
 const cap = Math.max(timeoutCap, counterCap);
-const toolTimeout = Number(input.tool_input?.timeout);
 const boundedSubagent = !actsAsMain(input) &&
   ((toolTimeout > 0 && toolTimeout <= MAX_WAIT_S * 1000) || (cap > 0 && cap <= MAX_WAIT_S));
 // What a loop that waits for a port or a URL does is a server coming up: a few seconds, and fine.
-const waitsForEndpoint = /\b(curl|wget|nc|ncat|netcat|Test-NetConnection|Invoke-WebRequest|iwr)\b|\/dev\/tcp\//i.test(cmd);
+const waitsForEndpoint = /\b(curl|wget|nc|ncat|netcat|Test-NetConnection|Invoke-WebRequest|iwr)\b|\/dev\/tcp\//i.test(run);
 // A `for` whose variable the body uses goes through items with a pause between them: that is pacing, not
 // waiting for something to happen.
-const pacing = /\bwhile\s+(?:IFS=\S*\s+)?read\b/.test(cmd) || (!/\b(until|while)\b/.test(cmd) &&
-  [...cmd.matchAll(/\bfor\s+(\w+)\s+in\b/g)].some((m) => new RegExp(`\\$\\{?${m[1]}\\b`).test(cmd)));
+const pacing = /\bwhile\s+(?:IFS=\S*\s+)?read\b/.test(run) || (!/\b(until|while)\b/.test(run) &&
+  [...run.matchAll(/\bfor\s+(\w+)\s+in\b/g)].some((m) => new RegExp(`\\$\\{?${m[1]}\\b`).test(run)));
 const polling = loop && wait > 0 && !waitsForEndpoint && !pacing;
 if (!background && polling && cap > 0 && cap < MIN_POLL_S) {
   reject(

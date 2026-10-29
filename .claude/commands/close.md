@@ -15,7 +15,7 @@ Card: `$1`.
    (`node .claude/tools/app.mjs down` for the shared app). Never by process name.
 4. Publish, in order (`publish.mjs` lets out exactly these): `git push -u origin <ID>-<slug>`, `gh pr create --title "<ID> · <title>"
    --body-file specs/<card>/closing.md`, CI in the background (`gh pr checks --watch > .validation/ci.log 2>&1`, awaited with
-   `wait.mjs`), `gh pr comment <n> --body-file .validation/ci.md`, the closing comment on Jira with the PR link, once, and `gh pr merge <n>`
+   `wait.mjs`), the result of `ci.log` written to `.validation/ci.md`, then `gh pr comment <n> --body-file .validation/ci.md`, the closing comment on Jira with the PR link, once, and `gh pr merge <n>`
    when the checks passed and `closing.md` has nothing failed and no `## Needs a person` (otherwise the PR stays open for a
-   person). Never a push onto main, `--force` or `--admin`. With no remote, `## Could not run` gets `publish: could not run, no remote configured`; the card closes
+   person). Never a push onto main, `--force` or `--admin` unless the user's last message orders it. With no remote, `## Could not run` gets `publish: could not run, no remote configured`; the card closes
    locally all the same and is not given as passed.

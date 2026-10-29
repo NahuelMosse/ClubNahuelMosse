@@ -24,6 +24,8 @@
 //            --fail and --until are checked first, so a regex that matches earlier decides. A log that is not a kit
 //            tool's has no such line: give it --until.
 // --fail     regex whose match means “done, and bad”; checked before --until, so a failure is never masked.
+//            Both repeat as alternatives (`--until PASS --until FAIL`): a `|` in an argument is cut by cmd where `node` is
+//            a Volta shim on Windows (measured: two waits that ran the second half of their regex as a command).
 // --agent    the id of a subagent launched in the background (the `agentId` its launch returns); repeat it to wait on
 //            several. An agent is done when
 //            `<claude home>/projects/*/*/subagents/agent-<id>.meta.json` has `"finished": true`. A subagent's
@@ -77,8 +79,14 @@ const wantAll = bare('--all');
 if (wantAny && wantAll) usage('--any and --all exclude each other');
 const agents = [];
 for (let a = flag('--agent'); a !== null; a = flag('--agent')) agents.push(a);
-const untilText = flag('--until');
-const failText = flag('--fail');
+// --until and --fail repeat as alternatives: a `|` inside quotes is cut by cmd when `node` is a Volta shim on Windows.
+const alternatives = (name) => {
+  const all = [];
+  for (let v = flag(name); v !== null; v = flag(name)) all.push(v);
+  return all.length ? all.map((v) => (all.length > 1 ? `(?:${v})` : v)).join('|') : null;
+};
+const untilText = alternatives('--until');
+const failText = alternatives('--fail');
 const monitored = bare('--monitor');
 const everyText = flag('--every');
 const every = everyText === null ? 0 : Number(everyText);
@@ -107,8 +115,14 @@ const pause = () => sleep(Math.min(500, Math.max(10, max * 1000 - (Date.now() - 
 const timedOut = () => Date.now() - start >= max * 1000;
 
 const home = process.env.KIT_CLAUDE_HOME || process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude');
-// The meta sits in `projects/<project>/<session>/subagents/`; the session of the agent is not known here.
+// The meta sits in `projects/<project>/<session>/subagents/`; the session of the agent is not known here. Found once, it
+// stays: the search walks every session of the machine, and the wait polls twice a second.
+const metas = new Map();
 const metaOf = (id) => {
+  if (!metas.has(id)) metas.set(id, findMeta(id));
+  return metas.get(id);
+};
+const findMeta = (id) => {
   const projects = join(home, 'projects');
   let found = null;
   try {
@@ -306,9 +320,11 @@ for (;;) {
 }
 if (!several) {
   const [t] = targets;
-  console.log(`timed out after ${max} s${t.name.startsWith('agent ') ? `: ${t.over()}` : ` ${t.over()}`}`);
+  console.log(`timed out after ${max} s${t.name.startsWith('agent ') ? `: ${t.over()}` : ` ${t.over()}`}\n` +
+    'Not a failure: what you wait for is still running. Run the same wait again; nothing needs fixing.');
   process.exit(2);
 }
 const pending = targets.filter((t) => !done.has(t)).map((t) => t.name);
-console.log(`timed out after ${max} s: ${done.size ? `ended: ${[...done].map(([t, r]) => `${t.name} (${r.line})`).join('; ')}; ` : ''}still running: ${pending.join(', ')}`);
+console.log(`timed out after ${max} s: ${done.size ? `ended: ${[...done].map(([t, r]) => `${t.name} (${r.line})`).join('; ')}; ` : ''}still running: ${pending.join(', ')}\n` +
+  'Not a failure: wait again for what is still running; nothing needs fixing.');
 process.exit(2);
