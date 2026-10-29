@@ -2,7 +2,6 @@ import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/card_frame.dart';
 import 'package:clubnahuelmosse/common/selectable_chip.dart';
-import 'package:clubnahuelmosse/common/skeleton.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/space_card_skeleton.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venue_card.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venue_card_skeleton.dart';

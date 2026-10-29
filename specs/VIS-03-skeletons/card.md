@@ -44,6 +44,7 @@ not_read:
 suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/soporte/held_api.dart apps/mobile/test/skeletons_venues_test.dart apps/mobile/test/skeletons_bookings_test.dart apps/mobile/test/skeletons_account_test.dart apps/mobile/test/skeletons_admin_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
+refactor-tests: three tests of this card carry an import they do not use (analyze warns unused_import); only that import line goes
 ```
 
 ## Log

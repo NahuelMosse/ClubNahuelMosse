@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/bottom_bar.dart';
