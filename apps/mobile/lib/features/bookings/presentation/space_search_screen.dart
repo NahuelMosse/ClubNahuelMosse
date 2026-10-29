@@ -364,6 +364,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
           : SpaceSearchBar(
               alLimpiar: _consultando ? null : _limpiar,
               alConsultar: _completo && !_consultando ? _consultar : null,
+              consultando: _consultando,
             ),
       body: opciones == null ? _bodyWithoutOptions() : _form(opciones, p),
     );
