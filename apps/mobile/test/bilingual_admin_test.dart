@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:clubnahuelmosse/features/admin/domain/outside_hours.dart';
 import 'package:clubnahuelmosse/features/admin/presentation/outside_hours_message.dart';
 import 'package:clubnahuelmosse/l10n/app_localizations.dart';
@@ -64,9 +62,7 @@ void main() {
 
       await montarAdmin(
         tester,
-        api: apiRutas({
-          'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-        }),
+        api: apiRutas({'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}')}),
       );
       expect(find.text('Venues'), findsOneWidget);
       expect(find.text('ADD VENUE'), findsOneWidget);
@@ -215,7 +211,8 @@ void main() {
 
       const keepMany =
           'at their original time: the change applies to new bookings.';
-      const keepOne = 'at its original time: the change applies to new bookings.';
+      const keepOne =
+          'at its original time: the change applies to new bookings.';
       expect(
         message('en', 1, starts),
         '1 future booking at Sede Morón starts before 09:00. If you save, it stays $keepOne',

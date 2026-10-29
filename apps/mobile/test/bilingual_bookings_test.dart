@@ -147,7 +147,10 @@ void main() {
       'SEE TIMES / BOOK',
       'Fútbol 5 · Open air · with lighting',
     ]);
-    expect(find.textContaining('Fútbol 5 · Open air · with lighting'), findsOne);
+    expect(
+      find.textContaining('Fútbol 5 · Open air · with lighting'),
+      findsOne,
+    );
   });
 
   test(
@@ -167,7 +170,10 @@ void main() {
       }
       expect(weekdaysText(en, weekdaysLabel([1, 3])), 'Mon, Wed');
       expect(weekdaysText(es, weekdaysLabel([1, 3])), 'Lun, Mié');
-      expect(weekdaysLabel([6, 7, 1, 2, 3, 4, 5]), weekdaysLabel([1, 2, 3, 4, 5, 6, 7]));
+      expect(
+        weekdaysLabel([6, 7, 1, 2, 3, 4, 5]),
+        weekdaysLabel([1, 2, 3, 4, 5, 6, 7]),
+      );
 
       final space = Space.fromJson({
         'id': _spaceId,

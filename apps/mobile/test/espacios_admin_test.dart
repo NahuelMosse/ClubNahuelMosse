@@ -7,7 +7,9 @@ import 'package:clubnahuelmosse/app.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/price_format.dart';
 import 'package:clubnahuelmosse/features/spaces/domain/space.dart';
+import 'package:clubnahuelmosse/features/spaces/presentation/space_texts.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
+import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -111,7 +113,11 @@ void main() {
       expect(c, isNotNull);
       if (espacio == null || c == null) return;
       expect(
-        espacio.description(c),
+        spaceDescription(
+          lookupAppLocalizations(const Locale('es')),
+          espacio,
+          c,
+        ),
         'Tenis · Polvo de ladrillo · Al aire libre · \$\u00A032.000 por hora',
       );
     });

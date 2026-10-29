@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:clubnahuelmosse/api/api_client.dart';
 import 'package:clubnahuelmosse/common/bottom_bar.dart';
@@ -25,7 +24,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
 
 const _english = [Locale('en', 'US')];
 
