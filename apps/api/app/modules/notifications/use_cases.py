@@ -4,13 +4,14 @@ from uuid import UUID
 
 from app.modules.notifications.email import notice_email
 from app.modules.notifications.rules import ChannelNotConfigured as ChannelNotConfigured
-from app.modules.notifications.rules import DeliveryResult as DeliveryResult
 from app.modules.notifications.rules import (
+    Delivery,
     Notice,
     Notification,
     Recipient,
     reminder_message,
 )
+from app.modules.notifications.rules import DeliveryResult as DeliveryResult
 from app.modules.notifications.rules import PendingNotice as PendingNotice
 from app.modules.notifications.rules import PushChannel as PushChannel
 from app.modules.notifications.store import Notifications
@@ -54,8 +55,8 @@ def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     The email goes first and does not depend on the push; if it fails it only reaches the log.
     Whoever already knows the recipient passes it, and otherwise it is looked up.
 
-    With no device that has permission it stays only in the center: `sin_permiso` if there are
-    devices that did not grant it and `sin_canal` if there is none to send it to, same as
+    With no device that has permission it stays only in the center: `no_permission` if there are
+    devices that did not grant it and `no_channel` if there is none to send it to, same as
     when there is no sending service. A delivery that fails is not retried from here: it is
     marked as failed.
     """
@@ -63,7 +64,7 @@ def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     tokens = notifications.tokens_with_permission(user_id)
     if not tokens:
         has_devices = notifications.has_devices(user_id)
-        outcome = "no_permission" if has_devices else "no_channel"
+        outcome: Delivery = "no_permission" if has_devices else "no_channel"
         notifications.mark_delivery(notification_id, outcome)
         return
     try:
