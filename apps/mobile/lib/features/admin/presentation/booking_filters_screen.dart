@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/date_format.dart';
 import '../../../common/transitions.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../bookings/domain/booking_status.dart';
 import '../../spaces/domain/space.dart';
@@ -124,6 +125,7 @@ class _FiltersPanelState extends State<_FiltersPanel> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: p.bgSurfaceRaised,
       body: SafeArea(
@@ -139,7 +141,7 @@ class _FiltersPanelState extends State<_FiltersPanel> {
                   Spacing.s24,
                 ),
                 children: [
-                  FilterTitle('SEDE'),
+                  FilterTitle(l10n.adminVenueUpper),
                   const SizedBox(height: Spacing.s8),
                   VenueFilter(
                     venues: widget.venues,
@@ -149,7 +151,7 @@ class _FiltersPanelState extends State<_FiltersPanel> {
                     ),
                   ),
                   const SizedBox(height: Spacing.s20),
-                  FilterTitle('DEPORTE'),
+                  FilterTitle(l10n.adminSportUpper),
                   const SizedBox(height: Spacing.s8),
                   SportFilter(
                     sports: widget.catalog.sports,
@@ -159,7 +161,7 @@ class _FiltersPanelState extends State<_FiltersPanel> {
                     ),
                   ),
                   const SizedBox(height: Spacing.s20),
-                  FilterTitle('ESTADO'),
+                  FilterTitle(l10n.adminStatusUpper),
                   const SizedBox(height: Spacing.s8),
                   StatusFilter(
                     selected: _status,
@@ -168,7 +170,7 @@ class _FiltersPanelState extends State<_FiltersPanel> {
                     ),
                   ),
                   const SizedBox(height: Spacing.s20),
-                  FilterTitle('RANGO DE FECHAS'),
+                  FilterTitle(l10n.adminDateRangeUpper),
                   const SizedBox(height: Spacing.s8),
                   // En un teléfono chico dos campos lado a lado no dejan ver la fecha
                   // entera; se apilan.

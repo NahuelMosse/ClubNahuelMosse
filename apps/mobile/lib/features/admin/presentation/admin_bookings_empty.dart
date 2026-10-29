@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/empty_state.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// The sliver of the history without bookings: no results for the filters, or no bookings.
@@ -16,23 +17,20 @@ class AdminBookingsEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: Spacing.s24),
       sliver: SliverToBoxAdapter(
         child: hasFilters
             ? EmptyState(
-                title: 'Sin resultados',
-                text:
-                    'Ninguna reserva coincide con los filtros '
-                    'aplicados.',
-                action: 'LIMPIAR FILTROS',
+                title: l10n.adminNoResults,
+                text: l10n.adminNoResultsText,
+                action: l10n.adminClearFilters,
                 onTap: onClearFilters,
               )
-            : const EmptyState(
-                title: 'No hay reservas',
-                text:
-                    'Todavía no se registró ninguna reserva en '
-                    'el sistema.',
+            : EmptyState(
+                title: l10n.adminNoBookings,
+                text: l10n.adminNoBookingsText,
               ),
       ),
     );

@@ -1,6 +1,7 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../venues/domain/venue.dart';
@@ -51,7 +52,7 @@ class VenueHeader extends StatelessWidget {
               style: Texts.h2.copyWith(color: p.accentInk),
             ),
             Text(
-              venue.spaceCount == 1 ? 'CANCHA' : 'CANCHAS',
+              AppLocalizations.of(context).adminCourtsLabel(venue.spaceCount),
               style: Texts.overline.copyWith(color: p.textMuted),
             ),
           ],

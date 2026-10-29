@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/bottom_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
@@ -79,30 +80,29 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final venues = _venues;
     return AdminListingTemplate(
       section: AdminSection.venues,
-      title: 'Sedes',
+      title: l10n.adminVenuesTitle,
       session: widget.session,
-      createText: 'AGREGAR SEDE',
+      createText: l10n.adminAddVenue,
       createRoute: '/admin/sedes/nueva',
       onRefresh: _load,
       absorbing: _deactivatingId != null,
       hasData: venues != null,
       failed: _failed,
       cardShape: AdminCardShape.venue,
-      items: venues == null ? const [] : _items(venues, p),
+      items: venues == null ? const [] : _items(venues, p, l10n),
     );
   }
 
-  List<Widget> _items(List<Venue> venues, Palette p) => [
+  List<Widget> _items(List<Venue> venues, Palette p, AppLocalizations l10n) => [
     ...adminListingHeader(
       p,
-      count: venues.length == 1
-          ? '1 SEDE ACTIVA'
-          : '${venues.length} SEDES ACTIVAS',
+      count: l10n.adminActiveVenues(venues.length),
       empty: venues.isEmpty,
-      emptyText: 'Todavía no hay sedes',
+      emptyText: l10n.adminNoVenues,
     ),
     for (final venue in venues) ...[
       AdminVenueCard(

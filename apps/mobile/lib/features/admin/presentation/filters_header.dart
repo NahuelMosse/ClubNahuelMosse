@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -10,6 +11,7 @@ class FiltersHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.s24,
@@ -23,14 +25,14 @@ class FiltersHeader extends StatelessWidget {
             child: Semantics(
               header: true,
               child: Text(
-                'Filtros',
+                l10n.adminFilters,
                 style: Texts.h2.copyWith(color: p.textPrimary),
               ),
             ),
           ),
           IconButton(
             onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Cerrar',
+            tooltip: l10n.adminClose,
             icon: const Icon(Icons.close_rounded),
             color: p.textSecondary,
           ),

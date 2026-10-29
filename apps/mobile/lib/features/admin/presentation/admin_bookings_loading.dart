@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'admin_booking_card_skeleton.dart';
@@ -27,7 +28,7 @@ class AdminBookingsLoading extends StatelessWidget {
             child: Semantics(
               liveRegion: true,
               child: Text(
-                'Cargando reservas…',
+                AppLocalizations.of(context).adminLoadingBookings,
                 style: Texts.overline.copyWith(color: p.textMuted),
               ),
             ),

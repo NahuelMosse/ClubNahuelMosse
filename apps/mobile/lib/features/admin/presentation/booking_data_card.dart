@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../common/card_frame.dart';
 import '../../../common/dates.dart';
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/booking_history_entry.dart';
 import 'booking_detail.dart';
 import 'booking_header.dart';
+import 'booking_status_text.dart';
 
 class BookingDataCard extends StatelessWidget {
   const BookingDataCard({
@@ -23,12 +25,13 @@ class BookingDataCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final b = booking;
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       container: true,
       excludeSemantics: true,
       label:
-          '$sportName, sede ${b.venue}, ${b.address}, ${formatPesos(b.total)}, '
-          '${b.status.apiValue}, usuario ${b.user}, ${b.space}, '
+          '$sportName, ${l10n.adminVenueWord} ${b.venue}, ${b.address}, ${formatPesos(b.total)}, '
+          '${statusChipText(l10n, b.status).toLowerCase()}, ${l10n.adminUserWord} ${b.user}, ${b.space}, '
           '${longDate(b.startsAt)}, $schedule',
       child: CardFrame(
         clip: Clip.none,
