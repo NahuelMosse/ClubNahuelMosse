@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -19,6 +20,7 @@ class SearchErrorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return Semantics(
       container: true,
       liveRegion: true,
@@ -33,28 +35,28 @@ class SearchErrorCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'NO SE PUDO CONSULTAR',
+              l.spaceSearchErrorOverline,
               style: Texts.overline.copyWith(color: p.stateDangerInk),
             ),
             const SizedBox(height: Spacing.s4),
             Text(
-              'No se pudo consultar la disponibilidad',
+              l.spaceSearchErrorTitle,
               style: Texts.title.copyWith(color: p.textPrimary),
             ),
             const SizedBox(height: Spacing.s4),
             Text(
-              '${sinConexion ? 'Revisá tu conexión e intentá nuevamente.' : 'El servidor no respondió. Intentá más tarde.'}'
-              ' Los filtros que cargaste se mantienen.',
+              '${sinConexion ? l.spaceSearchOffline : l.spaceSearchServerDown}'
+              ' ${l.spaceSearchFiltersKept}',
               style: Texts.body.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: Spacing.s12),
             Row(
               children: [
-                TextActionButton(label: 'VOLVER', onTap: alVolver),
+                TextActionButton(label: l.spaceSearchBack, onTap: alVolver),
                 const SizedBox(width: Spacing.s8),
                 Expanded(
                   child: OutlineButton(
-                    label: 'REINTENTAR',
+                    label: l.bookingRetry,
                     onTap: alReintentar,
                     danger: true,
                   ),

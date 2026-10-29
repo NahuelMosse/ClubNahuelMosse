@@ -1,5 +1,3 @@
-import '../../../common/dates.dart';
-
 /// Una sede activa, como la devuelve la API.
 class Venue {
   const Venue({
@@ -29,7 +27,7 @@ class Venue {
   final List<String> sports;
 
   /// «Lunes a sábado», o los días sueltos si no son seguidos desde el lunes.
-  String get daysLabel => weekdaysLabel(days);
+  WeekdaysLabel get daysLabel => weekdaysLabel(days);
 
   static Venue? fromJson(Object? json) {
     if (json case {
@@ -59,27 +57,47 @@ class Venue {
   }
 }
 
-/// Las opciones de «DÍAS QUE ABRE» del alta de sede.
+/// Las opciones de «DÍAS QUE ABRE» del alta de sede; el texto de cada una sale de las
+/// traducciones.
 enum OpenDays {
-  mondayToSunday('Lunes a domingo', [1, 2, 3, 4, 5, 6, 7]),
-  mondayToSaturday('Lunes a sábado', [1, 2, 3, 4, 5, 6]),
-  mondayToFriday('Lunes a viernes', [1, 2, 3, 4, 5]);
+  mondayToSunday([1, 2, 3, 4, 5, 6, 7]),
+  mondayToSaturday([1, 2, 3, 4, 5, 6]),
+  mondayToFriday([1, 2, 3, 4, 5]);
 
-  const OpenDays(this.text, this.days);
-  final String text;
+  const OpenDays(this.days);
   final List<int> days;
 }
 
-String weekdaysLabel(List<int> days) {
+/// Los días que abre una sede: una de las [OpenDays] si son exactamente esos, o los
+/// días sueltos (de 1 a 7) si no lo son. Dos sedes con los mismos días dan valores iguales.
+class WeekdaysLabel {
+  const WeekdaysLabel(this.option, this.days);
+
+  final OpenDays? option;
+
+  /// Los días sueltos, ordenados y sin repetir; vacío si hay [option].
+  final List<int> days;
+
+  @override
+  bool operator ==(Object other) =>
+      other is WeekdaysLabel &&
+      other.option == option &&
+      other.days.join(',') == days.join(',');
+
+  @override
+  int get hashCode => Object.hash(option, days.join(','));
+}
+
+WeekdaysLabel weekdaysLabel(List<int> days) {
   final sorted = {...days}.toList()..sort();
   for (final option in OpenDays.values) {
     if (sorted.length == option.days.length &&
         sorted.indexed.every((e) => e.$2 == option.days[e.$1])) {
-      return option.text;
+      return WeekdaysLabel(option, const []);
     }
   }
-  return [
+  return WeekdaysLabel(null, [
     for (final d in sorted)
-      if (d >= 1 && d <= 7) shortWeekdayName(d),
-  ].join(', ');
+      if (d >= 1 && d <= 7) d,
+  ]);
 }

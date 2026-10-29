@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/booking.dart';
@@ -18,6 +19,7 @@ class BookingConfirmedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: p.bgBase,
       bottomNavigationBar: const BookingExitBar(),
@@ -48,7 +50,7 @@ class BookingConfirmedScreen extends StatelessWidget {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            '¡A LA CANCHA!',
+                            l.bookingCheer,
                             style: Texts.display.copyWith(
                               fontSize: 36,
                               color: p.accentBase,
@@ -61,7 +63,7 @@ class BookingConfirmedScreen extends StatelessWidget {
                         header: true,
                         liveRegion: true,
                         child: Text(
-                          '¡Reserva confirmada!',
+                          l.bookingConfirmedTitle,
                           textAlign: TextAlign.center,
                           style: Texts.h1.copyWith(color: p.textPrimary),
                         ),

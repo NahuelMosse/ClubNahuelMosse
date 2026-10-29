@@ -2,9 +2,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/label.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
+import '../../spaces/presentation/space_texts.dart';
 
 /// Condición e iluminación a la izquierda y el precio a la derecha; con el texto grande el
 /// precio baja debajo de las etiquetas en vez de cortarse.
@@ -17,16 +19,17 @@ class LabelsAndPrice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final labels = Wrap(
       spacing: Spacing.s4,
       runSpacing: Spacing.s4,
       children: [
         AppLabel(
-          text: space.condition,
+          text: conditionText(l, space),
           icon: space.covered ? Icons.roofing_rounded : Icons.wb_sunny_outlined,
         ),
         AppLabel(
-          text: space.lighting,
+          text: lightingText(l, space),
           icon: space.lit
               ? Icons.lightbulb_outline_rounded
               : Icons.nightlight_outlined,
@@ -37,7 +40,10 @@ class LabelsAndPrice extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(price, style: Texts.h2.copyWith(color: p.accentInk)),
-        Text('/ HORA', style: Texts.overline.copyWith(color: p.textMuted)),
+        Text(
+          l.spacePerHourBadge,
+          style: Texts.overline.copyWith(color: p.textMuted),
+        ),
       ],
     );
     if (MediaQuery.textScalerOf(context).scale(10) > 13) {

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/venue.dart';
-import '../domain/venue_summary.dart';
 import 'venue_card_cover.dart';
 import 'venue_card_footer.dart';
+import 'venue_texts.dart';
 
 /// `Card-Sede`: portada con nombre, dirección, horario y canchas; abajo, los deportes y
 /// «Ver canchas». Se toca entera.
@@ -23,15 +24,20 @@ class VenueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
-    final spaces = spaceCountLabel(venue.spaceCount);
+    final l = AppLocalizations.of(context);
+    final label = l.venueCardLabel(
+      venue.address,
+      venue.closing,
+      weekdaysText(l, venue.daysLabel),
+      venue.name,
+      venue.opening,
+      l.venueSpaceCount(venue.spaceCount),
+    );
     return Semantics(
       container: true,
       button: true,
       excludeSemantics: true,
-      label:
-          '${venue.name}, ${venue.address}, '
-          '${venue.daysLabel} de ${venue.opening} a ${venue.closing}, '
-          '$spaces${sports.isEmpty ? '' : ': ${sports.join(', ')}'}',
+      label: '$label${sports.isEmpty ? '' : ': ${sports.join(', ')}'}',
       onTap: onTap,
       child: Material(
         color: p.bgSurface,

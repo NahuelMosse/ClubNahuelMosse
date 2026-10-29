@@ -1,6 +1,4 @@
 // kit-shape: a screen or error family kept with its private parts.
-import '../../../common/price_format.dart';
-
 class SpaceKind {
   const SpaceKind(this.key, this.name);
   final String key;
@@ -88,15 +86,6 @@ class Space {
   final bool covered;
   final bool lit;
   final int pricePerHour;
-
-  String get condition => covered ? 'Techada' : 'Al aire libre';
-
-  String get lighting => lit ? 'Iluminada' : 'Sin iluminación';
-
-  /// «Fútbol 5 · Al aire libre · $ 38.000 por hora».
-  String description(Catalog catalog) =>
-      '${catalog.readableKind(sport, kind)} · $condition · '
-      '${formatPesos(pricePerHour)} por hora';
 
   static Space? fromJson(Object? json) {
     if (json case {

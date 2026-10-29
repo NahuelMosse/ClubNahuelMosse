@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../common/bottom_bar.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/network_failure.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
@@ -117,23 +118,26 @@ class _VenuesScreenState extends State<VenuesScreen> {
                 Semantics(
                   header: true,
                   child: Text(
-                    'Sedes',
+                    AppLocalizations.of(context).venuesTitle,
                     style: Texts.h1.copyWith(color: p.textPrimary),
                   ),
                 ),
                 if (data != null) ...[
                   const SizedBox(height: Spacing.s4),
                   Text(
-                    '${data.$1.length == 1 ? '1 sede' : '${data.$1.length} sedes'} · '
-                    '${spaceCountLabel(data.$1.fold(0, (n, s) => n + s.spaceCount))} · '
-                    'cada una con su horario',
+                    AppLocalizations.of(context).venuesSummary(
+                      AppLocalizations.of(context).venueSpaceCount(
+                        data.$1.fold(0, (n, s) => n + s.spaceCount),
+                      ),
+                      AppLocalizations.of(context).venueCount(data.$1.length),
+                    ),
                     style: Texts.caption.copyWith(color: p.textSecondary),
                   ),
                   const SizedBox(height: Spacing.s16),
                   if (data.$1.isEmpty)
-                    const EmptyState(
-                      title: 'Todavía no hay sedes',
-                      text: 'El club todavía no cargó sus sedes.',
+                    EmptyState(
+                      title: AppLocalizations.of(context).venuesNoneTitle,
+                      text: AppLocalizations.of(context).venuesNoneText,
                     ),
                   for (final venue in data.$1) ...[
                     VenueCard(
@@ -147,9 +151,9 @@ class _VenuesScreenState extends State<VenuesScreen> {
                 if (data == null && _loading) const VenueCardSkeletons(),
                 if (data == null && !_loading)
                   EmptyState(
-                    title: 'No pudimos mostrar las sedes',
-                    text: 'Revisá tu conexión y volvé a intentar.',
-                    action: 'REINTENTAR',
+                    title: AppLocalizations.of(context).venuesFailedTitle,
+                    text: AppLocalizations.of(context).venuesFailedText,
+                    action: AppLocalizations.of(context).bookingRetry,
                     onTap: _load,
                   ),
               ],

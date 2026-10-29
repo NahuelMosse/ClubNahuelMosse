@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/selector.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/search_rules.dart';
 
@@ -25,13 +26,14 @@ class SearchTimeRange extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: SelectorField(
-            label: 'DESDE',
-            semanticLabel: 'Desde',
+            label: l.spaceSearchFrom.toUpperCase(),
+            semanticLabel: l.spaceSearchFrom,
             value: hhmm(desde),
             placeholder: '',
             icon: Icons.expand_more_rounded,
@@ -42,8 +44,8 @@ class SearchTimeRange extends StatelessWidget {
         const SizedBox(width: Spacing.s12),
         Expanded(
           child: SelectorField(
-            label: 'HASTA',
-            semanticLabel: 'Hasta',
+            label: l.spaceSearchTo.toUpperCase(),
+            semanticLabel: l.spaceSearchTo,
             value: hhmm(hasta),
             placeholder: '',
             icon: Icons.expand_more_rounded,

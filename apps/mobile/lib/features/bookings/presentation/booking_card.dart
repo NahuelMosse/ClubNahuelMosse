@@ -6,6 +6,7 @@ import '../../../common/dates.dart';
 import '../../../common/die_cut.dart';
 import '../../../common/in_progress.dart';
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import '../domain/booking.dart';
@@ -14,6 +15,7 @@ import 'booking_actions.dart';
 import 'booking_detail.dart';
 import 'booking_header.dart';
 import 'booking_price_and_status.dart';
+import 'booking_status_text.dart';
 
 /// `Card-Reserva`: deporte, sede y dirección, precio y estado arriba; el espacio, la fecha
 /// y el horario abajo, con el porqué si se canceló o se anuló.
@@ -53,21 +55,20 @@ class BookingCard extends StatelessWidget {
 
   String get _horario => horarioDe(reserva);
 
-  String? get _porque => switch (reserva.status) {
+  String? _porque(AppLocalizations l) => switch (reserva.status) {
     BookingStatus.canceled => switch (reserva.reason) {
-      final m? when m.trim().isNotEmpty =>
-        'Cancelada por vos · el horario quedó liberado · $m',
-      _ => 'Cancelada por vos · el horario quedó liberado',
+      final m? when m.trim().isNotEmpty => l.bookingCanceledByYouWithReason(m),
+      _ => l.bookingCanceledByYou,
     },
     BookingStatus.voided => switch (reserva.reason) {
-      final m? when m.trim().isNotEmpty => 'Anulada por el administrador · $m',
-      _ => 'Anulada por el administrador',
+      final m? when m.trim().isNotEmpty => l.bookingVoidedByAdminWithReason(m),
+      _ => l.bookingVoidedByAdmin,
     },
     _ => null,
   };
 
   /// Los días de calendario del club que faltan para el inicio, sin mirar la hora.
-  String? get _cuenta {
+  String? _cuenta(AppLocalizations l) {
     if (!cuentaRegresiva || reserva.status != BookingStatus.active) {
       return null;
     }
@@ -79,38 +80,38 @@ class BookingCard extends StatelessWidget {
       i.day,
     ).difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
     return switch (dias) {
-      <= 0 => 'HOY',
-      1 => 'MAÑANA',
-      _ => 'FALTAN $dias DÍAS',
+      <= 0 => l.bookingToday,
+      1 => l.bookingTomorrow,
+      _ => l.bookingInDays(dias),
     };
   }
 
   /// La tarjeta se lee entera como un dato; MODIFICAR y CANCELAR quedan afuera, como
   /// botones propios.
-  String _etiqueta(String? porque, String? account) {
+  String _etiqueta(AppLocalizations l, String? porque, String? account) {
     final r = reserva;
     return [
       catalogo.shortKind(r.sport, r.kind),
       '${r.venue}, ${r.address}',
-      r.status.apiValue,
+      bookingStatusText(l, r.status).toLowerCase(),
       longDate(r.startsAt),
       _horario,
-      '${formatPesos(r.total).replaceFirst('\$ ', '')} pesos',
+      l.bookingSpokenPrice(formatPesos(r.total).replaceFirst('\$ ', '')),
       r.space,
       ?porque,
       ?account?.toLowerCase(),
     ].join(', ');
   }
 
-  Widget _datos(Palette p, bool grande) {
+  Widget _datos(AppLocalizations l, Palette p, bool grande) {
     final r = reserva;
-    final porque = _porque;
-    final account = _cuenta;
+    final porque = _porque(l);
+    final account = _cuenta(l);
     return Semantics(
       container: true,
       selected: resaltada,
       excludeSemantics: true,
-      label: _etiqueta(porque, account),
+      label: _etiqueta(l, porque, account),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -135,13 +136,14 @@ class BookingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final r = reserva;
     final activa = r.status == BookingStatus.active;
     final grande = MediaQuery.textScalerOf(context).scale(10) > 13;
     final deQue =
         '${catalogo.shortKind(r.sport, r.kind)}, '
         '${shortDay(r.startsAt)}, $_horario';
-    final data = _datos(p, grande);
+    final data = _datos(l, p, grande);
     final borde = resaltada ? 2.0 : 1.0;
     return Container(
       decoration: BoxDecoration(
@@ -169,7 +171,7 @@ class BookingCard extends StatelessWidget {
                       Spacing.s16,
                     ),
                     child: cancelando
-                        ? const InProgress('Cancelando la reserva')
+                        ? InProgress(l.bookingCanceling)
                         : BookingActions(
                             deQue: deQue,
                             grande: grande,

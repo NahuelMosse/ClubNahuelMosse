@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/selectable_chip.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// Los chips Todas / Al aire libre / Techada con cuántas canchas trae cada uno.
@@ -23,6 +24,7 @@ class CoveredFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       clipBehavior: Clip.none,
@@ -36,9 +38,9 @@ class CoveredFilter extends StatelessWidget {
             SelectableChip(
               text:
                   '${switch (valor) {
-                    null => 'Todas',
-                    false => 'Al aire libre',
-                    true => 'Techada',
+                    null => l.spaceSearchAll,
+                    false => l.spaceOpenAir,
+                    true => l.spaceCovered,
                   }} ($cuantas)',
               selected: elegida == valor,
               onTap: cuantas == 0 ? null : () => alElegir(valor),

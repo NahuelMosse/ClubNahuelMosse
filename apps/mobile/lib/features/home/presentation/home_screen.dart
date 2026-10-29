@@ -172,7 +172,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_cancelando != null) return;
     final confirmo = await confirmarCancelacion(
       context,
-      textoDeCancelacion(r, catalogo),
+      textoDeCancelacion(AppLocalizations.of(context), r, catalogo),
     );
     if (!confirmo || !mounted) return;
     // Una lectura que venía en camino (deslizar para refrescar) ya no vale.

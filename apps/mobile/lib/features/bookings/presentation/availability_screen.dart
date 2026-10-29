@@ -11,6 +11,7 @@ import '../../../common/day_timeline.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/error_dialog.dart';
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
@@ -57,7 +58,7 @@ class AvailabilityScreen extends StatefulWidget {
     this.hours,
     this.start,
     this.modificando,
-    this.volverA = 'Mis reservas',
+    this.volverA,
   });
 
   final String sedeId;
@@ -77,8 +78,8 @@ class AvailabilityScreen extends StatefulWidget {
   /// marcada, y CONTINUAR CON EL CAMBIO lleva a «Confirmá el cambio».
   final Booking? modificando;
 
-  /// Cómo se llama la pantalla a la que vuelve la modificación.
-  final String volverA;
+  /// Cómo se llama la pantalla a la que vuelve la modificación; «Mis reservas» si no se dice.
+  final String? volverA;
 
   @override
   State<AvailabilityScreen> createState() => _AvailabilityScreenState();
@@ -348,14 +349,15 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     final data = _datos;
     final cancha = _cancha;
     final modificando = widget.modificando;
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: p.bgBase,
       bottomNavigationBar: data == null
           ? null
           : AvailabilityActionBar(
               texto: modificando == null
-                  ? 'CONTINUAR'
-                  : 'CONTINUAR CON EL CAMBIO',
+                  ? l.availabilityContinue
+                  : l.availabilityContinueChange,
               alContinuar: _puedeSeguir ? _continuar : null,
             ),
       body: data == null || cancha == null
@@ -401,7 +403,7 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       ),
       if (_hoy case final hoy?) ...[
         SlotsSection(
-          titulo: 'FECHA',
+          titulo: AppLocalizations.of(context).availabilityDate,
           child: DateStrip(hoy: hoy, elegida: _fecha, alElegir: _elegirFecha),
         ),
         if (modificando == null)
@@ -427,18 +429,23 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
     if (_fallo) {
       return SafeArea(
         child: Center(
-          child: TextActionButton(label: 'REINTENTAR', onTap: _cargar),
+          child: TextActionButton(
+            label: AppLocalizations.of(context).bookingRetry,
+            onTap: _cargar,
+          ),
         ),
       );
     }
     return AvailabilitySkeleton(volverA: _volverA, alVolver: _alVolver);
   }
 
-  String get _volverA => widget.modificando != null
-      ? widget.volverA
-      : widget.date == null
-      ? 'Sedes'
-      : 'Buscar cancha';
+  String get _volverA {
+    final l = AppLocalizations.of(context);
+    if (widget.modificando != null) {
+      return widget.volverA ?? l.bookingMyBookings;
+    }
+    return widget.date == null ? l.venuesTitle : l.spaceSearchTitle;
+  }
 
   VoidCallback get _alVolver => widget.modificando != null
       ? _salir
@@ -476,12 +483,13 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   Widget _grillaOAviso(Palette p) {
     final grilla = _grilla;
     final hours = _deLaGrilla?.$2 ?? _horas;
+    final l = AppLocalizations.of(context);
     if (grilla == null) {
       if (_cambio) return const SizedBox(height: Spacing.s48);
       if (_consultando || !_fallo) {
-        return const SlotsSection(
-          titulo: 'HORARIO DISPONIBLE',
-          child: Padding(
+        return SlotsSection(
+          titulo: l.availabilitySlots,
+          child: const Padding(
             padding: EdgeInsets.only(top: Spacing.s8 + 2),
             child: AvailabilityGridSkeleton(),
           ),
@@ -490,12 +498,12 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
       return Padding(
         padding: const EdgeInsets.all(Spacing.s24),
         child: Center(
-          child: TextActionButton(label: 'REINTENTAR', onTap: _consultar),
+          child: TextActionButton(label: l.bookingRetry, onTap: _consultar),
         ),
       );
     }
     return SlotsSection(
-      titulo: 'HORARIO DISPONIBLE',
+      titulo: l.availabilitySlots,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -513,9 +521,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   /// Mientras llega otra grilla, sus lugares se muestran como bloques.
   Widget _contenidoDeLaGrilla(AvailabilityGrid grilla, int hours) {
     if (_consultando) return const AvailabilityGridSkeleton();
+    final l = AppLocalizations.of(context);
     if (!grilla.hasFree) {
       return EmptyState(
-        title: 'No hay horarios disponibles',
+        title: l.availabilityNoSlots,
         text: _porQueNoHay(grilla, hours),
       );
     }
@@ -544,10 +553,11 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
           const SizedBox(height: Spacing.s12),
           AvailabilityNote(
             texto: hours == 1
-                ? 'Algunos horarios ya están ocupados · '
-                      '${grilla.unavailableCount} no disponibles'
-                : 'Con ${duration(hours)} hay menos inicios posibles · '
-                      '${grilla.unavailableCount} no disponibles',
+                ? l.availabilitySomeTaken(grilla.unavailableCount)
+                : l.availabilityFewerStarts(
+                    grilla.unavailableCount,
+                    l.bookingDuration(hours),
+                  ),
           ),
         ],
       ],
@@ -582,12 +592,10 @@ class _AvailabilityScreenState extends State<AvailabilityScreen> {
   }
 
   String _porQueNoHay(AvailabilityGrid grilla, int hours) {
-    if (!grilla.opens) return 'La sede no abre ese día. Probá con otra fecha.';
-    if (hours > 1) {
-      return 'Con ${duration(hours)} seguidas no entra ningún turno antes del '
-          'cierre. Probá con una duración menor, otra fecha u otra cancha.';
-    }
-    return 'Ya no quedan turnos libres ese día. Probá con otra fecha u otra cancha.';
+    final l = AppLocalizations.of(context);
+    if (!grilla.opens) return l.availabilityVenueClosed;
+    if (hours > 1) return l.availabilityNoFit(l.bookingDuration(hours));
+    return l.availabilityNoneLeft;
   }
 }
 

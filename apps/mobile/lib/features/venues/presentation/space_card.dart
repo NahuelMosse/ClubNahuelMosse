@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import '../../../common/button.dart';
 import '../../../common/card_frame.dart';
 import '../../../common/price_format.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
+import '../../spaces/presentation/space_texts.dart';
 import 'labels_and_price.dart';
 import 'space_photo.dart';
 
@@ -27,6 +29,7 @@ class SpaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     final kind = catalog.shortKind(space.sport, space.kind);
     final price = formatPesos(space.pricePerHour);
     return CardFrame(
@@ -36,10 +39,14 @@ class SpaceCard extends StatelessWidget {
           Semantics(
             container: true,
             excludeSemantics: true,
-            label:
-                '$kind, ${space.name}, ${space.condition}, '
-                '${space.lighting}, '
-                '${price.replaceFirst('\$ ', '')} pesos por hora',
+            label: l.spaceSpoken(
+              conditionText(l, space),
+              kind,
+              lightingText(l, space),
+              space.name,
+              price.replaceFirst(RegExp(r'^\$\s'), ''),
+            ),
+            //                '${price.replaceFirst('\$ ', '')} pesos por hora',
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -62,8 +69,8 @@ class SpaceCard extends StatelessWidget {
                   ),
                   child: Text(
                     '${catalog.readableKind(space.sport, space.kind)} · '
-                    '${space.condition} · '
-                    '${space.lit ? 'con iluminación' : 'sin iluminación'}',
+                    '${conditionText(l, space)} · '
+                    '${space.lit ? l.spaceWithLighting : l.spaceWithoutLighting}',
                     style: Texts.caption.copyWith(color: p.textSecondary),
                   ),
                 ),
@@ -74,9 +81,9 @@ class SpaceCard extends StatelessWidget {
             padding: const EdgeInsets.all(Spacing.s16),
             // Sin esto, el lector de pantalla oye el mismo botón en cada cancha.
             child: Semantics(
-              label: '$kind, cancha ${space.number}',
+              label: l.spaceBookLabel(kind, space.number),
               child: PrimaryButton(
-                label: 'VER HORARIOS / RESERVAR',
+                label: l.spaceBook,
                 icon: Icons.bolt_rounded,
                 onTap: onBook,
               ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../common/selectable_chip.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// `Segmented-Tab`: Próximas o Historial.
@@ -16,6 +17,7 @@ class BookingsTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l = AppLocalizations.of(context);
     Widget pestana(String texto, {required bool esHistorial}) {
       final elegida = historial == esHistorial;
       return Expanded(
@@ -39,9 +41,9 @@ class BookingsTabBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          pestana('Próximas', esHistorial: false),
+          pestana(l.bookingTabUpcoming, esHistorial: false),
           const SizedBox(width: Spacing.s4),
-          pestana('Historial', esHistorial: true),
+          pestana(l.bookingTabHistory, esHistorial: true),
         ],
       ),
     );
