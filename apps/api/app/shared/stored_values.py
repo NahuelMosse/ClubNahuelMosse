@@ -1,8 +1,12 @@
-"""Translation between the values the HTTP contract speaks (Spanish) and the ones the database stores (English).
+"""Translation between the values the HTTP contract speaks (Spanish) and the ones the
+database stores (English).
 
-The contract keeps its values until the contract card renames them; the tables already store the English ones.
-Both enumerations are closed: a value that is not listed is an error, never a default.
+The contract keeps its values until the contract card renames them; the tables already
+store the English ones. Both enumerations are closed: a value that is not listed is an
+error, never a default.
 """
+
+from typing import Any
 
 _STORED_BY_CONTRACT = {
     # roles
@@ -34,6 +38,9 @@ def stored(contract_value: str) -> str:
     return _STORED_BY_CONTRACT[contract_value]
 
 
-def contract(stored_value: str) -> str:
-    """The value the contract shows for a value of the database; KeyError if it is not one."""
+def contract(stored_value: str) -> Any:
+    """The value the contract shows for a value of the database; KeyError if it is not one.
+
+    Typed Any because each caller narrows it to its own closed enumeration (role, kind...).
+    """
     return _CONTRACT_BY_STORED[stored_value]

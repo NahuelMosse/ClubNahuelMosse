@@ -88,7 +88,7 @@ _SHARED_VENUE = (
 _CLUB_ZONE = f"'{CLUB_TIMEZONE_NAME}'"
 
 
-def _booking_values(mapping: Mapping[str, Any]) -> dict[str, Any]:
+def _booking_values(mapping: Mapping[Any, Any]) -> dict[str, Any]:
     """The columns of a row with the enumerations spoken as the contract does."""
     values = dict(mapping)
     values["status"] = contract(values["status"])
@@ -246,8 +246,7 @@ class BookingsSql:
             space = spaces.get(space_id)
             if venue is None or space is None or not space.active:
                 raise Unavailable("el espacio nuevo ya no está activo")
-            # The previous slot is released in the same transaction that takes the new one: if
-            # the new one collides with another booking, nothing changes.
+            # The previous slot is released in the same transaction that takes the new one.
             self._conn.execute(
                 text(
                     "UPDATE booking SET space_id = :space_id, starts_at = :starts_at,"
