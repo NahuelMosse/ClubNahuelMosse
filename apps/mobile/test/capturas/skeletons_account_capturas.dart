@@ -1,7 +1,5 @@
 import 'dart:async';
 
-import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/features/notifications/data/notifications_repository.dart';
 import 'package:clubnahuelmosse/features/notifications/presentation/notification_center.dart';
 import 'package:clubnahuelmosse/features/session/domain/profile.dart';
@@ -15,6 +13,7 @@ import '../notificaciones_test.dart'
 import '../soporte/admin.dart';
 import '../soporte/held_api.dart';
 import '../soporte/montar.dart';
+import '../soporte/skeleton_capture.dart';
 import '../soporte/usuario.dart';
 
 /// A profile whose read waits for [release]: My profile stays loading.
@@ -56,41 +55,28 @@ void main() {
     String route, {
     Session? session,
   }) async {
-    tester.view.physicalSize = const Size(393, 852) * 3;
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await cargarFuentes();
     final current = session ?? SesionFalsa(perfilUsuario);
-    await tester.pumpWidget(
-      App(
-        api: api.client,
-        session: current,
-        appearance: Appearance.inMemory(dark: true),
-        notificationCenter: NotificationCenter(
-          notifications: NotificationsRepository(
-            api: api.client,
-            session: current,
-          ),
+    await mountApp(
+      tester,
+      api: api.client,
+      session: current,
+      route: route,
+      notificationCenter: NotificationCenter(
+        notifications: NotificationsRepository(
+          api: api.client,
           session: current,
-          system: SistemaFalso(),
-          every: Duration.zero,
-          now: () => DateTime.utc(2026, 11, 13),
         ),
-        initialLocation: route,
+        session: current,
+        system: SistemaFalso(),
+        every: Duration.zero,
+        now: () => DateTime.utc(2026, 11, 13),
       ),
     );
-    await tester.pump();
-    await tester.pump();
   }
 
   Future<void> capture(WidgetTester tester, String file) async {
     await tester.pump();
     await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
-  }
-
-  Future<void> drain(WidgetTester tester) async {
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(minutes: 2));
   }
 
   testWidgets('home loading and loaded', (tester) async {
@@ -100,7 +86,7 @@ void main() {
     api.release();
     await tester.pumpAndSettle();
     await capture(tester, 'skeletons/inicio_cargada.png');
-    await drain(tester);
+    await drainApp(tester);
   });
 
   testWidgets('notifications loading and loaded', (tester) async {
@@ -110,7 +96,7 @@ void main() {
     api.release();
     await tester.pumpAndSettle();
     await capture(tester, 'skeletons/notificaciones_cargada.png');
-    await drain(tester);
+    await drainApp(tester);
   });
 
   testWidgets('profile loading and loaded', (tester) async {
@@ -121,6 +107,6 @@ void main() {
     session.release();
     await tester.pumpAndSettle();
     await capture(tester, 'skeletons/perfil_cargada.png');
-    await drain(tester);
+    await drainApp(tester);
   });
 }

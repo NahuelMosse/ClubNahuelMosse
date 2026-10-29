@@ -1,11 +1,10 @@
-import 'package:clubnahuelmosse/app.dart';
-import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../soporte/admin.dart';
 import '../soporte/held_api.dart';
 import '../soporte/montar.dart';
+import '../soporte/skeleton_capture.dart';
 
 String _booking(int n) {
   final start = DateTime.utc(2026, 12, 1, 18);
@@ -36,21 +35,13 @@ void main() {
     String route,
     Map<String, (int, String)> routes,
   ) async {
-    tester.view.physicalSize = const Size(393, 852) * 3;
-    tester.view.devicePixelRatio = 3;
-    addTearDown(tester.view.reset);
-    await cargarFuentes();
     final held = HeldApi(routes);
-    await tester.pumpWidget(
-      App(
-        api: held.client,
-        session: SesionFalsa(perfilAdmin),
-        appearance: Appearance.inMemory(dark: true),
-        initialLocation: route,
-      ),
+    await mountApp(
+      tester,
+      api: held.client,
+      session: SesionFalsa(perfilAdmin),
+      route: route,
     );
-    await tester.pump();
-    await tester.pump();
     return held;
   }
 
@@ -68,8 +59,7 @@ void main() {
     held.release();
     await tester.pumpAndSettle();
     await capture(tester, 'skeletons/${name}_cargada.png');
-    await tester.pumpWidget(const SizedBox());
-    await tester.pump(const Duration(minutes: 2));
+    await drainApp(tester);
   }
 
   final spaces = {

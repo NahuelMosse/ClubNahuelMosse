@@ -1,3 +1,5 @@
+// kit-shape: a widget with its private parts kept together.
+// kit-boundary: reuses the space card skeleton of venues for the search results; features export no public index yet.
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
