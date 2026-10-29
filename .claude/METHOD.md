@@ -1,14 +1,13 @@
 # SDD method
 
 **The Jira card is the specification. Nothing is assumed in silence: what is assumed is declared, numbered (`<ID>-ASM-NN`) and tied to a test.**
-The kit and the code are in English unless CLAUDE.md declares `Code language:`; the rest speaks the team's.
 ## The flow
 
 1. **`/card <ID>`.** Before `card.md`, one batch of at most 3 parallel calls, ~10k tokens (`git ls-files`, `Grep`, the files the card names); no test or whole file. Bring the whole requirement: Jira over MCP (description, comments, attachments, links; or the `archivist`),
    or the text you were given. If the MCP does not answer, stop. Write `specs/<ID>-<slug>/card.md` with **one `Write`**
    from `.claude/templates/card.md`:
    - header: `status: proposed`, `cap: <N> min`, `sources:`, `not_read:`;
-   - `## Specs`: every sentence of the card as `S<n> · "<verbatim quote>"`; an assumption as `<ID>-ASM-NN · <reading> · S<n>`;
+   - `## Specs`: every sentence of the card as `S<n> · "<verbatim quote>"` (one clause each); an assumption, only when it changes what the user sees or does, as `<ID>-ASM-NN · <reading> · S<n>` (HTTP defaults: one ASM, a test per row);
    - `## Tasks`: `T<n> · S<n>,… · <files (layer)> · tests: <file> "<title @<ID>-S<n>>"`; a file carries `(presentation|rule|data)`: `rule` does no I/O, SQL lives only in `data`; every `S#` and `ASM` has its planned test; each production task gets an indented `reuses:`/`new:` line, a new pattern a `why-layer:`; each file sits in its slice's layer folder;
    - `## Gate`: one command per line (`suite:`, `lint:`, `mutate <file>: <suite>`, `app:`), and the plan's own: a `probe <state>:` for each state `## Specs` names, `attacks:` with the card's limits, `migrate-upgrade:` if it touches data;
    - `## Log`: `L1` is the requirement, verbatim and whole. L1 never changes; the Log only grows, by `node .claude/tools/log.mjs specs/<card> "<line>"`. `Grep` the `@<ID>-S` tags of earlier cards in the files the Tasks touch: each frozen test the card contradicts is declared now as `replaces:`.
@@ -29,7 +28,7 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
      failing for the right reason, **committed before any code**; then the code; then the gate.
    - **large:** one `builder` per group of `## Tasks`, prompted with only the path of `card.md`, its task IDs and `S#`, and the gate command. Launch it in the
      background; its notification wakes you (unattended or a subagent: `wait.mjs --agent <id>`).
-   - Visual lens: with the tests green, one `designer` does 2-3 capture rounds against `ref/` (`rondas.md`), or the gate fails.
+   - Visual lens: a `designer` captures `ref/` beside the builder; once tests pass, a fresh one does 2-3 capture rounds (`rondas.md`), or the gate fails.
    - An `S#` over a set («un campo», «cada», «todos») gets one planned test per member the card names.
    - Validate what comes from outside on the way in; a missing key of a closed enumeration is an error, not a default. The scope is the
      card's: an unasked control, endpoint or header is a Log line `OUT · <what>`, not built.
@@ -49,20 +48,20 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
 
 ## Cost rules
 
-- **One `Write` per file, not ten `Edit`s.** Never `sed -i` or `node -e` to change a file: the guards do not see them.
+- **One `Write` per file, not ten `Edit`s.** Never `sed -i` or `node -e` to change a file: the hook refuses it.
 - **Nothing over ~30 s runs in the foreground:** background, log, `Grep`. A `Monitor` runs `node .claude/tools/wait.mjs <log> --monitor --max 1790`
   (ends on `<tool>: exit <N>`); the turn ends; unattended or in a subagent, `wait.mjs`.
 - **A subagent only from the table below,** never `general-purpose`; what decides is never a Sonnet's.
 - **Read in depth only what an `S#` touches;** the rest by `Grep`. To look at the card again, `node .claude/tools/card-view.mjs specs/<card> [S<n> T<n>…]` (L1 folded); `Read` it only to edit it. `bar.mjs <IDs>` prints the criteria rows you need. A tool's usage: `node .claude/tools/help.mjs <tool>`; never read a kit tool's code.
 - **Verify by what you touched:** `node .claude/tools/affected.mjs <files>` lists the tests that import them; run those. Whole suites are CI's. `node --test` always carries `--test-force-exit`.
-- **Context caps:** `context-cap` warns builder, grunt, designer and design-critic at 150k, stops at 200k: commit, `specs/<card>/handoff.md`, a fresh one. The main thread compacts at 200k.
+- **Context caps:** `context-cap` stops a builder, grunt, designer or design-critic at 200k: commit, `handoff.md`, a fresh one. The main thread compacts at 200k.
 
 ## Who does what
 
 | Task | Agent |
 |---|---|
 | Builds a group of tasks (RED, code, gate) of a large card | `builder` |
-| Capture rounds of a `(presentation)` screen against its `ref/`, after the builder | `designer` |
+| A `(presentation)` screen: `ref/` beside the builder · capture rounds after it | `designer` |
 | Critiques the look (`visual`, `production`); re-checks its blockers once | `design-critic` (Opus) |
 | Judges the plan at high (`PLAN`, 12 turns) against the lenses of `risk.json`; writes `judge.md` | `judge` (Opus) |
 | Fetches the requirement from Jira and freezes it | `archivist` |
@@ -73,7 +72,7 @@ The kit and the code are in English unless CLAUDE.md declares `Code language:`; 
 
 ## What does not depend on your good will
 
-Hooks block, even when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (one plan judge, only at high; no code judge, no `FIX`), `require-bar` (cap, Specs, Tasks, Gate before code),
+Hooks block, even when they fail: `guard` (L1 and the Log of `card.md`, `risk.json`, committed tagged tests, `kit.json`), `delegate-code` (production code: `builder`, `grunt`, or you on a small card after RED), `review-cap` (one plan judge, only at high), `require-bar` (cap, Specs, Tasks, Gate before code),
 `time-cap` (warns at 70 % of `cap:`, stops at 100 %), `context-cap`, `require-at-close` (mutation, linter of tests, scope, at high `judge.md` with its ACT closed), `publish`. If one stops you, read its message; do not go around it.
 What you open, you close.
 

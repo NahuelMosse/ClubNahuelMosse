@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// PreToolUse on Edit: counts the Edits of each file per agent, and on the fourth warns to write the file whole.
+// PreToolUse on Edit: counts the Edits of each file per agent, and on the second warns to write the file whole.
 // Measured: one agent made 67 Edits and 25 Writes; every edit stays in the context and is re-read on each request.
 // Files of more than 200 lines or 6000 characters are not warned about. It is a warning, never a block. The count lives in the git folder of the file's repo, like review-cap's.
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-const AT = 4;
+const AT = 2;
 const BIG = 200;
 const BIG_CHARS = 6000;
 try {
@@ -31,7 +31,7 @@ try {
     const text = readFileSync(file, 'utf8');
     if (text.length > BIG_CHARS || text.split('\n').length > BIG) process.exit(0);
   }
-  const message = `Fourth edit of ${file}: write it whole with Write — each edit stays in the context and is re-read on every request.`;
+  const message = `Second edit of ${file}: write it whole with Write — each edit stays in the context and is re-read on every request.`;
   process.stdout.write(JSON.stringify({
     systemMessage: message,
     hookSpecificOutput: { hookEventName: 'PreToolUse', additionalContext: message },

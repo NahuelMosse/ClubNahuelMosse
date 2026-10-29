@@ -455,6 +455,13 @@ for (const { method, path: r, body } of writes) {
   if (json && method === 'POST') { await hardening(r, body); await hang(r, true); jsonPosts.push(r); }
   if (json) await bigPlain(method, r);
 }
+// HEAD and OPTIONS on every known route: a 2xx is fine (HEAD has no body), a 405 must say which methods the route takes (`Allow`).
+for (const r of new Set([...writes.map((w) => w.path), ...reads])) for (const method of ['HEAD', 'OPTIONS']) {
+  const { s, headers } = await exchange(method, r, BROWSER);
+  const answered = typeof s === 'number';
+  const noAllow = s === 405 && headers.allow === undefined;
+  rows.push({ name: `${method} ${r} (method probe)`, s: answered ? s : '-', bad: !answered || s >= 500 || noAllow, evidence: noAllow ? '405 without an Allow header' : answered ? undefined : s });
+}
 for (const r of reads) {
   await legitimate(`GET ${r} legitimate, from the page itself`, 'GET', r);
   if (!noAmbient) for (const [name, headers] of ORIGINS.slice(0, 2)) await attack(`GET ${r} ${name}`, 'GET', r, headers, undefined, true);
@@ -471,11 +478,14 @@ for (const r of ['/', ...writes.map((w) => w.path), ...reads]) {
 }
 // A static server rooted at the repo serves its insides (measured: `/design/` and the repo's own files answered 200). A file
 // counts as served only when its content comes back: an app that answers every path with its index page is not leaking.
-const INTERNAL = [['/.git/config', /\[core\]/], ['/.env', /^[A-Z][A-Z0-9_]*=/m], ['/package.json', /"(dependencies|devDependencies|scripts)"\s*:/], ['/.claude/settings.json', /"(hooks|permissions)"\s*:/]];
+// `specs/` and `/design/line.md` are the repo's own text: an HTML answer (an SPA index) never counts.
+const currentCard = (() => { try { return readFileSync('specs/.current', 'utf8').trim(); } catch { return ''; } })();
+const INTERNAL = [['/.git/config', /\[core\]/], ['/.env', /^[A-Z][A-Z0-9_]*=/m], ['/package.json', /"(dependencies|devDependencies|scripts)"\s*:/], ['/.claude/settings.json', /"(hooks|permissions)"\s*:/],
+  ['/specs/.current', /^[a-z0-9]+(?:[-_.][a-z0-9]+)+\s*$/i], ...(/^[\w.-]+$/.test(currentCard) ? [[`/specs/${currentCard}/card.md`, /^(#\s|status:|id:|## )/m]] : []), ['/design/line.md', /^(#\s|[-*]\s)/m]];
 for (const [path, marker] of INTERNAL) {
   const { s, text } = await exchange('GET', path, BROWSER, undefined, undefined, false);
   const answered = typeof s === 'number';
-  const leaked = answered && s < 300 && marker.test(text);
+  const leaked = answered && s < 300 && !/^\s*<(!doctype|html)/i.test(text) && marker.test(text);
   rows.push({ name: `GET ${path} (a repo file the app must not serve)`, s: answered ? s : '-', bad: leaked, evidence: leaked ? `answered ${s} with the file's content` : answered ? undefined : s });
 }
 // A number the parser cannot hold (`Number('9'.repeat(30))` is 1e30, `parseInt` past 2^53 loses digits, SQLite's integer overflows):

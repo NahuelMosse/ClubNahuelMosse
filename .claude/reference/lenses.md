@@ -4,9 +4,6 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 
 ## interpretation
 
-- What counts as a space when trimming? Only ASCII, or also a non-breaking space and tabs (`" Ana"`)?
-- Do equality and search use the same case rule, ASCII or Unicode (`Ñandú` against `ñandú`)?
-- Which characters and how long may an id be when it is returned in a header (`X-Request-Id` with a newline)?
 - Does the product add text, routes or behavior the card does not ask for (a «welcome» line, a `/health`)? Each one is `OUT`.
 - Does each `S#` say the same as the sentence it quotes, no less and no more («at least 3» is not «more than 3»)?
 - Is there a sentence of `L1` that no `S#` covers (a second paragraph, a comment of Jira)?
@@ -22,21 +19,17 @@ Read by `/card` before `## Specs` closes, for the lenses of `risk.json` (or the 
 
 ## contract
 
-The questions every HTTP card leaves open (content type, byte limit, ids, query integers, search, order, request id, 405, 500)
-have their default in `reference/http-defaults.md` (profile backend): assumed from there as an `ASM` with its test, not deliberated.
+The questions every HTTP card leaves open (content type, byte limit, ids, query integers, text fields, case, search, order, request id,
+405, `//path`, percent-encoding, 431, 500, extra keys, client success) have their default in `reference/http-defaults.md` (profile backend): assumed from there as an `ASM` with its test, not deliberated.
 
-- What does an unsupported method answer on an invalid id, 405 or 404 (`DELETE /items/xyz`)?
 - Is a `+` in the query a space or a plus (`?q=a+b`)?
 - What happens in a partial case, one valid field and one invalid (`{"name":"Ana","age":-1}`)?
-- Is the cap of an integer in the query said for every parameter, and what does it answer when passed (`?limit=1000000`, `?page=` and 30 nines)?
-- Does a malformed path answer 4xx, never 5xx (`//items`, `/items/..%2f`, `/items/%`)?
 - Are bytes that decoding would repair silently refused instead (invalid UTF-8 turned into `�`)?
 - Which statuses does the contract (openapi) document that the app returns: 400, 404, 408, 413, 415, 431, 500?
 - What does a repeated or duplicate value answer, 409 or 200 with the existing one (`POST` of the same email twice)?
 - Which headers does every response carry (`content-type`, `cache-control`, the card's own), errors included?
-- What is the order of the fields and of the list when the card does not say (`name, email`; by creation)?
-- What answers a body of another content-type, empty, or with extra keys?
-- What does the client see on an error: a stable shape (`{error, message}`) and no stack?
+- What is the order of the fields of a response when the card does not say (`name, email`)?
+- Do the 4xx errors carry the same `error` shape as the 500 body of `http-defaults.md`?
 - Does an existing client keep working: which route, field or status of main changes?
 - Is each route a resource the client understands (`/orders/42` with its lines, totals and status), or a table exposed as is (`/order_lines?order_id=42`, foreign keys, internal columns)?
 
@@ -63,7 +56,7 @@ A card that edits a code file with markup in it and does not change the screen d
 - Does the sending indicator stay visible, with contrast, while the request is held?
 - Does a `select` placeholder read as a placeholder, not in the color of a chosen value?
 - Does what enters also leave with a transition, and does reduced motion leave no transform behind?
-- Do the gaps between blocks come from the spacing tokens of `design/line.md`, not loose values?
+- Do the gaps between blocks come from the spacing tokens (`design/line.md` from mvp; at poc the card's `tokens:`), not loose values?
 - Does a long text with no spaces overflow at 320 px (`aaaaaaaaaaaaaaaaaaaaaaaa`)?
 - Is a disabled control still legible, with contrast and a visible reason?
 - Does each state that can appear (loading, empty, error, sending, and the notice of a server error) have its `probe`?
@@ -90,9 +83,8 @@ Always read by the plan `judge` at high, whatever the lenses of `risk.json`. The
 ## security
 
 - Is the person's text inserted as text, never as HTML (`<img onerror=…>`)?
-- Does the search escape the wildcards `%` and `_` (`?q=100%`)?
 - Is a huge body with another content-type cut without reading it all?
-- Does an internal error leave the process alive and answer 500 without a stack?
+- Does an internal error leave the process alive?
 - Who may call each route, and what does the call without credentials answer, 401 or 403?
 - Does a value of the request reach a header, a path or a command without being checked (`../`, `\r\n`)?
 - Does a log line or an error echo personal data or a secret?

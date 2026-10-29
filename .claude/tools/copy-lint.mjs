@@ -57,3 +57,6 @@ export const lintCopy = ({ sections = [], ctas: shown = [], text = '' }, fixed =
   if (/\.{3}/.test(text)) add('three dots', 'use the ellipsis character …');
   return out;
 };
+
+// The texts a card quotes verbatim, one pass per quote kind: a straight quote first in one alternation swallowed the «…» inside `"… «Suscribirme» …"`.
+export const quotedTexts = (doc) => [/«([^»\n]{1,80})»/g, /“([^”\n]{1,80})”/g, /"([^"\n]{1,80})"/g].flatMap((re) => [...String(doc).matchAll(re)].map((m) => m[1]));

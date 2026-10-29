@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--brand <brand.json|card.md>] [--intent <collage|statement|grid|pinned-media|card.md>] [--kind <product|card.md>] [--scrub]
+// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1280x800,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--brand <brand.json|card.md>] [--intent <collage|statement|grid|pinned-media|card.md>] [--kind <product|card.md>] [--scrub]
 // `--brand` reads the fonts of the brand sheet (`brand.json` or the `## Brand` block of card.md): a text family outside them fails the
 // row «brand: fonts»; with no sheet the fonts used are only reported.
 // `--grain baked` (also what a card's `## Look` declares when the grain is baked into the image files) makes the grain rule pass
@@ -17,6 +17,11 @@
 // `design-round.mjs --sheet <ref-dir> [--out <dir>]` is the other mode: it makes one downscaled contact sheet (JPEG, 1600 px wide, a label per
 // thumbnail) per width from the `*.png`, `*.jpg` of the folder (the width is the `-<width>-<nn>` of the file name), so a reference is looked at in
 // one image Read per width, not one per capture. Output `<out>/sheet-<width>[-<k>].jpg` (default out: the folder); 24 thumbnails at most per sheet.
+// `design-round.mjs --ref <url> --name <genre>-<site> --out specs/<card>/ref` captures a reference site in one call, in the layout the
+// gate's `ref` check reads: at 1440x900 and 390x844, 9 frames scrolling down (`<name>-<width>-01..09.png`) and the first inner page the site
+// links (`-10`), `captures.json` merged, the contact sheets, and the site's motion (`motion-audit.mjs --measure --frames --scroll-story`)
+// in `motion-<name>.json`, copied to `motion.json` for the first reference. A bot wall is retried once with a fresh context and a longer
+// wait; a second one exits 2. About 2 min per site.
 // One whole capture round of a screen in a single call, so the designer spends its turns looking and fixing, not taking captures.
 // Per width it writes viewport captures, never a full page: the load at 0, 600 and 2000 ms; one per visible `section` or
 // `[data-section]`, scrolled to the top of the viewport; and, with --steps, the ones of a probe steps file (`help.mjs judge`
@@ -57,9 +62,11 @@ import { pathToFileURL, fileURLToPath } from 'node:url';
 import { parseSteps } from './probe.mjs';
 import { wallOf, wallMessage } from './bot-wall.mjs';
 import { DPR, FRAME_MAX, LCP_INIT, collectFonts, collectPalette, collectTextBoxes, crossWidthRows, loadBrand, loadIntent, loadProduct, measureProduct, mergePainted, paintedTexts, PASTED_MARGIN, designRows, frameFlags, frameReports, frameTable, markVisibleAtT0, measureFrame, measureImages, measureLayout, pickCta, sampleCanvases, sweepDeadClicks, sweepsWidth, typographyOf } from './design-checks.mjs';
-import { lintCopy, measureCopy } from './copy-lint.mjs';
+import { lintCopy, measureCopy, quotedTexts } from './copy-lint.mjs';
+import { currentCard } from './card.mjs';
+import { readCard } from './card-doc.mjs';
 
-const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--cta <selector>] [--brand <brand.json|card.md>] [--intent <name|card.md>] [--kind <product|card.md>] [--scrub]';
+const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1280x800,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--cta <selector>] [--brand <brand.json|card.md>] [--intent <name|card.md>] [--kind <product|card.md>] [--scrub]';
 const LOAD_MARKS = [0, 600, 2000];
 const STEP_TIMEOUT_MS = 5000;
 // Same numbers as LOOP_MIN_S, SEAM_MAX_RATIO and MEDIAN_FLOOR of asset-pipeline.py: a hero loop is 8 s or more (4 s when its seam is
@@ -398,12 +405,96 @@ export const sheet = async (argv) => {
   return { code: 0, message: lines.join('\n') };
 };
 
+const REF_VIEWPORTS = [{ width: 1440, height: 900 }, { width: 390, height: 844 }];
+const REF_SCROLLS = 9;
+const REF_SETTLE_MS = 3000;
+const REF_RETRY_SETTLE_MS = 8000;
+const REF_GOTO_MS = 45000;
+const REF_NAME = /^[a-z0-9]+(-[a-z0-9]+)+$/;
+const pad = (n) => String(n).padStart(2, '0');
+// The first same-origin page the site links to (header and nav first), never an anchor, a login or the page itself.
+const innerLink = () => {
+  const here = location.pathname.replace(/\/$/, '');
+  const ok = (a) => { try { const u = new URL(a.href); return u.origin === location.origin && u.pathname.replace(/\/$/, '') !== here && !/log[-_]?in|sign[-_]?(in|up)|auth/i.test(u.pathname); } catch { return false; } };
+  const links = [...document.querySelectorAll('header a[href], nav a[href]'), ...document.querySelectorAll('a[href]')];
+  return links.find(ok)?.href ?? null;
+};
+const openRef = async (browser, url, viewport, settle) => {
+  const context = await browser.newContext({ viewport });
+  const page = await context.newPage();
+  const response = await page.goto(url, { waitUntil: 'load', timeout: REF_GOTO_MS }).catch(() => null);
+  await page.waitForTimeout(settle);
+  return { context, page, response, wall: response ? await wallOf(page, response, url) : 'no response' };
+};
+const captureEntry = async (page, response, file) => ({
+  file, status: response?.status() ?? 0, title: await page.title(),
+  text: ((await page.evaluate(() => document.body?.innerText ?? '').catch(() => '')) || '').slice(0, 600),
+});
+export const capture = async (argv) => {
+  const args = [...argv];
+  const take = (name) => { const i = args.indexOf(name); return i < 0 ? undefined : args.splice(i, 2)[1]; };
+  const url = take('--ref'); const name = take('--name'); const out = take('--out');
+  if (!url || !/^https?:\/\//.test(url) || !REF_NAME.test(name ?? '') || !out || args.length) return { code: 2, message: 'usage: node design-round.mjs --ref <url> --name <genre>-<site> --out specs/<card>/ref' };
+  const pw = playwright();
+  if (!pw) return { code: 2, message: 'could not run: Playwright not found in the repo or KIT_PLAYWRIGHT_ROOT' };
+  mkdirSync(out, { recursive: true });
+  const browser = await pw.chromium.launch({ channel: 'chromium' }).catch(() => pw.chromium.launch());
+  const entries = []; const lines = [];
+  try {
+    for (const viewport of REF_VIEWPORTS) {
+      let r = await openRef(browser, url, viewport, REF_SETTLE_MS);
+      if (r.wall) { await r.context.close(); r = await openRef(browser, url, viewport, REF_RETRY_SETTLE_MS); }
+      if (r.wall) { await r.context.close(); return { code: 2, message: `${wallMessage(url, r.wall)}; retried once with a fresh context and ${REF_RETRY_SETTLE_MS} ms` }; }
+      const { page, response } = r;
+      for (let i = 1; i <= REF_SCROLLS; i++) {
+        const file = `${name}-${viewport.width}-${pad(i)}.png`;
+        await page.screenshot({ path: join(out, file) });
+        entries.push(await captureEntry(page, response, file));
+        await page.mouse.wheel(0, Math.round(viewport.height * 0.85));
+        await page.waitForTimeout(600);
+      }
+      await page.evaluate(() => scrollTo(0, 0));
+      const inner = await page.evaluate(innerLink).catch(() => null);
+      if (inner) {
+        const res = await page.goto(inner, { waitUntil: 'load', timeout: REF_GOTO_MS }).catch(() => null);
+        await page.waitForTimeout(REF_SETTLE_MS);
+        if (res && !(await wallOf(page, res, inner))) {
+          const file = `${name}-${viewport.width}-${pad(REF_SCROLLS + 1)}.png`;
+          await page.screenshot({ path: join(out, file) });
+          entries.push(await captureEntry(page, res, file));
+        }
+      }
+      await r.context.close();
+      lines.push(`${viewport.width}: ${entries.filter((e) => e.file.includes(`-${viewport.width}-`)).length} captures${inner ? ` (inner page ${new URL(inner).pathname})` : ', no inner page linked'}`);
+    }
+  } finally { await browser.close(); }
+  const manifestFile = join(out, 'captures.json');
+  let manifest = [];
+  try { manifest = JSON.parse(readFileSync(manifestFile, 'utf8')); } catch { /* first reference */ }
+  const files = new Set(entries.map((e) => e.file));
+  writeFileSync(manifestFile, JSON.stringify([...(Array.isArray(manifest) ? manifest : []).filter((e) => !files.has(e.file)), ...entries], null, 1));
+  const sheets = await sheet(['--sheet', out]);
+  // Serial, after the captures: a browser running beside motion-audit would move its timings.
+  const motionDir = mkdtempSync(join(tmpdir(), 'ref-motion-'));
+  const ma = spawnSync(process.execPath, [join(import.meta.dirname, 'motion-audit.mjs'), url, '--measure', '--frames', '--scroll-story', '--out', motionDir], { encoding: 'utf8', timeout: 240000, env: process.env });
+  let motion;
+  if (existsSync(join(motionDir, 'report.json'))) {
+    const report = readFileSync(join(motionDir, 'report.json'));
+    writeFileSync(join(out, `motion-${name}.json`), report);
+    const first = !existsSync(join(out, 'motion.json'));
+    if (first) writeFileSync(join(out, 'motion.json'), report);
+    motion = `motion: ${out}/motion-${name}.json${first ? ', also motion.json' : ''}`;
+  } else motion = `motion: could not run (motion-audit exit ${ma.status}): ${(ma.stderr || ma.stdout || '').trim().split('\n')[0]}`;
+  rmSync(motionDir, { recursive: true, force: true });
+  return { code: sheets.code, message: [`${url} → ${out}/${name}-<width>-<NN>.png`, ...lines, `captures.json: ${entries.length} entries`, sheets.message, motion].join('\n') };
+};
+
 const parseArgs = (argv) => {
   const args = [...argv];
   const take = (name) => { const i = args.indexOf(name); return i < 0 ? undefined : args.splice(i, 2)[1]; };
   const gpu = args.includes('--gpu');
   if (gpu) args.splice(args.indexOf('--gpu'), 1);
-  const out = take('--out'); const steps = take('--steps'); const widths = take('--widths') ?? '1440x900,1024x768,768x1024,390x844';
+  const out = take('--out'); const steps = take('--steps'); const widths = take('--widths') ?? '1440x900,1280x800,1024x768,768x1024,390x844';
   const grainFlag = take('--grain'); const cta = take('--cta'); const brandFile = take('--brand'); const intentArg = take('--intent'); const kindArg = take('--kind');
   const scrub = args.includes('--scrub');
   if (scrub) args.splice(args.indexOf('--scrub'), 1);
@@ -415,6 +506,7 @@ const parseArgs = (argv) => {
 
 export const round = async (argv) => {
   if (argv.includes('--sheet')) return sheet(argv);
+  if (argv.includes('--ref')) return capture(argv);
   const a = parseArgs(argv);
   if (a.error) return { code: 2, message: a.error };
   let steps = null;
@@ -572,12 +664,18 @@ export const round = async (argv) => {
       }
     }
   } finally { await browser.close(); }
-  if (result.copy) result.copyLint = lintCopy(result.copy);
+  // The texts the card quotes verbatim are not the screen's to reword: the same list the gate passes to the lint.
+  const cardDir = currentCard(process.cwd());
+  const quoted = cardDir ? quotedTexts(readCard(cardDir) ?? '') : [];
+  if (result.copy) result.copyLint = lintCopy(result.copy, quoted);
   if (!look) for (const r of crossWidthRows(result.widths)) result.widths[r.widest].rules.push(r);
 
+  // Serial, after the viewports: motion-audit times the load waves, and a browser running beside it would move them.
+  // A report left by an earlier round is deleted first, so a crashed audit is not read as this round's.
   const motionDir = join(a.out, 'motion');
-  const ma = spawnSync(process.execPath, [join(import.meta.dirname, 'motion-audit.mjs'), a.url, '--measure', '--out', motionDir], { encoding: 'utf8', timeout: 180000, env: process.env });
   const reportFile = join(motionDir, 'report.json');
+  rmSync(reportFile, { force: true });
+  const ma = spawnSync(process.execPath, [join(import.meta.dirname, 'motion-audit.mjs'), a.url, '--measure', '--out', motionDir], { encoding: 'utf8', timeout: 180000, env: process.env });
   if (existsSync(reportFile)) {
     const r = JSON.parse(readFileSync(reportFile, 'utf8'));
     result.load = loadWaves(r.load ?? []);

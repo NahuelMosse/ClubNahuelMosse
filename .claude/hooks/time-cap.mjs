@@ -10,9 +10,9 @@
 // Contract: exit 0 lets it through (stdout JSON carries the warning); exit 2 blocks and Claude reads
 // stderr. If it cannot read what is being asked, it blocks.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { delegateToRepo } from '../tools/card.mjs';
+import { gitDirOf } from '../tools/browser-lock.mjs';
 
 let input;
 let raw;
@@ -70,8 +70,9 @@ try {
   if (!message) process.exit(0);
 
   // One warning per card every ten minutes: the state lives in the git folder, like review-cap's count.
-  const branch = spawnSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: root, encoding: 'utf8' }).stdout?.trim() || 'no-branch';
-  const gitDir = spawnSync('git', ['rev-parse', '--absolute-git-dir'], { cwd: root, encoding: 'utf8' }).stdout?.trim();
+  const gitDir = gitDirOf(root);
+  let branch = 'no-branch';
+  try { branch = readFileSync(join(gitDir, 'HEAD'), 'utf8').match(/^ref: refs\/heads\/(.+?)\s*$/m)?.[1] ?? 'no-branch'; } catch { /* no git folder: no branch */ }
   const dir = gitDir || join(root, '.validation');
   const file = join(dir, 'sdd-time-cap.json');
   let warned = {};

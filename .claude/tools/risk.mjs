@@ -18,6 +18,8 @@
 // classification: a file outside `## Tasks` that is sensitive (auth, payments, crypto, sessions, permissions) or that other
 // modules import takes `review` to high; one that is a screen, a route or data takes it to what it is, and its lenses are added.
 // The result is written in risk.json as `escalated: { review, lenses, why }`; nothing lowers it and nothing but this tool writes it.
+// Prints the `risk:` line, not the JSON (it is in risk.json); a plan with gaps prints all of them at once and ends with the
+// command to rerun.
 // Exits 0, 2 when the card has no card.md or `## Tasks` names no task, 3 when the plan is incomplete.
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
@@ -69,7 +71,8 @@ export const classify = ({ files, taskCount, text, root, securityL2On = false, n
 
 export const riskLine = (r) => `risk: ${r.size} · ${r.review} · lenses ${r.lenses.length ? r.lenses.join(', ') : 'none'}${r.lenses.length ? `\nquestions: .claude/reference/lenses.md (${r.lenses.join(', ')})` : ''}${(r.declared ?? []).filter((d) => d.lens === 'visual').map((d) => ` · visual declared off: ${d.why}`).join('')}`;
 
-const planMessage = (gaps) => `The plan in card.md is incomplete (${gaps.length}); risk.json is not written and nothing is built until it is:\n${gaps.map((g) => `  - ${g}`).join('\n')}`;
+// Every gap at once, each with the line it asks for, and the command that judges the plan again.
+const planMessage = (gaps, cardArg) => `The plan in card.md is incomplete (${gaps.length}); risk.json is not written and nothing is built until it is:\n${gaps.map((g) => `  - ${g}`).join('\n')}\nfix them all, then rerun: node .claude/tools/risk.mjs ${cardArg}`;
 
 export const risk = (root, cardArg) => {
   const cardDir = isAbsolute(cardArg) ? cardArg : resolve(root, cardArg);
@@ -79,12 +82,12 @@ export const risk = (root, cardArg) => {
   if (!hasTasksSection(doc) || !tasks.length) return { code: 2, message: 'card.md has no `## Tasks` with a line `T1 · S1,S2 · <files>`: the classification reads the files from there' };
   const noVisual = noVisualOf(doc);
   const view = noVisual ? tasks.flatMap((t) => t.files).find((f) => IS_SCREEN.test(f)) : undefined;
-  if (view) return { code: 3, message: planMessage([`no-visual cannot hold: ${view} is a view`]) };
+  if (view) return { code: 3, message: planMessage([`no-visual cannot hold: ${view} is a view`], cardArg) };
   const out = join(cardDir, 'risk.json');
   if (existsSync(out)) {
     const frozen = JSON.parse(readFileSync(out, 'utf8'));
     const gaps = planProblems(doc, { cardDir, lenses: frozen.lenses ?? [], root });
-    if (gaps.length) return { code: 3, message: planMessage(gaps) };
+    if (gaps.length) return { code: 3, message: planMessage(gaps, cardArg) };
     return { code: 0, result: frozen, line: riskLine(frozen), kept: true };
   }
   const text = `${sectionOf(doc, 'Specs') ?? ''}\n${requirementOf(doc)}`;
@@ -99,7 +102,7 @@ export const risk = (root, cardArg) => {
     result.lensesOff = off;
   }
   const gaps = planProblems(doc, { cardDir, lenses: result.lenses, root });
-  if (gaps.length) return { code: 3, message: planMessage(gaps) };
+  if (gaps.length) return { code: 3, message: planMessage(gaps, cardArg) };
   writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`);
   return { code: 0, result, line: riskLine(result), kept: false };
 };
@@ -164,6 +167,5 @@ if (process.argv[1] && process.argv[2] === '--diff' && import.meta.url === pathT
   if (!arg) { console.error('usage: node risk.mjs <card-dir>'); process.exit(2); }
   const r = risk(process.cwd(), arg);
   if (r.code) { console.error(r.message); process.exit(r.code); }
-  console.log(JSON.stringify(r.result, null, 2));
   console.log(r.line);
 }

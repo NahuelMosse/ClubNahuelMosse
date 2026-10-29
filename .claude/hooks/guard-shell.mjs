@@ -61,7 +61,8 @@ const rewritesAmbiguities = sedEditsAmbiguities ||
 if (rewritesAmbiguities) {
   reject(
     'ambiguities.md is append-only. `sed -i`, `>`, `Set-Content` and `Out-File` rewrite lines already ' +
-    'recorded. To change a state, add a new event at the end with `>>`, `Add-Content` or `Out-File -Append`.'
+    'recorded. To change a state, add a new event at the end with `>>`, `Add-Content` or `Out-File -Append`. ' +
+    'One line per event: `<ID>-AMB-NN · <date> · resolved · <answer> · <author>, <date>` (or `expired → <ID>-ASM-NN`, `no channel · <question> → <ID>-ASM-NN`).'
   );
 }
 
@@ -158,11 +159,11 @@ if (stashes) {
 // `npm run <script>` of a line that is a script) is refused: a bounded run (`npx playwright test --grep @X`,
 // `node --test one.test.mjs`) is not that line.
 // Inside a subagent the rule is wider: what is equivalent to a whole line (an npm script a line reaches, its body,
-// `playwright test -c <config>` or `node --test <globs>` with no filter) is refused as well, and a grunt
-// runs no verify.mjs: the first whole run is the builder's or the main thread's, in step 4.
+// `playwright test -c <config>` or `node --test <globs>` with no filter) is refused as well, and a grunt or a
+// designer runs no verify.mjs: the first whole run is the builder's or the main thread's, in step 4.
 // For a subagent a parser that fails refuses; for the main thread it does not stop the shell, the rule is about cost.
 const agentType = String(input.agent_type ?? '');
-const noSuites = Boolean(input.agent_id) && /^(?:builder|grunt)$/.test(agentType);
+const noSuites = Boolean(input.agent_id) && /^(?:builder|grunt|designer)$/.test(agentType);
 try {
   const found = hookCard(input.cwd ?? process.cwd(), process.env, input);
   // The lines of the gate: `## Gate` of card.md, or `## Verification` of a plan.md a repo still has.
@@ -196,8 +197,8 @@ try {
     // Each command the line runs is compared on its own: parentheses, a trailing `&`, `nohup`, `sh -c '…'`, an
     // environment prefix and `cd x &&` do not make a whole line another command.
     for (const asked of [...new Set(commandsOf(cmd).map(clean))].filter(Boolean)) {
-      if (planned && noSuites && agentType === 'grunt' && /\bnode\s+(?:-\S+\s+)*\S*verify\.mjs(?:\s|$)/.test(asked)) {
-        reject(`A grunt does not run verify.mjs: the gate is the builder's or the main thread's. ${MAIN_THREAD}${BOUNDED}`);
+      if (planned && noSuites && agentType !== 'builder' &&/\bnode\s+(?:-\S+\s+)*\S*verify\.mjs(?:\s|$)/.test(asked)) {
+        reject(`A ${agentType} does not run verify.mjs: the gate is the builder's or the main thread's. ${MAIN_THREAD}${BOUNDED}`);
       }
       // Through once.mjs the command is what comes after `--`.
       const viaOnce = noSuites && /\bnode\s+(?:-\S+\s+)*\S*once\.mjs\s/.test(asked);
@@ -209,7 +210,7 @@ try {
         // A subagent may run a short line: one named lint, types or format, or one measured under 30 s.
         const reached = input.agent_id && equivalent ? planned.find((c) => c.file === undefined && c.name === equivalent.line) : null;
         if (reached && shortLine(found.root, reached)) continue;
-        // To a builder or a grunt, once.mjs is refused as well: it is not recommended.
+        // To a builder, a grunt or a designer, once.mjs is refused as well: it is not recommended.
         if (exact && !viaOnce && !noSuites) {
           reject(
             `That is the command of the verification line “${exact.name}” of the plan, run on its own: it leaves no record and verify.mjs repeats it. ` +
@@ -220,7 +221,7 @@ try {
         if (equivalent) {
           reject(
             `That is the whole of the verification line “${equivalent.line}” of the plan (${equivalent.what})${viaOnce ? ', even through once.mjs' : ' run bare inside a subagent'}: ` +
-            (noSuites ? 'a builder or a grunt does not run whole suites (the gate is verify.mjs). ' : 'it leaves no record and verify.mjs repeats it: run it as `node .claude/tools/once.mjs <name> -- <command>`. ') +
+            (noSuites ? `a ${agentType} does not run whole suites (the gate is verify.mjs). ` : 'it leaves no record and verify.mjs repeats it: run it as `node .claude/tools/once.mjs <name> -- <command>`. ') +
             MAIN_THREAD + BOUNDED
           );
         }

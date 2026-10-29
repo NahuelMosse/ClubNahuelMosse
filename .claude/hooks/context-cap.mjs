@@ -43,7 +43,7 @@ try {
     if (commits || handoff) process.exit(0);
     process.stderr.write(
       `The context of the ${who} is about ${k} tokens, past the cap of ${STOP / 1000}k: commit, write the handoff and return; the main thread launches a fresh ${who} with it. ` +
-      'Allowed now: git add, git commit, git status, and a Write to `specs/<card>/handoff.md` with what is done, what is left, the files, and the gate lines that pass and how to run them.\n'
+      'Allowed now: a shell command made only of git add, git commit and git status, chained with `&&`, optionally after `cd <path> &&` (no `export` or other prefix), and a Write to `specs/<card>/handoff.md` with what is done, what is left, the files, and the gate lines that pass and how to run them.\n'
     );
     process.exit(2);
   }

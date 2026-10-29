@@ -79,6 +79,10 @@ const PROMISES_RESPONSE = /\b[1-5]\d\d\b|\bdevuelv\w*|\bresponde\w*|\breturns?\b
 const API_TEST_FILE = /api|http|e2e|app|route|server/i;
 const EVERY_RESPONSE = wordsOf('toda respuesta|todas las respuestas|every response|all responses');
 const UNIQUENESS = wordsOf('ya existe|repetid[oa]s?|duplicad[oa]s?|[uú]nic[oa]s?|unique|duplicate');
+const CONTRACT_DOC = wordsOf('contrato|contract|openapi|documenta\\w*|documents');
+const OLD_ROWS = wordsOf('old|existing|legacy|null|viej[oa]s?|existentes?');
+const FILTER_OR_ORDER = wordsOf('filters?|filtering|filtros?|filtra\\w*|search|busca\\w*|order\\w*|orden\\w*|sort\\w*');
+const SEVERAL = wordsOf('several|two|multiple|varios|varias|dos|m[uú]ltiples');
 const hasFlag = (lines, flag) => lines.some((l) => l.includes(flag));
 const declaredFor = (doc, what) => new RegExp(`declared\\s*·[^\\n]*${what}`, 'i').test(doc);
 
@@ -107,6 +111,11 @@ const filesOf = (root, ref) => {
 const existsInMain = (root, file) => ['origin/main', 'main', 'master'].some((ref) => filesOf(root, ref).has(file));
 
 // The plan rules that read what a spec or an assumption promises against the layer of its test, the flags of `attacks:` and the steps of `probe`.
+const mutateSuiteOf = (tasks, f) => {
+  const test = tasks.find((t) => t.files.includes(f))?.files.find((x) => IS_TEST.test(x));
+  return test ? `node --test ${test}` : 'node --test <test file that imports it>';
+};
+
 export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
   const out = [];
   const id = cardIdOf(cardDir);
@@ -126,7 +135,7 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
       const task = tasks.find((k) => k.id === t.task);
       return API_TEST_FILE.test(basename(t.file)) || (task?.files ?? []).some((f) => !IS_TEST.test(f) && roleFor(roles, f) !== 'rule');
     });
-    if (!observable) out.push(`${it.id}: promises a response and its planned tests are all on rules (rule) · add a test through the app or the api (a file named api|http|e2e|app|route|server) to its T line`);
+    if (!observable) out.push(`${it.id}: promises a response and its planned tests are all on rules (rule) · add a test through the app or the api (a file named api|http|e2e|app|route|server) to its T line: \`· tests: test/api/<x>.test.mjs "<title @${it.id.includes('-') ? it.id : `${id}-${it.id}`}>"\``);
   }
 
   for (const a of asms) {
@@ -150,20 +159,33 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
     const search = specs.find((s) => /\b(?:buscar|busca|búsqueda|search|contiene|contains)\b/i.test(s.text));
     if (search && !hasFlag(attacks, '--search') && !declaredFor(doc, 'search'))
       out.push(`${search.id}: filters by free text and \`attacks:\` has no \`--search "<path> <param>"\` (\`%\`, \`_\` and a quote are literal) · append it, or \`declared · search · <why>\``);
+    const contractual = specs.find((s) => CONTRACT_DOC.test(s.text));
+    if (contractual && !hasFlag(attacks, '--openapi') && !declaredFor(doc, 'openapi'))
+      out.push(`${contractual.id}: speaks of a contract or its documentation and \`attacks:\` has no \`--openapi <file.yaml|json>\` · append it to the \`attacks:\` line, e.g. \`--openapi docs/openapi.yaml\`, or \`declared · openapi · <why>\``);
     if (unique && !hasFlag(attacks, '--unique')) out.push(`${unique.id}: speaks of a duplicate or a unique value and \`attacks:\` has no \`--unique "<METHOD> <path> <body>"\` · append it to the \`attacks:\` line, e.g. \`--unique "POST /<path> <field>=<value>"\``);
   }
   const hasData = tasks.some((t) => t.files.some((f) => IS_MIGRATION.test(f) || roleFor(roles, f) === 'data'));
   if ((lenses.includes('contract') || lenses.includes('integrity')) && hasData && !hasFlag(attacks, '--fault-db') && !declaredFor(doc, 'fault-db'))
     out.push('a migration or a `(data)` file in ## Tasks and `attacks:` has no `--fault-db <file>` · add it, or `declared · fault-db · <why>`');
+  const migrations = [...new Set(tasks.flatMap((t) => t.files))].filter((f) => IS_MIGRATION.test(f));
+  const titles = planned.map((t) => t.title);
+  const tagOf = (sid) => `@${id ?? '<ID>'}-${sid}`;
+  const addsNullable = migrations.some((f) => { try { return /add\s+column\b(?![^;]*\bnot\s+null)/i.test(readFileSync(join(root, f), 'utf8')); } catch { return false; } })
+    || (migrations.length > 0 && /\bnullable\b|columna nueva|new column|agrega(?:r)? (?:una )?columna|adds? a (?:new )?column/i.test(sectionOf(doc, 'Specs') ?? ''));
+  if (addsNullable && !titles.some((t) => OLD_ROWS.test(t) && FILTER_OR_ORDER.test(t)) && !declaredFor(doc, 'nullable'))
+    out.push(`a migration adds a nullable column and no planned test title mixes old rows with a filter or the order (old, existing or null, plus filter, search or order) · add one to a T line, e.g. \`· tests: test/api/<x>.test.mjs "existing rows with null <column> still appear in the filter and the order ${tagOf('S<n>')}"\`, or \`declared · nullable · <why>\``);
+  const uniqueSpec = items.find((s) => UNIQUENESS.test(s.text));
+  if (uniqueSpec && migrations.length && !titles.some((t) => SEVERAL.test(t) && /\bnull\b/i.test(t)) && !declaredFor(doc, 'null-unique'))
+    out.push(`${uniqueSpec.id}: speaks of a unique value and the card has a migration, and no planned test title says several or two and null (several rows with null in the unique column are not duplicates) · add one to a T line, e.g. \`· tests: test/api/<x>.test.mjs "two rows with null <column> do not collide ${tagOf(uniqueSpec.id)}"\`, or \`declared · null-unique · <why>\``);
   const mutated = gate.filter((l) => /^mutate\b/i.test(l)).join('\n');
   const unmutated = [...new Set(tasks.flatMap((t) => t.files))].filter((f) => !IS_TEST.test(f) && !IS_MIGRATION.test(f) && IS_CODE.test(f) && ['presentation', 'data'].includes(roleFor(roles, f)) && !mutated.includes(f));
   // A screen's script is mutated too: measured, a form whose logic only browser tests reached left every mutant alive.
   if ((lenses.includes('contract') || lenses.includes('visual')) && mutated && unmutated.length && !declaredFor(doc, 'mutate'))
-    out.push(`${unmutated[0]} carries behavior the card promises and no \`mutate\` line names it · add \`mutate ${unmutated[0]}: <node test command>\` with a node test that imports its logic, or \`declared · mutate · <why>\``);
+    out.push(`${unmutated[0]} carries behavior the card promises and no \`mutate\` line names it${unmutated.length > 1 ? ` (nor ${unmutated.slice(1).join(', ')})` : ''} · add to ## Gate: ${unmutated.map((f) => `\`mutate ${f}: ${mutateSuiteOf(tasks, f)}\``).join(' · ')} (each with a node test that imports its logic), or \`declared · mutate · <why>\``);
   // Measured: 9 refusals in one repo repeated this rule, whose message gave no form to close it.
   if (lenses.includes('integrity') && gate.some((l) => /^app\s*:/i.test(l)) && !planned.some((t) => /reinici|restart|sobrevive/i.test(t.title)) && !declaredFor(doc, 'restart'))
     out.push('integrity lens with an `app:` line and no planned test whose title says reinici, restart or sobrevive (a record survives restarting the app on the same database) · ' +
-      'add that test to a T line, or `declared · restart · <why>` when the card keeps nothing a restart can lose');
+      'add that test to a T line, e.g. `· tests: test/api/<x>.test.mjs "a saved record survives a restart of the app @' + (id ?? '<ID>') + '-S<n>"`, or `declared · restart · <why>` when the card keeps nothing a restart can lose');
 
   const instruments = visualInstruments(root ?? resolve(String(cardDir), '..', '..'), doc);
   if (lenses.includes('visual') && instruments.golden) {
@@ -178,7 +200,7 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
     const typed = specs.find((s) => /«[^»]*(?:<[^>\n]+>|\{[^}\n]+\})[^»]*»/.test(s.text));
     if (typed && !steps.includes('type-markup')) out.push(`${typed.id}: shows text the person typed and no steps file has a \`{ "type-markup": "<locator>" }\` step`);
     const moves = (sectionOf(doc, 'Look') ?? '').split('\n').some((l) => /^\W*behavior:/i.test(l.trim()) && /\b(?:hover|cursor|foco|focus|press)\b/i.test(l));
-    if (moves && !gate.some((l) => /^motion\s*:/i.test(l))) out.push('## Look has a `behavior:` of hover, cursor, focus or press and no `motion:` line in ## Gate');
+    if (moves && !gate.some((l) => /^motion\s*:/i.test(l))) out.push('## Look has a `behavior:` of hover, cursor, focus or press and no `motion:` line in ## Gate · add `motion: node .claude/tools/motion-audit.mjs <url>`');
     const states = probeLinesOf(doc).length;
     const onLoadOnly = gate.filter((l) => /^overflow\s*:/i.test(l) && !/\.json\b/.test(l));
     if (states > 1 && onLoadOnly.length && specs.some((s) => /desbord|overflow/i.test(s.text)) && !declaredFor(doc, 'overflow'))
@@ -259,7 +281,7 @@ const codeLanguageProblems = (newFiles, root) => {
   const tracked = (spawnSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).stdout ?? '').split('\n').filter((f) => IS_CODE.test(f) && !/^(?:\.claude|specs)\//.test(f));
   const spanish = tracked.filter((f) => isSpanish(f.split('/').pop())).length;
   if (!declaresCodeLanguage(root) && tracked.length >= 5 && spanish / tracked.length > 0.3) {
-    return [`${spanish} of the repo's ${tracked.length} code files have Spanish names and CLAUDE.md declares no code language · add \`Code language: es\` to keep the repo's language, or \`Code language: en\` to write new code in English (the default), so new files do not mix the two`];
+    return [`${spanish} of the repo's ${tracked.length} code files have Spanish names and CLAUDE.md declares no code language · add the line \`Code language: es\` to the CLAUDE.md of the product repo to keep the repo's language, or \`Code language: en\` to write new code in English (the default), so new files do not mix the two`];
   }
   return newFiles.filter((f) => f.split('/').some(isSpanish)).map((f) => `${f}: a Spanish name in the code · the code is in English (identifiers, file names, comments, test names); the UI text, commits and the PR speak the team's language. Another language is declared in CLAUDE.md as \`Code language: <lang>\``);
 };

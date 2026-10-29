@@ -57,7 +57,7 @@
 // nothing added: vitest and jest cut a test at 5 s by themselves, and pytest has no timeout without pytest-timeout (`--timeout=<s>`).
 // Exits 0 if there are no actions, 1 if there are, 2 if there is no card or the plan does not say what to run.
 import { spawn, spawnSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { cpus } from 'node:os';
 import { delimiter, isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -1043,8 +1043,11 @@ const mergeChunks = (root, line, parts, mine, logsDir) => {
 };
 
 export const verify = async (root) => {
+  // Run from another folder (the kit's own repo, a subfolder) it would grade nothing or the wrong card: stop with exit 3.
+  const top = spawnSync('git', ['rev-parse', '--show-toplevel'], { cwd: root, encoding: 'utf8' }).stdout?.trim();
   const cardDir = currentCard(root);
-  if (!cardDir) return { error: 'No card in progress.' };
+  if (!cardDir || (top && realpathSync.native(top).toLowerCase() !== realpathSync.native(root).toLowerCase()))
+    return { code: 3, error: `Not the root of a project with a card in progress: ${resolve(root)} has ${cardDir ? 'a card but is not the repo root' : 'no card (specs/.current or a frozen card.md under specs/)'}. Run verify.mjs from the root of the project the card belongs to.` };
   // The gate is the `## Gate` of card.md when the card has one; else the plan's `## Verification`.
   const cardPath = join(cardDir, CARD_FILE);
   const single = existsSync(cardPath);
@@ -1062,8 +1065,8 @@ export const verify = async (root) => {
   if (appLine) {
     const stateFile = join(root, '.validation', 'app.json');
     const pidBefore = readState(stateFile)?.pid;
-    // app.mjs waits KIT_APP_START_TIMEOUT_S (60 s by default) for the app, then runs the seed: this cut leaves it 90 s beyond its own wait.
-    const startS = Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 60;
+    // app.mjs waits KIT_APP_START_TIMEOUT_S (180 s by default) for the app, then runs the seed: this cut leaves it 90 s beyond its own wait.
+    const startS = Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 180;
     const up = spawnSync('node', [join(import.meta.dirname, 'app.mjs'), 'up'], { cwd: root, encoding: 'utf8', timeout: Math.max(150_000, (startS + 90) * 1000), maxBuffer: 1 << 26 });
     const state = readState(stateFile);
     if (up.status !== 0 || !state) return { error: `The \`app:\` line could not start the app (exit ${up.status}): ${(up.stderr || up.stdout || '').trim().split('\n').slice(-6).join(' ⏎ ')}` };
@@ -1084,6 +1087,24 @@ const hasAppLine = (doc, heading) => {
   const section = doc.split(/^## /m).find((s) => s.startsWith(heading));
   const block = section?.match(/```[^\n]*\n([\s\S]*?)```/)?.[1] ?? '';
   return block.split('\n').some((l) => /^app:/.test(l.trim()));
+};
+
+const PROBE_LANES = 3;
+const MOTION_AUDIT = /\bmotion-audit\b/;
+const probeOut = (command) => command.match(/\bapp\.mjs\s+probe\b.*?--out[ =](\S+)/)?.[1];
+// A whole line that is one probe with an --out no other probe line uses and no frame measurement.
+export const isParallelProbe =(c, all) => {
+  const out = probeOut(c.command);
+  return Boolean(out) && !c.parts && c.file === undefined && !/&&|;|\|/.test(c.command) && !MOTION_AUDIT.test(c.command) && !measuresFrames(c)
+    && all.filter((x) => x !== c && probeOut(x.command) === out).length === 0;
+};
+const PENDING_DESIGNER ='pending designer';
+const DESIGNER_CHECKS = new Set(['rounds', 'docs']);
+// A card with the `visual` lens whose designer has left no round yet (rondas.md without a `## Round`).
+export const designerPending = (cardDir) => {
+  if (!riskOf(cardDir)?.lenses?.includes('visual')) return false;
+  const notes = join(cardDir, 'rondas.md');
+  return !(existsSync(notes) && /^## Round\b/m.test(readFileSync(notes, 'utf8')));
 };
 
 const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
@@ -1152,12 +1173,20 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
   // The browser lines start only if every fast line passed; the slow ones, and the parts of split lines, keep running
   // beside them (a part that already failed when the chain starts still keeps it from starting).
   const redFast = results.filter((r) => failed(r) && [...fast, ...beside].some((c) => c.name === r.name)).map((r) => r.name);
-  for (const c of heavy) {
+  const runHeavy = async (c) => {
     if (redFast.length) {
       say(`not started ${c.name}: ${redFast.join(', ')} failed first`);
       results.push({ name: c.name, command: c.command, exit: 125, notRun: true, blockedBy: redFast, flaky: [], tail: '' });
     } else results.push(await exec(c));
-  }
+  };
+  // `app.mjs probe` lines with their own --out only read the running app and write their own folder (probe.mjs: own browser,
+  // own out dir), so up to PROBE_LANES run together; a frame measurement or motion-audit needs the machine to itself.
+  const lanes = heavy.filter((c) => isParallelProbe(c, heavy));
+  const audits = heavy.filter((c) => !lanes.includes(c) && MOTION_AUDIT.test(c.command));
+  const waiting = [...lanes];
+  await Promise.all(Array.from({ length: Math.min(PROBE_LANES, lanes.length) }, async () => { for (let c = waiting.shift(); c; c = waiting.shift()) await runHeavy(c); }));
+  for (const c of heavy.filter((x) => !lanes.includes(x) && !audits.includes(x))) await runHeavy(c);
+  for (const c of audits) await runHeavy(c);
   await Promise.all([slowRuns, sideRuns]);
   // A frame line that failed while others ran is measured again with the machine to itself.
   for (const c of rest.filter((x) => x.file === undefined && !splits.has(x) && measuresFrames(x))) {
@@ -1214,11 +1243,18 @@ const verifyLines = async (root, { cardDir, single, planned, logsDir }) => {
   }
   const required = missing(root);
   const { actions: lacking, pending } = splitPending(required ?? quality);
-  for (const f of lacking) actions.push(quality.includes(f) ? f : `${f} · close: \`node ${TOOLS}/required.mjs\` exits 0`);
+  // The designer owns the look: until it leaves its rounds, what it writes (design line, tokens, rounds, docs) is not the builder's to fix.
+  // Only this verdict changes: required.mjs and the close still ask for all of it.
+  const waitsDesigner = single && designerPending(cardDir);
+  const DESIGNER_OWNS = /^I-(line|tokens) ·/;
+  for (const f of lacking) {
+    if (waitsDesigner && DESIGNER_OWNS.test(f)) { say(`${f.split(' · ')[0]}: pending designer`); continue; }
+    actions.push(quality.includes(f) ? f : `${f} · close: \`node ${TOOLS}/required.mjs\` exits 0`);
+  }
   // The checks that read what the card and the probe left on disk: out-of-scope.mjs runs inside required.mjs above.
-  const checks = single ? gateChecks(root, cardDir) : [];
+  const checks = (single ? gateChecks(root, cardDir) : []).map((c) => (waitsDesigner && c.state === 'failed' && DESIGNER_CHECKS.has(c.name) ? { ...c, state: PENDING_DESIGNER } : c));
   for (const c of checks) for (const n of c.notes ?? []) say(n);
-  for (const c of checks.filter((x) => x.state !== 'passed'))
+  for (const c of checks.filter((x) => x.state !== 'passed' && x.state !== PENDING_DESIGNER))
     actions.push(`${c.name} · ${c.state === 'failed' ? c.detail : `could not run: ${c.detail}`} · close: \`node ${TOOLS}/verify.mjs\` shows ${c.name} passed`);
   const flaky = results.flatMap((r) => (r.flaky ?? []).map((f) => ({ line: r.name, ...f })));
   if (flaky.length) writeFileSync(join(logsDir, 'flaky.md'), `# Passed with flaky\n\n${flaky.map((f) => `- ${f.line}: ${f.test} — failed ${f.failed}/${FLAKY_RUNS} in the re-run`).join('\n')}\n`);
@@ -1241,7 +1277,7 @@ const isScreenCard = (root, cardDir) => {
 export const gateChecks = (root, cardDir) => oneRound(() => [specsCheck(root, cardDir), ...cardChecks(cardDir, root), ...(isScreenCard(root, cardDir) && visualInstruments(root, readCard(cardDir)).probe ? screenChecks(probeRecords(root)) : [])]);
 
 // One line per check: `<name>: passed`, `<name>: failed: <why>` or `<name>: could not run: <why>`.
-const lineOf = (name, state, detail) => `${name}: ${state === 'passed' ? 'passed' : `${state}: ${detail}`}`;
+const lineOf = (name, state, detail) => `${name}: ${state === 'passed' || state === PENDING_DESIGNER ? state : `${state}: ${detail}`}`;
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   if (process.argv.includes('--help') || process.argv.includes('-h')) {
@@ -1253,7 +1289,9 @@ A \`node --test\` with no \`--test-timeout\` gets 30 s per test (KIT_TEST_TIMEOU
 \`timed out after 30 s\`. Other runners are left as they are (vitest and jest cut at 5 s; pytest only with pytest-timeout and \`--timeout=<s>\`).
 A failing test is re-run once, alone: if it fails again with the same error the line is failed and nothing more runs; otherwise it is
 re-run up to 3 times and, if it passes at least once, the line is \`passed with flaky k/3\`.
-Exit: 0 nothing to fix, 1 actions, 2 no card or no commands.`);
+With a visual card whose designer has left no round yet (rondas.md), \`rounds\`, \`docs\`, \`I-line\` and \`I-tokens\` print \`pending designer\`
+and do not count for the exit code; required.mjs and the close still ask for them.
+Exit: 0 nothing to fix, 1 actions, 2 no commands in the gate, 3 not run from the root of a repo with a card in progress.`);
     process.exit(0);
   }
   if (process.argv.includes('--fresh')) process.env.ONCE_FRESH = '1';
@@ -1261,7 +1299,7 @@ Exit: 0 nothing to fix, 1 actions, 2 no card or no commands.`);
   const r = await verify(process.cwd());
   if (r.error) {
     console.error(r.error);
-    process.exit(2);
+    process.exit(r.code ?? 2);
   }
   if (r.single) {
     // card.md: one line per check, and the fixed final line (endsWithLine) at the end.

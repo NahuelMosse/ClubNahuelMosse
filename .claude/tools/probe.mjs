@@ -8,7 +8,7 @@
 // contrast of a button —and each script's setup errors cost more than the judgment.
 import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, relative, resolve, isAbsolute } from 'node:path';
 import { wallOf, BotWall, productRefOf } from './bot-wall.mjs';
 
 // One entry per flag: how it is written, what it does, and whether it may be repeated.
@@ -20,7 +20,7 @@ export const FLAGS = [
   { use: '--contrast "<selector>[,<selector>…]"', note: 'per selector and step: text color, effective background, font size and weight, contrast ratio, AA yes or no' },
   { use: '--enter-skip "<selector>[,<selector>…]"', note: 'css selectors of the controls `enter-each` does not fail for (a control that does not submit on Enter by design)' },
   { use: '--url <app url>', note: 'probe another app than the one of APP_URL or .validation/app.json' },
-  { use: '--out <folder>', note: 'write there instead of .validation/probe' },
+  { use: '--out <folder>', note: 'write there instead of .validation/probe (relative to the repo or absolute; never the repo, a folder above it, or one with .git or specs)' },
   { use: '--quiet', note: 'print nothing' },
 ];
 export const USAGE = `usage: node app.mjs probe <steps.json> ${FLAGS.map((f) => `[${f.use}]${f.repeat ? '…' : ''}`).join(' ')}`;
@@ -48,7 +48,7 @@ export const EXAMPLE_STEPS = [
   { wait: 300 },
 ];
 export const DEFAULT_OUT = '.validation/probe';
-export const RECORD_FIELDS = 'width, height, step, action, url, error, activeElement (tag, id, role, name, aria), announcements (role=status/alert texts), scrollWidth and clientWidth, animations running, axe (null without --axe), watch (per --watch locator: t0, t500), contrast (per --contrast selector; a disabled element is `skipped: disabled`), enter (per `enter-each` step: control, submitted), markup (after a `type-markup`: elements found), statusContrast (always: the alerts, live regions, invalid fields and what their aria-describedby points to), design (always: font families and sizes in use, and the action controls with no transition or animation), reduced (the last step: the large or continuous movement left with prefers-reduced-motion)';
+export const RECORD_FIELDS = 'width, height, step, action, url, error, activeElement (tag, id, role, name, aria), announcements (role=status/alert texts), scrollWidth and clientWidth, animations running, axe (null without --axe), watch (per --watch locator: t0, t500), contrast (per --contrast selector; a disabled element is `skipped: disabled` unless it is busy: `aria-busy="true"` or a label ending in «…»), enter (per `enter-each` step: control, submitted), markup (after a `type-markup`: elements found), statusContrast (always: the alerts, live regions, invalid fields, what their aria-describedby points to and the busy buttons), design (always: font families and sizes in use, and the action controls with no transition or animation), reduced (the last step: the large or continuous movement left with prefers-reduced-motion)';
 
 const STEP_TIMEOUT_MS = 5000;
 const WATCH_DELAY_MS = 500;
@@ -138,7 +138,13 @@ const snapshotPage = () => {
     .flatMap((c) => [...c.querySelectorAll('svg, [role=progressbar], [class*=spin], [class*=loader]')])
     .filter((s) => { const r = s.getBoundingClientRect(); return r.width === 0 || r.height === 0 || getComputedStyle(s).visibility === 'hidden'; })
     .map(label);
-  return { activeElement: focus, announcements, scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, animations, lang: doc.getAttribute('lang') || '', text: (document.body?.innerText ?? '').slice(0, 600), busyNotTrue, hiddenSpinners };
+  // A spinner shown in a button that is neither busy nor disabled says "working" while nothing is.
+  const idleSpinners = [...document.querySelectorAll('button')]
+    .filter((b) => b.getAttribute('aria-busy') !== 'true' && !b.disabled && b.getAttribute('aria-disabled') !== 'true')
+    .flatMap((b) => [...b.querySelectorAll('[role=progressbar], [class*=spin], [class*=loader]')])
+    .filter((s) => { const r = s.getBoundingClientRect(); const st = getComputedStyle(s); return r.width > 0 && r.height > 0 && st.visibility !== 'hidden' && st.display !== 'none'; })
+    .map(label);
+  return { activeElement: focus, announcements, scrollWidth: doc.scrollWidth, clientWidth: doc.clientWidth, animations, lang: doc.getAttribute('lang') || '', text: (document.body?.innerText ?? '').slice(0, 600), busyNotTrue, hiddenSpinners, idleSpinners };
 };
 
 // Runs in the page: the colors, size and weight of the first element of each selector. The background is the
@@ -159,18 +165,20 @@ const measureContrast = ([selectors, withStatus]) => {
   const over = (top, under) => [0, 1, 2].map((i) => Math.round(top[i] * top[3] + under[i] * (1 - top[3])));
   const shows = (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && (e.textContent.trim() || e.value); };
   const nameOf = (e) => (e.id ? `#${e.id}` : `${e.tagName.toLowerCase()}${e.getAttribute('role') ? `[role=${e.getAttribute('role')}]` : ''}`);
+  const busy = (e) => e.matches('[aria-busy=true]') || !!e.closest('[aria-busy=true]') || /(…|\.\.\.)\s*$/.test(e.textContent || e.value || '');
   const entries = selectors.map((selector) => ({ selector, el: document.querySelector(selector) }));
   if (withStatus) {
     const found = new Set([...document.querySelectorAll('[role=alert],[aria-live],[aria-invalid=true]')]);
     for (const field of document.querySelectorAll('[aria-describedby]')) {
       for (const id of field.getAttribute('aria-describedby').split(/\s+/).filter(Boolean)) { const target = document.getElementById(id); if (target) found.add(target); }
     }
-    for (const el of found) if (shows(el)) entries.push({ selector: nameOf(el), el, auto: true });
+    for (const el of document.querySelectorAll('button,[role=button],input[type=submit]')) if (busy(el)) found.add(el);
+    for (const el of found) if (shows(el) && !entries.some((e) => e.el === el)) entries.push({ selector: nameOf(el), el, auto: true });
   }
   return entries.map(({ selector, el, auto }) => {
     if (!el) return { selector, found: false };
-    // WCAG exempts inactive controls.
-    if (el.matches(':disabled,[aria-disabled=true]') || el.closest('[aria-disabled=true]')) return { selector, found: true, auto, skipped: 'disabled' };
+    // WCAG exempts inactive controls; a control disabled while it works («Enviando…») still says something the person reads.
+    if ((el.matches(':disabled,[aria-disabled=true]') || el.closest('[aria-disabled=true]')) && !busy(el)) return { selector, found: true, auto, skipped: 'disabled' };
     const style = getComputedStyle(el);
     const layers = [];
     let approximate = false;
@@ -347,7 +355,13 @@ export const probe = async (argv, root = process.cwd()) => {
   const axePath = axe ? axeFile() : null;
   if (axe && !axePath) { console.error('could not run --axe: axe-core is not installed here nor at KIT_PLAYWRIGHT_ROOT, and AXE_CORE does not name an axe.min.js'); return 2; }
 
-  const out = outFlag ? join(root, outFlag) : join(root, DEFAULT_OUT);
+  const out = resolve(root, outFlag ?? DEFAULT_OUT);
+  // `--out` is emptied before writing: the repo root, a folder above it or one holding `.git` or `specs` is never a probe folder.
+  const rel = relative(out, resolve(root));
+  if (rel === '' || !rel.startsWith('..') && !isAbsolute(rel) || existsSync(join(out, '.git')) || existsSync(join(out, 'specs'))) {
+    console.error(`--out ${out} is the repo, a folder above it or one with .git or specs: it is emptied before writing; pick a folder of its own`);
+    return 2;
+  }
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
   const browser = await (pw.chromium ?? pw.default.chromium).launch();

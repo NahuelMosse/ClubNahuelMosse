@@ -11,7 +11,8 @@
 // closing.md carries `## Passed`, `## Failed`, `## Could not run`, `## Judge`, `## Assumptions`, `## Notes` (the `closing:` lines of the Log, when there are any), `## Needs a person` (the tests the Log declares replaced) and `Cost: …` between its begin
 // and end markers; a second run regenerates the block and touches nothing outside it. A closing.md written by hand (no block) is
 // left as it is. `--check` prints and writes nothing.
-// Exits 0 if every check passed (or was skipped), 1 otherwise, 2 with no card in progress.
+// `## Assumptions` lists the untested ASMs and one line «N of N tagged» for the rest; modules off for the same reason are one line.
+// Exits 0 if every check passed (or was skipped), 1 otherwise, 2 with no card in progress («No card in progress»).
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -192,10 +193,13 @@ const judgeSummary = (risk, acts) => {
   return [`risk ${risk.size} · ${risk.review} · lenses ${risk.lenses.join(', ') || 'none'} · ${acts.length} ACT: ${by('closed')} closed, ${by('declared')} declared, ${by('open')} open`, ...loose].join('\n');
 };
 
+// «modules a, b off by decision: <reason>»: the modules that share a reason go on one line.
+export const offLines = (offs) => [...Map.groupBy(offs, (o) => o.reason)].map(([reason, group]) => `module${group.length > 1 ? 's' : ''} ${group.map((o) => o.name).join(', ')} off by decision: ${reason}`);
+
 const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, grade, manifest, base, since }) => {
   const parts = [BEGIN, '## Passed', bullets(checks, 'passed'), '', '## Failed', bullets(checks, 'failed'), '', '## Could not run', bullets(checks, 'could not run'),
     '', '## Judge', judgeSummary(risk, acts), '', '## Assumptions',
-    asms.length ? asms.map((a) => `- ${a}${untagged.includes(a) ? ' · untested' : ' · tagged'}`).join('\n') : 'none'];
+    asms.length ? [...untagged.map((a) => `- ${a} · untested`), `${asms.length - untagged.length} of ${asms.length} tagged`].join('\n') : 'none'];
   const notes = (doc.split(/^## Log\b.*$/m)[1] ?? '').split('\n').filter((l) => /^\s*[-*]\s*L\d+.*closing:/.test(l))
     .map((l) => `- ${l.replace(/^\s*[-*]\s*/, '').replace(/closing:\s*/, '')}`);
   if (notes.length) parts.push('', '## Notes', ...notes);
@@ -213,7 +217,7 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
     ...kept.map(([file, why]) => `- structure kept on purpose (overdesign): ${file} — ${why}; confirm the problem asks for it`),
     ...unmutated.map(([file, why]) => `- left unmutated: ${file} — ${why}; confirm its tests are enough without mutation`),
     ...edited.map(([plus, minus, f]) => `- frozen test edited by the refactor (${refactor}): ${f} (+${plus} −${minus}); confirm no assertion was loosened: \`git diff ${base.slice(0, 9)}..HEAD -- ${f}\``));
-  const decisions = [...off].map(([name, o]) => `- module ${name} off by decision: ${o.reason}`);
+  const decisions = offLines([...off].map(([name, o]) => ({ name, reason: o.reason }))).map((l) => `- ${l}`);
   if (grade !== 'production') decisions.push(`- grade: ${grade} — ${manifest?.grade?.reason ?? ''}`);
   if (decisions.length) parts.push('', '## Decisions of the repo', ...decisions);
   const cardPath = relativeTo(root, join(cardDir, 'card.md'));
@@ -227,7 +231,7 @@ const blockOf = (root, cardDir, { doc, checks, acts, risk, asms, untagged, off, 
     const at = parts.indexOf('## Passed') + 1;
     if (parts[at] === 'none') parts.splice(at, 1, ...declared); else parts.splice(at + 1, 0, ...declared);
   }
-  if (/^Cost: could not run/.test(cost)) notRun.push(`- cost — ${cost.replace(/^Cost: could not run:\s*/, '')}`);
+  if (/^Cost: could not run/.test(cost)) notRun.push('- cost — see the Cost line');
   if (notRun.length) {
     const at = parts.indexOf('## Could not run') + 1;
     if (parts[at] === 'none') parts.splice(at, 1, ...notRun); else parts.splice(at + 1, 0, ...notRun);
@@ -263,7 +267,7 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(2);
   }
   for (const c of result.checks) console.log(`${c.n} · ${c.label} · ${c.state}${c.detail ? ` — ${c.detail}` : ''}`);
-  for (const o of result.off) console.log(`module ${o.name} off by decision: ${o.reason}`);
+  for (const l of offLines(result.off)) console.log(l);
   for (const f of new Set(result.wrote)) console.log(`${f}: line added`);
   const closing = relativeTo(process.cwd(), join(result.cardDir, 'closing.md'));
   if (result.closing === 'kept') console.log(`${closing} exists and has no close.mjs block: not overwritten.`);

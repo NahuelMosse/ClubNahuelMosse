@@ -4,7 +4,7 @@ HTTP services and stored data. The base method does not name HTTP; this profile 
 
 ## What it brings
 - Modules: `api`, `data`, `observability`, `infra`; `security-l2` stays opt-in (decided by R10).
-- Tools: `attack.mjs`, `migrations`, `migrate-upgrade`.
+- Tools: `attack.mjs`, `migrations`.
 - `reference/http-defaults.md`: the default answer to each question an HTTP card leaves open, assumed as an `ASM` with its test.
 
 ## Gate lines it uses

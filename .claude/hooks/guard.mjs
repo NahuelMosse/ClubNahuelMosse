@@ -78,7 +78,7 @@ try {
   if (/(^|\/)specs\/[^/]+\/card\.md$/.test(path) && existsSync(path)) {
     const current = readFileSync(path, 'utf8');
     const why = logViolation(current, applyEdit(current, data));
-    if (why) reject(`card.md: ${why}. The requirement is frozen; a later doubt or an answer is a new line at the end of \`## Log\`.`);
+    if (why) reject(`card.md: ${why}. The requirement is frozen; a later doubt or an answer is a new line at the end of \`## Log\`: \`node .claude/tools/log.mjs specs/<card> "<line>"\`.`);
   }
   // risk.json is the classification that decides the size, the review and the lenses: written once by risk.mjs.
   if (/(^|\/)specs\/[^/]+\/risk\.json$/.test(path) && existsSync(path)) {
@@ -102,9 +102,8 @@ try {
       const mine = own && new RegExp(`@${own}-S\\d+(?!\\d)`).test(head.stdout);
       reject(
         `${relativeTo(root, path)} has tests tagged ${mine ? 'by this card' : 'by another card'} and a commit already holds them: frozen. ` +
-        'Whoever implements does not edit them. If one is wrong, say so in the `## Log` of card.md (a new line) and in judge.md or your report: a person decides; ' +
-        'a test can be replaced: a new file with the same tag and a `replaces:` line in the Log; ' +
-        'a new behavior is a new test with its own tag. A mechanical change that has to touch many of them (a type or a path that changes everywhere) ' +
+        'Whoever implements does not edit them. If one is wrong, replace it: a new file with the same tag, and ' +
+        '`node .claude/tools/log.mjs specs/<card> "replaces: <test file> · <why>"`. A mechanical change that has to touch many of them ' +
         'declares `refactor-tests: <why>` in ## Gate: they are edited in place and the close lists each one for review.'
       );
     }
@@ -126,7 +125,7 @@ try {
           `${relativeTo(root, path)} configures what gets verified and already existed before the card: ` +
           `lines are only added to it. This change removes or modifies ${lost.length}: “${lost[0]}”` +
           `${lost.length > 1 ? '…' : ''}. If a rule flags something, the code gets fixed. If the ` +
-          'rule is wrong, add a line to the `## Log` of card.md and it goes to the PR; the rule stays.'
+          'rule is wrong, log it and it goes to the PR; the rule stays: `node .claude/tools/log.mjs specs/<card> "rule <name> is wrong: <why>"`.'
         );
       }
     }

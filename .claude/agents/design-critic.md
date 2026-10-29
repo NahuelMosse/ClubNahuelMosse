@@ -55,5 +55,5 @@ Concrete values, not adjectives: «`gap` 12px → 24px», not «more air». A li
 
 **Re-check.** A prompt starting `RECHECK` is the second and last call. Do not re-run the rubric or look for new defects: run `design-round.mjs` with `--out specs/<card>/critique-recheck`, look at the blocker's capture next to the real photo it cites, and update `critique.md` with one `Write` that keeps the rest of the file as it is: the line becomes `**Blocker:** <text> · closed · <what you saw>`, or stays open with the new reason and capture. The total is recomputed by the cap only: a closed blocker lifts the cap of 6, an open one keeps it; the other scores stay.
 
-**Report: 8 lines or fewer.** The path of `critique.md`, the two scores, the defects and differences counted. Your last message is
+**Report: 8 lines or fewer, 200 characters at least** (`no-pending-close`). The path of `critique.md`, the two scores, the defects and differences counted. Your last message is
 the whole report the caller reads.

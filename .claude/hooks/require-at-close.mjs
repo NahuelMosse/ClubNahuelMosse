@@ -31,11 +31,7 @@ try {
     block(
       `Not closing yet: ${lacking.length} thing${lacking.length > 1 ? 's are' : ' is'} missing on the ` +
       `code being delivered —${lacking.slice(0, 8).join('; ')}${lacking.length > 8 ? '…' : ''}—. ` +
-      'What has to run is run with `node .claude/tools/once.mjs <name> -- <command>`, ' +
-      'naming the file in the command, and it has to pass; a mutant that does not change ' +
-      'behavior is declared in specs/<card>/equivalents.md and passed with `--equivalents`. ' +
-      'An OUT that points at what the card created or modified is fixed in the card, or the ' +
-      "card's change to that function is undone. `node .claude/tools/required.mjs` shows the list."
+      'Run `node .claude/tools/required.mjs`: it lists each one with the command that resolves it.'
     );
   }
 } catch (e) {

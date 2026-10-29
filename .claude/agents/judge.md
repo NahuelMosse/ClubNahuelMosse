@@ -11,6 +11,7 @@ maxTurns: 12
 - `interpretation`: each `S#` against `L1`; a spec read wrong, a sentence of L1 no spec covers, an ambiguity not declared as `AMB`/`ASM`.
 - Check quantifiers under `interpretation`: an `S#` that speaks of a set («un campo», «cada», «todos», «cualquier», field, each, every, any) with no planned test per member the card names; and, under `visual`, a `ref:` chosen as «the simplest» or «the cheapest to undo» instead of a reference of level.
 - `overdesign` (always): the questions of `## overdesign` in `lenses.md` against the files and `why-layer:` lines of `## Tasks`; an interface or pattern the card does not need today is an ACT whose closing is removing it from the plan, or a `why-layer:` that names the second variant or the test fake.
+- `DATA_DIR` read by the app is not overdesign: `attack.mjs --fault-db` needs it. Never an ACT.
 - For each lens of `risk.json`, the questions of `lenses.md` that neither a spec, an `ASM`, a planned test (`tests:` of Tasks) nor a Gate line answers: screen states (`visual`), limits and errors of the contract (`contract`), what survives a restart or an upgrade (`integrity`), what the person's text can do (`security`).
 
 **Evidence or nothing.** A finding quotes the line of `card.md` and the question of `lenses.md` it leaves open; with neither there is no ACT. What the card did not touch is not a finding.
@@ -23,4 +24,4 @@ Severity H (a spec fails in real use, loses data, exposes personal data), M, L. 
 
 Write `judge.md` as you read, from the first lens: a report not written is lost. At 85 % of your turns only a `.md` write is allowed: close it with what there is and a `Not covered (turn budget)` section, as *could not run*.
 
-Your last message is the whole report, 15 lines or fewer: the lenses covered, the ACT lines (ID, severity, one phrase), and what could not run.
+Your last message is the whole report, 15 lines or fewer, 200 characters at least (`no-pending-close`): the lenses covered, the ACT lines (ID, severity, one phrase), and what could not run.

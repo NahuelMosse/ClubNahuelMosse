@@ -202,8 +202,7 @@ export const designRoundChecks = (cardDir, root) => {
   if (!last.round.copy) out.push(couldNot('copy', `${last.name}/round.json has no copy`));
   else if (!copyLint) out.push(couldNot('copy', 'copy-lint.mjs is not installed (web profile off)'));
   else {
-    const quoted = [...String(doc).matchAll(/«([^»\n]{1,80})»|“([^”\n]{1,80})”|"([^"\n]{1,80})"/g)].map((m) => m[1] ?? m[2] ?? m[3]);
-    const found = copyLint.lintCopy(last.round.copy, quoted);
+    const found = copyLint.lintCopy(last.round.copy, copyLint.quotedTexts(doc));
     out.push(found.length ? failed('copy', found.slice(0, 5).map((c) => `${c.rule}: ${c.detail}`).join('; ')) : ok('copy', 'copy lint: 0 findings'));
   }
   return out;
@@ -273,6 +272,39 @@ export const layerImportProblems = (file, text) => {
   return out;
 };
 
+// Text between the bracket that opens at `from` and its pair: a body or an argument list, without parsing the language.
+const balanced = (text, from) => {
+  let depth = 0;
+  for (let i = from; i < text.length; i++) {
+    if ('({['.includes(text[i])) depth++;
+    else if (')}]'.includes(text[i]) && --depth === 0) return text.slice(from + 1, i);
+  }
+  return text.slice(from + 1);
+};
+const LOGS = /\bconsole\.|\blogger\b|\blog(?:ger)?\.\w+\(|\blog\(|\bnext\(\s*(?:e|err|error)\b|\bthrow\b/;
+// Failures a screen or a server hides: a catch that answers 500 and logs nothing leaves no trace to debug, a `fetch` with no `signal`
+// leaves "Sending…" up for good when the server hangs, a form of text fields with no `method="post"` puts what was typed in the URL.
+export const sourceProblems = (file, role, raw) => {
+  const text = blankComments(raw);
+  const out = [];
+  const lineOf = (i) => text.slice(0, i).split('\n').length;
+  for (const m of text.matchAll(/\bcatch\s*(?:\([^)]*\))?\s*\{/g)) {
+    const body = balanced(text, m.index + m[0].length - 1);
+    if (/\b500\b|\bstatus\s*\(\s*500|\bsendStatus\s*\(\s*500/.test(body) && !LOGS.test(body)) out.push(`${file}:${lineOf(m.index)} catch answers 500 and logs nothing · console.error(err) before the response`);
+  }
+  // File-wide: the options may be built outside the call (`fetch(url, opts)` with `opts.signal`).
+  if (role === 'presentation' && !/\bsignal\b|\bAbortSignal\b|\bAbortController\b/.test(text)) {
+    const m = /\bfetch\s*\(/.exec(text);
+    if (m) out.push(`${file}:${lineOf(m.index)} fetch with no signal in the file · AbortSignal.timeout(ms) so a hung server ends the wait`);
+  }
+  for (const m of text.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/gi)) {
+    const typed = /<input\b(?![^>]*type\s*=\s*["']?(?:hidden|submit|button|checkbox|radio|file)\b)[^>]*>|<textarea\b/i.test(m[2]);
+    const method = m[1].match(/\bmethod\s*=\s*(?:["']([^"']*)["']|\{)/i);
+    if (typed && (!method || (method[1] !== undefined && method[1].toLowerCase() !== 'post'))) out.push(`${file}:${lineOf(m.index)} form with text fields and no method="post" · a GET puts what was typed in the URL`);
+  }
+  return out;
+};
+
 export const layersCheck = (root, cardDir) => {
   const roles = rolesOf(readCard(cardDir) ?? '');
   if (!roles.size) return couldNot('layers', 'no file roles in ## Tasks');
@@ -284,7 +316,7 @@ export const layersCheck = (root, cardDir) => {
     let raw;
     try { raw = readFileSync(join(root, file), 'utf8'); } catch { continue; }
     if (!existedAt(root, ownBase(root, base), file) && !originOf(root, base, file)) { const p = misplacedLayer(file, role); if (p) found.push(p); }
-    found.push(...layerImportProblems(file, raw));
+    found.push(...layerImportProblems(file, raw), ...sourceProblems(file, role, raw));
     if (role === 'data') continue;
     const text = blankComments(raw);
     const lines = text.split('\n');
@@ -578,13 +610,14 @@ export const screenChecks = (records) => {
 };
 
 // A busy state a screen reader hears and a person sees: `aria-busy` is "true" (an empty value reads as not busy), and the
-// spinner inside a busy or disabled control takes a box. Probes older than these fields add no line.
+// spinner inside a busy or disabled control takes a box, and no spinner shows in a button that is neither. Probes older than these fields add no line.
 const busyChecks = (records) => {
-  const seen = records.filter((r) => r.busyNotTrue || r.hiddenSpinners);
+  const seen = records.filter((r) => r.busyNotTrue || r.hiddenSpinners || r.idleSpinners);
   if (!seen.length) return [];
   const bad = seen.flatMap((r) => [
     ...(r.busyNotTrue ?? []).map((e) => `${r.file} ${e} has aria-busy that is not "true"`),
     ...(r.hiddenSpinners ?? []).map((e) => `${r.file} ${e} sits in a busy control with no box (hidden or display: none)`),
+    ...(r.idleSpinners ?? []).map((e) => `${r.file} ${e} shows a spinner in a button that is neither aria-busy nor disabled`),
   ]);
   return [bad.length ? failed('busy', [...new Set(bad)].slice(0, 5).join('; ')) : ok('busy', 'every busy state is announced and its indicator seen')];
 };
