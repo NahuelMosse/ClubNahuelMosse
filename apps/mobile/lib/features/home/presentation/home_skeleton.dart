@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../common/skeleton.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
+import 'home_sports_section.dart';
 import 'home_title.dart';
 
 /// El Home mientras llega: la tarjeta de la próxima reserva, los deportes y los accesos,
@@ -25,20 +26,7 @@ class HomeSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _Booking(),
-          Padding(
-            padding: const EdgeInsets.only(top: Spacing.s32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: Spacing.s24),
-                  child: HomeTitle(AppLocalizations.of(context).homeSports),
-                ),
-                const SizedBox(height: Spacing.s12),
-                const _Tiles(),
-              ],
-            ),
-          ),
+          const HomeSportsSection(child: _Tiles()),
           const _Shortcuts(),
         ],
       ),

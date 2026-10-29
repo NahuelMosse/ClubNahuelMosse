@@ -6,10 +6,10 @@ import '../../../common/bottom_bar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/presentation/load_failure.dart';
+import '../../session/presentation/request_failure.dart';
 import '../../session/presentation/session.dart';
 import '../../venues/domain/venue.dart';
 import '../../venues/presentation/venues.dart';
-import '../data/api_failures.dart';
 import 'admin_card_skeleton.dart';
 import 'admin_listing.dart';
 import 'admin_listing_header.dart';
@@ -54,25 +54,19 @@ class _AdminVenuesScreenState extends State<AdminVenuesScreen> {
 
   Future<void> _load() async {
     setState(() => _failed = false);
-    Object? error;
-    var expired = false;
-    try {
+    final failure = await captureRequestFailure(() async {
       final venues = await widget.venues.repository.active();
       if (mounted) setState(() => _venues = venues);
-      return;
-    } on SessionExpired {
-      expired = true;
-    } on FalloDeRed catch (e) {
-      error = e;
-    }
+    });
+    if (failure.expired == false && failure.error == null) return;
     if (!mounted) return;
     // Sin datos que mostrar, la pantalla deja de esperar antes del aviso.
     setState(() => _failed = true);
     await avisarFalloDeCarga(
       context,
       session: widget.session,
-      expired: expired,
-      error: error,
+      expired: failure.expired,
+      error: failure.error,
       reintentar: _load,
     );
   }

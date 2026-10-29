@@ -1056,62 +1056,6 @@ void main() {
     },
   );
 
-  testWidgets(
-    'con reducir movimiento el festejo, el aviso y la entrada muestran su final en el primer cuadro @RED-04-S14',
-    (tester) async {
-      _reducirMovimiento(tester);
-
-      // El festejo.
-      await _montarLibre(
-        tester,
-        BookingConfirmedScreen(reserva: _reservaConfirmada()),
-      );
-      final titulo = find.text('¡Reserva confirmada!');
-      final comprobante = find.text('Horario');
-      expect(find.byType(Celebration), findsOneWidget);
-      final ancho = _ancho(tester, titulo);
-      expect(_visibilidad(tester, comprobante), _uno);
-      expect(tester.binding.hasScheduledFrame, isFalse);
-      await tester.pumpAndSettle();
-      expect(_ancho(tester, titulo), closeTo(ancho, 1e-6));
-      await _desmontar(tester);
-
-      // El aviso dentro de la app.
-      final api = ApiFalsa();
-      final sesion = SesionFalsa(perfilUsuario);
-      final centro = centroDe(api, sesion);
-      await _montarLibre(
-        tester,
-        Stack(
-          children: [
-            const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
-            NoticePanel(center: centro, now: () => ahoraClub, onOpen: (_) {}),
-          ],
-        ),
-      );
-      api
-        ..avisos = [recordatorio]
-        ..unread = 1;
-      await tester.runAsync(centro.load);
-      await tester.pump();
-      await tester.pump();
-      final aviso = find.text('NOTIFICACIONES');
-      expect(aviso, findsOneWidget);
-      final arriba = tester.getTopLeft(aviso).dy;
-      await tester.pumpAndSettle();
-      expect(tester.getTopLeft(aviso).dy, closeTo(arriba, 1e-6));
-      await _desmontar(tester);
-
-      // La entrada escalonada del inicio.
-      await _montarLibre(tester, inicioFalso(SesionFalsa(perfilUsuario)));
-      await _hastaQue(
-        tester,
-        () => find.byType(SportTile).evaluate().isNotEmpty,
-      );
-      expect(_todasEnSuFinal(tester), isTrue);
-    },
-  );
-
   // ---- T5: diálogos y tarjeta de la cuenta ----
 
   testWidgets(

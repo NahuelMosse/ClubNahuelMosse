@@ -1,3 +1,4 @@
+// kit-boundary: the repo keeps the pieces shared by every feature in common/; the app language is one of them.
 import 'dart:ui';
 
 import 'package:intl/intl.dart';

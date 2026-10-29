@@ -2,13 +2,13 @@
 // kit-boundary: uses the domain types of another feature directly; features export no public index yet.
 import 'package:flutter/material.dart';
 
-import '../../../common/network_failure.dart';
 import '../../../common/password_form.dart';
 import '../../../common/top_bar.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
+import '../../session/presentation/request_failure.dart';
 import '../../session/presentation/session.dart';
 import '../domain/registration_rules.dart';
 import 'password_rules.dart';
@@ -88,40 +88,35 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     if (_submitting || !_complete) return;
     FocusScope.of(context).unfocus();
     setState(() => _submitting = true);
-    Object? failure;
-    var expired = false;
-    try {
-      await widget.session.changePassword(
-        _valueOf(_Field.current),
-        _valueOf(_Field.newPassword),
-      );
-      if (mounted) setState(() => _done = true);
-    } on PasswordRejected catch (e) {
-      if (mounted) {
-        setState(() {
-          for (final MapEntry(:key, :value) in e.errors.entries) {
-            final field = switch (key) {
-              'actual' => _Field.current,
-              'nueva' => _Field.newPassword,
-              _ => null,
-            };
-            if (field != null) _serverErrors[field] = value;
-          }
-        });
+    final outcome = await captureRequestFailure(() async {
+      try {
+        await widget.session.changePassword(
+          _valueOf(_Field.current),
+          _valueOf(_Field.newPassword),
+        );
+        if (mounted) setState(() => _done = true);
+      } on PasswordRejected catch (e) {
+        if (mounted) {
+          setState(() {
+            for (final MapEntry(:key, :value) in e.errors.entries) {
+              final field = switch (key) {
+                'actual' => _Field.current,
+                'nueva' => _Field.newPassword,
+                _ => null,
+              };
+              if (field != null) _serverErrors[field] = value;
+            }
+          });
+        }
       }
-    } on SessionExpired {
-      expired = true;
-    } on FalloDeRed catch (e) {
-      failure = e;
-    } finally {
-      if (mounted) setState(() => _submitting = false);
-    }
+    });
+    if (mounted) setState(() => _submitting = false);
     if (!mounted) return;
     await avisarFalloDeEnvio(
       context,
       session: widget.session,
-      expired: expired,
-      error: failure,
+      expired: outcome.expired,
+      error: outcome.error,
       reintentar: _save,
     );
   }
