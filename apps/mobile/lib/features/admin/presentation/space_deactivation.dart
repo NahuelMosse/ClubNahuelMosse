@@ -21,23 +21,23 @@ Future<void> deactivateSpace(
 }) {
   final l10n = AppLocalizations.of(context);
   return deactivate(
-  context,
-  confirm: () => confirmSpaceDeactivation(context, space.name),
-  request: () async {
-    try {
-      await spaces.deactivate(space.id);
-      return DeactivationResult.done;
-    } on SpaceUnavailable {
-      return DeactivationResult.gone;
-    } on SpaceHasBookings {
-      return DeactivationResult.withBookings;
-    }
-  },
-  showWithBookings: () => showSpaceWithBookings(context),
-  success: l10n.adminSpaceDeactivatedDone,
-  notifyChange: spaces.notifyChange,
-  session: session,
-  submitting: submitting,
-  returnTo: returnToList ? '/admin/espacios' : null,
+    context,
+    confirm: () => confirmSpaceDeactivation(context, space.name),
+    request: () async {
+      try {
+        await spaces.deactivate(space.id);
+        return DeactivationResult.done;
+      } on SpaceUnavailable {
+        return DeactivationResult.gone;
+      } on SpaceHasBookings {
+        return DeactivationResult.withBookings;
+      }
+    },
+    showWithBookings: () => showSpaceWithBookings(context),
+    success: l10n.adminSpaceDeactivatedDone,
+    notifyChange: spaces.notifyChange,
+    session: session,
+    submitting: submitting,
+    returnTo: returnToList ? '/admin/espacios' : null,
   );
 }

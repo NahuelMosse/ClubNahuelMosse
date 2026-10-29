@@ -1,5 +1,5 @@
-import 'dart:ui';
-
+import 'package:clubnahuelmosse/api/api_client.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'soporte/admin.dart';
@@ -14,10 +14,20 @@ const _bookingJson =
     ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
     ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
     ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-    ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
+    ' "cancelada_por_nombre": null, "espacio_de_baja": false, "anulable": true}';
 
 void main() {
   setUpAll(cargarFuentes);
+
+  // A fresh tree per screen: pumping the same App keeps its router and its forms.
+  Future<void> mount(
+    WidgetTester tester, {
+    required ApiClient api,
+    String inicio = '/admin/sedes',
+  }) async {
+    await tester.pumpWidget(const SizedBox());
+    await montarAdmin(tester, api: api, inicio: inicio);
+  }
 
   testWidgets(
     'the admin panel, its lists and its forms show English @ENG-19-S1',
@@ -26,7 +36,7 @@ void main() {
       addTearDown(tester.platformDispatcher.clearLocalesTestValue);
       final semantics = tester.ensureSemantics();
 
-      await montarAdmin(
+      await mount(
         tester,
         inicio: '/admin',
         api: apiRutas({
@@ -46,11 +56,9 @@ void main() {
       expect(find.text('VOID BOOKING'), findsOneWidget);
       expect(find.text('Activas (1)'), findsNothing);
 
-      await montarAdmin(
+      await mount(
         tester,
-        api: apiRutas({
-          'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
-        }),
+        api: apiRutas({'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}')}),
       );
       expect(find.text('Venues'), findsOneWidget);
       expect(find.text('ADD VENUE'), findsOneWidget);
@@ -58,7 +66,7 @@ void main() {
       expect(find.bySemanticsLabel('Edit venue Sede Morón'), findsOneWidget);
       expect(find.text('AGREGAR SEDE'), findsNothing);
 
-      await montarAdmin(
+      await mount(
         tester,
         inicio: '/admin/espacios',
         api: apiRutas(rutasDeEspacios()),
@@ -68,7 +76,7 @@ void main() {
       expect(find.textContaining('1 ACTIVE SPACE'), findsOneWidget);
       expect(find.text('ALTA ESPACIO'), findsNothing);
 
-      await montarAdmin(
+      await mount(
         tester,
         inicio: '/admin/sedes/nueva',
         api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
@@ -81,7 +89,7 @@ void main() {
       expect(find.text('SAVE VENUE'), findsOneWidget);
       expect(find.text('GUARDAR SEDE'), findsNothing);
 
-      await montarAdmin(
+      await mount(
         tester,
         inicio: '/admin/espacios/nuevo',
         api: apiRutas(rutasDeEspacios()),

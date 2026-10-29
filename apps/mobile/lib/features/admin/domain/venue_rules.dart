@@ -25,10 +25,7 @@ VenueProblem? venueAddressProblem(String text) {
 VenueProblem? opensAtProblem(int? opensAt) =>
     opensAt == null ? VenueProblem.opensAtRequired : null;
 
-VenueProblem? closesAtProblem({
-  required int? closesAt,
-  required int? opensAt,
-}) {
+VenueProblem? closesAtProblem({required int? closesAt, required int? opensAt}) {
   if (closesAt == null) return VenueProblem.closesAtRequired;
   // Closing at 00:00 means closing at midnight.
   if (opensAt != null && closesAt != 0 && closesAt <= opensAt) {

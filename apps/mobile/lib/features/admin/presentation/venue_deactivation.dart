@@ -21,26 +21,26 @@ Future<void> deactivateVenue(
 }) {
   final l10n = AppLocalizations.of(context);
   return deactivate(
-  context,
-  confirm: () => confirmVenueDeactivation(
     context,
-    l10n.adminDeactivateVenueText(venue.name, venue.address),
-  ),
-  request: () async {
-    try {
-      await venues.deactivate(venue.id);
-      return DeactivationResult.done;
-    } on VenueUnavailable {
-      return DeactivationResult.gone;
-    } on VenueHasBookings {
-      return DeactivationResult.withBookings;
-    }
-  },
-  showWithBookings: () => showVenueWithBookings(context),
-  success: l10n.adminVenueDeactivated,
-  notifyChange: venues.notifyChange,
-  session: session,
-  submitting: submitting,
-  returnTo: returnToList ? '/admin/sedes' : null,
+    confirm: () => confirmVenueDeactivation(
+      context,
+      l10n.adminDeactivateVenueText(venue.name, venue.address),
+    ),
+    request: () async {
+      try {
+        await venues.deactivate(venue.id);
+        return DeactivationResult.done;
+      } on VenueUnavailable {
+        return DeactivationResult.gone;
+      } on VenueHasBookings {
+        return DeactivationResult.withBookings;
+      }
+    },
+    showWithBookings: () => showVenueWithBookings(context),
+    success: l10n.adminVenueDeactivated,
+    notifyChange: venues.notifyChange,
+    session: session,
+    submitting: submitting,
+    returnTo: returnToList ? '/admin/sedes' : null,
   );
 }

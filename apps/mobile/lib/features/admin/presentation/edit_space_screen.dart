@@ -132,9 +132,7 @@ class _EditSpaceScreenState extends State<EditSpaceScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLocalizations.of(context).adminChangesSaved),
-        ),
+        SnackBar(content: Text(AppLocalizations.of(context).adminChangesSaved)),
       );
       context.go('/admin/espacios');
       return;
