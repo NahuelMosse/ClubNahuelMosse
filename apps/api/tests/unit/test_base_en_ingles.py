@@ -66,7 +66,14 @@ def _castellano() -> set[str]:
     glosario = {
         p for p in _traducciones(GLOSARIO.read_text(encoding="utf-8")) if re.fullmatch(r"[a-z]+", p)
     }
-    return (glosario | EXTRA_CASTELLANO) - INGLES
+    # Una palabra que el glosario da como traducción ya es inglés, aunque otra fila la liste como origen.
+    traducidas = {
+        w
+        for destinos in _traducciones(GLOSARIO.read_text(encoding="utf-8")).values()
+        for d in destinos
+        for w in re.findall(r"[a-z]+", d)
+    }
+    return (glosario | EXTRA_CASTELLANO) - INGLES - traducidas
 
 
 def _palabras(nombre: str) -> list[str]:

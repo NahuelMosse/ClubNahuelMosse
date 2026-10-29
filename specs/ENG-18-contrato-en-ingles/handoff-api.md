@@ -1,20 +1,16 @@
-# Handoff ENG-18 (builder T1/T2/T5, API side)
+# Handoff ENG-18 (builder T1/T2/T5, API side), second round
 
 ## Done (committed)
-- Production in apps/api/app in English (`platform` key fixed); apps/api/openapi.json regenerated (34 operations).
-- T5 docs: apps/api/README.md, arquitectura.md, mapa-del-codigo.md (API tables only), system-design.md, glosario-ingles.md (additions to «Campos JSON» and «Rutas»). go_router screen routes untouched (OUT L3).
-- T2 partial: tests/integracion and tests/escenarios translated with `python D:/Temp/w/herramientas/eng18-translate-tests.py <files>` (token based; idempotent; also translates `?when=historial` query values). Left untranslated on purpose: meta tests (en_ingles, english_schema, glosario, sql_in_english, codigo_legible, arquitectura, documentacion, migrations, over_english, restricciones) and all tests/unit (Python kwargs there; fix by hand).
-- Last full run of integracion+escenarios (before the final translator pass, which also covered test_api_limpia_*, test_uuid_y_auditoria, test_repositorios_propios*, test_datos*): 48 failed, 360 passed, 2 skipped, 6 errors in 50 min (.validation/s2.log).
+- Production in apps/api/app in English; apps/api/openapi.json regenerated. `app/e2e_support.py outbox` keeps the Python name `recipient` with `Query(alias="to")` (main's signature); `notifications/use_cases.py` line 66 wrapped (E501).
+- T5 docs: README, arquitectura.md, mapa-del-codigo.md, system-design.md, glosario-ingles.md.
+- tests/integracion and tests/escenarios translated (`python D:/Temp/w/herramientas/eng18-translate-tests.py <files>`); `test_seguridad_api.py` parametrize argname fixed (collection error gone).
+- tests/unit hand-translated: 22 files by the translator plus fixes by hand (parametrize argnames, `_CAMPOS` maps, role `user`, push `kind`/`booking_id`, outbox keys). `test_base_en_ingles._castellano` now subtracts the words the glossary gives as translations (fixes the 5 "names in English" meta tests). `test_api_en_ingles_contrato_actual.contrato_distinto_del_de_main` now compares through `contract_renames.comparable` (uncommitted last edit: see below).
+- Last unit run (before the last two edits): 24 failed, 360 passed (tests/unit, ~1 min: `sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/unit --tb=short -rf`). After the edits the names-in-English tests pass.
 
-## Left (all: could not run)
-0. FIRST: apps/api/tests/escenarios/test_seguridad_api.py line 243 has `parametrize(("desde", "hours"), ...)` and the function arg is `horas`: change the argname back to `"horas"` (collection error otherwise).
-1. Rerun the suite by files (it takes ~50 min whole; run the failing files first): remaining failures by file: test_recuperacion_api (6), test_perfil_api (4), test_contract_over_english_schema (4), test_suite_confiable (3), test_espacios_api (2), test_requisitos_no_funcionales (2), test_cancelacion_forzosa (2), and one each in historial, reservas, anular_reserva, sin_sobreingenieria, api_limpia_*, render_rehearsal, contrato_publicado, confirmacion_cancelacion, english_schema, migrations_folder (check if it is mine), the README/doc tests (some are in the gate's --deselect list).
-2. tests/unit with Spanish contract keys/values: hand edits (use-case error keys, `activa`, `usuario`).
-3. `test_contract_in_english.py::test_every_hand_built_409_body...` is wrong (same admin, same data repeats idempotently as 201): replace in a new file, same tag, second post with `covered: True`, plus Log `replaces:` line.
-4. `test_every_operation_id_is_fastapis_default...`: the routes list is empty (check fixture / sub-app); replace if the test is wrong.
-5. Replace the ENG-17-ASM-01 tests (test_contract_over_english_schema.py, test_contract_values_over_english_schema.py; L5) by new files + `replaces:` Log lines; snapshots tests/unit/contrato_*_main.json compare through `contract_renames.comparable`.
-6. Lint: `sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh`.
-7. Log lines per task T1, T2, T5 with `node .claude/tools/log.mjs` (include the glossary additions).
-
-## Not covered (turn budget)
-Items 0 to 7: could not run.
+## Not covered (turn budget): all *could not run*
+1. tests/unit failing, contract-vs-main meta tests: test_api_en_ingles_contrato_actual, test_arquitectura_funcionalidades_actual (3 operations still differ after `comparable`: use `D:/Temp/w/herramientas/eng18-diff.py`, run from apps/api with the main repo venv python and PG_PUERTO=8701, to print the diff), test_modulo_notificaciones_en_ingles (contract + push, KeyError '/dispositivos'), test_modulo_reservas_en_ingles (contract), test_modulos_cuenta_en_ingles (2: Spanish JSON keys list, parameters/security), test_modulos_cuenta_en_ingles_actual (contract, KeyError 'POST /registro'), test_modulos_espacios_en_ingles (KeyError '/espacios/catalogo'). Fix: translate main's side with `renames.comparable(..., renamed=True)` / `renames.PATHS`.
+2. tests/unit failing, docs/mobile-path ones (some are in the gate's --deselect list): test_documentacion_del_modelo (2), test_integraciones_documentadas, test_readme_conciso, test_rutas_documentadas, test_sin_supresiones and test_capas_funcionalidades (both flag `# type: ignore[assignment]` at tests/integracion/test_contract_in_english.py:315, in the wrong operationId test: replace that test).
+3. Replacement tests (new files, same title and tag, plus `replaces:` Log lines via `node .claude/tools/log.mjs`): `test_every_hand_built_409_body...` (second POST /spaces with `covered: True` so it is a 409, not an idempotent 201); `test_every_operation_id_is_fastapis_default...` (use `from app.main import create_app`; `api.app.routes` is empty; no `type: ignore`); the ENG-17-ASM-01 tests of test_contract_over_english_schema.py and test_contract_values_over_english_schema.py (L5).
+4. Integracion + escenarios failures from the last run (.validation/s2.log): test_recuperacion_api (6), test_perfil_api (4), test_contract_over_english_schema (4), test_suite_confiable (3), test_espacios_api (2), test_requisitos_no_funcionales (2), test_cancelacion_forzosa (2), one each in historial, reservas, anular_reserva, render_rehearsal, contrato_publicado, confirmacion_cancelacion, english_schema, migrations_folder. Rerun by file first.
+5. The whole `suite` line of the card's Gate (about 50 min, background + wait.mjs) and `sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh`: could not run.
+6. Log lines for T1, T2, T5 (include the glossary additions: «Claves de error y de cuerpo», «Soporte de pruebas (`/_testing`)», `recordatorio_cinco`): not written.
