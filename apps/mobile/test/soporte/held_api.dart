@@ -53,14 +53,14 @@ List<Rect> skeletonRects(WidgetTester tester, {Finder? within}) {
       ? find.byType(Skeleton)
       : find.descendant(of: within, matching: find.byType(Skeleton));
   // By render box, not by widget: a const block is the same instance in every place.
-  final rects = finder.evaluate().map((e) {
-    final box = e.renderObject! as RenderBox;
-    return box.localToGlobal(Offset.zero) & box.size;
-  }).toList()
-    ..sort((a, b) {
-      final dy = a.top.compareTo(b.top);
-      return dy != 0 ? dy : a.left.compareTo(b.left);
-    });
+  final rects =
+      finder.evaluate().map((e) {
+        final box = e.renderObject! as RenderBox;
+        return box.localToGlobal(Offset.zero) & box.size;
+      }).toList()..sort((a, b) {
+        final dy = a.top.compareTo(b.top);
+        return dy != 0 ? dy : a.left.compareTo(b.left);
+      });
   return rects;
 }
 
@@ -74,8 +74,24 @@ void expectSameBox(
   String? reason,
 }) {
   final what = reason == null ? '' : '$reason: ';
-  expect(skeleton.left, moreOrLessEquals(real.left, epsilon: edge), reason: '${what}left edge');
-  expect(skeleton.right, moreOrLessEquals(real.right, epsilon: edge), reason: '${what}right edge');
-  expect(skeleton.top, moreOrLessEquals(real.top, epsilon: edge), reason: '${what}top edge');
-  expect(skeleton.height, moreOrLessEquals(real.height, epsilon: height), reason: '${what}height');
+  expect(
+    skeleton.left,
+    moreOrLessEquals(real.left, epsilon: edge),
+    reason: '${what}left edge',
+  );
+  expect(
+    skeleton.right,
+    moreOrLessEquals(real.right, epsilon: edge),
+    reason: '${what}right edge',
+  );
+  expect(
+    skeleton.top,
+    moreOrLessEquals(real.top, epsilon: edge),
+    reason: '${what}top edge',
+  );
+  expect(
+    skeleton.height,
+    moreOrLessEquals(real.height, epsilon: height),
+    reason: '${what}height',
+  );
 }

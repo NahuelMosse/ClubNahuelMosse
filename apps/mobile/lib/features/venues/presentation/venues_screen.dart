@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../common/bottom_bar.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/network_failure.dart';
-import '../../../common/skeleton.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
@@ -17,6 +16,7 @@ import '../../spaces/presentation/spaces.dart';
 import '../domain/venue.dart';
 import '../domain/venue_summary.dart';
 import 'venue_card.dart';
+import 'venue_card_skeleton.dart';
 import 'venues.dart';
 
 export 'venue_card.dart' show VenueCard;
@@ -144,8 +144,7 @@ class _VenuesScreenState extends State<VenuesScreen> {
                     const SizedBox(height: Spacing.s16),
                   ],
                 ],
-                if (data == null && _loading)
-                  const SkeletonList(shape: SkeletonShape.venue),
+                if (data == null && _loading) const VenueCardSkeletons(),
                 if (data == null && !_loading)
                   EmptyState(
                     title: 'No pudimos mostrar las sedes',
