@@ -18,7 +18,7 @@ lo exigen son RNF-01 (requisitos no funcionales) y los CU de sesión, reservas y
 
 | Axis | Answer |
 |---|---|
-| Meets the requirement | sí: la API publica `/openapi.json` y `/docs` (`apps/api/README.md`), la app es Flutter (`apps/mobile/pubspec.yaml`), la base es PostgreSQL y Firebase identifica y avisa. La restricción de no superposición de reservas se resuelve en la base con `btree_gist` (`migraciones/versions/0001_modelo_inicial.py:170-171`) |
+| Meets the requirement | sí: la API publica `/openapi.json` y `/docs` (`apps/api/README.md`), la app es Flutter (`apps/mobile/pubspec.yaml`), la base es PostgreSQL y Firebase identifica y avisa. La restricción de no superposición de reservas se resuelve en la base con `btree_gist` (`apps/api/migrations/versions/0001_modelo_inicial.py:170-171`) |
 | Deployment ease | un `render.yaml` describe la API y la base; el build instala con `uv` y migra con Alembic (`render.yaml:11`). Firebase es un servicio gestionado |
 | Monthly infra cost | hoy USD 0 con los planes free de Render y Firebase Authentication; las alternativas pagas están en `docs/technical/infra-cost.md` |
 | Cost to operate | parches de dependencias a mano (sin bot de actualizaciones, hallazgo 25); sin backups en la base free (hallazgo 4); Firebase no se opera |
