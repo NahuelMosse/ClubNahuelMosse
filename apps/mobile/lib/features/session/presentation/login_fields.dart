@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/button.dart';
 import '../../../common/text_field.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 
 /// Correo y contraseña, con el enlace para recuperarla.
@@ -30,12 +31,13 @@ class LoginFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         FormTextField(
-          semanticLabel: 'Correo',
-          placeholder: 'Correo',
+          semanticLabel: l10n.loginEmailLabel,
+          placeholder: l10n.loginEmailLabel,
           controller: email,
           error: emailError,
           keyboardType: TextInputType.emailAddress,
@@ -45,8 +47,8 @@ class LoginFields extends StatelessWidget {
         ),
         const SizedBox(height: Spacing.s12),
         FormTextField(
-          semanticLabel: 'Contraseña',
-          placeholder: 'Contraseña',
+          semanticLabel: l10n.loginPasswordLabel,
+          placeholder: l10n.loginPasswordLabel,
           controller: password,
           error: passwordError,
           obscure: !passwordVisible,
@@ -63,7 +65,7 @@ class LoginFields extends StatelessWidget {
         Align(
           alignment: Alignment.centerRight,
           child: TextActionButton(
-            label: '¿Olvidaste tu contraseña?',
+            label: l10n.loginForgotPassword,
             overPhoto: true,
             onTap: submitting
                 ? null

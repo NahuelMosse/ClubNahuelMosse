@@ -2,10 +2,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:go_router/go_router.dart';
 
 import 'api/api_client.dart';
+import 'common/app_language.dart';
 import 'common/appearance.dart';
 import 'common/pending_booking.dart';
 import 'features/admin/data/booking_history_api.dart';
@@ -24,6 +24,7 @@ import 'features/spaces/data/spaces_repository.dart';
 import 'features/spaces/presentation/spaces.dart';
 import 'features/venues/data/venues_repository.dart';
 import 'features/venues/presentation/venues.dart';
+import 'l10n/app_localizations.dart';
 import 'router.dart';
 import 'theme/theme.dart';
 
@@ -132,29 +133,33 @@ class _AppState extends State<App> {
     return ListenableBuilder(
       listenable: widget.appearance,
       builder: (context, _) => MaterialApp.router(
-        title: 'ClubNahuelMosse',
+        onGenerateTitle: (context) => AppLocalizations.of(context).appName,
         debugShowCheckedModeBanner: false,
         theme: lightTheme,
         darkTheme: darkTheme,
         themeMode: widget.appearance.mode,
         routerConfig: _router,
-        builder: (context, child) => Stack(
-          children: [
-            child ?? const SizedBox.shrink(),
-            if (widget.notificationCenter case final center?)
-              NoticePanel(
-                center: center,
-                navigator: _navigator,
-                onOpen: (n) {
-                  center.markRead(n);
-                  _router.go(noticeRoute(n.kind, n.bookingId));
-                },
-              ),
-          ],
-        ),
-        locale: const Locale('es', 'AR'),
-        supportedLocales: const [Locale('es', 'AR')],
-        localizationsDelegates: GlobalMaterialLocalizations.delegates,
+        builder: (context, child) {
+          // Dates and days are written in the language the device resolved to.
+          useLanguage(Localizations.localeOf(context));
+          return Stack(
+            children: [
+              child ?? const SizedBox.shrink(),
+              if (widget.notificationCenter case final center?)
+                NoticePanel(
+                  center: center,
+                  navigator: _navigator,
+                  onOpen: (n) {
+                    center.markRead(n);
+                    _router.go(noticeRoute(n.kind, n.bookingId));
+                  },
+                ),
+            ],
+          );
+        },
+        localeListResolutionCallback: resolveLanguage,
+        supportedLocales: AppLocalizations.supportedLocales,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
       ),
     );
   }

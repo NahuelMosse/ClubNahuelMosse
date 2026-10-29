@@ -22,6 +22,10 @@ import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
+/// El aviso del login cuando las credenciales no sirven, en castellano.
+const invalidCredentialsMessage =
+    'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
+
 /// Un cliente de la API que responde siempre [codigo] con [cuerpo], sin red.
 ApiClient apiFalsa({
   int codigo = 201,

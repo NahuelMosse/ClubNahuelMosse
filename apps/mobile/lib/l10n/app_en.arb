@@ -1,5 +1,6 @@
 {
   "@@locale": "en",
+  "appName": "Club Nahuel Mosse",
   "loginWelcome": "WELCOME TO",
   "loginTagline": "Sports facility management",
   "loginEmailLabel": "Email",

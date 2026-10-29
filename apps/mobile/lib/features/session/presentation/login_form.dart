@@ -6,6 +6,7 @@ import '../../../common/button.dart';
 import '../../../common/motion.dart';
 import '../../../common/network_failure.dart';
 import '../../../common/pending_booking.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/session_exceptions.dart';
 import 'load_failure.dart';
@@ -15,9 +16,6 @@ import 'login_fields.dart';
 import 'login_notice.dart';
 import 'register_link.dart';
 import 'session.dart';
-
-const invalidCredentialsMessage =
-    'No se pudo iniciar sesión. Revisá tus datos e intentá de nuevo.';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({super.key, required this.session, required this.pending});
@@ -63,12 +61,11 @@ class _LoginFormState extends State<LoginForm> {
     if (_submitting) return;
     final email = _email.text;
     final password = _password.text;
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _notice = null;
-      _emailError = email.trim().isEmpty
-          ? 'Completá tu correo electrónico'
-          : null;
-      _passwordError = password.isEmpty ? 'Completá tu contraseña' : null;
+      _emailError = email.trim().isEmpty ? l10n.loginEmailRequired : null;
+      _passwordError = password.isEmpty ? l10n.loginPasswordRequired : null;
     });
     if (_emailError != null || _passwordError != null) return;
 
@@ -87,7 +84,7 @@ class _LoginFormState extends State<LoginForm> {
     } on InvalidCredentials {
       if (mounted) {
         setState(() {
-          _notice = invalidCredentialsMessage;
+          _notice = l10n.loginInvalidCredentials;
           _notices++;
         });
       }
@@ -145,7 +142,7 @@ class _LoginFormState extends State<LoginForm> {
                   FadeIn(
                     delay: const Duration(milliseconds: 540),
                     child: PrimaryButton(
-                      label: 'INICIAR SESIÓN',
+                      label: AppLocalizations.of(context).loginSignIn,
                       loading: _submitting,
                       onTap: _signIn,
                     ),

@@ -9,6 +9,9 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
+  String get appName => 'Club Nahuel Mosse';
+
+  @override
   String get loginWelcome => 'WELCOME TO';
 
   @override

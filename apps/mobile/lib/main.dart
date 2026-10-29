@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'api/api_client.dart';
 import 'app.dart';
+import 'common/app_language.dart';
 import 'common/appearance.dart';
 import 'common/config.dart';
 import 'common/error_dialog.dart';
@@ -18,6 +19,7 @@ import 'features/session/data/firebase.dart';
 import 'features/session/data/session_repository.dart';
 import 'features/session/domain/profile.dart';
 import 'features/session/presentation/session.dart';
+import 'l10n/app_localizations.dart';
 import 'theme/theme.dart';
 
 void main() => bootstrap(AppConfig.fromEnvironment());
@@ -25,6 +27,13 @@ void main() => bootstrap(AppConfig.fromEnvironment());
 Future<void> bootstrap(AppConfig config) async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
+  await initializeDateFormatting('en');
+  useLanguage(
+    resolveLanguage(
+      WidgetsBinding.instance.platformDispatcher.locales,
+      supportedLanguages,
+    ),
+  );
   final auth = await initFirebase(config);
   final api = ApiClient(config.apiUrl);
   final session = Session(
@@ -86,6 +95,9 @@ class _Waiting extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     navigatorKey: navigator,
     debugShowCheckedModeBanner: false,
+    localeListResolutionCallback: resolveLanguage,
+    supportedLocales: AppLocalizations.supportedLocales,
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
     theme: lightTheme,
     darkTheme: darkTheme,
     home: const LoadingScreen(),

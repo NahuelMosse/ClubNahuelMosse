@@ -1,39 +1,48 @@
 // kit-boundary: the app-wide widget kit, shared by every feature.
 // kit-shape: a widget with its private parts kept together.
-/// Dates, times, days and the DNI as the app shows them. `intl` returns names in lower
-/// case; here they get their initial capital or are upper-cased.
-/// The `es` data is loaded by `initializeDateFormatting` at startup and in tests.
+/// Dates, times, days and the DNI as the app shows them, in the language of the app.
+/// `intl` returns names in lower case; here they get their initial capital or are
+/// upper-cased. The `en` and `es` data are loaded by `initializeDateFormatting` at
+/// startup and in tests.
 library;
 
 import 'package:intl/intl.dart';
 
-const _locale = 'es';
+import 'app_language.dart';
+
+String get _locale => currentLanguage();
+
+/// The DNI is written with Spanish thousands dots in every language.
+const _dniLocale = 'es';
 
 String _capitalize(String text) => toBeginningOfSentenceCase(text, _locale)!;
 
-/// «Jueves».
+/// «Jueves» / «Thursday».
 String weekdayName(DateTime day) =>
     _capitalize(DateFormat.EEEE(_locale).format(day));
 
-/// «JUE».
+/// «JUE» / «THU».
 String weekdayAbbreviation(DateTime day) =>
     DateFormat.E(_locale).format(day).toUpperCase();
 
-/// «Jue» for the weekday [day], from 1 (Monday) to 7 (Sunday).
+/// «Jue» / «Thu» for the weekday [day], from 1 (Monday) to 7 (Sunday).
 String shortWeekdayName(int day) =>
     _capitalize(DateFormat.E(_locale).format(DateTime(2024, 1, day)));
 
-/// «Jue 12».
+/// «Jue 12» / «Thu 12».
 String shortDay(DateTime day) =>
     _capitalize(DateFormat('E d', _locale).format(day));
 
-/// «Jue 12 nov». `intl` abbreviates September as «sept»; here months are always three letters.
+/// «Jue 12 nov» / «Thu 12 Nov». `intl` abbreviates September as «sept»; here months are always three letters.
 String shortDate(DateTime day) =>
     '${shortDay(day)} ${DateFormat.MMMM(_locale).format(day).substring(0, 3)}';
 
-/// «Jue 12 de noviembre».
-String longDate(DateTime day) =>
-    _capitalize(DateFormat("E d 'de' MMMM", _locale).format(day));
+/// «Jue 12 de noviembre» / «Thu 12 November».
+String longDate(DateTime day) {
+  final connector = _locale == 'es' ? ' de ' : ' ';
+  final month = DateFormat.MMMM(_locale).format(day);
+  return '${shortDay(day)}$connector$month';
+}
 
 /// «1 hora», «3 horas».
 String duration(int hours) => hours == 1 ? '1 hora' : '$hours horas';
@@ -77,5 +86,5 @@ String readableDni(String dni) {
       ? int.tryParse(digits)
       : null;
   if (number == null) return dni;
-  return NumberFormat.decimalPattern(_locale).format(number);
+  return NumberFormat.decimalPattern(_dniLocale).format(number);
 }

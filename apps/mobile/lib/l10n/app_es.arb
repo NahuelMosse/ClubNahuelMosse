@@ -1,5 +1,6 @@
 {
   "@@locale": "es",
+  "appName": "Club Nahuel Mosse",
   "loginWelcome": "BIENVENIDO A",
   "loginTagline": "Gestión de espacios deportivos",
   "loginEmailLabel": "Correo",

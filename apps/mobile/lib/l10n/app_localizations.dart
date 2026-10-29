@@ -98,6 +98,12 @@ abstract class AppLocalizations {
     Locale('es'),
   ];
 
+  /// No description provided for @appName.
+  ///
+  /// In en, this message translates to:
+  /// **'Club Nahuel Mosse'**
+  String get appName;
+
   /// No description provided for @loginWelcome.
   ///
   /// In en, this message translates to:
