@@ -10,7 +10,7 @@ from app.shared.input_validation import Identifier
 
 
 class _Pedido(BaseModel):
-    nombre: str = ""
+    name: str = ""
     cantidad: Identifier = UUID(int=1)
 
 
@@ -21,7 +21,7 @@ def cliente() -> TestClient:
 
     @app.post("/pedido")
     def pedido(p: _Pedido) -> dict[str, str]:
-        return {"nombre": p.nombre}
+        return {"name": p.name}
 
     return TestClient(app)
 
@@ -43,26 +43,26 @@ def test_un_identificador_acepta_mayusculas_y_sin_guiones() -> None:
 def test_un_identificador_mal_formado_tiene_un_mensaje_general(cliente: TestClient) -> None:
     r = cliente.post("/pedido", json={"cantidad": "1"})
 
-    assert r.json() == {"errores": {"cantidad": "El dato no es válido"}}
+    assert r.json() == {"errors": {"cantidad": "El dato no es válido"}}
 
 
 def test_un_dato_de_otro_tipo_tiene_un_mensaje_general(cliente: TestClient) -> None:
-    r = cliente.post("/pedido", json={"nombre": 5})
+    r = cliente.post("/pedido", json={"name": 5})
 
-    assert r.json() == {"errores": {"nombre": "El dato no es válido"}}
+    assert r.json() == {"errors": {"name": "El dato no es válido"}}
 
 
 def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
     r = cliente.post(
-        "/pedido", content='{"nombre": "clave-secreta', headers={"Content-Type": "application/json"}
+        "/pedido", content='{"name": "clave-secreta', headers={"Content-Type": "application/json"}
     )
 
     assert r.status_code == 400
-    assert r.json() == {"errores": {"cuerpo": "El cuerpo no es JSON válido"}}
+    assert r.json() == {"errors": {"body": "El cuerpo no es JSON válido"}}
 
 
 def test_un_cuerpo_que_falta_responde_422(cliente: TestClient) -> None:
     r = cliente.post("/pedido")
 
     assert r.status_code == 422
-    assert list(r.json()["errores"]) == ["cuerpo"]
+    assert list(r.json()["errors"]) == ["body"]

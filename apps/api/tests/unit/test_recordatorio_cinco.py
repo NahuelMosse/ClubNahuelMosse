@@ -31,7 +31,7 @@ def _cinco() -> Reminder:
         "Sede Morón",
         email="ana@correo.com",
         name="Ana",
-        reminder_kind="recordatorio_cinco",
+        reminder_kind="five_minute_reminder",
     )
 
 
@@ -83,9 +83,9 @@ def test_a_5_minutos_de_la_reserva_sale_un_aviso_por_push_y_por_correo_una_sola_
     assert registrados == 1
     assert [a.title for a in canal.avisos] == ["Tu reserva empieza en 5 minutos"]
     assert canal.avisos[0].body == "Fútbol 5 · Sede Morón · 21:00 – 22:00"
-    assert canal.avisos[0].data == {"tipo": "recordatorio_cinco", "reserva_id": str(UUID(int=7))}
+    assert canal.avisos[0].data == {"kind": "five_minute_reminder", "booking_id": str(UUID(int=7))}
     assert [c.subject for c in correos] == ["Tu reserva empieza en 5 minutos"]
-    assert repo.envios == ["enviada"]
+    assert repo.envios == ["sent"]
     assert FIVE_MINUTE_LEAD_TIME == timedelta(minutes=5)
 
 

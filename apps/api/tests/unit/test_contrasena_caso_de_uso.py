@@ -14,7 +14,7 @@ PERFIL = Profile(
     first_name="Lucía",
     last_name="Gómez",
     email="lucia@correo.com",
-    role="usuario",
+    role="user",
     dni="30111222",
     birth_date=date(1998, 11, 2),
 )
@@ -51,7 +51,7 @@ def test_con_la_actual_equivocada_no_cambia_nada() -> None:
     identidad, rastro = Identidad("ClubNahuel1"), Rastro()
     with pytest.raises(InvalidData) as error:
         cambiar_contrasena(PERFIL, "OtraClave9", "ClubNahuel2", identidad, rastro)
-    assert error.value.errors == {"actual": NO_COINCIDE}
+    assert error.value.errors == {"current_password": NO_COINCIDE}
     assert identidad.cambios == [] and rastro.marcados == []
 
 
@@ -69,7 +69,7 @@ def test_una_nueva_que_no_cumple_las_reglas_se_rechaza_antes_de_mirar_la_actual(
     identidad = Identidad("ClubNahuel1")
     with pytest.raises(InvalidData) as error:
         cambiar_contrasena(PERFIL, "equivocada", nueva, identidad, Rastro())
-    assert error.value.errors == {"nueva": mensaje}
+    assert error.value.errors == {"new_password": mensaje}
 
 
 def test_una_nueva_igual_a_la_actual_se_acepta() -> None:
@@ -100,4 +100,4 @@ def test_sin_la_actual_no_se_pregunta_al_proveedor() -> None:
 
     with pytest.raises(InvalidData) as error:
         cambiar_contrasena(PERFIL, "", "ClubNahuel2", SinConsultas("x"), Rastro())
-    assert error.value.errors == {"actual": NO_COINCIDE}
+    assert error.value.errors == {"current_password": NO_COINCIDE}

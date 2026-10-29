@@ -8,7 +8,7 @@ from app.modules.users.deactivation import deactivate as dar_de_baja
 from app.shared.errors import Forbidden
 
 
-def _perfil(rol: Role = "usuario") -> Profile:
+def _perfil(rol: Role = "user") -> Profile:
     return Profile(
         id=UUID(int=7),
         uid="u7",

@@ -32,4 +32,4 @@ def test_un_aviso_a_una_persona_sin_correo_no_manda_correo_y_sale_por_push(
 
     assert enviados == []
     assert canal.avisos == [AVISO]
-    assert repo.envios == ["enviada"]
+    assert repo.envios == ["sent"]

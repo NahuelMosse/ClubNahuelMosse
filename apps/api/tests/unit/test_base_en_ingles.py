@@ -48,14 +48,14 @@ INGLES = {"admin", "total", "token", "version", "dni", "club", "color", "plan", 
 # Los términos de los nombres de hoy que el glosario no lista como palabra suelta.
 EXTRA_CASTELLANO = {
     "motor", "conexion", "transaccion", "restriccion", "violada", "ventana", "reintento",
-    "cuerpo", "acotado", "limite", "plazo", "segundos", "entradas", "errores", "hora",
-    "leer", "instalar", "forma", "identidad", "correo", "contrasena", "nueva", "crear",
+    "body", "acotado", "limite", "plazo", "segundos", "entradas", "errors", "hora",
+    "leer", "instalar", "forma", "identidad", "email", "password", "new_password", "crear",
     "cuenta", "borrar", "espera", "rechazos", "zona", "credencial", "servicio", "conflicto",
     "salud", "vivo", "pruebas", "ciclo", "vida", "barrido", "recordatorios", "raiz",
     "proyecto", "datos", "invalidos", "duplicado", "demorado", "existente", "prohibido",
-    "disponible", "ocupado", "horario", "encontrada", "cambiado", "afuera", "agenda",
-    "cambiada", "futuras", "campos", "siguiente", "cantidad", "mensajes", "generico",
-    "origenes", "responder", "ingreso", "rechazo", "reservas", "espacio", "sede",
+    "available", "ocupado", "slot", "encontrada", "cambiado", "afuera", "agenda",
+    "cambiada", "futuras", "fields", "siguiente", "cantidad", "mensajes", "generico",
+    "origenes", "responder", "ingreso", "rechazo", "bookings", "space", "venue",
 }  # fmt: skip
 PALABRAS_COMUNES = re.compile(
     r"\b(de|la|el|los|las|que|por|para|con|una|del|sin|cuando|si)\b", re.I
@@ -148,7 +148,7 @@ def _app_con_errores() -> FastAPI:
 
     @app.get("/invalido")
     def invalido() -> None:
-        raise errors.InvalidData({"nombre": "Falta"})
+        raise errors.InvalidData({"name": "Falta"})
 
     @app.get("/prohibido")
     def prohibido() -> None:
@@ -173,8 +173,8 @@ def test_los_cuerpos_de_error_413_422_403_y_404_son_los_de_main() -> None:
 
     assert (grande.status_code, grande.content) == (413, b"")
     assert forma.status_code == 422
-    assert forma.json() == {"errores": {"a": "El dato no es válido"}}
-    assert (invalido.status_code, invalido.json()) == (422, {"errores": {"nombre": "Falta"}})
+    assert forma.json() == {"errors": {"a": "El dato no es válido"}}
+    assert (invalido.status_code, invalido.json()) == (422, {"errors": {"name": "Falta"}})
     assert (prohibido.status_code, prohibido.content) == (403, b"")
     assert (ausente.status_code, ausente.content) == (404, b"")
 

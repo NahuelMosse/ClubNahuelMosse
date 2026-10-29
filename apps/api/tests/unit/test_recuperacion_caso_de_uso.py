@@ -85,8 +85,8 @@ def test_a_una_cuenta_activa_le_toca_un_enlace_https_que_vence_en_media_hora() -
     ((usuario, codigo_hash, vigencia),) = enlaces.emisiones
     assert (usuario, vigencia) == (UUID(int=7), VIGENCIA_MINUTOS)
     assert mensaje.recipient == "lucia@correo.com"
-    assert "https://api.club.com/enlace/recuperar#codigo=" in mensaje.body
-    codigo = mensaje.body.split("#codigo=")[1].split()[0]
+    assert "https://api.club.com/link/recover#code=" in mensaje.body
+    codigo = mensaje.body.split("#code=")[1].split()[0]
     # El correo lleva el código y la base guarda sólo su hash.
     assert hash_de(codigo) == codigo_hash and codigo != codigo_hash
 
@@ -107,7 +107,7 @@ def test_despues_del_tope_por_hora_no_se_envian_mas() -> None:
 def test_un_correo_mal_escrito_se_rechaza() -> None:
     with pytest.raises(InvalidData) as error:
         pedir_enlace("lucia@correo", URL, Enlaces())
-    assert error.value.errors == {"correo": "Revisá el formato del correo"}
+    assert error.value.errors == {"email": "Revisá el formato del correo"}
 
 
 def test_con_un_enlace_vigente_cambia_la_contrasena_y_deja_rastro() -> None:
@@ -131,5 +131,5 @@ def test_una_contrasena_debil_no_gasta_el_enlace() -> None:
     enlaces = Enlaces(vigentes={hash_de("abc")})
     with pytest.raises(InvalidData) as error:
         usar_enlace("abc", "corta", enlaces, Identidad(), Rastro())
-    assert error.value.errors == {"nueva": "Al menos 8 caracteres"}
+    assert error.value.errors == {"new_password": "Al menos 8 caracteres"}
     assert hash_de("abc") in enlaces.vigentes

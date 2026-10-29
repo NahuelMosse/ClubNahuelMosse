@@ -20,8 +20,8 @@ def test_la_api_corta_un_cuerpo_de_mas_de_1_mb_con_413() -> None:
     """la API corta un cuerpo de más de 1 MB con 413 @SIM-01-S2 @assumption:SIM-01-ASM-09"""
     cliente = TestClient(create_app())
 
-    declarado = cliente.post("/sedes", content=b"x" * (UN_MB + 1))
-    por_partes = cliente.post("/sedes", content=_por_partes(3, UN_MB // 2))
+    declarado = cliente.post("/venues", content=b"x" * (UN_MB + 1))
+    por_partes = cliente.post("/venues", content=_por_partes(3, UN_MB // 2))
 
     assert declarado.status_code == 413
     assert por_partes.status_code == 413
@@ -45,7 +45,7 @@ def test_la_api_corta_con_408_en_5_s_un_cuerpo_que_no_termina_de_llegar(
     scope = {
         "type": "http",
         "method": "POST",
-        "path": "/sedes",
+        "path": "/venues",
         "raw_path": b"/sedes",
         "query_string": b"",
         "headers": [(b"host", b"testserver")],

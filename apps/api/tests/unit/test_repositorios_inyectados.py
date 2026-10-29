@@ -68,7 +68,7 @@ def test_una_ruta_recibe_su_repositorio_por_dependencia_y_un_test_lo_reemplaza()
     )
     app.dependency_overrides[repositorio_sedes] = _SedesDePrueba
 
-    respuesta = TestClient(app, base_url="http://localhost").get("/sedes")
+    respuesta = TestClient(app, base_url="http://localhost").get("/venues")
 
     assert respuesta.status_code == 200
     assert [s["nombre"] for s in respuesta.json()["sedes"]] == ["Sede de prueba"]

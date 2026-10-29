@@ -47,20 +47,20 @@ def test_cada_campo_que_falta_es_obligatorio() -> None:
     vacio = SpaceData(None, "", "", None, None, None)
     _, errores = validate_space(vacio)
     assert errores == dict.fromkeys(
-        ["sede_id", "deporte", "tipo", "techada", "iluminada", "precio_por_hora"],
+        ["venue_id", "sport", "kind", "covered", "lit", "price_per_hour"],
         "Este campo es obligatorio",
     )
 
 
 def test_deporte_y_tipo_salen_del_catalogo() -> None:
-    assert _errores(sport="Rugby") == {"deporte": "Elegí un deporte de la lista"}
-    assert _errores(kind="PDL") == {"tipo": "Elegí un tipo de la lista"}
+    assert _errores(sport="Rugby") == {"sport": "Elegí un deporte de la lista"}
+    assert _errores(kind="PDL") == {"kind": "Elegí un tipo de la lista"}
 
 
 @pytest.mark.parametrize("precio", [0, -1, 10_000_000])
 def test_el_precio_es_positivo_y_con_tope(precio: int) -> None:
     assert _errores(price_per_hour=precio) == {
-        "precio_por_hora": "Ingresá un precio entre $ 1 y $ 9.999.999"
+        "price_per_hour": "Ingresá un precio entre $ 1 y $ 9.999.999"
     }
 
 
@@ -151,9 +151,9 @@ def test_el_alta_queda_a_nombre_del_administrador_con_el_nombre_compuesto() -> N
 def test_un_usuario_no_gestiona_espacios() -> None:
     espacios = _EspaciosEnMemoria(MORON)
     with pytest.raises(Forbidden):
-        create_space(_perfil("usuario"), VALIDOS, None, espacios)
+        create_space(_perfil("user"), VALIDOS, None, espacios)
     with pytest.raises(Forbidden):
-        suggested_name(_perfil("usuario"), UUID(int=3), "Futbol", "F5", espacios)
+        suggested_name(_perfil("user"), UUID(int=3), "Futbol", "F5", espacios)
     assert espacios.guardados == []
 
 

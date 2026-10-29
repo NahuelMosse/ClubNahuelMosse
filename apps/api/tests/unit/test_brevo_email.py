@@ -97,15 +97,15 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
 
     s = unico()
     payload = {
-        "nombre": "Lucía",
-        "apellido": "Gómez",
+        "first_name": "Lucía",
+        "last_name": "Gómez",
         "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-        "fecha_nacimiento": "1998-11-02",
-        "correo": f"socia.{s}@correo.com",
-        "contrasena": "ClubNahuel1",
+        "birth_date": "1998-11-02",
+        "email": f"socia.{s}@correo.com",
+        "password": "ClubNahuel1",
     }
-    assert api.post("/registro", json=payload).status_code == 201
-    assert api.post("/recuperacion", json={"correo": payload["correo"]}).status_code == 202
+    assert api.post("/register", json=payload).status_code == 201
+    assert api.post("/password-recovery", json={"email": payload["email"]}).status_code == 202
 
 
 def test_smtp_y_buzon_siguen_igual_y_render_yaml_usa_brevo_con_la_clave_secreta(
