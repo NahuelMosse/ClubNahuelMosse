@@ -49,7 +49,7 @@ def _mundo(motor: Engine) -> dict[str, UUID]:
             ),
             {"venue": sede, "n": f"Propia{s}_Rivadavia_19850_Futbol_F5_1"},
         ).scalar_one()
-    return {"usuario": usuario, "sede": sede, "espacio": espacio}
+    return {"user": usuario, "venue": sede, "space": espacio}
 
 
 def _reserva(
@@ -63,8 +63,8 @@ def _reserva(
                 " coalesce(:c, now()), coalesce(:c, now())) RETURNING id"
             ),
             {
-                "u": mundo["usuario"],
-                "e": mundo["espacio"],
+                "u": mundo["user"],
+                "e": mundo["space"],
                 "i": inicio,
                 "f": inicio + timedelta(hours=1),
                 "c": creada,
@@ -82,9 +82,9 @@ def test_baja_de_cuenta_cancela_reservas_futuras(motor: Engine) -> None:
     mundo = _mundo(motor)
     reserva = _reserva(motor, mundo, _hora(dias=3))
     with motor.connect() as conn:
-        assert UsersSql(conn).deactivate(mundo["usuario"]) is True
+        assert UsersSql(conn).deactivate(mundo["user"]) is True
     assert _uno(motor, "SELECT status FROM booking WHERE id = :i", i=reserva) == "canceled"
-    assert not _uno(motor, "SELECT active FROM app_user WHERE id = :i", i=mundo["usuario"])
+    assert not _uno(motor, "SELECT active FROM app_user WHERE id = :i", i=mundo["user"])
 
 
 def test_cancelar_una_reserva_deja_su_aviso(motor: Engine) -> None:
@@ -92,7 +92,7 @@ def test_cancelar_una_reserva_deja_su_aviso(motor: Engine) -> None:
     mundo = _mundo(motor)
     reserva = _reserva(motor, mundo, _hora(dias=3))
     with motor.connect() as conn:
-        BookingsSql(conn).cancel(mundo["usuario"], reserva)
+        BookingsSql(conn).cancel(mundo["user"], reserva)
     assert (
         _uno(
             motor,
@@ -108,20 +108,20 @@ def test_baja_de_sede_da_de_baja_sus_espacios(motor: Engine) -> None:
     """dar de baja una sede sigue dando de baja sus espacios @REV-06-S6 @assumption:REV-06-ASM-05"""
     mundo = _mundo(motor)
     with motor.connect() as conn:
-        VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
-    assert not _uno(motor, "SELECT active FROM venue WHERE id = :i", i=mundo["sede"])
-    assert not _uno(motor, "SELECT active FROM space WHERE id = :i", i=mundo["espacio"])
+        VenuesSql(conn).deactivate(mundo["venue"], mundo["user"])
+    assert not _uno(motor, "SELECT active FROM venue WHERE id = :i", i=mundo["venue"])
+    assert not _uno(motor, "SELECT active FROM space WHERE id = :i", i=mundo["space"])
 
 
 def test_la_baja_de_sede_sobrevive_al_reinicio(motor: Engine) -> None:
     """la baja de una sede y de sus espacios sobrevive al reinicio de la app sobre la misma base @REV-06-S6 @assumption:REV-06-ASM-05"""
     mundo = _mundo(motor)
     with motor.connect() as conn:
-        VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
+        VenuesSql(conn).deactivate(mundo["venue"], mundo["user"])
     nuevo = create_engine(motor.url)
     try:
-        assert not _uno(nuevo, "SELECT active FROM venue WHERE id = :i", i=mundo["sede"])
-        assert not _uno(nuevo, "SELECT active FROM space WHERE id = :i", i=mundo["espacio"])
+        assert not _uno(nuevo, "SELECT active FROM venue WHERE id = :i", i=mundo["venue"])
+        assert not _uno(nuevo, "SELECT active FROM space WHERE id = :i", i=mundo["space"])
     finally:
         nuevo.dispose()
 
@@ -139,6 +139,6 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
 
     monkeypatch.setattr(SpacesSql, "deactivate_venue_spaces", escribe_y_cae)
     with motor.connect() as conn, pytest.raises(RuntimeError):
-        VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
-    assert _uno(motor, "SELECT active FROM venue WHERE id = :i", i=mundo["sede"])
-    assert _uno(motor, "SELECT active FROM space WHERE id = :i", i=mundo["espacio"])
+        VenuesSql(conn).deactivate(mundo["venue"], mundo["user"])
+    assert _uno(motor, "SELECT active FROM venue WHERE id = :i", i=mundo["venue"])
+    assert _uno(motor, "SELECT active FROM space WHERE id = :i", i=mundo["space"])

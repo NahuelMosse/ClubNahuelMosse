@@ -154,7 +154,7 @@ def _varar(socio: Socio, hace: str, intentos: int = 1) -> None:
 
 def _cancelar(socio: Socio, desde: str) -> None:
     reserva = socio.reservar(desde)
-    r = socio.api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
+    r = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
     assert r.status_code == 200
 
 

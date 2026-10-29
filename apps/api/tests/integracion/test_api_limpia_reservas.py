@@ -17,7 +17,7 @@ CLUB = ZoneInfo("America/Argentina/Buenos_Aires")
 
 
 def _usuario(api: TestClient, motor: Engine, token: str) -> UUID:
-    correo = api.get("/yo", headers={"Authorization": f"Bearer {token}"}).json()["correo"]
+    correo = api.get("/me", headers={"Authorization": f"Bearer {token}"}).json()["email"]
     with motor.connect() as conn:
         fila = conn.execute(text("SELECT id FROM app_user WHERE email = :c"), {"c": correo})
         return UUID(str(fila.scalar_one()))
@@ -25,10 +25,10 @@ def _usuario(api: TestClient, motor: Engine, token: str) -> UUID:
 
 def _cancha(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
-        "/espacios",
+        "/spaces",
         headers={"Authorization": f"Bearer {token_admin}"},
-        json={"sede_id": sede_id, "deporte": "Futbol", "tipo": "F5", "techada": False,
-              "iluminada": True, "precio_por_hora": 38000},
+        json={"venue_id": sede_id, "sport": "Futbol", "kind": "F5", "covered": False,
+              "lit": True, "price_per_hour": 38000},
     )  # fmt: skip
     return str(r.json()["id"])
 
@@ -121,7 +121,7 @@ def test_una_reserva_cancelada_no_se_mueve(motor: Engine, cancha: tuple[str, str
         )
 
 
-@pytest.mark.parametrize("de_baja", ["sede", "espacio"])
+@pytest.mark.parametrize("de_baja", ["venue", "space"])
 def test_no_se_reserva_ni_se_mueve_a_una_cancha_de_baja(
     motor: Engine, cancha: tuple[str, str, UUID], de_baja: str
 ) -> None:
@@ -132,7 +132,7 @@ def test_no_se_reserva_ni_se_mueve_a_una_cancha_de_baja(
     agenda = _agenda(motor, espacio)
     with motor.connect() as conn:
         reserva = BookingsSql(conn).insert(yo, espacio, _a_las(1, 10), _a_las(1, 11), agenda)
-    if de_baja == "sede":
+    if de_baja == "venue":
         _dar_de_baja(motor, "venue", "active", UUID(sede_id))
     else:
         _dar_de_baja(motor, "space", "active", espacio)

@@ -24,10 +24,10 @@ def test_el_recordatorio_sale_una_hora_antes(
     lejos = _reserva(motor, mundo, base + timedelta(hours=1), creada=creada)
 
     def ids(conn: Connection) -> list[UUID]:
-        return [r.booking_id for r in NotificationsSql(conn).due(ahora, mundo["usuario"])]
+        return [r.booking_id for r in NotificationsSql(conn).due(ahora, mundo["user"])]
 
     with motor.connect() as conn:
         assert ids(conn) == [cerca]
-    monkeypatch.setitem(repository.LEAD_TIME_BY_KIND, "recordatorio", timedelta(hours=2))
+    monkeypatch.setitem(repository.LEAD_TIME_BY_KIND, "reminder", timedelta(hours=2))
     with motor.connect() as conn:
         assert ids(conn) == [cerca, lejos]
