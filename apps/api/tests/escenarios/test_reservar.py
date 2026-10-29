@@ -35,11 +35,11 @@ def cancha(
     with motor.begin() as conn:
         espacio: Any = conn.execute(
             text(
-                "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
                 " RETURNING id)"
-                " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
+                " INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
                 " 38000 FROM s RETURNING id"
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
@@ -57,7 +57,7 @@ def _reservas(motor: Engine, espacio: str) -> int:
     with motor.connect() as conn:
         return int(
             conn.execute(
-                text("SELECT count(*) FROM reserva WHERE espacio_id = :e"), {"e": espacio}
+                text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": espacio}
             ).scalar_one()
         )
 

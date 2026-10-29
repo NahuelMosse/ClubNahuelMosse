@@ -43,7 +43,7 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
 
     with motor.connect() as otra:
         guardada = otra.execute(
-            text("SELECT nombre FROM sede WHERE id = :id"), {"id": alta.json()["id"]}
+            text("SELECT name FROM venue WHERE id = :id"), {"id": alta.json()["id"]}
         ).scalar_one()
     assert guardada == sede["nombre"]
     otra_api = TestClient(create_app(), base_url="http://localhost")

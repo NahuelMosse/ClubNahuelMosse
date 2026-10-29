@@ -67,7 +67,7 @@ def test_una_cuenta_dada_de_baja_no_tiene_sesion_aunque_el_token_sea_valido(
     token = iniciar_sesion(correo, CONTRASENA)
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE correo = :c"),
+            text("UPDATE app_user SET active = false, deactivated_at = now() WHERE email = :c"),
             {"c": correo},
         )
     assert _yo(api, token)[0] == 401
@@ -153,5 +153,5 @@ def test_la_siembra_sin_contrasena_no_toca_nada(
     ]  # fmt: skip
     assert sembrar(argumentos) == 2
     with motor.connect() as conn:
-        fila = conn.execute(text("SELECT 1 FROM usuario WHERE correo = :c"), {"c": correo})
+        fila = conn.execute(text("SELECT 1 FROM app_user WHERE email = :c"), {"c": correo})
         assert fila.first() is None

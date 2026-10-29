@@ -119,15 +119,15 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
     with motor.begin() as conn:
         id_: UUID = conn.execute(
             text(
-                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio)"
-                " SELECT id, 'cancelacion_forzosa', 'Cancelaron', 'Fútbol 5', 'pendiente'"
-                " FROM usuario WHERE activo LIMIT 1 RETURNING id"
+                "INSERT INTO notification (user_id, kind, title, body, delivery)"
+                " SELECT id, 'forced_cancellation', 'Cancelaron', 'Fútbol 5', 'pending'"
+                " FROM app_user WHERE active LIMIT 1 RETURNING id"
             )
         ).scalar_one()
         conn.execute(
             text(
-                "INSERT INTO dispositivo (usuario_id, token, plataforma, permiso)"
-                " SELECT usuario_id, 'fcm-sim01-' || id, 'android', true FROM notificacion"
+                "INSERT INTO device (user_id, token, platform, permission_granted)"
+                " SELECT user_id, 'fcm-sim01-' || id, 'android', true FROM notification"
                 " WHERE id = :id ON CONFLICT DO NOTHING"
             ),
             {"id": id_},
@@ -139,9 +139,9 @@ def test_un_aviso_que_falla_queda_fallido_y_no_se_reintenta(motor: Engine) -> No
         dispatch_pending(NotificationsSql(conn), canal)
     with motor.connect() as conn:
         envio: str = conn.execute(
-            text("SELECT envio FROM notificacion WHERE id = :id"), {"id": id_}
+            text("SELECT delivery FROM notification WHERE id = :id"), {"id": id_}
         ).scalar_one()
-    assert envio == "fallida"
+    assert envio == "failed"
     assert tras_el_primero >= 1 and _CanalQueFalla.llamadas == tras_el_primero
 
 

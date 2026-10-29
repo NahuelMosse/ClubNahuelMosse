@@ -38,17 +38,17 @@ def test_un_aviso_que_no_salio_queda_a_la_vista(
     with motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO notificacion (usuario_id, tipo, titulo, cuerpo, envio)"
-                " SELECT id, 'cancelacion_forzosa', 'Cancelaron tu reserva', 'Fútbol 5',"
-                " 'pendiente' FROM usuario WHERE correo = :c AND activo"
+                "INSERT INTO notification (user_id, kind, title, body, delivery)"
+                " SELECT id, 'forced_cancellation', 'Cancelaron tu reserva', 'Fútbol 5',"
+                " 'pending' FROM app_user WHERE email = :c AND active"
             ),
             {"c": f"socio.{s}@correo.com"},
         )
         conn.execute(
             text(
-                "INSERT INTO dispositivo (usuario_id, token, plataforma, permiso)"
-                " SELECT usuario_id, 'fcm-' || id, 'android', true FROM notificacion"
-                " WHERE envio = 'pendiente' ON CONFLICT DO NOTHING"
+                "INSERT INTO device (user_id, token, platform, permission_granted)"
+                " SELECT user_id, 'fcm-' || id, 'android', true FROM notification"
+                " WHERE delivery = 'pending' ON CONFLICT DO NOTHING"
             )
         )
 

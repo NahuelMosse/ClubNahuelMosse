@@ -31,14 +31,14 @@ def aviso_que_falla(motor: Engine) -> Iterator[None]:
         )
         conn.execute(
             text(
-                "CREATE TRIGGER falla_la_confirmacion BEFORE INSERT ON notificacion"
-                " FOR EACH ROW WHEN (NEW.tipo = 'cancelacion_usuario')"
+                "CREATE TRIGGER falla_la_confirmacion BEFORE INSERT ON notification"
+                " FOR EACH ROW WHEN (NEW.kind = 'user_cancellation')"
                 " EXECUTE FUNCTION falla_la_confirmacion()"
             )
         )
     yield
     with motor.begin() as conn:
-        conn.execute(text("DROP TRIGGER falla_la_confirmacion ON notificacion"))
+        conn.execute(text("DROP TRIGGER falla_la_confirmacion ON notification"))
         conn.execute(text("DROP FUNCTION falla_la_confirmacion()"))
 
 
@@ -63,11 +63,11 @@ def test_si_falla_el_aviso_la_reserva_sigue_activa_y_no_queda_ningun_aviso(
 
     with motor.connect() as conn:
         estado: Any = conn.execute(
-            text("SELECT estado FROM reserva WHERE id = :id"), {"id": reserva["id"]}
+            text("SELECT status FROM booking WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()
         avisos: Any = conn.execute(
-            text("SELECT count(*) FROM notificacion WHERE usuario_id = :u"),
+            text("SELECT count(*) FROM notification WHERE user_id = :u"),
             {"u": socio.usuario_id},
         ).scalar_one()
-    assert (estado, avisos) == ("activa", 0)
+    assert (estado, avisos) == ("active", 0)
     assert canal.enviados == []

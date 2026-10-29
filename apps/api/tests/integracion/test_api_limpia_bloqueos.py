@@ -23,7 +23,7 @@ def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
     }
     with motor.connect() as baja, ThreadPoolExecutor(max_workers=1) as pool:
         baja.execute(
-            text("UPDATE sede SET activa = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede_id},
         )
         alta = pool.submit(

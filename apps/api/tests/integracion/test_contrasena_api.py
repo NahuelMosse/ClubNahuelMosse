@@ -54,7 +54,7 @@ def test_cambia_la_contrasena_deja_rastro_e_invalida_las_sesiones(
     assert api.get("/yo", headers={"Authorization": f"Bearer {nuevo}"}).status_code == 200
     with motor.connect() as conn:
         cambiada = conn.execute(
-            text("SELECT contrasena_cambiada_en FROM usuario WHERE correo = :c"), {"c": correo}
+            text("SELECT password_changed_at FROM app_user WHERE email = :c"), {"c": correo}
         ).scalar()
     assert cambiada is not None
 

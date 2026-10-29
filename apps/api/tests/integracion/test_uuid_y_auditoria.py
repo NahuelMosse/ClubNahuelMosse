@@ -25,7 +25,6 @@ TABLAS_CON_ID = (
     "dispositivo",
     "notificacion",
 )
-TABLAS = (*TABLAS_CON_ID, "notificacion_reserva")
 
 REFERENCIAS = {
     ("sede", "creado_por", "usuario"),
@@ -47,16 +46,48 @@ REFERENCIAS = {
     ("notificacion_reserva", "reserva_id", "reserva"),
 }
 
-CLAVES = {
-    "usuario": "id = :usuario",
-    "sede": "id = :sede",
-    "espacio": "id = :espacio",
-    "reserva": "id = :reserva",
-    "enlace_recuperacion": "id = :enlace",
-    "correo_saliente": "id = :correo",
-    "dispositivo": "id = :dispositivo",
-    "notificacion": "id = :notificacion",
-    "notificacion_reserva": "notificacion_id = :notificacion AND reserva_id = :reserva",
+TABLAS_CON_ID_ACTUAL = (
+    "app_user",
+    "venue",
+    "space",
+    "booking",
+    "recovery_link",
+    "outgoing_email",
+    "device",
+    "notification",
+)
+TABLAS_ACTUAL = (*TABLAS_CON_ID_ACTUAL, "notification_booking")
+
+REFERENCIAS_ACTUAL = {
+    ("venue", "created_by", "app_user"),
+    ("venue", "updated_by", "app_user"),
+    ("venue", "deactivated_by", "app_user"),
+    ("space", "venue_id", "venue"),
+    ("space", "created_by", "app_user"),
+    ("space", "updated_by", "app_user"),
+    ("space", "deactivated_by", "app_user"),
+    ("booking", "user_id", "app_user"),
+    ("booking", "space_id", "space"),
+    ("booking", "canceled_by", "app_user"),
+    ("recovery_link", "user_id", "app_user"),
+    ("device", "user_id", "app_user"),
+    ("notification", "user_id", "app_user"),
+    ("notification", "booking_id", "booking"),
+    ("notification", "replaced_by", "notification"),
+    ("notification_booking", "notification_id", "notification"),
+    ("notification_booking", "booking_id", "booking"),
+}
+
+CLAVES_ACTUAL = {
+    "app_user": "id = :user",
+    "venue": "id = :venue",
+    "space": "id = :space",
+    "booking": "id = :booking",
+    "recovery_link": "id = :link",
+    "outgoing_email": "id = :email",
+    "device": "id = :device",
+    "notification": "id = :notification",
+    "notification_booking": "notification_id = :notification AND booking_id = :booking",
 }
 
 
@@ -65,7 +96,7 @@ def heredado(viejo: int) -> uuid.UUID:
     return uuid.UUID(int=(7 << 76) | (2 << 62) | viejo)
 
 
-def _sembrar(conn: Connection) -> dict[str, Any]:
+def _sembrar_0009(conn: Connection) -> dict[str, Any]:
     """Una fila en cada una de las 9 tablas, con todas las referencias usadas."""
     s = uuid.uuid4().hex[:8]
     usuario: Any = conn.execute(
@@ -151,6 +182,92 @@ def _sembrar(conn: Connection) -> dict[str, Any]:
     }
 
 
+def _sembrar(conn: Connection) -> dict[str, Any]:
+    """Una fila en cada una de las 9 tablas de la base actual, con todas las referencias usadas."""
+    s = uuid.uuid4().hex[:8]
+    user: Any = conn.execute(
+        text(
+            "INSERT INTO app_user (firebase_uid, email, first_name, last_name, dni, birth_date)"
+            " VALUES (:uid, :email, 'Ana', 'Pérez', :dni, '2000-03-14') RETURNING id"
+        ),
+        {
+            "uid": f"uid-{s}",
+            "email": f"{s}@correo.com",
+            "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
+        },
+    ).scalar_one()
+    venue: Any = conn.execute(
+        text(
+            "INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days,"
+            " created_by, updated_by, deactivated_by)"
+            " VALUES (:n, 'Av. X', 1, '08:00', '23:00', '{1,2,3}', :u, :u, :u) RETURNING id"
+        ),
+        {"n": f"Sede {s}", "u": user},
+    ).scalar_one()
+    space: Any = conn.execute(
+        text(
+            "INSERT INTO space (venue_id, sport, kind, number, name, covered, lit,"
+            " price_per_hour, created_by, updated_by, deactivated_by)"
+            " VALUES (:venue, 'Tenis', 'Polvo', 1, :n, true, true, 1000, :u, :u, :u) RETURNING id"
+        ),
+        {"venue": venue, "n": f"Cancha {s}", "u": user},
+    ).scalar_one()
+    booking: Any = conn.execute(
+        text(
+            "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total,"
+            " canceled_by)"
+            " VALUES (:u, :e, '2030-01-01 10:00-03', '2030-01-01 11:00-03', 1000, 1000, :u)"
+            " RETURNING id"
+        ),
+        {"u": user, "e": space},
+    ).scalar_one()
+    link: Any = conn.execute(
+        text(
+            "INSERT INTO recovery_link (user_id, code_hash, expires_at)"
+            " VALUES (:u, :h, now() + interval '1 hour') RETURNING id"
+        ),
+        {"u": user, "h": f"hash-{s}"},
+    ).scalar_one()
+    email: Any = conn.execute(
+        text(
+            "INSERT INTO outgoing_email (recipient, subject, body)"
+            " VALUES ('a@b.c', 'x', 'y') RETURNING id"
+        )
+    ).scalar_one()
+    device: Any = conn.execute(
+        text(
+            "INSERT INTO device (user_id, token, platform, permission_granted)"
+            " VALUES (:u, :t, 'android', true) RETURNING id"
+        ),
+        {"u": user, "t": f"token-{s}"},
+    ).scalar_one()
+    insertar = (
+        "INSERT INTO notification (user_id, kind, title, body, delivery{extra})"
+        " VALUES (:u, 'forced_cancellation', 't', 'c', 'pending'{valor}) RETURNING id"
+    )
+    nuevo: Any = conn.execute(
+        text(insertar.format(extra="", valor="")), {"u": user}
+    ).scalar_one()
+    notification: Any = conn.execute(
+        text(insertar.format(extra=", booking_id, replaced_by", valor=", :r, :n")),
+        {"u": user, "r": booking, "n": nuevo},
+    ).scalar_one()
+    conn.execute(
+        text("INSERT INTO notification_booking (notification_id, booking_id) VALUES (:n, :r)"),
+        {"n": notification, "r": booking},
+    )
+    return {
+        "user": user,
+        "venue": venue,
+        "space": space,
+        "booking": booking,
+        "link": link,
+        "email": email,
+        "device": device,
+        "notification": notification,
+    }
+
+
 def _foto(conn: Connection) -> dict[tuple[str, str], set[Any]]:
     """Los ids y las 17 referencias tal como están guardados."""
     columnas = [(t, "id") for t in TABLAS_CON_ID] + [(t, c) for t, c, _ in REFERENCIAS]
@@ -188,9 +305,9 @@ def test_clave_uuid_con_valor_por_defecto(db: Connection) -> None:
             "SELECT table_name, data_type, column_default FROM information_schema.columns"
             " WHERE table_schema = 'public' AND column_name = 'id' AND table_name = ANY(:t)"
         ),
-        {"t": list(TABLAS_CON_ID)},
+        {"t": list(TABLAS_CON_ID_ACTUAL)},
     ).all()
-    assert {f.table_name for f in filas} == set(TABLAS_CON_ID)
+    assert {f.table_name for f in filas} == set(TABLAS_CON_ID_ACTUAL)
     for f in filas:
         assert f.data_type == "uuid", f.table_name
         assert f.column_default == "uuid_v7()", f.table_name
@@ -207,22 +324,22 @@ def test_las_17_referencias_son_uuid(db: Connection) -> None:
             " WHERE c.contype = 'f' AND c.connamespace = 'public'::regnamespace"
         )
     ).all()
-    assert {(f.tabla, f.columna, f.destino) for f in filas} == REFERENCIAS
+    assert {(f.tabla, f.columna, f.destino) for f in filas} == REFERENCIAS_ACTUAL
     assert {f.tipo for f in filas} == {"uuid"}
     clave: Any = db.execute(
         text(
             "SELECT a.attname FROM pg_index i JOIN pg_attribute a"
             " ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)"
-            " WHERE i.indisprimary AND i.indrelid = 'notificacion_reserva'::regclass"
+            " WHERE i.indisprimary AND i.indrelid = 'notification_booking'::regclass"
         )
     ).scalars()
-    assert set(clave) == {"notificacion_id", "reserva_id"}
+    assert set(clave) == {"notification_id", "booking_id"}
 
 
 def test_ids_nuevos_version_7_y_en_orden(db: Connection) -> None:
     """los ids nuevos son versión 7 y salen en el orden en que se crean @DAT-01-S1"""
     ids: list[uuid.UUID] = [
-        db.execute(text("INSERT INTO correo_saliente (para, asunto, cuerpo)"
+        db.execute(text("INSERT INTO outgoing_email (recipient, subject, body)"
                         " VALUES ('a@b.c', 'x', 'y') RETURNING id")).scalar_one()
         for _ in range(40)
     ]  # fmt: skip
@@ -237,7 +354,7 @@ def test_migracion_con_filas_existentes(base_nueva: tuple[AlembicConfig, str]) -
     motor = create_engine(url)
     command.upgrade(config, "0009")
     with motor.begin() as conn:
-        _sembrar(conn)
+        _sembrar_0009(conn)
         antes = _foto(conn)
     assert all(isinstance(v, int) for valores in antes.values() for v in valores)
 
@@ -289,13 +406,13 @@ def test_auditoria_en_las_9_tablas(db: Connection) -> None:
     columnas = db.execute(
         text(
             "SELECT table_name, column_name, data_type, is_nullable FROM information_schema.columns"
-            " WHERE table_schema = 'public' AND column_name IN ('creado_en', 'modificado_en')"
+            " WHERE table_schema = 'public' AND column_name IN ('created_at', 'updated_at')"
             " AND table_name = ANY(:t)"
         ),
-        {"t": list(TABLAS)},
+        {"t": list(TABLAS_ACTUAL)},
     ).all()
     assert {(c.table_name, c.column_name) for c in columnas} == {
-        (t, c) for t in TABLAS for c in ("creado_en", "modificado_en")
+        (t, c) for t in TABLAS_ACTUAL for c in ("created_at", "updated_at")
     }
     assert {(c.data_type, c.is_nullable) for c in columnas} == {("timestamp with time zone", "NO")}
     viejas = db.execute(
@@ -308,17 +425,17 @@ def test_auditoria_en_las_9_tablas(db: Connection) -> None:
     assert viejas == []
 
     ids = _sembrar(db)
-    for tabla in TABLAS:
-        donde = CLAVES[tabla]
+    for tabla in TABLAS_ACTUAL:
+        donde = CLAVES_ACTUAL[tabla]
         antes = db.execute(
-            text(f"SELECT creado_en, modificado_en FROM {tabla} WHERE {donde}"), ids
+            text(f"SELECT created_at, updated_at FROM {tabla} WHERE {donde}"), ids
         ).one()
-        db.execute(text(f"UPDATE {tabla} SET creado_en = creado_en WHERE {donde}"), ids)
+        db.execute(text(f"UPDATE {tabla} SET created_at = created_at WHERE {donde}"), ids)
         despues = db.execute(
-            text(f"SELECT creado_en, modificado_en FROM {tabla} WHERE {donde}"), ids
+            text(f"SELECT created_at, updated_at FROM {tabla} WHERE {donde}"), ids
         ).one()
-        assert despues.creado_en == antes.creado_en, tabla
-        assert despues.modificado_en > antes.modificado_en, tabla
+        assert despues.created_at == antes.created_at, tabla
+        assert despues.updated_at > antes.updated_at, tabla
 
 
 def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, str]) -> None:
@@ -333,7 +450,7 @@ def test_filas_existentes_conservan_su_fecha(base_nueva: tuple[AlembicConfig, st
         "dispositivo": ("registrado_en", datetime(2020, 4, 1, tzinfo=UTC)),
     }
     with motor.begin() as conn:
-        _sembrar(conn)
+        _sembrar_0009(conn)
         for tabla, (columna, fecha) in viejas.items():
             conn.execute(text(f"UPDATE {tabla} SET {columna} = :f"), {"f": fecha})
         conn.execute(text("UPDATE dispositivo SET actualizado_en = registrado_en"))

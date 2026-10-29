@@ -15,13 +15,13 @@ def _crear_usuario(motor: Engine, sufijo: str) -> UUID:
             str(
                 conn.execute(
                     text(
-                        "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
-                        " fecha_nacimiento) VALUES (:uid, :correo, 'Ana', 'Rios', :dni,"
+                        "INSERT INTO app_user (firebase_uid, email, first_name, last_name, dni,"
+                        " birth_date) VALUES (:uid, :email, 'Ana', 'Rios', :dni,"
                         " '1990-01-01') RETURNING id"
                     ),
                     {
                         "uid": f"uid-{sufijo}",
-                        "correo": f"ana-{sufijo}@correo.com",
+                        "email": f"ana-{sufijo}@correo.com",
                         "dni": sufijo[-8:].rjust(8, "0"),
                     },
                 ).scalar_one()
@@ -42,7 +42,7 @@ def test_el_destinatario_de_un_aviso_sale_de_la_base_y_una_cuenta_de_baja_no_tie
         )
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE usuario SET activo = false, dado_de_baja_en = now() WHERE id = :u"),
+            text("UPDATE app_user SET active = false, deactivated_at = now() WHERE id = :u"),
             {"u": usuario},
         )
     with motor.connect() as conn:

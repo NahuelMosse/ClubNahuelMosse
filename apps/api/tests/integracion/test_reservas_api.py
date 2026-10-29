@@ -25,20 +25,20 @@ def _reservar(
     espacio: str,
     dia: date,
     hora: int,
-    estado: str = "activa",
+    estado: str = "active",
     motivo: str | None = None,
 ) -> None:
     with motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total,"
-                " estado, motivo, cancelada_en)"
-                " SELECT :u, :e, x.i, x.i + interval '1 hour', 38000, 38000, :estado, :motivo,"
-                " CASE WHEN :estado <> 'activa' THEN now() END"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total,"
+                " status, reason, canceled_at)"
+                " SELECT :u, :e, x.i, x.i + interval '1 hour', 38000, 38000, :status, :reason,"
+                " CASE WHEN :status <> 'active' THEN now() END"
                 " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
                 " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
             ),
-            {"u": usuario, "e": espacio, "dia": dia, "h": hora, "estado": estado, "motivo": motivo},
+            {"u": usuario, "e": espacio, "dia": dia, "h": hora, "status": estado, "reason": motivo},
         )
 
 
@@ -48,7 +48,7 @@ def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
         return UUID(
             str(
                 conn.execute(
-                    text("SELECT id FROM usuario WHERE correo = :c"), {"c": correo}
+                    text("SELECT id FROM app_user WHERE email = :c"), {"c": correo}
                 ).scalar_one()
             )
         )
@@ -74,9 +74,9 @@ def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
     hoy = date.today()
     _reservar(motor, yo, espacio, hoy + timedelta(days=3), 10)
     _reservar(motor, yo, espacio, hoy + timedelta(days=1), 10)
-    _reservar(motor, yo, espacio, hoy + timedelta(days=2), 10, "cancelada")
+    _reservar(motor, yo, espacio, hoy + timedelta(days=2), 10, "canceled")
     _reservar(motor, yo, espacio, hoy - timedelta(days=5), 10)
-    _reservar(motor, yo, espacio, hoy - timedelta(days=2), 10, "anulada", "lluvia")
+    _reservar(motor, yo, espacio, hoy - timedelta(days=2), 10, "voided", "lluvia")
     _reservar(motor, _yo(api, motor, token_admin), espacio, hoy + timedelta(days=4), 10)
 
     def reservas(cuando: str) -> list[dict[str, object]]:
@@ -136,7 +136,7 @@ def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
     with motor.connect() as conn:
         assert (
             conn.execute(
-                text("SELECT count(*) FROM reserva WHERE espacio_id = :e"), {"e": espacio}
+                text("SELECT count(*) FROM booking WHERE space_id = :e"), {"e": espacio}
             ).scalar_one()
             == 1
         )
@@ -165,7 +165,7 @@ def test_el_administrador_no_reserva_y_un_espacio_dado_de_baja_no_se_reserva(
     assert api.post("/reservas", headers=_con(token_admin), json=pedido).status_code == 403
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE espacio SET activo = false, dado_de_baja_en = now() WHERE id = :e"),
+            text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :e"),
             {"e": espacio},
         )
     r = api.post("/reservas", headers=_con(token_usuario), json=pedido)
@@ -248,7 +248,7 @@ def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT cancelada_en IS NOT NULL, cancelada_por = usuario_id FROM reserva"
+                "SELECT canceled_at IS NOT NULL, canceled_by = user_id FROM booking"
                 " WHERE id = :id"
             ),
             {"id": reserva},
@@ -268,18 +268,18 @@ def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
     hoy = date.today()
     _reservar(motor, otro, espacio, hoy + timedelta(days=1), 10)
     _reservar(motor, yo, espacio, hoy + timedelta(days=1), 12)
-    _reservar(motor, yo, espacio, hoy + timedelta(days=2), 12, "anulada", "lluvia")
+    _reservar(motor, yo, espacio, hoy + timedelta(days=2), 12, "voided", "lluvia")
     with motor.begin() as conn:
         ids_reservas: list[Any] = list(
             conn.execute(
-                text("SELECT id FROM reserva WHERE espacio_id = :e ORDER BY inicio"),
+                text("SELECT id FROM booking WHERE space_id = :e ORDER BY starts_at"),
                 {"e": espacio},
             ).scalars()
         )
         ajena, mia, anulada = ids_reservas
         conn.execute(
             text(
-                "UPDATE reserva SET inicio = date_trunc('hour', now()), fin ="
+                "UPDATE booking SET starts_at = date_trunc('hour', now()), ends_at ="
                 " date_trunc('hour', now()) + interval '1 hour' WHERE id = :id"
             ),
             {"id": mia},
@@ -394,7 +394,7 @@ def test_modificar_rechaza_lo_que_no_corresponde(
     )
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE reserva SET estado = 'anulada', motivo = 'lluvia' WHERE id = :id"),
+            text("UPDATE booking SET status = 'voided', reason = 'lluvia' WHERE id = :id"),
             {"id": mia},
         )
     cambio = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "15:00"})
@@ -461,7 +461,7 @@ def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
         vieja = BookingsSql(conn).opening_hours(UUID(espacio))
     assert vieja is not None
     with motor.begin() as conn:
-        conn.execute(text("UPDATE sede SET apertura = '09:00' WHERE id = :s"), {"s": sede_id})
+        conn.execute(text("UPDATE venue SET opens_at = '09:00' WHERE id = :s"), {"s": sede_id})
 
     # Verifica: la reserva de las 8, validada antes del cambio, no entra.
     with motor.connect() as conn, pytest.raises(OpeningHoursChanged):

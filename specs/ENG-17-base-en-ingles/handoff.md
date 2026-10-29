@@ -1,32 +1,22 @@
-# Handoff ENG-17 · T1 and T2 (builder 3)
+# Handoff T4 (tests SQL to English schema)
 
-## Done
-- `apps/api/migrations/env.py` translated (run, engine, app_config).
-- `apps/api/migrations/versions/0012_english_schema.py` written: generic `_migrate(move, functions, view)` with `TO_ENGLISH` / `TO_SPANISH = _reversed(...)`; drops triggers/value constraints/value indexes/view/functions, translates values, renames tables/columns/constraints/indexes, recreates in the target names.
-- First full group run (before the last refactor of `_migrate` into `_drop_definitions`/`_rename_in_place`/`_create_triggers`): 19 passed, 2 failed, both TEST bugs:
-  - `test_english_schema.py::test_the_migration_translates_the_rows...` compares `counts` dicts keyed by table name (Spanish vs English) and so never reaches the downgrade half.
-  - `test_migrations_folder.py::test_the_migrations_live...` uses `ConfigParser()` with `%(here)s` in alembic.ini (needs `interpolation=None`).
-- Replacements written (NOT yet committed, not yet confirmed green): `apps/api/tests/escenarios/test_english_schema_rows.py` and `test_migrations_folder_ini.py` (same `@ENG-17-S1`/`@ENG-17-S3` tags).
+Done (committed): SQL inside `text(...)`, `_falla(...)`, `_uno(...)` translated in 43 test files under apps/api/tests
+(script: D:/Temp/w/herramientas/t4_sql.py, `write <files>`; idempotent), plus row attribute reads and stored-value
+asserts fixed by hand in the files that failed. test_uuid_y_auditoria.py keeps the 0009 flow with old names
+(`_sembrar_0009`, `TABLAS_CON_ID`, `REFERENCIAS`) and has head versions (`_sembrar`, `*_ACTUAL`).
+test_sin_sobreingenieria_api.py keeps old names in the 0009 migration test only.
 
-## Left
-1. Check `/tmp/g2.log` (run of the two new test files; ends with `done`) or rerun: `cd D:/Temp/w/eng17 && sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/escenarios/test_english_schema_rows.py tests/escenarios/test_migrations_folder_ini.py` (background + log; ~10 min for the schema file). If the rows test fails after the translation step, the downgrade half is the thing to debug.
-2. `sh D:/Temp/w/herramientas/eng17-lint.sh`: last run had 4 errors in 0012 (3 E501 and C901 on `_migrate`); the refactor just made fixes them, confirm. Run `ruff format` on 0012 and the two new tests if the tool is available.
-3. `sh D:/Temp/w/herramientas/eng17-render-rehearsal.sh` (not yet run).
-4. Log lines in card.md for T1/T2 including the `replaces:` lines: `- L<n> · <date> · replaces: apps/api/tests/escenarios/test_english_schema.py "test_the_migration_translates_the_rows..." · counts compared by table name · by: test_english_schema_rows.py "..."` and the same for `test_migrations_folder.py` -> `test_migrations_folder_ini.py` (ConfigParser interpolation).
-5. Commit in Spanish with trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Never push.
-- Group gate lines passing in the first run: all of test_english_schema (except the replaced one), test_datos_migraciones (all), test_migrations_folder (except the replaced one).
-
-# Handoff ENG-17 · T3 (builder, ran out of context)
-
-Run tests from the worktree root with `sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/<path>` (paths relative to apps/api: the script cds there). A stray empty `apps/api/.venv` (created by a `uv run` without UV_PROJECT_ENVIRONMENT) breaks the script with "No module named psycopg": it was removed; if it reappears, delete it (git-ignored).
-
-## Done
-- RED committed: `apps/api/tests/unit/test_sql_in_english.py` (fails now: every Spanish name left in a `text()`, in module SQL constants, and in the dict keys of functions that run SQL). It reads the old vocabulary from migration 0012 plus a list of Spanish bind/alias names (`OLD_ALIASES`): so bind parameters and column aliases must also be English (`ahora`, `antes`, `autor`, `canchas`, `clase`, `desde`, `espera`, `hasta`, `nuevo`, `precio`, `sede`, `leida`, `creada_en`, `empezo`, `donde_estaba`, `como_se_vio`, `nombre_usuario`, `vinculo`, `aviso`, `administrador`, ...). Run it to see the remaining leftovers per file.
-- Everything of the repositories was read; nothing else of T3 is written.
-
-## Left (all of T3)
-1. RED, before any code: `apps/api/tests/integracion/test_contract_over_english_schema.py` with the 4 tests named in card.md T3 (fixtures: `api`, `db`, `token_admin`, `token_usuario`, `sede`, `unico`, `iniciar_sesion`; see `tests/integracion/conftest.py`): (a) book/cancel/void/notify through the API and assert the JSON says `"estado": "activa"|"cancelada"|"anulada"`, `"rol": "usuario"`, `"tipo": "recordatorio"|"cancelacion_forzosa"`, `"aviso_envio": "enviada"` while `db` shows `status='active'`, `role='user'`, `kind='reminder'`, `delivery='sent'`; (b) `app.openapi()` JSON equals the committed `apps/api/openapi.json` byte for byte and that file equals `git show main:apps/api/openapi.json`; (c) a booking is still readable through a fresh `TestClient` (app restart); (d) every constraint name in `_INDEX_TO_FIELD` / venues / spaces repositories exists in `pg_constraint`/`pg_indexes`, and registering the same email and dni twice, and creating the same venue name twice, answers 409. Commit them RED (`git commit -- <paths>`).
-2. `apps/api/app/shared/stored_values.py` (data): two dicts contract<->stored built from the VALUES of 0012 (`usuario<->user`, `activa<->active`, `cancelada<->canceled`, `anulada<->voided`, `completada<->completed` (view only), `recordatorio<->reminder`, `recordatorio_cinco<->five_minute_reminder`, `cancelacion_forzosa<->forced_cancellation`, `cancelacion_usuario<->user_cancellation`, `pendiente<->pending`, `enviando<->sending`, `enviada<->sent`, `sin_permiso<->no_permission`, `sin_canal<->no_channel`, `fallida<->failed`; `admin` is the same). Functions `stored(value)` and `contract(value)` that raise KeyError on a missing key (closed enumeration; no default). Repositories use `stored(...)` on write, in WHERE filters and bind params (never hardcode the English literal in a text besides what the migration already names), and `contract(...)` on read (`Booking.status`, `Profile.role`, `Notification.kind`, `LostNotice.kind`, `notice_data(kind)`, history `notice_delivery`, `Reminder`/`due` filter by kind, `mark_delivery`). Literals inside SQL (`'activa'`, `'pendiente'`, ...) become English literals; `r.estado_actual` -> `r.current_status` of view `booking_with_status` (`completada` -> `completed`).
-3. Rewrite the SQL of: availability, bookings, notifications, password_recovery, session, spaces, users, venues `repository.py`, `app/shared/email.py` (`outgoing_email (recipient, subject, body)`), `app/e2e_support.py` (its SQL binds come from `model_dump(by_alias=True)`: change to `model_dump()` by Python field name and rename the bind names; its `status` default `"activa"` stays the wire value and goes through `stored()`). Names: see TABLES/COMMON_COLUMNS/OWN_COLUMNS in `apps/api/migrations/versions/0012_english_schema.py` (e.g. usuario.activo -> `app_user.active`, sede.activa -> `venue.active`, espacio.techada -> `space.covered`, iluminada -> `lit`, reserva.inicio -> `starts_at`, notificacion.envio -> `delivery`, cantidad -> `count`, dispositivo.permiso -> `permission_granted`, correo_saliente.para -> `recipient`). Row attribute reads (`row.sede_id`, `row.nombre`, `space.activo`, `space.precio_por_hora`, `previous.usuario_id`, `row.empezo`...) follow the new column/alias names. `users.repository.duplicates` aliases `correo`/`dni` columns: alias them `email`/`dni` and map to the contract field keys `correo`/`dni` (those stay).
-4. Constraint names (ASM-10): `venue_name_active_unique` (venues), `space_name_key` (spaces; `espacio_nombre_key` -> derived by `_constraint_name`: table `space` + translated columns), `app_user_email_unique`, `app_user_dni_unique` in `_INDEX_TO_FIELD` (values stay `correo`/`dni`). Confirm the real name of the space name unique constraint with `SELECT conname FROM pg_constraint` on a migrated DB.
-5. Gate: new test files + `tests/integracion` (failures from tests' own SQL still in Spanish belong to T4), `sh D:/Temp/w/herramientas/eng17-lint.sh`; `apps/api/openapi.json` must stay identical to main. Log lines `- L<n> · <date> · T3 · <command and result>` and commit (Spanish message, trailer `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`, only own paths).
+Left:
+1. Path `migraciones` -> `migrations` (NOT yet applied; the sed was blocked by the context cap):
+   unit/test_base_en_ingles.py:191, unit/test_documentacion_del_modelo.py:9, unit/test_glosario_ingles_completo.py:72
+   (string "apps/api/migraciones/versions"), unit/test_modulos_cuenta_en_ingles_actual.py:32,
+   unit/test_modulo_notificaciones_en_ingles.py:68, unit/test_modulo_reservas_en_ingles.py:86,
+   escenarios/test_documentacion_modelo_uuid.py:21, escenarios/test_documentacion_vigente.py:134,143.
+2. Run the 43 changed files (`git diff --name-only HEAD~1 -- apps/api/tests`, paths relative to apps/api):
+   `sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider <files>` in background (about 10 min), then
+   fix failures that are not from app/ repositories. Check test_datos.py / test_datos_tandas_y_cola.py /
+   test_datos_migraciones*.py: helpers at head (e.g. test_datos.py:71-234, test_datos_tandas_y_cola.py:37,108)
+   may still use old names while tests below 0012 must keep them.
+3. Still to review: quoted index/constraint names in non-text SQL, `SELECT ... AS tipo` alias in
+   test_uuid_y_auditoria.py (alias kept, reads `f.tipo`), tests asserting stored values via helper functions.
+4. Commit: "ENG-17: el SQL de los tests sigue al esquema en inglés (T4)" + Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>.

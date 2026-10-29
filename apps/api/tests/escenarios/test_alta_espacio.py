@@ -31,7 +31,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
     with motor.begin() as conn:
         sede: Any = conn.execute(
             text(
-                "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
                 " RETURNING id"
             ),
@@ -58,7 +58,7 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
     with motor.connect() as conn:
         assert (
             conn.execute(
-                text("SELECT count(*) FROM espacio WHERE sede_id = :s"), {"s": sede}
+                text("SELECT count(*) FROM space WHERE venue_id = :s"), {"s": sede}
             ).scalar_one()
             == 0
         )

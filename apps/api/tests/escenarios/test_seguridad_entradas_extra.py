@@ -73,7 +73,7 @@ def test_la_baja_de_un_token_ajeno_no_hace_nada_y_responde_204(
 
     with motor.connect() as conn:
         activo = conn.execute(
-            text("SELECT activo FROM dispositivo WHERE token = :t"), {"t": token}
+            text("SELECT active FROM device WHERE token = :t"), {"t": token}
         ).scalar_one()
     assert baja.status_code == 204
     assert activo is True

@@ -45,10 +45,10 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
     motor = create_engine(config.database_url)
     with motor.connect() as conn:
         rol: Any = conn.execute(
-            text("SELECT rol FROM usuario WHERE correo = :c"), {"c": f"rol.{s}@correo.com"}
+            text("SELECT role FROM app_user WHERE email = :c"), {"c": f"rol.{s}@correo.com"}
         ).scalar_one()
     motor.dispose()
-    assert rol == "usuario"
+    assert rol == "user"
 
 
 def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:

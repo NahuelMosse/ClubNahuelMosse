@@ -33,11 +33,11 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     with motor.begin() as conn:
         espacio: Any = conn.execute(
             text(
-                "WITH s AS (INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "WITH s AS (INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Vergara', 1850, '08:00', '23:00', ARRAY[1,2,3,4,5,6,7])"
                 " RETURNING id)"
-                " INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
+                " INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour) SELECT id, 'Futbol', 'F5', 1, :e, false, true,"
                 " 38000 FROM s RETURNING id"
             ),
             {"n": f"Sede Haedo {s}", "e": f"Haedo{s}_Vergara_1850_Futbol_F5_1"},
@@ -79,6 +79,6 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     # Verifica: la reserva sigue en su horario.
     with motor.connect() as conn:
         inicio: Any = conn.execute(
-            text("SELECT inicio FROM reserva WHERE id = :id"), {"id": reserva["id"]}
+            text("SELECT starts_at FROM booking WHERE id = :id"), {"id": reserva["id"]}
         ).scalar_one()
     assert inicio.astimezone(ZONA).hour == 21

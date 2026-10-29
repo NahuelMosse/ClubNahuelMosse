@@ -23,19 +23,19 @@ def _mundo(motor: Engine) -> dict[str, UUID]:
     with motor.begin() as conn:
         usuario = conn.execute(
             text(
-                "INSERT INTO usuario (firebase_uid, correo, nombre, apellido, dni,"
-                " fecha_nacimiento) VALUES (:uid, :correo, 'Ana', 'Pérez', :dni, '2000-03-14')"
+                "INSERT INTO app_user (firebase_uid, email, first_name, last_name, dni,"
+                " birth_date) VALUES (:uid, :email, 'Ana', 'Pérez', :dni, '2000-03-14')"
                 " RETURNING id"
             ),
             {
                 "uid": f"uid-{s}",
-                "correo": f"ana.{s}@correo.com",
+                "email": f"ana.{s}@correo.com",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
             },
         ).scalar_one()
         sede = conn.execute(
             text(
-                "INSERT INTO sede (nombre, calle, altura, apertura, cierre, dias)"
+                "INSERT INTO venue (name, street, street_number, opens_at, closes_at, open_days)"
                 " VALUES (:n, 'Av. Rivadavia', 19850, '08:00', '23:00',"
                 " '{1,2,3,4,5,6,7}') RETURNING id"
             ),
@@ -43,11 +43,11 @@ def _mundo(motor: Engine) -> dict[str, UUID]:
         ).scalar_one()
         espacio = conn.execute(
             text(
-                "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) VALUES (:sede, 'Futbol', 'F5', 1, :n, false,"
+                "INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour) VALUES (:venue, 'Futbol', 'F5', 1, :n, false,"
                 " true, 38000) RETURNING id"
             ),
-            {"sede": sede, "n": f"Propia{s}_Rivadavia_19850_Futbol_F5_1"},
+            {"venue": sede, "n": f"Propia{s}_Rivadavia_19850_Futbol_F5_1"},
         ).scalar_one()
     return {"usuario": usuario, "sede": sede, "espacio": espacio}
 
@@ -58,8 +58,8 @@ def _reserva(
     with motor.begin() as conn:
         return conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                " total, creado_en, modificado_en) VALUES (:u, :e, :i, :f, 38000, 38000,"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                " total, created_at, updated_at) VALUES (:u, :e, :i, :f, 38000, 38000,"
                 " coalesce(:c, now()), coalesce(:c, now())) RETURNING id"
             ),
             {
@@ -83,8 +83,8 @@ def test_baja_de_cuenta_cancela_reservas_futuras(motor: Engine) -> None:
     reserva = _reserva(motor, mundo, _hora(dias=3))
     with motor.connect() as conn:
         assert UsersSql(conn).deactivate(mundo["usuario"]) is True
-    assert _uno(motor, "SELECT estado FROM reserva WHERE id = :i", i=reserva) == "cancelada"
-    assert not _uno(motor, "SELECT activo FROM usuario WHERE id = :i", i=mundo["usuario"])
+    assert _uno(motor, "SELECT status FROM booking WHERE id = :i", i=reserva) == "canceled"
+    assert not _uno(motor, "SELECT active FROM app_user WHERE id = :i", i=mundo["usuario"])
 
 
 def test_cancelar_una_reserva_deja_su_aviso(motor: Engine) -> None:
@@ -96,8 +96,8 @@ def test_cancelar_una_reserva_deja_su_aviso(motor: Engine) -> None:
     assert (
         _uno(
             motor,
-            "SELECT count(*) FROM notificacion WHERE reserva_id = :i"
-            " AND tipo = 'cancelacion_usuario'",
+            "SELECT count(*) FROM notification WHERE booking_id = :i"
+            " AND kind = 'user_cancellation'",
             i=reserva,
         )
         == 1
@@ -109,8 +109,8 @@ def test_baja_de_sede_da_de_baja_sus_espacios(motor: Engine) -> None:
     mundo = _mundo(motor)
     with motor.connect() as conn:
         VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
-    assert not _uno(motor, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
-    assert not _uno(motor, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
+    assert not _uno(motor, "SELECT active FROM venue WHERE id = :i", i=mundo["sede"])
+    assert not _uno(motor, "SELECT active FROM space WHERE id = :i", i=mundo["espacio"])
 
 
 def test_la_baja_de_sede_sobrevive_al_reinicio(motor: Engine) -> None:
@@ -120,8 +120,8 @@ def test_la_baja_de_sede_sobrevive_al_reinicio(motor: Engine) -> None:
         VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
     nuevo = create_engine(motor.url)
     try:
-        assert not _uno(nuevo, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
-        assert not _uno(nuevo, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
+        assert not _uno(nuevo, "SELECT active FROM venue WHERE id = :i", i=mundo["sede"])
+        assert not _uno(nuevo, "SELECT active FROM space WHERE id = :i", i=mundo["espacio"])
     finally:
         nuevo.dispose()
 
@@ -140,5 +140,5 @@ def test_si_la_baja_de_sede_falla_no_queda_nada(
     monkeypatch.setattr(SpacesSql, "deactivate_venue_spaces", escribe_y_cae)
     with motor.connect() as conn, pytest.raises(RuntimeError):
         VenuesSql(conn).deactivate(mundo["sede"], mundo["usuario"])
-    assert _uno(motor, "SELECT activa FROM sede WHERE id = :i", i=mundo["sede"])
-    assert _uno(motor, "SELECT activo FROM espacio WHERE id = :i", i=mundo["espacio"])
+    assert _uno(motor, "SELECT active FROM venue WHERE id = :i", i=mundo["sede"])
+    assert _uno(motor, "SELECT active FROM space WHERE id = :i", i=mundo["espacio"])

@@ -88,9 +88,9 @@ def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT s.calle, s.altura, s.activa, s.creado_en IS NOT NULL AS con_fecha,"
-                " u.correo LIKE 'admin.%' AS por_admin"
-                " FROM sede s JOIN usuario u ON u.id = s.creado_por WHERE s.id = :id"
+                "SELECT s.street, s.street_number, s.active, s.created_at IS NOT NULL AS con_fecha,"
+                " u.email LIKE 'admin.%' AS por_admin"
+                " FROM venue s JOIN app_user u ON u.id = s.created_by WHERE s.id = :id"
             ),
             {"id": r.json()["id"]},
         ).one()
@@ -110,10 +110,10 @@ def test_los_usuarios_ven_las_sedes_por_nombre_con_sus_canchas(
     with motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, precio_por_hora,"
-                " techada, iluminada) VALUES (:sede, 'Padel', 'PAD', 1, :n, 30000, true, true)"
+                "INSERT INTO space (venue_id, sport, kind, number, name, price_per_hour,"
+                " covered, lit) VALUES (:venue, 'Padel', 'PAD', 1, :n, 30000, true, true)"
             ),
-            {"sede": zeta["id"], "n": f"Zz_Vergara_1850_Padel_PAD_1_{s}"},
+            {"venue": zeta["id"], "n": f"Zz_Vergara_1850_Padel_PAD_1_{s}"},
         )
 
     r = api.get("/sedes", headers=_con(token_usuario))
@@ -154,7 +154,7 @@ def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
     assert codigos == [201, 409]
     with motor.connect() as conn:
         n: Any = conn.execute(
-            text("SELECT count(*) FROM sede WHERE nombre = :n"), {"n": nombre}
+            text("SELECT count(*) FROM venue WHERE name = :n"), {"n": nombre}
         ).scalar_one()
     assert n == 1
 
@@ -220,8 +220,8 @@ def test_editar_guarda_los_datos_nuevos_con_su_rastro(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT s.modificado_en > s.creado_en AS despues, u.correo LIKE 'admin.%' AS admin"
-                " FROM sede s JOIN usuario u ON u.id = s.modificado_por WHERE s.id = :id"
+                "SELECT s.updated_at > s.created_at AS despues, u.email LIKE 'admin.%' AS admin"
+                " FROM venue s JOIN app_user u ON u.id = s.updated_by WHERE s.id = :id"
             ),
             {"id": sede},
         ).one()
@@ -248,7 +248,7 @@ def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_ba
     assert vacio.json()["errores"]["direccion"] == "La dirección es obligatoria"
     with motor.begin() as conn:
         conn.execute(
-            text("UPDATE sede SET activa = false, dado_de_baja_en = now() WHERE id = :id"),
+            text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede},
         )
     assert (
@@ -282,22 +282,22 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
         },
     ).json()["id"]
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         manana: Any = conn.execute(
             text("SELECT (now() AT TIME ZONE 'America/Argentina/Buenos_Aires')::date + 1")
         ).scalar_one()
         for dia, hora, estado in [
-            (1, 8, "activa"),
-            (1, 22, "activa"),
-            (1, 9, "cancelada"),
-            (-2, 8, "activa"),
+            (1, 8, "active"),
+            (1, 22, "active"),
+            (1, 9, "canceled"),
+            (-2, 8, "active"),
         ]:
             conn.execute(
                 text(
-                    "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora,"
-                    " total, estado, cancelada_en)"
-                    " SELECT :u, :e, x.i, x.i + interval '1 hour', 38000, 38000, :estado,"
-                    " CASE WHEN :estado <> 'activa' THEN now() END"
+                    "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour,"
+                    " total, status, canceled_at)"
+                    " SELECT :u, :e, x.i, x.i + interval '1 hour', 38000, 38000, :status,"
+                    " CASE WHEN :status <> 'active' THEN now() END"
                     " FROM (SELECT (CAST(:dia AS date) + make_interval(hours => :h))"
                     " AT TIME ZONE 'America/Argentina/Buenos_Aires' AS i) x"
                 ),
@@ -306,7 +306,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
                     "e": espacio,
                     "dia": manana + timedelta(days=dia - 1),
                     "h": hora,
-                    "estado": estado,
+                    "status": estado,
                 },
             )
 
@@ -325,7 +325,7 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
     assert editar(apertura="09:00", dias=todos, direccion="Av. Rivadavia 19850")[0] == 200
     with motor.connect() as conn:
         activas: Any = conn.execute(
-            text("SELECT count(*) FROM reserva WHERE espacio_id = :e AND estado = 'activa'"),
+            text("SELECT count(*) FROM booking WHERE space_id = :e AND status = 'active'"),
             {"e": espacio},
         ).scalar_one()
     assert activas == 3
@@ -356,9 +356,9 @@ def test_la_baja_deja_la_sede_y_sus_espacios_inactivos_con_su_rastro(
     with motor.connect() as conn:
         fila = conn.execute(
             text(
-                "SELECT s.activa, s.dado_de_baja_en IS NOT NULL, e.activo,"
-                " e.dado_de_baja_por = s.dado_de_baja_por"
-                " FROM sede s JOIN espacio e ON e.sede_id = s.id WHERE s.id = :id"
+                "SELECT s.active, s.deactivated_at IS NOT NULL, e.active,"
+                " e.deactivated_by = s.deactivated_by"
+                " FROM venue s JOIN space e ON e.venue_id = s.id WHERE s.id = :id"
             ),
             {"id": sede},
         ).one()
@@ -389,11 +389,11 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
         },
     ).json()["id"]
     with motor.begin() as conn:
-        dueno: Any = conn.execute(text("SELECT id FROM usuario ORDER BY id LIMIT 1")).scalar_one()
+        dueno: Any = conn.execute(text("SELECT id FROM app_user ORDER BY id LIMIT 1")).scalar_one()
         # Una en curso: empezó en esta hora y termina en dos.
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT :u, :e, i, i + interval '2 hours', 38000, 76000"
                 " FROM (SELECT date_trunc('hour', now()) AS i) x"
             ),
@@ -410,5 +410,5 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
     }
     with motor.connect() as conn:
         assert conn.execute(
-            text("SELECT activa FROM sede WHERE id = :id"), {"id": sede}
+            text("SELECT active FROM venue WHERE id = :id"), {"id": sede}
         ).scalar_one()
