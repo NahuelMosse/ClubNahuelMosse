@@ -49,7 +49,7 @@ FieldProblem? validateEmail(String value) {
 /// The rules the password does not meet, in the order the app shows them.
 List<FieldProblem> passwordProblems(String password) => [
   if (password.runes.length < 8) FieldProblem.passwordLength,
-  // The uppercase letters of Spanish (Á É Í Ó Ú Ñ) count too.
+  // The uppercase letters of Spanish (A, E, I, O, U with acute, and N with tilde) count too.
   if (!RegExp(r'[A-ZÁÉÍÓÚÑ]').hasMatch(password))
     FieldProblem.passwordUppercase,
   if (!RegExp(r'[0-9]').hasMatch(password)) FieldProblem.passwordNumber,

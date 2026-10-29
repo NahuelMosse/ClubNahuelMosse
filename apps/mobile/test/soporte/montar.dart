@@ -150,7 +150,8 @@ Future<void> montar(
           child: hijo ?? const SizedBox.shrink(),
         );
       },
-      home: pantalla,
+      // A new key makes a second mount in the same test start from a fresh state.
+      home: KeyedSubtree(key: UniqueKey(), child: pantalla),
     ),
   );
   await tester.pumpAndSettle();

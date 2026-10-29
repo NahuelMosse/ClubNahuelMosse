@@ -1,10 +1,20 @@
-# Handoff ENG-19 · T1 and T5 (done); T2-T4 left to the next builders
+# Handoff T2 (ENG-19, worktree D:/Temp/w/eng19-t2, branch ENG-19-t2)
 
-Done (committed): the l10n setup (`apps/mobile/l10n.yaml`, `lib/l10n/app_{en,es}.arb` and the generated `app_localizations*.dart`), `lib/common/app_language.dart` (`resolveLanguage`, `useLanguage`, `currentLanguage`), `app.dart`, `main.dart`, `dates.dart` following the language, the login screen and its strings, `test/flutter_test_config.dart` and `integration_test/flutter_test_config.dart` (device es-AR), `test/soporte/montar.dart` (mounts with the app's delegates and the device's language; exports `invalidCredentialsMessage` in Spanish).
+## Done
+- RED committed (fe85e51); code commit: session/users/home/router converted to l10n; ~100 keys in app_en.arb and app_es.arb after appName; `FieldProblem` enum in users/domain; `fieldProblemText` in users/presentation.
+- `test/soporte/montar.dart` wraps the screen in `KeyedSubtree(key: UniqueKey())` so a second mount in one test starts with a fresh state. This was the cause of the two failures of `bilingual_account_test.dart` (state reused after re-mounting). Not re-run after the change.
+- registration_rules.dart uppercase regex written with \u escapes (literal scan).
 
-Regenerate after adding keys to the `.arb`: `cd apps/mobile && flutter gen-l10n` (Flutter at /d/projects/flutter/bin).
+## Left
+1. Re-run `bilingual_account_test.dart` (expected green now) and the scan in `bilingual_app_test.dart`: confirm no file of session/users/home/router is listed.
+2. Frozen tests broken by T2 that need an `_es_test.dart` copy (same title and tag, mounted in Spanish with the app delegates, `FieldProblem` values instead of strings in domain tests), plus a line in `specs/ENG-19-app-bilingue/replaces-T2.md` each (do NOT run log.mjs):
+   - compile errors: capas_test (87-113), reglas_registro_test, registration_limits_rules_test (`requiredMessage` param gone, rules return FieldProblem), pantalla_registro_test:165 (`validateEmail('ana')!`), recuperacion_test:95 (`linkSentNotice` removed; use the .arb text).
+   - runtime failures (probably MaterialApp without delegates -> `AppLocalizations.of` null check): accesibilidad_registro_test, errores_compartidos_test (2), interfaz_accesible_test (1), reintento_tras_corte_test (2), rediseno/movimiento_pantallas_test (7), rediseno/pantallas_test (4), rediseno/sobre_foto_test (8), rediseno/movimiento_reducido_reemplazo_test (1).
+   - Likely not mine, check against main before copying: rediseno/paleta_rediseno_test (3), componentes_test, boton_deshabilitado_test.
+3. `dart format`, `flutter analyze --no-pub`, commit.
 
-Tests: `test/bilingual_app_test.dart` (T1 and T5), `test/bilingual_price_test.dart`; replaced login copies: `pantalla_inicio_sesion_es_test.dart`, `teclado_en_el_login_es_test.dart`, `rediseno/movimiento_login_es_test.dart`, `rediseno/login_marca_es_test.dart` (Log L8-L24).
+## Run
+`cd D:/Temp/w/eng19-t2 && sh D:/Temp/w/herramientas/flutter-mobile.sh test/<file> ... > apps/mobile/.validation/x.log 2>&1` (from the worktree root, not apps/mobile).
 
-Left: T2-T4 move every other literal (the T5 scan lists them with file:line); `dates.dart` `duration()` still says `hora/horas`; `common/snackbar.dart` ('Cerrar aviso') and `common/text_field.dart` (password toggle tooltips) feed the T5 tooltips test; `rediseno/movimiento_pantallas_test.dart` @RED-04-S14 fails and its cause is not checked.
-Every frozen test that mounts its own `MaterialApp` without `AppLocalizations.localizationsDelegates` breaks when its screen converts: copy it to a new file mounted with the delegates and add a `replaces:` Log line.
+## Outside my folders
+common/password_form.dart, snackbar.dart, text_field.dart, error_dialog, network_failure, bottom_bar, result may hold Spanish (T4). `volverA` in T3's AvailabilityScreen is a String the router passes localized. `showNetworkError(context, ErrorDelServidor(0))` is called from account_card.
