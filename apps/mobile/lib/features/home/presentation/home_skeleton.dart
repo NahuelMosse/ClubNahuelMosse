@@ -18,45 +18,11 @@ class HomeSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final p = context.palette;
     return SkeletonZone(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              Spacing.s24,
-              Spacing.s24,
-              Spacing.s24,
-              0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const HomeTitle('TU PRÓXIMA RESERVA'),
-                const SizedBox(height: Spacing.s12),
-                Container(
-                  key: const ValueKey('skeleton-card'),
-                  height: _bookingHeight,
-                  padding: const EdgeInsets.all(Spacing.s16),
-                  decoration: BoxDecoration(
-                    border: Border.all(color: p.borderDefault),
-                    borderRadius: BorderRadius.circular(Spacing.radiusLg),
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Skeleton(width: 120, height: 14),
-                      SizedBox(height: Spacing.s12),
-                      Skeleton(width: 200, height: 20),
-                      SizedBox(height: Spacing.s8),
-                      Skeleton(width: 160, height: 14),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const _Booking(),
           const Padding(
             padding: EdgeInsets.only(top: Spacing.s32),
             child: Column(
@@ -71,37 +37,87 @@ class HomeSkeleton extends StatelessWidget {
               ],
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-              Spacing.s24,
-              Spacing.s32,
-              Spacing.s24,
-              Spacing.s40,
+          const _Shortcuts(),
+        ],
+      ),
+    );
+  }
+}
+
+class _Shortcuts extends StatelessWidget {
+  const _Shortcuts();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.fromLTRB(
+      Spacing.s24,
+      Spacing.s32,
+      Spacing.s24,
+      Spacing.s40,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        HomeTitle('ACCESOS RÁPIDOS'),
+        SizedBox(height: Spacing.s12),
+        Row(
+          children: [
+            Expanded(
+              child: Skeleton(
+                key: ValueKey('skeleton-shortcut'),
+                height: HomeSkeleton._shortcutHeight,
+                radius: Spacing.radiusLg,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+            SizedBox(width: Spacing.s12),
+            Expanded(
+              child: Skeleton(
+                key: ValueKey('skeleton-shortcut'),
+                height: HomeSkeleton._shortcutHeight,
+                radius: Spacing.radiusLg,
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class _Booking extends StatelessWidget {
+  const _Booking();
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.s24,
+        Spacing.s24,
+        Spacing.s24,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const HomeTitle('TU PRÓXIMA RESERVA'),
+          const SizedBox(height: Spacing.s12),
+          Container(
+            key: const ValueKey('skeleton-card'),
+            height: HomeSkeleton._bookingHeight,
+            padding: const EdgeInsets.all(Spacing.s16),
+            decoration: BoxDecoration(
+              border: Border.all(color: p.borderDefault),
+              borderRadius: BorderRadius.circular(Spacing.radiusLg),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                HomeTitle('ACCESOS RÁPIDOS'),
+                Skeleton(width: 120, height: 14),
                 SizedBox(height: Spacing.s12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Skeleton(
-                        key: ValueKey('skeleton-shortcut'),
-                        height: _shortcutHeight,
-                        radius: Spacing.radiusLg,
-                      ),
-                    ),
-                    SizedBox(width: Spacing.s12),
-                    Expanded(
-                      child: Skeleton(
-                        key: ValueKey('skeleton-shortcut'),
-                        height: _shortcutHeight,
-                        radius: Spacing.radiusLg,
-                      ),
-                    ),
-                  ],
-                ),
+                Skeleton(width: 200, height: 20),
+                SizedBox(height: Spacing.s8),
+                Skeleton(width: 160, height: 14),
               ],
             ),
           ),
