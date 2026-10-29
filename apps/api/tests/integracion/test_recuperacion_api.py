@@ -47,7 +47,10 @@ def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
     (codigo,) = _codigos(motor, correo)
 
     assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 204
-    assert api.put("/password-recovery", json={"code": codigo, "new_password": NUEVA}).status_code == 204
+    assert (
+        api.put("/password-recovery", json={"code": codigo, "new_password": NUEVA}).status_code
+        == 204
+    )
 
     assert iniciar_sesion(correo, VIEJA) is None
     assert iniciar_sesion(correo, NUEVA) is not None
@@ -55,7 +58,10 @@ def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
     assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
     assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 410
     assert (
-        api.put("/password-recovery", json={"code": codigo, "new_password": "ClubNahuel3"}).status_code == 410
+        api.put(
+            "/password-recovery", json={"code": codigo, "new_password": "ClubNahuel3"}
+        ).status_code
+        == 410
     )
 
 
@@ -130,7 +136,10 @@ def test_una_contrasena_debil_se_rechaza_y_el_enlace_sigue_sirviendo(
 def test_un_codigo_inventado_no_sirve(api: TestClient) -> None:
     assert api.post("/password-recovery/check", json={"code": "inventado"}).status_code == 410
     assert api.post("/password-recovery/check", json={}).status_code == 410
-    assert api.put("/password-recovery", json={"code": "inventado", "new_password": NUEVA}).status_code == 410
+    assert (
+        api.put("/password-recovery", json={"code": "inventado", "new_password": NUEVA}).status_code
+        == 410
+    )
 
 
 def test_un_correo_mal_escrito_se_rechaza(api: TestClient) -> None:
@@ -170,7 +179,8 @@ def test_pedidos_simultaneos_no_dejan_dos_enlaces_vigentes(
     with ThreadPoolExecutor(max_workers=6) as pool:
         codigos_http = list(
             pool.map(
-                lambda _: api.post("/password-recovery", json={"email": correo}).status_code, range(6)
+                lambda _: api.post("/password-recovery", json={"email": correo}).status_code,
+                range(6),
             )
         )
     assert codigos_http == [202] * 6
