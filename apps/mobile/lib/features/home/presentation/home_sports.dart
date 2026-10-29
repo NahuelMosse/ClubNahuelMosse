@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../common/motion.dart';
 import '../../../common/sport_tile.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../spaces/domain/space.dart';
 import '../../venues/presentation/photos.dart';
@@ -24,9 +25,9 @@ class HomeSports extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: Spacing.s24),
-            child: HomeTitle('DEPORTES'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.s24),
+            child: HomeTitle(AppLocalizations.of(context).homeSports),
           ),
           const SizedBox(height: Spacing.s12),
           SingleChildScrollView(

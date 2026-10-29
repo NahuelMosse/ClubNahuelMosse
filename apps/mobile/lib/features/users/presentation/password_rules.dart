@@ -1,9 +1,11 @@
 // kit-shape: a screen or error family kept with its private parts.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/registration_rules.dart';
+import 'field_problem_text.dart';
 
 /// The three password rules, each green if met and red if missing.
 /// Shown while the typed password does not meet all of them.
@@ -13,9 +15,9 @@ class PasswordRules extends StatelessWidget {
   final String password;
 
   static const _all = [
-    'Al menos 8 caracteres',
-    'Una letra mayúscula',
-    'Al menos un número',
+    FieldProblem.passwordLength,
+    FieldProblem.passwordUppercase,
+    FieldProblem.passwordNumber,
   ];
 
   @override
@@ -23,6 +25,7 @@ class PasswordRules extends StatelessWidget {
     final missing = passwordProblems(password);
     if (password.isEmpty || missing.isEmpty) return const SizedBox.shrink();
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: Spacing.s16),
       child: Semantics(
@@ -39,7 +42,10 @@ class PasswordRules extends StatelessWidget {
             children: [
               for (final (i, rule) in _all.indexed) ...[
                 if (i > 0) const SizedBox(height: Spacing.s8),
-                _Rule(text: rule, met: !missing.contains(rule)),
+                _Rule(
+                  text: fieldProblemText(l10n, rule),
+                  met: !missing.contains(rule),
+                ),
               ],
             ],
           ),
@@ -58,9 +64,10 @@ class _Rule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Semantics(
       container: true,
-      label: '$text: ${met ? 'cumplida' : 'falta'}',
+      label: met ? l10n.passwordRuleMet(text) : l10n.passwordRuleMissing(text),
       excludeSemantics: true,
       child: Row(
         children: [

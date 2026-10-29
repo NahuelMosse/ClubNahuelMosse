@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../common/avatar.dart';
 import '../../../common/error_dialog.dart';
 import '../../../common/network_failure.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'account_panel.dart';
 import 'session.dart';
@@ -28,7 +29,7 @@ class AccountButton extends StatelessWidget {
     return Semantics(
       container: true,
       button: true,
-      label: 'Tu cuenta',
+      label: AppLocalizations.of(context).accountTitle,
       // Con los hijos excluidos, el toque del lector de pantalla tiene que declararse acá.
       onTap: open,
       excludeSemantics: true,
@@ -73,7 +74,7 @@ Future<void> showAccountCard(BuildContext context, Session session) {
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: true,
-    barrierLabel: 'Cerrar la tarjeta de tu cuenta',
+    barrierLabel: AppLocalizations.of(context).accountCloseCard,
     barrierColor: context.palette.bgScrim,
     pageBuilder: (context, _, _) {
       // Perfil y reservas se apilan sobre el inicio: el atrás del teléfono vuelve a él.

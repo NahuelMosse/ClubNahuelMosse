@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/profile.dart';
 import '../domain/role.dart';
@@ -23,6 +24,7 @@ class AccountPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     final isUser = profile.role == Role.user;
     return FadeIn(
       fromY: -16,
@@ -57,18 +59,18 @@ class AccountPanel extends StatelessWidget {
                 if (isUser) ...[
                   AccountOption(
                     icon: Icons.person_outline_rounded,
-                    text: 'Perfil completo',
+                    text: l10n.accountFullProfile,
                     onTap: () => onNavigate('/perfil'),
                   ),
                   AccountOption(
                     icon: Icons.calendar_today_outlined,
-                    text: 'Mis reservas',
+                    text: l10n.accountMyBookings,
                     onTap: () => onNavigate('/reservas'),
                   ),
                 ],
                 AccountOption(
                   icon: Icons.logout_rounded,
-                  text: 'Cerrar sesión',
+                  text: l10n.accountSignOut,
                   danger: true,
                   onTap: onSignOut,
                 ),

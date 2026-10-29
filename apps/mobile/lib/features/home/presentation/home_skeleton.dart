@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import 'home_title.dart';
 
@@ -24,17 +25,17 @@ class HomeSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const _Booking(),
-          const Padding(
-            padding: EdgeInsets.only(top: Spacing.s32),
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.s32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: Spacing.s24),
-                  child: HomeTitle('DEPORTES'),
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.s24),
+                  child: HomeTitle(AppLocalizations.of(context).homeSports),
                 ),
-                SizedBox(height: Spacing.s12),
-                _Tiles(),
+                const SizedBox(height: Spacing.s12),
+                const _Tiles(),
               ],
             ),
           ),
@@ -49,8 +50,8 @@ class _Shortcuts extends StatelessWidget {
   const _Shortcuts();
 
   @override
-  Widget build(BuildContext context) => const Padding(
-    padding: EdgeInsets.fromLTRB(
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(
       Spacing.s24,
       Spacing.s32,
       Spacing.s24,
@@ -59,9 +60,9 @@ class _Shortcuts extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        HomeTitle('ACCESOS RÁPIDOS'),
-        SizedBox(height: Spacing.s12),
-        Row(
+        HomeTitle(AppLocalizations.of(context).homeQuickAccess),
+        const SizedBox(height: Spacing.s12),
+        const Row(
           children: [
             Expanded(
               child: Skeleton(
@@ -101,7 +102,7 @@ class _Booking extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const HomeTitle('TU PRÓXIMA RESERVA'),
+          HomeTitle(AppLocalizations.of(context).homeNextBooking),
           const SizedBox(height: Spacing.s12),
           Container(
             key: const ValueKey('skeleton-card'),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 
@@ -21,7 +22,9 @@ class ProfileDataRow extends StatelessWidget {
     final shown = value.trim().isEmpty ? '—' : value;
     return Semantics(
       container: true,
-      label: fixed ? '$label: $shown. No se puede cambiar' : '$label: $shown',
+      label: fixed
+          ? AppLocalizations.of(context).profileFixedField(label, shown)
+          : '$label: $shown',
       excludeSemantics: true,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: Spacing.s12),

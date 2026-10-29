@@ -10,11 +10,13 @@ import '../../../common/field_errors.dart';
 import '../../../common/missing_fields.dart';
 import '../../../common/network_failure.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../data/registration_service.dart';
 import '../domain/registration_data.dart';
 import '../domain/registration_field.dart';
 import '../domain/registration_rules.dart';
+import 'field_problem_text.dart';
 import 'registration_form.dart';
 import 'registration_header.dart';
 
@@ -93,24 +95,31 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   String _valueOf(RegistrationField c) => _controllers[c.index].text;
 
-  String? _ruleError(RegistrationField field) => switch (field) {
-    RegistrationField.firstName => validateName(
-      _valueOf(field),
-      requiredMessage: 'El nombre es obligatorio',
-    ),
-    RegistrationField.lastName => validateName(
-      _valueOf(field),
-      requiredMessage: 'El apellido es obligatorio',
-    ),
+  FieldProblem? _ruleError(RegistrationField field) => switch (field) {
+    RegistrationField.firstName ||
+    RegistrationField.lastName => validateName(_valueOf(field)),
     RegistrationField.dni => validateDni(_valueOf(field)),
     RegistrationField.birthDate => validateBirthDate(_valueOf(field), _today),
     RegistrationField.email => validateEmail(_valueOf(field)),
     RegistrationField.password => validatePassword(_valueOf(field)),
   };
 
+  String? _ruleText(RegistrationField field) {
+    final problem = _ruleError(field);
+    if (problem == null) return null;
+    final l10n = AppLocalizations.of(context);
+    return fieldProblemText(
+      l10n,
+      problem,
+      nameRequired: field == RegistrationField.lastName
+          ? l10n.ruleLastNameRequired
+          : l10n.ruleFirstNameRequired,
+    );
+  }
+
   String? _visibleError(RegistrationField field) => errorToShow(
     serverError: _serverErrors[field],
-    ruleError: _ruleError(field),
+    ruleError: _ruleText(field),
     attempted: _createAttempted,
     touched: _touched.contains(field),
   );
@@ -125,7 +134,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       setState(() => _createAttempted = true);
       focusFirstMissing([
         for (final c in RegistrationField.values)
-          (_focusNodes[c.index], _ruleError(c)),
+          (_focusNodes[c.index], _ruleError(c)?.name),
       ]);
       return;
     }
@@ -195,7 +204,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TopBar(title: 'Registro', onBack: () => context.go('/')),
+      appBar: TopBar(
+        title: AppLocalizations.of(context).registerTitle,
+        onBack: () => context.go('/'),
+      ),
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -224,7 +236,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               ),
               const SizedBox(height: Spacing.s16),
               PrimaryButton(
-                label: 'CREAR CUENTA',
+                label: AppLocalizations.of(context).registerCreate,
                 loading: _submitting,
                 dimmed: !_complete,
                 onTap: _createAccount,

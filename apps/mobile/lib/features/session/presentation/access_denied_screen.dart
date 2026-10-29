@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../common/button.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import 'account_card.dart';
@@ -50,6 +51,7 @@ class _AccessDeniedScreenState extends State<AccessDeniedScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: p.bgBase,
       body: SafeArea(
@@ -75,22 +77,25 @@ class _AccessDeniedScreenState extends State<AccessDeniedScreen> {
               Semantics(
                 header: true,
                 child: Text(
-                  'Acceso denegado',
+                  l10n.accessDeniedTitle,
                   textAlign: TextAlign.center,
                   style: Texts.h2.copyWith(color: p.textPrimary),
                 ),
               ),
               const SizedBox(height: Spacing.s8),
               Text(
-                'Tu cuenta no tiene permisos de administrador. Te llevamos a Mis reservas.',
+                l10n.accessDeniedBody,
                 textAlign: TextAlign.center,
                 style: Texts.body.copyWith(color: p.textSecondary),
               ),
               const SizedBox(height: Spacing.s24),
-              PrimaryButton(label: 'IR A MIS RESERVAS', onTap: _goToMyBookings),
+              PrimaryButton(
+                label: l10n.accessDeniedGoToBookings,
+                onTap: _goToMyBookings,
+              ),
               const SizedBox(height: Spacing.s8),
               TextActionButton(
-                label: 'Cerrar sesión',
+                label: l10n.accountSignOut,
                 onTap: () => signOut(context, widget.session),
               ),
             ],

@@ -9,6 +9,7 @@ import '../../../common/password_form.dart';
 import '../../../common/result.dart';
 import '../../../common/text_field.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../users/domain/registration_rules.dart';
 import '../../users/presentation/password_rules.dart';
@@ -99,7 +100,7 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     if (repeated.isEmpty || repeated == _newPassword.text) return null;
     final finished =
         !_repeatedFocus.hasFocus || repeated.length >= _newPassword.text.length;
-    return finished ? 'Las contraseñas no coinciden' : null;
+    return finished ? AppLocalizations.of(context).rulePasswordMismatch : null;
   }
 
   bool get _complete =>
@@ -169,13 +170,14 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     switch (_stage) {
       case _Stage.checking:
         return Scaffold(
           backgroundColor: p.bgBase,
           body: Center(
             child: Semantics(
-              label: 'Comprobando el enlace',
+              label: l10n.newPasswordChecking,
               child: CircularProgressIndicator(color: p.accentInk),
             ),
           ),
@@ -184,45 +186,45 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
         return ResultScreen(
           icon: Icons.warning_amber_rounded,
           tone: ResultTone.danger,
-          title: 'El enlace no es válido',
+          title: l10n.newPasswordInvalidTitle,
           text: _hadNetworkFailure
-              ? 'Este enlace ya se usó o venció. Si recién guardaste tu contraseña '
-                    'nueva, iniciá sesión con ella.'
-              : 'Este enlace ya se usó o venció. Pedí uno nuevo desde la pantalla '
-                    'de inicio de sesión.',
-          primary: 'PEDIR UN ENLACE NUEVO',
+              ? l10n.newPasswordInvalidAfterCutoff
+              : l10n.newPasswordInvalid,
+          primary: l10n.newPasswordRequestNew,
           onPrimaryTap: () => context.go('/recuperar-contrasena'),
-          secondary: 'Volver al inicio de sesión',
+          secondary: l10n.newPasswordBackToSignIn,
           onSecondaryTap: () => context.go('/'),
         );
       case _Stage.done:
         return PasswordUpdated(
-          primary: 'VOLVER AL INICIO DE SESIÓN',
+          primary: l10n.accountBackToSignIn,
           onPrimaryTap: _backToLogin,
         );
       case _Stage.form:
         break;
     }
     return PasswordFormTemplate(
-      bar: TopBar(title: 'Nueva contraseña', onBack: () => context.go('/')),
-      title: 'Creá una contraseña nueva',
-      explanation:
-          'Tiene que tener al menos 8 caracteres, una mayúscula y un número.',
+      bar: TopBar(
+        title: l10n.newPasswordBarTitle,
+        onBack: () => context.go('/'),
+      ),
+      title: l10n.newPasswordHeading,
+      explanation: l10n.newPasswordExplanation,
       fields: [
         _field(
           _newPassword,
-          label: 'CONTRASEÑA NUEVA',
-          accessible: 'Contraseña nueva',
-          placeholder: 'Mínimo 8 caracteres',
+          label: l10n.passwordNewUpper,
+          accessible: l10n.passwordNew,
+          placeholder: l10n.passwordNewPlaceholder,
           error: _serverError,
         ),
         PasswordRules(password: _newPassword.text),
         const SizedBox(height: Spacing.s16),
         _field(
           _repeated,
-          label: 'REPETIR CONTRASEÑA',
-          accessible: 'Repetir contraseña',
-          placeholder: 'Volvé a escribirla',
+          label: l10n.passwordRepeatUpper,
+          accessible: l10n.passwordRepeat,
+          placeholder: l10n.passwordRepeatPlaceholder,
           error: _repeatedError,
           focus: _repeatedFocus,
         ),

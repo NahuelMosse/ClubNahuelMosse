@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../common/avatar.dart';
 import '../../../common/member_profile.dart';
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/profile.dart';
 import '../../venues/presentation/photos.dart';
@@ -45,7 +46,7 @@ class ProfileHeader extends StatelessWidget {
               ),
               name: '${profile.firstName} ${profile.lastName}',
               email: profile.email,
-              number: 'MIEMBRO ACTIVO',
+              number: AppLocalizations.of(context).accountActiveMember,
               stats: const [],
               image: sportPhoto('Futbol'),
             ),

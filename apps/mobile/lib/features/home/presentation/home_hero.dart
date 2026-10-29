@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/marker.dart';
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../notifications/presentation/bell_button.dart';
@@ -69,7 +70,7 @@ class HomeHero extends StatelessWidget {
                 Semantics(
                   header: true,
                   child: Text(
-                    'RESERVÁ TU CANCHA',
+                    AppLocalizations.of(context).homeHeroTitle,
                     style: Texts.display.copyWith(color: p.textOnMedia),
                   ),
                 ),

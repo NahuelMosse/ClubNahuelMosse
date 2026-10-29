@@ -9,15 +9,13 @@ import '../../../common/network_failure.dart';
 import '../../../common/result.dart';
 import '../../../common/text_field.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../users/domain/registration_rules.dart';
+import '../../users/presentation/field_problem_text.dart';
 import '../data/password_recovery.dart';
 import '../domain/recovery_exceptions.dart';
-
-const linkSentNotice =
-    'Si el correo está registrado, te enviamos un enlace para crear una contraseña '
-    'nueva. El enlace vence en 30 minutos.';
 
 /// Recuperar contraseña: se llega desde «¿Olvidaste tu contraseña?» del login, pide el
 /// correo y muestra lo mismo tenga o no cuenta.
@@ -58,6 +56,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   bool get _valid => validateEmail(_email.text) == null;
 
+  String? _emailError(AppLocalizations l10n) {
+    final problem = validateEmail(_email.text);
+    return problem == null ? null : fieldProblemText(l10n, problem);
+  }
+
   Future<void> _send() async {
     if (_submitting || !_valid) return;
     FocusScope.of(context).unfocus();
@@ -81,15 +84,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (_sent) {
       return ResultScreen(
         icon: Icons.mail_outline_rounded,
         tone: ResultTone.warning,
-        title: 'Revisá tu correo',
-        text: linkSentNotice,
-        primary: 'VOLVER AL INICIO DE SESIÓN',
+        title: l10n.recoveryCheckEmail,
+        text: l10n.recoveryLinkSent,
+        primary: l10n.accountBackToSignIn,
         onPrimaryTap: () => context.go('/'),
-        secondary: 'Reenviar el correo',
+        secondary: l10n.recoveryResend,
         secondaryLoading: _submitting,
         onSecondaryTap: _send,
       );
@@ -97,10 +101,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final p = context.palette;
     return Scaffold(
       backgroundColor: p.bgBase,
-      appBar: TopBar(
-        title: 'Recuperar contraseña',
-        onBack: () => context.go('/'),
-      ),
+      appBar: TopBar(title: l10n.recoveryTitle, onBack: () => context.go('/')),
       body: SafeArea(
         top: false,
         child: ListView(
@@ -114,21 +115,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             Semantics(
               header: true,
               child: Text(
-                '¿Olvidaste tu contraseña?',
+                l10n.loginForgotPassword,
                 style: Texts.h1.copyWith(color: p.textPrimary),
               ),
             ),
             const SizedBox(height: Spacing.s8),
             Text(
-              'Ingresá el correo con el que te registraste y te enviamos un '
-              'enlace para crear una nueva.',
+              l10n.recoveryIntro,
               style: Texts.body.copyWith(color: p.textSecondary),
             ),
             const SizedBox(height: Spacing.s24),
             FormTextField(
-              label: 'CORREO ELECTRÓNICO',
-              semanticLabel: 'Correo electrónico',
-              placeholder: 'tu@correo.com',
+              label: l10n.profileEmailUpper,
+              semanticLabel: l10n.profileEmail,
+              placeholder: l10n.profileEmailPlaceholder,
               controller: _email,
               focusNode: _focus,
               keyboardType: TextInputType.emailAddress,
@@ -136,16 +136,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => _send(),
               enabled: !_submitting,
-              error:
-                  _serverError ??
-                  (_touched ? validateEmail(_email.text) : null),
+              error: _serverError ?? (_touched ? _emailError(l10n) : null),
             ),
           ],
         ),
       ),
       bottomNavigationBar: ActionBar(
         child: PrimaryButton(
-          label: 'ENVIAR ENLACE',
+          label: l10n.recoverySend,
           loading: _submitting,
           onTap: _valid ? _send : null,
         ),
