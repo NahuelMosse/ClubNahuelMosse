@@ -50,14 +50,14 @@ def _alta_socio(
     s = unico()
     correo_socio = f"socio.{s}@correo.com"
     alta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": correo_socio,
-            "contrasena": CONTRASENA,
+            "birth_date": "1994-07-21",
+            "email": correo_socio,
+            "password": CONTRASENA,
         },
     )
     assert alta.status_code == 201
@@ -202,7 +202,7 @@ def test_la_recuperacion_responde_igual_aunque_el_correo_no_salga(
     """
     smtp_falso.certificado_invalido = True
 
-    r = api.post("/recuperacion", json={"correo": "nadie.tls@correo.com"})
+    r = api.post("/password-recovery", json={"email": "nadie.tls@correo.com"})
 
     assert r.status_code == 202
 
@@ -213,18 +213,18 @@ def test_una_reserva_con_horas_fuera_de_rango_es_un_dato_invalido(
 ) -> None:
     """una reserva con horas desmesuradas se rechaza como dato inválido @REV-01-S2"""
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
         json={
-            "espacio_id": cancha,
-            "fecha": _manana().isoformat(),
-            "desde": "10:00",
-            "horas": horas,
+            "space_id": cancha,
+            "date": _manana().isoformat(),
+            "start_hour": "10:00",
+            "hours": horas,
         },
     )
 
     assert r.status_code == 422
-    assert "horas" in r.json()["errores"]
+    assert "hours" in r.json()["errors"]
 
 
 def test_una_reserva_de_cuatro_horas_se_acepta(
@@ -232,9 +232,9 @@ def test_una_reserva_de_cuatro_horas_se_acepta(
 ) -> None:
     """el borde de cuatro horas sigue aceptándose @REV-01-S2"""
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": cancha, "fecha": _manana().isoformat(), "desde": "10:00", "horas": 4},
+        json={"space_id": cancha, "date": _manana().isoformat(), "start_hour": "10:00", "hours": 4},
     )
 
     assert r.status_code == 201
@@ -246,13 +246,13 @@ def test_una_reserva_al_final_del_calendario_es_un_dato_invalido(
 ) -> None:
     """una reserva que termina después del último día representable es inválida @REV-01-S3"""
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": cancha, "fecha": "9999-12-31", "desde": desde, "horas": horas},
+        json={"space_id": cancha, "date": "9999-12-31", "start_hour": desde, "hours": horas},
     )
 
     assert r.status_code == 422
-    assert "fecha" in r.json()["errores"]
+    assert "date" in r.json()["errors"]
 
 
 @pytest.mark.parametrize("pagina", [2**70, 10_001, 0, "x"])
@@ -260,30 +260,30 @@ def test_una_pagina_fuera_de_rango_del_historial_global_es_un_dato_invalido(
     api: TestClient, token_admin: str, pagina: object
 ) -> None:
     """pedir una página enorme del historial global se rechaza como dato inválido @REV-01-S4"""
-    r = api.get("/reservas/todas", headers=_con(token_admin), params={"pagina": pagina})
+    r = api.get("/bookings/all", headers=_con(token_admin), params={"page": pagina})
 
     assert r.status_code == 422
-    assert "pagina" in r.json()["errores"]
+    assert "page" in r.json()["errors"]
 
 
 def test_la_ultima_pagina_permitida_del_historial_global_responde(
     api: TestClient, token_admin: str
 ) -> None:
     """el borde de la página 10000 sigue respondiendo @REV-01-S4 @assumption:REV-01-ASM-02"""
-    r = api.get("/reservas/todas", headers=_con(token_admin), params={"pagina": 10_000})
+    r = api.get("/bookings/all", headers=_con(token_admin), params={"page": 10_000})
 
     assert r.status_code == 200
-    assert r.json()["reservas"] == []
+    assert r.json()["bookings"] == []
 
 
 NULO = "Ana\x00Rios"
-SEDE = {"direccion": "Av. Vergara 1850", "apertura": "08:00", "cierre": "23:00", "dias": [1]}
+SEDE = {"address": "Av. Vergara 1850", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1]}
 ESPACIO = {
-    "sede_id": "00000000-0000-7000-8000-000000000001",
-    "tipo": "F5",
-    "techada": False,
-    "iluminada": True,
-    "precio_por_hora": 1,
+    "venue_id": "00000000-0000-7000-8000-000000000001",
+    "kind": "F5",
+    "covered": False,
+    "lit": True,
+    "price_per_hour": 1,
 }
 
 
@@ -350,14 +350,14 @@ def test_una_ruta_con_saltos_de_linea_no_falsifica_el_log(
 ) -> None:
     """una ruta con saltos de línea no puede falsificar una línea del log @REV-01-S13"""
     falsa = (
-        f"/reservas/1{salto}2026-10-20 00:00:00,000 ERROR clubnahuelmosse.errores FALSO/cancelar"
+        f"/bookings/1{salto}2026-10-20 00:00:00,000 ERROR clubnahuelmosse.errores FALSO/cancel"
     )
 
     with caplog.at_level(logging.INFO):
         api.post(falsa)
 
     mensajes = [r.getMessage() for r in caplog.records]
-    assert any("/reservas/1" in m for m in mensajes)
+    assert any("/bookings/1" in m for m in mensajes)
     assert not any("\n" in m or "\r" in m for m in mensajes)
 
 
@@ -367,16 +367,16 @@ def test_los_secretos_no_llegan_al_log_ni_a_las_respuestas(
     """contraseñas, tokens y códigos de recuperación no llegan al log @REV-01-S14"""
     with caplog.at_level(logging.DEBUG):
         respuestas = [
-            api.put("/recuperacion", json={"codigo": "cod-secreto-7Q", "nueva": ["Clave9Secreta"]}),
-            api.post("/recuperacion/consulta", json={"codigo": "cod-secreto-7Q"}),
-            api.get("/yo", headers={"Authorization": "Bearer token-secreto-9Z"}),
+            api.put("/password-recovery", json={"code": "cod-secreto-7Q", "new_password": ["Clave9Secreta"]}),
+            api.post("/password-recovery/check", json={"code": "cod-secreto-7Q"}),
+            api.get("/me", headers={"Authorization": "Bearer token-secreto-9Z"}),
             api.post(
-                "/registro", json={"correo": "ana@correo.com", "contrasena": ["Clave9Secreta"]}
+                "/register", json={"email": "ana@correo.com", "password": ["Clave9Secreta"]}
             ),
             api.put(
-                "/yo/contrasena",
+                "/me/password",
                 headers=_con(token_usuario),
-                json={"actual": ["Clave9Secreta"], "nueva": ["Clave9Secreta"]},
+                json={"current_password": ["Clave9Secreta"], "new_password": ["Clave9Secreta"]},
             ),
         ]
 
@@ -432,11 +432,11 @@ def test_el_token_de_otra_persona_no_cambia_de_duenio(
     duenia, correo_duenia = _alta_socio(api, iniciar_sesion, unico)
     intruso, _ = _alta_socio(api, iniciar_sesion, unico)
     token = f"fcm-{unico()}"
-    pedido = {"token": token, "plataforma": "android", "permiso": True}
+    pedido = {"token": token, "platform": "android", "permission_granted": True}
 
-    assert api.put("/dispositivos", headers=duenia, json=pedido).status_code == 204
-    intento = api.put("/dispositivos", headers=intruso, json=pedido)
-    baja = api.post("/dispositivos/baja", headers=intruso, json={"token": token})
+    assert api.put("/devices", headers=duenia, json=pedido).status_code == 204
+    intento = api.put("/devices", headers=intruso, json=pedido)
+    baja = api.post("/devices/unregister", headers=intruso, json={"token": token})
 
     assert intento.status_code == 204
     assert baja.status_code == 204
@@ -455,10 +455,10 @@ def test_un_token_dado_de_baja_pasa_a_quien_lo_registra(
     primera, _ = _alta_socio(api, iniciar_sesion, unico)
     segunda, correo_segunda = _alta_socio(api, iniciar_sesion, unico)
     token = f"fcm-{unico()}"
-    pedido = {"token": token, "plataforma": "android", "permiso": True}
+    pedido = {"token": token, "platform": "android", "permission_granted": True}
 
-    assert api.put("/dispositivos", headers=primera, json=pedido).status_code == 204
-    assert api.post("/dispositivos/baja", headers=primera, json={"token": token}).status_code == 204
-    assert api.put("/dispositivos", headers=segunda, json=pedido).status_code == 204
+    assert api.put("/devices", headers=primera, json=pedido).status_code == 204
+    assert api.post("/devices/unregister", headers=primera, json={"token": token}).status_code == 204
+    assert api.put("/devices", headers=segunda, json=pedido).status_code == 204
 
     assert _duenio(motor, token) == correo_segunda

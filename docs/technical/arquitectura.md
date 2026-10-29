@@ -84,7 +84,7 @@ flowchart TB
   `text()` sobre la conexión del pedido. Cada repositorio escribe sólo sus tablas.
 - **`rutas.py`** traduce HTTP a casos de uso y errores a códigos: arma el repositorio con la conexión del pedido, llama
   al caso de uso y convierte `Prohibido` en 403, `NoEncontrada` en 404, `DatosInvalidos` en 422 con
-  `{"errores": {campo: mensaje}}`, los conflictos en 409.
+  `{"errors": {field: message}}`, los conflictos en 409.
 - **Una funcionalidad sólo entra en otra por su `__init__.py`**; `shared/` no importa ninguna.
 
 Los tests `tests/unit/test_arquitectura_funcionalidades.py`, `test_capas_funcionalidades.py` y
@@ -102,7 +102,7 @@ sequenceDiagram
   participant CU as modules/bookings/use_cases.py
   participant Repo as BookingsSql
   participant PG as PostgreSQL
-  App->>Ruta: POST /reservas (Bearer token)
+  App->>Ruta: POST /bookings (Bearer token)
   Ruta->>Auth: token
   Auth->>Auth: Firebase verifica firma y revocación
   Auth-->>Ruta: Perfil (id, rol)
@@ -137,7 +137,7 @@ Detalles que importan:
 | Autenticación | token de Firebase en `Authorization: Bearer`; la API lo verifica con `check_revoked=True` y busca el perfil activo en `app_user` | `modules/session/current_user.py`, `shared/identity.py` |
 | Autorización | por rol, dentro de cada caso de uso (`perfil.rol`); por dueño en las consultas (`WHERE usuario_id = …`): una reserva ajena da 404 | `modules/*/casos_de_uso.py` |
 | Validación de entrada | tipos de pydantic; un cuerpo que no es JSON da 400 sin repetirlo | `shared/entradas.py` |
-| Errores | errores del negocio → 403, 404, 409 y 422 con `{"errores": …}` | `main.py`, `shared/errores_http.py`, `shared/respuestas.py` |
+| Errores | errores del negocio → 403, 404, 409 y 422 con `{"errors": …}` | `main.py`, `shared/errores_http.py`, `shared/respuestas.py` |
 | Salud | `/health` dice que el proceso vive | `salud.py` |
 | Base | pool de conexiones de SQLAlchemy con `pool_pre_ping` | `shared/db.py` |
 | Hora | `ZONA_CLUB` y `datetime.now(ZONA_CLUB)`; las columnas son `timestamptz` | `shared/zona.py` |
@@ -168,8 +168,8 @@ stateDiagram-v2
   segundos: primero despacha los pendientes y después busca las reservas activas que empiezan dentro de la próxima hora
   y no tienen recordatorio. El índice único `notification_reminder_unique` impide el duplicado aunque dos barridos se
   crucen. El mismo barrido existe como comando de una pasada (`python -m app.modules.notifications.sweep --una-vez`) para un cron.
-- **En el teléfono.** `CentroDeNotificaciones` registra el token de FCM con `PUT /dispositivos` al iniciar sesión, lo da
-  de baja al cerrarla, consulta `GET /notificaciones` cada 20 s mientras la app está abierta y en primer plano, y lleva
+- **En el teléfono.** `CentroDeNotificaciones` registra el token de FCM con `PUT /devices` al iniciar sesión, lo da
+  de baja al cerrarla, consulta `GET /notifications` cada 20 s mientras la app está abierta y en primer plano, y lleva
   a la reserva cuando se toca un aviso (`rutaDelAviso`). Con la app cerrada, el aviso lo muestra la bandeja del sistema.
 
 ## Cuentas y contraseñas
@@ -182,26 +182,26 @@ sequenceDiagram
   Note over App,API: Iniciar sesión
   App->>FB: signInWithEmailAndPassword
   FB-->>App: token (se renueva solo)
-  App->>API: GET /yo (Bearer)
+  App->>API: GET /me (Bearer)
   API-->>App: Perfil con rol → /inicio o /admin
   Note over App,API: Recuperar la contraseña
-  App->>API: POST /recuperacion {correo}
+  App->>API: POST /password-recovery {email}
   API-->>App: 202 siempre (exista o no la cuenta)
   API->>API: guarda el hash del código, vence a los 30 min, tope 3 por hora
-  API-)Correo: enlace URL_PUBLICA/enlace/recuperar#codigo=…
+  API-)Correo: enlace URL_PUBLICA/link/recover#code=…
   Note over App: la página abre clubnahuelmosse://app/recuperar?codigo=…
-  App->>API: POST /recuperacion/consulta {codigo}
-  App->>API: PUT /recuperacion {codigo, contraseña}
+  App->>API: POST /password-recovery/check {code}
+  App->>API: PUT /password-recovery {code, password}
   API->>FB: cambia la contraseña y revoca las sesiones
 ```
 
-- El **registro** (`POST /registro`) crea la cuenta en Firebase y la fila en `app_user`; si la fila falla, borra la
+- El **registro** (`POST /register`) crea la cuenta en Firebase y la fila en `app_user`; si la fila falla, borra la
   cuenta de Firebase para no dejarla huérfana.
-- La **baja de la cuenta** (`DELETE /yo`) cancela las reservas futuras, marca el usuario inactivo y borra la cuenta de
+- La **baja de la cuenta** (`DELETE /me`) cancela las reservas futuras, marca el usuario inactivo y borra la cuenta de
   Firebase. El historial queda en la base.
 - El código de recuperación viaja después del `#`, así que no llega a ningún log de servidor. La base sólo guarda su
   hash.
-- La app no guarda el perfil en el teléfono: al abrirse, retoma la sesión de Firebase y vuelve a pedir `GET /yo`.
+- La app no guarda el perfil en el teléfono: al abrirse, retoma la sesión de Firebase y vuelve a pedir `GET /me`.
 
 ## La app
 

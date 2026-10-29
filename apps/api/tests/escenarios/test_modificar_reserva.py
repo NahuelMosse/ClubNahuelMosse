@@ -19,14 +19,14 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     s = unico()
     correo = f"socio.{s}@correo.com"
     alta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": correo,
-            "contrasena": "ClubNahuel1",
+            "birth_date": "1994-07-21",
+            "email": correo,
+            "password": "ClubNahuel1",
         },
     )
     assert alta.status_code == 201
@@ -46,36 +46,36 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
     sesion = {"Authorization": f"Bearer {token}"}
     manana = datetime.now(ZONA).date() + timedelta(days=1)
     reserva = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
         json={
-            "espacio_id": str(espacio),
-            "fecha": manana.isoformat(),
-            "desde": "21:00",
-            "horas": 1,
+            "space_id": str(espacio),
+            "date": manana.isoformat(),
+            "start_hour": "21:00",
+            "hours": 1,
         },
     ).json()
 
     ayer = api.post(
-        f"/reservas/{reserva['id']}/modificar",
+        f"/bookings/{reserva['id']}/modify",
         headers=sesion,
         json={
-            "espacio_id": str(espacio),
-            "fecha": (manana - timedelta(days=2)).isoformat(),
-            "desde": "10:00",
+            "space_id": str(espacio),
+            "date": (manana - timedelta(days=2)).isoformat(),
+            "start_hour": "10:00",
         },
     )
     tarde = api.post(
-        f"/reservas/{reserva['id']}/modificar",
+        f"/bookings/{reserva['id']}/modify",
         headers=sesion,
-        json={"espacio_id": str(espacio), "fecha": manana.isoformat(), "desde": "23:00"},
+        json={"space_id": str(espacio), "date": manana.isoformat(), "start_hour": "23:00"},
     )
 
     # Verifica: los dos cambios se rechazan por su regla.
     assert ayer.status_code == 422
-    assert ayer.json()["errores"]["fecha"] == "La fecha tiene que ser futura"
+    assert ayer.json()["errors"]["date"] == "La fecha tiene que ser futura"
     assert tarde.status_code == 422
-    assert tarde.json()["errores"]["hasta"] == "La sede cierra a las 23:00"
+    assert tarde.json()["errors"]["until"] == "La sede cierra a las 23:00"
     # Verifica: la reserva sigue en su horario.
     with motor.connect() as conn:
         inicio: Any = conn.execute(

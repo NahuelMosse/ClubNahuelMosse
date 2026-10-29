@@ -21,14 +21,14 @@ def cancha(
     s = unico()
     correo = f"socio.{s}@correo.com"
     alta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": correo,
-            "contrasena": "ClubNahuel1",
+            "birth_date": "1994-07-21",
+            "email": correo,
+            "password": "ClubNahuel1",
         },
     )
     assert alta.status_code == 201
@@ -70,14 +70,14 @@ def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
     ayer = datetime.now(ZONA).date() - timedelta(days=1)
 
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
-        json={"espacio_id": espacio, "fecha": ayer.isoformat(), "desde": "10:00", "horas": 1},
+        json={"space_id": espacio, "date": ayer.isoformat(), "start_hour": "10:00", "hours": 1},
     )
 
     # Verifica: la rechaza por la fecha y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errores"]["fecha"] == "La fecha tiene que ser futura"
+    assert r.json()["errors"]["date"] == "La fecha tiene que ser futura"
     assert _reservas(motor, espacio) == 0
 
 
@@ -88,19 +88,19 @@ def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sed
     sesion, espacio = cancha
 
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
         json={
-            "espacio_id": espacio,
-            "fecha": _manana().isoformat(),
-            "desde": "22:00",
-            "horas": 2,
+            "space_id": espacio,
+            "date": _manana().isoformat(),
+            "start_hour": "22:00",
+            "hours": 2,
         },
     )
 
     # Verifica: la rechaza por el cierre y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errores"]["hasta"] == "La sede cierra a las 23:00"
+    assert r.json()["errors"]["until"] == "La sede cierra a las 23:00"
     assert _reservas(motor, espacio) == 0
 
 
@@ -111,19 +111,19 @@ def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_comp
     sesion, espacio = cancha
 
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
         json={
-            "espacio_id": espacio,
-            "fecha": _manana().isoformat(),
-            "desde": "18:30",
-            "horas": 1,
+            "space_id": espacio,
+            "date": _manana().isoformat(),
+            "start_hour": "18:30",
+            "hours": 1,
         },
     )
 
     # Verifica: la rechaza por la hora y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errores"]["desde"] == "Elegí una hora en punto"
+    assert r.json()["errors"]["start_hour"] == "Elegí una hora en punto"
     assert _reservas(motor, espacio) == 0
 
 
@@ -134,19 +134,19 @@ def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
     sesion, espacio = cancha
 
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
         json={
-            "espacio_id": espacio,
-            "fecha": _manana().isoformat(),
-            "desde": "18:00",
-            "horas": 0,
+            "space_id": espacio,
+            "date": _manana().isoformat(),
+            "start_hour": "18:00",
+            "hours": 0,
         },
     )
 
     # Verifica: la rechaza por la duración y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errores"]["hasta"] == "La duración mínima es de una hora"
+    assert r.json()["errors"]["until"] == "La duración mínima es de una hora"
     assert _reservas(motor, espacio) == 0
 
 
@@ -157,19 +157,19 @@ def test_el_backend_rechaza_una_reserva_que_se_superpone_en_parte_con_otra_del_m
     sesion, espacio = cancha
     manana = _manana().isoformat()
     primera = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
-        json={"espacio_id": espacio, "fecha": manana, "desde": "18:00", "horas": 2},
+        json={"space_id": espacio, "date": manana, "start_hour": "18:00", "hours": 2},
     )
     assert primera.status_code == 201
 
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=sesion,
-        json={"espacio_id": espacio, "fecha": manana, "desde": "19:00", "horas": 2},
+        json={"space_id": espacio, "date": manana, "start_hour": "19:00", "hours": 2},
     )
 
     # Verifica: la segunda choca con la primera y sólo queda una.
     assert r.status_code == 409
-    assert r.json()["errores"]["horario"] == "Ese horario se ocupó"
+    assert r.json()["errors"]["slot"] == "Ese horario se ocupó"
     assert _reservas(motor, espacio) == 1

@@ -155,7 +155,7 @@ def register_device(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
     if not token.strip():
         errors["token"] = "Este campo es obligatorio"
     if platform not in PLATFORMS:
-        errors["plataforma"] = "Tiene que ser android o ios"
+        errors["platform"] = "Tiene que ser android o ios"
     if errors:
         raise InvalidData(errors)
     if not notifications.register_device(profile.id, token.strip(), platform, permission):

@@ -14,11 +14,11 @@ from app.main import create_app
 # Lo que la API sirve sin sesión: alta de cuenta y recuperación de contraseña, con la página
 # del enlace del correo.
 PUBLICAS = {
-    ("POST", "/registro"),
-    ("POST", "/recuperacion"),
-    ("POST", "/recuperacion/consulta"),
-    ("PUT", "/recuperacion"),
-    ("GET", "/enlace/recuperar"),
+    ("POST", "/register"),
+    ("POST", "/password-recovery"),
+    ("POST", "/password-recovery/check"),
+    ("PUT", "/password-recovery"),
+    ("GET", "/link/recover"),
     ("GET", "/health"),
 }
 PROTEGIDAS = 28

@@ -42,14 +42,14 @@ def token_usuario(
     s = unico()
     correo = f"socio.{s}@correo.com"
     pedido = {
-        "nombre": "Martín",
-        "apellido": "Ferreyra",
+        "first_name": "Martín",
+        "last_name": "Ferreyra",
         "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-        "fecha_nacimiento": "1994-07-21",
-        "correo": correo,
-        "contrasena": CONTRASENA,
+        "birth_date": "1994-07-21",
+        "email": correo,
+        "password": CONTRASENA,
     }
-    assert api.post("/registro", json=pedido).status_code == 201
+    assert api.post("/register", json=pedido).status_code == 201
     token = iniciar_sesion(correo, CONTRASENA)
     assert token is not None
     return token
@@ -57,11 +57,11 @@ def token_usuario(
 
 def _sede(nombre: str, **cambios: object) -> dict[str, object]:
     return {
-        "nombre": nombre,
-        "direccion": "Av. Vergara 1850",
-        "apertura": "08:00",
-        "cierre": "23:00",
-        "dias": [1, 2, 3, 4, 5, 6],
+        "name": nombre,
+        "address": "Av. Vergara 1850",
+        "opens_at": "08:00",
+        "closes_at": "23:00",
+        "open_days": [1, 2, 3, 4, 5, 6],
     } | cambios
 
 
@@ -73,17 +73,17 @@ def test_el_alta_guarda_la_sede_con_su_rastro_y_la_devuelve(
     api: TestClient, motor: Engine, token_admin: str, unico: Callable[[], str]
 ) -> None:
     nombre = f"Sede Haedo {unico()}"
-    r = api.post("/sedes", headers=_con(token_admin), json=_sede(nombre))
+    r = api.post("/venues", headers=_con(token_admin), json=_sede(nombre))
     assert r.status_code == 201
     assert r.json() | {"id": ""} == {
         "id": "",
-        "nombre": nombre,
-        "direccion": "Av. Vergara 1850",
-        "apertura": "08:00",
-        "cierre": "23:00",
-        "dias": [1, 2, 3, 4, 5, 6],
-        "canchas": 0,
-        "deportes": [],
+        "name": nombre,
+        "address": "Av. Vergara 1850",
+        "opens_at": "08:00",
+        "closes_at": "23:00",
+        "open_days": [1, 2, 3, 4, 5, 6],
+        "space_count": 0,
+        "sports": [],
     }
     with motor.connect() as conn:
         fila = conn.execute(
@@ -105,8 +105,8 @@ def test_los_usuarios_ven_las_sedes_por_nombre_con_sus_canchas(
     unico: Callable[[], str],
 ) -> None:
     s = unico()
-    zeta = api.post("/sedes", headers=_con(token_admin), json=_sede(f"zz Sede {s}")).json()
-    api.post("/sedes", headers=_con(token_admin), json=_sede(f"ZY Sede {s}"))
+    zeta = api.post("/venues", headers=_con(token_admin), json=_sede(f"zz Sede {s}")).json()
+    api.post("/venues", headers=_con(token_admin), json=_sede(f"ZY Sede {s}"))
     with motor.begin() as conn:
         conn.execute(
             text(
@@ -116,11 +116,11 @@ def test_los_usuarios_ven_las_sedes_por_nombre_con_sus_canchas(
             {"venue": zeta["id"], "n": f"Zz_Vergara_1850_Padel_PAD_1_{s}"},
         )
 
-    r = api.get("/sedes", headers=_con(token_usuario))
+    r = api.get("/venues", headers=_con(token_usuario))
 
     assert r.status_code == 200
-    propias = [x for x in r.json()["sedes"] if x["nombre"].endswith(s)]
-    assert [(x["nombre"], x["canchas"]) for x in propias] == [
+    propias = [x for x in r.json()["venues"] if x["name"].endswith(s)]
+    assert [(x["name"], x["space_count"]) for x in propias] == [
         (f"ZY Sede {s}", 0),
         (f"zz Sede {s}", 1),
     ]
@@ -130,12 +130,12 @@ def test_no_hay_dos_sedes_activas_con_el_mismo_nombre(
     api: TestClient, token_admin: str, unico: Callable[[], str]
 ) -> None:
     nombre = f"Sede Haedo {unico()}"
-    assert api.post("/sedes", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
+    assert api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
     r = api.post(
-        "/sedes", headers=_con(token_admin), json=_sede(nombre.upper(), direccion="Otra 1")
+        "/venues", headers=_con(token_admin), json=_sede(nombre.upper(), address="Otra 1")
     )
     assert r.status_code == 409
-    assert r.json() == {"errores": {"nombre": "Ya existe una sede con ese nombre"}}
+    assert r.json() == {"errors": {"name": "Ya existe una sede con ese nombre"}}
 
 
 def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
@@ -146,7 +146,7 @@ def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
         codigos = sorted(
             pool.map(
                 lambda _: (
-                    api.post("/sedes", headers=_con(token_admin), json=_sede(nombre)).status_code
+                    api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code
                 ),
                 range(2),
             )
@@ -163,39 +163,39 @@ def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
     api: TestClient, token_admin: str, unico: Callable[[], str]
 ) -> None:
     r = api.post(
-        "/sedes",
+        "/venues",
         headers=_con(token_admin),
-        json=_sede(f"Sede {unico()}", direccion="Vergara", apertura="22:00", cierre="21:00"),
+        json=_sede(f"Sede {unico()}", address="Vergara", opens_at="22:00", closes_at="21:00"),
     )
     assert r.status_code == 422
     assert r.json() == {
-        "errores": {
-            "direccion": "Escribí la calle y la altura",
-            "cierre": "El cierre tiene que ser después de la apertura",
+        "errors": {
+            "address": "Escribí la calle y la altura",
+            "closes_at": "El cierre tiene que ser después de la apertura",
         }
     }
-    r = api.post("/sedes", headers=_con(token_admin), json={})
+    r = api.post("/venues", headers=_con(token_admin), json={})
     assert r.status_code == 422
-    assert set(r.json()["errores"]) == {"nombre", "direccion", "apertura", "cierre", "dias"}
+    assert set(r.json()["errors"]) == {"name", "address", "opens_at", "closes_at", "open_days"}
 
 
 def test_sin_sesion_no_hay_sedes(api: TestClient) -> None:
-    assert api.get("/sedes").status_code == 401
-    assert api.post("/sedes", json=_sede("Sede Haedo")).status_code == 401
+    assert api.get("/venues").status_code == 401
+    assert api.post("/venues", json=_sede("Sede Haedo")).status_code == 401
 
 
 @pytest.mark.parametrize("hora", ["23:00+00:00", "00:00Z", "08", "0800", "T08:00", "8:00"])
 def test_una_hora_que_no_es_hh_mm_es_un_error_del_campo(
     api: TestClient, token_admin: str, unico: Callable[[], str], hora: str
 ) -> None:
-    r = api.post("/sedes", headers=_con(token_admin), json=_sede(f"Sede {unico()}", cierre=hora))
+    r = api.post("/venues", headers=_con(token_admin), json=_sede(f"Sede {unico()}", closes_at=hora))
     assert r.status_code == 422
-    assert r.json() == {"errores": {"cierre": "El horario de cierre es obligatorio"}}
+    assert r.json() == {"errors": {"closes_at": "El horario de cierre es obligatorio"}}
 
 
 def _alta(api: TestClient, token_admin: str, nombre: str) -> str:
     r = api.post(
-        "/sedes", headers=_con(token_admin), json=_sede(nombre, dias=[1, 2, 3, 4, 5, 6, 7])
+        "/venues", headers=_con(token_admin), json=_sede(nombre, open_days=[1, 2, 3, 4, 5, 6, 7])
     )
     assert r.status_code == 201
     return str(r.json()["id"])
@@ -206,12 +206,12 @@ def test_editar_guarda_los_datos_nuevos_con_su_rastro(
 ) -> None:
     nombre = f"Sede Haedo {unico()}"
     sede = _alta(api, token_admin, nombre)
-    cambios = _sede(f"{nombre} Norte", direccion="Av. Vergara 1900", cierre="00:00", dias=[1, 2])
+    cambios = _sede(f"{nombre} Norte", address="Av. Vergara 1900", closes_at="00:00", open_days=[1, 2])
 
-    r = api.put(f"/sedes/{sede}", headers=_con(token_admin), json=cambios)
+    r = api.put(f"/venues/{sede}", headers=_con(token_admin), json=cambios)
 
     assert r.status_code == 200
-    assert (r.json()["nombre"], r.json()["direccion"], r.json()["cierre"], r.json()["dias"]) == (
+    assert (r.json()["name"], r.json()["address"], r.json()["closes_at"], r.json()["open_days"]) == (
         f"{nombre} Norte",
         "Av. Vergara 1900",
         "00:00",
@@ -227,9 +227,9 @@ def test_editar_guarda_los_datos_nuevos_con_su_rastro(
         ).one()
     assert tuple(fila) == (True, True)
     # La misma sede puede quedarse con su nombre.
-    assert api.put(f"/sedes/{sede}", headers=_con(token_admin), json=cambios).status_code == 200
-    assert api.put(f"/sedes/{sede}", headers=_con(token_usuario), json=cambios).status_code == 403
-    assert api.put(f"/sedes/{sede}", json=cambios).status_code == 401
+    assert api.put(f"/venues/{sede}", headers=_con(token_admin), json=cambios).status_code == 200
+    assert api.put(f"/venues/{sede}", headers=_con(token_usuario), json=cambios).status_code == 403
+    assert api.put(f"/venues/{sede}", json=cambios).status_code == 401
 
 
 def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_baja(
@@ -240,23 +240,23 @@ def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_ba
     sede = _alta(api, token_admin, nombre)
     _alta(api, token_admin, otra)
 
-    repetido = api.put(f"/sedes/{sede}", headers=_con(token_admin), json=_sede(otra.upper()))
+    repetido = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(otra.upper()))
     assert repetido.status_code == 409
-    assert repetido.json() == {"errores": {"nombre": "Ya existe una sede con ese nombre"}}
-    vacio = api.put(f"/sedes/{sede}", headers=_con(token_admin), json=_sede(nombre, direccion=""))
+    assert repetido.json() == {"errors": {"name": "Ya existe una sede con ese nombre"}}
+    vacio = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre, address=""))
     assert vacio.status_code == 422
-    assert vacio.json()["errores"]["direccion"] == "La dirección es obligatoria"
+    assert vacio.json()["errors"]["address"] == "La dirección es obligatoria"
     with motor.begin() as conn:
         conn.execute(
             text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
             {"id": sede},
         )
     assert (
-        api.put(f"/sedes/{sede}", headers=_con(token_admin), json=_sede(nombre)).status_code == 404
+        api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre)).status_code == 404
     )
     assert (
         api.put(
-            "/sedes/00000000-0000-7000-8000-0000000000ff",
+            "/venues/00000000-0000-7000-8000-0000000000ff",
             headers=_con(token_admin),
             json=_sede(nombre),
         ).status_code
@@ -270,15 +270,15 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
     nombre = f"Sede Morón {unico()}"
     sede = _alta(api, token_admin, nombre)
     espacio = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     ).json()["id"]
     with motor.begin() as conn:
@@ -311,18 +311,18 @@ def test_achicar_el_horario_pide_confirmar_las_reservas_que_quedan_afuera_y_las_
             )
 
     def editar(**cambios: object) -> tuple[int, object]:
-        r = api.put(f"/sedes/{sede}", headers=_con(token_admin), json=_sede(nombre, **cambios))
+        r = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre, **cambios))
         return r.status_code, r.json()
 
     todos = [1, 2, 3, 4, 5, 6, 7]
     # Las pasadas y las canceladas no cuentan.
-    assert editar(apertura="09:00", dias=todos) == (409, {"reservas_afuera": 1})
-    assert editar(apertura="09:00", cierre="22:00", dias=todos) == (409, {"reservas_afuera": 2})
+    assert editar(opens_at="09:00", open_days=todos) == (409, {"bookings_outside": 1})
+    assert editar(opens_at="09:00", closes_at="22:00", open_days=todos) == (409, {"bookings_outside": 2})
     sin_manana = [d for d in todos if d != manana.isoweekday()]
-    assert editar(dias=sin_manana) == (409, {"reservas_afuera": 2})
-    assert editar(apertura="09:00", dias=todos, confirmar=True)[0] == 200
+    assert editar(open_days=sin_manana) == (409, {"bookings_outside": 2})
+    assert editar(opens_at="09:00", open_days=todos, confirm=True)[0] == 200
     # Lo que ya estaba afuera no se vuelve a preguntar.
-    assert editar(apertura="09:00", dias=todos, direccion="Av. Rivadavia 19850")[0] == 200
+    assert editar(opens_at="09:00", open_days=todos, address="Av. Rivadavia 19850")[0] == 200
     with motor.connect() as conn:
         activas: Any = conn.execute(
             text("SELECT count(*) FROM booking WHERE space_id = :e AND status = 'active'"),
@@ -337,21 +337,21 @@ def test_la_baja_deja_la_sede_y_sus_espacios_inactivos_con_su_rastro(
     nombre = f"Sede Haedo {unico()}"
     sede = _alta(api, token_admin, nombre)
     espacio = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     ).json()["id"]
-    assert api.delete(f"/sedes/{sede}", headers=_con(token_usuario)).status_code == 403
-    assert api.delete(f"/sedes/{sede}").status_code == 401
+    assert api.delete(f"/venues/{sede}", headers=_con(token_usuario)).status_code == 403
+    assert api.delete(f"/venues/{sede}").status_code == 401
 
-    assert api.delete(f"/sedes/{sede}", headers=_con(token_admin)).status_code == 204
+    assert api.delete(f"/venues/{sede}", headers=_con(token_admin)).status_code == 204
 
     with motor.connect() as conn:
         fila = conn.execute(
@@ -363,13 +363,13 @@ def test_la_baja_deja_la_sede_y_sus_espacios_inactivos_con_su_rastro(
             {"id": sede},
         ).one()
     assert tuple(fila) == (False, True, False, True)
-    sedes = api.get("/sedes", headers=_con(token_usuario)).json()["sedes"]
-    assert nombre not in [s["nombre"] for s in sedes]
-    espacios = api.get("/espacios", headers=_con(token_usuario)).json()["espacios"]
+    sedes = api.get("/venues", headers=_con(token_usuario)).json()["venues"]
+    assert nombre not in [s["name"] for s in sedes]
+    espacios = api.get("/spaces", headers=_con(token_usuario)).json()["spaces"]
     assert espacio not in [e["id"] for e in espacios]
     # Ya dada de baja: 404, y su nombre queda libre para una sede nueva.
-    assert api.delete(f"/sedes/{sede}", headers=_con(token_admin)).status_code == 404
-    assert api.post("/sedes", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
+    assert api.delete(f"/venues/{sede}", headers=_con(token_admin)).status_code == 404
+    assert api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
 
 
 def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
@@ -377,15 +377,15 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
 ) -> None:
     sede = _alta(api, token_admin, f"Sede Morón {unico()}")
     espacio = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     ).json()["id"]
     with motor.begin() as conn:
@@ -400,12 +400,12 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
             {"u": dueno, "e": espacio},
         )
 
-    r = api.delete(f"/sedes/{sede}", headers=_con(token_admin))
+    r = api.delete(f"/venues/{sede}", headers=_con(token_admin))
 
     assert r.status_code == 409
     assert r.json() == {
-        "errores": {
-            "sede": "No se puede dar de baja la sede porque posee reservas futuras asociadas."
+        "errors": {
+            "venue": "No se puede dar de baja la sede porque posee reservas futuras asociadas."
         }
     }
     with motor.connect() as conn:

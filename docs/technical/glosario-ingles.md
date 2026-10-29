@@ -85,7 +85,7 @@ Config `correo_modo`: `buzon`→`outbox`, `smtp` igual.
 `/reservas`→`/bookings`, `/reservas/{id}/{cancelar,modificar,anular}`→`/bookings/{booking_id}/{cancel,modify,void}`,
 `/reservas/todas[/{id}]`→`/bookings/all[/{booking_id}]`; `PUT /dispositivos`→`/devices`, `/dispositivos/baja`→`/devices/unregister`;
 `/notificaciones`→`/notifications`, `/leer-todas`→`/read-all`, `/{id}/leer`→`/{notification_id}/read`; `/health` igual (cuerpo
-`{"estado":"vivo"}`→`{"status":"ok"}`); `/_pruebas/...`→`/_testing/{emails, bookings[/clear,/start,/void], venues/deactivate, spaces/deactivate, password-recovery/{code}/expire, reminders}`.
+`{"estado":"vivo"}`→`{"status":"ok"}`); `/_pruebas/...`→`/_testing/{emails, bookings[/clear,/start,/void], venues/deactivate, spaces/deactivate, password-recovery/{code}/expire, reminders, devices}`.
 Query: `sede_id`→`venue_id`, `deporte`→`sport`, `tipo`→`kind`, `fecha`→`date`, `horas`→`hours`, `reserva_id`→`booking_id`,
 `desde`/`hasta`→`since`/`until`, `cuando`→`when`, `estado`→`status`, `pagina`→`page`; `q` igual.
 
@@ -104,6 +104,10 @@ Query: `sede_id`→`venue_id`, `deporte`→`sport`, `tipo`→`kind`, `fecha`→`
 `reservas_afuera`→`bookings_outside`; `notificaciones`→`notifications`, `no_leidas`→`unread`, `titulo`→`title`, `cuerpo`→`body`,
 `creada_en`→`created_at`, `leida`→`read`; `plataforma`→`platform`, `permiso`→`permission_granted`, `mensaje`→`message`, `campos`→`fields`;
 datos push `tipo`→`kind`, `reserva_id`→`booking_id`; enlace `clubnahuelmosse://app/recuperar#codigo=`→`app/recover#code=`.
+Claves de error y de cuerpo que el glosario no nombraba (ENG-18): `fechas`→`dates`, `hasta` (clave de error)→`until`, `cuerpo` (clave de error de un cuerpo ilegible)→`body`,
+`horario`→`slot`, `reserva` (clave de error)→`booking`, `hora`→`hour`. El vocabulario de claves de error es el mismo para el cuerpo y la consulta: `start_hour`, `until`, `date`, `hours`.
+Soporte de pruebas (`/_testing`): `emails?to=`, `bookings[/clear,/start,/void]`, `venues/deactivate`, `spaces/deactivate`, `password-recovery/{code}/expire`, `reminders`, `devices?email=`;
+claves del cuerpo `space`, `date`, `hour`, `hours`, `email`, `status`, `reason`, `name`, `now`, `registered`, `subject`, `body`, `emails`, `devices`, `permission_granted`.
 
 ## Clases y funciones principales
 `Reserva`→`Booking`, `ReservaHistorial`→`BookingHistoryEntry`, `HistorialDeReservas`→`BookingHistory`, `FiltrosHistorial`→`HistoryFilters`,

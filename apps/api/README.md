@@ -32,7 +32,7 @@ entorno del proceso: en el `.env` no tienen efecto.
 | `BREVO_API_KEY` | Clave de la API de Brevo; hace falta con `EMAIL_MODE=brevo` |
 | `FIREBASE_CREDENTIALS_JSON` (o `FIREBASE_CREDENCIALES_JSON`) | Contenido del JSON de la cuenta de servicio de Firebase, alternativa a `GOOGLE_APPLICATION_CREDENTIALS` |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Servidor de correo saliente con `EMAIL_MODE=smtp`; cada uno también se lee como `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` |
-| `E2E_TESTING` (o `PRUEBAS`) | `1` habilita `/_pruebas`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
+| `E2E_TESTING` (o `PRUEBAS`) | `1` habilita `/_testing`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
 | `REMINDERS_EVERY` (o `RECORDATORIOS_CADA`) | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. En producción hace falta ésta o `FIREBASE_CREDENCIALES_JSON`: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
 | `FIREBASE_CREDENCIALES_JSON` | El contenido del JSON de la cuenta de servicio, para plataformas que no montan archivos (Render, con un Blueprint). Si `GOOGLE_APPLICATION_CREDENTIALS` también está definida, manda el JSON |
@@ -70,7 +70,7 @@ como `http://10.0.2.2:8000`.
 
 ## Errores
 
-422 por un dato inválido (`{"errores": {campo: mensaje}}`); 403 y 404 sin cuerpo.
+422 por un dato inválido (`{"errors": {field: message}}`); 403 y 404 sin cuerpo.
 
 ## Contrato
 
@@ -84,7 +84,7 @@ FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; f
 
 ## Catálogo de deportes
 
-El catálogo es fijo y vive en `app/modules/spaces/rules.py`; la app lo pide con `GET /espacios/catalogo`.
+El catálogo es fijo y vive en `app/modules/spaces/rules.py`; la app lo pide con `GET /spaces/catalog`.
 Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
 (B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
 
@@ -144,7 +144,7 @@ Lo que se asumió donde el requisito no lo dice (REV-03); cada una se cambia en 
 - REV-03-ASM-02: un aviso que lleva más de 10 minutos en `enviando` (la API se cayó a mitad del
   envío) pasa a `fallida` en el siguiente barrido y no se repite («se envía una sola vez»,
   CU-24.1); SIM-01-ASM-10.
-- REV-03-ASM-03: el historial propio (`GET /reservas`) trae todas las reservas de una vez, igual
+- REV-03-ASM-03: el historial propio (`GET /bookings`) trae todas las reservas de una vez, igual
   que el global; no hay cursor ni tandas.
 
 ## Desplegar en Render
@@ -187,7 +187,7 @@ El `render.yaml` de la raíz del repo describe todo: un web service de Python pa
    ```
 
 6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y
-   `GET /sedes` sin sesión responde 401. Con la dirección en `API_URL_NUBE`, el escenario
+   `GET /venues` sin sesión responde 401. Con la dirección en `API_URL_NUBE`, el escenario
    RNF-01-H06-01 hace esa comprobación: `uv run pytest tests/escenarios --card RNF-01`.
 
 Los despliegues siguientes salen solos con cada commit a la rama enlazada.

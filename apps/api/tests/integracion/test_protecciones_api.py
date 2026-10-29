@@ -11,7 +11,7 @@ from app.shared.config import config
 
 
 def test_json_roto_da_400(api: TestClient) -> None:
-    r = api.post("/registro", content=b"{roto", headers={"content-type": "application/json"})
+    r = api.post("/register", content=b"{roto", headers={"content-type": "application/json"})
     assert r.status_code == 400
 
 
@@ -20,7 +20,7 @@ def test_json_roto_da_400(api: TestClient) -> None:
     [b"[]", b'{"nombre": 12, "dni": {"a": 1}}', b'"texto"', b""],
 )
 def test_tipos_equivocados_dan_422(api: TestClient, cuerpo: bytes) -> None:
-    r = api.post("/registro", content=cuerpo, headers={"content-type": "application/json"})
+    r = api.post("/register", content=cuerpo, headers={"content-type": "application/json"})
     assert r.status_code == 422
 
 
@@ -29,15 +29,15 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
 ) -> None:
     s = unico()
     r = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Ana",
-            "apellido": "Pérez",
+            "first_name": "Ana",
+            "last_name": "Pérez",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "2000-03-14",
-            "correo": f"rol.{s}@correo.com",
-            "contrasena": "ClubNahuel1",
-            "rol": "admin",
+            "birth_date": "2000-03-14",
+            "email": f"rol.{s}@correo.com",
+            "password": "ClubNahuel1",
+            "role": "admin",
         },
     )
     assert r.status_code == 201
@@ -52,7 +52,7 @@ def test_un_campo_desconocido_no_llega_a_ningun_lado(
 
 
 def test_un_error_no_expone_detalles_internos(api: TestClient) -> None:
-    r = api.post("/registro", content=b"{roto", headers={"content-type": "application/json"})
+    r = api.post("/register", content=b"{roto", headers={"content-type": "application/json"})
     texto = r.text.lower()
     for fuga in ("traceback", "sqlalchemy", "psycopg", "firebase", 'file "'):
         assert fuga not in texto

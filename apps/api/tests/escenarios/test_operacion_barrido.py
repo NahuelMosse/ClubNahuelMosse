@@ -43,14 +43,14 @@ def test_los_recordatorios_salen_con_un_comando_fuera_del_servicio_web(
     """
     s = unico()
     api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": f"socio.{s}@correo.com",
-            "contrasena": "ClubNahuel1",
+            "birth_date": "1994-07-21",
+            "email": f"socio.{s}@correo.com",
+            "password": "ClubNahuel1",
         },
     )
     reserva = _reserva_en_la_proxima_hora(motor, f"socio.{s}@correo.com", s)

@@ -92,7 +92,7 @@ def test_el_usuario_se_guarda_con_sus_datos_y_el_correo_no_cambia(db: Connection
     )
     assert fila.created_at is not None
 
-    with pytest.raises(DBAPIError, match="correo"):
+    with pytest.raises(DBAPIError, match="email"):
         with db.begin_nested():
             db.execute(
                 text("UPDATE app_user SET email = 'otro@correo.com' WHERE id = :id"), {"id": uid}

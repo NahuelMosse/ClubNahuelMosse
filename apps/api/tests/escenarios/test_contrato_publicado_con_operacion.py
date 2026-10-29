@@ -7,11 +7,11 @@ from fastapi.testclient import TestClient
 
 METODOS = {"get", "post", "put", "delete", "patch"}
 PUBLICAS = {
-    ("post", "/registro"),
-    ("post", "/recuperacion"),
-    ("post", "/recuperacion/consulta"),
-    ("put", "/recuperacion"),
-    ("get", "/enlace/recuperar"),
+    ("post", "/register"),
+    ("post", "/password-recovery"),
+    ("post", "/password-recovery/check"),
+    ("put", "/password-recovery"),
+    ("get", "/link/recover"),
     ("get", "/health"),
 }
 
@@ -39,5 +39,5 @@ def test_toda_operacion_de_la_api_sin_usuario_salvo_las_publicas_se_rechaza_con_
     assert not aceptadas, aceptadas
     assert len(protegidas) >= 28
     token_falso = {"Authorization": "Bearer no-es-un-token"}
-    assert api.get("/reservas", headers=token_falso).status_code == 401
-    assert api.get("/yo", headers=token_falso).status_code == 401
+    assert api.get("/bookings", headers=token_falso).status_code == 401
+    assert api.get("/me", headers=token_falso).status_code == 401

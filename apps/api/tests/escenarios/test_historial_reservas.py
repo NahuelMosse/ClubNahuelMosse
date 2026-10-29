@@ -13,14 +13,14 @@ def test_la_api_rechaza_la_consulta_global_de_reservas_a_un_usuario_sin_rol_de_a
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
-            "/registro",
+            "/register",
             json={
-                "nombre": "Martín",
-                "apellido": "Ferreyra",
+                "first_name": "Martín",
+                "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-                "fecha_nacimiento": "1994-07-21",
-                "correo": correo,
-                "contrasena": "ClubNahuel1",
+                "birth_date": "1994-07-21",
+                "email": correo,
+                "password": "ClubNahuel1",
             },
         ).status_code
         == 201
@@ -28,7 +28,7 @@ def test_la_api_rechaza_la_consulta_global_de_reservas_a_un_usuario_sin_rol_de_a
     token = iniciar_sesion(correo, "ClubNahuel1")
 
     r = api.get(
-        "/reservas/todas",
+        "/bookings/all",
         headers={"Authorization": f"Bearer {token}"},
     )
 

@@ -93,16 +93,16 @@ def test_agrupar_abre_un_aviso_nuevo_y_cada_reserva_conserva_el_envio_del_suyo(
     primera = socio.reservar("20:00")
     segunda = socio.reservar("21:00")
     assert base.anular(socio, admin, primera) == 200
-    [antes] = socio.centro()["notificaciones"]
+    [antes] = socio.centro()["notifications"]
     trazabilidad = base.para_el_admin(socio, admin, primera["id"])
 
     assert base.anular(socio, admin, segunda) == 200
 
-    [despues] = socio.centro()["notificaciones"]
+    [despues] = socio.centro()["notifications"]
     assert despues["id"] != antes["id"]
-    assert despues["titulo"] == "El club anuló 2 de tus reservas"
-    assert base.para_el_admin(socio, admin, primera["id"])["aviso_en"] == trazabilidad["aviso_en"]
-    assert base.para_el_admin(socio, admin, segunda["id"])["aviso_envio"] == "enviada"
+    assert despues["title"] == "El club anuló 2 de tus reservas"
+    assert base.para_el_admin(socio, admin, primera["id"])["notice_at"] == trazabilidad["notice_at"]
+    assert base.para_el_admin(socio, admin, segunda["id"])["notice_delivery"] == "sent"
     anterior, nuevo = _avisos(motor, socio)
     assert anterior.replaced_by == nuevo.id
     assert anterior.sent_at < nuevo.sent_at
@@ -160,8 +160,8 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
         motor, socio.usuario_id, [[UUID(simultaneas[0]["id"])], [UUID(simultaneas[1]["id"])]]
     )
 
-    [visible] = socio.centro()["notificaciones"]
-    assert visible["titulo"] == f"El club anuló {total} de tus reservas"
+    [visible] = socio.centro()["notifications"]
+    assert visible["title"] == f"El club anuló {total} de tus reservas"
     sin_reemplazar = [a for a in _avisos(motor, socio) if a.replaced_by is None]
     assert [a.count for a in sin_reemplazar] == [total]
     with motor.connect() as conn:
@@ -188,7 +188,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
     primera = socio.reservar("20:00")
     segunda = socio.reservar("21:00")
     assert base.anular(socio, admin, primera) == 200
-    [leido] = socio.centro()["notificaciones"]
+    [leido] = socio.centro()["notifications"]
     _anular_en_la_base(motor, socio, [segunda])
 
     def leyendo() -> None:
@@ -215,10 +215,10 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
     lectura.join(10)
 
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    [entrada] = centro["notificaciones"]
-    assert entrada["titulo"] == "El club anuló 2 de tus reservas"
-    assert entrada["leida"] is False
+    assert centro["unread"] == 1
+    [entrada] = centro["notifications"]
+    assert entrada["title"] == "El club anuló 2 de tus reservas"
+    assert entrada["read"] is False
 
 
 def test_el_despacho_toma_los_pendientes_por_un_indice_parcial(motor: Engine) -> None:

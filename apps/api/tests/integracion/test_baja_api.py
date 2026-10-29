@@ -21,14 +21,14 @@ def _registrar(api: TestClient, s: str) -> tuple[str, str]:
     correo = f"socia.{s}@correo.com"
     dni = str(int(s, 16) % 90_000_000 + 10_000_000)
     pedido = {
-        "nombre": "Lucía",
-        "apellido": "Gómez",
+        "first_name": "Lucía",
+        "last_name": "Gómez",
         "dni": dni,
-        "fecha_nacimiento": "1998-11-02",
-        "correo": correo,
-        "contrasena": CONTRASENA,
+        "birth_date": "1998-11-02",
+        "email": correo,
+        "password": CONTRASENA,
     }
-    assert api.post("/registro", json=pedido).status_code == 201
+    assert api.post("/register", json=pedido).status_code == 201
     return correo, dni
 
 
@@ -88,7 +88,7 @@ def test_la_baja_es_logica_conserva_el_historial_y_libera_el_correo(
     futura = _reservar(motor, correo, espacio, hora + timedelta(days=1))
     token = iniciar_sesion(correo, CONTRASENA)
 
-    assert api.delete("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 204
+    assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 204
 
     with motor.connect() as conn:
         estados: dict[UUID, str] = dict(
@@ -104,18 +104,18 @@ def test_la_baja_es_logica_conserva_el_historial_y_libera_el_correo(
     assert estados == {pasada: "active", en_curso: "active", futura: "canceled"}
     assert activo is False
     # La sesión ya no vale y con esa contraseña no se entra.
-    assert api.get("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 401
+    assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 401
     assert iniciar_sesion(correo, CONTRASENA) is None
     # Verifica CU-07-SUP-01: el correo y el DNI quedan libres para una cuenta nueva.
     otra = {
-        "nombre": "Lucía",
-        "apellido": "Gómez",
+        "first_name": "Lucía",
+        "last_name": "Gómez",
         "dni": dni,
-        "fecha_nacimiento": "1998-11-02",
-        "correo": correo,
-        "contrasena": CONTRASENA,
+        "birth_date": "1998-11-02",
+        "email": correo,
+        "password": CONTRASENA,
     }
-    assert api.post("/registro", json=otra).status_code == 201
+    assert api.post("/register", json=otra).status_code == 201
 
 
 def test_un_administrador_no_se_da_de_baja(
@@ -133,13 +133,13 @@ def test_un_administrador_no_se_da_de_baja(
     ]  # fmt: skip
     assert sembrar(argumentos) == 0
     token = iniciar_sesion(correo, CONTRASENA)
-    assert api.delete("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 403
-    assert api.get("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 200
+    assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 403
+    assert api.get("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 200
     os.environ.pop("ADMIN_CONTRASENA", None)
 
 
 def test_sin_sesion_no_hay_baja(api: TestClient) -> None:
-    assert api.delete("/yo").status_code == 401
+    assert api.delete("/me").status_code == 401
 
 
 def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
@@ -156,7 +156,7 @@ def test_dos_bajas_a_la_vez_dan_de_baja_una_sola_vez(
         codigos = sorted(
             pool.map(
                 lambda _: (
-                    api.delete("/yo", headers={"Authorization": f"Bearer {token}"}).status_code
+                    api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code
                 ),
                 range(2),
             )

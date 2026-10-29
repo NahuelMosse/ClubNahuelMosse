@@ -268,14 +268,14 @@ def _socio(
 ) -> dict[str, str]:
     correo = f"socio.{s}@correo.com"
     alta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Martín",
-            "apellido": "Ferreyra",
+            "first_name": "Martín",
+            "last_name": "Ferreyra",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "1994-07-21",
-            "correo": correo,
-            "contrasena": CONTRASENA,
+            "birth_date": "1994-07-21",
+            "email": correo,
+            "password": CONTRASENA,
         },
     )
     assert alta.status_code == 201
@@ -322,12 +322,12 @@ def test_mis_reservas_hace_las_mismas_consultas_con_pocas_o_muchas(
         espacio = _espacio(conn, s)
     correo = f"socio.{s}@correo.com"
     _proximas(motor, correo, espacio, 2)
-    pocas = _contar(consultas, lambda: api.get("/reservas", headers=sesion))
+    pocas = _contar(consultas, lambda: api.get("/bookings", headers=sesion))
     with motor.begin() as conn:
         otro = _espacio(conn, f"{s}b")
     _proximas(motor, correo, otro, 13)
 
-    muchas = _contar(consultas, lambda: api.get("/reservas", headers=sesion))
+    muchas = _contar(consultas, lambda: api.get("/bookings", headers=sesion))
 
     assert muchas == pocas
 
@@ -366,14 +366,14 @@ def test_las_sedes_y_el_historial_global_hacen_consultas_fijas(
     with motor.begin() as conn:
         espacio = _espacio(conn, s)
     _proximas(motor, f"socio.{s}@correo.com", espacio, 2)
-    sedes_antes = _contar(consultas, lambda: api.get("/sedes", headers=admin))
-    historial_antes = _contar(consultas, lambda: api.get("/reservas/todas", headers=admin))
+    sedes_antes = _contar(consultas, lambda: api.get("/venues", headers=admin))
+    historial_antes = _contar(consultas, lambda: api.get("/bookings/all", headers=admin))
     with motor.begin() as conn:
         otros = [_espacio(conn, f"{s}{n}") for n in range(5)]
     _proximas(motor, f"socio.{s}@correo.com", otros[0], 13)
 
-    sedes_despues = _contar(consultas, lambda: api.get("/sedes", headers=admin))
-    historial_despues = _contar(consultas, lambda: api.get("/reservas/todas", headers=admin))
+    sedes_despues = _contar(consultas, lambda: api.get("/venues", headers=admin))
+    historial_despues = _contar(consultas, lambda: api.get("/bookings/all", headers=admin))
 
     assert sedes_despues == sedes_antes
     assert historial_despues == historial_antes

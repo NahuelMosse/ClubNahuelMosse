@@ -25,14 +25,14 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
     correo = f"socia.{s}@correo.com"
     assert (
         api.post(
-            "/registro",
+            "/register",
             json={
-                "nombre": "Lucía",
-                "apellido": "Gómez",
+                "first_name": "Lucía",
+                "last_name": "Gómez",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-                "fecha_nacimiento": "1998-11-02",
-                "correo": correo,
-                "contrasena": "ClubNahuel1",
+                "birth_date": "1998-11-02",
+                "email": correo,
+                "password": "ClubNahuel1",
             },
         ).status_code
         == 201
@@ -67,7 +67,7 @@ def test_al_eliminar_la_cuenta_el_horario_de_su_reserva_vigente_vuelve_a_estar_d
         ).scalar_one()
 
     token = iniciar_sesion(correo, "ClubNahuel1")
-    assert api.delete("/yo", headers={"Authorization": f"Bearer {token}"}).status_code == 204
+    assert api.delete("/me", headers={"Authorization": f"Bearer {token}"}).status_code == 204
 
     with motor.begin() as conn:
         estado, cancelada_por = conn.execute(
