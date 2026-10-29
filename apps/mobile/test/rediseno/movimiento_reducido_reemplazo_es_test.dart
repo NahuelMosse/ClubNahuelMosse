@@ -1,5 +1,3 @@
-import 'package:clubnahuelmosse/common/app_language.dart';
-import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'dart:convert';
 
@@ -9,10 +7,11 @@ import 'package:clubnahuelmosse/features/bookings/presentation/booking_confirmed
 import 'package:clubnahuelmosse/features/bookings/domain/booking.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:clubnahuelmosse/l10n/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../mis_reservas_test.dart' show reservaJson;
-import '../notificaciones_test.dart'
+import '../notificaciones_es_test.dart'
     show ApiFalsa, ahoraClub, centroDe, recordatorio;
 import '../soporte/montar.dart';
 import 'package:clubnahuelmosse/features/notifications/presentation/notice_panel.dart';
@@ -27,7 +26,7 @@ Future<void> _montarLibre(WidgetTester tester, Widget pantalla) async {
     MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: darkTheme,
-      localeListResolutionCallback: resolveLanguage,
+      locale: const Locale('es'),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       home: pantalla,

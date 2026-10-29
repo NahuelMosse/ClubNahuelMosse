@@ -1767,6 +1767,384 @@ abstract class AppLocalizations {
   /// **'Enter your email address'**
   String get loginEmailRequired;
 
+  /// No description provided for @commonDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours, plural, =1{1 hour} other{{hours} hours}}'**
+  String commonDuration(num hours);
+
+  /// No description provided for @commonRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'RETRY'**
+  String get commonRetry;
+
+  /// No description provided for @commonBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get commonBack;
+
+  /// No description provided for @commonOk.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get commonOk;
+
+  /// No description provided for @commonCloseNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Close notice'**
+  String get commonCloseNotice;
+
+  /// No description provided for @commonShowPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Show password'**
+  String get commonShowPassword;
+
+  /// No description provided for @commonHidePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide password'**
+  String get commonHidePassword;
+
+  /// No description provided for @commonLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading'**
+  String get commonLoading;
+
+  /// No description provided for @commonMemberCard.
+  ///
+  /// In en, this message translates to:
+  /// **'MEMBER CARD'**
+  String get commonMemberCard;
+
+  /// No description provided for @commonSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'SELECTED'**
+  String get commonSelected;
+
+  /// No description provided for @commonSavePassword.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE PASSWORD'**
+  String get commonSavePassword;
+
+  /// No description provided for @commonPasswordUpdatedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated'**
+  String get commonPasswordUpdatedTitle;
+
+  /// No description provided for @commonPasswordUpdatedText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password was changed. Use it the next time you sign in.'**
+  String get commonPasswordUpdatedText;
+
+  /// No description provided for @commonYourDay.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR DAY ON THE COURT'**
+  String get commonYourDay;
+
+  /// No description provided for @commonSlotFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get commonSlotFree;
+
+  /// No description provided for @commonSlotTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Taken'**
+  String get commonSlotTaken;
+
+  /// No description provided for @commonSlotChosen.
+  ///
+  /// In en, this message translates to:
+  /// **'Chosen'**
+  String get commonSlotChosen;
+
+  /// No description provided for @commonSlotFreeSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{hour} h free'**
+  String commonSlotFreeSemantics(Object hour);
+
+  /// No description provided for @commonSlotTakenSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{hour} h taken'**
+  String commonSlotTakenSemantics(Object hour);
+
+  /// No description provided for @commonSlotChosenSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'{hour} h chosen'**
+  String commonSlotChosenSemantics(Object hour);
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'HOME'**
+  String get navHome;
+
+  /// No description provided for @navVenues.
+  ///
+  /// In en, this message translates to:
+  /// **'VENUES'**
+  String get navVenues;
+
+  /// No description provided for @navBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'BOOKINGS'**
+  String get navBookings;
+
+  /// No description provided for @navProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'PROFILE'**
+  String get navProfile;
+
+  /// No description provided for @navSpaces.
+  ///
+  /// In en, this message translates to:
+  /// **'SPACES'**
+  String get navSpaces;
+
+  /// No description provided for @errorConnectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection error'**
+  String get errorConnectionTitle;
+
+  /// No description provided for @errorConnectionText.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not connect. Check your internet connection and try again.'**
+  String get errorConnectionText;
+
+  /// No description provided for @errorServerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error'**
+  String get errorServerTitle;
+
+  /// No description provided for @errorNoResponseText.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is not responding. Try again in a few minutes.'**
+  String get errorNoResponseText;
+
+  /// No description provided for @errorGenericText.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not process the operation right now. Try again later.'**
+  String get errorGenericText;
+
+  /// No description provided for @errorTimeSlotTakenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'That time slot was taken'**
+  String get errorTimeSlotTakenTitle;
+
+  /// No description provided for @errorTimeSlotRejectedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We could not confirm the time slot'**
+  String get errorTimeSlotRejectedTitle;
+
+  /// No description provided for @errorChooseAnotherTime.
+  ///
+  /// In en, this message translates to:
+  /// **'CHOOSE ANOTHER TIME'**
+  String get errorChooseAnotherTime;
+
+  /// No description provided for @errorSaveNewScheduleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the new schedule?'**
+  String get errorSaveNewScheduleTitle;
+
+  /// No description provided for @errorSaveAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE ANYWAY'**
+  String get errorSaveAnyway;
+
+  /// No description provided for @errorReviewSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'REVIEW THE SCHEDULE'**
+  String get errorReviewSchedule;
+
+  /// No description provided for @errorBookingCanceledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking canceled'**
+  String get errorBookingCanceledTitle;
+
+  /// No description provided for @errorBookingCanceledText.
+  ///
+  /// In en, this message translates to:
+  /// **'The time slot was freed and the booking moved to your history.'**
+  String get errorBookingCanceledText;
+
+  /// No description provided for @errorBookingVoidedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking voided'**
+  String get errorBookingVoidedTitle;
+
+  /// No description provided for @errorBookingVoidedText.
+  ///
+  /// In en, this message translates to:
+  /// **'The time slot was freed and the booking moved to the voided ones.'**
+  String get errorBookingVoidedText;
+
+  /// No description provided for @errorChangedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'This changed in the meantime'**
+  String get errorChangedTitle;
+
+  /// No description provided for @errorChangedText.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone else changed this data while you were viewing it. We updated it so you see the current state.'**
+  String get errorChangedText;
+
+  /// No description provided for @errorChangedAction.
+  ///
+  /// In en, this message translates to:
+  /// **'SEE THE UPDATE'**
+  String get errorChangedAction;
+
+  /// No description provided for @errorSessionExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session expired'**
+  String get errorSessionExpiredTitle;
+
+  /// No description provided for @errorSessionExpiredText.
+  ///
+  /// In en, this message translates to:
+  /// **'For security we signed you out. Sign in again to continue.'**
+  String get errorSessionExpiredText;
+
+  /// No description provided for @errorSessionExpiredAction.
+  ///
+  /// In en, this message translates to:
+  /// **'GO TO SIGN IN'**
+  String get errorSessionExpiredAction;
+
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsBellUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications, {unread} unread'**
+  String notificationsBellUnread(Object unread);
+
+  /// No description provided for @notificationUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'unread'**
+  String get notificationUnread;
+
+  /// No description provided for @notificationFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'CLUBNAHUELMOSSE · {when}'**
+  String notificationFrom(Object when);
+
+  /// No description provided for @notificationsCloseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Close notifications'**
+  String get notificationsCloseLabel;
+
+  /// No description provided for @notificationsPanelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'NOTIFICATIONS'**
+  String get notificationsPanelTitle;
+
+  /// No description provided for @notificationsMarkAll.
+  ///
+  /// In en, this message translates to:
+  /// **'MARK ALL READ'**
+  String get notificationsMarkAll;
+
+  /// No description provided for @notificationsDisabledTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off'**
+  String get notificationsDisabledTitle;
+
+  /// No description provided for @notificationsDisabledText.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notices so we can remind you about your bookings an hour before.'**
+  String get notificationsDisabledText;
+
+  /// No description provided for @notificationsEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'TURN ON NOTIFICATIONS'**
+  String get notificationsEnable;
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Here you will see the reminders for your bookings.'**
+  String get notificationsEmptyText;
+
+  /// No description provided for @arrivalToday.
+  ///
+  /// In en, this message translates to:
+  /// **'TODAY'**
+  String get arrivalToday;
+
+  /// No description provided for @arrivalYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'YESTERDAY'**
+  String get arrivalYesterday;
+
+  /// No description provided for @arrivalNow.
+  ///
+  /// In en, this message translates to:
+  /// **'NOW'**
+  String get arrivalNow;
+
+  /// No description provided for @arrivalMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} MIN AGO'**
+  String arrivalMinutesAgo(Object minutes);
+
+  /// No description provided for @arrivalHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} H AGO'**
+  String arrivalHoursAgo(Object hours);
+
   /// No description provided for @loginPasswordRequired.
   ///
   /// In en, this message translates to:

@@ -1,10 +1,12 @@
 // kit-shape: a screen or error family kept with its private parts.
 import 'package:flutter/material.dart';
 
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../domain/app_notification.dart';
 import '../domain/notification_kind.dart';
+import 'arrival_text.dart';
 
 /// `Push-Notification` del prototipo: el ícono del tipo, «CLUBNAHUELMOSSE · cuándo», el título
 /// y el cuerpo. Sin leer lleva un punto de acento.
@@ -26,7 +28,8 @@ class NoticeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = context.palette;
     final n = notification;
-    final when = arrivedLabel(n.createdAt, now);
+    final l10n = AppLocalizations.of(context);
+    final when = arrivalText(l10n, arrivalOf(n.createdAt, now));
     final shape = RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(Spacing.radiusLg),
       side: BorderSide(color: p.borderDefault),
@@ -35,7 +38,8 @@ class NoticeCard extends StatelessWidget {
       container: true,
       button: true,
       excludeSemantics: true,
-      label: '${n.title}. ${n.body}. $when${n.read ? '' : ', sin leer'}',
+      label:
+          '${n.title}. ${n.body}. $when${n.read ? '' : ', ${l10n.notificationUnread}'}',
       onTap: onTap,
       child: Material(
         color: p.bgSurfaceRaised,
@@ -55,7 +59,7 @@ class NoticeCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'CLUBNAHUELMOSSE · $when',
+                        l10n.notificationFrom(when),
                         style: Texts.overline.copyWith(color: p.textMuted),
                       ),
                       const SizedBox(height: Spacing.s4),

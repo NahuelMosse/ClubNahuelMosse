@@ -10,12 +10,14 @@ import '../../../common/clock.dart';
 import '../../../common/empty_state.dart';
 import '../../../common/network_failure.dart';
 import '../../../common/top_bar.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/theme.dart';
 import '../../../theme/tokens.dart';
 import '../../session/domain/session_exceptions.dart';
 import '../../session/presentation/load_failure.dart';
 import '../../session/presentation/session.dart';
 import '../domain/app_notification.dart';
+import 'arrival_text.dart';
 import 'notice_card.dart';
 import 'notice_card_skeleton.dart';
 import 'notification_center.dart';
@@ -105,6 +107,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final l10n = AppLocalizations.of(context);
     return ListenableBuilder(
       listenable: widget.center,
       builder: (context, _) {
@@ -114,14 +117,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         return Scaffold(
           backgroundColor: p.bgBase,
           appBar: TopBar(
-            title: 'Notificaciones',
+            title: l10n.notificationsTitle,
             onBack: () =>
                 context.canPop() ? context.pop() : context.go('/inicio'),
           ),
           bottomNavigationBar: disabled && noNotices
               ? ActionBar(
                   child: PrimaryButton(
-                    label: 'ACTIVAR NOTIFICACIONES',
+                    label: l10n.notificationsEnable,
                     onTap: center.enable,
                   ),
                 )
@@ -137,12 +140,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     NotificationCenter center,
     bool noNotices,
   ) {
+    final l10n = AppLocalizations.of(context);
     if (!_read && center.list.isEmpty) {
       if (_loading) return const NoticeCardSkeleton();
       // Con el aviso de error abierto no hay nada más que mostrar: el reintento es el del aviso.
       return _failed
           ? Center(
-              child: TextActionButton(label: 'REINTENTAR', onTap: _load),
+              child: TextActionButton(label: l10n.commonRetry, onTap: _load),
             )
           : const SizedBox.shrink();
     }
@@ -150,15 +154,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return SingleChildScrollView(
         padding: const EdgeInsets.all(Spacing.s24),
         child: center.allowed
-            ? const EmptyState(
+            ? EmptyState(
                 icon: Icons.notifications_none_rounded,
-                title: 'Todavía no tenés notificaciones',
-                text: 'Acá vas a ver los recordatorios de tus reservas.',
+                title: l10n.notificationsEmptyTitle,
+                text: l10n.notificationsEmptyText,
               )
-            : const EmptyState(
+            : EmptyState(
                 icon: Icons.notifications_none_rounded,
-                title: disabledTitle,
-                text: disabledText,
+                title: l10n.notificationsDisabledTitle,
+                text: l10n.notificationsDisabledText,
               ),
       );
     }
@@ -186,7 +190,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 bottom: Spacing.s12,
               ),
               child: Text(
-                group.label,
+                arrivalText(l10n, group.arrival),
                 style: Texts.overline.copyWith(color: p.textMuted),
               ),
             ),

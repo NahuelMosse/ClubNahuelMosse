@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../common/clock.dart';
 import '../../../common/motion.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../theme/tokens.dart';
 import '../domain/app_notification.dart';
 import 'notice_card.dart';
@@ -83,7 +84,7 @@ class _NoticePanelState extends State<NoticePanel> {
     final palette = context.palette;
     final route = RawDialogRoute<void>(
       barrierDismissible: true,
-      barrierLabel: 'Cerrar las notificaciones',
+      barrierLabel: AppLocalizations.of(context).notificationsCloseLabel,
       barrierColor: palette.bgScrim,
       transitionDuration: Duration.zero,
       pageBuilder: (context, _, _) => _PanelContent(

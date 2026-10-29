@@ -6,8 +6,11 @@
 /// startup and in tests.
 library;
 
+import 'dart:ui';
+
 import 'package:intl/intl.dart';
 
+import '../l10n/app_localizations.dart';
 import 'app_language.dart';
 
 String get _locale => currentLanguage();
@@ -44,8 +47,9 @@ String longDate(DateTime day) {
   return '${shortDay(day)}$connector$month';
 }
 
-/// «1 hora», «3 horas».
-String duration(int hours) => hours == 1 ? '1 hora' : '$hours horas';
+/// «1 hora», «3 horas» / «1 hour», «3 hours».
+String duration(int hours) =>
+    lookupAppLocalizations(Locale(_locale)).commonDuration(hours);
 
 /// «09:05».
 String shortTime(DateTime moment) =>

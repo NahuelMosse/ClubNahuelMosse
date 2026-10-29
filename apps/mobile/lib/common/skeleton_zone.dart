@@ -2,6 +2,8 @@
 // kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
+
 // kit-shape: the stateful widget and its State are a single component; _Slide is its private gradient.
 
 /// Gathers the blocks of a screen under one shimmer that sweeps across them. It stops with
@@ -43,7 +45,7 @@ class _SkeletonZoneState extends State<SkeletonZone>
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Cargando',
+    label: AppLocalizations.of(context).commonLoading,
     container: true,
     child: ExcludeSemantics(
       child: AnimatedBuilder(
