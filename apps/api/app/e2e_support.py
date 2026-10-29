@@ -1,12 +1,12 @@
 # kit-shape: the models of the test requests and the routes that use them are read together
 """What the scenarios need to see or force and the app cannot. It only exists with `PRUEBAS=1`.
-Wire names (routes, JSON keys, query parameters) stay in Spanish; Python names are English."""
+Wire names (routes, JSON keys, query parameters) are English, like the public contract."""
 
 from datetime import date, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response, status
-from pydantic import BaseModel, ConfigDict, Field
+from fastapi import APIRouter, Depends, Response, status
+from pydantic import BaseModel
 from sqlalchemy import text
 
 from app.modules.notifications import (
@@ -19,51 +19,43 @@ from app.modules.password_recovery import hash_of
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection
 from app.shared.errors import NotFound
-from app.shared.stored_values import stored
 
-router = APIRouter(prefix="/_pruebas", include_in_schema=False)
-
-
-class _Wire(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
+router = APIRouter(prefix="/_testing", include_in_schema=False)
 
 
-class Email(_Wire):
-    subject: str = Field(alias="asunto")
-    body: str = Field(alias="cuerpo")
+class Email(BaseModel):
+    subject: str
+    body: str
 
 
-class Outbox(_Wire):
-    emails: list[Email] = Field(alias="correos")
+class Outbox(BaseModel):
+    emails: list[Email]
 
 
-@router.get("/correos", response_model_by_alias=True)
-def outbox(conn: DbConnection, recipient: Annotated[str, Query(alias="para")]) -> Outbox:
+@router.get("/emails")
+def outbox(conn: DbConnection, to: str) -> Outbox:
     rows = conn.execute(
         text("SELECT subject, body FROM outgoing_email WHERE recipient = :p ORDER BY id"),
-        {"p": recipient.strip().lower()},
+        {"p": to.strip().lower()},
     ).all()
     return Outbox(emails=[Email(subject=r.subject, body=r.body) for r in rows])
 
 
-class Occupation(_Wire):
-    space: str = Field(alias="espacio")
-    day: date = Field(alias="fecha")
-    hour: int = Field(alias="hora")
-    hours: int = Field(1, alias="horas")
+class Occupation(BaseModel):
+    space: str
+    date: date
+    hour: int
+    hours: int = 1
     # Whose booking it is; without an email, the first account in the database.
-    email: str | None = Field(None, alias="correo")
-    status: str = Field("activa", alias="estado")
-    reason: str | None = Field(None, alias="motivo")
+    email: str | None = None
+    status: str = "active"
+    reason: str | None = None
 
 
-@router.post("/reservas", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/bookings", status_code=status.HTTP_204_NO_CONTENT)
 def occupy(occupation: Occupation, conn: DbConnection) -> Response:
     """A booking loaded outside the app, for [email] or for someone else."""
-    values = occupation.model_dump() | {
-        "status": stored(occupation.status),
-        "active_status": stored("activa"),
-    }
+    values = occupation.model_dump() | {"day": occupation.date, "active_status": "active"}
     inserted = conn.execute(
         text(
             "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total,"
@@ -90,7 +82,7 @@ def occupy(occupation: Occupation, conn: DbConnection) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/reservas/vaciar", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/bookings/clear", status_code=status.HTTP_204_NO_CONTENT)
 def clear_bookings(conn: DbConnection) -> Response:
     """The system is left with no bookings, nor the notices that mention them: the run
     database is a single one and the global-history scenarios start from zero."""
@@ -99,11 +91,11 @@ def clear_bookings(conn: DbConnection) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-class SpaceName(_Wire):
-    space: str = Field(alias="espacio")
+class SpaceName(BaseModel):
+    space: str
 
 
-@router.post("/reservas/empezar", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/bookings/start", status_code=status.HTTP_204_NO_CONTENT)
 def start(request: SpaceName, conn: DbConnection) -> Response:
     """The next active booking of [space] starts at the club's current hour, as if time
     had run while the app was open."""
@@ -117,13 +109,13 @@ def start(request: SpaceName, conn: DbConnection) -> Response:
             "               WHERE e.name = :space AND b2.status = :active_status"
             "               ORDER BY b2.starts_at LIMIT 1)"
         ),
-        request.model_dump() | {"active_status": stored("activa")},
+        request.model_dump() | {"active_status": "active"},
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/reservas/anular", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/bookings/void", status_code=status.HTTP_204_NO_CONTENT)
 def cancel(request: SpaceName, conn: DbConnection) -> Response:
     """The club cancels the active bookings of [space], as an administrator would."""
     conn.execute(
@@ -133,19 +125,19 @@ def cancel(request: SpaceName, conn: DbConnection) -> Response:
             " FROM space e WHERE e.id = b.space_id AND e.name = :space"
             " AND b.status = :active_status"
         ),
-        request.model_dump() | {"voided": stored("anulada"), "active_status": stored("activa")},
+        request.model_dump() | {"voided": "voided", "active_status": "active"},
     )
     conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-class BranchName(_Wire):
-    name: str = Field(alias="nombre")
+class VenueName(BaseModel):
+    name: str
 
 
-@router.post("/sedes/baja", status_code=status.HTTP_204_NO_CONTENT)
-def deactivate_branch(request: BranchName, conn: DbConnection) -> Response:
-    """The branch [name] stops being active, as if another administrator deactivated it."""
+@router.post("/venues/deactivate", status_code=status.HTTP_204_NO_CONTENT)
+def deactivate_venue(request: VenueName, conn: DbConnection) -> Response:
+    """The venue [name] stops being active, as if another administrator deactivated it."""
     conn.execute(
         text(
             "UPDATE venue SET active = false, deactivated_at = now(),"
@@ -158,7 +150,7 @@ def deactivate_branch(request: BranchName, conn: DbConnection) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/espacios/baja", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/spaces/deactivate", status_code=status.HTTP_204_NO_CONTENT)
 def deactivate_space(request: SpaceName, conn: DbConnection) -> Response:
     """The space [space] stops being active, as if another administrator deactivated it."""
     conn.execute(
@@ -173,7 +165,7 @@ def deactivate_space(request: SpaceName, conn: DbConnection) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.post("/recuperacion/{code}/vencer", status_code=status.HTTP_204_NO_CONTENT)
+@router.post("/password-recovery/{code}/expire", status_code=status.HTTP_204_NO_CONTENT)
 def expire(code: str, conn: DbConnection) -> Response:
     conn.execute(
         text(
@@ -186,18 +178,18 @@ def expire(code: str, conn: DbConnection) -> Response:
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-class Sweep(_Wire):
+class Sweep(BaseModel):
     # Only the bookings of this account; without an email, those of all.
-    email: str | None = Field(None, alias="correo")
+    email: str | None = None
     # The time the sweep is run at; without it, now.
-    now: datetime | None = Field(None, alias="ahora")
+    now: datetime | None = None
 
 
-class Registered(_Wire):
-    registered: int = Field(alias="registrados")
+class Registered(BaseModel):
+    registered: int
 
 
-@router.post("/recordatorios", response_model_by_alias=True)
+@router.post("/reminders")
 def sweep(
     request: Sweep,
     conn: DbConnection,
@@ -217,16 +209,16 @@ def sweep(
     return Registered(registered=send_reminders(notifications, push_channel(), now, user))
 
 
-class Device(_Wire):
-    permission: bool = Field(alias="permiso")
+class Device(BaseModel):
+    permission_granted: bool
 
 
-class Devices(_Wire):
-    devices: list[Device] = Field(alias="dispositivos")
+class Devices(BaseModel):
+    devices: list[Device]
 
 
-@router.get("/dispositivos", response_model_by_alias=True)
-def devices(conn: DbConnection, email: Annotated[str, Query(alias="correo")]) -> Devices:
+@router.get("/devices")
+def devices(conn: DbConnection, email: str) -> Devices:
     """The phones the account [email] has registered today, with their permission."""
     rows = conn.execute(
         text(
@@ -236,4 +228,4 @@ def devices(conn: DbConnection, email: Annotated[str, Query(alias="correo")]) ->
         {"c": email.strip()},
     ).all()
     conn.rollback()
-    return Devices(devices=[Device(permission=r.permission_granted) for r in rows])
+    return Devices(devices=[Device(permission_granted=r.permission_granted) for r in rows])

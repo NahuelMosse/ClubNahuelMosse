@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     smtp_user: str = _env("", "SMTP_USER", "SMTP_USUARIO")
     smtp_password: str = _env("", "SMTP_PASSWORD", "SMTP_CONTRASENA")
     email_sender: str = _env("", "EMAIL_SENDER", "CORREO_REMITENTE")
-    # Enables /_pruebas (the outbox and link expiry), and only against the emulator.
+    # Enables /_testing (the outbox and link expiry), and only against the emulator.
     e2e_testing: bool = Field(
         default=False, validation_alias=AliasChoices("E2E_TESTING", "PRUEBAS")
     )

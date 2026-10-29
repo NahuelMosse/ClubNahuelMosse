@@ -10,7 +10,7 @@ from app.shared.errors import Forbidden, InvalidData, NotFound
 
 async def _respond_422(_: Request, e: Exception) -> Response:
     assert isinstance(e, InvalidData)
-    return JSONResponse({"errores": e.errors}, status_code=422)
+    return JSONResponse({"errors": e.errors}, status_code=422)
 
 
 async def _respond_403(_: Request, __: Exception) -> Response:

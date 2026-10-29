@@ -42,7 +42,7 @@ _SOURCES = {"body", "query", "path", "header", "cookie"}
 def _field(location: tuple[int | str, ...]) -> str:
     """The name of the field that failed: what follows `body`, `query` or `path`."""
     rest = location[1:] if location and location[0] in _SOURCES else location
-    return rest[0] if rest and isinstance(rest[0], str) else "cuerpo"
+    return rest[0] if rest and isinstance(rest[0], str) else "body"
 
 
 def shape_errors(e: RequestValidationError) -> dict[str, str]:
@@ -58,15 +58,15 @@ async def _respond(_: Request, e: Exception) -> JSONResponse:
     if any(error["type"] == "json_invalid" for error in e.errors()):
         return JSONResponse(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content={"errores": {"cuerpo": _MESSAGES["json_invalid"]}},
+            content={"errors": {"body": _MESSAGES["json_invalid"]}},
         )
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-        content={"errores": shape_errors(e)},
+        content={"errors": shape_errors(e)},
     )
 
 
 def install(app: FastAPI) -> None:
-    """A malformed value answers 422 with `{"errores": {field: message}}`; a body that is
+    """A malformed value answers 422 with `{"errors": {field: message}}`; a body that is
     not JSON, 400."""
     app.add_exception_handler(RequestValidationError, _respond)

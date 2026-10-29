@@ -68,7 +68,7 @@ def request_link(email: str, public_url: str, links: LinkRepository) -> Message 
     """
     email = normalize_email(email)
     if not valid_email(email):
-        raise InvalidData({"correo": "Revisá el formato del correo"})
+        raise InvalidData({"email": "Revisá el formato del correo"})
     recipient = links.recipient(email)
     if recipient is None:
         return None
@@ -77,7 +77,7 @@ def request_link(email: str, public_url: str, links: LinkRepository) -> Message 
         return None
     # The code goes after the "#": the browser does not send it to the server, so it does not
     # end up in any request log.
-    link = f"{public_url.rstrip('/')}/enlace/recuperar#codigo={code}"
+    link = f"{public_url.rstrip('/')}/link/recover#code={code}"
     expiry = f"El enlace vence en {VALIDITY_MINUTES} minutos y sirve una sola vez."
     discard = "Si no lo pediste, ignorá este correo: tu contraseña no cambia."
     return Message(
@@ -115,7 +115,7 @@ def use_link(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
 ) -> None:
     """Creates the new password with the link, which stops being valid."""
     if missing := password_problems(new):
-        raise InvalidData({"nueva": missing[0]})
+        raise InvalidData({"new_password": missing[0]})
     claimed = links.claim(hash_of(code))
     if claimed is None:
         raise InvalidLink

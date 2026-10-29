@@ -85,8 +85,8 @@ def _personal_errors(data: PersonalData, today: date) -> tuple[dict[str, str], s
     errors: dict[str, str] = {}
 
     for field, value, required in (
-        ("nombre", data.first_name, "El nombre es obligatorio"),
-        ("apellido", data.last_name, "El apellido es obligatorio"),
+        ("first_name", data.first_name, "El nombre es obligatorio"),
+        ("last_name", data.last_name, "El apellido es obligatorio"),
     ):
         clean = value.strip()
         if not clean:
@@ -102,11 +102,11 @@ def _personal_errors(data: PersonalData, today: date) -> tuple[dict[str, str], s
 
     birth_date = _date(data.birth_date)
     if not data.birth_date.strip():
-        errors["fecha_nacimiento"] = "La fecha de nacimiento es obligatoria"
+        errors["birth_date"] = "La fecha de nacimiento es obligatoria"
     elif birth_date is None:
-        errors["fecha_nacimiento"] = "La fecha no es válida"
+        errors["birth_date"] = "La fecha no es válida"
     elif birth_date >= today:
-        errors["fecha_nacimiento"] = "La fecha tiene que ser anterior a hoy"
+        errors["birth_date"] = "La fecha tiene que ser anterior a hoy"
 
     return errors, dni, birth_date
 
@@ -121,14 +121,14 @@ def validate_registration(
 
     email = normalize_email(data.email)
     if not email:
-        errors["correo"] = "El correo es obligatorio"
+        errors["email"] = "El correo es obligatorio"
     elif not _EMAIL.fullmatch(email):
-        errors["correo"] = "Revisá el formato del correo"
+        errors["email"] = "Revisá el formato del correo"
 
     if not data.password:
-        errors["contrasena"] = "La contraseña es obligatoria"
+        errors["password"] = "La contraseña es obligatoria"
     elif missing := password_problems(data.password):
-        errors["contrasena"] = missing[0]
+        errors["password"] = missing[0]
 
     if errors or birth_date is None:
         return None, errors

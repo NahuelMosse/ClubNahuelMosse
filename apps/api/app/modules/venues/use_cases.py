@@ -11,7 +11,7 @@ class Venues(Protocol):
     def active(self) -> list[Venue]: ...
 
     def insert(self, new: NewVenue, author: UUID) -> Venue:
-        """Raises `Duplicate(["nombre"])` if another active venue already has that name."""
+        """Raises `Duplicate(["name"])` if another active venue already has that name."""
         ...
 
     def update(self, venue_id: UUID, data: NewVenue, author: UUID, *, confirm: bool) -> Venue:
@@ -19,7 +19,7 @@ class Venues(Protocol):
 
         Without [confirm], raises `BookingsOutsideHours` if the new schedule leaves out active
         future bookings that the previous one admitted. Raises `NotFound` if the venue is no
-        longer active and `Duplicate(["nombre"])` if another active venue already has that name.
+        longer active and `Duplicate(["name"])` if another active venue already has that name.
         """
         ...
 

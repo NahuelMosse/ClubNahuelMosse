@@ -4,11 +4,11 @@ from datetime import date, datetime
 from typing import Literal
 from uuid import UUID
 
-Status = Literal["activa", "completada", "cancelada", "anulada"]
-# The four tabs of the global history (CU-14): "cancelada" has no tab of its own, it only
-# shows up inside "Todas".
-StatusFilter = Literal["activa", "completada", "anulada"]
-When = Literal["proximas", "historial"]
+Status = Literal["active", "completed", "canceled", "voided"]
+# The four tabs of the global history (CU-14): "canceled" has no tab of its own, it only
+# shows up inside "all".
+StatusFilter = Literal["active", "completed", "voided"]
+When = Literal["upcoming", "history"]
 
 
 # How many bookings each page of the global history brings.

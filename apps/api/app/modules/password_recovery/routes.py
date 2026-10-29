@@ -26,25 +26,24 @@ ANDROID_PACKAGE = "ar.edu.unimoron.clubnahuelmosse"
 
 
 class LinkRequest(BaseModel):
-    correo: str = ""
+    email: str = ""
 
 
 class LinkCheck(BaseModel):
-    codigo: str = ""
+    code: str = ""
 
 
 class NewPassword(BaseModel):
-    codigo: str = ""
-    nueva: str = ""
+    code: str = ""
+    new_password: str = ""
 
 
 class FieldErrors(BaseModel):
-    errores: dict[str, str]
+    errors: dict[str, str]
 
 
 @router.post(
-    "/recuperacion",
-    operation_id="pedir_recuperacion_post",
+    "/password-recovery",
     status_code=status.HTTP_202_ACCEPTED,
     responses={422: {"model": FieldErrors}},
     summary="Pedir un enlace para crear una contraseña nueva",
@@ -55,7 +54,7 @@ def request_recovery(
     tasks: BackgroundTasks,
     links: Annotated[LinksSql, Depends(link_repository)],
 ) -> Response:
-    message = request_link(request.correo, config.public_url, links)
+    message = request_link(request.email, config.public_url, links)
     if message is not None:
         if config.email_mode == "outbox":
             # In development and scenarios the outbox is filled before responding, so the
@@ -69,20 +68,18 @@ def request_recovery(
 
 # The codes travel in the body, not in the path: the path ends up in the request logs.
 @router.post(
-    "/recuperacion/consulta",
-    operation_id="consultar_recuperacion_consulta_post",
+    "/password-recovery/check",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={410: {"description": "El enlace venció, ya se usó o fue reemplazado"}},
     summary="Saber si un enlace de recuperación sigue sirviendo",
 )
 def check_link(check: LinkCheck, links: Annotated[LinksSql, Depends(link_repository)]) -> Response:
-    valid = bool(check.codigo) and link_is_valid(check.codigo, links)
+    valid = bool(check.code) and link_is_valid(check.code, links)
     return Response(status_code=status.HTTP_204_NO_CONTENT if valid else status.HTTP_410_GONE)
 
 
 @router.put(
-    "/recuperacion",
-    operation_id="usar_recuperacion_put",
+    "/password-recovery",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         410: {"description": "El enlace venció, ya se usó o fue reemplazado"},
@@ -99,8 +96,8 @@ def reset_password(
 ) -> Response:
     try:
         use_link(
-            request.codigo,
-            request.nueva,
+            request.code,
+            request.new_password,
             links,
             identity=provider,
             users=users,
@@ -111,8 +108,8 @@ def reset_password(
 
 
 _LINK_SCRIPT = f"""
-  var codigo = new URLSearchParams(location.hash.slice(1)).get("codigo") || "";
-  location.replace("intent://app/recuperar?codigo=" + encodeURIComponent(codigo) +
+  var code = new URLSearchParams(location.hash.slice(1)).get("code") || "";
+  location.replace("intent://app/recuperar?codigo=" + encodeURIComponent(code) +
     "#Intent;scheme=clubnahuelmosse;package={ANDROID_PACKAGE};end");
 """
 
@@ -135,8 +132,7 @@ _LINK_POLICY = f"default-src 'none'; script-src 'sha256-{_SCRIPT_HASH}'; frame-a
 
 
 @router.get(
-    "/enlace/recuperar",
-    operation_id="pagina_del_enlace_enlace_recuperar_get",
+    "/link/recover",
     response_class=HTMLResponse,
     summary="Página del enlace del correo: abre la app en la contraseña nueva",
     description=(

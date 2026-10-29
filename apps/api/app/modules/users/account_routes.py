@@ -1,5 +1,6 @@
 # kit-shape: the account routes and the models of their requests and responses are read together
-from datetime import date, datetime
+from datetime import date as date_type
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -20,44 +21,42 @@ router = APIRouter(tags=["sesión"])
 
 
 class OwnProfile(BaseModel):
-    nombre: str
-    apellido: str
-    correo: str
-    rol: Role
+    first_name: str
+    last_name: str
+    email: str
+    role: Role
     dni: str
-    fecha_nacimiento: date
+    birth_date: date_type
 
 
 @router.get(
-    "/yo",
-    operation_id="perfil_propio_yo_get",
+    "/me",
     response_model=OwnProfile,
     responses={401: {"model": NoSession}},
     summary="El perfil y el rol de quien inició sesión",
 )
 def own_profile(profile: Annotated[Profile, Depends(current_user)]) -> OwnProfile:
     return OwnProfile(
-        nombre=profile.first_name,
-        apellido=profile.last_name,
-        correo=profile.email,
-        rol=profile.role,
+        first_name=profile.first_name,
+        last_name=profile.last_name,
+        email=profile.email,
+        role=profile.role,
         dni=profile.dni,
-        fecha_nacimiento=profile.birth_date,
+        birth_date=profile.birth_date,
     )
 
 
 class PasswordChangeRequest(BaseModel):
-    actual: str = ""
-    nueva: str = ""
+    current_password: str = ""
+    new_password: str = ""
 
 
 class PasswordErrors(BaseModel):
-    errores: dict[str, str]
+    errors: dict[str, str]
 
 
 @router.put(
-    "/yo/contrasena",
-    operation_id="cambiar_contrasena_propia_yo_contrasena_put",
+    "/me/password",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
@@ -76,8 +75,8 @@ def change_own_password(
     try:
         change_password(
             profile,
-            request.actual,
-            request.nueva,
+            request.current_password,
+            request.new_password,
             identity=provider,
             users=users,
         )
@@ -87,15 +86,14 @@ def change_own_password(
 
 
 class ProfileEditRequest(BaseModel):
-    nombre: str = ""
-    apellido: str = ""
+    first_name: str = ""
+    last_name: str = ""
     dni: str = ""
-    fecha_nacimiento: str = ""
+    birth_date: str = ""
 
 
 @router.put(
-    "/yo",
-    operation_id="editar_perfil_propio_yo_put",
+    "/me",
     response_model=OwnProfile,
     responses={
         401: {"model": NoSession},
@@ -115,10 +113,10 @@ def update_own_profile(
         update_profile(
             profile,
             PersonalData(
-                first_name=request.nombre,
-                last_name=request.apellido,
+                first_name=request.first_name,
+                last_name=request.last_name,
                 dni=request.dni,
-                birth_date=request.fecha_nacimiento,
+                birth_date=request.birth_date,
             ),
             today=datetime.now(CLUB_TIMEZONE).date(),
             users=users,
@@ -126,7 +124,7 @@ def update_own_profile(
     except Duplicate:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            content={"errores": {"dni": "Este DNI ya está registrado"}},
+            content={"errors": {"dni": "Este DNI ya está registrado"}},
         )
     updated = profiles.active_profile(profile.uid)
     if updated is None:
@@ -139,8 +137,7 @@ def update_own_profile(
 
 
 @router.delete(
-    "/yo",
-    operation_id="dar_de_baja_propia_yo_delete",
+    "/me",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
