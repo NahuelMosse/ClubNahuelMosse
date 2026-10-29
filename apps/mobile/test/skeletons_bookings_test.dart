@@ -3,7 +3,6 @@ import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/common/clock.dart';
 import 'package:clubnahuelmosse/common/day_timeline.dart';
 import 'package:clubnahuelmosse/common/selector.dart';
-import 'package:clubnahuelmosse/common/skeleton.dart';
 import 'package:clubnahuelmosse/common/text_field.dart';
 import 'package:clubnahuelmosse/features/bookings/presentation/availability_cover.dart';
 import 'package:clubnahuelmosse/features/bookings/presentation/availability_skeleton.dart';

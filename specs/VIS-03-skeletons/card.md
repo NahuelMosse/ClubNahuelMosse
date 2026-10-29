@@ -37,6 +37,7 @@ not_read:
 - la carga de la sede, Sedes, el inicio, Horarios, Buscar cancha, Mis reservas, Notificaciones y las listas del admin cambia de forma: los bloques genéricos pasan a tener la forma de la pantalla · `esqueletos_de_carga*_test.dart` (@VIS-02-S1) siguen válidos: buscan `Skeleton` y ningún spinner
 - Mi perfil y Alta de espacio cargan con skeleton en vez de un spinner; el historial del admin suma filas skeleton bajo «Cargando reservas…» · `integration_test/reservas/historial_global_test.dart` @CU-14-H01-09 sigue válido
 - las capturas de `test/capturas/` que muestran una carga cambian con la forma nueva
+- Horarios, al cambiar de día o de duración, reemplaza la grilla anterior atenuada por el skeleton de la grilla mientras consulta
 
 ## Gate
 
@@ -44,7 +45,7 @@ not_read:
 suite [timeout 1 h]: sh D:/Temp/w/herramientas/flutter-mobile.sh
 fmt: D:/projects/flutter/bin/dart format --output=none --set-exit-if-changed apps/mobile/lib apps/mobile/test/soporte/held_api.dart apps/mobile/test/skeletons_venues_test.dart apps/mobile/test/skeletons_bookings_test.dart apps/mobile/test/skeletons_account_test.dart apps/mobile/test/skeletons_admin_test.dart
 lint: D:/projects/flutter/bin/flutter analyze --no-pub apps/mobile
-refactor-tests: three tests of this card carry an import they do not use (analyze warns unused_import); only that import line goes
+refactor-tests: four tests of this card carry an import they do not use (analyze warns unused_import); only that import line goes
 ```
 
 ## Log
@@ -58,3 +59,4 @@ refactor-tests: three tests of this card carry an import they do not use (analyz
 - L7 · 2026-10-29 · T1 · flutter-mobile.sh test/skeletons_venues_test.dart: 4 pasan (S1, ASM-01, ASM-05); capturas test/capturas/skeletons/sede(s)_cargando|filtrando|cargada|filtrada.png (oscuro 393x852); format de lo mío limpio; analyze: solo el import sin uso del test commiteado
 - L8 · 2026-10-29 · T3 · flutter-mobile.sh test/skeletons_account_closed_test.dart perfil_test inicio_test inicio_reservas_test notificaciones_test avisos_test: 80 pasan; dart format sin cambios; analyze: solo imports sin uso en tests congelados (skeletons_account_closed_test.dart:3, skeletons_account_test.dart:3); capturas skeletons/{inicio,notificaciones,perfil}_{cargando,cargada}.png generadas (oscuro 393x852)
 - L9 · 2026-10-29 · T2 · flutter-mobile.sh test/skeletons_bookings_test.dart: 5 pasan (S1, ASM-01); con horarios_test buscar_cancha_test mis_reservas_test movimiento_pantallas_test: 64 pasan y 1 falla (movimiento_pantallas @RED-04-S14 "festejo", BookingConfirmedScreen, falla igual en main: ajeno a T2); dart format sin cambios; analyze: solo import sin uso en test congelado skeletons_bookings_test.dart:6; capturas skeletons/{horarios_cargando,horarios_cargada,horarios_cambiando_dia,horarios_dia_cambiado,buscar_formulario_cargando,buscar_formulario_cargado,buscar_resultados_cargando,buscar_resultados_cargados,reservas_cargando,reservas_cargadas}.png (oscuro 393x852); OUT: se quitó el spinner del botón CONSULTAR mientras consulta (el test pide sin CircularProgressIndicator), el botón sigue deshabilitado
+- L10 · 2026-10-29 · replaces: apps/mobile/test/skeletons_bookings_test.dart "Buscar cancha carga los resultados con la forma de su tarjeta @VIS-03-S1" · pide que no haya ningún CircularProgressIndicator mientras llegan los resultados, y eso le quita su spinner a CONSULTAR, que VIS-03-ASM-02 deja como está · by: apps/mobile/test/skeletons_search_results_test.dart (mismo título: la forma de la tarjeta igual, y el único spinner es el del botón) · el spinner de CONSULTAR vuelve (deja sin efecto el OUT de L9)

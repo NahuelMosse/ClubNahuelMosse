@@ -156,7 +156,7 @@ void main() {
     await tester.tap(find.text('CONSULTAR'));
     await tester.pump();
     await tester.pump();
-    await tester.ensureVisible(find.text('CONSULTAR'));
+    await tester.ensureVisible(find.text('LIMPIAR'));
     await capture(tester, 'skeletons/buscar_resultados_cargando.png');
     held.release();
     await tester.pumpAndSettle();
