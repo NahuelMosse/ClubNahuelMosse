@@ -45,9 +45,9 @@ datos.
 anterior no trae la última migración, Alembic se queja de una revisión que no conoce y el build falla (comportamiento
 conocido de Alembic, no ensayado contra Render: `not verified`). La vuelta atrás de una migración se hace a mano, contra la
 **External Database URL** de la base, desde `apps/api`: `DATABASE_URL=<External Database URL> uv run alembic downgrade -1`.
-Tres bajadas borran tablas con datos y no se deben correr sobre una base con uso real: la 0003 (`correo_saliente`,
-`enlace_recuperacion`), la 0005 (`notificacion`, `dispositivo`) y la 0007 (`notificacion_reserva` y las columnas `cantidad` y
-`reemplazada_por`). La 0008 y la 0009 bajan sin perder reservas.
+Tres bajadas borran tablas con datos y no se deben correr sobre una base con uso real: la 0003 (`outgoing_email`,
+`recovery_link`), la 0005 (`notification`, `device`) y la 0007 (`notification_booking` y las columnas `count` y
+`replaced_by`). La 0008 y la 0009 bajan sin perder reservas.
 
 Cómo confirmar que sirve la versión anterior: el estado del despliegue en el panel, `GET /health` con la versión anterior y
 el comportamiento que se había roto.
@@ -87,12 +87,12 @@ No hay alertas definidas ni `runbook_url`. Lo que sigue es por síntoma, para qu
 - **What the user sees:** ningún aviso push antes del turno; en el centro de avisos de la app el aviso sí aparece cuando
   la API está despierta.
 - **Confirm:** el barrido corre dentro del proceso web cada `RECORDATORIOS_CADA` segundos y no corre mientras Render duerme
-  el servicio. En la tabla `notificacion`, el `envio` del aviso dice qué pasó: `sin_permiso` (la persona no dio permiso),
-  `sin_canal` (falta `FIREBASE_CREDENCIALES_JSON`), `fallida` (FCM falló; el log trae `aviso_sin_enviar` con el número del
+  el servicio. En la tabla `notification`, el `delivery` del aviso dice qué pasó: `no_permission` (la persona no dio permiso),
+  `no_channel` (falta `FIREBASE_CREDENCIALES_JSON`), `failed` (FCM falló; el log trae `aviso_sin_enviar` con el número del
   aviso).
 - **Mitigate:** disparar el barrido desde afuera con `uv run python -m app.modules.notifications.sweep --una-vez` (por ejemplo, con un
   cron externo), o mantener el servicio despierto en la hora previa a los turnos.
-- **Verify:** el aviso pasa a `enviada`.
+- **Verify:** el aviso pasa a `sent`.
 - **Escalate:** el arreglo de fondo es un cron que llame al barrido; el plan free de Render no tiene cron jobs.
 
 ### sin-correo: no llega el correo de recuperación
