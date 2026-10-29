@@ -10,6 +10,11 @@ const _moron = '00000000-0000-7000-8000-000000000001';
 
 /// Asserts nothing: it produces each loading state of the venues screens next to the same
 /// screen loaded, dark, 393x852.
+Future<void> _capture(WidgetTester tester, String file) async {
+  await decodeImages(tester);
+  await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
+}
+
 void main() {
   Future<HeldApi> mount(WidgetTester tester, String route) async {
     final held = HeldApi(rutasDeSedes());
@@ -24,19 +29,19 @@ void main() {
 
   testWidgets('venues loading and loaded', (tester) async {
     final held = await mount(tester, '/sedes');
-    await captureApp(tester, 'skeletons/sedes_cargando.png');
+    await _capture(tester, 'skeletons/sedes_cargando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/sedes_cargada.png');
+    await _capture(tester, 'skeletons/sedes_cargada.png');
     await drainApp(tester);
   });
 
   testWidgets('venue loading and loaded', (tester) async {
     final held = await mount(tester, '/sedes/$_moron');
-    await captureApp(tester, 'skeletons/sede_cargando.png');
+    await _capture(tester, 'skeletons/sede_cargando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/sede_cargada.png');
+    await _capture(tester, 'skeletons/sede_cargada.png');
     await drainApp(tester);
   });
 
@@ -48,10 +53,10 @@ void main() {
     await tester.tap(find.byType(SelectableChip).first);
     await tester.pump();
     await tester.pump();
-    await captureApp(tester, 'skeletons/sede_filtrando.png');
+    await _capture(tester, 'skeletons/sede_filtrando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/sede_filtrada.png');
+    await _capture(tester, 'skeletons/sede_filtrada.png');
     await drainApp(tester);
   });
 }

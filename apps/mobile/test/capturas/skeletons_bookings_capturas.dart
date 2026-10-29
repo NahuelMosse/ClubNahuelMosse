@@ -14,6 +14,11 @@ const _f5 = '00000000-0000-7000-8000-000000000009';
 
 /// Asserts nothing: it produces each loading state of the bookings screens next to the same
 /// screen loaded, dark, 393x852.
+Future<void> _capture(WidgetTester tester, String file) async {
+  await decodeImages(tester);
+  await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
+}
+
 void main() {
   Future<HeldApi> mount(
     WidgetTester tester,
@@ -35,10 +40,10 @@ void main() {
 
   testWidgets('availability loading and loaded', (tester) async {
     final held = await mount(tester, '/sedes/$_moron/canchas/$_f5');
-    await captureApp(tester, 'skeletons/horarios_cargando.png');
+    await _capture(tester, 'skeletons/horarios_cargando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/horarios_cargada.png');
+    await _capture(tester, 'skeletons/horarios_cargada.png');
     await drainApp(tester);
   });
 
@@ -57,19 +62,19 @@ void main() {
     );
     await tester.pump();
     await tester.pump();
-    await captureApp(tester, 'skeletons/horarios_cambiando_dia.png');
+    await _capture(tester, 'skeletons/horarios_cambiando_dia.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/horarios_dia_cambiado.png');
+    await _capture(tester, 'skeletons/horarios_dia_cambiado.png');
     await drainApp(tester);
   });
 
   testWidgets('search form loading and loaded', (tester) async {
     final held = await mount(tester, '/inicio/buscar');
-    await captureApp(tester, 'skeletons/buscar_formulario_cargando.png');
+    await _capture(tester, 'skeletons/buscar_formulario_cargando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/buscar_formulario_cargado.png');
+    await _capture(tester, 'skeletons/buscar_formulario_cargado.png');
     await drainApp(tester);
   });
 
@@ -87,10 +92,10 @@ void main() {
     );
     await submitSearch(tester, held);
     await tester.ensureVisible(find.text('LIMPIAR'));
-    await captureApp(tester, 'skeletons/buscar_resultados_cargando.png');
+    await _capture(tester, 'skeletons/buscar_resultados_cargando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/buscar_resultados_cargados.png');
+    await _capture(tester, 'skeletons/buscar_resultados_cargados.png');
     await drainApp(tester);
     semantics.dispose();
   });
@@ -104,10 +109,10 @@ void main() {
         'GET /reservas': (200, '{"reservas": [${reservaJson()}, $second]}'),
       },
     );
-    await captureApp(tester, 'skeletons/reservas_cargando.png');
+    await _capture(tester, 'skeletons/reservas_cargando.png');
     held.release();
     await tester.pumpAndSettle();
-    await captureApp(tester, 'skeletons/reservas_cargadas.png');
+    await _capture(tester, 'skeletons/reservas_cargadas.png');
     await drainApp(tester);
   });
 }

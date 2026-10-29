@@ -1,3 +1,4 @@
+// kit-shape: a widget with its private parts kept together.
 import 'package:flutter/material.dart';
 
 import '../../../common/card_frame.dart';

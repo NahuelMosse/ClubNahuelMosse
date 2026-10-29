@@ -43,8 +43,8 @@ Future<void> mountApp(
   }
 }
 
-/// Compares the app with the golden [file] once its images are decoded.
-Future<void> captureApp(WidgetTester tester, String file) async {
+/// Decodes the images on screen, so a golden shows them instead of their placeholders.
+Future<void> decodeImages(WidgetTester tester) async {
   await tester.runAsync(() async {
     for (final element in find.byType(Image).evaluate()) {
       final image = element.widget;
@@ -52,7 +52,6 @@ Future<void> captureApp(WidgetTester tester, String file) async {
     }
   });
   await tester.pump();
-  await expectLater(find.byType(MaterialApp), matchesGoldenFile(file));
 }
 
 /// Unmounts the app and lets the pending timers run out.

@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
+import '../../../common/skeleton_card_frame.dart';
 import '../../../theme/tokens.dart';
 
 const _cardHeight = 260.0;
@@ -31,14 +32,9 @@ class BookingCardSkeleton extends StatelessWidget {
   const BookingCardSkeleton({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => const SkeletonCardFrame(
     height: _cardHeight,
-    padding: const EdgeInsets.all(Spacing.s16),
-    decoration: BoxDecoration(
-      border: Border.all(color: context.palette.borderDefault),
-      borderRadius: BorderRadius.circular(Spacing.radiusLg),
-    ),
-    child: const Column(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(

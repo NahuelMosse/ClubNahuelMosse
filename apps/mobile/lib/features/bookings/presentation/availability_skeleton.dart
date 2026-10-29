@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
-import '../../../theme/theme.dart';
+import '../../../common/skeleton_cover.dart';
 import '../../../theme/tokens.dart';
 import 'paired_grid.dart';
 
@@ -32,50 +32,18 @@ class AvailabilitySkeleton extends StatelessWidget {
   final VoidCallback alVolver;
 
   @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final top = MediaQuery.paddingOf(context).top;
-    return Stack(
-      children: [
-        SkeletonZone(
-          child: SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Skeleton(height: top + _coverBelowTop, radius: 0),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    Spacing.s24,
-                    Spacing.s20,
-                    Spacing.s24,
-                    Spacing.s32,
-                  ),
-                  child: _Body(),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.only(left: Spacing.s12, top: Spacing.s8),
-            child: TextButton.icon(
-              onPressed: alVolver,
-              style: TextButton.styleFrom(
-                foregroundColor: p.textPrimary,
-                minimumSize: const Size(0, Spacing.touchTarget),
-                textStyle: Texts.caption,
-              ),
-              icon: const Icon(Icons.chevron_left_rounded, size: 20),
-              label: Text(volverA),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => SkeletonCover(
+    coverBelowTop: _coverBelowTop,
+    bodyPadding: const EdgeInsets.fromLTRB(
+      Spacing.s24,
+      Spacing.s20,
+      Spacing.s24,
+      Spacing.s32,
+    ),
+    body: const _Body(),
+    backLabel: volverA,
+    onBack: alVolver,
+  );
 }
 
 /// The slot grid of a court while it loads, in its own zone: the day line and twelve slots.

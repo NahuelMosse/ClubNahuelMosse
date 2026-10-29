@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
+import '../../../common/skeleton_card_frame.dart';
 import '../../../theme/tokens.dart';
 
 /// Height of a booking card of the admin history with its ANULAR RESERVA button.
@@ -13,15 +14,10 @@ class AdminBookingCardSkeleton extends StatelessWidget {
   const AdminBookingCardSkeleton({super.key});
 
   @override
-  Widget build(BuildContext context) => Container(
-    key: const ValueKey('skeleton-card'),
+  Widget build(BuildContext context) => const SkeletonCardFrame(
+    key: ValueKey('skeleton-card'),
     height: adminBookingCardHeight,
-    padding: const EdgeInsets.all(Spacing.s16),
-    decoration: BoxDecoration(
-      border: Border.all(color: context.palette.borderDefault),
-      borderRadius: BorderRadius.circular(Spacing.radiusLg),
-    ),
-    child: const Column(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Row(

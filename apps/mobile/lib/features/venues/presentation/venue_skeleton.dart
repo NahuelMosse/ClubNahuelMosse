@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../common/skeleton.dart';
-import '../../../theme/theme.dart';
+import '../../../common/skeleton_cover.dart';
 import '../../../theme/tokens.dart';
 import 'space_card_skeleton.dart';
 
@@ -17,50 +17,18 @@ class VenueSkeleton extends StatelessWidget {
   final VoidCallback onBack;
 
   @override
-  Widget build(BuildContext context) {
-    final p = context.palette;
-    final top = MediaQuery.paddingOf(context).top;
-    return Stack(
-      children: [
-        SkeletonZone(
-          child: SingleChildScrollView(
-            physics: const NeverScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Skeleton(height: top + _coverBelowTop, radius: 0),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    Spacing.s24,
-                    Spacing.s24,
-                    Spacing.s24,
-                    Spacing.s40,
-                  ),
-                  child: _Body(),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.only(left: Spacing.s12, top: Spacing.s8),
-            child: TextButton.icon(
-              onPressed: onBack,
-              style: TextButton.styleFrom(
-                foregroundColor: p.textPrimary,
-                minimumSize: const Size(0, Spacing.touchTarget),
-                textStyle: Texts.caption,
-              ),
-              icon: const Icon(Icons.chevron_left_rounded, size: 20),
-              label: const Text('Todas las sedes'),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => SkeletonCover(
+    coverBelowTop: _coverBelowTop,
+    bodyPadding: const EdgeInsets.fromLTRB(
+      Spacing.s24,
+      Spacing.s24,
+      Spacing.s24,
+      Spacing.s40,
+    ),
+    body: const _Body(),
+    backLabel: 'Todas las sedes',
+    onBack: onBack,
+  );
 }
 
 class _Body extends StatelessWidget {
