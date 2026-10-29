@@ -18,8 +18,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'mis_reservas_test.dart' show reservaJson;
-import 'notificaciones_test.dart'
-    show SistemaFalso, confirmacion, recordatorio;
+import 'notificaciones_test.dart' show SistemaFalso, confirmacion, recordatorio;
 import 'soporte/admin.dart';
 import 'soporte/held_api.dart';
 import 'soporte/montar.dart';
@@ -139,9 +138,7 @@ void main() {
       final api = HeldApi(_noticeAnswers, held: {'GET /notificaciones'});
       await _open(tester, api, '/notificaciones');
 
-      final frames = tester
-          .widgetList(find.byKey(_skeletonCard))
-          .length;
+      final frames = tester.widgetList(find.byKey(_skeletonCard)).length;
       final first = tester.getRect(find.byKey(_skeletonCard).first);
       final last = tester.getRect(find.byKey(_skeletonCard).last);
       expect(frames, greaterThan(3));
@@ -155,7 +152,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(Skeleton), findsNothing);
-      expectSameBox(first, tester.getRect(find.byType(NoticeCard).first), edge: 2);
+      expectSameBox(
+        first,
+        tester.getRect(find.byType(NoticeCard).first),
+        edge: 2,
+      );
     },
   );
 
@@ -180,7 +181,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(Skeleton), findsNothing);
-      expectSameBox(header, tester.getRect(find.byType(ProfileHeader)), edge: 2);
+      expectSameBox(
+        header,
+        tester.getRect(find.byType(ProfileHeader)),
+        edge: 2,
+      );
       final real = find.byType(ProfileCard);
       for (var i = 0; i < 3; i++) {
         expectSameBox(cards[i], tester.getRect(real.at(i)), edge: 2);
@@ -207,20 +212,30 @@ void main() {
         await _open(tester, api, route, session: session);
         await tester.pump(const Duration(milliseconds: 100));
         expect(tester.hasRunningAnimations, isTrue, reason: '$route brilla');
-        expect(find.bySemanticsLabel('Cargando'), findsOneWidget, reason: route);
+        expect(
+          find.bySemanticsLabel('Cargando'),
+          findsOneWidget,
+          reason: route,
+        );
         await _close(tester, api);
       }
 
       tester.platformDispatcher.accessibilityFeaturesTestValue =
           const FakeAccessibilityFeatures(disableAnimations: true);
-      addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
       for (final (route, api, session) in screens) {
         api.holdAgain();
         await _open(tester, api, route, session: session);
         await tester.pump(const Duration(seconds: 3));
         expect(find.byType(Skeleton), findsWidgets, reason: route);
         expect(tester.hasRunningAnimations, isFalse, reason: '$route quieto');
-        expect(find.bySemanticsLabel('Cargando'), findsOneWidget, reason: route);
+        expect(
+          find.bySemanticsLabel('Cargando'),
+          findsOneWidget,
+          reason: route,
+        );
         await _close(tester, api);
       }
     },
