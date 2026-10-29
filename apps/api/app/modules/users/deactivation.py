@@ -23,7 +23,7 @@ class ProviderAccounts(Protocol):
 
 def deactivate(profile: Profile, users: DeactivatableAccounts, identity: ProviderAccounts) -> None:
     """Deactivates the account of whoever holds the session. The history stays in the database."""
-    if profile.role != "usuario":
+    if profile.role != "user":
         raise Forbidden("un administrador no se da de baja desde la app")
     if not users.deactivate(profile.id):
         return

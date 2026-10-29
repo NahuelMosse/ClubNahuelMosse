@@ -45,9 +45,9 @@ def validate_query(day: date, today: date, hours: int) -> dict[str, str]:
     """The errors of a slot query, by field (keys are the JSON names of the API)."""
     errors: dict[str, str] = {}
     if not today <= day < today + timedelta(days=DAYS_IN_VIEW):
-        errors["fecha"] = f"Elegí un día de los próximos {DAYS_IN_VIEW}"
+        errors["date"] = f"Elegí un día de los próximos {DAYS_IN_VIEW}"
     if not MIN_HOURS <= hours <= MAX_HOURS:
-        errors["horas"] = f"La duración va de {MIN_HOURS} a {MAX_HOURS} horas"
+        errors["hours"] = f"La duración va de {MIN_HOURS} a {MAX_HOURS} horas"
     return errors
 
 
@@ -126,21 +126,21 @@ def validate_range(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
     errors: dict[str, str] = {}
     date_error = _date_error(opening_hours, day, now.date())
     if date_error:
-        errors["fecha"] = date_error
-    for field, hour in (("desde", since), ("hasta", until)):
+        errors["date"] = date_error
+    for field, hour in (("start_hour", since), ("until", until)):
         if (hour.minute, hour.second, hour.microsecond) != (0, 0, 0):
             errors[field] = "Elegí una hora en punto"
-    if errors.keys() & {"desde", "hasta"} or day >= date.max - timedelta(days=1):
+    if errors.keys() & {"start_hour", "until"} or day >= date.max - timedelta(days=1):
         return errors
     start, end = time_range(day, since, until, now.tzinfo)
     opening, closing = time_range(day, opening_hours.opens_at, opening_hours.closes_at, now.tzinfo)
     end_error = _end_error(opening_hours, start, end, closing)
     if end_error:
-        errors["hasta"] = end_error
+        errors["until"] = end_error
     if start < opening:
-        errors["desde"] = f"La sede abre a las {_hhmm(opening_hours.opens_at)}"
-    elif "fecha" not in errors and start <= now:
-        errors["desde"] = "El horario tiene que ser futuro"
+        errors["start_hour"] = f"La sede abre a las {_hhmm(opening_hours.opens_at)}"
+    elif "date" not in errors and start <= now:
+        errors["start_hour"] = "El horario tiene que ser futuro"
     return errors
 
 
@@ -160,11 +160,11 @@ def validate_booking(  # noqa: PLR0913, PLR0917 -- public signature fixed by its
     plus a whole duration that does not go past midnight."""
     if error := duration_error(hours):
         errors = validate_range(opening_hours, day, since, since, now)
-        errors["hasta"] = error
+        errors["until"] = error
         return errors
     end = since.hour + hours
     if end > HOURS_PER_DAY:
         errors = validate_range(opening_hours, day, since, time(0, 0), now)
-        errors["hasta"] = f"La sede cierra a las {_hhmm(opening_hours.closes_at)}"
+        errors["until"] = f"La sede cierra a las {_hhmm(opening_hours.closes_at)}"
         return errors
     return validate_range(opening_hours, day, since, time(end % HOURS_PER_DAY, since.minute), now)

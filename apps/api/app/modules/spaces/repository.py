@@ -21,7 +21,6 @@ from app.shared.errors import (
     NumberTaken,
     Unavailable,
 )
-from app.shared.stored_values import stored
 
 SPACE_COLUMNS = (
     "e.id, e.name, e.venue_id, s.name AS venue, e.sport, e.kind, e.number, e.covered,"
@@ -164,7 +163,7 @@ class SpacesSql:
             # A creation in another venue took the same name between the computation and the
             # INSERT.
             if index == "space_name_key":
-                raise Duplicate(["nombre"]) from e
+                raise Duplicate(["name"]) from e
             raise
         return space_of_row(row)
 
@@ -287,7 +286,7 @@ class SpacesSql:
                     "SELECT count(*) FROM booking WHERE space_id = :id"
                     " AND status = :active_status AND ends_at > now()"
                 ),
-                {"id": space_id, "active_status": stored("activa")},
+                {"id": space_id, "active_status": "active"},
             ).scalar_one()
             if pending:
                 raise HasFutureBookings("el espacio tiene reservas que todavía no terminaron")

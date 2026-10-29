@@ -6,4 +6,4 @@ from fastapi.responses import JSONResponse
 
 
 def conflict(errors: dict[str, str]) -> JSONResponse:
-    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"errores": errors})
+    return JSONResponse(status_code=status.HTTP_409_CONFLICT, content={"errors": errors})

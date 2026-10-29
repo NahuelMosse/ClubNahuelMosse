@@ -1,5 +1,5 @@
 # kit-shape: the bookings repository and the function that hands it to the routes go together
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Any
@@ -33,7 +33,6 @@ from app.shared.errors import (
     SlotTaken,
     Unavailable,
 )
-from app.shared.stored_values import contract, stored
 
 # SQLSTATE of the exclusion constraint: another active booking overlaps the slot.
 EXCLUSION_VIOLATION = "23P01"
@@ -88,13 +87,6 @@ _SHARED_VENUE = (
 _CLUB_ZONE = f"'{CLUB_TIMEZONE_NAME}'"
 
 
-def _booking_values(mapping: Mapping[Any, Any]) -> dict[str, Any]:
-    """The columns of a row with the enumerations spoken as the contract does."""
-    values = dict(mapping)
-    values["status"] = contract(values["status"])
-    if values.get("notice_delivery") is not None:
-        values["notice_delivery"] = contract(values["notice_delivery"])
-    return values
 
 
 @contextmanager
@@ -145,7 +137,7 @@ class BookingsSql:
     def of_user(self, user_id: UUID, when: When) -> list[Booking]:
         order = (
             " AND r.current_status = 'active' ORDER BY r.starts_at, r.id"
-            if when == "proximas"
+            if when == "upcoming"
             else " AND r.current_status <> 'active' ORDER BY r.starts_at DESC, r.id DESC"
         )
         rows = self._conn.execute(
@@ -153,7 +145,7 @@ class BookingsSql:
             {"user_id": user_id},
         ).all()
         self._conn.rollback()
-        return [Booking(**_booking_values(r._mapping)) for r in rows]
+        return [Booking(**r._mapping) for r in rows]
 
     def opening_hours(self, space_id: UUID) -> OpeningHours | None:
         return AvailabilitySql(self._conn).opening_hours(space_id)
@@ -190,7 +182,7 @@ class BookingsSql:
         row = self._conn.execute(
             text(f"SELECT {_COLUMNS}{_FROM_BOOKING} WHERE r.id = :id"), {"id": booking_id}
         ).one()
-        return Booking(**_booking_values(row._mapping))
+        return Booking(**row._mapping)
 
     def own(self, user_id: UUID, booking_id: UUID) -> Booking | None:
         row = self._conn.execute(
@@ -198,7 +190,7 @@ class BookingsSql:
             {"id": booking_id, "user_id": user_id},
         ).first()
         self._conn.rollback()
-        return None if row is None else Booking(**_booking_values(row._mapping))
+        return None if row is None else Booking(**row._mapping)
 
     def space_kind(self, space_id: UUID) -> tuple[UUID, str, str] | None:
         row = self._conn.execute(
@@ -280,7 +272,7 @@ class BookingsSql:
         ).first()
         if row is None:
             raise NotFound("no hay una reserva suya con ese número")
-        if row.status != stored("activa") or row.started or not row.was_there:
+        if row.status != "active" or row.started or not row.was_there:
             raise ConcurrentChange("la reserva ya no está activa, ya empezó o ya se movió")
 
     def cancel(self, user_id: UUID, booking_id: UUID) -> Booking:
@@ -295,10 +287,10 @@ class BookingsSql:
             ).first()
             if row is None:
                 raise NotFound("no hay una reserva suya con ese número")
-            if row.status == stored("cancelada") and row.canceled_by == user_id:
+            if row.status == "canceled" and row.canceled_by == user_id:
                 self._conn.rollback()
                 return self._one(booking_id)
-            if row.status != stored("activa") or row.started:
+            if row.status != "active" or row.started:
                 raise ConcurrentChange("la reserva ya no está activa o ya empezó")
             self._conn.execute(
                 text(
@@ -438,13 +430,13 @@ class BookingsSql:
             previous = self._lock_for_void(params)
             row = self._lock_booking_to_void(params)
             if (
-                row.status == stored("anulada")
+                row.status == "voided"
                 and row.canceled_by == admin_id
                 and row.reason == reason
             ):
                 self._conn.rollback()
                 return self._detail(booking_id)
-            if row.status != stored("activa") or row.started or not row.as_seen:
+            if row.status != "active" or row.started or not row.as_seen:
                 raise ConcurrentChange("la reserva ya no está activa, ya empezó o cambió")
             self._conn.execute(
                 text(
@@ -492,7 +484,7 @@ class BookingsSql:
         total_of = "count(*)"
         if filters.status is not None:
             conditions.append("r.current_status = :status")
-            params["status"] = stored(filters.status)
+            params["status"] = filters.status
             total_of = "count(*) FILTER (WHERE r.current_status = :status)"
         total, counters = self._count(common, total_of, params)
         page = max(1, filters.page)
@@ -506,7 +498,7 @@ class BookingsSql:
         ).all()
         self._conn.rollback()
         return BookingHistory(
-            bookings=[BookingHistoryEntry(**_booking_values(r._mapping)) for r in rows],
+            bookings=[BookingHistoryEntry(**r._mapping) for r in rows],
             total=total,
             page=page,
             per_page=PAGE_SIZE,
@@ -519,7 +511,7 @@ class BookingsSql:
             {"id": booking_id},
         ).first()
         self._conn.rollback()
-        return None if row is None else BookingHistoryEntry(**_booking_values(row._mapping))
+        return None if row is None else BookingHistoryEntry(**row._mapping)
 
 
 def bookings_repository(conn: DbConnection) -> BookingsSql:

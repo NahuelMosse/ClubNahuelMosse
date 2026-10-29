@@ -24,8 +24,8 @@ router = APIRouter(tags=["notificaciones"])
 
 class DeviceRequest(BaseModel):
     token: str
-    plataforma: Literal["android", "ios"]
-    permiso: bool
+    platform: Literal["android", "ios"]
+    permission_granted: bool
 
 
 class DeviceUnregistration(BaseModel):
@@ -33,12 +33,11 @@ class DeviceUnregistration(BaseModel):
 
 
 class Errors(BaseModel):
-    errores: dict[str, str]
+    errors: dict[str, str]
 
 
 @router.put(
-    "/dispositivos",
-    operation_id="registrar_dispositivos_put",
+    "/devices",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
@@ -48,8 +47,8 @@ class Errors(BaseModel):
     },
     summary="Registrar el teléfono para recibir avisos",
     description=(
-        "`permiso` es lo que el sistema operativo contestó sobre las notificaciones: sin "
-        "permiso los avisos quedan sólo en el centro. Si el token ya estaba a nombre de otra "
+        "`permission_granted` es lo que el sistema operativo contestó sobre las notificaciones: "
+        "sin permiso los avisos quedan sólo en el centro. Si el token ya estaba a nombre de otra "
         "cuenta, pasa a quien pide."
     ),
 )
@@ -59,15 +58,16 @@ def register(
     notifications: Annotated[NotificationsSql, Depends(notifications_repository)],
 ) -> Response:
     try:
-        register_device(notifications, profile, request.token, request.plataforma, request.permiso)
+        register_device(
+            notifications, profile, request.token, request.platform, request.permission_granted
+        )
     except Unavailable:
         return Response(status_code=status.HTTP_409_CONFLICT)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/dispositivos/baja",
-    operation_id="baja_dispositivos_baja_post",
+    "/devices/unregister",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={401: {"model": NoSession}},
     summary="Dar de baja el teléfono al cerrar la sesión",
@@ -84,34 +84,33 @@ def unregister(
 
 class NotificationView(BaseModel):
     id: UUID
-    tipo: NoticeKind
-    titulo: str
-    cuerpo: str
-    reserva_id: UUID | None
-    creada_en: datetime
-    leida: bool
+    kind: NoticeKind
+    title: str
+    body: str
+    booking_id: UUID | None
+    created_at: datetime
+    read: bool
 
 
 class Center(BaseModel):
-    notificaciones: list[NotificationView]
-    no_leidas: int
+    notifications: list[NotificationView]
+    unread: int
 
 
 def _view(n: Notification) -> NotificationView:
     return NotificationView(
         id=n.id,
-        tipo=n.kind,
-        titulo=n.title,
-        cuerpo=n.body,
-        reserva_id=n.booking_id,
-        creada_en=n.created_at,
-        leida=n.read,
+        kind=n.kind,
+        title=n.title,
+        body=n.body,
+        booking_id=n.booking_id,
+        created_at=n.created_at,
+        read=n.read,
     )
 
 
 @router.get(
-    "/notificaciones",
-    operation_id="centro_notificaciones_get",
+    "/notifications",
     response_model=Center,
     responses={401: {"model": NoSession}},
     summary="El centro de notificaciones de quien consulta",
@@ -124,12 +123,11 @@ def center(
     notifications: Annotated[NotificationsSql, Depends(notifications_repository)],
 ) -> Center:
     items, unread = my_notifications(notifications, profile)
-    return Center(notificaciones=[_view(n) for n in items], no_leidas=unread)
+    return Center(notifications=[_view(n) for n in items], unread=unread)
 
 
 @router.post(
-    "/notificaciones/leer-todas",
-    operation_id="leer_todas_notificaciones_leer_todas_post",
+    "/notifications/read-all",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={401: {"model": NoSession}},
     summary="Marcar todas las notificaciones como leídas",
@@ -143,8 +141,7 @@ def read_all(
 
 
 @router.post(
-    "/notificaciones/{notificacion_id}/leer",
-    operation_id="leer_notificaciones__notificacion_id__leer_post",
+    "/notifications/{notification_id}/read",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
@@ -156,7 +153,7 @@ def read_all(
 def read(
     profile: Annotated[Profile, Depends(current_user)],
     notifications: Annotated[NotificationsSql, Depends(notifications_repository)],
-    notification_id: Annotated[Identifier, Path(alias="notificacion_id")],
+    notification_id: Annotated[Identifier, Path()],
 ) -> Response:
     mark_read(notifications, profile, notification_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

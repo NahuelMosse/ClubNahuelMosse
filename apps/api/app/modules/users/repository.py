@@ -8,9 +8,8 @@ from app.modules.bookings import BookingsSql
 from app.modules.users.rules import EditedProfile, Registration
 from app.shared.db import DbConnection, in_transaction, violated_constraint
 from app.shared.errors import Duplicate
-from app.shared.stored_values import stored
 
-_INDEX_TO_FIELD = {"app_user_email_unique": "correo", "app_user_dni_unique": "dni"}
+_INDEX_TO_FIELD = {"app_user_email_unique": "email", "app_user_dni_unique": "dni"}
 
 
 class UsersSql:
@@ -26,7 +25,7 @@ class UsersSql:
             {"email": email, "dni": dni},
         ).one()
         self._conn.rollback()
-        fields = (("correo", row.email), ("dni", row.dni))
+        fields = (("email", row.email), ("dni", row.dni))
         return [field for field, repeated in fields if repeated]
 
     def uid_is_active(self, uid: str) -> bool:
@@ -47,7 +46,7 @@ class UsersSql:
     def make_admin(self, user_id: UUID) -> None:
         self._conn.execute(
             text("UPDATE app_user SET role = :admin WHERE id = :id AND role <> :admin"),
-            {"id": user_id, "admin": stored("admin")},
+            {"id": user_id, "admin": "admin"},
         )
         self._conn.commit()
 

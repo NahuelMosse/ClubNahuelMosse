@@ -9,7 +9,6 @@ router = APIRouter(tags=["operación"])
     "/health",
     summary="Chequeo de vida de la API, sin tocar dependencias",
     description="La API está viva; no mira la base ni Firebase.",
-    operation_id="vivo_health_get",
 )
 def alive() -> dict[str, str]:
-    return {"estado": "vivo", "version": config.version}
+    return {"status": "ok", "version": config.version}
