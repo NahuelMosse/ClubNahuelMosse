@@ -1,5 +1,5 @@
-"""The current schema is the one of 0012: this module maps the names of earlier migrations (tables, columns, stored
-values) to the ones the database has at head."""
+"""The current schema is the one of 0012: this module maps the names of earlier migrations
+(tables, columns, stored values) to the ones the database has at head."""
 
 import importlib.util
 from pathlib import Path
