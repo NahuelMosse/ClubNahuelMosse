@@ -107,12 +107,12 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String adminVenueSchedule(Object closing, Object days, Object opening) {
+  String adminVenueSchedule(Object days, Object opening, Object closing) {
     return '$days de $opening a $closing';
   }
 
   @override
-  String adminVenueScheduleShort(Object closing, Object days, Object opening) {
+  String adminVenueScheduleShort(Object days, Object opening, Object closing) {
     return '$days · $opening a $closing';
   }
 
@@ -208,10 +208,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String adminVoidBookingLabel(
+    Object user,
+    Object sport,
     Object date,
     Object schedule,
-    Object sport,
-    Object user,
   ) {
     return 'Anular la reserva de $user, $sport, $date, $schedule';
   }
@@ -338,7 +338,7 @@ class AppLocalizationsEs extends AppLocalizations {
       'El espacio posee reservas futuras. Gestionalas primero.';
 
   @override
-  String adminDeactivateVenueText(Object address, Object name) {
+  String adminDeactivateVenueText(Object name, Object address) {
     return '$name · $address. Sus espacios deportivos dejan de estar disponibles.';
   }
 
@@ -509,12 +509,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get adminTraceCreated => 'Reserva creada';
 
   @override
-  String adminTraceBy(Object date, Object who) {
+  String adminTraceBy(Object who, Object date) {
     return 'Por $who · $date';
   }
 
   @override
-  String adminTraceByReason(Object date, Object reason, Object who) {
+  String adminTraceByReason(Object who, Object date, Object reason) {
     return 'Por $who · $date · $reason';
   }
 
@@ -701,7 +701,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String adminOutsideNotice(Object keeps, Object reason, Object subject) {
+  String adminOutsideNotice(Object subject, Object reason, Object keeps) {
     return '$subject $reason. Si guardás, $keeps: el cambio rige para las reservas nuevas.';
   }
 

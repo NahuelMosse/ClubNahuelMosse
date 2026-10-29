@@ -222,13 +222,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{days} from {opening} to {closing}'**
-  String adminVenueSchedule(Object closing, Object days, Object opening);
+  String adminVenueSchedule(Object days, Object opening, Object closing);
 
   /// No description provided for @adminVenueScheduleShort.
   ///
   /// In en, this message translates to:
   /// **'{days} · {opening} to {closing}'**
-  String adminVenueScheduleShort(Object closing, Object days, Object opening);
+  String adminVenueScheduleShort(Object days, Object opening, Object closing);
 
   /// No description provided for @adminEditVenue.
   ///
@@ -391,10 +391,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Void the booking of {user}, {sport}, {date}, {schedule}'**
   String adminVoidBookingLabel(
+    Object user,
+    Object sport,
     Object date,
     Object schedule,
-    Object sport,
-    Object user,
   );
 
   /// No description provided for @adminVoidBookingFor.
@@ -599,7 +599,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{name} · {address}. Its sports spaces stop being available.'**
-  String adminDeactivateVenueText(Object address, Object name);
+  String adminDeactivateVenueText(Object name, Object address);
 
   /// No description provided for @adminVenueDeactivated.
   ///
@@ -929,13 +929,13 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'By {who} · {date}'**
-  String adminTraceBy(Object date, Object who);
+  String adminTraceBy(Object who, Object date);
 
   /// No description provided for @adminTraceByReason.
   ///
   /// In en, this message translates to:
   /// **'By {who} · {date} · {reason}'**
-  String adminTraceByReason(Object date, Object reason, Object who);
+  String adminTraceByReason(Object who, Object date, Object reason);
 
   /// No description provided for @adminTraceVoided.
   ///
@@ -1205,7 +1205,7 @@ abstract class AppLocalizations {
   ///
   /// In en, this message translates to:
   /// **'{subject} {reason}. If you save, {keeps}: the change applies to new bookings.'**
-  String adminOutsideNotice(Object keeps, Object reason, Object subject);
+  String adminOutsideNotice(Object subject, Object reason, Object keeps);
 
   /// No description provided for @loginSignIn.
   ///
