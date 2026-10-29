@@ -205,7 +205,7 @@ def test_brevo_recibe_htmlcontent_solo_si_hay_html_smtp_la_alternativa_y_el_buzo
 
     monkeypatch.setattr(email, "engine", lambda: FakeEngine())
     email._to_outbox(Message(ADDRESS, "Asunto", "texto", "<p>hola</p>"))
-    assert saved == [{"p": ADDRESS, "a": "Asunto", "c": "texto"}]
+    assert saved == [{"recipient": ADDRESS, "subject": "Asunto", "body": "texto"}]
 
 
 def test_un_nombre_o_una_sede_con_marcado_salen_escapados_en_el_html() -> None:

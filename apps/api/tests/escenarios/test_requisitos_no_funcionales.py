@@ -142,7 +142,7 @@ def test_la_api_guarda_los_datos_en_postgresql(motor: Engine) -> None:
     with motor.connect() as conn:
         version: Any = conn.execute(text("SELECT version()")).scalar_one()
         tablas: Any = conn.execute(
-            text("SELECT count(*) FROM information_schema.tables WHERE table_name = 'reserva'")
+            text("SELECT count(*) FROM information_schema.tables WHERE table_name = 'booking'")
         ).scalar_one()
 
     assert str(version).startswith("PostgreSQL")

@@ -34,7 +34,7 @@ def _ids_del_socio(socio: Socio) -> set[str]:
         return {
             str(f.id)
             for f in conn.execute(
-                text("SELECT id FROM reserva WHERE usuario_id = :u"), {"u": socio.usuario_id}
+                text("SELECT id FROM booking WHERE user_id = :u"), {"u": socio.usuario_id}
             )
         }
 
@@ -105,7 +105,7 @@ def test_las_proximas_reservas_siguen_llegando_enteras(socio: Socio) -> None:
     with socio.motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT :u, :e, h + make_interval(days => n), h + make_interval(days => n)"
                 " + interval '1 hour', 38000, 38000 FROM generate_series(1, 25) AS n,"
                 " (SELECT date_trunc('hour', now()) AS h) AS t"

@@ -136,7 +136,7 @@ def test_el_sql_que_se_repetia_en_reservas_vive_en_un_solo_lugar() -> None:
 
 _BLOQUEO = re.compile(r"\bFOR (?:SHARE|NO KEY UPDATE|UPDATE)\b")
 _TABLA = re.compile(r"\bFROM\s+(\w+)")
-_ORDEN = {"usuario": 0, "sede": 1, "espacio": 2, "reserva": 3}
+_ORDEN = {"app_user": 0, "venue": 1, "space": 2, "booking": 3}
 
 
 def _bloqueos(repositorio: Path, metodo: str) -> list[str]:
@@ -186,8 +186,8 @@ def _bloqueos(repositorio: Path, metodo: str) -> list[str]:
 def test_una_reserva_toma_sus_bloqueos_en_el_mismo_orden() -> None:
     """una reserva toma sus bloqueos en el mismo orden @assumption:SIM-02-ASM-04"""
     repositorio = APP / "modules" / "bookings" / "repository.py"
-    assert _bloqueos(repositorio, "insert") == ["usuario", "sede", "espacio"]
-    assert _bloqueos(repositorio, "move") == ["sede", "espacio", "reserva"]
+    assert _bloqueos(repositorio, "insert") == ["app_user", "venue", "space"]
+    assert _bloqueos(repositorio, "move") == ["venue", "space", "booking"]
     for metodo in ("insert", "move"):
         rangos = [_ORDEN[t] for t in _bloqueos(repositorio, metodo)]
         assert rangos == sorted(rangos)

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import yaml
 
+from tests.esquema_vigente import vigentes
 from tests.unit.test_documentacion_del_modelo import _sql as _subida
 
 RAIZ = Path(__file__).resolve().parents[4]
@@ -146,7 +147,7 @@ def _columnas_por_tabla() -> dict[str, set[str]]:
         ):
             tablas.setdefault(tabla, set()).discard(vieja)
             tablas[tabla].add(nueva)
-    return tablas
+    return vigentes(tablas)
 
 
 def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:

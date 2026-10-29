@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from alembic import command
 from alembic.config import Config as AlembicConfig
-from sqlalchemy import create_engine, text
+from sqlalchemy import Engine, create_engine, text
 
 API_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = API_ROOT.parents[1]
@@ -43,12 +43,12 @@ def _target_url() -> str:
     pytest.skip("ENG17_REHEARSAL_URL is not set")
 
 
-def _counts(engine, tables: list[str]) -> dict[str, int]:  # type: ignore[no-untyped-def]
+def _counts(engine: Engine, tables: list[str]) -> dict[str, int]:
     with engine.connect() as conn:
         return {t: conn.execute(text(f"SELECT count(*) FROM {t}")).scalar_one() for t in tables}
 
 
-def _tally(engine, table: str, column: str) -> dict[str, int]:  # type: ignore[no-untyped-def]
+def _tally(engine: Engine, table: str, column: str) -> dict[str, int]:
     with engine.connect() as conn:
         rows = conn.execute(text(f"SELECT {column}, count(*) FROM {table} GROUP BY {column}"))
         return {value: count for value, count in rows}

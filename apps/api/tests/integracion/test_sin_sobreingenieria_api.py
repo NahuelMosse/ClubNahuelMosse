@@ -153,7 +153,7 @@ def test_notificacion_ya_no_tiene_intentos_ni_tomada_en(motor: Engine) -> None:
             for f in conn.execute(
                 text(
                     "SELECT column_name FROM information_schema.columns"
-                    " WHERE table_name = 'notificacion'"
+                    " WHERE table_name = 'notification'"
                 )
             )
         }

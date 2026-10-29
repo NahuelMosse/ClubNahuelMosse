@@ -11,13 +11,13 @@ RAIZ = API.parents[1]
 
 # Cada archivo de acceso a datos escribe sólo las tablas que son suyas.
 TABLAS_PROPIAS = {
-    "users/repository.py": {"usuario"},
-    "bookings/repository.py": {"reserva"},
-    "venues/repository.py": {"sede"},
-    "notifications/repository.py": {"notificacion", "notificacion_reserva", "dispositivo"},
-    "spaces/repository.py": {"espacio"},
-    "password_recovery/repository.py": {"enlace_recuperacion"},
-    "shared/email.py": {"correo_saliente"},
+    "users/repository.py": {"app_user"},
+    "bookings/repository.py": {"booking"},
+    "venues/repository.py": {"venue"},
+    "notifications/repository.py": {"notification", "notification_booking", "device"},
+    "spaces/repository.py": {"space"},
+    "password_recovery/repository.py": {"recovery_link"},
+    "shared/email.py": {"outgoing_email"},
 }
 ESCRITURA = re.compile(
     r"(?:INSERT\s+INTO|(?<!FOR\s)(?<!DO\s)UPDATE|DELETE\s+FROM)\s+(\w+)", re.IGNORECASE

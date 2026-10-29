@@ -6,17 +6,17 @@ from pathlib import Path
 
 MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "modelo-de-datos.md"
 TABLAS = (
-    "usuario",
-    "sede",
-    "espacio",
-    "reserva",
-    "enlace_recuperacion",
-    "correo_saliente",
-    "dispositivo",
-    "notificacion",
-    "notificacion_reserva",
+    "app_user",
+    "venue",
+    "space",
+    "booking",
+    "recovery_link",
+    "outgoing_email",
+    "device",
+    "notification",
+    "notification_booking",
 )
-AUDITORIA = ("creado_en", "modificado_en")
+AUDITORIA = ("created_at", "updated_at")
 
 
 def test_cada_tabla_del_diagrama_y_de_su_seccion_muestra_creado_en_y_modificado_en() -> None:

@@ -2,6 +2,7 @@
 
 import re
 
+from tests.esquema_vigente import columna, tabla as tabla_vigente
 from tests.escenarios.test_documentacion_vigente import (
     API,
     DISENO,
@@ -11,7 +12,7 @@ from tests.escenarios.test_documentacion_vigente import (
 )
 from tests.escenarios.test_documentacion_modelo_vigente import MODELO
 
-COMUNES = {"id", "creado_en", "modificado_en"}
+COMUNES = {"id", "created_at", "updated_at"}
 RENOMBRES = re.compile(r"ALTER TABLE (\w+) RENAME COLUMN (\w+) TO (\w+)")
 
 
@@ -21,8 +22,8 @@ def _columnas_vigentes() -> dict[str, set[str]]:
     migracion = next((API / "migrations" / "versions").glob("0010_*.py"))
     subida = _texto(migracion).split("def _auditoria_abajo")[0]
     for tabla, viejo, nuevo in RENOMBRES.findall(subida):
-        tablas[tabla].discard(viejo)
-        tablas[tabla].add(nuevo)
+        tablas[tabla_vigente(tabla)].discard(columna(tabla, viejo))
+        tablas[tabla_vigente(tabla)].add(columna(tabla, nuevo))
     return tablas
 
 

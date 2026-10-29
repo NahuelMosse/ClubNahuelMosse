@@ -68,7 +68,7 @@ def _pasadas(socio: Socio, cantidad: int) -> None:
     with socio.motor.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                "INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT :u, :e, h - make_interval(days => n), h - make_interval(days => n)"
                 " + interval '1 hour', 38000, 38000"
                 " FROM generate_series(1, :c) AS n,"
@@ -90,9 +90,9 @@ def _indices(motor: Engine, tabla: str) -> list[str]:
 
 def test_el_historial_propio_tiene_un_indice_por_socio(motor: Engine) -> None:
     """el historial propio se resuelve con un índice por socio @REV-03-S1"""
-    indices = _indices(motor, "reserva")
+    indices = _indices(motor, "booking")
 
-    assert any("(usuario_id" in i for i in indices)
+    assert any("(user_id" in i for i in indices)
 
 
 def _empate(socio: Socio) -> None:
@@ -100,11 +100,11 @@ def _empate(socio: Socio) -> None:
     with socio.motor.begin() as conn:
         conn.execute(
             text(
-                "WITH e AS (INSERT INTO espacio (sede_id, deporte, tipo, numero, nombre, techada,"
-                " iluminada, precio_por_hora) SELECT sede_id, deporte, tipo, numero + 1,"
-                " nombre || '_bis', techada, iluminada, precio_por_hora FROM espacio"
+                "WITH e AS (INSERT INTO space (venue_id, sport, kind, number, name, covered,"
+                " lit, price_per_hour) SELECT venue_id, sport, kind, number + 1,"
+                " name || '_bis', covered, lit, price_per_hour FROM space"
                 " WHERE id = :e RETURNING id)"
-                " INSERT INTO reserva (usuario_id, espacio_id, inicio, fin, precio_por_hora, total)"
+                " INSERT INTO booking (user_id, space_id, starts_at, ends_at, price_per_hour, total)"
                 " SELECT :u, e.id, h - interval '20 days', h - interval '20 days'"
                 " + interval '1 hour', 38000, 38000 FROM e,"
                 " (SELECT date_trunc('hour', now(), 'America/Argentina/Buenos_Aires') AS h) AS t"
@@ -118,23 +118,23 @@ MARCADORES_INVALIDOS = ["no-es", "", "AAAA", "eyJ4IjoxfQ", "MjAyNi0xMS0xMlQwMDow
 
 def test_el_historial_global_tiene_un_indice_por_fecha(motor: Engine) -> None:
     """el historial global se ordena por un índice de inicio @REV-03-S3"""
-    indices = _indices(motor, "reserva")
+    indices = _indices(motor, "booking")
 
-    assert any("(inicio DESC, id DESC)" in i for i in indices)
+    assert any("(starts_at DESC, id DESC)" in i for i in indices)
 
 
 def test_quien_cancelo_y_que_aviso_reemplazo_tienen_indice(motor: Engine) -> None:
     """quién canceló y qué aviso reemplazó a otro se consultan por índice @REV-03-S4"""
-    assert any("(cancelada_por" in i for i in _indices(motor, "reserva"))
-    assert any("(reemplazada_por" in i for i in _indices(motor, "notificacion"))
+    assert any("(canceled_by" in i for i in _indices(motor, "booking"))
+    assert any("(replaced_by" in i for i in _indices(motor, "notification"))
 
 
 def _envios(socio: Socio) -> list[str]:
     with socio.motor.connect() as conn:
         return [
-            str(f.envio)
+            str(f.delivery)
             for f in conn.execute(
-                text("SELECT envio FROM notificacion WHERE usuario_id = :u ORDER BY id"),
+                text("SELECT delivery FROM notification WHERE user_id = :u ORDER BY id"),
                 {"u": socio.usuario_id},
             )
         ]

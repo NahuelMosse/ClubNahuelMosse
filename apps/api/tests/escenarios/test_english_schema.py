@@ -3,7 +3,7 @@
 import re
 import threading
 from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import pytest
 from alembic import command
@@ -196,7 +196,7 @@ def _book(conn: Connection, ids: dict[str, Any], day: int, status: str = "active
 def _rejected(base: Engine, sql: str, params: dict[str, Any] | None = None) -> str:
     with pytest.raises(IntegrityError) as caught, base.begin() as conn:
         conn.execute(text(sql), params or {})
-    return str(caught.value.orig.sqlstate)  # type: ignore[union-attr]
+    return str(cast(Any, caught.value.orig).sqlstate)
 
 
 def test_every_stored_value_is_in_english_and_the_old_ones_are_rejected(
@@ -338,7 +338,7 @@ def test_the_double_booking_exclusion_rejects_two_overlapping_active_bookings(
     with pytest.raises(IntegrityError) as caught, base.begin() as conn:
         _book(conn, ids, 1)
 
-    assert caught.value.orig.sqlstate == "23P01"  # type: ignore[union-attr]
+    assert cast(Any, caught.value.orig).sqlstate == "23P01"
     assert "booking_space_id_tstzrange_excl" in str(caught.value.orig)
 
 
