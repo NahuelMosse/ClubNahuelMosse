@@ -1,23 +1,23 @@
 from alembic import context
 from sqlalchemy import create_engine
 
-from app.shared.config import config as config_app
+from app.shared.config import config as app_config
 
-url = context.config.get_main_option("sqlalchemy.url") or config_app.database_url
+url = context.config.get_main_option("sqlalchemy.url") or app_config.database_url
 
 
-def correr() -> None:
-    motor = create_engine(url)
+def run() -> None:
+    engine = create_engine(url)
     try:
-        with motor.connect() as conn:
-            # Una transacción por migración: un `CREATE INDEX CONCURRENTLY` no corre dentro de
-            # una, y una sola para todo el upgrade mantendría tomados los locks de las primeras
-            # mientras se arma el índice de la última.
+        with engine.connect() as conn:
+            # One transaction per migration: a `CREATE INDEX CONCURRENTLY` cannot run inside
+            # one, and a single transaction for the whole upgrade would hold the locks of the
+            # first migrations while the last index is built.
             context.configure(connection=conn, transaction_per_migration=True)
             with context.begin_transaction():
                 context.run_migrations()
     finally:
-        motor.dispose()
+        engine.dispose()
 
 
-correr()
+run()
