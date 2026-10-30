@@ -193,3 +193,6 @@ risk large · high · lenses contract, interpretation, security · 5 ACT: 5 clos
 
 Cost: USD 40.00 (card-runner 20.63, builder 16.76, main 1.53, grunt 0.55, judge 0.43, runner 0.10) · the messages of this card
 <!-- close.mjs:end -->
+
+## Conflicto con main
+main recibió ENG-19 (app bilingüe) después de que arrancó esta card: el PR choca en 12 archivos de `apps/mobile` (los enums de dominio, `search_rules.dart`, tarjetas y chips de reservas, `traceability.dart`, `space_search_screen.dart`, `change_password_screen.dart`, `reintento_tras_corte_test.dart`). La resolución es mecánica: la estructura de ENG-19 (textos desde las traducciones, enums sin `label`) con los valores del contrato en inglés; los tests de `label` de esta card pasan a leer `app_es.arb`. Hay que resolverla y volver a correr el gate antes del merge.
