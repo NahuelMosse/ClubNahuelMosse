@@ -124,7 +124,7 @@ def show_available(  # noqa: PLR0913, PLR0917 -- one parameter per query field o
     start, end = parse_time(since), parse_time(until)
     errors = {
         field: "Elegí una hora en punto"
-        for field, hour in (("since", start), ("until", end))
+        for field, hour in (("start_hour", start), ("until", end))
         if hour is None
     }
     if start is None or end is None:
