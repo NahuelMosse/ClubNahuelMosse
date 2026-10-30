@@ -531,7 +531,7 @@ def test_editar_sin_un_campo_lo_deja_como_estaba(
     assert (r.json()["price_per_hour"], r.json()["covered"]) == (50000, not alta["covered"])
     vacio = api.put(ruta, headers=_con(token_admin), json={})
     assert vacio.status_code == 422
-    assert vacio.json()["errors"] == {"change": "No hay nada que cambiar"}
+    assert vacio.json()["errors"] == {"change": "There is nothing to change"}
 
 
 def test_la_baja_deja_el_espacio_inactivo_con_su_rastro_y_la_sede_con_uno_menos(

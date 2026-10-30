@@ -45,7 +45,7 @@ def test_the_day_before_the_last_one_of_the_calendar_reports_only_its_date() -> 
     """the day before the last one of the calendar reports only its date error, under date @ENG-18-S2"""
     errors = validate_range(HOURS, date.max - timedelta(1), time(6), time(7), _at(THURSDAY, 9))
 
-    assert errors == {"date": "Elegí un día de los próximos 7"}
+    assert errors == {"date": "Choose a day within the next 7"}
 
 
 class _NoDeviceAccepted:

@@ -160,7 +160,7 @@ def test_un_rango_que_ya_empezo_o_de_otro_dia_no_se_consulta() -> None:
         "date": "The venue is closed that day"
     }
     assert validate_range(agenda, JUEVES + timedelta(7), time(18), time(19), ahora) == {
-        "date": "Elegí un día de los próximos 7"
+        "date": "Choose a day within the next 7"
     }
     assert validate_range(agenda, JUEVES, time(19, 30), time(21), ahora) == {
         "start_hour": "Choose an on-the-hour time"

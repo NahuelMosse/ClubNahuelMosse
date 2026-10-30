@@ -63,8 +63,8 @@ def test_el_correo_de_recuperacion_sale_en_html_con_la_plantilla_el_saludo_el_bo
     assert "Create new password" in html
     assert f'href="{BASE_LINK}/link/recover#code=' in html
     assert "30 minutes" in html
-    assert "una sola vez" in html
-    assert "ignorá" in html
+    assert "only once" in html
+    assert "ignore this email" in html
 
 
 def _booking(**changes: Any) -> Booking:
