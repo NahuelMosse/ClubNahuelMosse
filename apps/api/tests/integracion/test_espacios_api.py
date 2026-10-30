@@ -414,8 +414,8 @@ def test_las_canchas_disponibles_son_las_libres_en_todo_el_rango(
 
     assert nombres(kind="F5") == [f"{prefijo}_Futbol_F5_1"]
     assert nombres() == [f"{prefijo}_Futbol_F5_1", f"{prefijo}_Futbol_F7_1"]
-    assert nombres(kind="F5", start_hour="09:00", until="12:00") == []
-    assert len(nombres(kind="F5", start_hour="12:00", until="14:00")) == 2
+    assert nombres(kind="F5", since="09:00", until="12:00") == []
+    assert len(nombres(kind="F5", since="12:00", until="14:00")) == 2
 
 
 def test_las_canchas_disponibles_rechazan_un_rango_invalido(

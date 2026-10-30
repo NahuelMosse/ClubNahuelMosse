@@ -99,7 +99,7 @@ def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repe
         ).status_code
         == 201
     )
-    historial = api.get("/bookings?when=historial", headers=_con(token_usuario)).json()
+    historial = api.get("/bookings?when=history", headers=_con(token_usuario)).json()
     assert [(x["status"], x["reason"]) for x in historial["bookings"]] == [("voided", MOTIVO)]
 
 

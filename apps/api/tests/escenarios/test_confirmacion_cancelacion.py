@@ -74,7 +74,7 @@ def test_al_tocar_la_confirmacion_la_app_sabe_que_reserva_abrir(
     assert aviso.data["booking_id"] == str(reserva["id"])
     [entrada] = socio.centro()["notifications"]
     assert entrada["booking_id"] == reserva["id"]
-    historial = socio.api.get("/bookings?when=historial", headers=socio.sesion).json()
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
     assert [(r["id"], r["status"]) for r in historial["bookings"]] == [(reserva["id"], "canceled")]
 
 

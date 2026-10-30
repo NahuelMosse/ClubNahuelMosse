@@ -54,7 +54,7 @@ def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
 
     [(_, aviso)] = canal.enviados
     assert aviso.body.endswith(f"Motivo: {'x' * 199}….")
-    historial = socio.api.get("/bookings?when=historial", headers=socio.sesion).json()
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
     assert [r["reason"] for r in historial["bookings"]] == [motivo]
 
 

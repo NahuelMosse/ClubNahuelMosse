@@ -73,13 +73,13 @@ def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
     _mover_a(motor, UUID(a_las_23), "2031-09-10", 23)
     base = f"q={sede[1]}"
 
-    assert _ids(api, token_admin, f"{base}&desde=2031-09-10&hasta=2031-09-10") == {
+    assert _ids(api, token_admin, f"{base}&since=2031-09-10&until=2031-09-10") == {
         a_las_21,
         a_las_23,
     }
-    assert _ids(api, token_admin, f"{base}&desde=2031-09-11&hasta=2031-09-11") == set()
-    assert _ids(api, token_admin, f"{base}&desde=2031-09-09&hasta=2031-09-09") == set()
-    assert _ids(api, token_admin, f"{base}&hasta=2031-09-10") == {a_las_21, a_las_23}
+    assert _ids(api, token_admin, f"{base}&since=2031-09-11&until=2031-09-11") == set()
+    assert _ids(api, token_admin, f"{base}&since=2031-09-09&until=2031-09-09") == set()
+    assert _ids(api, token_admin, f"{base}&until=2031-09-10") == {a_las_21, a_las_23}
 
 
 def test_la_busqueda_toma_los_comodines_como_texto(

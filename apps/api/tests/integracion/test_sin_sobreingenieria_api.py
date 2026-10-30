@@ -192,4 +192,4 @@ def test_la_migracion_0009_pasa_a_fallida_un_aviso_que_estaba_enviando(
             ).scalar_one()
     finally:
         motor.dispose()
-    assert envio == "failed"
+    assert envio == "fallida"

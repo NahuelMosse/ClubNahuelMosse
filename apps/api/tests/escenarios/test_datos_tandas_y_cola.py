@@ -40,7 +40,7 @@ def _ids_del_socio(socio: Socio) -> set[str]:
 
 
 def _historial(socio: Socio, **params: str) -> dict[str, Any]:
-    r = socio.api.get("/bookings", headers=socio.sesion, params={"cuando": "history", **params})
+    r = socio.api.get("/bookings", headers=socio.sesion, params={"when": "history", **params})
     assert r.status_code == 200
     cuerpo: dict[str, Any] = r.json()
     return cuerpo

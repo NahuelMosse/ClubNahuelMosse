@@ -40,10 +40,10 @@ def test_guarda_los_datos_personales_y_devuelve_el_perfil_nuevo(
     codigo, cuerpo = _editar(
         api,
         token,
-        nombre=" Lucía Inés ",
-        apellido="Gómez Paz",
+        first_name=" Lucía Inés ",
+        last_name="Gómez Paz",
         dni="30.111.225",
-        fecha_nacimiento="1998-11-03",
+        birth_date="1998-11-03",
     )
     assert codigo == 200
     assert cuerpo == {
@@ -70,11 +70,11 @@ def test_el_correo_no_se_cambia_aunque_se_mande(
     codigo, cuerpo = _editar(
         api,
         token,
-        nombre="Lucía",
-        apellido="Gómez",
+        first_name="Lucía",
+        last_name="Gómez",
         dni=dni,
-        fecha_nacimiento="1998-11-02",
-        correo="otra@correo.com",
+        birth_date="1998-11-02",
+        email="otra@correo.com",
     )
     assert (codigo, cuerpo["email"]) == (200, correo)
 
@@ -85,7 +85,7 @@ def test_datos_invalidos_no_guardan_nada(
     correo, _ = _registrar(api, unico())
     token = iniciar_sesion(correo, CONTRASENA)
     codigo, cuerpo = _editar(
-        api, token, nombre="Otra", apellido="", dni="42118", fecha_nacimiento="2000-13-32"
+        api, token, first_name="Otra", last_name="", dni="42118", birth_date="2000-13-32"
     )
     assert codigo == 422
     assert set(cuerpo["errors"]) == {"last_name", "dni", "birth_date"}
@@ -102,7 +102,7 @@ def test_un_dni_de_otra_cuenta_se_rechaza(
     correo, _ = _registrar(api, unico())
     token = iniciar_sesion(correo, CONTRASENA)
     codigo, cuerpo = _editar(
-        api, token, nombre="Lucía", apellido="Gómez", dni=ajeno, fecha_nacimiento="1998-11-02"
+        api, token, first_name="Lucía", last_name="Gómez", dni=ajeno, birth_date="1998-11-02"
     )
     assert (codigo, cuerpo) == (409, {"errors": {"dni": "Este DNI ya está registrado"}})
 
