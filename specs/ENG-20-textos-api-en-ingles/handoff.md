@@ -9,7 +9,7 @@
 - Suite (`tests/escenarios/test_english_texts.py tests/integracion tests/unit`): 583 passed, 14 failed; 4 of those fixed since (the 4 files rerun: 68 passed). Left failing: the 5 ENG-18 tests in `tests/integracion/test_contract_in_english.py` that froze main's Spanish texts (declared as `replaces:` L4-L8), and 5 tests that fail the same on main in this worktree (L9).
 
 ## Next
-1. Mutation: `sh D:/Temp/w/herramientas/eng18-mutate-all.sh D:/Temp/w/herramientas/eng20-mutate-list.txt` (log `/tmp/eng20-mut.log`). Text-only files exit 3 (no operator applies): declare each in the Log as ENG-18 L92-L96 did. `availability/rules.py` went over the 10-minute budget against the whole suite: map it in the script to `tests/unit/test_horarios.py tests/unit/test_contract_values_edges.py`.
+1. Mutation: `sh D:/Temp/w/herramientas/eng18-mutate-all.sh D:/Temp/w/herramientas/eng20-mutate-list.txt` (log `/tmp/eng20-mut.log`). Seven files exited 3 (no operator applies) and are declared in the Log (L10-L16). Left to run: availability/rules.py, spaces/rules.py, spaces/use_cases.py, users/password.py, users/rules.py, venues/rules.py, venues/use_cases.py (trim the list file to these). `availability/rules.py` went over the 10-minute budget against the whole suite: map it in the script to `tests/unit/test_horarios.py tests/unit/test_contract_values_edges.py`.
 2. Gate: `node .claude/tools/verify.mjs`. Open items from the last run:
    - `attacks:` could not run (app did not answer): check `arq01-app.sh eng20_app` starts.
    - `no-visual:` fails because `password_recovery/routes.py` changes `<html lang="es">` to `en` on the recover-link page. That page's text is in scope (S1/S2 reading); decide: keep `no-visual` with a Log `declared` line, or turn the lens on (costly).
