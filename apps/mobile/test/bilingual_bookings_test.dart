@@ -177,15 +177,15 @@ void main() {
 
       final space = Space.fromJson({
         'id': _spaceId,
-        'nombre': 'Moron_Rivadavia_19850_Futbol_F5_1',
-        'sede_id': _venueId,
-        'sede': 'Sede Morón',
-        'deporte': 'Futbol',
-        'tipo': 'F5',
-        'numero': 1,
-        'techada': true,
-        'iluminada': false,
-        'precio_por_hora': 38000,
+        'name': 'Moron_Rivadavia_19850_Futbol_F5_1',
+        'venue_id': _venueId,
+        'venue': 'Sede Morón',
+        'sport': 'Futbol',
+        'kind': 'F5',
+        'number': 1,
+        'covered': true,
+        'lit': false,
+        'price_per_hour': 38000,
       })!;
       expect(conditionText(en, space), 'Covered');
       expect(conditionText(es, space), 'Techada');
@@ -194,12 +194,12 @@ void main() {
 
       final venue = Venue.fromJson({
         'id': _venueId,
-        'nombre': 'Sede Morón',
-        'direccion': 'Av. Rivadavia 19850',
-        'apertura': '08:00',
-        'cierre': '23:00',
-        'dias': [1, 2, 3, 4, 5, 6],
-        'canchas': 2,
+        'name': 'Sede Morón',
+        'address': 'Av. Rivadavia 19850',
+        'opens_at': '08:00',
+        'closes_at': '23:00',
+        'open_days': [1, 2, 3, 4, 5, 6],
+        'space_count': 2,
       })!;
       final now = DateTime.utc(2026, 11, 12, 18, 20);
       final thursday = DateTime.utc(2026, 11, 12);
@@ -209,42 +209,42 @@ void main() {
 
       for (final (problem, english, spanish) in [
         (
-          errors(thursday.subtract(const Duration(days: 1)), 19, 20)['fecha'],
+          errors(thursday.subtract(const Duration(days: 1)), 19, 20)['date'],
           'The date must be in the future',
           'La fecha tiene que ser futura',
         ),
         (
-          errors(thursday.add(const Duration(days: 7)), 19, 20)['fecha'],
+          errors(thursday.add(const Duration(days: 7)), 19, 20)['date'],
           'Pick a day within the next 7',
           'Elegí un día de los próximos 7',
         ),
         (
-          errors(thursday.add(const Duration(days: 3)), 19, 20)['fecha'],
+          errors(thursday.add(const Duration(days: 3)), 19, 20)['date'],
           'The venue is closed that day',
           'La sede no abre ese día',
         ),
         (
-          errors(friday, 18, 18)['hasta'],
+          errors(friday, 18, 18)['until'],
           'The minimum duration is one hour',
           'La duración mínima es de una hora',
         ),
         (
-          errors(friday, 10, 15)['hasta'],
+          errors(friday, 10, 15)['until'],
           'The maximum duration is 4 hours',
           'La duración máxima es de 4 horas',
         ),
         (
-          errors(friday, 22, 0)['hasta'],
+          errors(friday, 22, 0)['until'],
           'The venue closes at 23:00',
           'La sede cierra a las 23:00',
         ),
         (
-          errors(friday, 7, 9)['desde'],
+          errors(friday, 7, 9)['start_hour'],
           'The venue opens at 08:00',
           'La sede abre a las 08:00',
         ),
         (
-          errors(thursday, 18, 19)['desde'],
+          errors(thursday, 18, 19)['start_hour'],
           'The time must be in the future',
           'El horario tiene que ser futuro',
         ),

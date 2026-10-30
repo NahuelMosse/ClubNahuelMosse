@@ -26,13 +26,13 @@ void main() {
     () {
       final source = _sources(['lib/features/bookings', 'lib/features/home']);
       for (final piece in [
-        "'/reservas?cuando=",
-        '/cancelar',
-        '/modificar',
-        "'/espacios/disponibles'",
-        '/horarios',
-        "'espacio_id'",
-        "'no_disponibles'",
+        "'/bookings?when=",
+        '/cancel',
+        '/modify',
+        "'/spaces/available'",
+        '/slots',
+        "'space_id'",
+        "'unavailable'",
         "'cancelable'",
       ]) {
         expect(source, contains(piece), reason: piece);

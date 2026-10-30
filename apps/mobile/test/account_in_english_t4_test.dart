@@ -69,20 +69,20 @@ void main() {
           _dartFiles(dir).map((f) => f.readAsStringSync()).join('\n');
       final features = code('lib/features');
       for (final path in [
-        "'/sedes'",
-        "'/espacios'",
-        "'/yo'",
-        "'/yo/contrasena'",
-        "'/notificaciones'",
-        "'/dispositivos'",
+        "'/venues'",
+        "'/spaces'",
+        "'/me'",
+        "'/me/password'",
+        "'/notifications'",
+        "'/devices'",
       ]) {
         expect(features, contains(path), reason: path);
       }
       for (final key in [
-        "'fecha_nacimiento'",
-        "'no_leidas'",
-        "'creada_en'",
-        "'reservas_afuera'",
+        "'birth_date'",
+        "'unread'",
+        "'created_at'",
+        "'bookings_outside'",
       ]) {
         expect(features, contains(key), reason: key);
       }

@@ -205,8 +205,8 @@ ApiClient _apiAdmin() => apiRutas({
   'GET /bookings/all': (
     200,
     '{"bookings": [$_adminBooking], "total": 1, "page": 1, "per_page": 20,'
-        ' "contadores": {"todas": 1, "activas": 1, "completadas": 0,'
-        ' "anuladas": 0}}',
+        ' "counters": {"all": 1, "active": 1, "completed": 0,'
+        ' "voided": 0}}',
   ),
 });
 

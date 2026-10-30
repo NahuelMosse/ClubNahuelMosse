@@ -231,14 +231,14 @@ ApiClient _apiMisReservas(Completer<void>? esperaHistorial) {
   return ApiClient(
     'http://api.falsa',
     cliente: MockClient((request) async {
-      final historial = request.url.queryParameters['cuando'] == 'historial';
-      if (request.url.path == '/reservas' && historial) {
+      final historial = request.url.queryParameters['when'] == 'history';
+      if (request.url.path == '/bookings' && historial) {
         await esperaHistorial?.future;
       }
-      final (codigo, cuerpo) = request.url.path == '/reservas'
+      final (codigo, cuerpo) = request.url.path == '/bookings'
           ? (
               200,
-              '{"reservas": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completada') : reservaJson()}]}',
+              '{"bookings": [${historial ? reservaJson(id: '00000000-0000-7000-8000-000000000002', estado: 'completed') : reservaJson()}]}',
             )
           : rutas['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
@@ -256,11 +256,11 @@ ApiClient _apiSede(Completer<void>? espera) {
     'http://api.falsa',
     cliente: MockClient((request) async {
       final filtrado =
-          request.url.path == '/espacios' &&
-          request.url.queryParameters.containsKey('deporte');
+          request.url.path == '/spaces' &&
+          request.url.queryParameters.containsKey('sport');
       if (filtrado) await espera?.future;
       final (codigo, cuerpo) = filtrado
-          ? (200, '{"espacios": [$espacioF5Json]}')
+          ? (200, '{"spaces": [$espacioF5Json]}')
           : rutas['${request.method} ${request.url.path}'] ?? (404, '{}');
       return http.Response.bytes(
         utf8.encode(cuerpo),
@@ -1219,7 +1219,7 @@ void main() {
     (tester) async {
       final screens = <String, Widget>{
         'login': _login(),
-        'inicio': inicioFalso(SesionFalsa(perfilUsuario)),
+        'starts_at': inicioFalso(SesionFalsa(perfilUsuario)),
         'mi perfil': MyProfileScreen(
           session: SesionFalsa(perfilUsuario),
           appearance: Appearance.inMemory(),

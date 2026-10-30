@@ -32,10 +32,10 @@ const _english = [Locale('en', 'US')];
 final _now = DateTime.utc(2026, 11, 12, 20);
 
 String _notice(String id, DateTime club, {bool read = false}) =>
-    '{"id": "$id", "tipo": "recordatorio", "titulo": "Your booking is in 1 hour", '
-    '"cuerpo": "Football 5", "reserva_id": null, '
-    '"creada_en": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
-    '"leida": $read}';
+    '{"id": "$id", "kind": "reminder", "title": "Your booking is in 1 hour", '
+    '"body": "Football 5", "booking_id": null, '
+    '"created_at": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
+    '"read": $read}';
 
 class _System implements NotificationSystem {
   _System({this.allowed = true});
@@ -76,11 +76,11 @@ NotificationCenter _center(List<String> notices, {bool allowed = true}) {
     'http://api.falsa',
     cliente: MockClient((request) async {
       final (code, body) = switch ((request.method, request.url.path)) {
-        ('GET', '/notificaciones') => (
+        ('GET', '/notifications') => (
           200,
-          '{"notificaciones": [${notices.join(', ')}], "no_leidas": ${notices.length}}',
+          '{"notifications": [${notices.join(', ')}], "unread": ${notices.length}}',
         ),
-        ('GET', '/yo') => (200, perfilJson()),
+        ('GET', '/me') => (200, perfilJson()),
         _ => (204, ''),
       };
       return http.Response.bytes(

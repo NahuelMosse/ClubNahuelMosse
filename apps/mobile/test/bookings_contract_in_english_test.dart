@@ -22,10 +22,13 @@ void main() {
         "'space_id'",
         "'unavailable'",
         "'cancelable'",
-        "'Reserva modificada'",
       ]) {
         expect(source, contains(piece), reason: piece);
       }
+      expect(
+        File('lib/l10n/app_es.arb').readAsStringSync(),
+        contains('"Reserva modificada"'),
+      );
     },
   );
 }

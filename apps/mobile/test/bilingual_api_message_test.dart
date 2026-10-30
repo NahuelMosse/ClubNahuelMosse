@@ -32,7 +32,7 @@ void main() {
         final session = Session(
           repository: SessionRepository(
             credentials: CredencialesFalsas(),
-            api: apiFalsa(codigo: 429, cuerpo: '{"mensaje": "$message"}'),
+            api: apiFalsa(codigo: 429, cuerpo: '{"message": "$message"}'),
           ),
         );
         await montar(

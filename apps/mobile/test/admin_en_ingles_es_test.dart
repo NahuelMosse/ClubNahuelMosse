@@ -21,14 +21,14 @@ void main() {
       ].join('\n');
       for (final kept in [
         'Este campo es obligatorio',
-        '/reservas/todas',
-        '/anular',
-        "'sede_id=",
-        "'cancelada_por_nombre'",
-        "'aviso_envio'",
-        "'por_pagina'",
-        "'contadores'",
-        "'espacio_de_baja'",
+        '/bookings/all',
+        '/void',
+        "'venue_id=",
+        "'canceled_by_name'",
+        "'notice_delivery'",
+        "'per_page'",
+        "'counters'",
+        "'space_deactivated'",
         'reservas futuras',
       ]) {
         expect(source, contains(kept), reason: kept);

@@ -106,7 +106,7 @@ void main() {
         ),
         findsOneWidget,
       );
-      expect(requests.single.body, '{"correo":"nahuel@correo.com"}');
+      expect(requests.single.body, '{"email":"nahuel@correo.com"}');
 
       await tester.tap(find.text('Reenviar el correo'));
       await tester.pumpAndSettle();
@@ -201,7 +201,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Contraseña actualizada'), findsOneWidget);
-      expect(requests.last.body, '{"codigo":"abc","nueva":"ClubNahuel2"}');
+      expect(requests.last.body, '{"code":"abc","new_password":"ClubNahuel2"}');
       await tester.tap(find.text('VOLVER AL INICIO DE SESIÓN'));
       await tester.pumpAndSettle();
       expect(find.text('LOGIN'), findsOneWidget);
@@ -282,8 +282,8 @@ void main() {
 
         await abrir(tester, '/recuperar?codigo=nuevo');
         expect(requests.map((p) => p.body), [
-          '{"codigo":"viejo"}',
-          '{"codigo":"nuevo"}',
+          '{"code":"viejo"}',
+          '{"code":"nuevo"}',
         ]);
       },
     );

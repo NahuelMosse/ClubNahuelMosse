@@ -6,12 +6,14 @@ void main() {
   test(
     'los textos, rutas de la API, claves JSON y rutas de pantalla del panel son los de antes @ENG-09-S3',
     () {
-      final source = Directory('lib/features/admin')
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.dart'))
-          .map((f) => f.readAsStringSync())
-          .join('\n');
+      final source = [
+        File('lib/l10n/app_es.arb').readAsStringSync(),
+        ...Directory('lib/features/admin')
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((f) => f.path.endsWith('.dart'))
+            .map((f) => f.readAsStringSync()),
+      ].join('\n');
       for (final kept in [
         'El motivo es obligatorio para anular',
         'Este campo es obligatorio',

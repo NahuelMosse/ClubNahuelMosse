@@ -77,7 +77,7 @@ void main() {
     expect(requests, 2);
 
     segundo.complete(
-      http.Response('{"errores": {"dni": "El DNI tiene 7 u 8 numeros"}}', 422),
+      http.Response('{"errors": {"dni": "El DNI tiene 7 u 8 numeros"}}', 422),
     );
     await tester.pumpAndSettle();
     expect(find.text('El DNI tiene 7 u 8 numeros'), findsOneWidget);
@@ -96,9 +96,9 @@ void main() {
           apiFalsa(
             codigo: 409,
             cuerpo:
-                '{"mensaje": "El usuario ya está registrado. Modificá el correo o el DNI.",'
-                ' "campos": ["correo"],'
-                ' "errores": {"correo": "Este correo ya está registrado"}}',
+                '{"message": "El usuario ya está registrado. Modificá el correo o el DNI.",'
+                ' "campos": ["email"],'
+                ' "errors": {"email": "Este correo ya está registrado"}}',
           ),
         ),
       ),
