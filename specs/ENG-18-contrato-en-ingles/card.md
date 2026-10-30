@@ -36,6 +36,7 @@ not_read:
 - ENG-18-ASM-10 · el valor de `kind` del push es el del tipo de aviso en inglés (`forced_cancellation`, `reminder`, `five_minute_reminder`, `user_cancellation`), y `booking_id` sigue siendo texto UUID · S5
 - ENG-18-ASM-12 · un correo de recuperación enviado antes del deploy apunta a `/enlace/recuperar`, que responde 404 después del corte: el código se pierde y la persona pide otro enlace (Render es de pruebas; el código vence igual) · S8
 - ENG-18-ASM-11 · las instantáneas congeladas del contrato de main que usan tests de otras cards se comparan a través del mapa de renombres del glosario (`apps/api/tests/contract_renames.py`), que es la única copia del mapa en los tests · S11
+- ENG-18-ASM-13 · el contrato publicado documenta en cada operación con cuerpo JSON el 400 (cuerpo ilegible), el 408 (cuerpo que no llega entero en 5 s) y el 413 (cuerpo de más de 1 MB) que la app ya responde; main tampoco los documentaba y el ataque del gate con `--openapi` los marca · S2
 
 ## Tasks
 
@@ -49,6 +50,8 @@ not_read:
   new: no escribe lógica de producción
 - T5 · S1,S2,S6 · apps/api/README.md (presentation), docs/technical/arquitectura.md (presentation), docs/technical/integraciones.md (presentation), docs/technical/mapa-del-codigo.md (presentation), docs/technical/modelo-de-datos.md (presentation), docs/technical/navegacion-de-la-app.md (presentation), docs/technical/runbook.md (presentation), docs/technical/system-design.md (presentation), docs/technical/glosario-ingles.md (presentation), docs/guia-basica.md (presentation) · las rutas, campos y parámetros que citan los docs; la prosa sigue en castellano (ENG-21)
   new: no escribe lógica
+- T6 · S2,ENG-18-ASM-13 · apps/api/app/main.py (presentation), apps/api/openapi.json (data) · tests: apps/api/tests/integracion/test_contract_documents_body_errors.py "every operation with a JSON body documents 400, 408 and 413 @ENG-18-S2 @assumption:ENG-18-ASM-13"
+  reuses: el esquema de error de apps/api/app/shared/responses.py y el `openapi()` de FastAPI; new: el agregado de esas tres respuestas a las operaciones con requestBody al generar el esquema, porque BodyLimit e input_validation responden fuera de cada ruta
 
 ## Changes to existing behavior
 
