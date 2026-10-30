@@ -31,6 +31,8 @@ not_read:
   reuses: las plantillas de correo y de aviso existentes; sólo cambia el texto
 - T3 · S4,S5,S6,ENG-20-ASM-02,ENG-20-ASM-04 · apps/api/app/modules/spaces/rules.py (rule), apps/api/app/modules/users/seed_admin.py (data), apps/api/app/modules/users/admins.py (data) · tests: apps/api/tests/escenarios/test_english_texts.py "the catalog names are English @ENG-20-S4"; apps/api/tests/escenarios/test_english_texts.py "the catalog keys are main's @ENG-20-ASM-02"; apps/api/tests/escenarios/test_english_texts.py "the seeded data is English @ENG-20-S5"; apps/api/tests/escenarios/test_english_texts.py "the admin seed command prints English and keeps its options @ENG-20-ASM-04"; apps/api/tests/escenarios/test_english_texts.py "no migration of this card rewrites stored rows @ENG-20-S6"
   reuses: apps/api/app/modules/spaces/rules.py CATALOG y apps/api/app/modules/users/seed_admin.py
+- T5 · S1,S2,S3 · apps/api/app/main.py (presentation), apps/api/app/health.py (presentation), apps/api/app/shared/firebase_credential.py (presentation), apps/api/app/modules/notifications/email.py (presentation), apps/api/app/shared/email.py (data), apps/api/app/e2e_support.py (data), apps/api/app/modules/users/deactivation.py (data), apps/api/app/modules/users/registration.py (data) · tests: apps/api/tests/escenarios/test_english_texts.py "no string literal of the API code is Spanish @ENG-20-ASM-03"
+  reuses: cada literal de texto en su lugar (los textos que el escaneo de literales encontró fuera de los archivos de T1 a T3); sólo cambia el contenido del string
 - T4 · S1,S2,S3,S4,S5 · apps/api/tests/** · los tests de la API que comparan un texto en castellano pasan a compararlo en inglés (refactor-tests)
   new: no escribe lógica de producción
 
@@ -42,7 +44,7 @@ not_read:
 ## Gate
 
 ```
-suite [timeout 50 min]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider -rf {affected}
+suite [timeout 50 min]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider -rf tests/escenarios/test_english_texts.py tests/integracion tests/unit
 lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh
 app: sh D:/Temp/w/herramientas/arq01-app.sh eng20_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh eng20_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi app
