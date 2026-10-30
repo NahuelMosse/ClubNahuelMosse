@@ -439,7 +439,7 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
         headers=_con(token_usuario),
         params=base | {"since": "10", "until": "11:00"},
     )
-    assert r.json()["errors"] == {"since": "Elegí una hora en punto"}
+    assert r.json()["errors"] == {"start_hour": "Elegí una hora en punto"}
     r = api.get(
         "/spaces/available",
         headers=_con(token_usuario),
