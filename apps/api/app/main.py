@@ -2,7 +2,6 @@ import asyncio
 import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
-from typing import Any
 
 from fastapi import FastAPI
 
@@ -20,6 +19,7 @@ from app.modules.notifications import sweep_every
 from app.shared import http_errors, input_validation
 from app.shared.body_limit import BodyLimit
 from app.shared.config import config
+from app.shared.documented_app import DocumentedApp
 
 
 @asynccontextmanager
@@ -38,44 +38,8 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
                 await sweep
 
 
-BODY_ERRORS = {
-    "400": "El cuerpo no se puede leer",
-    "408": "El cuerpo no llegó entero en 5 segundos",
-    "413": "El cuerpo supera 1 MB",
-}
-BODY_ERROR_SCHEMA = {
-    "type": "object",
-    "properties": {"errors": {"type": "object", "additionalProperties": {"type": "string"}}},
-    "required": ["errors"],
-}
-BODY_ERROR_CONTENT = {"application/json": {"schema": {"$ref": "#/components/schemas/BodyError"}}}
-
-
-def _document_body_errors(app: FastAPI) -> dict[str, Any]:
-    """BodyLimit and input_validation answer outside each route, so FastAPI does not know them."""
-    if app.openapi_schema is None:
-        schema = FastAPI.openapi(app)
-        schema["components"]["schemas"]["BodyError"] = BODY_ERROR_SCHEMA
-        for methods in schema["paths"].values():
-            for operation in methods.values():
-                if "requestBody" not in operation:
-                    continue
-                for status, description in BODY_ERRORS.items():
-                    operation["responses"][status] = {
-                        "description": description,
-                        "content": BODY_ERROR_CONTENT,
-                    }
-        app.openapi_schema = schema
-    return app.openapi_schema
-
-
-class _DocumentedApp(FastAPI):
-    def openapi(self) -> dict[str, Any]:
-        return _document_body_errors(self)
-
-
 def create_app() -> FastAPI:
-    app = _DocumentedApp(
+    app = DocumentedApp(
         title="ClubNahuelMosse API",
         version=config.version,
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
