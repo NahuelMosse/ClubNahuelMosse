@@ -73,9 +73,9 @@ def test_el_backend_rechaza_un_horario_nuevo_en_el_pasado_o_que_termina_despues_
 
     # Verifica: los dos cambios se rechazan por su regla.
     assert ayer.status_code == 422
-    assert ayer.json()["errors"]["date"] == "La fecha tiene que ser futura"
+    assert ayer.json()["errors"]["date"] == "The date must be in the future"
     assert tarde.status_code == 422
-    assert tarde.json()["errors"]["until"] == "La sede cierra a las 23:00"
+    assert tarde.json()["errors"]["until"] == "The venue closes at 23:00"
     # Verifica: la reserva sigue en su horario.
     with motor.connect() as conn:
         inicio: Any = conn.execute(

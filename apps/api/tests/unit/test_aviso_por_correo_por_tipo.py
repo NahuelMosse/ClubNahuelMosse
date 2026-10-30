@@ -41,7 +41,7 @@ def test_el_recordatorio_la_cancelacion_del_club_la_agrupada_y_la_propia_salen_p
     ahora = datetime(2026, 10, 1, 20, 30, tzinfo=UTC)
     send_reminders(cast(Any, _ConPendientes([])), _Canal(), ahora)
     pendientes = [
-        _pendiente(1, "cancelacion_forzosa", "El club anuló tu reserva", UUID(int=3)),
+        _pendiente(1, "cancelacion_forzosa", "The club voided your booking", UUID(int=3)),
         _pendiente(2, "cancelacion_forzosa", "El club anuló 3 reservas", None),
         _pendiente(3, "cancelacion_usuario", "Cancelaste tu reserva", UUID(int=4)),
     ]
@@ -49,8 +49,8 @@ def test_el_recordatorio_la_cancelacion_del_club_la_agrupada_y_la_propia_salen_p
 
     assert despachados == 3
     assert [m.subject for m in enviados] == [
-        "Tu reserva es en 1 hora",
-        "El club anuló tu reserva",
+        "Your booking is in 1 hour",
+        "The club voided your booking",
         "El club anuló 3 reservas",
         "Cancelaste tu reserva",
     ]

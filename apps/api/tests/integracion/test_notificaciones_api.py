@@ -105,7 +105,7 @@ def test_registrar_un_dispositivo_exige_sesion_de_usuario_y_datos_validos(
     assert api.put("/devices", headers=_con(token_admin), json=cuerpo).status_code == 403
     vacio = api.put("/devices", headers=_con(token_usuario), json=cuerpo | {"token": "  "})
     assert vacio.status_code == 422
-    assert vacio.json()["errors"]["token"] == "Este campo es obligatorio"
+    assert vacio.json()["errors"]["token"] == "This field is required"
     assert (
         api.put(
             "/devices", headers=_con(token_usuario), json=cuerpo | {"platform": "web"}

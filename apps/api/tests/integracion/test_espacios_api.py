@@ -12,7 +12,7 @@ from sqlalchemy import Engine, text
 from app.modules.users.seed_admin import main as sembrar
 
 CONTRASENA = "ClubNahuel1"
-DUPLICADO = "Ya existe un espacio deportivo con ese nombre en la sede seleccionada."
+DUPLICADO = "A sports space with that name already exists in the selected venue."
 
 
 def _con(token: str) -> dict[str, str]:
@@ -119,8 +119,8 @@ def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
     assert r.status_code == 422
     assert r.json() == {
         "errors": {
-            "kind": "Elegí un tipo de la lista",
-            "price_per_hour": "Ingresá un precio entre $ 1 y $ 9.999.999",
+            "kind": "Choose a kind from the list",
+            "price_per_hour": "Enter a price between $ 1 and $ 9,999,999",
         }
     }
 
@@ -136,7 +136,7 @@ def test_una_sede_dada_de_baja_no_recibe_espacios(
         )
     r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede_id))
     assert r.status_code == 422
-    assert r.json() == {"errors": {"venue_id": "La sede ya no está disponible"}}
+    assert r.json() == {"errors": {"venue_id": "The venue is no longer available"}}
 
 
 def test_los_usuarios_ven_los_espacios_activos_y_el_catalogo(
@@ -162,7 +162,7 @@ def test_los_usuarios_ven_los_espacios_activos_y_el_catalogo(
     assert propios == [f"{prefijo}_Futbol_F5_1"]
     catalogo = api.get("/spaces/catalog", headers=_con(token_usuario)).json()
     futbol = next(d for d in catalogo["sports"] if d["key"] == "Futbol")
-    assert {"key": "F5", "name": "Fútbol 5"} in futbol["kinds"]
+    assert {"key": "F5", "name": "Football 5"} in futbol["kinds"]
 
 
 def test_un_usuario_no_pide_nombres_de_espacios(
@@ -431,22 +431,22 @@ def test_las_canchas_disponibles_rechazan_un_rango_invalido(
     )
     assert r.status_code == 422
     assert r.json()["errors"] == {
-        "date": "La fecha tiene que ser futura",
-        "until": "La duración mínima es de una hora",
+        "date": "The date must be in the future",
+        "until": "The minimum duration is one hour",
     }
     r = api.get(
         "/spaces/available",
         headers=_con(token_usuario),
         params=base | {"since": "10", "until": "11:00"},
     )
-    assert r.json()["errors"] == {"start_hour": "Elegí una hora en punto"}
+    assert r.json()["errors"] == {"start_hour": "Choose an on-the-hour time"}
     r = api.get(
         "/spaces/available",
         headers=_con(token_usuario),
         params=base
         | {"venue_id": "00000000-0000-7000-8000-000000000000", "since": "10:00", "until": "11:00"},
     )
-    assert r.json()["errors"] == {"venue_id": "La sede ya no está disponible"}
+    assert r.json()["errors"] == {"venue_id": "The venue is no longer available"}
     assert api.get("/spaces/available", params=base).status_code in (401, 422)
 
 
@@ -494,9 +494,9 @@ def test_editar_rechaza_un_precio_invalido_y_un_espacio_dado_de_baja(
     ruta = f"/spaces/{alta['id']}"
 
     for precio, mensaje in [
-        (None, "Este campo es obligatorio"),
-        (0, "Ingresá un precio entre $ 1 y $ 9.999.999"),
-        (10_000_000, "Ingresá un precio entre $ 1 y $ 9.999.999"),
+        (None, "This field is required"),
+        (0, "Enter a price between $ 1 and $ 9,999,999"),
+        (10_000_000, "Enter a price between $ 1 and $ 9,999,999"),
     ]:
         r = api.put(
             ruta,
@@ -580,7 +580,7 @@ def test_no_se_da_de_baja_un_espacio_con_una_reserva_sin_terminar(
 
     assert r.status_code == 409
     assert r.json() == {
-        "errors": {"space": "No se puede dar de baja el espacio porque posee reservas futuras."}
+        "errors": {"space": "The space cannot be deleted because it has future bookings."}
     }
     with motor.connect() as conn:
         assert conn.execute(

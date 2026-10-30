@@ -81,14 +81,14 @@ def test_a_5_minutos_de_la_reserva_sale_un_aviso_por_push_y_por_correo_una_sola_
     registrados = send_reminders(cast(Any, repo), canal, AHORA)
 
     assert registrados == 1
-    assert [a.title for a in canal.avisos] == ["Tu reserva empieza en 5 minutos"]
-    assert canal.avisos[0].body == "Fútbol 5 · Sede Morón · 21:00 – 22:00"
+    assert [a.title for a in canal.avisos] == ["Your booking starts in 5 minutes"]
+    assert canal.avisos[0].body == "Football 5 · Sede Morón · 21:00 – 22:00"
     assert canal.avisos[0].data == {"kind": "five_minute_reminder", "booking_id": str(UUID(int=7))}
-    assert [c.subject for c in correos] == ["Tu reserva empieza en 5 minutos"]
+    assert [c.subject for c in correos] == ["Your booking starts in 5 minutes"]
     assert repo.envios == ["sent"]
     assert FIVE_MINUTE_LEAD_TIME == timedelta(minutes=5)
 
 
 def test_el_aviso_de_una_hora_sigue_igual() -> None:
     una_hora = Reminder(UUID(int=7), UUID(int=3), INICIO, INICIO, "Futbol", "F5", "Sede")
-    assert reminder_message(una_hora).title == "Tu reserva es en 1 hora"
+    assert reminder_message(una_hora).title == "Your booking is in 1 hour"

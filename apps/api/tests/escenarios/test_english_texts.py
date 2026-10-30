@@ -4,6 +4,7 @@ import ast
 import re
 import subprocess
 import uuid
+from typing import cast
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -12,6 +13,7 @@ from fastapi.testclient import TestClient
 from app.modules.notifications.rules import (
     BookingData,
     Reminder,
+    ReminderKind,
     cancellation_message,
     forced_cancellations_message,
     reminder_email,
@@ -109,7 +111,7 @@ def _reminder(kind: str) -> Reminder:
         venue="Venue",
         email="a@b.com",
         name="Ana",
-        reminder_kind=kind,  # type: ignore[arg-type]
+        reminder_kind=cast(ReminderKind, kind),
     )
 
 

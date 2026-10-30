@@ -129,7 +129,7 @@ def test_una_contrasena_debil_se_rechaza_y_el_enlace_sigue_sirviendo(
     (codigo,) = _codigos(motor, correo)
     r = api.put("/password-recovery", json={"code": codigo, "new_password": "ClubNahuel"})
     assert r.status_code == 422
-    assert r.json() == {"errors": {"new_password": "Al menos un número"}}
+    assert r.json() == {"errors": {"new_password": "At least one number"}}
     assert api.post("/password-recovery/check", json={"code": codigo}).status_code == 204
 
 
@@ -145,7 +145,7 @@ def test_un_codigo_inventado_no_sirve(api: TestClient) -> None:
 def test_un_correo_mal_escrito_se_rechaza(api: TestClient) -> None:
     r = api.post("/password-recovery", json={"email": "lucia@correo"})
     assert r.status_code == 422
-    assert r.json() == {"errors": {"email": "Revisá el formato del correo"}}
+    assert r.json() == {"errors": {"email": "Check the email format"}}
 
 
 def test_sin_modo_pruebas_no_existe_el_buzon(api: TestClient) -> None:

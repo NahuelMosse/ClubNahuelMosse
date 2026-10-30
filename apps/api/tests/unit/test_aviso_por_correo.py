@@ -16,7 +16,7 @@ DIRECCION = "ana@correo.com"
 USUARIO = UUID(int=7)
 AVISO = Notice(
     title="El club canceló tu reserva",
-    body="Fútbol 5 · Sede Morón · Mié 11, 20:00",
+    body="Football 5 · Sede Morón · Wed 11, 20:00",
     data={"kind": "forced_cancellation"},
 )
 
@@ -94,7 +94,7 @@ def test_cada_notificacion_registrada_sale_tambien_por_correo_con_titulo_cuerpo_
     assert enviados[0].recipient == DIRECCION
     assert enviados[0].subject == AVISO.title
     assert enviados[0].html is not None
-    for texto in (AVISO.title, "Fútbol 5", "Abrir la app", 'href="https://club.example"'):
+    for texto in (AVISO.title, "Football 5", "Open the app", 'href="https://club.example"'):
         assert texto in enviados[0].html
     assert AVISO.body in enviados[0].body
 
@@ -102,7 +102,7 @@ def test_cada_notificacion_registrada_sale_tambien_por_correo_con_titulo_cuerpo_
     monkeypatch.setattr(config, "public_url", "")
     _entregar(_Repositorio(["token"]), canal)
     assert enviados[0].html is not None
-    assert "Abrir la app" not in enviados[0].html
+    assert "Open the app" not in enviados[0].html
 
 
 def test_el_correo_sale_aunque_no_haya_push_y_si_falla_el_aviso_queda_como_estaba(
@@ -142,7 +142,7 @@ def test_el_recordatorio_manda_un_solo_correo(monkeypatch: pytest.MonkeyPatch) -
 
     assert registrados == 1
     assert len(enviados) == 1
-    assert enviados[0].subject == "Tu reserva es en 1 hora"
+    assert enviados[0].subject == "Your booking is in 1 hour"
 
 
 def test_un_aviso_que_no_se_registra_no_manda_correo(monkeypatch: pytest.MonkeyPatch) -> None:

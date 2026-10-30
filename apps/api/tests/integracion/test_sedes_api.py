@@ -133,7 +133,7 @@ def test_no_hay_dos_sedes_activas_con_el_mismo_nombre(
     assert api.post("/venues", headers=_con(token_admin), json=_sede(nombre)).status_code == 201
     r = api.post("/venues", headers=_con(token_admin), json=_sede(nombre.upper(), address="Otra 1"))
     assert r.status_code == 409
-    assert r.json() == {"errors": {"name": "Ya existe una sede con ese nombre"}}
+    assert r.json() == {"errors": {"name": "A venue with that name already exists"}}
 
 
 def test_dos_altas_iguales_a_la_vez_guardan_una_sola(
@@ -168,8 +168,8 @@ def test_los_datos_invalidos_vuelven_con_el_mensaje_de_cada_campo(
     assert r.status_code == 422
     assert r.json() == {
         "errors": {
-            "address": "Escribí la calle y la altura",
-            "closes_at": "El cierre tiene que ser después de la apertura",
+            "address": "Write the street and the number",
+            "closes_at": "The closing must be after the opening",
         }
     }
     r = api.post("/venues", headers=_con(token_admin), json={})
@@ -190,7 +190,7 @@ def test_una_hora_que_no_es_hh_mm_es_un_error_del_campo(
         "/venues", headers=_con(token_admin), json=_sede(f"Sede {unico()}", closes_at=hora)
     )
     assert r.status_code == 422
-    assert r.json() == {"errors": {"closes_at": "El horario de cierre es obligatorio"}}
+    assert r.json() == {"errors": {"closes_at": "The closing time is required"}}
 
 
 def _alta(api: TestClient, token_admin: str, nombre: str) -> str:
@@ -249,10 +249,10 @@ def test_editar_rechaza_otro_nombre_en_uso_datos_invalidos_y_una_sede_dada_de_ba
 
     repetido = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(otra.upper()))
     assert repetido.status_code == 409
-    assert repetido.json() == {"errors": {"name": "Ya existe una sede con ese nombre"}}
+    assert repetido.json() == {"errors": {"name": "A venue with that name already exists"}}
     vacio = api.put(f"/venues/{sede}", headers=_con(token_admin), json=_sede(nombre, address=""))
     assert vacio.status_code == 422
-    assert vacio.json()["errors"]["address"] == "La dirección es obligatoria"
+    assert vacio.json()["errors"]["address"] == "The address is required"
     with motor.begin() as conn:
         conn.execute(
             text("UPDATE venue SET active = false, deactivated_at = now() WHERE id = :id"),
@@ -415,7 +415,7 @@ def test_no_se_da_de_baja_una_sede_con_reservas_sin_terminar(
     assert r.status_code == 409
     assert r.json() == {
         "errors": {
-            "venue": "No se puede dar de baja la sede porque posee reservas futuras asociadas."
+            "venue": "The venue cannot be deleted because it has future bookings."
         }
     }
     with motor.connect() as conn:

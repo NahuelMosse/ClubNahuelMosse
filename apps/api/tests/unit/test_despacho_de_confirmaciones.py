@@ -109,7 +109,7 @@ class CanalQueAcepta:
 
 def _pendiente(numero: int) -> PendingNotice:
     return PendingNotice(
-        _id(numero), _id(3), Notice("Reserva cancelada", "body", {"kind": "user_cancellation"})
+        _id(numero), _id(3), Notice("Booking cancelled", "body", {"kind": "user_cancellation"})
     )
 
 
@@ -117,9 +117,9 @@ def test_el_mensaje_nombra_la_reserva_con_el_dia_y_la_hora_del_club() -> None:
     """el día sale abreviado como en el prototipo @supuesto:CU-24.3-SUP-05"""
     notice = cancellation_message(_reserva(datetime(2026, 11, 11, 23, 0, tzinfo=UTC)))
 
-    assert notice.title == "Reserva cancelada"
+    assert notice.title == "Booking cancelled"
     assert notice.body == (
-        "Fútbol 5 · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado."
+        "Football 5 · Sede Ramos Mejía · Wed 11, 20:00. The slot was freed."
     )
     assert notice.data == {"kind": "user_cancellation", "booking_id": str(_id(12))}
 

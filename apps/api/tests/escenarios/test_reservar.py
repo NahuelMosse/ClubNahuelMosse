@@ -77,7 +77,7 @@ def test_el_backend_rechaza_una_reserva_en_un_horario_pasado(
 
     # Verifica: la rechaza por la fecha y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errors"]["date"] == "La fecha tiene que ser futura"
+    assert r.json()["errors"]["date"] == "The date must be in the future"
     assert _reservas(motor, espacio) == 0
 
 
@@ -100,7 +100,7 @@ def test_el_backend_rechaza_una_reserva_que_termina_despues_del_cierre_de_la_sed
 
     # Verifica: la rechaza por el cierre y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errors"]["until"] == "La sede cierra a las 23:00"
+    assert r.json()["errors"]["until"] == "The venue closes at 23:00"
     assert _reservas(motor, espacio) == 0
 
 
@@ -123,7 +123,7 @@ def test_el_backend_rechaza_una_reserva_que_no_empieza_o_no_termina_en_hora_comp
 
     # Verifica: la rechaza por la hora y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errors"]["start_hour"] == "Elegí una hora en punto"
+    assert r.json()["errors"]["start_hour"] == "Choose an on-the-hour time"
     assert _reservas(motor, espacio) == 0
 
 
@@ -146,7 +146,7 @@ def test_el_backend_rechaza_una_reserva_de_menos_de_una_hora(
 
     # Verifica: la rechaza por la duración y no guarda nada.
     assert r.status_code == 422
-    assert r.json()["errors"]["until"] == "La duración mínima es de una hora"
+    assert r.json()["errors"]["until"] == "The minimum duration is one hour"
     assert _reservas(motor, espacio) == 0
 
 
@@ -171,5 +171,5 @@ def test_el_backend_rechaza_una_reserva_que_se_superpone_en_parte_con_otra_del_m
 
     # Verifica: la segunda choca con la primera y sólo queda una.
     assert r.status_code == 409
-    assert r.json()["errors"]["slot"] == "Ese horario se ocupó"
+    assert r.json()["errors"]["slot"] == "That slot was taken"
     assert _reservas(motor, espacio) == 1

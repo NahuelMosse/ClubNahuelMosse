@@ -47,7 +47,7 @@ def password_problems(password: str) -> list[str]:
     """The rules it does not meet, in the order the app shows them."""
     missing = []
     if len(password) < PASSWORD_MIN_LENGTH:
-        missing.append(f"Al menos {PASSWORD_MIN_LENGTH} caracteres")
+        missing.append(f"At least {PASSWORD_MIN_LENGTH} characters")
     if not re.search(r"[A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]", password):
         missing.append("An uppercase letter")
     if not re.search(r"[0-9]", password):

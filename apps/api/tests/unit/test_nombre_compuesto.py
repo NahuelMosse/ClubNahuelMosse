@@ -65,4 +65,4 @@ def test_partes_vacias(vacio: str) -> None:
 
 def test_tipo_sin_letras_se_rechaza() -> None:
     with pytest.raises(ValueError):
-        composite_name("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "¡!", 1)
+        composite_name("Sede Morón", "Av. Rivadavia", 19850, "Football", "¡!", 1)

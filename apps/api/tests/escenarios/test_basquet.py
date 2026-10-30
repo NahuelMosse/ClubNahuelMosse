@@ -122,7 +122,7 @@ def test_un_tipo_de_otro_deporte_no_sirve_para_basquet(
     r = api.post("/spaces", headers=_con(token_admin), json=_cancha(sede, "Basquet", "F5"))
 
     assert r.status_code == 422
-    assert r.json()["errors"]["kind"] == "Elegí un tipo de la lista"
+    assert r.json()["errors"]["kind"] == "Choose a kind from the list"
 
 
 def test_el_socio_filtra_los_espacios_por_basquet(

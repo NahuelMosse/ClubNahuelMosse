@@ -52,7 +52,7 @@ def test_si_el_proveedor_falla_la_baja_igual_queda_hecha(
     cuentas.falla_proveedor = True
     dar_de_baja(_perfil(), cuentas, cuentas)
     assert cuentas.bajas == [UUID(int=7)]
-    assert "no se pudo borrar del proveedor" in caplog.text
+    assert "could not delete account" in caplog.text
 
 
 def test_una_cuenta_que_ya_estaba_de_baja_no_toca_el_proveedor() -> None:

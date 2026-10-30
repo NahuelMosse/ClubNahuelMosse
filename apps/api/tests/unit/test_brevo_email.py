@@ -12,7 +12,7 @@ from app.shared.config import Settings, config
 from app.shared.message import Message
 
 MESSAGE = Message(
-    recipient="lucia+club@correo.com", subject="Creá una contraseña nueva", body="Hola"
+    recipient="lucia+club@correo.com", subject="Create a new password", body="Hola"
 )
 ROOT = Path(__file__).resolve().parents[4]
 
@@ -58,7 +58,7 @@ def test_con_modo_brevo_el_correo_sale_por_la_api_con_clave_remitente_y_texto(
     assert json.loads(request.data) == {
         "sender": {"email": "club@correo.com", "name": "Club Nahuel Mosse"},
         "to": [{"email": "lucia+club@correo.com"}],
-        "subject": "Creá una contraseña nueva",
+        "subject": "Create a new password",
         "textContent": "Hola",
     }
 
@@ -90,7 +90,7 @@ def test_si_brevo_falla_el_log_no_trae_la_direccion_y_el_pedido_sigue_en_202(
     monkeypatch.setattr("urllib.request.urlopen", broken)
     email.send(MESSAGE)
     assert (
-        f"no se pudo enviar el correo «{MESSAGE.subject}»: {type(failure).__name__}" in caplog.text
+        f"could not send the email «{MESSAGE.subject}»: {type(failure).__name__}" in caplog.text
     )
     assert "lucia" not in caplog.text
     assert "clave-secreta" not in caplog.text

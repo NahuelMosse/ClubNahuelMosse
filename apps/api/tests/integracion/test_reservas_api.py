@@ -388,7 +388,7 @@ def test_modificar_rechaza_lo_que_no_corresponde(
     assert mismo[1]["id"] == mia
     assert cambiar({"space_id": hockey, "date": manana, "start_hour": "10:00"})[0] == 422
     ocupado = cambiar({"space_id": espacio, "date": manana, "start_hour": "12:00"})
-    assert ocupado == (409, {"errors": {"slot": "Ese horario se ocupó"}})
+    assert ocupado == (409, {"errors": {"slot": "That slot was taken"}})
     assert (
         cambiar({"space_id": espacio, "date": manana, "start_hour": "15:00"}, token_admin)[0] == 403
     )
@@ -398,7 +398,7 @@ def test_modificar_rechaza_lo_que_no_corresponde(
             {"id": mia},
         )
     cambio = cambiar({"space_id": espacio, "date": manana, "start_hour": "15:00"})
-    assert cambio == (409, {"errors": {"booking": "Esto cambió mientras tanto"}})
+    assert cambio == (409, {"errors": {"booking": "This changed in the meantime"}})
 
 
 def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
@@ -478,4 +478,4 @@ def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
         },
     )
     assert r.status_code == 422
-    assert r.json()["errors"]["start_hour"] == "La sede abre a las 09:00"
+    assert r.json()["errors"]["start_hour"] == "The venue opens at 09:00"

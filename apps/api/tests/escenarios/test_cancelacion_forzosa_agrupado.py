@@ -100,7 +100,7 @@ def test_agrupar_abre_un_aviso_nuevo_y_cada_reserva_conserva_el_envio_del_suyo(
 
     [despues] = socio.centro()["notifications"]
     assert despues["id"] != antes["id"]
-    assert despues["title"] == "El club anuló 2 de tus reservas"
+    assert despues["title"] == "The club voided 2 of your bookings"
     assert base.para_el_admin(socio, admin, primera["id"])["notice_at"] == trazabilidad["notice_at"]
     assert base.para_el_admin(socio, admin, segunda["id"])["notice_delivery"] == "sent"
     anterior, nuevo = _avisos(motor, socio)
@@ -161,7 +161,7 @@ def test_dos_anulaciones_simultaneas_dejan_la_cantidad_y_un_solo_aviso_visible(
     )
 
     [visible] = socio.centro()["notifications"]
-    assert visible["title"] == f"El club anuló {total} de tus reservas"
+    assert visible["title"] == f"The club voided {total} of your bookings"
     sin_reemplazar = [a for a in _avisos(motor, socio) if a.replaced_by is None]
     assert [a.count for a in sin_reemplazar] == [total]
     with motor.connect() as conn:
@@ -217,7 +217,7 @@ def test_un_aviso_leido_mientras_se_agrupa_no_se_traga_la_anulacion_nueva(
     centro = socio.centro()
     assert centro["unread"] == 1
     [entrada] = centro["notifications"]
-    assert entrada["title"] == "El club anuló 2 de tus reservas"
+    assert entrada["title"] == "The club voided 2 of your bookings"
     assert entrada["read"] is False
 
 

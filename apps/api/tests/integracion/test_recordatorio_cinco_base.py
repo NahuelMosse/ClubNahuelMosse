@@ -140,4 +140,4 @@ def test_una_reserva_que_ya_empezo_o_creada_dentro_de_los_5_minutos_no_recibe_el
     # Con tiempo de sobra salen los dos avisos, el de una hora y el de 5 minutos, y ninguno repite.
     assert _barrer(motor, usuario, canal, inicio - timedelta(minutes=4)) == 2
     assert _barrer(motor, usuario, canal, inicio - timedelta(minutes=3)) == 0
-    assert [t for t, _ in _cinco(motor, usuario)] == ["Tu reserva empieza en 5 minutos"]
+    assert [t for t, _ in _cinco(motor, usuario)] == ["Your booking starts in 5 minutes"]

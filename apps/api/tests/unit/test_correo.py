@@ -13,7 +13,7 @@ def test_sin_servidor_configurado_el_correo_no_sale_y_queda_en_el_log(
     monkeypatch.setattr(config, "email_mode", "smtp")
     monkeypatch.setattr(config, "smtp_host", "")
     correo.send(MENSAJE)
-    assert "no se pudo enviar el correo" in caplog.text
+    assert "could not send the email" in caplog.text
     assert "RuntimeError" in caplog.text
 
 

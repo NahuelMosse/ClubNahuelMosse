@@ -131,11 +131,11 @@ def test_una_fecha_fuera_de_la_semana_se_rechaza() -> None:
     ("desde", "hasta", "errores"),
     [
         (10, 12, {}),
-        (22, 0, {"until": "La sede cierra a las 23:00"}),
-        (18, 18, {"until": "La duración mínima es de una hora"}),
-        (20, 18, {"until": "La duración mínima es de una hora"}),
-        (10, 15, {"until": "La duración máxima es de 4 horas"}),
-        (7, 9, {"start_hour": "La sede abre a las 08:00"}),
+        (22, 0, {"until": "The venue closes at 23:00"}),
+        (18, 18, {"until": "The minimum duration is one hour"}),
+        (20, 18, {"until": "The minimum duration is one hour"}),
+        (10, 15, {"until": "The maximum duration is 4 hours"}),
+        (7, 9, {"start_hour": "The venue opens at 08:00"}),
     ],
 )
 def test_un_rango_se_valida_contra_el_horario_de_la_sede(
@@ -151,28 +151,28 @@ def test_un_rango_que_ya_empezo_o_de_otro_dia_no_se_consulta() -> None:
     agenda = OpeningHours(time(8), time(23), (1, 2, 3, 4))
     ahora = datetime.combine(JUEVES, time(18, 20), tzinfo=ZONA)
     assert validate_range(agenda, JUEVES, time(18), time(19), ahora) == {
-        "start_hour": "El horario tiene que ser futuro"
+        "start_hour": "The time must be in the future"
     }
     assert validate_range(agenda, JUEVES - timedelta(1), time(18), time(19), ahora) == {
-        "date": "La fecha tiene que ser futura"
+        "date": "The date must be in the future"
     }
     assert validate_range(agenda, JUEVES + timedelta(1), time(18), time(19), ahora) == {
-        "date": "La sede no abre ese día"
+        "date": "The venue is closed that day"
     }
     assert validate_range(agenda, JUEVES + timedelta(7), time(18), time(19), ahora) == {
         "date": "Elegí un día de los próximos 7"
     }
     assert validate_range(agenda, JUEVES, time(19, 30), time(21), ahora) == {
-        "start_hour": "Elegí una hora en punto"
+        "start_hour": "Choose an on-the-hour time"
     }
 
 
 @pytest.mark.parametrize(
     ("desde", "horas", "campo", "mensaje"),
     [
-        (10, 0, "until", "La duración mínima es de una hora"),
-        (10, 5, "until", "La duración máxima es de 4 horas"),
-        (22, 3, "until", "La sede cierra a las 23:00"),
+        (10, 0, "until", "The minimum duration is one hour"),
+        (10, 5, "until", "The maximum duration is 4 hours"),
+        (22, 3, "until", "The venue closes at 23:00"),
         (21, 2, None, None),
     ],
 )
@@ -192,12 +192,12 @@ def test_una_reserva_se_valida_por_su_inicio_y_su_duracion(
 @pytest.mark.parametrize(
     ("horas", "mensaje"),
     [
-        (-1, "La duración mínima es de una hora"),
-        (0, "La duración mínima es de una hora"),
+        (-1, "The minimum duration is one hour"),
+        (0, "The minimum duration is one hour"),
         (1, None),
         (4, None),
-        (5, "La duración máxima es de 4 horas"),
-        (10**12, "La duración máxima es de 4 horas"),
+        (5, "The maximum duration is 4 hours"),
+        (10**12, "The maximum duration is 4 hours"),
     ],
 )
 def test_una_duracion_es_reservable_de_una_a_cuatro_horas(horas: int, mensaje: str | None) -> None:

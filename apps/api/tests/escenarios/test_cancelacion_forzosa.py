@@ -15,7 +15,7 @@ from app.modules.users.seed_admin import main as sembrar
 DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
 CONTRASENA = "ClubNahuel1"
 MOTIVO = "mantenimiento de la cancha"
-TITULO = "El club anuló tu reserva"
+TITULO = "The club voided your booking"
 
 
 class CanalQueFalla:
@@ -63,7 +63,7 @@ def anular(
 
 def cuerpo_esperado(sede: str, hora: str, motivo: str = MOTIVO) -> str:
     dia = manana()
-    return f"Fútbol 5 · {sede} · {DIAS[dia.weekday()]} {dia.day}, {hora}. Motivo: {motivo}."
+    return f"Football 5 · {sede} · {DIAS[dia.weekday()]} {dia.day}, {hora}. Reason: {motivo}."
 
 
 def para_el_admin(socio: Socio, admin: dict[str, str], reserva_id: str) -> dict[str, Any]:
@@ -212,10 +212,10 @@ def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con
     centro = socio.centro()
     assert centro["unread"] == 1
     [entrada] = centro["notifications"]
-    assert entrada["title"] == "El club anuló 2 de tus reservas"
+    assert entrada["title"] == "The club voided 2 of your bookings"
     assert (
         entrada["body"]
-        == "Tenés 2 reservas anuladas por el club. Mirá el detalle en tu historial."
+        == "You have 2 bookings voided by the club. See the detail in your history."
     )
     assert entrada["booking_id"] is None
 
