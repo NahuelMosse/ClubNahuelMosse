@@ -12,7 +12,7 @@ from app.modules.notifications.repository import NotificationsSql, enqueue_force
 from app.modules.notifications.push import push_channel
 from app.modules.users.seed_admin import main as sembrar
 
-DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+DIAS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 CONTRASENA = "ClubNahuel1"
 MOTIVO = "mantenimiento de la cancha"
 TITULO = "The club voided your booking"

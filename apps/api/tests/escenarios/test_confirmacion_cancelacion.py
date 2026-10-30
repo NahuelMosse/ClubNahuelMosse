@@ -7,7 +7,7 @@ from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
 from app.modules.notifications.push import push_channel
 
-DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+DIAS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 @pytest.fixture
