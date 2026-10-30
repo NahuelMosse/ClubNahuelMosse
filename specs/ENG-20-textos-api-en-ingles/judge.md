@@ -1,0 +1,9 @@
+- ACT-01 · M · S2 «cada correo» and S3 «cada aviso push y cada aviso guardado» each plan a single test (the booking email; «a notification»): the password-recovery email (password_recovery/use_cases.py) and each notification kind (notifications/use_cases.py, sweep.py) have no test of their own, and the static «no string literal is Spanish» scan does not say how it tells Spanish apart (lenses.md interpretation: «Does a quantifier name its members, and does each member have a test?») · card.md S2, S3, T2 · plan · closed · T2, ENG-20-ASM-03
+- ACT-02 · M · S5 names «el administrador inicial», but seed_admin.py seeds no fixed data: it takes it from Spanish CLI flags (`--correo --nombre --apellido --dni --nacimiento --promover`, env `ADMIN_CONTRASENA`) and prints Spanish messages. The card does not say whether the flags and the env fallback change (that would break whoever runs the command, against S7) or only the printed texts. No AMB/ASM covers it (lenses.md interpretation: «Which reading works with any answer to the open question, and is that the one assumed?»; contract: «Does an existing client keep working?») · card.md S5, S7, T3 · plan · closed · ENG-20-ASM-04
+
+## Verified
+
+- interpretation · fails (ACT-01, ACT-02) · S1, S4, S6 and S7 match L1. ASM-01 covers the Accept-Language question L1 raises and has a test.
+- contract · meets · S7 plus the «routes, codes and keys are main's» and «catalog keys are main's» tests cover the existing client. apps/mobile/lib does not match on `detail` texts (grep). Gate attacks covers the rest of http-defaults.
+- security · meets · email_template.py escapes every dynamic value in `html_email`, and T2 only changes literals. The Gate attacks line covers the HTTP questions.
+- overdesign · meets · no new file, interface or layer. Every task edits literals in place (`reuses:`).
