@@ -441,8 +441,8 @@ Booking _reservaConfirmada() {
 final _resultados = <_Resultado>[
   _Resultado(
     'registro exitoso',
-    (t) => _usuarioEn(t, '/register'),
-    (t) => _ir(t, '/register/exitoso'),
+    (t) => _usuarioEn(t, '/registro'),
+    (t) => _ir(t, '/registro/exitoso'),
     RegistrationDoneScreen,
   ),
   _Resultado(
