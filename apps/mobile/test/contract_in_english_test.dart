@@ -6,7 +6,6 @@ import 'package:clubnahuelmosse/features/bookings/data/booking_json.dart';
 import 'package:clubnahuelmosse/features/bookings/domain/booking_status.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/notification_kind.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/notification_system.dart';
-import 'package:clubnahuelmosse/features/session/domain/role.dart';
 import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -139,37 +138,6 @@ void main() {
       });
       expect(old.kind, isNull);
       expect(old.bookingId, isNull);
-    },
-  );
-
-  test(
-    'each booking status, role and notification kind shows the same Spanish word as before @ENG-18-S10 @assumption:ENG-18-ASM-07',
-    () {
-      expect(
-        {for (final s in BookingStatus.values) s.apiValue: s.label},
-        {
-          'active': 'Activa',
-          'completed': 'Completada',
-          'canceled': 'Cancelada',
-          'voided': 'Anulada',
-        },
-      );
-      expect(
-        {for (final r in Role.values) r.apiValue: r.label},
-        {'user': 'usuario', 'admin': 'admin'},
-      );
-      expect({
-        for (final k in NotificationKind.values) k.apiValue: k.label,
-      }, containsPair('forced_cancellation', 'cancelación del club'));
-      expect(
-        NotificationKind.values.map((k) => k.apiValue),
-        containsAll([
-          'forced_cancellation',
-          'reminder',
-          'five_minute_reminder',
-          'user_cancellation',
-        ]),
-      );
     },
   );
 }

@@ -188,23 +188,23 @@ List<double> _opacidadesDe(WidgetTester tester, Type pantalla) => [
 
 ApiClient _apiUsuario() => apiRutas({
   ...rutasDeSedes(grilla: grillaJson(ocupadas: {9, 12})),
-  'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
+  'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
 });
 
 const _adminBooking =
-    '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-    ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-    ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-    ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-    ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-    ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-    ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
+    '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+    ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+    ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+    ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+    ' "status": "active", "reason": null, "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+    ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
+    ' "canceled_by_name": null, "space_deactivated": false}';
 
 ApiClient _apiAdmin() => apiRutas({
   ...rutasDeEspacios(),
-  'GET /reservas/todas': (
+  'GET /bookings/all': (
     200,
-    '{"reservas": [$_adminBooking], "total": 1, "pagina": 1, "por_pagina": 20,'
+    '{"bookings": [$_adminBooking], "total": 1, "page": 1, "per_page": 20,'
         ' "contadores": {"todas": 1, "activas": 1, "completadas": 0,'
         ' "anuladas": 0}}',
   ),

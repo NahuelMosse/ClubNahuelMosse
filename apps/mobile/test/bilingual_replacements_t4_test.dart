@@ -8,25 +8,25 @@ void main() {
   test(
     'Role y NotificationKind muestran su label en castellano y leen el valor de la API de siempre @assumption:ENG-11-ASM-01',
     () {
-      expect(Role.fromApi('usuario'), Role.user);
+      expect(Role.fromApi('user'), Role.user);
       expect(Role.fromApi('admin'), Role.admin);
       expect(Role.fromApi('otro'), isNull);
-      expect(Role.user.apiValue, 'usuario');
+      expect(Role.user.apiValue, 'user');
       expect(Role.admin.apiValue, 'admin');
       expect(
-        NotificationKind.fromApi('recordatorio'),
+        NotificationKind.fromApi('reminder'),
         NotificationKind.reminder,
       );
       expect(
-        NotificationKind.fromApi('cancelacion_forzosa'),
+        NotificationKind.fromApi('forced_cancellation'),
         NotificationKind.forcedCancellation,
       );
       expect(
-        NotificationKind.fromApi('cancelacion_usuario'),
+        NotificationKind.fromApi('user_cancellation'),
         NotificationKind.userCancellation,
       );
       expect(NotificationKind.fromApi('x'), isNull);
-      expect(NotificationKind.userCancellation.apiValue, 'cancelacion_usuario');
+      expect(NotificationKind.userCancellation.apiValue, 'user_cancellation');
     },
   );
 }

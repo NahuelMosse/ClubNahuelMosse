@@ -105,10 +105,10 @@ void main() {
       await initializeDateFormatting();
       final es = await AppLocalizations.delegate.load(const Locale('es'));
       expect(BookingStatus.values.map((s) => s.apiValue), [
-        'activa',
-        'completada',
-        'cancelada',
-        'anulada',
+        'active',
+        'completed',
+        'canceled',
+        'voided',
       ]);
       expect(BookingStatus.values.map((s) => bookingStatusText(es, s)), [
         'Activa',
@@ -116,9 +116,9 @@ void main() {
         'Cancelada',
         'Anulada',
       ]);
-      expect(BookingStatus.fromApi('activa'), BookingStatus.active);
-      expect(BookingStatus.fromApi('anulada'), BookingStatus.voided);
-      expect(BookingStatus.fromApi('active'), isNull);
+      expect(BookingStatus.fromApi('active'), BookingStatus.active);
+      expect(BookingStatus.fromApi('voided'), BookingStatus.voided);
+      expect(BookingStatus.fromApi('activa'), isNull);
     },
   );
 }

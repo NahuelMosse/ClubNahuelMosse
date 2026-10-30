@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:clubnahuelmosse/features/bookings/domain/booking_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 String _sources(List<String> dirs) => [
@@ -27,27 +26,6 @@ void main() {
       ]) {
         expect(source, contains(piece), reason: piece);
       }
-    },
-  );
-
-  test(
-    'BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01',
-    () {
-      expect(BookingStatus.values.map((s) => s.apiValue), [
-        'active',
-        'completed',
-        'canceled',
-        'voided',
-      ]);
-      expect(BookingStatus.values.map((s) => s.label), [
-        'Activa',
-        'Completada',
-        'Cancelada',
-        'Anulada',
-      ]);
-      expect(BookingStatus.fromApi('active'), BookingStatus.active);
-      expect(BookingStatus.fromApi('voided'), BookingStatus.voided);
-      expect(BookingStatus.fromApi('activa'), isNull);
     },
   );
 }

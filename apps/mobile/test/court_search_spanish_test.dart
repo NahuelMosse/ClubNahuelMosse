@@ -85,7 +85,7 @@ void main() {
 
   group('pantalla', () {
     const disponibles =
-        '{"espacios": [$espacioF5Json, '
+        '{"spaces": [$espacioF5Json, '
         '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
         '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
         '"techada": true, "iluminada": true, "precio_por_hora": 43000}]}';
@@ -104,7 +104,7 @@ void main() {
         tamano: escala > 1 ? const Size(360, 800) : const Size(393, 852),
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /espacios/disponibles': respuesta,
+          'GET /spaces/available': respuesta,
         }, pedidos: requests),
       );
       return requests;
@@ -169,7 +169,7 @@ void main() {
         await tester.pumpAndSettle();
 
         final consulta = requests.last.url;
-        expect(consulta.path, '/espacios/disponibles');
+        expect(consulta.path, '/spaces/available');
         expect(
           consulta.queryParameters['sede_id'],
           '00000000-0000-7000-8000-000000000001',
@@ -228,7 +228,7 @@ void main() {
       expect(find.text('La duración mínima es de una hora'), findsOneWidget);
       expect(habilitado(tester, 'CONSULTAR'), isFalse);
       expect(
-        requests.where((p) => p.url.path == '/espacios/disponibles'),
+        requests.where((p) => p.url.path == '/spaces/available'),
         isEmpty,
       );
       semantica.dispose();
@@ -265,7 +265,7 @@ void main() {
         tester,
         respuesta: (
           422,
-          '{"errores": {"desde": "El horario tiene que ser futuro"}}',
+          '{"errors": {"start_hour": "El horario tiene que ser futuro"}}',
         ),
       );
       await completar(tester);
@@ -293,7 +293,7 @@ void main() {
     });
 
     testWidgets('sin resultados, el aviso y LIMPIAR FILTROS', (tester) async {
-      await abrir(tester, respuesta: (200, '{"espacios": []}'));
+      await abrir(tester, respuesta: (200, '{"spaces": []}'));
       await completar(tester);
       await tester.tap(find.text('CONSULTAR'));
       await tester.pumpAndSettle();
@@ -362,7 +362,7 @@ void main() {
 
     testWidgets('un chip sin canchas no se puede elegir', (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrir(tester, respuesta: (200, '{"espacios": [$espacioF5Json]}'));
+      await abrir(tester, respuesta: (200, '{"spaces": [$espacioF5Json]}'));
       await completar(tester);
       await tester.tap(find.text('CONSULTAR'));
       await tester.pumpAndSettle();

@@ -63,7 +63,7 @@ void main() {
         await montarEnRutas(
           tester,
           ForgotPasswordScreen(
-            recovery: recuperacion({'POST /recuperacion': (202, '')}),
+            recovery: recuperacion({'POST /password-recovery': (202, '')}),
           ),
         );
         await tester.enterText(
@@ -88,7 +88,7 @@ void main() {
       await montarEnRutas(
         tester,
         ForgotPasswordScreen(
-          recovery: recuperacion({'POST /recuperacion': (202, '')}),
+          recovery: recuperacion({'POST /password-recovery': (202, '')}),
         ),
       );
       await tester.enterText(
@@ -125,7 +125,7 @@ void main() {
       await montarEnRutas(
         tester,
         ForgotPasswordScreen(
-          recovery: recuperacion({'POST /recuperacion': (500, '')}),
+          recovery: recuperacion({'POST /password-recovery': (500, '')}),
         ),
       );
       await tester.enterText(
@@ -152,7 +152,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        pantalla({'POST /recuperacion/consulta': (410, '')}),
+        pantalla({'POST /password-recovery/check': (410, '')}),
       );
       expect(find.text('El enlace no es válido'), findsOneWidget);
       await tester.tap(find.text('PEDIR UN ENLACE NUEVO'));
@@ -183,8 +183,8 @@ void main() {
       await montarEnRutas(
         tester,
         pantalla({
-          'POST /recuperacion/consulta': (204, ''),
-          'PUT /recuperacion': (204, ''),
+          'POST /password-recovery/check': (204, ''),
+          'PUT /password-recovery': (204, ''),
         }),
       );
       expect(habilitado(tester, 'GUARDAR CONTRASEÑA'), isFalse);
@@ -215,8 +215,8 @@ void main() {
       await montarEnRutas(
         tester,
         pantalla({
-          'POST /recuperacion/consulta': (204, ''),
-          'PUT /recuperacion': (410, ''),
+          'POST /password-recovery/check': (204, ''),
+          'PUT /password-recovery': (410, ''),
         }),
       );
       await tester.enterText(
@@ -238,7 +238,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await montarEnRutas(
         tester,
-        pantalla({'POST /recuperacion/consulta': (204, '')}),
+        pantalla({'POST /password-recovery/check': (204, '')}),
       );
       await tester.enterText(
         find.bySemanticsLabel('Contraseña nueva'),
@@ -267,7 +267,7 @@ void main() {
       (tester) async {
         final requests = <http.Request>[];
         final api = apiRutas({
-          'POST /recuperacion/consulta': (410, ''),
+          'POST /password-recovery/check': (410, ''),
         }, pedidos: requests);
         await tester.pumpWidget(
           App(
@@ -296,8 +296,8 @@ void main() {
       await tester.pumpWidget(
         App(
           api: apiRutas({
-            'POST /recuperacion/consulta': (204, ''),
-            'PUT /recuperacion': (204, ''),
+            'POST /password-recovery/check': (204, ''),
+            'PUT /password-recovery': (204, ''),
           }),
           session: session,
           appearance: Appearance.inMemory(),

@@ -28,8 +28,8 @@ void main() {
       inicio: route,
       api: apiRutas({
         ...rutasDeSedes(),
-        'POST /reservas': (201, reservaJson()),
-        'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
+        'POST /bookings': (201, reservaJson()),
+        'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
       }),
     );
   }

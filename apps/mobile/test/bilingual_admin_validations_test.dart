@@ -55,7 +55,7 @@ void main() {
         await montarAdmin(
           tester,
           inicio: '/admin/sedes/nueva',
-          api: apiRutas({'GET /sedes': (200, '{"sedes": []}')}),
+          api: apiRutas({'GET /venues': (200, '{"venues": []}')}),
         );
         await tap(tester, save);
         for (final message in messages) {
