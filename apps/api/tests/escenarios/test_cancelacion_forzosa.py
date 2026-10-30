@@ -128,7 +128,7 @@ def test_al_tocar_el_aviso_la_app_sabe_que_reserva_abrir_y_el_historial_la_trae_
     assert entrada["booking_id"] == reserva["id"]
 
     # Verifica: el historial de esa persona la lista como anulada y con el motivo.
-    historial = socio.api.get("/bookings?when=historial", headers=socio.sesion).json()
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
     assert [(r["id"], r["status"], r["reason"]) for r in historial["bookings"]] == [
         (reserva["id"], "voided", MOTIVO)
     ]
@@ -225,7 +225,7 @@ def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con
     assert aviso.data == {"kind": "forced_cancellation"}
 
     # Verifica: las dos figuran anuladas en el historial, cada una con su motivo.
-    historial = socio.api.get("/bookings?when=historial", headers=socio.sesion).json()
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
     assert sorted((r["id"], r["status"]) for r in historial["bookings"]) == sorted(
         [(primera["id"], "voided"), (segunda["id"], "voided")]
     )

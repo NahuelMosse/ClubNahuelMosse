@@ -16,21 +16,21 @@ from sqlalchemy import Engine, create_engine, text
 API_ROOT = Path(__file__).resolve().parents[2]
 REPO_ROOT = API_ROOT.parents[1]
 TABLES = {
-    "user": "app_user", "venue": "venue", "space": "space", "booking": "booking",
+    "usuario": "app_user", "sede": "venue", "espacio": "space", "reserva": "booking",
     "enlace_recuperacion": "recovery_link", "correo_saliente": "outgoing_email",
     "dispositivo": "device", "notificacion": "notification",
     "notificacion_reserva": "notification_booking",
 }  # fmt: skip
 TALLIES = {  # table, column (0011) -> table, column (0012), value map
-    ("booking", "status"): ("booking", "status",
-                            {"active": "active", "canceled": "canceled", "voided": "voided"}),
-    ("user", "role"): ("app_user", "role", {"user": "user", "admin": "admin"}),
-    ("notificacion", "kind"): ("notification", "kind", {
-        "reminder": "reminder", "five_minute_reminder": "five_minute_reminder",
-        "forced_cancellation": "forced_cancellation", "user_cancellation": "user_cancellation"}),
+    ("reserva", "estado"): ("booking", "status",
+                            {"activa": "active", "cancelada": "canceled", "anulada": "voided"}),
+    ("usuario", "rol"): ("app_user", "role", {"usuario": "user", "admin": "admin"}),
+    ("notificacion", "tipo"): ("notification", "kind", {
+        "recordatorio": "reminder", "recordatorio_cinco": "five_minute_reminder",
+        "cancelacion_forzosa": "forced_cancellation", "cancelacion_usuario": "user_cancellation"}),
     ("notificacion", "envio"): ("notification", "delivery", {
-        "pending": "pending", "sending": "sending", "sent": "sent",
-        "no_permission": "no_permission", "no_channel": "no_channel", "failed": "failed"}),
+        "pendiente": "pending", "enviando": "sending", "enviada": "sent",
+        "sin_permiso": "no_permission", "sin_canal": "no_channel", "fallida": "failed"}),
 }  # fmt: skip
 
 

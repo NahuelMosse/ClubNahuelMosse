@@ -31,7 +31,7 @@ def _codigos(motor: Engine, correo: str) -> list[str]:
         cuerpos: Any = conn.execute(
             text("SELECT body FROM outgoing_email WHERE recipient = :p ORDER BY id"), {"p": correo}
         ).scalars()
-        return [m.group(1) for c in cuerpos if (m := re.search(r"#codigo=([\w-]+)", c))]
+        return [m.group(1) for c in cuerpos if (m := re.search(r"#code=([\w-]+)", c))]
 
 
 def test_pedir_y_usar_el_enlace_cambia_la_contrasena_una_sola_vez(
@@ -161,7 +161,7 @@ def test_el_enlace_del_correo_es_https_y_el_codigo_no_llega_al_servidor(
         cuerpo: Any = conn.execute(
             text("SELECT body FROM outgoing_email WHERE recipient = :p"), {"p": correo}
         ).scalar_one()
-    enlace = re.search(r"(\S+/enlace/recuperar)#codigo=", cuerpo)
+    enlace = re.search(r"(\S+/link/recover)#code=", cuerpo)
     assert enlace is not None and enlace.group(1).startswith("http")
     pagina = api.get("/link/recover")
     assert pagina.status_code == 200

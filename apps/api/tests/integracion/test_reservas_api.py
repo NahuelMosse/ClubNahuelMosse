@@ -80,7 +80,7 @@ def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
     _reservar(motor, _yo(api, motor, token_admin), espacio, hoy + timedelta(days=4), 10)
 
     def reservas(cuando: str) -> list[dict[str, object]]:
-        r = api.get("/bookings", headers=_con(token_usuario), params={"cuando": cuando})
+        r = api.get("/bookings", headers=_con(token_usuario), params={"when": cuando})
         assert r.status_code == 200
         lista: list[dict[str, object]] = r.json()["bookings"]
         return lista
