@@ -9,13 +9,7 @@ from pydantic import AwareDatetime, BaseModel
 
 from app.modules.bookings.email import booking_email
 from app.modules.bookings.repository import BookingsSql, bookings_repository
-from app.modules.bookings.rules import (
-    Booking,
-    BookingHistoryEntry,
-    HistoryFilters,
-    Status,
-    StatusFilter,
-)
+from app.modules.bookings.rules import HistoryFilters, Status, StatusFilter
 from app.modules.bookings.use_cases import (
     When,
     admin_detail,
@@ -72,26 +66,6 @@ class BookingList(BaseModel):
     bookings: list[BookingView]
 
 
-def _view(b: Booking) -> BookingView:
-    return BookingView(
-        id=b.id,
-        space_id=b.space_id,
-        venue_id=b.venue_id,
-        space=b.space,
-        sport=b.sport,
-        kind=b.kind,
-        venue=b.venue,
-        address=b.address,
-        starts_at=b.starts_at,
-        ends_at=b.ends_at,
-        price_per_hour=b.price_per_hour,
-        total=b.total,
-        status=b.status,
-        reason=b.reason,
-        cancelable=b.cancelable,
-    )
-
-
 @router.get(
     "/bookings",
     response_model=BookingList,
@@ -108,7 +82,12 @@ def list_bookings(
     repository: Annotated[BookingsSql, Depends(bookings_repository)],
     when: Annotated[When, Query()] = "upcoming",
 ) -> BookingList:
-    return BookingList(bookings=[_view(b) for b in my_bookings(repository, profile, when)])
+    return BookingList(
+        bookings=[
+            BookingView.model_validate(b, from_attributes=True)
+            for b in my_bookings(repository, profile, when)
+        ]
+    )
 
 
 class BookingRequest(BaseModel):
@@ -158,7 +137,7 @@ def create_booking(
     except SlotTaken:
         return conflict({"slot": SLOT_TAKEN_MESSAGE})
     after.add_task(send, booking_email(profile, booking))
-    return _view(booking)
+    return BookingView.model_validate(booking, from_attributes=True)
 
 
 CHANGED_MESSAGE = "Esto cambió mientras tanto"
@@ -191,7 +170,7 @@ def cancel(
     except ConcurrentChange:
         return conflict({"booking": CHANGED_MESSAGE})
     background.add_task(dispatch_for, profile.id, channel)
-    return _view(booking)
+    return BookingView.model_validate(booking, from_attributes=True)
 
 
 class BookingChangeRequest(BaseModel):
@@ -244,7 +223,7 @@ def modify(
         return conflict({"booking": CHANGED_MESSAGE})
     except SlotTaken:
         return conflict({"slot": SLOT_TAKEN_MESSAGE})
-    return _view(booking)
+    return BookingView.model_validate(booking, from_attributes=True)
 
 
 class BookingHistoryView(_BookingFields):
@@ -272,34 +251,6 @@ class HistoryView(BaseModel):
     page: int
     per_page: int
     counters: CountersView
-
-
-def _admin_view(b: BookingHistoryEntry) -> BookingHistoryView:
-    return BookingHistoryView(
-        id=b.id,
-        space_id=b.space_id,
-        venue_id=b.venue_id,
-        space=b.space,
-        sport=b.sport,
-        kind=b.kind,
-        venue=b.venue,
-        address=b.address,
-        starts_at=b.starts_at,
-        ends_at=b.ends_at,
-        price_per_hour=b.price_per_hour,
-        total=b.total,
-        status=b.status,
-        reason=b.reason,
-        user_id=b.user_id,
-        user=b.user,
-        created_at=b.created_at,
-        canceled_at=b.canceled_at,
-        canceled_by_name=b.canceled_by_name,
-        space_deactivated=b.space_deactivated,
-        voidable=b.voidable,
-        notice_delivery=b.notice_delivery,
-        notice_at=b.notice_at,
-    )
 
 
 @router.get(
@@ -343,7 +294,9 @@ def list_all(  # noqa: PLR0913, PLR0917 -- one parameter per query filter of the
         ),
     )
     return HistoryView(
-        bookings=[_admin_view(b) for b in history.bookings],
+        bookings=[
+            BookingHistoryView.model_validate(b, from_attributes=True) for b in history.bookings
+        ],
         total=history.total,
         page=history.page,
         per_page=history.per_page,
@@ -371,7 +324,9 @@ def detail(
     repository: Annotated[BookingsSql, Depends(bookings_repository)],
     booking_id: Annotated[Identifier, Path()],
 ) -> BookingHistoryView:
-    return _admin_view(admin_detail(repository, profile, booking_id))
+    return BookingHistoryView.model_validate(
+        admin_detail(repository, profile, booking_id), from_attributes=True
+    )
 
 
 class VoidRequest(BaseModel):
@@ -421,4 +376,4 @@ def void(
     # The notice to whoever booked goes out only once the voiding is confirmed and the
     # response sent.
     background.add_task(dispatch_for, booking.user_id, channel)
-    return _admin_view(booking)
+    return BookingHistoryView.model_validate(booking, from_attributes=True)
