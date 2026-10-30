@@ -27,22 +27,22 @@ String _reserva(int n) {
   final start = DateTime.now().toUtc().add(const Duration(days: 30));
   final end = start.add(const Duration(hours: 1));
   return '{"id": "00000000-0000-7000-8000-${n.toString().padLeft(12, '0')}",'
-      ' "espacio_id": "00000000-0000-7000-8000-000000000009",'
-      ' "sede_id": "00000000-0000-7000-8000-000000000001",'
-      ' "espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol",'
-      ' "tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850",'
-      ' "inicio": "${start.toIso8601String()}", "fin": "${end.toIso8601String()}",'
-      ' "total": 38000, "estado": "activa", "motivo": null,'
-      ' "usuario_id": "00000000-0000-7000-8000-000000000001",'
-      ' "usuario": "Socio $n", "creado_en": "2026-11-02T18:42:00-03:00",'
-      ' "cancelada_en": null, "cancelada_por_nombre": null,'
-      ' "espacio_de_baja": false}';
+      ' "space_id": "00000000-0000-7000-8000-000000000009",'
+      ' "venue_id": "00000000-0000-7000-8000-000000000001",'
+      ' "space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol",'
+      ' "kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850",'
+      ' "starts_at": "${start.toIso8601String()}", "ends_at": "${end.toIso8601String()}",'
+      ' "total": 38000, "status": "active", "reason": null,'
+      ' "user_id": "00000000-0000-7000-8000-000000000001",'
+      ' "user": "Socio $n", "created_at": "2026-11-02T18:42:00-03:00",'
+      ' "canceled_at": null, "canceled_by_name": null,'
+      ' "space_deactivated": false}';
 }
 
 String _pagina(Iterable<int> ids, int numero) =>
-    '{"reservas": [${ids.map(_reserva).join(',')}], "total": 40,'
-    ' "pagina": $numero, "por_pagina": 20, "contadores": {"todas": 40,'
-    ' "activas": 40, "completadas": 0, "anuladas": 0}}';
+    '{"bookings": [${ids.map(_reserva).join(',')}], "total": 40,'
+    ' "page": $numero, "per_page": 20, "counters": {"all": 40,'
+    ' "active": 40, "completed": 0, "voided": 0}}';
 
 Future<void> _abrir(WidgetTester tester, ApiClient api, String inicio) async {
   tester.view.physicalSize = const Size(393, 852) * 3;
@@ -72,7 +72,7 @@ Future<void> _cardShape(
 }) async {
   final held = HeldApi({
     ...rutasDeEspacios(),
-    'GET /sedes': (200, '{"sedes": [$sedeMoronJson]}'),
+    'GET /venues': (200, '{"venues": [$sedeMoronJson]}'),
   });
   await _abrir(tester, held.client, inicio);
   expect(find.byType(CircularProgressIndicator), findsNothing);
@@ -113,8 +113,8 @@ void main() {
         'http://api.falsa',
         cliente: MockClient((pedido) {
           final cabeceras = {'content-type': 'application/json; charset=utf-8'};
-          if (pedido.url.path == '/reservas/todas') {
-            if (pedido.url.queryParameters['pagina'] == '2') {
+          if (pedido.url.path == '/bookings/all') {
+            if (pedido.url.queryParameters['page'] == '2') {
               return segunda.future;
             }
             return Future.value(
@@ -128,7 +128,7 @@ void main() {
           return Future.value(
             http.Response.bytes(
               utf8.encode(catalogoJson),
-              pedido.url.path == '/espacios/catalogo' ? 200 : 404,
+              pedido.url.path == '/spaces/catalog' ? 200 : 404,
               headers: cabeceras,
             ),
           );
@@ -164,8 +164,8 @@ void main() {
     '@VIS-03-S2 @assumption:VIS-03-ASM-03',
     (tester) async {
       final held = HeldApi({
-        'GET /reservas/todas': (200, _pagina([1, 2], 1)),
-        'GET /espacios/catalogo': (200, catalogoJson),
+        'GET /bookings/all': (200, _pagina([1, 2], 1)),
+        'GET /spaces/catalog': (200, catalogoJson),
       });
       await _abrir(tester, held.client, '/admin');
       expect(find.text('Cargando reservas…'), findsOneWidget);

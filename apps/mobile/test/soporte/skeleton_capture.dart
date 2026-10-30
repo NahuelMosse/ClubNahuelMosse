@@ -12,9 +12,9 @@ import 'montar.dart';
 
 /// The second covered space of the Morón venue, next to `espacioF5Json`.
 const f5TechadaJson =
-    '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
-    '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
-    '"techada": true, "iluminada": true, "precio_por_hora": 43000}';
+    '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
+    '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
+    '"covered": true, "lit": true, "price_per_hour": 43000}';
 
 /// Mounts the app dark at 393x852 on [route] and pumps [pumps] frames.
 Future<void> mountApp(

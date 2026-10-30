@@ -77,9 +77,9 @@ def test_el_contrato_no_anuncia_el_429_del_limite_ni_el_503() -> None:
         for metodo, operacion in operaciones.items():
             respuestas = operacion["responses"]
             assert "503" not in respuestas, (metodo, ruta)
-            if (metodo, ruta) != ("put", "/yo/contrasena"):
+            if (metodo, ruta) != ("put", "/me/password"):
                 assert "429" not in respuestas, (metodo, ruta)
-    assert "429" in esquema["paths"]["/yo/contrasena"]["put"]["responses"]
+    assert "429" in esquema["paths"]["/me/password"]["put"]["responses"]
 
 
 def test_docs_y_openapi_responden_con_la_configuracion_de_render() -> None:
@@ -101,8 +101,8 @@ def test_un_texto_largo_o_con_control_ya_no_se_rechaza_y_las_horas_siguen_de_1_a
     from app.modules.venues.routes import VenueRequest
     from app.shared.input_validation import parse_time
 
-    pedido = VenueRequest(nombre="x" * 500 + "\x00", direccion="y" * 500, apertura="08:00")
-    assert len(pedido.nombre) == 501
+    pedido = VenueRequest(name="x" * 500 + "\x00", address="y" * 500, opens_at="08:00")
+    assert len(pedido.name) == 501
     assert "maxLength" not in str(create_app().openapi())
     assert parse_time("08:00") is not None and parse_time("8:00") is None
     assert duration_error(0) and duration_error(5)

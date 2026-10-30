@@ -14,12 +14,12 @@ def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
     @ARQ-02-S2 @assumption:ARQ-02-ASM-05"""
     sede_id, _ = sede
     espacio = {
-        "sede_id": sede_id,
-        "deporte": "Futbol",
-        "tipo": "F5",
-        "techada": False,
-        "iluminada": True,
-        "precio_por_hora": 38000,
+        "venue_id": sede_id,
+        "sport": "Futbol",
+        "kind": "F5",
+        "covered": False,
+        "lit": True,
+        "price_per_hour": 38000,
     }
     with motor.connect() as baja, ThreadPoolExecutor(max_workers=1) as pool:
         baja.execute(
@@ -27,7 +27,7 @@ def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
             {"id": sede_id},
         )
         alta = pool.submit(
-            api.post, "/espacios", headers={"Authorization": f"Bearer {token_admin}"}, json=espacio
+            api.post, "/spaces", headers={"Authorization": f"Bearer {token_admin}"}, json=espacio
         )
         time.sleep(1.5)
         esperaba = not alta.done()
@@ -36,4 +36,4 @@ def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
 
     assert esperaba
     assert r.status_code == 422
-    assert r.json() == {"errores": {"sede_id": "La sede ya no está disponible"}}
+    assert r.json() == {"errors": {"venue_id": "La sede ya no está disponible"}}

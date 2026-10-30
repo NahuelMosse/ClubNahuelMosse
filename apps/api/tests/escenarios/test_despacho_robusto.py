@@ -37,7 +37,7 @@ class FallaLaPrimeraVez(NotificationsSql):
 def _tres_cancelaciones_pendientes(socio: Socio) -> None:
     for desde in ("20:00", "21:00", "22:00"):
         reserva = socio.reservar(desde)
-        r = socio.api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
+        r = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
         assert r.status_code == 200
     with socio.motor.begin() as conn:
         conn.execute(

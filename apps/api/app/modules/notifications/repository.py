@@ -24,7 +24,6 @@ from app.modules.notifications.rules import (
     notice_data,
 )
 from app.shared.db import DbConnection, in_transaction
-from app.shared.stored_values import contract, stored
 
 # How many notifications the center brings: the newest ones.
 CENTER_LIMIT = 100
@@ -89,7 +88,7 @@ def _voided_without_notice(
             " AND NOT EXISTS (SELECT 1 FROM notification_booking nb WHERE nb.booking_id = b.id)"
             " ORDER BY b.starts_at, b.id"
         ),
-        {"ids": list(booking_ids), "user_id": user_id, "voided": stored("anulada")},
+        {"ids": list(booking_ids), "user_id": user_id, "voided": "voided"},
     ).all()
     return [
         VoidedBooking(
@@ -112,7 +111,7 @@ def _unread_notice(conn: Connection, user_id: UUID) -> Row[Any] | None:
             " AND n.read_at IS NULL AND n.replaced_by IS NULL"
             " ORDER BY n.id DESC LIMIT 1 FOR UPDATE"
         ),
-        {"user_id": user_id, "kind": stored("cancelacion_forzosa")},
+        {"user_id": user_id, "kind": "forced_cancellation"},
     ).first()
 
 
@@ -129,12 +128,12 @@ def _open_notice(conn: Connection, user_id: UUID, fresh: list[VoidedBooking], to
         ),
         {
             "user_id": user_id,
-            "kind": stored("cancelacion_forzosa"),
+            "kind": "forced_cancellation",
             "title": notice.title,
             "body": notice.body,
             "booking": None if single is None else single.booking_id,
             "starts_at": None if single is None else single.starts_at,
-            "delivery": stored("pendiente"),
+            "delivery": "pending",
             "total": total,
         },
     ).scalar_one()
@@ -146,7 +145,7 @@ def _replace_notice(conn: Connection, previous: Row[Any], notification_id: UUID)
         text("UPDATE notification SET replaced_by = :replacement WHERE id = :id"),
         {"replacement": notification_id, "id": previous.id},
     )
-    if contract(previous.delivery) == "pendiente":
+    if previous.delivery == "pending":
         conn.execute(
             text(
                 "UPDATE notification_booking SET notification_id = :replacement"
@@ -189,12 +188,12 @@ class NotificationsSql:
             ),
             {
                 "user_id": user_id,
-                "kind": stored("cancelacion_usuario"),
+                "kind": "user_cancellation",
                 "id": booking_id,
                 "title": notice.title,
                 "body": notice.body,
                 "starts_at": starts_at,
-                "delivery": stored("pendiente"),
+                "delivery": "pending",
             },
         )
 
@@ -223,8 +222,8 @@ class NotificationsSql:
                 "now": now,
                 "user_id": user_id,
                 "lead_time": LEAD_TIME_BY_KIND[kind],
-                "notice_kind": stored(kind),
-                "active": stored("activa"),
+                "notice_kind": kind,
+                "active": "active",
             },
         ).all()
         self._conn.rollback()
@@ -238,9 +237,9 @@ class NotificationsSql:
             "booking": reminder.booking_id,
             "starts_at": reminder.starts_at,
             "lead_time": LEAD_TIME_BY_KIND[reminder.reminder_kind],
-            "notice_kind": stored(reminder.reminder_kind),
-            "active": stored("activa"),
-            "delivery": stored("pendiente"),
+            "notice_kind": reminder.reminder_kind,
+            "active": "active",
+            "delivery": "pending",
         }
         with in_transaction(self._conn):
             # Between `due` looking and here, the booking may have been cancelled, voided or
@@ -327,11 +326,11 @@ class NotificationsSql:
                 ),
                 {
                     "user_id": user_id,
-                    "failed": stored("fallida"),
-                    "pending": stored("pendiente"),
-                    "reminder": stored("recordatorio"),
-                    "five_minute_reminder": stored("recordatorio_cinco"),
-                    "active": stored("activa"),
+                    "failed": "failed",
+                    "pending": "pending",
+                    "reminder": "reminder",
+                    "five_minute_reminder": "five_minute_reminder",
+                    "active": "active",
                 },
             ).all()
             # One that stays `sending` too long was left mid-send: it is not sent again.
@@ -345,11 +344,11 @@ class NotificationsSql:
                 {
                     "user_id": user_id,
                     "timeout": SENDING_TIMEOUT,
-                    "failed": stored("fallida"),
-                    "sending": stored("enviando"),
+                    "failed": "failed",
+                    "sending": "sending",
                 },
             ).all()
-        return [LostNotice(row.id, contract(row.kind)) for row in [*dead, *stuck]]
+        return [LostNotice(row.id, row.kind) for row in [*dead, *stuck]]
 
     def take_next(self, user_id: UUID | None) -> PendingNotice | None:
         # The ones that go out: the pending ones, and reminders only if still current and the
@@ -372,11 +371,11 @@ class NotificationsSql:
             {
                 "user_id": user_id,
                 "grace": REMINDER_GRACE,
-                "sending": stored("enviando"),
-                "pending": stored("pendiente"),
-                "reminder": stored("recordatorio"),
-                "five_minute_reminder": stored("recordatorio_cinco"),
-                "active": stored("activa"),
+                "sending": "sending",
+                "pending": "pending",
+                "reminder": "reminder",
+                "five_minute_reminder": "five_minute_reminder",
+                "active": "active",
             },
         ).first()
         self._conn.commit()
@@ -388,7 +387,7 @@ class NotificationsSql:
             notice=Notice(
                 title=row.title,
                 body=row.body,
-                data=notice_data(contract(row.kind), row.booking_id),
+                data=notice_data(row.kind, row.booking_id),
             ),
         )
 
@@ -399,7 +398,7 @@ class NotificationsSql:
                 " sent_at = CASE WHEN CAST(:delivery AS text) = :sent THEN now() END"
                 " WHERE id = :id"
             ),
-            {"delivery": stored(delivery), "sent": stored("enviada"), "id": notification_id},
+            {"delivery": delivery, "sent": "sent", "id": notification_id},
         )
         self._conn.commit()
 
@@ -482,7 +481,7 @@ class NotificationsSql:
             [
                 Notification(
                     id=row.id,
-                    kind=contract(row.kind),
+                    kind=row.kind,
                     title=row.title,
                     body=row.body,
                     booking_id=row.booking_id,

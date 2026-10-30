@@ -6,18 +6,18 @@ import '../domain/booking_status.dart';
 Booking? bookingFromJson(Object? json) {
   if (json case {
     'id': final String id,
-    'espacio_id': final String spaceId,
-    'sede_id': final String venueId,
-    'espacio': final String space,
-    'deporte': final String sport,
-    'tipo': final String kind,
-    'sede': final String venue,
-    'direccion': final String address,
-    'inicio': final String startsAt,
-    'fin': final String endsAt,
+    'space_id': final String spaceId,
+    'venue_id': final String venueId,
+    'space': final String space,
+    'sport': final String sport,
+    'kind': final String kind,
+    'venue': final String venue,
+    'address': final String address,
+    'starts_at': final String startsAt,
+    'ends_at': final String endsAt,
     'total': final int total,
-    'estado': final String status,
-    'motivo': final Object? reason,
+    'status': final String status,
+    'reason': final Object? reason,
   }) {
     final start = _inClubTime(startsAt);
     final end = _inClubTime(endsAt);

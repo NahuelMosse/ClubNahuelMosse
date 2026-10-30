@@ -16,7 +16,7 @@ PERFIL = Profile(
     first_name="Lucía",
     last_name="Gómez",
     email="lucia@correo.com",
-    role="usuario",
+    role="user",
     dni="30111222",
     birth_date=date(1998, 11, 2),
 )
@@ -43,11 +43,11 @@ def test_guarda_los_datos_normalizados() -> None:
 @pytest.mark.parametrize(
     ("datos", "campos"),
     [
-        (DatosPersonales("", "Díaz", "30111223", "1985-06-01"), {"nombre"}),
+        (DatosPersonales("", "Díaz", "30111223", "1985-06-01"), {"first_name"}),
         (DatosPersonales("Ana", "Díaz", "42118", "1985-06-01"), {"dni"}),
-        (DatosPersonales("Ana", "Díaz", "30111223", "2000-13-32"), {"fecha_nacimiento"}),
-        (DatosPersonales("Ana", "Díaz", "30111223", "2026-09-27"), {"fecha_nacimiento"}),
-        (DatosPersonales("A" * 61, "Díaz", "30111223", "1985-06-01"), {"nombre"}),
+        (DatosPersonales("Ana", "Díaz", "30111223", "2000-13-32"), {"birth_date"}),
+        (DatosPersonales("Ana", "Díaz", "30111223", "2026-09-27"), {"birth_date"}),
+        (DatosPersonales("A" * 61, "Díaz", "30111223", "1985-06-01"), {"first_name"}),
     ],
 )
 def test_un_dato_invalido_no_guarda_nada(datos: DatosPersonales, campos: set[str]) -> None:

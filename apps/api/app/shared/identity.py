@@ -53,7 +53,7 @@ class FirebaseProvider:
         try:
             user = auth.create_user(email=email, password=password, app=_firebase_app())
         except auth.EmailAlreadyExistsError as e:
-            raise Duplicate(["correo"]) from e
+            raise Duplicate(["email"]) from e
         return str(user.uid)
 
     def uid_of(self, email: str) -> str | None:

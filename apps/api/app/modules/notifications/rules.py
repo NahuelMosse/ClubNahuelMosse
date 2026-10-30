@@ -11,21 +11,21 @@ from app.shared.email_template import html_email
 from app.shared.message import Message
 
 NoticeKind = Literal[
-    "recordatorio", "recordatorio_cinco", "cancelacion_forzosa", "cancelacion_usuario"
+    "reminder", "five_minute_reminder", "forced_cancellation", "user_cancellation"
 ]
-ReminderKind = Literal["recordatorio", "recordatorio_cinco"]
-Delivery = Literal["pendiente", "enviando", "enviada", "sin_permiso", "sin_canal", "fallida"]
+ReminderKind = Literal["reminder", "five_minute_reminder"]
+Delivery = Literal["pending", "sending", "sent", "no_permission", "no_channel", "failed"]
 
 LEAD_TIME = timedelta(hours=1)
 FIVE_MINUTE_LEAD_TIME = timedelta(minutes=5)
 # Each reminder class: how long before the booking it goes out and the title it carries.
 LEAD_TIME_BY_KIND: dict[ReminderKind, timedelta] = {
-    "recordatorio": LEAD_TIME,
-    "recordatorio_cinco": FIVE_MINUTE_LEAD_TIME,
+    "reminder": LEAD_TIME,
+    "five_minute_reminder": FIVE_MINUTE_LEAD_TIME,
 }
 TITLE_BY_KIND: dict[ReminderKind, str] = {
-    "recordatorio": "Tu reserva es en 1 hora",
-    "recordatorio_cinco": "Tu reserva empieza en 5 minutos",
+    "reminder": "Tu reserva es en 1 hora",
+    "five_minute_reminder": "Tu reserva empieza en 5 minutos",
 }
 WEEKDAYS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
 
@@ -102,7 +102,7 @@ class Reminder:
     venue: str
     email: str = ""
     name: str = ""
-    reminder_kind: ReminderKind = "recordatorio"
+    reminder_kind: ReminderKind = "reminder"
 
 
 @dataclass(frozen=True)
@@ -177,7 +177,7 @@ def reminder_email(r: Reminder) -> Message:
 
 def notice_data(kind: NoticeKind, booking_id: UUID | None) -> dict[str, str]:
     """The data the app uses to know where to take the person on tapping the notice."""
-    return {"tipo": kind} | ({} if booking_id is None else {"reserva_id": str(booking_id)})
+    return {"kind": kind} | ({} if booking_id is None else {"booking_id": str(booking_id)})
 
 
 def _when(moment: datetime) -> str:
@@ -205,7 +205,7 @@ def cancellation_message(r: BookingData) -> Notice:
             f"{short_kind(r.sport, r.kind)} · {r.venue} · {_when(r.starts_at)}. "
             "El horario quedó liberado."
         ),
-        data=notice_data("cancelacion_usuario", r.id),
+        data=notice_data("user_cancellation", r.id),
     )
 
 
@@ -223,7 +223,7 @@ def forced_cancellation_message(voided: Sequence[VoidedBooking]) -> Notice:
                 f"{short_kind(r.sport, r.kind)} · {r.venue} · {_when(r.starts_at)}. "
                 f"Motivo: {reason}."
             ),
-            data=notice_data("cancelacion_forzosa", r.booking_id),
+            data=notice_data("forced_cancellation", r.booking_id),
         )
     return forced_cancellations_message(len(voided))
 
@@ -233,5 +233,5 @@ def forced_cancellations_message(count: int) -> Notice:
     return Notice(
         title=f"El club anuló {count} de tus reservas",
         body=f"Tenés {count} reservas anuladas por el club. Mirá el detalle en tu historial.",
-        data=notice_data("cancelacion_forzosa", None),
+        data=notice_data("forced_cancellation", None),
     )

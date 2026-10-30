@@ -16,18 +16,18 @@ def _con(token: str) -> dict[str, str]:
 
 def _espacio(sede_id: str) -> dict[str, object]:
     return {
-        "sede_id": sede_id,
-        "deporte": "Futbol",
-        "tipo": "F5",
-        "techada": False,
-        "iluminada": True,
-        "precio_por_hora": 38000,
+        "venue_id": sede_id,
+        "sport": "Futbol",
+        "kind": "F5",
+        "covered": False,
+        "lit": True,
+        "price_per_hour": 38000,
     }
 
 
 @pytest.fixture
 def espacio_id(api: TestClient, token_admin: str, sede: tuple[str, str]) -> str:
-    r = api.post("/espacios", headers=_con(token_admin), json=_espacio(sede[0]))
+    r = api.post("/spaces", headers=_con(token_admin), json=_espacio(sede[0]))
     assert r.status_code == 201, r.text
     id_ = r.json()["id"]
     assert isinstance(id_, str)
@@ -42,10 +42,10 @@ def test_la_api_devuelve_y_recibe_los_ids_como_texto_uuid(
 
     assert UUID_V7.match(sede_id)
     assert UUID_V7.match(espacio_id)
-    listado = api.get("/espacios", headers=_con(token_admin), params={"sede_id": sede_id})
+    listado = api.get("/spaces", headers=_con(token_admin), params={"venue_id": sede_id})
     assert listado.status_code == 200
-    assert espacio_id in [e["id"] for e in listado.json()["espacios"]]
-    horarios = api.get(f"/espacios/{espacio_id}/horarios", headers=_con(token_admin))
+    assert espacio_id in [e["id"] for e in listado.json()["spaces"]]
+    horarios = api.get(f"/spaces/{espacio_id}/slots", headers=_con(token_admin))
     assert horarios.status_code == 200, horarios.text
 
 
@@ -56,13 +56,13 @@ def test_un_id_mal_formado_responde_422_y_uno_que_no_existe_404(
     admin = _con(token_admin)
     inexistente = str(uuid.uuid4())
 
-    assert api.put("/sedes/no-es-un-uuid", headers=admin, json={}).status_code == 422
-    assert api.post("/espacios", headers=admin, json=_espacio("no-es-un-uuid")).status_code == 422
+    assert api.put("/venues/no-es-un-uuid", headers=admin, json={}).status_code == 422
+    assert api.post("/spaces", headers=admin, json=_espacio("no-es-un-uuid")).status_code == 422
     assert (
-        api.get("/espacios", headers=admin, params={"sede_id": "no-es-un-uuid"}).status_code == 422
+        api.get("/spaces", headers=admin, params={"venue_id": "no-es-un-uuid"}).status_code == 422
     )
-    assert api.delete(f"/espacios/{inexistente}", headers=admin).status_code == 404
-    assert api.delete(f"/sedes/{inexistente}", headers=admin).status_code == 404
+    assert api.delete(f"/spaces/{inexistente}", headers=admin).status_code == 404
+    assert api.delete(f"/venues/{inexistente}", headers=admin).status_code == 404
 
 
 def test_un_uuid_en_mayusculas_o_sin_guiones_se_acepta(
@@ -72,7 +72,7 @@ def test_un_uuid_en_mayusculas_o_sin_guiones_se_acepta(
     admin = _con(token_admin)
 
     for escrito in (espacio_id.upper(), espacio_id.replace("-", "")):
-        r = api.put(f"/espacios/{escrito}", headers=admin, json={"precio_por_hora": 40000})
+        r = api.put(f"/spaces/{escrito}", headers=admin, json={"price_per_hour": 40000})
         assert r.status_code == 200, r.text
         assert r.json()["id"] == espacio_id
 
@@ -81,4 +81,4 @@ def test_un_metodo_no_admitido_responde_405_aunque_el_id_este_mal_formado(
     api: TestClient, token_admin: str
 ) -> None:
     """un método no admitido responde 405 aunque el id esté mal formado @assumption:DAT-01-ASM-08"""
-    assert api.patch("/sedes/no-es-un-uuid", headers=_con(token_admin)).status_code == 405
+    assert api.patch("/venues/no-es-un-uuid", headers=_con(token_admin)).status_code == 405

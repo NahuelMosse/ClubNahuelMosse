@@ -1,5 +1,6 @@
 # kit-shape: the booking routes and the models of their requests and responses are read together
-from datetime import date, datetime
+from datetime import date as date_type
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -8,13 +9,7 @@ from pydantic import AwareDatetime, BaseModel
 
 from app.modules.bookings.email import booking_email
 from app.modules.bookings.repository import BookingsSql, bookings_repository
-from app.modules.bookings.rules import (
-    Booking,
-    BookingHistoryEntry,
-    HistoryFilters,
-    Status,
-    StatusFilter,
-)
+from app.modules.bookings.rules import HistoryFilters, Status, StatusFilter
 from app.modules.bookings.use_cases import (
     When,
     admin_detail,
@@ -44,19 +39,19 @@ UNAVAILABLE_MESSAGE = "Esta cancha ya no está disponible"
 
 class _BookingFields(BaseModel):
     id: UUID
-    espacio_id: UUID
-    sede_id: UUID
-    espacio: str
-    deporte: str
-    tipo: str
-    sede: str
-    direccion: str
-    inicio: datetime
-    fin: datetime
-    precio_por_hora: int
+    space_id: UUID
+    venue_id: UUID
+    space: str
+    sport: str
+    kind: str
+    venue: str
+    address: str
+    starts_at: datetime
+    ends_at: datetime
+    price_per_hour: int
     total: int
-    estado: Status
-    motivo: str | None
+    status: Status
+    reason: str | None
 
 
 class BookingView(_BookingFields):
@@ -64,64 +59,47 @@ class BookingView(_BookingFields):
 
 
 class Errors(BaseModel):
-    errores: dict[str, str]
+    errors: dict[str, str]
 
 
 class BookingList(BaseModel):
-    reservas: list[BookingView]
-
-
-def _view(b: Booking) -> BookingView:
-    return BookingView(
-        id=b.id,
-        espacio_id=b.space_id,
-        sede_id=b.venue_id,
-        espacio=b.space,
-        deporte=b.sport,
-        tipo=b.kind,
-        sede=b.venue,
-        direccion=b.address,
-        inicio=b.starts_at,
-        fin=b.ends_at,
-        precio_por_hora=b.price_per_hour,
-        total=b.total,
-        estado=b.status,
-        motivo=b.reason,
-        cancelable=b.cancelable,
-    )
+    bookings: list[BookingView]
 
 
 @router.get(
-    "/reservas",
-    operation_id="listar_reservas_reservas_get",
+    "/bookings",
     response_model=BookingList,
     responses={401: {"model": NoSession}, 422: {"model": Errors}},
     summary="Las reservas de quien consulta",
     description=(
-        "`proximas`: las activas que no terminaron, de la más cercana a la más lejana. "
-        "`historial`: las completadas, canceladas y anuladas, de la más reciente a la más "
+        "`upcoming`: las activas que no terminaron, de la más cercana a la más lejana. "
+        "`history`: las completadas, canceladas y anuladas, de la más reciente a la más "
         "vieja. El total es el que se guardó al reservar."
     ),
 )
 def list_bookings(
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
-    cuando: Annotated[When, Query()] = "proximas",
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
+    when: Annotated[When, Query()] = "upcoming",
 ) -> BookingList:
-    return BookingList(reservas=[_view(b) for b in my_bookings(bookings, perfil, cuando)])
+    return BookingList(
+        bookings=[
+            BookingView.model_validate(b, from_attributes=True)
+            for b in my_bookings(repository, profile, when)
+        ]
+    )
 
 
 class BookingRequest(BaseModel):
-    espacio_id: Identifier
-    fecha: date
-    desde: str
+    space_id: Identifier
+    date: date_type
+    start_hour: str
     # No bound here: the use case rejects an out-of-range duration before computing anything.
-    horas: int
+    hours: int
 
 
 @router.post(
-    "/reservas",
-    operation_id="hacer_reserva_reservas_post",
+    "/bookings",
     status_code=status.HTTP_201_CREATED,
     response_model=BookingView,
     responses={
@@ -132,7 +110,7 @@ class BookingRequest(BaseModel):
     },
     summary="Reservar un espacio",
     description=(
-        "`horas` horas desde `desde` (`HH:MM`, en la hora del club) el día `fecha`. Horas "
+        "`hours` horas desde `start_hour` (`HH:MM`, en la hora del club) el día `date`. Horas "
         "completas, de 1 a 4, futuras, de los próximos 7 días y dentro del horario de la sede; "
         "si la misma persona repite el mismo pedido dentro de los cinco minutos, devuelve la "
         "reserva que ya hizo."
@@ -140,34 +118,33 @@ class BookingRequest(BaseModel):
 )
 def create_booking(
     payload: BookingRequest,
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
     after: BackgroundTasks,
 ) -> BookingView | Response:
     try:
         booking = book(
-            bookings,
-            perfil,
-            payload.espacio_id,
-            payload.fecha,
-            parse_time(payload.desde),
-            payload.horas,
+            repository,
+            profile,
+            payload.space_id,
+            payload.date,
+            parse_time(payload.start_hour),
+            payload.hours,
             datetime.now(CLUB_TIMEZONE),
         )
     except Unavailable:
-        raise InvalidData({"espacio_id": UNAVAILABLE_MESSAGE}) from None
+        raise InvalidData({"space_id": UNAVAILABLE_MESSAGE}) from None
     except SlotTaken:
-        return conflict({"horario": SLOT_TAKEN_MESSAGE})
-    after.add_task(send, booking_email(perfil, booking))
-    return _view(booking)
+        return conflict({"slot": SLOT_TAKEN_MESSAGE})
+    after.add_task(send, booking_email(profile, booking))
+    return BookingView.model_validate(booking, from_attributes=True)
 
 
 CHANGED_MESSAGE = "Esto cambió mientras tanto"
 
 
 @router.post(
-    "/reservas/{reserva_id}/cancelar",
-    operation_id="cancelar_reservas__reserva_id__cancelar_post",
+    "/bookings/{booking_id}/cancel",
     response_model=BookingView,
     responses={
         401: {"model": NoSession},
@@ -182,29 +159,28 @@ CHANGED_MESSAGE = "Esto cambió mientras tanto"
     ),
 )
 def cancel(
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
-    reserva_id: Annotated[Identifier, Path()],
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
+    booking_id: Annotated[Identifier, Path()],
     background: BackgroundTasks,
     channel: Annotated[PushChannel, Depends(push_channel)],
 ) -> BookingView | Response:
     try:
-        booking = cancel_booking(bookings, perfil, reserva_id)
+        booking = cancel_booking(repository, profile, booking_id)
     except ConcurrentChange:
-        return conflict({"reserva": CHANGED_MESSAGE})
-    background.add_task(dispatch_for, perfil.id, channel)
-    return _view(booking)
+        return conflict({"booking": CHANGED_MESSAGE})
+    background.add_task(dispatch_for, profile.id, channel)
+    return BookingView.model_validate(booking, from_attributes=True)
 
 
 class BookingChangeRequest(BaseModel):
-    espacio_id: Identifier
-    fecha: date
-    desde: str
+    space_id: Identifier
+    date: date_type
+    start_hour: str
 
 
 @router.post(
-    "/reservas/{reserva_id}/modificar",
-    operation_id="modificar_reservas__reserva_id__modificar_post",
+    "/bookings/{booking_id}/modify",
     response_model=BookingView,
     responses={
         401: {"model": NoSession},
@@ -212,8 +188,8 @@ class BookingChangeRequest(BaseModel):
         404: {"description": "No hay una reserva de quien pide con ese número"},
         409: {
             "model": Errors,
-            "description": "El horario nuevo se ocupó (`horario`) o la reserva ya no se puede "
-            "modificar (`reserva`)",
+            "description": "El horario nuevo se ocupó (`slot`) o la reserva ya no se puede "
+            "modificar (`booking`)",
         },
         422: {"model": Errors},
     },
@@ -227,87 +203,58 @@ class BookingChangeRequest(BaseModel):
 )
 def modify(
     payload: BookingChangeRequest,
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
-    reserva_id: Annotated[Identifier, Path()],
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
+    booking_id: Annotated[Identifier, Path()],
 ) -> BookingView | Response:
     try:
         booking = modify_booking(
-            bookings,
-            perfil,
-            reserva_id,
-            payload.espacio_id,
-            payload.fecha,
-            parse_time(payload.desde),
+            repository,
+            profile,
+            booking_id,
+            payload.space_id,
+            payload.date,
+            parse_time(payload.start_hour),
             datetime.now(CLUB_TIMEZONE),
         )
     except Unavailable:
-        raise InvalidData({"espacio_id": UNAVAILABLE_MESSAGE}) from None
+        raise InvalidData({"space_id": UNAVAILABLE_MESSAGE}) from None
     except ConcurrentChange:
-        return conflict({"reserva": CHANGED_MESSAGE})
+        return conflict({"booking": CHANGED_MESSAGE})
     except SlotTaken:
-        return conflict({"horario": SLOT_TAKEN_MESSAGE})
-    return _view(booking)
+        return conflict({"slot": SLOT_TAKEN_MESSAGE})
+    return BookingView.model_validate(booking, from_attributes=True)
 
 
 class BookingHistoryView(_BookingFields):
-    usuario_id: UUID
-    usuario: str
-    creado_en: datetime
-    cancelada_en: datetime | None
-    cancelada_por_nombre: str | None
-    espacio_de_baja: bool
-    anulable: bool
-    aviso_envio: str | None
-    aviso_en: datetime | None
+    user_id: UUID
+    user: str
+    created_at: datetime
+    canceled_at: datetime | None
+    canceled_by_name: str | None
+    space_deactivated: bool
+    voidable: bool
+    notice_delivery: str | None
+    notice_at: datetime | None
 
 
 class CountersView(BaseModel):
-    todas: int
-    activas: int
-    completadas: int
-    anuladas: int
+    all: int
+    active: int
+    completed: int
+    voided: int
 
 
 class HistoryView(BaseModel):
-    reservas: list[BookingHistoryView]
+    bookings: list[BookingHistoryView]
     total: int
-    pagina: int
-    por_pagina: int
-    contadores: CountersView
-
-
-def _admin_view(b: BookingHistoryEntry) -> BookingHistoryView:
-    return BookingHistoryView(
-        id=b.id,
-        espacio_id=b.space_id,
-        sede_id=b.venue_id,
-        espacio=b.space,
-        deporte=b.sport,
-        tipo=b.kind,
-        sede=b.venue,
-        direccion=b.address,
-        inicio=b.starts_at,
-        fin=b.ends_at,
-        precio_por_hora=b.price_per_hour,
-        total=b.total,
-        estado=b.status,
-        motivo=b.reason,
-        usuario_id=b.user_id,
-        usuario=b.user,
-        creado_en=b.created_at,
-        cancelada_en=b.canceled_at,
-        cancelada_por_nombre=b.canceled_by_name,
-        espacio_de_baja=b.space_deactivated,
-        anulable=b.voidable,
-        aviso_envio=b.notice_delivery,
-        aviso_en=b.notice_at,
-    )
+    page: int
+    per_page: int
+    counters: CountersView
 
 
 @router.get(
-    "/reservas/todas",
-    operation_id="listar_todas_reservas_todas_get",
+    "/bookings/all",
     response_model=HistoryView,
     responses={
         401: {"model": NoSession},
@@ -316,53 +263,54 @@ def _admin_view(b: BookingHistoryEntry) -> BookingHistoryView:
     },
     summary="El historial global de reservas (CU-14)",
     description=(
-        "Todos los usuarios, todas las sedes. Filtra por estado (`activa`, `completada` o"
-        " `anulada`; sin filtro trae también las canceladas por su usuario), sede, deporte,"
-        " rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `pagina`, de la"
+        "Todos los usuarios, todas las sedes. Filtra por estado (`active`, `completed` o"
+        " `voided`; sin filtro trae también las canceladas por su usuario), sede, deporte,"
+        " rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `page`, de la"
         " más reciente a la más antigua. No modifica nada."
     ),
 )
-def list_all(
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
-    estado: Annotated[StatusFilter | None, Query()] = None,
-    sede_id: Annotated[Identifier | None, Query()] = None,
-    deporte: Annotated[str | None, Query()] = None,
-    desde: Annotated[date | None, Query()] = None,
-    hasta: Annotated[date | None, Query()] = None,
+def list_all(  # noqa: PLR0913, PLR0917 -- one parameter per query filter of the route
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
+    status: Annotated[StatusFilter | None, Query()] = None,
+    venue_id: Annotated[Identifier | None, Query()] = None,
+    sport: Annotated[str | None, Query()] = None,
+    since: Annotated[date_type | None, Query()] = None,
+    until: Annotated[date_type | None, Query()] = None,
     q: Annotated[str | None, Query()] = None,
-    pagina: Annotated[int, Query(ge=1, le=MAX_PAGE)] = 1,
+    page: Annotated[int, Query(ge=1, le=MAX_PAGE)] = 1,
 ) -> HistoryView:
     history = global_history(
-        bookings,
-        perfil,
+        repository,
+        profile,
         HistoryFilters(
-            status=estado,
-            venue_id=sede_id,
-            sport=deporte,
-            since=desde,
-            until=hasta,
+            status=status,
+            venue_id=venue_id,
+            sport=sport,
+            since=since,
+            until=until,
             q=q,
-            page=pagina,
+            page=page,
         ),
     )
     return HistoryView(
-        reservas=[_admin_view(b) for b in history.bookings],
+        bookings=[
+            BookingHistoryView.model_validate(b, from_attributes=True) for b in history.bookings
+        ],
         total=history.total,
-        pagina=history.page,
-        por_pagina=history.per_page,
-        contadores=CountersView(
-            todas=history.counters.all,
-            activas=history.counters.active,
-            completadas=history.counters.completed,
-            anuladas=history.counters.voided,
+        page=history.page,
+        per_page=history.per_page,
+        counters=CountersView(
+            all=history.counters.all,
+            active=history.counters.active,
+            completed=history.counters.completed,
+            voided=history.counters.voided,
         ),
     )
 
 
 @router.get(
-    "/reservas/todas/{reserva_id}",
-    operation_id="detalle_reservas_todas__reserva_id__get",
+    "/bookings/all/{booking_id}",
     response_model=BookingHistoryView,
     responses={
         401: {"model": NoSession},
@@ -372,22 +320,23 @@ def list_all(
     summary="El detalle de cualquier reserva (CU-14)",
 )
 def detail(
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
-    reserva_id: Annotated[Identifier, Path()],
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
+    booking_id: Annotated[Identifier, Path()],
 ) -> BookingHistoryView:
-    return _admin_view(admin_detail(bookings, perfil, reserva_id))
+    return BookingHistoryView.model_validate(
+        admin_detail(repository, profile, booking_id), from_attributes=True
+    )
 
 
 class VoidRequest(BaseModel):
-    motivo: str
-    espacio_id: Identifier
-    inicio: AwareDatetime
+    reason: str
+    space_id: Identifier
+    starts_at: AwareDatetime
 
 
 @router.post(
-    "/reservas/{reserva_id}/anular",
-    operation_id="anular_reservas__reserva_id__anular_post",
+    "/bookings/{booking_id}/void",
     response_model=BookingHistoryView,
     responses={
         401: {"model": NoSession},
@@ -398,7 +347,7 @@ class VoidRequest(BaseModel):
     },
     summary="Anular una reserva (CU-15)",
     description=(
-        "Hasta el inicio del turno. `espacio_id` e `inicio` son la cancha y el horario que el "
+        "Hasta el inicio del turno. `space_id` y `starts_at` son la cancha y el horario que el "
         "administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a "
         "quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una "
         "anulación ya hecha por el mismo administrador con el mismo motivo responde igual. "
@@ -407,24 +356,24 @@ class VoidRequest(BaseModel):
 )
 def void(
     payload: VoidRequest,
-    perfil: Annotated[Profile, Depends(current_user)],
-    bookings: Annotated[BookingsSql, Depends(bookings_repository)],
-    reserva_id: Annotated[Identifier, Path()],
+    profile: Annotated[Profile, Depends(current_user)],
+    repository: Annotated[BookingsSql, Depends(bookings_repository)],
+    booking_id: Annotated[Identifier, Path()],
     background: BackgroundTasks,
     channel: Annotated[PushChannel, Depends(push_channel)],
 ) -> BookingHistoryView | Response:
     try:
         booking = void_booking(
-            bookings,
-            perfil,
-            reserva_id,
-            payload.motivo,
-            payload.espacio_id,
-            payload.inicio,
+            repository,
+            profile,
+            booking_id,
+            payload.reason,
+            payload.space_id,
+            payload.starts_at,
         )
     except ConcurrentChange:
-        return conflict({"reserva": CHANGED_MESSAGE})
+        return conflict({"booking": CHANGED_MESSAGE})
     # The notice to whoever booked goes out only once the voiding is confirmed and the
     # response sent.
     background.add_task(dispatch_for, booking.user_id, channel)
-    return _admin_view(booking)
+    return BookingHistoryView.model_validate(booking, from_attributes=True)

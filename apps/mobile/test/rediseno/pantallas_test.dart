@@ -40,33 +40,33 @@ const _oscura = Palette.dark;
 const _claveBorde = ValueKey('borde-reserva-activa');
 
 const _catalogo =
-    '{"deportes": ['
-    '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
-    '{"clave": "F5", "nombre": "Fútbol 5"}]}, '
-    '{"clave": "Tenis", "nombre": "Tenis", "tipos": ['
-    '{"clave": "PDL", "nombre": "Polvo de ladrillo"}]}, '
-    '{"clave": "Padel", "nombre": "Pádel", "tipos": [{"clave": "PAD", "nombre": "Pádel"}]}, '
-    '{"clave": "Voley", "nombre": "Vóley", "tipos": [{"clave": "IND", "nombre": "Indoor"}]}, '
-    '{"clave": "Basquet", "nombre": "Básquet", "tipos": [{"clave": "B5", "nombre": "Básquet 5"}]}, '
-    '{"clave": "Hockey", "nombre": "Hockey", "tipos": [{"clave": "H7", "nombre": "Hockey 7"}]}, '
-    '{"clave": "Golf", "nombre": "Golf", "tipos": [{"clave": "DR", "nombre": "Driving range"}]}'
+    '{"sports": ['
+    '{"key": "Futbol", "name": "Fútbol", "kinds": ['
+    '{"key": "F5", "name": "Fútbol 5"}]}, '
+    '{"key": "Tenis", "name": "Tenis", "kinds": ['
+    '{"key": "PDL", "name": "Polvo de ladrillo"}]}, '
+    '{"key": "Padel", "name": "Pádel", "kinds": [{"key": "PAD", "name": "Pádel"}]}, '
+    '{"key": "Voley", "name": "Vóley", "kinds": [{"key": "IND", "name": "Indoor"}]}, '
+    '{"key": "Basquet", "name": "Básquet", "kinds": [{"key": "B5", "name": "Básquet 5"}]}, '
+    '{"key": "Hockey", "name": "Hockey", "kinds": [{"key": "H7", "name": "Hockey 7"}]}, '
+    '{"key": "Golf", "name": "Golf", "kinds": [{"key": "DR", "name": "Driving range"}]}'
     ']}';
 
 const _catalogoConDesconocido =
-    '{"deportes": ['
-    '{"clave": "Futbol", "nombre": "Fútbol", "tipos": ['
-    '{"clave": "F5", "nombre": "Fútbol 5"}]}, '
-    '{"clave": "Rugby", "nombre": "Rugby", "tipos": ['
-    '{"clave": "R7", "nombre": "Rugby 7"}]}'
+    '{"sports": ['
+    '{"key": "Futbol", "name": "Fútbol", "kinds": ['
+    '{"key": "F5", "name": "Fútbol 5"}]}, '
+    '{"key": "Rugby", "name": "Rugby", "kinds": ['
+    '{"key": "R7", "name": "Rugby 7"}]}'
     ']}';
 
 String _sede(String id, String nombre, String direccion, int canchas) =>
-    '{"id": "$id", "nombre": "$nombre", "direccion": "$direccion", '
-    '"apertura": "08:00", "cierre": "23:00", "dias": [1, 2, 3, 4, 5, 6, 7], '
-    '"canchas": $canchas, "deportes": ["Futbol", "Tenis"]}';
+    '{"id": "$id", "name": "$nombre", "address": "$direccion", '
+    '"opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7], '
+    '"space_count": $canchas, "sports": ["Futbol", "Tenis"]}';
 
 final _sedes =
-    '{"sedes": [${_sede('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
+    '{"venues": [${_sede('00000000-0000-7000-8000-000000000001', 'Sede Haedo', 'Av. Vergara 1850', 6)}, '
     '${_sede('00000000-0000-7000-8000-000000000002', 'Sede Morón', 'Av. Rivadavia 19850', 4)}, '
     '${_sede('00000000-0000-7000-8000-000000000003', 'Sede Castelar', 'Av. Santa Rosa 1200', 4)}, '
     '${_sede('00000000-0000-7000-8000-000000000004', 'Sede Ituzaingó', 'Blas Parera 300', 3)}]}';
@@ -81,18 +81,18 @@ String _uuid(int n) =>
 String _reserva({
   String id = '00000000-0000-7000-8000-000000000001',
   DateTime? inicio,
-  String estado = 'activa',
+  String estado = 'active',
   String? motivo,
 }) {
   final desde = inicio ?? _delClub(12, 21);
   final hasta = desde.add(const Duration(hours: 1));
-  return '{"id": "$id", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000002", '
-      '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
-      '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
-      '"inicio": "${desde.toIso8601String()}", "fin": "${hasta.toIso8601String()}", '
-      '"precio_por_hora": 38000, "total": 38000, "estado": "$estado", '
-      '"motivo": ${motivo == null ? 'null' : '"$motivo"'}, '
-      '"cancelable": ${estado == 'activa'}}';
+  return '{"id": "$id", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000002", '
+      '"space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", '
+      '"kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850", '
+      '"starts_at": "${desde.toIso8601String()}", "ends_at": "${hasta.toIso8601String()}", '
+      '"price_per_hour": 38000, "total": 38000, "status": "$estado", '
+      '"reason": ${motivo == null ? 'null' : '"$motivo"'}, '
+      '"cancelable": ${estado == 'active'}}';
 }
 
 Future<void> _montarInicio(
@@ -106,13 +106,13 @@ Future<void> _montarInicio(
   final sesion = SesionFalsa(perfilUsuario);
   final lista = (reservas ?? [_reserva()]).join(', ');
   final api = apiRutas({
-    'GET /reservas': (
+    'GET /bookings': (
       200,
-      '{"reservas": [$lista]'
+      '{"bookings": [$lista]'
           '${siguiente == null ? '' : ', "siguiente": "$siguiente"'}}',
     ),
-    'GET /espacios/catalogo': (200, catalogo),
-    'GET /sedes': (200, _sedes),
+    'GET /spaces/catalog': (200, catalogo),
+    'GET /venues': (200, _sedes),
   });
   return montar(
     tester,
@@ -147,10 +147,10 @@ Future<void> _montarMisReservas(
     api: ApiClient(
       'http://api.falsa',
       cliente: MockClient((pedido) async {
-        final (c, cuerpo) = pedido.url.path == '/reservas'
+        final (c, cuerpo) = pedido.url.path == '/bookings'
             ? (
                 200,
-                '{"reservas": ${pedido.url.queryParameters['cuando'] == 'historial' ? historial : proximas}}',
+                '{"bookings": ${pedido.url.queryParameters['when'] == 'history' ? historial : proximas}}',
               )
             : rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}');
         return http.Response.bytes(
@@ -459,9 +459,9 @@ void main() {
       await _montarMisReservas(
         tester,
         historial:
-            '[${_reserva(id: '00000000-0000-7000-8000-000000000001', estado: 'cancelada', inicio: _delClub(14, 12))}, '
-            '${_reserva(id: '00000000-0000-7000-8000-000000000002', estado: 'anulada', motivo: 'lluvia', inicio: _delClub(14, 12))}, '
-            '${_reserva(id: '00000000-0000-7000-8000-000000000003', estado: 'completada', inicio: _delClub(10, 12))}]',
+            '[${_reserva(id: '00000000-0000-7000-8000-000000000001', estado: 'canceled', inicio: _delClub(14, 12))}, '
+            '${_reserva(id: '00000000-0000-7000-8000-000000000002', estado: 'voided', motivo: 'lluvia', inicio: _delClub(14, 12))}, '
+            '${_reserva(id: '00000000-0000-7000-8000-000000000003', estado: 'completed', inicio: _delClub(10, 12))}]',
         inicio: '/reservas?historial=1',
       );
 
@@ -742,16 +742,16 @@ void main() {
       (tester) async {
         final semantica = tester.ensureSemantics();
         String franja(int h, bool libre) =>
-            '{"inicio": "${h.toString().padLeft(2, '0')}:00", '
-            '"fin": "${(h + 2).toString().padLeft(2, '0')}:00", '
-            '"disponible": $libre}';
+            '{"starts_at": "${h.toString().padLeft(2, '0')}:00", '
+            '"ends_at": "${(h + 2).toString().padLeft(2, '0')}:00", '
+            '"available": $libre}';
         await abrirHorarios(
           tester,
           grilla:
-              '{"fecha": "2026-11-12", "hoy": "2026-11-12", "abre": true, '
-              '"franjas": [${franja(8, true)}, ${franja(9, false)}, '
+              '{"date": "2026-11-12", "today": "2026-11-12", "opens": true, '
+              '"slots": [${franja(8, true)}, ${franja(9, false)}, '
               '${franja(10, false)}, ${franja(11, false)}, ${franja(12, true)}, '
-              '${franja(13, false)}], "no_disponibles": 4}',
+              '${franja(13, false)}], "unavailable": 4}',
         );
         await tester.tap(find.bySemanticsLabel('Una hora más'));
         await tester.pumpAndSettle();

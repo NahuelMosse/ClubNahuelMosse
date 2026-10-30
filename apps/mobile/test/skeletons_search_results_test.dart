@@ -23,9 +23,9 @@ void main() {
       final semantics = tester.ensureSemantics();
       final held = HeldApi({
         ...rutasDeSedes(espacios: '[$espacioF5Json, $f5TechadaJson]'),
-        'GET /espacios/disponibles': (
+        'GET /spaces/available': (
           200,
-          '{"espacios": [$espacioF5Json, $f5TechadaJson]}',
+          '{"spaces": [$espacioF5Json, $f5TechadaJson]}',
         ),
       });
       await mountApp(

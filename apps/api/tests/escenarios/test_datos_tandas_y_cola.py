@@ -40,7 +40,7 @@ def _ids_del_socio(socio: Socio) -> set[str]:
 
 
 def _historial(socio: Socio, **params: str) -> dict[str, Any]:
-    r = socio.api.get("/reservas", headers=socio.sesion, params={"cuando": "historial", **params})
+    r = socio.api.get("/bookings", headers=socio.sesion, params={"when": "history", **params})
     assert r.status_code == 200
     cuerpo: dict[str, Any] = r.json()
     return cuerpo
@@ -73,13 +73,13 @@ def test_el_total_y_los_contadores_siguen_exactos_en_una_sola_consulta(
 
     sentencias = _capturar_sql(
         lambda: cuerpos.append(
-            api.get("/reservas/todas", headers=admin, params={"q": socio.sede}).json()
+            api.get("/bookings/all", headers=admin, params={"q": socio.sede}).json()
         )
     )
 
     assert cuerpos[0]["total"] == 25
-    assert cuerpos[0]["contadores"]["todas"] == 25
-    assert cuerpos[0]["contadores"]["completadas"] == 25
+    assert cuerpos[0]["counters"]["all"] == 25
+    assert cuerpos[0]["counters"]["completed"] == 25
     assert len([s for s, _ in sentencias if "count(*)" in s.lower()]) == 1
 
 
@@ -92,9 +92,9 @@ def test_en_el_historial_propio_con_el_mismo_inicio_va_primero_el_id_mas_alto(
     _pasadas(socio, 20)
     _empate(socio)
 
-    todas = _historial(socio)["reservas"]
+    todas = _historial(socio)["bookings"]
 
-    claves = [(r["inicio"], r["id"]) for r in todas]
+    claves = [(r["starts_at"], r["id"]) for r in todas]
     assert claves == sorted(claves, reverse=True)
     assert {r["id"] for r in todas} == _ids_del_socio(socio)
     assert len(todas) == 21
@@ -113,9 +113,9 @@ def test_las_proximas_reservas_siguen_llegando_enteras(socio: Socio) -> None:
             {"u": socio.usuario_id, "e": socio.espacio_id},
         )
 
-    r = socio.api.get("/reservas", headers=socio.sesion, params={"cuando": "proximas"}).json()
+    r = socio.api.get("/bookings", headers=socio.sesion, params={"cuando": "upcoming"}).json()
 
-    assert len(r["reservas"]) == 25
+    assert len(r["bookings"]) == 25
 
 
 def test_la_migracion_0008_corta_por_lock_timeout_y_se_puede_volver_a_correr(

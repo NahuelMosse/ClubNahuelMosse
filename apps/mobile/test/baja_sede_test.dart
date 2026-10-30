@@ -26,13 +26,13 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('DELETE', '/sedes/00000000-0000-7000-8000-000000000001') => () {
+            ('DELETE', '/venues/00000000-0000-7000-8000-000000000001') => () {
               dadaDeBaja = alDarDeBaja.$1 == 204 || alDarDeBaja.$1 == 404;
               return alDarDeBaja;
             }(),
-            ('GET', '/sedes') => (
+            ('GET', '/venues') => (
               200,
-              '{"sedes": [${dadaDeBaja ? sedeHaedoJson : '$sedeHaedoJson, $sedeMoronJson'}]}',
+              '{"venues": [${dadaDeBaja ? sedeHaedoJson : '$sedeHaedoJson, $sedeMoronJson'}]}',
             ),
             _ => (404, '{}'),
           };
@@ -114,7 +114,7 @@ void main() {
       tester,
       alDarDeBaja: (
         409,
-        '{"errores": {"sede": "No se puede dar de baja la sede porque posee '
+        '{"errors": {"venue": "No se puede dar de baja la sede porque posee '
             'reservas futuras asociadas."}}',
       ),
     );
@@ -188,10 +188,10 @@ void main() {
             dadaDeBaja = true;
             return r;
           }
-          if (pedido.url.path == '/sedes') {
+          if (pedido.url.path == '/venues') {
             return json(
               200,
-              '{"sedes": [${dadaDeBaja ? sedeHaedoJson : '$sedeHaedoJson, $sedeMoronJson'}]}',
+              '{"venues": [${dadaDeBaja ? sedeHaedoJson : '$sedeHaedoJson, $sedeMoronJson'}]}',
             );
           }
           return json(404, '{}');

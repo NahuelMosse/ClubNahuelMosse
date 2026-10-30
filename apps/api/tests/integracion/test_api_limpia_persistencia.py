@@ -29,15 +29,15 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
     token = iniciar_sesion(correo, CONTRASENA)
     assert token is not None
     sede = {
-        "nombre": f"Sede {s}",
-        "direccion": "Calle 1",
-        "apertura": "08:00",
-        "cierre": "23:00",
-        "dias": [1, 2, 3, 4, 5],
+        "name": f"Sede {s}",
+        "address": "Calle 1",
+        "opens_at": "08:00",
+        "closes_at": "23:00",
+        "open_days": [1, 2, 3, 4, 5],
     }
 
     alta = TestClient(create_app(), base_url="http://localhost").post(
-        "/sedes", json=sede, headers={"Authorization": f"Bearer {token}"}
+        "/venues", json=sede, headers={"Authorization": f"Bearer {token}"}
     )
     assert alta.status_code == 201
 
@@ -45,7 +45,7 @@ def test_una_sede_dada_de_alta_sobrevive_a_reiniciar_la_api_sobre_la_misma_base(
         guardada = otra.execute(
             text("SELECT name FROM venue WHERE id = :id"), {"id": alta.json()["id"]}
         ).scalar_one()
-    assert guardada == sede["nombre"]
+    assert guardada == sede["name"]
     otra_api = TestClient(create_app(), base_url="http://localhost")
-    listado = otra_api.get("/sedes", headers={"Authorization": f"Bearer {token}"}).json()
-    assert sede["nombre"] in [x["nombre"] for x in listado["sedes"]]
+    listado = otra_api.get("/venues", headers={"Authorization": f"Bearer {token}"}).json()
+    assert sede["name"] in [x["name"] for x in listado["venues"]]

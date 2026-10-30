@@ -6,7 +6,6 @@ from sqlalchemy import Connection, text
 
 from app.modules.session.profile import Profile
 from app.shared.db import DbConnection
-from app.shared.stored_values import contract
 
 
 class ProfilesSql:
@@ -33,7 +32,7 @@ class ProfilesSql:
             first_name=row.first_name,
             last_name=row.last_name,
             email=row.email,
-            role=contract(row.role),
+            role=row.role,
             dni=row.dni,
             birth_date=row.birth_date,
         )

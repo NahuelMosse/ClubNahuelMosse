@@ -24,11 +24,11 @@ METODOS = {"get", "post", "put", "delete", "patch"}
 
 # Lo que la API sirve sin sesión: alta de cuenta y recuperación de contraseña (con la página del enlace del correo).
 PUBLICAS = {
-    ("post", "/registro"),
-    ("post", "/recuperacion"),
-    ("post", "/recuperacion/consulta"),
-    ("put", "/recuperacion"),
-    ("get", "/enlace/recuperar"),
+    ("post", "/register"),
+    ("post", "/password-recovery"),
+    ("post", "/password-recovery/check"),
+    ("put", "/password-recovery"),
+    ("get", "/link/recover"),
     ("get", "/health"),
 }
 
@@ -62,8 +62,8 @@ def _endpoints_que_usa_la_app() -> set[tuple[str, str]]:
     }
     # El catálogo, la búsqueda y la grilla arman un `Uri` y piden GET.
     for f in (
-        APP / "lib" / "espacios" / "espacios.dart",
-        APP / "lib" / "reservas" / "horarios.dart",
+        APP / "lib" / "spaces" / "espacios.dart",
+        APP / "lib" / "bookings" / "horarios.dart",
     ):
         for m in re.finditer(r"(?:_get\(\s*'([^']+)'|path:\s*'([^']+)')", _leer(f)):
             hallados.add(("get", _normalizar(m.group(1) or m.group(2))))
@@ -186,8 +186,8 @@ def test_toda_operacion_de_la_api_sin_usuario_autenticado_se_rechaza(api: TestCl
     assert not aceptadas, aceptadas
     assert rechazadas >= 25
     token_falso = {"Authorization": "Bearer no-es-un-token"}
-    assert api.get("/reservas", headers=token_falso).status_code == 401
-    assert api.get("/yo", headers=token_falso).status_code == 401
+    assert api.get("/bookings", headers=token_falso).status_code == 401
+    assert api.get("/me", headers=token_falso).status_code == 401
 
 
 def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pedido(
@@ -203,14 +203,14 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
         s = unico()
         correo = f"{nombre.lower()}.{s}@correo.com"
         alta = api.post(
-            "/registro",
+            "/register",
             json={
-                "nombre": nombre,
-                "apellido": "Ferreyra",
+                "first_name": nombre,
+                "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-                "fecha_nacimiento": "1994-07-21",
-                "correo": correo,
-                "contrasena": "ClubNahuel1",
+                "birth_date": "1994-07-21",
+                "email": correo,
+                "password": "ClubNahuel1",
             },
         )
         assert alta.status_code == 201
@@ -242,22 +242,22 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
 
     # Beto reserva a su nombre; Ana intenta reservar y cancelar «como Beto».
     de_beto = api.post(
-        "/reservas",
+        "/bookings",
         headers=beto,
-        json={"espacio_id": str(espacio), "fecha": manana, "desde": "10:00", "horas": 1},
+        json={"space_id": str(espacio), "date": manana, "start_hour": "10:00", "hours": 1},
     )
     de_ana = api.post(
-        "/reservas",
+        "/bookings",
         headers=ana,
         json={
-            "espacio_id": str(espacio),
-            "fecha": manana,
-            "desde": "12:00",
-            "horas": 1,
-            "usuario_id": str(id_beto),
+            "space_id": str(espacio),
+            "date": manana,
+            "start_hour": "12:00",
+            "hours": 1,
+            "user_id": str(id_beto),
         },
     )
-    intento = api.post(f"/reservas/{de_beto.json()['id']}/cancelar", headers=ana)
+    intento = api.post(f"/bookings/{de_beto.json()['id']}/cancel", headers=ana)
 
     assert (de_beto.status_code, de_ana.status_code) == (201, 201)
     with motor.connect() as conn:
@@ -273,7 +273,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     assert dueno == {de_beto.json()["id"]: id_beto, de_ana.json()["id"]: id_ana}
     assert intento.status_code in (403, 404)
     assert estado == "active"
-    mias = api.get("/reservas", headers=ana).json()["reservas"]
+    mias = api.get("/bookings", headers=ana).json()["bookings"]
     assert [r["id"] for r in mias] == [de_ana.json()["id"]]
 
 

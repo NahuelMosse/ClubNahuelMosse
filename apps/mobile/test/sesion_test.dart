@@ -141,10 +141,10 @@ void main() {
       repository: SessionRepository(
         credentials: CredencialesFalsas(),
         api: apiRutas({
-          'GET /yo': (200, perfilJson()),
-          'PUT /yo': (
+          'GET /me': (200, perfilJson()),
+          'PUT /me': (
             409,
-            '{"errores": {"dni": "Este DNI ya está registrado"}}',
+            '{"errors": {"dni": "Este DNI ya está registrado"}}',
           ),
         }),
       ),

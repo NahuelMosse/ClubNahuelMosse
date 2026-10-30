@@ -17,15 +17,15 @@ def _con(token: str) -> dict[str, str]:
 
 def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede_id,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     )
     return str(r.json()["id"])
@@ -34,9 +34,9 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
 def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int = 1) -> dict[str, Any]:
     fecha = (date.today() + timedelta(days=dia)).isoformat()
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": espacio, "fecha": fecha, "desde": "18:00", "horas": 1},
+        json={"space_id": espacio, "date": fecha, "start_hour": "18:00", "hours": 1},
     )
     assert r.status_code == 201
     reserva: dict[str, Any] = r.json()
@@ -44,7 +44,7 @@ def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int = 1) -
 
 
 def _pedido(reserva: dict[str, Any], motivo: str = MOTIVO) -> dict[str, Any]:
-    return {"motivo": motivo, "espacio_id": reserva["espacio_id"], "inicio": reserva["inicio"]}
+    return {"reason": motivo, "space_id": reserva["space_id"], "starts_at": reserva["starts_at"]}
 
 
 def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repetir(
@@ -55,30 +55,30 @@ def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repe
     reserva = _reservar(api, token_usuario, espacio)
 
     r = api.post(
-        f"/reservas/{reserva['id']}/anular",
+        f"/bookings/{reserva['id']}/void",
         headers=_con(token_admin),
         json=_pedido(reserva, f"  {MOTIVO}  "),
     )
     otra_vez = api.post(
-        f"/reservas/{reserva['id']}/anular", headers=_con(token_admin), json=_pedido(reserva)
+        f"/bookings/{reserva['id']}/void", headers=_con(token_admin), json=_pedido(reserva)
     )
     distinto = api.post(
-        f"/reservas/{reserva['id']}/anular",
+        f"/bookings/{reserva['id']}/void",
         headers=_con(token_admin),
         json=_pedido(reserva, "otro motivo"),
     )
 
     assert r.status_code == 200
-    assert (r.json()["estado"], r.json()["motivo"], r.json()["anulable"]) == (
-        "anulada",
+    assert (r.json()["status"], r.json()["reason"], r.json()["voidable"]) == (
+        "voided",
         MOTIVO,
         False,
     )
-    assert r.json()["cancelada_por_nombre"] == "Ana Díaz"
-    assert r.json()["cancelada_en"] is not None
+    assert r.json()["canceled_by_name"] == "Ana Díaz"
+    assert r.json()["canceled_at"] is not None
     assert otra_vez.status_code == 200
     # El envío del aviso sale después de responder: lo único que cambia entre las dos.
-    envio = {"aviso_envio", "aviso_en"}
+    envio = {"notice_delivery", "notice_at"}
     assert {k: v for k, v in otra_vez.json().items() if k not in envio} == {
         k: v for k, v in r.json().items() if k not in envio
     }
@@ -93,14 +93,14 @@ def test_anular_estampa_quien_cuando_y_por_que_libera_el_horario_y_se_puede_repe
     fecha = (date.today() + timedelta(days=1)).isoformat()
     assert (
         api.post(
-            "/reservas",
+            "/bookings",
             headers=_con(token_usuario),
-            json={"espacio_id": espacio, "fecha": fecha, "desde": "18:00", "horas": 1},
+            json={"space_id": espacio, "date": fecha, "start_hour": "18:00", "hours": 1},
         ).status_code
         == 201
     )
-    historial = api.get("/reservas?cuando=historial", headers=_con(token_usuario)).json()
-    assert [(x["estado"], x["motivo"]) for x in historial["reservas"]] == [("anulada", MOTIVO)]
+    historial = api.get("/bookings?when=history", headers=_con(token_usuario)).json()
+    assert [(x["status"], x["reason"]) for x in historial["bookings"]] == [("voided", MOTIVO)]
 
 
 def test_anular_rechaza_lo_que_no_corresponde(
@@ -113,7 +113,7 @@ def test_anular_rechaza_lo_que_no_corresponde(
     empezada = _reservar(api, token_usuario, espacio, dia=2)
     cancelada = _reservar(api, token_usuario, espacio, dia=3)
     assert (
-        api.post(f"/reservas/{cancelada['id']}/cancelar", headers=_con(token_usuario)).status_code
+        api.post(f"/bookings/{cancelada['id']}/cancel", headers=_con(token_usuario)).status_code
         == 200
     )
     with motor.begin() as conn:
@@ -126,7 +126,7 @@ def test_anular_rechaza_lo_que_no_corresponde(
         )
 
     def anular(id_: str, pedido: dict[str, Any], token: str = token_admin) -> int:
-        return api.post(f"/reservas/{id_}/anular", headers=_con(token), json=pedido).status_code
+        return api.post(f"/bookings/{id_}/void", headers=_con(token), json=pedido).status_code
 
     assert anular(reserva["id"], _pedido(reserva), token_usuario) == 403
     assert anular("00000000-0000-7000-8000-000000000000", _pedido(reserva)) == 404
@@ -136,9 +136,9 @@ def test_anular_rechaza_lo_que_no_corresponde(
     assert anular(empezada["id"], _pedido(empezada)) == 409
     assert anular(cancelada["id"], _pedido(cancelada)) == 409
     # La reserva se vio en otra cancha o en otro horario: cambió mientras tanto.
-    assert anular(reserva["id"], _pedido(reserva) | {"espacio_id": otro_espacio}) == 409
+    assert anular(reserva["id"], _pedido(reserva) | {"space_id": otro_espacio}) == 409
     assert anular(reserva["id"], _pedido(empezada)) == 409
-    assert api.post(f"/reservas/{reserva['id']}/anular", json=_pedido(reserva)).status_code == 401
+    assert api.post(f"/bookings/{reserva['id']}/void", json=_pedido(reserva)).status_code == 401
     with motor.connect() as conn:
         estado: Any = conn.execute(
             text("SELECT status FROM booking WHERE id = :id"), {"id": reserva["id"]}
@@ -151,12 +151,12 @@ def test_el_listado_ofrece_anular_solo_lo_activo_que_no_empezo(
 ) -> None:
     espacio = _espacio_nuevo(api, token_admin, sede[0])
     reserva = _reservar(api, token_usuario, espacio)
-    api.post(f"/reservas/{reserva['id']}/anular", headers=_con(token_admin), json=_pedido(reserva))
+    api.post(f"/bookings/{reserva['id']}/void", headers=_con(token_admin), json=_pedido(reserva))
     futura = _reservar(api, token_usuario, espacio, dia=2)
 
-    lista = api.get("/reservas/todas?q=" + sede[1], headers=_con(token_admin)).json()
+    lista = api.get("/bookings/all?q=" + sede[1], headers=_con(token_admin)).json()
 
-    por_id = {x["id"]: x["anulable"] for x in lista["reservas"]}
+    por_id = {x["id"]: x["voidable"] for x in lista["bookings"]}
     assert por_id[futura["id"]] is True
     assert por_id[reserva["id"]] is False
 
@@ -172,7 +172,7 @@ def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
         def anular(reserva: dict[str, Any] = reserva, barrera: Barrier = barrera) -> int:
             barrera.wait()
             return api.post(
-                f"/reservas/{reserva['id']}/anular",
+                f"/bookings/{reserva['id']}/void",
                 headers=_con(token_admin),
                 json=_pedido(reserva),
             ).status_code
@@ -180,7 +180,7 @@ def test_anular_y_cancelar_a_la_vez_dejan_una_sola_y_sin_trabarse(
         def cancelar(reserva: dict[str, Any] = reserva, barrera: Barrier = barrera) -> int:
             barrera.wait()
             return api.post(
-                f"/reservas/{reserva['id']}/cancelar", headers=_con(token_usuario)
+                f"/bookings/{reserva['id']}/cancel", headers=_con(token_usuario)
             ).status_code
 
         with ThreadPoolExecutor(2) as hilos:
@@ -206,11 +206,11 @@ def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
             ),
             {"id": empezada["id"]},
         )
-    vigente = api.get(f"/reservas/todas/{empezada['id']}", headers=_con(token_admin)).json()
-    assert vigente["anulable"] is False
+    vigente = api.get(f"/bookings/all/{empezada['id']}", headers=_con(token_admin)).json()
+    assert vigente["voidable"] is False
 
     r = api.post(
-        f"/reservas/{empezada['id']}/anular",
+        f"/bookings/{empezada['id']}/void",
         headers=_con(token_admin),
         json=_pedido(vigente),
     )
@@ -223,6 +223,6 @@ def test_una_reserva_ya_empezada_se_rechaza_aunque_se_mande_su_horario_vigente(
                 " starts_at = CAST(:starts_at AS timestamptz) AS coincide"
                 " FROM booking WHERE id = :id"
             ),
-            {"id": empezada["id"], "starts_at": vigente["inicio"]},
+            {"id": empezada["id"], "starts_at": vigente["starts_at"]},
         ).one()
     assert (fila.status, fila.empezo, fila.coincide) == ("active", True, True)

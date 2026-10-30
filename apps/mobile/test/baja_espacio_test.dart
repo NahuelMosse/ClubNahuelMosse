@@ -29,15 +29,15 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('DELETE', '/espacios/00000000-0000-7000-8000-000000000009') => () {
+            ('DELETE', '/spaces/00000000-0000-7000-8000-000000000009') => () {
               dadoDeBaja = alDarDeBaja.$1 == 204 || alDarDeBaja.$1 == 404;
               return alDarDeBaja;
             }(),
-            ('GET', '/espacios') => (
+            ('GET', '/spaces') => (
               200,
-              '{"espacios": [${dadoDeBaja ? espacioTenisJson : '$espacioF5Json, $espacioTenisJson'}]}',
+              '{"spaces": [${dadoDeBaja ? espacioTenisJson : '$espacioF5Json, $espacioTenisJson'}]}',
             ),
-            ('GET', '/espacios/catalogo') => (200, catalogoJson),
+            ('GET', '/spaces/catalog') => (200, catalogoJson),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
@@ -106,7 +106,7 @@ void main() {
   testWidgets('con reservas pendientes: el aviso y el espacio sigue', (
     tester,
   ) async {
-    await abrir(tester, alDarDeBaja: (409, '{"errores": {"espacio": "x"}}'));
+    await abrir(tester, alDarDeBaja: (409, '{"errors": {"space": "x"}}'));
 
     await tocar(tester, find.bySemanticsLabel('Baja $nombre'));
     await tocar(tester, find.text('CONFIRMAR BAJA'));
@@ -180,11 +180,11 @@ void main() {
             return r;
           }
           return switch (pedido.url.path) {
-            '/espacios' => json(
+            '/spaces' => json(
               200,
-              '{"espacios": [${dadoDeBaja ? espacioTenisJson : '$espacioF5Json, $espacioTenisJson'}]}',
+              '{"spaces": [${dadoDeBaja ? espacioTenisJson : '$espacioF5Json, $espacioTenisJson'}]}',
             ),
-            '/espacios/catalogo' => json(200, catalogoJson),
+            '/spaces/catalog' => json(200, catalogoJson),
             _ => json(404, '{}'),
           };
         }),

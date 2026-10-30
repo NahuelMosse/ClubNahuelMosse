@@ -136,7 +136,7 @@ void main() {
     () {
       expect(_queContienen('SelectableChip(').length, greaterThanOrEqualTo(6));
       expect(_queContienen('InProgress(').length, greaterThanOrEqualTo(6));
-      expect(_queContienen("'errores'"), {'common/field_errors.dart'});
+      expect(_queContienen("'errors'"), {'common/field_errors.dart'});
       expect(_queContienen('class _Elegible '), isEmpty);
     },
   );

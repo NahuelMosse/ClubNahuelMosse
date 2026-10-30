@@ -12,13 +12,13 @@ import 'package:clubnahuelmosse/features/venues/domain/venue.dart';
 void main() {
   final sede = Venue.fromJson({
     'id': '00000000-0000-7000-8000-000000000001',
-    'nombre': 'Sede Morón',
-    'direccion': 'Av. Rivadavia 19850',
-    'apertura': '08:00',
-    'cierre': '23:00',
-    'dias': [1, 2, 3, 4, 5, 6],
-    'canchas': 2,
-    'deportes': ['Futbol'],
+    'name': 'Sede Morón',
+    'address': 'Av. Rivadavia 19850',
+    'opens_at': '08:00',
+    'closes_at': '23:00',
+    'open_days': [1, 2, 3, 4, 5, 6],
+    'space_count': 2,
+    'sports': ['Futbol'],
   })!;
   // Jueves 12 de noviembre de 2026, 18:20 en el club.
   final ahora = DateTime.utc(2026, 11, 12, 18, 20);
@@ -35,43 +35,43 @@ void main() {
 
     test('la fecha tiene que ser de hoy a seis días y de un día que abre', () {
       expect(errores(jueves.subtract(const Duration(days: 1)), 19, 20), {
-        'fecha': 'La fecha tiene que ser futura',
+        'date': 'La fecha tiene que ser futura',
       });
       expect(errores(jueves.add(const Duration(days: 7)), 19, 20), {
-        'fecha': 'Elegí un día de los próximos 7',
+        'date': 'Elegí un día de los próximos 7',
       });
       expect(errores(jueves.add(const Duration(days: 3)), 19, 20), {
-        'fecha': 'La sede no abre ese día',
+        'date': 'La sede no abre ese día',
       });
     });
 
     test('la duración va de una a cuatro horas y termina antes del cierre', () {
       final viernes = jueves.add(const Duration(days: 1));
       expect(
-        errores(viernes, 18, 18)['hasta'],
+        errores(viernes, 18, 18)['until'],
         'La duración mínima es de una hora',
       );
       expect(
-        errores(viernes, 10, 15)['hasta'],
+        errores(viernes, 10, 15)['until'],
         'La duración máxima es de 4 horas',
       );
-      expect(errores(viernes, 22, 0)['hasta'], 'La sede cierra a las 23:00');
-      expect(errores(viernes, 7, 9)['desde'], 'La sede abre a las 08:00');
+      expect(errores(viernes, 22, 0)['until'], 'La sede cierra a las 23:00');
+      expect(errores(viernes, 7, 9)['start_hour'], 'La sede abre a las 08:00');
     });
 
     test('hoy, un rango que ya empezó no es futuro', () {
       expect(errores(jueves, 18, 19), {
-        'desde': 'El horario tiene que ser futuro',
+        'start_hour': 'El horario tiene que ser futuro',
       });
     });
   });
 
   group('pantalla', () {
     const disponibles =
-        '{"espacios": [$espacioF5Json, '
-        '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
-        '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
-        '"techada": true, "iluminada": true, "precio_por_hora": 43000}]}';
+        '{"spaces": [$espacioF5Json, '
+        '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
+        '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
+        '"covered": true, "lit": true, "price_per_hour": 43000}]}';
 
     Future<List<http.Request>> abrir(
       WidgetTester tester, {
@@ -87,7 +87,7 @@ void main() {
         tamano: escala > 1 ? const Size(360, 800) : const Size(393, 852),
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /espacios/disponibles': respuesta,
+          'GET /spaces/available': respuesta,
         }, pedidos: pedidos),
       );
       return pedidos;
@@ -152,15 +152,15 @@ void main() {
         await tester.pumpAndSettle();
 
         final consulta = pedidos.last.url;
-        expect(consulta.path, '/espacios/disponibles');
+        expect(consulta.path, '/spaces/available');
         expect(
-          consulta.queryParameters['sede_id'],
+          consulta.queryParameters['venue_id'],
           '00000000-0000-7000-8000-000000000001',
         );
-        expect(consulta.queryParameters['deporte'], 'Futbol');
-        expect(consulta.queryParameters['desde'], '18:00');
-        expect(consulta.queryParameters['hasta'], '19:00');
-        expect(consulta.queryParameters.containsKey('tipo'), isFalse);
+        expect(consulta.queryParameters['sport'], 'Futbol');
+        expect(consulta.queryParameters['since'], '18:00');
+        expect(consulta.queryParameters['until'], '19:00');
+        expect(consulta.queryParameters.containsKey('kind'), isFalse);
         expect(
           find.text('2 CANCHAS DISPONIBLES · FÚTBOL · 18:00 – 19:00'),
           findsOneWidget,
@@ -211,7 +211,7 @@ void main() {
       expect(find.text('La duración mínima es de una hora'), findsOneWidget);
       expect(habilitado(tester, 'CONSULTAR'), isFalse);
       expect(
-        pedidos.where((p) => p.url.path == '/espacios/disponibles'),
+        pedidos.where((p) => p.url.path == '/spaces/available'),
         isEmpty,
       );
       semantica.dispose();
@@ -248,7 +248,7 @@ void main() {
         tester,
         respuesta: (
           422,
-          '{"errores": {"desde": "El horario tiene que ser futuro"}}',
+          '{"errors": {"start_hour": "El horario tiene que ser futuro"}}',
         ),
       );
       await completar(tester);
@@ -276,7 +276,7 @@ void main() {
     });
 
     testWidgets('sin resultados, el aviso y LIMPIAR FILTROS', (tester) async {
-      await abrir(tester, respuesta: (200, '{"espacios": []}'));
+      await abrir(tester, respuesta: (200, '{"spaces": []}'));
       await completar(tester);
       await tester.tap(find.text('CONSULTAR'));
       await tester.pumpAndSettle();
@@ -345,7 +345,7 @@ void main() {
 
     testWidgets('un chip sin canchas no se puede elegir', (tester) async {
       final semantica = tester.ensureSemantics();
-      await abrir(tester, respuesta: (200, '{"espacios": [$espacioF5Json]}'));
+      await abrir(tester, respuesta: (200, '{"spaces": [$espacioF5Json]}'));
       await completar(tester);
       await tester.tap(find.text('CONSULTAR'));
       await tester.pumpAndSettle();

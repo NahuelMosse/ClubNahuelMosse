@@ -150,7 +150,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
     final dia = _dia;
     if (_date.text.length >= l.spaceSearchDatePlaceholder.length &&
         dia == null) {
-      errores['fecha'] = l.spaceSearchDateFormat;
+      errores['date'] = l.spaceSearchDateFormat;
     }
     final venue = _sede;
     final problems = <String, RangeProblem>{
@@ -233,7 +233,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         _consultando = false;
         _rechazo = e.errors;
       });
-      if (e.errors.containsKey('sede_id')) {
+      if (e.errors.containsKey('venue_id')) {
         widget.venues.notifyChange();
         await _cargar();
       }
@@ -474,7 +474,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         placeholder: l.spaceSearchPickVenue,
         icon: Icons.expand_more_rounded,
         onTap: _consultando ? null : () => _elegirSede(venues),
-        error: errores['sede_id'],
+        error: errores['venue_id'],
       ),
       const SizedBox(height: Spacing.s12),
       SelectorField(
@@ -506,7 +506,7 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
         semanticLabel: l.spaceSearchDate,
         controller: _date,
         placeholder: l.spaceSearchDatePlaceholder,
-        error: errores['fecha'],
+        error: errores['date'],
         keyboardType: TextInputType.number,
         inputFormatters: const [DateInputFormatter()],
         enabled: !_consultando,
@@ -523,8 +523,8 @@ class _SpaceSearchScreenState extends State<SpaceSearchScreen> {
       SearchTimeRange(
         desde: _desde,
         hasta: _hasta,
-        errorDesde: errores['desde'],
-        errorHasta: errores['hasta'],
+        errorDesde: errores['start_hour'],
+        errorHasta: errores['until'],
         alElegirDesde: _consultando ? null : () => _elegirHora(inicio: true),
         alElegirHasta: _consultando ? null : () => _elegirHora(inicio: false),
       ),

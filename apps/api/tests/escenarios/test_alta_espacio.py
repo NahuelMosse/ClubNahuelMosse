@@ -16,14 +16,14 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
     correo = f"socio.{s}@correo.com"
     assert (
         api.post(
-            "/registro",
+            "/register",
             json={
-                "nombre": "Martín",
-                "apellido": "Ferreyra",
+                "first_name": "Martín",
+                "last_name": "Ferreyra",
                 "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-                "fecha_nacimiento": "1994-07-21",
-                "correo": correo,
-                "contrasena": "ClubNahuel1",
+                "birth_date": "1994-07-21",
+                "email": correo,
+                "password": "ClubNahuel1",
             },
         ).status_code
         == 201
@@ -40,15 +40,15 @@ def test_un_usuario_sin_rol_de_administrador_no_puede_dar_de_alta_un_espacio(
     token = iniciar_sesion(correo, "ClubNahuel1")
 
     r = api.post(
-        "/espacios",
+        "/spaces",
         headers={"Authorization": f"Bearer {token}"},
         json={
-            "sede_id": str(sede),
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": str(sede),
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     )
 

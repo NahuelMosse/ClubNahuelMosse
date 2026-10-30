@@ -18,14 +18,14 @@ def test_con_la_cuenta_recien_creada_puede_iniciar_sesion(
     s = unico()
     correo = f"Nueva.{s}@Correo.com"
     respuesta = api.post(
-        "/registro",
+        "/register",
         json={
-            "nombre": "Nahuel Agustín",
-            "apellido": "Mosse",
+            "first_name": "Nahuel Agustín",
+            "last_name": "Mosse",
             "dni": str(int(s, 16) % 90_000_000 + 10_000_000),
-            "fecha_nacimiento": "2000-03-14",
-            "correo": correo,
-            "contrasena": "ClubNahuel1",
+            "birth_date": "2000-03-14",
+            "email": correo,
+            "password": "ClubNahuel1",
         },
     )
     assert respuesta.status_code == 201, respuesta.text

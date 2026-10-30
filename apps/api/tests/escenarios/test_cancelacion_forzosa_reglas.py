@@ -33,8 +33,8 @@ def test_un_aviso_que_esta_saliendo_se_agrupa_con_la_anulacion_siguiente(
     assert base.anular(socio, admin, segunda) == 200
 
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    assert [e["titulo"] for e in centro["notificaciones"]] == ["El club anuló 2 de tus reservas"]
+    assert centro["unread"] == 1
+    assert [e["title"] for e in centro["notifications"]] == ["El club anuló 2 de tus reservas"]
 
 
 def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
@@ -54,8 +54,8 @@ def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
 
     [(_, aviso)] = canal.enviados
     assert aviso.body.endswith(f"Motivo: {'x' * 199}….")
-    historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
-    assert [r["motivo"] for r in historial["reservas"]] == [motivo]
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
+    assert [r["reason"] for r in historial["bookings"]] == [motivo]
 
 
 def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
@@ -76,4 +76,4 @@ def test_una_reserva_con_aviso_no_lo_repite_si_se_encola_de_nuevo(
     with motor.begin() as conn:
         enqueue_forced_cancellation(conn, socio.usuario_id, [UUID(reserva["id"])])
 
-    assert len(socio.centro()["notificaciones"]) == 1
+    assert len(socio.centro()["notifications"]) == 1

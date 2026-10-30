@@ -85,9 +85,9 @@ void main() {
       tester,
       '/inicio/buscar',
       extra: {
-        'GET /espacios/disponibles': (
+        'GET /spaces/available': (
           200,
-          '{"espacios": [$espacioF5Json, $f5TechadaJson]}',
+          '{"spaces": [$espacioF5Json, $f5TechadaJson]}',
         ),
       },
     );
@@ -107,7 +107,7 @@ void main() {
       tester,
       '/reservas',
       extra: {
-        'GET /reservas': (200, '{"reservas": [${reservaJson()}, $second]}'),
+        'GET /bookings': (200, '{"bookings": [${reservaJson()}, $second]}'),
       },
     );
     await _capture(tester, 'skeletons/reservas_cargando.png');

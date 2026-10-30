@@ -14,10 +14,10 @@ void main() {
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   const modos = {'oscuro': true, 'claro': false};
   const disponibles =
-      '{"espacios": [$espacioF5Json, '
-      '{"id": "00000000-0000-7000-8000-000000000011", "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "sede_id": "00000000-0000-7000-8000-000000000001", '
-      '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F5", "numero": 2, '
-      '"techada": true, "iluminada": true, "precio_por_hora": 43000}]}';
+      '{"spaces": [$espacioF5Json, '
+      '{"id": "00000000-0000-7000-8000-000000000011", "name": "Moron_Rivadavia_19850_Futbol_F5_2", "venue_id": "00000000-0000-7000-8000-000000000001", '
+      '"venue": "Sede Morón", "sport": "Futbol", "kind": "F5", "number": 2, '
+      '"covered": true, "lit": true, "price_per_hour": 43000}]}';
 
   Future<void> capturar(WidgetTester tester, String archivo) async {
     await tester.runAsync(() async {
@@ -69,7 +69,7 @@ void main() {
         inicio: '/inicio/buscar',
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /espacios/disponibles': respuesta,
+          'GET /spaces/available': respuesta,
         }),
       );
 
@@ -81,10 +81,10 @@ void main() {
           inicio: '/inicio',
           api: apiRutas({
             ...rutasDeSedes(),
-            'GET /reservas': (200, '{"reservas": []}'),
-            'GET /notificaciones': (
+            'GET /bookings': (200, '{"bookings": []}'),
+            'GET /notifications': (
               200,
-              '{"notificaciones": [], "no_leidas": 0}',
+              '{"notifications": [], "unread": 0}',
             ),
           }),
         );
@@ -119,7 +119,7 @@ void main() {
 
       testWidgets('sin resultados $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await abrir(tester, respuesta: (200, '{"espacios": []}'));
+        await abrir(tester, respuesta: (200, '{"spaces": []}'));
         await completar(tester);
         await tester.tap(find.text('CONSULTAR'));
         await tester.pumpAndSettle();

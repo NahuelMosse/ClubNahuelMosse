@@ -28,16 +28,16 @@ final ahoraClub = DateTime.utc(2026, 11, 12, 20);
 String notif({
   required String id,
   required DateTime club,
-  String tipo = 'recordatorio',
+  String tipo = 'reminder',
   String titulo = 'Tu reserva es en 1 hora',
   String cuerpo = 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
   String? reservaId = '00000000-0000-7000-8000-000000000001',
   bool leida = false,
 }) =>
-    '{"id": "$id", "tipo": "$tipo", "titulo": "$titulo", "cuerpo": "$cuerpo", '
-    '"reserva_id": ${reservaId == null ? 'null' : '"$reservaId"'}, '
-    '"creada_en": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
-    '"leida": $leida}';
+    '{"id": "$id", "kind": "$tipo", "title": "$titulo", "body": "$cuerpo", '
+    '"booking_id": ${reservaId == null ? 'null' : '"$reservaId"'}, '
+    '"created_at": "${club.add(const Duration(hours: 3)).toIso8601String()}", '
+    '"read": $leida}';
 
 final recordatorio = notif(
   id: '00000000-0000-7000-8000-000000000003',
@@ -46,7 +46,7 @@ final recordatorio = notif(
 final confirmacion = notif(
   id: '00000000-0000-7000-8000-000000000002',
   club: DateTime.utc(2026, 11, 12, 17),
-  tipo: 'cancelacion_usuario',
+  tipo: 'user_cancellation',
   titulo: 'Reserva cancelada',
   cuerpo:
       'Vóley · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado.',
@@ -55,7 +55,7 @@ final confirmacion = notif(
 final alerta = notif(
   id: '00000000-0000-7000-8000-000000000001',
   club: DateTime.utc(2026, 11, 11, 15),
-  tipo: 'cancelacion_forzosa',
+  tipo: 'forced_cancellation',
   titulo: 'El club anuló tu reserva',
   cuerpo: 'Hockey 7 · Sede Ramos Mejía · Vie 30, 19:00. Motivo: mantenimiento.',
   leida: true,
@@ -146,22 +146,22 @@ class ApiFalsa {
       alPedir?.call(pedido);
       if (caida) throw http.ClientException('sin red');
       final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-        ('GET', '/notificaciones') => (
+        ('GET', '/notifications') => (
           200,
-          '{"notificaciones": [${avisos.join(', ')}], "no_leidas": $unread}',
+          '{"notifications": [${avisos.join(', ')}], "unread": $unread}',
         ),
-        ('GET', '/yo') => (200, perfilJson()),
-        ('DELETE', '/yo') => (204, ''),
-        ('GET', '/reservas') => (
+        ('GET', '/me') => (200, perfilJson()),
+        ('DELETE', '/me') => (204, ''),
+        ('GET', '/bookings') => (
           200,
-          '{"reservas": [${reservaJson()}, ${reservaJson(id: '00000000-0000-7000-8000-000000000002', inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
+          '{"bookings": [${reservaJson()}, ${reservaJson(id: '00000000-0000-7000-8000-000000000002', inicio: '2026-11-15T13:00:00+00:00', fin: '2026-11-15T14:00:00+00:00')}]}',
         ),
-        ('GET', '/espacios/catalogo') => (200, catalogoJson),
-        ('GET', '/sedes') => (200, '{"sedes": []}'),
-        ('PUT', '/dispositivos') ||
-        ('POST', '/dispositivos/baja') ||
-        ('POST', '/notificaciones/leer-todas') => (204, ''),
-        ('POST', final ruta) when ruta.endsWith('/leer') => (204, ''),
+        ('GET', '/spaces/catalog') => (200, catalogoJson),
+        ('GET', '/venues') => (200, '{"venues": []}'),
+        ('PUT', '/devices') ||
+        ('POST', '/devices/unregister') ||
+        ('POST', '/notifications/read-all') => (204, ''),
+        ('POST', final ruta) when ruta.endsWith('/read') => (204, ''),
         _ => (404, '{}'),
       };
       return http.Response.bytes(
@@ -372,19 +372,19 @@ void main() {
           ),
           findsOneWidget,
         );
-        final antes = cuerpoDe(api.de('PUT', '/dispositivos').last);
-        expect(antes['permiso'], isFalse);
+        final antes = cuerpoDe(api.de('PUT', '/devices').last);
+        expect(antes['permission_granted'], isFalse);
 
         await tester.tap(find.text('ACTIVAR NOTIFICACIONES'));
         await tester.pumpAndSettle();
 
         expect(find.text('Notificaciones desactivadas'), findsNothing);
         expect(find.text('Todavía no tenés notificaciones'), findsOneWidget);
-        final despues = cuerpoDe(api.de('PUT', '/dispositivos').last);
+        final despues = cuerpoDe(api.de('PUT', '/devices').last);
         expect(despues, {
           'token': 'token-del-telefono',
-          'plataforma': 'android',
-          'permiso': true,
+          'platform': 'android',
+          'permission_granted': true,
         });
       },
     );
@@ -417,7 +417,7 @@ void main() {
       expect(
         api.de(
           'POST',
-          '/notificaciones/00000000-0000-7000-8000-000000000003/leer',
+          '/notifications/00000000-0000-7000-8000-000000000003/read',
         ),
         hasLength(1),
       );
@@ -604,7 +604,7 @@ void main() {
 
       expect(find.text('MARCAR TODAS'), findsNothing);
       expect(centro.unread, 0);
-      expect(api.de('POST', '/notificaciones/leer-todas'), hasLength(1));
+      expect(api.de('POST', '/notifications/read-all'), hasLength(1));
     });
 
     testWidgets('tocar afuera cierra el panel sin marcar nada', (tester) async {
@@ -619,7 +619,7 @@ void main() {
 
       expect(find.text('MARCAR TODAS'), findsNothing);
       expect(centro.unread, 1);
-      expect(api.de('POST', '/notificaciones/leer-todas'), isEmpty);
+      expect(api.de('POST', '/notifications/read-all'), isEmpty);
     });
 
     testWidgets('tocar un aviso lo abre', (tester) async {
@@ -972,7 +972,7 @@ void main() {
   });
 
   group('la consulta periódica', () {
-    int lecturas(ApiFalsa api) => api.de('GET', '/notificaciones').length;
+    int lecturas(ApiFalsa api) => api.de('GET', '/notifications').length;
 
     testWidgets('un centro liberado mientras arrancaba no deja un reloj vivo', (
       tester,
@@ -1044,8 +1044,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final pedido = cuerpoDe(api.de('PUT', '/dispositivos').single);
-      expect(pedido['permiso'], isFalse);
+      final pedido = cuerpoDe(api.de('PUT', '/devices').single);
+      expect(pedido['permission_granted'], isFalse);
       expect(pedido['token'], 'token-del-telefono');
     });
 
@@ -1088,7 +1088,7 @@ void main() {
         );
         String? autorizacionDeLaBaja;
         api.alPedir = (p) {
-          if (p.url.path == '/dispositivos/baja') {
+          if (p.url.path == '/devices/unregister') {
             autorizacionDeLaBaja = p.headers['authorization'];
           }
         };
@@ -1098,13 +1098,13 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 100));
         });
         await tester.pumpAndSettle();
-        expect(api.de('PUT', '/dispositivos'), hasLength(1));
+        expect(api.de('PUT', '/devices'), hasLength(1));
 
         await tester.runAsync(sesion.close);
         await tester.pumpAndSettle();
 
-        expect(api.de('POST', '/dispositivos/baja'), hasLength(1));
-        expect(cuerpoDe(api.de('POST', '/dispositivos/baja').single), {
+        expect(api.de('POST', '/devices/unregister'), hasLength(1));
+        expect(cuerpoDe(api.de('POST', '/devices/unregister').single), {
           'token': 'token-del-telefono',
         });
         // La baja va con la sesión que se cerró, tomada antes de cerrarla.
@@ -1215,8 +1215,8 @@ void main() {
       final api = ApiFalsa()
         ..avisos = [
           recordatorio.replaceFirst(
-            '"reserva_id": "00000000-0000-7000-8000-000000000001"',
-            '"reserva_id": "00000000-0000-7000-8000-000000000002"',
+            '"booking_id": "00000000-0000-7000-8000-000000000001"',
+            '"booking_id": "00000000-0000-7000-8000-000000000002"',
           ),
         ]
         ..unread = 1;
@@ -1251,7 +1251,7 @@ void main() {
             notif(
               id: '00000000-0000-7000-8000-000000000004',
               club: DateTime.utc(2026, 11, 12, 19, 58),
-              tipo: 'cancelacion_usuario',
+              tipo: 'user_cancellation',
               titulo: 'Reserva cancelada',
               reservaId: '00000000-0000-7000-8000-000000000002',
             ),
@@ -1270,8 +1270,8 @@ void main() {
         expect(
           api.pedidos.any(
             (p) =>
-                p.url.path == '/reservas' &&
-                p.url.queryParameters['cuando'] == 'historial',
+                p.url.path == '/bookings' &&
+                p.url.queryParameters['when'] == 'history',
           ),
           isTrue,
         );

@@ -34,9 +34,9 @@ def change_password(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
 ) -> None:
     """Replaces the password of whoever holds the session, if they confirm the current one."""
     if missing := password_problems(new):
-        raise InvalidData({"nueva": missing[0]})
+        raise InvalidData({"new_password": missing[0]})
     if not current or not identity.password_matches(profile.email, current):
-        raise InvalidData({"actual": DOES_NOT_MATCH})
+        raise InvalidData({"current_password": DOES_NOT_MATCH})
     identity.change_password(profile.uid, new)
     # The password already changed: if the trace fails, the response must still say it
     # changed, or the person would try to log in with the old one.

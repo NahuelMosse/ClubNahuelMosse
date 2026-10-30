@@ -12,7 +12,7 @@ registration_log = logging.getLogger("clubnahuelmosse.registro")
 
 class IdentityProvider(Protocol):
     def create_account(self, email: str, password: str) -> str:
-        """Creates the account and returns its uid. Raises `Duplicate(["correo"])` if the email
+        """Creates the account and returns its uid. Raises `Duplicate(["email"])` if the email
         exists."""
         ...
 

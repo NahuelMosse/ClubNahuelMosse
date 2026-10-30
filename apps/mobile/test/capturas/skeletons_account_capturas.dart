@@ -34,15 +34,15 @@ class _HeldSession extends SesionFalsa {
 }
 
 final _homeAnswers = {
-  'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
-  'GET /espacios/catalogo': (200, catalogoJson),
-  'GET /sedes': (200, '{"sedes": [$sedeMoronConDeportes]}'),
+  'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+  'GET /spaces/catalog': (200, catalogoJson),
+  'GET /venues': (200, '{"venues": [$sedeMoronConDeportes]}'),
 };
 
 final _noticeAnswers = {
-  'GET /notificaciones': (
+  'GET /notifications': (
     200,
-    '{"notificaciones": [$recordatorio, $confirmacion], "no_leidas": 1}',
+    '{"notifications": [$recordatorio, $confirmacion], "unread": 1}',
   ),
 };
 
@@ -90,7 +90,7 @@ void main() {
   });
 
   testWidgets('notifications loading and loaded', (tester) async {
-    final api = HeldApi(_noticeAnswers, held: {'GET /notificaciones'});
+    final api = HeldApi(_noticeAnswers, held: {'GET /notifications'});
     await mount(tester, api, '/notificaciones');
     await capture(tester, 'skeletons/notificaciones_cargando.png');
     api.release();

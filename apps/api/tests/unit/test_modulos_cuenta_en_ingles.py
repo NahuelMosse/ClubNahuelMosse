@@ -8,11 +8,13 @@ import re
 import tokenize
 from pathlib import Path
 
+from tests.contract_renames import SPANISH_NAMES
+from tests.unit.test_api_en_ingles_contrato_actual import operaciones_distintas_en
+
 RAIZ_API = Path(__file__).resolve().parents[2]
 RAIZ = RAIZ_API.parents[1]
 APP = RAIZ_API / "app"
 MODULOS = APP / "modules"
-LINEA_BASE = Path(__file__).parent / "contrato_cuenta_main.json"
 
 ARCHIVOS = {
     "venues": ["__init__", "use_cases", "rules", "repository", "routes"],
@@ -107,29 +109,23 @@ def _contrato_publicado() -> dict:
     return json.loads((RAIZ_API / "openapi.json").read_text(encoding="utf-8"))
 
 
-def test_los_campos_de_los_modelos_de_entrada_y_salida_siguen_siendo_las_claves_json_en_castellano() -> (
+def test_los_campos_de_los_modelos_de_entrada_y_salida_son_las_claves_json_en_ingles() -> (
     None
 ):
-    """los campos de los modelos de entrada y salida siguen siendo las claves JSON en castellano @assumption:ENG-02-ASM-05"""
-    base = json.loads(LINEA_BASE.read_text(encoding="utf-8"))
-    propiedades = {
-        k
-        for e in base["esquemas"]
-        for k in json.loads(e).get("properties", {})
-        if re.fullmatch(r"[a-z_]+", k)
-    }
+    """los campos de los modelos de entrada y salida son las claves JSON en inglés @assumption:ENG-02-ASM-05"""
     publicado = {
         k
         for e in _contrato_publicado()["components"]["schemas"].values()
         for k in e.get("properties", {})
     }
+    en_castellano = sorted(publicado & SPANISH_NAMES)
     con_alias = [
         str(p.relative_to(APP))
         for p in NUEVOS
         if p.exists() and re.search(r"\balias\s*=", p.read_text(encoding="utf-8"))
     ]
 
-    assert propiedades <= publicado, sorted(propiedades - publicado)
+    assert not en_castellano, en_castellano
     assert not con_alias, con_alias
 
 
@@ -146,12 +142,7 @@ def test_e2e_sh_y_e2e_support_usan_los_modulos_nuevos_con_las_mismas_opciones() 
 
 def test_cada_operacion_conserva_sus_parametros_y_su_security() -> None:
     """cada operación conserva sus parámetros y su security @assumption:ENG-02-ASM-07"""
-    base = json.loads(LINEA_BASE.read_text(encoding="utf-8"))["operaciones"]
-    hoy = _contrato_normalizado(_contrato_publicado())["operaciones"]
-
-    for clave, op in base.items():
-        assert hoy[clave].get("parameters") == op.get("parameters"), clave
-        assert hoy[clave].get("security") == op.get("security"), clave
+    assert operaciones_distintas_en("/register", "/me", "/password-recovery", "/link", "/venues") == []
 
 
 def test_ningun_documento_nombra_sedes_usuarios_sesion_ni_recuperacion_como_modulo() -> None:

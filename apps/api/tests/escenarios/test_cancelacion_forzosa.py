@@ -54,9 +54,9 @@ def anular(
     socio: Socio, admin: dict[str, str], reserva: dict[str, Any], motivo: str = MOTIVO
 ) -> int:
     r = socio.api.post(
-        f"/reservas/{reserva['id']}/anular",
+        f"/bookings/{reserva['id']}/void",
         headers=admin,
-        json={"motivo": motivo, "espacio_id": reserva["espacio_id"], "inicio": reserva["inicio"]},
+        json={"reason": motivo, "space_id": reserva["space_id"], "starts_at": reserva["starts_at"]},
     )
     return r.status_code
 
@@ -68,9 +68,9 @@ def cuerpo_esperado(sede: str, hora: str, motivo: str = MOTIVO) -> str:
 
 def para_el_admin(socio: Socio, admin: dict[str, str], reserva_id: str) -> dict[str, Any]:
     """La reserva como la ve el administrador en el historial global."""
-    r = socio.api.get(f"/reservas/todas?q={socio.sede}", headers=admin)
+    r = socio.api.get(f"/bookings/all?q={socio.sede}", headers=admin)
     assert r.status_code == 200
-    [reserva] = [x for x in r.json()["reservas"] if x["id"] == reserva_id]
+    [reserva] = [x for x in r.json()["bookings"] if x["id"] == reserva_id]
     assert isinstance(reserva, dict)
     return reserva
 
@@ -99,10 +99,10 @@ def test_al_anular_una_reserva_el_usuario_recibe_el_aviso_con_deporte_sede_fecha
 
     # Verifica: queda también en el centro, sin leer.
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    [entrada] = centro["notificaciones"]
-    assert (entrada["tipo"], entrada["titulo"], entrada["cuerpo"]) == (
-        "cancelacion_forzosa",
+    assert centro["unread"] == 1
+    [entrada] = centro["notifications"]
+    assert (entrada["kind"], entrada["title"], entrada["body"]) == (
+        "forced_cancellation",
         aviso.title,
         aviso.body,
     )
@@ -123,14 +123,14 @@ def test_al_tocar_el_aviso_la_app_sabe_que_reserva_abrir_y_el_historial_la_trae_
 
     # Verifica: el push y el centro llevan el tipo y el número de la reserva.
     [(_, aviso)] = canal.enviados
-    assert aviso.data == {"tipo": "cancelacion_forzosa", "reserva_id": str(reserva["id"])}
-    [entrada] = socio.centro()["notificaciones"]
-    assert entrada["reserva_id"] == reserva["id"]
+    assert aviso.data == {"kind": "forced_cancellation", "booking_id": str(reserva["id"])}
+    [entrada] = socio.centro()["notifications"]
+    assert entrada["booking_id"] == reserva["id"]
 
     # Verifica: el historial de esa persona la lista como anulada y con el motivo.
-    historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
-    assert [(r["id"], r["estado"], r["motivo"]) for r in historial["reservas"]] == [
-        (reserva["id"], "anulada", MOTIVO)
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
+    assert [(r["id"], r["status"], r["reason"]) for r in historial["bookings"]] == [
+        (reserva["id"], "voided", MOTIVO)
     ]
 
 
@@ -145,14 +145,14 @@ def test_el_envio_del_aviso_consta_en_la_trazabilidad_de_la_reserva(
     """el envío del aviso queda en la trazabilidad de la reserva @CU-24.2-H01-03 @supuesto:CU-24.2-SUP-07"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] is None
+    assert para_el_admin(socio, admin, reserva["id"])["notice_delivery"] is None
 
     assert anular(socio, admin, reserva) == 200
 
     # Verifica: el administrador ve que se envió, y cuándo.
     detalle = para_el_admin(socio, admin, reserva["id"])
-    assert detalle["aviso_envio"] == "enviada"
-    assert detalle["aviso_en"] is not None
+    assert detalle["notice_delivery"] == "sent"
+    assert detalle["notice_at"] is not None
 
 
 def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_reserva(
@@ -188,8 +188,8 @@ def test_una_baja_que_afecta_a_varios_usuarios_manda_un_aviso_a_cada_uno_con_su_
         ([uno.dispositivo], cuerpo_esperado(uno.sede, "20:00", "Baja de la sede")),
         ([otro.dispositivo], cuerpo_esperado(otro.sede, "21:00", "Baja de la sede")),
     ]
-    assert [e["titulo"] for e in uno.centro()["notificaciones"]] == [TITULO]
-    assert [e["titulo"] for e in otro.centro()["notificaciones"]] == [TITULO]
+    assert [e["title"] for e in uno.centro()["notifications"]] == [TITULO]
+    assert [e["title"] for e in otro.centro()["notifications"]] == [TITULO]
 
 
 def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con_la_cantidad(
@@ -210,29 +210,29 @@ def test_varias_reservas_anuladas_a_la_misma_persona_llegan_en_un_solo_aviso_con
 
     # Verifica: el centro trae un solo aviso, sin leer, que dice cuántas son y no apunta a una.
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    [entrada] = centro["notificaciones"]
-    assert entrada["titulo"] == "El club anuló 2 de tus reservas"
+    assert centro["unread"] == 1
+    [entrada] = centro["notifications"]
+    assert entrada["title"] == "El club anuló 2 de tus reservas"
     assert (
-        entrada["cuerpo"]
+        entrada["body"]
         == "Tenés 2 reservas anuladas por el club. Mirá el detalle en tu historial."
     )
-    assert entrada["reserva_id"] is None
+    assert entrada["booking_id"] is None
 
     # Verifica: el último push dice lo mismo y lleva a Mis reservas sin una reserva puntual.
     _, aviso = canal.enviados[-1]
-    assert (aviso.title, aviso.body) == (entrada["titulo"], entrada["cuerpo"])
-    assert aviso.data == {"tipo": "cancelacion_forzosa"}
+    assert (aviso.title, aviso.body) == (entrada["title"], entrada["body"])
+    assert aviso.data == {"kind": "forced_cancellation"}
 
     # Verifica: las dos figuran anuladas en el historial, cada una con su motivo.
-    historial = socio.api.get("/reservas?cuando=historial", headers=socio.sesion).json()
-    assert sorted((r["id"], r["estado"]) for r in historial["reservas"]) == sorted(
-        [(primera["id"], "anulada"), (segunda["id"], "anulada")]
+    historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
+    assert sorted((r["id"], r["status"]) for r in historial["bookings"]) == sorted(
+        [(primera["id"], "voided"), (segunda["id"], "voided")]
     )
 
     # Verifica: las dos tienen el envío en su trazabilidad.
     for reserva in (primera, segunda):
-        assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] == "enviada"
+        assert para_el_admin(socio, admin, reserva["id"])["notice_delivery"] == "sent"
 
 
 def test_una_anulacion_despues_de_leer_el_aviso_abre_uno_nuevo(
@@ -248,15 +248,15 @@ def test_una_anulacion_despues_de_leer_el_aviso_abre_uno_nuevo(
     primera = socio.reservar("20:00")
     segunda = socio.reservar("21:00")
     assert anular(socio, admin, primera) == 200
-    [leida] = socio.centro()["notificaciones"]
-    assert api.post(f"/notificaciones/{leida['id']}/leer", headers=socio.sesion).status_code == 204
+    [leida] = socio.centro()["notifications"]
+    assert api.post(f"/notifications/{leida['id']}/read", headers=socio.sesion).status_code == 204
 
     assert anular(socio, admin, segunda) == 200
 
     centro = socio.centro()
-    assert centro["no_leidas"] == 1
-    assert [e["titulo"] for e in centro["notificaciones"]] == [TITULO, TITULO]
-    assert [e["leida"] for e in centro["notificaciones"]] == [False, True]
+    assert centro["unread"] == 1
+    assert [e["title"] for e in centro["notifications"]] == [TITULO, TITULO]
+    assert [e["read"] for e in centro["notifications"]] == [False, True]
 
 
 def test_sin_permiso_de_notificaciones_no_llega_el_push_pero_el_aviso_esta_en_el_centro(
@@ -276,9 +276,9 @@ def test_sin_permiso_de_notificaciones_no_llega_el_push_pero_el_aviso_esta_en_el
     # Verifica: nada sale hacia el teléfono, el aviso está en el centro y el administrador ve
     # que el push no salió.
     assert canal.enviados == []
-    [entrada] = socio.centro()["notificaciones"]
-    assert entrada["titulo"] == TITULO
-    assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] == "sin_permiso"
+    [entrada] = socio.centro()["notifications"]
+    assert entrada["title"] == TITULO
+    assert para_el_admin(socio, admin, reserva["id"])["notice_delivery"] == "no_permission"
 
 
 def test_si_el_usuario_ya_habia_cancelado_la_reserva_no_recibe_aviso(
@@ -292,14 +292,14 @@ def test_si_el_usuario_ya_habia_cancelado_la_reserva_no_recibe_aviso(
     """si el usuario ya había cancelado la reserva, no recibe aviso @CU-24.2-H05-01"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    cancelada = socio.api.post(f"/reservas/{reserva['id']}/cancelar", headers=socio.sesion)
+    cancelada = socio.api.post(f"/bookings/{reserva['id']}/cancel", headers=socio.sesion)
     assert cancelada.status_code == 200
 
     assert anular(socio, admin, reserva) == 409
 
     # Verifica: sólo quedó la confirmación de su propia cancelación.
-    assert [a.data["tipo"] for _, a in canal.enviados] == ["cancelacion_usuario"]
-    assert [e["tipo"] for e in socio.centro()["notificaciones"]] == ["cancelacion_usuario"]
+    assert [a.data["kind"] for _, a in canal.enviados] == ["user_cancellation"]
+    assert [e["kind"] for e in socio.centro()["notifications"]] == ["user_cancellation"]
 
 
 def test_repetir_la_anulacion_no_repite_el_aviso(
@@ -318,7 +318,7 @@ def test_repetir_la_anulacion_no_repite_el_aviso(
     assert anular(socio, admin, reserva) == 200
 
     assert len(canal.enviados) == 1
-    assert len(socio.centro()["notificaciones"]) == 1
+    assert len(socio.centro()["notifications"]) == 1
 
 
 def test_una_anulacion_que_no_se_completa_no_deja_aviso(
@@ -332,12 +332,12 @@ def test_una_anulacion_que_no_se_completa_no_deja_aviso(
     """una anulación rechazada no deja aviso @supuesto:CU-24.2-SUP-08"""
     socio = un_socio(api, motor, iniciar_sesion, unico)
     reserva = socio.reservar("21:00")
-    movida = {**reserva, "inicio": "2030-01-01T21:00:00-03:00"}
+    movida = {**reserva, "starts_at": "2030-01-01T21:00:00-03:00"}
 
     assert anular(socio, admin, movida) == 409
 
     assert canal.enviados == []
-    assert socio.centro() == {"notificaciones": [], "no_leidas": 0}
+    assert socio.centro() == {"notifications": [], "unread": 0}
 
 
 def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
@@ -355,7 +355,7 @@ def test_si_el_push_falla_no_se_reintenta_y_el_aviso_queda_en_el_centro(
 
         assert anular(socio, admin, reserva) == 200
 
-        assert [e["titulo"] for e in socio.centro()["notificaciones"]] == [TITULO]
-        assert para_el_admin(socio, admin, reserva["id"])["aviso_envio"] == "fallida"
+        assert [e["title"] for e in socio.centro()["notifications"]] == [TITULO]
+        assert para_el_admin(socio, admin, reserva["id"])["notice_delivery"] == "failed"
     finally:
         app_de(api).dependency_overrides.pop(push_channel, None)

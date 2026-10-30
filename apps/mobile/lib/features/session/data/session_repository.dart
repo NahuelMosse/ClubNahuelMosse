@@ -38,7 +38,7 @@ class SessionRepository implements TokenSource {
   Future<Profile> fetchProfile() async {
     final token = await credentials.token();
     if (token == null) throw const InvalidCredentials();
-    return _profileFrom(await _api.get('/yo', token: token));
+    return _profileFrom(await _api.get('/me', token: token));
   }
 
   /// Lanza [DataRejected], [SessionExpired], [SinConexion] o [ErrorDelServidor].
@@ -49,11 +49,11 @@ class SessionRepository implements TokenSource {
     required String dni,
     required String birthDate,
   }) async {
-    final r = await _api.put('/yo', {
-      'nombre': firstName,
-      'apellido': lastName,
+    final r = await _api.put('/me', {
+      'first_name': firstName,
+      'last_name': lastName,
       'dni': dni,
-      'fecha_nacimiento': birthDate,
+      'birth_date': birthDate,
     }, token: token);
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 409 || r.codigo == 422) {
@@ -75,9 +75,9 @@ class SessionRepository implements TokenSource {
     String current,
     String newPassword,
   ) async {
-    final r = await _api.put('/yo/contrasena', {
-      'actual': current,
-      'nueva': newPassword,
+    final r = await _api.put('/me/password', {
+      'current_password': current,
+      'new_password': newPassword,
     }, token: token);
     switch (r.codigo) {
       case 204:
@@ -101,7 +101,7 @@ class SessionRepository implements TokenSource {
 
   /// Lanza [SessionExpired], [SinConexion] o [ErrorDelServidor].
   Future<void> deactivate(String token) async {
-    final r = await _api.delete('/yo', token: token);
+    final r = await _api.delete('/me', token: token);
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo != 204) throw ErrorDelServidor(r.codigo);
   }
@@ -110,12 +110,12 @@ class SessionRepository implements TokenSource {
     if (r.codigo == 401) throw const InvalidCredentials();
     if (r.codigo != 200) throw ErrorDelServidor(r.codigo);
     if (r.cuerpo case {
-      'nombre': final String firstName,
-      'apellido': final String lastName,
-      'correo': final String email,
-      'rol': final String role,
+      'first_name': final String firstName,
+      'last_name': final String lastName,
+      'email': final String email,
+      'role': final String role,
       'dni': final String dni,
-      'fecha_nacimiento': final String birth,
+      'birth_date': final String birth,
     }) {
       final known = Role.fromApi(role);
       final date = DateTime.tryParse(birth);

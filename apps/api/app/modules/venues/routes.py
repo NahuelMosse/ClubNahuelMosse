@@ -25,21 +25,21 @@ router = APIRouter(tags=["sedes"])
 
 class VenueView(BaseModel):
     id: UUID
-    nombre: str
-    direccion: str
-    apertura: str
-    cierre: str
-    dias: list[int]
-    canchas: int
-    deportes: list[str]
+    name: str
+    address: str
+    opens_at: str
+    closes_at: str
+    open_days: list[int]
+    space_count: int
+    sports: list[str]
 
 
 class VenueList(BaseModel):
-    sedes: list[VenueView]
+    venues: list[VenueView]
 
 
 class VenueErrors(BaseModel):
-    errores: dict[str, str]
+    errors: dict[str, str]
 
 
 def _hour(value: time) -> str:
@@ -49,19 +49,18 @@ def _hour(value: time) -> str:
 def _view(venue: Venue) -> VenueView:
     return VenueView(
         id=venue.id,
-        nombre=venue.name,
-        direccion=venue.address,
-        apertura=_hour(venue.opens_at),
-        cierre=_hour(venue.closes_at),
-        dias=list(venue.open_days),
-        canchas=venue.space_count,
-        deportes=list(venue.sports),
+        name=venue.name,
+        address=venue.address,
+        opens_at=_hour(venue.opens_at),
+        closes_at=_hour(venue.closes_at),
+        open_days=list(venue.open_days),
+        space_count=venue.space_count,
+        sports=list(venue.sports),
     )
 
 
 @router.get(
-    "/sedes",
-    operation_id="listar_sedes_sedes_get",
+    "/venues",
     response_model=VenueList,
     responses={401: {"model": NoSession}},
     summary="Las sedes activas, por nombre, con sus canchas y los deportes que ofrecen",
@@ -70,31 +69,30 @@ def list_venues(
     _: Annotated[Profile, Depends(current_user)],
     venues: Annotated[VenuesSql, Depends(venue_repository)],
 ) -> VenueList:
-    return VenueList(sedes=[_view(v) for v in active_venues(venues)])
+    return VenueList(venues=[_view(v) for v in active_venues(venues)])
 
 
 class VenueRequest(BaseModel):
-    nombre: str = ""
-    direccion: str = ""
-    apertura: str = ""
-    cierre: str = ""
+    name: str = ""
+    address: str = ""
+    opens_at: str = ""
+    closes_at: str = ""
     # Weekdays go from 1 to 7: more than seven makes no sense.
-    dias: Annotated[list[int], Field(max_length=7)] = []
+    open_days: Annotated[list[int], Field(max_length=7)] = []
 
 
 def _data(request: VenueRequest) -> VenueData:
     return VenueData(
-        name=request.nombre,
-        address=request.direccion,
-        opens_at=parse_time(request.apertura),
-        closes_at=parse_time(request.cierre),
-        open_days=tuple(request.dias),
+        name=request.name,
+        address=request.address,
+        opens_at=parse_time(request.opens_at),
+        closes_at=parse_time(request.closes_at),
+        open_days=tuple(request.open_days),
     )
 
 
 @router.post(
-    "/sedes",
-    operation_id="alta_de_sede_sedes_post",
+    "/venues",
     status_code=status.HTTP_201_CREATED,
     response_model=VenueView,
     responses={
@@ -114,22 +112,21 @@ def add_venue(
     try:
         venue = create_venue(profile, _data(request), venues)
     except Duplicate:
-        return conflict({"nombre": "Ya existe una sede con ese nombre"})
+        return conflict({"name": "Ya existe una sede con ese nombre"})
     return _view(venue)
 
 
 class VenueEditRequest(VenueRequest):
     # Save anyway a schedule that leaves future bookings outside.
-    confirmar: bool = False
+    confirm: bool = False
 
 
 class BookingsOutside(BaseModel):
-    reservas_afuera: int
+    bookings_outside: int
 
 
 @router.put(
-    "/sedes/{sede_id}",
-    operation_id="edicion_de_sede_sedes__sede_id__put",
+    "/venues/{venue_id}",
     response_model=VenueView,
     responses={
         401: {"model": NoSession},
@@ -138,7 +135,7 @@ class BookingsOutside(BaseModel):
         409: {
             "model": VenueErrors | BookingsOutside,
             "description": "Otra sede activa ya tiene ese nombre, o el horario nuevo deja "
-            "afuera reservas futuras y falta `confirmar`",
+            "afuera reservas futuras y falta `confirm`",
         },
         422: {"model": VenueErrors},
     },
@@ -152,24 +149,23 @@ def edit_venue(
     request: VenueEditRequest,
     profile: Annotated[Profile, Depends(current_user)],
     venues: Annotated[VenuesSql, Depends(venue_repository)],
-    sede_id: Annotated[Identifier, Path()],
+    venue_id: Annotated[Identifier, Path()],
 ) -> VenueView | Response:
     try:
         venue = update_venue(
-            profile, sede_id, _data(request), confirm=request.confirmar, venues=venues
+            profile, venue_id, _data(request), confirm=request.confirm, venues=venues
         )
     except Duplicate:
-        return conflict({"nombre": "Ya existe una sede con ese nombre"})
+        return conflict({"name": "Ya existe una sede con ese nombre"})
     except BookingsOutsideHours as e:
         return JSONResponse(
-            status_code=status.HTTP_409_CONFLICT, content={"reservas_afuera": e.count}
+            status_code=status.HTTP_409_CONFLICT, content={"bookings_outside": e.count}
         )
     return _view(venue)
 
 
 @router.delete(
-    "/sedes/{sede_id}",
-    operation_id="baja_de_sede_sedes__sede_id__delete",
+    "/venues/{venue_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
@@ -186,12 +182,12 @@ def edit_venue(
 def remove_venue(
     profile: Annotated[Profile, Depends(current_user)],
     venues: Annotated[VenuesSql, Depends(venue_repository)],
-    sede_id: Annotated[Identifier, Path()],
+    venue_id: Annotated[Identifier, Path()],
 ) -> Response:
     try:
-        deactivate_venue(profile, sede_id, venues)
+        deactivate_venue(profile, venue_id, venues)
     except HasFutureBookings:
         return conflict(
-            {"sede": "No se puede dar de baja la sede porque posee reservas futuras asociadas."}
+            {"venue": "No se puede dar de baja la sede porque posee reservas futuras asociadas."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

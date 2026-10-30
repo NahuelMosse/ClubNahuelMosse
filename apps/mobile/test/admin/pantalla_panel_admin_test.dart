@@ -26,13 +26,13 @@ void main() {
   setUpAll(cargarFuentes);
 
   const reservaJson =
-      '{"id": "00000000-0000-7000-8000-000000000001", "espacio_id": "00000000-0000-7000-8000-000000000009", "sede_id": "00000000-0000-7000-8000-000000000001", "espacio":'
-      ' "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", "tipo": "F5", "sede":'
-      ' "Sede Morón", "direccion": "Av. Rivadavia 19850", "inicio":'
-      ' "2026-11-12T21:00:00-03:00", "fin": "2026-11-12T22:00:00-03:00", "total": 38000,'
-      ' "estado": "activa", "motivo": null, "usuario_id": "00000000-0000-7000-8000-000000000001", "usuario": "Nahuel Mosse",'
-      ' "creado_en": "2026-11-02T18:42:00-03:00", "cancelada_en": null,'
-      ' "cancelada_por_nombre": null, "espacio_de_baja": false}';
+      '{"id": "00000000-0000-7000-8000-000000000001", "space_id": "00000000-0000-7000-8000-000000000009", "venue_id": "00000000-0000-7000-8000-000000000001", "space":'
+      ' "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", "kind": "F5", "venue":'
+      ' "Sede Morón", "address": "Av. Rivadavia 19850", "starts_at":'
+      ' "2026-11-12T21:00:00-03:00", "ends_at": "2026-11-12T22:00:00-03:00", "total": 38000,'
+      ' "status": "active", "reason": null, "user_id": "00000000-0000-7000-8000-000000000001", "user": "Nahuel Mosse",'
+      ' "created_at": "2026-11-02T18:42:00-03:00", "canceled_at": null,'
+      ' "canceled_by_name": null, "space_deactivated": false}';
 
   Widget pantalla({required ApiClient api}) {
     final sesion = SesionFalsa(perfilAdmin);
@@ -56,13 +56,13 @@ void main() {
       tester,
       pantalla(
         api: apiRutas({
-          'GET /reservas/todas': (
+          'GET /bookings/all': (
             200,
-            '{"reservas": [$reservaJson], "total": 1, "pagina": 1,'
-                ' "por_pagina": 20, "contadores": {"todas": 1, "activas": 1,'
-                ' "completadas": 0, "anuladas": 0}}',
+            '{"bookings": [$reservaJson], "total": 1, "page": 1,'
+                ' "per_page": 20, "counters": {"all": 1, "active": 1,'
+                ' "completed": 0, "voided": 0}}',
           ),
-          'GET /espacios/catalogo': (200, catalogoJson),
+          'GET /spaces/catalog': (200, catalogoJson),
         }),
       ),
       tema: darkTheme,
@@ -82,13 +82,13 @@ void main() {
       tester,
       pantalla(
         api: apiRutas({
-          'GET /reservas/todas': (
+          'GET /bookings/all': (
             200,
-            '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
-                ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
-                ' "anuladas": 0}}',
+            '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
+                ' "counters": {"all": 0, "active": 0, "completed": 0,'
+                ' "voided": 0}}',
           ),
-          'GET /espacios/catalogo': (200, catalogoJson),
+          'GET /spaces/catalog': (200, catalogoJson),
         }),
       ),
       tema: darkTheme,
@@ -106,13 +106,13 @@ void main() {
         tester,
         pantalla(
           api: apiRutas({
-            'GET /reservas/todas': (
+            'GET /bookings/all': (
               200,
-              '{"reservas": [$reservaJson], "total": 1, "pagina": 1,'
-                  ' "por_pagina": 20, "contadores": {"todas": 1, "activas": 1,'
-                  ' "completadas": 0, "anuladas": 0}}',
+              '{"bookings": [$reservaJson], "total": 1, "page": 1,'
+                  ' "per_page": 20, "counters": {"all": 1, "active": 1,'
+                  ' "completed": 0, "voided": 0}}',
             ),
-            'GET /espacios/catalogo': (200, catalogoJson),
+            'GET /spaces/catalog': (200, catalogoJson),
           }),
         ),
         tema: darkTheme,
@@ -134,9 +134,9 @@ void main() {
       .replaceFirst('Nahuel Mosse', 'Socio $id');
 
   String pagina(Iterable<int> ids, int numero) =>
-      '{"reservas": [${ids.map(reservaN).join(',')}], "total": 40,'
-      ' "pagina": $numero, "por_pagina": 20, "contadores": {"todas": 40,'
-      ' "activas": 40, "completadas": 0, "anuladas": 0}}';
+      '{"bookings": [${ids.map(reservaN).join(',')}], "total": 40,'
+      ' "page": $numero, "per_page": 20, "counters": {"all": 40,'
+      ' "active": 40, "completed": 0, "voided": 0}}';
 
   testWidgets(
     'un cambio de filtro con la página siguiente en camino no traba el scroll '
@@ -147,8 +147,8 @@ void main() {
         'http://api.falsa',
         cliente: MockClient((pedido) async {
           final cabeceras = {'content-type': 'application/json; charset=utf-8'};
-          if (pedido.url.path == '/reservas/todas') {
-            if (pedido.url.queryParameters['pagina'] == '2') {
+          if (pedido.url.path == '/bookings/all') {
+            if (pedido.url.queryParameters['page'] == '2') {
               final c = Completer<http.Response>();
               segundas.add(c);
               return c.future;
@@ -161,7 +161,7 @@ void main() {
           }
           return http.Response.bytes(
             utf8.encode(catalogoJson),
-            pedido.url.path == '/espacios/catalogo' ? 200 : 404,
+            pedido.url.path == '/spaces/catalog' ? 200 : 404,
             headers: cabeceras,
           );
         }),

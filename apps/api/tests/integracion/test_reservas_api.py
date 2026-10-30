@@ -43,7 +43,7 @@ def _reservar(
 
 
 def _yo(api: TestClient, motor: Engine, token: str) -> UUID:
-    correo = api.get("/yo", headers=_con(token)).json()["correo"]
+    correo = api.get("/me", headers=_con(token)).json()["email"]
     with motor.connect() as conn:
         return UUID(
             str(
@@ -59,15 +59,15 @@ def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
 ) -> None:
     sede_id, prefijo = sede
     espacio = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede_id,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     ).json()["id"]
     yo = _yo(api, motor, token_usuario)
@@ -80,39 +80,39 @@ def test_cada_uno_ve_sus_proximas_y_su_historial_en_orden(
     _reservar(motor, _yo(api, motor, token_admin), espacio, hoy + timedelta(days=4), 10)
 
     def reservas(cuando: str) -> list[dict[str, object]]:
-        r = api.get("/reservas", headers=_con(token_usuario), params={"cuando": cuando})
+        r = api.get("/bookings", headers=_con(token_usuario), params={"when": cuando})
         assert r.status_code == 200
-        lista: list[dict[str, object]] = r.json()["reservas"]
+        lista: list[dict[str, object]] = r.json()["bookings"]
         return lista
 
-    proximas = reservas("proximas")
-    assert [str(p["inicio"])[:10] for p in proximas] == [
+    proximas = reservas("upcoming")
+    assert [str(p["starts_at"])[:10] for p in proximas] == [
         str(hoy + timedelta(days=1)),
         str(hoy + timedelta(days=3)),
     ]
-    assert proximas[0]["espacio"] == f"{prefijo}_Futbol_F5_1"
-    assert proximas[0]["direccion"] == "Av. Vergara 1850"
-    assert {p["estado"] for p in proximas} == {"activa"}
-    historial = reservas("historial")
-    assert [h["estado"] for h in historial] == ["cancelada", "anulada", "completada"]
-    assert historial[1]["motivo"] == "lluvia"
+    assert proximas[0]["space"] == f"{prefijo}_Futbol_F5_1"
+    assert proximas[0]["address"] == "Av. Vergara 1850"
+    assert {p["status"] for p in proximas} == {"active"}
+    historial = reservas("history")
+    assert [h["status"] for h in historial] == ["canceled", "voided", "completed"]
+    assert historial[1]["reason"] == "lluvia"
 
 
 def test_las_reservas_se_piden_con_sesion(api: TestClient) -> None:
-    assert api.get("/reservas").status_code == 401
+    assert api.get("/bookings").status_code == 401
 
 
 def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede_id,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     )
     return str(r.json()["id"])
@@ -124,13 +124,13 @@ def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
     manana = (date.today() + timedelta(days=1)).isoformat()
-    pedido = {"espacio_id": espacio, "fecha": manana, "desde": "18:00", "horas": 2}
+    pedido = {"space_id": espacio, "date": manana, "start_hour": "18:00", "hours": 2}
 
-    primera = api.post("/reservas", headers=_con(token_usuario), json=pedido)
-    segunda = api.post("/reservas", headers=_con(token_usuario), json=pedido)
+    primera = api.post("/bookings", headers=_con(token_usuario), json=pedido)
+    segunda = api.post("/bookings", headers=_con(token_usuario), json=pedido)
 
     assert primera.status_code == 201
-    assert (primera.json()["total"], primera.json()["estado"]) == (76000, "activa")
+    assert (primera.json()["total"], primera.json()["status"]) == (76000, "active")
     assert segunda.status_code == 201
     assert segunda.json()["id"] == primera.json()["id"]
     with motor.connect() as conn:
@@ -141,11 +141,11 @@ def test_reservar_guarda_el_precio_y_un_pedido_repetido_devuelve_la_misma(
             == 1
         )
     grilla = api.get(
-        f"/espacios/{espacio}/horarios",
+        f"/spaces/{espacio}/slots",
         headers=_con(token_usuario),
-        params={"fecha": manana},
+        params={"date": manana},
     ).json()
-    libres = {f["inicio"]: f["disponible"] for f in grilla["franjas"]}
+    libres = {f["starts_at"]: f["available"] for f in grilla["slots"]}
     assert (libres["17:00"], libres["18:00"], libres["19:00"], libres["20:00"]) == (
         True,
         False,
@@ -160,18 +160,18 @@ def test_el_administrador_no_reserva_y_un_espacio_dado_de_baja_no_se_reserva(
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
     manana = (date.today() + timedelta(days=1)).isoformat()
-    pedido = {"espacio_id": espacio, "fecha": manana, "desde": "10:00", "horas": 1}
+    pedido = {"space_id": espacio, "date": manana, "start_hour": "10:00", "hours": 1}
 
-    assert api.post("/reservas", headers=_con(token_admin), json=pedido).status_code == 403
+    assert api.post("/bookings", headers=_con(token_admin), json=pedido).status_code == 403
     with motor.begin() as conn:
         conn.execute(
             text("UPDATE space SET active = false, deactivated_at = now() WHERE id = :e"),
             {"e": espacio},
         )
-    r = api.post("/reservas", headers=_con(token_usuario), json=pedido)
+    r = api.post("/bookings", headers=_con(token_usuario), json=pedido)
     assert r.status_code == 422
-    assert "espacio_id" in r.json()["errores"]
-    assert api.post("/reservas", json=pedido).status_code == 401
+    assert "space_id" in r.json()["errors"]
+    assert api.post("/bookings", json=pedido).status_code == 401
 
 
 def test_dos_reservas_a_la_vez_del_mismo_horario_dejan_una_y_la_otra_es_ocupado(
@@ -236,14 +236,14 @@ def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
     manana = (date.today() + timedelta(days=1)).isoformat()
-    pedido = {"espacio_id": espacio, "fecha": manana, "desde": "18:00", "horas": 1}
-    reserva = api.post("/reservas", headers=_con(token_usuario), json=pedido).json()["id"]
+    pedido = {"space_id": espacio, "date": manana, "start_hour": "18:00", "hours": 1}
+    reserva = api.post("/bookings", headers=_con(token_usuario), json=pedido).json()["id"]
 
-    r = api.post(f"/reservas/{reserva}/cancelar", headers=_con(token_usuario))
-    otra_vez = api.post(f"/reservas/{reserva}/cancelar", headers=_con(token_usuario))
+    r = api.post(f"/bookings/{reserva}/cancel", headers=_con(token_usuario))
+    otra_vez = api.post(f"/bookings/{reserva}/cancel", headers=_con(token_usuario))
 
     assert r.status_code == 200
-    assert r.json()["estado"] == "cancelada"
+    assert r.json()["status"] == "canceled"
     assert otra_vez.status_code == 200
     with motor.connect() as conn:
         fila = conn.execute(
@@ -255,7 +255,7 @@ def test_cancelar_libera_el_horario_estampa_quien_y_se_puede_repetir(
         ).one()
     assert tuple(fila) == (True, True)
     # El horario vuelve a estar libre para otra reserva.
-    assert api.post("/reservas", headers=_con(token_usuario), json=pedido).status_code == 201
+    assert api.post("/bookings", headers=_con(token_usuario), json=pedido).status_code == 201
 
 
 def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
@@ -286,12 +286,12 @@ def test_no_se_cancela_una_ajena_una_empezada_ni_una_anulada(
         )
 
     def cancelar(reserva: UUID) -> int:
-        return api.post(f"/reservas/{reserva}/cancelar", headers=_con(token_usuario)).status_code
+        return api.post(f"/bookings/{reserva}/cancel", headers=_con(token_usuario)).status_code
 
     assert cancelar(ajena) == 404
     assert cancelar(mia) == 409
     assert cancelar(anulada) == 409
-    assert api.post(f"/reservas/{mia}/cancelar").status_code == 401
+    assert api.post(f"/bookings/{mia}/cancel").status_code == 401
 
 
 def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total(
@@ -300,32 +300,32 @@ def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total
     sede_id, _ = sede
     una = _espacio_nuevo(api, token_admin, sede_id)
     otra = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": True,
-            "iluminada": True,
-            "precio_por_hora": 43000,
+            "venue_id": sede_id,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": True,
+            "lit": True,
+            "price_per_hour": 43000,
         },
     ).json()["id"]
     manana = (date.today() + timedelta(days=1)).isoformat()
     reserva = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": una, "fecha": manana, "desde": "21:00", "horas": 2},
+        json={"space_id": una, "date": manana, "start_hour": "21:00", "hours": 2},
     ).json()
 
     r = api.post(
-        f"/reservas/{reserva['id']}/modificar",
+        f"/bookings/{reserva['id']}/modify",
         headers=_con(token_usuario),
-        json={"espacio_id": otra, "fecha": manana, "desde": "18:00"},
+        json={"space_id": otra, "date": manana, "start_hour": "18:00"},
     )
 
     assert r.status_code == 200, r.text
-    assert (r.json()["id"], r.json()["espacio_id"], r.json()["total"]) == (
+    assert (r.json()["id"], r.json()["space_id"], r.json()["total"]) == (
         reserva["id"],
         otra,
         86000,
@@ -333,23 +333,23 @@ def test_modificar_mueve_la_misma_reserva_libera_el_horario_y_recalcula_el_total
     # El horario anterior quedó libre y la grilla de la cancha nueva lo ignora sólo para su
     # dueño.
     libre = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": una, "fecha": manana, "desde": "21:00", "horas": 1},
+        json={"space_id": una, "date": manana, "start_hour": "21:00", "hours": 1},
     )
     assert libre.status_code == 201
     grilla = api.get(
-        f"/espacios/{otra}/horarios",
+        f"/spaces/{otra}/slots",
         headers=_con(token_usuario),
-        params={"fecha": manana, "horas": 2, "reserva_id": reserva["id"]},
+        params={"date": manana, "hours": 2, "booking_id": reserva["id"]},
     ).json()
-    assert {f["inicio"]: f["disponible"] for f in grilla["franjas"]}["18:00"] is True
+    assert {f["starts_at"]: f["available"] for f in grilla["slots"]}["18:00"] is True
     ajena = api.get(
-        f"/espacios/{otra}/horarios",
+        f"/spaces/{otra}/slots",
         headers=_con(token_admin),
-        params={"fecha": manana, "horas": 2, "reserva_id": reserva["id"]},
+        params={"date": manana, "hours": 2, "booking_id": reserva["id"]},
     ).json()
-    assert {f["inicio"]: f["disponible"] for f in ajena["franjas"]}["18:00"] is False
+    assert {f["starts_at"]: f["available"] for f in ajena["slots"]}["18:00"] is False
 
 
 def test_modificar_rechaza_lo_que_no_corresponde(
@@ -358,47 +358,47 @@ def test_modificar_rechaza_lo_que_no_corresponde(
     sede_id, _ = sede
     espacio = _espacio_nuevo(api, token_admin, sede_id)
     hockey = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Hockey",
-            "tipo": "H7",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 50000,
+            "venue_id": sede_id,
+            "sport": "Hockey",
+            "kind": "H7",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 50000,
         },
     ).json()["id"]
     manana = (date.today() + timedelta(days=1)).isoformat()
     mia = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": espacio, "fecha": manana, "desde": "10:00", "horas": 1},
+        json={"space_id": espacio, "date": manana, "start_hour": "10:00", "hours": 1},
     ).json()["id"]
     _reservar(motor, _yo(api, motor, token_admin), espacio, date.today() + timedelta(days=1), 12)
 
     def cambiar(cuerpo: dict[str, object], token: str = token_usuario) -> tuple[int, object]:
-        r = api.post(f"/reservas/{mia}/modificar", headers=_con(token), json=cuerpo)
+        r = api.post(f"/bookings/{mia}/modify", headers=_con(token), json=cuerpo)
         return r.status_code, r.json() if r.content else None
 
     # El mismo horario es un reintento de un cambio que ya se hizo: responde la reserva.
-    mismo = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "10:00"})
+    mismo = cambiar({"space_id": espacio, "date": manana, "start_hour": "10:00"})
     assert mismo[0] == 200
     assert isinstance(mismo[1], dict)
     assert mismo[1]["id"] == mia
-    assert cambiar({"espacio_id": hockey, "fecha": manana, "desde": "10:00"})[0] == 422
-    ocupado = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "12:00"})
-    assert ocupado == (409, {"errores": {"horario": "Ese horario se ocupó"}})
+    assert cambiar({"space_id": hockey, "date": manana, "start_hour": "10:00"})[0] == 422
+    ocupado = cambiar({"space_id": espacio, "date": manana, "start_hour": "12:00"})
+    assert ocupado == (409, {"errors": {"slot": "Ese horario se ocupó"}})
     assert (
-        cambiar({"espacio_id": espacio, "fecha": manana, "desde": "15:00"}, token_admin)[0] == 403
+        cambiar({"space_id": espacio, "date": manana, "start_hour": "15:00"}, token_admin)[0] == 403
     )
     with motor.begin() as conn:
         conn.execute(
             text("UPDATE booking SET status = 'voided', reason = 'lluvia' WHERE id = :id"),
             {"id": mia},
         )
-    cambio = cambiar({"espacio_id": espacio, "fecha": manana, "desde": "15:00"})
-    assert cambio == (409, {"errores": {"reserva": "Esto cambió mientras tanto"}})
+    cambio = cambiar({"space_id": espacio, "date": manana, "start_hour": "15:00"})
+    assert cambio == (409, {"errors": {"booking": "Esto cambió mientras tanto"}})
 
 
 def test_dos_cambios_cruzados_entre_las_mismas_canchas_se_esperan_sin_trabarse(
@@ -468,14 +468,14 @@ def test_una_reserva_validada_con_el_horario_viejo_no_se_guarda(
         BookingsSql(conn).insert(yo, UUID(espacio), manana, manana + timedelta(hours=1), vieja)
     # Verifica: por la API, se vuelve a validar con el horario nuevo.
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
         json={
-            "espacio_id": espacio,
-            "fecha": manana.date().isoformat(),
-            "desde": "08:00",
-            "horas": 1,
+            "space_id": espacio,
+            "date": manana.date().isoformat(),
+            "start_hour": "08:00",
+            "hours": 1,
         },
     )
     assert r.status_code == 422
-    assert r.json()["errores"]["desde"] == "La sede abre a las 09:00"
+    assert r.json()["errors"]["start_hour"] == "La sede abre a las 09:00"

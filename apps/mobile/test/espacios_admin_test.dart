@@ -134,7 +134,7 @@ void main() {
       await e.repository.catalog();
       await e.repository.catalog();
       expect(
-        pedidos.where((p) => p.url.path == '/espacios/catalogo'),
+        pedidos.where((p) => p.url.path == '/spaces/catalog'),
         hasLength(1),
       );
     });
@@ -149,9 +149,9 @@ void main() {
       );
       expect((nombre, numero), ('Moron_Rivadavia_19850_Futbol_F5_1', 1));
       expect(pedidos.single.url.queryParameters, {
-        'sede_id': '00000000-0000-7000-8000-000000000001',
-        'deporte': 'Futbol',
-        'tipo': 'F5',
+        'venue_id': '00000000-0000-7000-8000-000000000001',
+        'sport': 'Futbol',
+        'kind': 'F5',
       });
     });
 
@@ -171,13 +171,13 @@ void main() {
       final espacio = await alta(e);
       expect(espacio.name, 'Moron_Rivadavia_19850_Futbol_F5_1');
       expect(jsonDecode(pedidos.single.body), {
-        'sede_id': '00000000-0000-7000-8000-000000000001',
-        'deporte': 'Futbol',
-        'tipo': 'F5',
-        'techada': false,
-        'iluminada': true,
-        'precio_por_hora': 38000,
-        'numero': 1,
+        'venue_id': '00000000-0000-7000-8000-000000000001',
+        'sport': 'Futbol',
+        'kind': 'F5',
+        'covered': false,
+        'lit': true,
+        'price_per_hour': 38000,
+        'number': 1,
       });
     });
 
@@ -187,8 +187,8 @@ void main() {
           rutasDeEspacios(
             alta: (
               409,
-              '{"errores": {"nombre": "Ya existe"}, '
-                  '"nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "numero": 2}',
+              '{"errors": {"name": "Ya existe"}, '
+                  '"name": "Moron_Rivadavia_19850_Futbol_F5_2", "number": 2}',
             ),
           ),
         ),
@@ -213,7 +213,7 @@ void main() {
           rutasDeEspacios(
             alta: (
               422,
-              '{"errores": {"sede_id": "La sede ya no está disponible"}}',
+              '{"errors": {"venue_id": "La sede ya no está disponible"}}',
             ),
           ),
         ),
@@ -230,9 +230,9 @@ void main() {
         inicio: '/admin/espacios',
         api: apiRutas({
           ...rutasDeEspacios(),
-          'GET /espacios': (
+          'GET /spaces': (
             200,
-            '{"espacios": [$espacioF5Json, $espacioTenisJson, $espacioCastelarJson]}',
+            '{"spaces": [$espacioF5Json, $espacioTenisJson, $espacioCastelarJson]}',
           ),
         }),
       );
@@ -253,7 +253,7 @@ void main() {
         inicio: '/admin/espacios',
         api: apiRutas({
           ...rutasDeEspacios(),
-          'GET /espacios': (200, '{"espacios": []}'),
+          'GET /spaces': (200, '{"spaces": []}'),
         }),
       );
       expect(find.text('0 ESPACIOS ACTIVOS · 0 SEDES'), findsOneWidget);
@@ -341,7 +341,7 @@ void main() {
       await tester.tap(find.text('GUARDAR ESPACIO'));
       await tester.pumpAndSettle();
       final alta = pedidos.singleWhere((p) => p.method == 'POST');
-      expect(jsonDecode(alta.body), containsPair('numero', 1));
+      expect(jsonDecode(alta.body), containsPair('number', 1));
       expect(find.text('¡Espacio deportivo creado!'), findsOneWidget);
       expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
       semantica.dispose();
@@ -356,9 +356,9 @@ void main() {
         rutas: rutasDeEspacios(
           alta: (
             409,
-            '{"errores": {"nombre": "Ya existe un espacio deportivo con ese nombre '
+            '{"errors": {"name": "Ya existe un espacio deportivo con ese nombre '
                 'en la sede seleccionada."}, '
-                '"nombre": "Moron_Rivadavia_19850_Futbol_F5_2", "numero": 2}',
+                '"name": "Moron_Rivadavia_19850_Futbol_F5_2", "number": 2}',
           ),
         ),
       );
@@ -382,7 +382,7 @@ void main() {
         final semantica = tester.ensureSemantics();
         final pedidos = await abrir(
           tester,
-          rutas: {...rutasDeEspacios(), 'GET /espacios/nombre': (500, '{}')},
+          rutas: {...rutasDeEspacios(), 'GET /spaces/name': (500, '{}')},
         );
         await elegir(tester, 'Sede', 'Sede Morón');
         await elegir(tester, 'Deporte', 'Fútbol');
@@ -392,7 +392,7 @@ void main() {
         await tester.tap(find.text('REINTENTAR'));
         await tester.pumpAndSettle();
         expect(
-          pedidos.where((p) => p.url.path == '/espacios/nombre'),
+          pedidos.where((p) => p.url.path == '/spaces/name'),
           hasLength(2),
         );
         semantica.dispose();
@@ -405,7 +405,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       final pedidos = await abrir(
         tester,
-        rutas: {...rutasDeEspacios(), 'GET /espacios/nombre': (500, '{}')},
+        rutas: {...rutasDeEspacios(), 'GET /spaces/name': (500, '{}')},
       );
       await completar(tester);
       await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
@@ -422,7 +422,7 @@ void main() {
       final semantica = tester.ensureSemantics();
       await abrir(
         tester,
-        rutas: {...rutasDeEspacios(), 'GET /espacios/nombre': (401, '{}')},
+        rutas: {...rutasDeEspacios(), 'GET /spaces/name': (401, '{}')},
       );
       await elegir(tester, 'Sede', 'Sede Morón');
       await elegir(tester, 'Deporte', 'Fútbol');

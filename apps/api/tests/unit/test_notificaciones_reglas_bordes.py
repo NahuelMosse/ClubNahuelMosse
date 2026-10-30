@@ -36,12 +36,12 @@ def test_un_tipo_desconocido_del_deporte_nombra_el_deporte_y_no_falla() -> None:
 def test_un_solo_anulado_lleva_su_reserva_y_varios_sólo_la_cuenta() -> None:  # @ENG-14-S1
     one = forced_cancellation_message([_voided("Lluvia")])
     assert one.title == "El club anuló tu reserva"
-    assert one.data["reserva_id"]
+    assert one.data["booking_id"]
 
     two = forced_cancellation_message([_voided("Lluvia"), _voided("Lluvia")])
     assert two == forced_cancellations_message(2)
     assert two.title == "El club anuló 2 de tus reservas"
-    assert two.data == {"tipo": "cancelacion_forzosa"}
+    assert two.data == {"kind": "forced_cancellation"}
 
 
 def test_el_motivo_en_el_límite_exacto_no_se_recorta() -> None:  # @ENG-14-S1

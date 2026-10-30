@@ -123,12 +123,12 @@ Future<void> crearCuenta({
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'nombre': nombre,
-      'apellido': 'Mosse',
+      'name': nombre,
+      'last_name': 'Mosse',
       'dni': dniDe(unico()),
-      'fecha_nacimiento': '2000-03-14',
-      'correo': correo,
-      'contrasena': contrasena,
+      'birth_date': '2000-03-14',
+      'email': correo,
+      'password': contrasena,
     }),
   );
   if (r.statusCode == 409 && _soloElCorreoRepetido(r.body)) {
@@ -143,7 +143,7 @@ Future<void> crearCuenta({
 
 /// El 409 del registro dice que el único campo repetido es el correo.
 bool _soloElCorreoRepetido(String cuerpo) {
-  if (jsonDecode(cuerpo) case {'campos': ['correo']}) return true;
+  if (jsonDecode(cuerpo) case {'campos': ['email']}) return true;
   return false;
 }
 

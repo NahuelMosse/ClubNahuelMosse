@@ -186,14 +186,14 @@ def validate_change(
 
     The error keys and the names in [given] are the JSON field names of the API."""
     errors: dict[str, str] = {}
-    if not given & {"techada", "iluminada", "precio_por_hora"}:
-        errors["cambio"] = "No hay nada que cambiar"
-    if "techada" in given and covered is None:
-        errors["techada"] = REQUIRED
-    if "iluminada" in given and lit is None:
-        errors["iluminada"] = REQUIRED
-    if "precio_por_hora" in given and (error := _price_error(price_per_hour)):
-        errors["precio_por_hora"] = error
+    if not given & {"covered", "lit", "price_per_hour"}:
+        errors["change"] = "No hay nada que cambiar"
+    if "covered" in given and covered is None:
+        errors["covered"] = REQUIRED
+    if "lit" in given and lit is None:
+        errors["lit"] = REQUIRED
+    if "price_per_hour" in given and (error := _price_error(price_per_hour)):
+        errors["price_per_hour"] = error
     if errors:
         return None, errors
     return SpaceChange(covered, lit, price_per_hour), {}
@@ -203,23 +203,23 @@ def validate_space(data: SpaceData) -> tuple[NewSpace | None, dict[str, str]]:
     """The space ready to save, or the error of each field (keys are JSON field names)."""
     errors: dict[str, str] = {}
     if data.venue_id is None:
-        errors["sede_id"] = REQUIRED
+        errors["venue_id"] = REQUIRED
     sports = {s.key for s in CATALOG}
     if not data.sport:
-        errors["deporte"] = REQUIRED
+        errors["sport"] = REQUIRED
     elif data.sport not in sports:
-        errors["deporte"] = "Elegí un deporte de la lista"
+        errors["sport"] = "Elegí un deporte de la lista"
     if not data.kind:
-        errors["tipo"] = REQUIRED
+        errors["kind"] = REQUIRED
     elif data.sport in sports and catalog_kind(data.sport, data.kind) is None:
-        errors["tipo"] = "Elegí un tipo de la lista"
+        errors["kind"] = "Elegí un tipo de la lista"
     if data.covered is None:
-        errors["techada"] = REQUIRED
+        errors["covered"] = REQUIRED
     if data.lit is None:
-        errors["iluminada"] = REQUIRED
+        errors["lit"] = REQUIRED
     price = data.price_per_hour
     if (error := _price_error(price)) is not None:
-        errors["precio_por_hora"] = error
+        errors["price_per_hour"] = error
     if errors or data.venue_id is None or data.covered is None or data.lit is None or price is None:
         return None, errors
     return (

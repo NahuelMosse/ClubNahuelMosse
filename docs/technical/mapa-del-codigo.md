@@ -112,7 +112,7 @@ errores del negocio), `http_errors.py`, `responses.py`, `input_validation.py`, `
 |---|---|
 | `main.py` | `create_app()`: arma la app, los handlers de error y los routers; `_lifespan` (el barrido en segundo plano) |
 | `health.py` | `/health` (el proceso vive) |
-| `e2e_support.py` | `/_pruebas/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
+| `e2e_support.py` | `/_testing/*`: atajos para los e2e; sólo se monta con `PRUEBAS=true` y el emulador |
 
 **`shared/`**
 
@@ -154,39 +154,39 @@ si el rol no es `admin`.
 |---|---|---|---|
 | GET `/health` | `health.py` | — | cualquiera |
 | GET `/openapi.json` | FastAPI | — | cualquiera (también `/docs` y `/redoc`) |
-| POST `/registro` | `users/registration_routes.py` | `register` | cualquiera |
-| POST `/recuperacion` | `password_recovery/routes.py` | `request_link` | cualquiera |
-| POST `/recuperacion/consulta` | `password_recovery/routes.py` | `link_is_valid` | cualquiera |
-| PUT `/recuperacion` | `password_recovery/routes.py` | `use_link` | cualquiera |
-| GET `/enlace/recuperar` | `password_recovery/routes.py` | página que abre la app desde el correo | cualquiera |
-| GET `/yo` | `users/account_routes.py` | — | sesión |
-| PUT `/yo` | `users/account_routes.py` | `update_profile` | sesión |
-| PUT `/yo/contrasena` | `users/account_routes.py` | `change_password` | sesión |
-| DELETE `/yo` | `users/account_routes.py` | `deactivate` | sesión |
-| GET `/sedes` | `venues/routes.py` | `active_venues` | sesión |
-| POST `/sedes` | `venues/routes.py` | `create_venue` | admin |
-| PUT `/sedes/{sede_id}` | `venues/routes.py` | `update_venue` | admin |
-| DELETE `/sedes/{sede_id}` | `venues/routes.py` | `deactivate_venue` | admin |
-| GET `/espacios/catalogo` | `spaces/routes.py` | `catalog` | sesión |
-| GET `/espacios` | `spaces/routes.py` | `active_spaces` | sesión |
-| GET `/espacios/nombre` | `spaces/routes.py` | `suggested_name` | admin |
-| POST `/espacios` | `spaces/routes.py` | `create_space` | admin |
-| PUT `/espacios/{espacio_id}` | `spaces/routes.py` | `update_space` | admin |
-| DELETE `/espacios/{espacio_id}` | `spaces/routes.py` | `deactivate_space` | admin |
-| GET `/espacios/{espacio_id}/horarios` | `availability/routes.py` | `available_slots` | sesión |
-| GET `/espacios/disponibles` | `availability/routes.py` | `available_spaces` | sesión |
-| GET `/reservas` | `reservas/rutas.py` | `mis_reservas` | sesión |
-| POST `/reservas` | `reservas/rutas.py` | `book` | usuario (admin: 403) |
-| POST `/reservas/{id}/cancelar` | `reservas/rutas.py` | `cancelar_reserva`, después despacha el aviso | usuario, sólo sus reservas (una ajena da 404) |
-| POST `/reservas/{id}/modificar` | `reservas/rutas.py` | `modificar_reserva` | usuario |
-| GET `/reservas/todas` | `reservas/rutas.py` | `historial_global` | admin |
-| GET `/reservas/todas/{id}` | `reservas/rutas.py` | `detalle_admin` | admin |
-| POST `/reservas/{id}/anular` | `reservas/rutas.py` | `anular_reserva`, después despacha el aviso | admin |
-| PUT `/dispositivos` | `notifications/routes.py` | `register_device` | usuario |
-| POST `/dispositivos/baja` | `notifications/routes.py` | `deactivate_device` | sesión |
-| GET `/notificaciones` | `notifications/routes.py` | `my_notifications` | sesión |
-| POST `/notificaciones/leer-todas` | `notifications/routes.py` | `mark_all_read` | sesión |
-| POST `/notificaciones/{id}/leer` | `notifications/routes.py` | `mark_read` | sesión |
+| POST `/register` | `users/registration_routes.py` | `register` | cualquiera |
+| POST `/password-recovery` | `password_recovery/routes.py` | `request_link` | cualquiera |
+| POST `/password-recovery/check` | `password_recovery/routes.py` | `link_is_valid` | cualquiera |
+| PUT `/password-recovery` | `password_recovery/routes.py` | `use_link` | cualquiera |
+| GET `/link/recover` | `password_recovery/routes.py` | página que abre la app desde el correo | cualquiera |
+| GET `/me` | `users/account_routes.py` | — | sesión |
+| PUT `/me` | `users/account_routes.py` | `update_profile` | sesión |
+| PUT `/me/password` | `users/account_routes.py` | `change_password` | sesión |
+| DELETE `/me` | `users/account_routes.py` | `deactivate` | sesión |
+| GET `/venues` | `venues/routes.py` | `active_venues` | sesión |
+| POST `/venues` | `venues/routes.py` | `create_venue` | admin |
+| PUT `/venues/{venue_id}` | `venues/routes.py` | `update_venue` | admin |
+| DELETE `/venues/{venue_id}` | `venues/routes.py` | `deactivate_venue` | admin |
+| GET `/spaces/catalog` | `spaces/routes.py` | `catalog` | sesión |
+| GET `/spaces` | `spaces/routes.py` | `active_spaces` | sesión |
+| GET `/spaces/name` | `spaces/routes.py` | `suggested_name` | admin |
+| POST `/spaces` | `spaces/routes.py` | `create_space` | admin |
+| PUT `/spaces/{space_id}` | `spaces/routes.py` | `update_space` | admin |
+| DELETE `/spaces/{space_id}` | `spaces/routes.py` | `deactivate_space` | admin |
+| GET `/spaces/{space_id}/slots` | `availability/routes.py` | `available_slots` | sesión |
+| GET `/spaces/available` | `availability/routes.py` | `available_spaces` | sesión |
+| GET `/bookings` | `reservas/rutas.py` | `mis_reservas` | sesión |
+| POST `/bookings` | `reservas/rutas.py` | `book` | usuario (admin: 403) |
+| POST `/bookings/{booking_id}/cancel` | `reservas/rutas.py` | `cancelar_reserva`, después despacha el aviso | usuario, sólo sus reservas (una ajena da 404) |
+| POST `/bookings/{booking_id}/modify` | `reservas/rutas.py` | `modificar_reserva` | usuario |
+| GET `/bookings/all` | `reservas/rutas.py` | `historial_global` | admin |
+| GET `/bookings/all/{booking_id}` | `reservas/rutas.py` | `detalle_admin` | admin |
+| POST `/bookings/{booking_id}/void` | `reservas/rutas.py` | `anular_reserva`, después despacha el aviso | admin |
+| PUT `/devices` | `notifications/routes.py` | `register_device` | usuario |
+| POST `/devices/unregister` | `notifications/routes.py` | `deactivate_device` | sesión |
+| GET `/notifications` | `notifications/routes.py` | `my_notifications` | sesión |
+| POST `/notifications/read-all` | `notifications/routes.py` | `mark_all_read` | sesión |
+| POST `/notifications/{notification_id}/read` | `notifications/routes.py` | `mark_read` | sesión |
 
 ### Configuración de la API
 
@@ -202,7 +202,7 @@ si el rol no es `admin`.
 | `CORREO_MODO` | `smtp` | `buzon` guarda los correos en la tabla `outgoing_email` (sólo desarrollo) |
 | `SMTP_HOST`, `SMTP_PUERTO` (587), `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | vacíos | el correo saliente |
 | `RECORDATORIOS_CADA` | 30 | segundos entre barridos; 0 apaga el barrido en proceso |
-| `PRUEBAS` | false | montar `/_pruebas` (sólo junto al emulador) |
+| `PRUEBAS` | false | montar `/_testing` (sólo junto al emulador) |
 | `VERSION` | la del `pyproject.toml` | lo que informan `/health` y el log |
 
 Fuera de `Settings`: `FIREBASE_AUTH_EMULATOR_HOST` (emulador de Auth), `GOOGLE_APPLICATION_CREDENTIALS` (cuenta de servicio

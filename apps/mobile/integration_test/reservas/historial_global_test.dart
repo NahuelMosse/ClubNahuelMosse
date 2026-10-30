@@ -97,7 +97,7 @@ void main() {
         anulado,
         manana,
         15,
-        estado: 'anulada',
+        estado: 'voided',
         motivo: 'mantenimiento',
       );
       await entrarComoAdmin(tester);

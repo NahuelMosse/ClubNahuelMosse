@@ -45,7 +45,7 @@ def _id(numero: int) -> UUID:
     return UUID(int=numero)
 
 
-def _perfil(id: int = 1, rol: str = "usuario") -> Perfil:
+def _perfil(id: int = 1, rol: str = "user") -> Perfil:
     return Perfil(
         id=_id(id), uid=f"u{id}", first_name="Ana", last_name="Paz", email="a@b.c", role=rol,
         dni="1", birth_date=date(2000, 1, 1),
@@ -58,7 +58,7 @@ def _reserva(**cambios: object) -> Booking:
         kind="5",
         venue="Centro", address="x", starts_at=datetime(2026, 3, 3, 18, 0, tzinfo=ZONA),
         ends_at=datetime(2026, 3, 3, 20, 0, tzinfo=ZONA), price_per_hour=100, total=200,
-        status="activa", reason=None,
+        status="active", reason=None,
     )  # fmt: skip
     return replace(base, **cambios)
 
@@ -68,7 +68,7 @@ def _historial(**cambios: object) -> BookingHistoryEntry:
     base = BookingHistoryEntry(
         id=r.id, space_id=r.space_id, venue_id=r.venue_id, space=r.space,
         sport=r.sport, kind=r.kind, venue=r.venue, address=r.address, starts_at=r.starts_at,
-        ends_at=r.ends_at, price_per_hour=100, total=200, status="activa", reason=None,
+        ends_at=r.ends_at, price_per_hour=100, total=200, status="active", reason=None,
         user_id=_id(1), user="Ana Paz", created_at=AHORA, canceled_at=None,
         canceled_by_name=None, space_deactivated=False,
     )  # fmt: skip
@@ -112,7 +112,7 @@ class Memoria:
 
     def cancel(self, usuario_id, reserva_id):
         self.llamadas.append(("cancelar", usuario_id, reserva_id))
-        return _reserva(status="cancelada")
+        return _reserva(status="canceled")
 
     def insert(self, usuario_id, espacio_id, inicio, fin, agenda):
         self.llamadas.append(("insertar", usuario_id, espacio_id, inicio, fin, agenda))
@@ -123,10 +123,10 @@ class Memoria:
 
     def void(self, admin_id, reserva_id, motivo, espacio_id, inicio):
         self.llamadas.append(("anular", admin_id, reserva_id, motivo, espacio_id, inicio))
-        return _historial(status="anulada", reason=motivo)
+        return _historial(status="voided", reason=motivo)
 
     def history(self, filtros):
-        self.llamadas.append(("historial", filtros))
+        self.llamadas.append(("history", filtros))
         return BookingHistory(
             bookings=[], total=0, page=1, per_page=20,
             counters=Counters(all=0, active=0, completed=0, voided=0),
@@ -147,12 +147,12 @@ def _errores(excepcion: pytest.ExceptionInfo[InvalidData]) -> dict[str, str]:
 def test_mis_reservas_pide_solo_las_de_quien_consulta() -> None:
     repo = Memoria()
 
-    resultado = my_bookings(repo, _perfil(id=7), "proximas")
+    resultado = my_bookings(repo, _perfil(id=7), "upcoming")
 
     assert resultado == [_reserva()]
-    assert repo.llamadas == [("de_usuario", _id(7), "proximas")]
-    my_bookings(repo, _perfil(id=7), "historial")
-    assert repo.llamadas[-1] == ("de_usuario", _id(7), "historial")
+    assert repo.llamadas == [("de_usuario", _id(7), "upcoming")]
+    my_bookings(repo, _perfil(id=7), "history")
+    assert repo.llamadas[-1] == ("de_usuario", _id(7), "history")
 
 
 # reservar
@@ -192,7 +192,7 @@ def test_reservar_sin_hora_pide_una_hora_en_punto() -> None:
     with pytest.raises(InvalidData) as e:
         book(Memoria(), _perfil(), _id(2), MANANA, None, 1, AHORA)
 
-    assert set(_errores(e)) == {"desde"}
+    assert set(_errores(e)) == {"start_hour"}
 
 
 @pytest.mark.parametrize("horas", [0, 5, -1])
@@ -202,7 +202,7 @@ def test_reservar_con_una_duracion_fuera_de_una_a_cuatro_horas_falla(horas: int)
     with pytest.raises(InvalidData) as e:
         book(repo, _perfil(), _id(2), MANANA, time(18, 0), horas, AHORA)
 
-    assert set(_errores(e)) == {"horas", "hasta"}
+    assert set(_errores(e)) == {"hours", "until"}
     assert repo.llamadas == []
 
 
@@ -216,7 +216,7 @@ def test_reservar_acepta_los_bordes_de_la_duracion(horas: int) -> None:
 def test_reservar_un_dia_fuera_de_la_ventana_falla_aun_en_date_max() -> None:
     with pytest.raises(InvalidData) as e:
         book(Memoria(), _perfil(), _id(2), date.max, time(18, 0), 4, AHORA)
-    assert set(_errores(e)) == {"fecha"}
+    assert set(_errores(e)) == {"date"}
 
     with pytest.raises(InvalidData):
         book(Memoria(), _perfil(), _id(2), AHORA.date() + timedelta(days=7), time(18, 0), 1, AHORA)
@@ -286,7 +286,7 @@ def test_cancelar_reserva_cancela_la_de_quien_pide() -> None:
 
     reserva = cancel_booking(repo, _perfil(id=3), _id(5))
 
-    assert reserva.status == "cancelada"
+    assert reserva.status == "canceled"
     assert repo.llamadas == [("cancelar", _id(3), _id(5))]
 
 
@@ -338,7 +338,7 @@ def test_modificar_reserva_sin_hora_falla() -> None:
     with pytest.raises(InvalidData) as e:
         modify_booking(_con_reserva(), _perfil(), _id(5), _id(2), MANANA, None, AHORA)
 
-    assert set(_errores(e)) == {"desde"}
+    assert set(_errores(e)) == {"start_hour"}
 
 
 def test_modificar_reserva_fuera_de_la_ventana_falla_antes_de_buscarla() -> None:
@@ -347,7 +347,7 @@ def test_modificar_reserva_fuera_de_la_ventana_falla_antes_de_buscarla() -> None
     with pytest.raises(InvalidData) as e:
         modify_booking(repo, _perfil(), _id(5), _id(2), date.max, time(9, 0), AHORA)
 
-    assert set(_errores(e)) == {"fecha"}
+    assert set(_errores(e)) == {"date"}
     assert repo.llamadas == []
 
 
@@ -367,7 +367,7 @@ def test_modificar_reserva_repetida_devuelve_la_actual_sin_mover() -> None:
 
 def test_modificar_reserva_cancelada_con_el_mismo_horario_no_se_da_por_repetida() -> None:
     repo = Memoria()
-    repo.propia_de = _reserva(status="cancelada")
+    repo.propia_de = _reserva(status="canceled")
 
     modify_booking(repo, _perfil(), _id(5), _id(2), MANANA, time(18, 0), AHORA)
 
@@ -393,7 +393,7 @@ def test_modificar_reserva_a_una_cancha_de_otro_tipo_o_sede_falla(tipo) -> None:
     with pytest.raises(InvalidData) as e:
         modify_booking(repo, _perfil(), _id(5), _id(3), MANANA, time(10, 0), AHORA)
 
-    assert set(_errores(e)) == {"espacio_id"}
+    assert set(_errores(e)) == {"space_id"}
 
 
 def test_modificar_reserva_valida_el_horario_con_la_agenda() -> None:
@@ -438,7 +438,7 @@ def test_historial_global_lo_consulta_un_administrador_con_sus_filtros() -> None
     resultado = global_history(repo, _perfil(rol="admin"), filtros)
 
     assert resultado.total == 0
-    assert repo.llamadas == [("historial", filtros)]
+    assert repo.llamadas == [("history", filtros)]
 
 
 def test_historial_global_un_usuario_es_prohibido() -> None:
@@ -456,7 +456,7 @@ def test_historial_global_rechaza_desde_posterior_a_hasta() -> None:
     with pytest.raises(InvalidData) as e:
         global_history(Memoria(), admin, filtros)
 
-    assert set(_errores(e)) == {"fechas"}
+    assert set(_errores(e)) == {"dates"}
 
 
 def test_historial_global_acepta_rangos_abiertos() -> None:
@@ -519,7 +519,7 @@ def test_anular_reserva_sin_motivo_falla(motivo: str) -> None:
     with pytest.raises(InvalidData) as e:
         void_booking(repo, _perfil(rol="admin"), _id(5), motivo, _id(2), AHORA)
 
-    assert set(_errores(e)) == {"motivo"}
+    assert set(_errores(e)) == {"reason"}
     assert repo.llamadas == []
 
 
@@ -532,8 +532,8 @@ def test_anular_reserva_acepta_el_motivo_maximo_y_rechaza_uno_mas() -> None:
     with pytest.raises(InvalidData) as e:
         void_booking(repo, admin, _id(5), "x" * (MAX_REASON_LENGTH + 1), _id(2), AHORA)
 
-    assert set(_errores(e)) == {"motivo"}
-    assert str(MAX_REASON_LENGTH) in _errores(e)["motivo"]
+    assert set(_errores(e)) == {"reason"}
+    assert str(MAX_REASON_LENGTH) in _errores(e)["reason"]
     assert len(repo.llamadas) == 2
 
 

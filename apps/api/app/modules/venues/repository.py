@@ -10,7 +10,6 @@ from app.modules.venues.rules import NewVenue, Venue
 from app.shared.club_timezone import CLUB_TIMEZONE_NAME
 from app.shared.db import DbConnection, in_transaction, violated_constraint
 from app.shared.errors import BookingsOutsideHours, Duplicate, HasFutureBookings, NotFound
-from app.shared.stored_values import stored
 
 _COLUMNS = "v.id, v.name, v.street, v.street_number, v.opens_at, v.closes_at, v.open_days"
 
@@ -88,7 +87,7 @@ class VenuesSql:
         except IntegrityError as e:
             constraint = violated_constraint(e)
             if constraint == "venue_name_active_unique":
-                raise Duplicate(["nombre"]) from e
+                raise Duplicate(["name"]) from e
             raise
         return _venue(row, space_count=0)
 
@@ -104,7 +103,7 @@ class VenuesSql:
                 ),
                 values
                 | {
-                    "active_status": stored("activa"),
+                    "active_status": "active",
                     "before_opens_at": before.opens_at,
                     "before_closes_at": before.closes_at,
                     "before_open_days": list(before.open_days),
@@ -155,7 +154,7 @@ class VenuesSql:
         except IntegrityError as e:
             constraint = violated_constraint(e)
             if constraint == "venue_name_active_unique":
-                raise Duplicate(["nombre"]) from e
+                raise Duplicate(["name"]) from e
             raise
         saved = next((s for s in self.active() if s.id == venue_id), None)
         if saved is None:
@@ -180,7 +179,7 @@ class VenuesSql:
                     "SELECT count(*) FROM booking b JOIN space e ON e.id = b.space_id"
                     " WHERE e.venue_id = :id AND b.status = :active_status AND b.ends_at > now()"
                 ),
-                {"id": venue_id, "active_status": stored("activa")},
+                {"id": venue_id, "active_status": "active"},
             ).scalar_one()
             if pending:
                 raise HasFutureBookings("la sede tiene reservas que todavía no terminaron")

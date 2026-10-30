@@ -57,17 +57,17 @@ Map<String, RangeProblem> dateErrors({
   final today = DateTime.utc(now.year, now.month, now.day);
   final date = DateTime.utc(day.year, day.month, day.day);
   if (date.isBefore(today)) {
-    return {'fecha': const RangeProblem(RangeProblemKind.datePast)};
+    return {'date': const RangeProblem(RangeProblemKind.datePast)};
   }
   if (!date.isBefore(today.add(const Duration(days: daysInView)))) {
     return {
-      'fecha': const RangeProblem(RangeProblemKind.dateTooFar, daysInView),
+      'date': const RangeProblem(RangeProblemKind.dateTooFar, daysInView),
     };
   }
   return {};
 }
 
-/// The errors per field (`fecha`, `desde`, `hasta`) of the range [from] to [to] (whole
+/// The errors per field (`date`, `start_hour`, `until`) of the range [from] to [to] (whole
 /// hours; [to] 0 is midnight) on [day] at [venue], with [now] in club time.
 Map<String, RangeProblem> rangeErrors({
   required Venue venue,
@@ -80,7 +80,7 @@ Map<String, RangeProblem> rangeErrors({
   final today = DateTime.utc(now.year, now.month, now.day);
   final date = DateTime.utc(day.year, day.month, day.day);
   if (errors.isEmpty && !venue.days.contains(date.weekday)) {
-    errors['fecha'] = const RangeProblem(RangeProblemKind.venueClosedThatDay);
+    errors['date'] = const RangeProblem(RangeProblemKind.venueClosedThatDay);
   }
   final end = to == 0 ? 24 : to;
   final opening = onTheHour(venue.opening) ?? 0;
@@ -89,18 +89,18 @@ Map<String, RangeProblem> rangeErrors({
     final h => h,
   };
   if (end - from < minHours) {
-    errors['hasta'] = const RangeProblem(RangeProblemKind.tooShort);
+    errors['until'] = const RangeProblem(RangeProblemKind.tooShort);
   } else if (end - from > maxHours) {
-    errors['hasta'] = const RangeProblem(RangeProblemKind.tooLong, maxHours);
+    errors['until'] = const RangeProblem(RangeProblemKind.tooLong, maxHours);
   } else if (end > closing) {
-    errors['hasta'] = RangeProblem(RangeProblemKind.venueCloses, venue.closing);
+    errors['until'] = RangeProblem(RangeProblemKind.venueCloses, venue.closing);
   }
   if (from < opening) {
-    errors['desde'] = RangeProblem(RangeProblemKind.venueOpens, venue.opening);
-  } else if (!errors.containsKey('fecha') &&
+    errors['start_hour'] = RangeProblem(RangeProblemKind.venueOpens, venue.opening);
+  } else if (!errors.containsKey('date') &&
       date == today &&
       from <= now.hour) {
-    errors['desde'] = const RangeProblem(RangeProblemKind.timePast);
+    errors['start_hour'] = const RangeProblem(RangeProblemKind.timePast);
   }
   return errors;
 }

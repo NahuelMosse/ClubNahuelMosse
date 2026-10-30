@@ -158,8 +158,8 @@ void main() {
           cliente: MockClient((pedido) async {
             pedidos.add(pedido);
             final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-              ('GET', '/sedes') => (200, '{"sedes": [$sedeMoronJson]}'),
-              ('PUT', '/sedes/00000000-0000-7000-8000-000000000001') => (
+              ('GET', '/venues') => (200, '{"venues": [$sedeMoronJson]}'),
+              ('PUT', '/venues/00000000-0000-7000-8000-000000000001') => (
                 200,
                 sedeMoronJson,
               ),
@@ -205,9 +205,9 @@ void main() {
           '/sedes/00000000-0000-7000-8000-000000000001/canchas/00000000-0000-7000-8000-000000000009',
       api: apiRutas({
         ...rutasDeSedes(),
-        'POST /reservas': (
+        'POST /bookings': (
           422,
-          '{"errores": {"fecha": "Ese horario ya empezó"}}',
+          '{"errors": {"date": "Ese horario ya empezó"}}',
         ),
       }),
     );
@@ -243,10 +243,10 @@ void main() {
         inicio: '/reservas',
         api: apiRutas({
           ...rutas,
-          'GET /reservas': (200, '{"reservas": [${reservaJson()}]}'),
-          'POST /reservas/00000000-0000-7000-8000-000000000001/modificar': (
+          'GET /bookings': (200, '{"bookings": [${reservaJson()}]}'),
+          'POST /bookings/00000000-0000-7000-8000-000000000001/modify': (
             422,
-            '{"errores": {"fecha": "Ese horario ya empezó"}}',
+            '{"errors": {"date": "Ese horario ya empezó"}}',
           ),
         }),
       );
@@ -280,7 +280,7 @@ void main() {
         inicio: '/reservas',
         api: apiRutas({
           ...rutasDeSedes(),
-          'GET /reservas': (200, '{"reservas": [$proxima]}'),
+          'GET /bookings': (200, '{"bookings": [$proxima]}'),
         }),
       );
 
@@ -411,7 +411,7 @@ void main() {
         RegistrationScreen(
           registration: RegistrationService(
             apiRutas({
-              'POST /registro': (
+              'POST /register': (
                 201,
                 '{"id": "00000000-0000-7000-8000-000000000001"}',
               ),
@@ -444,7 +444,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('El correo es obligatorio'), findsNothing);
       await tocar(tester, find.text('CREAR CUENTA'));
-      expect(pedidos.where((p) => p.url.path == '/registro'), hasLength(1));
+      expect(pedidos.where((p) => p.url.path == '/register'), hasLength(1));
     },
   );
 

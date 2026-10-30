@@ -25,15 +25,15 @@ def _con(token: str) -> dict[str, str]:
 
 def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede_id,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     )
     return str(r.json()["id"])
@@ -41,13 +41,13 @@ def _espacio(api: TestClient, token_admin: str, sede_id: str) -> str:
 
 def _reservar(api: TestClient, token: str, espacio: str, dia: int, hora: int) -> dict[str, Any]:
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token),
         json={
-            "espacio_id": espacio,
-            "fecha": (date.today() + timedelta(days=dia)).isoformat(),
-            "desde": f"{hora:02d}:00",
-            "horas": 1,
+            "space_id": espacio,
+            "date": (date.today() + timedelta(days=dia)).isoformat(),
+            "start_hour": f"{hora:02d}:00",
+            "hours": 1,
         },
     )
     assert r.status_code == 201, r.text
@@ -64,12 +64,12 @@ def test_el_historial_propio_es_el_listado_entero_y_sin_marcador(
         _reservar(api, token_usuario, espacio, d, h)["id"] for d in (1, 2) for h in range(8, 19)
     ]
 
-    r = api.get("/reservas", headers=_con(token_usuario), params={"cuando": "proximas"})
+    r = api.get("/bookings", headers=_con(token_usuario), params={"cuando": "upcoming"})
 
     assert r.status_code == 200
     assert "siguiente" not in r.json()
-    assert [x["id"] for x in r.json()["reservas"]] == creadas
-    assert api.get("/reservas?despues=x", headers=_con(token_usuario)).status_code == 200
+    assert [x["id"] for x in r.json()["bookings"]] == creadas
+    assert api.get("/bookings?despues=x", headers=_con(token_usuario)).status_code == 200
 
 
 def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
@@ -81,11 +81,11 @@ def test_el_historial_del_administrador_sigue_paginando_por_numero_de_pagina(
         _reservar(api, token_usuario, espacio, 1 + (h - 8) // 11, 8 + (h - 8) % 11)
     q = {"q": sede[1]}
 
-    primera = api.get("/reservas/todas", headers=_con(token_admin), params={**q, "pagina": 1})
-    segunda = api.get("/reservas/todas", headers=_con(token_admin), params={**q, "pagina": 2})
+    primera = api.get("/bookings/all", headers=_con(token_admin), params={**q, "page": 1})
+    segunda = api.get("/bookings/all", headers=_con(token_admin), params={**q, "page": 2})
 
     assert primera.status_code == segunda.status_code == 200
-    assert len(primera.json()["reservas"]) == 20 and len(segunda.json()["reservas"]) == 2
+    assert len(primera.json()["bookings"]) == 20 and len(segunda.json()["bookings"]) == 2
     assert "siguiente" not in primera.json()
 
 
@@ -99,8 +99,8 @@ def test_una_reserva_sobrevive_a_reiniciar_la_api(
     creada = _reservar(api, token_usuario, espacio, 1, 10)["id"]
 
     with TestClient(create_app()) as otra:
-        r = otra.get("/reservas", headers=_con(token_usuario))
-    assert creada in [x["id"] for x in r.json()["reservas"]]
+        r = otra.get("/bookings", headers=_con(token_usuario))
+    assert creada in [x["id"] for x in r.json()["bookings"]]
 
 
 class _CanalQueFalla:

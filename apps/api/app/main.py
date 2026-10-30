@@ -19,6 +19,7 @@ from app.modules.notifications import sweep_every
 from app.shared import http_errors, input_validation
 from app.shared.body_limit import BodyLimit
 from app.shared.config import config
+from app.shared.documented_app import DocumentedApp
 
 
 @asynccontextmanager
@@ -38,7 +39,7 @@ async def _lifespan(_: FastAPI) -> AsyncIterator[None]:
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(
+    app = DocumentedApp(
         title="ClubNahuelMosse API",
         version=config.version,
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",

@@ -29,7 +29,7 @@ class SpacesRepository {
   Future<Catalog> catalog() async {
     final cached = _catalog;
     if (cached != null) return cached;
-    final r = await _get('/espacios/catalogo');
+    final r = await _get('/spaces/catalog');
     final parsed = r.codigo == 200 ? Catalog.fromJson(r.cuerpo) : null;
     if (parsed == null) throw ErrorDelServidor(r.codigo);
     return _catalog = parsed;
@@ -44,9 +44,9 @@ class SpacesRepository {
     String? sport,
     String? kind,
   }) async {
-    final filters = {'sede_id': ?venueId, 'deporte': ?sport, 'tipo': ?kind};
+    final filters = {'venue_id': ?venueId, 'sport': ?sport, 'kind': ?kind};
     final query = Uri(
-      path: '/espacios',
+      path: '/spaces',
       queryParameters: filters.isEmpty ? null : filters,
     );
     final r = await _get(query.toString());
@@ -64,14 +64,14 @@ class SpacesRepository {
     required String kind,
   }) async {
     final query = Uri(
-      path: '/espacios/nombre',
-      queryParameters: {'sede_id': venueId, 'deporte': sport, 'tipo': kind},
+      path: '/spaces/name',
+      queryParameters: {'venue_id': venueId, 'sport': sport, 'kind': kind},
     );
     final r = await _get(query.toString());
     if (r.codigo == 422) throw SpaceRejected(fieldErrors(r.cuerpo));
     if (r.cuerpo case {
-      'nombre': final String n,
-      'numero': final int number,
+      'name': final String n,
+      'number': final int number,
     } when r.codigo == 200) {
       return (n, number);
     }
@@ -91,22 +91,19 @@ class SpacesRepository {
     required int pricePerHour,
     required int number,
   }) async {
-    final r = await _api.post('/espacios', {
-      'sede_id': venueId,
-      'deporte': sport,
-      'tipo': kind,
-      'techada': covered,
-      'iluminada': lit,
-      'precio_por_hora': pricePerHour,
-      'numero': number,
+    final r = await _api.post('/spaces', {
+      'venue_id': venueId,
+      'sport': sport,
+      'kind': kind,
+      'covered': covered,
+      'lit': lit,
+      'price_per_hour': pricePerHour,
+      'number': number,
     }, token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 409) {
-      if (r.cuerpo case {
-        'nombre': final String name,
-        'numero': final int next,
-      }) {
-        if (fieldErrors(r.cuerpo)['nombre'] case final message?) {
+      if (r.cuerpo case {'name': final String name, 'number': final int next}) {
+        if (fieldErrors(r.cuerpo)['name'] case final message?) {
           throw NameTaken(message, name, next);
         }
       }
@@ -131,10 +128,10 @@ class SpacesRepository {
     int? pricePerHour,
   }) async {
     // Sólo lo que cambió: lo demás queda como lo haya guardado quien guardó último.
-    final r = await _api.put('/espacios/$id', {
-      'techada': ?covered,
-      'iluminada': ?lit,
-      'precio_por_hora': ?pricePerHour,
+    final r = await _api.put('/spaces/$id', {
+      'covered': ?covered,
+      'lit': ?lit,
+      'price_per_hour': ?pricePerHour,
     }, token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 404) throw const SpaceUnavailable();
@@ -152,7 +149,7 @@ class SpacesRepository {
   /// Lanza [SpaceUnavailable], [SpaceHasBookings], [SessionExpired], [SinConexion] o
   /// [ErrorDelServidor].
   Future<void> deactivate(String id) async {
-    final r = await _api.delete('/espacios/$id', token: await _session.token());
+    final r = await _api.delete('/spaces/$id', token: await _session.token());
     if (r.codigo == 401) throw const SessionExpired();
     if (r.codigo == 404) throw const SpaceUnavailable();
     if (r.codigo == 409) throw const SpaceHasBookings();

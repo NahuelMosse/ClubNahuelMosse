@@ -16,23 +16,23 @@ void main() {
   test('la sede lee sus deportes, y sin ellos queda vacía', () {
     final con = Venue.fromJson({
       'id': '00000000-0000-7000-8000-000000000001',
-      'nombre': 'Sede Morón',
-      'direccion': 'Av. Rivadavia 19850',
-      'apertura': '08:00',
-      'cierre': '23:00',
-      'dias': [1, 2],
-      'canchas': 2,
-      'deportes': ['Futbol', 'Tenis'],
+      'name': 'Sede Morón',
+      'address': 'Av. Rivadavia 19850',
+      'opens_at': '08:00',
+      'closes_at': '23:00',
+      'open_days': [1, 2],
+      'space_count': 2,
+      'sports': ['Futbol', 'Tenis'],
     });
     expect(con?.sports, ['Futbol', 'Tenis']);
     final sin = Venue.fromJson({
       'id': '00000000-0000-7000-8000-000000000001',
-      'nombre': 'Sede Morón',
-      'direccion': 'Av. Rivadavia 19850',
-      'apertura': '08:00',
-      'cierre': '23:00',
-      'dias': [1, 2],
-      'canchas': 0,
+      'name': 'Sede Morón',
+      'address': 'Av. Rivadavia 19850',
+      'opens_at': '08:00',
+      'closes_at': '23:00',
+      'open_days': [1, 2],
+      'space_count': 0,
     });
     expect(sin?.sports, isEmpty);
   });
@@ -74,7 +74,7 @@ void main() {
     ) async {
       await montarUsuario(
         tester,
-        api: apiRutas({...rutasDeSedes(), 'GET /sedes': (500, '{}')}),
+        api: apiRutas({...rutasDeSedes(), 'GET /venues': (500, '{}')}),
       );
       expect(find.text('Error del servidor'), findsOneWidget);
       await tester.tap(find.text('ACEPTAR'));
@@ -110,9 +110,9 @@ void main() {
         ),
         findsOneWidget,
       );
-      final canchas = pedidos.where((p) => p.url.path == '/espacios').single;
+      final canchas = pedidos.where((p) => p.url.path == '/spaces').single;
       expect(canchas.url.queryParameters, {
-        'sede_id': '00000000-0000-7000-8000-000000000001',
+        'venue_id': '00000000-0000-7000-8000-000000000001',
       });
       semantica.dispose();
     });
@@ -160,7 +160,7 @@ void main() {
         'http://api.falsa',
         cliente: _Cliente((pedido) async {
           final ruta = pedido.url.path;
-          if (ruta == '/espacios' && intentos++ == 0) throw const _Corte();
+          if (ruta == '/spaces' && intentos++ == 0) throw const _Corte();
           final (codigo, cuerpo) = rutasDeSedes()['GET $ruta'] ?? (404, '{}');
           return http.Response.bytes(utf8.encode(cuerpo), codigo);
         }),
@@ -184,9 +184,9 @@ void main() {
 
   group('filtro', () {
     const f7 =
-        '{"id": "00000000-0000-7000-8000-000000000012", "nombre": "Moron_Rivadavia_19850_Futbol_F7_1", "sede_id": "00000000-0000-7000-8000-000000000001", '
-        '"sede": "Sede Morón", "deporte": "Futbol", "tipo": "F7", "numero": 1, '
-        '"techada": false, "iluminada": true, "precio_por_hora": 55000}';
+        '{"id": "00000000-0000-7000-8000-000000000012", "name": "Moron_Rivadavia_19850_Futbol_F7_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
+        '"venue": "Sede Morón", "sport": "Futbol", "kind": "F7", "number": 1, '
+        '"covered": false, "lit": true, "price_per_hour": 55000}';
 
     /// Una API que responde a `GET /espacios` según el deporte y el tipo del pedido.
     ApiClient api({List<http.Request>? pedidos, bool fallaAlFiltrar = false}) =>
@@ -196,21 +196,21 @@ void main() {
             pedidos?.add(pedido as http.Request);
             final ruta = pedido.url.path;
             final q = pedido.url.queryParameters;
-            if (ruta == '/espacios') {
-              if (fallaAlFiltrar && q.containsKey('deporte')) {
+            if (ruta == '/spaces') {
+              if (fallaAlFiltrar && q.containsKey('sport')) {
                 return http.Response('{}', 500);
               }
               final todas = [espacioF5Json, f7, espacioTenisJson];
               final quedan = [
                 for (final e in todas)
-                  if ((q['deporte'] == null ||
-                          e.contains('"deporte": "${q['deporte']}"')) &&
-                      (q['tipo'] == null ||
-                          e.contains('"tipo": "${q['tipo']}"')))
+                  if ((q['sport'] == null ||
+                          e.contains('"sport": "${q['sport']}"')) &&
+                      (q['kind'] == null ||
+                          e.contains('"kind": "${q['kind']}"')))
                     e,
               ];
               return http.Response.bytes(
-                utf8.encode('{"espacios": [${quedan.join(', ')}]}'),
+                utf8.encode('{"spaces": [${quedan.join(', ')}]}'),
                 200,
               );
             }
@@ -241,8 +241,8 @@ void main() {
       expect(find.text('2 CANCHAS · FÚTBOL · TODOS LOS TIPOS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsOneWidget);
       expect(pedidos.last.url.queryParameters, {
-        'sede_id': '00000000-0000-7000-8000-000000000001',
-        'deporte': 'Futbol',
+        'venue_id': '00000000-0000-7000-8000-000000000001',
+        'sport': 'Futbol',
       });
 
       await tocarChip(tester, 'Tipo Fútbol 7');
@@ -270,16 +270,16 @@ void main() {
           pedidos.add(pedido as http.Request);
           final ruta = pedido.url.path;
           final q = pedido.url.queryParameters;
-          if (ruta == '/espacios') {
+          if (ruta == '/spaces') {
             final quedan = [
               for (final e in datos)
-                if ((q['deporte'] == null ||
-                        e.contains('"deporte": "${q['deporte']}"')) &&
-                    (q['tipo'] == null || e.contains('"tipo": "${q['tipo']}"')))
+                if ((q['sport'] == null ||
+                        e.contains('"sport": "${q['sport']}"')) &&
+                    (q['kind'] == null || e.contains('"kind": "${q['kind']}"')))
                   e,
             ];
             return http.Response.bytes(
-              utf8.encode('{"espacios": [${quedan.join(', ')}]}'),
+              utf8.encode('{"spaces": [${quedan.join(', ')}]}'),
               200,
             );
           }
@@ -300,7 +300,7 @@ void main() {
       await tocarChip(tester, 'Deporte Fútbol');
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
       expect(pedidos.last.url.queryParameters, {
-        'sede_id': '00000000-0000-7000-8000-000000000001',
+        'venue_id': '00000000-0000-7000-8000-000000000001',
       });
 
       // Al volver a elegir el deporte aparece el tipo nuevo.

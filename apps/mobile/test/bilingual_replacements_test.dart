@@ -26,13 +26,13 @@ void main() {
     () {
       final source = _sources(['lib/features/bookings', 'lib/features/home']);
       for (final piece in [
-        "'/reservas?cuando=",
-        '/cancelar',
-        '/modificar',
-        "'/espacios/disponibles'",
-        '/horarios',
-        "'espacio_id'",
-        "'no_disponibles'",
+        "'/bookings?when=",
+        '/cancel',
+        '/modify',
+        "'/spaces/available'",
+        '/slots',
+        "'space_id'",
+        "'unavailable'",
         "'cancelable'",
       ]) {
         expect(source, contains(piece), reason: piece);
@@ -45,10 +45,10 @@ void main() {
     'BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01',
     () {
       expect(BookingStatus.values.map((s) => s.apiValue), [
-        'activa',
-        'completada',
-        'cancelada',
-        'anulada',
+        'active',
+        'completed',
+        'canceled',
+        'voided',
       ]);
       final spanish = _catalog('app_es.arb');
       expect(
@@ -60,9 +60,9 @@ void main() {
         ],
         ['Activa', 'Completada', 'Cancelada', 'Anulada'],
       );
-      expect(BookingStatus.fromApi('activa'), BookingStatus.active);
-      expect(BookingStatus.fromApi('anulada'), BookingStatus.voided);
-      expect(BookingStatus.fromApi('active'), isNull);
+      expect(BookingStatus.fromApi('active'), BookingStatus.active);
+      expect(BookingStatus.fromApi('voided'), BookingStatus.voided);
+      expect(BookingStatus.fromApi('activa'), isNull);
     },
   );
 }

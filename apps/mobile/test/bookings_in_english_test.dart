@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:clubnahuelmosse/features/bookings/domain/booking_status.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Iterable<File> _dartFiles(String dir) => Directory(dir).existsSync()
@@ -68,47 +67,6 @@ void main() {
       expect(outside, isEmpty);
       final bookingsData = _sources(['lib/features/bookings/data']);
       expect(bookingsData, isNot(contains('package:flutter/')));
-    },
-  );
-
-  test(
-    'los textos, rutas de la API, claves JSON y rutas de pantalla de reservas e inicio son los de antes @ENG-10-S3',
-    () {
-      final source = _sources(['lib/features/bookings', 'lib/features/home']);
-      for (final piece in [
-        "'/reservas?cuando=",
-        '/cancelar',
-        '/modificar',
-        "'/espacios/disponibles'",
-        '/horarios',
-        "'espacio_id'",
-        "'no_disponibles'",
-        "'cancelable'",
-        "'Reserva modificada'",
-      ]) {
-        expect(source, contains(piece), reason: piece);
-      }
-    },
-  );
-
-  test(
-    'BookingStatus muestra su label en castellano y lee el valor de la API de siempre @assumption:ENG-10-ASM-01',
-    () {
-      expect(BookingStatus.values.map((s) => s.apiValue), [
-        'activa',
-        'completada',
-        'cancelada',
-        'anulada',
-      ]);
-      expect(BookingStatus.values.map((s) => s.label), [
-        'Activa',
-        'Completada',
-        'Cancelada',
-        'Anulada',
-      ]);
-      expect(BookingStatus.fromApi('activa'), BookingStatus.active);
-      expect(BookingStatus.fromApi('anulada'), BookingStatus.voided);
-      expect(BookingStatus.fromApi('active'), isNull);
     },
   );
 }

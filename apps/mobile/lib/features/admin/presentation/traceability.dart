@@ -95,7 +95,7 @@ _Step? _cancellationStep(
 
 _Step? _noticeStep(AppLocalizations l10n, Palette p, BookingHistoryEntry b) =>
     switch ((b.status, b.noticeDelivery, b.noticeAt)) {
-      (BookingStatus.voided, 'enviada', final at?) => (
+      (BookingStatus.voided, 'sent', final at?) => (
         l10n.adminTraceNoticeSent,
         Icons.notifications_active_outlined,
         p.stateSuccessInk,

@@ -47,8 +47,8 @@ void main() {
 
   group('registro', () {
     const yaRegistrado =
-        '{"errores": {"correo": "Ese correo ya está registrado"}, '
-        '"mensaje": "Ese correo ya está registrado"}';
+        '{"errors": {"email": "Ese correo ya está registrado"}, '
+        '"message": "Ese correo ya está registrado"}';
 
     Future<void> abrirRegistro(
       WidgetTester tester,
@@ -69,7 +69,7 @@ void main() {
                 ApiClient(
                   'http://api.falsa',
                   cliente: _conCorte(
-                    '/registro',
+                    '/register',
                     respuestas,
                     (_) => (404, '{}'),
                   ),

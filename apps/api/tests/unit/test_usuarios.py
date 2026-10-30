@@ -8,26 +8,17 @@ from app.modules.users.rules import validate_registration as validar_registro
 
 HOY = date(2026, 11, 12)
 
-_CAMPOS = {
-    "nombre": "first_name",
-    "apellido": "last_name",
-    "fecha_nacimiento": "birth_date",
-    "correo": "email",
-    "contrasena": "password",
-}
-
-
 def _datos(**cambios: str) -> DatosRegistro:
     base = {
-        "nombre": "Nahuel Agustín",
-        "apellido": "Mosse",
+        "first_name": "Nahuel Agustín",
+        "last_name": "Mosse",
         "dni": "42.118.507",
-        "fecha_nacimiento": "2000-03-14",
-        "correo": "  NMosse@UniMoron.edu.ar ",
-        "contrasena": "ClubNahuel1",
+        "birth_date": "2000-03-14",
+        "email": "  NMosse@UniMoron.edu.ar ",
+        "password": "ClubNahuel1",
     }
     base.update(cambios)
-    return DatosRegistro(**{_CAMPOS.get(k, k): v for k, v in base.items()})
+    return DatosRegistro(**base)
 
 
 def test_normaliza_correo_y_dni() -> None:
@@ -42,17 +33,17 @@ def test_normaliza_correo_y_dni() -> None:
 @pytest.mark.parametrize(
     ("campo", "mensaje"),
     [
-        ("nombre", "El nombre es obligatorio"),
-        ("apellido", "El apellido es obligatorio"),
+        ("first_name", "El nombre es obligatorio"),
+        ("last_name", "El apellido es obligatorio"),
         ("dni", "El DNI es obligatorio"),
-        ("fecha_nacimiento", "La fecha de nacimiento es obligatoria"),
-        ("correo", "El correo es obligatorio"),
-        ("contrasena", "La contraseña es obligatoria"),
+        ("birth_date", "La fecha de nacimiento es obligatoria"),
+        ("email", "El correo es obligatorio"),
+        ("password", "La contraseña es obligatoria"),
     ],
 )
 def test_cada_campo_es_obligatorio(campo: str, mensaje: str) -> None:
     registro, errores = validar_registro(
-        _datos(**{campo: "   " if campo != "contrasena" else ""}), HOY
+        _datos(**{campo: "   " if campo != "password" else ""}), HOY
     )
     assert registro is None
     assert errores == {campo: mensaje}
@@ -86,19 +77,19 @@ def test_dni_de_7_u_8_numeros(dni: str, valido: bool) -> None:
     ],
 )
 def test_fecha_de_nacimiento(fecha: str, mensaje: str) -> None:
-    _, errores = validar_registro(_datos(fecha_nacimiento=fecha), HOY)
-    assert errores == {"fecha_nacimiento": mensaje}
+    _, errores = validar_registro(_datos(birth_date=fecha), HOY)
+    assert errores == {"birth_date": mensaje}
 
 
 def test_fecha_de_ayer_es_valida() -> None:
-    _, errores = validar_registro(_datos(fecha_nacimiento="2026-11-11"), HOY)
+    _, errores = validar_registro(_datos(birth_date="2026-11-11"), HOY)
     assert errores == {}
 
 
 @pytest.mark.parametrize("correo", ["sinarroba.com", "a@b", "a b@c.com", "a@@c.com"])
 def test_formato_de_correo(correo: str) -> None:
-    _, errores = validar_registro(_datos(correo=correo), HOY)
-    assert errores == {"correo": "Revisá el formato del correo"}
+    _, errores = validar_registro(_datos(email=correo), HOY)
+    assert errores == {"email": "Revisá el formato del correo"}
 
 
 @pytest.mark.parametrize(
@@ -117,7 +108,7 @@ def test_reglas_de_contrasena(contrasena: str, faltan: list[str]) -> None:
 
 
 def test_nombre_de_hasta_60_caracteres() -> None:
-    _, errores = validar_registro(_datos(nombre="a" * 60), HOY)
+    _, errores = validar_registro(_datos(first_name="a" * 60), HOY)
     assert errores == {}
-    _, errores = validar_registro(_datos(nombre="a" * 61), HOY)
-    assert errores == {"nombre": "Máximo 60 caracteres"}
+    _, errores = validar_registro(_datos(first_name="a" * 61), HOY)
+    assert errores == {"first_name": "Máximo 60 caracteres"}

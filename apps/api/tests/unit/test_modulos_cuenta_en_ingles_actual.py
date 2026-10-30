@@ -2,20 +2,16 @@
 
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
 import ast
-import json
 from pathlib import Path
 
 from tests.unit import test_modulos_cuenta_en_ingles as anterior
+from tests.unit.test_api_en_ingles_contrato_actual import operaciones_distintas_en
 from tests.unit.test_base_en_ingles import PALABRAS_COMUNES, _castellano, _palabras
 
 ARCHIVOS = {
     modulo: [a for a in archivos if a != "email"] for modulo, archivos in anterior.ARCHIVOS.items()
 }
 NUEVOS = [anterior.MODULOS / m / f"{a}.py" for m, archivos in ARCHIVOS.items() for a in archivos]
-TIPOS_SIN_CINCO = '"enum": ["recordatorio", "cancelacion_forzosa", "cancelacion_usuario"]'
-TIPOS_CON_CINCO = (
-    '"enum": ["recordatorio", "recordatorio_cinco", "cancelacion_forzosa", "cancelacion_usuario"]'
-)
 
 
 def test_los_modulos_de_sedes_usuarios_sesion_y_recuperacion_se_llaman_como_dice_el_glosario() -> (
@@ -69,14 +65,4 @@ def test_el_contrato_tiene_las_mismas_rutas_metodos_codigos_campos_y_operation_i
     None
 ):
     """el contrato tiene las mismas rutas, métodos, códigos, campos y operationId que main @ENG-02-S3 @assumption:ENG-02-ASM-01"""
-    base = json.loads(anterior.LINEA_BASE.read_text(encoding="utf-8"))
-    # El glosario nombra `ErrorBody` y `Errors` a los cuatro `Errores` de main, que éste publicaba como un solo esquema:
-    # lo que se compara es cada forma de esquema, no cuántos nombres la llevan.
-    base_esquemas = {e.replace(TIPOS_SIN_CINCO, TIPOS_CON_CINCO) for e in base["esquemas"]}
-    hoy = anterior._contrato_normalizado(anterior._contrato_publicado())
-
-    assert sorted(hoy["operaciones"]) == sorted(base["operaciones"])
-    assert set(hoy["esquemas"]) == base_esquemas
-    for clave, op in base["operaciones"].items():
-        assert hoy["operaciones"][clave]["operationId"] == op["operationId"], clave
-        assert sorted(hoy["operaciones"][clave]["responses"]) == sorted(op["responses"]), clave
+    assert operaciones_distintas_en("/register", "/me", "/password-recovery", "/link", "/venues") == []

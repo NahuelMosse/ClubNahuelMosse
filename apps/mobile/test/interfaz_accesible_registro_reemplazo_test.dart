@@ -26,7 +26,7 @@ void main() {
           // Un 422 evita la navegación de un alta exitosa, que pide un GoRouter.
           registration: RegistrationService(
             apiRutas({
-              'POST /registro': (422, '{"errores": {"dni": "DNI repetido"}}'),
+              'POST /register': (422, '{"errors": {"dni": "DNI repetido"}}'),
             }, pedidos: pedidos),
           ),
         ),
@@ -56,7 +56,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('El correo es obligatorio'), findsNothing);
       await tocar(tester, find.text('CREAR CUENTA'));
-      expect(pedidos.where((p) => p.url.path == '/registro'), hasLength(1));
+      expect(pedidos.where((p) => p.url.path == '/register'), hasLength(1));
     },
   );
 }

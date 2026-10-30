@@ -23,7 +23,7 @@ def test_una_reserva_dice_deporte_sede_dia_hora_y_motivo() -> None:
     assert notice.body == (
         "Fútbol 5 · Sede Ramos Mejía · Mié 11, 20:00. Motivo: mantenimiento de la cancha."
     )
-    assert notice.data == {"tipo": "cancelacion_forzosa", "reserva_id": str(UUID(int=7))}
+    assert notice.data == {"kind": "forced_cancellation", "booking_id": str(UUID(int=7))}
 
 
 def test_varias_reservas_dicen_cuantas_son_y_no_apuntan_a_una() -> None:
@@ -31,7 +31,7 @@ def test_varias_reservas_dicen_cuantas_son_y_no_apuntan_a_una() -> None:
 
     assert notice.title == "El club anuló 3 de tus reservas"
     assert notice.body == "Tenés 3 reservas anuladas por el club. Mirá el detalle en tu historial."
-    assert notice.data == {"tipo": "cancelacion_forzosa"}
+    assert notice.data == {"kind": "forced_cancellation"}
 
 
 def test_el_motivo_de_mas_de_doscientos_caracteres_se_recorta() -> None:

@@ -7,11 +7,11 @@ from fastapi.testclient import TestClient
 
 METODOS = {"get", "post", "put", "delete", "patch"}
 PUBLICAS = {
-    ("post", "/registro"),
-    ("post", "/recuperacion"),
-    ("post", "/recuperacion/consulta"),
-    ("put", "/recuperacion"),
-    ("get", "/enlace/recuperar"),
+    ("post", "/register"),
+    ("post", "/password-recovery"),
+    ("post", "/password-recovery/check"),
+    ("put", "/password-recovery"),
+    ("get", "/link/recover"),
     ("get", "/health"),
 }
 

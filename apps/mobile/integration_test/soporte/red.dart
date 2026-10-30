@@ -203,13 +203,13 @@ Future<Map<String, int>> sedesQueVeUnUsuario() async {
     Uri.parse('$api/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'nombre': 'Mirada',
-      'apellido': 'Externa',
+      'name': 'Mirada',
+      'last_name': 'Externa',
       'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
           .toString(),
-      'fecha_nacimiento': '1995-05-20',
-      'correo': correo,
-      'contrasena': contrasena,
+      'birth_date': '1995-05-20',
+      'email': correo,
+      'password': contrasena,
     }),
   );
   if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
@@ -222,10 +222,10 @@ Future<Map<String, int>> sedesQueVeUnUsuario() async {
   if (r.statusCode != 200) throw StateError('sedes: ${r.statusCode}');
   return {
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'sedes': final List<Object?> sedes,
+      'venues': final List<Object?> sedes,
     })
       for (final sede in sedes)
-        if (sede case {'nombre': final String nombre, 'canchas': final int n})
+        if (sede case {'name': final String nombre, 'space_count': final int n})
           nombre: n,
   };
 }
@@ -239,13 +239,13 @@ Future<List<String>> espaciosQueVeUnUsuario() async {
     Uri.parse('$api/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'nombre': 'Mirada',
-      'apellido': 'Externa',
+      'name': 'Mirada',
+      'last_name': 'Externa',
       'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
           .toString(),
-      'fecha_nacimiento': '1995-05-20',
-      'correo': correo,
-      'contrasena': contrasena,
+      'birth_date': '1995-05-20',
+      'email': correo,
+      'password': contrasena,
     }),
   );
   if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
@@ -258,10 +258,10 @@ Future<List<String>> espaciosQueVeUnUsuario() async {
   if (r.statusCode != 200) throw StateError('espacios: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'espacios': final List<Object?> espacios,
+      'spaces': final List<Object?> espacios,
     })
       for (final espacio in espacios)
-        if (espacio case {'nombre': final String nombre}) nombre,
+        if (espacio case {'name': final String nombre}) nombre,
   ];
 }
 
@@ -302,12 +302,12 @@ Future<void> crearSede(
   String direccion, {
   List<int> dias = const [1, 2, 3, 4, 5, 6, 7],
 }) async {
-  await _comoAdmin('/sedes', {
-    'nombre': nombre,
-    'direccion': direccion,
-    'apertura': '08:00',
-    'cierre': '23:00',
-    'dias': dias,
+  await _comoAdmin('/venues', {
+    'name': nombre,
+    'address': direccion,
+    'opens_at': '08:00',
+    'closes_at': '23:00',
+    'open_days': dias,
   });
 }
 
@@ -331,7 +331,7 @@ Future<void> ocupar(
   int hora, {
   int horas = 1,
   String? correo,
-  String estado = 'activa',
+  String estado = 'active',
   String? motivo,
 }) async {
   final fecha =
@@ -341,13 +341,13 @@ Future<void> ocupar(
     _pruebas('reservas'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'espacio': nombreEspacio,
-      'fecha': fecha,
+      'space': nombreEspacio,
+      'date': fecha,
       'hora': hora,
-      'horas': horas,
-      'correo': ?correo,
-      'estado': estado,
-      'motivo': ?motivo,
+      'hours': horas,
+      'email': ?correo,
+      'status': estado,
+      'reason': ?motivo,
     }),
   );
   if (r.statusCode != 204) throw StateError('ocupar: ${r.statusCode}');
@@ -367,25 +367,25 @@ Future<String> crearEspacio(
   );
   final sedes = jsonDecode(utf8.decode(r.bodyBytes));
   final id = switch (sedes) {
-    {'sedes': final List<Object?> lista} => [
+    {'venues': final List<Object?> lista} => [
       for (final s in lista)
-        if (s case {'id': final String id, 'nombre': final String n})
+        if (s case {'id': final String id, 'name': final String n})
           if (n == nombreSede) id,
     ].firstOrNull,
     _ => null,
   };
   if (id == null) throw StateError('no está la sede $nombreSede');
-  final espacio = await _comoAdmin('/espacios', {
-    'sede_id': id,
-    'deporte': deporte,
-    'tipo': tipo,
+  final espacio = await _comoAdmin('/spaces', {
+    'venue_id': id,
+    'sport': deporte,
+    'kind': tipo,
     // Otra cancha que la que carga el escenario en la pantalla: con los mismos datos y la
     // misma cuenta, la API la tomaría por el mismo pedido repetido después de un corte.
-    'techada': true,
-    'iluminada': true,
-    'precio_por_hora': 43000,
+    'covered': true,
+    'lit': true,
+    'price_per_hour': 43000,
   });
-  final nombre = espacio['nombre'];
+  final nombre = espacio['name'];
   if (nombre is! String) throw StateError('el alta no devolvió el nombre');
   return nombre;
 }
@@ -404,7 +404,7 @@ Future<List<String>> correosPara(String para) async {
   return [
     if (datos case {'correos': final List<Object?> correos})
       for (final correo in correos)
-        if (correo case {'cuerpo': final String cuerpo}) cuerpo,
+        if (correo case {'body': final String cuerpo}) cuerpo,
   ];
 }
 
@@ -439,12 +439,12 @@ Future<List<(String, String)>> reservasDe(
   if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'reservas': final List<Object?> reservas,
+      'bookings': final List<Object?> reservas,
     })
       for (final reserva in reservas)
         if (reserva case {
-          'espacio': final String espacio,
-          'inicio': final String inicio,
+          'space': final String espacio,
+          'starts_at': final String inicio,
         })
           (
             espacio,
@@ -463,7 +463,7 @@ Future<void> empezarReservasDe(String nombreEspacio) async {
   final r = await http.post(
     _pruebas('reservas/empezar'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'espacio': nombreEspacio}),
+    body: jsonEncode({'space': nombreEspacio}),
   );
   if (r.statusCode != 204) throw StateError('empezar: ${r.statusCode}');
 }
@@ -479,7 +479,7 @@ Future<void> anularReservasDe(String nombreEspacio) async {
   final r = await http.post(
     _pruebas('reservas/anular'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'espacio': nombreEspacio}),
+    body: jsonEncode({'space': nombreEspacio}),
   );
   if (r.statusCode != 204) throw StateError('anular: ${r.statusCode}');
 }
@@ -499,7 +499,7 @@ Future<int> despacharRecordatorios({
   final r = await http.post(
     _pruebas('recordatorios'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'correo': correo, 'ahora': ahora}),
+    body: jsonEncode({'email': correo, 'ahora': ahora}),
   );
   if (r.statusCode != 200) throw StateError('recordatorios: ${r.statusCode}');
   if (jsonDecode(utf8.decode(r.bodyBytes)) case {'registrados': final int n}) {
@@ -520,7 +520,7 @@ Future<List<bool>> dispositivosDe(String correo) async {
       'dispositivos': final List<Object?> dispositivos,
     })
       for (final d in dispositivos)
-        if (d case {'permiso': final bool permiso}) permiso,
+        if (d case {'permission_granted': final bool permiso}) permiso,
   ];
 }
 
@@ -538,7 +538,7 @@ Future<List<String>> numerosDeReservas(
   if (r.statusCode != 200) throw StateError('reservas: ${r.statusCode}');
   return [
     if (jsonDecode(utf8.decode(r.bodyBytes)) case {
-      'reservas': final List<Object?> reservas,
+      'bookings': final List<Object?> reservas,
     })
       for (final reserva in reservas)
         if (reserva case {'id': final String id}) id,
@@ -550,7 +550,7 @@ Future<void> darDeBajaSedeDesdeOtraSesion(String nombre) async {
   final r = await http.post(
     _pruebas('sedes/baja'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'nombre': nombre}),
+    body: jsonEncode({'name': nombre}),
   );
   if (r.statusCode != 204) throw StateError('baja de sede: ${r.statusCode}');
 }
@@ -563,13 +563,13 @@ Future<String> _tokenDeOtraPersona() async {
     Uri.parse('${AppConfig.fromEnvironment().apiUrl}/registro'),
     headers: {'content-type': 'application/json'},
     body: jsonEncode({
-      'nombre': 'Mirada',
-      'apellido': 'Externa',
+      'name': 'Mirada',
+      'last_name': 'Externa',
       'dni': (10000000 + DateTime.now().microsecondsSinceEpoch % 89999999)
           .toString(),
-      'fecha_nacimiento': '1995-05-20',
-      'correo': correo,
-      'contrasena': contrasena,
+      'birth_date': '1995-05-20',
+      'email': correo,
+      'password': contrasena,
     }),
   );
   if (alta.statusCode != 201) throw StateError('registro: ${alta.statusCode}');
@@ -590,10 +590,10 @@ Future<Object?> _leer(String ruta, String token) async {
 /// La sede activa [nombre] como la ve un usuario (dirección, apertura, cierre, días), o
 /// `null` si no la ve.
 Future<Map<String, Object?>?> sedeQueVeUnUsuario(String nombre) async {
-  final datos = await _leer('/sedes', await _tokenDeOtraPersona());
-  if (datos case {'sedes': final List<Object?> sedes}) {
+  final datos = await _leer('/venues', await _tokenDeOtraPersona());
+  if (datos case {'venues': final List<Object?> sedes}) {
     for (final sede in sedes) {
-      if (sede case final Map<String, Object?> s when s['nombre'] == nombre) {
+      if (sede case final Map<String, Object?> s when s['name'] == nombre) {
         return s;
       }
     }
@@ -604,11 +604,11 @@ Future<Map<String, Object?>?> sedeQueVeUnUsuario(String nombre) async {
 /// Las horas de inicio (`HH:MM`) que un usuario puede elegir el [dia] en [nombreEspacio].
 Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
   final token = await _tokenDeOtraPersona();
-  final espacios = await _leer('/espacios', token);
+  final espacios = await _leer('/spaces', token);
   final id = switch (espacios) {
-    {'espacios': final List<Object?> lista} => [
+    {'spaces': final List<Object?> lista} => [
       for (final e in lista)
-        if (e case {'id': final String id, 'nombre': final String n})
+        if (e case {'id': final String id, 'name': final String n})
           if (n == nombreEspacio) id,
     ].firstOrNull,
     _ => null,
@@ -617,11 +617,11 @@ Future<List<String>> iniciosLibres(String nombreEspacio, DateTime dia) async {
   final fecha =
       '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
       '${dia.day.toString().padLeft(2, '0')}';
-  final grilla = await _leer('/espacios/$id/horarios?fecha=$fecha', token);
+  final grilla = await _leer('/spaces/$id/slots?date=$fecha', token);
   return [
-    if (grilla case {'franjas': final List<Object?> franjas})
+    if (grilla case {'slots': final List<Object?> franjas})
       for (final f in franjas)
-        if (f case {'inicio': final String inicio, 'disponible': true}) inicio,
+        if (f case {'starts_at': final String inicio, 'available': true}) inicio,
   ];
 }
 
@@ -630,7 +630,7 @@ Future<void> darDeBajaEspacioDesdeOtraSesion(String nombre) async {
   final r = await http.post(
     _pruebas('espacios/baja'),
     headers: {'content-type': 'application/json'},
-    body: jsonEncode({'espacio': nombre}),
+    body: jsonEncode({'space': nombre}),
   );
   if (r.statusCode != 204) throw StateError('baja de espacio: ${r.statusCode}');
 }
@@ -638,11 +638,11 @@ Future<void> darDeBajaEspacioDesdeOtraSesion(String nombre) async {
 /// El espacio activo [nombre] como lo ve un usuario (precio, condición, iluminación), o
 /// `null` si no lo ve.
 Future<Map<String, Object?>?> espacioQueVeUnUsuario(String nombre) async {
-  final datos = await _leer('/espacios', await _tokenDeOtraPersona());
-  if (datos case {'espacios': final List<Object?> espacios}) {
+  final datos = await _leer('/spaces', await _tokenDeOtraPersona());
+  if (datos case {'spaces': final List<Object?> espacios}) {
     for (final espacio in espacios) {
       if (espacio case final Map<String, Object?> e
-          when e['nombre'] == nombre) {
+          when e['name'] == nombre) {
         return e;
       }
     }
@@ -661,11 +661,11 @@ Future<int> reservarPorLaApi(
 }) async {
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
-  final espacios = await _leer('/espacios', token);
+  final espacios = await _leer('/spaces', token);
   final id = switch (espacios) {
-    {'espacios': final List<Object?> lista} => [
+    {'spaces': final List<Object?> lista} => [
       for (final e in lista)
-        if (e case {'id': final String id, 'nombre': final String n})
+        if (e case {'id': final String id, 'name': final String n})
           if (n == nombreEspacio) id,
     ].firstOrNull,
     _ => null,
@@ -678,12 +678,12 @@ Future<int> reservarPorLaApi(
       'authorization': 'Bearer $token',
     },
     body: jsonEncode({
-      'espacio_id': id,
-      'fecha':
+      'space_id': id,
+      'date':
           '${dia.year}-${dia.month.toString().padLeft(2, '0')}-'
           '${dia.day.toString().padLeft(2, '0')}',
-      'desde': '${hora.toString().padLeft(2, '0')}:00',
-      'horas': 1,
+      'start_hour': '${hora.toString().padLeft(2, '0')}:00',
+      'hours': 1,
     }),
   );
   if (r.statusCode != 201) throw StateError('reservar: ${r.statusCode}');
@@ -701,12 +701,12 @@ Future<Map<String, int>> totalesDeReservas(
 }) async {
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
-  final datos = await _leer('/reservas?cuando=proximas', token);
+  final datos = await _leer('/bookings?when=upcoming', token);
   return {
-    if (datos case {'reservas': final List<Object?> reservas})
+    if (datos case {'bookings': final List<Object?> reservas})
       for (final reserva in reservas)
         if (reserva case {
-          'inicio': final String inicio,
+          'starts_at': final String inicio,
           'total': final int total,
         })
           DateTime.parse(inicio)
@@ -739,13 +739,13 @@ Future<void> cancelarProximasDe(
 /// quién y cuándo la anuló), o `null` si el espacio no tiene ninguna.
 Future<Map<String, Object?>?> reservaQueVeElAdmin(String nombreEspacio) async {
   final datos = await _leer(
-    '/reservas/todas?q=${Uri.encodeQueryComponent(nombreEspacio)}',
+    '/bookings/all?q=${Uri.encodeQueryComponent(nombreEspacio)}',
     await _tokenAdmin(),
   );
-  if (datos case {'reservas': final List<Object?> reservas}) {
+  if (datos case {'bookings': final List<Object?> reservas}) {
     for (final reserva in reservas) {
       if (reserva is Map<String, Object?> &&
-          reserva['espacio'] == nombreEspacio) {
+          reserva['space'] == nombreEspacio) {
         return reserva;
       }
     }
@@ -761,14 +761,14 @@ Future<List<(String, String, String?)>> historialDe(
 }) async {
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
-  final datos = await _leer('/reservas?cuando=historial', token);
+  final datos = await _leer('/bookings?when=history', token);
   return [
-    if (datos case {'reservas': final List<Object?> reservas})
+    if (datos case {'bookings': final List<Object?> reservas})
       for (final reserva in reservas)
         if (reserva case {
-          'espacio': final String espacio,
-          'estado': final String estado,
-          'motivo': final Object? motivo,
+          'space': final String espacio,
+          'status': final String estado,
+          'reason': final Object? motivo,
         })
           (espacio, estado, motivo is String ? motivo : null),
   ];
@@ -803,14 +803,14 @@ Future<List<ReservaAnulable>> proximasDe(
 }) async {
   final token = await _token(correo, contrasena);
   if (token == null) throw StateError('la cuenta $correo no entra');
-  final datos = await _leer('/reservas?cuando=proximas', token);
+  final datos = await _leer('/bookings?when=upcoming', token);
   return [
-    if (datos case {'reservas': final List<Object?> reservas})
+    if (datos case {'bookings': final List<Object?> reservas})
       for (final reserva in reservas)
         if (reserva case {
           'id': final String id,
-          'espacio_id': final String espacioId,
-          'inicio': final String inicio,
+          'space_id': final String espacioId,
+          'starts_at': final String inicio,
         })
           (id: id, espacioId: espacioId, inicio: inicio),
   ];
@@ -831,9 +831,9 @@ Future<int> anularDesdeElAdmin(
       'authorization': 'Bearer ${await _tokenAdmin()}',
     },
     body: jsonEncode({
-      'motivo': motivo,
-      'espacio_id': reserva.espacioId,
-      'inicio': reserva.inicio,
+      'reason': motivo,
+      'space_id': reserva.espacioId,
+      'starts_at': reserva.inicio,
     }),
   );
   return r.statusCode;
@@ -844,7 +844,7 @@ Future<int> anularDesdeElAdmin(
 Future<String> esperarElEnvioDelAviso(String nombreEspacio) async {
   for (var i = 0; i < 40; i++) {
     final reserva = await reservaQueVeElAdmin(nombreEspacio);
-    if (reserva?['aviso_envio'] case final String envio) return envio;
+    if (reserva?['notice_delivery'] case final String envio) return envio;
     await Future<void>.delayed(const Duration(milliseconds: 250));
   }
   throw StateError('el aviso de $nombreEspacio no salió a despacho');

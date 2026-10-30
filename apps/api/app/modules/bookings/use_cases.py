@@ -65,13 +65,13 @@ def _require_day_in_view(day: date, now: datetime) -> None:
     """A date beyond the booking window is rejected before computing the end of the slot:
     near `date.max` that computation overflows."""
     if day >= now.date() + timedelta(days=DAYS_IN_VIEW):
-        raise InvalidData({"fecha": f"Elegí un día de los próximos {DAYS_IN_VIEW}"})
+        raise InvalidData({"date": f"Elegí un día de los próximos {DAYS_IN_VIEW}"})
 
 
 def _require_same_kind(bookings: Bookings, current: Booking, space_id: UUID) -> None:
     new = bookings.space_kind(space_id)
     if new is None or new != (current.venue_id, current.sport, current.kind):
-        raise InvalidData({"espacio_id": "Elegí una cancha del mismo tipo en la misma sede"})
+        raise InvalidData({"space_id": "Elegí una cancha del mismo tipo en la misma sede"})
 
 
 def book(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
@@ -89,14 +89,14 @@ def book(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     Raises `Forbidden` if whoever asks is an administrator, `InvalidData` if the slot cannot
     be booked, `Unavailable` and `SlotTaken` as `Bookings.insert`.
     """
-    if perfil.role != "usuario":
+    if perfil.role != "user":
         raise Forbidden("sólo un usuario reserva")
     if start_time is None:
-        raise InvalidData({"desde": "Elegí una hora en punto"})
+        raise InvalidData({"start_hour": "Elegí una hora en punto"})
     if error := duration_error(hours):
         # Before computing the end of the slot: with an excessive duration that computation
-        # overflows. `hasta` is the field the clients already read.
-        raise InvalidData({"horas": error, "hasta": error})
+        # overflows. `until` is the field the clients already read.
+        raise InvalidData({"hours": error, "until": error})
     _require_day_in_view(day, now)
     starts_at, _ = time_range(day, start_time, start_time, now.tzinfo)
     ends_at = starts_at + timedelta(hours=hours)
@@ -136,17 +136,17 @@ def modify_booking(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
     theirs, `InvalidData` if the new slot is not valid, and `Unavailable`,
     `ConcurrentChange` and `SlotTaken` as `Bookings.move`.
     """
-    if perfil.role != "usuario":
+    if perfil.role != "user":
         raise Forbidden("sólo un usuario reserva")
     if start_time is None:
-        raise InvalidData({"desde": "Elegí una hora en punto"})
+        raise InvalidData({"start_hour": "Elegí una hora en punto"})
     _require_day_in_view(day, now)
     current = bookings.own(perfil.id, booking_id)
     if current is None:
         raise NotFound("no hay una reserva suya con ese número")
     start, _ = time_range(day, start_time, start_time, now.tzinfo)
     # A retry after a cut arrives with the booking already moved: it is returned as it is.
-    if current.status == "activa" and (current.space_id, current.starts_at) == (space_id, start):
+    if current.status == "active" and (current.space_id, current.starts_at) == (space_id, start):
         return current
     _require_same_kind(bookings, current, space_id)
     duration = current.ends_at - current.starts_at
@@ -171,7 +171,7 @@ def global_history(bookings: Bookings, perfil: Profile, filters: HistoryFilters)
     if perfil.role != "admin":
         raise Forbidden("sólo un administrador consulta el historial global")
     if filters.since is not None and filters.until is not None and filters.since > filters.until:
-        raise InvalidData({"fechas": "Desde no puede ser posterior a Hasta"})
+        raise InvalidData({"dates": "Desde no puede ser posterior a Hasta"})
     return bookings.history(filters)
 
 
@@ -207,7 +207,7 @@ def void_booking(  # noqa: PLR0913, PLR0917 -- public signature fixed by its cal
         raise Forbidden("sólo un administrador anula una reserva")
     clean = reason.strip()
     if not clean:
-        raise InvalidData({"motivo": "El motivo es obligatorio para anular"})
+        raise InvalidData({"reason": "El motivo es obligatorio para anular"})
     if len(clean) > MAX_REASON_LENGTH:
-        raise InvalidData({"motivo": f"El motivo admite hasta {MAX_REASON_LENGTH} caracteres"})
+        raise InvalidData({"reason": f"El motivo admite hasta {MAX_REASON_LENGTH} caracteres"})
     return bookings.void(perfil.id, booking_id, clean, space_id, starts_at)

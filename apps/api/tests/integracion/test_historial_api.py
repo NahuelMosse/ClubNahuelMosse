@@ -14,15 +14,15 @@ def _con(token: str) -> dict[str, str]:
 
 def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
     r = api.post(
-        "/espacios",
+        "/spaces",
         headers=_con(token_admin),
         json={
-            "sede_id": sede_id,
-            "deporte": "Futbol",
-            "tipo": "F5",
-            "techada": False,
-            "iluminada": True,
-            "precio_por_hora": 38000,
+            "venue_id": sede_id,
+            "sport": "Futbol",
+            "kind": "F5",
+            "covered": False,
+            "lit": True,
+            "price_per_hour": 38000,
         },
     )
     return str(r.json()["id"])
@@ -31,9 +31,9 @@ def _espacio_nuevo(api: TestClient, token_admin: str, sede_id: str) -> str:
 def _reservar(api: TestClient, token_usuario: str, espacio: str, dia: int) -> dict[str, Any]:
     fecha = (date.today() + timedelta(days=dia)).isoformat()
     r = api.post(
-        "/reservas",
+        "/bookings",
         headers=_con(token_usuario),
-        json={"espacio_id": espacio, "fecha": fecha, "desde": "18:00", "horas": 1},
+        json={"space_id": espacio, "date": fecha, "start_hour": "18:00", "hours": 1},
     )
     assert r.status_code == 201
     reserva: dict[str, Any] = r.json()
@@ -56,10 +56,10 @@ def _mover_a(motor: Engine, id_: UUID, dia: str, hora: int) -> None:
 
 
 def _ids(api: TestClient, token: str, consulta: str) -> set[str]:
-    r = api.get(f"/reservas/todas?{consulta}", headers=_con(token))
+    r = api.get(f"/bookings/all?{consulta}", headers=_con(token))
     assert r.status_code == 200
     cuerpo: dict[str, Any] = r.json()
-    return {x["id"] for x in cuerpo["reservas"]}
+    return {x["id"] for x in cuerpo["bookings"]}
 
 
 def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
@@ -73,13 +73,13 @@ def test_los_dias_del_filtro_se_cortan_en_la_hora_del_club(
     _mover_a(motor, UUID(a_las_23), "2031-09-10", 23)
     base = f"q={sede[1]}"
 
-    assert _ids(api, token_admin, f"{base}&desde=2031-09-10&hasta=2031-09-10") == {
+    assert _ids(api, token_admin, f"{base}&since=2031-09-10&until=2031-09-10") == {
         a_las_21,
         a_las_23,
     }
-    assert _ids(api, token_admin, f"{base}&desde=2031-09-11&hasta=2031-09-11") == set()
-    assert _ids(api, token_admin, f"{base}&desde=2031-09-09&hasta=2031-09-09") == set()
-    assert _ids(api, token_admin, f"{base}&hasta=2031-09-10") == {a_las_21, a_las_23}
+    assert _ids(api, token_admin, f"{base}&since=2031-09-11&until=2031-09-11") == set()
+    assert _ids(api, token_admin, f"{base}&since=2031-09-09&until=2031-09-09") == set()
+    assert _ids(api, token_admin, f"{base}&until=2031-09-10") == {a_las_21, a_las_23}
 
 
 def test_la_busqueda_toma_los_comodines_como_texto(

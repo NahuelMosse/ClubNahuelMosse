@@ -4,13 +4,14 @@ from uuid import UUID
 
 from app.modules.notifications.email import notice_email
 from app.modules.notifications.rules import ChannelNotConfigured as ChannelNotConfigured
-from app.modules.notifications.rules import DeliveryResult as DeliveryResult
 from app.modules.notifications.rules import (
+    Delivery,
     Notice,
     Notification,
     Recipient,
     reminder_message,
 )
+from app.modules.notifications.rules import DeliveryResult as DeliveryResult
 from app.modules.notifications.rules import PendingNotice as PendingNotice
 from app.modules.notifications.rules import PushChannel as PushChannel
 from app.modules.notifications.store import Notifications
@@ -54,8 +55,8 @@ def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     The email goes first and does not depend on the push; if it fails it only reaches the log.
     Whoever already knows the recipient passes it, and otherwise it is looked up.
 
-    With no device that has permission it stays only in the center: `sin_permiso` if there are
-    devices that did not grant it and `sin_canal` if there is none to send it to, same as
+    With no device that has permission it stays only in the center: `no_permission` if there are
+    devices that did not grant it and `no_channel` if there is none to send it to, same as
     when there is no sending service. A delivery that fails is not retried from here: it is
     marked as failed.
     """
@@ -63,22 +64,23 @@ def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     tokens = notifications.tokens_with_permission(user_id)
     if not tokens:
         has_devices = notifications.has_devices(user_id)
-        notifications.mark_delivery(notification_id, "sin_permiso" if has_devices else "sin_canal")
+        outcome: Delivery = "no_permission" if has_devices else "no_channel"
+        notifications.mark_delivery(notification_id, outcome)
         return
     try:
         result = channel.send(tokens, notice)
     except ChannelNotConfigured:
-        notifications.mark_delivery(notification_id, "sin_canal")
+        notifications.mark_delivery(notification_id, "no_channel")
         return
     except Exception as e:
         # The outside service can fail in any way; the notice is already in the center and
         # one delivery must not cut off another person's. The error type is logged and not
         # its text, which may carry the phone token.
         _log.error("aviso_sin_enviar notificacion=%s error=%s", notification_id, type(e).__name__)
-        notifications.mark_delivery(notification_id, "fallida")
+        notifications.mark_delivery(notification_id, "failed")
         return
     notifications.deactivate_tokens(result.invalid)
-    notifications.mark_delivery(notification_id, "enviada" if result.sent > 0 else "fallida")
+    notifications.mark_delivery(notification_id, "sent" if result.sent > 0 else "failed")
 
 
 def dispatch_pending(
@@ -87,10 +89,10 @@ def dispatch_pending(
     """Sends the notices registered together with the fact they report, such as the
     confirmation of a cancellation, and returns how many went out to dispatch.
 
-    Takes one at a time: what was not attempted stays `pendiente`, and a notice that fails
-    for any reason becomes `fallida` without cutting the ones that follow. Before taking, the
+    Takes one at a time: what was not attempted stays `pending`, and a notice that fails
+    for any reason becomes `failed` without cutting the ones that follow. Before taking, the
     ones that will not go out (a reminder that no longer applies, or a notice more than 10
-    minutes in `enviando` because the API crashed mid-send) become `fallida`, are not resent
+    minutes in `sending` because the API crashed mid-send) become `failed`, are not resent
     and are reported in the log as `aviso_sin_enviar`.
     """
     for lost in notifications.fail_stranded(user_id):
@@ -105,7 +107,7 @@ def dispatch_pending(
             _log.error(
                 "aviso_sin_enviar notificacion=%s error=%s", p.notification_id, type(e).__name__
             )
-            notifications.mark_delivery(p.notification_id, "fallida")
+            notifications.mark_delivery(p.notification_id, "failed")
     return dispatched
 
 
@@ -149,13 +151,13 @@ def register_device(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
     Raises `Forbidden` for an administrator, `InvalidData` if the token is missing or the
     platform does not exist and `Unavailable` if the account is no longer active.
     """
-    if profile.role != "usuario":
+    if profile.role != "user":
         raise Forbidden("sólo un usuario recibe avisos")
     errors: dict[str, str] = {}
     if not token.strip():
         errors["token"] = "Este campo es obligatorio"
     if platform not in PLATFORMS:
-        errors["plataforma"] = "Tiene que ser android o ios"
+        errors["platform"] = "Tiene que ser android o ios"
     if errors:
         raise InvalidData(errors)
     if not notifications.register_device(profile.id, token.strip(), platform, permission):

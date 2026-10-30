@@ -13,7 +13,7 @@
         ],
         "summary": "Chequeo de vida de la API, sin tocar dependencias",
         "description": "La API está viva; no mira la base ni Firebase.",
-        "operationId": "vivo_health_get",
+        "operationId": "alive_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -24,7 +24,7 @@
                     "type": "string"
                   },
                   "type": "object",
-                  "title": "Response Vivo Health Get"
+                  "title": "Response Alive Health Get"
                 }
               }
             }
@@ -32,13 +32,13 @@
         }
       }
     },
-    "/registro": {
+    "/register": {
       "post": {
         "tags": [
           "usuarios"
         ],
         "summary": "Registrar un usuario nuevo",
-        "operationId": "registrar_usuario_registro_post",
+        "operationId": "register_user_register_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -79,17 +79,47 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/yo": {
+    "/me": {
       "get": {
         "tags": [
           "sesión"
         ],
         "summary": "El perfil y el rol de quien inició sesión",
-        "operationId": "perfil_propio_yo_get",
+        "operationId": "own_profile_me_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -124,7 +154,7 @@
         ],
         "summary": "Editar los datos personales de quien inició sesión",
         "description": "Todo menos el correo, que no se puede cambiar.",
-        "operationId": "editar_perfil_propio_yo_put",
+        "operationId": "update_own_profile_me_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -175,6 +205,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -189,7 +249,7 @@
         ],
         "summary": "Dar de baja la cuenta de quien inició sesión",
         "description": "Baja lógica: la cuenta deja de estar activa, sus reservas que todavía no empezaron pasan a canceladas y el historial se conserva.",
-        "operationId": "dar_de_baja_propia_yo_delete",
+        "operationId": "deactivate_own_account_me_delete",
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -215,14 +275,14 @@
         ]
       }
     },
-    "/yo/contrasena": {
+    "/me/password": {
       "put": {
         "tags": [
           "sesión"
         ],
         "summary": "Cambiar la contraseña de quien inició sesión",
         "description": "Invalida todas las sesiones abiertas: la app vuelve a entrar con la nueva.",
-        "operationId": "cambiar_contrasena_propia_yo_contrasena_put",
+        "operationId": "change_own_password_me_password_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -259,6 +319,36 @@
           },
           "429": {
             "description": "Demasiados intentos con la contraseña actual"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -268,14 +358,14 @@
         ]
       }
     },
-    "/recuperacion": {
+    "/password-recovery": {
       "put": {
         "tags": [
           "recuperación de contraseña"
         ],
         "summary": "Crear la contraseña nueva con el enlace",
         "description": "El enlace deja de servir y se invalidan todas las sesiones de la cuenta.",
-        "operationId": "usar_recuperacion_put",
+        "operationId": "reset_password_password_recovery_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -302,6 +392,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       },
@@ -311,7 +431,7 @@
         ],
         "summary": "Pedir un enlace para crear una contraseña nueva",
         "description": "Responde lo mismo exista o no una cuenta con ese correo.",
-        "operationId": "pedir_recuperacion_post",
+        "operationId": "request_recovery_password_recovery_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -340,17 +460,47 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/recuperacion/consulta": {
+    "/password-recovery/check": {
       "post": {
         "tags": [
           "recuperación de contraseña"
         ],
         "summary": "Saber si un enlace de recuperación sigue sirviendo",
-        "operationId": "consultar_recuperacion_consulta_post",
+        "operationId": "check_link_password_recovery_check_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -377,18 +527,48 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/enlace/recuperar": {
+    "/link/recover": {
       "get": {
         "tags": [
           "recuperación de contraseña"
         ],
         "summary": "Página del enlace del correo: abre la app en la contraseña nueva",
         "description": "Los clientes de correo no vuelven tocables los enlaces con esquema propio; este enlace https lleva a la app con un intent de Android.",
-        "operationId": "pagina_del_enlace_enlace_recuperar_get",
+        "operationId": "link_page_link_recover_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -403,13 +583,13 @@
         }
       }
     },
-    "/sedes": {
+    "/venues": {
       "get": {
         "tags": [
           "sedes"
         ],
         "summary": "Las sedes activas, por nombre, con sus canchas y los deportes que ofrecen",
-        "operationId": "listar_sedes_sedes_get",
+        "operationId": "list_venues_venues_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -444,7 +624,7 @@
         ],
         "summary": "Dar de alta una sede",
         "description": "Horas en punto; un cierre a las 00:00 es la medianoche del mismo día.",
-        "operationId": "alta_de_sede_sedes_post",
+        "operationId": "add_venue_venues_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -498,6 +678,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -507,14 +717,14 @@
         ]
       }
     },
-    "/sedes/{sede_id}": {
+    "/venues/{venue_id}": {
       "put": {
         "tags": [
           "sedes"
         ],
         "summary": "Editar una sede",
         "description": "Los mismos datos y reglas que el alta. Las reservas ya hechas se mantienen aunque queden fuera del horario nuevo, que rige para las que vengan.",
-        "operationId": "edicion_de_sede_sedes__sede_id__put",
+        "operationId": "edit_venue_venues__venue_id__put",
         "security": [
           {
             "HTTPBearer": []
@@ -522,13 +732,13 @@
         ],
         "parameters": [
           {
-            "name": "sede_id",
+            "name": "venue_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Sede Id"
+              "title": "Venue Id"
             }
           }
         ],
@@ -570,7 +780,7 @@
             "description": "La sede ya no está activa"
           },
           "409": {
-            "description": "Otra sede activa ya tiene ese nombre, o el horario nuevo deja afuera reservas futuras y falta `confirmar`",
+            "description": "Otra sede activa ya tiene ese nombre, o el horario nuevo deja afuera reservas futuras y falta `confirm`",
             "content": {
               "application/json": {
                 "schema": {
@@ -582,7 +792,7 @@
                       "$ref": "#/components/schemas/BookingsOutside"
                     }
                   ],
-                  "title": "Response 409 Edicion De Sede Sedes  Sede Id  Put"
+                  "title": "Response 409 Edit Venue Venues  Venue Id  Put"
                 }
               }
             }
@@ -596,6 +806,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       },
@@ -605,7 +845,7 @@
         ],
         "summary": "Dar de baja una sede",
         "description": "Baja lógica: la sede y sus espacios dejan de verse y de poder reservarse, y el historial los sigue nombrando. No se permite con reservas activas sin terminar.",
-        "operationId": "baja_de_sede_sedes__sede_id__delete",
+        "operationId": "remove_venue_venues__venue_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -613,13 +853,13 @@
         ],
         "parameters": [
           {
-            "name": "sede_id",
+            "name": "venue_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Sede Id"
+              "title": "Venue Id"
             }
           }
         ],
@@ -666,13 +906,13 @@
         }
       }
     },
-    "/espacios/catalogo": {
+    "/spaces/catalog": {
       "get": {
         "tags": [
           "espacios"
         ],
         "summary": "Los deportes y sus tipos de cancha",
-        "operationId": "ver_catalogo_espacios_catalogo_get",
+        "operationId": "show_catalog_spaces_catalog_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -702,13 +942,13 @@
         ]
       }
     },
-    "/espacios": {
+    "/spaces": {
       "get": {
         "tags": [
           "espacios"
         ],
         "summary": "Los espacios activos de las sedes activas, por sede, deporte, tipo y número",
-        "operationId": "listar_espacios_espacios_get",
+        "operationId": "list_spaces_spaces_get",
         "security": [
           {
             "HTTPBearer": []
@@ -716,7 +956,7 @@
         ],
         "parameters": [
           {
-            "name": "sede_id",
+            "name": "venue_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -729,11 +969,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Sede Id"
+              "title": "Venue Id"
             }
           },
           {
-            "name": "deporte",
+            "name": "sport",
             "in": "query",
             "required": false,
             "schema": {
@@ -746,11 +986,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Deporte"
+              "title": "Sport"
             }
           },
           {
-            "name": "tipo",
+            "name": "kind",
             "in": "query",
             "required": false,
             "schema": {
@@ -763,7 +1003,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Tipo"
+              "title": "Kind"
             }
           }
         ],
@@ -805,8 +1045,8 @@
           "espacios"
         ],
         "summary": "Dar de alta un espacio deportivo",
-        "description": "El nombre se compone con la sede, la dirección, el deporte, el tipo y el número siguiente de ese tipo en esa sede. `numero` es el que vio el administrador; si se omite, se usa el siguiente.",
-        "operationId": "alta_de_espacio_espacios_post",
+        "description": "El nombre se compone con la sede, la dirección, el deporte, el tipo y el número siguiente de ese tipo en esa sede. `number` es el que vio el administrador; si se omite, se usa el siguiente.",
+        "operationId": "create_space_route_spaces_post",
         "security": [
           {
             "HTTPBearer": []
@@ -858,17 +1098,47 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/espacios/nombre": {
+    "/spaces/name": {
       "get": {
         "tags": [
           "espacios"
         ],
         "summary": "El nombre que tendría el próximo espacio de ese tipo en esa sede",
-        "operationId": "sugerir_nombre_espacios_nombre_get",
+        "operationId": "suggest_name_spaces_name_get",
         "security": [
           {
             "HTTPBearer": []
@@ -876,31 +1146,31 @@
         ],
         "parameters": [
           {
-            "name": "sede_id",
+            "name": "venue_id",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Sede Id"
+              "title": "Venue Id"
             }
           },
           {
-            "name": "deporte",
+            "name": "sport",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Deporte"
+              "title": "Sport"
             }
           },
           {
-            "name": "tipo",
+            "name": "kind",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Tipo"
+              "title": "Kind"
             }
           }
         ],
@@ -941,14 +1211,14 @@
         }
       }
     },
-    "/espacios/{espacio_id}": {
+    "/spaces/{space_id}": {
       "put": {
         "tags": [
           "espacios"
         ],
         "summary": "Editar un espacio",
         "description": "Condición, iluminación y precio por hora; lo que no viene queda como está. La sede, el deporte, el tipo y el nombre compuesto no cambian; las reservas ya hechas conservan su precio.",
-        "operationId": "edicion_de_espacio_espacios__espacio_id__put",
+        "operationId": "update_space_route_spaces__space_id__put",
         "security": [
           {
             "HTTPBearer": []
@@ -956,13 +1226,13 @@
         ],
         "parameters": [
           {
-            "name": "espacio_id",
+            "name": "space_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Espacio Id"
+              "title": "Space Id"
             }
           }
         ],
@@ -1012,6 +1282,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       },
@@ -1021,7 +1321,7 @@
         ],
         "summary": "Dar de baja un espacio",
         "description": "Baja lógica: el espacio deja de verse y de poder reservarse, y el historial lo sigue nombrando. No se permite con reservas activas sin terminar.",
-        "operationId": "baja_de_espacio_espacios__espacio_id__delete",
+        "operationId": "deactivate_space_route_spaces__space_id__delete",
         "security": [
           {
             "HTTPBearer": []
@@ -1029,13 +1329,13 @@
         ],
         "parameters": [
           {
-            "name": "espacio_id",
+            "name": "space_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Espacio Id"
+              "title": "Space Id"
             }
           }
         ],
@@ -1082,14 +1382,14 @@
         }
       }
     },
-    "/espacios/{espacio_id}/horarios": {
+    "/spaces/{space_id}/slots": {
       "get": {
         "tags": [
           "horarios"
         ],
         "summary": "Las franjas de un espacio para un día y una duración",
-        "description": "Todas las horas de inicio en punto que entran en el horario de la sede con esa duración y todavía no empezaron, en la hora del club; `disponible` dice si no pisan una reserva activa. Sin `fecha`, la de hoy. `abre` es falso si la sede no abre ese día.",
-        "operationId": "ver_horarios_espacios__espacio_id__horarios_get",
+        "description": "Todas las horas de inicio en punto que entran en el horario de la sede con esa duración y todavía no empezaron, en la hora del club; `available` dice si no pisan una reserva activa. Sin `date`, la de hoy. `opens` es falso si la sede no abre ese día.",
+        "operationId": "show_slots_spaces__space_id__slots_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1097,17 +1397,17 @@
         ],
         "parameters": [
           {
-            "name": "espacio_id",
+            "name": "space_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Espacio Id"
+              "title": "Space Id"
             }
           },
           {
-            "name": "fecha",
+            "name": "date",
             "in": "query",
             "required": false,
             "schema": {
@@ -1120,11 +1420,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Fecha"
+              "title": "Date"
             }
           },
           {
-            "name": "horas",
+            "name": "hours",
             "in": "query",
             "required": false,
             "schema": {
@@ -1132,11 +1432,11 @@
               "maximum": 4,
               "minimum": 1,
               "default": 1,
-              "title": "Horas"
+              "title": "Hours"
             }
           },
           {
-            "name": "reserva_id",
+            "name": "booking_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -1149,7 +1449,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Reserva Id"
+              "title": "Booking Id"
             }
           }
         ],
@@ -1197,14 +1497,14 @@
         }
       }
     },
-    "/espacios/disponibles": {
+    "/spaces/available": {
       "get": {
         "tags": [
           "horarios"
         ],
         "summary": "Las canchas de una sede libres en todo un rango",
-        "description": "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas que pisen [desde, hasta) el día `fecha`, en la hora del club. `hasta` a las 00:00 es la medianoche. El rango tiene que ser futuro, de horas completas, de 1 a 4 horas, de los próximos 7 días y dentro del horario de la sede: si no, 422 con el error de cada campo.",
-        "operationId": "ver_disponibles_espacios_disponibles_get",
+        "description": "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas que pisen [since, until) el día `date`, en la hora del club. `until` a las 00:00 es la medianoche. El rango tiene que ser futuro, de horas completas, de 1 a 4 horas, de los próximos 7 días y dentro del horario de la sede: si no, 422 con el error de cada campo.",
+        "operationId": "show_available_spaces_available_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1212,55 +1512,55 @@
         ],
         "parameters": [
           {
-            "name": "sede_id",
+            "name": "venue_id",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Sede Id"
+              "title": "Venue Id"
             }
           },
           {
-            "name": "deporte",
+            "name": "sport",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "minLength": 1,
-              "title": "Deporte"
+              "title": "Sport"
             }
           },
           {
-            "name": "fecha",
+            "name": "date",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
               "format": "date",
-              "title": "Fecha"
+              "title": "Date"
             }
           },
           {
-            "name": "desde",
+            "name": "since",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Desde"
+              "title": "Since"
             }
           },
           {
-            "name": "hasta",
+            "name": "until",
             "in": "query",
             "required": true,
             "schema": {
               "type": "string",
-              "title": "Hasta"
+              "title": "Until"
             }
           },
           {
-            "name": "tipo",
+            "name": "kind",
             "in": "query",
             "required": false,
             "schema": {
@@ -1273,7 +1573,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Tipo"
+              "title": "Kind"
             }
           }
         ],
@@ -1311,14 +1611,14 @@
         }
       }
     },
-    "/reservas": {
+    "/bookings": {
       "get": {
         "tags": [
           "reservas"
         ],
         "summary": "Las reservas de quien consulta",
-        "description": "`proximas`: las activas que no terminaron, de la más cercana a la más lejana. `historial`: las completadas, canceladas y anuladas, de la más reciente a la más vieja. El total es el que se guardó al reservar.",
-        "operationId": "listar_reservas_reservas_get",
+        "description": "`upcoming`: las activas que no terminaron, de la más cercana a la más lejana. `history`: las completadas, canceladas y anuladas, de la más reciente a la más vieja. El total es el que se guardó al reservar.",
+        "operationId": "list_bookings_bookings_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1326,17 +1626,17 @@
         ],
         "parameters": [
           {
-            "name": "cuando",
+            "name": "when",
             "in": "query",
             "required": false,
             "schema": {
               "enum": [
-                "proximas",
-                "historial"
+                "upcoming",
+                "history"
               ],
               "type": "string",
-              "default": "proximas",
-              "title": "Cuando"
+              "default": "upcoming",
+              "title": "When"
             }
           }
         ],
@@ -1378,8 +1678,8 @@
           "reservas"
         ],
         "summary": "Reservar un espacio",
-        "description": "`horas` horas desde `desde` (`HH:MM`, en la hora del club) el día `fecha`. Horas completas, de 1 a 4, futuras, de los próximos 7 días y dentro del horario de la sede; si la misma persona repite el mismo pedido dentro de los cinco minutos, devuelve la reserva que ya hizo.",
-        "operationId": "hacer_reserva_reservas_post",
+        "description": "`hours` horas desde `start_hour` (`HH:MM`, en la hora del club) el día `date`. Horas completas, de 1 a 4, futuras, de los próximos 7 días y dentro del horario de la sede; si la misma persona repite el mismo pedido dentro de los cinco minutos, devuelve la reserva que ya hizo.",
+        "operationId": "create_booking_bookings_post",
         "security": [
           {
             "HTTPBearer": []
@@ -1438,18 +1738,48 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/reservas/{reserva_id}/cancelar": {
+    "/bookings/{booking_id}/cancel": {
       "post": {
         "tags": [
           "reservas"
         ],
         "summary": "Cancelar una reserva propia",
         "description": "Hasta el inicio del turno. El horario vuelve a quedar libre, la reserva pasa al historial como cancelada y la confirmación queda en el centro de notificaciones y sale por push. Cancelar una que ya canceló la misma persona responde igual.",
-        "operationId": "cancelar_reservas__reserva_id__cancelar_post",
+        "operationId": "cancel_bookings__booking_id__cancel_post",
         "security": [
           {
             "HTTPBearer": []
@@ -1457,13 +1787,13 @@
         ],
         "parameters": [
           {
-            "name": "reserva_id",
+            "name": "booking_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Reserva Id"
+              "title": "Booking Id"
             }
           }
         ],
@@ -1514,14 +1844,14 @@
         }
       }
     },
-    "/reservas/{reserva_id}/modificar": {
+    "/bookings/{booking_id}/modify": {
       "post": {
         "tags": [
           "reservas"
         ],
         "summary": "Modificar una reserva propia",
         "description": "Otra cancha del mismo tipo en la misma sede, otro día u otro horario, con la misma duración. El horario anterior se libera sólo si el nuevo queda tomado; la reserva conserva su número y el total pasa al precio de ahora del espacio. Repetir un cambio que ya se hizo responde igual.",
-        "operationId": "modificar_reservas__reserva_id__modificar_post",
+        "operationId": "modify_bookings__booking_id__modify_post",
         "security": [
           {
             "HTTPBearer": []
@@ -1529,13 +1859,13 @@
         ],
         "parameters": [
           {
-            "name": "reserva_id",
+            "name": "booking_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Reserva Id"
+              "title": "Booking Id"
             }
           }
         ],
@@ -1577,7 +1907,7 @@
             "description": "No hay una reserva de quien pide con ese número"
           },
           "409": {
-            "description": "El horario nuevo se ocupó (`horario`) o la reserva ya no se puede modificar (`reserva`)",
+            "description": "El horario nuevo se ocupó (`slot`) o la reserva ya no se puede modificar (`booking`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1595,18 +1925,48 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/reservas/todas": {
+    "/bookings/all": {
       "get": {
         "tags": [
           "reservas"
         ],
         "summary": "El historial global de reservas (CU-14)",
-        "description": "Todos los usuarios, todas las sedes. Filtra por estado (`activa`, `completada` o `anulada`; sin filtro trae también las canceladas por su usuario), sede, deporte, rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `pagina`, de la más reciente a la más antigua. No modifica nada.",
-        "operationId": "listar_todas_reservas_todas_get",
+        "description": "Todos los usuarios, todas las sedes. Filtra por estado (`active`, `completed` o `voided`; sin filtro trae también las canceladas por su usuario), sede, deporte, rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `page`, de la más reciente a la más antigua. No modifica nada.",
+        "operationId": "list_all_bookings_all_get",
         "security": [
           {
             "HTTPBearer": []
@@ -1614,16 +1974,16 @@
         ],
         "parameters": [
           {
-            "name": "estado",
+            "name": "status",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
                   "enum": [
-                    "activa",
-                    "completada",
-                    "anulada"
+                    "active",
+                    "completed",
+                    "voided"
                   ],
                   "type": "string"
                 },
@@ -1631,11 +1991,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Estado"
+              "title": "Status"
             }
           },
           {
-            "name": "sede_id",
+            "name": "venue_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -1648,11 +2008,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Sede Id"
+              "title": "Venue Id"
             }
           },
           {
-            "name": "deporte",
+            "name": "sport",
             "in": "query",
             "required": false,
             "schema": {
@@ -1664,11 +2024,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Deporte"
+              "title": "Sport"
             }
           },
           {
-            "name": "desde",
+            "name": "since",
             "in": "query",
             "required": false,
             "schema": {
@@ -1681,11 +2041,11 @@
                   "type": "null"
                 }
               ],
-              "title": "Desde"
+              "title": "Since"
             }
           },
           {
-            "name": "hasta",
+            "name": "until",
             "in": "query",
             "required": false,
             "schema": {
@@ -1698,7 +2058,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Hasta"
+              "title": "Until"
             }
           },
           {
@@ -1718,7 +2078,7 @@
             }
           },
           {
-            "name": "pagina",
+            "name": "page",
             "in": "query",
             "required": false,
             "schema": {
@@ -1726,7 +2086,7 @@
               "maximum": 10000,
               "minimum": 1,
               "default": 1,
-              "title": "Pagina"
+              "title": "Page"
             }
           }
         ],
@@ -1767,13 +2127,13 @@
         }
       }
     },
-    "/reservas/todas/{reserva_id}": {
+    "/bookings/all/{booking_id}": {
       "get": {
         "tags": [
           "reservas"
         ],
         "summary": "El detalle de cualquier reserva (CU-14)",
-        "operationId": "detalle_reservas_todas__reserva_id__get",
+        "operationId": "detail_bookings_all__booking_id__get",
         "security": [
           {
             "HTTPBearer": []
@@ -1781,13 +2141,13 @@
         ],
         "parameters": [
           {
-            "name": "reserva_id",
+            "name": "booking_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Reserva Id"
+              "title": "Booking Id"
             }
           }
         ],
@@ -1831,14 +2191,14 @@
         }
       }
     },
-    "/reservas/{reserva_id}/anular": {
+    "/bookings/{booking_id}/void": {
       "post": {
         "tags": [
           "reservas"
         ],
         "summary": "Anular una reserva (CU-15)",
-        "description": "Hasta el inicio del turno. `espacio_id` e `inicio` son la cancha y el horario que el administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una anulación ya hecha por el mismo administrador con el mismo motivo responde igual. Le avisa a quien reservó, con el motivo, sin repetir el aviso.",
-        "operationId": "anular_reservas__reserva_id__anular_post",
+        "description": "Hasta el inicio del turno. `space_id` y `starts_at` son la cancha y el horario que el administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una anulación ya hecha por el mismo administrador con el mismo motivo responde igual. Le avisa a quien reservó, con el motivo, sin repetir el aviso.",
+        "operationId": "void_bookings__booking_id__void_post",
         "security": [
           {
             "HTTPBearer": []
@@ -1846,13 +2206,13 @@
         ],
         "parameters": [
           {
-            "name": "reserva_id",
+            "name": "booking_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Reserva Id"
+              "title": "Booking Id"
             }
           }
         ],
@@ -1912,18 +2272,48 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/dispositivos": {
+    "/devices": {
       "put": {
         "tags": [
           "notificaciones"
         ],
         "summary": "Registrar el teléfono para recibir avisos",
-        "description": "`permiso` es lo que el sistema operativo contestó sobre las notificaciones: sin permiso los avisos quedan sólo en el centro. Si el token ya estaba a nombre de otra cuenta, pasa a quien pide.",
-        "operationId": "registrar_dispositivos_put",
+        "description": "`permission_granted` es lo que el sistema operativo contestó sobre las notificaciones: sin permiso los avisos quedan sólo en el centro. Si el token ya estaba a nombre de otra cuenta, pasa a quien pide.",
+        "operationId": "register_devices_put",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1963,6 +2353,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -1972,14 +2392,14 @@
         ]
       }
     },
-    "/dispositivos/baja": {
+    "/devices/unregister": {
       "post": {
         "tags": [
           "notificaciones"
         ],
         "summary": "Dar de baja el teléfono al cerrar la sesión",
         "description": "Deja de recibir avisos de esta cuenta. Si no estaba registrado, responde igual.",
-        "operationId": "baja_dispositivos_baja_post",
+        "operationId": "unregister_devices_unregister_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2013,6 +2433,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2022,14 +2472,14 @@
         ]
       }
     },
-    "/notificaciones": {
+    "/notifications": {
       "get": {
         "tags": [
           "notificaciones"
         ],
         "summary": "El centro de notificaciones de quien consulta",
         "description": "Las últimas 100, de la más nueva a la más vieja, y cuántas hay sin leer en total.",
-        "operationId": "centro_notificaciones_get",
+        "operationId": "center_notifications_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2059,13 +2509,13 @@
         ]
       }
     },
-    "/notificaciones/leer-todas": {
+    "/notifications/read-all": {
       "post": {
         "tags": [
           "notificaciones"
         ],
         "summary": "Marcar todas las notificaciones como leídas",
-        "operationId": "leer_todas_notificaciones_leer_todas_post",
+        "operationId": "read_all_notifications_read_all_post",
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -2088,14 +2538,14 @@
         ]
       }
     },
-    "/notificaciones/{notificacion_id}/leer": {
+    "/notifications/{notification_id}/read": {
       "post": {
         "tags": [
           "notificaciones"
         ],
         "summary": "Marcar una notificación como leída",
         "description": "Marcar una que ya estaba leída responde igual.",
-        "operationId": "leer_notificaciones__notificacion_id__leer_post",
+        "operationId": "read_notifications__notification_id__read_post",
         "security": [
           {
             "HTTPBearer": []
@@ -2103,13 +2553,13 @@
         ],
         "parameters": [
           {
-            "name": "notificacion_id",
+            "name": "notification_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "string",
               "format": "uuid",
-              "title": "Notificacion Id"
+              "title": "Notification Id"
             }
           }
         ],
@@ -2148,26 +2598,26 @@
     "schemas": {
       "BookingChangeRequest": {
         "properties": {
-          "espacio_id": {
+          "space_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Espacio Id"
+            "title": "Space Id"
           },
-          "fecha": {
+          "date": {
             "type": "string",
             "format": "date",
-            "title": "Fecha"
+            "title": "Date"
           },
-          "desde": {
+          "start_hour": {
             "type": "string",
-            "title": "Desde"
+            "title": "Start Hour"
           }
         },
         "type": "object",
         "required": [
-          "espacio_id",
-          "fecha",
-          "desde"
+          "space_id",
+          "date",
+          "start_hour"
         ],
         "title": "BookingChangeRequest"
       },
@@ -2178,65 +2628,65 @@
             "format": "uuid",
             "title": "Id"
           },
-          "espacio_id": {
+          "space_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Espacio Id"
+            "title": "Space Id"
           },
-          "sede_id": {
+          "venue_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Sede Id"
+            "title": "Venue Id"
           },
-          "espacio": {
+          "space": {
             "type": "string",
-            "title": "Espacio"
+            "title": "Space"
           },
-          "deporte": {
+          "sport": {
             "type": "string",
-            "title": "Deporte"
+            "title": "Sport"
           },
-          "tipo": {
+          "kind": {
             "type": "string",
-            "title": "Tipo"
+            "title": "Kind"
           },
-          "sede": {
+          "venue": {
             "type": "string",
-            "title": "Sede"
+            "title": "Venue"
           },
-          "direccion": {
+          "address": {
             "type": "string",
-            "title": "Direccion"
+            "title": "Address"
           },
-          "inicio": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Inicio"
-          },
-          "fin": {
+          "starts_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Fin"
+            "title": "Starts At"
           },
-          "precio_por_hora": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ends At"
+          },
+          "price_per_hour": {
             "type": "integer",
-            "title": "Precio Por Hora"
+            "title": "Price Per Hour"
           },
           "total": {
             "type": "integer",
             "title": "Total"
           },
-          "estado": {
+          "status": {
             "type": "string",
             "enum": [
-              "activa",
-              "completada",
-              "cancelada",
-              "anulada"
+              "active",
+              "completed",
+              "canceled",
+              "voided"
             ],
-            "title": "Estado"
+            "title": "Status"
           },
-          "motivo": {
+          "reason": {
             "anyOf": [
               {
                 "type": "string"
@@ -2245,23 +2695,23 @@
                 "type": "null"
               }
             ],
-            "title": "Motivo"
+            "title": "Reason"
           },
-          "usuario_id": {
+          "user_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Usuario Id"
+            "title": "User Id"
           },
-          "usuario": {
+          "user": {
             "type": "string",
-            "title": "Usuario"
+            "title": "User"
           },
-          "creado_en": {
+          "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Creado En"
+            "title": "Created At"
           },
-          "cancelada_en": {
+          "canceled_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -2271,9 +2721,9 @@
                 "type": "null"
               }
             ],
-            "title": "Cancelada En"
+            "title": "Canceled At"
           },
-          "cancelada_por_nombre": {
+          "canceled_by_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -2282,17 +2732,17 @@
                 "type": "null"
               }
             ],
-            "title": "Cancelada Por Nombre"
+            "title": "Canceled By Name"
           },
-          "espacio_de_baja": {
+          "space_deactivated": {
             "type": "boolean",
-            "title": "Espacio De Baja"
+            "title": "Space Deactivated"
           },
-          "anulable": {
+          "voidable": {
             "type": "boolean",
-            "title": "Anulable"
+            "title": "Voidable"
           },
-          "aviso_envio": {
+          "notice_delivery": {
             "anyOf": [
               {
                 "type": "string"
@@ -2301,9 +2751,9 @@
                 "type": "null"
               }
             ],
-            "title": "Aviso Envio"
+            "title": "Notice Delivery"
           },
-          "aviso_en": {
+          "notice_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -2313,80 +2763,80 @@
                 "type": "null"
               }
             ],
-            "title": "Aviso En"
+            "title": "Notice At"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "espacio_id",
-          "sede_id",
-          "espacio",
-          "deporte",
-          "tipo",
-          "sede",
-          "direccion",
-          "inicio",
-          "fin",
-          "precio_por_hora",
+          "space_id",
+          "venue_id",
+          "space",
+          "sport",
+          "kind",
+          "venue",
+          "address",
+          "starts_at",
+          "ends_at",
+          "price_per_hour",
           "total",
-          "estado",
-          "motivo",
-          "usuario_id",
-          "usuario",
-          "creado_en",
-          "cancelada_en",
-          "cancelada_por_nombre",
-          "espacio_de_baja",
-          "anulable",
-          "aviso_envio",
-          "aviso_en"
+          "status",
+          "reason",
+          "user_id",
+          "user",
+          "created_at",
+          "canceled_at",
+          "canceled_by_name",
+          "space_deactivated",
+          "voidable",
+          "notice_delivery",
+          "notice_at"
         ],
         "title": "BookingHistoryView"
       },
       "BookingList": {
         "properties": {
-          "reservas": {
+          "bookings": {
             "items": {
               "$ref": "#/components/schemas/BookingView"
             },
             "type": "array",
-            "title": "Reservas"
+            "title": "Bookings"
           }
         },
         "type": "object",
         "required": [
-          "reservas"
+          "bookings"
         ],
         "title": "BookingList"
       },
       "BookingRequest": {
         "properties": {
-          "espacio_id": {
+          "space_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Espacio Id"
+            "title": "Space Id"
           },
-          "fecha": {
+          "date": {
             "type": "string",
             "format": "date",
-            "title": "Fecha"
+            "title": "Date"
           },
-          "desde": {
+          "start_hour": {
             "type": "string",
-            "title": "Desde"
+            "title": "Start Hour"
           },
-          "horas": {
+          "hours": {
             "type": "integer",
-            "title": "Horas"
+            "title": "Hours"
           }
         },
         "type": "object",
         "required": [
-          "espacio_id",
-          "fecha",
-          "desde",
-          "horas"
+          "space_id",
+          "date",
+          "start_hour",
+          "hours"
         ],
         "title": "BookingRequest"
       },
@@ -2397,65 +2847,65 @@
             "format": "uuid",
             "title": "Id"
           },
-          "espacio_id": {
+          "space_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Espacio Id"
+            "title": "Space Id"
           },
-          "sede_id": {
+          "venue_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Sede Id"
+            "title": "Venue Id"
           },
-          "espacio": {
+          "space": {
             "type": "string",
-            "title": "Espacio"
+            "title": "Space"
           },
-          "deporte": {
+          "sport": {
             "type": "string",
-            "title": "Deporte"
+            "title": "Sport"
           },
-          "tipo": {
+          "kind": {
             "type": "string",
-            "title": "Tipo"
+            "title": "Kind"
           },
-          "sede": {
+          "venue": {
             "type": "string",
-            "title": "Sede"
+            "title": "Venue"
           },
-          "direccion": {
+          "address": {
             "type": "string",
-            "title": "Direccion"
+            "title": "Address"
           },
-          "inicio": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Inicio"
-          },
-          "fin": {
+          "starts_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Fin"
+            "title": "Starts At"
           },
-          "precio_por_hora": {
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ends At"
+          },
+          "price_per_hour": {
             "type": "integer",
-            "title": "Precio Por Hora"
+            "title": "Price Per Hour"
           },
           "total": {
             "type": "integer",
             "title": "Total"
           },
-          "estado": {
+          "status": {
             "type": "string",
             "enum": [
-              "activa",
-              "completada",
-              "cancelada",
-              "anulada"
+              "active",
+              "completed",
+              "canceled",
+              "voided"
             ],
-            "title": "Estado"
+            "title": "Status"
           },
-          "motivo": {
+          "reason": {
             "anyOf": [
               {
                 "type": "string"
@@ -2464,7 +2914,7 @@
                 "type": "null"
               }
             ],
-            "title": "Motivo"
+            "title": "Reason"
           },
           "cancelable": {
             "type": "boolean",
@@ -2474,98 +2924,98 @@
         "type": "object",
         "required": [
           "id",
-          "espacio_id",
-          "sede_id",
-          "espacio",
-          "deporte",
-          "tipo",
-          "sede",
-          "direccion",
-          "inicio",
-          "fin",
-          "precio_por_hora",
+          "space_id",
+          "venue_id",
+          "space",
+          "sport",
+          "kind",
+          "venue",
+          "address",
+          "starts_at",
+          "ends_at",
+          "price_per_hour",
           "total",
-          "estado",
-          "motivo",
+          "status",
+          "reason",
           "cancelable"
         ],
         "title": "BookingView"
       },
       "BookingsOutside": {
         "properties": {
-          "reservas_afuera": {
+          "bookings_outside": {
             "type": "integer",
-            "title": "Reservas Afuera"
+            "title": "Bookings Outside"
           }
         },
         "type": "object",
         "required": [
-          "reservas_afuera"
+          "bookings_outside"
         ],
         "title": "BookingsOutside"
       },
       "CatalogView": {
         "properties": {
-          "deportes": {
+          "sports": {
             "items": {
               "$ref": "#/components/schemas/SportView"
             },
             "type": "array",
-            "title": "Deportes"
+            "title": "Sports"
           }
         },
         "type": "object",
         "required": [
-          "deportes"
+          "sports"
         ],
         "title": "CatalogView"
       },
       "Center": {
         "properties": {
-          "notificaciones": {
+          "notifications": {
             "items": {
               "$ref": "#/components/schemas/NotificationView"
             },
             "type": "array",
-            "title": "Notificaciones"
+            "title": "Notifications"
           },
-          "no_leidas": {
+          "unread": {
             "type": "integer",
-            "title": "No Leidas"
+            "title": "Unread"
           }
         },
         "type": "object",
         "required": [
-          "notificaciones",
-          "no_leidas"
+          "notifications",
+          "unread"
         ],
         "title": "Center"
       },
       "CountersView": {
         "properties": {
-          "todas": {
+          "all": {
             "type": "integer",
-            "title": "Todas"
+            "title": "All"
           },
-          "activas": {
+          "active": {
             "type": "integer",
-            "title": "Activas"
+            "title": "Active"
           },
-          "completadas": {
+          "completed": {
             "type": "integer",
-            "title": "Completadas"
+            "title": "Completed"
           },
-          "anuladas": {
+          "voided": {
             "type": "integer",
-            "title": "Anuladas"
+            "title": "Voided"
           }
         },
         "type": "object",
         "required": [
-          "todas",
-          "activas",
-          "completadas",
-          "anuladas"
+          "all",
+          "active",
+          "completed",
+          "voided"
         ],
         "title": "CountersView"
       },
@@ -2575,24 +3025,24 @@
             "type": "string",
             "title": "Token"
           },
-          "plataforma": {
+          "platform": {
             "type": "string",
             "enum": [
               "android",
               "ios"
             ],
-            "title": "Plataforma"
+            "title": "Platform"
           },
-          "permiso": {
+          "permission_granted": {
             "type": "boolean",
-            "title": "Permiso"
+            "title": "Permission Granted"
           }
         },
         "type": "object",
         "required": [
           "token",
-          "plataforma",
-          "permiso"
+          "platform",
+          "permission_granted"
         ],
         "title": "DeviceRequest"
       },
@@ -2611,78 +3061,78 @@
       },
       "DuplicateUser": {
         "properties": {
-          "mensaje": {
+          "message": {
             "type": "string",
-            "title": "Mensaje"
+            "title": "Message"
           },
-          "campos": {
+          "fields": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Campos"
+            "title": "Fields"
           },
-          "errores": {
+          "errors": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Errores"
+            "title": "Errors"
           }
         },
         "type": "object",
         "required": [
-          "mensaje",
-          "campos",
-          "errores"
+          "message",
+          "fields",
+          "errors"
         ],
         "title": "DuplicateUser"
       },
       "ErrorBody": {
         "properties": {
-          "errores": {
+          "errors": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Errores"
+            "title": "Errors"
           }
         },
         "type": "object",
         "required": [
-          "errores"
+          "errors"
         ],
         "title": "ErrorBody"
       },
       "Errors": {
         "properties": {
-          "errores": {
+          "errors": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Errores"
+            "title": "Errors"
           }
         },
         "type": "object",
         "required": [
-          "errores"
+          "errors"
         ],
         "title": "Errors"
       },
       "FieldErrors": {
         "properties": {
-          "errores": {
+          "errors": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Errores"
+            "title": "Errors"
           }
         },
         "type": "object",
         "required": [
-          "errores"
+          "errors"
         ],
         "title": "FieldErrors"
       },
@@ -2701,62 +3151,62 @@
       },
       "HistoryView": {
         "properties": {
-          "reservas": {
+          "bookings": {
             "items": {
               "$ref": "#/components/schemas/BookingHistoryView"
             },
             "type": "array",
-            "title": "Reservas"
+            "title": "Bookings"
           },
           "total": {
             "type": "integer",
             "title": "Total"
           },
-          "pagina": {
+          "page": {
             "type": "integer",
-            "title": "Pagina"
+            "title": "Page"
           },
-          "por_pagina": {
+          "per_page": {
             "type": "integer",
-            "title": "Por Pagina"
+            "title": "Per Page"
           },
-          "contadores": {
+          "counters": {
             "$ref": "#/components/schemas/CountersView"
           }
         },
         "type": "object",
         "required": [
-          "reservas",
+          "bookings",
           "total",
-          "pagina",
-          "por_pagina",
-          "contadores"
+          "page",
+          "per_page",
+          "counters"
         ],
         "title": "HistoryView"
       },
       "KindView": {
         "properties": {
-          "clave": {
+          "key": {
             "type": "string",
-            "title": "Clave"
+            "title": "Key"
           },
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre"
+            "title": "Name"
           }
         },
         "type": "object",
         "required": [
-          "clave",
-          "nombre"
+          "key",
+          "name"
         ],
         "title": "KindView"
       },
       "LinkCheck": {
         "properties": {
-          "codigo": {
+          "code": {
             "type": "string",
-            "title": "Codigo",
+            "title": "Code",
             "default": ""
           }
         },
@@ -2765,9 +3215,9 @@
       },
       "LinkRequest": {
         "properties": {
-          "correo": {
+          "email": {
             "type": "string",
-            "title": "Correo",
+            "title": "Email",
             "default": ""
           }
         },
@@ -2776,14 +3226,14 @@
       },
       "NewPassword": {
         "properties": {
-          "codigo": {
+          "code": {
             "type": "string",
-            "title": "Codigo",
+            "title": "Code",
             "default": ""
           },
-          "nueva": {
+          "new_password": {
             "type": "string",
-            "title": "Nueva",
+            "title": "New Password",
             "default": ""
           }
         },
@@ -2810,25 +3260,25 @@
             "format": "uuid",
             "title": "Id"
           },
-          "tipo": {
+          "kind": {
             "type": "string",
             "enum": [
-              "recordatorio",
-              "recordatorio_cinco",
-              "cancelacion_forzosa",
-              "cancelacion_usuario"
+              "reminder",
+              "five_minute_reminder",
+              "forced_cancellation",
+              "user_cancellation"
             ],
-            "title": "Tipo"
+            "title": "Kind"
           },
-          "titulo": {
+          "title": {
             "type": "string",
-            "title": "Titulo"
+            "title": "Title"
           },
-          "cuerpo": {
+          "body": {
             "type": "string",
-            "title": "Cuerpo"
+            "title": "Body"
           },
-          "reserva_id": {
+          "booking_id": {
             "anyOf": [
               {
                 "type": "string",
@@ -2838,83 +3288,83 @@
                 "type": "null"
               }
             ],
-            "title": "Reserva Id"
+            "title": "Booking Id"
           },
-          "creada_en": {
+          "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Creada En"
+            "title": "Created At"
           },
-          "leida": {
+          "read": {
             "type": "boolean",
-            "title": "Leida"
+            "title": "Read"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "tipo",
-          "titulo",
-          "cuerpo",
-          "reserva_id",
-          "creada_en",
-          "leida"
+          "kind",
+          "title",
+          "body",
+          "booking_id",
+          "created_at",
+          "read"
         ],
         "title": "NotificationView"
       },
       "OwnProfile": {
         "properties": {
-          "nombre": {
+          "first_name": {
             "type": "string",
-            "title": "Nombre"
+            "title": "First Name"
           },
-          "apellido": {
+          "last_name": {
             "type": "string",
-            "title": "Apellido"
+            "title": "Last Name"
           },
-          "correo": {
+          "email": {
             "type": "string",
-            "title": "Correo"
+            "title": "Email"
           },
-          "rol": {
+          "role": {
             "type": "string",
             "enum": [
-              "usuario",
+              "user",
               "admin"
             ],
-            "title": "Rol"
+            "title": "Role"
           },
           "dni": {
             "type": "string",
             "title": "Dni"
           },
-          "fecha_nacimiento": {
+          "birth_date": {
             "type": "string",
             "format": "date",
-            "title": "Fecha Nacimiento"
+            "title": "Birth Date"
           }
         },
         "type": "object",
         "required": [
-          "nombre",
-          "apellido",
-          "correo",
-          "rol",
+          "first_name",
+          "last_name",
+          "email",
+          "role",
           "dni",
-          "fecha_nacimiento"
+          "birth_date"
         ],
         "title": "OwnProfile"
       },
       "PasswordChangeRequest": {
         "properties": {
-          "actual": {
+          "current_password": {
             "type": "string",
-            "title": "Actual",
+            "title": "Current Password",
             "default": ""
           },
-          "nueva": {
+          "new_password": {
             "type": "string",
-            "title": "Nueva",
+            "title": "New Password",
             "default": ""
           }
         },
@@ -2923,30 +3373,30 @@
       },
       "PasswordErrors": {
         "properties": {
-          "errores": {
+          "errors": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Errores"
+            "title": "Errors"
           }
         },
         "type": "object",
         "required": [
-          "errores"
+          "errors"
         ],
         "title": "PasswordErrors"
       },
       "ProfileEditRequest": {
         "properties": {
-          "nombre": {
+          "first_name": {
             "type": "string",
-            "title": "Nombre",
+            "title": "First Name",
             "default": ""
           },
-          "apellido": {
+          "last_name": {
             "type": "string",
-            "title": "Apellido",
+            "title": "Last Name",
             "default": ""
           },
           "dni": {
@@ -2954,9 +3404,9 @@
             "title": "Dni",
             "default": ""
           },
-          "fecha_nacimiento": {
+          "birth_date": {
             "type": "string",
-            "title": "Fecha Nacimiento",
+            "title": "Birth Date",
             "default": ""
           }
         },
@@ -2979,14 +3429,14 @@
       },
       "RegistrationRequest": {
         "properties": {
-          "nombre": {
+          "first_name": {
             "type": "string",
-            "title": "Nombre",
+            "title": "First Name",
             "default": ""
           },
-          "apellido": {
+          "last_name": {
             "type": "string",
-            "title": "Apellido",
+            "title": "Last Name",
             "default": ""
           },
           "dni": {
@@ -2994,19 +3444,19 @@
             "title": "Dni",
             "default": ""
           },
-          "fecha_nacimiento": {
+          "birth_date": {
             "type": "string",
-            "title": "Fecha Nacimiento",
+            "title": "Birth Date",
             "default": ""
           },
-          "correo": {
+          "email": {
             "type": "string",
-            "title": "Correo",
+            "title": "Email",
             "default": ""
           },
-          "contrasena": {
+          "password": {
             "type": "string",
-            "title": "Contrasena",
+            "title": "Password",
             "default": ""
           }
         },
@@ -3015,68 +3465,68 @@
       },
       "SlotGridView": {
         "properties": {
-          "fecha": {
+          "date": {
             "type": "string",
             "format": "date",
-            "title": "Fecha"
+            "title": "Date"
           },
-          "hoy": {
+          "today": {
             "type": "string",
             "format": "date",
-            "title": "Hoy"
+            "title": "Today"
           },
-          "abre": {
+          "opens": {
             "type": "boolean",
-            "title": "Abre"
+            "title": "Opens"
           },
-          "franjas": {
+          "slots": {
             "items": {
               "$ref": "#/components/schemas/SlotView"
             },
             "type": "array",
-            "title": "Franjas"
+            "title": "Slots"
           },
-          "no_disponibles": {
+          "unavailable": {
             "type": "integer",
-            "title": "No Disponibles"
+            "title": "Unavailable"
           }
         },
         "type": "object",
         "required": [
-          "fecha",
-          "hoy",
-          "abre",
-          "franjas",
-          "no_disponibles"
+          "date",
+          "today",
+          "opens",
+          "slots",
+          "unavailable"
         ],
         "title": "SlotGridView"
       },
       "SlotView": {
         "properties": {
-          "inicio": {
+          "starts_at": {
             "type": "string",
-            "title": "Inicio"
+            "title": "Starts At"
           },
-          "fin": {
+          "ends_at": {
             "type": "string",
-            "title": "Fin"
+            "title": "Ends At"
           },
-          "disponible": {
+          "available": {
             "type": "boolean",
-            "title": "Disponible"
+            "title": "Available"
           }
         },
         "type": "object",
         "required": [
-          "inicio",
-          "fin",
-          "disponible"
+          "starts_at",
+          "ends_at",
+          "available"
         ],
         "title": "SlotView"
       },
       "SpaceChangeRequest": {
         "properties": {
-          "deporte": {
+          "sport": {
             "anyOf": [
               {
                 "type": "string"
@@ -3085,9 +3535,9 @@
                 "type": "null"
               }
             ],
-            "title": "Deporte"
+            "title": "Sport"
           },
-          "tipo": {
+          "kind": {
             "anyOf": [
               {
                 "type": "string"
@@ -3096,9 +3546,9 @@
                 "type": "null"
               }
             ],
-            "title": "Tipo"
+            "title": "Kind"
           },
-          "techada": {
+          "covered": {
             "anyOf": [
               {
                 "type": "boolean"
@@ -3107,9 +3557,9 @@
                 "type": "null"
               }
             ],
-            "title": "Techada"
+            "title": "Covered"
           },
-          "iluminada": {
+          "lit": {
             "anyOf": [
               {
                 "type": "boolean"
@@ -3118,9 +3568,9 @@
                 "type": "null"
               }
             ],
-            "title": "Iluminada"
+            "title": "Lit"
           },
-          "precio_por_hora": {
+          "price_per_hour": {
             "anyOf": [
               {
                 "type": "integer"
@@ -3129,7 +3579,7 @@
                 "type": "null"
               }
             ],
-            "title": "Precio Por Hora"
+            "title": "Price Per Hour"
           }
         },
         "type": "object",
@@ -3137,23 +3587,23 @@
       },
       "SpaceList": {
         "properties": {
-          "espacios": {
+          "spaces": {
             "items": {
               "$ref": "#/components/schemas/SpaceView"
             },
             "type": "array",
-            "title": "Espacios"
+            "title": "Spaces"
           }
         },
         "type": "object",
         "required": [
-          "espacios"
+          "spaces"
         ],
         "title": "SpaceList"
       },
       "SpaceRequest": {
         "properties": {
-          "sede_id": {
+          "venue_id": {
             "anyOf": [
               {
                 "type": "string",
@@ -3163,19 +3613,19 @@
                 "type": "null"
               }
             ],
-            "title": "Sede Id"
+            "title": "Venue Id"
           },
-          "deporte": {
+          "sport": {
             "type": "string",
-            "title": "Deporte",
+            "title": "Sport",
             "default": ""
           },
-          "tipo": {
+          "kind": {
             "type": "string",
-            "title": "Tipo",
+            "title": "Kind",
             "default": ""
           },
-          "techada": {
+          "covered": {
             "anyOf": [
               {
                 "type": "boolean"
@@ -3184,9 +3634,9 @@
                 "type": "null"
               }
             ],
-            "title": "Techada"
+            "title": "Covered"
           },
-          "iluminada": {
+          "lit": {
             "anyOf": [
               {
                 "type": "boolean"
@@ -3195,9 +3645,9 @@
                 "type": "null"
               }
             ],
-            "title": "Iluminada"
+            "title": "Lit"
           },
-          "precio_por_hora": {
+          "price_per_hour": {
             "anyOf": [
               {
                 "type": "integer"
@@ -3206,9 +3656,9 @@
                 "type": "null"
               }
             ],
-            "title": "Precio Por Hora"
+            "title": "Price Per Hour"
           },
-          "numero": {
+          "number": {
             "anyOf": [
               {
                 "type": "integer"
@@ -3217,7 +3667,7 @@
                 "type": "null"
               }
             ],
-            "title": "Numero"
+            "title": "Number"
           }
         },
         "type": "object",
@@ -3230,100 +3680,100 @@
             "format": "uuid",
             "title": "Id"
           },
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre"
+            "title": "Name"
           },
-          "sede_id": {
+          "venue_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Sede Id"
+            "title": "Venue Id"
           },
-          "sede": {
+          "venue": {
             "type": "string",
-            "title": "Sede"
+            "title": "Venue"
           },
-          "deporte": {
+          "sport": {
             "type": "string",
-            "title": "Deporte"
+            "title": "Sport"
           },
-          "tipo": {
+          "kind": {
             "type": "string",
-            "title": "Tipo"
+            "title": "Kind"
           },
-          "numero": {
+          "number": {
             "type": "integer",
-            "title": "Numero"
+            "title": "Number"
           },
-          "techada": {
+          "covered": {
             "type": "boolean",
-            "title": "Techada"
+            "title": "Covered"
           },
-          "iluminada": {
+          "lit": {
             "type": "boolean",
-            "title": "Iluminada"
+            "title": "Lit"
           },
-          "precio_por_hora": {
+          "price_per_hour": {
             "type": "integer",
-            "title": "Precio Por Hora"
+            "title": "Price Per Hour"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "nombre",
-          "sede_id",
-          "sede",
-          "deporte",
-          "tipo",
-          "numero",
-          "techada",
-          "iluminada",
-          "precio_por_hora"
+          "name",
+          "venue_id",
+          "venue",
+          "sport",
+          "kind",
+          "number",
+          "covered",
+          "lit",
+          "price_per_hour"
         ],
         "title": "SpaceView"
       },
       "SportView": {
         "properties": {
-          "clave": {
+          "key": {
             "type": "string",
-            "title": "Clave"
+            "title": "Key"
           },
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre"
+            "title": "Name"
           },
-          "tipos": {
+          "kinds": {
             "items": {
               "$ref": "#/components/schemas/KindView"
             },
             "type": "array",
-            "title": "Tipos"
+            "title": "Kinds"
           }
         },
         "type": "object",
         "required": [
-          "clave",
-          "nombre",
-          "tipos"
+          "key",
+          "name",
+          "kinds"
         ],
         "title": "SportView"
       },
       "Suggestion": {
         "properties": {
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre"
+            "title": "Name"
           },
-          "numero": {
+          "number": {
             "type": "integer",
-            "title": "Numero"
+            "title": "Number"
           }
         },
         "type": "object",
         "required": [
-          "nombre",
-          "numero"
+          "name",
+          "number"
         ],
         "title": "Suggestion"
       },
@@ -3369,38 +3819,38 @@
       },
       "VenueEditRequest": {
         "properties": {
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre",
+            "title": "Name",
             "default": ""
           },
-          "direccion": {
+          "address": {
             "type": "string",
-            "title": "Direccion",
+            "title": "Address",
             "default": ""
           },
-          "apertura": {
+          "opens_at": {
             "type": "string",
-            "title": "Apertura",
+            "title": "Opens At",
             "default": ""
           },
-          "cierre": {
+          "closes_at": {
             "type": "string",
-            "title": "Cierre",
+            "title": "Closes At",
             "default": ""
           },
-          "dias": {
+          "open_days": {
             "items": {
               "type": "integer"
             },
             "type": "array",
             "maxItems": 7,
-            "title": "Dias",
+            "title": "Open Days",
             "default": []
           },
-          "confirmar": {
+          "confirm": {
             "type": "boolean",
-            "title": "Confirmar",
+            "title": "Confirm",
             "default": false
           }
         },
@@ -3409,65 +3859,65 @@
       },
       "VenueErrors": {
         "properties": {
-          "errores": {
+          "errors": {
             "additionalProperties": {
               "type": "string"
             },
             "type": "object",
-            "title": "Errores"
+            "title": "Errors"
           }
         },
         "type": "object",
         "required": [
-          "errores"
+          "errors"
         ],
         "title": "VenueErrors"
       },
       "VenueList": {
         "properties": {
-          "sedes": {
+          "venues": {
             "items": {
               "$ref": "#/components/schemas/VenueView"
             },
             "type": "array",
-            "title": "Sedes"
+            "title": "Venues"
           }
         },
         "type": "object",
         "required": [
-          "sedes"
+          "venues"
         ],
         "title": "VenueList"
       },
       "VenueRequest": {
         "properties": {
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre",
+            "title": "Name",
             "default": ""
           },
-          "direccion": {
+          "address": {
             "type": "string",
-            "title": "Direccion",
+            "title": "Address",
             "default": ""
           },
-          "apertura": {
+          "opens_at": {
             "type": "string",
-            "title": "Apertura",
+            "title": "Opens At",
             "default": ""
           },
-          "cierre": {
+          "closes_at": {
             "type": "string",
-            "title": "Cierre",
+            "title": "Closes At",
             "default": ""
           },
-          "dias": {
+          "open_days": {
             "items": {
               "type": "integer"
             },
             "type": "array",
             "maxItems": 7,
-            "title": "Dias",
+            "title": "Open Days",
             "default": []
           }
         },
@@ -3481,78 +3931,92 @@
             "format": "uuid",
             "title": "Id"
           },
-          "nombre": {
+          "name": {
             "type": "string",
-            "title": "Nombre"
+            "title": "Name"
           },
-          "direccion": {
+          "address": {
             "type": "string",
-            "title": "Direccion"
+            "title": "Address"
           },
-          "apertura": {
+          "opens_at": {
             "type": "string",
-            "title": "Apertura"
+            "title": "Opens At"
           },
-          "cierre": {
+          "closes_at": {
             "type": "string",
-            "title": "Cierre"
+            "title": "Closes At"
           },
-          "dias": {
+          "open_days": {
             "items": {
               "type": "integer"
             },
             "type": "array",
-            "title": "Dias"
+            "title": "Open Days"
           },
-          "canchas": {
+          "space_count": {
             "type": "integer",
-            "title": "Canchas"
+            "title": "Space Count"
           },
-          "deportes": {
+          "sports": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Deportes"
+            "title": "Sports"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "nombre",
-          "direccion",
-          "apertura",
-          "cierre",
-          "dias",
-          "canchas",
-          "deportes"
+          "name",
+          "address",
+          "opens_at",
+          "closes_at",
+          "open_days",
+          "space_count",
+          "sports"
         ],
         "title": "VenueView"
       },
       "VoidRequest": {
         "properties": {
-          "motivo": {
+          "reason": {
             "type": "string",
-            "title": "Motivo"
+            "title": "Reason"
           },
-          "espacio_id": {
+          "space_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Espacio Id"
+            "title": "Space Id"
           },
-          "inicio": {
+          "starts_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Inicio"
+            "title": "Starts At"
           }
         },
         "type": "object",
         "required": [
-          "motivo",
-          "espacio_id",
-          "inicio"
+          "reason",
+          "space_id",
+          "starts_at"
         ],
         "title": "VoidRequest"
+      },
+      "BodyError": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "errors"
+        ]
       }
     },
     "securitySchemes": {

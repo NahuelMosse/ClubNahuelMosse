@@ -4,9 +4,9 @@ import '../domain/slot.dart';
 /// The slot in [json]; `null` if it is not one.
 Slot? slotFromJson(Object? json) => switch (json) {
   {
-    'inicio': final String start,
-    'fin': final String end,
-    'disponible': final bool available,
+    'starts_at': final String start,
+    'ends_at': final String end,
+    'available': final bool available,
   } =>
     Slot(start: start, end: end, available: available),
   _ => null,
@@ -15,11 +15,11 @@ Slot? slotFromJson(Object? json) => switch (json) {
 /// The grid in [json]; `null` if it is not one.
 AvailabilityGrid? availabilityGridFromJson(Object? json) {
   if (json case {
-    'fecha': final String date,
-    'hoy': final String today,
-    'abre': final bool opens,
-    'franjas': final List<Object?> list,
-    'no_disponibles': final int unavailableCount,
+    'date': final String date,
+    'today': final String today,
+    'opens': final bool opens,
+    'slots': final List<Object?> list,
+    'unavailable': final int unavailableCount,
   }) {
     final day = _day(date);
     final todayDate = _day(today);

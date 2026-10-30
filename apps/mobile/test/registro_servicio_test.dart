@@ -16,7 +16,7 @@ void main() {
         'lib/features/users/presentation/registration_screen.dart',
       ).readAsStringSync();
       expect(pantalla, isNot(contains('api.post(')));
-      expect(pantalla, isNot(contains("'/registro'")));
+      expect(pantalla, isNot(contains("'/register'")));
       expect(pantalla, contains('RegistrationService'));
     },
   );
@@ -26,7 +26,7 @@ void main() {
     () async {
       final pedidos = <http.Request>[];
       final servicio = RegistrationService(
-        apiRutas({'POST /registro': (201, '{}')}, pedidos: pedidos),
+        apiRutas({'POST /register': (201, '{}')}, pedidos: pedidos),
       );
       final r = await servicio.register(
         RegistrationData(
@@ -40,14 +40,14 @@ void main() {
       );
       expect(r.codigo, 201);
       expect(pedidos, hasLength(1));
-      expect(pedidos.single.url.path, '/registro');
+      expect(pedidos.single.url.path, '/register');
       expect(jsonDecode(pedidos.single.body), {
-        'nombre': 'Ana',
-        'apellido': 'Pérez',
+        'first_name': 'Ana',
+        'last_name': 'Pérez',
         'dni': '12.345.678',
-        'fecha_nacimiento': '1990-05-07',
-        'correo': 'ana@correo.com',
-        'contrasena': 'Clave1234',
+        'birth_date': '1990-05-07',
+        'email': 'ana@correo.com',
+        'password': 'Clave1234',
       });
     },
   );

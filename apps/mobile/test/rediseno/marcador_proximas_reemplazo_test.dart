@@ -20,12 +20,12 @@ String _uuid(int n) =>
 String _reserva(int n) {
   final desde = DateTime.utc(2026, 11, 12, 21).add(Duration(days: n));
   final hasta = desde.add(const Duration(hours: 1));
-  return '{"id": "${_uuid(n)}", "espacio_id": "${_uuid(9)}", "sede_id": "${_uuid(2)}", '
-      '"espacio": "Moron_Rivadavia_19850_Futbol_F5_1", "deporte": "Futbol", '
-      '"tipo": "F5", "sede": "Sede Morón", "direccion": "Av. Rivadavia 19850", '
-      '"inicio": "${desde.toIso8601String()}", "fin": "${hasta.toIso8601String()}", '
-      '"precio_por_hora": 38000, "total": 38000, "estado": "activa", '
-      '"motivo": null, "cancelable": true}';
+  return '{"id": "${_uuid(n)}", "space_id": "${_uuid(9)}", "venue_id": "${_uuid(2)}", '
+      '"space": "Moron_Rivadavia_19850_Futbol_F5_1", "sport": "Futbol", '
+      '"kind": "F5", "venue": "Sede Morón", "address": "Av. Rivadavia 19850", '
+      '"starts_at": "${desde.toIso8601String()}", "ends_at": "${hasta.toIso8601String()}", '
+      '"price_per_hour": 38000, "total": 38000, "status": "active", '
+      '"reason": null, "cancelable": true}';
 }
 
 void main() {
@@ -34,12 +34,12 @@ void main() {
     (tester) async {
       final sesion = SesionFalsa(perfilUsuario);
       final api = apiRutas({
-        'GET /reservas': (
+        'GET /bookings': (
           200,
-          '{"reservas": [${[for (var i = 1; i <= 20; i++) _reserva(i)].join(', ')}]}',
+          '{"bookings": [${[for (var i = 1; i <= 20; i++) _reserva(i)].join(', ')}]}',
         ),
-        'GET /espacios/catalogo': (200, '{"deportes": []}'),
-        'GET /sedes': (200, '{"sedes": []}'),
+        'GET /spaces/catalog': (200, '{"sports": []}'),
+        'GET /venues': (200, '{"venues": []}'),
       });
       await montar(
         tester,

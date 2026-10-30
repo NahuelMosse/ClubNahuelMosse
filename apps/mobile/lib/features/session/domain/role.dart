@@ -1,6 +1,6 @@
 /// El rol de una cuenta: lo que decide a qué pantallas entra.
 enum Role {
-  user('usuario'),
+  user('user'),
   admin('admin');
 
   const Role(this.apiValue);

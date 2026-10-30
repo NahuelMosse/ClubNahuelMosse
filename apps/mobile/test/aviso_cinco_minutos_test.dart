@@ -11,19 +11,19 @@ const _reserva = '00000000-0000-7000-8000-000000000007';
 
 AppNotification _aviso(String tipo) => AppNotification.fromJson({
   'id': '00000000-0000-7000-8000-000000000001',
-  'tipo': tipo,
-  'titulo': 'Tu reserva empieza en 5 minutos',
-  'cuerpo': 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
-  'reserva_id': _reserva,
-  'creada_en': '2026-11-12T23:55:00Z',
-  'leida': false,
+  'kind': tipo,
+  'title': 'Tu reserva empieza en 5 minutos',
+  'body': 'Fútbol 5 · Sede Morón · 21:00 – 22:00',
+  'booking_id': _reserva,
+  'created_at': '2026-11-12T23:55:00Z',
+  'read': false,
 })!;
 
 void main() {
   testWidgets(
     'el aviso de 5 minutos se muestra con el ícono del recordatorio y abre la reserva @NOT-05-S2',
     (tester) async {
-      final cinco = _aviso('recordatorio_cinco');
+      final cinco = _aviso('five_minute_reminder');
       expect(cinco.kind, NotificationKind.fiveMinuteReminder);
       expect(
         noticeRoute(cinco.kind, cinco.bookingId),

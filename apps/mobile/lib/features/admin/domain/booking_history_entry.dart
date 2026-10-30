@@ -53,7 +53,7 @@ class BookingHistoryEntry {
   /// Active and not started yet, by the server clock: only then voiding is offered.
   final bool voidable;
 
-  /// How the notice of the voiding reached whoever booked (`enviada`, `sin_permiso`,
+  /// How the notice of the voiding reached whoever booked (`sent`, `no_permission`,
   /// `sin_canal` or `fallida`) and when; `null` if there was no notice or it has not
   /// gone out yet.
   final String? noticeDelivery;

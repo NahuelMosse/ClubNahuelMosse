@@ -3,7 +3,7 @@ from datetime import date
 from typing import Literal
 from uuid import UUID
 
-Role = Literal["usuario", "admin"]
+Role = Literal["user", "admin"]
 
 
 @dataclass(frozen=True)

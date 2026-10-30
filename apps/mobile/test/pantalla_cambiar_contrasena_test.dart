@@ -21,8 +21,8 @@ void main() {
       repository: SessionRepository(
         credentials: credenciales,
         api: apiRutas({
-          'GET /yo': (200, perfilJson()),
-          'PUT /yo/contrasena': cambio,
+          'GET /me': (200, perfilJson()),
+          'PUT /me/password': cambio,
         }, pedidos: pedidos),
       ),
     );
@@ -123,7 +123,7 @@ void main() {
     expect(credenciales.intentos.last, ('nahuel@correo.com', 'ClubNahuel2'));
     final put = pedidos.singleWhere((p) => p.method == 'PUT');
     expect(put.headers['authorization'], 'Bearer token-falso');
-    expect(put.body, '{"actual":"ClubNahuel1","nueva":"ClubNahuel2"}');
+    expect(put.body, '{"current_password":"ClubNahuel1","new_password":"ClubNahuel2"}');
     semantica.dispose();
   });
 
@@ -135,7 +135,7 @@ void main() {
       tester,
       await sesionCon((
         422,
-        '{"errores": {"actual": "La contraseña actual no coincide"}}',
+        '{"errors": {"current_password": "La contraseña actual no coincide"}}',
       )),
     );
     await completar(tester, actual: 'OtraClave9');
@@ -202,7 +202,7 @@ void main() {
       tester,
       await sesionCon((
         422,
-        '{"errores": {"actual": "La contraseña actual no coincide"}}',
+        '{"errors": {"current_password": "La contraseña actual no coincide"}}',
       )),
     );
     await completar(tester, actual: 'OtraClave9');

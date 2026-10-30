@@ -39,7 +39,7 @@ def _replacement_key(notice: Notice) -> str | None:
     """The key the system uses to replace the previous notice in the tray. A grouped voiding
     notice goes out with a new id and has to take the place of the one already there, so the
     key is stable per person (the tokens belong to one) and per kind."""
-    return "cancelacion_forzosa" if notice.data.get("tipo") == "cancelacion_forzosa" else None
+    return "forced_cancellation" if notice.data.get("kind") == "forced_cancellation" else None
 
 
 def build_message(tokens: Sequence[str], notice: Notice) -> messaging.MulticastMessage:

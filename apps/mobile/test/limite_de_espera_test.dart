@@ -18,7 +18,7 @@ void main() {
               ),
             ),
           )
-          .get('/espacios')
+          .get('/spaces')
           .then(
             (_) {},
             onError: (Object e) {

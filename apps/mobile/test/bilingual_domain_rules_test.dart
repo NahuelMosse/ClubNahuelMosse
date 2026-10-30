@@ -156,13 +156,13 @@ void main() {
       expect(Venue.fromJson({'id': 'v1'}), isNull);
       final venue = Venue.fromJson({
         'id': 'v1',
-        'nombre': 'Morón',
-        'direccion': 'Calle 123',
-        'apertura': '08:00',
-        'cierre': '23:00',
-        'dias': [1, 2, 'x'],
-        'canchas': 2,
-        'deportes': ['Futbol', 3],
+        'name': 'Morón',
+        'address': 'Calle 123',
+        'opens_at': '08:00',
+        'closes_at': '23:00',
+        'open_days': [1, 2, 'x'],
+        'space_count': 2,
+        'sports': ['Futbol', 3],
       })!;
       expect(venue.days, [1, 2]);
       expect(venue.sports, ['Futbol']);

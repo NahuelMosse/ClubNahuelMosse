@@ -24,11 +24,11 @@ void main() {
         cliente: MockClient((pedido) async {
           pedidos.add(pedido);
           final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
-            ('PUT', '/sedes/00000000-0000-7000-8000-000000000001') =>
+            ('PUT', '/venues/00000000-0000-7000-8000-000000000001') =>
               respuestas.isEmpty
                   ? (200, sedeMoronJson)
                   : respuestas.removeAt(0),
-            ('GET', '/sedes') => (200, '{"sedes": [$sedeMoronJson]}'),
+            ('GET', '/venues') => (200, '{"venues": [$sedeMoronJson]}'),
             _ => (404, '{}'),
           };
           return http.Response.bytes(
@@ -89,12 +89,12 @@ void main() {
 
     final put = pedidos.singleWhere((p) => p.method == 'PUT');
     expect(cuerpo(put), {
-      'nombre': 'Sede Morón',
-      'direccion': 'Av. Rivadavia 20000',
-      'apertura': '09:00',
-      'cierre': '00:00',
-      'dias': [1, 2, 3, 4, 5, 6],
-      'confirmar': false,
+      'name': 'Sede Morón',
+      'address': 'Av. Rivadavia 20000',
+      'opens_at': '09:00',
+      'closes_at': '00:00',
+      'open_days': [1, 2, 3, 4, 5, 6],
+      'confirm': false,
     });
     expect(find.text('Los cambios se guardaron correctamente'), findsOneWidget);
     expect(find.text('AGREGAR SEDE'), findsOneWidget);
@@ -123,7 +123,7 @@ void main() {
   ) async {
     final pedidos = await abrir(
       tester,
-      alGuardar: [(409, '{"reservas_afuera": 3}')],
+      alGuardar: [(409, '{"bookings_outside": 3}')],
     );
     await elegir(tester, 'Horario de cierre', '22:00');
 
@@ -141,14 +141,14 @@ void main() {
     await tocar(tester, 'GUARDAR IGUAL');
 
     final puts = pedidos.where((p) => p.method == 'PUT').toList();
-    expect(puts.map((p) => cuerpo(p)['confirmar']), [false, true]);
+    expect(puts.map((p) => cuerpo(p)['confirm']), [false, true]);
     expect(find.text('Los cambios se guardaron correctamente'), findsOneWidget);
   });
 
   testWidgets('con varios motivos, el aviso habla del horario nuevo', (
     tester,
   ) async {
-    await abrir(tester, alGuardar: [(409, '{"reservas_afuera": 1}')]);
+    await abrir(tester, alGuardar: [(409, '{"bookings_outside": 1}')]);
     await elegir(tester, 'Horario de apertura', '10:00');
     await elegir(tester, 'Días que abre', 'Lunes a viernes');
 
@@ -170,7 +170,7 @@ void main() {
     await abrir(
       tester,
       alGuardar: [
-        (409, '{"errores": {"nombre": "Ya existe una sede con ese nombre"}}'),
+        (409, '{"errors": {"name": "Ya existe una sede con ese nombre"}}'),
       ],
     );
     await escribir(tester, 'Nombre de la sede', 'Sede Castelar');

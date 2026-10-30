@@ -12,10 +12,10 @@ class PasswordRecovery {
   /// Lanza [EmailRejected], [SinConexion] o [ErrorDelServidor]. La respuesta es la misma
   /// tenga o no cuenta el correo.
   Future<void> requestLink(String email) async {
-    final r = await _api.post('/recuperacion', {'correo': email});
+    final r = await _api.post('/password-recovery', {'email': email});
     if (r.codigo == 202) return;
     if (r.codigo == 422) {
-      if (fieldErrors(r.cuerpo)['correo'] case final message?) {
+      if (fieldErrors(r.cuerpo)['email'] case final message?) {
         throw EmailRejected(message);
       }
     }
@@ -25,7 +25,7 @@ class PasswordRecovery {
   /// Si el enlace todavía sirve. Lanza [SinConexion] o [ErrorDelServidor].
   Future<bool> isValid(String code) async {
     if (code.isEmpty) return false;
-    final r = await _api.post('/recuperacion/consulta', {'codigo': code});
+    final r = await _api.post('/password-recovery/check', {'code': code});
     return switch (r.codigo) {
       204 => true,
       410 => false,
@@ -35,9 +35,9 @@ class PasswordRecovery {
 
   /// Lanza [InvalidLink], [PasswordRejected], [SinConexion] o [ErrorDelServidor].
   Future<void> createPassword(String code, String newPassword) async {
-    final r = await _api.put('/recuperacion', {
-      'codigo': code,
-      'nueva': newPassword,
+    final r = await _api.put('/password-recovery', {
+      'code': code,
+      'new_password': newPassword,
     });
     switch (r.codigo) {
       case 204:
@@ -45,8 +45,8 @@ class PasswordRecovery {
       case 410:
         throw const InvalidLink();
       case 422:
-        if (fieldErrors(r.cuerpo)['nueva'] case final message?) {
-          throw PasswordRejected({'nueva': message});
+        if (fieldErrors(r.cuerpo)['new_password'] case final message?) {
+          throw PasswordRejected({'new_password': message});
         }
     }
     throw ErrorDelServidor(r.codigo);

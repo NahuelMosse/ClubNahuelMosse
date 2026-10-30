@@ -20,11 +20,11 @@ class RegistrationData {
 
   /// Los campos con el nombre que usa la API.
   Map<String, Object?> toJson() => {
-    'nombre': firstName,
-    'apellido': lastName,
+    'first_name': firstName,
+    'last_name': lastName,
     'dni': dni,
-    'fecha_nacimiento': isoDate(birthDate),
-    'correo': email,
-    'contrasena': password,
+    'birth_date': isoDate(birthDate),
+    'email': email,
+    'password': password,
   };
 }

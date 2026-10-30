@@ -37,8 +37,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(sistema.solicitudes, 1);
-      final request = cuerpoDe(api.de('PUT', '/dispositivos').last);
-      expect(request['permiso'], isTrue);
+      final request = cuerpoDe(api.de('PUT', '/devices').last);
+      expect(request['permission_granted'], isTrue);
     },
   );
 
@@ -87,8 +87,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(sistema.solicitudes, 1);
-      final request = cuerpoDe(api.de('PUT', '/dispositivos').last);
-      expect(request['permiso'], isFalse);
+      final request = cuerpoDe(api.de('PUT', '/devices').last);
+      expect(request['permission_granted'], isFalse);
 
       centroDe(api, session, sistema: sistema);
       await tester.pumpAndSettle();

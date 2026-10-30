@@ -60,7 +60,7 @@ void main() {
           RegExp('45\\.000 por hora, .*${RegExp.escape(cancha)}\$'),
         ),
       );
-      expect((await espacioQueVeUnUsuario(cancha))?['precio_por_hora'], 45000);
+      expect((await espacioQueVeUnUsuario(cancha))?['price_per_hour'], 45000);
       semantica.dispose();
     },
   );
@@ -119,7 +119,7 @@ void main() {
 
     // Verifica: vuelve al listado y el precio sigue siendo el de antes.
     await esperarA(tester, find.text('ALTA ESPACIO'));
-    expect((await espacioQueVeUnUsuario(cancha))?['precio_por_hora'], 43000);
+    expect((await espacioQueVeUnUsuario(cancha))?['price_per_hour'], 43000);
     semantica.dispose();
   });
 
@@ -148,7 +148,7 @@ void main() {
       await escribir(tester, 'Precio por hora', 'abc');
       expect(find.text('abc'), findsNothing);
       expect(banderas(tester, 'GUARDAR ESPACIO').isEnabled, isFalse);
-      expect((await espacioQueVeUnUsuario(cancha))?['precio_por_hora'], 43000);
+      expect((await espacioQueVeUnUsuario(cancha))?['price_per_hour'], 43000);
       semantica.dispose();
     },
   );
@@ -208,7 +208,7 @@ void main() {
       await esperarA(tester, find.text('Error de conexión'));
       await tocar(tester, 'Volver');
       expect(find.textContaining('45.000'), findsOneWidget);
-      expect((await espacioQueVeUnUsuario(cancha))?['precio_por_hora'], 43000);
+      expect((await espacioQueVeUnUsuario(cancha))?['price_per_hour'], 43000);
 
       // Verifica: con la red de vuelta, guardar funciona.
       api.estado = EstadoApi.normal;
@@ -217,7 +217,7 @@ void main() {
         tester,
         find.text('Los cambios se guardaron correctamente'),
       );
-      expect((await espacioQueVeUnUsuario(cancha))?['precio_por_hora'], 45000);
+      expect((await espacioQueVeUnUsuario(cancha))?['price_per_hour'], 45000);
       semantica.dispose();
     },
   );

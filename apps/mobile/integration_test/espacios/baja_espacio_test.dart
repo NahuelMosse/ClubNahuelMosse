@@ -59,7 +59,7 @@ void main() {
     (tester) async {
       final semantica = tester.ensureSemantics();
       final (sede, cancha, _) = await sedeConDos();
-      expect((await sedeQueVeUnUsuario(sede))?['canchas'], 2);
+      expect((await sedeQueVeUnUsuario(sede))?['space_count'], 2);
       await entrarComoAdmin(tester);
       await pedirLaBaja(tester, cancha);
 
@@ -70,7 +70,7 @@ void main() {
       );
 
       // Verifica: la sede queda con una cancha.
-      expect((await sedeQueVeUnUsuario(sede))?['canchas'], 1);
+      expect((await sedeQueVeUnUsuario(sede))?['space_count'], 1);
       semantica.dispose();
     },
   );

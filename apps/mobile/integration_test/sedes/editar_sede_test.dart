@@ -56,7 +56,7 @@ void main() {
       );
       // Verifica: un usuario ve la sede con la dirección nueva.
       expect(
-        (await sedeQueVeUnUsuario(nombre))?['direccion'],
+        (await sedeQueVeUnUsuario(nombre))?['address'],
         'Av. Vergara 1900',
       );
       semantica.dispose();
@@ -86,7 +86,7 @@ void main() {
 
       // Verifica: la reserva sigue, en la misma cancha, con su nombre de siempre.
       expect(await reservasDe(correo), [(cancha, '21:00')]);
-      expect((await sedeQueVeUnUsuario('$nombre Norte'))?['canchas'], 1);
+      expect((await sedeQueVeUnUsuario('$nombre Norte'))?['space_count'], 1);
       semantica.dispose();
     },
   );
@@ -113,7 +113,7 @@ void main() {
       findsOneWidget,
     );
     expect(
-      (await sedeQueVeUnUsuario(nombre))?['direccion'],
+      (await sedeQueVeUnUsuario(nombre))?['address'],
       'Av. Vergara 1850',
     );
     semantica.dispose();
@@ -134,7 +134,7 @@ void main() {
       expect(find.text('La dirección es obligatoria'), findsOneWidget);
       expect(banderas(tester, 'GUARDAR CAMBIOS').isEnabled, isFalse);
       expect(
-        (await sedeQueVeUnUsuario(nombre))?['direccion'],
+        (await sedeQueVeUnUsuario(nombre))?['address'],
         'Av. Vergara 1850',
       );
       semantica.dispose();
@@ -174,7 +174,7 @@ void main() {
         tester,
         find.text('Los cambios se guardaron correctamente'),
       );
-      expect((await sedeQueVeUnUsuario(nombre))?['apertura'], '09:00');
+      expect((await sedeQueVeUnUsuario(nombre))?['opens_at'], '09:00');
       expect((await reservasDe(correo)).toSet(), {
         (una, '08:00'),
         (otra, '08:00'),
@@ -237,7 +237,7 @@ void main() {
     // Verifica: sigue en la edición con lo elegido y la sede no cambió.
     expect(find.text('Editar sede'), findsOneWidget);
     expect(find.text('22:00'), findsOneWidget);
-    expect((await sedeQueVeUnUsuario(nombre))?['cierre'], '23:00');
+    expect((await sedeQueVeUnUsuario(nombre))?['closes_at'], '23:00');
     semantica.dispose();
   });
 
@@ -282,7 +282,7 @@ void main() {
       await tocar(tester, 'Volver');
       expect(find.text('Av. Vergara 1900'), findsOneWidget);
       expect(
-        (await sedeQueVeUnUsuario(nombre))?['direccion'],
+        (await sedeQueVeUnUsuario(nombre))?['address'],
         'Av. Vergara 1850',
       );
 
@@ -294,7 +294,7 @@ void main() {
         find.text('Los cambios se guardaron correctamente'),
       );
       expect(
-        (await sedeQueVeUnUsuario(nombre))?['direccion'],
+        (await sedeQueVeUnUsuario(nombre))?['address'],
         'Av. Vergara 1900',
       );
       semantica.dispose();

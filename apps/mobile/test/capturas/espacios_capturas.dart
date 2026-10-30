@@ -16,9 +16,9 @@ void main() {
   };
   const modos = {'oscuro': true, 'claro': false};
   const duplicado =
-      '{"errores": {"nombre": "Ya existe un espacio deportivo con ese nombre en la '
-      'sede seleccionada."}, "nombre": "Moron_Rivadavia_19850_Futbol_F5_2", '
-      '"numero": 2}';
+      '{"errors": {"name": "Ya existe un espacio deportivo con ese nombre en la '
+      'sede seleccionada."}, "name": "Moron_Rivadavia_19850_Futbol_F5_2", '
+      '"number": 2}';
 
   Future<void> capturar(WidgetTester tester, String archivo) async {
     await tester.pumpAndSettle();
@@ -60,9 +60,9 @@ void main() {
         testWidgets('panel de espacios $ancho $modo', (tester) async {
           await abrir(tester, '/admin/espacios', {
             ...rutasDeEspacios(),
-            'GET /espacios': (
+            'GET /spaces': (
               200,
-              '{"espacios": [$espacioCastelarJson, $espacioF5Json, '
+              '{"spaces": [$espacioCastelarJson, $espacioF5Json, '
                   '$espacioTenisJson]}',
             ),
           });

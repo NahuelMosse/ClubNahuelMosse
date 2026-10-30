@@ -14,11 +14,11 @@ void main() {
 
   /// Lo que necesita el panel admin (CU-14) para no fallar con un pedido real.
   final apiConPanelAdmin = apiRutas({
-    'GET /reservas/todas': (
+    'GET /bookings/all': (
       200,
-      '{"reservas": [], "total": 0, "pagina": 1, "por_pagina": 20,'
-          ' "contadores": {"todas": 0, "activas": 0, "completadas": 0,'
-          ' "anuladas": 0}}',
+      '{"bookings": [], "total": 0, "page": 1, "per_page": 20,'
+          ' "counters": {"all": 0, "active": 0, "completed": 0,'
+          ' "voided": 0}}',
     ),
   });
 

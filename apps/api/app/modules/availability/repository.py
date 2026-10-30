@@ -8,7 +8,6 @@ from sqlalchemy import Connection, text
 from app.modules.availability.rules import OpeningHours
 from app.modules.spaces import SPACE_COLUMNS, Space, space_of_row
 from app.shared.db import DbConnection
-from app.shared.stored_values import stored
 
 
 def opening_hours_of_row(row: Any) -> OpeningHours:
@@ -63,7 +62,7 @@ class AvailabilitySql:
                 "kind": kind,
                 "starts_at": start,
                 "ends_at": end,
-                "active": stored("activa"),
+                "active": "active",
             },
         ).all()
         self._conn.rollback()
@@ -91,7 +90,7 @@ class AvailabilitySql:
                 "until": until,
                 "booking_id": booking,
                 "user_id": user,
-                "active": stored("activa"),
+                "active": "active",
             },
         ).all()
         self._conn.rollback()
