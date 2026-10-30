@@ -41,6 +41,13 @@ def test_a_range_that_starts_right_now_is_not_future() -> None:
     assert errors == {"start_hour": "El horario tiene que ser futuro"}
 
 
+def test_the_day_before_the_last_one_of_the_calendar_reports_only_its_date() -> None:
+    """the day before the last one of the calendar reports only its date error, under date @ENG-18-S2"""
+    errors = validate_range(HOURS, date.max - timedelta(1), time(6), time(7), _at(THURSDAY, 9))
+
+    assert errors == {"date": "Elegí un día de los próximos 7"}
+
+
 class _NoDeviceAccepted:
     def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
         return DeliveryResult(sent=0)
