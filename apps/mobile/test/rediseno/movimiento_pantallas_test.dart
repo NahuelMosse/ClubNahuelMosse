@@ -257,7 +257,7 @@ ApiClient _apiSede(Completer<void>? espera) {
     cliente: MockClient((pedido) async {
       final filtrado =
           pedido.url.path == '/spaces' &&
-          pedido.url.queryParameters.containsKey('deporte');
+          pedido.url.queryParameters.containsKey('sport');
       if (filtrado) await espera?.future;
       final (codigo, cuerpo) = filtrado
           ? (200, '{"spaces": [$espacioF5Json]}')
