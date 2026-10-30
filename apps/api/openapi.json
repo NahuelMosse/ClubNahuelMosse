@@ -79,6 +79,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
@@ -175,6 +205,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -259,6 +319,36 @@
           },
           "429": {
             "description": "Demasiados intentos con la contraseña actual"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -302,6 +392,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       },
@@ -340,6 +460,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
@@ -374,6 +524,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
                 }
               }
             }
@@ -498,6 +678,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -596,6 +806,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       },
@@ -858,6 +1098,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
@@ -1012,6 +1282,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       },
@@ -1438,6 +1738,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
@@ -1595,6 +1925,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
@@ -1912,6 +2272,36 @@
               }
             },
             "description": "Unprocessable Content"
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         }
       }
@@ -1963,6 +2353,36 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -2010,6 +2430,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "El cuerpo no se puede leer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "408": {
+            "description": "El cuerpo no llegó entero en 5 segundos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "El cuerpo supera 1 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BodyError"
                 }
               }
             }
@@ -3553,6 +4003,20 @@
           "starts_at"
         ],
         "title": "VoidRequest"
+      },
+      "BodyError": {
+        "type": "object",
+        "properties": {
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "errors"
+        ]
       }
     },
     "securitySchemes": {

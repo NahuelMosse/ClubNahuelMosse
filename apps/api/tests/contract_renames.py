@@ -210,6 +210,9 @@ def _tree(node: Any, schemas: dict[str, Any], owner: str, *, renamed: bool) -> A
     return result
 
 
+BODY_ERROR_CODES = ("400", "408", "413")
+
+
 def _operation(op: dict[str, Any], schemas: dict[str, Any], *, renamed: bool) -> dict[str, Any]:
     parameters = []
     for p in op.get("parameters", []):
@@ -217,12 +220,16 @@ def _operation(op: dict[str, Any], schemas: dict[str, Any], *, renamed: bool) ->
         schema = _tree(p["schema"], schemas, "", renamed=renamed)
         parameters.append((name, p["in"], p.get("required", False), schema))
     body = op.get("requestBody", {}).get("content", {})
+    # BodyLimit and input_validation answer these outside each route; main did not
+    # document them (ENG-18-ASM-13).
+    outside_route = BODY_ERROR_CODES if "requestBody" in op else ()
     return {
         "parameters": sorted(parameters, key=lambda p: (p[1], p[0])),
         "body": _tree(body, schemas, "", renamed=renamed),
         "responses": {
             code: _tree(r.get("content", {}), schemas, "", renamed=renamed)
             for code, r in op["responses"].items()
+            if code not in outside_route
         },
         "security": op.get("security"),
     }
