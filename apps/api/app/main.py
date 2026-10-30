@@ -69,14 +69,18 @@ def _document_body_errors(app: FastAPI) -> dict[str, Any]:
     return app.openapi_schema
 
 
+class _DocumentedApp(FastAPI):
+    def openapi(self) -> dict[str, Any]:
+        return _document_body_errors(self)
+
+
 def create_app() -> FastAPI:
-    app = FastAPI(
+    app = _DocumentedApp(
         title="ClubNahuelMosse API",
         version=config.version,
         description="API de reservas de espacios deportivos de ClubNahuelMosse.",
         lifespan=_lifespan,
     )
-    app.openapi = lambda: _document_body_errors(app)  # type: ignore[method-assign]
     app.add_middleware(BodyLimit)
     input_validation.install(app)
     http_errors.install(app)
