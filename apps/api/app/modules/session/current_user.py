@@ -11,7 +11,7 @@ from app.modules.session.use_cases import authenticated_profile
 from app.shared.errors import NotAuthenticated
 from app.shared.identity import FirebaseProvider, identity
 
-_bearer = HTTPBearer(auto_error=False, description="ID token de Firebase Authentication")
+_bearer = HTTPBearer(auto_error=False, description="Firebase Authentication ID token")
 
 
 class NoSession(BaseModel):
@@ -34,6 +34,6 @@ def current_user(
     except NotAuthenticated as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sesión inválida o vencida",
+            detail="Invalid or expired session",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e

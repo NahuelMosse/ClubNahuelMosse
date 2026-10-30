@@ -63,7 +63,7 @@ def _view(venue: Venue) -> VenueView:
     "/venues",
     response_model=VenueList,
     responses={401: {"model": NoSession}},
-    summary="Las sedes activas, por nombre, con sus canchas y los deportes que ofrecen",
+    summary="The active venues, by name, with their courts and the sports they offer",
 )
 def list_venues(
     _: Annotated[Profile, Depends(current_user)],
@@ -97,12 +97,12 @@ def _data(request: VenueRequest) -> VenueData:
     response_model=VenueView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador da de alta sedes"},
-        409: {"model": VenueErrors, "description": "Otra sede activa ya tiene ese nombre"},
+        403: {"description": "Only an administrator creates venues"},
+        409: {"model": VenueErrors, "description": "Another active venue already has that name"},
         422: {"model": VenueErrors},
     },
-    summary="Dar de alta una sede",
-    description="Horas en punto; un cierre a las 00:00 es la medianoche del mismo día.",
+    summary="Create a venue",
+    description="On-the-hour times; a closing at 00:00 is midnight of the same day.",
 )
 def add_venue(
     request: VenueRequest,
@@ -112,7 +112,7 @@ def add_venue(
     try:
         venue = create_venue(profile, _data(request), venues)
     except Duplicate:
-        return conflict({"name": "Ya existe una sede con ese nombre"})
+        return conflict({"name": "A venue with that name already exists"})
     return _view(venue)
 
 
@@ -130,19 +130,19 @@ class BookingsOutside(BaseModel):
     response_model=VenueView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador edita sedes"},
-        404: {"description": "La sede ya no está activa"},
+        403: {"description": "Only an administrator edits venues"},
+        404: {"description": "The venue is no longer active"},
         409: {
             "model": VenueErrors | BookingsOutside,
-            "description": "Otra sede activa ya tiene ese nombre, o el horario nuevo deja "
-            "afuera reservas futuras y falta `confirm`",
+            "description": "Another active venue already has that name, or the new hours leave "
+            "future bookings out and `confirm` is missing",
         },
         422: {"model": VenueErrors},
     },
-    summary="Editar una sede",
+    summary="Edit a venue",
     description=(
-        "Los mismos datos y reglas que el alta. Las reservas ya hechas se mantienen aunque "
-        "queden fuera del horario nuevo, que rige para las que vengan."
+        "The same data and rules as creation. Bookings already made are kept even if they "
+        "fall outside the new hours, which apply to the ones to come."
     ),
 )
 def edit_venue(
@@ -156,7 +156,7 @@ def edit_venue(
             profile, venue_id, _data(request), confirm=request.confirm, venues=venues
         )
     except Duplicate:
-        return conflict({"name": "Ya existe una sede con ese nombre"})
+        return conflict({"name": "A venue with that name already exists"})
     except BookingsOutsideHours as e:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT, content={"bookings_outside": e.count}
@@ -169,14 +169,14 @@ def edit_venue(
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador da de baja sedes"},
-        404: {"description": "La sede ya no está activa"},
-        409: {"model": VenueErrors, "description": "La sede tiene reservas que no terminaron"},
+        403: {"description": "Only an administrator deletes venues"},
+        404: {"description": "The venue is no longer active"},
+        409: {"model": VenueErrors, "description": "The venue has bookings that have not ended"},
     },
-    summary="Dar de baja una sede",
+    summary="Delete a venue",
     description=(
-        "Baja lógica: la sede y sus espacios dejan de verse y de poder reservarse, y el "
-        "historial los sigue nombrando. No se permite con reservas activas sin terminar."
+        "Soft delete: the venue and its spaces stop being shown and bookable, and the "
+        "history keeps naming it. Not allowed with active bookings that have not ended."
     ),
 )
 def remove_venue(
@@ -188,6 +188,6 @@ def remove_venue(
         deactivate_venue(profile, venue_id, venues)
     except HasFutureBookings:
         return conflict(
-            {"venue": "No se puede dar de baja la sede porque posee reservas futuras asociadas."}
+            {"venue": "The venue cannot be deleted because it has future bookings."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

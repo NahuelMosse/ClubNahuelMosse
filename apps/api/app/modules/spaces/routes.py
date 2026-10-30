@@ -32,8 +32,8 @@ from app.shared.responses import conflict
 
 router = APIRouter(tags=["espacios"])
 
-DUPLICATE = "Ya existe un espacio deportivo con ese nombre en la sede seleccionada."
-VENUE_UNAVAILABLE = "La sede ya no está disponible"
+DUPLICATE = "A sports space with that name already exists in the selected venue."
+VENUE_UNAVAILABLE = "The venue is no longer available"
 
 
 class KindView(BaseModel):
@@ -55,7 +55,7 @@ class CatalogView(BaseModel):
     "/spaces/catalog",
     response_model=CatalogView,
     responses={401: {"model": NoSession}},
-    summary="Los deportes y sus tipos de cancha",
+    summary="The sports and their court kinds",
 )
 def show_catalog(_: Annotated[Profile, Depends(current_user)]) -> CatalogView:
     return CatalogView(
@@ -106,7 +106,7 @@ def space_view(space: Space) -> SpaceView:
     "/spaces",
     response_model=SpaceList,
     responses={401: {"model": NoSession}},
-    summary="Los espacios activos de las sedes activas, por sede, deporte, tipo y número",
+    summary="The active spaces of the active venues, by venue, sport, kind and number",
 )
 def list_spaces(
     _: Annotated[Profile, Depends(current_user)],
@@ -133,10 +133,10 @@ class ErrorBody(BaseModel):
     response_model=Suggestion,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador da de alta espacios"},
+        403: {"description": "Only an administrator creates spaces"},
         422: {"model": ErrorBody},
     },
-    summary="El nombre que tendría el próximo espacio de ese tipo en esa sede",
+    summary="The name the next space of that kind in that venue would have",
 )
 def suggest_name(  # noqa: PLR0913, PLR0917 -- one parameter per query field of the route
     profile: Annotated[Profile, Depends(current_user)],
@@ -168,20 +168,20 @@ class SpaceRequest(BaseModel):
     response_model=SpaceView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador da de alta espacios"},
+        403: {"description": "Only an administrator creates spaces"},
         409: {
             "description": (
-                "El número que se mostraba ya lo tomó otro alta: vuelve con el nombre y el "
-                "número siguientes"
+                "The number shown was already taken by another creation: it returns with the next "
+                "name and number"
             )
         },
         422: {"model": ErrorBody},
     },
-    summary="Dar de alta un espacio deportivo",
+    summary="Create a sports space",
     description=(
-        "El nombre se compone con la sede, la dirección, el deporte, el tipo y el número "
-        "siguiente de ese tipo en esa sede. `number` es el que vio el administrador; si se "
-        "omite, se usa el siguiente."
+        "The name is built from the venue, the address, the sport, the kind and the next number "
+        "of that kind in that venue. `number` is the one the administrator saw; if "
+        "omitted, the next one is used."
     ),
 )
 def create_space_route(
@@ -235,15 +235,15 @@ class SpaceChangeRequest(BaseModel):
     response_model=SpaceView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador edita espacios"},
-        404: {"description": "El espacio o su sede ya no están activos"},
+        403: {"description": "Only an administrator edits spaces"},
+        404: {"description": "The space or its venue is no longer active"},
         422: {"model": ErrorBody},
     },
-    summary="Editar un espacio",
+    summary="Edit a space",
     description=(
-        "Condición, iluminación y precio por hora; lo que no viene queda como está. La sede, "
-        "el deporte, el tipo y el nombre compuesto no cambian; las reservas ya hechas "
-        "conservan su precio."
+        "Condition, lighting and price per hour; what is not sent stays as it is. The venue, "
+        "the sport, the kind and the composite name do not change; bookings already made "
+        "keep their price."
     ),
 )
 def update_space_route(
@@ -269,14 +269,14 @@ def update_space_route(
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador da de baja espacios"},
-        404: {"description": "El espacio ya no está activo"},
-        409: {"model": ErrorBody, "description": "El espacio tiene reservas que no terminaron"},
+        403: {"description": "Only an administrator deletes spaces"},
+        404: {"description": "The space is no longer active"},
+        409: {"model": ErrorBody, "description": "The space has bookings that have not ended"},
     },
-    summary="Dar de baja un espacio",
+    summary="Delete a space",
     description=(
-        "Baja lógica: el espacio deja de verse y de poder reservarse, y el historial lo sigue "
-        "nombrando. No se permite con reservas activas sin terminar."
+        "Soft delete: the space stops being shown and bookable, and the history keeps "
+        "naming it. Not allowed with active bookings that have not ended."
     ),
 )
 def deactivate_space_route(
@@ -288,6 +288,6 @@ def deactivate_space_route(
         deactivate_space(profile, space_id, repository)
     except HasFutureBookings:
         return conflict(
-            {"space": "No se puede dar de baja el espacio porque posee reservas futuras."}
+            {"space": "The space cannot be deleted because it has future bookings."}
         )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

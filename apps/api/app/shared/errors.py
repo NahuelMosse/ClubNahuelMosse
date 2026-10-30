@@ -1,6 +1,6 @@
 class InvalidData(Exception):
     def __init__(self, errors: dict[str, str]) -> None:
-        super().__init__("datos inválidos")
+        super().__init__("invalid data")
         self.errors = errors
 
 
@@ -36,7 +36,7 @@ class NumberTaken(Exception):
     """Another creation already took the space number that was being shown."""
 
     def __init__(self, next_number: int, name: str) -> None:
-        super().__init__(f"número ocupado; el siguiente es {next_number} ({name})")
+        super().__init__(f"number taken; the next one is {next_number} ({name})")
         self.next_number = next_number
         self.name = name
 
@@ -58,7 +58,7 @@ class BookingsOutsideHours(Exception):
     """The new opening hours leave future bookings outside: it must be confirmed."""
 
     def __init__(self, count: int) -> None:
-        super().__init__(f"{count} reservas futuras quedan fuera del horario nuevo")
+        super().__init__(f"{count} future bookings fall outside the new hours")
         self.count = count
 
 

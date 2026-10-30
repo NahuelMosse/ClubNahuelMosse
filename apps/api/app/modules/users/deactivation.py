@@ -24,7 +24,7 @@ class ProviderAccounts(Protocol):
 def deactivate(profile: Profile, users: DeactivatableAccounts, identity: ProviderAccounts) -> None:
     """Deactivates the account of whoever holds the session. The history stays in the database."""
     if profile.role != "user":
-        raise Forbidden("un administrador no se da de baja desde la app")
+        raise Forbidden("an administrator cannot be deleted from the app")
     if not users.deactivate(profile.id):
         return
     # The deactivation is done: without an active profile, no token of that account passes the
@@ -32,4 +32,4 @@ def deactivate(profile: Profile, users: DeactivatableAccounts, identity: Provide
     try:
         identity.delete_account(profile.uid)
     except Exception:
-        deactivation_log.exception("no se pudo borrar del proveedor la cuenta %s", profile.id)
+        deactivation_log.exception("could not delete account %s from the provider", profile.id)

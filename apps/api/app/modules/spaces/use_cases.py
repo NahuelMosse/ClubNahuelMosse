@@ -76,7 +76,7 @@ class Spaces(Protocol):
 
 def _admin_only(profile: Profile) -> None:
     if profile.role != "admin":
-        raise Forbidden("sólo un administrador gestiona espacios")
+        raise Forbidden("only an administrator manages spaces")
 
 
 def catalog() -> tuple[Sport, ...]:
@@ -95,10 +95,10 @@ def suggested_name(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
     """The name the next space of that kind in that venue would have."""
     _admin_only(profile)
     if catalog_kind(sport, kind) is None:
-        raise InvalidData({"kind": "Elegí un tipo de la lista"})
+        raise InvalidData({"kind": "Choose a kind from the list"})
     suggested = spaces.next_number(venue_id, sport, kind, _name(sport, kind))
     if suggested is None:
-        raise Unavailable("la sede no está activa")
+        raise Unavailable("the venue is not active")
     return suggested
 
 

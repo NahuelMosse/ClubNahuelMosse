@@ -38,7 +38,7 @@ def available_spaces(  # noqa: PLR0913, PLR0917 -- public signature fixed by its
     """
     opening_hours = search.venue_opening_hours(venue_id)
     if opening_hours is None:
-        raise Unavailable("la sede no está activa")
+        raise Unavailable("the venue is not active")
     errors = validate_range(opening_hours, day, since, until, now)
     if errors:
         raise InvalidData(errors)

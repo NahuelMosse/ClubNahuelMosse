@@ -24,10 +24,10 @@ LEAD_TIME_BY_KIND: dict[ReminderKind, timedelta] = {
     "five_minute_reminder": FIVE_MINUTE_LEAD_TIME,
 }
 TITLE_BY_KIND: dict[ReminderKind, str] = {
-    "reminder": "Tu reserva es en 1 hora",
-    "five_minute_reminder": "Tu reserva empieza en 5 minutos",
+    "reminder": "Your booking is in 1 hour",
+    "five_minute_reminder": "Your booking starts in 5 minutes",
 }
-WEEKDAYS = ("Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom")
+WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
 @dataclass(frozen=True)
@@ -162,16 +162,16 @@ def reminder_message(r: Reminder) -> Notice:
 def reminder_email(r: Reminder) -> Message:
     """The same one-hour-ahead notice, by email with the app's design."""
     details = [
-        ("Cancha", short_kind(r.sport, r.kind)),
-        ("Sede", r.venue),
-        ("Horario", f"{_time(r.starts_at)} a {_time(r.ends_at)}"),
+        ("Court", short_kind(r.sport, r.kind)),
+        ("Venue", r.venue),
+        ("Time", f"{_time(r.starts_at)} to {_time(r.ends_at)}"),
     ]
-    greeting = f"Hola {r.name}: tu turno empieza en 1 hora."
+    greeting = f"Hi {r.name}: your slot starts in 1 hour."
     return Message(
         recipient=r.email,
-        subject="Tu reserva es en 1 hora",
+        subject="Your booking is in 1 hour",
         body="\n".join([greeting, "", *(f"{label}: {value}" for label, value in details)]),
-        html=html_email("Tu reserva es en 1 hora", [greeting], details=details),
+        html=html_email("Your booking is in 1 hour", [greeting], details=details),
     )
 
 
@@ -200,10 +200,10 @@ class BookingData:
 def cancellation_message(r: BookingData) -> Notice:
     """The cancellation notice: short kind, venue and the slot in the club's time."""
     return Notice(
-        title="Reserva cancelada",
+        title="Booking cancelled",
         body=(
             f"{short_kind(r.sport, r.kind)} · {r.venue} · {_when(r.starts_at)}. "
-            "El horario quedó liberado."
+            "The slot was freed."
         ),
         data=notice_data("user_cancellation", r.id),
     )
@@ -218,10 +218,10 @@ def forced_cancellation_message(voided: Sequence[VoidedBooking]) -> Notice:
         if len(reason) > REASON_LIMIT:
             reason = reason[: REASON_LIMIT - 1].rstrip() + "…"
         return Notice(
-            title="El club anuló tu reserva",
+            title="The club voided your booking",
             body=(
                 f"{short_kind(r.sport, r.kind)} · {r.venue} · {_when(r.starts_at)}. "
-                f"Motivo: {reason}."
+                f"Reason: {reason}."
             ),
             data=notice_data("forced_cancellation", r.booking_id),
         )
@@ -231,7 +231,7 @@ def forced_cancellation_message(voided: Sequence[VoidedBooking]) -> Notice:
 def forced_cancellations_message(count: int) -> Notice:
     """The notice of [count] bookings voided by the club, which leads to the history."""
     return Notice(
-        title=f"El club anuló {count} de tus reservas",
-        body=f"Tenés {count} reservas anuladas por el club. Mirá el detalle en tu historial.",
+        title=f"The club voided {count} of your bookings",
+        body=f"You have {count} bookings voided by the club. See the detail in your history.",
         data=notice_data("forced_cancellation", None),
     )

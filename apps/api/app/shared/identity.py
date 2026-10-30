@@ -44,7 +44,7 @@ def _sign_in_url() -> str:
     if emulator := os.environ.get("FIREBASE_AUTH_EMULATOR_HOST"):
         return f"http://{emulator}/{path}?key=clave-del-emulador"
     if not config.firebase_api_key:
-        raise RuntimeError("falta FIREBASE_API_KEY para comprobar contraseñas")
+        raise RuntimeError("FIREBASE_API_KEY is missing to check passwords")
     return f"https://{path}?key={config.firebase_api_key}"
 
 
@@ -105,7 +105,7 @@ class FirebaseProvider:
         try:
             auth.revoke_refresh_tokens(uid, app=_firebase_app())
         except Exception:
-            identity_log.exception("no se pudieron revocar las sesiones de %s", uid)
+            identity_log.exception("could not revoke the sessions of %s", uid)
 
 
 def identity() -> FirebaseProvider:

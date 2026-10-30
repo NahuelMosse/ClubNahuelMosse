@@ -2,13 +2,13 @@ from fastapi import APIRouter
 
 from app.shared.config import config
 
-router = APIRouter(tags=["operación"])
+router = APIRouter(tags=["operations"])
 
 
 @router.get(
     "/health",
-    summary="Chequeo de vida de la API, sin tocar dependencias",
-    description="La API está viva; no mira la base ni Firebase.",
+    summary="API liveness check, without touching dependencies",
+    description="The API is alive; it does not check the database or Firebase.",
 )
 def alive() -> dict[str, str]:
     return {"status": "ok", "version": config.version}

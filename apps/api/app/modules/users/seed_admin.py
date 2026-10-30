@@ -26,7 +26,7 @@ def _parse(argv: list[str] | None) -> argparse.Namespace:
     for option in ("correo", "nombre", "apellido", "dni", "nacimiento"):
         parser.add_argument(f"--{option}", required=True)
     parser.add_argument(
-        "--promover", action="store_true", help="ascender la cuenta que ya tenga ese correo"
+        "--promover", action="store_true", help="promote the account that already has that email"
     )
     return parser.parse_args(argv)
 
@@ -35,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
     args = _parse(argv)
     password = os.environ.get("ADMIN_PASSWORD") or os.environ.get("ADMIN_CONTRASENA", "")
     if not password:
-        print("Falta la variable de entorno ADMIN_PASSWORD", file=sys.stderr)
+        print("The ADMIN_PASSWORD environment variable is missing", file=sys.stderr)
         return 2
 
     with engine().connect() as conn:
@@ -56,7 +56,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         except AccountExists:
             print(
-                f"ya hay una cuenta con {args.correo}; usá --promover para hacerla administradora",
+                f"an account with {args.correo} already exists; "
+                "use --promover to make it an administrator",
                 file=sys.stderr,
             )
             return 1
@@ -65,9 +66,10 @@ def main(argv: list[str] | None = None) -> int:
                 print(f"{field}: {message}", file=sys.stderr)
             return 1
         except Duplicate as e:
-            print(f"ya hay otra cuenta activa con ese {' y '.join(e.fields)}", file=sys.stderr)
+            fields = " and ".join(e.fields)
+            print(f"another active account already has that {fields}", file=sys.stderr)
             return 1
-    print(f"administrador listo: {args.correo}")
+    print(f"administrator ready: {args.correo}")
     return 0
 
 

@@ -26,8 +26,8 @@ WORDS = re.compile(
     re.IGNORECASE,
 )
 SPANISH_PATTERN = re.compile(
-    r"\b(Tu|Elegí|Escribí|Sólo|sólo|Revisá|Hola|Cancha|Día|Sede|Total|Horario|Motivo|Tenés|"
-    r"Reserva|club|enlace|cuenta)\b"
+    r"\b(Tu|Elegí|Escribí|Sólo|sólo|Revisá|Hola|Cancha|Día|Sede|Horario|Motivo|Tenés|"
+    r"Reserva|enlace|cuenta)\b"
 )
 
 
@@ -46,7 +46,15 @@ def _literals(path: Path) -> list[tuple[int, str]]:
     ]
 
 
+CLI_INTERFACE = {
+    "correo", "nombre", "apellido", "dni", "nacimiento", "promover",
+    "--promover", "ADMIN_CONTRASENA", "--una-vez", "clubnahuelmosse.correo",
+}  # fmt: skip
+
+
 def _is_spanish(text: str) -> bool:
+    if text in CLI_INTERFACE:
+        return False
     return bool(ACCENTS.search(text) or WORDS.search(text) or SPANISH_PATTERN.search(text))
 
 

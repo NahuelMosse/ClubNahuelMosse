@@ -60,16 +60,16 @@ def _on_the_hour(hour: time) -> bool:
 def _hours_errors(opens_at: time | None, closes_at: time | None) -> dict[str, str]:
     errors: dict[str, str] = {}
     if opens_at is None:
-        errors["opens_at"] = "El horario de apertura es obligatorio"
+        errors["opens_at"] = "The opening time is required"
     elif not _on_the_hour(opens_at):
-        errors["opens_at"] = "Elegí una hora en punto"
+        errors["opens_at"] = "Choose an on-the-hour time"
     if closes_at is None:
-        errors["closes_at"] = "El horario de cierre es obligatorio"
+        errors["closes_at"] = "The closing time is required"
     elif not _on_the_hour(closes_at):
-        errors["closes_at"] = "Elegí una hora en punto"
+        errors["closes_at"] = "Choose an on-the-hour time"
     elif opens_at is not None and closes_at != MIDNIGHT and closes_at <= opens_at:
         # Closing at 00:00 means closing at midnight of the same day.
-        errors["closes_at"] = "El cierre tiene que ser después de la apertura"
+        errors["closes_at"] = "The closing must be after the opening"
     return errors
 
 
@@ -78,27 +78,27 @@ def validate_venue(data: VenueData) -> tuple[NewVenue | None, dict[str, str]]:
     errors: dict[str, str] = {}
     name = " ".join(data.name.split())
     if not name:
-        errors["name"] = "El nombre es obligatorio"
+        errors["name"] = "The name is required"
     elif len(name) > NAME_MAX_LENGTH:
-        errors["name"] = f"Usá hasta {NAME_MAX_LENGTH} caracteres"
+        errors["name"] = f"Use up to {NAME_MAX_LENGTH} characters"
     elif not venue_part(name):
         # Without it the venue's spaces would have no composite name (RF 5).
-        errors["name"] = "Escribí el nombre de la sede"
+        errors["name"] = "Write the venue name"
 
     address = " ".join(data.address.split())
     parts = _STREET_AND_NUMBER.match(address)
     if not address:
-        errors["address"] = "La dirección es obligatoria"
+        errors["address"] = "The address is required"
     elif len(address) > ADDRESS_MAX_LENGTH:
-        errors["address"] = f"Usá hasta {ADDRESS_MAX_LENGTH} caracteres"
+        errors["address"] = f"Use up to {ADDRESS_MAX_LENGTH} characters"
     elif parts is None or int(parts["number"]) == 0 or not street_part(parts["street"]):
-        errors["address"] = "Escribí la calle y la altura"
+        errors["address"] = "Write the street and the number"
 
     errors |= _hours_errors(data.opens_at, data.closes_at)
 
     open_days = tuple(sorted(set(data.open_days)))
     if not open_days or not set(open_days) <= WEEKDAYS:
-        errors["open_days"] = "Elegí los días que abre"
+        errors["open_days"] = "Choose the days it opens"
 
     if errors or parts is None or data.opens_at is None or data.closes_at is None:
         return None, errors

@@ -28,14 +28,14 @@ def parse_time(value: str) -> time | None:
 
 _MESSAGES = {
     # A lone surrogate (`\ud800`): pydantic already rejects it, it cannot be saved as UTF-8.
-    "string_unicode": "Tiene caracteres no permitidos",
-    "too_long": "Tiene demasiados elementos",
-    "missing": "Falta este dato",
-    "json_invalid": "El cuerpo no es JSON válido",
-    "greater_than_equal": "Está fuera del rango permitido",
-    "less_than_equal": "Está fuera del rango permitido",
+    "string_unicode": "It has characters that are not allowed",
+    "too_long": "It has too many items",
+    "missing": "This value is missing",
+    "json_invalid": "The body is not valid JSON",
+    "greater_than_equal": "It is outside the allowed range",
+    "less_than_equal": "It is outside the allowed range",
 }
-_GENERIC = "El dato no es válido"
+_GENERIC = "The value is not valid"
 _SOURCES = {"body", "query", "path", "header", "cookie"}
 
 

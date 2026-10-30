@@ -147,7 +147,7 @@ class VenuesSql:
                     values,
                 ).first()
                 if before is None:
-                    raise NotFound("la sede ya no está activa")
+                    raise NotFound("the venue is no longer active")
                 if not confirm:
                     self._check_bookings(values, before)
                 self._save(values)
@@ -158,7 +158,7 @@ class VenuesSql:
             raise
         saved = next((s for s in self.active() if s.id == venue_id), None)
         if saved is None:
-            raise NotFound("la sede se dio de baja apenas se guardó")
+            raise NotFound("the venue was deleted right after it was saved")
         return saved
 
     def deactivate(self, venue_id: UUID, author: UUID) -> None:
@@ -173,7 +173,7 @@ class VenuesSql:
                 ).first()
                 is None
             ):
-                raise NotFound("la sede ya no está activa")
+                raise NotFound("the venue is no longer active")
             pending: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM booking b JOIN space e ON e.id = b.space_id"
@@ -182,7 +182,7 @@ class VenuesSql:
                 {"id": venue_id, "active_status": "active"},
             ).scalar_one()
             if pending:
-                raise HasFutureBookings("la sede tiene reservas que todavía no terminaron")
+                raise HasFutureBookings("the venue has bookings that have not ended yet")
             SpacesSql(self._conn).deactivate_venue_spaces(venue_id, author)
             self._conn.execute(
                 text(

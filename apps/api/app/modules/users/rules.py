@@ -48,10 +48,10 @@ def password_problems(password: str) -> list[str]:
     missing = []
     if len(password) < PASSWORD_MIN_LENGTH:
         missing.append(f"Al menos {PASSWORD_MIN_LENGTH} caracteres")
-    if not re.search(r"[A-ZÁÉÍÓÚÑ]", password):
-        missing.append("Una letra mayúscula")
+    if not re.search(r"[A-Z\u00c1\u00c9\u00cd\u00d3\u00da\u00d1]", password):
+        missing.append("An uppercase letter")
     if not re.search(r"[0-9]", password):
-        missing.append("Al menos un número")
+        missing.append("At least one number")
     return missing
 
 
@@ -85,28 +85,28 @@ def _personal_errors(data: PersonalData, today: date) -> tuple[dict[str, str], s
     errors: dict[str, str] = {}
 
     for field, value, required in (
-        ("first_name", data.first_name, "El nombre es obligatorio"),
-        ("last_name", data.last_name, "El apellido es obligatorio"),
+        ("first_name", data.first_name, "The name is required"),
+        ("last_name", data.last_name, "The last name is required"),
     ):
         clean = value.strip()
         if not clean:
             errors[field] = required
         elif len(clean) > NAME_MAX_LENGTH:
-            errors[field] = f"Máximo {NAME_MAX_LENGTH} caracteres"
+            errors[field] = f"At most {NAME_MAX_LENGTH} characters"
 
     dni = normalize_dni(data.dni)
     if not dni:
-        errors["dni"] = "El DNI es obligatorio"
+        errors["dni"] = "The DNI is required"
     elif not re.fullmatch(r"[0-9]{7,8}", dni):
-        errors["dni"] = "El DNI tiene 7 u 8 números"
+        errors["dni"] = "The DNI has 7 or 8 digits"
 
     birth_date = _date(data.birth_date)
     if not data.birth_date.strip():
-        errors["birth_date"] = "La fecha de nacimiento es obligatoria"
+        errors["birth_date"] = "The birth date is required"
     elif birth_date is None:
-        errors["birth_date"] = "La fecha no es válida"
+        errors["birth_date"] = "The date is not valid"
     elif birth_date >= today:
-        errors["birth_date"] = "La fecha tiene que ser anterior a hoy"
+        errors["birth_date"] = "The date must be before today"
 
     return errors, dni, birth_date
 
@@ -121,12 +121,12 @@ def validate_registration(
 
     email = normalize_email(data.email)
     if not email:
-        errors["email"] = "El correo es obligatorio"
+        errors["email"] = "The email is required"
     elif not _EMAIL.fullmatch(email):
-        errors["email"] = "Revisá el formato del correo"
+        errors["email"] = "Check the email format"
 
     if not data.password:
-        errors["password"] = "La contraseña es obligatoria"
+        errors["password"] = "The password is required"
     elif missing := password_problems(data.password):
         errors["password"] = missing[0]
 

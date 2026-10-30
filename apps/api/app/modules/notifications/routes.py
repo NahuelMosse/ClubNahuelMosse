@@ -41,15 +41,15 @@ class Errors(BaseModel):
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
-        403: {"description": "El administrador no recibe avisos"},
-        409: {"description": "La cuenta ya no está activa"},
+        403: {"description": "An administrator does not receive notices"},
+        409: {"description": "The account is no longer active"},
         422: {"model": Errors},
     },
-    summary="Registrar el teléfono para recibir avisos",
+    summary="Register the phone to receive notices",
     description=(
-        "`permission_granted` es lo que el sistema operativo contestó sobre las notificaciones: "
-        "sin permiso los avisos quedan sólo en el centro. Si el token ya estaba a nombre de otra "
-        "cuenta, pasa a quien pide."
+        "`permission_granted` is what the operating system answered about notifications: "
+        "without permission the notices stay only in the center. If the token was already in "
+        "the name of another account, it moves to the requester."
     ),
 )
 def register(
@@ -70,8 +70,10 @@ def register(
     "/devices/unregister",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={401: {"model": NoSession}},
-    summary="Dar de baja el teléfono al cerrar la sesión",
-    description="Deja de recibir avisos de esta cuenta. Si no estaba registrado, responde igual.",
+    summary="Unregister the phone when the session closes",
+    description=(
+        "Stops receiving notices for this account. If it was not registered, it answers the same."
+    ),
 )
 def unregister(
     request: DeviceUnregistration,
@@ -113,9 +115,9 @@ def _view(n: Notification) -> NotificationView:
     "/notifications",
     response_model=Center,
     responses={401: {"model": NoSession}},
-    summary="El centro de notificaciones de quien consulta",
+    summary="The notification center of whoever asks",
     description=(
-        "Las últimas 100, de la más nueva a la más vieja, y cuántas hay sin leer en total."
+        "The latest 100, from newest to oldest, and how many are unread in total."
     ),
 )
 def center(
@@ -130,7 +132,7 @@ def center(
     "/notifications/read-all",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={401: {"model": NoSession}},
-    summary="Marcar todas las notificaciones como leídas",
+    summary="Mark all notifications as read",
 )
 def read_all(
     profile: Annotated[Profile, Depends(current_user)],
@@ -145,10 +147,10 @@ def read_all(
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
-        404: {"description": "No hay una notificación de quien pide con ese número"},
+        404: {"description": "The requester has no notification with that number"},
     },
-    summary="Marcar una notificación como leída",
-    description="Marcar una que ya estaba leída responde igual.",
+    summary="Mark a notification as read",
+    description="Marking one that was already read answers the same.",
 )
 def read(
     profile: Annotated[Profile, Depends(current_user)],

@@ -15,10 +15,10 @@ from app.shared.errors import Duplicate
 from app.shared.identity import FirebaseProvider, identity
 
 router = APIRouter(tags=["usuarios"])
-DUPLICATE_MESSAGE: str = "El usuario ya está registrado. Modificá el correo o el DNI."
+DUPLICATE_MESSAGE: str = "The user is already registered. Change the email or the DNI."
 FIELD_MESSAGES = {
-    "email": "Este correo ya está registrado",
-    "dni": "Este DNI ya está registrado",
+    "email": "This email is already registered",
+    "dni": "This DNI is already registered",
 }
 
 
@@ -53,7 +53,7 @@ class DuplicateUser(BaseModel):
         422: {"model": FieldErrors},
         409: {"model": DuplicateUser},
     },
-    summary="Registrar un usuario nuevo",
+    summary="Register a new user",
 )
 def register_user(
     request: RegistrationRequest,

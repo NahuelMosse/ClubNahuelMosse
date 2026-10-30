@@ -36,7 +36,7 @@ class Venues(Protocol):
 def create_venue(profile: Profile, data: VenueData, venues: Venues) -> Venue:
     """Registers a new venue, active right away, on behalf of the admin who loads it."""
     if profile.role != "admin":
-        raise Forbidden("sólo un administrador da de alta sedes")
+        raise Forbidden("only an administrator creates venues")
     new, errors = validate_venue(data)
     if new is None:
         raise InvalidData(errors)
@@ -50,7 +50,7 @@ def update_venue(  # noqa: PLR0913 -- public signature fixed by its callers
     respected: the new schedule applies to the ones to come (RF 3 is validated when
     booking)."""
     if profile.role != "admin":
-        raise Forbidden("sólo un administrador edita sedes")
+        raise Forbidden("only an administrator edits venues")
     new, errors = validate_venue(data)
     if new is None:
         raise InvalidData(errors)
@@ -66,5 +66,5 @@ def deactivate_venue(profile: Profile, venue_id: UUID, venues: Venues) -> None:
     """Retires a venue (CU-19): it stops being shown and its spaces can no longer be booked.
     Not allowed with pending bookings (decision 5): forced cancellation belongs to CU-15."""
     if profile.role != "admin":
-        raise Forbidden("sólo un administrador da de baja sedes")
+        raise Forbidden("only an administrator deletes venues")
     venues.deactivate(venue_id, author=profile.id)

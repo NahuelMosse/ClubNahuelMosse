@@ -19,7 +19,7 @@ from app.shared.config import config
 from app.shared.email import send
 from app.shared.identity import FirebaseProvider, identity
 
-router = APIRouter(tags=["recuperación de contraseña"])
+router = APIRouter(tags=["password recovery"])
 
 # The app's Android package: the link in the email opens it with this intent.
 ANDROID_PACKAGE = "ar.edu.unimoron.clubnahuelmosse"
@@ -46,8 +46,8 @@ class FieldErrors(BaseModel):
     "/password-recovery",
     status_code=status.HTTP_202_ACCEPTED,
     responses={422: {"model": FieldErrors}},
-    summary="Pedir un enlace para crear una contraseña nueva",
-    description="Responde lo mismo exista o no una cuenta con ese correo.",
+    summary="Ask for a link to create a new password",
+    description="Answers the same whether or not an account with that email exists.",
 )
 def request_recovery(
     request: LinkRequest,
@@ -70,8 +70,8 @@ def request_recovery(
 @router.post(
     "/password-recovery/check",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={410: {"description": "El enlace venció, ya se usó o fue reemplazado"}},
-    summary="Saber si un enlace de recuperación sigue sirviendo",
+    responses={410: {"description": "The link expired, was already used or was replaced"}},
+    summary="Find out whether a recovery link still works",
 )
 def check_link(check: LinkCheck, links: Annotated[LinksSql, Depends(link_repository)]) -> Response:
     valid = bool(check.code) and link_is_valid(check.code, links)
@@ -82,11 +82,11 @@ def check_link(check: LinkCheck, links: Annotated[LinksSql, Depends(link_reposit
     "/password-recovery",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        410: {"description": "El enlace venció, ya se usó o fue reemplazado"},
+        410: {"description": "The link expired, was already used or was replaced"},
         422: {"model": FieldErrors},
     },
-    summary="Crear la contraseña nueva con el enlace",
-    description="El enlace deja de servir y se invalidan todas las sesiones de la cuenta.",
+    summary="Create the new password with the link",
+    description="The link stops working and every session of the account is invalidated.",
 )
 def reset_password(
     request: NewPassword,
@@ -114,12 +114,12 @@ _LINK_SCRIPT = f"""
 """
 
 _LINK_PAGE = f"""<!doctype html>
-<html lang="es">
+<html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ClubNahuelMosse</title>
-<p>Abriendo la app de ClubNahuelMosse…</p>
-<p>Si no se abre, abrí este correo desde el teléfono que tiene la app instalada.</p>
+<p>Opening the ClubNahuelMosse app…</p>
+<p>If it does not open, open this email on the phone that has the app installed.</p>
 <script>{_LINK_SCRIPT}</script>
 </html>
 """
@@ -134,10 +134,10 @@ _LINK_POLICY = f"default-src 'none'; script-src 'sha256-{_SCRIPT_HASH}'; frame-a
 @router.get(
     "/link/recover",
     response_class=HTMLResponse,
-    summary="Página del enlace del correo: abre la app en la contraseña nueva",
+    summary="Email link page: opens the app on the new password",
     description=(
-        "Los clientes de correo no vuelven tocables los enlaces con esquema propio; este "
-        "enlace https lleva a la app con un intent de Android."
+        "Email clients do not make links with a custom scheme tappable; this https "
+        "link takes the app through an Android intent."
     ),
 )
 def link_page() -> HTMLResponse:

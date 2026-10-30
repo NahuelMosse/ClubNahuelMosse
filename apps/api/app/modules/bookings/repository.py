@@ -96,7 +96,7 @@ def _slot_taken() -> Iterator[None]:
         yield
     except IntegrityError as e:
         if getattr(e.orig, "sqlstate", None) == EXCLUSION_VIOLATION:
-            raise SlotTaken("otra reserva activa pisa ese horario") from e
+            raise SlotTaken("another active booking overlaps that slot") from e
         raise
 
 
@@ -207,7 +207,7 @@ class BookingsSql:
         since the booking was validated, it is validated again with the new ones."""
         venue = self._conn.execute(text(_SHARED_VENUE), params).first()
         if venue is not None and opening_hours_of_row(venue) != opening_hours:
-            raise OpeningHoursChanged("la sede cambió de horario")
+            raise OpeningHoursChanged("the venue changed its opening hours")
         return venue
 
     def move(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
@@ -237,7 +237,7 @@ class BookingsSql:
             self._require_movable_booking(params)
             space = spaces.get(space_id)
             if venue is None or space is None or not space.active:
-                raise Unavailable("el espacio nuevo ya no está activo")
+                raise Unavailable("the new space is no longer active")
             # The previous slot is released in the same transaction that takes the new one.
             self._conn.execute(
                 text(
@@ -271,9 +271,11 @@ class BookingsSql:
             params,
         ).first()
         if row is None:
-            raise NotFound("no hay una reserva suya con ese número")
+            raise NotFound("you have no booking with that number")
         if row.status != "active" or row.started or not row.was_there:
-            raise ConcurrentChange("la reserva ya no está activa, ya empezó o ya se movió")
+            raise ConcurrentChange(
+                "the booking is no longer active, has started or was already moved"
+            )
 
     def cancel(self, user_id: UUID, booking_id: UUID) -> Booking:
         params = {"user_id": user_id, "id": booking_id}
@@ -286,12 +288,12 @@ class BookingsSql:
                 params,
             ).first()
             if row is None:
-                raise NotFound("no hay una reserva suya con ese número")
+                raise NotFound("you have no booking with that number")
             if row.status == "canceled" and row.canceled_by == user_id:
                 self._conn.rollback()
                 return self._one(booking_id)
             if row.status != "active" or row.started:
-                raise ConcurrentChange("la reserva ya no está activa o ya empezó")
+                raise ConcurrentChange("the booking is no longer active or has started")
             self._conn.execute(
                 text(
                     "UPDATE booking SET status = 'canceled', canceled_at = now(),"
@@ -340,7 +342,7 @@ class BookingsSql:
             params,
         ).first()
         if account is None or venue is None or space is None:
-            raise Unavailable("la cuenta o el espacio ya no están activos")
+            raise Unavailable("the account or the space is no longer active")
         return space
 
     def insert(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
@@ -389,7 +391,7 @@ class BookingsSql:
             params,
         ).first()
         if previous is None:
-            raise NotFound("no hay una reserva con ese número")
+            raise NotFound("there is no booking with that number")
         params |= {
             "user_id": previous.user_id,
             "venue_id": previous.venue_id,
@@ -413,7 +415,7 @@ class BookingsSql:
             params,
         ).first()
         if row is None:
-            raise NotFound("no hay una reserva con ese número")
+            raise NotFound("there is no booking with that number")
         return row
 
     def void(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
@@ -437,7 +439,7 @@ class BookingsSql:
                 self._conn.rollback()
                 return self._detail(booking_id)
             if row.status != "active" or row.started or not row.as_seen:
-                raise ConcurrentChange("la reserva ya no está activa, ya empezó o cambió")
+                raise ConcurrentChange("the booking is no longer active, has started or changed")
             self._conn.execute(
                 text(
                     "UPDATE booking SET status = 'voided', reason = :reason,"
@@ -452,7 +454,7 @@ class BookingsSql:
     def _detail(self, booking_id: UUID) -> BookingHistoryEntry:
         detail = self.any_one(booking_id)
         if detail is None:
-            raise NotFound("no hay una reserva con ese número")
+            raise NotFound("there is no booking with that number")
         return detail
 
     def _count(
