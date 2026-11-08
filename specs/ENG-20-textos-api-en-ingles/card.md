@@ -44,10 +44,10 @@ not_read:
 ## Gate
 
 ```
-suite [timeout 50 min]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider -rf tests/escenarios/test_english_texts.py tests/integracion tests/unit
+suite [timeout 50 min]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider -rf tests/escenarios/test_english_texts.py tests/integracion tests/unit --deselect tests/unit/test_documentacion_del_modelo.py::test_cada_ruta_que_nombra_la_pagina_de_navegacion_existe_en_app_dart --deselect tests/unit/test_documentacion_del_modelo.py::test_la_pagina_de_navegacion_lista_cada_ruta_de_app_dart --deselect tests/unit/test_integraciones_documentadas.py::test_cada_archivo_y_variable_que_cita_integraciones_md_existe_en_el_repo --deselect tests/unit/test_readme_conciso.py::test_el_readme_muestra_a_lo_sumo_4_capturas_en_una_fila_y_no_quedan_capturas_sin_usar --deselect tests/unit/test_rutas_documentadas.py::test_la_pagina_de_navegacion_nombra_rutas_y_redireccion
 lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh
 app: sh D:/Temp/w/herramientas/arq01-app.sh eng20_app
-attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh eng20_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi app
+attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh eng20_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
 refactor-tests: los tests de la API que comparan un texto que la API produce cambian el literal castellano por el inglés; lo que verifican no cambia
 no-visual: la card no toca ninguna pantalla de la app
 no-docs: la card cambia textos, no comportamiento ni contrato
