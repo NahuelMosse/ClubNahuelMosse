@@ -27,6 +27,7 @@ suite: node --test tests/kit.test.mjs
 lint: npx -y eslint@9 --no-config-lookup --rule {"no-unused-vars":"error"} tests/kit.test.mjs
 no-docs: la card actualiza el kit, que trae su propia documentación
 no-visual: no toca pantallas
+refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.33.0 a 6.42.0; el test de KIT-04 se reescribe en su lugar como el de KIT-05
 ```
 
 ## Log
