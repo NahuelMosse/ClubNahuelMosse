@@ -42,7 +42,10 @@ const functionsOf = (lines) => lines.flatMap((l, i) => {
 
 // The lines of the earlier code that the card changed or deleted, and those next to which it inserted.
 const touchedLines = (root, base, file) => {
-  const d = git(root, ['diff', '-U0', base, '--', file]).stdout ?? '';
+  const r = git(root, ['diff', '-U0', base, '--', file]);
+  // A diff that failed says nothing about the lines: null, never an empty set that clears every OUT.
+  if (r.status !== 0) return null;
+  const d = r.stdout ?? '';
   const touched = new Set();
   for (const [, start, count] of d.matchAll(/^@@ -(\d+)(?:,(\d+))? \+\S+ @@/gm)) {
     if (count === '0') { touched.add(+start); touched.add(+start + 1); continue; }
@@ -52,17 +55,19 @@ const touchedLines = (root, base, file) => {
 };
 
 export const outOfScopeThatBelongToTheCard = (root, base, cardDir, touchedFiles) => {
-  // The OUT lines live in ambiguities.md, or in the `## Log` of card.md when the card has no such file.
-  const log = [join(cardDir, 'ambiguities.md'), join(cardDir, 'card.md')].find((p) => existsSync(p));
-  if (!log) return [];
+  // The OUT lines live in ambiguities.md and in the `## Log` of card.md: both are read.
+  const logs = [join(cardDir, 'ambiguities.md'), join(cardDir, 'card.md')].filter((p) => existsSync(p));
+  if (!logs.length) return [];
   const problems = [];
-  const lines = readFileSync(log, 'utf8').split('\n');
+  const seen = new Set();
+  const lines = logs.flatMap((p) => readFileSync(p, 'utf8').split('\n'));
   // The log is append-only: an OUT that stopped being one is not deleted, it is withdrawn with an
   // event `<ID>-OUT-NN · <date> · withdrawn · <reason>`.
   const withdrawn = new Set(lines.map((l) => l.match(/\b([A-Z]+-\d+-OUT-\d+)\s*·[^·]*·\s*withdrawn\b/i)?.[1]).filter(Boolean));
   for (const line of lines) {
     const m = line.match(/\b([A-Z]+-\d+-OUT-\d+)\b.*?\s([\w./\\-]+\.\w+):(\d+)(?:\s*[-–]\s*(\d+))?/);
-    if (!m || withdrawn.has(m[1])) continue;
+    if (!m || withdrawn.has(m[1]) || seen.has(m[1])) continue;
+    seen.add(m[1]);
     const [, id, raw, from, to] = m;
     const file = raw.replaceAll('\\', '/').replace(/^\.\//, '');
     if (!touchedFiles.includes(file)) continue;
@@ -75,6 +80,10 @@ export const outOfScopeThatBelongToTheCard = (root, base, cardDir, touchedFiles)
     const oldLines = before.stdout.split('\n');
     const range = [+from, +(to ?? from)];
     const touched = touchedLines(root, base, file);
+    if (!touched) {
+      problems.push(`${label} could not run: \`git diff ${base} -- ${file}\` failed, so whether the card touched it is unknown · close: make the diff run`);
+      continue;
+    }
     const functions = functionsOf(oldLines);
     const modified = (f) => [...touched].some((n) => n >= f.from && n <= f.to);
 

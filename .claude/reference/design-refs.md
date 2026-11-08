@@ -6,11 +6,11 @@ It is declared as an `ASM` all the same, with the reference of that level. The d
 A screen that marketing or a campaign asks for (a landing, a newsletter or launch sign-up, a promo) takes its reference from
 «Landing or marketing» and from the section of its genre, not from the product forms: it has to sell, not only work.
 
-**A landing declares its genre.** `## Look` carries `ref-genre: <genre>` (`drink-food`, `cosmetics`, `local-service`, `saas`, `app`) and a
-`ref:` from that genre's section: the same-genre reference is mandatory, it gives the structure and the conventions people expect. The level
+**A landing declares its genre.** `## Look` carries `ref-genre: <genre>` (free text; the sections below are `drink-food`, `cosmetics`, `local-service`, `saas`, `app`) and a
+`ref:` from the nearest genre's section: the same-genre reference is mandatory, it gives the structure and the conventions people expect. The level
 is set by the **first** `ref:`, the one of award level, of the genre or lateral; a store of the genre is not the ceiling. One or two
 `### Lateral` references of other genres give the trait of excellence. Every URL below answered with a real page when it was fetched; a
-reference that later answers a bot wall or an error is retried once (fresh context, longer wait) and, if it still fails, replaced by the next one of its section: the substitute is of the same product genre (another drink for a drink, never a cooking oil for a soda). The retry is recorded in `rondas.md`.
+reference that later answers a bot wall or an error is retried once (fresh context, longer wait) and, if it still fails, replaced by the next one of its section: the substitute is of the same product genre. The retry is recorded in `rondas.md`.
 
 ## Form or sign-up
 
@@ -53,7 +53,7 @@ A product screen names `ref-kind: product` in `## Look`: its references are real
 Same `ref-kind: product`. The question is a state ("is it free or busy"), so the verdict is one line of text with its number, and the list under it is rows with a hairline.
 
 - https://github.com/microsoft/vscode/actions · a list of runs as rows with a hairline: about 12 per screen, status as an icon, no card per row.
-- https://london3.my-netdata.io · machine resources (open the dashboard anonymously): CPU, RAM, disk and network at once, dense; the gauges are not to copy.
+- https://london3.my-netdata.io · machine resources (open the dashboard anonymously): CPU, RAM, disk and network at once, dense.
 - https://status.openstatus.dev · a status page: one line of verdict, one 45-day bar per service, uptime in tabular mono.
 - https://www.vercel-status.com · a status page: hairlines between rows, color only for state.
 
@@ -61,9 +61,7 @@ Same `ref-kind: product`. The question is a state ("is it free or busy"), so the
 
 - https://ciechanow.ski/moon/ · one phenomenon, three controls, an immediate answer.
 
-Not to copy: https://status.twin.sh (a list as a grid of cards), the gauges of Netdata, the hero of https://www.githubstatus.com.
-
-## List or table (CRM)
+## List or table
 
 - https://attio.com · dense rows, inline-editable cells, a toolbar of filters and views.
 - https://folk.app · contact rows with avatar and tags, a light surface.
@@ -85,6 +83,26 @@ Not to copy: https://status.twin.sh (a list as a grid of cards), the gauges of N
 
 - https://www.rijksmuseum.nl/en/collection/SK-C-5 · the record as a provenance register (where, when, who) with a download.
 - https://ciechanow.ski/moon/ · the explanation carries its own controls.
+
+## Dense record (a loan, an account, a case)
+
+Same `ref-kind: product`, and the card carries `## Information`. What the record systems of large products do, from their own docs:
+
+- **A header of key facts that stays.** Salesforce's highlights panel shows the first 7 fields of the compact layout; the Dynamics 365 header holds up to 4 and stays visible on scroll; Fiori's object page has a dynamic header of key facts that collapses to its title. The fields of D1 go there (`ia-check` fails a long record whose key facts scroll away).
+- **The state and the next step right under it**: Salesforce's Path and the Dynamics business process flow sit below the header.
+- **A wide main column and a narrow one of context**: Polaris 2/3 + 1/3, Jira's details panel, Stripe's detail page. The narrow one holds what is read, not what is worked on.
+- **Sections by decision, reached from a bar that stays**: Fiori's anchor bar, Dynamics tabs and sections. Secondary tabs do not load until opened; related lists show only the important ones.
+- **Rows and space by steps**: Carbon's row heights 24 · 32 · 40 · 48 · 64 px with a 16 px cell padding; Atlassian's scale on 8 px, 12–24 inside a group and 32–80 between groups. Narrow screens stack the columns, never squeeze them.
+
+Captures (public pages that answered as product UI at 1440 px):
+
+- https://stockanalysis.com/stocks/aapl/ · a dense record: the price and its change as the headline, 18 key stats in two label-value columns with the values right-aligned beside the chart, the rest in tabs.
+- https://github.com/microsoft/vscode/issues/250000 · the case: the conversation as the main column, the properties (assignees, labels, milestone) in a narrow right column.
+- https://dashboard.tremor.so/overview · KPIs with their delta over a table, one spacing scale.
+
+### Lateral
+
+- https://github.com/microsoft/vscode/actions · the state of each item as one icon per row, so a long list reads at a glance.
 
 ## Settings
 
@@ -110,7 +128,7 @@ Not to copy: https://status.twin.sh (a list as a grid of cards), the gauges of N
 ### Lateral
 
 - https://oryzo.ai · a humble object told as an engineering product: a serious spec sheet and a demo you handle inside the page.
-- https://en.manayerbamate.com · a 3D slider of the flavors as the variant selector instead of a grid.
+- https://www.graza.co · a selector that is the product itself: choosing changes pack, color and copy together.
 
 ## Landing: DTC drink or food
 
@@ -167,7 +185,7 @@ Inner pages to capture: pricing and a feature or changelog page.
 ### Lateral
 
 - https://oryzo.ai · a spec sheet and a handled demo give an object the weight of a product.
-- https://manus.im · an AI product whose hero is the input itself: a warm off-white, a serif headline over a large prompt field and task chips; the dark closing block carries the promise in italic serif.
+- https://manus.im · the input is the hero: a headline over a large prompt field and task chips.
 
 ## Landing: app
 
@@ -205,3 +223,16 @@ Inner pages to capture: a feature page and the download or sign-up step.
 - https://refero.design · screenshots by pattern.
 - https://pageflows.com · whole user flows on video.
 - https://typeform.com/templates · one question per screen, with a transition between them.
+
+## By section of a page
+
+A screen's whole reference gives the level; a gallery of one kind of section gives the piece the reference lacks. The designer captures the
+entry it takes into `ref/` like any other, and the screen builds it with its own copy, colors and the set's components, never as a copy of the entry.
+
+- https://unsection.com · whole sections sorted by type: hero, pricing, FAQ, footer.
+- https://navbar.gallery · navigation bars of real sites.
+- https://cta.gallery · calls to action, the piece of a landing that sells and the most designed one.
+- https://footer.design · footers that close a page with intent.
+- https://bentogrids.com · grids that show several things at once without a list.
+- https://404s.design · error pages that hand back a way out.
+- https://60fps.design · the micro-interactions of well-made apps, mobile and web: what each component's motion answers to.

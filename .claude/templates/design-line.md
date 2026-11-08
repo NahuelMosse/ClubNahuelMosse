@@ -18,7 +18,7 @@ The values of today are in `.claude/reference/modern-interface.md`, measured on 
 Three to five real products —not mock-ups— and **what is taken from each**: “the density and the
 row selection of Linear”, “the instant feedback of Raycast”, “the chart that updates when filtering
 of Mercury”, “two expressive moments in the style of Lando Norris”. If the card brought references,
-they are those, saved in `design/references/`. Step 9 compares against them. **References that come
+they are those, saved in `design/references/`. The captures of `## Look` compare against them. **References that come
 with a card move the direction too** —depth, materials, surfaces, how the figure leads—, not only
 how much responds: keeping the previous look is a decision of the business, asked as an `AMB`, not
 the cheap assumption. *Measured: a card kept the previous palette and took from the references only
@@ -75,8 +75,9 @@ lowering it is a decision of the business, asked as an `AMB`.
 one primary action per view; navigation (tabs, segmented control, menu highlight) is neutral and the
 accent marks value and the selection of data (checked controls, the selected row, the chosen day); a toolbar
 has title and count on the left and controls on the right, wrapping on a phone; a data table has
-fixed column widths from a `<colgroup>` so filtering never moves a column; the page container is
-1200 px, centered, with 24 / 32 px gutters. A line that departs from one says why.
+fixed column widths from a `<colgroup>` so filtering never moves a column; a reading page is 1200 px
+at most and centered, a data screen spans the width beside its navigation, both with 24 / 32 px
+gutters; a dense screen is laid out by the decisions of `## Information`. A line that departs from one says why.
 
 ## 4. Typography
 
@@ -96,7 +97,7 @@ Layers, from the bottom: tokens → primitives → components → patterns → s
 **composed** from the set in
 `design/components/` —primitives (`stack`, `inline`, `grid`, `surface`, `text-*`) and components—,
 with its gallery (`design/components/gallery.html`) showing every component in every state and its
-tests (`gallery.spec.mjs`: behavior and visual baselines). **The patterns this product uses** —how
+tests (`gallery.spec.mjs`: behavior and visual baselines; `record.spec.mjs` for the dense record). **The patterns this product uses** —how
 it confirms, waits, edits, gives feedback, navigates— are written here, starting from
 `.claude/reference/patterns.md`.
 
@@ -134,7 +135,7 @@ disappears, is replaced or stops existing leaves the DOM in the event's task, wi
 `hidden` or deferred `remove()` on that node; the motion goes on what enters and on the neighbors (FLIP).
 
 **Optimistic where it is safe and reversible**: the change is shown at once and confirmed in the
-background, with undo. Skeletons only after 150–300 ms, so a fast answer does not flash.
+background, with undo. Skeleton delay: `reference/ui-patterns.md` UX-CARGA-1.
 
 ## 6b. The screen audit
 
@@ -166,7 +167,7 @@ loads). A blank row is the failure.
 Two to four, chosen by the card that creates the screen: the only expressive ones, where the
 product shows its personality —a figure that tells its story as you scroll, a transition between
 the two main views, a celebratory moment—. Each with its row in section 6 and its contact sheet in
-step 9.
+`## Look`.
 
 ## 8. Data states
 
@@ -200,7 +201,7 @@ One table per component. Every cell is a **token**, not a value; `n/a` only with
 | Pressed | | | | | scale 0.97 | | | `--motion-button-press` |
 | Selected | | | | | | | | `--motion-indicator` if something slides |
 | Disabled | | | | | | `not-allowed` | | |
-| Loading | | | | | | `progress` | | only after 150 ms |
+| Loading | | | | | | `progress` | | delay per UX-CARGA-1 |
 | Success / error | | | | | | | | |
 
 Plus: ARIA role and keyboard —which keys and where focus goes—, target size (24 × 24 px minimum),

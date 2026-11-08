@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1280x800,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--brand <brand.json|card.md>] [--intent <collage|statement|grid|pinned-media|card.md>] [--kind <product|card.md>] [--scrub]
-// `--brand` reads the fonts of the brand sheet (`brand.json` or the `## Brand` block of card.md): a text family outside them fails the
-// row «brand: fonts»; with no sheet the fonts used are only reported.
+// design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1280x800,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--brand <direction.json|DESIGN.md|brand.json|card.md>] [--intent <collage|statement|grid|pinned-media|card.md>] [--kind <product|card.md>] [--scrub]
+// `--brand` reads the brand sheet (`brand.json`, the `## Brand` block of card.md, a DESIGN.md or the dealt `direction.json`): a text family
+// outside its fonts, or a primary action or page background off its colors, fails a «brand:» row. round.json records the sheet, and the
+// gate fails a round run without one (gate-checks.mjs `brand`).
 // `--grain baked` (also what a card's `## Look` declares when the grain is baked into the image files) makes the grain rule pass
 // without a global layer and prints «grain: baked (declared)»; `--grain none` declares that the page has no grain (a paper texture or an image is the texture).
 // `--intent` (or the `intent:` line of the card's `## Look`) is what a section family is on purpose: under it the focal share, competing
@@ -34,7 +35,7 @@
 // the motion times mean nothing. --gpu launches Chromium with `--use-angle=d3d11 --enable-gpu-rasterization
 // --ignore-gpu-blocklist` on Windows (the last two elsewhere).
 // Hero video: each autoplaying looping `video` in the first viewport must last 8 s or more and its last frame must look like its
-// first when it is one continuous shot (a montage with cuts passes: its restart is one more cut) (SSIM 0.85 or more, measured with ffmpeg on the file; `asset-pipeline.py loop` makes such a loop).
+// first when it is one continuous shot (a montage with cuts passes: its restart is one more cut) (the restart seam jumps no more than 1.5 times the video's own frame-to-frame step, measured with ffmpeg on the file).
 // A page that answers a bot wall or an error page (status 400 or more, «Just a moment», a captcha) is not captured: exit 2.
 // By window class (`.claude/reference/responsive-classes.md`): widths under 600 (compact) measure tap targets under 44x44,
 // hover-only reveals, inputs under 16 px, document overflow, media queries (min-width against max-width), the share of the viewport
@@ -44,7 +45,7 @@
 // share, flagged against the ranges of `design-checks.mjs`, a table per width); at 390 touch and from 1200 a dead-click sweep (every
 // link, button and pointer element is activated; no effect within 1 s, `href="#"` and an anchor to a missing id fail; captures in
 // `<dir>/<width>/dead-clicks/`); at DPR 2 the image checks (file width against shown width x 2, pasted boxes, repeated images, the LCP
-// image not lazy and visible at t0); and, once, the copy lint (`copy-lint.json`) of the visible text.
+// image not lazy and visible at t0).
 // Output: `<dir>/round.json` with everything, a short table on stdout (each rule: value, range, pass or fail; then the captures).
 // Exit 0 whenever it ran, a failed rule included; 2 when it could not run (bad arguments, no Playwright, the URL does not answer).
 // Run from the root of the repo of the card; Playwright is found there or at KIT_PLAYWRIGHT_ROOT.
@@ -57,19 +58,16 @@ import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { createRequire } from 'node:module';
 import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, relative, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { parseSteps } from './probe.mjs';
 import { wallOf, wallMessage } from './bot-wall.mjs';
-import { DPR, FRAME_MAX, LCP_INIT, collectFonts, collectPalette, collectTextBoxes, crossWidthRows, loadBrand, loadIntent, loadProduct, measureProduct, mergePainted, paintedTexts, PASTED_MARGIN, designRows, frameFlags, frameReports, frameTable, markVisibleAtT0, measureFrame, measureImages, measureLayout, pickCta, sampleCanvases, sweepDeadClicks, sweepsWidth, typographyOf } from './design-checks.mjs';
-import { lintCopy, measureCopy, quotedTexts } from './copy-lint.mjs';
-import { currentCard } from './card.mjs';
-import { readCard } from './card-doc.mjs';
+import { DPR, FRAME_MAX, LCP_INIT, collectFonts, collectPalette, collectTextBoxes, crossWidthRows, loadBrand, loadIntent, loadProduct, measureProduct, mergePainted, paintedTexts, PASTED_MARGIN, designRows, frameFlags, frameReports, frameTable, markVisibleAtT0, measureFrame, measureImages, measureLayout, pickCta, sampleCanvases, sheetHashOf, sweepDeadClicks, sweepsWidth, typographyOf } from './design-checks.mjs';
 
-const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1280x800,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--cta <selector>] [--brand <brand.json|card.md>] [--intent <name|card.md>] [--kind <product|card.md>] [--scrub]';
+const USAGE = 'usage: node design-round.mjs <url> --out <dir> [--steps <steps.json>] [--widths 1440x900,1280x800,1024x768,768x1024,390x844] [--gpu] [--grain baked|none] [--cta <selector>] [--brand <direction.json|DESIGN.md|brand.json|card.md>] [--intent <name|card.md>] [--kind <product|card.md>] [--scrub]';
 const LOAD_MARKS = [0, 600, 2000];
 const STEP_TIMEOUT_MS = 5000;
-// Same numbers as LOOP_MIN_S, SEAM_MAX_RATIO and MEDIAN_FLOOR of asset-pipeline.py: a hero loop is 8 s or more (4 s when its seam is
+// Thresholds of the hero loop: a hero loop is 8 s or more (4 s when its seam is
 // clean, as a searched loop is) and its restart jumps no more than 1.5 steps of the video.
 const HERO_MIN_S = 8;
 const HERO_SHORT_MIN_S = 4;
@@ -109,7 +107,7 @@ export const measureResponsive = () => {
   const interactive = [...document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [tabindex]:not([tabindex="-1"])')]
     .filter((el) => shown(el) && !(el.tagName === 'A' && getComputedStyle(el).display === 'inline'));
   const tapSmall = interactive.filter((el) => rectOf(el).width < 44 || rectOf(el).height < 44).map(size);
-  const clickSmall = interactive.filter((el) => rectOf(el).width < 24 || rectOf(el).height < 24).map(size);
+  const clickSmall = interactive.filter((el) => rectOf(el).width <= 24 || rectOf(el).height <= 24).map(size);
   // A card that is a button as a whole (a plan, a product) is not a control: past 64 px tall it is left out of the median.
   const heights = interactive.filter((el) => el.matches('button, [role=button], input[type=submit], input[type=button]')).map((el) => rectOf(el).height)
     .filter((h) => h <= 64).sort((a, b) => a - b);
@@ -181,7 +179,7 @@ export const responsiveRules = (m) => {
   if (m.width >= 840) out.push(row('hamburger, expanded', m.nav.hamburger ? 'yes' : 'no', 'no', !m.nav.hamburger));
   if (m.width >= 1200) {
     out.push(
-      row('clicks under 24x24', m.clickSmall.length, '0', m.clickSmall.length === 0, m.clickSmall),
+      row('clicks of 24x24 or less', m.clickSmall.length, '0', m.clickSmall.length === 0, m.clickSmall),
       row('median button height', m.medianButton ?? 'no buttons', '< 48 (all 48+ is a stretched mobile)', m.medianButton == null || m.medianButton < 48),
     );
   }
@@ -259,7 +257,7 @@ export const videoRules = async (videos, pageUrl) => {
         ? row(`hero video seam (${name})`, 'not measurable (no ffmpeg, or the file cannot be fetched)', `seam ratio <= ${SEAM_MAX_RATIO}`, false, [v.src])
         : seam.cuts > 0
         ? row(`hero video seam (${name})`, `${seam.cuts} cuts inside: the restart is one more cut (seam ratio ${seam.ratio})`, `single shot: seam ratio <= ${SEAM_MAX_RATIO}`, true)
-        : row(`hero video seam (${name})`, `seam ratio ${seam.ratio}`, `seam ratio <= ${SEAM_MAX_RATIO}`, clean, clean ? [] : ['the last frame jumps to the first more than a step of the video: search the loop point or blend it (asset-pipeline.py loop --seam auto, or crossfade)']));
+        : row(`hero video seam (${name})`, `seam ratio ${seam.ratio}`, `seam ratio <= ${SEAM_MAX_RATIO}`, clean, clean ? [] : ['the last frame jumps to the first more than a step of the video: search the loop point or crossfade it with ffmpeg']));
     }
   } finally { rmSync(dir, { recursive: true, force: true }); }
   return out;
@@ -275,16 +273,18 @@ const rendererOf = () => {
 };
 
 // The rules of `excellence.md` that a measure decides: value, range and whether it passes.
-export const rulesOf = (m, grainDecl = false) => {
+// A product page (`product` true) keeps the rows that hold on any screen: tracking and grain are landing rules, and grain is never required.
+export const rulesOf = (m, grainDecl = false, product = false) => {
   const grainBaked = grainDecl === true || grainDecl === 'baked';
   const row = (rule, value, range, pass) => ({ rule, value, range, pass: value == null ? false : pass });
   return [
     { ...row('display/body ratio', m.ratio, 'report only: winners median 2.9x, 2-9x', true), report: true },
     { ...row('display line height', m.displayLineHeight, 'report only: winners median 1.0', true), report: true },
+    ...(product ? [] : [
     row('display tracking (em)', m.displayTrackingEm, '-0.03..-0.02', m.displayTrackingEm <= -0.02 && m.displayTrackingEm >= -0.05),
-    row('body tracking (em)', m.bodyTrackingEm, '0..0.02', m.bodyTrackingEm >= 0 && m.bodyTrackingEm <= 0.02),
+    row('body tracking (em)', m.bodyTrackingEm, '0..0.02', m.bodyTrackingEm >= 0 && m.bodyTrackingEm <= 0.02)]),
     row('font sizes, first viewport', m.sizeCount, '<= 9', m.sizeCount <= 9),
-    row('grain or noise', m.grain ? 'yes' : grainBaked ? 'baked (declared)' : grainDecl === 'none' ? 'none (declared)' : 'no', 'a texture, or none declared', m.grain || grainBaked || grainDecl === 'none'),
+    ...(product ? [] : [row('grain or noise', m.grain ? 'yes' : grainBaked ? 'baked (declared)' : grainDecl === 'none' ? 'none (declared)' : 'no', 'a texture, or none declared', m.grain || grainBaked || grainDecl === 'none')]),
   ];
 };
 
@@ -296,8 +296,10 @@ export const loadWaves = (load) => {
   const waves = [...new Set(starts.map((s) => Math.floor(s / 100) * 100))];
   return { waves, gapsMs: waves.slice(1).map((w, i) => w - waves[i]), totalMs: Math.round(Math.max(...moving.map((l) => l.endMs)) - starts[0]) };
 };
-const loadRules = (w) => {
+// The load waves are a landing rule: a product page has no rows here.
+export const loadRules = (w, product = false) => {
   const row = (rule, value, range, pass) => ({ rule, value, range, pass });
+  if (product) return [];
   return [
     row('load waves', w.waves.length, '2-3', w.waves.length >= 2 && w.waves.length <= 3),
     row('load wave gap (ms)', w.gapsMs.length ? w.gapsMs.join('/') : '-', '200-300', w.gapsMs.length > 0 && w.gapsMs.every((g) => g >= 200 && g <= 300)),
@@ -535,7 +537,10 @@ export const round = async (argv) => {
   const launchArgs = a.gpu ? (process.platform === 'win32' ? ['--use-angle=d3d11', '--enable-gpu-rasterization', '--ignore-gpu-blocklist'] : ['--enable-gpu-rasterization', '--ignore-gpu-blocklist']) : [];
   const launch = (args) => pw.chromium.launch({ channel: 'chromium', args }).catch(() => pw.chromium.launch({ args }));
   let browser = await launch(launchArgs);
-  const result = { url: a.url, intent, kind: look ? 'product' : 'landing', gpu: a.gpu, path: a.gpu ? 'gpu' : 'non-gpu', cta: {}, renderer: null, software: null, widths: {}, console: [], captures: [], load: null, motion: null };
+  // The sheet the round was held to, for the gate: relative to the working directory (the repo root) when it lies inside it.
+  const sheetPath = a.brandFile ? relative(process.cwd(), resolve(a.brandFile)) : null;
+  const held = brand ? { file: (sheetPath.startsWith('..') || isAbsolute(sheetPath) ? resolve(a.brandFile) : sheetPath).replace(/\\/g, '/'), ...brand, sheetHash: sheetHashOf(resolve(a.brandFile)) } : null;
+  const result = { url: a.url, intent, kind: look ? 'product' : 'landing', brand: held, gpu: a.gpu, path: a.gpu ? 'gpu' : 'non-gpu', cta: {}, renderer: null, software: null, widths: {}, console: [], captures: [], load: null, motion: null };
   try {
     for (let vi = 0; vi < a.viewports.length; vi++) {
       const { width, height } = a.viewports[vi];
@@ -571,7 +576,7 @@ export const round = async (argv) => {
         const m = { ...await page.evaluate(measure), ...(tb?.boxes.length ? typographyOf(tb) : {}) };
         const canvas = await sampleCanvases(page, 't0+2s').catch(() => []);
         const responsive = await page.evaluate(measureResponsive);
-        result.widths[key] = { measure: m, responsive, rules: [...rulesOf(m, a.grain), ...responsiveRules(responsive), ...await videoRules(await page.evaluate(measureVideos).catch(() => []), page.url())] };
+        result.widths[key] = { measure: m, responsive, rules: [...rulesOf(m, a.grain, !!look), ...responsiveRules(responsive), ...await videoRules(await page.evaluate(measureVideos).catch(() => []), page.url())] };
         const sections = await page.evaluate(() => {
           const els = [...document.querySelectorAll('section, [data-section]')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).display !== 'none' && getComputedStyle(e).visibility !== 'hidden'; });
           els.forEach((e, i) => e.setAttribute('data-design-round', String(i)));
@@ -617,7 +622,6 @@ export const round = async (argv) => {
             }
           }
         }
-        if (!result.copy) result.copy = await page.evaluate(measureCopy).catch(() => null);
         const palette = await page.evaluate(collectPalette).catch(() => null);
         if (palette) palette.painted = mergePainted(painted);
         const fonts = await page.evaluate(collectFonts).catch(() => null);
@@ -664,10 +668,6 @@ export const round = async (argv) => {
       }
     }
   } finally { await browser.close(); }
-  // The texts the card quotes verbatim are not the screen's to reword: the same list the gate passes to the lint.
-  const cardDir = currentCard(process.cwd());
-  const quoted = cardDir ? quotedTexts(readCard(cardDir) ?? '') : [];
-  if (result.copy) result.copyLint = lintCopy(result.copy, quoted);
   if (!look) for (const r of crossWidthRows(result.widths)) result.widths[r.widest].rules.push(r);
 
   // Serial, after the viewports: motion-audit times the load waves, and a browser running beside it would move them.
@@ -675,11 +675,11 @@ export const round = async (argv) => {
   const motionDir = join(a.out, 'motion');
   const reportFile = join(motionDir, 'report.json');
   rmSync(reportFile, { force: true });
-  const ma = spawnSync(process.execPath, [join(import.meta.dirname, 'motion-audit.mjs'), a.url, '--measure', '--out', motionDir], { encoding: 'utf8', timeout: 180000, env: process.env });
+  const ma = spawnSync(process.execPath, [join(import.meta.dirname, 'motion-audit.mjs'), a.url, '--measure', ...(look ? ['--kind', 'product'] : []), '--out', motionDir], { encoding: 'utf8', timeout: 180000, env: process.env });
   if (existsSync(reportFile)) {
     const r = JSON.parse(readFileSync(reportFile, 'utf8'));
     result.load = loadWaves(r.load ?? []);
-    result.load.rules = loadRules(result.load);
+    result.load.rules = loadRules(result.load, !!look);
     result.motion = { report: reportFile, staggerMs: r.grammar?.staggerMs ?? null };
   } else result.motion = { error: `motion-audit did not write a report (exit ${ma.status}): ${(ma.stderr || ma.stdout || '').trim().split('\n')[0]}` };
 
@@ -697,10 +697,6 @@ export const round = async (argv) => {
     }
     if (w.frames?.length) lines.push(...frameTable(w.frames));
   }
-  lines.push('-- copy');
-  if (!result.copyLint) lines.push('  could not measure the copy');
-  else if (!result.copyLint.length) lines.push('  pass  copy lint: 0 findings');
-  else for (const c of result.copyLint.slice(0, 12)) lines.push(`  FAIL  ${c.rule}: ${c.detail}`);
   lines.push('-- load');
   if (result.load) for (const r of result.load.rules) lines.push(`  ${r.pass ? 'pass' : 'FAIL'}  ${r.rule}: ${r.value} (range ${r.range})`);
   else lines.push(`  could not measure: ${result.motion.error}`);

@@ -36,3 +36,4 @@ refactor-tests: la versión del kit que fija tests/kit.test.mjs pasa de 6.33.0 a
 - L2 · 2026-11-08 · declared · fault-db · la card no toca la base
 - L3 · 2026-11-08 · declared · attacks · la card no toca la API
 - L4 · 2026-11-08 · replaces: tests/kit.test.mjs "el kit instalado es el 6.33.0 @KIT-04-S1" · el kit pasa a 6.42.0 · by: tests/kit.test.mjs "el kit instalado es el 6.42.0 @KIT-05-S1"
+- L5 · 2026-11-08 · kit updated 26569f73feb42502ee0ea56bf62ccc84c28a6faa → a1b87003068b2cd329d26c589605466ea362bec5 · la card KIT-05 es la actualización del kit

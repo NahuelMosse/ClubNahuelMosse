@@ -10,6 +10,7 @@
 // it does not know whether it already blocked once, and blocking the close blindly jams the session forever.
 import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
 import { delegateToRepo } from '../tools/card.mjs';
+import { linesOf as streamLines } from '../tools/transcript.mjs';
 
 let input;
 let raw;
@@ -19,13 +20,14 @@ await delegateToRepo(import.meta.url, raw, input);
 // If it was already blocked once and still wants to end, it is let through: blocking in a loop is worse.
 if (input.stop_hook_active) process.exit(0);
 
-// The end of the transcript first: a whole read costs about 6 ms per MB, and a long session's passes 100 MB.
+// The end of the transcript first. Past it, the transcript is streamed a line at a time and only the lines that can
+// matter are parsed: a long session's passes 600 MB, more than V8's longest string, and a whole read threw.
 const TAIL_BYTES = 1024 * 1024;
-const linesOf = (path, whole) => {
+const tailOf = (path) => {
   const fd = openSync(path, 'r');
   try {
     const size = fstatSync(fd).size;
-    const length = whole ? size : Math.min(size, TAIL_BYTES);
+    const length = Math.min(size, TAIL_BYTES);
     const buffer = Buffer.alloc(length);
     readSync(fd, buffer, 0, length, size - length);
     const lines = buffer.toString('utf8').trim().split('\n');
@@ -33,19 +35,19 @@ const linesOf = (path, whole) => {
     return { lines, whole: length === size };
   } finally { closeSync(fd); }
 };
-const lastTextOf = (path) => {
-  const tail = linesOf(path, false);
-  const text = lastTextIn(tail.lines);
-  return text || tail.whole ? text : lastTextIn(linesOf(path, true).lines);
+const textOf = (line) => {
+  if (!line.includes('"assistant"') || !line.includes('"text"')) return '';
+  let j;
+  try { j = JSON.parse(line); } catch { return ''; }
+  if (j.message?.role !== 'assistant' || !Array.isArray(j.message.content)) return '';
+  return j.message.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
 };
-const lastTextIn = (lines) => {
+const lastTextOf = (path) => {
+  const tail = tailOf(path);
   let text = '';
-  for (let i = lines.length - 1; i >= 0 && !text; i--) {
-    let j;
-    try { j = JSON.parse(lines[i]); } catch { continue; }
-    if (j.message?.role !== 'assistant' || !Array.isArray(j.message.content)) continue;
-    text = j.message.content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
-  }
+  for (let i = tail.lines.length - 1; i >= 0 && !text; i--) text = textOf(tail.lines[i]);
+  if (text || tail.whole) return text;
+  for (const line of streamLines(path)) text = textOf(line) || text;
   return text;
 };
 
@@ -76,33 +78,26 @@ if (!last) { try { last = lastTextOf(input.transcript_path); } catch { process.e
 // In an interactive session (no SDD_UNATTENDED=1) the main thread may end its turn with work running when this turn armed
 // what wakes it: a `Monitor`, or a command or agent launched with `run_in_background`, whose end is notified. The person
 // can talk meanwhile. Unattended, nothing wakes it: the rule below holds.
-const armedThisTurn = (path) => {
-  const { lines } = linesOf(path, true);
-  for (let i = lines.length - 1; i >= 0; i--) {
-    let j;
-    try { j = JSON.parse(lines[i]); } catch { continue; }
-    const content = j.message?.content;
-    // A background task's notice is stored as a user message, but it is not one: the turn it opens keeps what was armed before.
-    if (j.type === 'user' && !j.isMeta && typeof content === 'string' && !content.startsWith('<task-notification>')) return false;
-    if (j.message?.role !== 'assistant' || !Array.isArray(content)) continue;
-    if (content.some((b) => b.type === 'tool_use' && (b.name === 'Monitor' || b.input?.run_in_background === true))) return true;
-  }
-  return false;
-};
 // Armed in an earlier turn and not yet ended wakes it all the same: a background task whose end notice (`<tool-use-id>` with a
 // `<status>`) is not in the transcript is still running. Measured: the hook fired on every turn of a session that watched a
-// suite armed two turns before.
-const liveArmed = (lines) => {
+// suite armed two turns before. One streamed pass answers both.
+const wakesThisTurn = (path) => {
   const armed = new Set(), ended = new Set();
-  for (const line of lines) {
+  let armedSinceUser = false;
+  for (const line of streamLines(path)) {
     if (line.includes('task-notification')) for (const m of line.matchAll(/<tool-use-id>([^<]+)<\/tool-use-id>(?=[\s\S]*?<status>)/g)) ended.add(m[1]);
+    const typed = line.includes('"user"') && line.includes('"content":"');
+    const arms = line.includes('"tool_use"') && (line.includes('"Monitor"') || line.includes('"run_in_background":true'));
+    if (!typed && !arms) continue;
     let j;
     try { j = JSON.parse(line); } catch { continue; }
     const content = j.message?.content;
+    // A background task's notice is stored as a user message, but it is not one: the turn it opens keeps what was armed before.
+    if (j.type === 'user' && !j.isMeta && typeof content === 'string' && !content.startsWith('<task-notification>')) armedSinceUser = false;
     if (j.message?.role !== 'assistant' || !Array.isArray(content)) continue;
-    for (const b of content) if (b.type === 'tool_use' && (b.name === 'Monitor' || b.input?.run_in_background === true)) armed.add(b.id);
+    for (const b of content) if (b.type === 'tool_use' && (b.name === 'Monitor' || b.input?.run_in_background === true)) { armed.add(b.id); armedSinceUser = true; }
   }
-  return [...armed].some((id) => !ended.has(id));
+  return armedSinceUser || [...armed].some((id) => !ended.has(id));
 };
 
 // What is quoted is not a promise: it is talking about one. Measured: the hook blocked a message
@@ -137,7 +132,7 @@ const alive = asserted(ALIVE);
 const pending = asserted(PROMISE) || asserted(WAITING) || (alive && DEFERRED.test(last)) || (alive && !DECLARED.test(original));
 
 if (pending && process.env.SDD_UNATTENDED !== '1') {
-  try { if (armedThisTurn(input.transcript_path) || liveArmed(linesOf(input.transcript_path, true).lines)) process.exit(0); } catch { /* the rule below decides */ }
+  try { if (wakesThisTurn(input.transcript_path)) process.exit(0); } catch { /* the rule below decides */ }
 }
 if (pending) {
   process.stderr.write(

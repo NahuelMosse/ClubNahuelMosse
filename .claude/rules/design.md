@@ -4,20 +4,21 @@ paths: ["**/*.css", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.svelte", "**/*.htm
 
 # Design: the level of a screen comes from the process, not from the model
 
-Loads by itself when you touch a screen file. It applies to product screens (forms, CRM, dashboards) and to landings. A
+Loads by itself when you touch a screen file. It applies to product screens (forms, admin and data screens, dashboards) and to landings. A
 repo with its own design system uses it: where this rule names a font, token or curve, the repo's wins. The card's `## Look`
 (`ref:`, `behavior:`, `tokens:`) is the brief; this is how it is built.
 
 ## Before
+- Whoever designs a screen (the `designer`, or the thread when no designer runs) first reads the skill `design-taste-frontend`, deals the palette and the type with its `draw.mjs` instead of choosing them, runs every design round with `--brand` on that sheet (the gate's `brand` check blocks without it), takes a DESIGN.md from `.claude/templates/design-md/` as the token system when the repo has none of its own, and starts every component the set lacks from the gallery (`agents/designer.md`, «Taste and a design system»).
 - Build against the `ref:` of `## Look`: copy its system (hierarchy, density, depth, motion), not its pixels.
 - The reference sets the level (quality, depth, motion, type); the composition is yours. `## Direction` names 3 layout decisions that differ from it.
 - One visual direction in two lines (tone, density, a memorable trait). One focal point per screen.
 
 ## Tokens, in one place
 - Colors, fonts, spacing, radii, shadows, easings and durations are CSS variables or the theme file. No loose value in a component.
-- The `tokens:` of `## Look` picks a display font with character, from Google Fonts or the repo's; never only the system font.
+- The `tokens:` of `## Look` fixes no font family unless the brand or the requester gives one; the designer picks a display font with character (Google Fonts or the repo's) in `## Direction`; never only the system font.
 - Two font families with character, one for display and one for text. Never Inter, Roboto, Arial or the system font as identity.
-- Six to eight font sizes in a fixed scale; at most three weights.
+- Six to eight font sizes in a fixed scale, within the ceiling of `.claude/reference/excellence.md` (at most nine in the first viewport); at most three weights.
 - Spacing on a scale (4 8 12 16 24 32 48 64 96); no margin or padding outside it.
 - Two or three radii and two or three layered, tinted shadow levels. No pure `#000` or `#fff`.
 
@@ -44,5 +45,6 @@ repo with its own design system uses it: where this rule names a font, token or 
 - The same shadow on every card; `01/02/03` numbering with no real sequence.
 
 ## After: look before you finish
-- For a `presentation` task, the capture loop of the builder (`rondas.md`) runs before saying done: capture, compare against `ref:`, correct.
+- Looking at the screen (captures, verdict against `ref:`, correction) is the `designer`'s rounds and, at grade `production`, the `design-critic`'s.
+- A public page (landing, product, pricing, post) is also built to be found: title, description, canonical, sharing cards, structured data, alt and size on images, links that name where they go, no jump while it loads. The values and what the skill's `inspect.mjs` checks are in its `references/seo.md`; a screen behind a login says `noindex` and nothing more.
 - If two rules collide, clarity and accessibility win over aesthetics and motion.

@@ -10,7 +10,8 @@ lenses and stacks only the section a question needs (`Grep -n "^## "`, then `Rea
    (open the ones you can), linked pages. If the MCP does not respond, stop: without the requirement there is no card. A requirement
    that arrived as text is the source all the same: `sources:` says where it came from and `not_read:` what has no channel.
 2. **Write `specs/$1-<slug>/card.md` with one `Write`**, from the template:
-   - header: `status: proposed`, `cap: <N> min` (the time the card is worth; `time-cap` warns at 70 % and stops at 100 %),
+   - header: `status: proposed`, `cap: <N> min` (the time the card is worth; `time-cap` warns at 70 % and stops at 100 %; at grade poc at most 2× the likely time),
+     at grade poc the card is a facade: only cap, `## Specs` (an assumption is an `ASM-NN` line with no test), `## Look` and `## Log` with `L1`; no `## Tasks`, no `## Gate`, no round of questions, no `replaces:` lines,
      `sources:` never empty, `not_read:` present;
    - `## Specs`: every sentence or criterion of the card as `S<n> · "<verbatim quote>"`, quoting only its own clause, not the whole card; an assumption as
      `$1-ASM-NN · <the cheapest reading to undo> · S<n>`, only for what changes what the user sees or does; the HTTP defaults of `reference/http-defaults.md` (profile backend) are one ASM with a test per row. A screen that calls an endpoint that does not exist yet: ask about it (AMB) or assume it as an ASM with its route and body, and plan it in `## Tasks`;
@@ -25,7 +26,6 @@ lenses and stacks only the section a question needs (`Grep -n "^## "`, then `Rea
 4. **One round of questions.** What the card does not say (the empty case, duplicates, validation, limits, permissions, states, error,
    order, concurrency, what must be stamped now) is `$1-AMB-NN · <date> · open · <question in the business's language, no IDs>` in
    `specs/$1-<slug>/ambiguities.md`. With Jira, all of them go in **one** comment on the card, posted without asking approval, each with
-   the option assumed if nobody answers (`.claude/AUTONOMY.md`). Read the answers before the tests; what is unanswered becomes an
-   `$1-ASM-NN` line of `## Specs`, with its planned test. Never a second round.
-5. Commit `card.md` alone. **Closes with:** `git diff --name-only <hash>..HEAD -- specs/$1-<slug>/card.md` (`<hash>`, the commit of `card.md`) lists nothing you
-   did not mean; report the specs, the open questions, `not_read:` and the `risk:` line.
+   the option assumed if nobody answers (`.claude/AUTONOMY.md`). The main thread reads the answers once, before RED; what is unanswered becomes an
+   `$1-ASM-NN` line of `## Specs`, with its planned test. A later answer goes in the Log and the PR; it does not reopen RED. Never a second round.
+5. Commit `card.md` alone. **Closes with:** `git show --name-only --format= HEAD` lists only `specs/$1-<slug>/card.md`; report the specs, the open questions, `not_read:` and the `risk:` line.

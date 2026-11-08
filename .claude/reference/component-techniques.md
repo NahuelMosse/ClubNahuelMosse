@@ -6,9 +6,8 @@ Vaul and cmdk do, read from their source: the values, the structure and the edge
 they can be built in plain CSS and JS. **A repo without React does not get React for its
 components: it gets these techniques.**
 
-*Measured: a set copied from screenshots and memory scored 7/10 against these libraries; the gap
-was in the details below —springs, origins, grace areas, focus return—, none of them visible in a
-still image.*
+The gap between a set copied from screenshots and these libraries is in the details below —springs, origins,
+grace areas, focus return—, none of them visible in a still image.
 
 ## Material: what makes them look expensive
 
@@ -50,6 +49,8 @@ Radii: cards 12, controls 8, menu items 6, the command palette and dialogs 16, w
   `|v|` and `|x-target|` are below 0.01, writing the style each frame. A critically damped spring
   has `c = 2·√(k·m)`. For CSS, sample the integrator into `linear(…)` (~30 points); the duration is
   the settle time.
+
+  The values are a calibration to start from, not requirements.
 
   | Where | stiffness | damping | mass |
   |---|---|---|---|

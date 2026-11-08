@@ -6,8 +6,8 @@ the components come from `reference/components.md`, installed, not drawn.
 
 What is perceived today as professional software —Linear, Attio, Raycast, Mercury, Stripe, Vercel,
 with Carbon, Atlassian and Apple behind the systems— distilled into rules with values. Read it when
-writing the design line and the `## Visual brief`. Hover and press were **measured** on those
-products, and overlays come from the documented systems (`reference/motion-benchmark.md`); the
+writing the design line, `## Look` and `## Information`. Hover and press are a **calibration from Linear**, measured on those
+products, not universal values, and overlays come from the documented systems (`reference/motion-benchmark.md`); the
 components that carry them are in
 `reference/components.md` and `templates/components/`. When to choose each component is in
 `reference/ui-patterns.md`; the front-end performance budgets (initial JS per route, Web Vitals, O15), in
@@ -49,11 +49,12 @@ What a product screen starts from, with its values; a project changes a value in
 - **Toolbar.** Title (20 px, 600) and count (13 px, faint, tabular) on the left; search, filters and the primary on the right, one control height (32 px); under 640 px the controls drop under the title at full width.
 - **Stable table columns.** `table-layout: fixed` with a `<colgroup>`; rows 40 px, header 36 px and sticky; numbers right-aligned and `tabular-nums`. Filtering hides rows and never changes a width; an empty result is a row with the message and the action that resolves it.
 - **Figures that can be believed.** A KPI's figure, its change and its trend line come from the same filtered set: the figure is the current period, the change is that period against the one before, and a zero before says «new», never a percentage. Chart ticks are round (1, 2 or 5 × a power of ten, from zero), a bar chart's unit is its figure's unit, and the current month is the data in the accent. On a phone the KPIs are one strip that scrolls and snaps, and a list row is a card of two lines: who and how much, then what, when and the status.
-- **Centered container.** 1200 px at most, centered, 24 px gutters (32 px from 768 px up); content never glued to the left at 1280.
-- **Press and focus.** Press `scale(0.98)` in 80 ms, release on a 240 ms spring; focus-visible is a 2 px ring with 2 px offset, and a text field takes a 3 px halo that grows in 120 ms; hover only with a fine pointer.
+- **Container by what the page holds.** A reading page (a form, settings, an article) is 1200 px wide or less and centered; a data screen (a board, a list, a record) spans the width beside its navigation, 85 % or more from 1200 px (`product: content span`). Gutters of 24 px, 32 px from 768 px up; content never glued to the left at 1280.
+- **Information first on a dense screen.** The screen serves the decisions of `## Information`: the main decision's fields sit together in the first viewport, seven at most (Salesforce's highlights panel shows seven), in a header that stays on a long record, each value larger, heavier or of more contrast than its label; a second decision is its own group, separated by more space than the space inside a group; what serves no decision goes one interaction away (a tab, a disclosure, a drawer), and audit data (ids, who changed what) out of the first view. Spacing is one scale on a 4 px grid, and six steps carry most of the layout (measured: GitHub, Plausible, Tremor and shadcn dashboards put 84–100% of their layout spacing on 4 px and 92–100% on their six most used values). Tabular data is a `<table>` with its headers, numbers right-aligned. `ia-check.mjs` measures each of these.
+- **Press and focus.** Press `scale(0.98)` in 80 ms (the Linear calibration), release on a 240 ms spring; focus-visible is a 2 px ring with 2 px offset, and a text field takes a 3 px halo that grows in 120 ms; hover only with a fine pointer.
 - **Everything animates, short and interruptible; reduced motion fades.** Nothing is instant, not even what the keyboard opens: a panel opened by Enter animates like one opened by click. With `prefers-reduced-motion` displacement and scale become an opacity or color fade of 100–150 ms, never zero. **The card outranks motion:** what the card says disappears, is replaced or stops existing leaves the DOM in the event's own task, with no exit animation on that node, no `hidden` and no deferred `remove()`; the motion goes on what enters and on the neighbors (FLIP).
-- **Light neutral by default, one accent.** Twelve OKLCH steps in a cool gray, dark as `data-theme="dark"`; the accent is three numbers (`--accent-hue`, `--accent-chroma`, `--accent-l`: the project's brand color, with muted indigo and mono as presets) and every tint, hover, text and ring derives from them in OKLCH, so 4.5:1 and 3:1 hold in both themes. The accent is the one primary action, the focus ring, the value of a control and the selection of data; warm amber on dark belongs to the showcase register only. In dark the page, the card and the overlay are three steps of lightness, about 6 L and 3 L apart.
-- **Type.** 12 / 13 / 14 / 16 / 20 / 28, weights 400 / 500 / 600, tracking negative from 20 px up, `tabular-nums` on every number.
+- **Light neutral by default, one accent.** Twelve OKLCH steps whose neutrals take the brand hue (a cool gray is a preset), dark as `data-theme="dark"`; the accent is three numbers (`--accent-hue`, `--accent-chroma`, `--accent-l`: the project's brand color, with muted indigo and mono as presets) and every tint, hover, text and ring derives from them in OKLCH, so 4.5:1 and 3:1 hold in both themes. The accent is the one primary action, the focus ring, the value of a control and the selection of data. In dark the page, the card and the overlay are three steps of lightness, about 6 L and 3 L apart.
+- **Type.** Defaults of a dense tool, changed in the tokens: 12 / 13 / 14 / 16 / 20 / 28, weights 400 / 500 / 600, tracking negative from 20 px up, `tabular-nums` on every number.
 
 ## Values
 
@@ -117,7 +118,7 @@ underline that slides, row → detail panel that grows from it, button → popov
 card → panel, thumbnail → viewer. Nothing teleports.
 
 **Perceived speed counts more than decoration.** Respond on pointer-down. Optimistic updates when
-safe and reversible, with undo. Skeletons only after 150–300 ms so a fast answer does not flash.
+safe and reversible, with undo. Skeletons follow the delay of `ui-patterns.md` UX-CARGA-1. A skeleton has the shape of what arrives (`skeletonOf` the same markup): a list loads as circle and lines, a table as its cells, never a stack of grey bars.
 
 **Technique, in this order:** CSS transitions —they can be interrupted and retarget from the
 current value; keyframes restart from zero— → Web Animations API → View Transitions →

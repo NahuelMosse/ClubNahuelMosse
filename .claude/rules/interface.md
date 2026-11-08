@@ -6,12 +6,9 @@ paths: ["**/*.css","**/*.tsx","**/*.jsx","**/*.vue","**/*.svelte","**/*.html"]
 
 This rule loads by itself when you touch a screen file. There is nothing to remember.
 
-Everything that follows came out of measured runs, not judgment. Each block says what was
-observed.
+## Before writing the screen: the card's `## Look` and `## Information`
 
-## Before writing the screen: the plan's `## Visual brief`
-
-- `## Visual brief` — **only if the card touches a screen.** What the user has to be able to do and
+- `## Look` (and `## Information` on a product screen) — **only if the card touches a screen.** What the user has to be able to do and
 read in each view, in short prose. It is not design: it is what will be checkable by looking.
 **If the card creates a screen, invoke `interface-design` to write it**; if it only adds a control
 to a screen that already exists, the brief is written by looking at that screen and the skill adds
@@ -22,12 +19,15 @@ strong”*—, so the brief is not documentation of the design, **it is the deci
 made in writing and beforehand**.
 
 **And the brief says from where each thing is done.** For each action the card asks for, write
-which screen the person is standing on when they need it. Measured: a run put the creation of an
-interaction only on the creation screen, with a selector that listed **all** the contacts of all
-the companies; from the company record you are looking at there was no way to log one. All the
-card's scenarios passed. *An action that exists but forces you to leave where you are is, for
-whoever uses it every day, an action that does not exist* — and no scenario test detects it,
-because the scenario says what can be done, not from where.
+which screen the person is standing on when they need it. *An action that exists but forces you to
+leave where you are is, for whoever uses it every day, an action that does not exist* — and no
+scenario test detects it, because the scenario says what can be done, not from where.
+
+**On a product screen the brief starts from `## Information` of the card.** A dense screen (a loan
+file, an account, a case) fails by burying the decision under everything it can show, not by its
+components. The card lists what the user decides there and, per field, the decision it serves and
+its tier (`glance`, `detail`, `audit`); the brief turns that into zones, one per decision, and
+`ia-check.mjs` measures the result in the browser (`templates/card.md`, `## Information`).
 
 **Before looking for a signature, calibrate how much is called for.** `interface-design` pushes
 toward standing out without asking which screen it is about, and not all screens tolerate the same.
@@ -55,7 +55,7 @@ type of screen has mature patterns: a data grid, a board by states, a table with
 **Departing from that is a decision that is declared and justified**, not the default. *Because the
 user does not come to get to know your system: they come to read a number.*
 
-**Two more things the brief has to say, or step 9 cannot verify them:**
+**Two more things the brief has to say, or the designer's rounds cannot verify them:**
 
 **What each view does with the desktop width.** One line per view. It is built mobile-first
 because covering both comes out cheaper, but the desktop is where the whole workday happens: it
@@ -64,25 +64,22 @@ has to show something that does not fit on the phone, not be the phone stretched
 **What data each visual variable encodes.** Color, weight, density: each one names the dimension of
 the data it carries —*color says the stage*, *weight says the priority*— or it does not go. **If a
 visual variable cannot name what data it encodes, it is a disguise.** Measured: a card chose a
-metaphor palette —paper, stamp, folder, pen— and came out worse than another with six colors, one
-per pipeline stage. The signature is not in the mood, it is in the domain's variables.
+metaphor palette and came out worse than another with six colors, one per data category. The signature is not in the mood, it is in the domain's variables.
 
 **And the material, which is what gives the most away and what nobody declares.** Five decisions,
-five lines. **What is not decided comes out by default, and the default is recognizable.**
+five lines, decided per product. **What is not decided comes out by default, and the default is recognizable.**
 
 | | If not declared, it comes out as |
 |---|---|
 | **Typography** — which family, and why that one | `system-ui` |
-| **Canvas** — what color the background is and what color the surface resting on it | cold gray `#f6f7f9` + white card |
+| **Canvas** — what color the background is and what color the surface resting on it (cold gray is one option) | cold gray `#f6f7f9` + white card |
 | **Separation** — what separates things: space, line, shadow or background change. **One, not all four** | 1 px border **plus** shadow **plus** radius, on everything |
 | **Radius** — how much, and whether it is a single one or varies by size | 10-12 px on everything |
 | **Density** — how much a row breathes, in pixels | comfortable, landing-page style |
 
-**Measured, and it is the most uncomfortable finding in the kit:** two independent runs —one with
-the whole method and another with spec-kit alone, which never saw each other— arrived at the same
-cold gray canvas, the same white card with 1 px border plus shadow plus 10-12 px radius, the same
-uppercase labels, and **neither of them chose a typeface**. The first one's brief defined
-precisely what data each color encodes and left the whole support undecided.
+Independent runs left to default converge on the same cold gray canvas, the same white card with
+1 px border plus shadow plus radius, the same uppercase labels, and **no chosen typeface**, even
+when the brief defined precisely what data each color encodes.
 
 *And `design-deslop` does not catch it: its list is flat hierarchy, no focal point, identical
 cards, timid palette — and that screen had none of them. **The anti-generic review is passed while
@@ -92,9 +89,8 @@ material.*
 ### Deciding the material is not moving away from the default
 
 **This table says what has to be decided, not that you have to go the other way.** Reading it as
-“cold gray is wrong” is the mistake that produced the next three runs: *linen canvas*, *cream paper
-with serif*, *warm cardboard*. All three different, all three worse, and the verdict was the same
-all three times — **“it looks old”**.
+“cold gray is wrong” produces linen canvas, cream paper with serif, warm cardboard: all different,
+all worse, with the same verdict — **“it looks old”**.
 
 Cold gray is the default **because it is the contemporary register of work software**. The problem
 with the screen that used it was not the color: it was that **it had not decided anything else**.
@@ -103,8 +99,9 @@ with the screen that used it was not the color: it was that **it had not decided
 > fifteen years old tells the client the software is old, even if it was delivered yesterday. For a
 > consultancy that is not an aesthetic objection: it is the next quote being to replace it.
 
-**The register has to be today's.** Five signals that age a screen, and the first three showed up
-in measured runs:
+**For work software (tools, admin, dashboards) the register has to be today's.** It does not govern
+landings, editorial or brand pages, where a serif, a warm canvas or texture can be the identity.
+Five signals that age a work screen:
 
 | Ages it | Instead |
 |---|---|
@@ -128,14 +125,11 @@ values:
 - **Space** — one unit and its multiples. No hand-written `padding: .85rem`.
 - **Color** — the domain's ones plus a short neutral ramp. The rest is derived.
 
-Measured over four runs: **none declared a type scale.** One used 15 loose sizes, another 10,
-another 6. *Fifteen sizes is not a decision made fifteen times: it is no decision, made fifteen
-times.*
+*Fifteen loose sizes is not a decision made fifteen times: it is no decision, made fifteen times.*
+The size ceiling is owned by `rules/design.md`.
 
 **And what repeats twice is a component.** A form field, a status pill, a listing row: if the same
-block shows up in two views, it goes to a primitive with its variants. Measured: all four runs had
-the same company select copied in two creation forms, and the same amount+stage+date block in two
-views.
+block shows up in two views, it goes to a primitive with its variants.
 
 ## The project's design line
 
@@ -145,8 +139,7 @@ following `.claude/templates/design-line.md`: the references, the direction, the
 typography, **the component set**, the state changes of the screen, the signature interactions, the
 data states and the voice. The cards that follow **use it and extend it**. `verify.mjs` flags every
 color or duration written by hand in what the card adds, a card that touches a screen without a
-design line, and a control written by hand when the set has it. *Measured: four runs used between 6
-and 15 loose font sizes; none declared a scale.*
+design line, and a control written by hand when the set has it.
 
 **On a screen, never write a value of your own**: no color, space, radius, shadow or duration
 outside the tokens; no `display`, `gap` or margin of your own where a primitive (`stack`,
@@ -160,7 +153,13 @@ confirms, waits, edits and navigates is in the design line's patterns
 with its gallery, starts from `.claude/templates/components/` and follows
 `.claude/reference/components.md`: every component designed once, with all its states and its
 motion, and every screen inherits it. A component that is missing enters the set before being
-used.
+used. The plan names the set in the `reuses:` of the task that builds the screen, and the gate
+measures it (`I-set`): of the classes the card's markup names, at least 60 % are defined by the set
+or by a stylesheet the repo already had, the screen loads the set's stylesheets, and a card with
+`## Information` uses at least three blocks of the record (`design/components/record.html`); a
+button, field, select, table or dialog written without the set's class fails as well. In a repo
+with shadcn (`components.json`), the `reuses:` names registry items or `components/ui/` files, and a
+native control written outside `components/ui/` fails the gate (`I-catalog`): it is installed, not drawn.
 
 **And the brief designs each element, not only the screen.** For each new or changed element, the
 brief brings its state matrix —rest, hover, visible focus, pressed, selected, disabled, loading,
@@ -191,7 +190,7 @@ of the plan against the snapshot.
 
 `verify.mjs` checks that there is motion and its reduced version; `motion-audit.mjs`, in the
 browser, that every element and every inventoried change responds, in range, without layout
-animation and without long frames. How it looks is step 9.
+animation and without long frames. How it looks is the designer's rounds.
 
 ## After writing the screen
 

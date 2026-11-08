@@ -9,11 +9,10 @@
 #client-filter { --kokonut-toolbar-selected: var(--surface-inverse); --kokonut-toolbar-on-selected: var(--text-inverse); justify-self: start; }
 #client-filter .ktb__item[data-selected]::before, #client-filter .ktb__item[data-selected]:hover::before { box-shadow: none; }
 #client-filter .ktb__item[data-selected]:hover::before { background: var(--surface-inverse); }
-/* The sprite's alert is a bare stroke, unreadable at 16 px: the state of the overdue ones is the alert in a circle (the field error's). */
-#client-filter [data-kt-item="overdue"] .icon use { display: none; }
-#client-filter [data-kt-item="overdue"] .icon { stroke: none; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM7.25 4.5h1.5v4.5h-1.5Zm0 6h1.5v1.5h-1.5Z'/%3E%3C/svg%3E") center / contain no-repeat; }
 
-.client-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(var(--client-card-min), 100%), 1fr)); gap: var(--space-4); }
+/* The cards wrap and the last row widens to the edge, so a count that does not fill the columns leaves no hole. */
+.client-cards { display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.client-cards > * { flex: 1 1 var(--client-card-min); }
 .client-cards[data-motion="expandable-card"] { grid-template-columns: minmax(0, 1fr); --ac-xc-media-h: 128px; --ac-xc-media-h-open: 240px; }
 .client-card-root { min-width: 0; }
 .client-card { display: grid; align-content: start; gap: var(--space-1); width: 100%; padding: var(--client-card-pad); border: 0; background: none; color: var(--text); font: inherit; text-align: start; cursor: pointer; }

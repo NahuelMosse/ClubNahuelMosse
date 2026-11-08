@@ -1,7 +1,7 @@
 # Profile: Node and TypeScript
 
 The commands for the lines of `## Gate` on this stack, and for the criteria of `reference/criteria.md` that
-have a command. **It is the tested profile**: it came out of more than twenty measured runs. `$ID` is the
+have a command. **It is the tested profile.** `$ID` is the
 card; `$E2E`, the scenarios folder. A command marked **Untested on this machine** is written from the tool's
 documentation and has not run here: the first card that uses it confirms or adjusts it. Every product named is
 an option, never an obligation.
@@ -15,7 +15,8 @@ whole profile would be re-read on every request of the card.
   the verification commands live once as `verify:*` scripts of `package.json`.
 - `node --test` lines run with `--test-concurrency=1`, or 4 (or half the cores) when the tests isolate their own port and database
   and a stable ×3 run (`tools/repeat.mjs`) confirms it. Playwright and axe are development dependencies; browsers install with
-  `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`.
+  `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`. A browser test whose browser is missing fails, never `{ skip }`:
+  the gate counts any skip, even a conditional one, as its spec not run.
 - The `## Gate` lines of `card.md`, one per check, run by `verify.mjs`: `suite: node --test {affected}`, `lint: npx eslint <src test e2e>`,
   `mutate <file>: node --test <that file's unit tests>` (production: every logic file; mvp: the domain; poc: none),
   `attacks: node .claude/tools/attack.mjs --json <flags>` (profile backend; url from `APP_URL`), `motion: npm run motion`, `app: node src/main.mjs` (takes `PORT` and `DATA_DIR` from the environment).
@@ -26,10 +27,7 @@ whole profile would be re-read on every request of the card.
 - Mutation of a logic file: `node .claude/tools/mutate.mjs <file> --since <card-start> --equivalents specs/<card>/equivalents.md -- <unit suite>`,
   never over the browser suite. ZAP: once per card, at the end.
 - `node --test` takes a glob (`"test/**/*.test.mjs"`), never a folder: Node 24 runs a folder as if it were a test file, and fails.
-- A test file that starts a server (the repo's own too) ends with `await new Promise((done) => { server.close(done); server.closeAllConnections(); })` and then the database closed; never a
-  sleep. A handle left open makes Windows abort `--test-force-exit` with `UV_HANDLE_CLOSING`.
-- A static server sends `.mjs` and `.js` as `text/javascript` and serves only its public folder.
-- The logic of a screen (validation, messages, the payload) lives in an ES module the page and `node --test` both import: mutation runs node tests only.
+- Test traps (server shutdown, static server MIME, screen logic in a pure module): the "Test traps" section below.
 
 Read the rest only when a criterion of `bar.mjs` needs a command not listed here (its section, by line range),
 or the card has a screen (`## Screen: states and motion`).
@@ -41,12 +39,10 @@ or the card has a screen (`## Screen: states and motion`).
 - `npm test` = types + unit tests + screen gate. Captures stay outside the gate.
 - **`node --test` lines run with `--test-concurrency=4`** (or half the cores) when the tests isolate their own port and database;
   the condition is a stable ×3 run (`tools/repeat.mjs`) that confirms it, and the card's `## Gate` declares it. Without that run, `--test-concurrency=1`.
-  *Measured: 949 tests went from 10.9 to 7.0 minutes.*
 - Playwright and `@axe-core/playwright` as **development dependencies**, never production ones.
 - Browsers are installed with `PLAYWRIGHT_SKIP_BROWSER_GC=1 npx playwright install chromium`:
   without the variable, Playwright deletes from the machine's cache the versions this repo does
-  not use, and other projects or agents on the same machine may be using them. *Measured:* a run
-  deleted somebody else's Chromium version.
+  not use, and on a shared machine other projects or agents may be using them.
 - Several tags in one filter: `--grep "@A|@B"` with **double** quotes; cmd.exe, which runs npm scripts and
   `verify.mjs` lines on Windows, takes an unquoted `|` as a pipe. Repeating `--grep` does not add up: only the
   last one counts. *Verified on this machine.*
@@ -55,11 +51,27 @@ or the card has a screen (`## Screen: states and motion`).
 - The verification commands live once, as `verify:*` scripts of `package.json` (`verify:suite`, `verify:lint`,
   `verify:contract`…); the `## Gate` lines and the pipeline both invoke them.
 
+## Test traps
+
+The list `agents/builder.md` points to; each one failed in practice.
+- The focused submit is never `disabled` while sending: `aria-disabled="true"` and the click ignored. `disabled` drops the focus to `body`.
+- A busy indicator is seen while its state holds: never `hidden` or `display: none` on its icon; `aria-busy="true"`, not `""`.
+- A test file ends clean: `server.close()` with `closeAllConnections()` and the database closed, never a pause. Its `fetch` calls send `connection: close`: a connection fetch keeps alive makes Node 24 on Windows abort `--test-force-exit` with `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)` after every test passed, and `closeAllConnections` does not reach it. In a file the card does not touch that abort is the runtime, not the change: `once.mjs` (every verify line) runs it again without the forced exit; do not debug it.
+- URLs in tests are built with `new URL` or `encodeURIComponent`; a body at a byte limit with a helper that counts bytes, not characters.
+- A test that the contract matches the app takes the statuses from real responses, never from a list in the test.
+- A screen's logic (validation, messages, the payload, and every decision of its flow: the state a response status leads to, the field that takes the focus, whether a submit goes out, the key that sends) lives in a pure module `presentation/<name>-state.js` that `node --test` imports, mutated like the domain; the DOM file only reads the DOM, calls those functions and writes what they return, with no `if` of its own beyond a null check, and the server has an HTTP test under node: mutation runs only node tests, and browser-only coverage leaves every mutant alive.
+- A static server sends `.mjs` and `.js` as `text/javascript` and serves only its public folder.
+- A browser test runs axe or reads a color only after the state's animations end (`await page.evaluate(() => Promise.all(document.getAnimations().filter((a) => a.effect?.getComputedTiming().endTime !== Infinity).map((a) => a.finished.catch(() => {}))))`; a spinner never ends): mid-fade, text fails contrast that it passes at rest.
+
+## HTTP defaults: JS idioms
+
+For `reference/http-defaults.md` (profile backend): the largest exact integer is `Number.MAX_SAFE_INTEGER`; text is trimmed with `trim()` and measured with `[...s].length`; case-insensitive uniqueness and search use `toLowerCase()`; a repeated JSON key keeps the last value (`JSON.parse`); a malformed request is the server's `clientError` event.
+
 ## Default libraries by category
 
 Solved problems use a library (`rules/architecture.md`, «Solved problems use the stack's library»). **The repo's
 existing choice always wins**; this table is for a new repo or a category the repo does not cover yet. A library
-lives in the module's `infrastructure/` (or the composition root for DI), behind domain names.
+lives in the module's `data/` (or the composition root for DI), behind domain names.
 
 | Category | NestJS | Express, Fastify, Hono |
 |---|---|---|
@@ -73,6 +85,8 @@ lives in the module's `infrastructure/` (or the composition root for DI), behind
 
 A module per feature maps to `src/modules/<feature>/` (Nest: the feature module folder), with its layer folders inside
 (`presentation/`, `domain/`, `data/`, `application/` when a use case orchestrates); `shared/` holds the kernel. The architecture test of D2 reads those paths.
+
+**Request-handling files** import no persistence client: in NestJS with Sequelize, nothing under `*.controller.ts` imports `sequelize` or a `*.model.ts`; the same pattern holds for the repo's own ORM. ORM defaults to map: Prisma `@default(uuid(7))` for ids and `@db.Timestamptz(3)` on every `DateTime` (its default `timestamp(3)` has no zone); see P17.
 
 ## Recipes
 
@@ -118,7 +132,8 @@ vitals: npm run verify:vitals
 load: npm run verify:load
 ```
 
-`attacks:` runs `attack.mjs` against `APP_URL`, the app `verify.mjs` started with `app:`. `npm run motion` starts its own app on a free port, runs
+`attacks:` runs `attack.mjs` against `APP_URL`, the app `verify.mjs` started with `app:`; the probes, rule ids and exit codes are the
+vendored skill's (`.claude/skills/http-attack/SKILL.md`, profile backend). `npm run motion` starts its own app on a free port, runs
 the audit and stops it by PID, with `node .claude/tools/motion-audit.mjs <url>
 --only <selectors of what the card added> --cpu 4`, or over `design/components/gallery.html` when
 the card changed the set. What uses a browser or starts the app goes one at a time; the rest, in
@@ -159,9 +174,9 @@ thousand tokens; a long full page, ten.
 | What | Command | Must give |
 |---|---|---|
 | test types | `npx tsc --noEmit` (the `tsconfig`/`jsconfig` includes `e2e/`) | 0 errors |
-| test linter | **eslint-plugin-playwright** with `playwright/missing-playwright-await` (`includePageLocatorMethods: true`), `playwright/no-useless-await` and `playwright/no-conditional-in-test`, over the scenario files; for unit tests, `no-conditional-in-test` from `eslint-plugin-jest`. **In both**, `no-restricted-syntax` over `ForStatement`, `ForOfStatement`, `ForInStatement`, `WhileStatement` and `CallExpression[callee.property.name='forEach']` inside tests: the conditional rules do not see loops, and two runs let them through | 0 errors. It does not see an `await` on a locator returned from your own function: the `judge` checks that |
-| expected value | in the spec files' block of the ESLint config, a `no-restricted-syntax` selector `CallExpression[callee.name='expect'] CallExpression[callee.property.name=/^(filter\|map\|reduce\|sort\|find)$/]` with the message “the expected value is written, not computed with the logic under test”. *Measured: in two runs the e2e computed the expected value with the same filter it tests.* A locator's `.filter(...)` inside `expect(...)` also matches: it is assigned to a `const` first | 0 errors |
-| stable | the card's new tests run **3 times** before they are committed: Playwright `npx playwright test --grep "@$ID" --repeat-each=3`; node tests `node .claude/tools/repeat.mjs 3 -- node --test --test-concurrency=1 <files>` (`node --test` de-duplicates a file named three times and has no repeat flag, so `repeat.mjs` runs the command three times in a row and stops at the first failure). A test that fails once is **“could not run: unstable”**, never committed: it is fixed or its order dependence removed. *Measured elsewhere: LLM-written tests are flakier than human ones, and order dependence is the main cause.* | 3 of 3 green |
+| test linter | **eslint-plugin-playwright** with `playwright/missing-playwright-await` (`includePageLocatorMethods: true`), `playwright/no-useless-await` and `playwright/no-conditional-in-test`, over the scenario files; for unit tests, `no-conditional-in-test` from `eslint-plugin-jest`. **In both**, `no-restricted-syntax` over `ForStatement`, `ForOfStatement`, `ForInStatement`, `WhileStatement` and `CallExpression[callee.property.name='forEach']` inside tests: the conditional rules do not see loops | 0 errors. It does not see an `await` on a locator returned from your own function |
+| expected value | in the spec files' block of the ESLint config, a `no-restricted-syntax` selector `CallExpression[callee.name='expect'] CallExpression[callee.property.name=/^(filter\|map\|reduce\|sort\|find)$/]` with the message “the expected value is written, not computed with the logic under test”. A locator's `.filter(...)` inside `expect(...)` also matches: it is assigned to a `const` first | 0 errors |
+| stable | the card's new tests run **3 times** before they are committed: Playwright `npx playwright test --grep "@$ID" --repeat-each=3`; node tests `node .claude/tools/repeat.mjs 3 -- node --test --test-concurrency=1 <files>` (`node --test` de-duplicates a file named three times and has no repeat flag, so `repeat.mjs` runs the command three times in a row and stops at the first failure). A test that fails once is **“could not run: unstable”**, never committed: it is fixed or its order dependence removed. Order dependence is the main cause of flakiness. | 3 of 3 green |
 | red run | node tests in red, with a server they may leave open: `timeout 30 node --test --test-timeout=5000 --test-force-exit <files>`. Playwright reds: `npx playwright test --grep "@$ID" --timeout=5000 --retries=0`: a red test that waits for a locator that does not exist is cut at 5 s and is not retried. A red test that waits for a server that does not exist hangs the run for minutes; the timeout makes it fail on the assertion. Only here: **never in the final suite**, where `--test-force-exit` would hide an open handle | fails in under 30 s, on the assertion |
 | test smells | the detectors D01 to D24 of `reference/testing.md` over the new tests, when the linter does not cover them. Untested on this machine as a set; each one was tried over a sample | no finding that is not a justified false positive |
 
@@ -202,7 +217,7 @@ thousand tokens; a long full page, ten.
 | T11 | `npx c8 --include <production files in the diff> --check-coverage --lines 80 node --test <unit-tests>` |
 | S12 | `npx @lizenz/checker --production --onlyAllow "MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Unlicense;CC0-1.0;Zlib"` (successor of `license-checker-rseidelsohn`), or `npx licensee --production --errors-only` with a `.licensee.json`; the repo's own list if `docs/technical/dependencies.md` overrides it. Fonts, icons, images and copied fragments: **scancode-toolkit** or the inventory in the notices. A command not verified on this machine: **Untested on this machine** |
 | S17 | **OWASP ZAP** in baseline mode, against the running app: `zap-baseline.py -t http://127.0.0.1:<port>` — needs Docker or Java. Untested on this machine. Once per card, at the end; not rerun after fixes |
-| P4 · P12 | PostgreSQL: `npx squawk-cli <migrations>/*.sql`; MySQL: every `ALTER TABLE` of the card declares `ALGORITHM` (`rg -n "ALTER TABLE" <migrations> \| rg -v "ALGORITHM"` is empty). Untested on this machine |
+| P4 · P12 | `node .claude/skills/migrations-safe/scripts/migration-lint.mjs --history` (module data): the migrations new in the branch, plus the history checks (an applied file edited, two branches that collide or sort out of order); runner (Prisma, Drizzle, Knex, Atlas, goose, dbmate…) and dialect (PostgreSQL, SQLite, MySQL, SQL Server, Oracle, Db2) detected from the project, `--dialect` to override. Exit 2 is could not run, never a pass |
 | W8 | `npx @redocly/cli lint docs/api/openapi.yaml` or `npx @stoplight/spectral-cli lint docs/api/openapi.yaml`; AsyncAPI: `npx @asyncapi/cli validate docs/api/asyncapi.yaml` (the validator for AsyncAPI 3 must be confirmed, [NV]); GraphQL: the schema printed from the code against the committed one. Untested on this machine |
 | W9 | a test in the suite that compares the registered routes with the spec paths in both directions and validates the responses of the HTTP tests (the `contract:` line); alternative `schemathesis run docs/api/openapi.yaml --url http://127.0.0.1:<port>`, one at a time. Untested on this machine |
 | W1 · W7 · W10 | the generator's strict build (Docusaurus with `onBrokenLinks: 'throw'`, `mkdocs build --strict`, Starlight with `starlight-links-validator`), or `lychee --offline docs README.md`, or `npx markdown-link-check` (the `docs:` line). Diagrams as code, one render per source through `once.mjs`: `npx -p @mermaid-js/mermaid-cli mmdc -i <file.mmd|page.md> -o <out>`, `d2 <file.d2> <out.svg>`, `likec4 build`, a request to Kroki, `node archify/bin/archify.mjs validate <name>.archify.json` [NV subcommand]. Untested on this machine; the flags of `mmdc`, `d2`, `likec4` and `archify` are [NV] |

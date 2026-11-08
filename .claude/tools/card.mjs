@@ -18,17 +18,17 @@ export const isProductionPath = (root, path) => {
   const rel = relative(root, path).split(sep).join('/');
   return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel) && !NOT_PRODUCTION.test(rel);
 };
-export const NOT_PRODUCTION = /^(specs|\.claude|\.specify|scripts|docs)\/|(^|\/)(e2e|tests?|__tests__)\/|\.(md|json|ya?ml|lock)$|(^|\/)[^/]*\.(test|spec)\.|(^|\/)(test_[^/]*|[^/]*_test|conftest)\.py$|_test\.go$|^\.|(^|\/)(playwright|vitest|jest|eslint|tsconfig|jsconfig)[^/]*$|(^|\/)design\/components\/(serve\.mjs|gallery\.html)$/;
+export const NOT_PRODUCTION = /^(specs|\.claude|\.specify|scripts|docs)\/|(^|\/)(e2e|tests?|__tests__|__mocks__|integration_test|cypress|fixtures|vendor)\/|\.(stories|min)\.[jt]sx?$|\.(md|json|ya?ml|lock)$|(^|\/)[^/]*\.(test|spec)\.|(^|\/)(test_[^/]*|[^/]*_test|conftest)\.py$|_test\.go$|^\.|(^|\/)(playwright|vitest|jest|eslint|tsconfig|jsconfig)[^/]*$|(^|\/)design\/components\/(serve\.mjs|gallery\.html)$/;
 export const IS_CODE = /\.(m?[jt]sx?|cjs|cts|py|go|cs|java|kt|rb|php|dart)$/;
 export const IS_TEST = /\.(spec|test)\.[cm]?[tj]sx?$|(^|[\\/])test_[^\\/]*\.py$|_test\.(py|go|dart)$|Tests?\.(cs|java|kt)$|\.feature$/;
 
 // The configs of what gets verified: loosening them is approving without fixing.
-export const IS_VERIFICATION_CONFIG = /(^|\/)(eslint\.config\.[cm]?[jt]s|\.eslintrc(\.[a-z]+)?|playwright\.config\.[cm]?[jt]s|stryker\.conf(ig)?\.[a-z]+|\.c8rc(\.json)?|\.nycrc(\.json)?|jest\.config\.[cm]?[jt]s|vitest\.config\.[cm]?[jt]s|tsconfig[^/]*\.json|ruff\.toml|\.ruff\.toml|mypy\.ini|pytest\.ini|\.golangci\.[a-z]+|\.axerc[^/]*)$/;
+export const IS_VERIFICATION_CONFIG = /(^|\/)(eslint\.config\.[cm]?[jt]s|\.eslintrc(\.[a-z]+)?|playwright\.config\.[cm]?[jt]s|stryker\.conf(ig)?\.[a-z]+|\.c8rc(\.json)?|\.nycrc(\.json)?|jest\.config\.[cm]?[jt]s|vitest\.config\.[cm]?[jt]s|tsconfig[^/]*\.json|ruff\.toml|\.ruff\.toml|mypy\.ini|pytest\.ini|\.golangci\.[a-z]+|\.axerc[^/]*|\.prettierrc[^/]*|prettier\.config\.[cm]?[jt]s|biome\.jsonc?)$/;
 
 // What kind of file a path is is defined once in signals.mjs and re-exported here so no import breaks. They are
 // heuristics; a false negative is for the judge to catch. Paths are relative, with `/`.
 export {
-  I18N, INFRA_DEPENDENCY, IS_CI, IS_INFRA, IS_SCHEMA, IS_SCREEN, ROUTE, SCREEN_MARKUP, WRITING_ROUTE,
+  I18N, INFRA_DEPENDENCY, IS_CI, IS_INFRA, IS_SCHEMA, IS_SCREEN, ROUTE, SCREEN_MARKUP,
 } from './signals.mjs';
 
 // What the agent never reads or writes: the value of a secret is set by a person. The example files
@@ -124,10 +124,12 @@ export const namedIn = (lines, file, root = process.cwd()) => {
 
 // A file of `design/components/` that is byte for byte the kit's own and that a File map line declares as a set —`design/components/
 // — copied from the kit`—: the set is one line of the map, not one line per file. A copy the card changed is its own file.
-const KIT_SET = 'design/components/';
+// The copy under the served folder (`public/design/components/`) is declared the same way, by its own folder.
+const KIT_SET = /^((?:public|static|www|wwwroot)\/)?design\/components\//;
 export const copiedFromKit = (root, map, file) => {
-  if (!file.startsWith(KIT_SET) || !map.some((l) => /copied from the kit/i.test(l) && pathTokens(l).includes(KIT_SET))) return false;
-  try { return readFileSync(join(root, '.claude', 'templates', 'components', file.slice(KIT_SET.length))).equals(readFileSync(join(root, file))); } catch { return false; }
+  const at = file.match(KIT_SET)?.[0];
+  if (!at || !map.some((l) => /copied from the kit/i.test(l) && pathTokens(l).includes(at))) return false;
+  try { return readFileSync(join(root, '.claude', 'templates', 'components', file.slice(at.length))).equals(readFileSync(join(root, file))); } catch { return false; }
 };
 
 // A file named loosely —a bare name or the end of a path— resolved against the paths the map's lines hold: the one
@@ -138,7 +140,12 @@ export const resolveInMap = (lines, name) => {
   return paths.length === 1 ? paths[0] : null;
 };
 
-export const git = (cwd, args) => spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28 });
+// A git call that times out throws: the guards that ask git something block on an error, and nothing reads the empty answer as a "no".
+export const git = (cwd, args) => {
+  const r = spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28, timeout: 20_000 });
+  if (r.error?.code === 'ETIMEDOUT') throw new Error(`git ${args[0]} did not answer within 20 s`);
+  return r;
+};
 
 // The root is the nearest folder upwards that has specs/. Without specs/ there is no card.
 export const rootOf = (path) => {
@@ -202,7 +209,7 @@ export const kitRootOf = (path) => {
     dir = up;
   }
 };
-export const SOFT = new Set(['trim-output', 'session-record', 'light-images', 'edit-count', 'no-pending-close', 'context-cap', 'turn-budget', 'shell-writes']);
+export const SOFT = new Set(['trim-output', 'session-record', 'light-images', 'edit-count', 'no-pending-close', 'context-cap', 'turn-budget', 'shell-writes', 'kit-feedback']);
 const real = (p) => { try { return realpathSync.native(p); } catch { return resolve(p); } };
 
 // A hook reads its call from fd 0. Once the call was read here, an imported hook of another kit
@@ -228,9 +235,24 @@ export const feedStdin = (raw) => {
 export const delegationTarget = (hookUrl, call) => {
   if (process.env.SDD_HOOK_DELEGATED) return null;
   const cwd = call.cwd ?? process.cwd();
+  const own = real(resolve(dirname(fileURLToPath(hookUrl)), '..', '..'));
   const touched = touchedBy(cwd, call);
-  const target = (touched.length ? touched : [cwd]).map(kitRootOf).find(Boolean);
-  return !target || real(target) === real(resolve(dirname(fileURLToPath(hookUrl)), '..', '..')) ? null : target;
+  if (!touched.length) {
+    const target = kitRootOf(cwd);
+    return !target || real(target) === own ? null : target;
+  }
+  // A folder a call only names takes the hooks over when it is a worktree of this same repository with hooks of its
+  // own; any other folder with a kit.json is a decoy that would turn every hook of the call off, so this kit answers.
+  const target = touched.map(kitRootOf).find(Boolean);
+  if (!target || real(target) === own) return null;
+  return existsSync(join(target, '.claude', 'hooks')) && worktreesOf(own).has(sameCase(real(target))) ? target : null;
+};
+const sameCase = (p) => (process.platform === 'win32' ? p.replaceAll('\\', '/').toLowerCase() : p);
+// The worktrees git lists for a repository; none when git does not answer within 20 s, so nothing is handed over.
+const worktreesOf = (repo) => {
+  const r = spawnSync('git', ['worktree', 'list', '--porcelain'], { cwd: repo, encoding: 'utf8', timeout: 20_000 });
+  if (r.error || r.status !== 0) return new Set();
+  return new Set(r.stdout.split('\n').filter((l) => l.startsWith('worktree ')).map((l) => sameCase(real(l.slice(9).trim()))));
 };
 
 export const delegateToRepo = async (hookUrl, rawStdin, input) => {
@@ -246,6 +268,7 @@ export const delegateToRepo = async (hookUrl, rawStdin, input) => {
     if (!call || typeof call !== 'object') return;
     const target = delegationTarget(hookUrl, call);
     if (!target) return;
+    // delegationTarget only hands over to a folder with its own hooks/; a hook missing from it has nothing to enforce.
     const hook = join(target, '.claude', 'hooks', name);
     if (!existsSync(hook)) process.exit(0);
     feedStdin(rawStdin);
@@ -395,9 +418,9 @@ export const renamesOf = (root, base) => remembered(renames, `${root}\0${base}`,
 export const originOf = (root, base, file) => renamesOf(root, base).get(file) ?? null;
 
 export const cardFiles = (root, base) => [...remembered(changedFiles, `${root}\0${base}`, () => {
-  const changed = git(root, ['diff', '--name-only', '--diff-filter=d', ownBase(root, base)]).stdout ?? '';
-  const added = git(root, ['ls-files', '--others', '--exclude-standard']).stdout ?? '';
-  return [...new Set([...changed.split('\n'), ...added.split('\n')].map((f) => f.trim()).filter((f) => f && !IS_KIT.test(f)))];
+  const changed = git(root, ['diff', '--name-only', '-z', '--diff-filter=d', ownBase(root, base)]).stdout ?? '';
+  const added = git(root, ['ls-files', '--others', '--exclude-standard', '-z']).stdout ?? '';
+  return [...new Set([...changed.split('\0'), ...added.split('\0')].map((f) => f.trim()).filter((f) => f && !IS_KIT.test(f)))];
 })];
 
 // Cuts a shell line at ; & | and line breaks that are not inside quotes: `grep -E "a|gh pr"` is one command.
@@ -432,63 +455,9 @@ export const publishes = (cmd) => splitShell(String(cmd).replace(/<<-?\s*['"]?(\
     return false;
   });
 
-// What does not change the result of a verification command: the card's documentation, the
-// screenshots and the texts, and what the tools leave in `.validation/` (records, the shared app's data).
-const NOT_CODE = /^specs\/|^\.validation\/|\.md$|\.(png|jpe?g|gif|webp|svg)$/i;
-
-// “The same code”: the content of every file in the repo that is not ignored —committed or not—,
-// except documentation and screenshots, plus the command. once.mjs uses it to avoid repeating and
-// required.mjs to know whether something ran on what is there now. Committing, or writing the
-// session log, does not invalidate what already ran; measured: with the commit in the key, the log
-// written at the end left every mutation of the card without value.
-//
-// If the command names the files it runs —a mutation with its unit test, a linter over loose
-// files—, the key is only those files, what they import inside the repo, and the configuration and
-// dependencies. That way fixing one file does not invalidate the mutation of another that does not
-// use it. Measured: every fix to the actions list forced repeating all the mutations of the card. An
-// entire suite —`npm test`, Playwright— depends on all the code.
-const WHOLE_SUITE = /\bnpm\s+(test|run)\b|playwright|\bpytest\b(?!\s+\S+\.py)|\bjest\b|\bvitest\b|\bgo\s+test\b/;
-const WHOLE_APP = /playwright|puppeteer|chromium|createServer\(|\.listen\(/;
-const LOCAL = /(?:import\s[^'"]*?from\s*|import\s*\(\s*|require\s*\(\s*|import\s+)['"](\.{1,2}\/[^'"]+)['"]/g;
-
-const dependenciesOf = (root, initial) => {
-  const seen = new Set();
-  const pending = [...initial];
-  while (pending.length) {
-    const rel = pending.pop();
-    if (seen.has(rel)) continue;
-    seen.add(rel);
-    const path = join(root, rel);
-    if (!IS_CODE.test(rel) || !existsSync(path)) continue;
-    for (const [, spec] of readFileSync(path, 'utf8').matchAll(LOCAL)) {
-      const base = relativeTo(root, join(path, '..', spec));
-      const candidate = [base, `${base}.js`, `${base}.mjs`, `${base}.ts`, `${base}/index.js`, `${base}/index.ts`]
-        .find((c) => existsSync(join(root, c)) && statSync(join(root, c)).isFile());
-      if (candidate) pending.push(candidate);
-    }
-  }
-  return [...seen];
-};
-
-const IS_ENVIRONMENT = /(^|\/)(package(-lock)?\.json|pnpm-lock\.yaml|yarn\.lock|requirements[^/]*\.txt|pyproject\.toml|go\.(mod|sum))$/;
-
-// What a person or a tool leaves lying around is not the code: a log, a pid file, an id, the debris of
-// a browser session. A file that has not entered git, is not code or configuration, and that the command
-// does not name is out of the key; one loose in the root stays only if a source file mentions it by
-// name. Measured: a `.verify-run.log` written by an executor invalidated the key of every record and
-// repeated two suites, 73 minutes.
-const DEBRIS = /\.(log|pid|id|tmp|out|bak|swp|stackdump)$|^\.playwright-mcp\//;
-const withoutDebris = (root, files, untracked, tokens) => {
-  const stray = files.filter((f) => untracked.has(f) && !IS_CODE.test(f) && !IS_VERIFICATION_CONFIG.test(f) && !IS_ENVIRONMENT.test(f) &&
-    !tokens.some((t) => t && (t === f || f.startsWith(`${t}/`))));
-  if (!stray.length) return files;
-  const loose = stray.filter((f) => !DEBRIS.test(f) && !f.includes('/'));
-  const sources = loose.length
-    ? files.filter((f) => IS_CODE.test(f) && !untracked.has(f) && existsSync(join(root, f))).map((f) => readFileSync(join(root, f)))
-    : [];
-  const drop = new Set(stray.filter((f) => DEBRIS.test(f) || (!f.includes('/') && !sources.some((s) => s.includes(f)))));
-  return files.filter((f) => !drop.has(f));
-};
+// “The same code”: once.mjs uses it to avoid repeating, and required.mjs and close.mjs to know whether something ran on what
+// is there now. The key is the content of the files, not the commit: committing a file it already counted does not change it,
+// while committing a file it did not count (untracked and without a source extension) does.
 
 // A command line handed to a tool that runs it in a shell (`once.mjs`, `mutate.mjs`) has to stay one argument when it chains
 // commands: unquoted, the caller's shell splits `cd apps/mobile && flutter test` at the `&&` and the tool gets only the `cd`.
@@ -498,22 +467,13 @@ export const asOneArg = (command) => (SHELL_CHAIN.test(command) ? `"${command.re
 export const shellJoin = (tokens) => (tokens.length === 1 ? tokens[0] : tokens.map((t) => (/[\s&|;<>"]/.test(t) ? `"${t.replace(/"/g, '\\"')}"` : t)).join(' '));
 
 export const keyOf = (root, command) => {
+  // The key is every tracked file plus the untracked, not ignored ones with a source extension,
+  // outside specs/ and .validation/, plus the line: a stray pid, log or note must not make a pass look stale.
+  // An import graph misses aliases (`#lib/*`, `@/x`, `from app.a import f`) and served a stale pass after the code broke:
+  // a record is reused only when nothing in the repo changed.
   const { all, untracked } = listing(root) ?? { all: [], untracked: new Set() };
-  const tokens = [...new Set(command.split(/\s+/).map((t) => t.replace(/^['"]|['"]$/g, '').replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '')))];
-  // A folder named in the command is every tracked file under it: a linter over `src test e2e` runs
-  // on those files, not only on the config it also names. Measured: with the folders left out, the
-  // record of a lint that passed stayed valid after a test it covered was edited and failed it.
-  const present = new Set(all);
-  const named = tokens.flatMap((t) => (present.has(t) ? [t] : t ? all.filter((f) => f.startsWith(`${t}/`)) : []));
-  // The kit's tools do not count as “naming what runs”: attack.mjs depends on the whole app even if
-  // it only names itself. `.` names the whole repo.
-  const graph = named.some((f) => IS_CODE.test(f) && !f.startsWith('.claude/')) && !WHOLE_SUITE.test(command) && !tokens.includes('.')
-    ? dependenciesOf(root, named) : [];
-  // A file of the graph that starts a server or drives a browser reaches the whole app: its key is the repo's.
-  const bounded = graph.length > 0 && !graph.some((f) => IS_CODE.test(f) && !f.startsWith('.claude/') && existsSync(join(root, f)) && WHOLE_APP.test(readFileSync(join(root, f), 'utf8')));
-  const files = withoutDebris(root, bounded
-    ? [...new Set([...graph, ...all.filter((f) => IS_VERIFICATION_CONFIG.test(f) || IS_ENVIRONMENT.test(f))])]
-    : all.filter((f) => !NOT_CODE.test(f)), untracked, tokens).sort();
+  const SOURCE = /\.(?:mjs|cjs|js|jsx|ts|tsx|py|dart|vue|svelte|astro|html|css|scss|json|sql|ya?ml|toml|sh)$/i;
+  const files = all.filter((f) => !/^(?:specs|\.validation)\//.test(f) && !(untracked.has(f) && !SOURCE.test(f))).sort();
   // The hash of the files is the costly part and is the same for every command that runs over the same
   // set: it is computed once per process and each command only adds itself.
   const id = `${root}\0${files.join('\0')}`;

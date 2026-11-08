@@ -22,7 +22,8 @@
 .ap__tools { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .ap__icon { width: 16px; height: 16px; flex: none; display: block; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .ap__icon--mark { width: 14px; height: 14px; fill: var(--accent); stroke: var(--accent); stroke-width: 1; }
-.ap__icon--chev { width: 12px; height: 12px; opacity: 0.5; }
+.ap__icon--chev { width: 12px; height: 12px; opacity: 0.5; transition: transform var(--motion-chevron); }
+.ap__model[aria-expanded="true"] .ap__icon--chev { transform: rotate(180deg); }
 
 .ap__model { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 8px 0 8px; border: 0; border-radius: var(--radius-item); background: transparent; color: var(--text); font: inherit; font-size: var(--text-xs); cursor: pointer; transition: background-color var(--motion-hover), transform var(--motion-press); }
 .ap__model-label { display: inline-block; white-space: nowrap; }

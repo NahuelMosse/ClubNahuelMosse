@@ -14,13 +14,20 @@ import { join } from 'node:path';
 export const IS_SCREEN = /\.(css|scss|html?|jsx|tsx|vue|svelte)$/;
 export const SCREEN_MARKUP = /<(html|style|body|main|button|input|form|table|section)\b/i;
 
-// A route: an HTTP handler registered for a path. A method counts as one when it is compared
-// (`req.method === 'POST'`) or sits in a route-table object next to its `path`/`route`/`url`; a bare
-// `method: 'POST'` is what a client's `fetch` passes, not a server.
-const routeMethod = (verbs) => `\\bmethod\\s*={2,3}\\s*['"](?:${verbs})['"]|\\b(?:path|route|url)['"]?\\s*:[^\\n]*\\bmethod['"]?\\s*:\\s*['"](?:${verbs})['"]|\\bmethod['"]?\\s*:\\s*['"](?:${verbs})['"][^\\n]*\\b(?:path|route|url)['"]?\\s*:`;
-export const ROUTE = new RegExp(`\\.(get|post|put|patch|delete)\\(\\s*['"\`]\\/|@(Get|Post|Put|Patch|Delete)(Mapping)?\\b|${routeMethod('GET|POST|PUT|PATCH|DELETE')}`);
-// A route that writes: an HTTP handler registered for POST, PUT, PATCH or DELETE.
-export const WRITING_ROUTE = new RegExp(`\\.(post|put|patch|delete)\\(\\s*['"\`/]|@(Post|Put|Patch|Delete)(Mapping)?\\b|${routeMethod('POST|PUT|PATCH|DELETE')}`);
+// A route: an HTTP handler registered for a path. A method counts as one when the request's is compared
+// (`req.method === 'POST'`, `event.requestContext.http.method`; a form's `form.method` is the client's) or sits in a
+// route-table object next to its `path`/`route`/`url`; a bare `method: 'POST'` is what a client's `fetch` passes, not a
+// server, and from a `fetch(` to the end of its line is a request whatever its body holds. A call on a client object
+// (`axios.get('/x')`, `http.post(`, `this.http.get(`, `api.`, `client.`) is a request, not a declaration, and does not count.
+const routeMethod = (verbs) => `\\b(?:req|request|ctx|context|event|c\\.req)\\.method\\s*={2,3}\\s*['"](?:${verbs})['"]|(?<!\\b(?:form|el|element|target|init|options|opts|config|xhr)\\.)\\b(?:http)?[mM]ethod\\s*={2,3}\\s*['"](?:${verbs})['"]|\\b(?:path|route|url)['"]?\\s*:[^\\n]*\\bmethod['"]?\\s*:\\s*['"](?:${verbs})['"]|\\bmethod['"]?\\s*:\\s*['"](?:${verbs})['"][^\\n]*\\b(?:path|route|url)['"]?\\s*:`;
+export const ROUTE = new RegExp(`(?<!\\b(?:axios|http|api|client|httpClient|superagent)|\\$http)\\.(get|post|put|patch|delete)\\(\\s*['"\`]\\/|@(Get|Post|Put|Patch|Delete)(Mapping)?\\b|\\bexport\\s+(?:async\\s+)?function\\s+(?:GET|POST|PUT|PATCH|DELETE)\\s*\\(|\\bexport\\s+const\\s+(?:GET|POST|PUT|PATCH|DELETE)\\b\\s*[:=]|\\bexport\\s+(?:const\\s*)?\\{[^}]*\\b(?:GET|POST|PUT|PATCH|DELETE)\\b[^}]*\\}|${routeMethod('GET|POST|PUT|PATCH|DELETE')}`);
+// A receiver named like a client (`api`, `client`, `http`) is a server when the same file makes it a router or an app.
+const SERVER_RECEIVER = /\b(api|client|http)\s*=\s*(?:new\s+)?(?:express(?:\.Router)?\s*\(|Router\s*\(|Hono\s*\(|fastify\s*\(|Elysia\s*\(|Koa\s*\(|\w+\.Router\s*\()/g;
+export const routeIn = (text) => {
+  if (ROUTE.test(String(text).replace(/\bfetch\s*\([^\n]*/g, ''))) return true;
+  const names = [...String(text).matchAll(SERVER_RECEIVER)].map((m) => m[1]);
+  return names.some((n) => new RegExp(`\\b${n}\\.(?:get|post|put|patch|delete)\\(\\s*['"\`]\\/`).test(text));
+};
 // A long-lived process: it listens on a port, or consumes a queue, or runs on a schedule.
 export const LISTEN = /\blisten\s*\(|\buvicorn\.run\(|\bapp\.run\(/;
 export const WORKER = /\bnew\s+Worker\(|\bcron\.schedule\(|@Cron\(|@Scheduled\b|\bconsumer\.run\(|@(Rabbit|Kafka)Listener\b/;
@@ -119,7 +126,7 @@ export const detectIn = ({ files = [], added = [], texts = [], asks = [] } = {})
     }
     if (f !== null && CODE.test(f)) {
       if (!IS_SCREEN.test(f) && SCREEN_MARKUP.test(text)) push(found, 'screen', `markup in ${f}`);
-      if (ROUTE.test(text)) push(found, 'route', `route in ${f}`);
+      if (routeIn(text)) push(found, 'route', `route in ${f}`);
       if (LISTEN.test(text)) push(found, 'listen', `listen in ${f}`);
       if (WORKER.test(text)) push(found, 'worker', `worker or schedule in ${f}`);
       if (/\blang\s*=\s*["']([\w-]+)["']/.test(text)) push(found, 'i18n-lang', text.match(/\blang\s*=\s*["']([\w-]+)["']/)[1]);

@@ -55,7 +55,8 @@
 .breadcrumb a { color: inherit; text-decoration: none; border-radius: 4px; transition: color var(--motion-hover); }
 @media (hover: hover) and (pointer: fine) { .breadcrumb a:hover { color: var(--text); } }
 .breadcrumb [aria-current="page"] { color: var(--text); font-weight: var(--weight-medium); }
-.content { padding-block: var(--space-5) var(--space-8); }
+/* A view slides in from the side the navigation came from: the page clips that sideways travel instead of scrolling. */
+.content { padding-block: var(--space-5) var(--space-8); overflow-x: clip; }
 .view { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-5); align-content: start; }
 .view[hidden] { display: none; }
 @media (max-width: 860px) {
@@ -77,16 +78,16 @@
    rest → hover → focus → pressed → loading → success | error → disabled
    primary (the one action of the view) · secondary · ghost · destructive; sizes md and sm */
 .btn {
-  --_bg: var(--field-bg); --_fg: var(--text); --_bd: var(--btn-border);
+  --_bg: var(--btn-bg); --_fg: var(--text); --_bd: var(--btn-border); --_face: var(--btn-face);
   position: relative; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
   height: var(--control-md); padding: 0 var(--space-3); border-radius: var(--radius-control);
-  background: var(--_bg); color: var(--_fg); border: 1px solid var(--_bd); box-shadow: var(--shadow-control);
+  background: var(--_face, none) border-box, var(--_bg) border-box; color: var(--_fg); border: 1px solid var(--_bd); box-shadow: var(--shadow-control);
   font-size: var(--text-md); font-weight: var(--weight-medium); white-space: nowrap; cursor: pointer; user-select: none; touch-action: manipulation; text-decoration: none;
-  transition: background-color var(--motion-hover), border-color var(--motion-hover), color var(--motion-hover), box-shadow var(--motion-hover), transform var(--motion-release);
+  transition: background-color var(--motion-hover), border-color var(--motion-hover), color var(--motion-hover), box-shadow var(--motion-hover), transform var(--motion-release), translate var(--motion-release);
 }
-.btn--primary { --_bg: var(--accent); --_fg: var(--on-accent); --_bd: transparent; box-shadow: var(--shadow-primary); }
+.btn--primary { --_bg: var(--accent); --_fg: var(--on-accent); --_bd: transparent; --_face: var(--primary-face); box-shadow: var(--shadow-primary); }
 .btn--destructive { --_fg: color-mix(in oklab, var(--danger), var(--text) 25%); }
-.btn--ghost { --_bg: transparent; --_bd: transparent; box-shadow: none; }
+.btn--ghost { --_bg: transparent; --_bd: transparent; --_face: none; box-shadow: none; }
 .btn--sm { height: var(--control-sm); padding: 0 var(--space-2); font-size: var(--text-xs); }
 .btn--icon { width: var(--control-md); padding: 0; }
 .btn--icon.btn--sm { width: var(--control-sm); }
@@ -95,20 +96,21 @@
 @keyframes icon-pop { from { transform: scale(0.9); } }
 @media (hover: hover) and (pointer: fine) {
   .btn:hover { --_bg: var(--btn-bg-hover); }
-  .btn--primary:hover { --_bg: var(--accent-hover); --_bd: transparent; }
+  .btn--primary:hover:not(:disabled, [aria-disabled="true"], [data-state]) { --_bg: color-mix(in oklab, var(--accent) 90%, var(--surface)); --_bd: transparent; box-shadow: var(--shadow-primary-hover); }
   .btn--destructive:hover { --_bg: var(--danger-soft); --_bd: color-mix(in oklab, var(--danger), transparent 60%); }
   .btn--ghost:hover { --_bg: var(--surface-hover); --_bd: transparent; }
+  .btn:hover:not(.btn--primary, .btn--ghost, :disabled) { --_bd: var(--control-border); }
 }
 /* The halo of a field would not reach 3:1 on a button, so a button keeps the 2 px outline of the page
    and takes the focus color on its edge. */
 .btn:focus-visible { --_bd: var(--border-focus); }
 .btn--primary:focus-visible { --_bd: transparent; }
 .btn .icon { transition: transform var(--motion-release); }
-.btn:active { transform: scale(var(--press-scale)); transition-duration: var(--duration-instant); box-shadow: none; }
+.btn:active { transform: scale(var(--press-scale)); translate: none; transition-duration: var(--duration-instant); box-shadow: none; }
 .btn--primary:active { box-shadow: var(--shadow-primary-press); }
 .btn:active .icon { transform: scale(var(--press-scale-sm)); transition-duration: var(--duration-instant); }
 /* Disabled is a color, not an opacity: the fill of a hover, the faint text, no edge and no shadow. */
-.btn:disabled, .btn[aria-disabled="true"] { --_bg: var(--surface-hover); --_fg: var(--text-faint); --_bd: transparent; box-shadow: none; cursor: not-allowed; transform: none; }
+.btn:disabled, .btn[aria-disabled="true"] { --_bg: var(--surface-hover); --_fg: var(--text-faint); --_bd: transparent; --_face: none; box-shadow: none; text-shadow: none; cursor: not-allowed; transform: none; }
 /* The label and every state share one grid cell, so the width is the longest of them and nothing
    overflows while the button loads. */
 .btn:has(> .btn__state) { display: inline-grid; justify-items: center; align-items: center; }
@@ -116,12 +118,13 @@
 /* A label may carry its icon: they sit on one line, centered on each other. */
 .btn .btn__label { display: inline-flex; align-items: center; gap: var(--space-2); }
 /* A label swap: the one that leaves goes up and out in 90 ms, the one that arrives comes from below in 160. */
-.btn .btn__label, .btn .btn__state { transition: opacity var(--motion-swap-out), transform var(--motion-swap-out); }
-.btn:not([data-state]) .btn__label { transition: opacity var(--motion-swap-in), transform var(--motion-swap-in); }
-.btn .btn__state { display: flex; align-items: center; justify-content: center; gap: var(--space-2); opacity: 0; transform: translateY(var(--swap-y)); pointer-events: none; }
-.btn[data-state] .btn__label { opacity: 0; transform: translateY(calc(var(--swap-y) * -1)); }
+/* What is hidden is also `visibility: hidden`: its text leaves innerText, find in page and the tab order, and screen readers do not announce it. */
+.btn .btn__label, .btn .btn__state { transition: opacity var(--motion-swap-out), transform var(--motion-swap-out), visibility var(--motion-swap-out); }
+.btn:not([data-state]) .btn__label { transition: opacity var(--motion-swap-in), transform var(--motion-swap-in), visibility var(--motion-swap-in); }
+.btn .btn__state { display: flex; align-items: center; justify-content: center; gap: var(--space-2); opacity: 0; visibility: hidden; transform: translateY(var(--swap-y)); pointer-events: none; }
+.btn[data-state] .btn__label { opacity: 0; visibility: hidden; transform: translateY(calc(var(--swap-y) * -1)); }
 .btn[data-state="loading"], .btn[aria-busy="true"] { cursor: progress; }
-.btn[data-state="loading"] .btn__state--loading, .btn[data-state="success"] .btn__state--success, .btn[data-state="error"] .btn__state--error { opacity: 1; transform: none; transition: opacity var(--motion-swap-in), transform var(--motion-swap-in); }
+.btn[data-state="loading"] .btn__state--loading, .btn[data-state="success"] .btn__state--success, .btn[data-state="error"] .btn__state--error { opacity: 1; visibility: visible; transform: none; transition: opacity var(--motion-swap-in), transform var(--motion-swap-in), visibility var(--motion-swap-in); }
 /* A rotating arc: a faint ring and a round-capped arc on it (`pathLength` 100, so 72 is three
    quarters), the whole drawing turning. */
 .spinner { width: 14px; height: 14px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; }
@@ -133,11 +136,36 @@
 .btn[data-state="success"] .check-draw path { stroke-dashoffset: 0; }
 /* Success is a morph, not a swap: the fill eases to the success tone, the check draws, the button
    settles from a slightly pressed size. */
-.btn[data-state="success"] { --_bg: var(--success-soft); --_fg: color-mix(in oklab, var(--success), var(--text) 55%); --_bd: transparent; transition-duration: var(--duration-slow); animation: settle var(--duration-slow) var(--spring); }
+.btn[data-state="success"] { --_face: none; text-shadow: none; box-shadow: none; --_bg: var(--success-soft); --_fg: color-mix(in oklab, var(--success), var(--text) 55%); --_bd: transparent; transition-duration: var(--duration-slow); animation: settle var(--duration-slow) var(--spring); }
 @keyframes settle { from { transform: scale(0.96); } }
 /* Error is the danger tone, soft: its fill, its edge and its text; the action reads again as one to retry. */
-.btn[data-state="error"] { --_bg: var(--danger-soft); --_fg: color-mix(in oklab, var(--danger), var(--text) 25%); --_bd: color-mix(in oklab, var(--danger) 45%, transparent); animation: nudge var(--ms-280) var(--ease-out); }
+.btn[data-state="error"] { --_face: none; text-shadow: none; box-shadow: none; --_bg: var(--danger-soft); --_fg: color-mix(in oklab, var(--danger), var(--text) 25%); --_bd: color-mix(in oklab, var(--danger) 45%, transparent); animation: nudge var(--ms-280) var(--ease-out); }
 @keyframes nudge { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1px); } }
+.btn--lg { height: var(--control-lg); padding: 0 var(--space-4); font-size: var(--text-md); border-radius: calc(var(--radius-control) + 2px); }
+/* A shortcut inside a button reads as part of it: no frame of its own, the label's color one step down. */
+.btn kbd.key { height: 18px; min-width: 18px; margin-right: -4px; padding: 0 4px; border-color: var(--border-subtle); background: none; color: var(--text-faint); }
+.btn--primary kbd.key { border-color: color-mix(in oklab, var(--on-accent) 30%, transparent); color: color-mix(in oklab, var(--on-accent) 80%, transparent); }
+/* A group: the buttons touch, the corners outside stay round, the seams are one hairline. */
+.btn-group { display: inline-flex; isolation: isolate; border-radius: var(--radius-control); box-shadow: var(--shadow-control); }
+.btn-group > .btn { box-shadow: none; }
+.btn-group > .btn:not(:first-child) { margin-left: -1px; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.btn-group > .btn:not(:last-child) { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.btn-group > .btn:is(:hover, :focus-visible, [aria-expanded="true"]) { z-index: 1; }
+.btn-group > .btn[aria-expanded="true"] { --_bg: var(--surface-active); }
+/* Copy: the two icons share a cell; the copy turns out as the check draws in, and the label says so. */
+.btn__swap { display: inline-grid; flex: none; }
+.btn__swap > .icon { grid-area: 1 / 1; transition: opacity var(--motion-swap-in), scale var(--motion-swap-in), rotate var(--motion-swap-in); }
+.btn__swap > .icon + .icon { opacity: 0; scale: 0.5; rotate: -45deg; color: var(--success); }
+.btn__swap > .icon + .icon path { stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset var(--duration-slow) var(--ease-out) var(--ms-60); }
+.btn[data-copied] .btn__swap > .icon:first-child { opacity: 0; scale: 0.5; rotate: 45deg; }
+.btn[data-copied] .btn__swap > .icon + .icon { opacity: 1; scale: 1; rotate: none; }
+.btn[data-copied] .btn__swap > .icon + .icon path { stroke-dashoffset: 0; }
+/* Hold to confirm: the fill grows from the left while the button is held and drains when it is let go; full, it acts. */
+.btn--hold { overflow: hidden; }
+.btn__hold { position: absolute; inset: 0; z-index: -1; background: var(--danger-soft); transform: scaleX(0); transform-origin: left; transition: transform var(--ms-320) var(--ease-out); pointer-events: none; }
+.btn--hold[data-holding] .btn__hold { transform: scaleX(1); transition: transform var(--hold-duration, var(--ms-1200)) linear; }
+.btn--hold[data-holding] { --_bd: color-mix(in oklab, var(--danger) 45%, transparent); }
+.btn--hold[data-held] { animation: nudge var(--ms-280) var(--ease-out); }
 
 /* ── Badge / status: neutral by default; the tone says the data, text keeps 4.5:1. The tone is also a
    hairline ring at 18 %; changing tone eases the colors and pulses the dot once. ── */
@@ -184,12 +212,15 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
    in 150 ms; the outline of every other control never appears here. */
 .input, .select, .textarea {
   width: 100%; height: var(--control-field); padding: 0 var(--space-3); border-radius: var(--radius-control);
-  background: var(--field-bg); border: 1px solid var(--control-border); box-shadow: var(--shadow-control); font-size: var(--text-field);
+  background: var(--field-bg); border: 1px solid var(--control-border); box-shadow: var(--shadow-field); font-size: var(--text-field);
   transition: border-color var(--motion-field), box-shadow var(--motion-field), background-color var(--motion-field);
 }
 .textarea { height: auto; min-height: 80px; padding: var(--space-2) var(--space-3); resize: vertical; line-height: 1.5; }
 @media (hover: hover) and (pointer: fine) { .input:hover, .select:hover, .textarea:hover { border-color: var(--control-border-hover); background: var(--field-bg-hover); } }
-.input:focus-visible, .select:focus-visible, .textarea:focus-visible { outline: none; border-color: var(--border-focus); box-shadow: var(--shadow-control), 0 0 0 3px var(--focus-soft); }
+.input:focus-visible, .select:focus-visible, .textarea:focus-visible { outline: none; border-color: var(--border-focus); background: var(--surface-raised); box-shadow: var(--shadow-field-focus); }
+/* The field the person is in lifts its icon a step, so the eye finds where it is typing. */
+.field__control > .icon:first-child, .search > .icon { transition: color var(--motion-field); }
+.field:has(:focus-visible) .field__control > .icon:first-child, .search:has(.input:focus-visible) > .icon { color: var(--text-soft); }
 .input:disabled, .select:disabled, .textarea:disabled { cursor: not-allowed; background: var(--surface-sunken); border-color: var(--border); color: var(--text-faint); box-shadow: none; }
 /* Read-only is a value, not a field: the same height and baseline, no border, no fill, no halo. */
 .input[readonly], .textarea[readonly] { padding-inline: 0; border-color: transparent; background: none; box-shadow: none; color: var(--text); cursor: default; }
@@ -204,7 +235,7 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 .field__clear:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 /* Invalid: the edge and the halo are the danger color, with the focus or without it; the focused one adds the focus ring, so
    it is told from an invalid field nobody is on (WCAG 2.4.7). */
-.field[data-state="invalid"] :is(.input, .textarea, .select), .field[data-state="invalid"] :is(.input, .textarea, .select):hover { border-color: var(--danger); box-shadow: var(--shadow-control), 0 0 0 3px var(--danger-soft); }
+.field[data-state="invalid"] :is(.input, .textarea, .select), .field[data-state="invalid"] :is(.input, .textarea, .select):hover { border-color: var(--danger); box-shadow: var(--shadow-field), 0 0 0 3px var(--danger-soft); }
 .field[data-state="invalid"] :is(.input, .textarea, .select):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .field[data-state="invalid"] .field__control { animation: shake var(--ms-300) var(--ease-out); }
 @keyframes shake { 20% { transform: translateX(-3px); } 40% { transform: translateX(3px); } 60% { transform: translateX(-2px); } 80% { transform: translateX(1px); } }
@@ -215,18 +246,22 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 .field__icon--saving { color: var(--text-faint); }
 .field__foot, .field__message { margin-top: 6px; font-size: var(--text-xs); line-height: 16px; }
 .field__foot:empty { display: none; }
-.field__foot { display: flex; justify-content: space-between; gap: var(--space-3); color: var(--text-soft); transition: opacity var(--duration-fast) var(--ease-out); }
-.field[data-state="invalid"] .field__foot > :not(.field__counter) { opacity: 0; }
+.field__foot { display: flex; justify-content: space-between; gap: var(--space-3); color: var(--text-soft); }
+.field__foot > * { transition: opacity var(--duration-fast) var(--ease-out), visibility var(--duration-fast); }
+.field[data-state="invalid"] .field__foot > :not(.field__counter) { opacity: 0; visibility: hidden; }
 .field__counter { margin-left: auto; font-variant-numeric: tabular-nums; transition: color var(--motion-hover); }
 .field__counter[data-near] { color: color-mix(in oklab, var(--danger), var(--text) 25%); }
 /* The message never moves the page: it takes the help row. A field that can say an error and has no help keeps that
    row empty (6 px + 16 px) under its control, so the message is as far from the next label as any other field's help. */
 .field__message { position: absolute; left: 0; right: 0; bottom: 0; display: grid; pointer-events: none; }
 .field:has(> .field__message):not(:has(> .field__foot:not(:empty))) { padding-bottom: 22px; }
-.field__error { font-size: var(--text-xs); color: color-mix(in oklab, var(--danger), var(--text) 25%); opacity: 0; transform: translateY(-3px); transition: opacity var(--duration-fast) var(--ease-out), transform var(--motion-pop); }
+/* In a form grid every field keeps that row, so the labels of all rows are one rhythm apart whatever each field can say. */
+.form-grid > .field:not(:has(> .field__foot:not(:empty))) { padding-bottom: 22px; }
+.form-grid:has(> .field) { row-gap: var(--space-3); }
+.field__error { font-size: var(--text-xs); color: color-mix(in oklab, var(--danger), var(--text) 25%); opacity: 0; visibility: hidden; transform: translateY(-3px); transition: opacity var(--duration-fast) var(--ease-out), transform var(--motion-pop), visibility var(--duration-fast); }
 .field__error > span { display: flex; align-items: center; gap: 6px; min-height: 16px; }
 .field__error > span:not(:empty)::before { content: ""; flex: none; width: 14px; height: 14px; background: currentColor; mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM7.25 4.5h1.5v4.5h-1.5Zm0 6h1.5v1.5h-1.5Z'/%3E%3C/svg%3E") center / contain no-repeat; }
-.field[data-state="invalid"] .field__error { opacity: 1; transform: none; }
+.field[data-state="invalid"] .field__error { opacity: 1; visibility: visible; transform: none; }
 :is(.comp, .stack, .form-grid):has(> .field) { gap: var(--field-gap) var(--space-4); }
 :is(.comp, .stack):has(> .field) { --gap: var(--field-gap); gap: var(--field-gap); }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-4) var(--space-4); align-items: start; }
@@ -243,8 +278,8 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 @media (hover: hover) and (pointer: fine) { .editable:hover { background: var(--surface-hover); } }
 .editable input { width: 100%; height: var(--control-sm); padding: 0 6px; margin: 0 -6px; border: 1px solid var(--border-focus); border-radius: var(--radius-control); background: var(--field-bg); box-shadow: 0 0 0 3px var(--focus-soft); outline: none; }
 .editable[data-state="saving"] { color: var(--text-faint); }
-.editable__status { font-size: var(--text-xs); color: var(--success); opacity: 0; transform: translateX(-4px); transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-normal) var(--ease-out); }
-.editable[data-state="saved"] .editable__status { opacity: 1; transform: none; }
+.editable__status { font-size: var(--text-xs); color: var(--success); opacity: 0; visibility: hidden; transform: translateX(-4px); transition: opacity var(--duration-fast) var(--ease-out), transform var(--duration-normal) var(--ease-out), visibility var(--duration-fast); }
+.editable[data-state="saved"] .editable__status { opacity: 1; visibility: visible; transform: none; }
 
 /* ── Checkbox and radio: the mark draws itself; checked is the accent, the value of the control ── */
 .checkbox, .radio { display: inline-flex; align-items: center; gap: var(--space-2); min-height: 24px; cursor: pointer; user-select: none; }
@@ -323,7 +358,7 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 .tabs__tab { position: relative; z-index: 1; height: 38px; padding: 0 2px; border: 0; border-radius: var(--radius-control); background: none; color: var(--text-soft); font-weight: var(--weight-medium); cursor: pointer; transition: color var(--motion-hover), transform var(--motion-release); }
 .tabs__tab[aria-selected="true"] { color: var(--text); }
 @media (hover: hover) and (pointer: fine) { .tabs__tab:hover { color: var(--text); } }
-.tabs__indicator { position: absolute; bottom: -1px; left: 0; width: 100px; height: 2px; border-radius: 2px 2px 0 0; background: var(--text); transform-origin: left center; transition: transform var(--motion-indicator), opacity var(--motion-hover); }
+.tabs__indicator { position: absolute; bottom: -1px; left: 0; width: 100px; height: 2px; border-radius: 2px 2px 0 0; background: var(--text); transform-origin: left center; transition: transform var(--motion-indicator); }
 /* In dark the 2 px line is a light on a dark ground: a hairline of its own color keeps it from thinning out. */
 :root:is([data-theme="dark"], [data-register="showcase"]) .tabs__indicator { box-shadow: 0 0 0 0.5px var(--text); }
 .tabs__tab:disabled { color: var(--text-faint); cursor: not-allowed; }
@@ -453,7 +488,10 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 .select__value[data-placeholder] { color: var(--text-faint); }
 .select__chevron { flex: none; color: var(--text-faint); transition: transform var(--motion-chevron); }
 .select[aria-expanded="true"] .select__chevron { transform: rotate(180deg); }
-.select[aria-expanded="true"] { border-color: var(--border-focus); box-shadow: var(--shadow-control), 0 0 0 3px var(--focus-soft); }
+/* Every trigger that drops something turns its chevron the same way, a button or a port alike. */
+[aria-haspopup]:not([role^="menuitem"]) .icon:is([data-icon="chevron"], :has(> use[href="#i-chevron"])) { transition: transform var(--motion-chevron); }
+[aria-haspopup][aria-expanded="true"]:not([role^="menuitem"]) .icon:is([data-icon="chevron"], :has(> use[href="#i-chevron"])) { transform: rotate(180deg); }
+.select[aria-expanded="true"] { border-color: var(--border-focus); background: var(--surface-raised); box-shadow: var(--shadow-field-focus); }
 .listbox { min-width: 0; }
 /* A range filter in a toolbar keeps one width, the empty one and the chosen one alike. */
 .btn[data-datepicker][data-mode="range"] { min-width: 10rem; }
@@ -663,10 +701,10 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 :root:has(.toasts > .toast:not([data-leaving])) .selection-bar[data-open] { transition-delay: var(--ms-100); }
 .toast { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 44px var(--space-3) var(--space-4); border: 0; outline: 1px solid transparent; border-radius: var(--radius); overflow: hidden; background: var(--surface-overlay); box-shadow: var(--shadow-overlay), var(--overlay-edge); color: var(--text); font-size: var(--text-sm); font-weight: var(--weight-medium); touch-action: pan-y; transform-origin: bottom center; transform: translateY(var(--y, 0px)) scale(var(--s, 1)); animation: toast-in var(--motion-toast-in) backwards; transition: opacity var(--motion-toast), transform var(--motion-slide), translate var(--motion-slide); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(100%); } }
-.toast > * { transition: opacity var(--duration-fast) ease; }
+.toast > * { transition: opacity var(--duration-fast) ease, visibility var(--duration-fast); }
 .toasts:not([data-expanded]) .toast:not([data-front]) { max-height: var(--_front); }
-.toasts:not([data-expanded]) .toast:not([data-front]) > * { opacity: 0; }
-.toast[data-hidden] { opacity: 0; pointer-events: none; }
+.toasts:not([data-expanded]) .toast:not([data-front]) > * { opacity: 0; visibility: hidden; }
+.toast[data-hidden] { opacity: 0; visibility: hidden; pointer-events: none; }
 .toast[data-leaving] { opacity: 0; pointer-events: none; transform: translateY(calc(var(--y, 0px) + 10px)) scale(var(--s, 1)); transition-duration: var(--motion-toast-out); }
 .toast[data-dragging] { transition: none; cursor: grabbing; user-select: none; }
 .toast[data-tone="error"] { --_ring: color-mix(in oklab, var(--danger) 32%, transparent); background: color-mix(in oklab, var(--danger) 9%, var(--surface-overlay)); border-color: var(--_ring); box-shadow: 0 0 0 1px var(--_ring), var(--shadow-overlay), var(--overlay-edge); color: color-mix(in oklab, var(--danger), var(--text) 60%); }
@@ -691,8 +729,9 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 
 /* ── Skeleton, progress, spinner, ring ── */
 /* A skeleton has the shape of what it stands for: a circle where an avatar goes, lines where text goes (the row of
-   `skeletonList`: a 28 px circle and two lines at 60 % and 40 %). Its ring keeps it readable on a dark ground. */
-.skeleton { position: relative; overflow: hidden; border-radius: var(--radius-item); background: var(--surface-hover); box-shadow: inset 0 0 0 1px var(--border); }
+   `skeletonList`: a 28 px circle and two lines at 60 % and 40 %). It is a fill, not a field: the ring is drawn only on a
+   dark ground, where the fill alone does not read. */
+.skeleton { position: relative; overflow: hidden; border-radius: var(--radius-item); background: var(--skeleton); box-shadow: inset 0 0 0 1px var(--skeleton-ring); }
 .skeleton--avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; }
 .skeleton-row { display: flex; align-items: center; gap: var(--space-3); }
 .skeleton-lines { display: grid; flex: 1; gap: var(--space-1); min-width: 0; }
@@ -700,7 +739,15 @@ kbd.key { display: inline-grid; place-items: center; min-width: 20px; height: 20
 .skeleton-lines > .skeleton + .skeleton { height: 10px; width: var(--w2, 40%); }
 .skeleton::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, var(--sheen), transparent); transform: translateX(-100%); animation: sheen var(--ms-1500) var(--ease-in-out) infinite; }
 @keyframes sheen { to { transform: translateX(100%); } }
-.swap-in { animation: swap-in var(--duration-normal) var(--ease-out); }
+/* `skeletonOf`: the markup that will arrive, laid out as it will be with its text and its marks unseen; its frame (the
+   rules between rows, the borders of a card) stays. Over it, a bone on each line of text and on each mark. The band
+   is as wide as the whole skeleton and each bone shows the part passing over its own place, so one light crosses it all. */
+.skeleton-of { position: relative; color: transparent; pointer-events: none; user-select: none; }
+.skeleton-of :not(.skeleton) { color: transparent !important; -webkit-text-fill-color: transparent; text-shadow: none; text-decoration-color: transparent; animation: none !important; transition: none !important; }
+.skeleton-of :not(.skeleton)::before, .skeleton-of :not(.skeleton)::after, .skeleton-of [data-bone-mark] { visibility: hidden; }
+.skeleton-of__bones { position: absolute; inset: 0; }
+.skeleton-of__bones > .skeleton { position: absolute; }
+.skeleton[data-bone]::after { right: auto; left: calc(var(--x) * -1); width: var(--bones-w); background: linear-gradient(100deg, transparent 30%, var(--sheen) 50%, transparent 70%); }.swap-in { animation: swap-in var(--duration-normal) var(--ease-out); }
 @keyframes swap-in { from { opacity: 0; filter: blur(2px); } }
 .progress { height: 6px; border-radius: var(--radius-full); background: var(--surface-hover); box-shadow: inset 0 1px 1px color-mix(in oklab, var(--scrim) 30%, transparent); overflow: hidden; }
 .progress__bar { height: 100%; width: 100%; border-radius: inherit; background: var(--accent); box-shadow: var(--shadow-check); transform-origin: left; transform: scaleX(var(--value, 0)); transition: transform var(--motion-data); }
@@ -866,10 +913,10 @@ button.card { width: 100%; text-align: left; font: inherit; color: inherit; }
 .table .skeleton--box { width: 18px; height: 18px; border-radius: 5px; }
 .table .skeleton--end { margin-left: auto; width: 20px; }
 .table-card { position: relative; }
-.selection-bar { position: fixed; z-index: 12; bottom: var(--space-5); left: calc(50% + var(--sidebar) / 2); display: flex; align-items: center; gap: var(--space-1); padding: 5px 5px 5px var(--space-4); border-radius: var(--radius); color: var(--text-inverse); font-size: var(--text-sm); white-space: nowrap; opacity: 0; transform: translate(-50%, 24px) scale(0.96); pointer-events: none; transition: opacity var(--motion-toast), transform var(--motion-slide); }
+.selection-bar { position: fixed; z-index: 12; bottom: var(--space-5); left: calc(50% + var(--sidebar) / 2); display: flex; align-items: center; gap: var(--space-1); padding: 5px 5px 5px var(--space-4); border-radius: var(--radius); color: var(--text-inverse); font-size: var(--text-sm); white-space: nowrap; opacity: 0; transform: translate(-50%, 24px) scale(0.96); visibility: hidden; pointer-events: none; transition: opacity var(--motion-toast), transform var(--motion-slide), visibility var(--motion-toast); }
 /* The bar's surface is its ::before, so the Toolbar Expandable inside can make it follow the height of the panel it opens. */
 .selection-bar::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--surface-inverse); box-shadow: var(--shadow-3); transform-origin: 0 0; }
-.selection-bar[data-open] { opacity: 1; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
+.selection-bar[data-open] { opacity: 1; visibility: visible; transform: translate(-50%, 0) scale(1); pointer-events: auto; }
 .selection-bar__count { display: inline-flex; align-items: center; gap: 4px; margin-right: var(--space-2); font-variant-numeric: tabular-nums; }
 .selection-bar kbd.key { margin-left: 2px; border-color: transparent; background: color-mix(in oklab, var(--text-inverse) 16%, transparent); color: inherit; }
 /* The bar is a Toolbar Expandable (a panel opens above its actions): its surface is the bar's own, inverse, so the
@@ -1122,8 +1169,18 @@ th[aria-sort="descending"] .th-sort::after { opacity: 1; scale: 1; filter: none;
 .settings-section__copy { display: grid; gap: var(--space-1); align-content: start; }
 @media (max-width: 760px) { .settings-section { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); } }
 .comp-grid { columns: 340px; column-gap: var(--space-4); }
+/* The filter row runs to the screen's edges and scrolls under them: the side with more fades out (a mask, so the
+   fade starts at the edge itself and not inside the padding, where a sticky shadow would sit). */
+@property --fade-s { syntax: "<length>"; inherits: false; initial-value: 0px; }
+@property --fade-e { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.comp-filter { margin: 0 calc(var(--space-4) * -1) var(--space-4); padding: 2px var(--space-4); overflow-x: auto; scrollbar-width: none; mask-image: linear-gradient(90deg, transparent, black var(--fade-s), black calc(100% - var(--fade-e)), transparent); transition: --fade-s var(--duration-normal) ease, --fade-e var(--duration-normal) ease; }
+.comp-filter[data-more~="start"] { --fade-s: var(--space-6); }
+.comp-filter[data-more~="end"] { --fade-e: var(--space-6); }
+.comp-filter > .scroll-edge { display: none; }
+.comp-filter .segmented { width: max-content; }
 .comp { display: grid; gap: var(--space-4); align-content: start; min-width: 0; margin-bottom: var(--space-4); break-inside: avoid; }
 .comp-grid > .comp--wide { column-span: all; }
+.comp[hidden] { display: none; }
 .segmented[inert] { opacity: 0.5; }
 .comp__title { font-size: var(--text-sm); font-weight: var(--weight-strong); }
 .ports { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
@@ -1140,6 +1197,11 @@ th[aria-sort="descending"] .th-sort::after { opacity: 1; scale: 1; filter: none;
 .ports__library { margin-left: auto; color: var(--text-faint); font-size: var(--text-xs); }
 .comp__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
 .comp__label { font-size: var(--text-xs); color: var(--text-faint); }
+/* A wide card lays its sets in two columns once each row fits whole; a label sits close to its row and farther from the next set. */
+.comp--wide { container-type: inline-size; }
+.comp__sets { display: grid; gap: var(--space-5) var(--space-6); }
+@container (min-width: 58rem) { .comp__sets { grid-template-columns: max-content minmax(0, 1fr); } }
+.comp__set { display: grid; gap: var(--space-2); align-content: start; }
 
 /* Reduced motion: feedback stays as color and opacity; displacement and scale become a fade. Nothing is
    instant: a panel that opens or a view that changes still fades in. */
@@ -1158,7 +1220,7 @@ th[aria-sort="descending"] .th-sort::after { opacity: 1; scale: 1; filter: none;
   .selection-bar { translate: -50% 0; }
   .switch:active .switch__knob, .slider[data-dragging] .slider__thumb { scale: 1; }
   :is(.sortable__item, .board__card)[data-grabbed] { scale: none; }
-  .scroll-edge::after { transition: none; }
+  .scroll-edge::after, .comp-filter { transition: none; }
   .btn[data-state="error"] { animation: none; }
   .field[data-state="invalid"] .field__control { animation: none; }
   .skeleton { animation: none; }

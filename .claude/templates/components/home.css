@@ -55,7 +55,8 @@
 
 /* What was billed and what was collected: the ring beside the line where there is room, then the days of the year. */
 .home-money { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
-.home-money > .surface { display: grid; align-content: start; gap: var(--space-4); min-width: 0; }
+/* Beside the ring the line card is as tall as it, and its chart (height 'fill') takes what the ring leaves. */
+.home-money > .surface { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
 @media (min-width: 1000px) { .home-money { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } }
 .home-income__head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .home-activity { display: grid; gap: var(--space-4); }

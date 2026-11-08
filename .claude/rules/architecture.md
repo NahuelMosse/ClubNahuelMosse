@@ -8,16 +8,11 @@ With that frontmatter these rules are loaded only when one of those files is tou
 they are paid for in every session. Adjust them to the repo's real structure — **and in the first
 card of a new repo that is part of the work**, because it is the card that invents the structure.
 
-*Measured, and it is the reason this is written up here and not at the end:* the kit came with
-`apps/api/**` and `apps/web/**`, and out of six runs of the method itself **four chose
-`apps/crm/`**. In those four the rule was never loaded — and nobody noticed, because **a rule that
-is activated by path does not warn you when it is not activated**: there is no error, no warning,
-simply nothing happens.
-
-*What did work, and why the critical content does not live only here:* the dependency-direction
-test was written anyway by the runs where this rule was not loaded, because the obligation is also
-in the gate and in the plan judge, which reads `card.md` and runs only at high risk. **What rests on a single door is lost when that door does
-not open.**
+The path globs must match the repo's real layout; check in the first card that this rule loads.
+**A rule activated by path does not warn you when it is not activated**: there is no error, simply
+nothing happens. For that reason the critical content does not live only here: the
+dependency-direction obligation is also in the gate and in the plan judge (high risk only).
+**What rests on a single door is lost when that door does not open.**
 
 ## Simplest structure that works
 
@@ -36,7 +31,8 @@ and a folder costs nothing to keep.
 - Extracting duplicated logic (see «Duplicated logic») is not abstraction; a **new pattern** is, and it is justified or removed.
 
 The gate checks it: `overdesign` fails a pass-through method, an interface or abstract class with one implementation, a folder with one
-tiny file outside the layer folders and an empty layer folder that the card added, and reports the ones already in the repo;
+tiny file outside the layer folders that the card added, and reports the ones already in the repo; empty layer folders of a slice are
+expected and never flagged;
 `plan.mjs` asks `why-layer:` for a factory, strategy, adapter, bus or `I<Name>` interface file. A finding the card keeps on
 purpose (the port a use case depends on so it does not import the repository) goes in the Log as
 `declared · overdesign · <file> · <the rule that asks for it>`: it stays a note and the close lists it for a person.
@@ -45,20 +41,16 @@ purpose (the port a use case depends on so it does not import the repository) go
 
 They are the ones that cost the most and that no generic linter catches.
 
-1. **A controller does not talk to persistence.** Whoever receives the request validates it,
-   delegates to a use case and responds; it does not import the ORM, the database client or the
-   table models. *In NestJS with Sequelize: nothing under `*.controller.ts` imports `sequelize` or
-   a `*.model.ts`.*
+1. **A request-handling file does not talk to persistence.** Whoever receives the request validates it,
+   delegates to a use case and responds; the files that handle requests import no persistence
+   client, ORM or table model (the stack's file patterns are in `.claude/stacks/<stack>.md`).
 2. **The domain carries no appearance — but it does carry the name.** A color, an icon, a column
    width or a date format inside the rules layer means that **a new screen with another palette
-   can no longer use that domain**. Measured: the stages table carried `color: '#7a889c'`.
+   can no longer use that domain**.
 
-   **The cut is at “how it looks”, not at “what it is called”.** That the stage knows it is called
-   *Negotiation* is business vocabulary and saves a parallel map that has to be kept up to date.
-   Measured with two runs of the same kit: the one that took the name out of the domain gained one
-   design point and **lost three of maintainability** —the test change cost it 8 files against
-   4—, because each new stage also needed its entry in the label map. *A principle that charges
-   three points where it wins one is badly applied.*
+   **The cut is at “how it looks”, not at “what it is called”.** That an entity knows its own
+   business name is vocabulary and saves a parallel label map that has to be kept up to date. A
+   principle that charges more maintainability than the design it wins is badly applied.
 
    The exception is **translated** text: if there is more than one language, the label is
    presentation and goes out, because there the map exists anyway.
@@ -89,8 +81,7 @@ layers. **Inside each slice, the clean-architecture layers are folders from its 
 Each folder exists when it holds something; the slice's public index (`index.ts`, `<feature>.dart`) stays at its root. Imports
 point inward: `domain/` imports neither `presentation/` nor `data/`, and `data/` does not import `presentation/`.
 `presentation/` may call `data/` directly while there is one implementation; the interface in `domain/` is born with the
-second one or the test fake. A repo that already names a layer otherwise (`infrastructure/`, `interface/`, `ui/`, `api/`)
-keeps its name. At the top there is only a small `shared/` kernel (config, logging, the base error types, a few pure
+second one or the test fake. A repo that already names a layer otherwise keeps its name. At the top there is only a small `shared/` kernel (config, logging, the base error types, a few pure
 utilities, UI primitives) and the composition root.
 
 ```
@@ -143,9 +134,8 @@ tables, compute fields or hide others; that assembly happens behind the route, i
   never as loose functions next to a class; in a functional stack (Express, plain TS, React) a file is a set of related functions
   or one class, never both. A class file holds the class and at most its private types. The gate's `shape` check flags a file with
   a class and a top-level function, more than one class, or a name like `utils`, `helpers` or `manager`.
-- **Measured limits, enforced by the stack's linter** in the `lint:` line: about 250 lines per file, 40 per function, cyclomatic
-  complexity 10, nesting depth 3, 4 parameters. Going over needs an inline reason (`eslint-disable-next-line <rule> -- <why>`).
-  Config per stack: `.claude/stacks/<stack>.md`, "Readability limits"; for ESLint, `.claude/templates/eslint-readability.mjs`.
+- **Readability limits** (file, function, complexity, nesting, parameters) are enforced by the stack's linter in the `lint:`
+  line; the values and the config are in `.claude/stacks/<stack>.md`, "Readability limits". Going over needs an inline reason.
 
 ## Readable code
 
@@ -178,7 +168,7 @@ only door is the public index (next section).
 ## Module boundaries
 
 You import another module's public index, never its inside:
-`import { X } from '../clients'` yes; `import { X } from '../clients/infrastructure/client.model'` no.
+`import { X } from '../clients'` yes; `import { X } from '../clients/data/client.model'` no.
 The index lists what is public by name, never `export *`; a slice that became a package exposes it in `exports`.
 
 - **Direction:** the composition root (`app`, routes) → slices → `shared/`. `shared/` imports no slice and holds no
@@ -191,8 +181,8 @@ The index lists what is public by name, never `export *`; a slice that became a 
 - **Cross effects** go through the other module's interface or through an event. In the front end, through
   props, events or a public API: never a `querySelector` inside another component, nor its internal state.
 - **A non-trivial library** (ORM, HTTP client, payments, mail, PDF, queues) is used behind an adapter
-  module in infrastructure (or beside the repository when the module has no layers), with names from the domain; domain and application do not import it. The
-  exceptions are the standard library, the web framework in the interface layer and the pure utilities
+  module in `data/` (or beside the repository when the module has no layers), with names from the domain; domain and application do not import it. The
+  exceptions are the standard library, the web framework in `presentation/` and the pure utilities
   declared in `system-design.md`. *Behind an adapter* is where the library lives, not a reason to
   replace it with hand-written code: see the next section.
 
@@ -203,8 +193,8 @@ migrations are solved problems. Each uses the stack's standard library, named pe
 `.claude/stacks/<stack>.md`; **the repo's existing choice always wins**, and a new repo takes the
 profile's default.
 
-- **Persistence:** an ORM or query builder **with migrations**, never hand-written SQL strings and a
-  home-made mapper. It lives in the module's `infrastructure/`; the domain keeps its own entities.
+- **Persistence:** a migration tool and one data-access layer in the module's `data/`; the domain keeps its own entities. A
+  builder that keeps SQL visible is allowed; a home-made mapper or ad hoc SQL strings scattered around are not.
 - **Dependency injection:** the framework's DI (Nest, ASP.NET, Spring, FastAPI `Depends`) or plain constructor
   parameters; a container (awilix, tsyringe, dependency-injector, get_it) only when the app wires many services and
   the framework has none, in the composition root. Not a hand-rolled container, registry, service locator or
@@ -225,8 +215,8 @@ is in doubt, `.claude/reference/code-patterns.md`.
    and signatures it would have, and for a snippet of the logic itself. The result goes in the card:
    `reuses: <file> <symbol>` or `new: <why nothing fits>` under the task, which `plan.mjs` checks.
    A piece that is close but not equal is extended or parameterised, not copied with a change.
-2. **Does the standard library bring it?** `node:crypto` for a token, `URL` to parse, `Intl` to
-   format. Writing it by hand is maintaining what others already maintain.
+2. **Does the standard library of the stack bring it?** Tokens, URL parsing and formatting are in it (in Node:
+   `node:crypto`, `URL`, `Intl`; others in `.claude/stacks/<stack>.md`). Writing it by hand is maintaining what others already maintain.
 3. **Does the platform do it?** `required` and `type="email"` before a JavaScript validation;
    `<details>` before an accordion; a uniqueness constraint in the database before a check in the
    code. **The native comes with accessibility and with edge cases you will not remember to
@@ -293,19 +283,17 @@ of each layer and fails if they point outward.
 
 ```
 modules/<x>/domain/**          imports nothing from outside its own domain/ (and shared/)
-modules/<x>/application/**     does not import from infrastructure/ or interface/
-modules/<x>/interface/**       does not import from infrastructure/
+modules/<x>/application/**     does not import from data/ or presentation/
+modules/<x>/presentation/**    does not import from data/ (while there is one implementation it may; see Structure)
 modules/<x>/**                 imports another module only through modules/<y>/index
 ```
 
-The test runs the three arrows per module (`**/domain/**` inside each `modules/<x>/`), so a new module
+The test runs the arrows per module (`**/domain/**` inside each `modules/<x>/`), so a new module
 is covered without editing it, and it fails any production file under a top-level `domain/`,
-`application/` or `infrastructure/` folder outside `modules/<x>/` and `shared/`.
+`application/` or `data/` folder outside `modules/<x>/` and `shared/`.
 
-Measured: a run complied with the three by discipline and **nothing forced it** — the application
-layer imported the store's concrete class and the views queried the raw data. Both things passed
-all the tests and were found by an outside reviewer reading. *A property that only holds because
-someone remembers it is already a lost property; the only difference is when you find out.*
+*A property that only holds because someone remembers it is already a lost property; the only
+difference is when you find out.*
 
 The same test also asserts that a module is imported only through its public index, that each table is
 touched only by its owner module (the “table → owner module” of `docs/technical/system-design.md`) and

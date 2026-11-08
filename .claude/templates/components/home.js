@@ -42,11 +42,11 @@ const ICONS = {
 };
 const icon = (name) => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name]}</svg>`;
 const PAUSE_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><g class="home-bg__pausebars"><path d="M5.5 3.5v9M10.5 3.5v9"/></g><path class="home-bg__play" d="M5 3.5l7 4.5-7 4.5z"/></svg>';
-const DONE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const DONE_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.25 12.75l4.5 4.5 9-10.5"/></svg>';
 
 const SENTENCE = {
   paid: { icon: 'coin', tone: 'success', title: 'Cobro recibido' },
-  overdue: { icon: 'alert', tone: 'warning', title: 'Cobro vencido' },
+  overdue: { icon: 'clock', tone: 'warning', title: 'Cobro vencido' },
   sent: { icon: 'send', tone: 'info', title: 'Factura enviada' },
   draft: { icon: 'draft', tone: 'accent', title: 'Borrador creado' },
 };
@@ -230,7 +230,7 @@ export const mountHome = ({ bento, review, status, income, activity }, { invoice
   const chart = keep(lineChart(income.chart, {
     data: ranges[days],
     label: 'Ingresos cobrados por día',
-    height: 200,
+    height: 'fill',
     categoryLabel: 'Fecha',
     series: [{ key: 'current', label: 'Este período' }, { key: 'previous', label: 'Período anterior', dashed: true, area: false }],
     formatValue: (v) => money(v),

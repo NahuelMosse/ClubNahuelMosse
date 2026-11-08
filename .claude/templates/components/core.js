@@ -124,6 +124,24 @@ export const messages = {
   moved: (name, position, total, list) => (list ? `${name}, ${list}, position ${position} of ${total}.` : `${name}, position ${position} of ${total}.`),
   dropped: (name, position, list) => (list ? `${name} dropped in ${list} at position ${position}.` : `${name} dropped at position ${position}.`),
   dragCancelled: (name) => `${name} moved back. Cancelled.`,
+  codeLabel: (n) => `${n}-digit code`,
+  codeVerified: 'Verified',
+  codeReopen: 'Verified. Press Enter to type a new code',
+  codeWrong: 'The code does not match. Check it or ask for a new one.',
+  checklistCount: (done, total) => `${done} of ${total}`,
+  checklistAdded: (name) => `${name} added`,
+  slideKeys: 'Press Enter to confirm',
+  tagRemove: (name) => `Remove ${name}`,
+  tagAdded: (name) => `${name} added`,
+  tagRemoved: (name) => `${name} removed`,
+  tagRepeated: (name) => `${name} is already in the list`,
+  tagFull: (max) => `Up to ${max}`,
+  amountMin: (v) => `The minimum is ${v}`,
+  amountMax: (v) => `The maximum is ${v}`,
+  pageRange: (from, to, total) => `${from}–${to} of ${total}`,
+  pagePrevious: 'Previous page',
+  pageNext: 'Next page',
+  page: (n) => `Page ${n}`,
 };
 
 // The set's single configuration, read by every formatter: `locale` (else the page's `data-locale`, else its
@@ -198,7 +216,15 @@ const ICONS = {
   send: '<path d="M14 2L7 9M14 2l-4.5 12-2.5-5.5L1.5 6z"/>',
   trash: '<path data-part="lid" d="M3 4.5h10M6.5 4.5V3h3v1.5"/><path data-part="body" d="M4.5 4.5l.5 8.5h6l.5-8.5M7 7v4M9 7v4"/>',
   copy: '<rect data-part="front" x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path data-part="back" d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2"/>',
-  'party-popper': '<path data-part="cone" d="M2.5 13.5l3-8 5 5z"/><path data-part="bit" d="M8.5 3.5l.7-1.7M11 6.2l1.8-.6M9.8 8.2l2.7 1.3"/>',
+  duplicate: '<rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2M9.5 7.5v4M7.5 9.5h4"/>',
+  archive: '<path d="M2.5 3.5h11v3h-11zM3.5 6.5v6a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-6M6.5 9h3"/>',
+  note: '<path d="M3.5 2.5h6l3 3v8h-9zM9.5 2.5v3h3M5.5 8.5h5M5.5 11h3"/>',
+  swap: '<path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13"/>',
+  clock: '<circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/>',
+  warning: '<path d="M8 2.5l6 10.5H2zM8 6.5v3M8 11.25v.01"/>',
+  'arrow-up': '<path d="M8 13V3M4 7l4-4 4 4"/>',
+  'arrow-down': '<path d="M8 3v10M4 9l4 4 4-4"/>',
+  'party-popper':'<path data-part="cone" d="M2.5 13.5l3-8 5 5z"/><path data-part="bit" d="M8.5 3.5l.7-1.7M11 6.2l1.8-.6M9.8 8.2l2.7 1.3"/>',
 };
 export const icon = (name, className = 'icon') => `<svg class="${className}" viewBox="0 0 16 16" aria-hidden="true" data-icon="${name}">${ICONS[name] ?? ''}</svg>`;
 // A page's `<use href="#i-name">` becomes the set's own drawing of that icon, so its parts can move.
@@ -422,7 +448,40 @@ export const celebrate = (play) => {
 // for a submenu), aligned to the start or the end of it. The anchor is an element or a point
 // (a context menu). Writes the origin the panel grows from and returns whether it opened below.
 // When neither side has room the roomier one wins and the panel scrolls.
-export const place = (panel, anchor, { align = 'start', side = 'bottom', matchWidth = false, gap = 6 } = {}) => {
+// While it stays open the panel follows its anchor through any scroll and resize (a point anchor
+// moves with the page), keeps the side it opened on while that side still fits, and hides while the
+// anchor is out of the window.
+const placed = new Map();
+let following = 0;
+const follow = () => {
+  following = 0;
+  for (const [panel, at] of placed) {
+    if (!panel.isConnected || !panel.checkVisibility()) { placed.delete(panel); panel.style.visibility = ''; continue; }
+    const anchor = at.anchor instanceof Element ? at.anchor : { x: at.anchor.x + at.sx - scrollX, y: at.anchor.y + at.sy - scrollY };
+    const r = anchor instanceof Element ? anchor.getBoundingClientRect() : new DOMRect(anchor.x, anchor.y, 0, 0);
+    panel.style.visibility = r.bottom < 0 || r.top > innerHeight ? 'hidden' : '';
+    at.below = put(panel, anchor, { ...at.opts, keep: at.below });
+  }
+};
+const schedule = (e) => {
+  if (!placed.size || following || (e.target instanceof Element && [...placed.keys()].some((panel) => panel.contains(e.target)))) return;
+  following = requestAnimationFrame(follow);
+};
+addEventListener('scroll', schedule, { capture: true, passive: true });
+addEventListener('resize', schedule, { passive: true });
+// Every list that drops opens the same way: its first six entries rise 4 px and fade in, 15 ms apart, so the list
+// reads top to bottom as it appears. The panel itself scales in by its own CSS; the chevron of its trigger turns.
+export const CASCADE = '[role=option], [role=menuitem], [role=menuitemcheckbox], [role=menuitemradio]';
+export const cascade = (panel, selector = CASCADE, max = 6) => {
+  if (reduced()) return;
+  [...panel.querySelectorAll(selector)].filter((n) => n.getClientRects().length).slice(0, max).forEach((n, i) => n.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 140, delay: i * 15, easing: EASE_OUT, fill: 'backwards' }));
+};
+export const place = (panel, anchor, opts = {}) => {
+  const at = { anchor, opts, sx: scrollX, sy: scrollY };
+  placed.set(panel, at);
+  return (at.below = put(panel, anchor, opts));
+};
+const put = (panel, anchor, { align = 'start', side = 'bottom', matchWidth = false, gap = 6, keep } = {}) => {
   const r = anchor instanceof Element ? anchor.getBoundingClientRect() : new DOMRect(anchor.x, anchor.y, 0, 0);
   panel.style.maxHeight = '';
   if (matchWidth) panel.style.minWidth = `${Math.round(r.width)}px`;
@@ -449,7 +508,8 @@ export const place = (panel, anchor, { align = 'start', side = 'bottom', matchWi
   }
   const roomBelow = innerHeight - r.bottom - gap - edge;
   const roomAbove = r.top - gap - edge;
-  const below = h <= roomBelow || (h > roomAbove && roomBelow >= roomAbove);
+  const fits = keep === undefined ? false : keep ? h <= roomBelow : h <= roomAbove;
+  const below = fits ? keep : h <= roomBelow || (h > roomAbove && roomBelow >= roomAbove);
   const room = below ? roomBelow : roomAbove;
   if (h > room) panel.style.maxHeight = `${Math.max(120, room)}px`;
   const height = Math.min(h, Math.max(120, room));

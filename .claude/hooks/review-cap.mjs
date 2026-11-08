@@ -21,8 +21,9 @@ import { delegateToRepo } from '../tools/card.mjs';
 import { gitDirOf } from '../tools/browser-lock.mjs';
 import { riskOf } from '../tools/card-doc.mjs';
 import { critiqueOf } from '../tools/close.mjs';
+import { active } from '../tools/kit.mjs';
 
-const REVIEWS = new Set(['code-review', 'simplify', 'design-review', 'accessibility-audit', 'design-deslop', 'architecture-review']);
+const REVIEWS = new Set(['code-review', 'simplify', 'design-review', 'accessibility-audit', 'design-deslop']);
 const PINNED = new Set(['judge', 'oracle', 'planner', 'design-critic']);
 // A prompt that pastes what the agent can read costs its length once in the caller's context and again in every
 // request of the agent. Past this many characters the call is warned, not blocked.
@@ -100,6 +101,8 @@ const risk = riskOf(card);
 if (review === 'judge-plan') {
   if (!risk) refuse(`No judge without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first. The classification decides whether the card gets a judge.`);
   if (risk.review !== 'high') refuse(`risk.json of ${cardName} says review: ${risk.review}: no judge. Only high gets the plan judge; the plan rules (\`node .claude/tools/risk.mjs <card-dir>\`), the gate and \`.claude/reference/lenses.md\` are the whole review of this card.`);
+  const { exempt } = active(root);
+  if (exempt.without.has('judge')) refuse(`The repo's grade is ${exempt.grade}: it launches no judge, whatever risk.json says. The plan rules (\`node .claude/tools/risk.mjs <card-dir>\`), the gate and \`.claude/reference/lenses.md\` are the whole review of this card.`);
 }
 if (review === 'design-critic') {
   if (!risk) refuse(`No design-critic without risk.json: run \`node .claude/tools/risk.mjs specs/${cardName}\` first.`);

@@ -1,31 +1,32 @@
 #!/usr/bin/env node
-// motion-audit.mjs [<url>] [--only <selector>]… [--cpu <rate>] [--frames [<selector>]]… [--out <dir>] [--measure] [--max <n>]
-//                  [--click <selector>] [--interrupt] [--scroll-story]
+// motion-audit.mjs [<url>] [--only <selector>]… [--max <n>] [--cpu <rate>] [--interact] [--click <selector> [--interrupt]]
+//                  [--frames [<selector>]]… [--entrances] [--config <file>] [--baseline <report.json>] [--storage-state <file>]
+//                  [--wait-for <selector>] [--allow-redirect] [--min-coverage <0-1>] [--out <dir>] [--strict] [--json]
+// motion-audit.mjs <url> --measure [--kind product] [--scroll-story] [--frames [<selector>]]… [--click <selector> [--interrupt]]
 // motion-audit.mjs compare <ref.json> <mine.json>
-// Run from the root of the repo of the card; Playwright is found there or at KIT_PLAYWRIGHT_ROOT.
+// Run from the root of the repo of the card. Without <url> it takes APP_URL from the environment; --out defaults
+// to .validation/motion.
 //
-// Curves: during every interaction it triggers (hover, press, focus, entrance on load and on scroll)
-// it samples the rect, opacity and transform of the element and its children on every animation frame,
-// and reports per property that moves its observed duration, overshoot, curve shape (linear, ease-out,
-// ease-in, ease-in-out, spring) and jumps (a frame over 3 times the median step). The trajectory is
-// measured, not the declared transition. Without --measure a jump is a finding.
-// Choreography: --click records everything that moves for 1500 ms after the click, with each element's
-// start delay and duration and the mean stagger step of a group of siblings; --interrupt (with --click)
-// clicks again halfway and checks that nothing jumps; --scroll-story scrolls end to end in 100 px steps
-// and records parallax, pinned and scroll-linked elements.
-// report.json carries `roles` (primary button hover and press, hero entrance, list entrance, section
-// entrance, click, scroll) and `grammar` (durations, curves, stagger); `compare` lines two reports up
-// by role. --frames without a selector uses the --click target, or else the primary button.
+// Two modes, two engines.
+// The gate mode (every call without --measure, --kind or --scroll-story) runs the motion-audit engine vendored at
+// .claude/skills/motion-audit/ (its SKILL.md lists every finding kind and flag): whether each control responds on
+// hover, press and focus, with what transition, curve and duration; controls revealed only on hover; hover not gated
+// by (hover: hover); jumps and interruptions; long frames with their LoAF attribution; what moves, stays, loops or
+// stays hidden with prefers-reduced-motion; a coverage contract (audited of candidates) and a repeat to confirm each
+// finding; a redirect to a login page is never audited. It needs Playwright >= 1.59, from PLAYWRIGHT_ROOT, the
+// repo's node_modules or KIT_PLAYWRIGHT_ROOT. --frames without a selector takes the --click target. Exit 0 clean,
+// 1 findings to fix, 2 could not run or audited nothing; --json prints the report (schemaVersion 1).
+// An external URL is checked first for a bot wall on its HTTP answer (status, title, text).
 //
-// Whether every state change of a screen has a designed response, measured in the browser and not
-// in the code. For each interactive element —or only the ones given with --only—: what changes on
-// hover, on press and on focus, with what transition, curve and duration; whether the sections
-// animate when they first enter on scroll; which animation frames take longer than 50 ms, also with
-// the CPU throttled (--cpu 4 is the “mediocre hardware”); and what remains with
-// prefers-reduced-motion. --frames builds a contact sheet of the element's hover and press, one frame
-// every 40 ms, so that the motion can be looked at: a still capture does not show it.
-// --measure only records what it finds, for reading a reference site; without it, exits 1 if there
-// is something to fix, with one line per finding.
+// The measure mode (--measure, --kind or --scroll-story) and `compare` run the kit's own engine
+// (motion-curves.mjs) and judge nothing: they record a reference site for design-round and the designer.
+// During hover, press, focus and the entrances on load and on scroll it samples the rect, opacity and
+// transform of every moving element on every animation frame: observed duration, overshoot, curve shape
+// and jumps. --click records everything that moves for 1500 ms after the click (delays, durations,
+// stagger); --interrupt clicks again halfway; --scroll-story scrolls end to end and records parallax,
+// pinned and scroll-linked elements. report.json carries `roles` and `grammar`; `compare` lines two
+// reports up by role. --frames writes a contact sheet of the element's hover and press, one frame
+// every 40 ms; without a selector it uses the --click target, or else the primary button.
 // Measured: a screen that passed every validation moved nothing but colors in 100 ms, and nothing
 // in the kit looked at whether each element responded.
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
@@ -33,11 +34,11 @@ import { createRequire } from 'node:module';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
-import { wallOf, wallMessage } from './bot-wall.mjs';
+import { wallOf, wallMessage, isExternal, reasonOf, withoutScripts } from './bot-wall.mjs';
 import { tracer, analyzeRecording, stagger, continuity, scrollStory, buildRoles, grammar, compare, primaryMove } from './motion-curves.mjs';
 
+const USAGE_LINE = 'motion-audit.mjs [<url>] [--only <selector>]… [--cpu 4] [--frames [<selector>]]… [--click <selector>] [--interrupt] [--out <dir>] [--strict] [--json]   (without <url>: APP_URL of the environment)\nmotion-audit.mjs <url> --measure [--kind product] [--scroll-story] [--frames [<selector>]]… [--click <selector>] [--interrupt]';
 const VISIBLE_PROPS = ['transform', 'opacity', 'background-color', 'background-image', 'color', 'box-shadow', 'border-color', 'outline-style', 'outline-width', 'outline-color', 'text-decoration-color', 'filter', 'scale', 'translate'];
-const LAYOUT_PROPS = /^(width|height|top|left|right|bottom|margin|padding|max-height|max-width|min-height|min-width)/;
 const INTERACTIVE = 'a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [role=tab], [role=switch], [role=menuitem], [role=checkbox], [role=link], [tabindex]:not([tabindex="-1"])';
 
 const args = process.argv.slice(2);
@@ -51,9 +52,62 @@ const click = val('--click')[0];
 const interrupt = args.includes('--interrupt');
 const story = args.includes('--scroll-story');
 const cpu = Number(opt('--cpu')[0] ?? 0);
-const out = resolve(opt('--out')[0] ?? join('.validation', 'motion'));
-const measure = args.includes('--measure');
+const DEFAULT_OUT = join('.validation', 'motion');
+const out = resolve(opt('--out')[0] ?? DEFAULT_OUT);
 const max = Number(opt('--max')[0] ?? 40);
+const MEASURE_MODE = args[0] === 'compare' || ['--measure', '--kind', '--scroll-story'].some((f) => args.includes(f));
+const ENGINE = '../skills/motion-audit/scripts/lib';
+const BOT_WALL_TIMEOUT_MS = 15000;
+
+// A bot wall read from the HTTP answer alone: status, title and visible text. The rendered page is the engine's
+// own browser, so the rules that need its DOM (challenge markers, thin text beside media) are not applied here.
+const httpWall = async (target) => {
+  if (!isExternal(target)) return null;
+  const response = await fetch(target, { redirect: 'follow', signal: AbortSignal.timeout(BOT_WALL_TIMEOUT_MS) }).catch(() => null);
+  if (!response) return null;
+  const html = await response.text().catch(() => '');
+  const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '';
+  const text = withoutScripts(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  return reasonOf({ status: response.status, title, text, html, media: { share: 1, nodes: 0 } });
+};
+
+// `--frames` with no selector takes the --click target; without one it is dropped.
+const withFramesTarget = (argv) => {
+  const at = argv.findIndex((a, i) => a === '--click' && argv[i + 1]);
+  const target = at >= 0 ? argv[at + 1] : argv.find((a) => a.startsWith('--click='))?.slice('--click='.length);
+  return argv.flatMap((a, i) => {
+    if (a !== '--frames' || (argv[i + 1] && !argv[i + 1].startsWith('--'))) return [a];
+    return target ? ['--frames', target] : [];
+  });
+};
+
+// The gate mode: the vendored engine's `main`, with the kit's defaults. Returns the exit code.
+const gate = async (argv) => {
+  if (!process.env.PLAYWRIGHT_ROOT && !existsSync(join(process.cwd(), 'node_modules', 'playwright')) && process.env.KIT_PLAYWRIGHT_ROOT) {
+    process.env.PLAYWRIGHT_ROOT = process.env.KIT_PLAYWRIGHT_ROOT;
+  }
+  let engine;
+  try {
+    engine = { ...(await import(`${ENGINE}/cli.mjs`)), ...(await import(`${ENGINE}/args.mjs`)) };
+  } catch (e) {
+    console.error(`could not run: the motion-audit engine is not installed at .claude/skills/motion-audit (${e.message}); the web profile brings it`);
+    return 2;
+  }
+  const a = withFramesTarget(argv);
+  if (!a.some((x) => x === '--out' || x.startsWith('--out='))) a.push('--out', resolve(DEFAULT_OUT));
+  let positional = [];
+  try { positional = engine.parseArgs(a).positional; } catch { return engine.main(a); }
+  if (!positional.length && process.env.APP_URL) { a.push(process.env.APP_URL); positional = [process.env.APP_URL]; }
+  if (a.includes('--help')) {
+    console.log(`${USAGE_LINE}\n\n${engine.USAGE}`);
+    return positional.length ? 0 : 2;
+  }
+  if (positional.length === 1) {
+    const wall = await httpWall(positional[0]);
+    if (wall) { console.error(wallMessage(positional[0], wall)); return 2; }
+  }
+  return engine.main(a);
+};
 
 // Playwright from the repo the tool runs in; failing that, from KIT_PLAYWRIGHT_ROOT (the kit's own tests,
 // a machine where Playwright lives in another repo). The output always goes under the cwd.
@@ -69,31 +123,6 @@ const playwright = () => {
 
 // The values of a duration list like "0.15s, 200ms" in milliseconds.
 const ms = (list) => String(list).split(',').map((s) => s.trim()).map((s) => (s.endsWith('ms') ? parseFloat(s) : parseFloat(s) * 1000));
-
-export const judge = (el) => {
-  const problems = [];
-  const name = el.label;
-  for (const [moment, data] of Object.entries(el.moments)) {
-    if (!data) continue;
-    if (moment === 'hover' && el.selected) continue;
-    const responds = data.changed.length > 0 || data.pixels;
-    if (moment !== 'focus' && !responds) problems.push(`${name} · ${moment}: nothing visible changes`);
-    if (moment === 'focus' && !responds) problems.push(`${name} · focus: no visible focus`);
-    const animated = data.changed.filter((p) => data.transitioned.includes(p) || data.transitioned.includes('all'));
-    const teleported = data.changed.filter((p) => !animated.includes(p) && !/^outline/.test(p));
-    if (moment !== 'focus' && data.changed.length && teleported.length === data.changed.length) problems.push(`${name} · ${moment}: changes without a transition (${teleported.join(', ')})`);
-  }
-  const t = el.transition;
-  if (t.properties.includes('all') && t.durations.some((d) => d > 0)) problems.push(`${name}: \`transition: all\``);
-  const layout = t.properties.filter((p) => LAYOUT_PROPS.test(p));
-  if (layout.length) problems.push(`${name}: animates layout (${layout.join(', ')}) — only transform and opacity`);
-  for (const d of t.durations) if (d > 0 && (d < 50 || d > 400)) problems.push(`${name}: duration ${d} ms, out of 50–400 for an interaction`);
-  if (t.easings.some((e) => /^ease-in$|cubic-bezier\(0\.[4-9]\d*, 0, 1, 1\)/.test(e))) problems.push(`${name}: ease-in on an interaction: it delays the response`);
-  if (t.easings.some((e) => e === 'linear')) problems.push(`${name}: linear curve on an interaction`);
-  if (el.reduced?.moves) problems.push(`${name}: with prefers-reduced-motion it still moves (${el.reduced.moves})`);
-  if (el.reduced?.residue) problems.push(`${name}: with prefers-reduced-motion a transform stays after the press ends (${el.reduced.residue})`);
-  return problems;
-};
 
 const snapshotIn = (handle, props) => handle.evaluate((node, props) => {
   const cs = getComputedStyle(node);
@@ -378,52 +407,6 @@ export const audit = async () => {
   }
   const long = await longFrames(page);
 
-  // Reduced motion: the same elements, looking for displacement or scale on hover and press.
-  const reducedContext = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
-  const rpage = await reducedContext.newPage();
-  await rpage.goto(url, { waitUntil: 'load', timeout: 45000 });
-  await rpage.waitForTimeout(800);
-  const rhandles = only.length ? (await Promise.all(only.map((s) => rpage.$$(s)))).flat() : await rpage.$$(INTERACTIVE);
-  let ri = 0;
-  for (const h of rhandles) {
-    if (ri >= elements.length) break;
-    if (!(await h.isVisible().catch(() => false))) continue;
-    await h.scrollIntoViewIfNeeded().catch(() => {});
-    const box = await h.boundingBox();
-    if (!box) { ri++; continue; }
-    const rest = await snapshotIn(h, ['transform', 'translate', 'scale']);
-    await rpage.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await rpage.mouse.down();
-    await rpage.waitForTimeout(250);
-    const now = await snapshotIn(h, ['transform', 'translate', 'scale']);
-    await rpage.mouse.move(1, 1);
-    await rpage.mouse.up();
-    await rpage.waitForTimeout(300);
-    const after = await snapshotIn(h, ['transform', 'translate', 'scale']);
-    const moved = diff(rest, now);
-    const kept = diff(rest, after);
-    elements[ri].reduced = { moves: moved.length ? moved.map((k) => `${k}: ${now[k]}`).join(', ') : '', residue: kept.map((k) => `${k}: ${after[k]}`).join(', ') };
-    ri++;
-  }
-  // An entrance that waits for an animation the reduced mode skips leaves its content at opacity 0: the text is there and
-  // nobody sees it. Scrolled end to end first, so that scroll-triggered entrances had their chance.
-  await rpage.evaluate(async () => { for (let y = 0; y < document.documentElement.scrollHeight; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 60)); } window.scrollTo(0, 0); });
-  await rpage.waitForTimeout(600);
-  const hiddenReduced = await rpage.evaluate(() => [...document.querySelectorAll('h1, h2, h3, p')].filter((n) => {
-    const r = n.getBoundingClientRect();
-    if (r.width < 2 || r.height < 2) return false;
-    let shown = true;
-    for (let e = n; e; e = e.parentElement) { const c = getComputedStyle(e); if (c.display === 'none' || c.visibility === 'hidden') return false; if (c.opacity === '0') shown = false; }
-    return !shown && !n.closest('[aria-hidden="true"]');
-  }).slice(0, 8).map((n) => `${n.tagName.toLowerCase()} “${(n.textContent || n.getAttribute('alt') || '').trim().slice(0, 30)}”`));
-  const infinite = await rpage.evaluate(() => document.getAnimations().filter((a) => {
-    const t = a.effect?.target;
-    if (a.effect?.getTiming?.().iterations !== Infinity || !t) return false;
-    for (let e = t; e; e = e.parentElement) { const c = getComputedStyle(e); if (c.opacity === '0' || c.display === 'none' || c.visibility === 'hidden') return false; }
-    return true;
-  }).length);
-  await reducedContext.close();
-
   const primary = elements.filter((e) => e.score > 0).sort((a, b) => b.score - a.score)[0] ?? null;
   const primaryHandle = primary ? handleOf.get(primary) ?? null : null;
   const sheets = [];
@@ -458,32 +441,20 @@ export const audit = async () => {
   if (story) storyReport = await storyRun(page);
   await browser.close();
 
-  const jumpLines = (where, els) => els.flatMap((e) => e.moves.flatMap((m) => m.jumps.map((j) => `${where}: ${e.label} ${m.prop} jumps ${j.size} at ${j.atMs} ms`)));
-  const motionProblems = measure ? [] : [
-    ...jumpLines('load', load), ...jumpLines('scroll', scroll), ...jumpLines('click', clickEls),
-    ...elements.flatMap((e) => Object.entries(e.moments).flatMap(([name, d]) => jumpLines(`${e.label} ${name}`, d?.motion ?? []))),
-    ...(interruptReport?.jumps ?? []).map((j) => `interrupt: ${j.label} ${j.prop} jumps ${j.size} after the second click`),
-  ];
   const roles = buildRoles({ load, scroll, click: clickEls, hover: primary, story: storyReport });
   const hoverMoves = (name) => elements.filter((e) => (e.moments[name]?.motion ?? []).some((m) => m.moves.length)).length;
   const grammarOf = grammar([...load, ...scroll, ...clickEls], roles, { hover: hoverMoves('hover'), press: hoverMoves('press'), focus: hoverMoves('focus'), of: elements.length });
-
-  const problems = measure ? [] : [
-    ...motionProblems,
-    ...elements.flatMap(judge),
-    ...sections.filter((s) => !s.animated).map((s) => `section “${s.section}”: appears without an entrance the first time it is scrolled to`),
-    ...(long?.length ? [`${long.length} animation frames over 50 ms while scrolling${cpu > 1 ? ` with the CPU ${cpu}× slower` : ''}: ${long.slice(0, 6).join(', ')} ms`] : []),
-    ...(infinite ? [`${infinite} infinite animations remain with prefers-reduced-motion`] : []),
-    ...(hiddenReduced.length ? [`with prefers-reduced-motion ${hiddenReduced.length} elements stay at opacity 0 after scrolling: ${hiddenReduced.join(', ')}`] : []),
-  ];
   return {
-    url, cpu, elements, sections, longFrames: long, infiniteReduced: infinite, hiddenReduced, sheets: sheets.flat().filter(Boolean),
+    url, cpu, elements, sections, longFrames: long, sheets: sheets.flat().filter(Boolean),
     load: load.slice(0, CAP), scrollEntrances: scroll.slice(0, CAP), click: clickReport, interrupt: interruptReport, scrollStory: storyReport,
-    roles, grammar: grammarOf, problems,
+    roles, grammar: grammarOf,
   };
 };
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+const isEntry = import.meta.url === pathToFileURL(process.argv[1]).href;
+// exitCode, not exit(): a large --json report on a pipe is written out before the process ends.
+if (isEntry && !MEASURE_MODE) process.exitCode = await gate(args);
+else if (isEntry) {
   if (args[0] === 'compare') {
     let ref, mine;
     try { ref = JSON.parse(readFileSync(args[1], 'utf8')); mine = JSON.parse(readFileSync(args[2], 'utf8')); } catch (e) { console.error(`compare: cannot read the reports (${e.message}); usage: motion-audit.mjs compare <ref.json> <mine.json>`); process.exit(2); }
@@ -493,27 +464,29 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     process.exit(0);
   }
   if (!url || args.includes('--help')) {
-    console.log('motion-audit.mjs [<url>] [--only <selector>]… [--cpu 4] [--frames [<selector>]]… [--click <selector>] [--interrupt] [--scroll-story] [--out <dir>] [--measure] [--max 40]   (without <url>: APP_URL of the environment)\nmotion-audit.mjs compare <ref.json> <mine.json>');
+    console.log(`${USAGE_LINE}\nmotion-audit.mjs compare <ref.json> <mine.json>`);
     process.exit(url ? 0 : 2);
   }
   if (interrupt && !click) { console.error('--interrupt needs --click <selector>'); process.exit(2); }
-  const r = await audit();
-  if (r.error) { console.error(r.error); process.exit(2); }
-  writeFileSync(join(out, 'report.json'), JSON.stringify(r, null, 1));
-  const resp = (m) => r.elements.filter((e) => e.moments[m]?.changed.length || e.moments[m]?.pixels).length;
-  // How rich the response is, not only whether it exists: movement or depth, not only color.
-  const moves = (m) => r.elements.filter((e) => (e.moments[m]?.changed ?? []).some((p) => /transform|scale|translate|box-shadow|filter/.test(p))).length;
-  const actionable = r.elements.filter((e) => e.kind !== 'focus-only').length;
-  console.log(`${r.elements.length} elements · respond on hover ${resp('hover')} · press ${resp('press')} · focus ${resp('focus')} · sections with entrance ${r.sections.filter((s) => s.animated).length}/${r.sections.length} · long frames ${r.longFrames?.length ?? 'n/a'}${r.cpu > 1 ? ` (CPU ${r.cpu}×)` : ''}`);
-  console.log(`richness · of ${actionable} actionable elements: press with movement ${moves('press')}, hover with depth or movement ${moves('hover')} — the audit checks that what exists responds well; how alive the screen is, is judged against the references in step 9`);
-  const g = r.grammar;
-  const d = g.durationsMs;
-  console.log(`motion · durations ${d ? `${d.min}–${d.max} ms (median ${d.median})` : 'none measured'} · curves ${Object.entries(g.shapes).map(([k, n]) => `${k} ${n}`).join(', ') || 'none'} · stagger ${g.staggerMs} ms${r.click?.totalMs !== undefined ? ` · click moves ${r.click.count} elements over ${r.click.totalMs} ms` : ''}${r.interrupt && !r.interrupt.error ? ` · interrupt ${r.interrupt.continuous ? 'continuous' : `${r.interrupt.jumps.length} jumps`}` : ''}${r.scrollStory ? ` · scroll story ${r.scrollStory.summary.narrative ? 'yes' : 'no'} (${r.scrollStory.summary.parallax} parallax, ${r.scrollStory.summary.pinned} pin, ${r.scrollStory.summary.linked} linked)` : ''}`);
-  if (r.sheets.length) console.log(`contact sheets: ${r.sheets.join(', ')}`);
-  console.log(`report: ${join(out, 'report.json')}`);
-  if (measure) process.exit(0);
-  if (!r.problems.length) { console.log('Every element responds, with transitions in range, and nothing remains with reduced motion.'); process.exit(0); }
-  console.log(`\n${r.problems.length} to fix:`);
-  for (const p of r.problems) console.log(`- ${p}`);
-  process.exit(1);
+  // A crash is "could not run" (2): exit 1 is read as findings.
+  try {
+    const r = await audit();
+    if (r.error) { console.error(r.error); process.exit(2); }
+    writeFileSync(join(out, 'report.json'), JSON.stringify(r, null, 1));
+    const resp = (m) => r.elements.filter((e) => e.moments[m]?.changed.length || e.moments[m]?.pixels).length;
+    // How rich the response is, not only whether it exists: movement or depth, not only color.
+    const moves = (m) => r.elements.filter((e) => (e.moments[m]?.changed ?? []).some((p) => /transform|scale|translate|box-shadow|filter/.test(p))).length;
+    const actionable = r.elements.filter((e) => e.kind !== 'focus-only').length;
+    console.log(`${r.elements.length} elements · respond on hover ${resp('hover')} · press ${resp('press')} · focus ${resp('focus')} · sections with entrance ${r.sections.filter((s) => s.animated).length}/${r.sections.length} · long frames ${r.longFrames?.length ?? 'n/a'}${r.cpu > 1 ? ` (CPU ${r.cpu}×)` : ''}`);
+    console.log(`richness · of ${actionable} actionable elements: press with movement ${moves('press')}, hover with depth or movement ${moves('hover')} — the audit checks that what exists responds well; how alive the screen is, is judged against the references in step 9`);
+    const g = r.grammar;
+    const d = g.durationsMs;
+    console.log(`motion · durations ${d ? `${d.min}–${d.max} ms (median ${d.median})` : 'none measured'} · curves ${Object.entries(g.shapes).map(([k, n]) => `${k} ${n}`).join(', ') || 'none'} · stagger ${g.staggerMs} ms${r.click?.totalMs !== undefined ? ` · click moves ${r.click.count} elements over ${r.click.totalMs} ms` : ''}${r.interrupt && !r.interrupt.error ? ` · interrupt ${r.interrupt.continuous ? 'continuous' : `${r.interrupt.jumps.length} jumps`}` : ''}${r.scrollStory ? ` · scroll story ${r.scrollStory.summary.narrative ? 'yes' : 'no'} (${r.scrollStory.summary.parallax} parallax, ${r.scrollStory.summary.pinned} pin, ${r.scrollStory.summary.linked} linked)` : ''}`);
+    if (r.sheets.length) console.log(`contact sheets: ${r.sheets.join(', ')}`);
+    console.log(`report: ${join(out, 'report.json')}`);
+    process.exit(0);
+  } catch (e) {
+    console.error(`motion-audit could not run: ${e.message}`);
+    process.exit(2);
+  }
 }

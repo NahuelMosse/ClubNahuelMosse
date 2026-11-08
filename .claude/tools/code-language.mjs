@@ -35,9 +35,12 @@ export const declaresCodeLanguage = (root) => { const path = join(root ?? '.', '
 const DECLARED = /\b(?:class|def|function|const|let|var|final|enum|interface|type|mixin|extension)\s+([A-Za-z_À-ÿ][\wÀ-ÿ]*)/g;
 export const declaredNames = (text) => [...new Set([...String(text).matchAll(DECLARED)].map((m) => m[1]))];
 
-// The Spanish names of a file the card created, path first: [`<file>: <name>`].
-export const spanishNames = (file, text) => {
-  const out = file.split('/').filter((part) => isSpanish(part)).slice(-1).map((part) => `${file}: the file name \`${part}\``);
-  for (const name of declaredNames(text)) if (isSpanish(name)) out.push(`${file}: \`${name}\``);
+// The Spanish names of a file the card created, path first: [`<file>: <name>`]. A name the requirement writes as is (`costoEnvio`,
+// `pesoKg`, `src/envio.mjs`) is its contract, not a naming choice: `contract` holds the requirement's text.
+export const spanishNames = (file, text, contract = '') => {
+  const escaped = (name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const named = (name) => new RegExp(`(?<![\\w$])${escaped(name)}(?![\\w$])`).test(contract);
+  const out = file.split('/').filter((part) => isSpanish(part) && !named(part)).slice(-1).map((part) => `${file}: the file name \`${part}\``);
+  for (const name of declaredNames(text)) if (isSpanish(name) && !named(name)) out.push(`${file}: \`${name}\``);
   return out;
 };

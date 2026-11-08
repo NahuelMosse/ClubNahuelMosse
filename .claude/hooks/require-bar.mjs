@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // PreToolUse on Edit and Write: production code is not written while the card in progress lacks what its code is
 // written and gated against: `cap: <N> min` (or `<N> h`) in the header of card.md, `## Specs`, `## Tasks` and a `## Gate` with
-// its block of commands. The cap is what time-cap and review-cap enforce: if it cannot be read they would silently do
+// its block of commands (at poc only the cap and the Specs, and no logic file). The cap is what time-cap and review-cap enforce: if it cannot be read they would silently do
 // nothing, so it is asked for here. A repo that still has a `plan.md` instead of card.md is asked for its cap only
 // (its `## Time plan`).
 // A module that is off by a person's decision (`.claude/kit.json`) whose signal shows up in what the card says it will
@@ -17,8 +17,8 @@ const block = (reason) => {
 
 try {
   const { NOT_PRODUCTION, rootOf, relativeTo, currentCard, cardCap } = await import('../tools/card.mjs');
-  const { gateBlock, hasTasksSection, sectionOf, specsOf } = await import('../tools/card-doc.mjs');
-  const { active, lateSignals, LATE_ADVICE } = await import('../tools/kit.mjs');
+  const { gateBlock, hasTasksSection, rolesOf, sectionOf, specsOf } = await import('../tools/card-doc.mjs');
+  const { active, lateSignals, LATE_ADVICE, isPoc, pocLogic } = await import('../tools/kit.mjs');
   const raw = readFileSync(0, 'utf8');
   const input = JSON.parse(raw);
   await (await import('../tools/card.mjs')).delegateToRepo(import.meta.url, raw, input);
@@ -40,20 +40,31 @@ try {
       `Resolve it with ${late.map(([mod]) => LATE_ADVICE(mod, modules.grade)).join('; and ')}.`);
 
   const problems = [];
+  let poc = false;
   const doc = join(cardDir, 'card.md');
   if (existsSync(doc)) {
     const text = readFileSync(doc, 'utf8');
     if (cardCap(cardDir) === null) problems.push('`cap: <N> min` (or `<N> h`) in the header of card.md, above its first `## ` heading');
     if (!specsOf(text).length) problems.push('“## Specs” with a line `S1 · "<quote of the card>"` for each sentence');
-    if (!hasTasksSection(text) || !sectionOf(text, 'Tasks')?.match(/\bT\d+\s*·/)) problems.push('“## Tasks” with a line `T1 · S1 · <files>`');
-    if (!gateBlock(text)?.trim()) problems.push('“## Gate” with a block of commands, one per line (`suite: …`, `lint: …`)');
+    // At poc the card is a facade: cap and Specs only, no Tasks or Gate, and no logic in what is written.
+    poc = isPoc(root);
+    if (!poc) {
+      if (!hasTasksSection(text) || !sectionOf(text, 'Tasks')?.match(/\bT\d+\s*·/)) problems.push('“## Tasks” with a line `T1 · S1 · <files>`');
+      if (!gateBlock(text)?.trim()) problems.push('“## Gate” with a block of commands, one per line (`suite: …`, `lint: …`)');
+    } else {
+      const added = String(input.tool_input?.content ?? input.tool_input?.new_string ?? '').split('\n').map((line) => ({ f: rel, text: line }));
+      const logic = pocLogic([rel], added, rolesOf(text));
+      if (logic.length)
+        block(`Not writing ${rel}: it brings logic (${logic[0]}). A poc is a facade: mock it in presentation; logic belongs to the mvp.`);
+    }
   } else if (existsSync(join(cardDir, 'plan.md')) && cardCap(cardDir) === null) {
     problems.push('`cap: <N> min` (or `<N> h`) in the plan\'s “## Time plan”');
   }
   if (problems.length)
     block(`Not writing ${rel} yet: the card in progress (${relative(root, doc)}) is missing ${problems.join(' and ')}. ` +
       'It is what the code is gated against: written beforehand, it does not come back as a finding. Skeleton:\n' +
-      'cap: 30 min\n## Specs\nS1 · "<quote of the card>"\n## Tasks\nT1 · S1 · <files>\n## Gate\n(a ``` block, one command per line: `suite: …`, `lint: …`)');
+      `cap: 30 min\n## Specs\nS1 · "<quote of the card>"` +
+      (poc ? '' : '\n## Tasks\nT1 · S1 · <files>\n## Gate\n(a ``` block, one command per line: `suite: …`, `lint: …`)'));
 } catch (e) {
   block(`Could not check the card (${e.message}). It blocks when in doubt: retry.`);
 }

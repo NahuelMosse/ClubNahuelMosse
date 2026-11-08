@@ -1,15 +1,10 @@
 #!/usr/bin/env node
-// PreToolUse on Edit and Write: who writes production code during a card.
-// - A `builder` or a `grunt` does, in its own context, from card.md.
-// - The main thread does only when `risk.json` says `size: small` and a commit already holds the card's tests
-//   (`@<ID>-S<n>`): RED comes before the code. On a `large` card, or before that commit, it launches the `builder`.
-// - A `designer` writes only the files `## Tasks` marks `(presentation)`.
-// - Any other subagent (a scout, a runner, an oracle) writes it without the card in front of it: refused.
-// A subagent's hook input has `agent_id` and `agent_type`; the main thread's has neither.
+// PreToolUse on Edit and Write: who writes production code during a card (tools/delegate-rule.mjs); guard-shell.mjs
+// applies the same rule to what a shell line writes.
 // Measured: in three runs the code was written by the main thread with 90 to 410 thousand tokens of context re-read on
 // every request.
-// Contract: exit 0 lets it through; exit 2 blocks and Claude reads stderr. On its own error it lets it through: it is a
-// saving, the guards that protect the card are others.
+// Contract: exit 0 lets it through; exit 2 blocks and Claude reads stderr. On its own error it blocks: a rule that
+// lets the write through when it crashes is a suggestion.
 import { readFileSync } from 'node:fs';
 
 try {
@@ -17,38 +12,14 @@ try {
   const input = JSON.parse(raw);
   const card = await import('../tools/card.mjs');
   await card.delegateToRepo(import.meta.url, raw, input);
-  if (input.agent_id && ['builder', 'grunt'].includes(input.agent_type)) process.exit(0);
-  const designing = input.agent_id && input.agent_type === 'designer';
-  const path = input.tool_input?.file_path ?? input.tool_input?.notebook_path;
-  if (!path) process.exit(0);
-  const root = card.rootOf(path);
-  if (!root || !card.isProductionPath(root, path)) process.exit(0);
-  const cardDir = card.currentCard(root);
-  if (!cardDir) process.exit(0);
-  if (designing) {
-    const { readCard, rolesOf } = await import('../tools/card-doc.mjs');
-    const { roleFor } = await import('../tools/gate-checks.mjs');
-    const roles = rolesOf(readCard(cardDir) ?? '');
-    if (roleFor(roles, path.replaceAll('\\', '/')) === 'presentation') process.exit(0);
-    const allowed = [...roles].filter(([, role]) => role === 'presentation').map(([file]) => file);
-    process.stderr.write(`The \`designer\` writes only the files \`## Tasks\` marks \`(presentation)\`: ${allowed.length ? allowed.join(', ') : 'none is marked yet'}. Not rules, data or tests. Tokens and new styles go inside a presentation file already listed; a change that needs another file goes to the Log as \`OUT · <what>\`.\n`);
+  const { productionVerdict } = await import('../tools/delegate-rule.mjs');
+  const why = await productionVerdict(input, input.tool_input?.file_path ?? input.tool_input?.notebook_path);
+  if (why) {
+    process.stderr.write(`${why}\n`);
     process.exit(2);
   }
-  if (card.actsAsMain(input)) {
-    const risk = (await import('../tools/card-doc.mjs')).riskOf(cardDir);
-    if (risk?.size === 'small' && card.redCommitted(root, cardDir)) process.exit(0);
-    // Past the card's time cap no builder starts (time-cap): the main thread finishes what is left, after the RED, or nobody can.
-    const cap = card.cardCap(cardDir);
-    const elapsed = card.minutesSinceSnapshot(root, cardDir);
-    if (cap !== null && elapsed !== null && elapsed >= cap && card.redCommitted(root, cardDir)) process.exit(0);
-    const why = !risk ? 'there is no risk.json yet: `node .claude/tools/risk.mjs specs/<card>` classifies the card'
-      : risk.size === 'small' ? 'the card is small, and no commit holds its tests yet (`@<ID>-S<n>`): write them, run them red and commit them first'
-        : 'the card is large';
-    process.stderr.write(`The main thread does not write production code here: ${why}. A large card goes to the \`builder\` with card.md, its task IDs and the gate command.\n`);
-    process.exit(2);
-  }
-  process.stderr.write('Only the `builder` and the `grunt` write production code during a card; not another subagent. Launch the `builder` with the path of card.md, its task IDs and the gate command.\n');
-  process.exit(2);
-} catch {
   process.exit(0);
+} catch (e) {
+  process.stderr.write(`delegate-code could not decide who writes this file (${e.message}). It blocks when in doubt: retry.\n`);
+  process.exit(2);
 }

@@ -16,7 +16,9 @@ import { IS_TEST } from './card.mjs';
 const MODULE = /\.(?:[cm]?[jt]sx?)$/;
 const EXTENSIONS = ['.mjs', '.js', '.cjs', '.ts', '.tsx', '.jsx', '.mts', '.cts'];
 const SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+)(["'])(\.{1,2}\/[^"'\n]*|\.{1,2})\1/g;
-const MAX_BYTES = 2_000_000;
+const ANY_SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*|\bimport\s+)(["'])([^"'\n]+)\1/g;
+const PY_IMPORT = /^[ \t]*(?:from[ \t]+([\w.]+)[ \t]+import[ \t]+([\w, \t]+)|import[ \t]+([\w.]+))/gm;
+const MAX_BYTES =2_000_000;
 
 const norm = (p) => p.replace(/\\/g, '/').replace(/^\.\//, '');
 const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -37,17 +39,59 @@ export const affected = (root, touched, isTest = IS_TEST) => {
       if (inRepo.has(c) && MODULE.test(c)) return c;
     return null;
   };
+  // Aliases: package.json `imports` (`#lib/*`) and tsconfig/jsconfig `paths` (relative to `baseUrl`).
+  const json = (f) => {
+    try { return JSON.parse(text(f).replace(/\/\*[^]*?\*\//g, '').replace(/(?<![:\w"'])\/\/.*$/gm, '').replace(/,(\s*[}\]])/g, '$1')); } catch { return null; }
+  };
+  const aliases = [];
+  const addAlias = (key, targets, dir) => {
+    const [prefix, suffix = ''] = key.split('*');
+    for (const t of [targets].flat().filter((x) => typeof x === 'string')) {
+      const [tp, ts = ''] = t.split('*');
+      aliases.push({ prefix, suffix, wild: key.includes('*'), target: posix.join(dir, tp), tsuffix: ts });
+    }
+  };
+  for (const f of repo.filter((x) => /(^|\/)package\.json$/.test(x))) {
+    for (const [k, v] of Object.entries(json(f)?.imports ?? {})) addAlias(k, v !== null && typeof v === 'object' && !Array.isArray(v) ? Object.values(v).flat() : v, posix.dirname(f));
+  }
+  for (const f of repo.filter((x) => /(^|\/)[tj]sconfig\.json$/.test(x))) {
+    const o = json(f)?.compilerOptions;
+    const dir = posix.join(posix.dirname(f), o?.baseUrl ?? '.');
+    for (const [k, v] of Object.entries(o?.paths ?? {})) addAlias(k, v, dir);
+  }
+  const resolveAlias = (spec) => {
+    for (const a of aliases) {
+      if (!spec.startsWith(a.prefix) || !spec.endsWith(a.suffix) || spec.length < a.prefix.length + a.suffix.length) continue;
+      if (!a.wild && spec !== a.prefix) continue;
+      const mid = a.wild ? spec.slice(a.prefix.length, spec.length - a.suffix.length) : '';
+      const found = resolveSpecifier('x', posix.join(a.target, mid + a.tsuffix));
+      if (found) return found;
+    }
+    return null;
+  };
+  // Python: `from pkg.mod import x` is pkg/mod.py or pkg/mod/__init__.py, from the repo root or from `src/`.
+  const resolvePython = (dotted) => {
+    const p = dotted.replace(/\./g, '/');
+    return ['', 'src/'].flatMap((b) => [`${b}${p}.py`, `${b}${p}/__init__.py`]).find((c) => inRepo.has(c)) ?? null;
+  };
   // Who imports whom: importedBy[file] = the files that import it.
   const importedBy = new Map();
   const sources = new Map();
-  for (const f of repo.filter((x) => MODULE.test(x) || isTest.test(x))) {
+  for (const f of repo.filter((x) => MODULE.test(x) || /\.py$/.test(x) || isTest.test(x))) {
     const body = text(f);
     sources.set(f, body);
-    if (!MODULE.test(f)) continue;
-    for (const m of body.matchAll(SPECIFIER)) {
-      const target = resolveSpecifier(f, m[2]);
-      if (target) importedBy.set(target, [...(importedBy.get(target) ?? []), f]);
+    const link = (target) => { if (target && target !== f) importedBy.set(target, [...(importedBy.get(target) ?? []), f]); };
+    if (/\.py$/.test(f)) {
+      for (const m of body.matchAll(PY_IMPORT)) {
+        const mod = m[1] ?? m[3];
+        link(resolvePython(mod));
+        for (const name of (m[2] ?? '').split(',').map((n) => n.trim().split(/\s/)[0]).filter(Boolean)) link(resolvePython(`${mod}.${name}`));
+      }
+      continue;
     }
+    if (!MODULE.test(f)) continue;
+    for (const m of body.matchAll(SPECIFIER)) link(resolveSpecifier(f, m[2]));
+    for (const m of body.matchAll(ANY_SPECIFIER)) if (!m[2].startsWith('.')) link(resolveAlias(m[2]));
   }
   const touchedFiles = touched.map(norm);
   const reach = new Set(touchedFiles);

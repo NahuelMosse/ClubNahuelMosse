@@ -71,12 +71,12 @@ research could not read in the source is marked “unverified”.
 
 | ID | Criterion | How | Grade | Today | Source |
 |---|---|---|---|---|---|
-| R1 | The acceptance criterion is met **in real use**, the way whoever asked for it would use it, not only in the test | A | poc | command (gate) | ISO 25010 functional suitability |
+| R1 | The acceptance criterion is met **in real use**, the way whoever asked for it would use it, not only in the test | A | mvp | command (gate) | ISO 25010 functional suitability |
 | R2 | Every gap in the card —what it does not say and has to be decided— is identified in writing, with its question | J | poc | command (10 questions) | SSDF PO.1.2 · Ambig-SWE |
 | R3 | Every decision on a gap picks, if it exists, the option that works with any answer, and says so | J | poc | command (gate) | own, measured |
 | R4 | The decisions that affect whoever uses or operates the product are in the README, with one `- <ID>-ASM-NN: <plain text>` line per assumption of the plan (`required.mjs` checks it) | J | mvp | prose | Google review: documentation |
 | R5 | The questions for the business can be answered without extra explanation: in the business's language, without criteria IDs, ASVS IDs or method jargon | C | poc | command (`/close` check 7) | — |
-| R6 | Every acceptance criterion has an identifiable test that proves it | C | poc | command (tags) | SSDF PW.8.2 |
+| R6 | Every acceptance criterion has an identifiable test that proves it | C | mvp | command (tags) | SSDF PW.8.2 |
 | R7 | **Every hunk of the diff corresponds to the card**; nothing added that nobody asked for without registering it | J | poc | prose (File map) | Google small CLs · agent PRs rejected for scope |
 | R8 | The foreign defects that were seen are registered and were not touched; what the card changes of what already existed is declared | J | poc | mechanism (plan: `## Changes to existing behavior` · `out-of-scope.mjs`: an OUT does not point at what the card touched) | Microsoft playbook · OpenSpec |
 | R9 | Every non-functional requirement has a measurable value, or the default budget of `reference/performance.md` is written as an `ASM-NN`, or it is declared that it has none | J | production | prose | ISO 25010 time behavior, capacity · PERF-01 |
@@ -145,10 +145,10 @@ The rules behind these criteria, with the smell detectors and the templates, are
 
 | ID | Criterion | How | Grade | Today | Source |
 |---|---|---|---|---|---|
-| T1 | The card's tests were written **before** the code, by commit order | C | poc | prose | SpecBench: tests written first · TDD-* |
-| T2 | **No test was softened** to make it pass: not edited, not skipped, not deleted. The one exception is the fast lane's replacement of a string literal, verified by the guard | T | poc | mechanism (guard) | ImpossibleBench (arXiv 2510.20270): in Claude models more than 79% of the cheating is modifying tests · TEST-IA-07 · TEST-VIS-04 · LANE-* |
+| T1 | The card's tests were written **before** the code, by commit order | C | mvp | prose | SpecBench: tests written first · TDD-* |
+| T2 | **No test was softened** to make it pass: not edited, not skipped, not deleted. The one exception is the fast lane's replacement of a string literal, verified by the guard | T | mvp | mechanism (guard) | ImpossibleBench (arXiv 2510.20270): in Claude models more than 79% of the cheating is modifying tests · TEST-IA-07 · TEST-VIS-04 · LANE-* |
 | T3 | Mutation score over the new lines detects breakage (poc none · mvp domain files · production every file in the diff) | T | mvp | mechanism (mutate · required) | Google: Practical Mutation Testing at Scale · TEST-COB-02 · TEST-IA-10 |
-| T4 | Every test asserts behavior: no tests without assertions, no assertions that hold by themselves | C | poc | prose (T5) | Banik et al., “All Smoke, No Alarm” (arXiv 2606.18168): 80.2% of agent test patches carry weak or no oracle signals; it measures syntactic signals, not whether the test is correct · TEST-ORA-01 · TEST-ORA-02 · TEST-ORA-05 |
+| T4 | Every test asserts behavior: no tests without assertions, no assertions that hold by themselves | C | mvp | prose (T5) | Banik et al., “All Smoke, No Alarm” (arXiv 2606.18168): 80.2% of agent test patches carry weak or no oracle signals; it measures syntactic signals, not whether the test is correct · TEST-ORA-01 · TEST-ORA-02 · TEST-ORA-05 |
 | T5 | Behavior is tested, not implementation: a refactor that does not change behavior does not break tests | J | mvp | — | Software Engineering at Google, ch. 12 · TEST-BUE-02 · TEST-DBL-04 |
 | T6 | No logic inside tests: loops, conditionals, calculations | T | mvp | mechanism (required: linter over every test in the diff, with `no-conditional-in-test`) | idem · TEST-BUE-06 |
 | T7 | Tests run in any order and in parallel with the same result | C | mvp | prose | Google: flaky tests · TEST-DET-04 · TEST-INT-02 |
@@ -158,7 +158,7 @@ The rules behind these criteria, with the smell detectors and the templates, are
 | T11 | Coverage of the new lines of 80% or more | T | production | command (stack profile) | Sonar way quality gate · TEST-COB-01 |
 | T12 | Screen tests look up by role and accessible name, not by structure | C | mvp | command (stack profile) | Testing Library · TEST-E2E-01 |
 | T13 | Domain logic with rules or calculations (`rule` in the File map): its unit test is committed before the code | C | mvp | mechanism (required) | TDD-* · Nagappan 2008 · Fucci 2017 |
-| T14 | The fast lane is used only when every condition holds; a hook takes the card out when the diff leaves them | C | poc | mechanism (require-bar · guard · lane) | LANE-* |
+| T14 | A poc's diff brings no logic: data is mocked in presentation files; logic belongs to the mvp | C | poc | mechanism (require-bar · required) | LANE-* |
 
 ## S · Security (attacking the running app)
 
@@ -207,9 +207,9 @@ The rules behind these criteria, with the smell detectors and the templates, are
 | P12 | Indexes and constraints are created without blocking where the engine allows it, with lock_timeout in migrations | C | production | command (stack profile) | DB-MIG-03 · DB-MIG-04 · DB-MIG-05 |
 | P13 | Nothing external inside an open transaction; events from a data change go through an outbox | J | production | prose | DB-TX-05 · DB-TX-06 |
 | P14 | The data model is in system-design.md before the code: entities, relations, owner, cardinality, volume, queries with their index, migrations | J | production | mechanism (require-bar · required) | DB-OPS-04 · INF-* |
-| P15 | Personal data inventoried and classified in system-design.md, with retention, encryption at rest and encrypted backups; Ley 25.326 and GDPR as context | J | production | mechanism (required) | SEC-DAT-03 · DB-SEC-07 · Ley 25.326 · GDPR |
-| P16 | A migration that exists on the main branch is never edited, renamed or deleted; new migrations sort after main's last one with a single history head; the model has no migration pending; the new migrations apply on top of main's last state with seeded data | C | poc | mechanism (guard · required) | DB-MIG-12 · DB-MIG-13 · DB-MIG-14 · DB-MIG-15 · DB-MIG-17 · DB-MIG-19 · DB-MIG-20 |
-| P17 | Every new table has its primary key per the repo's id decision (UUIDv7 by default, never serial or int), `created_at` and `updated_at` as timestamptz NOT NULL (only `created_at` in a declared append-only table) | C | poc | mechanism (gate table-shape) | DB-MOD-03 · DB-MOD-14 · RFC 9562 |
+| P15 | Personal data inventoried and classified in system-design.md, with retention, encryption at rest and encrypted backups, under the data-protection norm named in system-design.md (see `reference/security.md`) | J | production | mechanism (required) | SEC-DAT-03 · DB-SEC-07 · the applicable norm |
+| P16 | A migration that exists on the main branch is never edited, renamed or deleted; new migrations sort after main's last one with a single history head; the model has no migration pending; the new migrations apply on top of main's last state with seeded data | C | mvp | mechanism (guard · required) | DB-MIG-12 · DB-MIG-13 · DB-MIG-14 · DB-MIG-15 · DB-MIG-17 · DB-MIG-19 · DB-MIG-20 |
+| P17 | Every new table has its primary key per the repo's id decision (UUIDv7 by default, never serial or int), `created_at` and `updated_at` as timestamptz NOT NULL (only `created_at` in a declared append-only table) | C | mvp | mechanism (gate table-shape) | DB-MOD-03 · DB-MOD-14 · RFC 9562 |
 
 ## O · Operation and safe change
 
@@ -225,7 +225,7 @@ The rules behind these criteria, with the smell detectors and the templates, are
 | O8 | Change how the app starts or is deployed only if the card asks for it | J | poc | prose | measured in a legacy repo |
 | O9 | The feature can be turned off or reverted without losing data; a feature flag has an owner and a retirement date | J | production | prose | Fowler: feature toggles · DORA · CD-* |
 | O10 | Response time measured **and within budget**, with the volume the card asks for, **with the machine under no other load**; R1 is the per-card smoke and the full load test is O22; an operation does not degrade with more data or block the server | C | production | command (stack profile) | ISO 25010 · measured in CLI-11: the same POST took 84 ms alone and 589 ms with two other inspections in parallel · PERF-* · LOAD-* |
-| O11 | The whole screen suite runs once per card, not once per fix | T | poc | mechanism (once) | measured |
+| O11 | The whole screen suite runs once per card, not once per fix | T | mvp | mechanism (once) | measured |
 | O12 | What the validations generate —coverage, logs, probes— does not stay in the repo. **The evidence the method delivers does**: closing captures, ASVS matrix and accessibility report, in `specs/<card>/` | C | mvp | command (F4) | — |
 | O13 | A versioned cost model: price, URL and date per component, observability ingest and retention included, totals today and at 10x; updated with every infra change | C | production | mechanism (required) | COST-01 · INF-* · AWS Well-Architected · FinOps |
 | O14 | Infrastructure described as it is today in system-design.md: deployment, environments, scaling, secrets, linked cost | J | production | mechanism (require-bar · required) | INF-* · C4 |
@@ -261,8 +261,8 @@ Prioritized with the WebAIM Million 2026: 96% of errors fall in the first six.
 | I7 | Errors are announced and tied to the field; help on the expected format | A | mvp | prose (stack profile) | WCAG 3.3.1/3.3.2/4.1.3 · A11Y-FRM-03 |
 | I8 | Touch targets of 24 × 24 px or more | A | mvp | prose (stack profile) | WCAG 2.5.8 · A11Y-RSP-04 |
 | I9 | It is usable at 320 px wide without horizontal scroll, and with text zoomed to 200% | A | mvp | prose (stack profile) | WCAG 1.4.10 · WCAG 1.4.4 · A11Y-RSP-01 |
-| I10 | After an action, the screen comes back as it was: search, filter, focus | A | poc | prose (edges) | measured in CLI-11 · A11Y-KBD-06 |
-| I11 | A resource that does not exist gives 404 on the new screens | A | poc | prose (edges) | measured in CLI-11 |
+| I10 | After an action, the screen comes back as it was: search, filter, focus | A | mvp | prose (edges) | measured in CLI-11 · A11Y-KBD-06 |
+| I11 | A resource that does not exist gives 404 on the new screens | A | mvp | prose (edges) | measured in CLI-11 |
 | I12 | The texts are clear for whoever uses the screen | J | poc | prose | ISO 25010 self-descriptiveness · A11Y-DOC-04 |
 | I13 | No text overflows at its real length or with pseudo-localization, at 320, 390 and 1280 px | C | mvp | command (overflow.mjs) | A11Y-RSP-02 · I18N-LAY-01 · LANE-* |
 | I14 | The WCAG 2.2 AA criteria the kit did not cover: 2.4.11, 2.5.7, 3.2.6, 3.3.7, 3.3.8 | A | production | prose | A11Y-KBD-04 · A11Y-AUT-01 · WCAG 2.2 · UX-ARRASTRE-1 |
@@ -299,19 +299,19 @@ Prioritized with the WebAIM Million 2026: 96% of errors fall in the first six.
 |---|---|---|---|---|---|
 | C1 | Works with the real program that consumes it, with the configuration of whoever asked for it and with other common ones | A | mvp | prose (edges, test-first rule) | measured in CLI-9 |
 | C2 | Legitimate uncommon data is preserved exactly end to end: `+`, leading zeros, apostrophes, accents | A | mvp | prose (edges) | measured in CLI-9 |
-| C3 | Breaks nothing that already worked: the previous suite passes whole | C | poc | command (stack profile) | — |
+| C3 | Breaks nothing that already worked: the previous suite passes whole | C | mvp | command (stack profile) | — |
 | C4 | Responses for existing clients do not change | C | mvp | — | Stripe: API versioning · API-* |
 
 ## A · What fails in agent-generated code
 
 | ID | Criterion | How | Grade | Today | Source |
 |---|---|---|---|---|---|
-| A1 | **Every success claim has a command with its output** in the record; nothing is reported as verified without having run | C | poc | prose (three states) | 75.8% of failures with explicit state are false success |
+| A1 | **Every success claim has a command with its output** in the record; nothing is reported as verified without having run | C | mvp | prose (three states) | 75.8% of failures with explicit state are false success |
 | A2 | The closing does not mention changes that are not in the diff | C | poc | — | 45.4% of PRs inconsistent due to “phantom changes” |
 | A3 | Ambiguities are asked, not resolved silently | J | poc | prose (10 questions) | Ambig-SWE: asking improves up to 74% |
 | A4 | The project's constraints are respected, verified with executable checks | C | mvp | mechanism (hooks) | 38.33% of symptoms are constraint violations (unverified) |
 | A5 | The size of the **production** diff —without `specs/` or tests— is proportional to the request and to the criteria that apply | C | poc | — | Google small CLs · agent PRs rejected for size |
-| A6 | The feature is wired end to end, not only what the test checks | A | poc | command (gate) | agents deliver what the test looks at |
+| A6 | The feature is wired end to end, not only what the test checks | A | mvp | command (gate) | agents deliver what the test looks at |
 | A7 | If a language model evaluates or reviews, it is repeated and its output does not replace a command | C | production | prose | 13.6% of judgments flip between runs |
 | A8 | If the code calls a model: its output is validated as untrusted input, the system prompt is separated from the user input, least permissions, consumption limits | J | mvp | — | OWASP Top 10 for LLM 2025 · SEC-LLM-* |
 | A9 | The agent never disables a test, adds continue-on-error or skips hooks to make the pipeline pass | C | poc | mechanism (required · guard-shell) | CI-AI-* · TEST-IA-07 · ImpossibleBench (arXiv 2510.20270) |
@@ -321,11 +321,11 @@ Prioritized with the WebAIM Million 2026: 96% of errors fall in the first six.
 | ID | Criterion | How | Grade | Today | Source |
 |---|---|---|---|---|---|
 | V1 | The requirement was recorded as it arrived, frozen | C | poc | mechanism (guard) | — |
-| V2 | There is a plan written before the code, with the bar and the edges | C | poc | mechanism (require-bar) | — |
+| V2 | There is a plan written before the code, with the bar and the edges | C | mvp | mechanism (require-bar) | — |
 | V3 | The change is committed, with messages that say what and why, with Conventional Commits or the repo's convention | C | poc | command (stack profile) | Google: change descriptions · VER-* |
 | V4 | There is a record of the AI session: tool, model, cost, where the full record is | C | mvp | prose (F3) | ISO 42001 A.6.2.8 (unverified) · NIST AI RMF GOVERN 1.4 |
 | V5 | Accessibility evidence criterion by criterion, if the card touched a screen | J | mvp | prose (stack profile) | WCAG · VPAT · A11Y-PRO-03 · A11Y-PRO-07 |
-| V6 | The comment for the client comes only from the output of the validations | J | poc | prose | — |
+| V6 | The comment for the client comes only from the output of the validations | J | mvp | prose | — |
 | V7 | A person approves before merging | J | poc | prose (snapshot `proposed`) | SSDF PW.7 · ISO 42001 |
 
 ## W · Documentation
@@ -356,8 +356,8 @@ required and was not before: that is the debt to close.
 
 | Grade | The bar |
 |---|---|
-| `poc` | The invariants: the whole requirement read, ambiguities to the queue, a test per scenario, the three states, one round of questions, a push of the card's branch only and no merge, a migration already applied untouched. No mutation, no accessibility sweep, no performance budgets, no modules `docs`, `i18n`, `observability`, `api`, `ci` or `infra`, no judge; the time cap is at most 5× the likely time (goal 3×). |
-| `mvp` | Adds basic security (OWASP top 10), accessibility AA on what is touched, the plan judge only when `risk.json` says high, the API documented (W8, W9), the pipeline, health and visibility of failures, and mutation of the domain only (files under `domain/` or marked `rule`); cap at most 8× (goal 4×). |
+| `poc` | A facade to show how it would look: presentation with mock data, minimally functional (navigation, buttons and forms answer with mock data), nothing behind. It keeps the whole requirement read and frozen, the open gaps as ASMs in `## Specs` (no round of questions), the stack, folder structure and design rules, a push of the card's branch only and no merge. Its diff brings no logic (T14). It drops tests, Tasks, Gate, mutation, the judge, the accessibility sweep, performance budgets and the modules `docs`, `i18n`, `observability`, `api`, `ci` and `infra`. The only validation is one capture round at 390 and 1440 px. The time cap is at most 2× the likely time (goal 1×). |
+| `mvp` | Adds basic security (OWASP top 10), accessibility AA on what is touched, the plan judge only when `risk.json` says high, the API documented (W8, W9), the pipeline, health and visibility of failures, and mutation of the domain only (files under `domain/` or marked `rule`, and a screen's pure `*-state.js`); cap at most 8× (goal 4×). |
 | `production` | Everything in this list. `security-l2` stays opt-in on top. |
 
 **What a grade leaves out is never removed in silence.** `modules.json` defines it —per module a `grades`
@@ -370,7 +370,7 @@ names the grade. The «Grade» column and `modules.json` say the same thing: a t
 The screen's machinery is graded too: a module's `gradeProcedures` name what it asks to build and the grade
 leaves out, and `bar.mjs` shows each as the same `<procedure> · off by grade: <grade> — <reason>` line.
 At `poc` a screen has no `design/line.md`, no component set copied from the templates, no `screen-audit.md`
-and one capture width, 390 px; at `mvp` it has the line and both widths, and the set holds only the
+and one capture round, at 390 and 1440 px; at `mvp` it has the line and the capture rounds of the bar, and the set holds only the
 components the card uses; `production` asks the whole of it. **At `poc` the scope is the card's:** a signal
 that shows up while it is written (a route, a second language, a worker) does not turn a module on; it is
 noted as an `<ID>-OUT-NN` proposal.
@@ -379,20 +379,20 @@ Criteria required at each grade (cumulative), by area:
 
 | | Criteria | poc | mvp | production |
 |---|---|---|---|---|
-| R · Requirements and scope | 10 | 7 | 9 | 10 |
+| R · Requirements and scope | 10 | 5 | 9 | 10 |
 | D · Design | 15 | 2 | 6 | 15 |
 | K · Code | 11 | 1 | 8 | 11 |
 | E · Errors and reliability | 16 | 0 | 8 | 16 |
-| T · Tests | 14 | 4 | 13 | 14 |
+| T · Tests | 14 | 1 | 13 | 14 |
 | S · Security | 24 | 1 | 10 | 24 |
-| P · Data and privacy | 17 | 2 | 8 | 17 |
-| O · Operation and safe change | 30 | 2 | 10 | 30 |
-| I · Interaction and accessibility | 40 | 3 | 21 | 40 |
-| C · Compatibility | 4 | 1 | 4 | 4 |
-| A · Agent failures | 9 | 6 | 8 | 9 |
-| V · Process and evidence | 7 | 5 | 7 | 7 |
+| P · Data and privacy | 17 | 0 | 8 | 17 |
+| O · Operation and safe change | 30 | 1 | 10 | 30 |
+| I · Interaction and accessibility | 40 | 1 | 21 | 40 |
+| C · Compatibility | 4 | 0 | 4 | 4 |
+| A · Agent failures | 9 | 4 | 8 | 9 |
+| V · Process and evidence | 7 | 3 | 7 | 7 |
 | W · Documentation | 11 | 0 | 5 | 11 |
-| **Total** | **208** | **34** | **117** | **208** |
+| **Total** | **208** | **19** | **117** | **208** |
 
 ## What this list says about the method today
 

@@ -31,7 +31,7 @@ Source: landonorris.com, Site of the Year 2025 (own measurement, evidence streng
 
 ## Loader curtain
 
-- A first-frame brand curtain of 3 s or less (the measured site: about 2.6 s, lime). The content is reachable and focusable while it runs; the curtain has `pointer-events: none` once it is no longer needed and its controls leave the click sweep.
+- A first-frame brand curtain of 3 s or less. The content is reachable and focusable while it runs; the curtain has `pointer-events: none` once it is no longer needed and its controls leave the click sweep.
 
 ## Scroll as a variable
 
@@ -40,5 +40,5 @@ Source: landonorris.com, Site of the Year 2025 (own measurement, evidence streng
 
 ## Fluid rem: one composition scaled
 
-- `html { font-size: calc(clamp(992px, 100vw, 1920px) / 1728 * 16) }` and every size in rem: the layout is scaled, not reflowed. Mobile gets its own unit (the measured site: 48 over 320-479 px, 10.8 px at 390).
+- Sizes in rem over a root size that scales with the viewport between a floor and a ceiling: the layout is scaled, not reflowed. Mobile gets its own unit.
 - Check at 390 and 320: `scrollWidth <= clientWidth`, the display line count, tap targets of 44 px at the scaled size. A composition that scales needs the mobile-specific moves of `composition.md` rule 7 on top (the crop changes, the headline moves up).

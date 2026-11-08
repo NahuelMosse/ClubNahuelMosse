@@ -46,7 +46,9 @@ if (!existsSync(join(dir, 'pubspec.yaml'))) {
 
 let code = 0;
 for (const [name, argv] of [['analyze', ['analyze']], ['test', ['test', ...(accept ? ['--update-goldens'] : [])]]]) {
-  const r = spawnSync(flutter, argv, { cwd: dir, encoding: 'utf8', shell: /\.(bat|cmd)$/i.test(flutter), maxBuffer: 64 * 1024 * 1024 });
+  // A .bat/.cmd needs the shell, which splits an unquoted path with spaces ("C:\Program Files\flutter\bin").
+  const viaShell = /\.(bat|cmd)$/i.test(flutter);
+  const r = spawnSync(viaShell ? `"${flutter}"` : flutter, argv, { cwd: dir, encoding: 'utf8', shell: viaShell, maxBuffer: 64 * 1024 * 1024 });
   if (r.error) { console.log(`${name}: could not run: ${r.error.message}`); code = Math.max(code, 2); continue; }
   if (r.status === 0) { console.log(`${name}: passed`); continue; }
   console.log(`${name}: failed: exit ${r.status}${lastLines(r) ? `: ${lastLines(r)}` : ''}`);

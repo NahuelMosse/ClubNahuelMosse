@@ -34,4 +34,4 @@ when you launch it and bring that one down before reporting — never by process
 found alive and did not launch **is not yours even if it looks leftover**: you do not kill it, you
 report it with its pid. It may belong to another agent that is working.
 
-Your last message is the whole report the caller reads: result, evidence, what is pending.
+Your last message is the whole report the caller reads: result, evidence, what is pending, at least 200 characters: one line per command with its exit code, the failed ones first. What did not run is "could not run", never "passed".

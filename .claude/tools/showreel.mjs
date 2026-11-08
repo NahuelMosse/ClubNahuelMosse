@@ -115,7 +115,7 @@ export const frameChecks = async (page) => {
         boxes.push(r);
       } else if (/^(IMG|SVG|VIDEO|CANVAS|PICTURE|IFRAME)$/i.test(el.tagName)) boxes.push(r);
       else if (el !== document.documentElement && el !== document.body &&
-        (s.backgroundImage !== 'none' || !/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)|transparent/.test(s.backgroundColor)) &&
+        (!/^none(\s*,\s*none)*$/.test(s.backgroundImage) || !/rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)|transparent/.test(s.backgroundColor)) &&
         area < innerWidth * innerHeight * 0.9) boxes.push(r);
       if (el.tagName === 'CANVAS') {
         const x = Math.max(r.left, 0), y = Math.max(r.top, 0);
@@ -222,42 +222,48 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
     for (const name of ['playwright', '@playwright/test']) { try { pw ??= req(name); } catch {} }
   }
   if (!pw) { console.error('Playwright is not installed in this repo.'); process.exit(2); }
-  mkdirSync(out, { recursive: true });
-  // The old headless shell draws WebGL black —a globe or a shader vanishes from the video—; the new
-  // headless mode (`channel: 'chromium'`) renders with the real GPU. Falls back if it is not there.
-  const browser = await pw.chromium.launch({ channel: 'chromium' }).catch(() => pw.chromium.launch());
-  const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, recordVideo: { dir: out, size: { width, height } } });
-  const page = await context.newPage();
-  await page.goto(url, { waitUntil: 'load', timeout: 60000 });
-  const frames = await tour(page, { seconds });
-  const video = await page.video()?.path();
-  await context.close();
-  await sheet(browser, frames, join(out, 'frames.png'));
-  const still = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
-  await still.goto(url, { waitUntil: 'load', timeout: 60000 });
-  await settle(still);
-  const runChecks = !args.includes('--no-checks');
-  const sceneFrames = await scenes(still, { checks: runChecks });
-  const sections = runChecks ? await sectionChecks(still) : null;
-  if (sceneFrames.length) await sheet(browser, sceneFrames, join(out, 'scenes.png'));
-  // The sheet shrinks each scene to a quarter: a judge reading it scores 16 px text as illegible.
-  sceneFrames.forEach((f, i) => writeFileSync(join(out, `scene-${i + 1}.png`), Buffer.from(f.png, 'base64')));
-  await browser.close();
-  const final = join(out, 'showreel.webm');
-  if (video && existsSync(video)) renameSync(video, final);
-  console.log(`video: ${final}\nframes: ${join(out, 'frames.png')}${sceneFrames.length ? `\nscenes: ${join(out, 'scenes.png')}` : ''}`);
-  if (runChecks) {
-    const failures = [
-      ...sceneFrames.flatMap((f) => f.checks.failures.map((m) => `scene "${f.label}": ${m}`)),
-      ...sections.failures,
-    ];
-    writeFileSync(join(out, 'checks.json'), JSON.stringify({
-      scenes: sceneFrames.map((f) => ({ label: f.label, ...f.checks })),
-      sections,
-      failures,
-    }, null, 1));
-    console.log(`checks: ${join(out, 'checks.json')} · ${failures.length ? `${failures.length} failing` : 'all pass'}`);
-    for (const m of failures) console.log(`✗ ${m}`);
-    if (failures.length) process.exit(1);
+  // A crash is "could not run" (2): exit 1 is read as findings.
+  try {
+    mkdirSync(out, { recursive: true });
+    // The old headless shell draws WebGL black —a globe or a shader vanishes from the video—; the new
+    // headless mode (`channel: 'chromium'`) renders with the real GPU. Falls back if it is not there.
+    const browser = await pw.chromium.launch({ channel: 'chromium' }).catch(() => pw.chromium.launch());
+    const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, recordVideo: { dir: out, size: { width, height } } });
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+    const frames = await tour(page, { seconds });
+    const video = await page.video()?.path();
+    await context.close();
+    await sheet(browser, frames, join(out, 'frames.png'));
+    const still = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+    await still.goto(url, { waitUntil: 'load', timeout: 60000 });
+    await settle(still);
+    const runChecks = !args.includes('--no-checks');
+    const sceneFrames = await scenes(still, { checks: runChecks });
+    const sections = runChecks ? await sectionChecks(still) : null;
+    if (sceneFrames.length) await sheet(browser, sceneFrames, join(out, 'scenes.png'));
+    // The sheet shrinks each scene to a quarter: a judge reading it scores 16 px text as illegible.
+    sceneFrames.forEach((f, i) => writeFileSync(join(out, `scene-${i + 1}.png`), Buffer.from(f.png, 'base64')));
+    await browser.close();
+    const final = join(out, 'showreel.webm');
+    if (video && existsSync(video)) renameSync(video, final);
+    console.log(`video: ${final}\nframes: ${join(out, 'frames.png')}${sceneFrames.length ? `\nscenes: ${join(out, 'scenes.png')}` : ''}`);
+    if (runChecks) {
+      const failures = [
+        ...sceneFrames.flatMap((f) => f.checks.failures.map((m) => `scene "${f.label}": ${m}`)),
+        ...sections.failures,
+      ];
+      writeFileSync(join(out, 'checks.json'), JSON.stringify({
+        scenes: sceneFrames.map((f) => ({ label: f.label, ...f.checks })),
+        sections,
+        failures,
+      }, null, 1));
+      console.log(`checks: ${join(out, 'checks.json')} · ${failures.length ? `${failures.length} failing` : 'all pass'}`);
+      for (const m of failures) console.log(`✗ ${m}`);
+      if (failures.length) process.exit(1);
+    }
+  } catch (e) {
+    console.error(`showreel could not run: ${e.message}`);
+    process.exit(2);
   }
 }

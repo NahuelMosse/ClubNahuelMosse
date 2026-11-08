@@ -6,7 +6,7 @@
 // item (`listPill`); `data-modality` on the panel says which of them moved it last, and the keyboard
 // adds a thin ring. A panel opened by keyboard animates like one opened by pointer: motion is only
 // reduced to a fade by the CSS under `prefers-reduced-motion`.
-import { reduced, finePointer, once, uid, flip, place, icon, escapeHtml, fold, messages, locale, format, listPill, hueOf, swapIn, shimmerHtml, pauseOffscreen, EASE_OUT } from './core.js';
+import { reduced, finePointer, once, uid, flip, place, cascade, icon, escapeHtml, fold, messages, locale, format, listPill, hueOf, swapIn, shimmerHtml, pauseOffscreen, EASE_OUT } from './core.js';
 
 const printable = (e) => e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey;
 const rotate = (list, from) => [...list.slice(Math.max(0, from)), ...list.slice(0, Math.max(0, from))];
@@ -73,6 +73,7 @@ const menuOf = (panel, parent = null) => {
     pill.hide();
     panel.showPopover();
     place(panel, at, { side, align });
+    cascade(panel);
     at.setAttribute?.('aria-expanded', 'true');
     if (!parent) { openers.add(ctl); watchOutside(); }
     panel.dispatchEvent(new CustomEvent('menuopen', { detail: { context: ctl.root().context } }));
@@ -198,6 +199,7 @@ const popover = (trigger) => {
   const open = () => {
     panel.showPopover();
     place(panel, trigger, { align: trigger.dataset.align });
+    cascade(panel, ':scope > :not(.stack), :scope > .stack > *');
     trigger.setAttribute('aria-expanded', 'true');
     openers.add(handle);
     watchOutside();
@@ -264,6 +266,7 @@ const select = (trigger) => {
     pill.hide();
     list.showPopover();
     place(list, trigger, { matchWidth: true, gap: 4 });
+    cascade(list);
     trigger.setAttribute('aria-expanded', 'true');
     openers.add(handle);
     watchOutside();
@@ -382,8 +385,8 @@ const combobox = (box) => {
     openers.add(handle);
     watchOutside();
     render(preferChosen && fresh);
-    // Opening — not every key — brings the options in: 4 px, 15 ms apart, the first six.
-    if (fresh && !reduced()) optionEls().slice(0, 6).forEach((o, i) => o.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 140, delay: i * 15, easing: EASE_OUT, fill: 'backwards' }));
+    // Opening — not every key — brings the options in.
+    if (fresh) cascade(list);
   };
   // A combobox that can create says so in its error, with the same «X» its create option shows;
   // `data-error-create` on the input is that sentence in the screen's words (`{value}` is the text).

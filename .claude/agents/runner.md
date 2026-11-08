@@ -35,4 +35,4 @@ it down by its PID before reporting — never by process name. If something has 
 so with the pid and how it is brought down. A process you did not launch is not touched even if it
 looks leftover: it is reported.
 
-Your last message is the whole report the caller reads: result, evidence, what is pending.
+Your last message is the whole report the caller reads: result, evidence, what is pending, in **15 lines or fewer** (and at least 200 characters), the verdict first. What did not run is "could not run", never "passed".

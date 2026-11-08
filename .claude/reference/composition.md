@@ -7,7 +7,9 @@ correlates with the jury score (evidence strength `*`: taste to weigh, a range o
 Frames 1 and 2 weigh most (57 % of the time on the first, 74 % on two, 81 % on three): they get the wide strict bounds (focus 15-60 %, empty at most 70 %);
 the rest of the frames use the ranges as guides.
 
-## Frame rules (strict in frames 1 and 2)
+## Frame rules for landing frames (strict in frames 1 and 2)
+
+The numbers below describe landing frames. A product screen uses the product rows of `design-round` and `modern-interface.md`.
 
 The rules of focus, scale, air, axes, competing and density are taste (`*`). A flag on them is a difference to weigh: it is never chased if the frame looks worse against the reference than before. Each round starts with a visual judgment of the frame next to the same frame of the reference, then the numbers. A round spent only moving numbers, with no visual gain, is a failure mode, not progress.
 
@@ -31,9 +33,9 @@ An asymmetry with an anchor (2/3 + 1/3) is allowed; thirds and the golden ratio 
 
 The ranges describe a page of ordinary frames. A section family built on purpose to break them says so in the card's `## Look` with `intent: collage|statement|grid|pinned-media`
 (`design-round --intent <name|card.md>`). Under an intent, rules 1, 4, 5 and 6 (focus share, axes, competing, elements) print as `report:` and are not flags; rules 2, 3, 7 and 8 and the void-frame row keep their bounds.
-- `collage`: items of different sizes drifting at different speeds; 8-12 compete on purpose, one photo leads at about 35 % of the width.
-- `statement`: centered lines of one display size, 20 % of air on each side; few elements, no image.
-- `grid`: equals with no single focus (cards, helmets); dense, 5 % empty, a staggered column carries the rhythm.
+- `collage`: items of different sizes drifting at different speeds; many compete on purpose and one photo leads (for example 8-12 items, a photo at about 35 % of the width).
+- `statement`: centered lines of one display size with air on each side (for example 20 %); few elements, no image.
+- `grid`: equals with no single focus (cards); dense, little empty, a staggered column carries the rhythm.
 - `pinned-media`: a full-bleed layer held while text or a second layer moves over it.
 An intent is declared, never inferred from the frame that failed; without it the ranges are flags as before.
 Evidence (`*`, one site): landonorris.com, Site of the Year 2025, 1440 px. The first reading flagged 10 of 12 frames: a full-bleed pinned portrait read as a focus of 100 %, a 3143 px pinned drift collage carries 8-12 competing items, the helmet grid has 41 elements and 5 % empty. The same frames carry a scale jump of 8:1 (display 93-97 px at line height 0.85 against 12 px labels) and type that overflows the viewport on both sides.

@@ -589,7 +589,7 @@ function initMouseParallax() {
 - Keep pinned sections limited and test them on mobile.
 - Add `will-change` only to elements that actually animate.
 - Use `ScrollTrigger.refresh()` after images, fonts, or layout shifts.
-- In React or SPA routes, wrap setup in `gsap.context()` and call `ctx.revert()` on cleanup.
+- In React or SPA routes, set up with `useGSAP` (scope, `contextSafe` for handlers) and gate reduced motion and breakpoints with `gsap.matchMedia()`, which reverts when the query stops matching (`gsap-react`, `gsap-core`). Smooth scroll stays Lenis on the GSAP ticker: one engine, never ScrollSmoother beside it.
 - Kill or revert ScrollTriggers on page transitions before initializing the next route.
 
 ## Init Order

@@ -69,7 +69,12 @@
   /* Fields and the secondary button: the fill at rest and under the pointer. */
   --field-bg: var(--surface-raised);
   --field-bg-hover: var(--surface-raised);
+  --btn-bg: var(--surface-raised);
   --btn-bg-hover: var(--surface-hover);
+  /* The face of a button is lit from above: a light that fades down its first half and a shade at its foot. A field is
+     the opposite, a recess: its shadow falls inside, under its top edge. */
+  --btn-face: none;
+  --primary-face: none;
   /* The segmented control: a sunken track and a raised thumb that carries the selected option. */
   --segmented-track: var(--n-4);
   --segmented-thumb: var(--surface-raised);
@@ -110,6 +115,8 @@
   --range-tint: color-mix(in oklab, var(--accent) 12%, transparent);
   --chart-bar: color-mix(in oklab, var(--accent) 28%, var(--surface-raised));
   --sheen: oklch(100% 0 0 / 0.64);
+  --skeleton: color-mix(in oklab, var(--text) 7%, var(--surface-raised));
+  --skeleton-ring: transparent;
   --avatar-bg-l: 93%;
   --avatar-bg-c: 0.04;
   --avatar-fg-l: 40%;
@@ -136,10 +143,15 @@
   --overlay-edge: 0 0 #0000;
   --shadow-overlay: 0 0 0 1px var(--overlay-ring), 0 2px 4px -1px oklch(25% 0.03 265 / 0.06), 0 12px 32px -8px oklch(25% 0.03 265 / 0.14);
   --shadow-modal: 0 0 0 1px var(--overlay-ring), 0 4px 8px -2px oklch(25% 0.03 265 / 0.06), 0 24px 60px -12px oklch(25% 0.03 265 / 0.22);
-  --shadow-control: 0 1px 0 oklch(0% 0 0 / 0.04), 0 1px 2px oklch(25% 0.03 265 / 0.05);
+  --shadow-control: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-field: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-control-hover: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-field-focus: 0 0 0 3px var(--focus-soft);
   --card-hairline: 0 1px 0 oklch(0% 0 0 / 0.04);
-  --shadow-primary: inset 0 1px 0 oklch(100% 0 0 / 0.16), 0 1px 2px color-mix(in oklab, var(--accent) 24%, transparent);
-  --shadow-primary-press: inset 0 1px 0 oklch(0% 0 0 / 0.08);
+  /* The primary action glows in its own color under it, a glow that grows when the pointer is on it. */
+  --shadow-primary: inset 0 1px 0 0 oklch(100% 0 0 / 0.16), 0 1px 2px 0 oklch(0% 0 0 / 0.08);
+  --shadow-primary-hover: inset 0 1px 0 0 oklch(100% 0 0 / 0.16), 0 4px 12px -4px color-mix(in oklab, var(--accent) 60%, transparent);
+  --shadow-primary-press: none;
   --shadow-check: inset 0 1px 0 oklch(100% 0 0 / 0.16);
   /* The knob of a switch and the thumb of a slider carry the control's edge: a 1 px ring that holds 3:1
      against the light track (WCAG 1.4.11), so the track itself can stay light. */
@@ -341,6 +353,8 @@
   --motion-ripple: 450ms var(--ease-out);
   --ripple-on-accent: oklch(100% 0 0 / 0.22);
   --ripple-neutral: oklch(22% 0.02 265 / 0.08);
+  --btn-light: oklch(22% 0.02 265 / 0.06);
+  --btn-light-on-accent: oklch(100% 0 0 / 0.28);
   --motion-swap-out: 90ms var(--ease-in);
   --motion-swap-in: 160ms var(--ease-out);
   --swap-y: 6px;
@@ -394,9 +408,11 @@
   --control-border: oklch(100% 0 0 / 0.36);
   --control-border-hover: oklch(100% 0 0 / 0.46);
   --btn-border: oklch(100% 0 0 / 0.12);
-  --field-bg: oklch(100% 0 0 / 0.035);
-  --field-bg-hover: oklch(100% 0 0 / 0.06);
-  --btn-bg-hover: var(--field-bg-hover);
+  --field-bg: oklch(100% 0 0 / 0.045);
+  --field-bg-hover: oklch(100% 0 0 / 0.07);
+  --btn-bg: oklch(100% 0 0 / 0.045);
+  --btn-bg-hover: oklch(100% 0 0 / 0.08);
+  --btn-face: none;
   --hl-bg: oklch(100% 0 0 / 0.07);
   --track-hover: oklch(100% 0 0 / 0.13);
   --edge-shadow: oklch(0% 0 0 / 0.5);
@@ -407,6 +423,8 @@
   --range-tint: color-mix(in oklab, var(--accent) 20%, transparent);
   --chart-bar: color-mix(in oklab, var(--accent) 38%, var(--surface-raised));
   --sheen: oklch(100% 0 0 / 0.04);
+  --skeleton: oklch(100% 0 0 / 0.06);
+  --skeleton-ring: var(--border);
   --avatar-bg-l: 32%;
   --avatar-bg-c: 0.05;
   --avatar-fg-l: 86%;
@@ -415,7 +433,9 @@
   --overlay-edge: inset 0 1px 0 oklch(100% 0 0 / 0.06);
   --shadow-overlay: 0 0 0 1px var(--overlay-ring), 0 2px 6px oklch(0% 0 0 / 0.3), 0 12px 32px -6px oklch(0% 0 0 / 0.55);
   --shadow-modal: 0 0 0 1px var(--overlay-ring), 0 24px 60px -12px oklch(0% 0 0 / 0.65);
-  --shadow-control: inset 0 1px 0 oklch(100% 0 0 / 0.06), 0 1px 2px oklch(0% 0 0 / 0.4);
+  --shadow-control: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-field: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-control-hover: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
   --card-hairline: 0 -1px 0 oklch(100% 0 0 / 0.06);
   --shadow-thumb: inset 0 1px 0 oklch(100% 0 0 / 0.06);
   --scrim: oklch(0% 0 0 / 0.6);
@@ -463,6 +483,7 @@
   --info-soft: oklch(76% 0.11 235 / 0.14);
   --highlight: inset 0 1px 0 oklch(100% 0 0 / 0.05);
   --ripple-neutral: oklch(100% 0 0 / 0.1);
+  --btn-light: oklch(100% 0 0 / 0.1);
   --arrival: color-mix(in oklab, var(--accent) 16%, transparent);
   --spot: color-mix(in oklab, var(--accent) 10%, transparent);
   --shadow-1: 0 1px 2px oklch(0% 0 0 / 0.4);

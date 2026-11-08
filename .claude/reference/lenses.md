@@ -92,3 +92,15 @@ Always read by the plan `judge` at high, whatever the lenses of `risk.json`. The
 - Does anything sensitive travel in the query string?
 - Which limit stops a loop of requests (size, count, time), and what does it answer?
 - Does the static server serve only the public folder (`/.git/config`, `/.env`, `/package.json`, `/specs/`, `/design/` give 404)?
+- Does the page set a tracking cookie or call a tracker before consent, and does a form of personal data link the privacy page (`legal.md` LEG-07, LEG-08)?
+- Does the card copy code, fonts or pictures from others, and does each carry its licence or credit beside it (`legal.md` §1–2)?
+
+A security finding names its attack in one sentence: who sends what, and what they get. Without that sentence there is no finding. Before raising one, check whether a library the Tasks already name handles it: ORM parameters, the framework's escaping, the auth middleware. These are not findings:
+- A value from an environment variable, a CLI flag, a config file or a constant of the card. Only what a request or the person brings is untrusted.
+- An id from 128 random bits (UUID v4) that "could be guessed". Missing the ownership check on that id is still a finding.
+- A request value that fills part of a path on a fixed host. It is SSRF only when it chooses the host, the scheme or the port.
+- `../` in a value that never reaches the file system.
+- A screen that does not check permissions. The server decides; its route is what gets asked.
+- XSS in React, Vue, Svelte or Angular outside `dangerouslySetInnerHTML`, `v-html`, `{@html}`, `innerHTML` or `bypassSecurityTrust*`.
+- A log line with a URL, an id or a status code. Only secrets, tokens, passwords and personal data count.
+- Hardening with no attack: a header the card does not name, an audit log, a library version with no CVE that the card's code reaches.

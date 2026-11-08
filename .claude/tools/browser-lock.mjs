@@ -10,9 +10,20 @@ import { currentCard } from './card.mjs';
 
 // A command with the package.json scripts it runs written out: `npm test` becomes the body of the `test` script,
 // and so on down `npm run <other>` calls.
-export const expandScripts = (command, scripts, depth = 0) => command.replace(
-  /\bnpm\s+(?:run(?:-script)?\s+)?([\w:.-]+)/g,
-  (whole, name) => (scripts[name] && depth < 5 ? expandScripts(scripts[name], scripts, depth + 1) : whole));
+// npm, pnpm, yarn and bun are expanded; `run` is optional for all. A folder flag (`--prefix`, `-C`, `--dir`,
+// `--cwd`) moves the scripts to that folder's package.json, read from `root` when given.
+const FOLDER_FLAGS = String.raw`(?:\s+(?:--prefix|-C|--dir|--cwd)(?:=|\s+)(?:"[^"]*"|'[^']*'|\S+))*`;
+const RUNNER = new RegExp(String.raw`\b(npm|pnpm|yarn|bun)(${FOLDER_FLAGS})\s+(?:(?:run(?:-script)?)\s+)?([\w:.-]+)`, 'g');
+const scriptsOf = (folder) => {
+  try { return JSON.parse(readFileSync(join(folder, 'package.json'), 'utf8')).scripts ?? {}; } catch { return {}; }
+};
+export const expandScripts = (command, scripts, depth = 0, root = null) => command.replace(
+  RUNNER,
+  (whole, _tool, flags, name) => {
+    const dir = flags.match(/(?:--prefix|-C|--dir|--cwd)(?:=|\s+)("[^"]*"|'[^']*'|\S+)/)?.[1]?.replace(/^["']|["']$/g, '');
+    const own = dir && root ? scriptsOf(resolve(root, dir)) : scripts;
+    return own[name] && depth < 5 ? expandScripts(own[name], own, depth + 1, dir && root ? resolve(root, dir) : root) : whole;
+  });
 
 // A command launches Playwright when, with the scripts it runs written out, it says `playwright test`. Through
 // once.mjs it is the command after `--`. Naming Playwright (`grep playwright`) is not launching it. It lives here,
@@ -21,7 +32,7 @@ const PLAYWRIGHT_TEST = /(^|[\s/\\"'])playwright(?:\.cmd)?\s+test\b/;
 export const launchesPlaywright = (command, root) => {
   let scripts = {};
   try { scripts = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).scripts ?? {}; } catch {}
-  return PLAYWRIGHT_TEST.test(expandScripts(String(command).replace(/^.*\bonce\.mjs\s+\S+\s+--\s+/, ''), scripts));
+  return PLAYWRIGHT_TEST.test(expandScripts(String(command).replace(/^.*\bonce\.mjs\s+\S+\s+--\s+/, ''), scripts, 0, root));
 };
 
 // The git folder is read from the nearest `.git` up from `folder` (a folder, or in a worktree a file `gitdir: <path>`)
@@ -45,9 +56,23 @@ export const lockFile = (root) => {
   return dir ? join(dir, 'sdd-browser-run.json') : null;
 };
 
-const alive = (pid) => {
+// When the process started, as text that is stable for its lifetime; null when the system cannot say. A PID
+// that was recycled by another process has another start time.
+export const startOf = (pid) => {
+  if (!Number.isInteger(pid) || pid <= 0) return null;
+  const r = process.platform === 'win32'
+    ? spawnSync('powershell', ['-NoProfile', '-Command', `(Get-Process -Id ${pid}).StartTime.ToFileTimeUtc()`], { encoding: 'utf8' })
+    : spawnSync('ps', ['-o', 'lstart=', '-p', String(pid)], { encoding: 'utf8', env: { ...process.env, LC_ALL: 'C' } });
+  const text = r.status === 0 ? String(r.stdout).trim() : '';
+  return text || null;
+};
+
+const alive = (pid, started) => {
   if (!Number.isInteger(pid) || pid <= 0) return false;
-  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+  try { process.kill(pid, 0); } catch (e) { return e.code === 'EPERM'; }
+  if (!started) return true;
+  const now = startOf(pid);
+  return now === null || now === started;
 };
 
 const readLock = (file) => {
@@ -60,7 +85,7 @@ export const liveLock = (root) => {
   if (!currentCard(root)) return null;
   const file = lockFile(root);
   const held = file && readLock(file);
-  return held && alive(held.pid) ? { pid: held.pid, command: String(held.command ?? '') } : null;
+  return held && alive(held.pid, held.started) ? { pid: held.pid, command: String(held.command ?? '') } : null;
 };
 
 // Marks a browser run of this process. Returns the function that removes the mark (a no-op when nothing was
@@ -71,7 +96,7 @@ export const takeLock = (root, command) => {
   if (!file) return () => {};
   const other = liveLock(root);
   if (other && other.pid !== process.pid) return () => {};
-  try { writeFileSync(file, JSON.stringify({ pid: process.pid, command, at: new Date().toISOString() })); } catch { return () => {}; }
+  try { writeFileSync(file, JSON.stringify({ pid: process.pid, started: startOf(process.pid), command, at: new Date().toISOString() })); } catch { return () => {}; }
   const release = () => {
     if (readLock(file)?.pid === process.pid) { try { rmSync(file, { force: true }); } catch { /* a stale mark is ignored once its PID is dead */ } }
   };

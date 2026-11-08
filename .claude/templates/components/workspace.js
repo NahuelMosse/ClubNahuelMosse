@@ -40,7 +40,7 @@ const TEMPLATES = [
 const VISUALS = [
   `<div class="viz__row"><span style="width:55%"></span></div><div class="viz__row"><span style="width:70%"></span></div><div class="viz__row"><span style="width:42%"></span></div><div class="viz__row"><span style="width:63%"></span></div>`,
   [60, 45, 70].map((w, i) => `<div class="viz__pair"><div class="viz__row"><span style="width:${w}%"></span></div><span class="viz__link"></span><div class="viz__row viz__row--on"><span style="width:${[60, 75, 50][i]}%"></span></div></div>`).join(''),
-  '<span class="viz__done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>',
+  '<span class="viz__done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5.25 12.75l4.5 4.5 9-10.5"/></svg></span>',
 ];
 const STEPS = [
   ['Importás el extracto', 'Subís el archivo de tu banco y Ledger lee cada movimiento: fecha, concepto, importe y referencia. No hace falta preparar nada antes.'],

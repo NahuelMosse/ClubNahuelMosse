@@ -38,13 +38,12 @@ the card does not answer is an `ASM` with its test.
   rollback on error, invalidate on settle). Never for money or what cannot be undone.
 - Changing page or filter keeps the previous data on screen until the new one arrives; the next route and its data are
   prefetched on hover, focus or touchstart (never a route with side effects).
-- Waiting by duration: under 1 s nothing; up to 10 s a skeleton with the content's grid (a page) or a spinner (a module);
-  over 10 s progress.
+- Waiting: the skeleton delay and the progress thresholds are UX-CARGA-1 in `.claude/reference/ui-patterns.md` (module ui).
 - Images carry width and height, AVIF/WebP and `srcset`, lazy only below the fold, the main one eager; fonts are WOFF2,
   subset, with `font-display`.
 
 ## Flutter
 - `const` widgets; `ListView.builder`/`GridView.builder` for lists; no costly work in `build()`; `setState` on the smallest
-  subtree; no `Opacity`, `saveLayer` or clips inside animations. The frame budget is 16 ms.
+  subtree; no `Opacity`, `saveLayer` or clips inside animations. The frame budget is in `.claude/profiles/flutter.md`.
 
 The numbers and their sources: `.claude/reference/performance.md`.

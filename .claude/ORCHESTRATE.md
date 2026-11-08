@@ -21,7 +21,7 @@ in progress stays yours until its close, and the new one goes to a `card-runner`
 3. **End your turn.** Each runner's notification wakes you; the person can talk to you meanwhile. Pass each report on in one
    line per card: key, passed / failed / could not run, PR and whether it merged, what waits for a person.
 4. **You do not repair a card.** A runner that stopped (turn or context cap, a crash) is relaunched once with the same key and
-   worktree, plus `continue from specs/<card>/handoff.md`; a second stop goes to the person as is. A question about a card
+   worktree, plus `continue from specs/<card>/runner-handoff.md`; a second stop goes to the person as is. A question about a card
    goes to its runner by `SendMessage`, which resumes it with its context.
 5. **Close the worktree** once its PR merged: `git worktree remove ../<repo>-<ID>` (never `--force`: it may hold the only
    copy of unpublished work).

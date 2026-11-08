@@ -18,11 +18,11 @@ Always on the card in Jira, once, without asking approval.
 1. When the card is read, every open `<ID>-AMB-NN` goes in **a single comment** (`addCommentToJiraIssue`, the card's own key), in
    the business's language without IDs or jargon, numbered, each with its options and the one assumed if nobody answers, and
    saying when the answers are read. The hook records `<ID>-ASK · <date> · posted` in `ambiguities.md`.
-2. Answers are read at two fixed points, never by waiting: before the tests are written and before the gate first runs. Each is
+2. Answers are read once, by the main thread, before RED, never by waiting. Each is
    recorded `<ID>-AMB-NN · <date> · resolved · <answer> · <author>, <date>`.
-3. What has no answer at the second reading is `<ID>-AMB-NN · <date> · expired → <ID>-ASM-NN`: the reading that works with any
-   answer or, failing that, the cheapest to undo, with its test tagged `@<ID>-ASM-NN`. A later answer, or one that
-   contradicts an assumption frozen in a committed test, is not applied: it goes in the PR with what undoing it costs.
+3. What has no answer then is `<ID>-AMB-NN · <date> · expired → <ID>-ASM-NN`: the reading that works with any
+   answer or, failing that, the cheapest to undo, with its test tagged `@<ID>-ASM-NN`. A later answer does not reopen RED:
+   it is recorded in the Log and goes in the PR with what undoing the assumption costs.
 4. **Never a second round.** A later doubt is an `ASM-NN` with its test, listed in the PR; `publish.mjs` blocks a second comment.
    A failed post is retried once (`<ID>-ASK · <date> · failed · <error>`); if it fails again there is no channel.
 5. **No channel** (no Jira, no MCP, two failed posts): each ambiguity becomes `<ID>-AMB-NN · <date> · no channel · <the question> → <ID>-ASM-NN`.
@@ -56,7 +56,7 @@ applied; that the card is still `proposed`; that a visual verdict was a model's;
 
 ## What only a person decides
 
-A check that stops is not turned off: it stops the card, reported with what it lacks. `SDD_UNATTENDED=1`, exported by whoever
+A failing check is never silenced: it stops the card, reported with what it lacks. Turning on a module the repo needs is not silencing. `SDD_UNATTENDED=1`, exported by whoever
 runs a card with no person deciding, enforces it: `node .claude/tools/kit.mjs off` exits 2, and `confirm-off` too above poc. A
 signal that came after a module was turned off is not the agent's to dismiss: it runs `kit.mjs on <module>` (the cheapest to
 undo) and records an ASM with its undo command; the extra time counts against the cap. `kit.mjs grade` exits 2 for `poc` and any

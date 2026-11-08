@@ -17,6 +17,9 @@
 // <log>      the file to read; it may not exist yet, but if nothing writes it within 15 s it is not a wait (exit 3).
 //            An agent's output file (`tasks/<id>.output`, or any file with `--agent-output`) that is still at 0 bytes
 //            after 15 s is exit 3 too. An ordinary log that is empty is a normal wait: a suite may write only at the end.
+//            A log last written more than 60 s before the wait began whose lines already decide the wait is an earlier
+//            run's: they decide nothing until something writes it again, and if nothing does within 15 s it is exit 3,
+//            with its last line. An old log with no deciding line is a quiet live run, and is waited on.
 // --until    regex (multiline: ^ and $ match at lines) whose first match means “done, as expected”. Optional for the
 //            log of a kit tool (verify, mutate, once, attack, repeat, probe, pairs, showreel): each ends with the fixed
 //            line `<tool>: exit <N> in <X> min` (final-line.mjs), and the wait ENDS ON IT whatever --until says:
@@ -50,11 +53,15 @@ import { spawnSync } from 'node:child_process';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { finalLineOf } from './final-line.mjs';
+import { linesOf } from './transcript.mjs';
+import { STALE_MINUTES, agentDead } from './agents-running.mjs';
 
 const MAX_S = 570;
 const MONITOR_S = 1790;
 // Past this a missing or empty log is a wait on something nobody runs: blind sleeping, not waiting.
 const APPEARS_S = 15;
+// A log older than this when the wait starts is not the one the waited command is writing.
+const STALE_S = 60;
 const usage = (why) => {
   console.error(`${why}\nusage: node wait.mjs <log> [--until <regex>] [--fail <regex>] [--max ${MAX_S} | --monitor [--every <min>] --max ${MONITOR_S}] [--ignore-case]\n       node wait.mjs --agent <agentId> [--agent <agentId> ...] [--any | --all] [--max ${MAX_S}]`);
   process.exit(3);
@@ -149,12 +156,14 @@ const liveProcesses = () => {
   } catch { return []; }
 };
 const slashed = (s) => s.replaceAll('\\', '/').toLowerCase();
+// A kit tool's name is shared by every session's waiters and gates, so it never identifies one agent's work.
+const KIT_TOOLS = new Set((() => { try { return readdirSync(new URL('.', import.meta.url)); } catch { return []; } })().map((f) => f.toLowerCase()));
+const kitTool = (t) => KIT_TOOLS.has(t.split('/').pop());
 // Paths and file names inside the commands the agent launched in the background, from its transcript.
 const backgroundNeedles = (metaFile) => {
-  let text = '';
-  try { text = readFileSync(metaFile.replace(/\.meta\.json$/, '.jsonl'), 'utf8'); } catch { return []; }
+  const file = metaFile.replace(/\.meta\.json$/, '.jsonl');
   const needles = new Set();
-  for (const line of text.split('\n')) {
+  for (const line of linesOf(file)) {
     if (!line.includes('"Bash"') && !line.includes('"PowerShell"')) continue;
     let entry; try { entry = JSON.parse(line); } catch { continue; }
     for (const part of Array.isArray(entry?.message?.content) ? entry.message.content : []) {
@@ -162,14 +171,15 @@ const backgroundNeedles = (metaFile) => {
       if (part?.type !== 'tool_use' || typeof cmd !== 'string') continue;
       if (!(part.input.run_in_background === true || /\bnohup\b|\bstart\s+\/b\b|\bStart-Process\b|\s&\s*(\)|$)/m.test(cmd))) continue;
       for (const t of slashed(cmd).match(/[\w.:~@%+-]*\/[\w.:~@%+\/-]{3,}|[\w-]{3,}\.(?:py|mjs|js|cjs|sh|ps1|blend|exe|log)\b/g) ?? []) {
-        if (t.length >= 8 && t !== '/dev/null') needles.add(t);
+        if (t.length >= 8 && t !== '/dev/null' && !kitTool(t)) needles.add(t);
       }
     }
   }
   return [...needles];
 };
 const backgroundWork = (metaFile) => {
-  const needles = backgroundNeedles(metaFile);
+  let needles;
+  try { needles = backgroundNeedles(metaFile); } catch { return []; }
   if (!needles.length) return [];
   const mine = new Set([process.pid, process.ppid]);
   return liveProcesses().filter((p) => !mine.has(p.pid) && needles.some((n) => slashed(p.cmd).includes(n)));
@@ -203,6 +213,7 @@ for (const raw of agents) {
       return { code: 0, line: `agent ${id} finished after ${elapsed()} s, background work still running: ${shown}${work.length > 5 ? `; and ${work.length - 5} more` : ''} (matched by the paths of its background commands; remote jobs, containers and children that share nothing with their launcher are not visible)` };
     },
     over: () => `agent ${id} has not finished`,
+    dead: () => { const file = metaOf(id); return file ? agentDead(file) : false; },
   });
 }
 
@@ -241,11 +252,26 @@ if (args.length || !agents.length) {
   let size = -1;
   let grew = Date.now();
   let warned = false;
+  // A log last written well before the wait began, whose lines already decide the wait, holds an earlier run's result:
+  // a wait launched beside the command can start before the command truncates it. Its lines decide nothing until the
+  // file is written again. A quiet log with no deciding line is a live run between outputs, and is waited on.
+  const before = existsSync(log) ? statSync(log).mtimeMs : null;
+  const decides = (t) => Boolean(fail?.test(t) || until?.test(t) || finalLineOf(t));
+  let stale = before !== null && start - before > STALE_S * 1000 && decides(read()) ? before : null;
   targets.push({
     name: log,
     poll: () => {
       // Read after checking the process, so a line it wrote just before ending is seen.
       const dead = pid !== null && !alive(pid);
+      if (stale !== null) {
+        if (existsSync(log) && statSync(log).mtimeMs === stale) {
+          if (Date.now() - start < APPEARS_S * 1000 || max <= APPEARS_S) return null;
+          const last = read().trimEnd().split('\n').at(-1)?.slice(0, 160) || '(empty)';
+          console.error(`${log} was last written ${Math.round((start - stale) / 60000)} min before this wait and nothing has written it since: it is an earlier run's result, not this one's. Its last line: ${last}`);
+          process.exit(3);
+        }
+        stale = null;
+      }
       text = read();
       const bad = fail?.exec(text);
       if (bad) return { code: 1, line: `failed after ${elapsed()} s: ${lineAt(text, bad)}` };
@@ -317,6 +343,12 @@ for (;;) {
     writeSync(1, `[HB ${clock()}] ${Math.round((Date.now() - start) / 60000)} min · ${where}\n`);
   }
   pause();
+}
+// A dead agent will never report: waiting again is not the advice.
+const gone = targets.filter((t) => !done.has(t) && t.dead?.());
+if (gone.length) {
+  console.log(`timed out after ${max} s: ${gone.map((t) => t.name).join(', ')} ended without a result (it never finished and wrote nothing for ${STALE_MINUTES} min). Do not wait again: read what it wrote and relaunch it if the work is missing.`);
+  process.exit(1);
 }
 if (!several) {
   const [t] = targets;

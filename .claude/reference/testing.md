@@ -2,7 +2,7 @@
 
 **When it is read:** when the specs are turned into tests (shape of the suite, techniques per
 requirement type, test data), when the builder writes or changes tests (doubles, oracles,
-determinism, e2e), and by the `judge` on the area T criteria. **How:** only the sections the card touches,
+determinism, e2e). **How:** only the sections the card touches,
 with `Read` and a line range of the heading; never whole. `card.md` names the rule IDs that apply and the
 `builder` receives those IDs and their ranges. Examples are Node/TypeScript (Vitest, `node:test`,
 Playwright); each rule brings its generic equivalent (pytest, JUnit, xUnit). **Libraries and tools are options,
@@ -35,7 +35,7 @@ smell planted, a clean sample and five real spec files (false positives are revi
 | TEST-E2E-01, TEST-E2E-04 | T12 |
 
 The rules outside this table are judgment or guidance, with no criterion of their own. The detector D18 of the
-last topic (no test weakened in the card's diff) is checked by the gate; the plan judge reads `card.md` and runs only at high risk.
+last topic (no test weakened in the card's diff) is checked by the gate.
 
 ## 1. Strategy and shape of the suite (EST)
 
@@ -160,6 +160,8 @@ last topic (no test weakened in the card's diff) is checked by the gate; the pla
 **TEST-DET-05** — Asynchrony: wait for an event, a callback or polling with a timeout that lives in one place; never a sleep. · How C · criterion T8 · Check: detector D04. Covers TEST-E2E-03 for unit and integration · Source B6, B11.
 
 **TEST-DET-06** — Time zone and locale fixed in the runner (for example `TZ=UTC`), and an explicit test in another zone when the rule depends on the zone. · How C · criterion T8 · Check: the test script fixes `TZ`; `rg -n "TZ=" package.json`. Covers DB-MOD-06 in the data layer; see `reference/i18n.md` (module i18n) I18N-FMT-06 · Source B6.
+
+**TEST-DET-07** — A test runs on every OS the project supports. A behaviour tied to one platform (an encoding, line ends, a path separator) is reproduced from the test's own language so it runs everywhere, not by calling a shell that exists on one platform only. A test skipped by situation says why in its skip reason: skipped by platform, why the other platforms are not supported and what covers them there; skipped for a missing tool or service, which one, and the run reports it as could not run, never as passed. · How C · criterion T2 · Check: `rg -n "skip:|process\.platform" tests` — every conditional skip carries a reason that names its cause · Source B6.
 
 ## 10. Test data (DAT)
 

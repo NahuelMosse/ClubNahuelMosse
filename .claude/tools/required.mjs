@@ -2,7 +2,7 @@
 // required.mjs — run from the repo root, with a card in progress.
 //
 // Says what is missing, on the code being delivered, to be able to close:
-// - the mutation of every logic file the card touched (`mutationRequired`: nothing at poc, the domain at mvp, every file
+// - the mutation of every logic file the card touched (`mutationRequired`: nothing at poc, the domain and a screen's `*-state.js` at mvp, every file
 //   but the screens at production; a screen file —markup, components— and a file marked `(presentation)` are not mutated, and
 //   `declared · mutate · <file> · <why>` in the Log leaves one out, listed by the close for a person);
 // - the linter over every test file the card touched;
@@ -21,11 +21,12 @@ import {
   IS_CODE, IS_TEST, NOT_PRODUCTION, asOneArg, cardFiles, commandDir, oneRound, cardStart, copiedFromKit, currentCard, fileMapLines, keyOf, namedIn,
 } from './card.mjs';
 import { ROLES, actHold, actsOf, gateBlock, readCard, riskOf } from './card-doc.mjs';
-import { active, lateSignals, LATE_ADVICE } from './kit.mjs';
+import { active, cardLogic, isPoc, lateSignals, LATE_ADVICE } from './kit.mjs';
 import { runningAgents } from './agents-running.mjs';
 import { editedFromBase, IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { outOfScopeThatBelongToTheCard } from './out-of-scope.mjs';
 import { records } from './once.mjs';
+import { linesOf } from './transcript.mjs';
 
 const MUTATOR = /mutate\.mjs|stryker|mutmut|pitest|go-mutesting|cosmic-ray/i;
 const LINTER = /eslint|ruff|golangci-lint|pylint|flake8|rubocop|ktlint|checkstyle|dotnet format|dart (?:analyze|format)|flutter analyze/i;
@@ -39,12 +40,14 @@ const gateLine = (cardDir, name) => {
   return line?.slice(line.indexOf(':') + 1).trim();
 };
 
-// The models a session's record names (`"model":"…"` of its messages), in the order they appear.
+// The models a session's record names (`"model":"…"` of its messages), in the order they appear. Streamed: a long
+// session's record passes V8's longest string.
 export const modelsOf = (record) => {
+  const models = new Set();
   try {
-    const text = readFileSync(record, 'utf8');
-    return [...new Set([...text.matchAll(/"model"\s*:\s*"([^"<]+)"/g)].map((m) => m[1]))];
-  } catch { return []; }
+    for (const line of linesOf(record)) if (line.includes('"model"')) for (const m of line.matchAll(/"model"\s*:\s*"([^"<]+)"/g)) models.add(m[1]);
+  } catch { /* a record that is not there names no model */ }
+  return [...models];
 };
 // The records this card's sessions left in `.validation/sessions.log`, and the line of sessions.md each one needs.
 export const sessionRecords = (root, cardDir) => {
@@ -112,13 +115,16 @@ const hasRole = (lines, file, root, role) => namedIn(lines, file, root).some((l)
 const isDomain = (lines, file, root) => /(^|\/)domain\//.test(file) || hasRole(lines, file, root, 'rule');
 
 // `declared · mutate · <file> · <why>` in the Log: the card leaves that file unmutated on purpose; the close lists it for a person.
-export const DECLARED_MUTATE = /declared\s*·\s*mutate\s*·\s*([^\s·]+)\s*·\s*(.+?)\s*$/;
+export const DECLARED_MUTATE = /declared\s*·\s*mutate\s*·\s*`?([^\s·`]+)`?\s*·\s*(.+?)\s*$/;
 export const declaredUnmutated = (cardDir) => new Map((String(readCard(cardDir) ?? '').split(/^## Log\b.*$/m)[1] ?? '').split('\n')
   .map((l) => l.match(DECLARED_MUTATE)).filter(Boolean).map((m) => [m[1].replaceAll('\\', '/'), m[2]]));
 
 // Whether the grade asks for the mutation of a file. `root` is the card's repo (the cwd by default).
-export const mutationRequired = (exempt, map, file, root = process.cwd()) =>
-  !isPresentation(map, file, root) && !exempt.criteria.has('T3') && (exempt.level?.mutation !== 'domain' || isDomain(map, file, root));
+// A screen's pure state module (`presentation/<name>-state.js`, templates/card.md) holds its validation and messages: logic,
+// mutated at every grade that mutates, though it sits in presentation/.
+const SCREEN_LOGIC = /(^|\/)[^/]+-state\.[cm]?[jt]s$/;
+export const mutationRequired = (exempt, map, file, root = process.cwd()) => !exempt.criteria.has('T3') && (SCREEN_LOGIC.test(file)
+  || (!isPresentation(map, file, root) && (exempt.level?.mutation !== 'domain' || isDomain(map, file, root))));
 
 // Every report has an owner. A line for a report whose owner still runs starts with PENDING: it is not an action.
 export const PENDING = 'pending · ';
@@ -144,6 +150,13 @@ const migrationLines = (root, touched, recorded, current) => {
     if (!ran) out.push('P5 · DB-MIG-15 · the upgrade from main with seeded data, run on this code: a `migrate-upgrade: <the stack\'s command>` line in `## Gate` of card.md, which leaves its log through once.mjs');
   }
   return out;
+};
+
+// A poc's diff brings no logic: data is mocked in presentation files; logic belongs to the mvp.
+const pocVisualLogic = (root, cardDir) => {
+  if (!isPoc(root)) return [];
+  const logic = cardLogic(root, cardDir, readCard(cardDir) ?? '');
+  return logic.length ? [`T14 · a poc's diff brings no logic (${logic[0]}): mock the data in presentation files; logic belongs to the mvp`] : [];
 };
 
 // `closing: false` leaves out what is about the text of closing.md: whoever is writing it cannot be asked for what it is about to say.
@@ -187,13 +200,14 @@ const missingOnce = (root, { closing = true } = {}) => {
     ...qualityLines(root, touched, runOnThisCode),
     ...Object.entries(lateSignals(root, cardDir, { diff: true }))
       .map(([mod, found]) => `the module ${mod} is off (“${off.get(mod).reason}”) and the diff brings ${found.join('; ')}: ${LATE_ADVICE(mod, grade)}`),
+    ...pocVisualLogic(root, cardDir),
   ];
 
   const risk = riskOf(cardDir);
   if (!risk) out.push(`risk.json · run: \`node .claude/tools/risk.mjs specs/${name}\``);
   else if (risk.review !== 'low' && closing) {
     const judge = join(cardDir, 'judge.md');
-    if (!existsSync(judge) && risk.review === 'high') out.push(`${judgeRuns() ? PENDING : ''}judge.md: risk.json says review: high · launch the \`judge\` in plan mode (prompt starting PLAN) with card.md, before building${judgeRuns() ? ' (owner: the judge, still running)' : ''}`);
+    if (!existsSync(judge) && risk.review === 'high' && !exempt.without.has('judge')) out.push(`${judgeRuns() ? PENDING : ''}judge.md: risk.json says review: high · launch the \`judge\` in plan mode (prompt starting PLAN) with card.md, before building${judgeRuns() ? ' (owner: the judge, still running)' : ''}`);
     if (existsSync(judge)) for (const a of actsOf(readFileSync(judge, 'utf8'))) {
       const why = actHold(a, readCard(cardDir));
       if (why) out.push(`${a.id} of judge.md is ${why} · close it in the line: \`… · closed · <${a.plan ? 'ASM-NN, T<n> or Gate line of card.md' : 'output of its command or test'}>\`, or \`… · declared · <why it is not fixed>\``);
