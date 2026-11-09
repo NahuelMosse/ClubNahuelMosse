@@ -42,7 +42,7 @@ def create_app() -> FastAPI:
     app = DocumentedApp(
         title="ClubNahuelMosse API",
         version=config.version,
-        description="API de reservas de espacios deportivos de ClubNahuelMosse.",
+        description="Sports space booking API of ClubNahuelMosse.",
         lifespan=_lifespan,
     )
     app.add_middleware(BodyLimit)

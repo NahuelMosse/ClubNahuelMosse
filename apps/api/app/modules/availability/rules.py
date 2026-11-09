@@ -45,9 +45,9 @@ def validate_query(day: date, today: date, hours: int) -> dict[str, str]:
     """The errors of a slot query, by field (keys are the JSON names of the API)."""
     errors: dict[str, str] = {}
     if not today <= day < today + timedelta(days=DAYS_IN_VIEW):
-        errors["date"] = f"Elegí un día de los próximos {DAYS_IN_VIEW}"
+        errors["date"] = f"Choose a day within the next {DAYS_IN_VIEW}"
     if not MIN_HOURS <= hours <= MAX_HOURS:
-        errors["hours"] = f"La duración va de {MIN_HOURS} a {MAX_HOURS} horas"
+        errors["hours"] = f"The duration goes from {MIN_HOURS} to {MAX_HOURS} hours"
     return errors
 
 
@@ -97,11 +97,11 @@ def time_range(
 
 def _date_error(opening_hours: OpeningHours, day: date, today: date) -> str | None:
     if day < today:
-        return "La fecha tiene que ser futura"
+        return "The date must be in the future"
     if day >= today + timedelta(days=DAYS_IN_VIEW):
-        return f"Elegí un día de los próximos {DAYS_IN_VIEW}"
+        return f"Choose a day within the next {DAYS_IN_VIEW}"
     if day.isoweekday() not in opening_hours.open_days:
-        return "La sede no abre ese día"
+        return "The venue is closed that day"
     return None
 
 
@@ -109,11 +109,11 @@ def _end_error(
     opening_hours: OpeningHours, start: datetime, end: datetime, closing: datetime
 ) -> str | None:
     if end - start < timedelta(hours=MIN_HOURS):
-        return "La duración mínima es de una hora"
+        return "The minimum duration is one hour"
     if end - start > timedelta(hours=MAX_HOURS):
-        return f"La duración máxima es de {MAX_HOURS} horas"
+        return f"The maximum duration is {MAX_HOURS} hours"
     if end > closing:
-        return f"La sede cierra a las {_hhmm(opening_hours.closes_at)}"
+        return f"The venue closes at {_hhmm(opening_hours.closes_at)}"
     return None
 
 
@@ -129,7 +129,7 @@ def validate_range(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
         errors["date"] = date_error
     for field, hour in (("start_hour", since), ("until", until)):
         if (hour.minute, hour.second, hour.microsecond) != (0, 0, 0):
-            errors[field] = "Elegí una hora en punto"
+            errors[field] = "Choose an on-the-hour time"
     if errors.keys() & {"start_hour", "until"} or day >= date.max - timedelta(days=1):
         return errors
     start, end = time_range(day, since, until, now.tzinfo)
@@ -138,18 +138,18 @@ def validate_range(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
     if end_error:
         errors["until"] = end_error
     if start < opening:
-        errors["start_hour"] = f"La sede abre a las {_hhmm(opening_hours.opens_at)}"
+        errors["start_hour"] = f"The venue opens at {_hhmm(opening_hours.opens_at)}"
     elif "date" not in errors and start <= now:
-        errors["start_hour"] = "El horario tiene que ser futuro"
+        errors["start_hour"] = "The time must be in the future"
     return errors
 
 
 def duration_error(hours: int) -> str | None:
     """Why [hours] is not a bookable duration, or `None` if it is."""
     if hours < MIN_HOURS:
-        return "La duración mínima es de una hora"
+        return "The minimum duration is one hour"
     if hours > MAX_HOURS:
-        return f"La duración máxima es de {MAX_HOURS} horas"
+        return f"The maximum duration is {MAX_HOURS} hours"
     return None
 
 
@@ -165,6 +165,6 @@ def validate_booking(  # noqa: PLR0913, PLR0917 -- public signature fixed by its
     end = since.hour + hours
     if end > HOURS_PER_DAY:
         errors = validate_range(opening_hours, day, since, time(0, 0), now)
-        errors["until"] = f"La sede cierra a las {_hhmm(opening_hours.closes_at)}"
+        errors["until"] = f"The venue closes at {_hhmm(opening_hours.closes_at)}"
         return errors
     return validate_range(opening_hours, day, since, time(end % HOURS_PER_DAY, since.minute), now)

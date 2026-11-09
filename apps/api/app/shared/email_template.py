@@ -47,7 +47,7 @@ def _button(text: str, url: str) -> str:
         f"font-family:{TYPEFACE};font-size:16px;font-weight:700;color:{BACKGROUND};"
         f'text-decoration:none;border-radius:10px;">{escape(text)}</a></td></tr></table>'
         f'<p style="margin:0 0 8px 0;font-size:12px;line-height:18px;color:{TEXT_MUTED};'
-        f'word-break:break-all;">Si el botón no funciona, copiá este enlace: {escape(url)}</p>'
+        f'word-break:break-all;">If the button does not work, copy this link: {escape(url)}</p>'
     )
 
 
@@ -68,7 +68,7 @@ def html_email(  # noqa: PLR0913, PLR0917 -- the content of an email is these pa
         else ""
     )
     return (
-        '<!DOCTYPE html><html lang="es"><head><meta charset="utf-8">'
+        '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">'
         '<meta name="viewport" content="width=device-width,initial-scale=1">'
         f'<meta name="color-scheme" content="dark"><title>{escape(title)}</title></head>'
         f'<body style="margin:0;padding:0;background:{BACKGROUND};">'

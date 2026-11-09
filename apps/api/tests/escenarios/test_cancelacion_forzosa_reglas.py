@@ -34,7 +34,7 @@ def test_un_aviso_que_esta_saliendo_se_agrupa_con_la_anulacion_siguiente(
 
     centro = socio.centro()
     assert centro["unread"] == 1
-    assert [e["title"] for e in centro["notifications"]] == ["El club anuló 2 de tus reservas"]
+    assert [e["title"] for e in centro["notifications"]] == ["The club voided 2 of your bookings"]
 
 
 def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
@@ -53,7 +53,7 @@ def test_el_motivo_largo_se_recorta_en_el_aviso_y_el_historial_lo_conserva(
     assert base.anular(socio, admin, reserva, motivo) == 200
 
     [(_, aviso)] = canal.enviados
-    assert aviso.body.endswith(f"Motivo: {'x' * 199}….")
+    assert aviso.body.endswith(f"Reason: {'x' * 199}….")
     historial = socio.api.get("/bookings?when=history", headers=socio.sesion).json()
     assert [r["reason"] for r in historial["bookings"]] == [motivo]
 

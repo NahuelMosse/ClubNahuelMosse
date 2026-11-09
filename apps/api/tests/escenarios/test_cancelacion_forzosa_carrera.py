@@ -66,4 +66,4 @@ def test_la_anulacion_que_llega_con_el_aviso_anterior_saliendo_se_agrupa_igual(
     assert estados == [200, 200]
     centro = socio.centro()
     assert centro["unread"] == 1
-    assert [e["title"] for e in centro["notifications"]] == ["El club anuló 2 de tus reservas"]
+    assert [e["title"] for e in centro["notifications"]] == ["The club voided 2 of your bookings"]

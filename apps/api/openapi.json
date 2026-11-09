@@ -2,17 +2,17 @@
   "openapi": "3.1.0",
   "info": {
     "title": "ClubNahuelMosse API",
-    "description": "API de reservas de espacios deportivos de ClubNahuelMosse.",
+    "description": "Sports space booking API of ClubNahuelMosse.",
     "version": "0.1.0"
   },
   "paths": {
     "/health": {
       "get": {
         "tags": [
-          "operación"
+          "operations"
         ],
-        "summary": "Chequeo de vida de la API, sin tocar dependencias",
-        "description": "La API está viva; no mira la base ni Firebase.",
+        "summary": "API liveness check, without touching dependencies",
+        "description": "The API is alive; it does not check the database or Firebase.",
         "operationId": "alive_health_get",
         "responses": {
           "200": {
@@ -37,7 +37,7 @@
         "tags": [
           "usuarios"
         ],
-        "summary": "Registrar un usuario nuevo",
+        "summary": "Register a new user",
         "operationId": "register_user_register_post",
         "requestBody": {
           "content": {
@@ -81,7 +81,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -91,7 +91,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -101,7 +101,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -116,9 +116,9 @@
     "/me": {
       "get": {
         "tags": [
-          "sesión"
+          "session"
         ],
-        "summary": "El perfil y el rol de quien inició sesión",
+        "summary": "The profile and role of whoever signed in",
         "operationId": "own_profile_me_get",
         "responses": {
           "200": {
@@ -150,10 +150,10 @@
       },
       "put": {
         "tags": [
-          "sesión"
+          "session"
         ],
-        "summary": "Editar los datos personales de quien inició sesión",
-        "description": "Todo menos el correo, que no se puede cambiar.",
+        "summary": "Edit the personal data of whoever signed in",
+        "description": "Everything except the email, which cannot be changed.",
         "operationId": "update_own_profile_me_put",
         "requestBody": {
           "content": {
@@ -187,7 +187,7 @@
             }
           },
           "409": {
-            "description": "Otra cuenta ya tiene ese DNI",
+            "description": "Another account already has that DNI",
             "content": {
               "application/json": {
                 "schema": {
@@ -207,7 +207,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -217,7 +217,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -227,7 +227,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -245,10 +245,10 @@
       },
       "delete": {
         "tags": [
-          "sesión"
+          "session"
         ],
-        "summary": "Dar de baja la cuenta de quien inició sesión",
-        "description": "Baja lógica: la cuenta deja de estar activa, sus reservas que todavía no empezaron pasan a canceladas y el historial se conserva.",
+        "summary": "Delete the account of whoever signed in",
+        "description": "Soft delete: the account stops being active, its bookings that have not started become cancelled and the history is kept.",
         "operationId": "deactivate_own_account_me_delete",
         "responses": {
           "204": {
@@ -265,7 +265,7 @@
             }
           },
           "403": {
-            "description": "Un administrador no se da de baja desde la app"
+            "description": "An administrator cannot be deleted from the app"
           }
         },
         "security": [
@@ -278,10 +278,10 @@
     "/me/password": {
       "put": {
         "tags": [
-          "sesión"
+          "session"
         ],
-        "summary": "Cambiar la contraseña de quien inició sesión",
-        "description": "Invalida todas las sesiones abiertas: la app vuelve a entrar con la nueva.",
+        "summary": "Change the password of whoever signed in",
+        "description": "Invalidates every open session: the app signs in again with the new one.",
         "operationId": "change_own_password_me_password_put",
         "requestBody": {
           "content": {
@@ -318,10 +318,10 @@
             }
           },
           "429": {
-            "description": "Demasiados intentos con la contraseña actual"
+            "description": "Too many attempts with the current password"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -331,7 +331,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -341,7 +341,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -361,10 +361,10 @@
     "/password-recovery": {
       "put": {
         "tags": [
-          "recuperación de contraseña"
+          "password recovery"
         ],
-        "summary": "Crear la contraseña nueva con el enlace",
-        "description": "El enlace deja de servir y se invalidan todas las sesiones de la cuenta.",
+        "summary": "Create the new password with the link",
+        "description": "The link stops working and every session of the account is invalidated.",
         "operationId": "reset_password_password_recovery_put",
         "requestBody": {
           "content": {
@@ -381,7 +381,7 @@
             "description": "Successful Response"
           },
           "410": {
-            "description": "El enlace venció, ya se usó o fue reemplazado"
+            "description": "The link expired, was already used or was replaced"
           },
           "422": {
             "description": "Unprocessable Content",
@@ -394,7 +394,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -404,7 +404,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -414,7 +414,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -427,10 +427,10 @@
       },
       "post": {
         "tags": [
-          "recuperación de contraseña"
+          "password recovery"
         ],
-        "summary": "Pedir un enlace para crear una contraseña nueva",
-        "description": "Responde lo mismo exista o no una cuenta con ese correo.",
+        "summary": "Ask for a link to create a new password",
+        "description": "Answers the same whether or not an account with that email exists.",
         "operationId": "request_recovery_password_recovery_post",
         "requestBody": {
           "content": {
@@ -462,7 +462,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -472,7 +472,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -482,7 +482,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -497,9 +497,9 @@
     "/password-recovery/check": {
       "post": {
         "tags": [
-          "recuperación de contraseña"
+          "password recovery"
         ],
-        "summary": "Saber si un enlace de recuperación sigue sirviendo",
+        "summary": "Find out whether a recovery link still works",
         "operationId": "check_link_password_recovery_check_post",
         "requestBody": {
           "content": {
@@ -516,7 +516,7 @@
             "description": "Successful Response"
           },
           "410": {
-            "description": "El enlace venció, ya se usó o fue reemplazado"
+            "description": "The link expired, was already used or was replaced"
           },
           "422": {
             "description": "Validation Error",
@@ -529,7 +529,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -539,7 +539,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -549,7 +549,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -564,10 +564,10 @@
     "/link/recover": {
       "get": {
         "tags": [
-          "recuperación de contraseña"
+          "password recovery"
         ],
-        "summary": "Página del enlace del correo: abre la app en la contraseña nueva",
-        "description": "Los clientes de correo no vuelven tocables los enlaces con esquema propio; este enlace https lleva a la app con un intent de Android.",
+        "summary": "Email link page: opens the app on the new password",
+        "description": "Email clients do not make links with a custom scheme tappable; this https link takes the app through an Android intent.",
         "operationId": "link_page_link_recover_get",
         "responses": {
           "200": {
@@ -588,7 +588,7 @@
         "tags": [
           "sedes"
         ],
-        "summary": "Las sedes activas, por nombre, con sus canchas y los deportes que ofrecen",
+        "summary": "The active venues, by name, with their courts and the sports they offer",
         "operationId": "list_venues_venues_get",
         "responses": {
           "200": {
@@ -622,8 +622,8 @@
         "tags": [
           "sedes"
         ],
-        "summary": "Dar de alta una sede",
-        "description": "Horas en punto; un cierre a las 00:00 es la medianoche del mismo día.",
+        "summary": "Create a venue",
+        "description": "On-the-hour times; a closing at 00:00 is midnight of the same day.",
         "operationId": "add_venue_venues_post",
         "requestBody": {
           "content": {
@@ -657,10 +657,10 @@
             }
           },
           "403": {
-            "description": "Sólo un administrador da de alta sedes"
+            "description": "Only an administrator creates venues"
           },
           "409": {
-            "description": "Otra sede activa ya tiene ese nombre",
+            "description": "Another active venue already has that name",
             "content": {
               "application/json": {
                 "schema": {
@@ -680,7 +680,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -690,7 +690,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -700,7 +700,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -722,8 +722,8 @@
         "tags": [
           "sedes"
         ],
-        "summary": "Editar una sede",
-        "description": "Los mismos datos y reglas que el alta. Las reservas ya hechas se mantienen aunque queden fuera del horario nuevo, que rige para las que vengan.",
+        "summary": "Edit a venue",
+        "description": "The same data and rules as creation. Bookings already made are kept even if they fall outside the new hours, which apply to the ones to come.",
         "operationId": "edit_venue_venues__venue_id__put",
         "security": [
           {
@@ -774,13 +774,13 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador edita sedes"
+            "description": "Only an administrator edits venues"
           },
           "404": {
-            "description": "La sede ya no está activa"
+            "description": "The venue is no longer active"
           },
           "409": {
-            "description": "Otra sede activa ya tiene ese nombre, o el horario nuevo deja afuera reservas futuras y falta `confirm`",
+            "description": "Another active venue already has that name, or the new hours leave future bookings out and `confirm` is missing",
             "content": {
               "application/json": {
                 "schema": {
@@ -808,7 +808,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -818,7 +818,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -828,7 +828,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -843,8 +843,8 @@
         "tags": [
           "sedes"
         ],
-        "summary": "Dar de baja una sede",
-        "description": "Baja lógica: la sede y sus espacios dejan de verse y de poder reservarse, y el historial los sigue nombrando. No se permite con reservas activas sin terminar.",
+        "summary": "Delete a venue",
+        "description": "Soft delete: the venue and its spaces stop being shown and bookable, and the history keeps naming it. Not allowed with active bookings that have not ended.",
         "operationId": "remove_venue_venues__venue_id__delete",
         "security": [
           {
@@ -878,13 +878,13 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador da de baja sedes"
+            "description": "Only an administrator deletes venues"
           },
           "404": {
-            "description": "La sede ya no está activa"
+            "description": "The venue is no longer active"
           },
           "409": {
-            "description": "La sede tiene reservas que no terminaron",
+            "description": "The venue has bookings that have not ended",
             "content": {
               "application/json": {
                 "schema": {
@@ -911,7 +911,7 @@
         "tags": [
           "espacios"
         ],
-        "summary": "Los deportes y sus tipos de cancha",
+        "summary": "The sports and their court kinds",
         "operationId": "show_catalog_spaces_catalog_get",
         "responses": {
           "200": {
@@ -947,7 +947,7 @@
         "tags": [
           "espacios"
         ],
-        "summary": "Los espacios activos de las sedes activas, por sede, deporte, tipo y número",
+        "summary": "The active spaces of the active venues, by venue, sport, kind and number",
         "operationId": "list_spaces_spaces_get",
         "security": [
           {
@@ -1044,8 +1044,8 @@
         "tags": [
           "espacios"
         ],
-        "summary": "Dar de alta un espacio deportivo",
-        "description": "El nombre se compone con la sede, la dirección, el deporte, el tipo y el número siguiente de ese tipo en esa sede. `number` es el que vio el administrador; si se omite, se usa el siguiente.",
+        "summary": "Create a sports space",
+        "description": "The name is built from the venue, the address, the sport, the kind and the next number of that kind in that venue. `number` is the one the administrator saw; if omitted, the next one is used.",
         "operationId": "create_space_route_spaces_post",
         "security": [
           {
@@ -1084,10 +1084,10 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador da de alta espacios"
+            "description": "Only an administrator creates spaces"
           },
           "409": {
-            "description": "El número que se mostraba ya lo tomó otro alta: vuelve con el nombre y el número siguientes"
+            "description": "The number shown was already taken by another creation: it returns with the next name and number"
           },
           "422": {
             "content": {
@@ -1100,7 +1100,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1110,7 +1110,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -1120,7 +1120,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -1137,7 +1137,7 @@
         "tags": [
           "espacios"
         ],
-        "summary": "El nombre que tendría el próximo espacio de ese tipo en esa sede",
+        "summary": "The name the next space of that kind in that venue would have",
         "operationId": "suggest_name_spaces_name_get",
         "security": [
           {
@@ -1196,7 +1196,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador da de alta espacios"
+            "description": "Only an administrator creates spaces"
           },
           "422": {
             "content": {
@@ -1216,8 +1216,8 @@
         "tags": [
           "espacios"
         ],
-        "summary": "Editar un espacio",
-        "description": "Condición, iluminación y precio por hora; lo que no viene queda como está. La sede, el deporte, el tipo y el nombre compuesto no cambian; las reservas ya hechas conservan su precio.",
+        "summary": "Edit a space",
+        "description": "Condition, lighting and price per hour; what is not sent stays as it is. The venue, the sport, the kind and the composite name do not change; bookings already made keep their price.",
         "operationId": "update_space_route_spaces__space_id__put",
         "security": [
           {
@@ -1268,10 +1268,10 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador edita espacios"
+            "description": "Only an administrator edits spaces"
           },
           "404": {
-            "description": "El espacio o su sede ya no están activos"
+            "description": "The space or its venue is no longer active"
           },
           "422": {
             "content": {
@@ -1284,7 +1284,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1294,7 +1294,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -1304,7 +1304,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -1319,8 +1319,8 @@
         "tags": [
           "espacios"
         ],
-        "summary": "Dar de baja un espacio",
-        "description": "Baja lógica: el espacio deja de verse y de poder reservarse, y el historial lo sigue nombrando. No se permite con reservas activas sin terminar.",
+        "summary": "Delete a space",
+        "description": "Soft delete: the space stops being shown and bookable, and the history keeps naming it. Not allowed with active bookings that have not ended.",
         "operationId": "deactivate_space_route_spaces__space_id__delete",
         "security": [
           {
@@ -1354,13 +1354,13 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador da de baja espacios"
+            "description": "Only an administrator deletes spaces"
           },
           "404": {
-            "description": "El espacio ya no está activo"
+            "description": "The space is no longer active"
           },
           "409": {
-            "description": "El espacio tiene reservas que no terminaron",
+            "description": "The space has bookings that have not ended",
             "content": {
               "application/json": {
                 "schema": {
@@ -1387,8 +1387,8 @@
         "tags": [
           "horarios"
         ],
-        "summary": "Las franjas de un espacio para un día y una duración",
-        "description": "Todas las horas de inicio en punto que entran en el horario de la sede con esa duración y todavía no empezaron, en la hora del club; `available` dice si no pisan una reserva activa. Sin `date`, la de hoy. `opens` es falso si la sede no abre ese día.",
+        "summary": "The slots of a space for a day and a duration",
+        "description": "Every on-the-hour start time that fits the venue's opening hours with that duration and has not started yet, in the club's time; `available` says whether they do not overlap an active booking. Without `date`, today's. `opens` is false if the venue is closed that day.",
         "operationId": "show_slots_spaces__space_id__slots_get",
         "security": [
           {
@@ -1475,7 +1475,7 @@
             "description": "Unauthorized"
           },
           "404": {
-            "description": "El espacio o su sede ya no están activos",
+            "description": "The space or its venue is no longer active",
             "content": {
               "application/json": {
                 "schema": {
@@ -1502,8 +1502,8 @@
         "tags": [
           "horarios"
         ],
-        "summary": "Las canchas de una sede libres en todo un rango",
-        "description": "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas que pisen [since, until) el día `date`, en la hora del club. `until` a las 00:00 es la medianoche. El rango tiene que ser futuro, de horas completas, de 1 a 4 horas, de los próximos 7 días y dentro del horario de la sede: si no, 422 con el error de cada campo.",
+        "summary": "The courts of a venue that are free over a whole range",
+        "description": "The active spaces of the venue, of the sport and kind if given, with no active bookings overlapping [since, until) on `date`, in the club's time. `until` at 00:00 is midnight. The range must be in the future, of whole hours, from 1 to 4 hours, within the next 7 days and inside the venue's opening hours: otherwise 422 with each field's error.",
         "operationId": "show_available_spaces_available_get",
         "security": [
           {
@@ -1616,8 +1616,8 @@
         "tags": [
           "reservas"
         ],
-        "summary": "Las reservas de quien consulta",
-        "description": "`upcoming`: las activas que no terminaron, de la más cercana a la más lejana. `history`: las completadas, canceladas y anuladas, de la más reciente a la más vieja. El total es el que se guardó al reservar.",
+        "summary": "The bookings of whoever asks",
+        "description": "`upcoming`: the active ones that have not ended, from the nearest to the farthest. `history`: the completed, cancelled and voided ones, from the most recent to the oldest. The total is the one saved when booking.",
         "operationId": "list_bookings_bookings_get",
         "security": [
           {
@@ -1677,8 +1677,8 @@
         "tags": [
           "reservas"
         ],
-        "summary": "Reservar un espacio",
-        "description": "`hours` horas desde `start_hour` (`HH:MM`, en la hora del club) el día `date`. Horas completas, de 1 a 4, futuras, de los próximos 7 días y dentro del horario de la sede; si la misma persona repite el mismo pedido dentro de los cinco minutos, devuelve la reserva que ya hizo.",
+        "summary": "Book a space",
+        "description": "`hours` hours from `start_hour` (`HH:MM`, in the club's time) on `date`. Whole hours, from 1 to 4, in the future, within the next 7 days and inside the venue's opening hours; if the same person repeats the same request within five minutes, it returns the booking already made.",
         "operationId": "create_booking_bookings_post",
         "security": [
           {
@@ -1717,10 +1717,10 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "El administrador no reserva"
+            "description": "An administrator does not book"
           },
           "409": {
-            "description": "Otra reserva activa pisa ese horario",
+            "description": "Another active booking overlaps that slot",
             "content": {
               "application/json": {
                 "schema": {
@@ -1740,7 +1740,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1750,7 +1750,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -1760,7 +1760,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -1777,8 +1777,8 @@
         "tags": [
           "reservas"
         ],
-        "summary": "Cancelar una reserva propia",
-        "description": "Hasta el inicio del turno. El horario vuelve a quedar libre, la reserva pasa al historial como cancelada y la confirmación queda en el centro de notificaciones y sale por push. Cancelar una que ya canceló la misma persona responde igual.",
+        "summary": "Cancel your own booking",
+        "description": "Until the slot starts. The slot becomes free again, the booking moves to the history as cancelled and the confirmation stays in the notification center and goes out by push. Cancelling one the same person already cancelled answers the same.",
         "operationId": "cancel_bookings__booking_id__cancel_post",
         "security": [
           {
@@ -1819,10 +1819,10 @@
             "description": "Unauthorized"
           },
           "404": {
-            "description": "No hay una reserva de quien pide con ese número"
+            "description": "The requester has no booking with that number"
           },
           "409": {
-            "description": "La reserva ya no está activa o ya empezó",
+            "description": "The booking is no longer active or has started",
             "content": {
               "application/json": {
                 "schema": {
@@ -1849,8 +1849,8 @@
         "tags": [
           "reservas"
         ],
-        "summary": "Modificar una reserva propia",
-        "description": "Otra cancha del mismo tipo en la misma sede, otro día u otro horario, con la misma duración. El horario anterior se libera sólo si el nuevo queda tomado; la reserva conserva su número y el total pasa al precio de ahora del espacio. Repetir un cambio que ya se hizo responde igual.",
+        "summary": "Modify your own booking",
+        "description": "Another court of the same kind in the same venue, another day or another slot, with the same duration. The previous slot is freed only if the new one is taken; the booking keeps its number and the total becomes the space's current price. Repeating a change already made answers the same.",
         "operationId": "modify_bookings__booking_id__modify_post",
         "security": [
           {
@@ -1901,13 +1901,13 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Un administrador no reserva"
+            "description": "An administrator does not book"
           },
           "404": {
-            "description": "No hay una reserva de quien pide con ese número"
+            "description": "The requester has no booking with that number"
           },
           "409": {
-            "description": "El horario nuevo se ocupó (`slot`) o la reserva ya no se puede modificar (`booking`)",
+            "description": "The new slot was taken (`slot`) or the booking can no longer be modified (`booking`)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1927,7 +1927,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -1937,7 +1937,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -1947,7 +1947,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -1964,8 +1964,8 @@
         "tags": [
           "reservas"
         ],
-        "summary": "El historial global de reservas (CU-14)",
-        "description": "Todos los usuarios, todas las sedes. Filtra por estado (`active`, `completed` o `voided`; sin filtro trae también las canceladas por su usuario), sede, deporte, rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `page`, de la más reciente a la más antigua. No modifica nada.",
+        "summary": "The global booking history (CU-14)",
+        "description": "All users, all venues. Filters by status (`active`, `completed` or `voided`; without a filter it also brings those cancelled by their user), venue, sport, date range and text (user, venue or space); pages by 20 with `page`, from the most recent to the oldest. It changes nothing.",
         "operationId": "list_all_bookings_all_get",
         "security": [
           {
@@ -2112,7 +2112,7 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador consulta el historial global"
+            "description": "Only an administrator reads the global history"
           },
           "422": {
             "content": {
@@ -2132,7 +2132,7 @@
         "tags": [
           "reservas"
         ],
-        "summary": "El detalle de cualquier reserva (CU-14)",
+        "summary": "The detail of any booking (CU-14)",
         "operationId": "detail_bookings_all__booking_id__get",
         "security": [
           {
@@ -2173,10 +2173,10 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador consulta el detalle de cualquier reserva"
+            "description": "Only an administrator reads the detail of any booking"
           },
           "404": {
-            "description": "No hay una reserva con ese número"
+            "description": "There is no booking with that number"
           },
           "422": {
             "description": "Validation Error",
@@ -2196,8 +2196,8 @@
         "tags": [
           "reservas"
         ],
-        "summary": "Anular una reserva (CU-15)",
-        "description": "Hasta el inicio del turno. `space_id` y `starts_at` son la cancha y el horario que el administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una anulación ya hecha por el mismo administrador con el mismo motivo responde igual. Le avisa a quien reservó, con el motivo, sin repetir el aviso.",
+        "summary": "Void a booking (CU-15)",
+        "description": "Until the slot starts. `space_id` and `starts_at` are the court and the slot the administrator saw: if the booking is no longer there, it answers 409. The slot becomes free again and the booking keeps the reason, who voided it and when. Repeating a voiding already done by the same administrator with the same reason answers the same. It notifies whoever booked, with the reason, without repeating the notice.",
         "operationId": "void_bookings__booking_id__void_post",
         "security": [
           {
@@ -2248,13 +2248,13 @@
             "description": "Unauthorized"
           },
           "403": {
-            "description": "Sólo un administrador anula una reserva"
+            "description": "Only an administrator voids a booking"
           },
           "404": {
-            "description": "No hay una reserva con ese número"
+            "description": "There is no booking with that number"
           },
           "409": {
-            "description": "La reserva ya no está activa, ya empezó o cambió",
+            "description": "The booking is no longer active, has started or changed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2274,7 +2274,7 @@
             "description": "Unprocessable Content"
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2284,7 +2284,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -2294,7 +2294,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -2311,8 +2311,8 @@
         "tags": [
           "notificaciones"
         ],
-        "summary": "Registrar el teléfono para recibir avisos",
-        "description": "`permission_granted` es lo que el sistema operativo contestó sobre las notificaciones: sin permiso los avisos quedan sólo en el centro. Si el token ya estaba a nombre de otra cuenta, pasa a quien pide.",
+        "summary": "Register the phone to receive notices",
+        "description": "`permission_granted` is what the operating system answered about notifications: without permission the notices stay only in the center. If the token was already in the name of another account, it moves to the requester.",
         "operationId": "register_devices_put",
         "requestBody": {
           "content": {
@@ -2339,10 +2339,10 @@
             }
           },
           "403": {
-            "description": "El administrador no recibe avisos"
+            "description": "An administrator does not receive notices"
           },
           "409": {
-            "description": "La cuenta ya no está activa"
+            "description": "The account is no longer active"
           },
           "422": {
             "description": "Unprocessable Content",
@@ -2355,7 +2355,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2365,7 +2365,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -2375,7 +2375,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -2397,8 +2397,8 @@
         "tags": [
           "notificaciones"
         ],
-        "summary": "Dar de baja el teléfono al cerrar la sesión",
-        "description": "Deja de recibir avisos de esta cuenta. Si no estaba registrado, responde igual.",
+        "summary": "Unregister the phone when the session closes",
+        "description": "Stops receiving notices for this account. If it was not registered, it answers the same.",
         "operationId": "unregister_devices_unregister_post",
         "requestBody": {
           "content": {
@@ -2435,7 +2435,7 @@
             }
           },
           "400": {
-            "description": "El cuerpo no se puede leer",
+            "description": "The body cannot be read",
             "content": {
               "application/json": {
                 "schema": {
@@ -2445,7 +2445,7 @@
             }
           },
           "408": {
-            "description": "El cuerpo no llegó entero en 5 segundos",
+            "description": "The body did not arrive whole within 5 seconds",
             "content": {
               "application/json": {
                 "schema": {
@@ -2455,7 +2455,7 @@
             }
           },
           "413": {
-            "description": "El cuerpo supera 1 MB",
+            "description": "The body exceeds 1 MB",
             "content": {
               "application/json": {
                 "schema": {
@@ -2477,8 +2477,8 @@
         "tags": [
           "notificaciones"
         ],
-        "summary": "El centro de notificaciones de quien consulta",
-        "description": "Las últimas 100, de la más nueva a la más vieja, y cuántas hay sin leer en total.",
+        "summary": "The notification center of whoever asks",
+        "description": "The latest 100, from newest to oldest, and how many are unread in total.",
         "operationId": "center_notifications_get",
         "responses": {
           "200": {
@@ -2514,7 +2514,7 @@
         "tags": [
           "notificaciones"
         ],
-        "summary": "Marcar todas las notificaciones como leídas",
+        "summary": "Mark all notifications as read",
         "operationId": "read_all_notifications_read_all_post",
         "responses": {
           "204": {
@@ -2543,8 +2543,8 @@
         "tags": [
           "notificaciones"
         ],
-        "summary": "Marcar una notificación como leída",
-        "description": "Marcar una que ya estaba leída responde igual.",
+        "summary": "Mark a notification as read",
+        "description": "Marking one that was already read answers the same.",
         "operationId": "read_notifications__notification_id__read_post",
         "security": [
           {
@@ -2578,7 +2578,7 @@
             "description": "Unauthorized"
           },
           "404": {
-            "description": "No hay una notificación de quien pide con ese número"
+            "description": "The requester has no notification with that number"
           },
           "422": {
             "description": "Validation Error",
@@ -4022,7 +4022,7 @@
     "securitySchemes": {
       "HTTPBearer": {
         "type": "http",
-        "description": "ID token de Firebase Authentication",
+        "description": "Firebase Authentication ID token",
         "scheme": "bearer"
       }
     }

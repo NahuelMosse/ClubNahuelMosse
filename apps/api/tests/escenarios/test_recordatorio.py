@@ -155,8 +155,8 @@ def test_una_hora_antes_del_inicio_se_envia_una_sola_vez_el_recordatorio_con_dep
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.title == "Tu reserva es en 1 hora"
-    assert aviso.body == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
+    assert aviso.title == "Your booking is in 1 hour"
+    assert aviso.body == f"Football 5 · {socio.sede} · 21:00 – 22:00"
     assert aviso.data["booking_id"] == str(reserva["id"])
 
     # Verifica: se envía una sola vez, aunque el barrido vuelva a pasar antes del turno.
@@ -181,7 +181,7 @@ def test_sin_permiso_de_notificaciones_no_se_envia_pero_el_aviso_queda_en_el_cen
     assert registrados == 1
     assert canal.enviados == []
     centro = socio.centro()
-    assert [n["title"] for n in centro["notifications"]] == ["Tu reserva es en 1 hora"]
+    assert [n["title"] for n in centro["notifications"]] == ["Your booking is in 1 hour"]
     assert centro["unread"] == 1
 
 
@@ -205,7 +205,7 @@ def test_un_recordatorio_que_no_se_tocó_queda_como_no_leído(
     assert aviso["kind"] == "reminder"
     assert aviso["read"] is False
     assert aviso["booking_id"] == reserva["id"]
-    assert aviso["body"] == f"Fútbol 5 · {socio.sede} · 21:00 – 22:00"
+    assert aviso["body"] == f"Football 5 · {socio.sede} · 21:00 – 22:00"
 
 
 def test_marcar_todas_deja_todas_las_notificaciones_como_leidas(
@@ -279,4 +279,4 @@ def test_una_reserva_modificada_recibe_el_recordatorio_una_hora_antes_del_horari
     assert socio.barrer(canal, a_las(21, 0)) == 1
     [(tokens, aviso)] = canal.enviados
     assert tokens == [socio.dispositivo]
-    assert aviso.body == f"Fútbol 5 · {socio.sede} · 22:00 – 23:00"
+    assert aviso.body == f"Football 5 · {socio.sede} · 22:00 – 23:00"

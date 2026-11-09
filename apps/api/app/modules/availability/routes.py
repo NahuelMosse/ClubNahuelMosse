@@ -22,7 +22,7 @@ from app.shared.input_validation import Identifier, parse_time
 
 router = APIRouter(tags=["horarios"])
 
-SPACE_UNAVAILABLE = "Esta cancha ya no está disponible"
+SPACE_UNAVAILABLE = "This court is no longer available"
 
 
 class SlotView(BaseModel):
@@ -52,14 +52,15 @@ def _hour(moment: datetime) -> str:
     response_model=SlotGridView,
     responses={
         401: {"model": NoSession},
-        404: {"model": ErrorBody, "description": "El espacio o su sede ya no están activos"},
+        404: {"model": ErrorBody, "description": "The space or its venue is no longer active"},
         422: {"model": ErrorBody},
     },
-    summary="Las franjas de un espacio para un día y una duración",
+    summary="The slots of a space for a day and a duration",
     description=(
-        "Todas las horas de inicio en punto que entran en el horario de la sede con esa "
-        "duración y todavía no empezaron, en la hora del club; `available` dice si no pisan "
-        "una reserva activa. Sin `date`, la de hoy. `opens` es falso si la sede no abre ese día."
+        "Every on-the-hour start time that fits the venue's opening hours with that "
+        "duration and has not started yet, in the club's time; `available` says whether they "
+        "do not overlap an active booking. Without `date`, today's. `opens` is false if the "
+        "venue is closed that day."
     ),
 )
 def show_slots(  # noqa: PLR0913, PLR0917 -- one parameter per query/path field of the route
@@ -96,19 +97,19 @@ def show_slots(  # noqa: PLR0913, PLR0917 -- one parameter per query/path field 
     )
 
 
-VENUE_UNAVAILABLE = "La sede ya no está disponible"
+VENUE_UNAVAILABLE = "The venue is no longer available"
 
 
 @router.get(
     "/spaces/available",
     response_model=SpaceList,
     responses={401: {"model": NoSession}, 422: {"model": ErrorBody}},
-    summary="Las canchas de una sede libres en todo un rango",
+    summary="The courts of a venue that are free over a whole range",
     description=(
-        "Los espacios activos de la sede, del deporte y del tipo si viene, sin reservas activas "
-        "que pisen [since, until) el día `date`, en la hora del club. `until` a las 00:00 es la "
-        "medianoche. El rango tiene que ser futuro, de horas completas, de 1 a 4 horas, de los "
-        "próximos 7 días y dentro del horario de la sede: si no, 422 con el error de cada campo."
+        "The active spaces of the venue, of the sport and kind if given, with no active bookings "
+        "overlapping [since, until) on `date`, in the club's time. `until` at 00:00 is "
+        "midnight. The range must be in the future, of whole hours, from 1 to 4 hours, within the "
+        "next 7 days and inside the venue's opening hours: otherwise 422 with each field's error."
     ),
 )
 def show_available(  # noqa: PLR0913, PLR0917 -- one parameter per query field of the route
@@ -123,7 +124,7 @@ def show_available(  # noqa: PLR0913, PLR0917 -- one parameter per query field o
 ) -> SpaceList:
     start, end = parse_time(since), parse_time(until)
     errors = {
-        field: "Elegí una hora en punto"
+        field: "Choose an on-the-hour time"
         for field, hour in (("start_hour", start), ("until", end))
         if hour is None
     }

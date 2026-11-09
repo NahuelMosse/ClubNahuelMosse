@@ -7,7 +7,7 @@ from test_recordatorio import CanalDePrueba, Socio, app_de, manana, un_socio
 
 from app.modules.notifications.push import push_channel
 
-DIAS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+DIAS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def cancelar(socio: Socio, reserva_id: str) -> int:
 def cuerpo_esperado(sede: str, hora: str) -> str:
     dia = manana()
     return (
-        f"Fútbol 5 · {sede} · {DIAS[dia.weekday()]} {dia.day}, {hora}. El horario quedó liberado."
+        f"Football 5 · {sede} · {DIAS[dia.weekday()]} {dia.day}, {hora}. The slot was freed."
     )
 
 
@@ -50,7 +50,7 @@ def test_al_cancelar_una_reserva_se_envia_la_confirmacion_con_la_reserva_y_el_ho
     assert len(canal.enviados) == 1
     tokens, aviso = canal.enviados[0]
     assert tokens == [socio.dispositivo]
-    assert aviso.title == "Reserva cancelada"
+    assert aviso.title == "Booking cancelled"
     assert aviso.body == cuerpo_esperado(socio.sede, "21:00")
     assert aviso.data["booking_id"] == str(reserva["id"])
     assert aviso.data["kind"] == "user_cancellation"
@@ -97,7 +97,7 @@ def test_la_confirmacion_queda_en_el_centro_de_notificaciones(
     assert centro["unread"] == 1
     [entrada] = centro["notifications"]
     assert entrada["kind"] == "user_cancellation"
-    assert entrada["title"] == "Reserva cancelada"
+    assert entrada["title"] == "Booking cancelled"
     assert entrada["body"] == cuerpo_esperado(socio.sede, "21:00")
     assert entrada["read"] is False
 
@@ -118,7 +118,7 @@ def test_sin_permiso_de_notificaciones_no_se_envia_pero_la_confirmacion_queda_en
     # Verifica: nada sale hacia el teléfono y la confirmación está en el centro.
     assert canal.enviados == []
     [entrada] = socio.centro()["notifications"]
-    assert entrada["title"] == "Reserva cancelada"
+    assert entrada["title"] == "Booking cancelled"
 
 
 def test_si_la_cancelacion_falla_no_se_confirma_nada(

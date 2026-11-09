@@ -66,5 +66,5 @@ def register(
         try:
             identity.delete_account(uid)
         except Exception:
-            registration_log.exception("no se pudo borrar la cuenta %s del proveedor", uid)
+            registration_log.exception("could not delete account %s from the provider", uid)
         raise

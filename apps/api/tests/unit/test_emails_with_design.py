@@ -59,12 +59,12 @@ def test_el_correo_de_recuperacion_sale_en_html_con_la_plantilla_el_saludo_el_bo
         assert mark in html
     assert "<script" not in html
     assert "<img" not in html
-    assert "Hola Ana" in html
-    assert "Crear contraseña nueva" in html
+    assert "Hi Ana" in html
+    assert "Create new password" in html
     assert f'href="{BASE_LINK}/link/recover#code=' in html
-    assert "30 minutos" in html
-    assert "una sola vez" in html
-    assert "ignorá" in html
+    assert "30 minutes" in html
+    assert "only once" in html
+    assert "ignore this email" in html
 
 
 def _booking(**changes: Any) -> Booking:
@@ -116,7 +116,7 @@ def test_cada_correo_sigue_llevando_su_texto_y_el_html_repite_el_enlace_del_boto
     assert link.startswith(BASE_LINK)
     assert recovery.html is not None
     assert recovery.html.count(link) >= 2
-    assert "Crear contraseña nueva" not in recovery.body or link in recovery.body
+    assert "Create new password" not in recovery.body or link in recovery.body
 
     sent: list[Message] = []
     patch = pytest.MonkeyPatch()
@@ -254,8 +254,8 @@ def test_al_hacer_una_reserva_sale_el_correo_de_confirmacion_con_deporte_sede_di
     assert len(sent) == 1
     message = sent[0]
     assert message.recipient == ADDRESS
-    assert message.subject == "Tu reserva está confirmada"
-    for item in ("Fútbol 5", "Sede Morón", "miércoles 28 de octubre", "20:00", "21:00", "12.000"):
+    assert message.subject == "Your booking is confirmed"
+    for item in ("Football 5", "Sede Morón", "Wednesday October 28", "20:00", "21:00", "12.000"):
         assert item in message.body
         assert message.html is not None
         assert item in message.html
@@ -287,7 +287,7 @@ def test_si_el_correo_de_confirmacion_falla_la_reserva_responde_igual_y_queda_en
     with caplog.at_level(logging.ERROR, logger="clubnahuelmosse.correo"):
         _run(tasks)
 
-    assert "Tu reserva está confirmada" in caplog.text
+    assert "Your booking is confirmed" in caplog.text
     assert "ConnectionError" in caplog.text
     assert ADDRESS not in caplog.text
 
@@ -362,9 +362,9 @@ def test_el_recordatorio_de_una_hora_antes_sale_por_push_y_por_correo_una_sola_v
     assert len(channel.notices) == 1
     assert len(sent) == 1
     assert sent[0].recipient == ADDRESS
-    assert sent[0].subject == "Tu reserva es en 1 hora"
+    assert sent[0].subject == "Your booking is in 1 hour"
     assert sent[0].html is not None
-    for item in ("Fútbol 5", "Sede Morón", "21:00", "22:00"):
+    for item in ("Football 5", "Sede Morón", "21:00", "22:00"):
         assert item in sent[0].body
         assert item in sent[0].html
 

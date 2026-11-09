@@ -52,30 +52,30 @@ def test_una_sede_completa_separa_calle_y_altura() -> None:
 
 def test_cada_campo_vacio_tiene_su_mensaje() -> None:
     assert _errores(nombre=" ", direccion="", apertura=None, cierre=None, dias=()) == {
-        "name": "El nombre es obligatorio",
-        "address": "La dirección es obligatoria",
-        "opens_at": "El horario de apertura es obligatorio",
-        "closes_at": "El horario de cierre es obligatorio",
-        "open_days": "Elegí los días que abre",
+        "name": "The name is required",
+        "address": "The address is required",
+        "opens_at": "The opening time is required",
+        "closes_at": "The closing time is required",
+        "open_days": "Choose the days it opens",
     }
 
 
 @pytest.mark.parametrize("direccion", ["Av. Vergara", "1850", "Vergara 0", "Vergara 18a"])
 def test_la_direccion_termina_en_la_altura(direccion: str) -> None:
-    assert _errores(direccion=direccion) == {"address": "Escribí la calle y la altura"}
+    assert _errores(direccion=direccion) == {"address": "Write the street and the number"}
 
 
 def test_los_largos_tienen_tope() -> None:
     assert _errores(nombre="x" * 61, direccion="y" * 76 + " 1850") == {
-        "name": "Usá hasta 60 caracteres",
-        "address": "Usá hasta 80 caracteres",
+        "name": "Use up to 60 characters",
+        "address": "Use up to 80 characters",
     }
     sede, _ = validar_sede(replace(VALIDOS, name="x" * 60, address="y" * 75 + " 1850"))
     assert sede is not None
 
 
 def test_el_cierre_va_despues_de_la_apertura() -> None:
-    mensaje = {"closes_at": "El cierre tiene que ser después de la apertura"}
+    mensaje = {"closes_at": "The closing must be after the opening"}
     assert _errores(apertura=time(10), cierre=time(9)) == mensaje
     assert _errores(apertura=time(10), cierre=time(10)) == mensaje
 
@@ -88,14 +88,14 @@ def test_cerrar_a_las_00_es_la_medianoche() -> None:
 
 def test_las_horas_son_en_punto() -> None:
     assert _errores(apertura=time(8, 30), cierre=time(22, 15)) == {
-        "opens_at": "Elegí una hora en punto",
-        "closes_at": "Elegí una hora en punto",
+        "opens_at": "Choose an on-the-hour time",
+        "closes_at": "Choose an on-the-hour time",
     }
 
 
 def test_los_dias_son_de_la_semana() -> None:
-    assert _errores(dias=(0, 1)) == {"open_days": "Elegí los días que abre"}
-    assert _errores(dias=(8,)) == {"open_days": "Elegí los días que abre"}
+    assert _errores(dias=(0, 1)) == {"open_days": "Choose the days it opens"}
+    assert _errores(dias=(8,)) == {"open_days": "Choose the days it opens"}
 
 
 def _perfil(rol: Rol) -> Perfil:
@@ -148,14 +148,14 @@ def test_con_datos_invalidos_no_se_guarda_nada() -> None:
     sedes = _SedesEnMemoria()
     with pytest.raises(InvalidData) as e:
         dar_de_alta_sede(_perfil("admin"), replace(VALIDOS, address=""), sedes)
-    assert e.value.errors == {"address": "La dirección es obligatoria"}
+    assert e.value.errors == {"address": "The address is required"}
     assert sedes.guardadas == []
 
 
 def test_la_altura_es_de_digitos_comunes() -> None:
-    assert _errores(direccion="Calle ١٢٣") == {"address": "Escribí la calle y la altura"}
+    assert _errores(direccion="Calle ١٢٣") == {"address": "Write the street and the number"}
 
 
 def test_nombre_y_calle_tienen_que_aportar_al_nombre_de_los_espacios() -> None:
-    assert _errores(nombre="Sede") == {"name": "Escribí el nombre de la sede"}
-    assert _errores(direccion="Av. 100") == {"address": "Escribí la calle y la altura"}
+    assert _errores(nombre="Sede") == {"name": "Write the venue name"}
+    assert _errores(direccion="Av. 100") == {"address": "Write the street and the number"}

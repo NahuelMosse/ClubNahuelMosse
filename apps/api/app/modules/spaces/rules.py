@@ -4,7 +4,7 @@ import unicodedata
 from dataclasses import dataclass
 from uuid import UUID
 
-_VENUE_PREFIX = re.compile(r"^sede\b\s*", re.IGNORECASE)
+_VENUE_PREFIX = re.compile(r"^(?:[s]ede|venue)\b\s*", re.IGNORECASE)
 _STREET_PREFIX = re.compile(r"^(avenida|avda\.?|av\.?|calle)(\s+|(?<=\.))", re.IGNORECASE)
 _TRANSLITERATION = str.maketrans(
     {"ß": "ss", "ø": "o", "Ø": "O", "ł": "l", "Ł": "L", "æ": "ae", "Æ": "AE"}
@@ -26,7 +26,7 @@ def _part(text: str) -> str:
 
 def _positive_int(value: int, label: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
-        raise ValueError(f"{label} tiene que ser un entero positivo")
+        raise ValueError(f"{label} must be a positive integer")
     return value
 
 
@@ -45,19 +45,19 @@ def composite_name(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
 ) -> str:
     """Space name required by the assignment: venue, address, kind and number.
 
-    `composite_name("Sede Morón", "Av. Rivadavia", 19850, "Fútbol", "F5", 1)` gives
+    `composite_name("Sede Morón", "Av. Rivadavia", 19850, "Football", "F5", 1)` gives
     `Moron_Rivadavia_19850_Futbol_F5_1`, the format the prototype uses.
     """
     parts = [
         venue_part(venue),
         street_part(street),
-        str(_positive_int(street_number, "la altura")),
+        str(_positive_int(street_number, "the street number")),
         _part(sport),
         "".join(_words(kind)).upper(),
-        str(_positive_int(number, "el número")),
+        str(_positive_int(number, "the number")),
     ]
     if not all(parts):
-        raise ValueError("sede, calle, deporte y tipo no pueden quedar vacíos")
+        raise ValueError("venue, street, sport and kind cannot be empty")
     return "_".join(parts)
 
 
@@ -92,25 +92,25 @@ class Sport:
 CATALOG: tuple[Sport, ...] = (
     Sport(
         "Futbol",
-        "Fútbol",
+        "Football",
         (
-            Kind("F5", "Fútbol 5"),
-            Kind("F7", "Fútbol 7"),
-            Kind("F8", "Fútbol 8"),
-            Kind("F11", "Fútbol 11"),
+            Kind("F5", "Football 5"),
+            Kind("F7", "Football 7"),
+            Kind("F8", "Football 8"),
+            Kind("F11", "Football 11"),
         ),
     ),
-    Sport("Tenis", "Tenis", (Kind("PDL", "Polvo de ladrillo"), Kind("CEM", "Cemento"))),
-    Sport("Padel", "Pádel", (Kind("PAD", "Pádel"),)),
-    Sport("Voley", "Vóley", (Kind("IND", "Indoor"), Kind("PLA", "Vóley playa"))),
-    Sport("Basquet", "Básquet", (Kind("B5", "Básquet 5"), Kind("3X3", "Básquet 3x3"))),
+    Sport("Tenis", "Tennis", (Kind("PDL", "Clay"), Kind("CEM", "Concrete"))),
+    Sport("Padel", "Padel", (Kind("PAD", "Padel"),)),
+    Sport("Voley", "Volleyball", (Kind("IND", "Indoor"), Kind("PLA", "Beach volleyball"))),
+    Sport("Basquet", "Basketball", (Kind("B5", "Basketball 5"), Kind("3X3", "Basketball 3x3"))),
     Sport("Hockey", "Hockey", (Kind("H7", "Hockey 7"),)),
-    Sport("Golf", "Golf", (Kind("DR", "Driving range"), Kind("9H", "9 hoyos"))),
+    Sport("Golf", "Golf", (Kind("DR", "Driving range"), Kind("9H", "9 holes"))),
 )
 
 MAX_PRICE = 9_999_999
 
-REQUIRED = "Este campo es obligatorio"
+REQUIRED = "This field is required"
 
 
 def catalog_kind(sport: str, kind: str) -> Kind | None:
@@ -170,7 +170,7 @@ def _price_error(price: int | None) -> str | None:
     if price is None:
         return REQUIRED
     if not 0 < price <= MAX_PRICE:
-        return "Ingresá un precio entre $ 1 y $ 9.999.999"
+        return "Enter a price between $ 1 and $ 9,999,999"
     return None
 
 
@@ -187,7 +187,7 @@ def validate_change(
     The error keys and the names in [given] are the JSON field names of the API."""
     errors: dict[str, str] = {}
     if not given & {"covered", "lit", "price_per_hour"}:
-        errors["change"] = "No hay nada que cambiar"
+        errors["change"] = "There is nothing to change"
     if "covered" in given and covered is None:
         errors["covered"] = REQUIRED
     if "lit" in given and lit is None:
@@ -208,11 +208,11 @@ def validate_space(data: SpaceData) -> tuple[NewSpace | None, dict[str, str]]:
     if not data.sport:
         errors["sport"] = REQUIRED
     elif data.sport not in sports:
-        errors["sport"] = "Elegí un deporte de la lista"
+        errors["sport"] = "Choose a sport from the list"
     if not data.kind:
         errors["kind"] = REQUIRED
     elif data.sport in sports and catalog_kind(data.sport, data.kind) is None:
-        errors["kind"] = "Elegí un tipo de la lista"
+        errors["kind"] = "Choose a kind from the list"
     if data.covered is None:
         errors["covered"] = REQUIRED
     if data.lit is None:

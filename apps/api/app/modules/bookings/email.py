@@ -5,22 +5,22 @@ from app.shared.club_timezone import CLUB_TIMEZONE
 from app.shared.email_template import html_email
 from app.shared.message import Message
 
-DAYS = ("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
+DAYS = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
 MONTHS = (
-    "enero",
-    "febrero",
-    "marzo",
-    "abril",
-    "mayo",
-    "junio",
-    "julio",
-    "agosto",
-    "septiembre",
-    "octubre",
-    "noviembre",
-    "diciembre",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
 )
-SUBJECT = "Tu reserva está confirmada"
+SUBJECT = "Your booking is confirmed"
 
 
 def _money(amount: int) -> str:
@@ -33,16 +33,18 @@ def booking_email(profile: Profile, booking: Booking) -> Message:
     starts = booking.starts_at.astimezone(CLUB_TIMEZONE)
     ends = booking.ends_at.astimezone(CLUB_TIMEZONE)
     details = [
-        ("Cancha", short_kind(booking.sport, booking.kind)),
-        ("Sede", booking.venue),
-        ("Día", f"{DAYS[starts.weekday()]} {starts.day} de {MONTHS[starts.month - 1]}"),
-        ("Horario", f"{starts:%H:%M} a {ends:%H:%M}"),
+        ("Court", short_kind(booking.sport, booking.kind)),
+        ("Venue", booking.venue),
+        ("Day", f"{DAYS[starts.weekday()]} {MONTHS[starts.month - 1]} {starts.day}"),
+        ("Time", f"{starts:%H:%M} to {ends:%H:%M}"),
         ("Total", _money(booking.total)),
     ]
-    greeting = f"Hola {profile.first_name}: ya tenés tu cancha."
+    greeting = f"Hi {profile.first_name}: your court is booked."
     return Message(
         recipient=profile.email,
         subject=SUBJECT,
         body="\n".join([greeting, "", *(f"{label}: {value}" for label, value in details)]),
-        html=html_email(SUBJECT, [greeting], details=details, footer="Te esperamos en la sede."),
+        html=html_email(
+            SUBJECT, [greeting], details=details, footer="We are waiting for you at the venue."
+        ),
     )

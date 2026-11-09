@@ -45,7 +45,7 @@ def _with_current_hours(
     for _ in range(ATTEMPTS_WITH_NEW_HOURS):
         opening_hours = bookings.opening_hours(space_id)
         if opening_hours is None:
-            raise Unavailable("el espacio no está activo")
+            raise Unavailable("the space is not active")
         errors = validate(opening_hours)
         if errors:
             raise InvalidData(errors)
@@ -53,7 +53,7 @@ def _with_current_hours(
             return save(opening_hours)
         except OpeningHoursChanged:
             continue
-    raise SlotTaken("el horario de la sede cambió varias veces seguidas")
+    raise SlotTaken("the venue slot changed several times in a row")
 
 
 def my_bookings(bookings: Bookings, perfil: Profile, when: When) -> list[Booking]:
@@ -65,13 +65,13 @@ def _require_day_in_view(day: date, now: datetime) -> None:
     """A date beyond the booking window is rejected before computing the end of the slot:
     near `date.max` that computation overflows."""
     if day >= now.date() + timedelta(days=DAYS_IN_VIEW):
-        raise InvalidData({"date": f"Elegí un día de los próximos {DAYS_IN_VIEW}"})
+        raise InvalidData({"date": f"Choose a day within the next {DAYS_IN_VIEW}"})
 
 
 def _require_same_kind(bookings: Bookings, current: Booking, space_id: UUID) -> None:
     new = bookings.space_kind(space_id)
     if new is None or new != (current.venue_id, current.sport, current.kind):
-        raise InvalidData({"space_id": "Elegí una cancha del mismo tipo en la misma sede"})
+        raise InvalidData({"space_id": "Choose a court of the same kind in the same venue"})
 
 
 def book(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
@@ -90,9 +90,9 @@ def book(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
     be booked, `Unavailable` and `SlotTaken` as `Bookings.insert`.
     """
     if perfil.role != "user":
-        raise Forbidden("sólo un usuario reserva")
+        raise Forbidden("only a user books")
     if start_time is None:
-        raise InvalidData({"start_hour": "Elegí una hora en punto"})
+        raise InvalidData({"start_hour": "Choose an on-the-hour time"})
     if error := duration_error(hours):
         # Before computing the end of the slot: with an excessive duration that computation
         # overflows. `until` is the field the clients already read.
@@ -137,13 +137,13 @@ def modify_booking(  # noqa: PLR0913, PLR0917 -- public signature fixed by its c
     `ConcurrentChange` and `SlotTaken` as `Bookings.move`.
     """
     if perfil.role != "user":
-        raise Forbidden("sólo un usuario reserva")
+        raise Forbidden("only a user books")
     if start_time is None:
-        raise InvalidData({"start_hour": "Elegí una hora en punto"})
+        raise InvalidData({"start_hour": "Choose an on-the-hour time"})
     _require_day_in_view(day, now)
     current = bookings.own(perfil.id, booking_id)
     if current is None:
-        raise NotFound("no hay una reserva suya con ese número")
+        raise NotFound("you have no booking with that number")
     start, _ = time_range(day, start_time, start_time, now.tzinfo)
     # A retry after a cut arrives with the booking already moved: it is returned as it is.
     if current.status == "active" and (current.space_id, current.starts_at) == (space_id, start):
@@ -169,9 +169,9 @@ def global_history(bookings: Bookings, perfil: Profile, filters: HistoryFilters)
     range has `since` after `until`.
     """
     if perfil.role != "admin":
-        raise Forbidden("sólo un administrador consulta el historial global")
+        raise Forbidden("only an administrator reads the global history")
     if filters.since is not None and filters.until is not None and filters.since > filters.until:
-        raise InvalidData({"dates": "Desde no puede ser posterior a Hasta"})
+        raise InvalidData({"dates": "Since cannot be after Until"})
     return bookings.history(filters)
 
 
@@ -182,10 +182,10 @@ def admin_detail(bookings: Bookings, perfil: Profile, booking_id: UUID) -> Booki
     booking with that number.
     """
     if perfil.role != "admin":
-        raise Forbidden("sólo un administrador consulta el detalle de cualquier reserva")
+        raise Forbidden("only an administrator reads the detail of any booking")
     detail = bookings.any_one(booking_id)
     if detail is None:
-        raise NotFound("no hay una reserva con ese número")
+        raise NotFound("there is no booking with that number")
     return detail
 
 
@@ -204,10 +204,10 @@ def void_booking(  # noqa: PLR0913, PLR0917 -- public signature fixed by its cal
     is empty or too long, and `NotFound` and `ConcurrentChange` as `Bookings.void`.
     """
     if perfil.role != "admin":
-        raise Forbidden("sólo un administrador anula una reserva")
+        raise Forbidden("only an administrator voids a booking")
     clean = reason.strip()
     if not clean:
-        raise InvalidData({"reason": "El motivo es obligatorio para anular"})
+        raise InvalidData({"reason": "The reason is required to void"})
     if len(clean) > MAX_REASON_LENGTH:
-        raise InvalidData({"reason": f"El motivo admite hasta {MAX_REASON_LENGTH} caracteres"})
+        raise InvalidData({"reason": f"The reason allows up to {MAX_REASON_LENGTH} characters"})
     return bookings.void(perfil.id, booking_id, clean, space_id, starts_at)

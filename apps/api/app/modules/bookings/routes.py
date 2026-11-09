@@ -33,8 +33,8 @@ router = APIRouter(tags=["reservas"])
 # With 20 per page, ten thousand pages are two hundred thousand bookings.
 MAX_PAGE = 10_000
 
-SLOT_TAKEN_MESSAGE = "Ese horario se ocupó"
-UNAVAILABLE_MESSAGE = "Esta cancha ya no está disponible"
+SLOT_TAKEN_MESSAGE = "That slot was taken"
+UNAVAILABLE_MESSAGE = "This court is no longer available"
 
 
 class _BookingFields(BaseModel):
@@ -70,11 +70,11 @@ class BookingList(BaseModel):
     "/bookings",
     response_model=BookingList,
     responses={401: {"model": NoSession}, 422: {"model": Errors}},
-    summary="Las reservas de quien consulta",
+    summary="The bookings of whoever asks",
     description=(
-        "`upcoming`: las activas que no terminaron, de la más cercana a la más lejana. "
-        "`history`: las completadas, canceladas y anuladas, de la más reciente a la más "
-        "vieja. El total es el que se guardó al reservar."
+        "`upcoming`: the active ones that have not ended, from the nearest to the farthest. "
+        "`history`: the completed, cancelled and voided ones, from the most recent to the "
+        "oldest. The total is the one saved when booking."
     ),
 )
 def list_bookings(
@@ -104,16 +104,17 @@ class BookingRequest(BaseModel):
     response_model=BookingView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "El administrador no reserva"},
-        409: {"model": Errors, "description": "Otra reserva activa pisa ese horario"},
+        403: {"description": "An administrator does not book"},
+        409: {"model": Errors, "description": "Another active booking overlaps that slot"},
         422: {"model": Errors},
     },
-    summary="Reservar un espacio",
+    summary="Book a space",
     description=(
-        "`hours` horas desde `start_hour` (`HH:MM`, en la hora del club) el día `date`. Horas "
-        "completas, de 1 a 4, futuras, de los próximos 7 días y dentro del horario de la sede; "
-        "si la misma persona repite el mismo pedido dentro de los cinco minutos, devuelve la "
-        "reserva que ya hizo."
+        "`hours` hours from `start_hour` (`HH:MM`, in the club's time) on `date`. Whole "
+        "hours, from 1 to 4, in the future, within the next 7 days and inside the venue's "
+        "opening hours; "
+        "if the same person repeats the same request within five minutes, it returns the "
+        "booking already made."
     ),
 )
 def create_booking(
@@ -140,7 +141,7 @@ def create_booking(
     return BookingView.model_validate(booking, from_attributes=True)
 
 
-CHANGED_MESSAGE = "Esto cambió mientras tanto"
+CHANGED_MESSAGE = "This changed in the meantime"
 
 
 @router.post(
@@ -148,14 +149,14 @@ CHANGED_MESSAGE = "Esto cambió mientras tanto"
     response_model=BookingView,
     responses={
         401: {"model": NoSession},
-        404: {"description": "No hay una reserva de quien pide con ese número"},
-        409: {"model": Errors, "description": "La reserva ya no está activa o ya empezó"},
+        404: {"description": "The requester has no booking with that number"},
+        409: {"model": Errors, "description": "The booking is no longer active or has started"},
     },
-    summary="Cancelar una reserva propia",
+    summary="Cancel your own booking",
     description=(
-        "Hasta el inicio del turno. El horario vuelve a quedar libre, la reserva pasa al "
-        "historial como cancelada y la confirmación queda en el centro de notificaciones y sale "
-        "por push. Cancelar una que ya canceló la misma persona responde igual."
+        "Until the slot starts. The slot becomes free again, the booking moves to the "
+        "history as cancelled and the confirmation stays in the notification center and goes out "
+        "by push. Cancelling one the same person already cancelled answers the same."
     ),
 )
 def cancel(
@@ -184,21 +185,21 @@ class BookingChangeRequest(BaseModel):
     response_model=BookingView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Un administrador no reserva"},
-        404: {"description": "No hay una reserva de quien pide con ese número"},
+        403: {"description": "An administrator does not book"},
+        404: {"description": "The requester has no booking with that number"},
         409: {
             "model": Errors,
-            "description": "El horario nuevo se ocupó (`slot`) o la reserva ya no se puede "
-            "modificar (`booking`)",
+            "description": "The new slot was taken (`slot`) or the booking can no longer be "
+            "modified (`booking`)",
         },
         422: {"model": Errors},
     },
-    summary="Modificar una reserva propia",
+    summary="Modify your own booking",
     description=(
-        "Otra cancha del mismo tipo en la misma sede, otro día u otro horario, con la misma "
-        "duración. El horario anterior se libera sólo si el nuevo queda tomado; la reserva "
-        "conserva su número y el total pasa al precio de ahora del espacio. Repetir un cambio "
-        "que ya se hizo responde igual."
+        "Another court of the same kind in the same venue, another day or another slot, with "
+        "the same duration. The previous slot is freed only if the new one is taken; the booking "
+        "keeps its number and the total becomes the space's current price. Repeating a change "
+        "already made answers the same."
     ),
 )
 def modify(
@@ -258,15 +259,15 @@ class HistoryView(BaseModel):
     response_model=HistoryView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador consulta el historial global"},
+        403: {"description": "Only an administrator reads the global history"},
         422: {"model": Errors},
     },
-    summary="El historial global de reservas (CU-14)",
+    summary="The global booking history (CU-14)",
     description=(
-        "Todos los usuarios, todas las sedes. Filtra por estado (`active`, `completed` o"
-        " `voided`; sin filtro trae también las canceladas por su usuario), sede, deporte,"
-        " rango de fechas y texto (usuario, sede o espacio); pagina de a 20 con `page`, de la"
-        " más reciente a la más antigua. No modifica nada."
+        "All users, all venues. Filters by status (`active`, `completed` or"
+        " `voided`; without a filter it also brings those cancelled by their user), venue, sport,"
+        " date range and text (user, venue or space); pages by 20 with `page`, from the"
+        " most recent to the oldest. It changes nothing."
     ),
 )
 def list_all(  # noqa: PLR0913, PLR0917 -- one parameter per query filter of the route
@@ -314,10 +315,10 @@ def list_all(  # noqa: PLR0913, PLR0917 -- one parameter per query filter of the
     response_model=BookingHistoryView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador consulta el detalle de cualquier reserva"},
-        404: {"description": "No hay una reserva con ese número"},
+        403: {"description": "Only an administrator reads the detail of any booking"},
+        404: {"description": "There is no booking with that number"},
     },
-    summary="El detalle de cualquier reserva (CU-14)",
+    summary="The detail of any booking (CU-14)",
 )
 def detail(
     profile: Annotated[Profile, Depends(current_user)],
@@ -340,18 +341,21 @@ class VoidRequest(BaseModel):
     response_model=BookingHistoryView,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Sólo un administrador anula una reserva"},
-        404: {"description": "No hay una reserva con ese número"},
-        409: {"model": Errors, "description": "La reserva ya no está activa, ya empezó o cambió"},
+        403: {"description": "Only an administrator voids a booking"},
+        404: {"description": "There is no booking with that number"},
+        409: {
+            "model": Errors,
+            "description": "The booking is no longer active, has started or changed",
+        },
         422: {"model": Errors},
     },
-    summary="Anular una reserva (CU-15)",
+    summary="Void a booking (CU-15)",
     description=(
-        "Hasta el inicio del turno. `space_id` y `starts_at` son la cancha y el horario que el "
-        "administrador vio: si la reserva ya no está ahí, responde 409. El horario vuelve a "
-        "quedar libre y la reserva guarda el motivo, quién la anuló y cuándo. Repetir una "
-        "anulación ya hecha por el mismo administrador con el mismo motivo responde igual. "
-        "Le avisa a quien reservó, con el motivo, sin repetir el aviso."
+        "Until the slot starts. `space_id` and `starts_at` are the court and the slot the "
+        "administrator saw: if the booking is no longer there, it answers 409. The slot becomes "
+        "free again and the booking keeps the reason, who voided it and when. Repeating a "
+        "voiding already done by the same administrator with the same reason answers the same. "
+        "It notifies whoever booked, with the reason, without repeating the notice."
     ),
 )
 def void(

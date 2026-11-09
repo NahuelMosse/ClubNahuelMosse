@@ -23,8 +23,8 @@ class NullChannel:
     the notice is registered as `sin_canal` instead of as sent."""
 
     def send(self, tokens: Sequence[str], notice: Notice) -> DeliveryResult:
-        _log.info("aviso sin canal push: %s a %d dispositivos", notice.title, len(tokens))
-        raise ChannelNotConfigured("no hay credenciales de Firebase en el entorno")
+        _log.info("notice without push channel: %s to %d devices", notice.title, len(tokens))
+        raise ChannelNotConfigured("there are no Firebase credentials in the environment")
 
 
 # What FCM answers when the token is no longer valid: uninstalled, from another project, malformed.
@@ -74,7 +74,7 @@ class FcmChannel:
             if r.success:
                 continue
             # Only the error type: its text may carry the token.
-            _log.warning("FCM rechazó un envío: %s", type(r.exception).__name__)
+            _log.warning("FCM rejected a send: %s", type(r.exception).__name__)
             if isinstance(r.exception, _INVALID_TOKEN):
                 invalid.append(token)
         return DeliveryResult(sent=response.success_count, invalid=tuple(invalid))

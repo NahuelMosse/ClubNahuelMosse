@@ -173,7 +173,7 @@ class SpacesSql:
         # number.
         venue = self._venue(new.venue_id, lock=True)
         if venue is None:
-            raise Unavailable("la sede no está activa")
+            raise Unavailable("the venue is not active")
         self._conn.execute(
             text("SELECT pg_advisory_xact_lock(:space, hashtext(:c))"),
             {
@@ -247,7 +247,7 @@ class SpacesSql:
             {"id": params["id"]},
         ).first()
         if venue is None:
-            raise NotFound("el espacio ya no está activo")
+            raise NotFound("the space is no longer active")
 
     def _modify(self, params: dict[str, Any]) -> None:
         # The space may have been deactivated between the check and here: if no row was
@@ -264,7 +264,7 @@ class SpacesSql:
             params,
         ).first()
         if touched is None:
-            raise NotFound("el espacio se dio de baja mientras tanto")
+            raise NotFound("the space was deleted in the meantime")
 
     def deactivate(self, space_id: UUID, author: UUID) -> None:
         params = {"id": space_id, "author": author}
@@ -280,7 +280,7 @@ class SpacesSql:
                 {"id": space_id},
             ).first()
             if row is None:
-                raise NotFound("el espacio ya no está activo")
+                raise NotFound("the space is no longer active")
             pending: int = self._conn.execute(
                 text(
                     "SELECT count(*) FROM booking WHERE space_id = :id"
@@ -289,7 +289,7 @@ class SpacesSql:
                 {"id": space_id, "active_status": "active"},
             ).scalar_one()
             if pending:
-                raise HasFutureBookings("el espacio tiene reservas que todavía no terminaron")
+                raise HasFutureBookings("the space has bookings that have not ended yet")
             self._conn.execute(
                 text(
                     "UPDATE space SET active = false, deactivated_at = now(),"

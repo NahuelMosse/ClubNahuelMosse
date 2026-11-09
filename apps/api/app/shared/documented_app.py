@@ -3,9 +3,9 @@ from typing import Any
 from fastapi import FastAPI
 
 BODY_ERRORS = {
-    "400": "El cuerpo no se puede leer",
-    "408": "El cuerpo no llegó entero en 5 segundos",
-    "413": "El cuerpo supera 1 MB",
+    "400": "The body cannot be read",
+    "408": "The body did not arrive whole within 5 seconds",
+    "413": "The body exceeds 1 MB",
 }
 BODY_ERROR_SCHEMA = {
     "type": "object",

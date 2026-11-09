@@ -53,7 +53,7 @@ def test_sin_un_token_valido_no_hay_sesion(api: TestClient, cabecera: str | None
     r = api.get("/me", headers={"Authorization": cabecera} if cabecera is not None else {})
     assert r.status_code == 401
     assert r.headers["www-authenticate"] == "Bearer"
-    assert r.json() == {"detail": "Sesión inválida o vencida"}
+    assert r.json() == {"detail": "Invalid or expired session"}
 
 
 def test_una_cuenta_dada_de_baja_no_tiene_sesion_aunque_el_token_sea_valido(

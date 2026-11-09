@@ -17,7 +17,7 @@ from app.shared.club_timezone import CLUB_TIMEZONE
 from app.shared.errors import Duplicate, RateLimited
 from app.shared.identity import FirebaseProvider, identity
 
-router = APIRouter(tags=["sesión"])
+router = APIRouter(tags=["session"])
 
 
 class OwnProfile(BaseModel):
@@ -33,7 +33,7 @@ class OwnProfile(BaseModel):
     "/me",
     response_model=OwnProfile,
     responses={401: {"model": NoSession}},
-    summary="El perfil y el rol de quien inició sesión",
+    summary="The profile and role of whoever signed in",
 )
 def own_profile(profile: Annotated[Profile, Depends(current_user)]) -> OwnProfile:
     return OwnProfile(
@@ -61,10 +61,10 @@ class PasswordErrors(BaseModel):
     responses={
         401: {"model": NoSession},
         422: {"model": PasswordErrors},
-        429: {"description": "Demasiados intentos con la contraseña actual"},
+        429: {"description": "Too many attempts with the current password"},
     },
-    summary="Cambiar la contraseña de quien inició sesión",
-    description="Invalida todas las sesiones abiertas: la app vuelve a entrar con la nueva.",
+    summary="Change the password of whoever signed in",
+    description="Invalidates every open session: the app signs in again with the new one.",
 )
 def change_own_password(
     request: PasswordChangeRequest,
@@ -97,11 +97,11 @@ class ProfileEditRequest(BaseModel):
     response_model=OwnProfile,
     responses={
         401: {"model": NoSession},
-        409: {"model": PasswordErrors, "description": "Otra cuenta ya tiene ese DNI"},
+        409: {"model": PasswordErrors, "description": "Another account already has that DNI"},
         422: {"model": PasswordErrors},
     },
-    summary="Editar los datos personales de quien inició sesión",
-    description="Todo menos el correo, que no se puede cambiar.",
+    summary="Edit the personal data of whoever signed in",
+    description="Everything except the email, which cannot be changed.",
 )
 def update_own_profile(
     request: ProfileEditRequest,
@@ -124,13 +124,13 @@ def update_own_profile(
     except Duplicate:
         return JSONResponse(
             status_code=status.HTTP_409_CONFLICT,
-            content={"errors": {"dni": "Este DNI ya está registrado"}},
+            content={"errors": {"dni": "This DNI is already registered"}},
         )
     updated = profiles.active_profile(profile.uid)
     if updated is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Sesión inválida o vencida",
+            detail="Invalid or expired session",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return own_profile(updated)
@@ -141,12 +141,12 @@ def update_own_profile(
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
         401: {"model": NoSession},
-        403: {"description": "Un administrador no se da de baja desde la app"},
+        403: {"description": "An administrator cannot be deleted from the app"},
     },
-    summary="Dar de baja la cuenta de quien inició sesión",
+    summary="Delete the account of whoever signed in",
     description=(
-        "Baja lógica: la cuenta deja de estar activa, sus reservas que todavía no empezaron "
-        "pasan a canceladas y el historial se conserva."
+        "Soft delete: the account stops being active, its bookings that have not started "
+        "become cancelled and the history is kept."
     ),
 )
 def deactivate_own_account(

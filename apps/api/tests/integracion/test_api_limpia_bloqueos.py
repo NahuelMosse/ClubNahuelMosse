@@ -36,4 +36,4 @@ def test_el_alta_de_un_espacio_espera_la_baja_en_curso_de_su_sede_y_la_rechaza(
 
     assert esperaba
     assert r.status_code == 422
-    assert r.json() == {"errors": {"venue_id": "La sede ya no está disponible"}}
+    assert r.json() == {"errors": {"venue_id": "The venue is no longer available"}}

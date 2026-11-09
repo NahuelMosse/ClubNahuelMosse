@@ -58,9 +58,9 @@ def test_con_la_actual_equivocada_no_cambia_nada() -> None:
 @pytest.mark.parametrize(
     ("nueva", "mensaje"),
     [
-        ("Corta1", "Al menos 8 caracteres"),
-        ("clubnahuel1", "Una letra mayúscula"),
-        ("ClubNahuel", "Al menos un número"),
+        ("Corta1", "At least 8 characters"),
+        ("clubnahuel1", "An uppercase letter"),
+        ("ClubNahuel", "At least one number"),
     ],
 )
 def test_una_nueva_que_no_cumple_las_reglas_se_rechaza_antes_de_mirar_la_actual(
@@ -90,7 +90,7 @@ def test_si_falla_el_rastro_el_cambio_igual_se_informa_hecho(
     identidad = Identidad("ClubNahuel1")
     cambiar_contrasena(PERFIL, "ClubNahuel1", "ClubNahuel2", identidad, RastroQueFalla())
     assert identidad.cambios == [("u7", "ClubNahuel2")]
-    assert "no se pudo registrar el cambio de contraseña" in caplog.text
+    assert "could not record the password change" in caplog.text
 
 
 def test_sin_la_actual_no_se_pregunta_al_proveedor() -> None:

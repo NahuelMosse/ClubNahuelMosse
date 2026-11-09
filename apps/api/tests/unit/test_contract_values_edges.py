@@ -31,21 +31,21 @@ def test_a_start_hour_not_on_the_hour_is_its_only_error_even_before_opening() ->
     """a start hour that is not on the hour is the only error of start_hour, even before opening @ENG-18-S2"""
     errors = validate_range(HOURS, THURSDAY, time(6, 30), time(9), _at(THURSDAY - timedelta(1), 9))
 
-    assert errors == {"start_hour": "Elegí una hora en punto"}
+    assert errors == {"start_hour": "Choose an on-the-hour time"}
 
 
 def test_a_range_that_starts_right_now_is_not_future() -> None:
     """a range that starts right now is not future and the error goes under start_hour @ENG-18-S2"""
     errors = validate_range(HOURS, THURSDAY, time(18), time(19), _at(THURSDAY, 18))
 
-    assert errors == {"start_hour": "El horario tiene que ser futuro"}
+    assert errors == {"start_hour": "The time must be in the future"}
 
 
 def test_the_day_before_the_last_one_of_the_calendar_reports_only_its_date() -> None:
     """the day before the last one of the calendar reports only its date error, under date @ENG-18-S2"""
     errors = validate_range(HOURS, date.max - timedelta(1), time(6), time(7), _at(THURSDAY, 9))
 
-    assert errors == {"date": "Elegí un día de los próximos 7"}
+    assert errors == {"date": "Choose a day within the next 7"}
 
 
 class _NoDeviceAccepted:

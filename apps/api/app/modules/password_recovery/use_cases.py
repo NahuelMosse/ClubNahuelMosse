@@ -68,7 +68,7 @@ def request_link(email: str, public_url: str, links: LinkRepository) -> Message 
     """
     email = normalize_email(email)
     if not valid_email(email):
-        raise InvalidData({"email": "Revisá el formato del correo"})
+        raise InvalidData({"email": "Check the email format"})
     recipient = links.recipient(email)
     if recipient is None:
         return None
@@ -78,25 +78,25 @@ def request_link(email: str, public_url: str, links: LinkRepository) -> Message 
     # The code goes after the "#": the browser does not send it to the server, so it does not
     # end up in any request log.
     link = f"{public_url.rstrip('/')}/link/recover#code={code}"
-    expiry = f"El enlace vence en {VALIDITY_MINUTES} minutos y sirve una sola vez."
-    discard = "Si no lo pediste, ignorá este correo: tu contraseña no cambia."
+    expiry = f"The link expires in {VALIDITY_MINUTES} minutes and works only once."
+    discard = "If you did not ask for it, ignore this email: your password does not change."
     return Message(
         recipient=recipient.email,
-        subject="Creá una contraseña nueva",
+        subject="Create a new password",
         body=(
-            f"Hola {recipient.first_name}:\n\n"
-            "Para crear una contraseña nueva, abrí este enlace desde tu teléfono:\n"
+            f"Hi {recipient.first_name}:\n\n"
+            "To create a new password, open this link on your phone:\n"
             f"{link}\n\n"
             f"{expiry} {discard}"
         ),
         html=html_email(
-            "Creá una contraseña nueva",
+            "Create a new password",
             [
-                f"Hola {recipient.first_name}:",
-                "Para crear una contraseña nueva, tocá el botón desde tu teléfono.",
+                f"Hi {recipient.first_name}:",
+                "To create a new password, tap the button on your phone.",
                 expiry,
             ],
-            button=("Crear contraseña nueva", link),
+            button=("Create new password", link),
             footer=discard,
         ),
     )
@@ -131,5 +131,5 @@ def use_link(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
         users.mark_password_changed(claimed.user_id)
     except Exception:
         recovery_log.exception(
-            "no se pudo registrar el cambio de contraseña de %s", claimed.user_id
+            "could not record the password change of %s", claimed.user_id
         )

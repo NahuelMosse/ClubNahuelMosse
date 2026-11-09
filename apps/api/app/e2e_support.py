@@ -120,7 +120,7 @@ def cancel(request: SpaceName, conn: DbConnection) -> Response:
     """The club cancels the active bookings of [space], as an administrator would."""
     conn.execute(
         text(
-            "UPDATE booking b SET status = :voided, reason = 'mantenimiento de la cancha',"
+            "UPDATE booking b SET status = :voided, reason = 'court maintenance',"
             " canceled_at = now(), canceled_by = (SELECT id FROM app_user ORDER BY id LIMIT 1)"
             " FROM space e WHERE e.id = b.space_id AND e.name = :space"
             " AND b.status = :active_status"

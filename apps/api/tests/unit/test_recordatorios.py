@@ -102,18 +102,18 @@ class CanalQueRechaza:
 def test_el_mensaje_lleva_deporte_sede_y_horario_del_club() -> None:
     notice = reminder_message(_recordatorio())
 
-    assert notice.title == "Tu reserva es en 1 hora"
-    assert notice.body == "Fútbol 5 · Sede Morón · 21:00 – 22:00"
+    assert notice.title == "Your booking is in 1 hour"
+    assert notice.body == "Football 5 · Sede Morón · 21:00 – 22:00"
     assert notice.data == {"kind": "reminder", "booking_id": str(_id(7))}
 
 
 @pytest.mark.parametrize(
     ("deporte", "tipo", "esperado"),
     [
-        ("Futbol", "F11", "Fútbol 11"),
-        ("Tenis", "PDL", "Tenis"),
+        ("Futbol", "F11", "Football 11"),
+        ("Tenis", "PDL", "Tennis"),
         ("Hockey", "H7", "Hockey 7"),
-        ("Padel", "PAD", "Pádel"),
+        ("Padel", "PAD", "Padel"),
         ("Rugby", "R15", "Rugby"),
     ],
 )

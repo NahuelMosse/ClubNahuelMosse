@@ -25,7 +25,7 @@ def test_datos_invalidos_devuelven_los_errores_por_campo(
     r = api.post("/register", json=_pedido(unico(), dni="123", password="corta"))
     assert r.status_code == 422
     assert r.json() == {
-        "errors": {"dni": "El DNI tiene 7 u 8 números", "password": "Al menos 8 caracteres"}
+        "errors": {"dni": "The DNI has 7 or 8 digits", "password": "At least 8 characters"}
     }
 
 
@@ -37,9 +37,9 @@ def test_correo_repetido_sin_distinguir_mayusculas(
     r = api.post("/register", json=_pedido(unico(), email=f"  ANA.{s}@Correo.com "))
     assert r.status_code == 409
     assert r.json() == {
-        "message": "El usuario ya está registrado. Modificá el correo o el DNI.",
+        "message": "The user is already registered. Change the email or the DNI.",
         "fields": ["email"],
-        "errors": {"email": "Este correo ya está registrado"},
+        "errors": {"email": "This email is already registered"},
     }
 
 

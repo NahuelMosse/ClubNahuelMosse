@@ -43,13 +43,13 @@ def test_un_identificador_acepta_mayusculas_y_sin_guiones() -> None:
 def test_un_identificador_mal_formado_tiene_un_mensaje_general(cliente: TestClient) -> None:
     r = cliente.post("/pedido", json={"cantidad": "1"})
 
-    assert r.json() == {"errors": {"cantidad": "El dato no es válido"}}
+    assert r.json() == {"errors": {"cantidad": "The value is not valid"}}
 
 
 def test_un_dato_de_otro_tipo_tiene_un_mensaje_general(cliente: TestClient) -> None:
     r = cliente.post("/pedido", json={"name": 5})
 
-    assert r.json() == {"errors": {"name": "El dato no es válido"}}
+    assert r.json() == {"errors": {"name": "The value is not valid"}}
 
 
 def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
@@ -58,7 +58,7 @@ def test_un_json_roto_responde_400_sin_repetirlo(cliente: TestClient) -> None:
     )
 
     assert r.status_code == 400
-    assert r.json() == {"errors": {"body": "El cuerpo no es JSON válido"}}
+    assert r.json() == {"errors": {"body": "The body is not valid JSON"}}
 
 
 def test_un_cuerpo_que_falta_responde_422(cliente: TestClient) -> None:

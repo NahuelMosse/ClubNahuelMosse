@@ -30,7 +30,7 @@ def _to_outbox(message: Message) -> None:
 
 def _by_smtp(message: Message) -> None:
     if not config.smtp_host or not config.email_sender:
-        raise RuntimeError("faltan SMTP_HOST y CORREO_REMITENTE para enviar correos")
+        raise RuntimeError("SMTP_HOST and CORREO_REMITENTE are missing to send emails")
     email_message = EmailMessage()
     email_message["From"] = config.email_sender
     email_message["To"] = message.recipient
@@ -78,4 +78,4 @@ def send(message: Message) -> None:
         _SENDERS[config.email_mode](message)
     except Exception as e:
         # No traceback or exception text: both may carry the recipient's address.
-        email_log.error("no se pudo enviar el correo «%s»: %s", message.subject, type(e).__name__)
+        email_log.error("could not send the email «%s»: %s", message.subject, type(e).__name__)

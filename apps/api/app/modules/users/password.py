@@ -7,7 +7,7 @@ from app.modules.session import Profile
 from app.modules.users.rules import password_problems
 from app.shared.errors import InvalidData
 
-DOES_NOT_MATCH = "La contraseña actual no coincide"
+DOES_NOT_MATCH = "The current password does not match"
 password_log = logging.getLogger("clubnahuelmosse.contrasena")
 
 
@@ -43,4 +43,4 @@ def change_password(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
     try:
         users.mark_password_changed(profile.id)
     except Exception:
-        password_log.exception("no se pudo registrar el cambio de contraseña de %s", profile.id)
+        password_log.exception("could not record the password change of %s", profile.id)

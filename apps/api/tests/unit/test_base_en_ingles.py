@@ -180,7 +180,7 @@ def test_los_cuerpos_de_error_413_422_403_y_404_son_los_de_main() -> None:
 
     assert (grande.status_code, grande.content) == (413, b"")
     assert forma.status_code == 422
-    assert forma.json() == {"errors": {"a": "El dato no es válido"}}
+    assert forma.json() == {"errors": {"a": "The value is not valid"}}
     assert (invalido.status_code, invalido.json()) == (422, {"errors": {"name": "Falta"}})
     assert (prohibido.status_code, prohibido.content) == (403, b"")
     assert (ausente.status_code, ausente.content) == (404, b"")

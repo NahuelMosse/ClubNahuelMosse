@@ -48,19 +48,19 @@ def test_cada_campo_que_falta_es_obligatorio() -> None:
     _, errores = validate_space(vacio)
     assert errores == dict.fromkeys(
         ["venue_id", "sport", "kind", "covered", "lit", "price_per_hour"],
-        "Este campo es obligatorio",
+        "This field is required",
     )
 
 
 def test_deporte_y_tipo_salen_del_catalogo() -> None:
-    assert _errores(sport="Rugby") == {"sport": "Elegí un deporte de la lista"}
-    assert _errores(kind="PDL") == {"kind": "Elegí un tipo de la lista"}
+    assert _errores(sport="Rugby") == {"sport": "Choose a sport from the list"}
+    assert _errores(kind="PDL") == {"kind": "Choose a kind from the list"}
 
 
 @pytest.mark.parametrize("precio", [0, -1, 10_000_000])
 def test_el_precio_es_positivo_y_con_tope(precio: int) -> None:
     assert _errores(price_per_hour=precio) == {
-        "price_per_hour": "Ingresá un precio entre $ 1 y $ 9.999.999"
+        "price_per_hour": "Enter a price between $ 1 and $ 9,999,999"
     }
 
 

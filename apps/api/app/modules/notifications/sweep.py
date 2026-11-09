@@ -28,7 +28,7 @@ def sweep_once() -> int:
         try:
             dispatch_pending(notifications, channel)
         except Exception:
-            _log.exception("el despacho de avisos pendientes falló")
+            _log.exception("dispatching pending notices failed")
         return send_reminders(notifications, channel, datetime.now(UTC))
 
 
@@ -40,13 +40,13 @@ def dispatch_for(user_id: UUID, channel: PushChannel) -> None:
         with engine().connect() as conn:
             dispatch_pending(NotificationsSql(conn), channel, user_id)
     except Exception:
-        _log.exception("el despacho de avisos falló")
+        _log.exception("dispatching notices failed")
 
 
 def main(args: list[str] | None = None) -> int:
     """Runs one sweep and exits: a cron separate from the web service launches it, since the
     free plan sleeps."""
-    parser = argparse.ArgumentParser(description="Manda los recordatorios que ya les toca.")
+    parser = argparse.ArgumentParser(description="Sends the reminders that are due.")
     parser.add_argument("--una-vez", action="store_true", required=True)
     parser.parse_args(args)
     logging.basicConfig(level=logging.INFO)
@@ -66,7 +66,7 @@ async def sweep_every(seconds: int) -> None:
             await asyncio.to_thread(sweep_once)
         except Exception:
             # A failing sweep (the database down for a moment) must not kill the next one.
-            _log.exception("el barrido de recordatorios falló")
+            _log.exception("the reminder sweep failed")
 
 
 if __name__ == "__main__":

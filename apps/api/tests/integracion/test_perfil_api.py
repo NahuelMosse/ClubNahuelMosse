@@ -104,7 +104,7 @@ def test_un_dni_de_otra_cuenta_se_rechaza(
     codigo, cuerpo = _editar(
         api, token, first_name="Lucía", last_name="Gómez", dni=ajeno, birth_date="1998-11-02"
     )
-    assert (codigo, cuerpo) == (409, {"errors": {"dni": "Este DNI ya está registrado"}})
+    assert (codigo, cuerpo) == (409, {"errors": {"dni": "This DNI is already registered"}})
 
 
 def test_sin_sesion_no_se_edita(api: TestClient) -> None:

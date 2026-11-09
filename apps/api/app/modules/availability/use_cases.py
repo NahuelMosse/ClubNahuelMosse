@@ -45,7 +45,7 @@ def available_slots(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
         raise InvalidData(errors)
     opening_hours = availability.opening_hours(space_id)
     if opening_hours is None:
-        raise Unavailable("el espacio no está activo")
+        raise Unavailable("the space is not active")
     since = datetime.combine(queried, datetime.min.time(), tzinfo=now.tzinfo)
     taken = availability.taken(space_id, since, since + timedelta(days=2), excluding)
     return slot_grid(opening_hours, queried, hours, now, taken)

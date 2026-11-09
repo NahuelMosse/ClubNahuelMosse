@@ -66,7 +66,7 @@ def test_la_actual_equivocada_no_cambia_nada(
     token = iniciar_sesion(correo, ACTUAL)
     codigo, cuerpo = _cambiar(api, token, "OtraClave9", NUEVA)
     assert codigo == 422
-    assert '"current_password":"La contraseña actual no coincide"' in cuerpo
+    assert '"current_password":"The current password does not match"' in cuerpo
     assert iniciar_sesion(correo, ACTUAL) is not None
 
 
@@ -77,7 +77,7 @@ def test_una_nueva_debil_se_rechaza_con_la_regla_que_falta(
     token = iniciar_sesion(correo, ACTUAL)
     codigo, cuerpo = _cambiar(api, token, ACTUAL, "ClubNahuel")
     assert codigo == 422
-    assert '"new_password":"Al menos un número"' in cuerpo
+    assert '"new_password":"At least one number"' in cuerpo
     assert iniciar_sesion(correo, ACTUAL) is not None
 
 

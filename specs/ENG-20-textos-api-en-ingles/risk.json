@@ -1,0 +1,86 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "interpretation",
+    "security"
+  ],
+  "modules": [
+    "api"
+  ],
+  "signals": [
+    "screen"
+  ],
+  "words": [
+    "migración",
+    "migracion",
+    "session"
+  ],
+  "files": [
+    "apps/api/app/shared/errors.py",
+    "apps/api/app/shared/input_validation.py",
+    "apps/api/app/shared/identity.py",
+    "apps/api/app/modules/session/current_user.py",
+    "apps/api/app/shared/documented_app.py",
+    "apps/api/app/modules/availability/routes.py",
+    "apps/api/app/modules/bookings/routes.py",
+    "apps/api/app/modules/notifications/routes.py",
+    "apps/api/app/modules/password_recovery/routes.py",
+    "apps/api/app/modules/spaces/routes.py",
+    "apps/api/app/modules/venues/routes.py",
+    "apps/api/app/modules/users/account_routes.py",
+    "apps/api/app/modules/users/registration_routes.py",
+    "apps/api/app/modules/availability/rules.py",
+    "apps/api/app/modules/notifications/rules.py",
+    "apps/api/app/modules/venues/rules.py",
+    "apps/api/app/modules/users/rules.py",
+    "apps/api/app/modules/availability/use_cases.py",
+    "apps/api/app/modules/bookings/use_cases.py",
+    "apps/api/app/modules/spaces/use_cases.py",
+    "apps/api/app/modules/venues/use_cases.py",
+    "apps/api/app/modules/bookings/repository.py",
+    "apps/api/app/modules/spaces/repository.py",
+    "apps/api/app/modules/venues/repository.py",
+    "apps/api/app/modules/users/password.py",
+    "apps/api/app/modules/availability/slots.py",
+    "apps/api/app/modules/bookings/email.py",
+    "apps/api/app/shared/email_template.py",
+    "apps/api/app/modules/password_recovery/use_cases.py",
+    "apps/api/app/modules/notifications/push.py",
+    "apps/api/app/modules/notifications/sweep.py",
+    "apps/api/app/modules/notifications/use_cases.py",
+    "apps/api/app/modules/spaces/rules.py",
+    "apps/api/app/modules/users/seed_admin.py",
+    "apps/api/app/modules/users/admins.py",
+    "apps/api/tests/**",
+    "·",
+    "los",
+    "tests",
+    "de",
+    "la",
+    "API",
+    "que",
+    "comparan",
+    "un",
+    "texto",
+    "en",
+    "castellano",
+    "pasan",
+    "a",
+    "compararlo",
+    "inglés",
+    "(refactor-tests)"
+  ],
+  "tasks": 4,
+  "declared": [
+    {
+      "lens": "visual",
+      "why": "la card no toca ninguna pantalla de la app",
+      "files": [
+        "apps/api/app/modules/password_recovery/routes.py",
+        "apps/api/app/shared/email_template.py"
+      ]
+    }
+  ]
+}

@@ -38,7 +38,7 @@ def _notify_by_email(
             return
         send(notice_email(notice, target, config.public_url))
     except Exception as e:
-        _log.warning("el correo del aviso falló: %s", type(e).__name__)
+        _log.warning("the notice email failed: %s", type(e).__name__)
 
 
 def deliver(  # noqa: PLR0913, PLR0917 -- public signature fixed by its callers
@@ -135,7 +135,7 @@ def send_reminders(
             deliver(notifications, channel, new_id, reminder.user_id, notice, known)
         except Exception as e:
             # One person's reminder does not cut the others.
-            _log.warning("el recordatorio falló: %s", type(e).__name__)
+            _log.warning("the reminder failed: %s", type(e).__name__)
     return registered
 
 
@@ -152,16 +152,16 @@ def register_device(  # noqa: PLR0913, PLR0917 -- public signature fixed by its 
     platform does not exist and `Unavailable` if the account is no longer active.
     """
     if profile.role != "user":
-        raise Forbidden("sólo un usuario recibe avisos")
+        raise Forbidden("only a user receives notices")
     errors: dict[str, str] = {}
     if not token.strip():
-        errors["token"] = "Este campo es obligatorio"
+        errors["token"] = "This field is required"
     if platform not in PLATFORMS:
-        errors["platform"] = "Tiene que ser android o ios"
+        errors["platform"] = "It must be android or ios"
     if errors:
         raise InvalidData(errors)
     if not notifications.register_device(profile.id, token.strip(), platform, permission):
-        raise Unavailable("la cuenta ya no está activa")
+        raise Unavailable("the account is no longer active")
 
 
 def deactivate_device(notifications: Notifications, profile: Profile, token: str) -> None:
@@ -178,7 +178,7 @@ def my_notifications(
 def mark_read(notifications: Notifications, profile: Profile, notification_id: UUID) -> None:
     """Raises `NotFound` if the notification is not the requester's."""
     if not notifications.read(profile.id, notification_id):
-        raise NotFound("no hay una notificación suya con ese número")
+        raise NotFound("you have no notification with that number")
 
 
 def mark_all_read(notifications: Notifications, profile: Profile) -> None:
