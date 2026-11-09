@@ -26,6 +26,15 @@ not_read:
 - ENG-21-ASM-07 · los archivos del sitio que esta card toca y el archivo de capturas nuevo llevan nombre en inglés (`docs-site/scripts/copy-docs.mjs`, `docs-site/src/clientModules/diagram-zoom.js`, `docs-site/tests/integrations-on-site.test.mjs`, `docs-site/tests/diagram-zoom.test.mjs`, `apps/mobile/test/capturas/readme_screenshots.dart`); las carpetas y los nombres de los tests existentes de `apps/` (`test/capturas/`, `tests/escenarios/`) son de ENG-22 · S1,S3
 - ENG-21-ASM-08 · HEAD sobre una ruta GET de la API responde 405, igual que en main: FastAPI no registra HEAD y esta card no toca rutas; la fila `head-unsupported` del ataque queda ignorada en `specs/ENG-21-docs-en-ingles/http-attack.config.json` con este ASM · S1
 - ENG-21-ASM-09 · la portada del sitio (el README copiado) muestra el logo y las cuatro capturas, que `copy-docs.mjs` copia a `static/` y enlaza con rutas del sitio, y se titula «ClubNahuelMosse», no con el nombre del archivo; en main las imágenes salían rotas · S3
+- ENG-21-ASM-10 · el pedido no trae diseño del sitio: la referencia es la línea de diseño del repo (`design/line.md`, `design/tokens.css`, la de la app) para la marca, y la documentación de Stripe (https://docs.stripe.com) para la estructura de un sitio de documentación técnica de primer nivel: barra lateral, ancho de lectura, bloques de código · S3
+
+## Look
+
+- ref: design/line.md · https://docs.stripe.com
+- behavior: cursor · los enlaces del lateral y los botones responden a hover, press y foco con el motion de `design/tokens.css`
+- behavior: view · la página entra una vez; con reduced-motion, sin movimiento
+- tokens: mood sobrio, técnico · genre developer documentation · spacing y easing los de `design/tokens.css`
+- copy: el README de la raíz es la portada: ClubNahuelMosse, la app de reservas de canchas, con sus cuatro capturas
 
 ## Tasks
 
@@ -80,3 +89,5 @@ no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
 - L7 · 2026-11-09 · cap 150 → 420 min por orden de la persona (2026-11-09): la línea de diseño que pide el sitio movido (I-line, I-tokens, I-set, I-motion) y T7 necesitan builder
 - L8 · 2026-11-09 · T8 · design/tokens.css, design/components/, custom.css, Swagger.js, copy-docs.mjs, config; node --test docs-site/tests/design-line.test.mjs docs-site/tests/*.test.mjs tests/ci.test.mjs: 15 pass; required.mjs lists no I-* item (those are measured by verify.mjs)
 - L9 · 2026-11-09 · T7 · refactor-tests: 25 archivos de apps/api/tests y 2 de apps/mobile/test editados en el lugar (nombres, encabezados y frases en inglés, docs-site/scripts/copy-docs.mjs); flutter test navegacion_documentada + sin_sobreingenieria + readme_screenshots: 12 passed; pytest unit+escenarios de documentación: 398 passed y 4 failed que quedaron corregidos y verificados por separado (25 passed en documentacion_vigente/supuestos); falta corrida final de la línea suite: Docker se cayó (Postgres 8701 sin respuesta)
+- L10 · 2026-11-09 · uncovered · ENG-21-ASM-08 · lo cubre el ataque HTTP de la línea attacks: del Gate (la fila head-unsupported ignorada con su motivo en http-attack.config.json), no un test etiquetado: la card no toca rutas
+- L11 · 2026-11-09 · uncovered · ENG-21-ASM-10 · la referencia del aspecto la comprueban las rondas del designer contra ref/, no un test etiquetado
