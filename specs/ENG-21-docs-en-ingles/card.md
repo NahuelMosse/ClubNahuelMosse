@@ -66,3 +66,5 @@ no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
 - L1 · 2026-10-27 «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27 «porque quiero que este en ingles, igual que absolutamente todo en el repo» · alcance de esta card en el plan: «ENG-21 · docs, README y sitio (`sitio-docs/` → `docs-site/`) en inglés, capturas nuevas; también las tablas viejas de `navegacion-de-la-app.md`» · 2026-11-09 «perfecto, continua con lo que falta entonces»
 - L2 · 2026-11-09 · sin Jira: las dudas van directo a ASM (ENG-21-ASM-01..06), sin ronda de preguntas
 - L3 · 2026-11-09 · la rama sale de CI-01-ci-en-github (PR #35, abierto para una persona por su `## Needs a person`): el CI de CI-01 corre los tests de `sitio-docs/tests`, que esta card renombra
+- L4 · 2026-11-09 · T1 · docs-site renombrado y en inglés; node --test tests/ci.test.mjs docs-site/tests/*.test.mjs tests/docs-in-english.test.mjs: S3 y ASM-01 pasan
+- L5 · 2026-11-09 · T6 · flutter test test/capturas/readme_screenshots.dart: 4 passed, PNG 430 px en docs/screenshots; falta el README (T2) para el test S4
