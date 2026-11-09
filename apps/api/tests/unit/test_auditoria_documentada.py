@@ -4,7 +4,7 @@
 import re
 from pathlib import Path
 
-MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "modelo-de-datos.md"
+MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "data-model.md"
 TABLAS = (
     "app_user",
     "venue",
@@ -23,7 +23,7 @@ def test_cada_tabla_del_diagrama_y_de_su_seccion_muestra_creado_en_y_modificado_
     """cada tabla del diagrama y de su sección muestra creado_en y modificado_en @DOC-02-S1"""
     texto = MODELO.read_text(encoding="utf-8")
     diagrama = texto.split("```mermaid", 1)[1].split("```", 1)[0]
-    entidades = texto.split("## Entidades", 1)[1].split("\n## ", 1)[0]
+    entidades = texto.split("## Entities", 1)[1].split("\n## ", 1)[0]
 
     for tabla in TABLAS:
         bloque = re.search(rf"^\s+{tabla} \{{\n(.*?)\n\s+\}}", diagrama, re.S | re.M)

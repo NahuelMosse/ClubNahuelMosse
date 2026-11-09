@@ -24,7 +24,7 @@ def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     configuracion = _leer(APP / "lib" / "common" / "config.dart")
     definidas = set(re.findall(r"String\.fromEnvironment\(\s*'([A-Z_]+)'", configuracion))
 
-    for seccion in ("configurar", "ejecutar", "probar"):
+    for seccion in ("configure", "run", "test"):
         assert seccion in _secciones(readme), seccion
     assert {"API_URL", "AUTH_EMULADOR", "FIREBASE_API_KEY"} <= definidas
     assert not {v for v in definidas if v not in readme}, "variables sin documentar"

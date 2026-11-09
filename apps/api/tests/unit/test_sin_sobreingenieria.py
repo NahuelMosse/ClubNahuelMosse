@@ -123,8 +123,8 @@ def test_no_quedan_scripts_avisos_de_terceros_ni_documentacion_de_lo_que_se_sac√
         "apps/api/README.md",
         "docs/technical/runbook.md",
         "docs/technical/system-design.md",
-        "docs/technical/arquitectura.md",
-        "docs/technical/mapa-del-codigo.md",
+        "docs/technical/architecture.md",
+        "docs/technical/code-map.md",
     )
     retirado = ("/metrics", "METRICAS_TOKEN", "DATABASE_URL_APP", "DETRAS_DE_PROXY", "/ready")
     for doc in docs:

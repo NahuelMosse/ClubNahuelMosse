@@ -2,6 +2,7 @@
 
 # ruff: noqa: E501  (test titles carry their tags and are not split)
 import re
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -16,8 +17,8 @@ DOC_TESTS = [
     "tests/unit/test_readme_capturas_sin_el_logo.py",
 ]
 PAGES = [
-    ROOT / "docs" / "technical" / "navegacion-de-la-app.md",
-    ROOT / "docs" / "technical" / "integraciones.md",
+    ROOT / "docs" / "technical" / "app-navigation.md",
+    ROOT / "docs" / "technical" / "integrations.md",
 ]
 LOGO_COUNTED_AS_A_CAPTURE = "test_el_readme_muestra_a_lo_sumo_4_capturas_en_una_fila_y_no_quedan_capturas_sin_usar("
 
@@ -28,7 +29,8 @@ def test_the_documentation_tests_pass_without_deselecting_any() -> None:
     assert LOGO_COUNTED_AS_A_CAPTURE not in conciso
     run = subprocess.run(
         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", *DOC_TESTS],
-        cwd=API, capture_output=True, text=True, encoding="utf-8",
+        cwd=API, capture_output=True, text=True, encoding="utf-8", errors="replace",
+        env={**os.environ, "PYTHONUTF8": "1"},
     )  # fmt: skip
     assert run.returncode == 0, run.stdout[-2000:]
 

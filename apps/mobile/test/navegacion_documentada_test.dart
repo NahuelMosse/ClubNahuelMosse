@@ -15,9 +15,9 @@ const _acceso = '/admin/acceso-denegado';
 /// Cada fila de la tabla de rutas de la página: la ruta con valores de ejemplo y quién entra.
 List<(String, String)> _filas() {
   final texto = File(
-    '../../docs/technical/navegacion-de-la-app.md',
+    '../../docs/technical/app-navigation.md',
   ).readAsStringSync();
-  final tabla = texto.split('## Rutas').last.split('\n## ').first;
+  final tabla = texto.split('## Routes').last.split('\n## ').first;
   final fila = RegExp(
     r'^\| `([^`]+)` \|.*\| ([^|]+) \| [^|]+ \|$',
     multiLine: true,
@@ -63,9 +63,9 @@ void main() {
           await tester.pump(const Duration(milliseconds: 300));
 
           final entra = switch (quien) {
-            'Sin sesión' => true,
-            'Cualquiera con sesión' => sesion != 'ninguna',
-            'Usuario' => sesion == 'usuario',
+            'No session' => true,
+            'Anyone with a session' => sesion != 'ninguna',
+            'User' => sesion == 'usuario',
             'Admin' => sesion == 'admin',
             _ => throw StateError('rol sin documentar: $quien'),
           };
@@ -83,7 +83,7 @@ void main() {
               quien != 'Admin' &&
               ruta != _acceso &&
               sesion == 'admin' &&
-              quien == 'Usuario' &&
+              quien == 'User' &&
               find.byType(AdminPanelScreen).evaluate().isNotEmpty;
 
           expect(

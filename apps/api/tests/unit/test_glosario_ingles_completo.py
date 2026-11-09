@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
-GLOSARIO = RAIZ / "docs" / "technical" / "glosario-ingles.md"
+GLOSARIO = RAIZ / "docs" / "technical" / "glossary.md"
 # El punto de partida del pasaje al inglés: lo que el glosario tiene que cubrir.
 BASE = "9b83c86"
 # Nombres que ya están en inglés o que no se traducen.

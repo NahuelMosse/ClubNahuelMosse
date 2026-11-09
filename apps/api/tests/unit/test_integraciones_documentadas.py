@@ -2,14 +2,14 @@ import re
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
-DOC = RAIZ / "docs" / "technical" / "integraciones.md"
+DOC = RAIZ / "docs" / "technical" / "integrations.md"
 SERVICIOS = [
     "Firebase Authentication",
     "Firebase Cloud Messaging",
     "Brevo",
-    "PostgreSQL en Render",
+    "PostgreSQL on Render",
     "Render",
-    "Monitor que mantiene despierta la API",
+    "Monitor that keeps the API awake",
 ]
 CODIGO = ("apps/api/app", "apps/mobile/lib", "apps/mobile/android")
 OTROS = ("render.yaml", "firebase.json", "package.json", "apps/mobile/definiciones.example.json")
@@ -40,15 +40,15 @@ def _corpus() -> str:
 
 
 def test_integraciones_md_tiene_una_seccion_por_servicio_con_para_que_se_usa() -> None:
-    """integraciones.md tiene una sección por servicio con para qué se usa
+    """integrations.md tiene una sección por servicio con para qué se usa
     @DOC-03-S1 @assumption:DOC-03-ASM-02"""
     secciones = _secciones()
     for servicio in SERVICIOS:
         assert servicio in secciones, servicio
-        assert "**Para qué se usa.**" in secciones[servicio], servicio
-    for vecino in ("arquitectura.md", "system-design.md"):
+        assert "**What it is used for.**" in secciones[servicio], servicio
+    for vecino in ("architecture.md", "system-design.md"):
         pagina = RAIZ / "docs" / "technical" / vecino
-        assert "integraciones.md" in pagina.read_text(encoding="utf-8")
+        assert "integrations.md" in pagina.read_text(encoding="utf-8")
 
 
 def test_cada_seccion_nombra_sus_archivos_y_sus_variables() -> None:
@@ -56,14 +56,14 @@ def test_cada_seccion_nombra_sus_archivos_y_sus_variables() -> None:
     for servicio, cuerpo in _secciones().items():
         if servicio not in SERVICIOS:
             continue
-        assert "**Archivos.**" in cuerpo, servicio
+        assert "**Files.**" in cuerpo, servicio
         assert "**Variables.**" in cuerpo, servicio
-        archivos = cuerpo.split("**Archivos.**", 1)[1].split("**Variables.**", 1)[0]
+        archivos = cuerpo.split("**Files.**", 1)[1].split("**Variables.**", 1)[0]
         assert any("/" in c or "." in c for c in _citas(archivos)), servicio
 
 
 def test_cada_archivo_y_variable_que_cita_integraciones_md_existe_en_el_repo() -> None:
-    """cada archivo y variable que cita integraciones.md existe en el repo
+    """cada archivo y variable que cita integrations.md existe en el repo
     @assumption:DOC-03-ASM-01"""
     corpus = _corpus()
     for cita in _citas(DOC.read_text(encoding="utf-8")):
@@ -74,7 +74,7 @@ def test_cada_archivo_y_variable_que_cita_integraciones_md_existe_en_el_repo() -
 
 
 def test_integraciones_md_no_tiene_claves_cuentas_de_servicio_ni_urls_con_contrasena() -> None:
-    """integraciones.md no tiene claves, cuentas de servicio ni URLs con contraseña
+    """integrations.md no tiene claves, cuentas de servicio ni URLs con contraseña
     @assumption:DOC-03-ASM-03"""
     texto = DOC.read_text(encoding="utf-8")
     for forma in FORMAS_DE_SECRETO:

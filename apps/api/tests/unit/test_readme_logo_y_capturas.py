@@ -3,14 +3,14 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
 README = (RAIZ / "README.md").read_text(encoding="utf-8")
-CAPTURAS = RAIZ / "docs" / "capturas"
+CAPTURAS = RAIZ / "docs" / "screenshots"
 LOGO = "docs/logo.png"
 ICONO_DE_LA_APP = RAIZ / "apps" / "mobile" / "assets" / "icono" / "icono.png"
 CAPTURAS_ELEGIDAS = [
-    "docs/capturas/01-login.jpg",
-    "docs/capturas/03-sedes.jpg",
-    "docs/capturas/05-horarios.jpg",
-    "docs/capturas/07-listo.jpg",
+    "docs/screenshots/01-login.png",
+    "docs/screenshots/03-venues.png",
+    "docs/screenshots/05-availability.png",
+    "docs/screenshots/07-done.png",
 ]
 
 
@@ -32,9 +32,9 @@ def test_el_readme_muestra_en_una_fila_inicio_de_sesion_sedes_horarios_y_reserva
 ):
     """el README muestra en una fila inicio de sesión, sedes, horarios y reserva confirmada,
     sin capturas sin usar @DOC-09-S2 @assumption:DOC-09-ASM-01"""
-    capturas = [r for r in _imagenes() if r.startswith("docs/capturas/")]
+    capturas = [r for r in _imagenes() if r.startswith("docs/screenshots/")]
     filas = re.findall(r'<p align="center">(.*?)</p>', README, flags=re.S)
 
     assert capturas == CAPTURAS_ELEGIDAS
-    assert len([f for f in filas if "docs/capturas/" in f]) == 1
+    assert len([f for f in filas if "docs/screenshots/" in f]) == 1
     assert {p.name for p in CAPTURAS.iterdir()} == {Path(r).name for r in capturas}

@@ -4,7 +4,7 @@
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
-NAVEGACION = RAIZ / "docs" / "technical" / "navegacion-de-la-app.md"
+NAVEGACION = RAIZ / "docs" / "technical" / "app-navigation.md"
 RUTAS = "apps/mobile/lib/router.dart"
 REDIRECCION = "apps/mobile/lib/redirect.dart"
 
@@ -16,4 +16,4 @@ def test_la_pagina_de_navegacion_nombra_rutas_y_redireccion() -> None:
     assert (RAIZ / RUTAS).exists() and (RAIZ / REDIRECCION).exists()
     assert f"`{RUTAS}`" in pagina
     assert f"`{REDIRECCION}`" in pagina
-    assert "todas las rutas están en `apps/mobile/lib/app.dart`" not in pagina
+    assert "all routes are in `apps/mobile/lib/app.dart`" not in pagina

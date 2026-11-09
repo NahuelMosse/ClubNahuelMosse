@@ -3,12 +3,12 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
 README = (RAIZ / "README.md").read_text(encoding="utf-8")
-SECCIONES = ["Qué hace", "Con qué está hecha", "Cómo correrla", "Documentación"]
+SECCIONES = ["What it does", "What it is built with", "How to run it", "Documentation"]
 ENLACES_QUE_LEEN_LOS_TESTS = [
     "apps/api/README.md",
     "apps/mobile/README.md",
-    "docs/guia-basica.md",
-    "docs/technical/arquitectura.md",
+    "docs/getting-started.md",
+    "docs/technical/architecture.md",
     "docs/technical/runbook.md",
     "specs/asvs.md",
 ]
@@ -28,13 +28,13 @@ def test_el_readme_entra_en_unas_60_lineas_con_que_es_que_hace_en_6_vinetas_con_
     """el README entra en unas 60 líneas con qué es, qué hace en 6 viñetas, con qué está hecha,
     cómo correrla y la documentación @DOC-06-S2"""
     titulos = re.findall(r"^## (.+)$", README, flags=re.M)
-    vinetas = re.findall(r"^- .+$", _seccion("Qué hace"), flags=re.M)
+    vinetas = re.findall(r"^- .+$", _seccion("What it does"), flags=re.M)
 
     assert len(README.splitlines()) <= MAXIMO_DE_LINEAS
     for seccion in SECCIONES:
         assert seccion in titulos, seccion
     assert 1 <= len(vinetas) <= MAXIMO_DE_VINETAS_DE_QUE_HACE
-    assert "docs/technical/integraciones.md" in _seccion("Con qué está hecha")
+    assert "docs/technical/integrations.md" in _seccion("What it is built with")
     for tecnologia in ("Flutter", "FastAPI", "PostgreSQL", "Firebase", "Brevo", "Render"):
         assert tecnologia in README, tecnologia
 

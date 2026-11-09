@@ -292,11 +292,11 @@ def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     definidas = set(
         re.findall(
             r"String\.fromEnvironment\(\s*'([A-Z_]+)'",
-            _leer(APP / "lib" / "comun" / "configuracion.dart"),
+            _leer(APP / "lib" / "common" / "config.dart"),
         )
     )
 
-    for seccion in ("configurar", "ejecutar", "probar"):
+    for seccion in ("configure", "run", "test"):
         assert seccion in _secciones(readme), seccion
     assert {"API_URL", "AUTH_EMULADOR", "FIREBASE_API_KEY"} <= definidas
     assert not {v for v in definidas if v not in readme}, "variables sin documentar"
@@ -318,7 +318,7 @@ def test_el_readme_del_backend_alcanza_para_configurar_ejecutar_y_desplegar() ->
         if campo != "model_config"
     }
 
-    for seccion in ("configurar", "ejecutar", "probar", "desplegar"):
+    for seccion in ("configure", "run", "test", "deploy"):
         assert seccion in _secciones(readme), seccion
     assert variables >= {"DATABASE_URL", "FIREBASE_PROJECT_ID", "PUBLIC_URL"}
     assert not {v for v in variables if v not in readme}, "variables sin documentar"

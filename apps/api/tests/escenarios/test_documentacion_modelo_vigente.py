@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tests.escenarios.test_documentacion_vigente import _columnas_por_tabla, _texto
 
-MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "modelo-de-datos.md"
+MODELO = Path(__file__).resolve().parents[4] / "docs" / "technical" / "data-model.md"
 
 
 def test_el_modelo_de_datos_documenta_todas_las_tablas() -> None:

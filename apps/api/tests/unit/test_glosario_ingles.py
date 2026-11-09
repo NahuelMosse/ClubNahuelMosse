@@ -7,7 +7,7 @@ from collections import defaultdict
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
-GLOSARIO = RAIZ / "docs" / "technical" / "glosario-ingles.md"
+GLOSARIO = RAIZ / "docs" / "technical" / "glossary.md"
 MODULOS = RAIZ / "apps" / "api" / "app" / "modules"
 CONTRATO = RAIZ / "apps" / "api" / "openapi.json"
 TABLAS = (
@@ -78,18 +78,18 @@ def test_el_glosario_traduce_cada_modulo_tabla_y_ruta_una_sola_vez() -> None:
 def test_el_glosario_fija_los_nombres_del_dominio_y_lo_que_queda_en_castellano() -> None:
     """el glosario fija booking, venue, space, kind y app_user, deja en castellano los títulos de test y lo que ve el usuario @assumption:ENG-00-ASM-01 @assumption:ENG-00-ASM-02 @assumption:ENG-00-ASM-03"""
     texto = GLOSARIO.read_text(encoding="utf-8")
-    tablas = _por_seccion(texto)["Tablas, vista, funciones, disparadores"]
+    tablas = _por_seccion(texto)["Tables, view, functions, triggers"]
 
     assert tablas["reserva"] == {"booking"}
     assert tablas["sede"] == {"venue"}
     assert tablas["espacio"] == {"space"}
     assert tablas["usuario"] == {"app_user"}
     assert "`tipo`→`kind`" in texto
-    queda = texto.split("## Queda en castellano", 1)[1]
+    queda = texto.split("## What stays in Spanish", 1)[1]
     for tema in (
-        "texto que ve el usuario",
-        "títulos y archivos de test",
+        "app texts",
+        "test titles and files",
         "dni",
-        "migraciones 0001–0010",
+        "migrations 0001–0010",
     ):
         assert tema in queda, tema

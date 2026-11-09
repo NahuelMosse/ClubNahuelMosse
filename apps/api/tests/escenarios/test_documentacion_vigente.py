@@ -109,7 +109,7 @@ def test_el_runbook_dice_como_volver_atras_rotar_secretos_y_atender_incidentes()
         assert len(seccion.split()) > 30, titulo
         assert "TODO" not in seccion, titulo
     assert "render.yaml" in runbook
-    for secreto in ("FIREBASE_CREDENCIALES_JSON", "SMTP_CONTRASENA"):
+    for secreto in ("FIREBASE_CREDENTIALS_JSON", "SMTP_PASSWORD"):
         assert secreto in _seccion(runbook, "Secret rotation and revocation"), secreto
 
 
@@ -155,7 +155,7 @@ def test_el_presupuesto_de_rendimiento_y_capacidad_esta_escrito() -> None:
     diseno = _texto(DISENO)
 
     assert re.search(r"p95[^\n]*\d+ ?ms", diseno)
-    assert re.search(r"capacidad[^\n]*\d+", diseno, re.I)
+    assert re.search(r"capacity[^\n]*\d+", diseno, re.I)
 
 
 def _ids_registrados() -> set[str]:
@@ -176,7 +176,7 @@ def test_quien_opera_la_app_encuentra_los_supuestos_en_los_readme() -> None:
     assert len(supuesto.findall(api)) >= 5
     assert len(supuesto.findall(movil)) >= 3
     assert set(listados) <= _ids_registrados()
-    for idea in ("4 horas", "7 días", "pagos", "administrador", "catálogo"):
+    for idea in ("4 hours", "7 days", "payments", "admin", "catalog"):
         assert idea in api + movil, idea
 
 

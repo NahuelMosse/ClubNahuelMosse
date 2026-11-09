@@ -41,7 +41,9 @@ void main() {
         ),
       );
       Object? error;
-      api.get('/spaces').then((_) {}, onError: (Object e) => error = e);
+      api.get('/spaces').then((_) {}, onError: (Object e) {
+        error = e;
+      });
       await tester.pump(const Duration(seconds: 29));
       expect(error, isNull);
       await tester.pump(const Duration(seconds: 2));
