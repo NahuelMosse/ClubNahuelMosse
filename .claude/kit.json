@@ -52,11 +52,9 @@
       "since": "install 2026-10-20"
     },
     "ci": {
-      "state": "off",
-      "reason": "not chosen at install: no signal found in the repo",
-      "by": "person",
-      "at": "2026-10-20",
-      "signalsAtDecision": []
+      "state": "on",
+      "version": "1.0.0",
+      "since": "kit.mjs on 2026-11-09"
     },
     "observability": {
       "state": "on",

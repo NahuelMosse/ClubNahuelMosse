@@ -183,7 +183,7 @@ def test_el_registro_de_accesibilidad_nombra_cada_pantalla_con_lector_navegador_
     pudo correr @REV-07-S7 @assumption:REV-07-ASM-12
     """
     registro = _seccion(_texto(ACCESIBILIDAD), "Registro por pantalla").splitlines()
-    pantallas = sorted(p.stem for p in (MOVIL / "lib").rglob("pantalla_*.dart"))
+    pantallas = sorted(p.stem for p in (MOVIL / "lib").rglob("*_screen.dart"))
 
     assert pantallas
     for pantalla in pantallas:

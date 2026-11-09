@@ -1,0 +1,37 @@
+{
+  "size": "large",
+  "review": "high",
+  "lenses": [
+    "contract",
+    "integrity"
+  ],
+  "modules": [
+    "api",
+    "data"
+  ],
+  "signals": [
+    "ci",
+    "data-dependency",
+    "docs",
+    "http-dependency",
+    "route"
+  ],
+  "words": [],
+  "files": [
+    ".github/workflows/ci.yml",
+    "scripts/ci-pytest-verdict.mjs",
+    "tests/ci.test.mjs",
+    "apps/api/pyproject.toml",
+    "apps/api/tests/escenarios/test_basquet.py",
+    "apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py",
+    "apps/api/tests/escenarios/test_english_schema.py",
+    "apps/api/tests/escenarios/test_readme_app_configuracion.py",
+    "apps/api/tests/escenarios/test_requisitos_no_funcionales.py",
+    "apps/api/tests/escenarios/test_requisitos_no_funcionales_readme_app.py",
+    "apps/api/tests/unit/test_api_en_ingles_verde.py",
+    "docs/business/accessibility.md",
+    "specs/asvs.md",
+    "apps/api/tests/unit/test_ci_suite_green.py"
+  ],
+  "tasks": 2
+}

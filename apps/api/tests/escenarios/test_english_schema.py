@@ -237,10 +237,11 @@ def test_every_named_constraint_is_in_english(base_propia: Base) -> None:  # noq
     """every named constraint is in English @ENG-17-S1 @assumption:ENG-17-ASM-03"""
     base = _at_head(base_propia)
 
+    # PostgreSQL 18 records each NOT NULL as a constraint named after its column: those are not named by a migration.
     names = _names(
         base,
         "SELECT conname FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace"
-        " WHERE n.nspname = 'public'",
+        " WHERE n.nspname = 'public' AND c.contype <> 'n'",
     )
 
     assert names == CONSTRAINTS

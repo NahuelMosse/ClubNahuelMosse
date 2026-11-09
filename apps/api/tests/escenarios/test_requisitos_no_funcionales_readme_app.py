@@ -1,4 +1,4 @@
-"""El README de la app alcanza para configurarla y ejecutarla, con la configuración en `lib/comun/`."""
+"""El README de la app alcanza para configurarla y ejecutarla, con la configuración en `lib/common/`."""
 
 import re
 from pathlib import Path
@@ -26,7 +26,7 @@ def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     definidas = set(
         re.findall(
             r"String\.fromEnvironment\(\s*'([A-Z_]+)'",
-            _leer(APP / "lib" / "comun" / "configuracion.dart"),
+            _leer(APP / "lib" / "common" / "config.dart"),
         )
     )
 

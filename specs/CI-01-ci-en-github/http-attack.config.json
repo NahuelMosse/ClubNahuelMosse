@@ -1,0 +1,5 @@
+{
+  "ignore": [
+    { "id": "head-unsupported:head", "reason": "CI-01-ASM-06: FastAPI answers HEAD with 405 on every GET route of main; this card touches no route" }
+  ]
+}

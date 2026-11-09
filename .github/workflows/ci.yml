@@ -1,0 +1,127 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API · ruff, mypy, pytest
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: club
+          POSTGRES_PASSWORD: club
+          POSTGRES_DB: club_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U club"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://club:club@127.0.0.1:5432/club_test
+      FIREBASE_AUTH_EMULATOR_HOST: 127.0.0.1:9099
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Frozen tests compare files against the local `main` branch, which the checkout of a pull request does not create.
+      - run: git rev-parse --verify -q main > /dev/null || git branch main origin/main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      # The Firebase emulators run on Java.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+          enable-cache: true
+      - name: Start the Firebase Auth emulator
+        run: |
+          npm ci
+          nohup npx firebase emulators:start --only auth --project demo-clubnahuelmosse > emulator.log 2>&1 &
+          for i in $(seq 1 90); do curl -sf http://127.0.0.1:9099/ > /dev/null && exit 0; sleep 2; done
+          cat emulator.log; exit 1
+      - name: Install
+        working-directory: apps/api
+        run: uv sync --frozen
+      - name: Ruff
+        working-directory: apps/api
+        run: uv run ruff check .
+      - name: Mypy
+        working-directory: apps/api
+        run: uv run mypy app
+      - name: Pytest
+        run: |
+          set +e
+          (cd apps/api && uv run pytest -q -p no:cacheprovider) > pytest.log 2>&1
+          code=$?
+          tail -n 60 pytest.log
+          node scripts/ci-test-verdict.mjs pytest pytest.log "$code"
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log
+          path: pytest.log
+
+  mobile:
+    name: App · analyze, format, test
+    # The accessibility tests measure contrast on the rendered text. The Linux rasterizer greys the thin glyphs of
+    # the real font (a #0A0A0B digit on white is measured #A0A0A0); on Windows, a test file that does not compile
+    # takes the Dart compiler down with the files after it. macOS renders as Windows and compiles as Linux.
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.35.3
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      # The frozen scenarios keep the format they were committed with: only lib is checked.
+      - run: dart format --output=none --set-exit-if-changed lib
+      - name: Flutter test
+        run: |
+          set +e
+          flutter test --reporter expanded > ../../flutter.log 2>&1
+          code=$?
+          tail -n 60 ../../flutter.log
+          cd ../.. && node scripts/ci-test-verdict.mjs flutter flutter.log "$code"
+      # The step shows only the tail: the whole run, with each failure's message, stays as an artifact.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-log
+          path: flutter.log
+
+  node:
+    name: Repo and docs site · node tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node --test tests/*.test.mjs sitio-docs/tests/*.test.mjs

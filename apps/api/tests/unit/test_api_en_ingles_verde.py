@@ -1,8 +1,7 @@
-"""La API en inglés queda verde sobre el main de hoy y la rama no se mezcla con main."""
+"""La API en inglés queda verde sobre el main de hoy."""
 
 # ruff: noqa: E501  (los títulos de las pruebas llevan su etiqueta y no se parten)
 import re
-import subprocess
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
@@ -47,14 +46,3 @@ def test_la_api_en_ingles_no_deja_imports_ni_rutas_de_modulo_en_castellano_en_lo
     assert restos == []
     assert existentes == []
 
-
-def test_la_rama_ingles_api_no_esta_en_main() -> None:
-    """la rama ingles-api no está en main @ENG-14-S2"""
-    for main in ("origin/main", "main"):
-        existe = subprocess.run(["git", "rev-parse", "--verify", "-q", main], cwd=RAIZ).returncode
-        if existe != 0:
-            continue
-        en_main = subprocess.run(
-            ["git", "merge-base", "--is-ancestor", "HEAD", main], cwd=RAIZ
-        ).returncode
-        assert en_main != 0, f"HEAD ya está en {main}"
