@@ -6,8 +6,8 @@ Sólo se nombran variables, nunca sus valores. Para operarlos, el [runbook](runb
 
 | Servicio | Para qué | Dónde |
 |---|---|---|
-| Firebase Authentication | Registro, inicio de sesión y recuperación de contraseña | `apps/api/app/shared/identity.py`, `apps/mobile/lib/sesion/firebase.dart` |
-| Firebase Cloud Messaging | Avisos push al teléfono | `apps/api/app/modules/notifications/push.py`, `apps/mobile/lib/notificaciones/sistema_fcm.dart` |
+| Firebase Authentication | Registro, inicio de sesión y recuperación de contraseña | `apps/api/app/shared/identity.py`, `apps/mobile/lib/features/session/data/firebase.dart` |
+| Firebase Cloud Messaging | Avisos push al teléfono | `apps/api/app/modules/notifications/push.py`, `apps/mobile/lib/features/notifications/presentation/fcm_notification_system.dart` |
 | Brevo | Correos de recuperación, confirmación, recordatorio y avisos | `apps/api/app/shared/email.py` |
 | PostgreSQL en Render | Todos los datos | `apps/api/app/shared/config.py`, `render.yaml` |
 | Render | Hosting de la API y despliegue desde `main` | `render.yaml` |
@@ -22,8 +22,8 @@ Firebase; la API verifica el token de cada pedido y comprueba contraseñas con l
 - API: `apps/api/app/shared/identity.py` (cliente de Firebase y verificación de tokens),
   `apps/api/app/shared/firebase_credential.py` (cuenta de servicio), `apps/api/app/modules/session/current_user.py`
   (la persona de cada pedido), `apps/api/app/modules/users/registration.py` (alta de la cuenta).
-- App: `apps/mobile/lib/sesion/firebase.dart`, `apps/mobile/lib/sesion/sesion.dart`,
-  `apps/mobile/lib/comun/configuracion.dart` (lee las variables de compilación).
+- App: `apps/mobile/lib/features/session/data/firebase.dart`, `apps/mobile/lib/features/session/data/session_repository.dart`,
+  `apps/mobile/lib/common/config.dart` (lee las variables de compilación).
 - Configuración: `firebase.json` (emulador de Auth), `render.yaml`, `apps/mobile/definiciones.example.json`.
 
 **Variables.**
@@ -43,8 +43,8 @@ del dispositivo en la API y la API manda el aviso por FCM.
   `apps/api/app/modules/notifications/use_cases.py` (cuándo se entrega),
   `apps/api/app/modules/notifications/sweep.py` (el reloj de los recordatorios),
   `apps/api/app/shared/firebase_credential.py`.
-- App: `apps/mobile/lib/notificaciones/sistema_fcm.dart` (permiso, token y mensajes),
-  `apps/mobile/lib/notificaciones/sistema_simulado.dart` (el sistema sin Firebase), `apps/mobile/lib/main.dart`,
+- App: `apps/mobile/lib/features/notifications/presentation/fcm_notification_system.dart` (permiso, token y mensajes),
+  `apps/mobile/lib/features/notifications/data/simulated_notification_system.dart` (el sistema sin Firebase), `apps/mobile/lib/main.dart`,
   `apps/mobile/android/app/src/main/AndroidManifest.xml` (ícono y color de las notificaciones).
 - Configuración: `render.yaml`.
 

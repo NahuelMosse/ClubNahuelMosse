@@ -18,7 +18,7 @@ not_read: ninguno: no hay Jira ni adjuntos
 
 ## Changes to existing behavior
 
-- apps/api/tests/unit/test_documentacion_del_modelo.py · lee `apps/mobile/lib/router.dart` en vez de `rutas.dart` · "cada ruta que nombra la página de navegación existe en app.dart @DOC-01-S2" y "la página de navegación lista cada ruta de app.dart @DOC-01-S2" verifican lo mismo
+- apps/api/tests/unit/test_documentacion_del_modelo.py · lee `apps/mobile/lib/router.dart` en vez de `rutas.dart`, y una ruta que `router.dart` arma en un método aparte cuelga de la ruta donde se lo llama · "cada ruta que nombra la página de navegación existe en app.dart @DOC-01-S2" y "la página de navegación lista cada ruta de app.dart @DOC-01-S2" verifican lo mismo
 - apps/api/tests/unit/test_rutas_documentadas.py · lee `router.dart` y `redirect.dart` · "la página de navegación nombra rutas.dart y redireccion.dart, donde viven las rutas y la redirección @SIM-04-S1" verifica lo mismo
 - apps/api/tests/unit/test_readme_conciso.py · sale "el README muestra a lo sumo 4 capturas en una fila y no quedan capturas sin usar @DOC-06-S1", reemplazado por DOC-09
 
@@ -29,7 +29,7 @@ suite: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider tests/un
 lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh apps/api
 app: sh D:/Temp/w/herramientas/arq01-app.sh doc10_app
 attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh doc10_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
-refactor-tests: los tests de documentación que leen archivos de la app siguen el renombre de ENG-17 y ENG-19 (rutas.dart → router.dart, redireccion.dart → redirect.dart); lo que verifican no cambia
+refactor-tests: los tests de documentación que leen archivos de la app siguen el renombre de ENG-17 y ENG-19 (rutas.dart → router.dart, redireccion.dart → redirect.dart) y el lector de rutas sigue la ruta que router.dart arma en un método aparte; lo que verifican no cambia
 no-docs: la card corrige páginas que citaban archivos que ya no existen; no cambia comportamiento
 ```
 

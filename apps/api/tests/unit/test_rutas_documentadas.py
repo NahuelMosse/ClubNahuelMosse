@@ -5,8 +5,8 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
 NAVEGACION = RAIZ / "docs" / "technical" / "navegacion-de-la-app.md"
-RUTAS = "apps/mobile/lib/rutas.dart"
-REDIRECCION = "apps/mobile/lib/redireccion.dart"
+RUTAS = "apps/mobile/lib/router.dart"
+REDIRECCION = "apps/mobile/lib/redirect.dart"
 
 
 def test_la_pagina_de_navegacion_nombra_rutas_y_redireccion() -> None:
