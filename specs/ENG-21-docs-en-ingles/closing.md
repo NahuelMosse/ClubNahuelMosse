@@ -59,6 +59,6 @@ risk large · high · lenses contract, interpretation, security, visual · 3 ACT
 - module docs off by decision: not chosen at install: no signal found in the repo
 - grade: mvp — the app is an university project
 
-Cost: USD 21.73 (main 9.60, builder 8.24, designer 2.92, scout 0.97) · the messages of this card
-close.mjs seal: ENG-21 sha256:8ac85338ec6617ff35ab4d2a7b3d49fca119d2e3237a30aee7a3ee92bcbb9db1
+Cost: USD 22.39 (main 10.25, builder 8.24, designer 2.92, scout 0.97) · the messages of this card
+close.mjs seal: ENG-21 sha256:b1ff8de401ce41f1c53bc194acc76b2161ac25e4d50505ede700e3c6d294a1d2
 <!-- close.mjs:end -->
