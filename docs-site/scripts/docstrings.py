@@ -78,7 +78,7 @@ def main() -> int:
             encoding="utf-8",
         )
     (DESTINATION / "_category_.json").write_text(
-        json.dumps({"label": "Code reference (API)", "position": 7}, ensure_ascii=False, indent=2),
+        json.dumps({"label": "Code reference (API)", "position": 7, "link": {"type": "generated-index"}}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     print(f"{len(LAYERS)} pages in {DESTINATION.relative_to(SITE.parent)}")

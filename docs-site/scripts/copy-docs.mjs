@@ -65,14 +65,16 @@ for (const [source, page, position] of pages) {
   const text = readFileSync(join(repo, source), 'utf8')
     .replace(/\]\(([^)\s]+)\)/g, (_, url) => `](${rewriteLink(source, page, url)})`)
     // The README's images are copied to static/docs/ and linked by their site path.
-    .replace(/<img src="docs\//g, '<img src="/docs/');
+    // They sit in the first viewport, so none is lazy.
+    .replace(/<img src="docs\/([^"]+)"/g, '<img src="/docs/$1" loading="eager"');
   const file = join(destination, page);
   mkdirSync(dirname(file), { recursive: true });
   const cover = page === 'intro.md' ? 'slug: /\n' : '';
   // The side menu already names the product: the title without " · ClubNahuelMosse".
   const title = (text.match(/^# (.+)$/m)?.[1] ?? '').replace(/ · ClubNahuelMosse$/, '');
   const label = page === 'intro.md' ? 'Home' : title;
-  const pageTitle = page === 'intro.md' ? `title: "ClubNahuelMosse"\n` : '';
+  // The README opens with its own centered title: the page does not draw a second one.
+  const pageTitle = page === 'intro.md' ? `title: "ClubNahuelMosse"\nhide_title: true\n` : '';
   const header =
     `---\n${cover}${pageTitle}sidebar_position: ${position}\nsidebar_label: ${JSON.stringify(label)}\n` +
     `custom_edit_url: ${github}${source}\n---\n\n`;
@@ -98,9 +100,10 @@ that a test compares with the API. "Try it out" sends the request from the brows
 `,
 );
 for (const [folder, [label, position]] of Object.entries(sections)) {
+  // A section label opens its own index page, so it is a real link and never a `#`.
   writeFileSync(
     join(destination, folder, '_category_.json'),
-    JSON.stringify({ label, position }, null, 2),
+    JSON.stringify({ label, position, link: { type: 'generated-index' } }, null, 2),
   );
 }
 console.log(`${pages.length} pages in ${relative(repo, destination)}`);
