@@ -42,6 +42,8 @@ not_read:
   reuses: apps/mobile/test/soporte/montar.dart cargarFuentes y los montajes de los archivos de capturas existentes (test/capturas/*_capturas.dart)
 - T7 · S1,S2,S3,S4 · apps/api/tests/** , apps/mobile/test/navegacion_documentada_test.dart, apps/mobile/test/sin_sobreingenieria_test.dart · los tests de documentación que leen encabezados, frases, nombres de archivo o la carpeta `sitio-docs` siguen la traducción y el renombre (refactor-tests)
   new: no escribe lógica de producción
+- T8 · S3 · design/line.md (presentation), design/tokens.css (presentation), design/components/** (presentation), docs-site/src/css/custom.css (presentation), docs-site/src/components/Swagger.js (presentation), docs-site/scripts/copy-docs.mjs (presentation), docs-site/docusaurus.config.js (presentation), docs-site/tests/design-line.test.mjs · el sitio movido sigue la línea de diseño del proyecto (la de la app): tokens en `design/tokens.css`, el set de `design/components/` para lo que el sitio agrega, motion de hover, press, foco y entrada con su reduced-motion · tests: docs-site/tests/design-line.test.mjs "the docs site takes its colors, space and motion from design/tokens.css @ENG-21-S3"
+  reuses: la paleta de `apps/mobile/lib/theme/tokens.dart` y el set de `.claude/templates/components/`
 
 ## Changes to existing behavior
 
