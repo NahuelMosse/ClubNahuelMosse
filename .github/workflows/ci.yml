@@ -71,6 +71,11 @@ jobs:
           code=$?
           tail -n 60 pytest.log
           node scripts/ci-test-verdict.mjs pytest pytest.log "$code"
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-log
+          path: pytest.log
 
   mobile:
     name: App · analyze, format, test
@@ -100,6 +105,12 @@ jobs:
           code=$?
           tail -n 60 ../../flutter.log
           cd ../.. && node scripts/ci-test-verdict.mjs flutter flutter.log "$code"
+      # The step shows only the tail: the whole run, with each failure's message, stays as an artifact.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-log
+          path: flutter.log
 
   node:
     name: Repo and docs site · node tests
