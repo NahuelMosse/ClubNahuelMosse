@@ -1,45 +1,45 @@
-# ADR-0001: FastAPI con PostgreSQL para la API, Flutter para la app y Firebase para la identidad
+# ADR-0001: FastAPI with PostgreSQL for the API, Flutter for the app and Firebase for identity
 
 ## Status
 
-`accepted` · 2026-09-27 · NahuelMosse (autor del repo). Fecha de los commits que armaron cada pieza: la API en d13f90d y la app en
-c55abec, ambos del 2026-09-27.
+`accepted` · 2026-09-27 · NahuelMosse (repo author). Date of the commits that built each piece: the API in d13f90d and the app in
+c55abec, both of 2026-09-27.
 
 ## Problem and requirement
 
-El enunciado del TP pide una app móvil en Flutter, una API REST documentada con Swagger/OpenAPI (lenguaje libre,
-«preferentemente Python»), una base relacional («preferentemente PostgreSQL») y Firebase para la autenticación y los avisos
-push. Las restricciones son un equipo de una persona, sin presupuesto y con la entrega en un cuatrimestre. Los requisitos que
-lo exigen son RNF-01 (requisitos no funcionales) y los CU de sesión, reservas y avisos.
+The assignment asks for a mobile app in Flutter, a REST API documented with Swagger/OpenAPI (free language,
+"preferably Python"), a relational database ("preferably PostgreSQL") and Firebase for authentication and push
+notices. The constraints are a team of one person, no budget and delivery within one term. The requirements that
+demand it are RNF-01 (non-functional requirements) and the use cases of session, bookings and notices.
 
 ## Alternatives
 
-### Alternative A — FastAPI, SQLAlchemy, Alembic y PostgreSQL; Flutter; Firebase Authentication y Cloud Messaging
+### Alternative A — FastAPI, SQLAlchemy, Alembic and PostgreSQL; Flutter; Firebase Authentication and Cloud Messaging
 
 | Axis | Answer |
 |---|---|
-| Meets the requirement | sí: la API publica `/openapi.json` y `/docs` (`apps/api/README.md`), la app es Flutter (`apps/mobile/pubspec.yaml`), la base es PostgreSQL y Firebase identifica y avisa. La restricción de no superposición de reservas se resuelve en la base con `btree_gist` (`apps/api/migrations/versions/0001_modelo_inicial.py:170-171`) |
-| Deployment ease | un `render.yaml` describe la API y la base; el build instala con `uv` y migra con Alembic (`render.yaml:11`). Firebase es un servicio gestionado |
-| Monthly infra cost | hoy USD 0 con los planes free de Render y Firebase Authentication; las alternativas pagas están en `docs/technical/infra-cost.md` |
-| Cost to operate | parches de dependencias a mano (sin bot de actualizaciones, hallazgo 25); sin backups en la base free (hallazgo 4); Firebase no se opera |
-| Corrective maintenance cost | el autor conoce el stack, se reproduce en local con Postgres y el emulador de Firebase Auth (`firebase.json`), y los tres tienen comunidad grande. Hay 384 tests de la API y 416 de la app que corren en local (revisión, «Qué corrió») |
-| Lock-in and exit | los datos son Postgres estándar; la API es REST con OpenAPI. Salir de Firebase Authentication exige migrar las cuentas y las contraseñas (`usuario.firebase_uid` es la clave de unión) y reemplazar la verificación de tokens (`shared/identidad.py`) |
+| Meets the requirement | yes: the API publishes `/openapi.json` and `/docs` (`apps/api/README.md`), the app is Flutter (`apps/mobile/pubspec.yaml`), the database is PostgreSQL and Firebase identifies and notifies. The no-overlap constraint on bookings is solved in the database with `btree_gist` (`apps/api/migrations/versions/0001_modelo_inicial.py:170-171`) |
+| Deployment ease | one `render.yaml` describes the API and the database; the build installs with `uv` and migrates with Alembic (`render.yaml:11`). Firebase is a managed service |
+| Monthly infra cost | today USD 0 with the free plans of Render and Firebase Authentication; the paid alternatives are in `docs/technical/infra-cost.md` |
+| Cost to operate | dependency patches by hand (no update bot, finding 25); no backups on the free database (finding 4); Firebase is not operated |
+| Corrective maintenance cost | the author knows the stack, it is reproduced locally with Postgres and the Firebase Auth emulator (`firebase.json`), and all three have a large community. There are 384 API tests and 416 app tests that run locally (review, "What ran") |
+| Lock-in and exit | the data is standard Postgres; the API is REST with OpenAPI. Leaving Firebase Authentication requires migrating the accounts and passwords (`app_user.firebase_uid` is the join key) and replacing the token verification (`apps/api/app/shared/identity.py`) |
 
-### Alternative B — Django REST Framework con la autenticación propia (usuarios y contraseñas en la base) y avisos push con otro servicio
+### Alternative B — Django REST Framework with own authentication (users and passwords in the database) and push notices with another service
 
 | Axis | Answer |
 |---|---|
-| Meets the requirement | en parte: cumple Python, OpenAPI y PostgreSQL, pero el enunciado nombra a Firebase para la autenticación y las notificaciones push, y la identidad propia obliga a guardar contraseñas, recuperar cuentas y emitir tokens |
-| Deployment ease | un solo servicio y una base, como A, sin depender de Firebase para la identidad |
-| Monthly infra cost | el mismo servicio web y base de Render que A; el costo de otro servicio de push no se calculó (`not verified`) |
-| Cost to operate | guardar, rotar y proteger los hashes de contraseñas, el envío de correos y el límite de intentos lo operaría el autor |
-| Corrective maintenance cost | Django es el framework más conocido de Python y trae ORM y migraciones; el autor no lo evaluó con una prueba (`not verified`) |
-| Lock-in and exit | menor que A para la identidad; no se midió el costo del resto |
+| Meets the requirement | in part: it meets Python, OpenAPI and PostgreSQL, but the assignment names Firebase for authentication and push notifications, and an own identity forces storing passwords, recovering accounts and issuing tokens |
+| Deployment ease | a single service and one database, like A, without depending on Firebase for identity |
+| Monthly infra cost | the same Render web service and database as A; the cost of another push service was not calculated (`not verified`) |
+| Cost to operate | storing, rotating and protecting the password hashes, sending emails and the attempt limit would be operated by the author |
+| Corrective maintenance cost | Django is the best-known Python framework and brings an ORM and migrations; the author did not evaluate it with a trial (`not verified`) |
+| Lock-in and exit | lower than A for identity; the cost of the rest was not measured |
 
 ## Decision and why
 
-Se eligió la alternativa A. Decidieron el enunciado, que nombra Flutter, Python, PostgreSQL y Firebase, y el costo de operar
-una identidad propia, que el autor evitó. Se acepta como costo el acople a Firebase para las cuentas, los tokens y los
-avisos, y que el SDK acepta tokens sin firma si el entorno define `FIREBASE_AUTH_EMULATOR_HOST` (hallazgo 25). Se revisa si
-Firebase deja de ser gratuito para el volumen del club o si el enunciado cambia de proveedor. Los números de infraestructura
-están en `docs/technical/infra-cost.md`; el estado actual del sistema, en `docs/technical/system-design.md`.
+Alternative A was chosen. What decided it was the assignment, which names Flutter, Python, PostgreSQL and Firebase, and the cost of operating
+an own identity, which the author avoided. The coupling to Firebase for accounts, tokens and
+notices is accepted as a cost, along with the SDK accepting unsigned tokens if the environment defines `FIREBASE_AUTH_EMULATOR_HOST` (finding 25). It is reviewed if
+Firebase stops being free for the volume of the club or if the assignment changes provider. The infrastructure numbers
+are in `docs/technical/infra-cost.md`; the current state of the system, in `docs/technical/system-design.md`.

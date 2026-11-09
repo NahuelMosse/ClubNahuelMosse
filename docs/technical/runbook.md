@@ -1,177 +1,177 @@
 # Runbook · ClubNahuelMosse
 
-Para quien opera la API en Render y no la escribió. Frases cortas, comandos que se pegan, síntomas antes que causas. Lo que
-no se ejecutó en Render dice `not verified`: el despliegue en Render no se hizo todavía (el escenario RNF-01-H06-01 se
-saltea sin `API_URL_NUBE`). Los números de hallazgo remiten a la revisión de la rama `kit-3` (`specs/REVISION-kit3.md`).
-La arquitectura está en [`arquitectura.md`](arquitectura.md), el diseño del sistema en
-[`system-design.md`](system-design.md) y los costos en [`infra-cost.md`](infra-cost.md).
+For whoever operates the API on Render and did not write it. Short sentences, commands you paste, symptoms before causes. What
+was not run on Render says `not verified`: the deployment on Render has not been made yet (scenario RNF-01-H06-01 is
+skipped without `API_URL_NUBE`). Finding numbers refer to the review of the `kit-3` branch (`specs/REVISION-kit3.md`).
+The architecture is in [`architecture.md`](architecture.md), the system design in
+[`system-design.md`](system-design.md) and the costs in [`infra-cost.md`](infra-cost.md).
 
-Dueño: pendiente de una persona · Última revisión: pendiente de una persona (la revisa alguien que no lo escribió)
+Owner: pending a person · Last review: pending a person (reviewed by someone who did not write it)
 
 ## Deploy
 
-La fuente de la configuración es `render.yaml`, en la raíz del repo. Render lo lee como Blueprint y crea el web service
-`clubnahuelmosse-api` y la base `clubnahuelmosse-db`. Los pasos de la primera vez (cuenta, proyecto de Firebase, Blueprint,
-sembrar al administrador) están en «Desplegar en Render» de `apps/api/README.md`.
+The source of the configuration is `render.yaml`, at the root of the repo. Render reads it as a Blueprint and creates the web service
+`clubnahuelmosse-api` and the database `clubnahuelmosse-db`. The first-time steps (account, Firebase project, Blueprint,
+seeding the administrator) are in "Deploy on Render" of `apps/api/README.md`.
 
-Cada commit a la rama enlazada despliega solo. En cada despliegue Render corre, en `apps/api`:
+Each commit to the linked branch deploys by itself. On each deployment Render runs, in `apps/api`:
 
-1. Build: `uv sync --frozen --no-dev && uv run --no-sync alembic upgrade head`. **Las migraciones corren acá, contra la
-   base real**, con la versión anterior todavía sirviendo: si fallan, el despliegue no sale y el servicio sigue con la
-   versión anterior. Cada migración corre en su transacción y las que crean índices sobre tablas con datos lo hacen con
-   `CONCURRENTLY` y `lock_timeout`, así que no bloquean a la versión que atiende.
-2. Arranque: `uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-3. Health check: `GET /health`, que responde 200 mientras el proceso está vivo.
+1. Build: `uv sync --frozen --no-dev && uv run --no-sync alembic upgrade head`. **The migrations run here, against the
+   real database**, while the previous version is still serving: if they fail, the deployment does not go out and the service stays on the
+   previous version. Each migration runs in its own transaction and those that create indexes on tables with data do so with
+   `CONCURRENTLY` and `lock_timeout`, so they do not block the serving version.
+2. Start: `uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
+3. Health check: `GET /health`, which answers 200 while the process is alive.
 
-Cómo saber que terminó: el estado del servicio en el panel de Render pasa a «Live» (`not verified`: no se hizo un
-despliegue), `GET /health` devuelve la versión desplegada. Comprobación mínima de la API:
-`GET /sedes` sin sesión responde 401. Con el plan free el primer pedido después de dormir tarda alrededor de un minuto.
+How to tell it finished: the service status in the Render dashboard changes to "Live" (`not verified`: no deployment was
+made), `GET /health` returns the deployed version. Minimal check of the API:
+`GET /venues` without a session answers 401. On the free plan the first request after sleeping takes about a minute.
 
-La API en el plan free de Render se duerme tras 15 minutos sin tráfico. Un monitor de UptimeRobot llama a `/health` cada
-5 minutos para mantenerla despierta, y eso es lo que permite que el barrido dentro del proceso mande los recordatorios;
-el monitor tiene que apuntar a `/health`.
+The API on the Render free plan sleeps after 15 minutes without traffic. An UptimeRobot monitor calls `/health` every
+5 minutes to keep it awake, and that is what lets the in-process sweep send the reminders;
+the monitor has to point at `/health`.
 
 ## Roll back
 
-**Código.** No hay un comando propio: se vuelve a desplegar el commit anterior. Dos caminos, en este orden de preferencia:
+**Code.** There is no command of its own: the previous commit is deployed again. Two paths, in this order of preference:
 
-1. `git revert <commit malo>` y push a la rama enlazada: Render despliega el revert con el mismo build de arriba.
-2. En el panel del servicio, desplegar a mano un commit anterior (`not verified`: no se usó el panel).
+1. `git revert <bad commit>` and push to the linked branch: Render deploys the revert with the same build as above.
+2. In the service dashboard, deploy a previous commit by hand (`not verified`: the dashboard was not used).
 
-**Datos.** La base `free` no tiene copias automáticas, vence a los 30 días y se borra 14 días después: no hay vuelta atrás de
-datos.
+**Data.** The `free` database has no automatic copies, expires after 30 days and is deleted 14 days later: there is no rollback of
+data.
 
-**Migraciones.** El build corre `alembic upgrade head`, pero no hay un comando de vuelta atrás en el despliegue. Si el commit
-anterior no trae la última migración, Alembic se queja de una revisión que no conoce y el build falla (comportamiento
-conocido de Alembic, no ensayado contra Render: `not verified`). La vuelta atrás de una migración se hace a mano, contra la
-**External Database URL** de la base, desde `apps/api`: `DATABASE_URL=<External Database URL> uv run alembic downgrade -1`.
-Tres bajadas borran tablas con datos y no se deben correr sobre una base con uso real: la 0003 (`outgoing_email`,
-`recovery_link`), la 0005 (`notification`, `device`) y la 0007 (`notification_booking` y las columnas `count` y
-`replaced_by`). La 0008 y la 0009 bajan sin perder reservas.
+**Migrations.** The build runs `alembic upgrade head`, but there is no rollback command in the deployment. If the previous commit
+does not carry the latest migration, Alembic complains about a revision it does not know and the build fails (known
+Alembic behavior, not rehearsed against Render: `not verified`). Rolling a migration back is done by hand, against the
+database **External Database URL**, from `apps/api`: `DATABASE_URL=<External Database URL> uv run alembic downgrade -1`.
+Three downgrades delete tables with data and must not be run on a database in real use: 0003 (`outgoing_email`,
+`recovery_link`), 0005 (`notification`, `device`) and 0007 (`notification_booking` and the columns `count` and
+`replaced_by`). 0008 and 0009 downgrade without losing bookings.
 
-Cómo confirmar que sirve la versión anterior: el estado del despliegue en el panel, `GET /health` con la versión anterior y
-el comportamiento que se había roto.
+How to confirm the previous version is serving: the deployment status in the dashboard, `GET /health` with the previous version and
+the behavior that had broken.
 
 ## Diagnose
 
-Primer vistazo, en este orden:
+First look, in this order:
 
-1. `GET https://<servicio>.onrender.com/health`: si responde, el proceso web está vivo; trae la versión. Si tarda cerca
-   de un minuto, estaba dormido (plan free).
-2. `GET /sedes` sin sesión: 401 es lo normal.
-3. El log del servicio en el panel de Render (`not verified`).
-4. La base: `psql "<External Database URL>" -c "select 1"` (`not verified`: `psql` no se probó contra Render).
+1. `GET https://<service>.onrender.com/health`: if it answers, the web process is alive; it carries the version. If it takes about
+   a minute, it was asleep (free plan).
+2. `GET /venues` without a session: 401 is normal.
+3. The service log in the Render dashboard (`not verified`).
+4. The database: `psql "<External Database URL>" -c "select 1"` (`not verified`: `psql` was not tried against Render).
 
 ## Alerts, by symptom
 
-No hay alertas definidas ni `runbook_url`. Lo que sigue es por síntoma, para quien lo ve en la app o en el log.
+There are no alerts defined and no `runbook_url`. What follows is by symptom, for whoever sees it in the app or in the log.
 
-### base-caida: la app dice que no se pudo conectar
+### database-down: the app says it could not connect
 
-- **What the user sees:** el aviso de error de red con reintento.
-- **Confirm:** `/health` responde pero las pantallas fallan; el log trae errores de `OperationalError`.
-- **Mitigate:** comprobar que la base no venció (30 días en el plan free) y su estado en el panel de Render.
-- **Verify:** `GET /sedes` con sesión responde 200.
-- **Escalate:** si la base venció, sus datos se pierden a los 14 días de gracia: crear una base nueva y migrarla.
+- **What the user sees:** the network error notice with a retry.
+- **Confirm:** `/health` answers but the screens fail; the log carries `OperationalError` errors.
+- **Mitigate:** check that the database has not expired (30 days on the free plan) and its status in the Render dashboard.
+- **Verify:** `GET /venues` with a session answers 200.
+- **Escalate:** if the database expired, its data is lost after the 14-day grace period: create a new database and migrate it.
 
-### esquema-viejo: errores en pantallas que usan tablas o columnas nuevas
+### old-schema: errors on screens that use new tables or columns
 
-- **What the user sees:** errores en las pantallas que usan tablas o columnas nuevas.
-- **Confirm:** la base no está en la última migración (`alembic current` contra la base).
-- **Mitigate:** correr `DATABASE_URL=<External Database URL> uv run alembic upgrade head` desde `apps/api`, o redesplegar.
-- **Verify:** las pantallas responden.
-- **Escalate:** si la migración falla, a quien escribió la migración, con el error.
+- **What the user sees:** errors on the screens that use new tables or columns.
+- **Confirm:** the database is not on the latest migration (`alembic current` against the database).
+- **Mitigate:** run `DATABASE_URL=<External Database URL> uv run alembic upgrade head` from `apps/api`, or redeploy.
+- **Verify:** the screens answer.
+- **Escalate:** if the migration fails, to whoever wrote the migration, with the error.
 
-### sin-recordatorios: no llegan los avisos de una hora antes
+### no-reminders: the one-hour-before notices do not arrive
 
-- **What the user sees:** ningún aviso push antes del turno; en el centro de avisos de la app el aviso sí aparece cuando
-  la API está despierta.
-- **Confirm:** el barrido corre dentro del proceso web cada `RECORDATORIOS_CADA` segundos y no corre mientras Render duerme
-  el servicio. En la tabla `notification`, el `delivery` del aviso dice qué pasó: `no_permission` (la persona no dio permiso),
-  `no_channel` (falta `FIREBASE_CREDENCIALES_JSON`), `failed` (FCM falló; el log trae `aviso_sin_enviar` con el número del
-  aviso).
-- **Mitigate:** disparar el barrido desde afuera con `uv run python -m app.modules.notifications.sweep --una-vez` (por ejemplo, con un
-  cron externo), o mantener el servicio despierto en la hora previa a los turnos.
-- **Verify:** el aviso pasa a `sent`.
-- **Escalate:** el arreglo de fondo es un cron que llame al barrido; el plan free de Render no tiene cron jobs.
+- **What the user sees:** no push notice before the slot; in the notice center of the app the notice does appear when
+  the API is awake.
+- **Confirm:** the sweep runs inside the web process every `REMINDERS_EVERY` seconds and does not run while Render puts
+  the service to sleep. In the `notification` table, the `delivery` of the notice says what happened: `no_permission` (the person gave no permission),
+  `no_channel` (`FIREBASE_CREDENTIALS_JSON` is missing), `failed` (FCM failed; the log carries `aviso_sin_enviar` with the notice
+  number).
+- **Mitigate:** trigger the sweep from outside with `uv run python -m app.modules.notifications.sweep --una-vez` (for example, with an external
+  cron), or keep the service awake in the hour before the slots.
+- **Verify:** the notice changes to `sent`.
+- **Escalate:** the underlying fix is a cron that calls the sweep; the Render free plan has no cron jobs.
 
-### sin-correo: no llega el correo de recuperación
+### no-email: the recovery email does not arrive
 
-- **What the user sees:** pide recuperar la contraseña y nunca llega el enlace; la respuesta es la misma que para un correo
-  sin cuenta.
-- **Confirm:** el log trae «no se pudo enviar el correo» con el asunto y el tipo de error (sin la dirección); el timeout es
-  de 10 s y el certificado del servidor se verifica. Revisar `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA` y
-  `CORREO_REMITENTE` en *Environment* del servicio.
-- **Mitigate:** corregir la variable y volver a desplegar; si la contraseña de la cuenta de correo cambió, ver «Secret
-  rotation and revocation».
-- **Verify:** pedir la recuperación con una cuenta de prueba y recibir el correo.
-- **Escalate:** a quien administra la cuenta de correo saliente.
+- **What the user sees:** asks to recover the password and the link never arrives; the response is the same as for an email
+  with no account.
+- **Confirm:** the log carries "the email could not be sent" with the subject and the error type (without the address); the timeout is
+  10 s and the server certificate is verified. Check `SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD` and
+  `EMAIL_SENDER` in the service *Environment*.
+- **Mitigate:** fix the variable and deploy again; if the password of the mail account changed, see "Secret
+  rotation and revocation".
+- **Verify:** ask for recovery with a test account and receive the email.
+- **Escalate:** to whoever administers the outgoing mail account.
 
-### demasiados-pedidos: el ingreso responde 429
+### too-many-requests: sign-in answers 429
 
-- **What the user sees:** pide esperar antes de reintentar.
-- **Confirm:** el ingreso respondió `TOO_MANY_ATTEMPTS`: lo corta Firebase, la API no limita pedidos.
-- **Mitigate:** esperar.
-- **Verify:** el ingreso vuelve a funcionar.
-- **Escalate:** si persiste, revisar el estado de Firebase Authentication.
+- **What the user sees:** is asked to wait before trying again.
+- **Confirm:** sign-in answered `TOO_MANY_ATTEMPTS`: Firebase cuts it, the API does not limit requests.
+- **Mitigate:** wait.
+- **Verify:** sign-in works again.
+- **Escalate:** if it persists, check the status of Firebase Authentication.
 
 ## Support view
 
-Quien opera busca en el log de Render la línea del error. Pendiente de una persona: niveles de soporte, quién tiene acceso al
-log y auditoría de esos accesos.
+Whoever operates searches the Render log for the error line. Pending a person: support levels, who has access to the
+log and audit of those accesses.
 
 ## Escalation matrix
 
 | Severity | Support level | Who | Channel | In how long | Data package passed |
 |---|---|---|---|---|---|
-| todas | pendiente de una persona | pendiente de una persona | pendiente de una persona | pendiente de una persona | hora UTC, ruta, qué se esperaba, qué pasó, pasos para repetirlo |
+| all | pending a person | pending a person | pending a person | pending a person | UTC time, route, what was expected, what happened, steps to repeat it |
 
 ## Incidents
 
-Se declara un incidente si la persona usuaria lo ve y no se resuelve con una de las secciones de arriba, si hace falta otra
-persona, o si sigue sin resolverse a la hora. Al declararlo se nombran tres roles (quien lidera, quien comunica y quien
-anota; pueden ser la misma persona) y se abre un documento vivo con una línea de tiempo en hora UTC: qué se vio, qué se
-hizo y a qué hora. Primero se frena el daño (volver al commit anterior, apagar el barrido con `RECORDATORIOS_CADA=0`) y
-después se busca la causa. Al cerrarlo se escribe un postmortem sin culpas: impacto, línea de tiempo, causa y acciones con
-dueño. Dónde se anota y quién lidera es una decisión pendiente de una persona.
+An incident is declared if the user sees it and it is not solved by one of the sections above, if another person is needed,
+or if it is still unsolved after an hour. On declaring it, three roles are named (who leads, who communicates and who
+takes notes; they can be the same person) and a living document is opened with a timeline in UTC: what was seen, what was
+done and at what time. First the damage is stopped (go back to the previous commit, turn the sweep off with `REMINDERS_EVERY=0`) and
+then the cause is sought. On closing it, a blameless postmortem is written: impact, timeline, cause and actions with an
+owner. Where it is noted and who leads is a decision pending a person.
 
 ## Communication
 
-Cuatro estados, con un texto breve para cada uno: Investigando, Identificado, Monitoreando, Resuelto. Primer mensaje a los 5
-minutos de declarar el incidente, novedades cada 20 minutos como mínimo en las primeras dos horas, siempre con la hora de la
-próxima. El cierre dice si hubo pérdida de datos. Por qué canal se avisa a socios y administradores no está decidido:
-pendiente de una persona.
+Four states, with a short text for each: Investigating, Identified, Monitoring, Resolved. First message 5
+minutes after declaring the incident, updates at least every 20 minutes in the first two hours, always with the time of the
+next one. The closing says whether there was data loss. Through which channel members and administrators are told is not decided:
+pending a person.
 
 ## Secret rotation and revocation
 
-Inventario con nombres y lugares, sin valores: `## Secrets inventory` de `docs/technical/system-design.md`. En Render viven
-como variables de *Environment* del servicio; cambiar una exige volver a desplegar. Dueños, frecuencia y fechas de
-rotación: pendientes de una persona.
+Inventory with names and places, without values: `## Secrets inventory` of `docs/technical/system-design.md`. On Render they live
+as *Environment* variables of the service; changing one requires deploying again. Owners, frequency and rotation
+dates: pending a person.
 
-| Secreto | Cómo se rota | Cómo se comprueba que el valor viejo dejó de servir |
+| Secret | How it is rotated | How to check the old value no longer works |
 |---|---|---|
-| `FIREBASE_CREDENCIALES_JSON` | Consola de Firebase → *Configuración del proyecto* → *Cuentas de servicio* → *Generar nueva clave privada*; pegar el JSON completo en la variable; desplegar; borrar la clave vieja de la cuenta de servicio en Google Cloud | la API arranca y verifica tokens con la clave nueva; la clave vieja ya no figura en la cuenta de servicio (`not verified` en la consola) |
-| `SMTP_CONTRASENA` | Cambiarla en el proveedor de correo y después en la variable; desplegar | pedir la recuperación de una cuenta de prueba y recibir el correo; el proveedor rechaza la contraseña vieja |
-| `FIREBASE_API_KEY` | Crear una clave nueva en Google Cloud (credenciales del proyecto), cambiar la variable de la API y construir de nuevo el APK con la `--dart-define=FIREBASE_API_KEY` nueva: la clave viaja dentro de la app | la app nueva inicia sesión; borrar la clave vieja deja sin servicio a las instalaciones viejas |
-| `DATABASE_URL` | La entrega la base por `fromDatabase` en `render.yaml`. Cómo cambiar su contraseña: `not verified`, no se consultó el procedimiento de Render | las migraciones corren con la nueva y la vieja falla en `psql` |
-| `ADMIN_CONTRASENA` | Sólo siembra la cuenta. Para cambiarla, la persona administradora usa «Recuperar contraseña» (CU-04-SUP-02) | iniciar sesión con la contraseña nueva; la vieja da error |
+| `FIREBASE_CREDENTIALS_JSON` | Firebase console → *Project settings* → *Service accounts* → *Generate new private key*; paste the whole JSON into the variable; deploy; delete the old key from the service account in Google Cloud | the API starts and verifies tokens with the new key; the old key no longer appears in the service account (`not verified` in the console) |
+| `SMTP_PASSWORD` | Change it at the mail provider and then in the variable; deploy | ask for recovery on a test account and receive the email; the provider rejects the old password |
+| `FIREBASE_API_KEY` | Create a new key in Google Cloud (project credentials), change the API variable and build the APK again with the new `--dart-define=FIREBASE_API_KEY`: the key travels inside the app | the new app signs in; deleting the old key leaves the old installations without service |
+| `DATABASE_URL` | The database hands it out through `fromDatabase` in `render.yaml`. How to change its password: `not verified`, the Render procedure was not consulted | the migrations run with the new one and the old one fails in `psql` |
+| `ADMIN_PASSWORD` | Only seeds the account. To change it, the administrator uses "Recover password" (CU-04-SUP-02) | sign in with the new password; the old one gives an error |
 
-Ante una fuga, en este orden: revocar todo lo expuesto en la misma operación, emitir el reemplazo, desplegar, comprobar que el
-valor viejo falla (401 o 403), limpiar el lugar de la fuga, revisar el uso del secreto en la ventana expuesta y dejarlo
-registrado. Borrar el commit o reiniciar la API no revoca nada. Para cortar las sesiones de una cuenta, se le cambia la
-contraseña: la API revoca sus refresh tokens al cambiarla (`ProveedorFirebase.cambiar_contrasena` en
-`app/shared/identidad.py`) y verifica cada token con `check_revoked=True`. No hay un comando para revocar las
-sesiones de todas las cuentas a la vez.
+On a leak, in this order: revoke everything exposed in the same operation, issue the replacement, deploy, check the old
+value fails (401 or 403), clean the place of the leak, review the use of the secret in the exposed window and leave it
+recorded. Deleting the commit or restarting the API revokes nothing. To cut the sessions of an account, its password is
+changed: the API revokes its refresh tokens when it changes (`FirebaseProvider.change_password` in
+`apps/api/app/shared/identity.py`) and verifies each token with `check_revoked=True`. There is no command to revoke the
+sessions of all accounts at once.
 
-No hay un escáner de secretos como pre-commit ni un gestor de secretos por ambiente: hoy el repo sólo evita versionar el
-`.env` (`apps/api/.env.example` no tiene valores).
+There is no secret scanner as a pre-commit hook nor a secret manager per environment: today the repo only avoids versioning the
+`.env` (`apps/api/.env.example` has no values).
 
 ## Security incident response
 
-Fases: detectar, contener, erradicar, recuperar y postmortem. **Detectar:** hoy no hay alertas; se detecta por un reporte, por
-el log de Render. **Contener:** rotar lo expuesto con la sección anterior y, si hace falta, apagar el servicio
-desde el panel de Render. **Erradicar y recuperar:** corregir la causa, desplegar y comprobar. Quién decide si hubo datos
-personales involucrados (DNI, fecha de nacimiento, correo, token de dispositivo: `## Personal data` del diseño del sistema) y
-si hay que avisar a las personas o a la autoridad por la Ley 25.326, se decide antes de que ocurra: pendiente de una persona;
-no se consultó el texto de la ley (`not verified`). Toda filtración se documenta aunque no se notifique, y el postmortem
-sigue sin culpas, con impacto, línea de tiempo, causas y acciones con dueño.
+Phases: detect, contain, eradicate, recover and postmortem. **Detect:** today there are no alerts; it is detected by a report, by
+the Render log. **Contain:** rotate what was exposed with the previous section and, if needed, turn the service off
+from the Render dashboard. **Eradicate and recover:** fix the cause, deploy and check. Who decides whether personal data was
+involved (national ID, birth date, email, device token: `## Personal data` of the system design) and
+whether the people or the authority must be told under Law 25.326 is decided before it happens: pending a person;
+the text of the law was not consulted (`not verified`). Every leak is documented even if it is not notified, and the postmortem
+stays blameless, with impact, timeline, causes and actions with an owner.
