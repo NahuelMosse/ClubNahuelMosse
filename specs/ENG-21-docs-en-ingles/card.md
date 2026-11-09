@@ -63,8 +63,8 @@ flutter: sh -c "cd apps/mobile && /d/projects/flutter/bin/flutter test test/nave
 lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh apps/api
 app: sh D:/Temp/w/herramientas/ci01-app.sh eng21_app
 attacks: sh D:/Temp/w/herramientas/ci01-attacks.sh eng21_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --item-path "/bookings/all/{id}" --openapi apps/api/openapi.json
-probe docs [timeout 10 min]: sh D:/Temp/w/herramientas/eng21-docs-probe.sh specs/ENG-21-docs-en-ingles/probe-docs.json --widths 390,1280 --contrast "article p,.theme-doc-sidebar-container .menu__link--active,.navbar__title"
-probe drawer [timeout 10 min]: sh D:/Temp/w/herramientas/eng21-docs-probe.sh specs/ENG-21-docs-en-ingles/probe-drawer.json --widths 390 --contrast ".navbar-sidebar--show .menu__link--active,.navbar__title"
+probe docs [timeout 10 min]: sh D:/Temp/w/herramientas/eng21-docs-probe.sh specs/ENG-21-docs-en-ingles/probe-docs.json --out .validation/probe/docs --widths 390,1280 --contrast "article p,.theme-doc-sidebar-container .menu__link--active,.navbar__title"
+probe drawer [timeout 10 min]: sh D:/Temp/w/herramientas/eng21-docs-probe.sh specs/ENG-21-docs-en-ingles/probe-drawer.json --out .validation/probe/drawer --widths 390 --contrast ".navbar-sidebar--show .menu__link--active,.navbar__title"
 refactor-tests: los tests de documentación que leen un encabezado, una frase, un nombre de archivo o la carpeta del sitio siguen la traducción a inglés y el renombre (`sitio-docs` → `docs-site`, cada página a su nombre en inglés, `docs/capturas/*.jpg` → `docs/screenshots/*.png`); lo que verifican no cambia
 no-visual: la card no toca ninguna pantalla de la app; el archivo de capturas es un test
 no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
