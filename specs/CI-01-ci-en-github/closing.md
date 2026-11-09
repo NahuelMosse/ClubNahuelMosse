@@ -43,6 +43,6 @@ risk large · high · lenses contract, integrity · 5 ACT: 4 closed, 1 declared,
 - module docs off by decision: not chosen at install: no signal found in the repo
 - grade: mvp — the app is an university project
 
-Cost: USD 2.94 (main 2.63, judge 0.32) · the messages of this card
-close.mjs seal: CI-01 sha256:a8d1bcf85a58cc82679f2ce18248c3cb1b0fc31f9a5a839ed0f5e528fc2bb5cd
+Cost: USD 3.58 (main 3.26, judge 0.32) · the messages of this card
+close.mjs seal: CI-01 sha256:16555673c405e9916c449d47b54460706483becdb83ff42e0f5ad65cbdef95c9
 <!-- close.mjs:end -->
