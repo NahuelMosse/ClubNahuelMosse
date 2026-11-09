@@ -59,6 +59,17 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/tools/hook-dispatch.mjs\" UserPromptSubmit",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {

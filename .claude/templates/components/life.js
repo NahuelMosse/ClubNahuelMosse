@@ -25,7 +25,8 @@ export const ripple = (button, x, y) => {
   const drop = node('ripple');
   drop.style.cssText = `width: ${size}px; height: ${size}px; left: ${x - r.left - size / 2}px; top: ${y - r.top - size / 2}px;`;
   box.append(drop);
-  while (box.children.length > 3) box.firstElementChild.remove();
+  const drops = box.querySelectorAll(':scope > .ripple');
+  for (let i = 0; i < drops.length - 3; i++) drops[i].remove();
   drop.addEventListener('animationend', () => drop.remove(), { once: true });
   setTimeout(() => drop.remove(), ms('--motion-ripple', 450) + 300);
 };
@@ -39,6 +40,29 @@ const rippleEverywhere = () => {
     const button = e.detail === 0 ? e.target.closest?.('.btn') : null;
     if (button?.matches(':focus-visible')) { const c = centerOf(button); ripple(button, c.x, c.y); }
   });
+};
+
+// ── Button: a soft light under the label follows the pointer while it is on the button, so the button answers
+// before it is pressed. One element per button, moved by transform, written once a frame; only a fine pointer. ──
+const lightEverywhere = () => {
+  if (!once(document.documentElement, 'uiLight') || !finePointer()) return;
+  let raf = 0;
+  let at = null;
+  const paint = () => {
+    raf = 0;
+    const { button, x, y } = at;
+    const box = button.querySelector(':scope > .ripples') ?? button.appendChild(node('ripples'));
+    const light = box.querySelector(':scope > .btn-light') ?? box.insertBefore(node('btn-light'), box.firstChild);
+    const r = button.getBoundingClientRect();
+    light.style.transform = `translate(${x - r.left - 60}px, ${y - r.top - 60}px)`;
+  };
+  document.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse' || reduced()) return;
+    const button = e.target.closest?.('.btn:not(:disabled, [aria-disabled="true"])');
+    if (!button) return;
+    at = { button, x: e.clientX, y: e.clientY };
+    if (!raf) raf = requestAnimationFrame(paint);
+  }, { passive: true });
 };
 
 // The primary action of the page shimmers once, 900 ms after the view paints, once a session.
@@ -67,15 +91,6 @@ const brand = (mark) => {
   };
   if (playOnce('ledger:brand-shine')) setTimeout(run, 400);
   intent(mark.closest('.brand') ?? mark, run, 100);
-};
-
-// A navigation item whose icon the Animate UI set (motion/icons) does not have answers a resting pointer by moving
-// its icon by parts, after 100 ms. `data-playing` stays while the pointer does; the keyboard never sets it.
-const answerWithIcon = (items, wait) => {
-  for (const item of items) {
-    if (!once(item, 'uiIcon') || !item.querySelector('[data-icon]')) continue;
-    intent(item, () => item.setAttribute('data-playing', ''), wait, () => item.removeAttribute('data-playing'));
-  }
 };
 
 // A search field's icon rocks when the pointer gives it focus.
@@ -382,9 +397,9 @@ export const moments = {
 export const initLife = (root = document, life = forever) => {
   inlineIcons(root);
   rippleEverywhere();
+  lightEverywhere();
   shimmerOnLoad();
   root.querySelectorAll('.brand__mark').forEach(brand);
-  answerWithIcon(root.querySelectorAll('.nav__item'), ms('--icon-intent', 100));
   searchIcons(root);
   kpiTiles(root);
   root.querySelectorAll('.spotlight').forEach(spotlight);

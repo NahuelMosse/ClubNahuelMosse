@@ -1,5 +1,5 @@
 {
-  "kit": "6.33.0",
+  "kit": "6.42.0",
   "stack": "node-ts",
   "e2e": "apps/e2e",
   "rulePaths": {
@@ -27,8 +27,8 @@
     ]
   },
   "source": {
-    "path": "D:/Temp/w/kitsrc",
-    "commit": "26569f73feb42502ee0ea56bf62ccc84c28a6faa"
+    "path": "D:/Temp/w/kitsrc642",
+    "commit": "a1b87003068b2cd329d26c589605466ea362bec5"
   },
   "modules": {
     "ui": {

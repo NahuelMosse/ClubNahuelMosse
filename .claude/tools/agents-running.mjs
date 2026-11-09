@@ -5,10 +5,21 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-// An unfinished meta older than this belongs to an agent that died, not to one that is writing.
+// An unfinished agent silent for this long died: it will not report.
 const STALE_MS = 60 * 60 * 1000;
 
-export const runningAgents = (home = process.env.KIT_CLAUDE_HOME || process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude')) => {
+// An agent that never finished and wrote nothing for STALE_MS is dead. The meta is written at launch and at the end only;
+// the transcript next to it (`agent-<id>.jsonl`) grows on every turn, so the newer of the two is its last sign of life.
+export const STALE_MINUTES = STALE_MS / 60000;
+const touched = (file) => { try { return statSync(file).mtimeMs; } catch { return 0; } };
+export const agentDead = (metaFile) => {
+  try {
+    if (JSON.parse(readFileSync(metaFile, 'utf8')).finished === true) return false;
+    return Date.now() - Math.max(touched(metaFile), touched(metaFile.replace(/\.meta\.json$/, '.jsonl'))) >= STALE_MS;
+  } catch { return false; }
+};
+
+export const runningAgents =(home = process.env.KIT_CLAUDE_HOME || process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude')) => {
   const running = [];
   const projects = join(home, 'projects');
   const list = (dir) => { try { return readdirSync(dir); } catch { return []; } };

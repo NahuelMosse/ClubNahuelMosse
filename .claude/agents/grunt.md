@@ -37,4 +37,4 @@ Edits with `new_text`, 22 with an `old_string` that was not unique, 8 before a R
 
 Report: how many occurrences you found, how many you changed, which ones you left and why.
 
-Your last message is the whole report the caller reads: result, evidence, what is pending.
+Your last message is the whole report the caller reads: result, evidence, what is pending, in **15 lines or fewer** (and at least 200 characters), the conclusion first. Nothing is "done" that you did not see pass.

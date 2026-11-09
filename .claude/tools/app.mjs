@@ -10,8 +10,9 @@
 //   seed: <command>                       optional; runs once after the app answers, with APP_URL, PORT
 //                                         and DATA_DIR
 // up:     nothing to do if the app of `.validation/app.json` lives, answers and was started from the
-//         same code (the key of once.mjs); otherwise it brings the old one down by PID, starts a new one,
-//         waits up to 180 s for the port, seeds, writes app.json and prints `APP_URL=<url>`.
+//         same code (the key of once.mjs); otherwise it brings the old one down by PID, starts a new one and
+//         writes its pid and port to app.json at once (`starting: true`), waits up to 180 s for the port, seeds,
+//         rewrites app.json without `starting` and prints `APP_URL=<url>`.
 // down:   brings the app down by PID and removes app.json (the data folder stays).
 // status: app.json, and whether the app lives and is up to date. Exit 0 only if both.
 // probe <steps.json> [--widths 320,390,1280] [--route "POST /x=201|500|hold"] [--axe] [--watch <locator>] [--contrast "<sel>,<sel>"]
@@ -41,6 +42,7 @@ import { createServer, connect } from 'node:net';
 import { join } from 'node:path';
 import { currentCard, keyOf } from './card.mjs';
 import { endsWithLine } from './final-line.mjs';
+import { fencedBlocks } from './card-doc.mjs';
 
 // KIT_APP_START_TIMEOUT_S raises it on a loaded machine, where a cold Python import alone can pass 60 s.
 const START_TIMEOUT_MS = (Number(process.env.KIT_APP_START_TIMEOUT_S) > 0 ? Number(process.env.KIT_APP_START_TIMEOUT_S) : 180) * 1000;
@@ -75,7 +77,7 @@ const environmentOf = () => {
   const [file, heading] = cardDir && existsSync(join(cardDir, 'card.md')) ? [join(cardDir, 'card.md'), 'Gate'] : [cardDir && join(cardDir, 'plan.md'), 'Verification'];
   const plan = file && existsSync(file) ? readFileSync(file, 'utf8') : '';
   const section = plan.split(/^## /m).find((s) => s.startsWith(heading)) ?? '';
-  const block = section.match(/```[^\n]*\n([\s\S]*?)```/)?.[1] ?? '';
+  const block = fencedBlocks(section).join('\n');
   const line = (name) => block.split('\n').map((l) => l.trim()).find((l) => l.startsWith(`${name}:`))?.slice(name.length + 1).trim();
   return { app: line('app'), seed: line('seed') };
 };
@@ -122,7 +124,11 @@ const launch = (command, vars, logPath, cwd = root) => {
 
 // Starts the plan's app from `cwd` on a free port with a new data folder, waits for the port and seeds it. Returns
 // `{ ok: true, url, port, pid, dataDir, stamp }`, or `{ ok: false, why, tail, logPath }` with the app already brought down.
-const startApp = async ({ app, seed }, cwd = root) => {
+const writeState = (state) => {
+  mkdirSync(join(root, '.validation'), { recursive: true });
+  writeFileSync(stateFile, JSON.stringify(state, null, 1));
+};
+const startApp = async ({ app, seed }, key, cwd = root) => {
   const port = await freePort();
   const stamp = Date.now();
   const dataDir = join(root, '.validation', 'app', String(stamp));
@@ -130,8 +136,11 @@ const startApp = async ({ app, seed }, cwd = root) => {
   const logPath = `${dataDir}.log`;
   const url = `http://127.0.0.1:${port}`;
   const child = launch(app, { PORT: String(port), DATA_DIR: dataDir }, logPath, cwd);
+  // The app lives detached from here on: whoever cuts `up` before it ends still finds the pid and port for `down`.
+  writeState({ url, port, pid: child.pid, dataDir, key, startedAt: new Date(stamp).toISOString(), starting: true });
   const failed = (why) => {
     killTree(child.pid);
+    rmSync(stateFile, { force: true });
     const tail = existsSync(logPath) ? readFileSync(logPath, 'utf8').trim().split('\n').slice(-8).join('\n') : '';
     return { ok: false, why, tail, logPath };
   };
@@ -154,19 +163,18 @@ const up = async () => {
   needAppLine(env);
   const key = keyFor(env);
   const current = readState();
-  if (current && alive(current.pid) && await answers(current.port) && current.key === key) {
+  if (current && !current.starting && alive(current.pid) && await answers(current.port) && current.key === key) {
     console.log(`APP_URL=${current.url}`);
     return;
   }
   stop();
-  const started = await startApp(env);
+  const started = await startApp(env, key);
   if (!started.ok) {
     console.error(`${started.why}\n${started.tail}\nlog: ${started.logPath}`);
     process.exit(1);
   }
   const { url, port, pid, dataDir, stamp } = started;
-  mkdirSync(join(root, '.validation'), { recursive: true });
-  writeFileSync(stateFile, JSON.stringify({ url, port, pid, dataDir, key, startedAt: new Date(stamp).toISOString() }, null, 1));
+  writeState({ url, port, pid, dataDir, key, startedAt: new Date(stamp).toISOString() });
   console.log(`APP_URL=${url}`);
 };
 

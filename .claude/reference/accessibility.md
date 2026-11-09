@@ -1,7 +1,7 @@
 # Accessibility: rules a card can meet and a reviewer can check
 
 **When it is read:** when the card touches a screen, a component, a form, a table, a chart, an
-email or a PDF the app generates; and by the `judge` (lens `visual`), for the manual protocol of a new screen and the checklist
+email or a PDF the app generates; and for the manual protocol of a new screen and the checklist
 per pattern. **How:** only the sections the card touches, with `Read` and a line range of the heading;
 never whole. `card.md` names the rule IDs that apply, and the `builder` receives those IDs and their
 ranges. Framework-independent: the examples use browser HTML/CSS and, for automatic verification, Playwright
@@ -38,16 +38,16 @@ them together 71 %, and 29 % was found by none (B17). What is dubious goes to `i
 review. So “axe passed” is not “meets AA”: the report names the real coverage and what was not tried by hand
 stays *could not run*.
 
-**The regulations are context, not an obligation of the method.** Argentina: Ley 26.653 (2010), Decreto
-656/2019 and Disposición ONTI 6/2019, which approves the Web Content Accessibility Guidelines 2.0 (a translation
-of WCAG 2.0) with the declared aim of adopting level AA; article 4 asks for **a minimum of 20 criteria the first
-year and 30 afterwards, over the 38 A + AA criteria of Annex II**: the literal demand is 30 of 38, not complete
-WCAG 2.0 AA; the obliged are the State, public service concessionaires and those who provide or contract goods
-and services to the State (B11). European Union: the European Accessibility Act (Directive 2019/882) applies to
-products and services after 28 June 2025; microenterprises that provide services are exempt (B9). EN 301 549
-V3.2.1 (WCAG 2.1) is in force; **V4.1.1 was published on 2 September 2026 on a WCAG 2.2 AA baseline and has no
-legal effect until its citation in the Official Journal, expected on 16 December 2026** (B8). United States:
-Section 508 incorporates WCAG 2.0 AA, for web and non-web content (B10). Targeting WCAG 2.2 AA covers all of them.
+**WCAG 2.2 AA is the criterion; the regulations are context, not an obligation of the method.** Which applies depends on the jurisdiction
+of the product, for example:
+
+| Jurisdiction | Norm | Baseline |
+|---|---|---|
+| Argentina | Ley 26.653 (2010), Decreto 656/2019, Disposición ONTI 6/2019: for the State, public service concessionaires and those who provide or contract goods and services to the State (B11) | WCAG 2.0, aim of AA |
+| European Union | European Accessibility Act (Directive 2019/882), applies to products and services after 28 June 2025; microenterprises that provide services are exempt (B9). EN 301 549 V3.2.1 is in force; V4.1.1 (published 2 September 2026) moves the baseline to WCAG 2.2 AA once cited in the Official Journal (B8) | WCAG 2.1, then 2.2 AA |
+| United States | Section 508 (B10) | WCAG 2.0 AA |
+
+Targeting WCAG 2.2 AA covers all of them.
 
 ## Rules that are criteria
 

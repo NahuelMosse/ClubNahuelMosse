@@ -11,7 +11,7 @@ Fix the OKLCH L ladder of 7 roles: background, surface 1, surface 2, border, mut
 - Check: ΔL >= .10 between neighboring surfaces and >= .25 between background and muted text (*); the grayscale test: a capture with `filter: grayscale(1)` (and blur 8px) keeps CTA, headline and background separated; the accent is >= .10 ΔL from muted text. The CTA separates from its adjacent background and from body and muted text by OKLCH distance, not by L alone: ΔL >= .15, or ΔC >= .08, or hue >= 40° when both have chroma >= .04 (*). A saturated accent and a pale background of the same luminance separate by chroma (landonorris.com: L .96 and .97, ΔC .22).
 
 ## 2. Hue harmony by the brand concept
-Pick the main hue, then the scheme by personality: energy/CTA = complementary (dominant 60-70%, complement 10-15%, never equal parts); calm/content = analogous; many hues = triadic with one dominant; safe default = split-complementary; sophistication = monochrome + neutral.
+Pick the main hue, then the scheme by personality: energy/CTA = complementary as a heuristic (dominant 60-70%, complement 10-15%, never equal parts); calm/content = analogous; many hues = triadic with one dominant; safe default = split-complementary; sophistication = monochrome + neutral.
 - Check: classify the hues in use by LCH angle and match them to the declared scheme; in triadic or tetradic one hue dominates.
 
 ## 3. Temperature
@@ -30,7 +30,8 @@ Chroma hierarchy: neutrals and backgrounds low, one action color high. The actio
 Declare the proportion: 60/30/10 by default, 75/20/5 when the audience does not know the brand, 60/20/10/10 with four colors. It is a heuristic, not a standard.
 - Check: measured proportion (k-means of 5 clusters over a capture) within ±10 points of the declared one.
 
-## 7. Per-variant palettes (flavors, plans, categories)
+## 7. Per-variant palettes (plans, categories, flavors)
+Applies when the page has variants; otherwise this step is skipped.
 The same L ladder per role in every variant; only the hue (and chroma if needed) changes. Default: brand dominant + one accent per variant. The CTA fill has equal OKLCH L in every variant.
 - Check: variant x role table with L within ±.03 per role (*); hues of variants >= 40 degrees apart; each variant's (background, accent) pair Lc >= 60 for the button and 4.5:1 for text; `design-round` row `palette: variant CTA fills`.
 
@@ -47,4 +48,4 @@ Tokens in `oklch()` with an sRGB fallback and a `@media (color-gamut: p3)` overr
 - Check: no loose hex outside `:root`; the palette tokens are written in the Direction with their OKLCH L and the results of steps 1-8.
 
 ## 11. Final check
-1. Grayscale + blur 8px: hierarchy intact. 2. WCAG. 3. APCA. 4. Color vision deficiency. 5. Measured proportion against the declared. 6. The real page in context, not the swatch: a color looks different next to its neighbor. A grade does not fix a bad palette: decide the palette before choosing hero imagery.
+1. Grayscale + blur 8px: hierarchy intact. 2. WCAG. 3. APCA. 4. Color vision deficiency. 5. Measured proportion against the declared. 6. The real page in context, not the swatch: a color looks different next to its neighbor. Image treatment does not fix a bad palette: decide the palette before choosing hero imagery.

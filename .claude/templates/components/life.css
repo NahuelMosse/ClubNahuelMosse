@@ -16,6 +16,89 @@
 .btn--primary .ripple, .selection-bar .btn .ripple { background: var(--ripple-on-accent); }
 @keyframes ripple { to { transform: scale(2); opacity: 0; } }
 .btn--primary[data-shimmer]::after { animation: shimmer-once var(--ms-700) var(--ease-in-out) both; }
+/* A light under the label follows the pointer (life.js): it fades in with the hover and out when the pointer leaves. */
+.btn-light { position: absolute; top: 0; left: 0; width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(closest-side, var(--btn-light), transparent); opacity: 0; transition: opacity var(--duration-normal) var(--ease-out); }
+.btn--primary .btn-light, .selection-bar .btn .btn-light { background: radial-gradient(closest-side, var(--btn-light-on-accent), transparent); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled, [aria-disabled="true"]) .btn-light { opacity: 1; }
+  /* Every button that is not flat rises a pixel under the pointer and its shadow grows; pressed, it comes down and
+     shrinks. The flat one answers with its fill only. */
+}
+/* The ring of the focus arrives as a bloom: wider and faint, then it settles at its 3 px. */
+:is(.input, .select, .textarea):focus-visible, .tags:has(.tags__input:focus-visible) { animation: focus-bloom var(--duration-slow) var(--ease-out); }
+@keyframes focus-bloom { from { box-shadow: 0 0 0 7px transparent; } }
+/* The button's outline closes in on it as focus arrives, so the jump of focus reads as a move. */
+.btn:focus-visible { animation: focus-in var(--duration-normal) var(--ease-out); }
+@keyframes focus-in { from { outline-offset: 6px; outline-color: transparent; } }
+
+/* ── Icons: an icon has one motion, the one of what it means, and makes it wherever it is: in a button, a menu, the
+   navigation or a field. Inside a control it answers the hover (after the 100 ms of intent) and the keyboard focus,
+   once each time: an arrow goes where it leads, a chevron where it drops, a «+» or an «×» turns, «refresh» spins, the
+   alarms (a bin, a danger, a warning, an overdue clock) shake, «send» takes off, a pencil writes, the magnifier rocks,
+   sliders and «swap» slide, a sheet (a copy, a file, a note) lifts, the rest pop. An icon drawn by parts (core.js)
+   moves its parts instead: the lid of the bin, the two sheets of a copy, the head of the people, the knobs of the
+   sliders, the squares of the grid, the paper of a receipt. Out of a control an icon arrives with the scroll, drawn
+   from a smaller size. The motion is translate, rotate and scale, so a press (transform) composes with it. ── */
+.icon { --glyph: glyph-pop; }
+.icon:is([data-icon="arrow-right"], :has(> use[href="#i-arrow-right"]), [data-icon="chevron-right"], :has(> use[href="#i-chevron-right"]), [data-icon="logout"], :has(> use[href="#i-logout"])) { --glyph: glyph-ahead; }
+.icon:is([data-icon="chevron-left"], :has(> use[href="#i-chevron-left"]), [data-icon="back"], :has(> use[href="#i-back"])) { --glyph: glyph-back; }
+.icon:is([data-icon="chevron"], :has(> use[href="#i-chevron"]), [data-icon="download"], :has(> use[href="#i-download"]), [data-icon="arrow-down"], :has(> use[href="#i-arrow-down"])) { --glyph: glyph-down; }
+.icon:is([data-icon="chevron-up"], :has(> use[href="#i-chevron-up"]), [data-icon="arrow-up"], :has(> use[href="#i-arrow-up"])) { --glyph: glyph-up; }
+.icon:is([data-icon="plus"], :has(> use[href="#i-plus"]), [data-icon="x"], :has(> use[href="#i-x"]), [data-icon="void"], :has(> use[href="#i-void"])) { --glyph: glyph-turn; }
+.icon:is([data-icon="refresh"], :has(> use[href="#i-refresh"]), [data-icon="contrast"], :has(> use[href="#i-contrast"])) { --glyph: glyph-spin; }
+.icon:is([data-icon="trash"], :has(> use[href="#i-trash"]), [data-icon="alert"], :has(> use[href="#i-alert"]), [data-icon="warning"], :has(> use[href="#i-warning"]), [data-icon="clock"], :has(> use[href="#i-clock"]), [data-icon="phone"], :has(> use[href="#i-phone"])) { --glyph: glyph-shake; }
+.icon:is([data-icon="send"], :has(> use[href="#i-send"]), [data-icon="open"], :has(> use[href="#i-open"])) { --glyph: glyph-fly; }
+.icon:is([data-icon="edit"], :has(> use[href="#i-edit"])) { --glyph: glyph-tilt; }
+.icon:is([data-icon="search"], :has(> use[href="#i-search"])) { --glyph: wiggle; transform-origin: 70% 70%; }
+.icon:is([data-icon="sliders"], :has(> use[href="#i-sliders"]), [data-icon="swap"], :has(> use[href="#i-swap"]), [data-icon="grip"], :has(> use[href="#i-grip"]), [data-icon="menu"], :has(> use[href="#i-menu"]), [data-icon="more"], :has(> use[href="#i-more"])) { --glyph: glyph-slide; }
+.icon:is([data-icon="copy"], :has(> use[href="#i-copy"]), [data-icon="duplicate"], :has(> use[href="#i-duplicate"]), [data-icon="archive"], :has(> use[href="#i-archive"]), [data-icon="note"], :has(> use[href="#i-note"]), [data-icon="folder"], :has(> use[href="#i-folder"]), [data-icon="receipt"], :has(> use[href="#i-receipt"]), [data-icon="calendar"], :has(> use[href="#i-calendar"]), [data-icon="mail"], :has(> use[href="#i-mail"])) { --glyph: glyph-lift; }
+svg.icon:is([data-icon="trash"], [data-icon="copy"], [data-icon="users"], [data-icon="sliders"], [data-icon="grid"], [data-icon="receipt"]) { --glyph: none; }
+[data-icon] [data-part] { transform-box: fill-box; transform-origin: center; }
+[data-icon="trash"] [data-part="lid"] { --part: part-lid; transform-origin: 0% 100%; }
+[data-icon="copy"] [data-part="front"] { --part: part-front; }
+[data-icon="copy"] [data-part="back"] { --part: part-back; }
+[data-icon="users"] [data-part="head"] { --part: part-nod; }
+[data-icon="users"] [data-part="side"] { --part: part-nod; --q: 1.5; }
+[data-icon="sliders"] [data-part="k1"] { --part: part-left; }
+[data-icon="sliders"] [data-part="k2"] { --part: part-right; }
+[data-icon="grid"] [data-part] { --part: quad; }
+[data-icon="grid"] [data-part="q2"] { --q: 1; }
+[data-icon="grid"] [data-part="q3"] { --q: 2; }
+[data-icon="grid"] [data-part="q4"] { --q: 3; }
+[data-icon="receipt"] [data-part="paper"] { --part: paper-lift; }
+[data-icon="receipt"] [data-part="lines"] { --part: lines-squeeze; }
+@media (hover: hover) and (pointer: fine) {
+  :where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])):hover:not(:disabled, [aria-disabled="true"]) .icon:not([data-motion]) { animation: var(--glyph) var(--motion-icon) var(--icon-intent) both; }
+  :where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])):hover:not(:disabled, [aria-disabled="true"]) .icon:not([data-motion]) [data-part] { animation: var(--part, none) var(--motion-icon) calc(var(--icon-intent) + var(--q, 0) * var(--ms-40)) both; }
+}
+:where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])):focus-visible .icon:not([data-motion]) { animation: var(--glyph) var(--motion-icon) both; }
+:where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])):focus-visible .icon:not([data-motion]) [data-part] { animation: var(--part, none) var(--motion-icon) calc(var(--q, 0) * var(--ms-40)) both; }
+@keyframes glyph-pop { 50% { scale: 1.15; } }
+@keyframes glyph-ahead { 50% { translate: 3px 0; } }
+@keyframes glyph-back { 50% { translate: -3px 0; } }
+@keyframes glyph-down { 50% { translate: 0 2px; } }
+@keyframes glyph-up { 50% { translate: 0 -2px; } }
+@keyframes glyph-turn { to { rotate: 90deg; } }
+@keyframes glyph-spin { to { rotate: 1turn; } }
+@keyframes glyph-shake { 20% { rotate: -12deg; } 40% { rotate: 10deg; } 60% { rotate: -6deg; } 80% { rotate: 3deg; } }
+@keyframes glyph-fly { 45% { translate: 3px -3px; opacity: 0; } 46% { translate: -3px 3px; opacity: 0; } }
+@keyframes glyph-tilt { 30% { rotate: -14deg; } 60% { rotate: 6deg; } }
+@keyframes glyph-slide { 30% { translate: -1.5px 0; } 70% { translate: 1.5px 0; } }
+@keyframes glyph-lift { 50% { translate: 0 -2px; scale: 1.06; } }
+@keyframes glyph-dim { 50% { opacity: 0.45; } }
+@keyframes part-lid { 50% { translate: 0 -1.5px; rotate: -12deg; } }
+@keyframes part-front { 50% { translate: 1.5px 1.5px; } }
+@keyframes part-back { 50% { translate: -1px -1px; } }
+@keyframes part-nod { 50% { translate: 0 -1.5px; } }
+@keyframes part-left { 50% { translate: -3px 0; } }
+@keyframes part-right { 50% { translate: 3px 0; } }
+@keyframes quad { 50% { scale: 1 0.6; } }
+@keyframes paper-lift { 50% { translate: 0 -1.5px; } }
+@keyframes lines-squeeze { 50% { scale: 0.6 1; } }
+@supports (animation-timeline: view()) {
+  :where(.icon):not(:where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])) .icon, .spinner, [data-motion])) { animation: glyph-arrive linear both; animation-timeline: view(); animation-range: entry 10% entry 90%; }
+}
+@keyframes glyph-arrive { from { opacity: 0; scale: 0.6; } }
 
 /* ── The brand: a shine and a turn of light inside the square, once a session and when it is hovered ── */
 .brand__mark { overflow: hidden; }
@@ -35,17 +118,6 @@
 /* ── Notice: its icon pops a beat after the notice itself has risen ── */
 .notice__icon { animation: pop-in var(--motion-pop) var(--ms-120) both; }
 
-/* ── The navigation: the icons that the Animate UI set does not have move by parts when the pointer rests on their item (100 ms of intent) ── */
-[data-icon] [data-part] { transform-box: fill-box; transform-origin: center; }
-.nav__item[data-playing] [data-icon="grid"] [data-part] { animation: quad var(--ms-300) var(--ease-in-out) calc(var(--q, 0) * var(--ms-40)) both; }
-[data-icon="grid"] [data-part="q2"] { --q: 1; }
-[data-icon="grid"] [data-part="q3"] { --q: 2; }
-[data-icon="grid"] [data-part="q4"] { --q: 3; }
-@keyframes quad { 50% { scale: 1 0.6; } }
-.nav__item[data-playing] [data-icon="receipt"] [data-part="paper"] { animation: paper-lift var(--ms-400) var(--ease-in-out); }
-.nav__item[data-playing] [data-icon="receipt"] [data-part="lines"] { animation: lines-squeeze var(--ms-400) var(--ease-in-out); }
-@keyframes paper-lift { 50% { translate: 0 -1.5px; } }
-@keyframes lines-squeeze { 50% { scale: 0.6 1; } }
 @media (hover: hover) and (pointer: fine) {
   .topbar [data-palette]:hover kbd.key { animation: key-tap var(--duration-instant) ease; }
 }
@@ -139,8 +211,8 @@
 .segmented__ghost { display: inline-flex; align-items: center; height: var(--_option); padding: 0 var(--space-3); font-size: var(--text-sm); font-weight: var(--weight-medium); white-space: nowrap; }
 .tabs__ghost { display: inline-flex; align-items: center; height: 38px; padding: 0 2px; font-weight: var(--weight-medium); white-space: nowrap; }
 
-/* ── Inputs: the search icon rocks when the pointer focuses its field ── */
-.search > .icon[data-wiggle], .field__control > .icon[data-wiggle] { animation: wiggle var(--ms-500) var(--ease-out); transform-origin: 70% 70%; }
+/* ── Inputs: the magnifier of a field rocks, its one motion, when the pointer focuses the field ── */
+.search > .icon[data-wiggle], .field__control > .icon[data-wiggle] { animation: wiggle var(--motion-icon); transform-origin: 70% 70%; }
 @keyframes wiggle { 0% { rotate: 0deg; } 20% { rotate: 10deg; } 40% { rotate: -6deg; } 60% { rotate: 3deg; } 80% { rotate: -1deg; } 100% { rotate: 0deg; } }
 .field[data-redo] .field__icon--valid path { stroke-dashoffset: 1; }
 .field__icon--valid path { stroke-dasharray: 1; stroke-dashoffset: 0; transition: stroke-dashoffset var(--motion-check-draw); }
@@ -215,8 +287,13 @@
 @media (prefers-reduced-motion: reduce) {
   .ripples, .brand__fx, .spark__ring, .chart__ring, .shimmer__band, .sweep, .lap, .confetti-layer { display: none; }
   .btn .icon[data-icon="plus"], .btn:hover .icon[data-icon="plus"] { rotate: none; }
+  .icon:not(.toast__icon), .icon [data-part] { animation: none !important; }
+  @media (hover: hover) and (pointer: fine) {
+    :where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])):hover:not(:disabled, [aria-disabled="true"]) .icon:not(.toast__icon, [data-motion]) { animation: glyph-dim var(--motion-icon) var(--icon-intent) both !important; }
+  }
+  :where(button, a[href], summary, label, [role="button"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="tab"], [tabindex]:not([tabindex="-1"])):focus-visible .icon:not(.toast__icon, [data-motion]) { animation: glyph-dim var(--motion-icon) both !important; }
+  .btn:focus-visible, :is(.input, .select, .textarea):focus-visible, .tags:has(.tags__input:focus-visible) { animation: none; }
   .btn--primary[data-shimmer]::after { animation: none; display: none; }
-  [data-playing] [data-part], [data-playing][data-icon], [data-playing] [data-icon] { animation: none !important; translate: none !important; scale: none !important; rotate: none !important; }
   .topbar [data-palette]:hover kbd.key { animation: none; }
   .flash[data-run] { animation-duration: var(--ms-140); }
   .toast[data-tone="success"] .toast__icon, .toast__icon[data-icon="party-popper"], .toast__icon[data-icon="send"] { animation: fade-from var(--motion-fade-reduced) both; }

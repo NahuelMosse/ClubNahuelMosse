@@ -1,23 +1,19 @@
 # Copy: a voice and a number, not template phrases
 
-Source: a study of 14 public sites made by an AI site builder. The strongest ones say something only their offer can say ("Two cities. Thirteen days. 1,884 events.", a long quote in the first person); the weakest run on filler ("Powerful Features", "Loved by Writers", a testimonial from "Sarah Chen").
+The strongest sites say something only their offer can say (a count, a duration, a long quote in the first person); the weakest run on filler.
 
 ## The `copy:` row of `## Look`
 
 One line before the first headline is written: the concrete number of the offer (a count, a price, a duration, a distance: something that is checkable) and who speaks (the brand in first person, a founder, a customer by name and role, a handwritten note). The hero headline, one proof and one quote use them. A page with no number to give says so in the row (`copy: no number · the brand speaks`) instead of inventing one.
 
-## Template phrases (a lint failure)
+## Template phrases
 
-`design-round` runs `copy-lint.mjs` over the visible text; these phrases, in English and Spanish, fail the row `template phrase` (the list lives in `copy-lint.json`, key `template`):
+Ban the pattern, not the strings. These patterns read as filler, in any language; the designer avoids them:
 
-- Powerful Features
-- Loved by Writers (any "Loved by <word>")
-- Trusted by thousands, millions or teams
-- Unlock (and unlocks, unlocked, unlocking)
-- Elevate (and elevates, elevating)
-- All-in-one, one-stop, Everything you need
-- Built for the modern ..., Streamline your ..., Empower your teams
-- Lorem ipsum, Sarah Chen
-- Funciones potentes, Características principales, Amado por, Todo lo que necesitas, Soluciones integrales
+- A feature or benefit label that fits any product («Powerful Features», «Todo lo que necesitas»).
+- Social proof with no one behind it: «Loved by <group>», «Trusted by thousands», a testimonial from an invented or generic name.
+- Verbs that sell nothing in particular: unlock, elevate, empower, streamline.
+- Catch-all claims: all-in-one, one-stop, built for the modern <noun>.
+- Placeholder text (lorem ipsum).
 
-The fix is a sentence only this product can say, with its number, never a synonym of the phrase.
+The fix is specific over generic: a sentence only this product can say, with a number if one exists, never a synonym of the pattern.

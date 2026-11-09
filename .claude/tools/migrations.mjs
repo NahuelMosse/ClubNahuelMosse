@@ -23,7 +23,7 @@ export const isProtected = (rel) => PROTECTED.test(rel);
 export const IS_MIGRATION = /(^|\/)(migrations?|db\/migrate|alembic\/versions)\//i;
 
 const git = (cwd, args) => {
-  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const r = spawnSync('git', ['-c', 'core.quotepath=false', ...args], { cwd, encoding: 'utf8', maxBuffer: 1 << 28, timeout: 20_000 });
   if (r.error) throw new Error(`git could not run (${r.error.code})`);
   return r;
 };

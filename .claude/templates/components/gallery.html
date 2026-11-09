@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="./effects.css">
 <link rel="stylesheet" href="./life.css">
 <link rel="stylesheet" href="./components.css">
+<link rel="stylesheet" href="./entry.css">
 <link rel="stylesheet" href="./showcase.css">
 <link rel="stylesheet" href="./motion/bento-grid.css">
 <link rel="stylesheet" href="./motion/animated-list.css">
@@ -22,7 +23,6 @@
 <link rel="stylesheet" href="./motion/sliding-number.css">
 <link rel="stylesheet" href="./motion/animated-background.css">
 <link rel="stylesheet" href="./motion/theme-toggler.css">
-<link rel="stylesheet" href="./motion/icons.css">
 <link rel="stylesheet" href="./motion/copy-button.css">
 <link rel="stylesheet" href="./motion/flip-button.css">
 <link rel="stylesheet" href="./motion/flip-card.css">
@@ -86,6 +86,8 @@
     <symbol id="i-trash" viewBox="0 0 16 16"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.5 8.5h6l.5-8.5M7 7v4M9 7v4"/></symbol>
     <symbol id="i-folder" viewBox="0 0 16 16"><path d="M2 4.5a1 1 0 0 1 1-1h3l1.5 1.5H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></symbol>
     <symbol id="i-open" viewBox="0 0 16 16"><path d="M5.5 10.5l5-5M6 5.5h4.5V10"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2.5v8M4.5 7L8 10.5 11.5 7M3 13.5h10"/></symbol>
     <symbol id="i-edit" viewBox="0 0 16 16"><path d="M3 13l.7-3L10.5 3.2a1.4 1.4 0 0 1 2 2L5.7 12.3z"/></symbol>
     <symbol id="i-user" viewBox="0 0 16 16"><circle cx="8" cy="5.5" r="2.5"/><path d="M3 13.5c.4-2.5 2.3-4 5-4s4.6 1.5 5 4"/></symbol>
     <symbol id="i-logout" viewBox="0 0 16 16"><path d="M6.5 3H4a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h2.5M9.5 5.5L12.5 8l-3 2.5M12 8H6.5"/></symbol>
@@ -93,6 +95,15 @@
     <symbol id="i-menu" viewBox="0 0 16 16"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></symbol>
     <symbol id="i-void" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M4.1 4.1l7.8 7.8"/></symbol>
     <symbol id="i-home" viewBox="0 0 16 16"><path d="M2.5 7.5L8 3l5.5 4.5M4 6.5v6.5h8V6.5M6.5 13V9.5h3V13"/></symbol>
+    <symbol id="i-chevron-left" viewBox="0 0 16 16"><path d="M10 4L6 8l4 4"/></symbol>
+    <symbol id="i-duplicate" viewBox="0 0 16 16"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 5.5v-2a1 1 0 0 0-1-1h-6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2M9.5 7.5v4M7.5 9.5h4"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 16 16"><path d="M2.5 3.5h11v3h-11zM3.5 6.5v6a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-6M6.5 9h3"/></symbol>
+    <symbol id="i-note" viewBox="0 0 16 16"><path d="M3.5 2.5h6l3 3v8h-9zM9.5 2.5v3h3M5.5 8.5h5M5.5 11h3"/></symbol>
+    <symbol id="i-swap" viewBox="0 0 16 16"><path d="M3 5.5h9.5M10 3l2.5 2.5L10 8M13 10.5H3.5M6 8l-2.5 2.5L6 13"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></symbol>
+    <symbol id="i-warning" viewBox="0 0 16 16"><path d="M8 2.5l6 10.5H2zM8 6.5v3M8 11.25v.01"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 16 16"><path d="M8 13V3M4 7l4-4 4 4"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 16 16"><path d="M8 3v10M4 9l4 4 4-4"/></symbol>
   </defs>
 </svg>
 <a class="skip-link" href="#main">Saltar al contenido</a>
@@ -104,8 +115,8 @@
     <nav class="nav" aria-label="Secciones" data-motion="animated-background" data-mode="click" data-default="home" data-hl>
       <a class="nav__item" href="#/inicio" data-view-link="home" data-id="home" aria-current="page"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-home"/></svg>Inicio</a>
       <a class="nav__item" href="#/facturas" data-view-link="invoices" data-id="invoices"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-receipt"/></svg>Facturas<span class="nav__count" data-sliding id="nav-count" data-value="8">8</span></a>
-      <a class="nav__item" href="#/clientes" data-view-link="clients" data-id="clients"><span class="icon" data-motion="icons" data-icon="users" data-size="16" aria-hidden="true"></span>Clientes<span class="nav__count" data-sliding id="nav-clients" data-value="5">5</span></a>
-      <a class="nav__item" href="#/ajustes" data-view-link="settings" data-id="settings"><span class="icon" data-motion="icons" data-icon="settings" data-size="16" aria-hidden="true"></span>Configuración</a>
+      <a class="nav__item" href="#/clientes" data-view-link="clients" data-id="clients"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-users"/></svg>Clientes<span class="nav__count" data-sliding id="nav-clients" data-value="5">5</span></a>
+      <a class="nav__item" href="#/ajustes" data-view-link="settings" data-id="settings"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-sliders"/></svg>Configuración</a>
       <span class="nav__label">Sistema</span>
       <a class="nav__item" href="#/componentes" data-view-link="components" data-id="components"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-grid"/></svg>Componentes</a>
     </nav>
@@ -119,8 +130,8 @@
         <div class="menu" role="menu" id="m-nav" aria-label="Navegación">
           <a class="menu__item" role="menuitem" tabindex="-1" href="#/inicio" data-nav-link="home"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-home"/></svg>Inicio</a>
           <a class="menu__item" role="menuitem" tabindex="-1" href="#/facturas" data-nav-link="invoices"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-receipt"/></svg>Facturas</a>
-          <a class="menu__item" role="menuitem" tabindex="-1" href="#/clientes" data-nav-link="clients"><span class="icon" data-motion="icons" data-icon="users" data-size="16" aria-hidden="true"></span>Clientes</a>
-          <a class="menu__item" role="menuitem" tabindex="-1" href="#/ajustes" data-nav-link="settings"><span class="icon" data-motion="icons" data-icon="settings" data-size="16" aria-hidden="true"></span>Configuración</a>
+          <a class="menu__item" role="menuitem" tabindex="-1" href="#/clientes" data-nav-link="clients"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-users"/></svg>Clientes</a>
+          <a class="menu__item" role="menuitem" tabindex="-1" href="#/ajustes" data-nav-link="settings"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-sliders"/></svg>Configuración</a>
           <a class="menu__item" role="menuitem" tabindex="-1" href="#/componentes" data-nav-link="components"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-grid"/></svg>Componentes</a>
         </div>
         <nav class="breadcrumb" aria-label="Ruta">
@@ -222,8 +233,8 @@
           <div class="toolbar__controls">
             <div class="toolbar__actions">
               <button class="btn" id="undo-last" type="button" hidden>Deshacer</button>
-              <button class="btn btn--icon" id="refresh" aria-label="Actualizar" data-tooltip="Actualizar"><span class="icon" data-motion="icons" data-icon="refresh" data-size="16" aria-hidden="true"></span></button>
-              <button class="btn btn--primary btn--shimmer" id="new-invoice" data-dialog="d-new"><span class="icon" data-motion="icons" data-icon="plus" data-size="16" aria-hidden="true"></span>Nueva factura</button>
+              <button class="btn btn--icon" id="refresh" aria-label="Actualizar" data-tooltip="Actualizar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+              <button class="btn btn--primary btn--shimmer" id="new-invoice" data-dialog="d-new"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg>Nueva factura</button>
             </div>
           </div>
         </div>
@@ -282,7 +293,7 @@
               <table class="table" id="invoices" aria-label="Facturas" data-cards="summary">
                 <colgroup><col style="width: 44px"><col style="width: 104px"><col><col style="width: 124px"><col style="width: 124px"><col style="width: 136px"><col style="width: 52px"></colgroup>
                 <thead><tr>
-                  <th data-cell="check"><label class="checkbox" data-bare><input class="all-check" type="checkbox" aria-label="Seleccionar todas"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></th>
+                  <th data-cell="check"><label class="checkbox" data-bare><input class="all-check" type="checkbox" aria-label="Seleccionar todas"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></th>
                   <th aria-sort="none" data-cell="id"><button class="th-sort" type="button">Factura</button></th>
                   <th aria-sort="none" data-cell="title"><button class="th-sort" type="button">Cliente</button></th>
                   <th data-cell="status">Estado</th>
@@ -291,14 +302,14 @@
                   <th data-cell="menu"><span class="visually-hidden">Acciones</span></th>
                 </tr></thead>
                 <tbody>
-                  <tr data-status="paid" data-month="1"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1042"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1042</td><td>Northwind Traders</td><td><span class="badge" data-tone="success">Pagada</span></td><td data-sort="20261012">12/10/2026</td><td class="num" data-sort="9480">$ 9.480,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1042"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="overdue" data-month="5"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1043"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1043</td><td>BlueRock Capital</td><td><span class="badge" data-tone="danger">Vencida</span></td><td data-sort="20260928">28/09/2026</td><td class="num" data-sort="53154">$ 53.154,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1043"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="overdue" data-month="5"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1044"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1044</td><td>Initech</td><td><span class="badge" data-tone="danger">Vencida</span></td><td data-sort="20261002">02/10/2026</td><td class="num" data-sort="15920">$ 15.920,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1044"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="paid" data-month="5"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1045"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1045</td><td>Nike Store</td><td><span class="badge" data-tone="success">Pagada</span></td><td data-sort="20261030">30/10/2026</td><td class="num" data-sort="61223">$ 61.223,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1045"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="sent" data-month="3"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1046"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1046</td><td>Google Drive</td><td><span class="badge" data-tone="info">Enviada</span></td><td data-sort="20261114">14/11/2026</td><td class="num" data-sort="27114">$ 27.114,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1046"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="draft" data-month="4"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1047"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1047</td><td>Lucas Bennett</td><td><span class="badge" data-plain>Borrador</span></td><td data-sort="20261121">21/11/2026</td><td class="num" data-sort="80770">$ 80.770,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1047"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="paid" data-month="2"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1048"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1048</td><td>Globex</td><td><span class="badge" data-tone="success">Pagada</span></td><td data-sort="20261105">05/11/2026</td><td class="num" data-sort="12300">$ 12.300,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1048"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
-                  <tr data-status="sent" data-month="3"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1049"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1049</td><td>Bluefin Labs</td><td><span class="badge" data-tone="info">Enviada</span></td><td data-sort="20261118">18/11/2026</td><td class="num" data-sort="7850">$ 7.850,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1049"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="paid" data-month="1"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1042"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1042</td><td>Northwind Traders</td><td><span class="badge" data-tone="success">Pagada</span></td><td data-sort="20261012">12/10/2026</td><td class="num" data-sort="9480">$ 9.480,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1042"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="overdue" data-month="5"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1043"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1043</td><td>BlueRock Capital</td><td><span class="badge" data-tone="danger">Vencida</span></td><td data-sort="20260928">28/09/2026</td><td class="num" data-sort="53154">$ 53.154,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1043"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="overdue" data-month="5"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1044"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1044</td><td>Initech</td><td><span class="badge" data-tone="danger">Vencida</span></td><td data-sort="20261002">02/10/2026</td><td class="num" data-sort="15920">$ 15.920,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1044"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="paid" data-month="5"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1045"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1045</td><td>Nike Store</td><td><span class="badge" data-tone="success">Pagada</span></td><td data-sort="20261030">30/10/2026</td><td class="num" data-sort="61223">$ 61.223,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1045"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="sent" data-month="3"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1046"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1046</td><td>Google Drive</td><td><span class="badge" data-tone="info">Enviada</span></td><td data-sort="20261114">14/11/2026</td><td class="num" data-sort="27114">$ 27.114,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1046"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="draft" data-month="4"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1047"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1047</td><td>Lucas Bennett</td><td><span class="badge" data-plain>Borrador</span></td><td data-sort="20261121">21/11/2026</td><td class="num" data-sort="80770">$ 80.770,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1047"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="paid" data-month="2"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1048"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1048</td><td>Globex</td><td><span class="badge" data-tone="success">Pagada</span></td><td data-sort="20261105">05/11/2026</td><td class="num" data-sort="12300">$ 12.300,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1048"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
+                  <tr data-status="sent" data-month="3"><td><label class="checkbox" data-bare><input class="row-check" type="checkbox" aria-label="Seleccionar F-1049"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span></label></td><td>F-1049</td><td>Bluefin Labs</td><td><span class="badge" data-tone="info">Enviada</span></td><td data-sort="20261118">18/11/2026</td><td class="num" data-sort="7850">$ 7.850,00</td><td class="row-actions"><button class="btn btn--ghost btn--icon btn--sm row-menu" type="button" data-tooltip="Acciones" aria-haspopup="menu" aria-expanded="false" aria-label="Acciones de F-1049"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg></button></td></tr>
                   <tr class="table__empty" hidden><td colspan="7"><div class="empty"><span class="empty__mark" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16"><use href="#i-search"/></svg></span><span class="empty__title">Ninguna factura coincide</span><span>Probá otra búsqueda o mostrá todos los estados.</span><button class="btn btn--sm" id="clear-filters" type="button">Limpiar filtros</button></div></td></tr>
                 </tbody>
               </table>
@@ -331,8 +342,8 @@
               </div>
               <div class="peek__nav">
                 <span class="peek__position" id="detail-position" aria-live="polite"></span>
-                <button class="btn btn--ghost btn--icon btn--sm" id="detail-prev" type="button" aria-label="Factura anterior" data-tooltip="Anterior" data-shortcut="K"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-chevron-up"/></svg></button>
-                <button class="btn btn--ghost btn--icon btn--sm" id="detail-next" type="button" aria-label="Factura siguiente" data-tooltip="Siguiente" data-shortcut="J"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-chevron"/></svg></button>
+                <button class="btn btn--ghost btn--icon btn--sm" id="detail-prev" type="button" aria-label="Factura anterior" data-tooltip="Anterior" data-shortcut="K"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-arrow-up"/></svg></button>
+                <button class="btn btn--ghost btn--icon btn--sm" id="detail-next" type="button" aria-label="Factura siguiente" data-tooltip="Siguiente" data-shortcut="J"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-arrow-down"/></svg></button>
                 <button class="btn btn--ghost btn--icon btn--sm" id="detail-close" type="button" aria-label="Cerrar" data-tooltip="Cerrar" data-shortcut="Esc"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-x"/></svg></button>
               </div>
             </div>
@@ -386,7 +397,7 @@
                       <span class="mpop-label" data-mpo="label">Agregar nota</span>
                       <textarea class="mpop-field" name="note" aria-label="Nota de la factura" autofocus></textarea>
                       <div class="mpop-actions">
-                        <button type="button" class="mpop-btn" data-mpo="close" aria-label="Cerrar sin guardar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M13 8H3M7 4L3 8l4 4"/></svg></button>
+                        <button type="button" class="mpop-btn" data-mpo="close" aria-label="Cerrar sin guardar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-x"/></svg></button>
                         <button type="submit" class="mpop-btn" aria-label="Guardar nota">Guardar</button>
                       </div>
                     </form>
@@ -411,7 +422,7 @@
               <input class="input" type="search" id="client-query" placeholder="Buscar clientes" aria-label="Buscar clientes">
               <button class="field__clear" type="button" aria-label="Borrar búsqueda"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true" style="width: 10px; height: 10px"><use href="#i-x"/></svg></button>
             </div>
-            <button class="btn btn--primary" data-dialog="d-client"><span class="icon" data-motion="icons" data-icon="plus" data-size="16" aria-hidden="true"></span>Nuevo cliente</button>
+            <button class="btn btn--primary" data-dialog="d-client"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg>Nuevo cliente</button>
           </div>
         </div>
         <div class="ktb" id="client-filter" data-motion="kokonut-toolbar">
@@ -421,7 +432,7 @@
               <button type="button" class="ktb__item" data-kt-item="all" data-selected><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-users"/></svg><span class="ktb__label">Todos</span></button>
               <button type="button" class="ktb__item" data-kt-item="ok"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg><span class="ktb__label">Al día</span></button>
               <button type="button" class="ktb__item" data-kt-item="due"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-calendar"/></svg><span class="ktb__label">En plazo</span></button>
-              <button type="button" class="ktb__item" data-kt-item="overdue"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg><span class="ktb__label">Vencidos</span></button>
+              <button type="button" class="ktb__item" data-kt-item="overdue"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-clock"/></svg><span class="ktb__label">Vencidos</span></button>
             </div>
           </div>
         </div>
@@ -602,22 +613,65 @@
           <div class="toolbar__heading"><h1 class="toolbar__title" id="h-components">Componentes</h1></div>
           <p class="text-soft">Cada componente aislado, en todos sus estados. Pasá el puntero, tabulá, activá el movimiento reducido.</p>
         </div>
-        <div class="comp-grid">
+        <div class="comp-filter">
+          <div class="segmented" role="radiogroup" aria-label="Categoría" id="c-filter">
+            <span class="segmented__indicator" aria-hidden="true"></span>
+            <button class="segmented__option" role="radio" aria-checked="true" data-group="todos">Todos</button>
+            <button class="segmented__option" role="radio" aria-checked="false" data-group="acciones">Acciones</button>
+            <button class="segmented__option" role="radio" aria-checked="false" data-group="entrada">Entrada</button>
+            <button class="segmented__option" role="radio" aria-checked="false" data-group="navegacion">Navegación</button>
+            <button class="segmented__option" role="radio" aria-checked="false" data-group="superposiciones">Superposiciones</button>
+            <button class="segmented__option" role="radio" aria-checked="false" data-group="datos">Datos</button>
+            <button class="segmented__option" role="radio" aria-checked="false" data-group="portes">Portes</button>
+          </div>
+        </div>
+        <div class="comp-grid" id="c-grid">
 
-          <div class="surface comp" data-comp="button">
+          <div class="surface comp comp--wide" data-comp="button" data-group="acciones">
             <h2 class="comp__title">Botón</h2>
-            <div class="comp__row"><button class="btn btn--primary">Principal</button><button class="btn" id="c-secondary">Secundario</button><button class="btn btn--ghost">Fantasma</button><button class="btn btn--destructive">Eliminar cliente</button><button class="btn btn--icon" aria-label="Ajustes" data-tooltip="Ajustes" data-shortcut="Mod ,"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-sliders"/></svg></button></div>
-            <div class="comp__row"><button class="btn btn--sm btn--primary">Principal</button><button class="btn btn--sm">Secundario</button><button class="btn btn--sm btn--ghost">Fantasma</button><button class="btn btn--sm" aria-pressed="true">Activado</button></div>
-            <span class="comp__label">Estados: carga, éxito y error mantienen el ancho</span>
-            <div class="comp__row">
-              <button class="btn btn--primary" id="c-save"><span class="btn__label">Guardar cambios</span><span class="btn__state btn__state--loading"><svg class="spinner" viewBox="0 0 16 16" aria-hidden="true"><circle class="spinner__track" cx="8" cy="8" r="6" pathLength="100"/><circle class="spinner__arc" cx="8" cy="8" r="6" pathLength="100"/></svg>Guardando…</span><span class="btn__state btn__state--success"><svg class="icon check-draw" viewBox="0 0 16 16" stroke-width="2" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="btn__state btn__state--error">Reintentar</span></button>
-              <button class="btn" id="c-fail"><span class="btn__label">Acción que falla</span><span class="btn__state btn__state--loading"><svg class="spinner" viewBox="0 0 16 16" aria-hidden="true"><circle class="spinner__track" cx="8" cy="8" r="6" pathLength="100"/><circle class="spinner__arc" cx="8" cy="8" r="6" pathLength="100"/></svg>Procesando…</span><span class="btn__state btn__state--success">Hecho</span><span class="btn__state btn__state--error">Falló</span></button>
-              <button class="btn" data-state="loading" aria-busy="true" aria-label="Guardando"><span class="btn__label">Guardando</span><span class="btn__state btn__state--loading"><svg class="spinner" viewBox="0 0 16 16" aria-hidden="true"><circle class="spinner__track" cx="8" cy="8" r="6" pathLength="100"/><circle class="spinner__arc" cx="8" cy="8" r="6" pathLength="100"/></svg>Guardando…</span></button>
+            <div class="comp__sets">
+              <div class="comp__set">
+                <span class="comp__label">Variantes: el ícono dice lo que va a pasar; lo borrado regresa con «Deshacer»</span>
+                <div class="comp__row"><button class="btn btn--primary">Crear factura<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-arrow-right"/></svg></button><button class="btn" id="c-secondary"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-download"/></svg>Exportar</button><button class="btn btn--ghost"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-refresh"/></svg>Actualizar</button><button class="btn btn--destructive" id="c-delete"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg>Eliminar factura</button></div>
+              </div>
+              <div class="comp__set">
+                <span class="comp__label">Atajo y alternable</span>
+                <div class="comp__row"><button class="btn" data-palette="palette"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-search"/></svg>Buscar<kbd class="key" data-shortcut="Mod K">Ctrl K</kbd></button><button class="btn" aria-pressed="true"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg>Seguir</button></div>
+              </div>
+              <div class="comp__set">
+                <span class="comp__label">Partido, copiar y mantener: lo que no se deshace se mantiene apretado</span>
+                <div class="comp__row">
+                  <div class="btn-group" role="group" aria-label="Enviar"><button class="btn" id="c-send"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-send"/></svg>Enviar</button><button class="btn btn--icon" aria-label="Más formas de enviar" aria-haspopup="menu" aria-expanded="false" aria-controls="menu-send"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-chevron"/></svg></button></div>
+                  <div class="menu" role="menu" id="menu-send" aria-label="Más formas de enviar">
+                    <button class="menu__item" role="menuitem" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-calendar"/></svg>Programar envío</button>
+                    <button class="menu__item" role="menuitem" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-user"/></svg>Enviarme una copia</button>
+                    <button class="menu__item" role="menuitem" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-download"/></svg>Descargar PDF</button>
+                  </div>
+                  <button class="btn" data-copy="https://ledger.app/f/F-1043" data-copied-label="Enlace copiado"><span class="btn__swap"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-copy"/></svg><svg class="icon" viewBox="0 0 16 16" stroke-width="2" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="btn__text">Copiar enlace</span></button>
+                  <button class="btn btn--destructive btn--hold" data-hold-label="Papelera vacía"><span class="btn__hold" aria-hidden="true"></span><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg>Mantené para vaciar la papelera</button>
+                </div>
+              </div>
+              <div class="comp__set">
+                <span class="comp__label">Solo ícono, suelto y en grupo</span>
+                <div class="comp__row"><button class="btn btn--icon" aria-label="Ajustes" data-tooltip="Ajustes" data-shortcut="Mod ,"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-sliders"/></svg></button><div class="btn-group" role="group" aria-label="Acciones de la factura"><button class="btn btn--icon" aria-label="Editar" data-tooltip="Editar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-edit"/></svg></button><button class="btn btn--icon" aria-label="Duplicar" data-tooltip="Duplicar"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-copy"/></svg></button><button class="btn btn--icon" aria-label="Abrir" data-tooltip="Abrir en otra pestaña"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-open"/></svg></button></div></div>
+              </div>
+              <div class="comp__set">
+                <span class="comp__label">Estados: carga, éxito y error mantienen el ancho</span>
+                <div class="comp__row">
+                  <button class="btn btn--primary" id="c-save"><span class="btn__label">Guardar cambios</span><span class="btn__state btn__state--loading"><svg class="spinner" viewBox="0 0 16 16" aria-hidden="true"><circle class="spinner__track" cx="8" cy="8" r="6" pathLength="100"/><circle class="spinner__arc" cx="8" cy="8" r="6" pathLength="100"/></svg>Guardando…</span><span class="btn__state btn__state--success"><svg class="icon check-draw" viewBox="0 0 16 16" stroke-width="2" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span><span class="btn__state btn__state--error">Reintentar</span></button>
+                  <button class="btn" id="c-fail"><span class="btn__label">Acción que falla</span><span class="btn__state btn__state--loading"><svg class="spinner" viewBox="0 0 16 16" aria-hidden="true"><circle class="spinner__track" cx="8" cy="8" r="6" pathLength="100"/><circle class="spinner__arc" cx="8" cy="8" r="6" pathLength="100"/></svg>Procesando…</span><span class="btn__state btn__state--success">Hecho</span><span class="btn__state btn__state--error">Falló</span></button>
+                  <button class="btn" data-state="loading" aria-busy="true" aria-label="Guardando"><span class="btn__label">Guardando</span><span class="btn__state btn__state--loading"><svg class="spinner" viewBox="0 0 16 16" aria-hidden="true"><circle class="spinner__track" cx="8" cy="8" r="6" pathLength="100"/><circle class="spinner__arc" cx="8" cy="8" r="6" pathLength="100"/></svg>Guardando…</span></button>
+                </div>
+                <div class="comp__row"><button class="btn" id="c-disabled" disabled>Deshabilitado</button><button class="btn btn--primary" disabled>Principal deshabilitado</button></div>
+              </div>
+              <div class="comp__set">
+                <span class="comp__label">Tamaños</span>
+                <div class="comp__row" data-sizes><button class="btn btn--sm"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg>Pequeño</button><button class="btn"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg>Mediano</button><button class="btn btn--lg"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg>Grande</button></div>
+              </div>
             </div>
-            <div class="comp__row"><button class="btn" id="c-disabled" disabled>Deshabilitado</button><button class="btn btn--primary" disabled>Principal deshabilitado</button></div>
           </div>
 
-          <div class="surface comp" data-comp="field">
+          <div class="surface comp" data-comp="field" data-group="entrada">
             <h2 class="comp__title">Campos</h2>
             <div class="field" id="f-email">
               <label class="field__label" for="c-email">Correo</label>
@@ -666,13 +720,13 @@
             <div class="inline" data-gap="2"><span class="text-label">Concepto</span><span class="editable" data-label="Concepto"><span class="editable__value">Desarrollo de CRM</span><span class="editable__status">Guardado</span></span></div>
           </div>
 
-          <div class="surface comp" data-comp="choices">
+          <div class="surface comp" data-comp="choices" data-group="entrada">
             <h2 class="comp__title">Casilla, opción e interruptor</h2>
             <div class="stack" data-gap="3">
-              <label class="checkbox" id="l-check"><input type="checkbox"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span>Enviar copia</label>
-              <label class="checkbox"><input type="checkbox" checked><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span>Con IVA incluido</label>
-              <label class="checkbox"><input type="checkbox" data-indeterminate><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span>Algunas seleccionadas</label>
-              <label class="checkbox"><input type="checkbox" disabled><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg></span>Deshabilitada</label>
+              <label class="checkbox" id="l-check"><input type="checkbox"><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span>Enviar copia</label>
+              <label class="checkbox"><input type="checkbox" checked><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span>Con IVA incluido</label>
+              <label class="checkbox"><input type="checkbox" data-indeterminate><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span>Algunas seleccionadas</label>
+              <label class="checkbox"><input type="checkbox" disabled><span class="checkbox__box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg></span>Deshabilitada</label>
               <div class="radio-group" role="radiogroup" aria-label="Plan">
                 <label class="radio" id="l-radio-a"><input type="radio" name="plan" checked><span class="radio__dot"></span><span class="radio__text">Mensual<span class="radio__desc">$ 9 por mes, sin permanencia.</span></span></label>
                 <label class="radio" id="l-radio-b"><input type="radio" name="plan"><span class="radio__dot"></span><span class="radio__text">Anual<span class="radio__desc">$ 90 por año: ahorrás dos meses.</span></span></label>
@@ -685,7 +739,7 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="segmented">
+          <div class="surface comp" data-comp="segmented" data-group="navegacion">
             <h2 class="comp__title">Segmentado y pestañas</h2>
             <div class="segmented" role="radiogroup" aria-label="Rango" id="c-range">
               <span class="segmented__indicator" aria-hidden="true"></span>
@@ -712,23 +766,67 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="tooltip">
+          <div class="surface comp" data-comp="code" data-group="entrada">
+            <h2 class="comp__title">Código de un solo uso</h2>
+            <p class="text-soft">Escribí 482913 y se cierra en una píldora; otro código tiembla y se vacía.</p>
+            <div class="otp" id="c-otp" data-length="6" data-answer="482913"><input class="otp__field" id="c-otp-field"></div>
+          </div>
+
+          <div class="surface comp" data-comp="checklist" data-group="entrada">
+            <div class="checklist" id="c-checklist" data-max="7">
+              <div class="checklist__head"><h2 class="checklist__title">Legajo del préstamo</h2><span class="checklist__count"></span></div>
+              <ul class="checklist__list">
+                <li><button class="checklist__row" aria-checked="true">DNI frente y dorso</button></li>
+                <li><button class="checklist__row" aria-checked="true">Últimos tres recibos de sueldo</button></li>
+                <li><button class="checklist__row" aria-checked="false">Constancia de CUIL</button></li>
+                <li><button class="checklist__row" aria-checked="false">Servicio a nombre del titular</button></li>
+              </ul>
+              <div class="checklist__add"><button class="btn btn--ghost btn--sm checklist__new" type="button">Agregar documento</button><input class="checklist__field" type="text" aria-label="Nuevo documento" placeholder="Nombre del documento" hidden></div>
+            </div>
+          </div>
+
+          <div class="surface comp" data-comp="slide" data-group="acciones">
+            <h2 class="comp__title">Deslizar para confirmar</h2>
+            <p class="text-soft">Para lo que no se deshace: arrastrá hasta el final, o enfocá y apretá Enter.</p>
+            <div class="slide-confirm" id="c-slide" data-done="Desembolsado"><span class="slide-confirm__say">Desembolsar $ 2.450.000</span></div>
+            <div class="slide-confirm" id="c-slide-danger" data-tone="danger" data-done="Cancelado"><span class="slide-confirm__say">Cancelar el préstamo</span></div>
+            <div class="comp__row"><button class="btn btn--sm btn--ghost" type="button" id="c-slide-reset">Volver a empezar</button></div>
+          </div>
+
+          <div class="surface comp" data-comp="amount" data-group="entrada">
+            <h2 class="comp__title">Importe, hora y etiquetas</h2>
+            <div class="field amount" id="c-amount" data-min="50000" data-max="5000000" data-step="50000">
+              <label class="field__label" for="c-amount-input">Monto solicitado</label>
+              <span class="field__control"><span class="amount__unit">$</span><input class="input" id="c-amount-input" inputmode="numeric" value="2450000" autocomplete="off"><span class="amount__steps"><button class="amount__step" type="button" aria-label="Restar $ 50.000"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M3.5 8h9"/></svg></button><button class="amount__step" type="button" aria-label="Sumar $ 50.000"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M3.5 8h9M8 3.5v9"/></svg></button></span></span>
+              <span class="field__foot"><span>Entre $ 50.000 y $ 5.000.000. Flechas: un paso; Shift: diez.</span></span>
+              <span class="field__message" aria-live="polite"><span class="field__error"><span></span></span></span>
+            </div>
+            <div class="stack" data-gap="1"><span class="text-label" id="c-time-label">Hora de la firma</span><div class="scrubber" id="c-time" aria-label="Hora de la firma" data-step="15" data-value="630"></div></div>
+            <div class="stack" data-gap="1"><span class="text-label" id="c-tags-label">Garantes</span><div class="tags" id="c-tags" data-max="4" aria-labelledby="c-tags-label"><ul class="tags__list"><li class="tag">Lucía Ferreyra</li><li class="tag">Martín Ojeda</li></ul><input class="tags__input" aria-labelledby="c-tags-label" placeholder="Nombre y Enter"></div></div>
+          </div>
+
+          <div class="surface comp" data-comp="pager" data-group="navegacion">
+            <h2 class="comp__title">Paginador</h2>
+            <nav class="pager" id="c-pager" aria-label="Páginas de solicitudes" data-total="248" data-size="20" data-page="1"></nav>
+          </div>
+
+          <div class="surface comp" data-comp="tooltip" data-group="superposiciones">
             <h2 class="comp__title">Información emergente</h2>
             <p class="text-soft">Aparece tras 400 ms de intención; mientras sigue caliente, el siguiente sale al instante.</p>
             <div class="comp__row">
-              <button class="btn btn--icon" id="tt-a" aria-label="Duplicar" data-tooltip="Duplicar" data-shortcut="D"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-plus"/></svg></button>
-              <button class="btn btn--icon" id="tt-b" aria-label="Archivar" data-tooltip="Archivar" data-shortcut="E"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-receipt"/></svg></button>
+              <button class="btn btn--icon" id="tt-a" aria-label="Duplicar" data-tooltip="Duplicar" data-shortcut="D"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-duplicate"/></svg></button>
+              <button class="btn btn--icon" id="tt-b" aria-label="Archivar" data-tooltip="Archivar" data-shortcut="E"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-archive"/></svg></button>
               <button class="btn btn--icon" aria-label="Actualizar datos" data-tooltip="Actualizar datos"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-refresh"/></svg></button>
             </div>
           </div>
 
-          <div class="surface comp" data-comp="overlays">
+          <div class="surface comp" data-comp="overlays" data-group="superposiciones">
             <h2 class="comp__title">Menú, popover, calendario, diálogo y panel</h2>
             <div class="comp__row">
               <button class="btn" id="c-menu-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="m-actions">Acciones<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-chevron"/></svg></button>
               <div class="menu" role="menu" id="m-actions" aria-label="Acciones">
                 <button class="menu__item" role="menuitem" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-edit"/></svg>Editar <kbd class="key">E</kbd></button>
-                <button class="menu__item" role="menuitem" tabindex="-1"><span class="icon" data-motion="icons" data-icon="copy" data-size="16" aria-hidden="true"></span>Duplicar <kbd class="key">D</kbd></button>
+                <button class="menu__item" role="menuitem" tabindex="-1"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-duplicate"/></svg>Duplicar <kbd class="key">D</kbd></button>
                 <button class="menu__item" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" aria-controls="m-actions-move"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-folder"/></svg>Mover a<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
                 <div class="menu__sep" role="separator"></div>
                 <div role="group" aria-label="Vista">
@@ -741,7 +839,7 @@
                   <button class="menu__item" role="menuitemradio" aria-checked="false" tabindex="-1" id="c-menu-amount"><span class="menu__check"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg></span>Mayor importe</button>
                 </div>
                 <div class="menu__sep" role="separator"></div>
-                <button class="menu__item menu__item--danger" role="menuitem" tabindex="-1" id="c-menu-delete"><span class="icon" data-motion="icons" data-icon="trash" data-size="16" aria-hidden="true"></span>Eliminar</button>
+                <button class="menu__item menu__item--danger" role="menuitem" tabindex="-1" id="c-menu-delete"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg>Eliminar</button>
               </div>
               <div class="menu" role="menu" id="m-actions-move" aria-label="Mover a">
                 <button class="menu__item" role="menuitem" tabindex="-1" data-value="Cobranzas">Cobranzas</button>
@@ -770,7 +868,7 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="toast">
+          <div class="surface comp" data-comp="toast" data-group="acciones">
             <h2 class="comp__title">Avisos</h2>
             <p class="text-soft">Se apilan solapados, se abren en columna con el puntero y pausan mientras tanto. El que ofrece deshacer vacía su barra y, al deshacer, se actualiza en el lugar. Alt + T lleva el foco a la pila; se descartan deslizando a la derecha, y a la izquierda ofrecen resistencia.</p>
             <div class="comp__row">
@@ -785,7 +883,7 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="moments">
+          <div class="surface comp" data-comp="moments" data-group="acciones">
             <h2 class="comp__title">Momentos firma</h2>
             <p class="text-soft">Cuatro momentos que pueden ser expresivos porque son raros: cada uno se dispara desde acá, y cada uno dice con palabras lo que pasó.</p>
             <div class="stack" data-gap="2">
@@ -798,7 +896,7 @@
             <div class="comp__row"><button class="btn btn--sm btn--ghost" id="m-reset" type="button">Reiniciar la «primera vez»</button></div>
           </div>
 
-          <div class="surface comp comp--wide" data-comp="table">
+          <div class="surface comp comp--wide" data-comp="table" data-group="datos">
             <h2 class="comp__title">Tabla</h2>
             <p class="text-soft">Columnas estables con <code>colgroup</code>, filas que entran y salen, orden con FLIP. La tabla de facturas suma selección múltiple, barra de acciones y panel de detalle.</p>
             <div class="comp__row"><button class="btn btn--sm" id="c-table-add">Agregar fila</button><button class="btn btn--sm" id="c-table-remove">Quitar fila</button></div>
@@ -815,7 +913,7 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="accordion">
+          <div class="surface comp" data-comp="accordion" data-group="navegacion">
             <h2 class="comp__title">Acordeón</h2>
             <div class="accordion" id="c-acc">
               <div class="accordion__item">
@@ -833,7 +931,7 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="numbers">
+          <div class="surface comp" data-comp="numbers" data-group="datos">
             <h2 class="comp__title">Números</h2>
             <div class="card stack" data-gap="3">
               <div class="figure"><span class="figure__label">Facturas emitidas</span><span class="figure__value" data-sliding data-good="up" id="c-roll" data-value="1284">1.284</span></div>
@@ -842,7 +940,7 @@
             <div class="comp__row"><button class="btn btn--sm" id="c-roll-btn">Cambiar valor</button></div>
           </div>
 
-          <div class="surface comp" data-comp="states">
+          <div class="surface comp" data-comp="states" data-group="datos">
             <h2 class="comp__title">Vacío, cargando y error</h2>
             <div class="empty" id="c-empty" data-first-run><span class="empty__mark" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16"><use href="#i-receipt"/></svg></span><span class="empty__title">Aún no hay facturas</span><span class="empty__body">Aparecen acá apenas creás la primera.</span><button class="btn">Crear factura</button><span class="empty__hint">Pulsá <kbd class="key">C</kbd> para crear</span></div>
             <div class="stack" data-gap="2" id="c-loader"><div class="stack" data-gap="2" id="c-loader-body"><div class="skeleton-row" style="--w1: 60%; --w2: 40%"><div class="skeleton skeleton--avatar"></div><div class="skeleton-lines"><div class="skeleton"></div><div class="skeleton"></div></div></div></div><div class="comp__row"><button class="btn btn--sm" id="c-load">Cargar datos</button></div></div>
@@ -858,7 +956,22 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="morph">
+          <div class="surface comp" data-comp="skeletons" data-group="datos">
+            <h2 class="comp__title">Esqueletos</h2>
+            <p class="text-soft">Mientras carga, cada cosa ocupa su lugar con su forma: lo que llega no mueve nada.</p>
+            <div class="comp__row">
+              <div class="segmented" role="radiogroup" aria-label="Forma" id="c-sk-shape">
+                <span class="segmented__indicator" aria-hidden="true"></span>
+                <button class="segmented__option" role="radio" aria-checked="true" data-value="card">Tarjeta</button>
+                <button class="segmented__option" role="radio" aria-checked="false" data-value="list">Lista</button>
+                <button class="segmented__option" role="radio" aria-checked="false" data-value="table">Tabla</button>
+              </div>
+              <button class="btn btn--sm" id="c-sk-reload" type="button"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-refresh"/></svg>Recargar</button>
+            </div>
+            <div id="c-sk-body" aria-live="polite" style="min-width: 0"></div>
+          </div>
+
+          <div class="surface comp" data-comp="morph" data-group="acciones">
             <h2 class="comp__title">Tarjeta que se vuelve diálogo</h2>
             <p class="text-soft">La tarjeta crece hasta su detalle y regresa a ella al cerrar. La luz sigue al puntero en el showcase.</p>
             <div class="grid" style="--min: 140px">
@@ -867,13 +980,13 @@
             </div>
           </div>
 
-          <div class="surface comp" data-comp="palette">
+          <div class="surface comp" data-comp="palette" data-group="navegacion">
             <h2 class="comp__title">Paleta de comandos</h2>
             <p class="text-soft">Entrá rápido, filtrá mientras escribís y los resultados se mueven a su lugar.</p>
             <div class="comp__row"><button class="btn" data-palette="palette">Abrir comandos <kbd class="key" data-shortcut="Mod K">Ctrl K</kbd></button></div>
           </div>
 
-          <div class="surface comp" data-comp="list">
+          <div class="surface comp" data-comp="list" data-group="datos">
             <h2 class="comp__title">Lista reordenable</h2>
             <ul class="sortable" id="c-list" aria-label="Prioridades">
               <li class="sortable__item" tabindex="0"><span class="sortable__handle" aria-hidden="true"><svg class="icon" viewBox="0 0 16 16"><use href="#i-grip"/></svg></span>Leer dos libros</li>
@@ -882,16 +995,16 @@
             </ul>
           </div>
 
-          <div class="surface comp" data-comp="feedback">
+          <div class="surface comp" data-comp="feedback" data-group="datos">
             <h2 class="comp__title">Avisos en línea y estados</h2>
             <div class="notice" data-tone="success" role="status"><svg class="notice__icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-check"/></svg><div class="notice__body"><span class="notice__title">Pago recibido</span><span class="text-soft">La factura F-1045 se pagó completa.</span></div></div>
             <div class="notice" data-tone="danger" role="alert"><svg class="notice__icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg><div class="notice__body"><span class="notice__title">El banco no respondió</span><span class="text-soft">No se cobró nada. Intentalo en un minuto.</span></div></div>
-            <div class="notice" data-tone="warning" role="status"><svg class="notice__icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-alert"/></svg><div class="notice__body"><span class="notice__title">Tres facturas vencen esta semana</span></div></div>
+            <div class="notice" data-tone="warning" role="status"><svg class="notice__icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-warning"/></svg><div class="notice__body"><span class="notice__title">Tres facturas vencen esta semana</span></div></div>
             <div class="notice" data-tone="info" role="status"><svg class="notice__icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-info"/></svg><div class="notice__body"><span class="notice__title">Los informes se actualizan cada hora</span></div></div>
             <div class="comp__row"><span class="badge" data-tone="success">Pagada</span><span class="badge" data-tone="warning">Vence pronto</span><span class="badge" data-tone="danger">Vencida</span><span class="badge" data-tone="info">Enviada</span><span class="badge" data-plain>Borrador</span></div>
           </div>
 
-          <div class="surface comp" data-comp="data">
+          <div class="surface comp" data-comp="data" data-group="datos">
             <h2 class="comp__title">Datos</h2>
             <div class="figure chart__readout" id="collected-readout"></div>
             <div class="chart" data-readout="collected-readout" data-animate data-label="Cobrado por mes" data-bars="[98200,121400,143900,152300,174400,172560]" data-labels='["May","Jun","Jul","Ago","Sep","Oct"]' data-format='{"style":"currency","currency":"ARS","maximumFractionDigits":0}'></div>
@@ -906,7 +1019,7 @@
             </div>
           </div>
 
-          <div class="surface comp comp--wide" data-comp="ports">
+          <div class="surface comp comp--wide" data-comp="ports" data-group="portes">
             <h2 class="comp__title">Portes fieles</h2>
             <p class="text-soft">Cada componente de las librerías, aislado y con su demo: se portó de su código con sus valores y se comparó con la demo en vivo.</p>
             <ul class="ports" id="c-ports" aria-label="Portes fieles"></ul>
@@ -938,7 +1051,7 @@
       </div>
       <div class="tbe__menu" data-te="menu">
         <span class="selection-bar__count"><span data-sliding id="sel-count" data-value="0">0</span> seleccionadas</span>
-        <button type="button" class="tbe__btn" data-te-item="status" aria-label="Cambiar estado de la selección"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-refresh"/></svg></button>
+        <button type="button" class="tbe__btn" data-te-item="status" aria-label="Cambiar estado de la selección"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-swap"/></svg></button>
         <button class="btn btn--sm" id="mark-paid" type="button">Marcar como pagadas <kbd class="key">E</kbd></button>
         <button class="btn btn--sm" id="delete-selected" type="button">Eliminar <kbd class="key">⌫</kbd></button>
         <button class="btn btn--sm" id="clear-selection" type="button">Limpiar <kbd class="key">Esc</kbd></button>
@@ -949,14 +1062,14 @@
 
 <div class="menu" role="menu" id="m-row" aria-label="Acciones de la factura">
   <button class="menu__item" role="menuitem" tabindex="-1" data-action="open"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-open"/></svg>Abrir<kbd class="key">↵</kbd></button>
-  <button class="menu__item" role="menuitem" tabindex="-1" data-action="status"><span class="icon" data-motion="icons" data-icon="refresh" data-size="16" aria-hidden="true"></span>Cambiar estado<kbd class="key">S</kbd></button>
-  <button class="menu__item" role="menuitem" tabindex="-1" data-action="send"><span class="icon" data-motion="icons" data-icon="send" data-size="16" aria-hidden="true"></span>Enviar por correo</button>
-  <button class="menu__item" role="menuitem" tabindex="-1" data-action="duplicate"><span class="icon" data-motion="icons" data-icon="copy" data-size="16" aria-hidden="true"></span>Duplicar</button>
-  <button class="menu__item" role="menuitem" tabindex="-1" data-action="note"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-edit"/></svg>Agregar nota</button>
+  <button class="menu__item" role="menuitem" tabindex="-1" data-action="status"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-swap"/></svg>Cambiar estado<kbd class="key">S</kbd></button>
+  <button class="menu__item" role="menuitem" tabindex="-1" data-action="send"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-send"/></svg>Enviar por correo</button>
+  <button class="menu__item" role="menuitem" tabindex="-1" data-action="duplicate"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-duplicate"/></svg>Duplicar</button>
+  <button class="menu__item" role="menuitem" tabindex="-1" data-action="note"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-note"/></svg>Agregar nota</button>
   <button class="menu__item" role="menuitem" tabindex="-1" aria-haspopup="menu" aria-expanded="false" aria-controls="m-row-move"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-folder"/></svg>Mover a<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-chevron-right"/></svg></button>
   <div class="menu__sep" role="separator"></div>
   <button class="menu__item menu__item--danger" role="menuitem" tabindex="-1" data-action="void"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-void"/></svg>Anular factura…</button>
-  <button class="menu__item menu__item--danger" role="menuitem" tabindex="-1" data-action="delete"><span class="icon" data-motion="icons" data-icon="trash" data-size="16" aria-hidden="true"></span>Eliminar<kbd class="key">⌫</kbd></button>
+  <button class="menu__item menu__item--danger" role="menuitem" tabindex="-1" data-action="delete"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-trash"/></svg>Eliminar<kbd class="key">⌫</kbd></button>
 </div>
 <div class="menu" role="menu" id="m-status" aria-label="Estado">
   <button class="menu__item" role="menuitemradio" aria-checked="false" tabindex="-1" data-value="draft" data-key="1"><span class="menu__dot"></span>Borrador<kbd class="key">1</kbd></button>
@@ -1043,7 +1156,7 @@
 <dialog class="dialog" id="d-account" aria-labelledby="d-account-title" role="alertdialog">
   <div class="dialog__head"><h2 class="text-title" id="d-account-title">¿Eliminar la cuenta?</h2></div>
   <div class="dialog__body"><p class="text-soft">Se borran las facturas y los clientes. No se puede deshacer.</p></div>
-  <form method="dialog" class="dialog__foot"><button class="btn" autofocus>Cancelar</button><button class="btn btn--destructive" id="confirm-account">Eliminar cuenta</button></form>
+  <form method="dialog" class="dialog__foot"><button class="btn" autofocus>Cancelar</button><button class="btn btn--destructive btn--hold" type="button" id="confirm-account" data-hold-label="Cuenta eliminada"><span class="btn__hold" aria-hidden="true"></span>Mantené para eliminar</button></form>
 </dialog>
 
 <dialog class="dialog" id="d-confirm" aria-labelledby="d-confirm-title">
@@ -1093,7 +1206,6 @@
   import { mountWorkspace } from './workspace.js';
   import { mount as mountKokonutToolbar } from './motion/kokonut-toolbar.js';
   import './motion/magic-card.js';
-  import './motion/icons.js';
   import { mount as mountDock } from './motion/floating-dock.js';
   import { mount as mountTransitionPanel } from './motion/transition-panel.js';
   import { mount as mountAiPrompt } from './motion/ai-prompt.js';
@@ -1151,10 +1263,35 @@
     moved: (name, position, total, list) => (list ? `${name}, ${list}, posición ${position} de ${total}.` : `${name}, posición ${position} de ${total}.`),
     dropped: (name, position, list) => (list ? `${name} soltado en ${list}, posición ${position}.` : `${name} soltado en la posición ${position}.`),
     dragCancelled: (name) => `${name} volvió a su lugar. Movimiento cancelado.`,
+    codeLabel: (n) => `Código de ${n} dígitos`,
+    codeVerified: 'Verificado',
+    codeReopen: 'Verificado. Apretá Enter para escribir otro código',
+    codeWrong: 'El código no coincide. Revisalo o pedí uno nuevo.',
+    checklistCount: (done, total) => `${done} de ${total}`,
+    checklistAdded: (name) => `${name} agregado`,
+    slideKeys: 'Apretá Enter para confirmar',
+    tagRemove: (name) => `Quitar ${name}`,
+    tagAdded: (name) => `${name} agregada`,
+    tagRemoved: (name) => `${name} quitada`,
+    tagRepeated: (name) => `${name} ya está en la lista`,
+    tagFull: (max) => `Hasta ${max}`,
+    amountMin: (v) => `El mínimo es ${v}`,
+    amountMax: (v) => `El máximo es ${v}`,
+    pageRange: (from, to, total) => `${from}–${to} de ${total}`,
+    pagePrevious: 'Página anterior',
+    pageNext: 'Página siguiente',
+    page: (n) => `Página ${n}`,
   });
   ui.init();
 
   const $ = (id) => document.getElementById(id);
+  // The category filter keeps the grid in one column flow: a hidden card leaves no hole, and the rest close up with FLIP.
+  const compFilter = $('c-filter');
+  new MutationObserver(() => {
+    const group = compFilter.querySelector('[aria-checked=true]')?.dataset.group ?? 'todos';
+    ui.flip([...$('c-grid').children], () => { for (const c of $('c-grid').children) c.hidden = group !== 'todos' && c.dataset.group !== group; });
+  }).observe(compFilter, { subtree: true, attributeFilter: ['aria-checked'] });
+  $('c-slide-reset').addEventListener('click', () => { $('c-slide').slide?.reset(); $('c-slide-danger').slide?.reset(); });
   const later = (ms, fail) => () => new Promise((ok, no) => setTimeout(fail ? no : ok, ms));
   const money = { format: (value) => ui.format.currency(value) };
   // Taking it back updates the same toast: the question gives way to the result and the button folds away.
@@ -1356,7 +1493,7 @@
 
   const STATUS = { paid: ['success', 'Pagada'], overdue: ['danger', 'Vencida'], sent: ['info', 'Enviada'], draft: ['plain', 'Borrador'], void: ['plain', 'Anulada'] };
   const badge = (key) => { const [tone, label] = STATUS[key]; return `<span class="badge"${tone === 'plain' ? ' data-plain' : tone ? ` data-tone="${tone}"` : ''}>${label}</span>`; };
-  const CHECK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.5 6.5l2.5 2.5 4.5-6"/><path class="dash" d="M3 6h6"/></svg>';
+  const CHECK = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path class="tick" d="M2.625 6.375l2.25 2.25 4.5-5.25"/><path class="dash" d="M3 6h6"/></svg>';
   const MORE = '<svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><use href="#i-more"/></svg>';
   // The status is a button that opens the picker; the client's name carries the hover card.
   const statusCell = (key, number) => `<button class="badge-btn" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="Cambiar estado de ${number}: ${STATUS[key][1]}">${badge(key)}</button>`;
@@ -2037,7 +2174,8 @@
     syncSave();
     ui.toast('Cambios guardados', { tone: 'success' });
   });
-  $('confirm-account').addEventListener('click', () => ui.toast('Cuenta eliminada', { tone: 'error' }));
+  $('confirm-account').addEventListener('held', () => $('d-account').close());
+  $('c-delete').addEventListener('click', () => undoable('Factura F-1043'));
 
   // ── The user menu, in the sidebar's foot: the Profile Dropdown port ──
   const profile = $('user-profile');
@@ -2150,6 +2288,37 @@
   const barSets = [[98200, 121400, 143900, 152300, 174400, 172560], [60000, 90000, 120000, 150000, 180000, 90000]];
   let barSet = 0;
   $('c-chart-data').addEventListener('click', () => ui.setChart(document.querySelector('[data-comp=data] .chart'), barSets[++barSet % barSets.length]));
+  // Skeletons: each shape loads as its own skeleton (`skeletonOf` the same markup), so the swap moves nothing.
+  const skShapes = {
+    card: '<div class="surface stack" data-pad="4" data-gap="3"><div class="inline" data-gap="3"><span class="avatar" aria-hidden="true" style="--h: 160">NW</span><div class="stack" data-gap="1"><strong>Northwind Traders</strong><span class="text-caption">María Soto · 3 facturas</span></div><span class="badge" data-tone="success" style="margin-left: auto">Al día</span></div><span class="figure__value">$ 53.154,00</span><span class="text-soft">Último cobro el 12 de octubre, por transferencia.</span></div>',
+    list: `<div>${[['MS', 'María Soto', 'pagó la factura F-1042', 'hace 2 h'], ['JO', 'Javier Ortiz', 'abrió la factura F-1043', 'hace 5 h'], ['CI', 'Carla Ibáñez', 'respondió al recordatorio de F-1044', 'ayer']].map(([i, who, what, when]) => `<div class="activity__item"><span class="avatar" aria-hidden="true">${i}</span><div><span><strong>${who}</strong> ${what}</span><span class="text-caption">${when}</span></div></div>`).join('')}</div>`,
+    table: `<div class="table-wrap" style="--table-min: 0"><table class="table"><thead><tr><th>Cliente</th><th>Estado</th><th class="num">Importe</th></tr></thead><tbody>${[['Northwind Traders', 'success', 'Pagada', '$ 12.400'], ['BlueRock Capital', 'danger', 'Vencida', '$ 53.154'], ['Initech', 'info', 'Enviada', '$ 15.920']].map(([who, tone, state, amount]) => `<tr><td>${who}</td><td><span class="badge" data-tone="${tone}">${state}</span></td><td class="num">${amount}</td></tr>`).join('')}</tbody></table></div>`,
+  };
+  const skBody = $('c-sk-body');
+  let skShape = 'card';
+  let skLoading = false;
+  let skAgain = false;
+  skBody.innerHTML = skShapes[skShape];
+  ui.init(skBody);
+  // A shape chosen while one loads is loaded right after it, never over it.
+  const skLoad = async () => {
+    if (skLoading) { skAgain = true; return; }
+    skLoading = true;
+    do {
+      skAgain = false;
+      const html = skShapes[skShape];
+      await ui.withSkeleton(skBody, ui.skeletonOf(html), async () => { await later(1400)(); return html; });
+    } while (skAgain);
+    skLoading = false;
+  };
+  $('c-sk-reload').addEventListener('click', skLoad);
+  $('c-sk-shape').addEventListener('click', (e) => {
+    const option = e.target.closest('.segmented__option');
+    if (!option || option.dataset.value === skShape) return;
+    skShape = option.dataset.value;
+    skLoad();
+  });
+
   const loaderSkeleton = ui.skeletonList(1);
   $('c-load').addEventListener('click', () => ui.withSkeleton($('c-loader-body'), loaderSkeleton,
     async () => { await later(1200)(); return '<div class="inline" data-gap="3"><span class="avatar" aria-hidden="true">NW</span><div class="stack" data-gap="1"><strong>Northwind Traders</strong><span class="text-caption">1.284 facturas · al día</span></div></div>'; }));
@@ -2219,10 +2388,10 @@
   // The sub-page says which invoice its options act on: the open one, else the current row.
   const statuses = () => {
     const number = (detailRow ?? invoices.querySelector('tr[aria-current=true]'))?.cells[1].textContent;
-    return Object.entries(STATUS).filter(([key]) => key !== 'void').map(([key, [, label]]) => ({ id: `status-${key}`, group: 'Estado', icon: 'refresh', label: number ? `Marcar ${number} como ${label.toLowerCase()}` : `Marcar como ${label.toLowerCase()}`, meta: number ? STATUS[key][1] : 'Elegí una factura' }));
+    return Object.entries(STATUS).filter(([key]) => key !== 'void').map(([key, [, label]]) => ({ id: `status-${key}`, group: 'Estado', icon: 'swap', label: number ? `Marcar ${number} como ${label.toLowerCase()}` : `Marcar como ${label.toLowerCase()}`, meta: number ? STATUS[key][1] : 'Elegí una factura' }));
   };
   $('palette').source = () => [
-    { group: 'Facturas', icon: 'refresh', label: 'Cambiar estado', shortcut: 'S', pages: statuses },
+    { group: 'Facturas', icon: 'swap', label: 'Cambiar estado', shortcut: 'S', pages: statuses },
     ...everyRow().map((r) => ({ id: `inv-${r.cells[1].textContent}`, entity: true, group: 'Facturas', icon: 'receipt', label: `${r.cells[1].textContent} · ${r.cells[2].textContent}`, meta: `${STATUS[r.dataset.status][1]} · ${r.cells[4].textContent}`, amount: money.format(amountOf(r)), keywords: 'factura' })),
     ...[...clients.tBodies[0].rows].filter((r) => !r.classList.contains('table__empty')).map((r) => ({ id: `cli-${r.cells[0].textContent}`, entity: true, group: 'Clientes', icon: 'users', label: r.cells[0].textContent, meta: r.cells[1].textContent, amount: money.format(everyRow().filter((i) => i.cells[2].textContent === r.cells[0].textContent && i.dataset.status !== 'paid').reduce((sum, i) => sum + amountOf(i), 0)), keywords: 'cliente' })),
   ];

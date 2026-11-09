@@ -2,13 +2,16 @@
 // risk.json; a card with a gap in the plan is not built.
 // One rule, two moments: the checks over `## Gate` (probe per state, attacks line) and over `## Tasks` (the layer of a file)
 // are the ones gate-checks.mjs runs on the code afterwards.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { basename, join, resolve } from 'node:path';
 import { asmsOf, cardIdOf, plannedTestsOf, reuseOf, rolesOf, sectionOf, specTagsIn, specsOf, tasksOf, whyLayerOf } from './card-doc.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION } from './card.mjs';
 import { gateLinesOf, hasAttacksLine, misplacedLayer, removeOnlyOf, roleFor, statesLacking, visualInstruments } from './gate-checks.mjs';
 import { IS_MIGRATION } from './migrations.mjs';
+import { informationProblems, isProductLook } from './information.mjs';
+import { SET, TEMPLATES, usesCatalog } from './component-set.mjs';
+import { active, isPoc } from './kit.mjs';
 import { codeLanguageOf, declaresCodeLanguage, isSpanish } from './code-language.mjs';
 
 const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -28,8 +31,11 @@ export const lookProblems = (doc, cardDir) => {
   if (lines.length > LOOK_MAX_LINES) out.push(`## Look has ${lines.length} lines (max ${LOOK_MAX_LINES}): it is a direction, not a document`);
   const refs = field('ref');
   if (!refs.length) out.push('## Look has no `ref:` (an image in specs/<card>/ref/ or a URL)');
-  for (const r of refs) {
-    if (!/^https?:\/\//i.test(r) && !existsSync(join(cardDir, 'ref', basename(r)))) out.push(`## Look ref ${r}: not a URL and not a file in specs/${basename(String(cardDir))}/ref/`);
+  // A `ref:` is one or several parts joined by ` · ` (a file, a URL): each part is a file in ref/ or a well-formed http(s) URL.
+  const wellFormedUrl = (u) => { try { return /^https?:$/.test(new URL(u).protocol) && !/\s/.test(u); } catch { return false; } };
+  for (const r of refs) for (const part of r.split(' · ').map((p) => p.trim()).filter(Boolean)) {
+    const ok = /^https?:\/\//i.test(part) ? wellFormedUrl(part) : existsSync(join(cardDir, 'ref', basename(part)));
+    if (!ok) out.push(`## Look ref ${part}: not a well-formed http(s) URL and not a file in specs/${basename(String(cardDir))}/ref/`);
   }
   for (const i of field('intent')) if (!['collage', 'statement', 'grid', 'pinned-media'].includes(i.toLowerCase())) out.push(`## Look \`intent: ${i}\` is not one of collage, statement, grid, pinned-media`);
   if (!field('behavior').length) out.push('## Look has no `behavior:` line (load, cursor and hover, entering the view, each action or state of the card)');
@@ -38,7 +44,8 @@ export const lookProblems = (doc, cardDir) => {
   for (const t of field('tokens')) {
     if (/los del repo|the repo'?s|design system/i.test(t)) continue;
     const names = t.split(/[·;|]/)[0].replace(/^\s*(?:fonts?|fuentes?)\b:?\s*/i, '').split(/[,+/]|\band\b|\by\b/i).map((n) => n.replace(/^["'\s]+|["'\s]+$/g, '').toLowerCase()).filter(Boolean);
-    if (names.length && names.every((n) => GENERIC_FONTS.includes(n))) out.push('## Look `tokens:` names only generic fonts: a display font with character (the generic system fonts are the default look)');
+    // A product screen reads in the system or a neutral UI font: the display-font rule is a landing's.
+    if (!isProductLook(doc) && names.length && names.every((n) => GENERIC_FONTS.includes(n))) out.push('## Look `tokens:` names only generic fonts: a display font with character (the generic system fonts are the default look)');
   }
   return out;
 };
@@ -57,7 +64,7 @@ export const quantifierProblems = (doc, id, planned) => {
   if (!id || members.length < 2) return [];
   return specsOf(doc).flatMap((s) => {
     if (!QUANTIFIER.test(s.text)) return [];
-    if (new RegExp(`declared[^\\n]*\\b${s.id}\\b`, 'i').test(doc)) return [];
+    if (declaredFor(doc, s.id)) return [];
     const count = planned.filter((t) => specTagsIn(id, t.title).includes(s.id)).length;
     return count < members.length ? [`${s.id}: speaks of a set and the card names ${members.length} members (${members.map((x) => `«${x}»`).join(', ')}) but ${count} planned tests carry its tag · one test per member in its T line, or \`declared · ${s.id} · <why>\``] : [];
   });
@@ -68,23 +75,48 @@ export const BRANCH = /(?<![\p{L}\d])(?:o|u|or|either|otherwise|si no|sino|en ca
 export const branchProblems = (doc, id, planned) => {
   if (!id) return [];
   return specsOf(doc).flatMap((s) => {
-    if (!BRANCH.test(s.text) || new RegExp(`declared[^\\n]*\\b${s.id}\\b`, 'i').test(doc)) return [];
+    if (!BRANCH.test(s.text) || declaredFor(doc, s.id)) return [];
     const count = planned.filter((t) => specTagsIn(id, t.title).includes(s.id)).length;
     return count === 1 ? [`${s.id}: has two branches («${s.text.match(BRANCH)[0]}») and one planned test · a test per branch in its T line, or \`declared · ${s.id} · <why>\``] : [];
   });
 };
+// A spec past 500 characters usually holds several behaviors under one tag, and the one test it gets checks only one of them.
+export const SPEC_MAX_CHARS = 500;
+// Only what the card writes counts: the quote of the requirement is verbatim and keeps its length.
+// A quote is a pair of marks around a dozen characters or more, so an inch mark (6") does not open one.
+const ownPart = (text) => text.replace(/(?<!\d)"[^"\n]{12,}"|“[^”]*”|«[^»]*»/g, '');
+// Its own declaration, so keeping a long scenario does not also silence the branch and quantifier checks of that S#.
+export const longSpecProblems = (doc) => specsOf(doc).flatMap((s) => (ownPart(s.text).length > SPEC_MAX_CHARS && !declaredFor(doc, `long-spec\\s*·\\s*${s.id}`)
+  ? [`${s.id}: ${ownPart(s.text).length} characters in one scenario · split it into one S# per behavior, or \`declared · long-spec · ${s.id} · <why it is one>\``]
+  : []));
 
 const wordsOf = (s) => new RegExp(`(?<![\\p{L}\\d])(?:${s})(?![\\p{L}\\d])`, 'iu');
 const PROMISES_RESPONSE = /\b[1-5]\d\d\b|\bdevuelv\w*|\bresponde\w*|\breturns?\b|\bresponds?\b|\bse (?:guarda|devuelve)\b|\b(?:saved|stored|returned)\b/i;
-const API_TEST_FILE = /api|http|e2e|app|route|server/i;
+// A test goes through the app when a path or file-name token is one of these (`test/api/x`, `items-api.test`, `app.test`),
+// not when the letters appear inside another word (`mapper`, `happy-path`, `approval`).
+const API_TEST_FILE = /(?:^|[/._-])(?:api|http|e2e|app|route|server)(?:[/._-]|$)/i;
 const EVERY_RESPONSE = wordsOf('toda respuesta|todas las respuestas|every response|all responses');
-const UNIQUENESS = wordsOf('ya existe|repetid[oa]s?|duplicad[oa]s?|[uú]nic[oa]s?|unique|duplicate');
+// A uniqueness constraint, not «the only one» (`el único pedido`) nor a one-off (`pago único`): «único»/«unique» counts
+// next to a key noun or with «por»/«per»; «ya existe», «repetido», «duplicado», «duplicate», «no se repite» count alone.
+const UNIQUE_WORD = '[uú]nic[oa]s?|unique';
+const UNIQUE_KEY = 'e-?mails?|correo|c[oó]digo|code|id|n[uú]mero|number|nombre|name|key|clave|dni|cuit|usuario|user|username|slug|sku|token|identificador|identifier';
+const UNIQUENESS = wordsOf(`ya existe|no se repite|repetid[oa]s?|duplicad[oa]s?|duplicate|` +
+  // A key noun and «único» in a constraint frame: «el email es único», «unique email», «único por usuario». A price, a size
+  // or an experience that is «único» constrains nothing.
+  `(?:${UNIQUE_KEY})\\s+(?:(?:es|is|must be|debe ser|has to be|tiene que ser)\\s+(?:[\\p{L}-]+\\s+(?:y|and)\\s+)?)?(?:${UNIQUE_WORD})|` +
+  // «dos usuarios con el mismo email», «two users with the same email», «el email registrado dos veces», «the email used twice».
+  `(?:dos|two)\\s+(?:[\\p{L}-]+\\s+){1,4}?(?:con el mismo|with the same|mismo|same)\\s+(?:${UNIQUE_KEY})|` +
+  `(?:${UNIQUE_KEY})(?:\\s+[\\p{L}-]+){0,6}?\\s+(?:dos veces|twice)|` +
+  `(?<!(?<![\\p{L}\\d])(?:el|la|los|las|lo|un|una|su|sus|the|only)\\s+)(?:${UNIQUE_WORD})\\s+(?:${UNIQUE_KEY})|` +
+  `(?:${UNIQUE_WORD})\\s+(?:por|per)\\s+(?:${UNIQUE_KEY}|cliente|customer|cuenta|account|pedido|order)`);
 const CONTRACT_DOC = wordsOf('contrato|contract|openapi|documenta\\w*|documents');
 const OLD_ROWS = wordsOf('old|existing|legacy|null|viej[oa]s?|existentes?');
 const FILTER_OR_ORDER = wordsOf('filters?|filtering|filtros?|filtra\\w*|search|busca\\w*|order\\w*|orden\\w*|sort\\w*');
 const SEVERAL = wordsOf('several|two|multiple|varios|varias|dos|m[uú]ltiples');
-const hasFlag = (lines, flag) => lines.some((l) => l.includes(flag));
-const declaredFor = (doc, what) => new RegExp(`declared\\s*·[^\\n]*${what}`, 'i').test(doc);
+const DOM_FILE = /\.(tsx|jsx|vue|svelte|html)$/;
+const hasFlag =(lines, flag) => lines.some((l) => l.includes(flag));
+// `declared · <topic> · <why>` as a line of its own (a Log line may carry its `L<n> · <date> ·`); the topic may lead a list («S1, S2»).
+const declaredFor = (doc, what) => new RegExp(`^\\s*(?:[-*]\\s*)?(?:L\\d+\\s*·\\s*(?:\\d{4}-\\d{2}-\\d{2}\\s*·\\s*)?)?declared\\s*·\\s*(?:[\\w-]+\\s*,\\s*)*(?:${what})\\b`, 'im').test(doc);
 
 // `<ID>-ASM-NN · <reading> · S<n>` → { id, text } with the id removed from the text.
 const asmLinesOf = (doc) => (sectionOf(doc, 'Specs') ?? '').split('\n').flatMap((line) => {
@@ -133,7 +165,7 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
     if (!PROMISES_RESPONSE.test(it.text) || !it.tests.length) continue;
     const observable = it.tests.some((t) => {
       const task = tasks.find((k) => k.id === t.task);
-      return API_TEST_FILE.test(basename(t.file)) || (task?.files ?? []).some((f) => !IS_TEST.test(f) && roleFor(roles, f) !== 'rule');
+      return API_TEST_FILE.test(posix(t.file)) || (task?.files ?? []).some((f) => !IS_TEST.test(f) && roleFor(roles, f) !== 'rule');
     });
     if (!observable) out.push(`${it.id}: promises a response and its planned tests are all on rules (rule) · add a test through the app or the api (a file named api|http|e2e|app|route|server) to its T line: \`· tests: test/api/<x>.test.mjs "<title @${it.id.includes('-') ? it.id : `${id}-${it.id}`}>"\``);
   }
@@ -152,8 +184,8 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
     if (titles.length && all.length >= 2 && missing.length) out.push(`${a.id}: its literal values (${missing.map((v) => `«${v}»`).join(', ')}) are in no title of its planned tests · name them in the title of its test, or \`declared · ${a.id} · <why>\``);
   }
 
-  if (specs.some((s) => EVERY_RESPONSE.test(s.text)) && !hasFlag(attacks, '--common-headers'))
-    out.push(`${specs.find((s) => EVERY_RESPONSE.test(s.text)).id}: speaks of every response and \`attacks:\` has no \`--common-headers "<A, B>"\``);
+  if (lenses.includes('contract') && specs.some((s) => EVERY_RESPONSE.test(s.text)) && !hasFlag(attacks, '--common-headers') && !declaredFor(doc, 'common-headers'))
+    out.push(`${specs.find((s) => EVERY_RESPONSE.test(s.text)).id}: speaks of every response and \`attacks:\` has no \`--common-headers "<A, B>"\` · append it, or \`declared · common-headers · <why>\``);
   if (lenses.includes('contract')) {
     const unique = items.find((s) => UNIQUENESS.test(s.text));
     const search = specs.find((s) => /\b(?:buscar|busca|búsqueda|search|contiene|contains)\b/i.test(s.text));
@@ -162,7 +194,7 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
     const contractual = specs.find((s) => CONTRACT_DOC.test(s.text));
     if (contractual && !hasFlag(attacks, '--openapi') && !declaredFor(doc, 'openapi'))
       out.push(`${contractual.id}: speaks of a contract or its documentation and \`attacks:\` has no \`--openapi <file.yaml|json>\` · append it to the \`attacks:\` line, e.g. \`--openapi docs/openapi.yaml\`, or \`declared · openapi · <why>\``);
-    if (unique && !hasFlag(attacks, '--unique')) out.push(`${unique.id}: speaks of a duplicate or a unique value and \`attacks:\` has no \`--unique "<METHOD> <path> <body>"\` · append it to the \`attacks:\` line, e.g. \`--unique "POST /<path> <field>=<value>"\``);
+    if (unique && !hasFlag(attacks, '--unique') && !declaredFor(doc, 'unique')) out.push(`${unique.id}: speaks of a duplicate or a unique value and \`attacks:\` has no \`--unique "<METHOD> <path> <body>"\` · append it to the \`attacks:\` line, e.g. \`--unique "POST /<path> <field>=<value>"\`, or \`declared · unique · <why>\``);
   }
   const hasData = tasks.some((t) => t.files.some((f) => IS_MIGRATION.test(f) || roleFor(roles, f) === 'data'));
   if ((lenses.includes('contract') || lenses.includes('integrity')) && hasData && !hasFlag(attacks, '--fault-db') && !declaredFor(doc, 'fault-db'))
@@ -178,10 +210,11 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
   if (uniqueSpec && migrations.length && !titles.some((t) => SEVERAL.test(t) && /\bnull\b/i.test(t)) && !declaredFor(doc, 'null-unique'))
     out.push(`${uniqueSpec.id}: speaks of a unique value and the card has a migration, and no planned test title says several or two and null (several rows with null in the unique column are not duplicates) · add one to a T line, e.g. \`· tests: test/api/<x>.test.mjs "two rows with null <column> do not collide ${tagOf(uniqueSpec.id)}"\`, or \`declared · null-unique · <why>\``);
   const mutated = gate.filter((l) => /^mutate\b/i.test(l)).join('\n');
-  const unmutated = [...new Set(tasks.flatMap((t) => t.files))].filter((f) => !IS_TEST.test(f) && !IS_MIGRATION.test(f) && IS_CODE.test(f) && ['presentation', 'data'].includes(roleFor(roles, f)) && !mutated.includes(f));
+  const unmutated = [...new Set(tasks.flatMap((t) => t.files))].filter((f) => !IS_TEST.test(f) && !IS_MIGRATION.test(f) && IS_CODE.test(f) && ['presentation', 'data'].includes(roleFor(roles, f)) && !DOM_FILE.test(f) && !mutated.includes(f) && !declaredFor(doc, `mutate\\s*·\\s*${escape(f)}`));
   // A screen's script is mutated too: measured, a form whose logic only browser tests reached left every mutant alive.
-  if ((lenses.includes('contract') || lenses.includes('visual')) && mutated && unmutated.length && !declaredFor(doc, 'mutate'))
-    out.push(`${unmutated[0]} carries behavior the card promises and no \`mutate\` line names it${unmutated.length > 1 ? ` (nor ${unmutated.slice(1).join(', ')})` : ''} · add to ## Gate: ${unmutated.map((f) => `\`mutate ${f}: ${mutateSuiteOf(tasks, f)}\``).join(' · ')} (each with a node test that imports its logic), or \`declared · mutate · <why>\``);
+  // A DOM file (.tsx, .jsx, .vue, .svelte, .html) is not: it has no logic and needs a browser per mutant (required.mjs).
+  if ((lenses.includes('contract') || lenses.includes('visual')) && mutated && unmutated.length)
+    out.push(`${unmutated[0]} carries behavior the card promises and no \`mutate\` line names it${unmutated.length > 1 ? ` (nor ${unmutated.slice(1).join(', ')})` : ''} · add to ## Gate: ${unmutated.map((f) => `\`mutate ${f}: ${mutateSuiteOf(tasks, f)}\``).join(' · ')} (each with a node test that imports its logic), or \`declared · mutate · <file> · <why>\` for the file it silences`);
   // Measured: 9 refusals in one repo repeated this rule, whose message gave no form to close it.
   if (lenses.includes('integrity') && gate.some((l) => /^app\s*:/i.test(l)) && !planned.some((t) => /reinici|restart|sobrevive/i.test(t.title)) && !declaredFor(doc, 'restart'))
     out.push('integrity lens with an `app:` line and no planned test whose title says reinici, restart or sobrevive (a record survives restarting the app on the same database) · ' +
@@ -224,13 +257,23 @@ export const promiseProblems = (doc, { cardDir, lenses = [], root }) => {
 // has (`root` given) stays where it is: moving it is a card of its own. `components/ui/` is where shadcn installs the UI primitives.
 export const LAYER_FIRST = /^(?:(?:src|app|lib|apps\/[^/]+(?:\/src)?|packages\/[^/]+(?:\/src)?)\/)?(domain|application|infrastructure|presentation|data|screens|pages|views|widgets|components(?!\/ui\/)|services|models|entities|repositories|providers|controllers|blocs?|cubits?|viewmodels|use_?cases)\//i;
 const posix = (f) => f.split('\\').join('/').replace(/^\.\//, '');
+// `pages/` is the folder Next.js requires for its router: allowed in a repo with `next.config.*` or a `next` dependency.
+const usesNext = (root) => {
+  if (!root) return false;
+  try {
+    if (readdirSync(root).some((f) => /^next\.config\./.test(f))) return true;
+    const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    return Boolean({ ...pkg.dependencies, ...pkg.devDependencies }.next);
+  } catch { return false; }
+};
 export const layerFirstProblems = (doc, root) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
-  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && LAYER_FIRST.test(posix(f)) && !(root && existsSync(join(root, f))))
+  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && LAYER_FIRST.test(posix(f)) && !(root && existsSync(join(root, f)))
+    && !(posix(f).match(LAYER_FIRST)[1].toLowerCase() === 'pages' && usesNext(root)))
   .map((f) => { const folder = posix(f).match(LAYER_FIRST)[1]; return `${f}: a top-level \`${folder}/\` folder spans every feature · place it in its feature's slice, \`src/modules/<feature>/<layer>/\` (\`lib/features/<feature>/<layer>/\` in Flutter), or in \`shared/\` if every feature uses it`; });
 
 export const GRAB_BAG_NAME = /(^|\/)(utils?|helpers?|managers?|misc|common)(\.[a-z]+)*\.[a-z]+$/i;
-export const grabBagProblems = (doc) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
-  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && GRAB_BAG_NAME.test(posix(f)))
+export const grabBagProblems = (doc, root) => [...new Set(tasksOf(doc).flatMap((t) => t.files))]
+  .filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && GRAB_BAG_NAME.test(posix(f)) && !(root && existsSync(join(root, f))))
   .map((f) => `${f}: a grab-bag file name · name the file for the one concept it holds (a use case, an entity, an adapter)`);
 
 // A task that writes production code says what already exists that it uses or extends (`reuses:`), or why nothing fits (`new:`):
@@ -245,10 +288,28 @@ export const reuseProblems = (doc, root) => {
     if (!t.text || NO_REASON.test(t.text) || (t.kind === 'new' && t.text.split(/\s+/).length < 3))
       return [`${t.id}: \`${t.kind}:\` says nothing · ${t.kind === 'new' ? 'name what you searched and why it does not fit' : 'name the file and the symbol it uses or extends'}`];
     if (t.kind === 'new' || !root) return [];
-    return [...t.text.matchAll(/[\w.@-]+(?:\/[\w.@-]+)+\.\w+/g)].map((m) => m[0])
+    return [...t.text.replaceAll('\\', '/').matchAll(/[\w.@-]+(?:\/[\w.@-]+)+\.\w+/g)].map((m) => m[0])
       .filter((f) => !own.has(f) && !existsSync(join(root, f)))
       .map((f) => `${t.id}: \`reuses:\` names ${f}, which is not in the repo and no task of the card writes it · name what exists, or use \`new:\``);
   });
+};
+
+// A screen is composed from the catalog and the set: the task that builds it names in `reuses:` where its pieces come from —
+// the catalog's registries (`@shadcn/table`, `@coss/dialog`, or what they installed in components/ui/) in a repo with shadcn,
+// the set and its ports in design/components/ in one without—, which exist or are installed or copied by a task of the card. Not at poc.
+const setOff = (root) => { try { return active(root).exempt.procedures.has('component-set'); } catch { return false; } };
+export const setPlanProblems = (doc, root) => {
+  if (root && setOff(root)) return [];
+  const roles = rolesOf(doc);
+  const screens = reuseOf(doc).filter((t) => t.files.some((f) => !f.startsWith('design/') && /\.(html?|s?css|m?js|ts|jsx|tsx|vue|svelte)$/.test(f) && roleFor(roles, f) === 'presentation'));
+  if (!screens.length) return [];
+  if (root && usesCatalog(root)) {
+    if (screens.some((t) => /(^|[\s/])components\/ui\/|@[a-z][\w-]*\/[\w-]/i.test(t.text))) return [];
+    return [`${screens.map((t) => t.id).join(', ')}: the screen is planned without the catalog · under the task that builds it write \`  reuses: <registry items or components/ui/ files it composes>\` (\`@shadcn/table, @coss/dialog, @magicui/number-ticker\`…, reference/components.md), and add a task that installs what is missing with \`npx shadcn@latest add\` (a component the catalog covers is installed, never written by hand)`];
+  }
+  if (screens.some((t) => t.text.includes(`${SET}/`))) return [];
+  const pieces = /^## Information\b/m.test(doc) ? 'record.html record-head, facts, decision, exceptions, checks, record-section' : 'components.css <the components it composes>';
+  return [`${screens.map((t) => t.id).join(', ')}: the screen is planned without the component set · under the task that builds it write \`  reuses: ${SET}/${pieces}\`, naming too the catalog's ports it uses (${TEMPLATES}/motion/, reference/components.md «Without React»), and add a task that copies the set and those ports from ${TEMPLATES}/ if ${SET}/ does not have them (rules/interface.md: screens are composed from the set, not drawn)`];
 };
 
 // The simplest structure that works: the layer folders of a slice are its shape, but a task that adds a factory, strategy, adapter,
@@ -256,8 +317,11 @@ export const reuseProblems = (doc, root) => {
 // rule it serves; without it the pattern is dropped. Checked against the repo, so it needs `root`.
 export const isPatternFile = (file) => {
   const name = file.split('/').pop();
+  if (DOM_FILE.test(name)) return false;
   return /(?:^|[-_.])(?:factory|strategy|adapter|builder|bus|mediator|container|registry|locator)(?:[-_.]|$)/i.test(name)
-    || /[a-z0-9](?:Factory|Strategy|Adapter|Builder|Bus|Mediator|Container|Registry|Locator)(?:[-_.]|$)/.test(name)
+    // A pattern word that ends the name as a whole PascalCase segment (`OrderFactory`, `XAdapter`, `EventBus`). A component file
+    // (`PageContainer.tsx`, `FormBuilder.tsx`) is a view, not the pattern.
+    || /[A-Za-z0-9](?:Factory|Strategy|Adapter|Builder|Bus|Mediator|Container|Registry|Locator)(?:[-_.]|$)/.test(name)
     || /^I[A-Z]\w*\.(?:ts|cs|java|dart)$/.test(name) || /\.(?:port|interface)\.[a-z]+$/.test(name);
 };
 export const whyLayerProblems = (doc, root) => {
@@ -291,6 +355,8 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   const id = cardIdOf(cardDir);
   const out = [];
   const planned = plannedTestsOf(doc);
+  // A poc card has no Tasks, tests or Gate to plan: only its Look is checked.
+  if (root && isPoc(root)) return lenses.includes('visual') ? lookProblems(doc, cardDir) : [];
   if (!id) out.push(`the folder ${String(cardDir).split(/[\\/]/).filter(Boolean).pop()} has no card ID: the tags of the tests cannot be checked`);
   else {
     const tagged = new Set(planned.flatMap((t) => [...specTagsIn(id, t.title), ...[...t.title.matchAll(new RegExp(`@(?:assumption:)?(${escape(id)}-ASM-\\d+)(?!\\d)`, 'g'))].map((m) => m[1])]));
@@ -300,6 +366,7 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   }
   out.push(...quantifierProblems(doc, id, planned));
   out.push(...branchProblems(doc, id, planned));
+  out.push(...longSpecProblems(doc));
   out.push(...promiseProblems(doc, { cardDir, lenses, root }));
   const roles = rolesOf(doc);
   const unmarked = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !roleFor(roles, f));
@@ -308,8 +375,17 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
   const newFiles = [...new Set(tasksOf(doc).flatMap((t) => t.files))].filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !(root && existsSync(join(root, f))));
   for (const f of newFiles) { const p = misplacedLayer(f, roleFor(roles, f)); if (p) out.push(p); }
   out.push(...codeLanguageProblems(newFiles, root));
+  const migrationLens = () => {
+    if (lenses.includes('integrity') || tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)))) {
+      const upgrade = gateLinesOf(doc).some((l) => /^migrate-upgrade\b/i.test(l));
+      const migration = tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)));
+      const form = '`migrate-upgrade: <the stack\'s command that upgrades a copy of main\'s database with seeded data>` (reference/database.md)';
+      if (!migration && !upgrade) out.push(`no migration file in ## Tasks and no \`migrate-upgrade:\` line in ## Gate (integrity lens) · add the migration to a T line, or ${form}`);
+      if (migration && !upgrade) out.push(`a migration in ## Tasks and no \`migrate-upgrade:\` line in ## Gate · add ${form}`);
+    }
+  };
   out.push(...layerFirstProblems(doc, root));
-  out.push(...grabBagProblems(doc));
+  out.push(...grabBagProblems(doc, root));
   out.push(...reuseProblems(doc, root));
   out.push(...whyLayerProblems(doc, root));
   if (lenses.includes('visual')) {
@@ -317,14 +393,8 @@ export const planProblems = (doc, { cardDir, lenses = [], root }) => {
     const kind = instruments.probe && instruments.golden ? 'probe` or `golden' : instruments.golden ? 'golden' : 'probe';
     for (const x of statesLacking(doc, instruments)) out.push(`state ${x}: no \`${kind} ${x}:\` line in ## Gate (visual lens)`);
   }
-  if (lenses.includes('visual')) out.push(...lookProblems(doc, cardDir));
+  if (lenses.includes('visual')) out.push(...lookProblems(doc, cardDir), ...informationProblems(doc, gateLinesOf(doc)), ...setPlanProblems(doc, root));
   if (lenses.includes('contract') && !hasAttacksLine(doc)) out.push('no `attacks:` line in ## Gate (contract lens) · add `attacks: node .claude/tools/attack.mjs --write "POST /<path> <field>=<value>" --read "/<path>"`, with `--body-limit <bytes>` if the card sets a limit');
-  if (lenses.includes('integrity') || tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)))) {
-    const upgrade = gateLinesOf(doc).some((l) => /^migrate-upgrade\b/i.test(l));
-    const migration = tasksOf(doc).some((t) => t.files.some((f) => IS_MIGRATION.test(f)));
-    const form = '`migrate-upgrade: <the stack\'s command that upgrades a copy of main\'s database with seeded data>` (reference/database.md)';
-    if (!migration && !upgrade) out.push(`no migration file in ## Tasks and no \`migrate-upgrade:\` line in ## Gate (integrity lens) · add the migration to a T line, or ${form}`);
-    if (migration && !upgrade) out.push(`a migration in ## Tasks and no \`migrate-upgrade:\` line in ## Gate · add ${form}`);
-  }
+  migrationLens();
   return out;
 };

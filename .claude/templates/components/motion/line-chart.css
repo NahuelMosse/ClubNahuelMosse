@@ -22,6 +22,10 @@
 @media (hover: hover) and (pointer: fine) { .lc-toggle:hover { color: var(--text); background: color-mix(in oklab, var(--text) 5%, transparent); } }
 
 .lc-chart { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) var(--lc-axis-w); grid-template-rows: auto var(--lc-axis-h); min-width: 0; }
+/* height 'fill': the chart grows into the box it is given and its plot takes the rows the legend and the axis leave. */
+.lc[data-fill] { flex: 1; grid-template-rows: auto minmax(0, 1fr); }
+.lc[data-fill] .lc-legend[hidden] + .lc-chart { grid-row: 1 / -1; }
+.lc[data-fill] .lc-chart { grid-template-rows: minmax(0, 1fr) var(--lc-axis-h); }
 .lc-plot { position: relative; grid-area: 1 / 1; min-width: 0; outline: none; touch-action: pan-y; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 .lc-plot:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; border-radius: 4px; }
 .lc-svg { display: block; overflow: visible; }

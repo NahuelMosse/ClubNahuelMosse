@@ -48,6 +48,9 @@ Find curves at [easing.dev](https://easing.dev/) or [easings.co](https://easings
 
 **Rule: UI animations stay under 300ms.** A 180ms dropdown feels more responsive than a 400ms one. Faster spinners make load feel faster (same actual time). Instant tooltips after the first (skip delay + animation) make a toolbar feel faster.
 
+- **A close is quicker than its open.** A dropdown or modal that opens in 250ms closes in about 150ms, and the close can drop the distance and blur of the entrance. Motions that reverse into themselves (tabs, accordion, a swap) keep one duration both ways.
+- **A delay filters or sequences, never pads.** A short wait (about 80ms) keeps a passing cursor from firing a tooltip; a delay never goes on a close or a hover-out. If something feels late, cut its duration instead of adding delay.
+
 ## Physicality
 
 - **Never `scale(0)`.** Start from `scale(0.9–0.97)` + `opacity: 0`. Nothing in the real world appears from nothing.

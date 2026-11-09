@@ -28,7 +28,7 @@ try {
   const cwd = input.cwd ?? process.cwd();
   const found = hookCard(cwd, process.env, input);
   if (!found) process.exit(0);
-  const git = (...args) => spawnSync('git', args, { cwd: found.root, encoding: 'utf8', maxBuffer: 1 << 28 });
+  const git = (...args) => spawnSync('git', args, { cwd: found.root, encoding: 'utf8', maxBuffer: 1 << 28, timeout: 20_000 });
   const gitDir = git('rev-parse', '--absolute-git-dir');
   const top = git('rev-parse', '--show-toplevel');
   if (gitDir.status !== 0 || top.status !== 0) process.exit(0);

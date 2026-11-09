@@ -37,7 +37,7 @@ Commits, UI text, the PR and the Jira comments speak the team's language. Headin
 3. **Three states: passed · failed · could not run.** What did not run is never "passed". A check that stops you is not turned off.
 4. **The card is born `status: proposed`** and stays so: nothing waits for a signature. The human review is the PR, and the PR says it.
 5. **One round of questions, on the card.** A later doubt is an `ASM-NN`, listed in the PR. Never a second round.
-6. **The close publishes and merges by itself:** branch, PR, CI result and closing comment, then the merge once CI passed and
+6. **The close publishes and merges by itself:** branch, PR, CI result and closing comment, then, from mvp, the merge once CI passed and
    `closing.md` has nothing failed or for a person. Never a push onto main, `--force` or `--admin` unless the user orders it (`.claude/AUTONOMY.md`).
 
 ## How to work
@@ -58,7 +58,7 @@ Hooks block, and block also when they fail; they reach subagents too. If one sto
 - `delegate-code`: production code is written by the `builder`, the `grunt`, or the main thread on a small card after the RED commit.
 - `review-cap`: judges by `risk.json` (none in low and medium; one plan judge before building in high), no code judge and no correction round. `require-bar`: cap, Specs, Tasks, Gate.
 - `time-cap`: warns, then stops new agents and suites. `context-cap`: caps the builder, grunt, designer and design-critic (commit, `handoff.md`, a fresh one); the main thread compacts at 200k.
-- `require-at-close` and `publish`: no close without gate, mutation, at high `judge.md` with its ACT closed; publish pushes any branch but main and merges a PR whose checks passed; never force or `--admin` unless the user's last message orders it.
+- `require-at-close` and `publish`: no close without mutation, linter of tests and scope, at high `judge.md` with its ACT closed (the gate, `close.mjs`); publish pushes any branch but main and merges a PR whose checks passed; never force or `--admin` unless the user's last message orders it.
 
 ## If the task is, it goes to
 

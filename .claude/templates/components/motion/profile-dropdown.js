@@ -4,7 +4,7 @@
 // mount(el, opts) -> { destroy, open, close }. Auto-mounts on [data-motion="profile-dropdown"].
 //   opts: data { name, email, company, plan }, items [{ id, label, value, tone, icon, href, external }].
 // Event on the root: profile:select ({ id }). The menu follows the menu pattern: ↓ ↑ Home End Esc Tab.
-import { reduced, uid, escapeHtml, place, hueOf } from '../core.js';
+import { reduced, uid, escapeHtml, place, cascade, hueOf } from '../core.js';
 
 const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
 const mounted = new WeakMap();
@@ -75,6 +75,7 @@ export const mount = (el, opts = {}) => {
     play(menu, reduced()
       ? [{ opacity: 0 }, { opacity: 1 }]
       : [{ opacity: 0, transform: 'translateY(-8px) scale(0.95)' }, { opacity: 1, transform: 'none' }], { duration: reduced() ? 120 : 150, easing: EASE });
+    cascade(menu);
     if (viaKeyboard) rows[0].focus(); else menu.focus({ preventScroll: true });
   };
   const close = (returnFocus) => {

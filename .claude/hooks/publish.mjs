@@ -12,28 +12,50 @@
 // person. The order is read from the session transcript and has to be explicit: an imperative of the action ("mergealo",
 // "push it", "autorizo"), no question and no negation, and it names what made the call risky (main, force, admin, delete).
 // Contract: exit 0 lets it through, exit 2 blocks and Claude reads stderr. On its own error it blocks.
-import { appendFileSync, existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { appendFileSync, closeSync, existsSync, fstatSync, openSync, readFileSync, readSync, realpathSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 // The user's last message in the session: a typed prompt or one sent while the agent worked; tool results,
 // reminders, background-task notices (stored as user messages that start with `<`) and subagents are not theirs.
+const userTextOf = (line) => {
+  if (!line.includes('"user"') && !line.includes('queued_command')) return '';
+  let e;
+  try { e = JSON.parse(line); } catch { return ''; }
+  const own = e.type === 'user' && !e.isMeta && !e.isSidechain;
+  if (own && typeof e.message?.content === 'string') return e.message.content.startsWith('<') ? '' : e.message.content;
+  if (own && Array.isArray(e.message?.content) && e.message.content.length && e.message.content.every((c) => c.type === 'text')) {
+    return e.message.content.map((c) => c.text).filter((t) => !t.startsWith('<')).join('\n');
+  }
+  if (e.type === 'attachment' && e.attachment?.type === 'queued_command' && e.attachment.origin?.kind === 'human') return String(e.attachment.prompt ?? '');
+  return '';
+};
+// Read from the end in blocks: a long session's transcript passes the largest string Node can hold.
+const TAIL_BLOCK = 1 << 22;
 const lastUserText = (path) => {
   if (!path || !existsSync(path)) return '';
-  let text = '';
-  for (const line of readFileSync(path, 'utf8').split('\n')) {
-    if (!line.includes('"user"') && !line.includes('queued_command')) continue;
-    let e;
-    try { e = JSON.parse(line); } catch { continue; }
-    const own = e.type === 'user' && !e.isMeta && !e.isSidechain;
-    if (own && typeof e.message?.content === 'string') { if (!e.message.content.startsWith('<')) text = e.message.content; }
-    else if (own && Array.isArray(e.message?.content) && e.message.content.length && e.message.content.every((c) => c.type === 'text')) {
-      text = e.message.content.map((c) => c.text).filter((t) => !t.startsWith('<')).join('\n') || text;
-    } else if (e.type === 'attachment' && e.attachment?.type === 'queued_command' && e.attachment.origin?.kind === 'human') {
-      text = String(e.attachment.prompt ?? '');
+  const fd = openSync(path, 'r');
+  try {
+    let end = fstatSync(fd).size;
+    let rest = Buffer.alloc(0);
+    while (end > 0) {
+      const start = Math.max(0, end - TAIL_BLOCK);
+      const chunk = Buffer.alloc(end - start);
+      readSync(fd, chunk, 0, chunk.length, start);
+      const buf = Buffer.concat([chunk, rest]);
+      end = start;
+      // Bytes before the first newline may be the tail of a line that starts in an earlier block.
+      const cut = start === 0 ? -1 : buf.indexOf(10);
+      if (start > 0 && cut === -1) { rest = buf; continue; }
+      rest = cut === -1 ? Buffer.alloc(0) : buf.subarray(0, cut);
+      const lines = buf.subarray(cut + 1).toString('utf8').split('\n');
+      for (let i = lines.length - 1; i >= 0; i--) {
+        const text = userTextOf(lines[i]);
+        if (text) return text;
+      }
     }
-  }
-  return text;
+    return '';
+  } finally { closeSync(fd); }
 };
 // The order of an action: an imperative, never an infinitive or a remark ("deberían poder mergear" orders nothing).
 const AUTHORIZE = /\bautorizo\b|\bi authori[sz]e\b|\bgo ahead\b/i;
@@ -140,7 +162,11 @@ try {
     }
   };
 
-  const words = (segment) => [...segment.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+  // Each word as the shell hands it to the program: `ma''in`, `pu"sh"` and `\git` reach git as `main`, `push` and `git`.
+  // PowerShell has no backslash escape: `\` there separates the folders of a path.
+  // PowerShell's escape is the backtick: ``ma`in`` is `main`.
+  const unquote = (w) => (tool === 'PowerShell' ? w.replace(/`(.)/g, '$1') : w.replace(/\\(.)/g, '$1')).replace(/['"]/g, '');
+  const words = (segment) => [...segment.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? unquote(m[3]));
   const flagValue = (args, names) => {
     for (let i = 0; i < args.length; i++) {
       for (const n of names) {
@@ -167,7 +193,9 @@ try {
     '`publish: could not run, no remote configured (git remote is empty)`, and finish the close without a PR.';
   const hasRemote = () => git('remote').stdout.trim() !== '';
   const checkPush = (rawArgs) => {
-    const args = withoutRedirections(rawArgs);
+    // A push option (`-o ci.skip`) is read by the server's hooks; it moves no ref.
+    const args = withoutRedirections(rawArgs).filter((a, i, all) => !/^(?:-o|--push-option)$/.test(a) && !/^(?:-o|--push-option=)./.test(a) &&
+      !/^(?:-o|--push-option)$/.test(all[i - 1] ?? ''));
     if (!hasRemote()) block(NO_REMOTE);
     const bad = args.filter((a) => a.startsWith('-')).find((f) => !PUSH_FLAGS.has(f));
     if (bad) {
@@ -185,26 +213,32 @@ try {
       block(`You can push; the refspec ${spec} forces or deletes, which is refused. Push the branch plainly: \`git push -u origin <branch>\`.`);
     }
     const here = currentBranch();
-    const name = (r) => r.replace(/^refs\/heads\//, '').replace(/^HEAD$/, here);
+    const name = (r) => r.replace(/^\+/, '').replace(/^(?:refs\/)?heads\//, '').replace(/^(?:HEAD|@)$/, here);
     const [src, dst = src] = spec.split(':');
     if (name(src) !== name(dst)) block(`You can push; ${spec} pushes one branch onto another, which is refused. Push each branch onto its own name.`);
     checkBranch(name(dst));
   };
 
-  const GH_READ = new Set(['view', 'list', 'status', 'diff', 'checks']);
+  // `checkout` only fetches the PR's branch into the working copy; `ready` takes a PR that already exists out of draft.
+  const GH_READ = new Set(['view', 'list', 'status', 'diff', 'checks', 'checkout', 'ready']);
   const GH_WRITE = new Set(['create', 'comment', 'edit']);
-  const checkGh = (args) => {
+  const checkGh = async (args) => {
     const [sub, verb] = args.filter((a) => !a.startsWith('-'));
     if (sub === 'api') {
-      const method = (flagValue(args, ['-X', '--method']) ?? 'GET').toUpperCase();
-      const writes = method !== 'GET' || args.some((a) => /^(-f|-F|--field|--raw-field|--input)$/.test(a));
+      // Every spelling of the method (`-X PUT`, `-XPUT`, `-X=PUT`, `--method=PUT`), and a field or an input, which makes it a POST.
+      const methods = args.flatMap((a, i) => {
+        const m = /^(?:-X|--method)(?:=?(.+))?$/.exec(a);
+        return m ? [m[1] ?? args[i + 1] ?? ''] : [];
+      });
+      const writes = methods.some((m) => m.toUpperCase() !== 'GET') ||
+        args.some((a) => /^(?:-[fF]|--field|--raw-field|--input)(?:$|=)|^-[fF]\S/.test(a));
       if (writes) block('You can open, comment, edit and merge PRs with `gh pr`; a `gh api` call that writes is refused because it cannot be checked. Use the pr subcommand.');
       return;
     }
     if (sub !== 'pr' || GH_READ.has(verb)) return;
     if (verb === 'merge') return checkMerge(args);
     if (!GH_WRITE.has(verb)) {
-      block(`You can create, comment, edit, merge and read PRs (view, checks, list, status, diff); \`gh pr ${verb ?? ''}\` is the one refused.`);
+      block(`You can create, comment, edit, merge, check out, mark ready and read PRs (view, checks, list, status, diff); \`gh pr ${verb ?? ''}\` is the one refused.`);
     }
     if (verb === 'create' && !hasRemote()) block(NO_REMOTE);
     // Outside a card the agent opens and edits its PRs as it sees fit; a card's PR comes from its close.
@@ -224,15 +258,24 @@ try {
   // A merge goes in when the PR's checks pass (a repo without CI has none to wait for) and, inside a card, its closing.md
   // has nothing failed and nothing left for a person. --admin skips the branch protection, so it is never used.
   const section = (text, name) => text.split(/^## /m).find((p) => p.startsWith(name))?.slice(name.length) ?? null;
-  const checkMerge = (args) => {
+  const checkMerge = async (args) => {
     if (args.includes('--admin')) block('You can merge this PR; --admin is the part that is refused, because it skips the branch protection. Run `gh pr merge` without it.');
-    const pr = args.filter((a) => !a.startsWith('-')).slice(2, 3);
+    // The PR named in another repository with -R is checked there, not in the one the session runs in.
+    const repo = flagValue(args, ['--repo', '-R']);
+    const valueAt = new Set(args.flatMap((a, i) => (['--repo', '-R'].includes(a) ? [i + 1] : [])));
+    const pr = args.filter((a, i) => !a.startsWith('-') && !valueAt.has(i)).slice(2, 3);
+    if (repo !== null) pr.push('--repo', repo);
     // KIT_GH_CHECKS: a node script that stands in for `gh pr checks` in the kit's tests.
     const fake = process.env.KIT_GH_CHECKS;
     const checks = fake ? spawnSync(process.execPath, [fake, ...pr], { cwd: root(), encoding: 'utf8' })
       : spawnSync('gh', ['pr', 'checks', ...pr], { cwd: root(), encoding: 'utf8' });
     const out = `${checks.stdout ?? ''}${checks.stderr ?? ''}`;
     if (checks.status !== 0 && !/no checks reported/i.test(out)) {
+      // The checks are asked in the session's repository: a PR of another one is not found there, whatever the `cd`.
+      if (/could not resolve to a pullrequest/i.test(out) && repo === null) {
+        block('You can merge this PR once its checks pass, but the check looks for it in the session\'s repository and it is not there. ' +
+              'Name its repository: `gh pr merge <n> -R <owner>/<repo>`.');
+      }
       block(`You can merge this PR once its checks pass; they do not yet (\`gh pr checks\`: ${out.trim().split('\n').slice(0, 3).join(' · ') || `exit ${checks.status}`}). ` +
             'Wait for them (`gh pr checks --watch`) or fix what fails and push, then merge.');
     }
@@ -245,29 +288,138 @@ try {
       block('You can merge PRs, but this one has `## Needs a person` in closing.md: those lines are a person\'s call, so a person merges it. ' +
             'Leave the PR open and say so in your report.');
     }
+    const { sealed } = await import('../tools/close.mjs');
+    if (!sealed(root(), card().dir, closing)) {
+      block('You can merge this card\'s PR once closing.md is the one `node .claude/tools/close.mjs` wrote: its seal line is missing or no ' +
+            'longer matches the block and the gate records. Rerun /close (after verify.mjs if the code changed), then merge.');
+    }
+  };
+
+  // The wrappers that are peeled off, with their flags that take a value.
+  const PEELED = new Map([['command', []], ['builtin', []], ['exec', ['-a']], ['nohup', []], ['time', ['-f', '--format', '-o', '--output']],
+    ['nice', ['-n', '--adjustment']], ['timeout', ['-s', '--signal', '-k', '--kill-after']], ['env', ['-u', '--unset', '-C', '--chdir']]]);
+  // Git's own commands never resolve to an alias; any other name is looked up, since an alias can be a push.
+  const BUILTIN = new Set(['add', 'am', 'apply', 'archive', 'bisect', 'blame', 'branch', 'cat-file', 'check-ignore', 'checkout',
+    'cherry-pick', 'clean', 'clone', 'commit', 'config', 'describe', 'diff', 'diff-tree', 'fetch', 'for-each-ref', 'format-patch',
+    'fsck', 'gc', 'grep', 'help', 'init', 'log', 'ls-files', 'ls-remote', 'ls-tree', 'merge', 'merge-base', 'mv', 'notes', 'pull',
+    'push', 'rebase', 'reflog', 'remote', 'reset', 'restore', 'rev-list', 'rev-parse', 'revert', 'rm', 'shortlog', 'show', 'show-ref',
+    'sparse-checkout', 'stash', 'status', 'submodule', 'switch', 'symbolic-ref', 'tag', 'version', 'worktree']);
+  // The subcommand git runs and its arguments, with the `-c key=value` options of the call. An alias is resolved the way git
+  // resolves it; one that cannot be resolved, or is set inline with `-c alias.*`, is refused rather than guessed.
+  const gitCommand = (rest) => {
+    const at = [];
+    const configs = [];
+    let i = 0;
+    while (i < rest.length && rest[i].startsWith('-')) {
+      const flag = rest[i];
+      if (['-C', '--git-dir', '--work-tree'].includes(flag)) { at.push(flag, rest[i + 1] ?? ''); i += 2; }
+      else if (flag === '-c' || flag === '--config-env') { configs.push(rest[i + 1] ?? ''); i += 2; }
+      else if (flag.startsWith('--config-env=')) { configs.push(flag.slice(13)); i += 1; }
+      else if (flag === '--namespace') i += 2;
+      else { if (/^--(?:git-dir|work-tree)=/.test(flag)) at.push(flag); i += 1; }
+    }
+    let sub = rest[i];
+    let args = rest.slice(i + 1);
+    if (configs.some((c) => /^alias\./i.test(c))) {
+      asked = 'push';
+      block('You can push and run git; a `-c alias.*` option defines a command inline, which cannot be checked. Run the git command itself.');
+    }
+    for (let depth = 0; sub !== undefined && !BUILTIN.has(sub); depth++) {
+      const found = spawnSync('git', [...at, 'config', '--get', `alias.${sub}`], { cwd, encoding: 'utf8', timeout: 3000 });
+      if (found.status === 1 && !found.stderr?.trim()) break;
+      const value = found.status === 0 ? found.stdout.trim() : '';
+      if (!value || depth > 4 || value.startsWith('-') || (value.startsWith('!') && /\bgit\b[\s\S]*\bpush\b|\bgh\b/.test(value))) {
+        asked = 'push';
+        block(`You can push and run git; \`git ${sub}\` is an alias that could not be resolved to a checkable command (\`git config --get alias.${sub}\`). Run the git command it stands for.`);
+      }
+      if (value.startsWith('!')) break;
+      const [first, ...more] = words(value);
+      sub = first;
+      args = [...more, ...args];
+    }
+    return { sub, args, configs, at };
   };
 
   if (isShell) {
     // A heredoc body is text (a commit message), not commands.
     const body = cmd.replace(/<<-?\s*['"]?(\w+)['"]?[^\n]*\n[\s\S]*?\n\s*\1\b/g, ' ');
+    // Only the variables that point git at another repository or another config redirect a push; any way of setting
+    // one (`X=…`, `${env:X} = …`, `Set-Item Env:X`, `SetEnvironmentVariable('X', …)`) shows its name in the line.
+    // Quoted text (a commit message) only mentions them.
+    const unquoted = body.replace(/"(?:[^"\\]|\\.)*"|'[^']*'/g, (q) => (/^["']\s*(?:env:)?GIT_\w+\s*["']$|^["']GIT_\w+=/i.test(q) ? q : '""'));
+    const gitEnv = /\bGIT_(?:DIR|WORK_TREE|COMMON_DIR|INDEX_FILE|NAMESPACE|CONFIG\w*)\b/i.test(unquoted);
+    const { native } = await import('../tools/guard-paths.mjs');
+    let where = cwd;
+    let unknownDir = false;
+    const stack = [];
+    const toplevel = (dir) => { try { return realpathSync(spawnSync('git', ['-C', dir, 'rev-parse', '--show-toplevel'], { encoding: 'utf8' }).stdout.trim()); } catch { return ''; } };
+    const elsewhere = () => block('You can push; the line moves to another repository than the one checked (`cd`, `-C`), so it is refused. Push from the repository itself.');
     for (const segment of cardMod.splitShell(body)) {
       const tokens = words(segment.replace(/^\s*\(+/, ''));
-      while (tokens.length && /^\w+=/.test(tokens[0])) tokens.shift();
+      const mover = (tokens[0] ?? '').toLowerCase();
+      if (/^(?:popd|pop-location)$/.test(mover)) {
+        // `popd -n` and `popd +N`/`-N` drop or pick another entry than the top: the folder is not known after them.
+        if (tokens.slice(1).some((t) => /^[-+](?:n|\d+)$/.test(t))) unknownDir = true;
+        else if (stack.length) { where = stack.pop(); unknownDir = false; } else unknownDir = true;
+      } else if (/^(?:cd|pushd|chdir|sl|set-location|push-location)$/.test(mover)) {
+        const dir = tokens.slice(1).find((t) => !t.startsWith('-') || t === '-');
+        if (/^(?:pushd|push-location)$/.test(mover)) stack.push(where);
+        // A bare `pushd` swaps with the stack's top: the folder is not known.
+        if (mover === 'pushd' && !dir) unknownDir = true;
+        // `-`, `~` and a variable name a folder this check cannot see.
+        if (dir && /^[-~]|\$/.test(dir)) unknownDir = true;
+        else if (dir) { where = resolve(where, native(dir)); unknownDir = false; }
+      }
+      call = ` ${tokens.join(' ')} `;
+      // A wrapper that runs the next words as the command (`command`, `timeout 60`, `env A=b`) is peeled off;
+      // `env -S` splits a string into a command line of its own, so it stays a wrapper that cannot be checked.
+      let opaque = false;
+      for (;;) {
+        while (tokens.length && /^\w+=/.test(tokens[0])) tokens.shift();
+        const wrapper = (tokens[0] ?? '').replace(/\.exe$/i, '').toLowerCase();
+        if (!PEELED.has(wrapper)) break;
+        tokens.shift();
+        while (tokens.length && (tokens[0].startsWith('-') || (wrapper === 'env' && /^\w+=/.test(tokens[0])))) {
+          const flag = tokens.shift();
+          if (wrapper === 'env' && /^(?:-S|--split-string)/.test(flag)) opaque = true;
+          if (PEELED.get(wrapper).includes(flag)) tokens.shift();
+        }
+        if (wrapper === 'timeout') tokens.shift();
+      }
       const [program = '', ...rest] = tokens;
-      call = ` ${segment.trim()} `;
       defaults = defaultBranches;
       try {
-        if (/^(sh|bash|zsh|pwsh|powershell|cmd|eval|xargs|env|nohup|start)(\.exe)?$/i.test(program) &&
-            /\bgit\b[\s\S]*\bpush\b|\bgh\s+(pr|api)\b/.test(segment)) {
+        if ((opaque || /^(sh|bash|zsh|pwsh|powershell|cmd|eval|xargs|start)(\.exe)?$/i.test(program)) &&
+            /\bgit\b[\s\S]*\bpush\b|\bgh\s+(pr|api)\b/.test(call)) {
           asked = 'gh';
-          block('You can push and call gh; inside a wrapper (sh -c, eval, xargs) the call cannot be checked. Run it directly.');
+          block('You can push and call gh; inside a wrapper (sh -c, eval, xargs, env -S) the call cannot be checked. Run it directly.');
         } else if (/^git(\.exe)?$/i.test(program)) {
-          let i = 0;
-          while (i < rest.length && rest[i].startsWith('-')) i += ['-C', '-c', '--git-dir', '--work-tree'].includes(rest[i]) ? 2 : 1;
-          if (rest[i] === 'push') { asked = 'push'; checkPush(rest.slice(i + 1)); }
+          const { sub, args, configs, at } = gitCommand(rest);
+          if (sub === 'config' && args.filter((a) => !a.startsWith('-')).length > 1 && /^remote\..+\.push$/i.test(args.find((a) => !a.startsWith('-')) ?? '')) {
+            asked = 'push';
+            block('You can configure git; `remote.<name>.push` rewrites where a push lands, so setting it is refused.');
+          }
+          if (sub === 'push') {
+            asked = 'push';
+            if (gitEnv) block('You can push; a `GIT_*` variable in the line can redirect the repository or the destination, so it is refused. Run `git push -u origin <branch>` without it.');
+            if (at.some((a) => /^--(?:git-dir|work-tree)/.test(a))) block('You can push; --git-dir and --work-tree choose another repository than the one checked, so they are refused. Push from the repository itself.');
+            let dir = where;
+            for (let k = 0; k < at.length; k++) if (at[k] === '-C') { dir = resolve(dir, native(at[k + 1] ?? '')); if (toplevel(dir) !== toplevel(root())) elsewhere(); }
+            if (unknownDir || toplevel(where) !== toplevel(root())) elsewhere();
+            if (git('config', '--get-regexp', '^remote\\..*\\.push$').stdout.trim()) {
+              block('You can push; this repository has `remote.<name>.push` configured, which rewrites where a push lands, so it is refused. Unset it (`git config --unset remote.<name>.push`) and push as `git push -u origin <branch>`.');
+            }
+            if (configs.some((c) => /^remote\..+\.push/i.test(c))) {
+              block('You can push; a `-c remote.<name>.push…` option rewrites where the push lands, so it is refused. Push as `git push -u origin <branch>`.');
+            }
+            if (configs.some((c) => /^include(?:if\..*)?\.path/i.test(c))) {
+              block('You can push; a `-c include.path` or `-c includeIf.*.path` option loads a config file that can set `remote.<name>.push`, so it is refused. Push as `git push -u origin <branch>`.');
+            }
+            checkPush(args);
+          }
         } else if (/^gh(\.exe)?$/i.test(program)) {
           asked = rest.filter((a) => !a.startsWith('-'))[1] === 'merge' ? 'merge' : 'gh';
-          checkGh(rest);
+          await checkGh(rest);
         }
       } catch (e) {
         if (!(e instanceof UserAsked)) throw e;

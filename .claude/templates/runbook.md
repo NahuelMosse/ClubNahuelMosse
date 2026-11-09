@@ -54,7 +54,7 @@ when to escalate.
 | Severity | Support level | Who | Channel | In how long | Data package passed |
 |---|---|---|---|---|---|
 
-The package on escalating: error reference id or trace id, tenant, UTC time, what the customer expected, what
+The package on escalating: error reference id or trace id, tenant (if multi-tenant), UTC time, what the customer expected, what
 happened, steps to reproduce.
 
 ## Incidents

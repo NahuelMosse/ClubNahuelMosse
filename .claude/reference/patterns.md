@@ -18,7 +18,7 @@ it uses; these are the defaults.
 | The answer takes | Pattern |
 |---|---|
 | Under 150 ms | Nothing |
-| 150 ms – 1 s | Skeleton with the real shape, or subtle progress in the control that started it; shown at least 300 ms once shown |
+| 150 ms – 1 s | Skeleton with the real shape, or subtle progress in the control that started it; delay and minimum stay per `ui-patterns.md` UX-CARGA-1 |
 | Over 1 s | Explicit: what is happening; over 10 s, how much is left and how to cancel |
 | Safe and reversible | Optimistic: show the result at once, confirm in the background, roll back visibly if it fails |
 
@@ -54,6 +54,13 @@ it uses; these are the defaults.
 - Lists: J/K or arrows move the selection; Enter opens; Escape returns.
 - A command menu (⌘K) when the product has many actions; it opens at once.
 - Going back restores where the user was: scroll, selection, filters.
+
+## A record with many fields
+
+- The decision first: the key facts in a header that stays, the exceptions under it, each linked to its section.
+- Groups by decision, a nav to them that stays and marks the current one; context in a narrow column.
+- One disclosure level inside a section; what is rarely read (documents, history) loads when opened.
+- On a phone: two or three facts in the header, columns stacked, the decision at the thumb (`record.html`).
 
 ## Filtering and searching
 

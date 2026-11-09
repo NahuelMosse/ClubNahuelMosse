@@ -4,8 +4,7 @@
 role, a secret, a personal datum, a dependency, a Dockerfile or a pipeline; and when a security
 incident has to be written up. **How:** only the sections the card touches, with `Read` and a line
 range of the heading; never whole. `card.md` names the rule IDs that apply, and the `builder`
-receives those IDs and their ranges; the `judge` reaches a rule through the Source column of the
-criterion. **Products are options, not obligations:** when a rule leans on one (GitHub, AWS, Azure, GCP,
+receives those IDs and their ranges. **Products are options, not obligations:** when a rule leans on one (GitHub, AWS, Azure, GCP,
 Vault) it is named as one of the options and the rule is written over the capability. **[NV] marks
 guidance not verified**: a hypothesis, never the only evidence of a `meets`.
 
@@ -23,6 +22,9 @@ attack or probe against the running app. The `node-ts` examples assume code unde
 `.github/workflows/` and a `Dockerfile` at the root; the `generic` ones hold for any stack. None of the
 commands was run: they are syntax to validate on first use, and several `-P` regexes need `rg` with PCRE2.
 Source numbers `Bn` are in Sources.
+
+**Data-protection norm:** the one the product falls under, named in `system-design.md` (GDPR, Ley 25.326 in Argentina, LGPD…). What a site must show for it (privacy page, cookies before consent, consumer buttons, email) is `legal.md`.
+The Argentine references below are one example.
 
 ## Rules that are criteria
 
@@ -99,7 +101,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **SEC-AUTH-03** — Hash with Argon2id (m≥19 MiB, t≥2, p=1); scrypt (N=2^17, r=8) if there is no Argon2; bcrypt (cost ≥10, the 72-byte limit rejected explicitly) only in legacy; PBKDF2-SHA256 600,000 iterations if FIPS is required. · How C+T · criterion S13 · Check: node-ts ``rg -n -i "createHash\(['\"](md5|sha1|sha256)['\"]\).*(password|pass)" src/`` is empty; a test reads the stored hash and checks the prefix `$argon2id$v=19$m=19456,t=2,p=1` or higher · Source B8.
 
-**SEC-AUTH-04** — Limit attempts per account (not only per IP) with a threshold, a window and a lock or an exponential delay, without the lock serving to deny service; at most 100 consecutive failures as an absolute ceiling. · How T · criterion S24 · Check: node-ts a test makes N+1 failed logins from different IPs (simulated `X-Forwarded-For` behind the test proxy) to the same account and expects 429 or a delay; the legitimate user can recover through the forgot flow · Source B5, B20.
+**SEC-AUTH-04** — Limit attempts per account (not only per IP) with a threshold, a window and a lock or an exponential delay, without the lock serving to deny service; the ceiling of consecutive failures comes from the threat model. · How T · criterion S24 · Check: node-ts a test makes N+1 failed logins to the same account from different client addresses, with a counter per account that does not rely on `X-Forwarded-For`, and expects 429 or a delay; the legitimate user can recover through the forgot flow · Source B5, B20.
 
 **SEC-AUTH-05** — Login, signup and recovery answer the same —same message, same code, similar time— whether the account exists or not. · How T · criterion none · Check: a test compares body and status of “user does not exist” against “wrong password”; measure that the non-existent path also runs the hash · Source B5.
 
@@ -129,7 +131,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **SEC-DAT-02** — Encryption at rest of disks, databases, buckets and backups, with keys in a KMS separate from the data; the most sensitive fields (document, health, bank account) with application/column-level encryption and envelope encryption. · How C+J · criterion P15 · Check: generic IaC `checkov -d infra/ --framework terraform` (storage/database encryption checks) [command V, check IDs NV]; the provider's console: encryption on and a managed key · Source B11, B33, B34 (art. 34: encrypted data exempt notifying the data subjects).
 
-**SEC-DAT-03** — Keep an inventory of personal data: which field, of whom, category (identifying / sensitive art. 2 Ley 25.326 / art. 9 GDPR), purpose, legal basis or consent, where it lives (tables, logs, backups, third parties, analytics), retention and how it is deleted. · How C+J · criterion P15 · Check: every new column/field with PII in the diff appears in the inventory; node-ts `git diff main... -- migrations/ prisma/ | rg -i "^\+.*(email|phone|telefono|dni|cuit|cuil|address|direccion|birth|nacimiento|salud|health)"` and each match is in the personal data inventory of `system-design.md` · Source B32 (arts. 2, 4, 5, 21), B34 (art. 5), B1 (V14.1.1).
+**SEC-DAT-03** — Keep an inventory of personal data: which field, of whom, category (identifying / sensitive, by the applicable norm: e.g. GDPR art. 9, Ley 25.326 art. 2), purpose, legal basis or consent, where it lives (tables, logs, backups, third parties, analytics), retention and how it is deleted. · How C+J · criterion P15 · Check: every new column/field with PII in the diff appears in the inventory; node-ts `git diff main... -- migrations/ prisma/ | rg -i "^\+.*(email|phone|telefono|dni|cuit|cuil|address|direccion|birth|nacimiento|salud|health)"` and each match is in the personal data inventory of `system-design.md` · Source B32 (arts. 2, 4, 5, 21), B34 (art. 5), B1 (V14.1.1).
 
 **SEC-DAT-04** — Minimize: do not ask for nor store what the card's purpose does not need; if a derivative is enough (age instead of birth date, last 4 digits), store the derivative. · How J · criterion P1 · Check: the plan justifies each new personal field with the phrase of the requirement that asks for it. D10 looks at what travels to the client; this looks at what is collected and stored · Source B32 (art. 4), B34 (art. 5(1)(c)), B11.
 
@@ -137,15 +139,15 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **SEC-DAT-06** — Encrypted backups, with access separate from production's, restored as a test periodically; a backup with PII inherits its retention. · How C · criterion P7 · Check: a restore job in staging with a validation query (see DB-OPS-05 in `reference/database.md`, module data) · Source B33, B11.
 
-**SEC-DAT-07** — The data subject's rights have an implemented and tested path: access/export (Ley 25.326: 10 calendar days; GDPR: 1 month), rectification and erasure (Ley 25.326: 5 business days), including derived tables and the third parties the datum was ceded to. · How T · criterion P1 · Check: node-ts a test creates a user with data in every table of the inventory, runs the erasure and checks that none keeps identifiable PII · Source B32 (arts. 14, 16), B34 (art. 12(3)).
+**SEC-DAT-07** — The data subject's rights have an implemented and tested path: access/export, rectification and erasure within the term of the applicable norm (examples: GDPR 1 month; Argentina, Ley 25.326: 10 calendar days for access, 5 business days for rectification and erasure), including derived tables and the third parties the datum was ceded to. · How T · criterion P1 · Check: node-ts a test creates a user with data in every table of the inventory, runs the erasure and checks that none keeps identifiable PII · Source B32 (arts. 14, 16), B34 (art. 12(3)).
 
-**SEC-DAT-08** — No real personal data in development, tests or fixtures; synthetic or anonymized data. · How C · criterion none · Check: generic `rg -n -P "\b\d{2}\.?\d{3}\.?\d{3}\b|@(gmail|hotmail|yahoo)\.com" fixtures/ seeds/` and review each match · Source B33 (annex I, “development environment”, content in an image [NV]), B4.
+**SEC-DAT-08** — No real personal data in development, tests or fixtures; synthetic or anonymized data. · How C · criterion none · Check: generic `rg -n -P "<id pattern taken from the inventory's fields>|@(gmail|hotmail|yahoo)\.com" fixtures/ seeds/` and review each match · Source B33 (annex I, “development environment”, content in an image [NV]), B4.
 
 **SEC-DAT-09** — International transfers and third parties (analytics, LLM providers, support): recorded in the inventory and allowed by the applicable norm. · How J · criterion P15 · Check: review of the inventory's last column · Source B32 (art. 12), B1 (V14.2.3).
 
 ## 6. Supply chain and CI/CD (SC)
 
-**SEC-SC-01** — Pin each third-party action to a full SHA (with the tag as a comment) and each base image to a digest; update them with a dependency bot. · How C · criterion S23 · Check: generic ``rg -n -P "uses:\s*[^@]+@(?![0-9a-f]{40}\b)" .github/workflows/ | rg -v "uses:\s*\./"`` is empty; `rg -n "^FROM\s+[^@\s]+(\s|$)" Dockerfile*` is empty (every `FROM image@sha256:…`). Evidence: in March 2025 (tj-actions/changed-files, CVE-2025-30066) and March 2026 (Trivy/trivy-action, CVE-2026-33634) **tags** were moved to malicious commits that exfiltrated runner secrets [V via search]. S11 pins dependencies by lockfile, not actions or images · Source B22, B24, B38.
+**SEC-SC-01** — Pin third-party CI steps by immutable id and each base image by digest; update them with a dependency bot (on GitHub Actions: a full commit SHA, with the tag as a comment). · How C · criterion S23 · Check: generic ``rg -n -P "uses:\s*[^@]+@(?![0-9a-f]{40}\b)" .github/workflows/ | rg -v "uses:\s*\./"`` is empty; `rg -n "^FROM\s+[^@\s]+(\s|$)" Dockerfile*` is empty (every `FROM image@sha256:…`). Evidence: in March 2025 (tj-actions/changed-files, CVE-2025-30066) and March 2026 (Trivy/trivy-action, CVE-2026-33634) **tags** were moved to malicious commits that exfiltrated runner secrets [V via search]. S11 pins dependencies by lockfile, not actions or images · Source B22, B24, B38.
 
 **SEC-SC-02** — `GITHUB_TOKEN` (or the CI's equivalent) read-only at workflow level; write permissions only in the job that needs them. · How C · criterion S23 · Check: every file in `.github/workflows/` has a top-level `permissions:`: `for f in .github/workflows/*.y*ml; do rg -q "^permissions:" "$f" || echo "$f"; done` is empty; `rg -n "permissions:\s*write-all" .github/` is empty · Source B22, B24, B16 (CICD-SEC-5).
 
@@ -163,11 +165,11 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **SEC-SC-09** — A written term to remediate vulnerabilities by severity, and nothing in production past that term. · How C · criterion S11 · Check: node-ts `npm audit --omit=dev --audit-level=high` in a scheduled CI run (not only in the card) · Source B1 (V15.1.1, V15.2.1), B19 [NV ID].
 
-**SEC-SC-10** — Prevent dependency confusion: own scopes reserved in the public registry and an `.npmrc` that fixes the registry per scope. · How C · criterion S10 · Check: node-ts `rg -n "^@myorg:registry=" .npmrc`; `npm view @myorg/<internal-package>` in the public registry gives 404 or is ours · Source B1 (V15.2.4, level 3).
+**SEC-SC-10** — Prevent dependency confusion: own namespaces reserved in the public registry and the registry fixed per namespace (on npm, an `.npmrc` per scope). · How C · criterion S10 · Check: node-ts `rg -n "^@myorg:registry=" .npmrc`; `npm view @myorg/<internal-package>` in the public registry gives 404 or is ours · Source B1 (V15.2.4, level 3).
 
 ## 7. Runtime hardening (RT)
 
-**SEC-RT-01** — Headers: HSTS, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` with what is not used turned off, `frame-ancestors 'none'` (or `X-Frame-Options: DENY`), `Cross-Origin-Opener-Policy: same-origin`; no `X-Powered-By` and no version in `Server`. · How T · criterion S7 · Check: node-ts a test does `GET /` and asserts each header and the absence of `x-powered-by` (`app.disable('x-powered-by')` or helmet); generic `curl -sI https://host | rg -i "strict-transport|referrer-policy|permissions-policy|frame-ancestors|x-powered-by|^server:"`. S7 asks for CSP, nosniff and no-store; the rest is missing. ZAP baseline (S17) flags some as an alert, not as a test · Source B13, B1 (V13.4.6, level 3).
+**SEC-RT-01** — Headers: HSTS, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` with what is not used turned off, `frame-ancestors 'none'` (or `X-Frame-Options: DENY`), `Cross-Origin-Opener-Policy: same-origin` only where no OAuth popup or cross-window flow needs `window.opener` (it breaks them); no `X-Powered-By` and no version in `Server`. · How T · criterion S7 · Check: node-ts a test does `GET /` and asserts each header and the absence of `x-powered-by` (`app.disable('x-powered-by')` or helmet); generic `curl -sI https://host | rg -i "strict-transport|referrer-policy|permissions-policy|frame-ancestors|x-powered-by|^server:"`. S7 asks for CSP, nosniff and no-store; the rest is missing. ZAP baseline (S17) flags some as an alert, not as a test · Source B13, B1 (V13.4.6, level 3).
 
 **SEC-RT-02** — CORS closed by default: no `Access-Control-Allow-Origin: *` on authenticated routes, never reflect the received `Origin`, never `*` with credentials; an exact list of origins per environment. · How C+T · criterion S24 · Check: node-ts `rg -n "cors\(\s*\)|origin:\s*(true|['\"]\*['\"])" src/` is empty; a test: `Origin: https://evil.example` to an authenticated route gets no `Access-Control-Allow-Origin`. S1 rejects the cross request; this looks at the CORS policy that would enable it. `cors()` with no options is `origin: "*"` [V] · Source B13, B39.
 
@@ -217,7 +219,7 @@ Each rule is a cheap command the agent runs over its own diff. The frequency fig
 
 **SEC-AI-10** — No `console.log(req.body)`/`console.log(err)` that dumps passwords or tokens. · How C · criterion P2 · Check: as SEC-SECR-10 · Source B4, B12.
 
-**SEC-AI-11** — No `fetch(req.query.url)` nor another user URL without an allow-list (SSRF). · How C · criterion S3 · Check: node-ts `rg -n "(fetch|axios\.(get|post)|got)\(\s*req\.(query|body|params)" src/` is empty · Source B1 (V1.3.6).
+**SEC-AI-11** — No `fetch(req.query.url)` nor another user URL without an allow-list (SSRF). A user value that only fills a path segment on a fixed host is not SSRF; one that chooses the host, the scheme or the port is. · How C · criterion S3 · Check: node-ts `rg -n "(fetch|axios\.(get|post)|got)\(\s*req\.(query|body|params)" src/` is empty · Source B1 (V1.3.6).
 
 ## 10. If the app uses an LLM (LLM)
 

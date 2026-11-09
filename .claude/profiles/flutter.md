@@ -14,9 +14,12 @@ Mobile screens in Flutter. The base method does not name a framework; this profi
 - `motion:` a `flutter test` that calls `kitTrace`, when `## Look` declares movement.
 - `flutter: node .claude/tools/flutter-gate.mjs`.
 - No `probe`, axe, `enter-each`, `type-markup` or `overflow`: the goldens at three widths and `kitA11y` cover them.
-- With `web` on too, a card whose `## Tasks` name only Dart files (no web screen) is checked the same way, with goldens and `kitA11y`: no probe, axe, dead-clicks or copy lint.
+- With `web` on too, a card whose `## Tasks` name only Dart files (no web screen) is checked the same way, with goldens and `kitA11y`: no probe, axe or dead-clicks.
 - The rounds' captures are the goldens, copied to `specs/<card>/rondas/r<k>/`; a card that only takes something off a screen writes `remove-only:` in `## Look` and has no rounds.
 - Mutation over `.dart` is `could not run: mutate.mjs has no Dart operators`.
+
+## Frame budget
+- 16 ms per frame at 60 Hz, 8 ms at 120 Hz; the speed rules (`const` widgets, builders, no costly `build()`) are in `rules/speed.md`.
 
 ## Libraries and structure
 - Features are folders, layers inside from the first file: `lib/features/<feature>/{presentation,domain,data}` (`application/` for a use case that orchestrates), the feature's door `<feature>.dart` at its root; `lib/shared/` holds the kernel. Never `lib/screens/`, `lib/widgets/`, `lib/models/` or `lib/services/` across features (`.claude/reference/structure.md`, «Flutter»).

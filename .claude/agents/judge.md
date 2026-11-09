@@ -14,7 +14,7 @@ maxTurns: 12
 - `DATA_DIR` read by the app is not overdesign: `attack.mjs --fault-db` needs it. Never an ACT.
 - For each lens of `risk.json`, the questions of `lenses.md` that neither a spec, an `ASM`, a planned test (`tests:` of Tasks) nor a Gate line answers: screen states (`visual`), limits and errors of the contract (`contract`), what survives a restart or an upgrade (`integrity`), what the person's text can do (`security`).
 
-**Evidence or nothing.** A finding quotes the line of `card.md` and the question of `lenses.md` it leaves open; with neither there is no ACT. What the card did not touch is not a finding.
+**Evidence or nothing.** A finding quotes the line of `card.md` and the question of `lenses.md` it leaves open; with neither there is no ACT. What the card did not touch is not a finding. Under `security`, the finding also says who sends what and what they get, and is none of the list after the questions of `## security`.
 
 Write `specs/<card>/judge.md` with one line per finding, then `## Verified` (each lens with `meets`, `fails (ACT-NN)` or `not verified · <why>`):
 ```

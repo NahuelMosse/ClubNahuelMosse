@@ -35,7 +35,7 @@ try {
   // In a worktree `.git` is a file that points at the real git folder: git itself says where
   // info/exclude is.
   const where = existsSync(join(root, '.git'))
-    ? spawnSync('git', ['rev-parse', '--git-path', 'info/exclude'], { cwd: root, encoding: 'utf8' }).stdout?.trim()
+    ? spawnSync('git', ['rev-parse', '--git-path', 'info/exclude'], { cwd: root, encoding: 'utf8', timeout: 20_000 }).stdout?.trim()
     : '';
   const exclude = where && resolve(root, where);
   if (exclude) {

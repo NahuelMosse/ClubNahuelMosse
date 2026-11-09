@@ -6,13 +6,14 @@
 // say), `overlays.js` (everything that floats), `charts.js` and `life.js` (what each thing does on the
 // way to being used, and the four signature moments), `drag.js` (lifting, sorting and moving items between
 // lists); this one holds the rest.
-import { scope, forever, reduced, finePointer, once, css, ms, spring, EASE_OUT, uid, messages, format, configure, keyLabel, flip, flying, locale, icon, describeChange, offsetIn, makePill, placePill, hueOf, fade, follower, springOf, swapIn, escapeHtml, shimmerHtml, alignSheen, endOf } from './core.js';
+import { scope, forever, reduced, finePointer, once, css, ms, spring, EASE_OUT, uid, messages, format, configure, keyLabel, flip, flying, locale, icon, describeChange, offsetIn, makePill, placePill, hueOf, fade, follower, springOf, swapIn, escapeHtml, shimmerHtml, alignSheen, pauseOffscreen, endOf } from './core.js';
 import { dragSort } from './drag.js';
 import { initOverlays, openMenu, closeMenu, contextMenu, hovercard as floatingHovercard, toast } from './overlays.js';
 import { initCharts, setChart, ping } from './charts.js';
 import { mount as slidingNumber } from './motion/sliding-number.js';
 import { mount as slotText } from './motion/slot-text.js';
 import { flipClip, flipMove, flipSurface, rectOf, surfaceRect, visibleRect } from './motion/flip-size.js';
+import { initEntry } from './entry.js';
 import { initLife, flashValue, placeEnd, pulseSpark, enterFields, enterSections, enterRows, enterCardRows, setProgress, sweepRows, particles, confetti, lap, moments } from './life.js';
 
 export { messages, format, configure, keyLabel, toast, openMenu, closeMenu, contextMenu };
@@ -187,6 +188,12 @@ let tip;
 let warmUntil = 0;
 let tipTimer;
 let tipAt = null;
+// A tooltip names what is under the pointer: a scroll moves that away, so an open one closes. A wait in course
+// goes on, because the scroll that brings an anchor under a resting pointer arrives after its pointerenter; when
+// the wait ends, the anchor still has to be under the pointer or hold the focus.
+addEventListener('scroll', () => {
+  if (tip?.matches(':popover-open')) tip.hidePopover();
+}, { capture: true, passive: true });
 const tooltip = (el, armed) => {
   if (!once(el, 'uiTip')) return;
   tip ??= Object.assign(document.body.appendChild(document.createElement('div')), { className: 'tooltip', role: 'tooltip', id: 'ui-tooltip', popover: 'manual' });
@@ -218,7 +225,7 @@ const tooltip = (el, armed) => {
   const show = (byPointer) => {
     if (byPointer && !finePointer()) return;
     clearTimeout(tipTimer);
-    if (Date.now() < warmUntil) open(); else tipTimer = setTimeout(open, 400);
+    if (Date.now() < warmUntil) open(); else tipTimer = setTimeout(() => el.matches(':hover, :focus-visible') && open(), 400);
   };
   const hide = () => {
     clearTimeout(tipTimer);
@@ -473,7 +480,7 @@ const stillLoading = (container) => {
 };
 export const withSkeleton = async (container, skeletonHTML, load) => {
   let shownAt = 0;
-  const timer = setTimeout(() => { container.innerHTML = skeletonHTML; container.setAttribute('aria-busy', 'true'); shownAt = performance.now(); syncSheen(container); initLife(container); }, 200);
+  const timer = setTimeout(() => { container.innerHTML = skeletonHTML; container.setAttribute('aria-busy', 'true'); shownAt = performance.now(); initLife(container); skeletonBones(container); syncSheen(container); }, 200);
   const slow = setTimeout(() => { if (shownAt) { container.innerHTML = stillLoading(container); initLife(container); } }, 8000);
   try {
     const html = await load();
@@ -902,6 +909,47 @@ export const closePeek = (panel) => new Promise((done) => {
   morph(panel, origin, 'out', { content: [...panel.children] }).then(finish);
 });
 
+// ── Copy: `data-copy` holds the text. The copy icon turns into a drawn check and the label says it for 1.6 s;
+// a second press restarts the count. ──
+const copyButton = (button) => {
+  if (!once(button, 'uiCopy')) return;
+  const text = button.querySelector('.btn__text');
+  const rest = text?.textContent ?? '';
+  let timer = 0;
+  button.addEventListener('click', () => {
+    navigator.clipboard?.writeText(button.dataset.copy).catch(() => {});
+    button.setAttribute('data-copied', '');
+    if (text) text.textContent = button.dataset.copiedLabel ?? rest;
+    clearTimeout(timer);
+    timer = setTimeout(() => { button.removeAttribute('data-copied'); if (text) text.textContent = rest; }, 1600);
+  });
+};
+
+// ── Hold to confirm: an action that cannot be undone fills while it is held (pointer, Space or Enter) and runs when
+// the fill is full, says so in a toast and fires `held`; let go earlier and it drains. Reduced motion keeps the hold
+// and loses only the fill's travel. What can be undone is not held: it runs on a click and offers «Deshacer». ──
+const holdButton = (button) => {
+  if (!once(button, 'uiHold')) return;
+  const fill = button.querySelector('.btn__hold');
+  const start = (e) => {
+    if (button.hasAttribute('data-holding') || (e.type === 'pointerdown' && e.button !== 0)) return;
+    if (e.type === 'keydown') { if (e.repeat || (e.key !== ' ' && e.key !== 'Enter')) return; e.preventDefault(); }
+    button.setAttribute('data-holding', '');
+  };
+  const stop = () => button.removeAttribute('data-holding');
+  fill?.addEventListener('transitionend', (e) => {
+    if (e.propertyName !== 'transform' || !button.hasAttribute('data-holding')) return;
+    stop();
+    button.setAttribute('data-held', '');
+    endOf(button, 'data-held', 400);
+    toast(button.dataset.holdLabel ?? '', { tone: 'success' });
+    button.dispatchEvent(new CustomEvent('held', { bubbles: true }));
+  });
+  button.addEventListener('pointerdown', start);
+  button.addEventListener('keydown', start);
+  for (const type of ['pointerup', 'pointerleave', 'pointercancel', 'keyup', 'blur']) button.addEventListener(type, stop);
+};
+
 // ── Accordion: a trigger and its panel. The open item is one unit: its surface covers the trigger and the
 // panel. The height is the final one from the first frame; the surfaces scale to it, the items below move
 // to their place and the panel is shown through a clip that grows or withdraws, all with transform and
@@ -1054,7 +1102,8 @@ const strip = (el, life = forever) => {
 // ── Slider: `role=slider` with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and, optionally,
 // `data-step` and `data-suffix` (what `aria-valuetext` appends to the number). Arrows move one step,
 // PageUp and PageDown a tenth of the range, Home and End the ends; a press or a drag sets the value and
-// grows the thumb. It writes `--p` (0 to 1) for the fill and the thumb, and fires `change` with the value. ──
+// grows the thumb. It writes `--p` (0 to 1) for the fill and the thumb, and fires `change` with the value;
+// `el.value` reads it and, set from code, moves the thumb and fires the same `change`. ──
 const slider = (el) => {
   if (!once(el, 'uiSlider')) return;
   const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -1123,6 +1172,7 @@ const slider = (el) => {
     e.preventDefault();
     set(next);
   });
+  Object.defineProperty(el, 'value', { configurable: true, get: () => value, set: (next) => set(Number(next)) });
   paint();
 };
 
@@ -1257,6 +1307,56 @@ export const skeletonList = (rows = 3) => {
   return Array.from({ length: rows }, (_, i) => `<div class="skeleton-row" style="--w1: ${widths[i % widths.length][0]}; --w2: ${widths[i % widths.length][1]}"><div class="skeleton skeleton--avatar"></div><div class="skeleton-lines"><div class="skeleton"></div><div class="skeleton"></div></div></div>`).join('');
 };
 
+// The skeleton of any markup: give it a sample of what will arrive and it is laid out exactly as that will be, its text
+// and its marks unseen, with a bone on every line of text (as long as the line, 0.7 of its type size, centred in it)
+// and on every mark (an avatar, a badge, an icon, a button, a picture: its own size and corners). What arrives takes
+// the place its skeleton held, to the pixel. The bones follow the size of their box.
+const MARKS = '.avatar, .badge, .btn, .key, .chip, svg, img, .spark, .progress, .switch, .checkbox, input, select, textarea';
+export const skeletonOf = (html) => `<div class="skeleton-of" data-skeleton-of aria-hidden="true" inert>${html}<div class="skeleton-of__bones"></div></div>`;
+const boneUp = (host) => {
+  const layer = host.querySelector(':scope > .skeleton-of__bones');
+  const origin = host.getBoundingClientRect();
+  const outside = (n) => !layer.contains(n);
+  const marks = [...host.querySelectorAll(MARKS)].filter((m) => outside(m) && !m.parentElement.closest(MARKS));
+  const lines = [];
+  const range = document.createRange();
+  const walker = document.createTreeWalker(host, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.data.trim() && outside(n) && !n.parentElement.closest(MARKS) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT) });
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const size = parseFloat(getComputedStyle(n.parentElement).fontSize);
+    range.selectNodeContents(n);
+    for (const r of range.getClientRects()) if (r.width > 1) lines.push({ x: r.left, mid: r.top + r.height / 2, w: r.width, size });
+  }
+  // Runs of one line (a name in bold, then the rest of the sentence) are one bone; a column further along is another.
+  lines.sort((a, b) => Math.round(a.mid) - Math.round(b.mid) || a.x - b.x);
+  const runs = [];
+  for (const l of lines) {
+    const last = runs.at(-1);
+    if (last && Math.abs(last.mid - l.mid) < 3 && l.x >= last.x && l.x - (last.x + last.w) < l.size * 0.6) { last.w = l.x + l.w - last.x; last.size = Math.max(last.size, l.size); } else runs.push({ ...l });
+  }
+  const bone = (x, y, w, h, radius) => `<div class="skeleton" data-bone style="left:${(x - origin.left).toFixed(1)}px;top:${(y - origin.top).toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px;border-radius:${radius};--x:${(x - origin.left).toFixed(1)}px"></div>`;
+  layer.innerHTML = [
+    ...runs.map((r) => { const h = Math.max(8, Math.round(r.size * 0.7)); return bone(r.x, r.mid - h / 2, r.w, h, `${Math.round(h / 3)}px`); }),
+    ...marks.map((m) => { m.setAttribute('data-bone-mark', ''); const r = m.getBoundingClientRect(); const radius = getComputedStyle(m).borderRadius; return r.width && r.height ? bone(r.left, r.top, r.width, r.height, radius === '0px' ? `${Math.round(Math.min(r.width, r.height) / 4)}px` : radius) : ''; }),
+  ].join('');
+  host.style.setProperty('--bones-w', `${origin.width}px`);
+  layer.querySelectorAll('.skeleton').forEach(pauseOffscreen);
+  syncSheen(host);
+};
+const boned = new WeakSet();
+const skeletonBones = (root) => {
+  for (const host of root.querySelectorAll('[data-skeleton-of]')) {
+    boneUp(host);
+    if (boned.has(host)) continue;
+    boned.add(host);
+    let width = host.offsetWidth;
+    const follow = new ResizeObserver(() => {
+      if (!host.isConnected) return follow.disconnect();
+      if (host.offsetWidth !== width) { width = host.offsetWidth; boneUp(host); }
+    });
+    follow.observe(host);
+  }
+};
+
 // ── Top bar: translucent over the canvas at rest; once the page scrolls, content passes under it, so
 // it turns opaque (the surface and its hairline) instead of letting text show through. ──
 const topbar = (bar, life = forever) => {
@@ -1313,6 +1413,7 @@ export const init = (root = document) => {
   const life = scope();
   document.documentElement.classList.add('js');
   initLife(root, life);
+  skeletonBones(root);
   root.querySelectorAll('kbd[data-shortcut]').forEach((k) => { k.textContent = keyLabel(k.dataset.shortcut); });
   root.querySelectorAll('.segmented[role=radiogroup], .tabs[role=tablist]').forEach((g) => choice(g, life));
   root.querySelectorAll('[data-tooltip]').forEach(tooltip);
@@ -1330,15 +1431,19 @@ export const init = (root = document) => {
   root.querySelectorAll('.accordion').forEach(accordion);
   root.querySelectorAll('.card[data-interactive]').forEach(card);
   root.querySelectorAll('.btn[aria-pressed]').forEach((b) => once(b, 'uiToggle') && b.addEventListener('click', () => b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'))));
+  root.querySelectorAll('.btn[data-copy]').forEach(copyButton);
+  root.querySelectorAll('.btn--hold').forEach(holdButton);
   root.querySelectorAll('.sortable').forEach(sortable);
   root.querySelectorAll('.board').forEach((b) => board(b, life));
-  root.querySelectorAll('.timeline').forEach((t) => timeline(t, life));
+  // A timeline marked data-static (a record's history) is a list to read: no items to open, no «today» line.
+  root.querySelectorAll('.timeline:not([data-static])').forEach((t) => timeline(t, life));
   if (once(document.documentElement, 'uiSettle')) settleOnEnable(life);
-  root.querySelectorAll('.table-wrap, .board__scroll').forEach((w) => scrollEdges(w, life));
+  root.querySelectorAll('.table-wrap, .board__scroll, .comp-filter').forEach((w) => scrollEdges(w, life));
   root.querySelectorAll('input[data-indeterminate]').forEach((i) => { i.indeterminate = true; });
   root.querySelectorAll('.avatars').forEach((g) => [...g.children].forEach((a, i) => a.style.setProperty('--i', i)));
   root.querySelectorAll('.avatar').forEach((a) => { if (!a.style.getPropertyValue('--h')) a.style.setProperty('--h', String(hueOf(a.dataset.name ?? a.textContent))); });
   root.querySelectorAll('.slider').forEach(slider);
+  initEntry(root, life);
   if (once(document.documentElement, 'uiPop')) popOnCheck();
   root.querySelectorAll('svg.spark[data-spark]').forEach((s) => spark(s, life));
   root.querySelectorAll('.topbar').forEach((b) => topbar(b, life));
@@ -1353,4 +1458,4 @@ export const init = (root = document) => {
 
 export const choose = (group, value) => group.choose?.(value);
 
-export const ui = { choose, format, configure, keyLabel, icon, flip, setDelta, setBadge, setSpark, setChart, syncSheen, init, tooltips, activate, toast, openMenu, closeMenu, contextMenu, hovercard, runAction, withSkeleton, skeletonRows, skeletonList, dismissNotice, setTheme, setAccent, setNumber, setProgress, filterRows, addRow, prependEvent, removeRow, openPeek, closePeek, closeInto, enterView, slideIn, sweepRows, particles, confetti, lap, moments, messages };
+export const ui = { choose, format, configure, keyLabel, icon, flip, setDelta, setBadge, setSpark, setChart, syncSheen, init, tooltips, activate, toast, openMenu, closeMenu, contextMenu, hovercard, runAction, withSkeleton, skeletonRows, skeletonList, skeletonOf, dismissNotice, setTheme, setAccent, setNumber, setProgress, filterRows, addRow, prependEvent, removeRow, openPeek, closePeek, closeInto, enterView, slideIn, sweepRows, particles, confetti, lap, moments, messages };

@@ -91,7 +91,7 @@ not its own.
 | `level` | from the level table below |
 | `service`, `version`, `environment` | who emitted it |
 | `trace_id`, `span_id` | the correlation id (W3C `traceparent`) |
-| `tenant`, `user` | pseudonymized, never the raw identifier |
+| `tenant` (if multi-tenant), `user` | pseudonymized, never the raw identifier |
 | `event` | stable event name |
 | `message` | readable sentence, no personal data or secrets |
 

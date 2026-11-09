@@ -7,7 +7,7 @@
 // The repo is the one the argument sits in; without it, the one `hookCard` finds from the cwd.
 // `--base` prints only the base ref. Exits 2 when there is no card to review.
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { cardFiles, cardStart, currentCard, hookCard, kitRootOf, rootOf } from './card.mjs';
 
@@ -17,7 +17,8 @@ export const reviewRange = (arg, cwd = process.cwd(), env = process.env) => {
   if (arg) {
     const path = resolve(cwd, arg);
     root = (existsSync(path) && rootOf(resolve(path, '_'))) || kitRootOf(path);
-    cardDir = root && currentCard(root);
+    // A card folder given is the card; a repo or any other path takes the card in progress.
+    cardDir = root && (existsSync(join(path, 'card.md')) ? path : currentCard(root));
   } else {
     const found = hookCard(cwd, env);
     if (found) ({ root, card: cardDir } = found);
@@ -27,7 +28,7 @@ export const reviewRange = (arg, cwd = process.cwd(), env = process.env) => {
   return { root, cardDir, base, files: cardFiles(root, base) };
 };
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url ===pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2);
   const r = reviewRange(args.find((a) => !a.startsWith('--')));
   if (!r) {

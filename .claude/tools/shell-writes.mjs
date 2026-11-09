@@ -1,8 +1,9 @@
 // What a shell line does to the production files of the repo, read from its text: the segments it runs
 // (`commandsOf`) and the files it writes (`shellWrites`). guard-shell.mjs refuses a subagent's line that writes
 // production code, and compares a verification line with the plan, through the same segments.
+import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { IS_CODE, isProductionPath, relativeTo } from './card.mjs';
 
 // The commands a shell line runs, one per segment: heredoc bodies are text, not commands; `;`, `&&`, `||`, `|`, a
@@ -45,6 +46,13 @@ const MAX_SCRIPT = 200_000;
 const KIT_TOOL = /[\\/]\.claude[\\/](?:tools|hooks)[\\/][^\\/]+$/;
 const IMPORTS = /\bimport\s*(?:[\w*{}\s,]+from\s*)?(["'])[^"'\n]+\1|\b(?:import|require)\s*\(\s*(["'])[^"'\n]+\2\s*\)/g;
 
+// A script HEAD holds unmodified is the project's own code, reviewed with the rest; one that is new, only staged or
+// changed is read for the writes it makes.
+const tracked = (file) => {
+  const opts = { cwd: dirname(file), stdio: 'ignore', timeout: 5000 };
+  return spawnSync('git', ['cat-file', '-e', `HEAD:./${basename(file)}`], opts).status === 0 &&
+    spawnSync('git', ['diff', '--quiet', 'HEAD', '--', basename(file)], opts).status === 0;
+};
 const unquote = (token) => token.replace(/^["'`]|["'`]$/g, '');
 const wordsOf = (segment) => [...segment.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
 const maskQuoted = (segment) => segment.replace(/"[^"]*"|'[^']*'/g, (q) => `${q[0]}${'_'.repeat(q.length - 2)}${q[0]}`);
@@ -87,7 +95,7 @@ export const shellWrites = (command, { root, cwd, tool = 'Bash' }) => {
       let text = segment;
       for (const w of wordsOf(segment).filter((x) => /\.(?:[cm]?[jt]s|py|ps1)$/.test(x))) {
         const file = resolve(where, unquote(w));
-        if (KIT_TOOL.test(file)) continue;
+        if (KIT_TOOL.test(file) || (existsSync(file) && tracked(file))) continue;
         try { if (existsSync(file)) text += `\n${readFileSync(file, 'utf8').slice(0, MAX_SCRIPT).replace(IMPORTS, '')}`; } catch { /* unreadable: the text it has */ }
       }
       if (WRITERS.test(text)) take(quotedPaths(text), 'a script that writes files');

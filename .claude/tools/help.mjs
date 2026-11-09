@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // help.mjs [tool] — how a kit tool is used, without reading its code.
-// help.mjs judge — what the judge needs of the tools in one read: judge-context, `app.mjs probe` (every flag, the steps format
-// with an example, where the captures and JSON go), motion-audit and overflow. Its first call.
+// help.mjs judge — the tools that look at a card and its screen, in one read: judge-context, `app.mjs probe` (every flag, the
+// steps format with an example, where the captures and JSON go), motion-audit and overflow. The plan judge runs none (agents/judge.md).
 //
 // With no argument, one line per tool; with a name, the comment at the head of that tool, which says what it runs, its
 // arguments and its exit codes.
@@ -22,7 +22,7 @@ const head = (file) => {
 
 // What the judge needs of the tools, in one read: everything comes from the tools themselves —the flags, the actions and the
 // example of the probe are the constants its code parses with; the rest, the head comment of each tool up to its «Measured:»
-// line—, so it cannot go stale. The judge starts here and does not read the tools' code.
+// line—, so it cannot go stale. Whoever needs these tools reads this, not their code.
 const installed = (file) => existsSync(join(DIR, file));
 const notInstalled = (tool, profile) => `${tool}: not installed (profile ${profile} off)`;
 const judge = async () => {
@@ -40,7 +40,8 @@ const judge = async () => {
   ];
   const usage = (file) => { const lines = head(file); const end = lines.findIndex((l) => l.startsWith('Measured')); return (end < 0 ? lines : lines.slice(0, end)).join('\n').trimEnd(); };
   console.log([
-    '=== help.mjs judge · what the judge needs of the kit tools; do not read their code ===',
+    '=== help.mjs judge · the kit tools that look at a card and its screen; do not read their code ===',
+    'The plan judge runs no tool: it reads card.md, risk.json and the questions of its lenses in reference/lenses.md, and writes judge.md.',
     'Run from the root of the repo of the card. The app is shared: `APP_URL` in your prompt, or `url` in `.validation/app.json`; start no other.',
     'Playwright is the repo\'s, or the one at `KIT_PLAYWRIGHT_ROOT`. Your own files (scripts, captures, logs) go in `.validation/judge/`.',
     '',
@@ -64,7 +65,7 @@ const tools = readdirSync(DIR).filter((f) => f.endsWith('.mjs')).sort();
 if (!name) {
   for (const f of tools) console.log(head(f)[0] ?? f);
   console.log('\nnode .claude/tools/help.mjs <tool> — how one is used');
-  console.log('node .claude/tools/help.mjs judge — what the judge needs of probe, motion-audit and overflow, in one read');
+  console.log('node .claude/tools/help.mjs judge — judge-context, probe, motion-audit and overflow, in one read (the plan judge runs none)');
   process.exit(0);
 }
 if (!tools.includes(`${name}.mjs`)) {

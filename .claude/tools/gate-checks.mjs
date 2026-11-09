@@ -1,21 +1,24 @@
 // The checks of the gate that are not a command of `## Gate`: they read what the card and the probe left on disk.
 // Each returns `{ name, state: 'passed' | 'failed' | 'could not run', detail }`; verify.mjs prints one line per check.
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, isAbsolute, join, relative, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { cardIdOf, gateBlock, readCard, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
+import { cardIdOf, gateBlock, readCard, requirementOf, riskOf, rolesOf, specTagsIn, specsOf, tasksOf } from './card-doc.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, existedAt, originOf, ownBase } from './card.mjs';
 import { IS_MIGRATION, migrationsOutlook } from './migrations.mjs';
 import { overdesignFindings } from './overdesign.mjs';
 import { codeLanguageOf, spanishNames } from './code-language.mjs';
-import { active, profileStates } from './kit.mjs';
+import { active, isPoc, profileStates } from './kit.mjs';
 import { IS_SCREEN, SCREEN_MARKUP } from './signals.mjs';
 import { sectionOf } from './card-doc.mjs';
 
-// bot-wall.mjs and copy-lint.mjs come with the web profile: the base alone installs without them, and their checks only run on visual cards.
+// bot-wall.mjs and design-checks.mjs come with the web profile: the base alone installs without them, and their checks only run on visual cards.
 const optional = async (file) => { try { return await import(file); } catch { return null; } };
 const botWall = await optional('./bot-wall.mjs');
-const copyLint = await optional('./copy-lint.mjs');
+const designLib = await optional('./design-checks.mjs');
+const colourLib = await optional('../skills/design-taste-frontend/scripts/lib/colour.mjs');
+// draw.mjs runs its command line only when it is the entry point: here it only gives `replayDeal`.
+const drawLib = await optional('../skills/design-taste-frontend/scripts/draw.mjs');
 
 
 const ok = (name, detail = '') => ({ name, state: 'passed', detail });
@@ -27,17 +30,146 @@ const couldNot = (name, detail) => ({ name, state: 'could not run', detail });
 export const specsCheck = (root, cardDir) => {
   const doc = readCard(cardDir);
   const id = cardIdOf(cardDir);
+  if (doc !== null && isPoc(root)) return ok('specs', 'poc: no tests');
   if (doc === null) return couldNot('specs', 'the card has no card.md');
   if (!id) return couldNot('specs', `the folder ${basename(cardDir)} has no card ID`);
   const specs = specsOf(doc);
   if (!specs.length) return failed('specs', 'card.md has no `S1 · "<quote>"` line under ## Specs');
   const grep = spawnSync('git', ['grep', '-l', '-I', '-F', '--untracked', '-e', `@${id}-S`, '--', ':(exclude)specs', ':(exclude).claude'], { cwd: root, encoding: 'utf8' });
   if (grep.status !== 0 && grep.status !== 1) return couldNot('specs', `git grep failed: ${(grep.stderr ?? '').trim().split('\n')[0]}`);
-  const tagged = new Set((grep.stdout ?? '').split('\n').filter(Boolean).flatMap((f) => {
-    try { return specTagsIn(id, readFileSync(join(root, f), 'utf8')); } catch { return []; }
-  }));
-  const lacking = specs.filter((s) => !tagged.has(s.id)).map((s) => `${s.id}: no test tagged`);
+  // Only a test that runs covers a spec: a tag in a doc, or on a skipped or todo test, is the spec written down, not verified.
+  const live = new Set();
+  const dead = new Map();
+  for (const f of (grep.stdout ?? '').split('\n').filter(Boolean)) {
+    let text = '';
+    try { text = readFileSync(join(root, f), 'utf8'); } catch { continue; }
+    for (const t of taggedTestsIn(id, f, text)) {
+      if (!t.skip) live.add(t.spec);
+      else dead.set(t.spec, [dead.get(t.spec), `${f}:${t.line} ${t.skip}`].filter(Boolean).join(', '));
+    }
+  }
+  const lacking = specs.filter((s) => !live.has(s.id)).map((s) => `${s.id}: ${dead.has(s.id) ? `tagged only where no test runs (${dead.get(s.id)})` : 'no test tagged'}`);
   return lacking.length ? failed('specs', `${lacking.join('; ')} (tag a test with @${id}-S<n>)`) : ok('specs', `${specs.length} specs, each with a tagged test`);
+};
+
+// Each spec tag of a file with whether its test runs: `skip` is null, or the reason it does not (a file that is not a test,
+// a skipped or todo test, a pytest skip/skipif/xfail mark, a Dart `skip:`).
+const SKIPPED_CALL = /\b(?:(?:test|it|describe|suite|specify|context)\s*\.\s*(skip|todo|fixme)|(xit|xdescribe|xtest|xcontext|xspecify))\s*\(/;
+const CALL_START = /\b(?:test|it|describe|suite|specify|context|xit|xdescribe|xtest|testWidgets|group|scenario|Scenario)\b(?:\s*\.\s*\w+)*\s*\(/;
+const EACH_START = /\b(?:test|it|describe)(?:\s*\.\s*(?:only|concurrent))*\s*\.\s*each\s*[(`]/g;
+const SKIP_OPTION = /\{\s*(?:\w+\s*:[^,}]*,\s*)*(skip|todo)\s*(?::\s*([^,}]+?))?\s*[,}]/;
+const DART_SKIP = /\bskip\s*:\s*(?!false\b|null\b)\S/;
+const PY_SKIP = /^\s*@pytest\.mark\.(skip|skipif|xfail)\b/;
+// The text of the call that opens at `from`, up to its closing parenthesis (strings skipped roughly).
+const callText = (text, from) => {
+  let depth = 0;
+  let quote = '';
+  for (let i = from; i < text.length; i++) {
+    const c = text[i];
+    if (quote) { if (c === '\\') i++; else if (c === quote) quote = ''; continue; }
+    if (c === '"' || c === "'" || c === '`') { quote = c; continue; }
+    if (c === '(') depth++;
+    else if (c === ')' && --depth === 0) return text.slice(from, i + 1);
+  }
+  return text.slice(from);
+};
+// [start, end) of the first string argument of the call whose `(` is at `open`, or null when it does not open with a string.
+const titleRange = (text, open) => {
+  let i = open + 1;
+  while (/\s/.test(text[i] ?? '')) i++;
+  const q = text[i];
+  if (q !== '"' && q !== "'" && q !== '`') return null;
+  for (let j = i + 1; j < text.length; j++) {
+    if (text[j] === '\\') j++;
+    else if (text[j] === q) return [i, j];
+  }
+  return null;
+};
+// Per language: how a test declaration looks, and the markers that switch it off. A marker counts on an uncommented line.
+const DECLARATION = {
+  go: { decl: /^\s*(?:\/\/\s*)?func\s+Test\w*/, marks: [[/\bt\.Skip(?:f|Now)?\s*\(/, 't.Skip']], inBody: true },
+  cs: { decl: /^\s*(?:\/\/\s*)?(?:public\s+|private\s+|internal\s+)?(?:async\s+)?(?:void|Task)\s+\w+\s*\(/, marks: [[/\[\s*(?:Fact|Theory)\s*\([^\]]*\bSkip\s*=/, 'Skip ='], [/\[\s*Ignore\b/, '[Ignore]']] },
+  java: { decl: /^\s*(?:\/\/\s*)?(?:public\s+|private\s+|protected\s+)?(?:static\s+)?void\s+\w+\s*\(/, marks: [[/@(?:Disabled|Ignore)\b/, '@Disabled']] },
+  kt: { decl: /^\s*(?:\/\/\s*)?(?:public\s+|private\s+|internal\s+)?fun\s+/, marks: [[/@(?:Disabled|Ignore)\b/, '@Ignore']] },
+  feature: { decl: /^\s*(?:#\s*)?(?:Scenario(?: Outline)?|Scenario Template|Example)\s*:/, marks: [[/(?:^|\s)@(?:skip|ignore|wip)\b/i, '@skip']] },
+};
+const COMMENTED = /^\s*(?:\/\/|#|\*|\/\*)/;
+const nearestDeclaration = (lang, lines, n, at) => {
+  const { decl, marks, inBody } = DECLARATION[lang];
+  if (lang === 'feature' && COMMENTED.test(lines[n])) return { ...at, skip: 'tag is commented out' };
+  let d = n;
+  while (d < lines.length && !decl.test(lines[d])) d++;
+  // No declaration after the tag (a file of tags alone): only the markers around the tag can switch it off.
+  if (d >= lines.length) d = n;
+  else if (COMMENTED.test(lines[d])) return { ...at, skip: 'test is commented out' };
+  // The annotations or tag lines above the tag belong to the same declaration.
+  let from = n;
+  while (from > 0 && /^\s*(?:@|\[|\/\/|#|\/\*|\*)/.test(lines[from - 1])) from--;
+  let to = d;
+  if (inBody) { to = d + 1; while (to < lines.length && !decl.test(lines[to])) to++; }
+  for (let k = from; k < to; k++) {
+    if (COMMENTED.test(lines[k]) && lang !== 'feature') continue;
+    if (lang === 'feature' && /^\s*#/.test(lines[k])) continue;
+    const hit = marks.find(([re]) => re.test(lines[k]));
+    if (hit) return { ...at, skip: hit[1] };
+  }
+  return at;
+};
+export const taggedTestsIn =(id, file, text) => {
+  const lines = String(text).split('\n');
+  const isTestFile = IS_TEST.test(file) && !/\.md$/i.test(file);
+  return lines.flatMap((l, n) => specTagsIn(id, l).map((spec) => {
+    const at = { spec, line: n + 1, skip: null };
+    if (!isTestFile) return { ...at, skip: 'is not a test file' };
+    if (/\.py$/.test(file)) {
+      let d = n;
+      while (d >= 0 && !/^\s*(?:async\s+)?def\s/.test(lines[d])) d--;
+      for (let k = d - 1; k >= 0 && /^\s*@/.test(lines[k]); k--) {
+        const m = lines[k].match(PY_SKIP);
+        if (m) return { ...at, skip: `@pytest.mark.${m[1]}` };
+      }
+      return at;
+    }
+    // Go, C#, Java, Kotlin and Gherkin have no title rule: the tag counts when the nearest declaration after it runs.
+    const other = file.match(/\.(go|cs|java|kt|feature)$/i)?.[1].toLowerCase();
+    if (other) return nearestDeclaration(other, lines, n, at);
+    // The tag counts only inside the title (first string argument) of a test call.
+    const tagAt = lines.slice(0, n).reduce((a, x) => a + x.length + 1, 0) + Math.max(0, lines[n].indexOf(`@${id}-${spec}`));
+    const calls = [...String(text).matchAll(new RegExp(CALL_START.source, 'g'))].map((m) => {
+      const open = m.index + m[0].length - 1;
+      const title = titleRange(text, open);
+      return { start: m.index, open, title, head: m[0], end: m.index + callText(text, open).length };
+    });
+    // `test.each(table)('title', fn)` and `it.each\`table\`('title', fn)`: the title is in the second call.
+    for (const m of String(text).matchAll(EACH_START)) {
+      const first = m.index + m[0].length - 1;
+      let after = first;
+      if (m[0].endsWith('(')) after = first + callText(text, first).length;
+      else { const close = titleRange(text, first - 1); after = close ? close[1] + 1 : first + 1; }
+      while (/\s/.test(text[after] ?? '')) after++;
+      if (text[after] !== '(') continue;
+      calls.push({ start: m.index, open: after, title: titleRange(text, after), head: m[0], end: after + callText(text, after).length });
+    }
+    // Playwright's `test('title', { tag: '@X-1-S1' }, fn)` (a string or an array) tags the test in its options.
+    const tagged = (c) => {
+      const body = callText(text, c.open).search(/=>|\bfunction\b/);
+      return tagAt > c.open && (body < 0 || tagAt < c.open + body) && /\btag\s*:\s*\[?[^\]}]*$/.test(text.slice(c.open, tagAt));
+    };
+    const own = calls.find((c) => c.title && tagAt >= c.title[0] && tagAt < c.title[1]) ?? calls.find(tagged);
+    if (!own) return { ...at, skip: 'tag is not in the title of a test' };
+    const outer = calls.find((c) => c !== own && c.start < own.start && c.end > own.start && SKIPPED_CALL.test(c.head));
+    if (outer) { const m = outer.head.match(SKIPPED_CALL); return { ...at, skip: `inside ${m[1] ? `.${m[1]}(` : `${m[2]}(`}` }; }
+    const offset = own.start;
+    const call = callText(text, own.open);
+    const skipped = own.head.match(SKIPPED_CALL);
+    if (skipped) return { ...at, skip: skipped[1] ? `.${skipped[1]}(` : `${skipped[2]}(` };
+    // The options of a node/vitest test sit between the title and the body; a Dart `skip:` after the body.
+    const body = call.search(/=>|\bfunction\b/);
+    const options = (body < 0 ? call : call.slice(0, body)).match(SKIP_OPTION);
+    if (options && !/\.dart$/.test(file) && !/^(?:false|null|undefined)$/.test(options[2] ?? '')) return { ...at, skip: `{ ${options[1]} }` };
+    if (/\.dart$/.test(file) && DART_SKIP.test(call.slice(call.lastIndexOf('}')))) return { ...at, skip: 'skip:' };
+    return at;
+  }));
 };
 
 // What `app.mjs probe` wrote (`.validation/probe/w<width>-step<NN>.json`), and in each `--out .validation/probe/<state>/` folder.
@@ -130,6 +262,9 @@ export const atLevelEvidence = (line) => {
 };
 export const roundsCheck = (cardDir) => {
   if (!lensesOf(cardDir).includes('visual') || removeOnlyOf(readCard(cardDir))) return [];
+  // The rounds the grade asks (`designRounds` of its level, 1 at poc); strict when the level cannot be read.
+  let minRounds = MIN_ROUNDS;
+  try { minRounds = active(resolve(String(cardDir), '..', '..')).exempt.level?.designRounds ?? MIN_ROUNDS; } catch { minRounds = MIN_ROUNDS; }
   const dir = join(cardDir, 'rondas');
   const folders = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && /^r\d+$/.test(e.name)).map((e) => e.name).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))) : [];
   const last = folders.at(-1);
@@ -143,7 +278,7 @@ export const roundsCheck = (cardDir) => {
     return changes < MIN_DIFFERENCES ? [`${b.match(/^##\s+(\S+\s+\d+)/)[1]} has ${changes} differences with a change (${MIN_DIFFERENCES} at least)`] : [];
   });
   const problems = [
-    blocks.length < MIN_ROUNDS ? `${blocks.length} rounds in rondas.md (${MIN_ROUNDS} at least)` : null,
+    blocks.length < minRounds ? `${blocks.length} rounds in rondas.md (${minRounds} at least)` : null,
     ...thin,
     images(join(cardDir, 'ref'), IMAGE) ? null : 'no capture of the reference in ref/',
     last && images(join(dir, last), /\.png$/i) ? null : 'no captures of the last round (rondas/r<k>/)',
@@ -156,7 +291,8 @@ export const roundsCheck = (cardDir) => {
 // `ref/captures.json` (`[{ "file", "status", "title", "text" }]`) and bot-wall.mjs reads each entry. No declaration, no check.
 export const REF_FRAMES = 8;
 export const REF_WIDTHS = [390, 1440];
-export const refGenreOf = (doc) => sectionOf(doc, 'Look')?.match(/^\s*(?:[-*]\s*)?ref-genre:\s*(\S.*)$/im)?.[1].trim() ?? null;
+// A gloss after the genre («drink-food (a local bakery)», «saas — b2b») is a comment, not part of the file names.
+export const refGenreOf = (doc) => sectionOf(doc, 'Look')?.match(/^\s*(?:[-*]\s*)?ref-genre:\s*(\S.*)$/im)?.[1].split(/\s+(?:\(|—|·|#)/)[0].trim() || null;
 export const refGenreCheck = (cardDir) => {
   if (!lensesOf(cardDir).includes('visual')) return [];
   const genre = refGenreOf(readCard(cardDir) ?? '');
@@ -179,19 +315,19 @@ export const refGenreCheck = (cardDir) => {
 };
 
 // What design-round.mjs measured (`specs/<card>/rondas/r<k>/round.json`, the last round): the dead-click sweep fails on one
-// dead control, the copy lint on any finding. No round.json is a check that could not run, never a pass.
+// dead control, and the brand rows on one off the sheet. No round.json is a check that could not run, never a pass.
 export const lastRound = (cardDir) => {
   const dir = join(cardDir, 'rondas');
   const folders = existsSync(dir) ? readdirSync(dir, { withFileTypes: true }).filter((e) => e.isDirectory() && /^r\d+$/.test(e.name)).map((e) => e.name).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1))) : [];
   try { return folders.length ? { name: folders.at(-1), round: JSON.parse(readFileSync(join(dir, folders.at(-1), 'round.json'), 'utf8')) } : null; } catch { return null; }
 };
-// The sweep and the copy lint read a page in a browser: a Flutter screen or a remove-only card has no round.json.
+// The sweep reads a page in a browser: a Flutter screen or a remove-only card has no round.json.
 export const designRoundChecks = (cardDir, root) => {
   const doc = readCard(cardDir);
   if (!lensesOf(cardDir).includes('visual') || removeOnlyOf(doc) || !visualInstruments(root, doc).probe) return [];
   const last = lastRound(cardDir);
   const none = 'no rondas/r<k>/round.json: run `node .claude/tools/design-round.mjs <url> --out specs/<card>/rondas/r<k>`';
-  if (!last) return [couldNot('dead-clicks', none), couldNot('copy', none)];
+  if (!last) return [couldNot('dead-clicks', none), couldNot('brand', none)];
   const out = [];
   const sweeps = Object.entries(last.round.widths ?? {}).filter(([, w]) => w.sweep);
   if (!sweeps.length) out.push(couldNot('dead-clicks', `${last.name}/round.json has no sweep (widths 390 touch and 1440)`));
@@ -199,13 +335,142 @@ export const designRoundChecks = (cardDir, root) => {
     const dead = sweeps.flatMap(([key, w]) => w.sweep.dead.map((d) => `${d.selector} (${key}, ${d.reason}, ${d.capture})`));
     out.push(dead.length ? failed('dead-clicks', `${dead.length} dead controls: ${dead.slice(0, 5).join('; ')}`) : ok('dead-clicks', `${sweeps.map(([key, w]) => `${key}: ${w.sweep.checked}`).join(', ')} controls, each with an effect`));
   }
-  if (!last.round.copy) out.push(couldNot('copy', `${last.name}/round.json has no copy`));
-  else if (!copyLint) out.push(couldNot('copy', 'copy-lint.mjs is not installed (web profile off)'));
-  else {
-    const found = copyLint.lintCopy(last.round.copy, copyLint.quotedTexts(doc));
-    out.push(found.length ? failed('copy', found.slice(0, 5).map((c) => `${c.rule}: ${c.detail}`).join('; ')) : ok('copy', 'copy lint: 0 findings'));
-  }
+  out.push(brandCheck(last, root, cardDir));
   return out;
+};
+
+// The brand rows of the last round hold the page to its sheet: a round run without `--brand`, or with a sheet that has no colors, never
+// passes, since a model left to choose returns the same cream and terracotta on every project. A dealt `direction.json` must still be the
+// library's: its palette and type, or for an app screen its style tokens and face, are compared with the entries of their ids. A palette
+// recoloured for colours no entry carries is recomputed from its entry, and only for colours the card's text names.
+const TASTE_LIBRARY = '.claude/skills/design-taste-frontend/library';
+const APP_TOKEN_KEYS = ['ground', 'surface', 'raised', 'active', 'text', 'muted', 'accent'];
+const PALETTE_FREE_KEYS = ['id', 'name', 'note', 'fit', 'seenIn', 'generated'];
+// A value as the comparison sees it: objects with sorted keys, strings in lower case (a hex is the same colour in any case).
+const canon = (v) => JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : 1))) : typeof x === 'string' ? x.toLowerCase() : x));
+const shown = (v) => (typeof v === 'string' ? v : JSON.stringify(v ?? null));
+export const dealtDrift = (direction, root, cardText = null) => {
+  const lib = join(root, TASTE_LIBRARY);
+  if (direction.kind === 'app') {
+    let app;
+    try { app = JSON.parse(readFileSync(join(lib, 'app.json'), 'utf8')); } catch { return null; }
+    const s = (app.styles ?? []).find((x) => x.id === direction.style?.id);
+    if (!s) return [`app style ${direction.style?.id ?? '(no id)'} is not in the library`];
+    const mine = direction.style.tokens ?? {};
+    const drift = APP_TOKEN_KEYS.filter((k) => String(s.tokens?.[k] ?? '').toLowerCase() !== String(mine[k] ?? '').toLowerCase()).map((k) => `style ${s.id}.${k} ${mine[k]} (library ${s.tokens?.[k]})`);
+    if (canon(s.tokens?.font ?? null) !== canon(mine.font ?? null)) drift.push(`style ${s.id} font ${shown(mine.font)} (library ${shown(s.tokens?.font)})`);
+    return drift;
+  }
+  let palettes, types;
+  try { palettes = JSON.parse(readFileSync(join(lib, 'palettes.json'), 'utf8')); types = JSON.parse(readFileSync(join(lib, 'type.json'), 'utf8')); } catch { return null; }
+  const drift = [];
+  const generated = direction.palette?.generated;
+  // `--keep palette` leaves the colours to the brand: there is no palette to compare.
+  let p = direction.palette === null ? null : palettes.find((x) => x.id === (generated ? generated.from : direction.palette?.id));
+  if (!p && direction.palette !== null) drift.push(`palette ${generated?.from ?? direction.palette?.id ?? '(no id)'} is not in the library`);
+  else if (generated) {
+    const asked = Array.isArray(generated.asked) ? generated.asked.map(String) : [];
+    // Who asked for a colour is L1 alone, the requirement as given and guarded: the rest of card.md is written by the agent.
+    const need = colourLib && cardText !== null ? colourLib.namedColours(requirementOf(cardText)) : null;
+    if (!colourLib) drift.push(`palette ${direction.palette.id} is recoloured and the kit's colour module cannot be loaded to recompute it`);
+    else if (!asked.length) drift.push(`palette ${direction.palette.id} is recoloured for no colour`);
+    else if (need === null) drift.push(`palette ${direction.palette.id} is recoloured and the card's text cannot be read to see who asked for ${asked.join(' and ')}`);
+    else {
+      const unasked = asked.filter((c) => !need.includes(c));
+      const unknown = asked.filter((c) => !(c in colourLib.COLOUR_TARGET));
+      if (unasked.length) drift.push(`palette ${direction.palette.id} is recoloured for ${unasked.join(' and ')}, which card.md never names`);
+      else if (asked[0] !== need[0]) drift.push(`palette ${direction.palette.id} is recoloured with ${asked[0]} first, and the requirement names ${need[0]} first`);
+      if (unknown.length) { drift.push(`palette ${direction.palette.id} is recoloured for ${unknown.join(' and ')}, which is not a colour the kit knows`); p = null; }
+      else p = colourLib.recolour(p, asked);
+    }
+  }
+  // Every key of the palette, the fields' ground and ink included: only what the deal annotates (name, note, fit, seenIn, generated) is free.
+  if (p && (!generated || p.generated)) {
+    const mine = direction.palette ?? {};
+    for (const k of [...new Set([...Object.keys(p), ...Object.keys(mine)])].filter((x) => !PALETTE_FREE_KEYS.includes(x))) if (canon(p[k] ?? null) !== canon(mine[k] ?? null)) drift.push(`palette ${p.id}.${k} ${shown(mine[k])} (library ${shown(p[k])})`);
+  }
+  // `--keep type` leaves the type to the brand: there is nothing to compare.
+  if (direction.type === null) return drift;
+  const t = types.find((x) => x.id === direction.type?.id);
+  if (!t) drift.push(`type ${direction.type?.id ?? '(no id)'} is not in the library`);
+  else for (const k of ['display', 'text']) if ((t[k]?.family ?? null) !== (direction.type[k]?.family ?? null)) drift.push(`type ${t.id}.${k} ${direction.type[k]?.family} (library ${t[k]?.family})`);
+  return drift;
+};
+// The palette the deal recorded (`deal` of direction.json: seed, input, history) dealt again by draw.mjs. A palette taken from the
+// library by hand has a deal that does not give it. Rows of drift, or null when the replay cannot run.
+export const dealReplayDrift = (direction) => {
+  if (direction.kind === 'app' || direction.palette === null) return [];
+  if (!drawLib) return null;
+  if (!direction.deal || typeof direction.deal !== 'object') return ['direction.json carries no `deal` (seed, input, history): the palette cannot be shown to come from the deal'];
+  let again;
+  try { again = drawLib.replayDeal(JSON.parse(JSON.stringify(direction.deal))); } catch (e) { return [`the \`deal\` of direction.json cannot be dealt again: ${e.message}`]; }
+  const dealt = again?.id ?? null;
+  const mine = direction.palette?.id ?? null;
+  return dealt === mine ? [] : [`palette ${mine} is not what its recorded deal (seed ${direction.deal.seed}) gives: ${dealt}`];
+};
+// Where a sheet that is not a dealt direction may come from: the `## Brand` block the card was committed with, a DESIGN.md
+// identical to a template of the kit, or a file the repo already held, unchanged, before the card started. A sheet written
+// during the card is the designer choosing its own palette again. Null when the origin holds, else the reason.
+const blockOf = (text, name) => (String(text).split(/^## /m).find((x) => new RegExp(`^${name}\\b`).test(x)) ?? null)?.trim() ?? null;
+const showAt = (root, ref, rel) => { const r = spawnSync('git', ['show', `${ref}:${rel}`], { cwd: root, encoding: 'utf8' }); return r.status === 0 ? r.stdout : null; };
+const HEX_COLOUR = /#(?:[0-9a-f]{6}|[0-9a-f]{3})\b/gi;
+const sameText = (a, b) => a !== null && b !== null && a.replace(/\r\n/g, '\n').trim() === b.replace(/\r\n/g, '\n').trim();
+export const sheetOriginProblem = (root, cardDir, file) => {
+  const abs = resolve(root, file);
+  const rel = relative(root, abs).replaceAll('\\', '/');
+  if (rel.startsWith('..') || isAbsolute(rel)) return `${file} lies outside the repo: its origin cannot be checked`;
+  let text;
+  try { text = readFileSync(abs, 'utf8'); } catch { return `${file} is not readable`; }
+  if (resolve(abs) === resolve(cardDir, 'card.md')) {
+    const first = spawnSync('git', ['log', '--diff-filter=A', '--format=%H', '--', rel], { cwd: root, encoding: 'utf8' }).stdout?.trim().split('\n').filter(Boolean).at(-1);
+    const committed = first ? blockOf(showAt(root, first, rel) ?? '', 'Brand') : null;
+    const now = blockOf(text, 'Brand');
+    if (sameText(committed, now)) return null;
+    // The brand of an existing site is written into `## Brand` after the first commit: its colours are the ones L1 names.
+    const norm = (h) => (h.length === 4 ? `#${[...h.slice(1)].map((c) => c + c).join('')}` : h).toLowerCase();
+    const mine = (now ?? '').match(HEX_COLOUR) ?? [];
+    const required = new Set((requirementOf(text).match(HEX_COLOUR) ?? []).map(norm));
+    if (mine.length && mine.every((h) => required.has(norm(h)))) return null;
+    return `the ## Brand block of ${rel} is not the one the card was committed with, and holds a colour its requirement does not name`;
+  }
+  const templates = join(root, '.claude', 'templates', 'design-md');
+  if (existsSync(templates) && readdirSync(templates).some((f) => { try { return sameText(readFileSync(join(templates, f), 'utf8'), text); } catch { return false; } })) return null;
+  const base = ownBase(root, cardStart(root, cardDir));
+  if (sameText(showAt(root, base, rel), text)) return null;
+  return `${rel} was written or edited during the card: the sheet is the dealt direction.json, a DESIGN.md of .claude/templates/design-md/ as is, the card's ## Brand, or a sheet the repo held before the card`;
+};
+const brandCheck = (last, root, cardDir) => {
+  const sheet = last.round.brand;
+  if (!sheet?.file) return failed('brand', `${last.name} ran without --brand: deal the palette and type (\`draw.mjs --out design/taste\`) and run design-round with \`--brand design/taste/direction.json\`, or the card's DESIGN.md or brand sheet`);
+  if (!sheet.colors?.length) return failed('brand', `${sheet.file} holds no colors: the primary action and the background are held to nothing (use the dealt direction.json, a DESIGN.md with colors:, or a brand.json with palette)`);
+  const where = resolve(root ?? '.', sheet.file);
+  // The rows were judged against the sheet as it was when the round ran: the file must still say the same.
+  if (designLib) {
+    let now = null;
+    try { now = designLib.loadBrand(where); } catch { return couldNot('brand', `${sheet.file} is not readable: the round's sheet cannot be checked`); }
+    const same = (a, b) => JSON.stringify([...(a ?? [])].sort()) === JSON.stringify([...(b ?? [])].sort());
+    if (!same(now.fonts, sheet.fonts) || !same(now.colors, sheet.colors)) return failed('brand', `${sheet.file} changed since ${last.name} ran: run the round again on the sheet as it is`);
+    // Any other edit of the sheet (a role moved, a value changed) leaves the colour and font sets alone: the text itself is hashed.
+    if (sheet.sheetHash && designLib.sheetHashOf(where) !== sheet.sheetHash) return failed('brand', `the sheet changed since the round: ${sheet.file} is not the text ${last.name} ran on (sheetHash): run the round again on the sheet as it is`);
+  }
+  if (/direction\.json$/i.test(sheet.file)) {
+    let direction = null;
+    try { direction = JSON.parse(readFileSync(where, 'utf8')); } catch { return couldNot('brand', `${sheet.file} is not readable: the dealt sheet cannot be compared with the library`); }
+    let cardText = null;
+    try { cardText = cardDir ? readFileSync(join(cardDir, 'card.md'), 'utf8') : null; } catch { cardText = null; }
+    const replay = dealReplayDrift(direction);
+    if (replay === null) return couldNot('brand', 'draw.mjs is not installed: the recorded deal cannot be dealt again');
+    const drift = [...(dealtDrift(direction, root ?? '.', cardText) ?? []), ...replay];
+    if (drift.length) return failed('brand', `${sheet.file} is not what the library dealt: ${drift.slice(0, 4).join('; ')}`);
+  } else if (root && cardDir) {
+    const problem = sheetOriginProblem(root, cardDir, sheet.file);
+    if (problem) return failed('brand', problem);
+  }
+  const off = Object.entries(last.round.widths ?? {}).flatMap(([key, w]) => (w.rules ?? []).filter((r) => String(r.rule).startsWith('brand:') && !r.pass && !r.report).map((r) => `${r.rule} (${key}): ${r.value}, ${r.range}${r.detail?.length ? ` · ${r.detail.slice(0, 2).join(', ')}` : ''}`));
+  if (off.length) return failed('brand', `${off.length} brand rows off ${sheet.file}: ${off.slice(0, 4).join('; ')}`);
+  const rows = Object.values(last.round.widths ?? {}).flatMap((w) => (w.rules ?? []).filter((r) => String(r.rule).startsWith('brand:') && !r.report));
+  if (!rows.length) return couldNot('brand', `${last.name}/round.json has no brand rows: no text was measured`);
+  return ok('brand', `${rows.length} brand rows within ${sheet.file}`);
 };
 
 // The layers: a `rule` file (domain) does no I/O, SQL lives only in `data` files, a `presentation` file has no db access.
@@ -288,14 +553,36 @@ export const sourceProblems = (file, role, raw) => {
   const text = blankComments(raw);
   const out = [];
   const lineOf = (i) => text.slice(0, i).split('\n').length;
+  // A comment on the catch's line, inside it or on the line above states why the error does not matter.
+  const commented = (from, to) => /\/\/|\/\*/.test(raw.slice(raw.lastIndexOf('\n', raw.lastIndexOf('\n', from - 1) - 1) + 1, (raw.indexOf('\n', to) + 1 || raw.length + 1) - 1));
   for (const m of text.matchAll(/\bcatch\s*(?:\([^)]*\))?\s*\{/g)) {
-    const body = balanced(text, m.index + m[0].length - 1);
+    if (/["'`]/.test(text[m.index - 1] ?? '')) continue;
+    const open = m.index + m[0].length - 1;
+    const body = balanced(text, open);
     if (/\b500\b|\bstatus\s*\(\s*500|\bsendStatus\s*\(\s*500/.test(body) && !LOGS.test(body)) out.push(`${file}:${lineOf(m.index)} catch answers 500 and logs nothing · console.error(err) before the response`);
+    else if (!body.trim() && !commented(m.index, open + body.length + 2)) out.push(`${file}:${lineOf(m.index)} empty catch swallows the error · handle it, rethrow it, or say in a comment why it does not matter`);
+  }
+  for (const m of text.matchAll(/\.catch\(\s*(?:\(\s*\w*\s*(?::\s*\w+)?\s*\)|\w+)\s*=>\s*(?:\{\s*\}|null|undefined|void 0)\s*\)/g)) {
+    if (!commented(m.index, m.index + m[0].length)) out.push(`${file}:${lineOf(m.index)} .catch that discards the error · log it or let it reach the caller`);
+  }
+  for (const m of text.matchAll(/^\s*debugger\s*;?\s*$/gm)) out.push(`${file}:${lineOf(m.index)} debugger statement left in production code`);
+  // Credentials written in the source reach the repository and the PR; they belong in the environment. Comments are skipped
+  // (documentation examples), a key header needs its body after it, and Firebase's generated config holds public identifiers.
+  const firebaseConfig = /(^|\/)(firebase_options\.dart|google-services\.json|GoogleService-Info\.plist)$|(^|\/)firebase[\w.-]*\.(js|ts)$/i.test(file);
+  for (const m of text.matchAll(/\b(?:AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{36,}|sk-(?:ant-|proj-)?[A-Za-z0-9_-]{20,}|xox[abpr]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_-]{35})\b|-----BEGIN [A-Z ]*PRIVATE KEY-----(?:\\n|\s)*[A-Za-z0-9+/=]{40}/g)) {
+    if (/EXAMPLE$/.test(m[0]) || (firebaseConfig && m[0].startsWith('AIza'))) continue;
+    out.push(`${file}:${lineOf(m.index)} credential written in the source · read it from the environment and rotate it`);
   }
   // File-wide: the options may be built outside the call (`fetch(url, opts)` with `opts.signal`).
   if (role === 'presentation' && !/\bsignal\b|\bAbortSignal\b|\bAbortController\b/.test(text)) {
     const m = /\bfetch\s*\(/.exec(text);
     if (m) out.push(`${file}:${lineOf(m.index)} fetch with no signal in the file · AbortSignal.timeout(ms) so a hung server ends the wait`);
+  }
+  // A public rule that destructures its object in the parameter list throws TypeError on `fn(null)` before any of its validation runs.
+  if (role === 'rule' && /\.(?:[cm]?[jt]s|tsx?)$/.test(file)) {
+    for (const m of text.matchAll(/^export\s+(?:default\s+)?(?:async\s+)?function\s*(\w*)\s*\(\s*\{|^export\s+const\s+(\w+)\s*=\s*(?:async\s*)?\(\s*\{/gm)) {
+      out.push(`${file}:${lineOf(m.index)} ${m[1] || m[2] || 'default export'} destructures its object parameter: fn(null) throws TypeError before its validation · take the object, validate it (null, {}, missing) and then read its fields`);
+    }
   }
   for (const m of text.matchAll(/<form\b([^>]*)>([\s\S]*?)<\/form>/gi)) {
     const typed = /<input\b(?![^>]*type\s*=\s*["']?(?:hidden|submit|button|checkbox|radio|file)\b)[^>]*>|<textarea\b/i.test(m[2]);
@@ -326,7 +613,16 @@ export const layersCheck = (root, cardDir) => {
     const sql = hit ? text.slice(0, hit.index).split('\n').length : at(DB_CALL);
     if (sql) found.push(`${file}:${sql} ${role === 'presentation' ? 'presentation file has SQL or db access' : 'SQL outside a data file'}`);
   }
-  return found.length ? failed('layers', found.slice(0, 5).join('; ')) : ok('layers', `${files.length} production files, the layers hold`);
+  // Markup is a screen too: its form, its inline script and a component's fetch hide the same failures.
+  for (const file of cardFiles(root, base).filter((f) => /\.(html?|vue|svelte|astro)$/i.test(f) && !NOT_PRODUCTION.test(f) && existsSync(join(root, f)))) {
+    try { found.push(...sourceProblems(file, 'presentation', readFileSync(join(root, file), 'utf8'))); } catch { /* unreadable: the file checks report it */ }
+  }
+  // `declared · layers · <file> · <why>` in the card keeps a finding the card means (a catch that must stay silent) as a note.
+  const kept = new Set([...(readCard(cardDir) ?? '').matchAll(/declared\s*·\s*layers\s*·\s*([^\s·]+)\s*·\s*\S/g)].map((m) => m[1]));
+  const isKept = (p) => kept.has(p.slice(0, p.search(/:\d+ /)));
+  const blocking = found.filter((p) => !isKept(p));
+  const notes = found.filter(isKept).map((p) => `note: layers · declared in the card: ${p}`);
+  return { ...(blocking.length ? failed('layers', blocking.slice(0, 5).join('; ')) : ok('layers', `${files.length} production files, the layers hold`)), notes };
 };
 
 // Readability: a file is one concept. A production file that has a top-level class and a top-level function, more than one class, or
@@ -401,7 +697,8 @@ export const codeLanguageCheck = (root, cardDir) => {
   if (codeLanguageOf(root) !== 'en') return [];
   const base = cardStart(root, cardDir);
   const files = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !/^(?:\.claude|specs)\//.test(f) && existsSync(join(root, f)) && !existedAt(root, ownBase(root, base), f) && !originOf(root, base, f));
-  const found = files.flatMap((f) => { try { return spanishNames(f, readFileSync(join(root, f), 'utf8')); } catch { return []; } });
+  const contract = requirementOf(readCard(cardDir) ?? '');
+  const found = files.flatMap((f) => { try { return spanishNames(f, readFileSync(join(root, f), 'utf8'), contract); } catch { return []; } });
   return [found.length ? failed('code-language', `${found.slice(0, 5).join('; ')} · name it in English, or declare \`Code language: <lang>\` in CLAUDE.md`) : ok('code-language', `${files.length} new code files, named in English`)];
 };
 
@@ -499,13 +796,17 @@ export const tableShapeCheck = (root, cardDir) => {
   return [found.length ? failed('table-shape', found.slice(0, 6).join('; ')) : ok('table-shape', `${files.length} migrations, every new table with its key and its timestamps`)];
 };
 
-// Overdesign (overdesign.mjs): a pass-through method, an interface with one implementation, a folder with one tiny file or an empty layer
-// folder fails when the card added it; the same already in the repo is a note, printed by verify.mjs.
+// Overdesign (overdesign.mjs): a pass-through method, an interface with one implementation or a folder with one tiny file
+// fails when the card added it; the same already in the repo is a note, printed by verify.mjs.
 export const overdesignCheck = (root, cardDir) => {
   let found;
   try { found = overdesignFindings(root, cardDir); } catch (e) { return couldNot('overdesign', e.message); }
   const result = found.blocking.length ? failed('overdesign', found.blocking.slice(0, 5).join('; ')) : ok('overdesign');
-  return { ...result, notes: found.notes.map((n) => `note: overdesign · already in the repo, not from this card: ${n}`) };
+  return { ...result, notes: [
+    ...found.notes.map((n) => (found.declared ?? []).includes(n)
+      ? `note: overdesign · declared in the Log: ${n}`
+      : `note: overdesign · already in the repo, not from this card: ${n}`),
+  ] };
 };
 
 // A fresh migration with more than one statement runs inside a transaction: `BEGIN`/`COMMIT` in the file, or a runner in
@@ -589,7 +890,14 @@ export const screenChecks = (records) => {
   const measured = records.flatMap((r) => [...(r.contrast ?? []), ...(r.statusContrast ?? [])].map((c) => ({ ...c, file: r.file })));
   if (!measured.length) out.push(couldNot('contrast', 'the probe ran without --contrast over the status texts'));
   else {
-    const bad = measured.filter((c) => c.found !== false && c.aa === false).map((c) => `${c.file} ${c.selector} ${c.ratio}:1 (needs ${c.needed})`);
+    // A selector the page lacks measured nothing: counting it as a measure would pass a contrast never taken. One selector is
+    // given to every state's probe, so it is missing only when no step measured it (an error message exists only in the error state).
+    const taken = new Set(measured.filter((c) => c.found !== false && !c.skipped).map((c) => c.selector));
+    const never = new Set(measured.filter((c) => !c.auto && !taken.has(c.selector) && c.skipped !== 'disabled').map((c) => c.selector));
+    const bad = [
+      ...[...never].map((s) => `${s} ${measured.some((c) => c.selector === s && c.found !== false) ? 'showed no text at any step' : 'not found on the page'}`),
+      ...measured.filter((c) => c.aa === false).map((c) => `${c.file} ${c.selector} ${c.ratio}:1 (needs ${c.needed})`),
+    ];
     out.push(bad.length ? failed('contrast', bad.slice(0, 5).join('; ')) : ok('contrast', `${measured.length} measures, all AA`));
   }
   // A re-render that drops the focus sends the next Tab to the top of the page: a step that is not a navigation and leaves the

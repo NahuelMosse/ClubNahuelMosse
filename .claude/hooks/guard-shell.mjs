@@ -4,7 +4,7 @@
 // Contract: exit 0 lets it through, exit 2 blocks and Claude reads stderr. On its own error it blocks.
 
 import { readFileSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const reject = (reason) => {
@@ -27,69 +27,187 @@ try {
 }
 if (!cmd) process.exit(0);
 
-// Redirection, sed -i, tee, mv/cp onto a destination: the ways to write without Edit/Write.
-// The operator and the file go on the same line: if the search crosses line breaks, a `>` from any
-// text and a mention of the file ten lines later count as a write.
-// PowerShell reaches the same files with its own cmdlets: they are matched alongside. Three `>` or more are a conflict marker
-// a `sed -n`/`grep` looks for, not a redirect.
-const POWERSHELL_WRITE = 'Set-Content|Add-Content|Out-File|Tee-Object|Move-Item|Copy-Item';
-const writesTo = (filePattern) =>
-  new RegExp(
-    `((?<!>)>>?(?!>)|\\btee\\b(\\s+-a)?|\\bsed\\b[^|;\\n]*\\s-i|\\bmv\\b|\\bcp\\b|\\b(?:${POWERSHELL_WRITE})\\b)[^|;&\\n]*${filePattern}`, 'i',
-  ).test(cmd);
-
-// card.md is frozen at L1 and append-only in its Log by guard.mjs, which compares before and after: through the shell it cannot.
-if (writesTo('specs[/\\\\][^/\\\\\\s]+[/\\\\]card\\.md') || writesTo('specs[/\\\\][^/\\\\\\s]+[/\\\\]risk\\.json')) {
-  reject(
-    'Writing card.md or risk.json through the shell dodges the guard that keeps L1 and the Log of the card. ' +
+// The ways to write a file without Edit/Write: a redirection, `tee`, `sed -i`, `perl -i`, `dd of=`, the destination of
+// `cp`/`mv`/`install`, `truncate`, the PowerShell cmdlets and `[IO.File]::Write*`; and a script handed to an
+// interpreter on the line itself, which can write anything it names. The line is read as the shell reads it
+// (shell-words.mjs): quotes inside a word, a `cd` before a relative path and a wrapper do not hide the target, and a
+// commit message, a heredoc body or a quoted `->` is data, not a target. Reading stays allowed: the source of a `cp`,
+// `grep`, `cat`, `git show`.
+const base = typeof input.cwd === 'string' && input.cwd && existsSync(input.cwd) ? input.cwd : process.cwd();
+const ADVICE = {
+  card: 'Writing card.md or risk.json through the shell dodges the guard that keeps L1 and the Log of the card. ' +
     'Create card.md with one Write; a later line goes at the end of `## Log` with ' +
-    '`node .claude/tools/log.mjs specs/<card> "<line>" ["<line>" ...]` (it numbers and dates each line), or with Edit.'
-  );
-}
-
-// What rewrites it: `sed -i`, and in PowerShell a `>`, `Set-Content` or `Out-File` without `-Append`.
-// `sed -i` counts only when ambiguities.md is a file the command edits: per command segment, and with
-// the quoted script out of the way (a script or another file's name that mentions it edits nothing of it).
-const sedEditsAmbiguities = cmd.split(/[|;&\n]+/).some((segment) => {
-  const args = segment.replace(/(['"])([^'"]*)\1/g, (_, __, inner) => (/ambiguities\.md$/.test(inner) ? ` ${inner} ` : ' '));
-  return /\bsed\b[^|;]*\s(?:-[a-zA-Z]*i|--in-place)\b/.test(args) && /(^|\s)\S*ambiguities\.md(?=\s|$)/.test(args);
-});
-const rewritesAmbiguities = sedEditsAmbiguities ||
-  /(?<![>\d])>(?![>&])[^|;&\n]*ambiguities\.md/.test(cmd) ||
-  /\bSet-Content\b[^|;&\n]*ambiguities\.md/i.test(cmd) ||
-  /\bOut-File\b(?![^|;&\n]*-Append)[^|;&\n]*ambiguities\.md/i.test(cmd);
-if (rewritesAmbiguities) {
-  reject(
-    'ambiguities.md is append-only. `sed -i`, `>`, `Set-Content` and `Out-File` rewrite lines already ' +
+    '`node .claude/tools/log.mjs specs/<card> "<line>" ["<line>" ...]` (it numbers and dates each line), or with Edit.',
+  closing: 'closing.md is written only by `node .claude/tools/close.mjs`, which seals it against the gate records; a line written by hand breaks the seal. Run /close instead.',
+  unresolved: 'That line writes to a path the guard cannot read from its text (a variable, a loop, `eval`, `xargs`, a patch from stdin) and it names a file the guards protect. ' +
+    'Write the path out in full, or use Read, Edit, Write and `node .claude/tools/log.mjs`.',
+  ambiguities: 'ambiguities.md is append-only. `sed -i`, `>`, `Set-Content` and `Out-File` rewrite lines already ' +
     'recorded. To change a state, add a new event at the end with `>>`, `Add-Content` or `Out-File -Append`. ' +
-    'One line per event: `<ID>-AMB-NN · <date> · resolved · <answer> · <author>, <date>` (or `expired → <ID>-ASM-NN`, `no channel · <question> → <ID>-ASM-NN`).'
-  );
-}
-
-// Verification configs only grow, and that is checked by the Edit/Write guard, which can compare
-// before and after. Through the shell it cannot compare: they are rewritten with Edit.
-const CONFIG = '(eslint\\.config\\.[cm]?[jt]s|\\.eslintrc[\\w.]*|playwright\\.config\\.[cm]?[jt]s|stryker\\.conf[\\w.]*|\\.c8rc[\\w.]*|\\.nycrc[\\w.]*|jest\\.config\\.[cm]?[jt]s|vitest\\.config\\.[cm]?[jt]s|tsconfig[\\w.-]*\\.json|ruff\\.toml|mypy\\.ini|pytest\\.ini|\\.golangci\\.\\w+)\\b';
-// With `cp` and `mv` the config counts only as the destination —the last argument—: copying it
-// elsewhere does not change it. Measured: the guard blocked a `cp` that took the config to a test copy.
-const writesConfig = new RegExp(`(>>?|\\btee\\b(\\s+-a)?|\\bsed\\b[^|;\\n]*\\s-i)[^|;&\\n]*${CONFIG}`).test(cmd) ||
-  new RegExp(`\\b(cp|mv)\\b[^|;&\\n]*\\s\\S*${CONFIG}\\s*($|[|;&\\n])`).test(cmd);
-if (writesConfig) {
-  reject(
-    'That is a configuration of what gets verified, and through the shell the guard cannot see what ' +
-    'changes. Edit it with Edit or Write: if it only adds rules, it goes through.'
-  );
-}
-
-// The manifest of the modules is written by `kit.mjs` and `install.mjs`, nothing else. With `cp` and
-// `mv` it counts only as the destination.
-const MANIFEST = 'kit(?:-files)?\\.json\\b';
-if (new RegExp(`(>>?|\\btee\\b(\\s+-a)?|\\bsed\\b[^|;\\n]*\\s-i|\\b(?:${POWERSHELL_WRITE})\\b)[^|;&\\n]*${MANIFEST}`, 'i').test(cmd) ||
-    new RegExp(`\\b(cp|mv)\\b[^|;&\\n]*\\s\\S*${MANIFEST}\\s*($|[|;&\\n])`).test(cmd)) {
-  reject(
-    '.claude/kit.json (and kit-files.json, the hashes of its files) is the manifest of the kit\'s modules, and through the shell it is not written: ' +
+    'One line per event: `<ID>-AMB-NN · <date> · resolved · <answer> · <author>, <date>` (or `expired → <ID>-ASM-NN`, `no channel · <question> → <ID>-ASM-NN`).',
+  config: 'That is a configuration of what gets verified, and through the shell the guard cannot see what ' +
+    'changes. Edit it with Edit or Write: if it only adds rules, it goes through.',
+  manifest: '.claude/kit.json (and kit-files.json, the hashes of its files) is the manifest of the kit\'s modules, and through the shell it is not written: ' +
     '`node .claude/tools/kit.mjs on <module>` or `kit.mjs confirm-off <module> --reason "…"`. Turning a ' +
-    'module off is a person\'s decision, between cards, with its reason.'
-  );
+    'module off is a person\'s decision, between cards, with its reason.',
+  secret: 'Secrets are not read or written by the agent. The variable names are in .env.example ' +
+    '(`cat .env.example`); the value is set by a person.',
+  frozen: 'has tagged tests and a commit already holds them: frozen, and the shell does not edit them either. If one is wrong, replace it: a new file with the same tag, and ' +
+    '`node .claude/tools/log.mjs specs/<card> "replaces: <test file> · <why>"`.',
+};
+let shell;
+let paths;
+let card;
+try {
+  shell = await import('../tools/shell-words.mjs');
+  paths = await import('../tools/guard-paths.mjs');
+  card = await import('../tools/card.mjs');
+} catch (e) {
+  reject(`The guard could not load its parsers (${e.message}). It blocks when in doubt: retry.`);
+}
+const visited = [];
+const targets = [];
+const scripts = [];
+try {
+  shell.walk(cmd, base, (step) => {
+    visited.push(step);
+    for (const w of shell.writesOf(step.segment, step.cwd)) targets.push({ ...w, cwd: step.cwd });
+    if (step.script !== null) scripts.push({ text: step.script, cwd: step.cwd });
+  });
+  // A heredoc a program runs is a script: a shell's body is read as a command line, any other interpreter's as an inline script.
+  for (const { name, body } of shell.heredocScripts(cmd)) {
+    if (['sh', 'bash', 'zsh', 'dash', 'ksh'].includes(name)) {
+      shell.walk(body, base, (step) => {
+        visited.push(step);
+        for (const w of shell.writesOf(step.segment, step.cwd)) targets.push({ ...w, cwd: step.cwd });
+        if (step.script !== null) scripts.push({ text: step.script, cwd: step.cwd });
+      });
+    }
+    scripts.push({ text: body, cwd: base });
+  }
+  for (const w of shell.fileApiWrites(shell.withoutBodies(cmd))) {
+    if (w.path) targets.push({ ...w, cwd: base });
+    else scripts.push({ text: shell.withoutBodies(cmd), cwd: base });
+  }
+} catch (e) {
+  reject(`The guard could not read the command (${e.message}). It blocks when in doubt: retry.`);
+}
+
+// What goes through `xargs` or `eval` is written to paths the line does not spell: a writer given an unknown last path stands for it.
+for (const { segment, cwd, name } of visited) {
+  if (segment.words.some((w) => w === 'xargs')) {
+    for (const w of shell.writesOf({ words: [...segment.words, '$xargs'], redirects: [] }, cwd)) if (w.path === '$xargs') targets.push({ ...w, cwd });
+  }
+  if (name === 'eval') targets.push({ path: '$eval', append: false, via: '`eval`', cwd });
+}
+
+const exemptions = new Map();
+const exempt = async (file) => {
+  const root = card.rootOf(file);
+  if (!exemptions.has(root)) exemptions.set(root, await paths.frozenExempt(root, card.currentCard));
+  return exemptions.get(root);
+};
+// A config outside every git work tree (a copy under /tmp) configures nothing a repo verifies.
+const inWorkTree = (key) => {
+  for (let dir = dirname(key); ; dir = dirname(dir)) {
+    if (existsSync(join(dir, '.git'))) return true;
+    if (dirname(dir) === dir) return false;
+  }
+};
+// What a written path is, matched on its normalized spelling; resolved against the folder the segment runs in and,
+// in case the `cd` tracking was wrong, against the folder of the call.
+const kindOf = async ({ path, cwd, append }) => {
+  for (const key of new Set([paths.normalizePath(path, cwd), paths.normalizePath(path, base)])) {
+    if (/(^|\/)specs\/[^/]+\/(card\.md|risk\.json)$/.test(key)) return 'card';
+    if (/(^|\/)specs\/[^/]+\/closing\.md$/.test(key)) return 'closing';
+    if (/(^|\/)ambiguities\.md$/.test(key) && !append) return 'ambiguities';
+    if (card.IS_VERIFICATION_CONFIG.test(key) && inWorkTree(key)) return 'config';
+    if (/(^|\/)kit(-files)?\.json$/.test(key)) return 'manifest';
+    if (card.isSecret(key)) return 'secret';
+  }
+  if (paths.IS_TEST_FILE.test(paths.normalizePath(path, cwd))) {
+    const file = paths.onDisk(path, cwd);
+    const head = paths.committedTagged(file);
+    if (head.error) reject(`Could not query git for ${file} (${head.error}). Without being able to verify whether the test is frozen, the guard blocks.`);
+    if (head.frozen && !(await exempt(file))) return 'frozen';
+  }
+  return null;
+};
+// The kinds of file a target that cannot be resolved may be: it blocks only when what can reach it names one of them.
+const PROTECTED_TEXT = /card\.md|closing\.md|risk\.json|ambiguities\.md|kit(?:-files)?\.json|\.(?:test|spec)\.|(?:^|[\s/'"=$])specs\/|migrations?\//i;
+const namesProtected = (text) => PROTECTED_TEXT.test(text) || String(text).split(/[\s'"`=;|&()<>,]+/).filter(Boolean).some((token) => {
+  const key = paths.normalizePath(token.replace(/^\$\w*/, ''), base);
+  return paths.IS_TEST_FILE.test(token) || card.IS_VERIFICATION_CONFIG.test(key) || card.isSecret(key) || card.isSecretGlob(token);
+});
+const NO_FILE = /^(?:\$null|\/dev\/null|nul)$/i;
+// What an unresolved path can stand for: itself, and the values the line gives the variables it uses (`f=…`, `for f in …`).
+// A variable the line binds from somewhere it cannot follow (`read`, `$1`, `$_`, a command substitution, a partial
+// value like `$f.md`) can stand for anything the line names: the whole line is what it reaches.
+const reachOf = (path, seen = new Set()) => {
+  const reach = [path];
+  const bare = /^["']?\$\{?\w+\}?["']?$/.test(String(path).trim());
+  if (/\$[@*]/.test(path)) return cmd;
+  for (const [, name] of String(path).matchAll(/\$\{?(\w+)/g)) {
+    if (seen.has(name)) continue;
+    seen.add(name);
+    if (/^\d+$/.test(name) || /^(?:_|PSItem)$/i.test(name)) return cmd;
+    const n = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`\\b(?:read|mapfile|readarray)\\b[^;\\n&|]*\\b${n}\\b`).test(cmd)) return cmd;
+    // Assignment forms: `n=v`, `for n in v`, `printf -v n fmt…`, `: ${n:=v}`, `Set-Variable -Name n -Value v`.
+    const forms = `(?:^|[\\s;&|(])\\$?${n}\\s*=([^;\\n&|]*)|\\bfor(?:each)?\\s*\\(?\\s*\\$?${n}\\s+in\\s+([^;\\n)]*)|\\bprintf\\s+-v\\s+${n}\\s+([^;\\n&|]*)|\\$\\{${n}:?=([^}]*)\\}|\\bSet-Variable\\s+(?:-Name\\s+)?\\$?${n}\\s+(?:-Value\\s+)?([^;\\n&|]*)|\\bSet-Variable\\s+-Value\\s+([^;\\n&|]*?)\\s+-Name\\s+\\$?${n}\\b`;
+    for (const m of cmd.matchAll(new RegExp(forms, 'gi'))) {
+      const value = (m[1] ?? m[2] ?? m[3] ?? m[4] ?? m[5] ?? m[6] ?? '').trim();
+      if (!bare) return cmd;
+      if (!/[`$]/.test(value)) { reach.push(value); continue; }
+      // A temp folder plus a literal name, or a `mktemp`, is a scratch path the line spells in full.
+      if (/^["']?\$\{?(?:TMPDIR|TEMP|TMP)\}?\/[^$`"']*["']?$/.test(value) || /^["']?\$\(\s*mktemp\b[^$`()]*\)["']?$/.test(value)) { reach.push(value.startsWith('$(') || /mktemp/.test(value) ? 'mktemp' : value); continue; }
+      if (!/^["']?\$\{?\w+\}?["']?$/.test(value)) return cmd;
+      reach.push(reachOf(value, seen));
+    }
+  }
+  return reach.join('\n');
+};
+const NULL_BOUND = /(?:^|[\s;&|(])\$?null\s*=/i;
+const noFile = (p) => NO_FILE.test(p ?? '') && !(/^\$null$/i.test(p) && NULL_BOUND.test(cmd));
+for (const target of targets) {
+  if (noFile(target.path)) continue;
+  if (target.unresolved || shell.isUnresolved(target.path)) {
+    // `xargs`, `eval` and a patch from stdin write paths that come from anywhere in the line.
+    const opaque = ['$xargs', '$eval', '-'].includes(target.path);
+    if (namesProtected(opaque ? cmd : reachOf(target.path))) reject(ADVICE.unresolved);
+    continue;
+  }
+  const candidates = [target.path];
+  if (shell.isGlob(target.path)) for (const match of shell.expandGlob(target.path, target.cwd)) candidates.push(match);
+  for (const path of candidates) {
+    const kind = await kindOf({ ...target, path });
+    if (kind === 'frozen') reject(`${path} ${ADVICE.frozen}`);
+    if (kind) reject(ADVICE[kind]);
+  }
+}
+
+const WRITE_CALL = /\b(?:write\w*|append\w*|copyFile\w*|rename\w*|unlink\w*|rm|rmSync|rmdir\w*|truncate\w*|createWriteStream|writelines|Set-Content|Add-Content|Out-File|Tee-Object|Remove-Item|Move-Item|Copy-Item|Rename-Item)\s*[(\s]|\b(?:execSync|execFileSync|spawnSync|exec|execFile|spawn)\s*\(|\bos\.(?:system|popen|exec\w*|spawn\w*)\b|\bsubprocess\.\w+|\b(?:cp|cpSync|copy\w*|move\w*)\s*\(|\bopen(?:Sync)?\s*\([^)]*,\s*['"`]\s*[rbt]*[wax+>]|\bos\.(?:remove|removedirs|replace|rename\w*|unlink|rmdir|truncate|ftruncate|write|link|symlink)\b|\bos\.open\s*\([^)]*\bO_(?:WRONLY|RDWR|CREAT|TRUNC|APPEND)|\bshutil\.(?:copy\w*|move|rmtree)\b|\bopen\s*\(?\s*(?:my\s+)?[$\w]+\s*,\s*(?:['"]\s*(?:\+?>|\+<)|['"]?\s*>)/i;
+// An inline script can write any file it names, through any API: a protected file named anywhere in it is refused.
+if (scripts.length) {
+  const config = card.IS_VERIFICATION_CONFIG.source.replace('(^|\\/)', '').replace(/\$$/, '').replaceAll('[^/]', '[^/\\s\'"`]');
+  const escape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const { text, cwd } of scripts) {
+    // The folder the script runs in may hold no repo (a failed `cd`): the folder of the call is searched as well.
+    const here = paths.frozenNames(cwd);
+    const there = cwd === base ? here : paths.frozenNames(base);
+    const frozen = here.error || there.error ? { error: here.error ?? there.error } : { names: [] };
+    if (frozen.error) reject(`Could not query git for the frozen tests (${frozen.error}). Without being able to verify them, the guard blocks.`);
+    const names = [];
+    for (const [found, folder] of [[here, cwd], [there, base]]) {
+      if (found.names.length && !(await exempt(resolve(folder, '_')))) names.push(...found.names.map(escape));
+    }
+    const protectedName = new RegExp(`(?<![\\w-])(?:card\\.md|risk\\.json|ambiguities\\.md|kit(?:-files)?\\.json|${config}${names.length ? `|${names.join('|')}` : ''})(?![\\w-])`, 'i');
+    const hit = text.match(protectedName);
+    // Naming a file is not writing it: a script that only reads card.md passes.
+    if (hit && WRITE_CALL.test(text)) {
+      reject(`That script names ${hit[0]}, a file the guards protect, and a script can write it through any API they cannot see. ` +
+        'Read it with Read or `cat`; a card line goes through `node .claude/tools/log.mjs`, a config through Edit, the manifest through `kit.mjs`.');
+    }
+  }
 }
 
 // Migrations that exist in the base are assumed applied everywhere (DB-MIG-12): through the shell they
@@ -107,33 +225,70 @@ try {
 }
 
 // Secrets: the agent neither reads nor writes them, so the value never enters the context. They are
-// blocked as the destination of a write, or as the argument of something that reads or copies them.
+// blocked as the destination of a write (above), or as the argument of something that reads or copies them.
 // Naming them to a program that loads them itself (`node --env-file=.env app.js`,
 // `docker compose --env-file .env up`) is allowed: the agent does not see the content.
+// A glob that can match `.env` (`.e*`, `.en?`, `.[e]nv`) reaches it as well as its name.
 // Declared holes: `git diff` or `git show` of a versioned `.env`, a script that reads the file, and
 // `env` or `printenv` after loading it.
-const { isSecret, hookCard, actsAsMain } = await import('../tools/card.mjs').catch((e) => reject(`The guard could not load the secret list (${e.message}). It blocks when in doubt: retry.`));
-const READERS = 'cat|type|less|more|head|tail|bat|nl|od|xxd|hexdump|strings|base64|grep|rg|egrep|sed|awk|cut|sort|diff|cmp|cp|mv|scp|rsync|tar|zip|7z|openssl|source|Get-Content|gc|Select-String|Copy-Item|Move-Item|code|notepad|vim|nano';
-const READER = new RegExp(`(^|[\\s;&|(])(${READERS})(?=\\s)|^\\s*\\.\\s`, 'i');
-const wordsOf = (segment) => segment.split(/[\s"'`]+/).map((t) => t.replace(/^>+/, '')).filter(Boolean);
-const segments = cmd.split(/[|;&\n]+/);
-const secretReach = segments.some((segment) => {
-  const words = wordsOf(segment);
-  const curl = /(^|\s)curl\s/i.test(segment) && /\s(-d\s*@|-F|-T|--data\S*\s+@|--upload-file)/.test(segment);
-  const named = words.filter((w) => isSecret(w) || (curl && isSecret(w.split(/[=@]/).pop())));
-  return named.length > 0 && (READER.test(segment) || curl);
+const { hookCard, actsAsMain } = card;
+const READERS = new Set('cat|type|less|more|head|tail|bat|nl|od|xxd|hexdump|strings|base64|grep|rg|egrep|sed|awk|cut|sort|diff|cmp|cp|mv|scp|rsync|tar|zip|7z|openssl|source|get-content|gc|select-string|copy-item|move-item|code|notepad|vim|nano'.split('|'));
+const globReachesEnv = (word) => {
+  const name = word.replaceAll('\\', '/').split('/').pop();
+  if (!/[*?[]/.test(name) || !name.startsWith('.')) return false;
+  const pattern = name.replace(/[.+^${}()|\\]/g, '\\$&').replace(/\*/g, '[^/]*').replace(/\?/g, '[^/]').replace(/\[!/g, '[^');
+  try { return new RegExp(`^${pattern}$`, process.platform === 'win32' ? 'i' : '').test('.env'); } catch { return true; }
+};
+const secretWord = (word, cwd) => globReachesEnv(word) || card.isSecretGlob(word) || card.isSecret(paths.normalizePath(word, cwd));
+const secretReach = visited.some(({ segment, cwd, name, args }) => {
+  const names = segment.words.map((w) => w.replaceAll('\\', '/').split('/').pop().toLowerCase().replace(/\.exe$/, ''));
+  const curl = name === 'curl' && args.some((a) => /^(?:-d@?|-F|-T|--data\S*|--upload-file)/.test(a));
+  const reads = names.some((n) => READERS.has(n)) || segment.words[0] === '.' || curl;
+  return reads && segment.words.some((w) => secretWord(w, cwd) || (curl && secretWord(w.split(/[=@]/).pop(), cwd)));
 });
-const writtenSecret = wordsOf(cmd).filter(isSecret).some((w) => writesTo(w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
-if (secretReach || writtenSecret) {
-  reject('Secrets are not read or written by the agent. The variable names are in .env.example ' +
-         '(`cat .env.example`); the value is set by a person.');
-}
+if (secretReach) reject(ADVICE.secret);
 
-// A check is never skipped to make a commit or a push go through.
-if (/\bgit\s+(commit|push)\b[^|;&\n]*--no-verify\b/.test(cmd)) {
-  reject('`--no-verify` skips the hooks that protect the card. Fix what the hook reports; if the hook is ' +
-         'wrong, record it in the card\'s `## Log` as `- L<n> · OUT · <what>` and it goes to the PR; the hook stays.');
+// A check is never skipped to make a commit or a push go through: not with `--no-verify` in any spelling git accepts
+// (an unambiguous prefix down to `--no-v`), not with `git commit -n` (alone or in a cluster of short flags), and not by
+// pointing `core.hooksPath` elsewhere for one call. A commit message is data: the values of `-m`, `-F` and their kin are
+// not flags.
+const SKIPS_HOOKS = '`--no-verify`, `git commit -n` `-c core.hooksPath=…` and `git config core.hooksPath` skip the hooks that protect the card. Fix what the hook reports; if the hook is ' +
+  'wrong, record it in the card\'s `## Log` as `- L<n> · OUT · <what>` and it goes to the PR; the hook stays.';
+const TAKES_VALUE = /^(?:-m|-F|-C|-c|-t|-o|--message|--file|--reuse-message|--reedit-message|--template|--author|--date|--trailer|--push-option|--cleanup|--fixup|--squash)$/;
+for (const { name, args } of visited) {
+  if (name !== 'git') continue;
+  let i = 0;
+  for (; i < args.length && args[i].startsWith('-'); i++) {
+    const a = args[i];
+    const config = a === '-c' || a === '--config-env' ? args[++i] ?? '' : a.match(/^(?:-c|--config-env=)(.+)$/)?.[1];
+    if (config !== undefined && /^core\.hookspath\b/i.test(config)) reject(SKIPS_HOOKS);
+    if (['-C', '--git-dir', '--work-tree', '--namespace', '--exec-path', '--super-prefix'].includes(a)) i++;
+  }
+  const sub = args[i];
+  // `git config core.hooksPath …` skips the hooks for good; reading or unsetting it does not.
+  const rest = args.slice(i + 1);
+  const plain = rest.filter((a) => !a.startsWith('-'));
+  const at = plain.findIndex((a) => /^core\.hookspath$/i.test(a));
+  if (sub === 'config' && at >= 0 && plain.length > at + 1 && !rest.some((a) => /^--(?:get\S*|list|unset\S*)$|^-l$/.test(a))) reject(SKIPS_HOOKS);
+  const remotePush = plain.findIndex((a) => /^remote\..+\.push$/i.test(a));
+  if (sub === 'config' && remotePush >= 0 && plain.length > remotePush + 1 && !rest.some((a) => /^--(?:get\S*|list|unset\S*)$|^-l$/.test(a))) {
+    reject('`git config remote.<name>.push …` rewrites where every push of that remote lands (it can send a card branch onto main), so setting it is refused. Reading or unsetting it is fine.');
+  }
+  for (let j = i + 1; j < args.length; j++) {
+    const a = args[j];
+    if (a === '--') break;
+    if (/^--no-v(?:e(?:r(?:i(?:f(?:y)?)?)?)?)?(?:=|$)/.test(a)) reject(SKIPS_HOOKS);
+    if (TAKES_VALUE.test(a)) { j++; continue; }
+    if (sub === 'commit' && /^-[A-Za-z]+$/.test(a)) {
+      for (const ch of a.slice(1)) {
+        if (ch === 'n') reject(SKIPS_HOOKS);
+        if ('mFCctSu'.includes(ch)) break;
+      }
+      if (/^-[A-Za-z]*[mFCct]$/.test(a)) j++;
+    }
+  }
 }
+const segments = visited.map(({ segment }) => segment.words.join(' '));
 
 // A stash changes the tree under the runs in the background (verify, a suite): measured, a false red on a
 // real card. With a card in progress only the read-only forms go through.
@@ -277,12 +432,19 @@ try {
 // The guards of production code see Edit and Write, not the shell: a subagent that writes it with `sed -i`, a
 // redirection, `tee` or a script that calls `writeFileSync` leaves no trace they can read. With a card in progress
 // the forms that can be read from the text are refused (shell-writes.mjs says what changed after the ones that cannot).
+// The main thread's shell writes go through the same rule as its Edit and Write (delegate-rule.mjs).
 try {
-  const found = input.agent_id ? hookCard(input.cwd ?? process.cwd(), process.env, input) : null;
+  const found = hookCard(input.cwd ?? process.cwd(), process.env, input);
   if (found) {
     const { shellWrites } = await import('../tools/shell-writes.mjs');
     const { files, via } = shellWrites(cmd, { root: found.root, cwd: input.cwd ?? process.cwd(), tool: input.tool_name });
-    if (files.length) {
+    if (files.length && !input.agent_id) {
+      const { productionVerdict } = await import('../tools/delegate-rule.mjs');
+      for (const file of files) {
+        const why = await productionVerdict(input, join(found.root, file));
+        if (why) reject(`${why} That includes writing ${file} through the shell (${via.join(', ')}).`);
+      }
+    } else if (files.length) {
       reject(`That writes production code through the shell (${via.join(', ')}: ${files.join(', ')}), where the guards that protect the card do not see it. ` +
         'Use Edit or Write for production files: whole file with Write, a small change with Edit. The shell is for running things, not for writing the product.');
     }
@@ -437,8 +599,8 @@ if (!background && loop && (wait > 0 || watchesAgent) && !boundedSubagent && cap
 if (!background && loop && !boundedSubagent && (watchesAgent || wait >= 20)) {
   reject(
     'This loop waits blind: ' + (watchesAgent ? 'it asks whether another agent finished' : `it sleeps ${wait} s per turn`) +
-    '. A subagent that what follows depends on is launched in the foreground —several in a single ' +
-    'message come back together—, and a long process is awaited through its own end, not by asking ' +
+    '. A subagent that what follows depends on is launched in the background and awaited with ' +
+    '`node .claude/tools/wait.mjs --agent <agentId>`, and a long process is awaited through its own end, not by asking ' +
     'every so often. ' + WAIT_WITH + 'If a server really has to be waited for, use a half-second loop with its condition. A subagent that waits for its own agents or processes ' +
     `may do it in the foreground up to ${MAX_WAIT_S} s with an explicit \`timeout\` on the call or a loop with a ceiling.`
   );

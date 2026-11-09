@@ -20,16 +20,20 @@
 // The result is written in risk.json as `escalated: { review, lenses, why }`; nothing lowers it and nothing but this tool writes it.
 // Prints the `risk:` line, not the JSON (it is in risk.json); a plan with gaps prints all of them at once and ends with the
 // command to rerun.
+// At poc the card has no Tasks: risk.json is `small · low` with the visual lens when the card has a `## Look`, with no plan check.
 // Exits 0, 2 when the card has no card.md or `## Tasks` names no task, 3 when the plan is incomplete.
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { active, lensesOff } from './kit.mjs';
+import { active, isPoc, lensesOff } from './kit.mjs';
 import { importersOf } from './importers.mjs';
 import { IS_CODE, IS_TEST, NOT_PRODUCTION, cardFiles, cardStart, fileMapLines, git, namedIn } from './card.mjs';
 import { AUTH_OR_PAYMENT, hasTasksSection, readCard, requirementOf, riskWordsIn, sectionOf, tasksOf } from './card-doc.mjs';
 import { planProblems } from './plan.mjs';
 import { noVisualOf } from './gate-checks.mjs';
+
+// A component or page file logs someone in as much as a .ts does: a risk word weighs on it too.
+const IS_RISK_CODE = (f) => IS_CODE.test(f) || /\.(vue|svelte|astro|html?)$/i.test(f);
 import { IS_SCREEN, detectIn } from './signals.mjs';
 
 const SIZE_LIMIT = 200_000;
@@ -53,7 +57,7 @@ export const classify = ({ files, taskCount, text, root, securityL2On = false, n
     data: Boolean(found.schema || found['data-dependency'] || files.some((f) => DATA_PATH.test(f))),
   };
   // A risk word weighs only on a card that writes production code: docs, specs and tests do not log anyone in.
-  const writesCode = files.some((f) => IS_CODE.test(f) && !IS_TEST.test(f) && !NOT_PRODUCTION.test(f));
+  const writesCode = files.some((f) => IS_RISK_CODE(f) && !IS_TEST.test(f) && !NOT_PRODUCTION.test(f));
   const words = writesCode ? [...new Set(riskWordsIn(text).map((w) => w.toLowerCase()))] : [];
   const touched = Object.keys(modules).filter((m) => modules[m]);
   const securityTouched = securityL2On && Boolean(found['auth-dependency']);
@@ -78,6 +82,14 @@ export const risk = (root, cardArg) => {
   const cardDir = isAbsolute(cardArg) ? cardArg : resolve(root, cardArg);
   const doc = readCard(cardDir);
   if (doc === null) return { code: 2, message: `${cardDir}: no card.md here: risk.mjs reads the card's single document` };
+  // A poc card has no Tasks or tests to check: small, low review, the visual lens when the card has a `## Look`.
+  if (isPoc(root)) {
+    const file = join(cardDir, 'risk.json');
+    if (existsSync(file)) { const frozen = JSON.parse(readFileSync(file, 'utf8')); return { code: 0, result: frozen, line: riskLine(frozen), kept: true }; }
+    const result = { size: 'small', review: 'low', lenses: sectionOf(doc, 'Look') === null ? [] : ['visual'], modules: [], signals: [], words: [], files: [], tasks: 0 };
+    writeFileSync(file, `${JSON.stringify(result, null, 2)}\n`);
+    return { code: 0, result, line: riskLine(result), kept: false };
+  }
   const tasks = tasksOf(doc);
   if (!hasTasksSection(doc) || !tasks.length) return { code: 2, message: 'card.md has no `## Tasks` with a line `T1 · S1,S2 · <files>`: the classification reads the files from there' };
   const noVisual = noVisualOf(doc);
@@ -114,9 +126,10 @@ export const escalate = (root, cardArg) => {
   const out = join(cardDir, 'risk.json');
   if (!existsSync(out)) return { code: 2, message: `${out}: no risk.json: run \`node .claude/tools/risk.mjs ${cardArg}\` first` };
   const frozen = JSON.parse(readFileSync(out, 'utf8'));
+  if (isPoc(root)) return { code: 0, escalated: null, line: 'risk: poc, the classification does not change' };
   const map = fileMapLines(cardDir) ?? [];
   const base = cardStart(root, cardDir);
-  const outside = cardFiles(root, base).filter((f) => IS_CODE.test(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && !namedIn(map, f, root).length);
+  const outside = cardFiles(root, base).filter((f) => IS_RISK_CODE(f) && !NOT_PRODUCTION.test(f) && !IS_TEST.test(f) && !namedIn(map, f, root).length);
   const current = frozen.escalated ?? { review: frozen.review, lenses: frozen.lenses, why: [] };
   const why = [];
   let review = RANK[current.review] >= RANK[frozen.review] ? current.review : frozen.review;

@@ -1,6 +1,6 @@
 // What the hooks read from a transcript: where it is and the `usage` of its last assistant message.
 // context-cap.mjs measures the context with it; guard-shell.mjs reads which prompt cache the author writes.
-import { closeSync, fstatSync, openSync, readFileSync, readSync } from 'node:fs';
+import { closeSync, fstatSync, openSync, readSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
 const TAIL_BYTES = 512 * 1024;
@@ -40,10 +40,27 @@ export const lastUsage = (file) => {
   } finally { closeSync(fd); }
 };
 
+// The lines of a JSONL file, read 1 MB at a time: a long session's transcript passes V8's longest string (~512 MB), so it
+// is never read whole.
+export function* linesOf(file) {
+  const fd = openSync(file, 'r');
+  try {
+    const buf = Buffer.alloc(1 << 20);
+    let rest = Buffer.alloc(0);
+    for (let n; (n = readSync(fd, buf, 0, buf.length, null)) > 0;) {
+      const chunk = rest.length ? Buffer.concat([rest, buf.subarray(0, n)]) : buf.subarray(0, n);
+      let start = 0;
+      for (let i; (i = chunk.indexOf(10, start)) !== -1; start = i + 1) yield chunk.toString('utf8', start, i);
+      rest = Buffer.from(chunk.subarray(start));
+    }
+    if (rest.length) yield rest.toString('utf8');
+  } finally { closeSync(fd); }
+}
+
 // The turns a subagent has used: its assistant messages with a distinct `message.id` (one turn is split in several lines).
 export const countTurns = (file) => {
   const ids = new Set();
-  for (const line of readFileSync(file, 'utf8').split('\n')) {
+  for (const line of linesOf(file)) {
     if (!line.includes('"assistant"')) continue;
     try {
       const entry = JSON.parse(line);

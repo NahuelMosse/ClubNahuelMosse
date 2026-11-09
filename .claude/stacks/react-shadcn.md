@@ -23,7 +23,12 @@ npx shadcn@latest init
 - React Aria Components (`npm i react-aria-components`) for what the catalog does not cover.
 - GSAP and Lenis (`npm i gsap lenis`) only in a showcase card that needs scroll timelines.
 - Installed components land in `src/components/ui/` and in one folder per registry; they are the
-  project's code from then on, adapted to its tokens.
+  project's code from then on, adapted to its tokens. They are the only place a native `<button>`,
+  `<input>`, `<select>`, `<table>` or `<dialog>` is written: on a screen it fails the gate (`I-catalog`),
+  and the task that builds the screen names the items it composes in `reuses:`.
+- The `shadcn` skill (from shadcn-ui, loaded by itself in a repo with `components.json`) carries the
+  CLI (`npx shadcn@latest search`, `docs`, `info`), the need → component table and the rules of
+  composition: before writing a styled `div`, `npx shadcn@latest search` across the registries.
 
 ## Every component that comes in
 
@@ -65,8 +70,7 @@ vitals: npm run verify:vitals
   selector of `stacks/node-ts.md` (“Before committing the RED tests”) against `expect(…filter|map|reduce|sort|find…)`.
 - **Components ahead**: the catalog components the design line names are installed when the card
   starts, in the background (`npx shadcn@latest add …` with a log), while the questions are answered; the
-  card does not wait for the network at implementation. *Measured: 25 of 46 minutes of a lap were
-  `shadcn add` over a slow network.*
+  card does not wait for the network at implementation.
 
 ## Screen: states and motion
 

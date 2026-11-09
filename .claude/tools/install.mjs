@@ -17,7 +17,12 @@
 // with what it does, its estimated cost per card and, pre-marked `[x]`, the signal found in the repo.
 // With no terminal and no `--modules` it prints that list and exits 2, writing nothing. A module that
 // has a signal and is left out needs `--off "<module>=<reason>"`: the reason is kept in
-// `.claude/kit.json` and repeated in every closing. Needs a clean git tree: `git checkout` undoes it.
+// `.claude/kit.json` and repeated in every closing. Needs a clean git tree: `git checkout .` and `git clean -fd` undo it (a
+// new file is untracked, `git checkout` alone leaves it).
+//
+// A fresh install lists every file it would replace (the ones that already exist with other content) and exits 2 without
+// writing; `--adopt` keeps them as they are, `--force` replaces them. `.claude/settings.json` is never replaced: the kit's
+// hooks are merged into it and the repo's own keys stay.
 // What the installer renders into the kit's files, so they are never edited by hand: `E2E=` in
 // METHOD.md and the `paths:` of `.claude/rules/*.md`, both kept in kit.json. `E2E=` is the folder of
 // scenario tests the target really has (`test/`, `tests/`, `apps/e2e`, …) unless `--e2e` says another;
@@ -26,12 +31,11 @@
 // team edited is left alone and the new version goes to `.claude/.kit-incoming/<path>`.
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 import { detectStack } from './doctor.mjs';
-import { GRADES, coreFiles, copiesOfProfile, detectE2e, filesOfModule, filesOfProfile, listKit, mcpAdd, openCard, profileOfFile, readManifest, readModules, recordedGrade, writeManifest } from './kit.mjs';
+import { GRADES, RULE_PATHS, coreFiles, copiesOfProfile, detectE2e, filesOfModule, filesOfProfile, listKit, mcpAdd, openCard, profileOfFile, readManifest, readModules, recordedGrade, render, shaOf, writeManifest } from './kit.mjs';
 import { cardIdOf, kitLogLine } from './card-doc.mjs';
 import { describe, detect, evidenceOf } from './signals.mjs';
 
@@ -45,14 +49,15 @@ const fail = (message) => {
   process.exit(2);
 };
 const today = () => new Date().toISOString().slice(0, 10);
-const sha = (text) => createHash('sha256').update(text).digest('hex');
+const SETTINGS = '.claude/settings.json';
+const SELF = fileURLToPath(import.meta.url);
 const gitOut = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8' });
 
 const parse = (argv) => {
   const o = { off: [] };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (['--plan', '--update', '--adopt', '--major', '--help'].includes(a)) o[a.slice(2)] = true;
+    if (['--plan', '--update', '--adopt', '--force', '--major', '--help'].includes(a)) o[a.slice(2)] = true;
     else if (a === '--off') o.off.push(argv[++i] ?? '');
     else if (['--target', '--modules', '--profiles', '--stack', '--e2e', '--from', '--card-open', '--rule-paths', '--grade', '--grade-reason'].includes(a)) o[a.slice(2).replace(/-(\w)/g, (_, c) => c.toUpperCase())] = argv[++i];
     else fail(`Unknown argument ${a}. See the header of install.mjs.`);
@@ -76,7 +81,6 @@ const listLines = (map, seen) => Object.entries(seen).map(([name, s]) => {
 });
 
 // The rules' `paths:` and the scenarios folder: read from what is installed, rendered into the files.
-const RULE_PATHS = /^paths:\s*(\[.*\])\s*$/m;
 const readRulePaths = (root) => {
   const dir = join(root, '.claude', 'rules');
   const out = {};
@@ -88,13 +92,6 @@ const readRulePaths = (root) => {
   return out;
 };
 const readE2e = (root) => (existsSync(join(root, '.claude', 'METHOD.md')) ? readFileSync(join(root, '.claude', 'METHOD.md'), 'utf8').match(/^E2E=(\S+)/m)?.[1] : null);
-
-const render = (rel, text, { e2e, rulePaths }) => {
-  if (rel === '.claude/METHOD.md' && e2e) return text.replace(/^E2E=\S+/m, `E2E=${e2e}`);
-  const rule = rel.match(/^\.claude\/rules\/([\w-]+)\.md$/)?.[1];
-  if (rule && rulePaths?.[rule]) return text.replace(RULE_PATHS, `paths: ${JSON.stringify(rulePaths[rule])}`);
-  return text;
-};
 
 const FRONT = /"(react|react-dom|vue|svelte|@angular\/core|solid-js|preact|next|nuxt|vite|astro|lit)"\s*:/;
 const read = (path) => { try { return readFileSync(path, 'utf8'); } catch { return ''; } };
@@ -165,11 +162,34 @@ const putClaudeMd = (source, target) => {
   writeFileSync(path, re.test(current) ? current.replace(re, () => block) : `${current}${current && !current.endsWith('\n\n') ? '\n' : ''}${block}`);
 };
 
+// The repo's settings.json with the kit's hooks added: a hook entry the repo already has (same commands) is not repeated,
+// and every key the repo set stays. null when the repo's file is not JSON: it is left alone.
+const hookKey = (entry) => JSON.stringify((entry?.hooks ?? []).map((h) => h.command ?? h));
+const mergeSettings = (current, kit) => {
+  let mine;
+  let theirs;
+  try { mine = JSON.parse(current); theirs = JSON.parse(kit); } catch { return null; }
+  if (!mine || typeof mine !== 'object' || Array.isArray(mine)) return null;
+  const out = { ...mine };
+  for (const [k, v] of Object.entries(theirs)) {
+    if (k === 'hooks' || out[k] !== undefined) continue;
+    out[k] = v;
+  }
+  if (out.env && theirs.env) out.env = { ...theirs.env, ...out.env };
+  const hooks = { ...(mine.hooks ?? {}) };
+  for (const [event, entries] of Object.entries(theirs.hooks ?? {})) {
+    const have = hooks[event] ?? [];
+    hooks[event] = [...have, ...entries.filter((e) => !have.some((x) => hookKey(x) === hookKey(e)))];
+  }
+  if (Object.keys(hooks).length) out.hooks = hooks;
+  return `${JSON.stringify(out, null, 2)}\n`;
+};
+
 const ensureIgnored = (target) => {
   const path = join(target, '.gitignore');
   const line = '.claude/.kit-incoming/';
   const text = existsSync(path) ? readFileSync(path, 'utf8') : '';
-  if (!text.split('\n').includes(line)) appendFileSync(path, `${text && !text.endsWith('\n') ? '\n' : ''}${line}\n`);
+  if (!text.split(/\r?\n/).includes(line)) appendFileSync(path, `${text && !text.endsWith('\n') ? '\n' : ''}${line}\n`);
 };
 
 const commitOf = (source) => gitOut(source, 'rev-parse', 'HEAD').stdout?.trim() || 'unknown';
@@ -269,7 +289,7 @@ const main = async () => {
   const { decided } = result;
   if (o.adopt) { if (openCard(target, { named: true })) fail('There is a card open: adopt between cards.'); }
   else if (gitOut(target, 'rev-parse', '--git-dir').status !== 0 || gitOut(target, 'status', '--porcelain').stdout?.trim() !== '')
-    fail('The target must be a git repo with a clean tree (`git checkout` is the undo): commit or set aside what is pending.');
+    fail('The target must be a git repo with a clean tree (`git checkout .` and `git clean -fd` are the undo): commit or set aside what is pending.');
   const on = new Set(Object.keys(decided).filter((n) => decided[n].state === 'on'));
   const stack = o.stack ?? STACK_KEY[detectStack(readdirSync(target))?.name] ?? null;
   if (stack === 'react-shadcn' && !on.has('ui')) fail('The stack react-shadcn requires the module ui.');
@@ -292,24 +312,55 @@ const main = async () => {
   if (grade) manifest.grade = grade;
   const owner = (rel) => { const p = profileOfFile(map, rel, profiles); return p ? `profile:${p}` : (Object.keys(map.modules).find((n) => filesOfModule(map, n, [rel]).length) ?? 'core'); };
   const local = [];
-  for (const { rel, content } of files) {
-    const path = join(target, rel);
-    manifest.files[rel] = { module: owner(rel), sha256: sha(content) };
-    if (o.adopt && existsSync(path)) { if (sha(readFileSync(path)) !== sha(content)) local.push(rel); continue; }
-    mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, content);
+  // Everything that exists with other content is listed before anything is written: a repo that gitignores `.claude/`
+  // passes the clean-tree check and would lose those files with no undo.
+  if (!o.adopt && !o.force) {
+    const clash = files.filter(({ rel, content }) => rel !== SETTINGS && existsSync(join(target, rel)) && shaOf(readFileSync(join(target, rel)), rel) !== shaOf(content, rel)).map((f) => f.rel);
+    if (clash.length)
+      fail(`These files already exist here with other content (${clash.length}) and the install would replace them:\n${clash.map((r) => `  ${r}`).join('\n')}\nNothing was written. --adopt keeps them as they are, --force replaces them; ${SETTINGS} is never replaced, the kit's hooks are merged into it.`);
   }
-  putClaudeMd(source, target);
-  ensureIgnored(target);
-  if (chosenProfiles) {
-    manifest.profiles = {};
-    for (const [n, p] of Object.entries(map.profiles).filter(([, d]) => d.status !== 'planned')) {
-      if (!profiles.includes(n)) { manifest.profiles[n] = { state: 'off', reason: 'not chosen at install', by: 'person', at: today() }; continue; }
-      const mcp = mcpAdd(target, p.mcp);
-      manifest.profiles[n] = { state: 'on', since: `install ${today()}`, reason: 'chosen at install', ...(Object.keys(mcp).length ? { mcp } : {}) };
+  // Each file is recorded as it is written and the manifest is written even if one fails, so a retry resumes from there.
+  let current = null;
+  try {
+    for (const { rel, content } of files) {
+      current = rel;
+      const path = join(target, rel);
+      const exists = existsSync(path);
+      if (rel === SETTINGS && exists) {
+        const merged = mergeSettings(readFileSync(path, 'utf8'), content.toString('utf8'));
+        if (merged === null) local.push(rel);
+        else {
+          if (shaOf(merged, rel) !== shaOf(readFileSync(path), rel)) writeFileSync(path, merged);
+          manifest.files[rel] = { module: owner(rel), sha256: shaOf(merged, rel) };
+          continue;
+        }
+      }
+      if (o.adopt && exists) {
+        if (shaOf(readFileSync(path), rel) !== shaOf(content, rel) && !local.includes(rel)) local.push(rel);
+        manifest.files[rel] = { module: owner(rel), sha256: shaOf(content, rel) };
+        continue;
+      }
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, content);
+      manifest.files[rel] = { module: owner(rel), sha256: shaOf(content, rel) };
     }
+    current = 'CLAUDE.md';
+    putClaudeMd(source, target);
+    current = '.gitignore';
+    ensureIgnored(target);
+    if (chosenProfiles) {
+      manifest.profiles = {};
+      for (const [n, p] of Object.entries(map.profiles).filter(([, d]) => d.status !== 'planned')) {
+        if (!profiles.includes(n)) { manifest.profiles[n] = { state: 'off', reason: 'not chosen at install', by: 'person', at: today() }; continue; }
+        const mcp = mcpAdd(target, p.mcp);
+        manifest.profiles[n] = { state: 'on', since: `install ${today()}`, reason: 'chosen at install', ...(Object.keys(mcp).length ? { mcp } : {}) };
+      }
+    }
+  } catch (e) {
+    throw new Error(`could not write ${current}: ${e.message}. What was written is recorded in .claude/kit.json; fix it and resume with: node ${SELF} --target ${target} --update`);
+  } finally {
+    writeManifest(target, manifest);
   }
-  writeManifest(target, manifest);
   const off = Object.keys(decided).filter((n) => decided[n].state === 'off');
   console.log(`${o.adopt ? 'Adopted' : 'Installed'} kit ${map.kit} in ${target}: ${files.length} files; on: ${[...on].join(', ') || 'none'}; off: ${off.join(', ') || 'none'}; grade: ${recordedGrade(manifest) ?? 'production'}.`);
   if (local.length) console.log(`Local editions kept as they are (${local.length}): ${local.join(', ')}.`);
@@ -350,33 +401,52 @@ const update = (o, target, source, map) => {
   }
   const replaced = [];
   const incoming = [];
+  const removed = [];
+  // Each file is recorded as it is written and the manifest is written even if one fails (kit and source stay at the old
+  // version until the end), so the same update run again resumes.
+  let current = null;
+  try {
   for (const { rel, content } of files) {
+    current = rel;
     const path = join(target, rel);
     const recorded = manifest.files?.[rel]?.sha256;
-    const next = sha(content);
+    if (rel === SETTINGS && existsSync(path)) {
+      const merged = mergeSettings(readFileSync(path, 'utf8'), content.toString('utf8'));
+      if (merged !== null) {
+        if (shaOf(merged, rel) !== shaOf(readFileSync(path), rel)) { writeFileSync(path, merged); replaced.push(rel); }
+        state.files[rel] = { module: owner(rel), sha256: shaOf(merged, rel) };
+        continue;
+      }
+    }
+    const next = shaOf(content, rel);
     if (!existsSync(path)) { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, content); state.files[rel] = { module: owner(rel), sha256: next }; replaced.push(rel); continue; }
-    const now = sha(readFileSync(path));
+    const now = shaOf(readFileSync(path), rel);
     if (now === next) { state.files[rel] = { module: owner(rel), sha256: next }; continue; }
     if (recorded && now === recorded) { writeFileSync(path, content); state.files[rel] = { module: owner(rel), sha256: next }; replaced.push(rel); continue; }
     mkdirSync(dirname(join(target, '.claude', '.kit-incoming', rel.replace(/^\.claude\//, ''))), { recursive: true });
     writeFileSync(join(target, '.claude', '.kit-incoming', rel.replace(/^\.claude\//, '')), content);
     incoming.push(rel);
   }
-  const removed = [];
   for (const [rel, rec] of Object.entries(manifest.files ?? {}).filter(([r, x]) => !wanted.has(r) && state.modules[x.module]?.state !== 'off')) {
     const path = join(target, rel);
-    if (existsSync(path) && sha(readFileSync(path)) === rec.sha256) { rmSync(path); removed.push(rel); delete state.files[rel]; }
+    if (existsSync(path) && shaOf(readFileSync(path), rel) === rec.sha256) { rmSync(path); removed.push(rel); delete state.files[rel]; }
     // A record of a file the kit no longer places there, and that is not on disk, is only a stale line of the manifest.
     else if (!existsSync(path)) delete state.files[rel];
   }
   // A source of another version that changes nothing is not an update: it is a stale or wrong source.
   if (map.kit !== manifest.kit && !replaced.length && !removed.length)
     fail(`Nothing was updated: the source ${source} is kit ${map.kit} and the repo has kit ${manifest.kit}, yet no file changed. The source is stale or is not the kit to update from: pass it with --from <kit>.`);
+  current = 'CLAUDE.md';
+  putClaudeMd(source, target);
+  current = '.gitignore';
+  ensureIgnored(target);
   state.kit = map.kit;
   state.source = { path: source, commit: commitOf(source) };
-  putClaudeMd(source, target);
-  ensureIgnored(target);
-  writeManifest(target, state);
+  } catch (e) {
+    throw new Error(`could not write ${current}: ${e.message}. What was written is recorded in .claude/kit.json; fix it and run the same update again: node ${SELF} --target ${target} --update`);
+  } finally {
+    writeManifest(target, state);
+  }
   if (open) {
     const doc = join(open, 'card.md');
     const from = manifest.source?.commit ?? 'unknown';

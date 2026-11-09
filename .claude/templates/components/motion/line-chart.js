@@ -20,7 +20,7 @@
 // mounts this one; `update({ data })` is its counterpart of `setChart(el, values)`.
 //
 // mount(root, { data: [{ key, label, axisLabel, values: { [seriesKey]: number } }], series: [{ key, label, color,
-//   dashed, area }], label, unit, height (220), formatValue(value, series), formatTick(value), hiddenSeries,
+//   dashed, area }], label, unit, height (220, or 'fill': the height its box leaves, never under 220), formatValue(value, series), formatTick(value), hiddenSeries,
 //   onActiveChange(index, datum), loading, emptyLabel, legend, categoryLabel, curve: 'smooth' | 'linear', labels })
 //   → { destroy, update({ data, series }), setHidden(keys), setLoading(bool), active }
 import { reduced, locale, uid } from '../core.js';
@@ -115,7 +115,8 @@ export function mount(root, options = {}) {
   const formatTick = o.formatTick ?? ((v) => compact.format(v));
   const categoryLabel = o.categoryLabel ?? L.category;
   const emptyLabel = o.emptyLabel ?? L.empty;
-  const height = o.height;
+  const fills = o.height === 'fill';
+  let height = fills ? 220 : o.height;
   const uidv = uid('lc');
   const life = new AbortController();
 
@@ -136,8 +137,9 @@ export function mount(root, options = {}) {
   const dots = new Map();
 
   root.classList.add('lc');
+  root.toggleAttribute('data-fill', fills);
   root.setAttribute('aria-label', o.label);
-  root.innerHTML = `<div class="lc-legend" role="group" aria-label="${esc(`${o.label}`)}" hidden></div><div class="lc-chart"><div class="lc-plot" style="height:${height}px" role="slider" aria-orientation="horizontal"><svg class="lc-svg" width="100%" height="${height}" aria-hidden="true" focusable="false"><defs><clipPath id="${uidv}-draw" clipPathUnits="userSpaceOnUse"><rect x="-8" y="-16" width="0" height="${height + 32}"/></clipPath></defs><g class="lc-grid"></g><line class="lc-baseline" x1="0" x2="100%" y1="${height - 0.5}" y2="${height - 0.5}"/><line class="lc-crosshair" y1="${TOP - 4}" y2="${height}"/><g class="lc-series" clip-path="url(#${uidv}-draw)"></g><g class="lc-dots"></g></svg><div class="lc-tooltip" aria-hidden="true"></div><p class="lc-message" hidden></p></div><div class="lc-gutter" aria-hidden="true"></div><div class="lc-axis" aria-hidden="true"></div></div><p class="arc-sr" data-summary></p><div class="arc-sr" data-table></div><p class="arc-sr" aria-live="polite" aria-atomic="true" data-live></p>`;
+  root.innerHTML = `<div class="lc-legend" role="group" aria-label="${esc(`${o.label}`)}" hidden></div><div class="lc-chart"><div class="lc-plot" style="${fills ? `min-height:${height}px` : `height:${height}px`}" role="slider" aria-orientation="horizontal"><svg class="lc-svg" width="100%" height="${height}" aria-hidden="true" focusable="false"><defs><clipPath id="${uidv}-draw" clipPathUnits="userSpaceOnUse"><rect x="-8" y="-16" width="0" height="${height + 32}"/></clipPath></defs><g class="lc-grid"></g><line class="lc-baseline" x1="0" x2="100%" y1="${height - 0.5}" y2="${height - 0.5}"/><line class="lc-crosshair" y1="${TOP - 4}" y2="${height}"/><g class="lc-series" clip-path="url(#${uidv}-draw)"></g><g class="lc-dots"></g></svg><div class="lc-tooltip" aria-hidden="true"></div><p class="lc-message" hidden></p></div><div class="lc-gutter" aria-hidden="true"></div><div class="lc-axis" aria-hidden="true"></div></div><p class="arc-sr" data-summary></p><div class="arc-sr" data-table></div><p class="arc-sr" aria-live="polite" aria-atomic="true" data-live></p>`;
   const legendEl = root.querySelector('.lc-legend');
   const chart = root.querySelector('.lc-chart');
   const plot = root.querySelector('.lc-plot');
@@ -429,6 +431,15 @@ export function mount(root, options = {}) {
   // ── Measure ──
   const measure = () => {
     plotWidth = plot.clientWidth;
+    if (fills && plot.clientHeight && plot.clientHeight !== height) {
+      height = plot.clientHeight;
+      svg.setAttribute('height', height);
+      clip.setAttribute('height', height + 32);
+      const baseline = root.querySelector('.lc-baseline');
+      baseline.setAttribute('y1', height - 0.5);
+      baseline.setAttribute('y2', height - 0.5);
+      crosshair.setAttribute('y2', height);
+    }
     tipSize = { w: tooltip.offsetWidth, h: tooltip.offsetHeight };
     syncAxis(false);
     paint();

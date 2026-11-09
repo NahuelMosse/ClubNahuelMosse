@@ -4,7 +4,7 @@ Screens in the browser. The base method does not name a browser; this profile br
 
 ## What it brings
 - Modules: `ui` (and `i18n` when its signal appears).
-- Tools: `probe`, `app.mjs probe`, `asset-pipeline.py`, `motion-audit`, `motion-curves`, `overflow`, axe.
+- Tools: `probe`, `app.mjs probe`, `asset-audit.py` (the measure of the set: sharpness, warmth), `motion-audit`, `motion-curves`, `overflow`, axe.
 - Agents: `designer`, `design-critic`.
 - References and rules: `design-refs.md`, `assets.md`, `responsive-classes.md`, `design.md`, `interface.md`, `showcase.md`, `motion-benchmark.md`, `modern-interface.md`, `ui-patterns.md`, `components.md`, `component-techniques.md`, `accessibility.md`.
 - Stacks: `react-shadcn`, `node-ts`.

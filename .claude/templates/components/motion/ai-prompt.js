@@ -4,7 +4,7 @@
 // mount(el, opts) -> { destroy, setValue }. Auto-mounts on [data-motion="ai-prompt"].
 //   opts: types (list of names), defaultType, placeholder, headerText, headerAction, minHeight, maxHeight.
 // Event on the root: aiprompt:submit ({ value, type, file }). Enter sends, Shift+Enter adds a line.
-import { reduced, uid, escapeHtml, place } from '../core.js';
+import { reduced, uid, escapeHtml, place, cascade } from '../core.js';
 
 const EASE = 'cubic-bezier(0.23, 1, 0.32, 1)';
 const mounted = new WeakMap();
@@ -108,6 +108,7 @@ export const mount = (el, opts = {}) => {
     place(menu, model, { align: 'start', gap: 4 });
     if (reduced()) play(menu, [{ opacity: 0 }, { opacity: 1 }], { duration: 120 });
     else play(menu, [{ opacity: 0, transform: 'translateY(var(--_sy, -4px)) scale(0.95)' }, { opacity: 1, transform: 'none' }], { duration: 150, easing: EASE });
+    cascade(menu);
     if (focusSelected) (optNodes.find((n) => n.getAttribute('aria-checked') === 'true') ?? optNodes[0]).focus();
   };
   const closeMenu = (returnFocus) => {

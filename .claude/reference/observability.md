@@ -70,7 +70,7 @@ The rules outside this table are judgment or guidance, with no criterion of thei
 
 **OBS-LOG-01** — Every log is structured (JSON, one object per line) and goes to stdout; the app does not rotate or ship files. · How C · criterion O5 · Check: `rg -n "createWriteStream|winston\.transports\.File|appendFile.*\.log" src/` is empty; one output line parses with `JSON.parse`; node-ts `pino({ base: {...} })` with the default destination; OTel: export over OTLP or let the collector read stdout · Source B33, B34, B36.
 
-**OBS-LOG-02** — Every log carries the minimum fields of the log schema in `templates/system-design.md` (UTC timestamp, level, service, version, environment, trace/span, tenant/pseudonymized user, event with a stable name, readable message). · How T · criterion O5 · Check: a test captures a line emitted inside a request and validates the schema (Zod/JSON Schema); OTel resource (`service.*`, `deployment.environment.name`) plus LogRecord (`TraceId`, `SpanId`, `SeverityNumber`, `EventName`, `Body`) · Source B22, B23, B27, B28, B36.
+**OBS-LOG-02** — Every log carries the minimum fields of the log schema in `templates/system-design.md` (UTC timestamp, level, service, version, environment, trace/span, tenant (if multi-tenant)/pseudonymized user, event with a stable name, readable message). · How T · criterion O5 · Check: a test captures a line emitted inside a request and validates the schema (Zod/JSON Schema); OTel resource (`service.*`, `deployment.environment.name`) plus LogRecord (`TraceId`, `SpanId`, `SeverityNumber`, `EventName`, `Body`) · Source B22, B23, B27, B28, B36.
 
 **OBS-LOG-03** — Timestamps in UTC, ISO 8601 with an explicit offset (`Z`); never local time nor an epoch with no unit. · How C+T · criterion O5 · Check: `rg -n "toLocaleString|toLocaleTimeString" src/**/log*`; a test checks `/Z$/` on `time`; node-ts `pino({ timestamp: pino.stdTimeFunctions.isoTime })` · Source B27, B28, B36.
 
@@ -194,7 +194,7 @@ The layout of a service dashboard, from top to bottom (what is above the line fi
 
 **OBS-SUP-07** — A written escalation matrix: severity × support level → who, through which channel, in how long and which data package is passed. · How J · criterion W5 · Check: `docs/support/escalation.md` exists with the table of `templates/runbook.md` (module infra) · Source B5, B8, B35, B37, B38.
 
-**OBS-SUP-08** — On escalating, the ticket carries the minimum package: error ref or trace-id, tenant, UTC time, what the customer expected, what happened, steps to reproduce. · How J · criterion none · Check: a ticket template with those fields required · Source B6.
+**OBS-SUP-08** — On escalating, the ticket carries the minimum package: error ref or trace-id, tenant (if multi-tenant), UTC time, what the customer expected, what happened, steps to reproduce. · How J · criterion none · Check: a ticket template with those fields required · Source B6.
 
 **OBS-SUP-09** — Declare an incident if the customer sees it, another team is needed or it is still unresolved after an hour; on declaring, roles and a living document. · How J · criterion none · Check: a written procedure with those criteria · Source B8.
 
@@ -267,7 +267,7 @@ What the user sees: “We could not process the payment. Try again in a few minu
 | Error code | `<DOMAIN>-<NNN>` stable, from the catalog (`PAY-002`) | N1 support knows what to say without searching anything |
 | Reference | 8 Crockford Base32 characters (no I, L, O, U) in two groups of 4: `7K3F-9QX2` (40 random bits) | Unique per occurrence; dictated by phone without ambiguity; searched in the logs as `error.ref` |
 
-It is generated in the edge error handler, once per failed request, and logged in the same line as `trace_id`, `error.code`, tenant and `user.hash`. It contains no user data and is not derivable from it (B21). It is not the trace-id (32 hex characters are not dictated); the log joins them. In APIs: RFC 9457 with `instance: "urn:ref:7K3F-9QX2"` and the extensions `code`, `ref` (B42). The support search is bounded by date: 40 bits make collisions within the retention irrelevant, and if one happens, the date and the tenant disambiguate.
+It is generated in the edge error handler, once per failed request, and logged in the same line as `trace_id`, `error.code`, tenant (if multi-tenant) and `user.hash`. It contains no user data and is not derivable from it (B21). It is not the trace-id (32 hex characters are not dictated); the log joins them. In APIs: RFC 9457 with `instance: "urn:ref:7K3F-9QX2"` and the extensions `code`, `ref` (B42). The support search is bounded by date: 40 bits make collisions within the retention irrelevant, and if one happens, the date and the tenant disambiguate.
 
 ```ts
 const ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'; // Crockford

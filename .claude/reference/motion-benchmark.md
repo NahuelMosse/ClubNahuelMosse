@@ -1,6 +1,6 @@
 # Motion measured on the reference products
 
-`motion-audit.mjs --measure` over their public pages, 06/10/2026, Chromium at 1280 × 900, the first
+A calibration of five marketing sites, not universal product values. `motion-audit.mjs --measure` over their public pages, 06/10/2026, Chromium at 1280 × 900, the first
 30 interactive elements of each page. What a public page shows is the marketing site, not the
 product behind the login: these numbers calibrate hover, press and focus; the overlays (menus,
 dialogs, toasts) come from the documented systems (Carbon, Atlassian, NN/g) and from the vendored
