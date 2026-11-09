@@ -1,0 +1,12 @@
+# Images and fonts are binary: git does not open them to diff or search them (`git log -G` over the history stays fast).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.pdf binary
