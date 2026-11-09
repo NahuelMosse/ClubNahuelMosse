@@ -14,7 +14,7 @@ not_read: ninguno: no hay Jira ni adjuntos
 
 ## Tasks
 
-- T1 · S1,S2,DOC-10-ASM-01,DOC-10-ASM-02 · docs/technical/navegacion-de-la-app.md, docs/technical/integraciones.md, apps/api/tests/unit/test_documentacion_del_modelo.py, apps/api/tests/unit/test_rutas_documentadas.py, apps/api/tests/unit/test_readme_conciso.py, apps/api/tests/unit/test_docs_follow_the_app.py · tests: apps/api/tests/unit/test_docs_follow_the_app.py "the documentation tests pass without deselecting any @DOC-10-S1 @assumption:DOC-10-ASM-02"; apps/api/tests/unit/test_docs_follow_the_app.py "every app file the navigation and integrations pages cite exists @DOC-10-S2 @assumption:DOC-10-ASM-01"
+- T1 · S1,S2,DOC-10-ASM-01,DOC-10-ASM-02 · docs/technical/navegacion-de-la-app.md (presentation), docs/technical/integraciones.md (presentation), apps/api/tests/unit/test_documentacion_del_modelo.py, apps/api/tests/unit/test_rutas_documentadas.py, apps/api/tests/unit/test_readme_conciso.py, apps/api/tests/unit/test_docs_follow_the_app.py · tests: apps/api/tests/unit/test_docs_follow_the_app.py "the documentation tests pass without deselecting any @DOC-10-S1 @assumption:DOC-10-ASM-02"; apps/api/tests/unit/test_docs_follow_the_app.py "every app file the navigation and integrations pages cite exists @DOC-10-S2 @assumption:DOC-10-ASM-01"
 
 ## Changes to existing behavior
 
