@@ -42,7 +42,7 @@ not_read:
   reuses: apps/mobile/test/soporte/montar.dart cargarFuentes y los montajes de los archivos de capturas existentes (test/capturas/*_capturas.dart)
 - T7 · S1,S2,S3,S4 · apps/api/tests/** , apps/mobile/test/navegacion_documentada_test.dart, apps/mobile/test/sin_sobreingenieria_test.dart · los tests de documentación que leen encabezados, frases, nombres de archivo o la carpeta `sitio-docs` siguen la traducción y el renombre (refactor-tests)
   new: no escribe lógica de producción
-- T8 · S3 · design/line.md (presentation), design/tokens.css (presentation), design/components/** (presentation), docs-site/src/css/custom.css (presentation), docs-site/src/components/Swagger.js (presentation), docs-site/scripts/copy-docs.mjs (presentation), docs-site/docusaurus.config.js (presentation), docs-site/tests/design-line.test.mjs · el sitio movido sigue la línea de diseño del proyecto (la de la app): tokens en `design/tokens.css`, el set de `design/components/` para lo que el sitio agrega, motion de hover, press, foco y entrada con su reduced-motion · tests: docs-site/tests/design-line.test.mjs "the docs site takes its colors, space and motion from design/tokens.css @ENG-21-S3"
+- T8 · S3 · design/line.md (presentation), design/tokens.css (presentation), design/components/primitives.css (presentation), design/components/components.css (presentation), design/components/fonts/InterVariable.woff2 (presentation), design/components/fonts/OFL.txt (presentation), docs-site/src/css/custom.css (presentation), docs-site/src/components/Swagger.js (presentation), docs-site/scripts/copy-docs.mjs (presentation), docs-site/docusaurus.config.js (presentation), specs/ENG-21-docs-en-ingles/probe-docs.json, docs-site/tests/design-line.test.mjs · el sitio movido sigue la línea de diseño del proyecto (la de la app): tokens en `design/tokens.css`, el set de `design/components/` para lo que el sitio agrega, motion de hover, press, foco y entrada con su reduced-motion · tests: docs-site/tests/design-line.test.mjs "the docs site takes its colors, space and motion from design/tokens.css @ENG-21-S3"
   reuses: la paleta de `apps/mobile/lib/theme/tokens.dart` y el set de `.claude/templates/components/`
 
 ## Changes to existing behavior
@@ -54,12 +54,13 @@ not_read:
 ## Gate
 
 ```
-suite [timeout 30 min]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider -rf tests/unit tests/escenarios/test_documentacion_vigente.py tests/escenarios/test_documentacion_supuestos_vigente.py tests/escenarios/test_requisitos_no_funcionales.py tests/escenarios/test_requisitos_no_funcionales_readme_app.py tests/escenarios/test_readme_app_configuracion.py
+suite [timeout 30 min]: sh D:/Temp/w/herramientas/ci01-pytest.sh -q -p no:cacheprovider -rf tests/unit tests/escenarios/test_documentacion_vigente.py tests/escenarios/test_documentacion_supuestos_vigente.py tests/escenarios/test_requisitos_no_funcionales.py tests/escenarios/test_requisitos_no_funcionales_readme_app.py tests/escenarios/test_readme_app_configuracion.py
 node: node --test --test-force-exit tests/*.test.mjs docs-site/tests/*.test.mjs
 flutter: sh -c "cd apps/mobile && /d/projects/flutter/bin/flutter test test/navegacion_documentada_test.dart test/sin_sobreingenieria_test.dart test/capturas/readme_screenshots.dart"
 lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh apps/api
 app: sh D:/Temp/w/herramientas/ci01-app.sh eng21_app
-attacks: sh D:/Temp/w/herramientas/ci01-attacks.sh eng21_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
+attacks: sh D:/Temp/w/herramientas/ci01-attacks.sh eng21_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --item-path "/bookings/all/{id}" --openapi apps/api/openapi.json
+probe docs [timeout 10 min]: sh D:/Temp/w/herramientas/eng21-docs-probe.sh specs/ENG-21-docs-en-ingles/probe-docs.json --widths 390,1280 --contrast "article p,.menu__link--active,.navbar__title"
 refactor-tests: los tests de documentación que leen un encabezado, una frase, un nombre de archivo o la carpeta del sitio siguen la traducción a inglés y el renombre (`sitio-docs` → `docs-site`, cada página a su nombre en inglés, `docs/capturas/*.jpg` → `docs/screenshots/*.png`); lo que verifican no cambia
 no-visual: la card no toca ninguna pantalla de la app; el archivo de capturas es un test
 no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
