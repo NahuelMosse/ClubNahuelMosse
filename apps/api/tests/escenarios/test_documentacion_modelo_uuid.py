@@ -62,5 +62,5 @@ def test_la_seccion_de_datos_del_diseno_remite_al_modelo_de_datos() -> None:
     """la sección Data del diseño de sistema remite al modelo de datos @REV-07-S8"""
     datos = _seccion(_texto(DISENO), "Data")
 
-    assert "modelo-de-datos.md" in datos
-    assert "nueve tablas" in datos
+    assert "data-model.md" in datos
+    assert "nine tables" in datos

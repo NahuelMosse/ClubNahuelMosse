@@ -18,6 +18,8 @@ import 'package:http/testing.dart';
 import 'package:clubnahuelmosse/features/session/domain/profile.dart';
 import 'package:clubnahuelmosse/features/session/domain/role.dart';
 import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
+import 'package:clubnahuelmosse/common/pending_booking.dart';
+import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
 import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
@@ -268,3 +270,16 @@ class SesionFalsa extends Session {
     notifyListeners();
   }
 }
+
+/// The login screen whose credentials are always rejected: the screen as a person first sees it.
+Widget loginRejectingCredentials() => LoginScreen(
+  pending: PendingBooking(),
+  session: Session(
+    repository: SessionRepository(
+      credentials: CredencialesFalsas(
+        alIngresar: (_, _) async => throw const InvalidCredentials(),
+      ),
+      api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
+    ),
+  ),
+);

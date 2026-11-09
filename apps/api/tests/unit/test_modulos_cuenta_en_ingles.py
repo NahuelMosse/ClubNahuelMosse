@@ -148,7 +148,7 @@ def test_cada_operacion_conserva_sus_parametros_y_su_security() -> None:
 def test_ningun_documento_nombra_sedes_usuarios_sesion_ni_recuperacion_como_modulo() -> None:
     """ningún documento nombra sedes, usuarios, sesion ni recuperacion como módulo @assumption:ENG-02-ASM-08"""
     documentos = [
-        RAIZ / "docs" / "technical" / "mapa-del-codigo.md",
+        RAIZ / "docs" / "technical" / "code-map.md",
         RAIZ_API / "README.md",
         *(RAIZ / "docs" / "features").glob("*.md"),
     ]

@@ -22,7 +22,7 @@ def _codigo(archivos: list[Path]) -> dict[str, str]:
 
 def test_el_mapa_del_codigo_sigue_al_dia() -> None:
     """el mapa del código sigue al día @ARQ-02-S3"""
-    mapa = (RAIZ / "docs" / "technical" / "mapa-del-codigo.md").read_text(encoding="utf-8")
+    mapa = (RAIZ / "docs" / "technical" / "code-map.md").read_text(encoding="utf-8")
 
     assert "`http_errors.py`" in mapa
 

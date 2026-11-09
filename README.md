@@ -1,54 +1,54 @@
-<p align="center"><img src="docs/logo.png" width="96" alt="Logo de ClubNahuelMosse"></p>
+<p align="center"><img src="docs/logo.png" width="96" alt="ClubNahuelMosse logo"></p>
 
 <h1 align="center">ClubNahuelMosse</h1>
 
-<p align="center"><strong>Reservá la cancha en tres pasos, sin llamar ni escribir al club.</strong><br>
-App móvil para reservar espacios deportivos, ver su disponibilidad y recibir avisos. Electiva General, Universidad de Morón.</p>
+<p align="center"><strong>Book a court in three steps, without calling or writing to the club.</strong><br>
+Mobile app to book sports spaces, see their availability and get notifications. Electiva General, Universidad de Morón.</p>
 
 <p align="center">
-  <img src="docs/capturas/01-login.jpg" width="200" alt="Inicio de sesión">
-  <img src="docs/capturas/03-sedes.jpg" width="200" alt="Sedes">
-  <img src="docs/capturas/05-horarios.jpg" width="200" alt="Horarios disponibles">
-  <img src="docs/capturas/07-listo.jpg" width="200" alt="Reserva confirmada">
+  <img src="docs/screenshots/01-login.png" width="200" alt="Sign in">
+  <img src="docs/screenshots/03-venues.png" width="200" alt="Venues">
+  <img src="docs/screenshots/05-availability.png" width="200" alt="Available times">
+  <img src="docs/screenshots/07-done.png" width="200" alt="Booking confirmed">
 </p>
 
-## Qué hace
+## What it does
 
-- **Reservar en tres pasos:** sede, cancha y horario libre.
-- **Mis reservas:** próximas e historial, con modificar y cancelar.
-- **Avisos por push y por correo:** recordatorio una hora antes y aviso de cancelación.
-- **Modo claro y oscuro.**
-- **Panel de administración** para que el club gestione las reservas.
-- **Recuperación de contraseña por correo.**
+- **Book in three steps:** venue, court and free time slot.
+- **My bookings:** upcoming and history, with edit and cancel.
+- **Push and email notifications:** a reminder one hour before and a cancellation notice.
+- **Light and dark mode.**
+- **Admin panel** so the club manages the bookings.
+- **Password recovery by email.**
 
-## Con qué está hecha
+## What it is built with
 
-| Parte | Tecnología |
+| Part | Technology |
 |---|---|
-| App móvil (`apps/mobile`) | Flutter, sólo Android |
-| API REST (`apps/api`) | FastAPI y SQLAlchemy, con PostgreSQL |
-| Cuentas y avisos push | Firebase Authentication y Cloud Messaging |
-| Correo | Brevo |
-| Despliegue (`render.yaml`) | Render |
+| Mobile app (`apps/mobile`) | Flutter, Android only |
+| REST API (`apps/api`) | FastAPI and SQLAlchemy, with PostgreSQL |
+| Accounts and push notifications | Firebase Authentication and Cloud Messaging |
+| Email | Brevo |
+| Deployment (`render.yaml`) | Render |
 
-Cada servicio externo está en [Integraciones](docs/technical/integraciones.md).
+Each external service is described in [Integrations](docs/technical/integrations.md).
 
-## Cómo correrla
+## How to run it
 
-Cada parte se configura, ejecuta y despliega con su README: [`apps/api/README.md`](apps/api/README.md) y
+Each part is configured, run and deployed with its own README: [`apps/api/README.md`](apps/api/README.md) and
 [`apps/mobile/README.md`](apps/mobile/README.md).
 
 ```sh
-npm ci && npm run emuladores   # emulador de Firebase Auth
-sh scripts/test.sh             # chequeos y pruebas de la API y la app
-cd sitio-docs && npm install && npm run build   # sitio de documentación (Docusaurus)
+npm ci && npm run emuladores   # Firebase Auth emulator
+sh scripts/test.sh             # checks and tests of the API and the app
+cd docs-site && npm install && npm run build   # documentation site (Docusaurus)
 ```
 
-## Documentación
+## Documentation
 
-- [Guía básica](docs/guia-basica.md): si nunca viste el repo, empezá por acá.
-- [Arquitectura](docs/technical/arquitectura.md) y [mapa del código](docs/technical/mapa-del-codigo.md).
-- [Diseño del sistema](docs/technical/system-design.md) y [runbook](docs/technical/runbook.md).
-- [Decisiones de arquitectura](docs/adr) y [costo de la infraestructura](docs/technical/infra-cost.md).
-- [Accesibilidad](docs/business/accessibility.md) y [matriz de seguridad ASVS](specs/asvs.md).
-- [Supuestos de la documentación](docs/supuestos-de-la-documentacion.md) y estado de la revisión.
+- [Getting started](docs/getting-started.md): if you have never seen the repo, start here.
+- [Architecture](docs/technical/architecture.md) and [code map](docs/technical/code-map.md).
+- [System design](docs/technical/system-design.md) and [runbook](docs/technical/runbook.md).
+- [Architecture decisions](docs/adr) and [infrastructure cost](docs/technical/infra-cost.md).
+- [Accessibility](docs/business/accessibility.md) and [ASVS security matrix](specs/asvs.md).
+- [Documentation assumptions](docs/documentation-assumptions.md) and review status.

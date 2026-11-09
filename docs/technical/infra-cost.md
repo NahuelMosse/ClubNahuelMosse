@@ -1,61 +1,61 @@
-# Costo de la infraestructura · ClubNahuelMosse
+# Infrastructure cost · ClubNahuelMosse
 
-Describe la rama `kit-3`. Modelo de costos de la API y su base. Hoy todo corre en los planes `free` de Render y cuesta USD 0 por mes; el modelo
-dice cuánto costaría sostener la app en producción con los planes pagos más chicos y qué pasaría con diez veces el
-volumen. La arquitectura actual está en `docs/technical/system-design.md` (`## Infrastructure`); el hosting, en
-`docs/adr/0002-hosting-en-render.md`. Se actualiza en cada card que toca la infraestructura.
+Describes the `kit-3` branch. Cost model of the API and its database. Today everything runs on the Render `free` plans and costs USD 0 per month; the model
+says how much it would cost to sustain the app in production with the smallest paid plans and what would happen with ten times the
+volume. The current architecture is in `docs/technical/system-design.md` (`## Infrastructure`); the hosting, in
+`docs/adr/0002-hosting-on-render.md`. It is updated in every card that touches the infrastructure.
 
-Los precios de Render salen de https://render.com/pricing.md, consultado el 2026-10-20. Lo que esa página no dice, o que
-no se consultó, figura como `not verified`.
+The Render prices come from https://render.com/pricing.md, consulted on 2026-10-20. What that page does not say, or what
+was not consulted, is marked `not verified`.
 
 ## Volume assumptions
 
-Nada de esto está medido: la app no se desplegó en Render (`docs/technical/system-design.md`, `## Infrastructure`) y no hay
-métricas de uso. Son supuestos de esta card (REV-07-ASM-01), y los objetivos de capacidad son los de
-`## Performance and capacity budget` del diseño del sistema.
+None of this is measured: the app was not deployed on Render (`docs/technical/system-design.md`, `## Infrastructure`) and there are no
+usage metrics. They are assumptions of this card (REV-07-ASM-01), and the capacity targets are those of
+`## Performance and capacity budget` of the system design.
 
 | Assumption | Today | Growth per month | Source |
 |---|---|---|---|
-| Active users | sin uso real: `not verified` | no estimado | REV-07-ASM-01; objetivo de 20 personas con sesión a la vez (`system-design.md`, presupuesto de capacidad) |
-| Orders (reservas) per day | sin uso real: `not verified` | no estimado | REV-07-ASM-01 |
-| Stored data (GB) | por debajo de 1 GB, supuesto: el techo de capacidad es de 100 000 reservas | no estimado | REV-07-ASM-01; el tamaño en disco no se midió (`not verified`) |
-| Outbound traffic (GB per month) | `not verified`: no se midió | no estimado | REV-07-ASM-01 |
-| Logs, metrics and traces ingested (GB per month) | 0: no hay observabilidad de producción, sólo el log de texto de la API (`system-design.md`, `## Observability`) | no aplica | revisión, hallazgo 15 |
+| Active users | no real use: `not verified` | not estimated | REV-07-ASM-01; target of 20 people with a session at the same time (`system-design.md`, capacity budget) |
+| Orders (bookings) per day | no real use: `not verified` | not estimated | REV-07-ASM-01 |
+| Stored data (GB) | below 1 GB, assumption: the capacity ceiling is 100 000 bookings | not estimated | REV-07-ASM-01; the size on disk was not measured (`not verified`) |
+| Outbound traffic (GB per month) | `not verified`: not measured | not estimated | REV-07-ASM-01 |
+| Logs, metrics and traces ingested (GB per month) | 0: there is no production observability, only the text log of the API (`system-design.md`, `## Observability`) | not applicable | review, finding 15 |
 
-A 10x se toma diez veces el objetivo de capacidad: 200 personas con sesión a la vez y 50 pedidos simultáneos. Con el pool
-de 15 conexiones de la API (`system-design.md`, `## Infrastructure`) ese volumen no entra en una sola instancia sin
-cambiar la configuración: es una estimación, no una medición.
+At 10x, ten times the capacity target is taken: 200 people with a session at the same time and 50 simultaneous requests. With the API's pool
+of 15 connections (`system-design.md`, `## Infrastructure`) that volume does not fit in a single instance without
+changing the configuration: it is an estimate, not a measurement.
 
 ## Cost per component
 
 | Component | Provider | Plan | Public price | URL | Date checked | Cost today | Cost at 10x |
 |---|---|---|---|---|---|---|---|
-| Compute: web service de la API | Render | `free` (`render.yaml:7`) | free: USD 0. Alternativas: `0.5c-512mb` USD 7/mes; `1c-2g` USD 25/mes | https://render.com/pricing.md | checked: 2026-10-20 | USD 0 | USD 25/mes (`1c-2g`), supuesto: la instancia chica no alcanza para 200 personas; no se midió |
-| Database: Postgres gestionado | Render | `free` (`render.yaml:47`) | free: USD 0 y vence a los 30 días con 14 de gracia. Alternativas: `0.1c-256mb` USD 6/mes; `0.5c-1g` USD 19/mes | https://render.com/pricing.md | checked: 2026-10-20 | USD 0 | USD 19/mes (`0.5c-1g`) |
-| Storage and backups | Render | almacenamiento de la base | USD 0,30 por GB al mes, 1 GB incluido. Backups lógicos en instancias pagas y recuperación a un punto en el tiempo de 3 días (Hobby) o 7 (Pro). La página no dice si la base free tiene backups | https://render.com/pricing.md | checked: 2026-10-20 | USD 0: la base free está sin backups (revisión, hallazgo 4) | USD 0 si la base sigue por debajo de 1 GB (supuesto); USD 0,30 por cada GB de más |
-| Network and CDN | Render | ancho de banda incluido en el plan | `not verified`: no se leyó el precio del tráfico de salida | https://render.com/pricing.md | checked: 2026-10-20 | USD 0 | `not verified` |
-| Observability: ingest and retention of logs, metrics and traces | ninguno | no hay observabilidad de producción | no aplica | no aplica | checked: 2026-10-20 | USD 0 | `not verified`: sin proveedor elegido; lo decide REV-02 |
-| Third-party services (mail, push) | Firebase (Authentication y Cloud Messaging) y un servidor SMTP | planes de la cuenta de Firebase y de la cuenta de correo | `not verified`: no se consultaron los precios de Firebase ni del proveedor de correo | no consultada | no consultada | `not verified` | `not verified` |
+| Compute: API web service | Render | `free` (`render.yaml:7`) | free: USD 0. Alternatives: `0.5c-512mb` USD 7/month; `1c-2g` USD 25/month | https://render.com/pricing.md | checked: 2026-10-20 | USD 0 | USD 25/month (`1c-2g`), assumption: the small instance is not enough for 200 people; not measured |
+| Database: managed Postgres | Render | `free` (`render.yaml:47`) | free: USD 0 and expires after 30 days with 14 of grace. Alternatives: `0.1c-256mb` USD 6/month; `0.5c-1g` USD 19/month | https://render.com/pricing.md | checked: 2026-10-20 | USD 0 | USD 19/month (`0.5c-1g`) |
+| Storage and backups | Render | database storage | USD 0.30 per GB per month, 1 GB included. Logical backups on paid instances and point-in-time recovery of 3 days (Hobby) or 7 (Pro). The page does not say whether the free database has backups | https://render.com/pricing.md | checked: 2026-10-20 | USD 0: the free database has no backups (review, finding 4) | USD 0 if the database stays below 1 GB (assumption); USD 0.30 for each extra GB |
+| Network and CDN | Render | bandwidth included in the plan | `not verified`: the price of outbound traffic was not read | https://render.com/pricing.md | checked: 2026-10-20 | USD 0 | `not verified` |
+| Observability: ingest and retention of logs, metrics and traces | none | there is no production observability | not applicable | not applicable | checked: 2026-10-20 | USD 0 | `not verified`: no provider chosen; REV-02 decides it |
+| Third-party services (mail, push) | Firebase (Authentication and Cloud Messaging) and an SMTP server | plans of the Firebase account and of the mail account | `not verified`: the prices of Firebase and of the mail provider were not consulted | not consulted | not consulted | `not verified` | `not verified` |
 
-Alternativa para el barrido de recordatorios (hallazgo 3 de la revisión: hoy corre dentro del proceso web, que el plan
-free duerme): un cron de Render a USD 0,00016 por minuto, cada minuto, son 43 200 minutos al mes, unos USD 6,91 por mes.
-Es un cálculo sobre el precio por minuto; el cobro mínimo por ejecución `not verified`. No hay una decisión tomada.
+Alternative for the reminder sweep (finding 3 of the review: today it runs inside the web process, which the free
+plan puts to sleep): a Render cron at USD 0.00016 per minute, every minute, is 43 200 minutes per month, about USD 6.91 per month.
+It is a calculation on the price per minute; the minimum charge per execution is `not verified`. No decision has been made.
 
 ## Totals
 
-Los totales suman sólo los precios verificados: Render web y base. Firebase y el correo quedan afuera (`not verified`).
+The totals add only the verified prices: Render web and database. Firebase and mail are left out (`not verified`).
 
 | | Per month | Per year |
 |---|---|---|
-| Today (planes free) | USD 0 | USD 0 |
-| Producción con los planes pagos más chicos (`0.5c-512mb` USD 7 más `0.1c-256mb` USD 6) | USD 13 | USD 156 |
-| At 10x (`1c-2g` USD 25 más `0.5c-1g` USD 19) | USD 44 | USD 528 |
+| Today (free plans) | USD 0 | USD 0 |
+| Production with the smallest paid plans (`0.5c-512mb` USD 7 plus `0.1c-256mb` USD 6) | USD 13 | USD 156 |
+| At 10x (`1c-2g` USD 25 plus `0.5c-1g` USD 19) | USD 44 | USD 528 |
 
 ## What breaks first
 
-Antes que el costo se agota lo que da el plan free, no el presupuesto: la base free vence a los 30 días y se borra 14 días
-después, sin backups ni vuelta atrás de datos (revisión, hallazgo 4), y el servicio se duerme a los 15 minutos sin tráfico
-(`apps/api/README.md`, «Límites del plan free»). Para operar de verdad hay que pasar la base a un plan pago, USD 6 por mes
-como mínimo, y el web service a uno que no se duerma, USD 7 por mes como mínimo. Con diez veces el volumen lo que crece más
-rápido es la base (USD 19 por mes y USD 0,30 por GB), y el límite que se alcanza antes es el pool de 15 conexiones por
-instancia, no el precio.
+What the free plan gives runs out before the budget does: the free database expires after 30 days and is deleted 14 days
+later, with no backups or data rollback (review, finding 4), and the service goes to sleep after 15 minutes without traffic
+(`apps/api/README.md`, "Free plan limits"). To operate for real the database has to move to a paid plan, USD 6 per month
+at least, and the web service to one that does not sleep, USD 7 per month at least. With ten times the volume the fastest-growing
+item is the database (USD 19 per month and USD 0.30 per GB), and the limit reached first is the pool of 15 connections per
+instance, not the price.

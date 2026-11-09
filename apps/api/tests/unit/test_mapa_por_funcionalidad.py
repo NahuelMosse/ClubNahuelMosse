@@ -3,15 +3,15 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
 MODULOS = RAIZ / "apps" / "api" / "app" / "modules"
-MAPA = RAIZ / "docs" / "technical" / "mapa-del-codigo.md"
+MAPA = RAIZ / "docs" / "technical" / "code-map.md"
 
 
 def _filas() -> dict[str, set[str]]:
     texto = MAPA.read_text(encoding="utf-8")
-    seccion = texto.split("### Por funcionalidad", 1)[1].split("\n#", 1)[0]
+    seccion = texto.split("### By feature", 1)[1].split("\n#", 1)[0]
     filas: dict[str, set[str]] = {}
     for linea in seccion.splitlines():
-        if not linea.startswith("| ") or linea.startswith("| Funcionalidad"):
+        if not linea.startswith("| ") or linea.startswith("| Feature"):
             continue
         nombre, *celdas = [c.strip() for c in linea.strip("|").split("|")]
         filas[nombre.strip("`")] = set(re.findall(r"`([\w.]+\.py)`", " ".join(celdas)))

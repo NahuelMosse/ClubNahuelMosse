@@ -1,94 +1,94 @@
-# Accesibilidad de ClubNahuelMosse
+# Accessibility of ClubNahuelMosse
 
-ClubNahuelMosse quiere que todas las personas puedan reservar un espacio deportivo desde la app. Este documento dice cuánto
-se logró hoy, sin adornos: lo que no se probó figura como `not verified`.
+ClubNahuelMosse wants everyone to be able to book a sports space from the app. This document says how much
+has been achieved today, without embellishment: what was not tested appears as `not verified`.
 
 ## Standard
 
-La app apunta a cumplir WCAG 2.2 nivel AA. El contexto legal es la Ley 26.653 de accesibilidad de la información en las
-páginas web, que informa el texto; no se evaluó el cumplimiento de la ley.
+The app aims to meet WCAG 2.2 level AA. The legal context is Law 26.653 on the accessibility of information on
+web pages, which informs the text; compliance with the law was not assessed.
 
 ## Conformance status
 
-Cumple parcialmente (Partially conforms), al 2026-10-20. La app es una aplicación Android de Flutter; los resultados usan los
-cuatro términos del VPAT 2.5Rev INT.
+Partially conforms, as of 2026-10-20. The app is an Android Flutter application; the results use the
+four terms of VPAT 2.5Rev INT.
 
 | Area | Result (Supports, Partially Supports, Does Not Support, Not Applicable) | Notes |
 |---|---|---|
-| Keyboard operation | Partially Supports | en las confirmaciones irreversibles ningún botón tiene `autofocus` y el primer Tab cae en el destructivo (`lib/comun/dialogo_error.dart:316-345`, hallazgo 18, I24); el resto del teclado `not verified` |
-| Screen readers (reader and browser tested) | Partially Supports | pruebas de semántica en widget tests (68 de 68 pasan); TalkBack no se corrió: `not verified`. El error de cada campo es un nodo aparte y el formato esperado («DD / MM / AAAA») queda oculto para el lector (I7) |
-| Zoom and reflow (200 % text, 320 px) | Partially Supports | 170 capturas a 320 px y 170 al 200 % sin excepción de desborde; con el texto al 200 %, la barra inferior corta «RESERVAS» en «RESERV» (I9); 6 capturas de alta de espacio fallan a 320×568, sin analizar (hallazgo 27) |
-| Color and contrast | Partially Supports | el botón `atenuado` en modo oscuro da 4,06:1 con 15 px en negrita, debajo de AA (`lib/comun/boton.dart:44-47`); el resto no se midió pantalla por pantalla |
-| Forms and errors | Partially Supports | I7 y, al enviar el registro, no se dice qué falta (hallazgo 17) |
-| Time limits and motion | Partially Supports | el rechazo de una reserva sale en un SnackBar de 4 s y la pantalla vuelve atrás al mismo tiempo (I20); el movimiento `not verified` |
+| Keyboard operation | Partially Supports | in irreversible confirmations no button has `autofocus` and the first Tab lands on the destructive one (`apps/mobile/lib/common/error_dialog.dart`, finding 18, I24); the rest of the keyboard is `not verified` |
+| Screen readers (reader and browser tested) | Partially Supports | semantics tests in widget tests (68 of 68 pass); TalkBack was not run: `not verified`. The error of each field is a separate node and the expected format ("DD / MM / YYYY") stays hidden from the reader (I7) |
+| Zoom and reflow (200 % text, 320 px) | Partially Supports | 170 screenshots at 320 px and 170 at 200 % with no overflow exception; with text at 200 %, the bottom bar cuts "BOOKINGS" short (I9); 6 space-creation screenshots fail at 320×568, not analyzed (finding 27) |
+| Color and contrast | Partially Supports | the dimmed button in dark mode gives 4.06:1 at 15 px bold, below AA (`apps/mobile/lib/common/button.dart`); the rest was not measured screen by screen |
+| Forms and errors | Partially Supports | I7 and, when submitting the registration, it does not say what is missing (finding 17) |
+| Time limits and motion | Partially Supports | the rejection of a booking shows in a 4 s SnackBar and the screen goes back at the same time (I20); motion is `not verified` |
 
 ## How it was assessed
 
-La revisión del 2026-10-20 de la rama `kit-3` (`specs/REVISION-kit3.md`, hallazgos 17, 18 y 27) la hizo el equipo de
-desarrollo, sin una auditoría externa. Corrieron: 68 tests de accesibilidad de widgets, que pasaron; capturas golden de 85
-vistas a 360 y 430 px en oscuro y claro, 340 de 340 sin diferencias, y 170 a 320 px y 170 al 200 % sin excepción de
-desborde; sondas de semántica y de foco en widget tests para I7, I20 e I24. **No corrieron:** TalkBack en un teléfono o
-emulador (`not verified`), la prueba de teclado en un dispositivo, un lector de pantalla de iOS (la app sólo se construye
-para Android), ni una auditoría externa.
+The review of 2026-10-20 of the `kit-3` branch (`specs/REVISION-kit3.md`, findings 17, 18 and 27) was done by the development
+team, without an external audit. What ran: 68 widget accessibility tests, which passed; golden screenshots of 85
+views at 360 and 430 px in dark and light, 340 of 340 with no differences, and 170 at 320 px and 170 at 200 % with no
+overflow exception; semantics and focus probes in widget tests for I7, I20 and I24. **What did not run:** TalkBack on a phone or
+emulator (`not verified`), the keyboard test on a device, an iOS screen reader (the app is only built
+for Android), nor an external audit.
 
-## Registro por pantalla
+## Per-screen register
 
-Una fila por pantalla (`apps/mobile/lib/**/*_screen.dart`). «Supports» quiere decir que no se encontró ninguna falla en
-los tests de widgets ni en las capturas; no que se probó con TalkBack (`not verified` en todas). Las referencias I7, I9, I20 e I24
-son las de la revisión; la columna dice cuál afecta a cada pantalla.
+One row per screen (`apps/mobile/lib/**/*_screen.dart`). "Supports" means no failure was found in
+the widget tests or the screenshots; not that it was tested with TalkBack (`not verified` in all). References I7, I9, I20 and I24
+are those of the review; the column says which one affects each screen.
 
-| Pantalla | Resultado | Qué se encontró | Verificado |
+| Screen | Result | What was found | Verified |
 |---|---|---|---|
-| `login_screen` | Partially Supports | I7: errores de campo como nodo aparte | widget tests y capturas; TalkBack `not verified` |
-| `registration_screen` | Partially Supports | I7; al enviar, no dice qué falta (hallazgo 17) | widget tests y capturas; TalkBack `not verified` |
-| `registration_done_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `forgot_password_screen` | Partially Supports | I7 | widget tests y capturas; TalkBack `not verified` |
-| `new_password_screen` | Partially Supports | I7 | widget tests y capturas; TalkBack `not verified` |
-| `change_password_screen` | Partially Supports | I7 | widget tests y capturas; TalkBack `not verified` |
-| `my_profile_screen` | Partially Supports | I7; I9 (barra inferior); I24 en la baja de cuenta | widget tests y capturas; TalkBack `not verified` |
-| `home_screen` | Partially Supports | I9 (barra inferior); I24 en la cancelación | widget tests y capturas; TalkBack `not verified` |
-| `venues_screen` | Partially Supports | I9 (barra inferior) | widget tests y capturas; TalkBack `not verified` |
-| `venue_screen` | Partially Supports | I9 (barra inferior) | widget tests y capturas; TalkBack `not verified` |
-| `space_search_screen` | Partially Supports | I7 en fecha y horas | widget tests y capturas; TalkBack `not verified` |
-| `availability_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `confirm_booking_screen` | Partially Supports | I20: SnackBar de 4 s con la pantalla volviendo atrás | widget tests y capturas; TalkBack `not verified` |
-| `confirm_change_screen` | Partially Supports | I20 | widget tests y capturas; TalkBack `not verified` |
-| `booking_confirmed_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `my_bookings_screen` | Partially Supports | I9 (barra inferior); I24 en la cancelación | widget tests y capturas; TalkBack `not verified` |
-| `notifications_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `access_denied_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `loading_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `admin_panel_screen` | Partially Supports | I9 («ESPACIOS» toca el borde al 200 %); I24 en las bajas | widget tests y capturas; TalkBack `not verified` |
-| `admin_venues_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `venue_form_screen` | Partially Supports | I7; contraste del botón GUARDAR SEDE (4,06:1 en oscuro); I24 en la baja | widget tests y capturas; TalkBack `not verified` |
-| `venue_created_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `admin_spaces_screen` | Partially Supports | I24 en la baja de espacio | widget tests y capturas; TalkBack `not verified` |
-| `new_space_screen` | Partially Supports | I7; contraste del botón GUARDAR ESPACIO; 6 capturas fallan a 320×568 (sin analizar) | widget tests y capturas; TalkBack `not verified` |
-| `edit_space_screen` | Partially Supports | I7; contraste del botón GUARDAR ESPACIO; I24 en la baja | widget tests y capturas; TalkBack `not verified` |
-| `space_created_screen` | Supports | sin fallas encontradas | widget tests y capturas; TalkBack `not verified` |
-| `booking_filters_screen` | Partially Supports | I7 | widget tests y capturas; TalkBack `not verified` |
-| `booking_detail_screen` | Partially Supports | I24 en la anulación de una reserva | widget tests y capturas; TalkBack `not verified` |
-| `pantalla_error_de_arranque` | Supports | sin fallas encontradas (test/pantalla_error_de_arranque_test.dart) | widget tests; TalkBack `not verified` |
+| `login_screen` | Partially Supports | I7: field errors as a separate node | widget tests and screenshots; TalkBack `not verified` |
+| `registration_screen` | Partially Supports | I7; on submit, it does not say what is missing (finding 17) | widget tests and screenshots; TalkBack `not verified` |
+| `registration_done_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `forgot_password_screen` | Partially Supports | I7 | widget tests and screenshots; TalkBack `not verified` |
+| `new_password_screen` | Partially Supports | I7 | widget tests and screenshots; TalkBack `not verified` |
+| `change_password_screen` | Partially Supports | I7 | widget tests and screenshots; TalkBack `not verified` |
+| `my_profile_screen` | Partially Supports | I7; I9 (bottom bar); I24 in account deactivation | widget tests and screenshots; TalkBack `not verified` |
+| `home_screen` | Partially Supports | I9 (bottom bar); I24 in cancellation | widget tests and screenshots; TalkBack `not verified` |
+| `venues_screen` | Partially Supports | I9 (bottom bar) | widget tests and screenshots; TalkBack `not verified` |
+| `venue_screen` | Partially Supports | I9 (bottom bar) | widget tests and screenshots; TalkBack `not verified` |
+| `space_search_screen` | Partially Supports | I7 in date and hours | widget tests and screenshots; TalkBack `not verified` |
+| `availability_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `confirm_booking_screen` | Partially Supports | I20: 4 s SnackBar with the screen going back | widget tests and screenshots; TalkBack `not verified` |
+| `confirm_change_screen` | Partially Supports | I20 | widget tests and screenshots; TalkBack `not verified` |
+| `booking_confirmed_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `my_bookings_screen` | Partially Supports | I9 (bottom bar); I24 in cancellation | widget tests and screenshots; TalkBack `not verified` |
+| `notifications_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `access_denied_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `loading_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `admin_panel_screen` | Partially Supports | I9 ("SPACES" touches the edge at 200 %); I24 in deactivations | widget tests and screenshots; TalkBack `not verified` |
+| `admin_venues_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `venue_form_screen` | Partially Supports | I7; contrast of the SAVE VENUE button (4.06:1 in dark); I24 in deactivation | widget tests and screenshots; TalkBack `not verified` |
+| `venue_created_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `admin_spaces_screen` | Partially Supports | I24 in space deactivation | widget tests and screenshots; TalkBack `not verified` |
+| `new_space_screen` | Partially Supports | I7; contrast of the SAVE SPACE button; 6 screenshots fail at 320×568 (not analyzed) | widget tests and screenshots; TalkBack `not verified` |
+| `edit_space_screen` | Partially Supports | I7; contrast of the SAVE SPACE button; I24 in deactivation | widget tests and screenshots; TalkBack `not verified` |
+| `space_created_screen` | Supports | no failures found | widget tests and screenshots; TalkBack `not verified` |
+| `booking_filters_screen` | Partially Supports | I7 | widget tests and screenshots; TalkBack `not verified` |
+| `booking_detail_screen` | Partially Supports | I24 in voiding a booking | widget tests and screenshots; TalkBack `not verified` |
+| startup error (`resumeWithRetry` in `apps/mobile/lib/main.dart`) | Supports | no failures found (`apps/mobile/test/arranque_sin_conexion_test.dart`) | widget tests; TalkBack `not verified` |
 
 ## Known limitations
 
-- **Errores de formulario (I7).** Afecta a todos los formularios; quien usa un lector de pantalla no oye el formato esperado
-  de la fecha y encuentra el error en un nodo aparte. Alternativa: ninguna escrita. Corrección: pendiente de una persona.
-- **Rechazo de una reserva (I20).** El aviso dura 4 s y la pantalla vuelve atrás a la vez: quien lo necesita más tiempo puede
-  perderlo. Alternativa: la reserva no aparece en «Mis reservas». Corrección: pendiente de una persona.
-- **Confirmaciones irreversibles (I24).** Sin foco inicial: con teclado, el primer Tab cae en el botón destructivo. Corrección:
-  pendiente de una persona.
-- **Texto al 200 % (I9).** La barra inferior corta «RESERVAS» y «ESPACIOS» toca el borde. Corrección: pendiente de una persona.
-- **Contraste.** El botón `atenuado` en oscuro, 4,06:1. Corrección: pendiente de una persona.
-- **Lector de pantalla.** No se probó con TalkBack, así que pueden existir fallas que los tests de widgets no ven.
+- **Form errors (I7).** Affects all forms; whoever uses a screen reader does not hear the expected date format
+  and finds the error in a separate node. Alternative: none written. Fix: pending a person.
+- **Booking rejection (I20).** The notice lasts 4 s and the screen goes back at the same time: whoever needs more time may
+  miss it. Alternative: the booking does not appear in "My bookings". Fix: pending a person.
+- **Irreversible confirmations (I24).** No initial focus: with a keyboard, the first Tab lands on the destructive button. Fix:
+  pending a person.
+- **Text at 200 % (I9).** The bottom bar cuts "BOOKINGS" short and "SPACES" touches the edge. Fix: pending a person.
+- **Contrast.** The dimmed button in dark, 4.06:1. Fix: pending a person.
+- **Screen reader.** It was not tested with TalkBack, so there may be failures the widget tests do not see.
 
-Quién corrige cada una y cuándo no está decidido: el pedido de esta documentación no corrige código.
+Who fixes each one and when is not decided: the request behind this documentation does not fix code.
 
 ## Feedback and contact
 
-Cómo avisar de una barrera de accesibilidad, quién responde y en cuánto tiempo: pendiente de una persona. Hasta que se decida,
-se avisa a quien mantiene el repositorio.
+How to report an accessibility barrier, who answers and within what time: pending a person. Until it is decided,
+tell whoever maintains the repository.
 
 ## Date
 
-Última revisión: 2026-10-20, sobre la rama `kit-3`. La hizo el equipo de desarrollo; no la revisó una persona externa.
+Last review: 2026-10-20, on the `kit-3` branch. It was done by the development team; it was not reviewed by an outside person.

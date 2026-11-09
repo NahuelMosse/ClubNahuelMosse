@@ -1,0 +1,8180 @@
+{
+ "url": "http://127.0.0.1:8707/",
+ "cpu": 0,
+ "elements": [
+  {
+   "label": "a “Skip to main content” [0]",
+   "kind": "a",
+   "selected": false,
+   "score": 8465,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "box-shadow",
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "box-shadow": [
+       "none",
+       "rgba(0, 0, 0, 0.2) 0px 5px 40px 0px"
+      ],
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(28, 30, 33)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": [
+      {
+       "label": "a.skipToContent_fXgn “Skip to main content”",
+       "root": true,
+       "primary": "left",
+       "startMs": 1,
+       "endMs": 18,
+       "moves": [
+        {
+         "prop": "left",
+         "from": 1280,
+         "to": 16,
+         "durationMs": 17,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 1
+        },
+        {
+         "prop": "width",
+         "from": 91.23,
+         "to": 189.83,
+         "durationMs": 17,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 1
+        },
+        {
+         "prop": "height",
+         "from": 92.78,
+         "to": 41.59,
+         "durationMs": 17,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 1
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "label": "a “ClubNahuelMosse” [1]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ],
+      "border-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ],
+      "text-decoration-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Switch to dark mode” [2]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background-color",
+     "border-color",
+     "color",
+     "box-shadow",
+     "transform",
+     "translate"
+    ],
+    "durations": [
+     120,
+     120,
+     120,
+     120,
+     260,
+     260
+    ],
+    "easings": [
+     "ease",
+     "ease",
+     "ease",
+     "ease",
+     "linear(0 0%, 0.034 1.5%, 0.13 3.2%, 0.432 8%, 0.63 11.7%, 0.773 15.6%, 0.871 19.6%, 0.936 23.9%, 0.976 28.6%, 0.995 34%, 1.003 41.6%, 1.002 56%, 1 100%)",
+     "linear(0 0%, 0.034 1.5%, 0.13 3.2%, 0.432 8%, 0.63 11.7%, 0.773 15.6%, 0.871 19.6%, 0.936 23.9%, 0.976 28.6%, 0.995 34%, 1.003 41.6%, 1.002 56%, 1 100%)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "border-color",
+      "color",
+      "box-shadow",
+      "transform",
+      "translate"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "oklch(0.96 0.005 265)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [
+      "transform"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "border-color",
+      "color",
+      "box-shadow",
+      "transform",
+      "translate"
+     ],
+     "values": {
+      "transform": [
+       "none",
+       "matrix(0.98, 0, 0, 0.98, 0, 0)"
+      ]
+     },
+     "motion": [
+      {
+       "label": "button.btn.btn--ghost “Dark”",
+       "root": true,
+       "primary": "scaleX",
+       "startMs": 6,
+       "endMs": 39,
+       "moves": [
+        {
+         "prop": "scaleX",
+         "from": 1,
+         "to": 0.98,
+         "durationMs": 33,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 6
+        },
+        {
+         "prop": "scaleY",
+         "from": 1,
+         "to": 0.98,
+         "durationMs": 33,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 6
+        }
+       ]
+      }
+     ]
+    },
+    "focus": {
+     "changed": [
+      "border-color",
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "border-color",
+      "color",
+      "box-shadow",
+      "transform",
+      "translate"
+     ],
+     "values": {
+      "border-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(77, 102, 0)"
+      ],
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "input “Search” [3]",
+   "kind": "input",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(68, 73, 80)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Home” [4]",
+   "kind": "a",
+   "selected": false,
+   "score": 9146,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Getting started” [5]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Technical” [6]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Expand sidebar category 'Technic” [7]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "cubic-bezier(0.08, 0.52, 0.52, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "background"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Guides” [8]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Expand sidebar category 'Guides'” [9]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "cubic-bezier(0.08, 0.52, 0.52, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "background"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Decisions” [10]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Expand sidebar category 'Decisio” [11]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "cubic-bezier(0.08, 0.52, 0.52, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "background"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Product and quality” [12]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Expand sidebar category 'Product” [13]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "cubic-bezier(0.08, 0.52, 0.52, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "background"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “API (Swagger)” [14]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Code reference (API)” [15]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 82, 91)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Expand sidebar category 'Code re” [16]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "cubic-bezier(0.08, 0.52, 0.52, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(246, 246, 247)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "background"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Home page” [17]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "background",
+     "color"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "cubic-bezier(0.08, 0.52, 0.52, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color",
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background",
+      "color"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgba(0, 0, 0, 0.05)"
+      ],
+      "color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ],
+      "border-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ],
+      "text-decoration-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "background",
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background",
+      "color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(10, 10, 11)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Integrations” [18]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “apps/api/README.md” [19]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “apps/mobile/README.md” [20]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "pre “npm ci && npm run emuladores # F” [21]",
+   "kind": "focus-only",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Copy code to clipboard” [22]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "opacity"
+    ],
+    "durations": [
+     200
+    ],
+    "easings": [
+     "ease-in-out"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "opacity"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "opacity"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "opacity"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(57, 58, 52)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Getting started” [23]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Architecture” [24]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “code map” [25]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “System design” [26]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “runbook” [27]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Architecture decisions” [28]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “infrastructure cost” [29]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Accessibility” [30]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “ASVS security matrix” [31]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Documentation assumptions” [32]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Edit this page” [33]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “NextGetting started” [34]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "border-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "border-color": [
+       "rgb(218, 221, 225)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “What it does” [35]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "border-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "outline-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "text-decoration-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “What it is built with” [36]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "border-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "outline-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "text-decoration-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “How to run it” [37]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Documentation” [38]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color",
+     "background-color"
+    ],
+    "durations": [
+     120,
+     120
+    ],
+    "easings": [
+     "ease",
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "border-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "outline-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ],
+      "text-decoration-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color",
+      "background-color"
+     ],
+     "values": {
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "2px"
+      ],
+      "outline-color": [
+       "rgb(82, 88, 96)",
+       "rgb(77, 102, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  }
+ ],
+ "sections": [],
+ "longFrames": [],
+ "sheets": [],
+ "load": [
+  {
+   "id": 1,
+   "label": "div#__docusaurus",
+   "parent": 2,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2468.44,
+     "to": 2438.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 3,
+   "label": "a.skipToContent_fXgn “Skip to main content”",
+   "parent": 4,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": true,
+   "root": false,
+   "primary": "width",
+   "moves": [
+    {
+     "prop": "width",
+     "from": 87.72,
+     "to": 91.23,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 8,
+   "label": "a.navbar__brand",
+   "parent": 7,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "width",
+   "moves": [
+    {
+     "prop": "width",
+     "from": 135.73,
+     "to": 143.67,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 9,
+   "label": "b.navbar__title.text--truncate “ClubNahuelMosse”",
+   "parent": 8,
+   "tag": "b",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "width",
+   "moves": [
+    {
+     "prop": "width",
+     "from": 135.73,
+     "to": 143.67,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 11,
+   "label": "div.colorModeToggle_DEke",
+   "parent": 10,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 29,
+     "to": 28,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 17,
+   "label": "div#__docusaurus_skipToContent_fallback.theme-layout-main.main-wrapper",
+   "parent": 1,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2408.44,
+     "to": 2378.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 18,
+   "label": "div.docsWrapper_hBAB",
+   "parent": 17,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2408.44,
+     "to": 2378.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 19,
+   "label": "div.docRoot_UBD9",
+   "parent": 18,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2408.44,
+     "to": 2378.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 20,
+   "label": "aside.theme-doc-sidebar-container.docSidebarContainer_YfHR",
+   "parent": 19,
+   "tag": "aside",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2468.44,
+     "to": 2438.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 27,
+   "label": "span.linkLabel_WmDU “Home”",
+   "parent": 26,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "width",
+   "moves": [
+    {
+     "prop": "width",
+     "from": 38.5,
+     "to": 39.86,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 30,
+   "label": "span.linkLabel_WmDU “Getting started”",
+   "parent": 29,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "width",
+   "moves": [
+    {
+     "prop": "width",
+     "from": 96.27,
+     "to": 100.02,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 53,
+   "label": "span.linkLabel_WmDU “API (Swagger)”",
+   "parent": 52,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "width",
+   "moves": [
+    {
+     "prop": "width",
+     "from": 89.66,
+     "to": 96.36,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 59,
+   "label": "main.docMainContainer_TBSr",
+   "parent": 19,
+   "tag": "main",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2408.44,
+     "to": 2378.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 60,
+   "label": "div.container.padding-top--md",
+   "parent": 59,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2408.44,
+     "to": 2378.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 61,
+   "label": "div.row",
+   "parent": 60,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2360.44,
+     "to": 2330.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 62,
+   "label": "div.col.docItemCol_VOVn",
+   "parent": 61,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2360.44,
+     "to": 2330.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 63,
+   "label": "div.docItemContainer_Djhp",
+   "parent": 62,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "height",
+   "moves": [
+    {
+     "prop": "height",
+     "from": 2360.44,
+     "to": 2330.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 855
+  },
+  {
+   "id": 64,
+   "label": "article",
+   "parent": 63,
+   "tag": "article",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "opacity",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 80,
+     "to": 76,
+     "durationMs": 300,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 855
+    },
+    {
+     "prop": "height",
+     "from": 2236.94,
+     "to": 2207.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "opacity",
+     "from": 0,
+     "to": 1,
+     "durationMs": 300,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 855
+    },
+    {
+     "prop": "translateY",
+     "from": 4,
+     "to": 0,
+     "durationMs": 300,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 855
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 65,
+   "label": "nav.theme-doc-breadcrumbs.breadcrumbsContainer_Z_bl",
+   "parent": 64,
+   "tag": "nav",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 80,
+     "to": 76,
+     "durationMs": 300,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 855
+    },
+    {
+     "prop": "height",
+     "from": 48.03,
+     "to": 49.03,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 66,
+   "label": "ul.breadcrumbs",
+   "parent": 65,
+   "tag": "ul",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 80,
+     "to": 76,
+     "durationMs": 300,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 855
+    },
+    {
+     "prop": "height",
+     "from": 48.03,
+     "to": 49.03,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 70,
+   "label": "li.breadcrumbs__item.breadcrumbs__item--active",
+   "parent": 66,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 84.03,
+     "to": 81.03,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 54.78,
+     "to": 56.34,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 71,
+   "label": "span.breadcrumbs__link “Home”",
+   "parent": 70,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 84.03,
+     "to": 81.03,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 54.78,
+     "to": 56.34,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 72,
+   "label": "div.theme-doc-markdown.markdown",
+   "parent": 64,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": true
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 140.83,
+     "to": 137.83,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 2102.52,
+     "to": 2072.06,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 73,
+   "label": "p",
+   "parent": 72,
+   "tag": "p",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 357,
+     "to": 316,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 140.83,
+     "to": 137.83,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 621,
+     "to": 703,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 102.59,
+     "to": 103.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 74,
+   "label": "img.img_ev3q",
+   "parent": 73,
+   "tag": "img",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 140.83,
+     "to": 137.83,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 75,
+   "label": "h1 “ClubNahuelMosse”",
+   "parent": 72,
+   "tag": "h1",
+   "h1": {
+    "is": true,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 263.42,
+     "to": 261.42,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 76,
+   "label": "p “Mobile app to book sport”",
+   "parent": 72,
+   "tag": "p",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 357,
+     "to": 316,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 319.42,
+     "to": 317.42,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 621,
+     "to": 703,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 77,
+   "label": "strong “Book a court in three st”",
+   "parent": 76,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 421.17,
+     "to": 416.44,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 321.42,
+     "to": 319.42,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 492.64,
+     "to": 502.11,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 78,
+   "label": "p",
+   "parent": 72,
+   "tag": "p",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 416.2,
+     "to": 414.2,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 79,
+   "label": "img.img_ev3q",
+   "parent": 78,
+   "tag": "img",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 417.2,
+     "to": 415.2,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 80,
+   "label": "img.img_ev3q",
+   "parent": 78,
+   "tag": "img",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 417.2,
+     "to": 415.2,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 81,
+   "label": "img.img_ev3q",
+   "parent": 78,
+   "tag": "img",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 417.2,
+     "to": 415.2,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 82,
+   "label": "img.img_ev3q",
+   "parent": 78,
+   "tag": "img",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 417.2,
+     "to": 415.2,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 83,
+   "label": "h2#what-it-does.anchor.anchorTargetStickyNavbar_Vzrq “What it does”",
+   "parent": 72,
+   "tag": "h2",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 899.69,
+     "to": 897.69,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 84,
+   "label": "a.hash-link “​”",
+   "parent": 83,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 450.06,
+     "to": 456.94,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 923.69,
+     "to": 923.69,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "round-trip",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 21.84,
+     "to": 23.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 32,
+     "to": 29,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 85,
+   "label": "ul",
+   "parent": 72,
+   "tag": "ul",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 975.88,
+     "to": 973.88,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 621,
+     "to": 703,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 199.16,
+     "to": 173.56,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 86,
+   "label": "li “venue, court and free ti”",
+   "parent": 85,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 975.88,
+     "to": 973.88,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 589,
+     "to": 671,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 87,
+   "label": "strong “Book in three steps:”",
+   "parent": 86,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 977.88,
+     "to": 975.88,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 148.88,
+     "to": 154.8,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 88,
+   "label": "li “upcoming and history, wi”",
+   "parent": 85,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1005.47,
+     "to": 1003.47,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 589,
+     "to": 671,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 89,
+   "label": "strong “My bookings:”",
+   "parent": 88,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1007.47,
+     "to": 1005.47,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 102.28,
+     "to": 106.2,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 90,
+   "label": "li “a reminder one hour befo”",
+   "parent": 85,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1035.06,
+     "to": 1033.06,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 589,
+     "to": 671,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.19,
+     "to": 25.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 91,
+   "label": "strong “Push and email notificat”",
+   "parent": 90,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1037.06,
+     "to": 1035.06,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 217.45,
+     "to": 226,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 92,
+   "label": "li",
+   "parent": 85,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1090.25,
+     "to": 1062.66,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 589,
+     "to": 671,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 93,
+   "label": "strong “Light and dark mode.”",
+   "parent": 92,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1092.25,
+     "to": 1064.66,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 161.09,
+     "to": 164.81,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 94,
+   "label": "li “so the club manages the ”",
+   "parent": 85,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1119.84,
+     "to": 1092.25,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 589,
+     "to": 671,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 95,
+   "label": "strong “Admin panel”",
+   "parent": 94,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1121.84,
+     "to": 1094.25,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 95.72,
+     "to": 97.72,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 96,
+   "label": "li",
+   "parent": 85,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1149.44,
+     "to": 1121.84,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 589,
+     "to": 671,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 97,
+   "label": "strong “Password recovery by ema”",
+   "parent": 96,
+   "tag": "strong",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1151.44,
+     "to": 1123.84,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 213.13,
+     "to": 224.86,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 98,
+   "label": "h2#what-it-is-built-with.anchor.anchorTargetStickyNavbar_Vzrq “What it is built with”",
+   "parent": 72,
+   "tag": "h2",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1223.03,
+     "to": 1195.44,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 99,
+   "label": "a.hash-link “​”",
+   "parent": 98,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 521.48,
+     "to": 528.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1247.03,
+     "to": 1221.44,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 21.84,
+     "to": 23.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 32,
+     "to": 29,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 100,
+   "label": "table",
+   "parent": 72,
+   "tag": "table",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1299.22,
+     "to": 1271.63,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 309.08,
+     "to": 305.56,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 101,
+   "label": "thead",
+   "parent": 100,
+   "tag": "thead",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1299.72,
+     "to": 1272.13,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 102,
+   "label": "tr",
+   "parent": 101,
+   "tag": "tr",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1299.72,
+     "to": 1272.13,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 103,
+   "label": "th “Part”",
+   "parent": 102,
+   "tag": "th",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1299.72,
+     "to": 1272.13,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 250.53,
+     "to": 267.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 104,
+   "label": "th “Technology”",
+   "parent": 102,
+   "tag": "th",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 567.03,
+     "to": 583.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1299.72,
+     "to": 1272.13,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 349.16,
+     "to": 372.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 105,
+   "label": "tbody",
+   "parent": 100,
+   "tag": "tbody",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1350.81,
+     "to": 1323.22,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 256.98,
+     "to": 253.47,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 106,
+   "label": "tr",
+   "parent": 105,
+   "tag": "tr",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1350.81,
+     "to": 1323.22,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 52.27,
+     "to": 51.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 107,
+   "label": "td “Mobile app ( )”",
+   "parent": 106,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1350.81,
+     "to": 1323.22,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 250.53,
+     "to": 267.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 52.27,
+     "to": 51.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 108,
+   "label": "code “apps/mobile”",
+   "parent": 107,
+   "tag": "code",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 418.81,
+     "to": 423.34,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1366.44,
+     "to": 1337.47,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 109,
+   "label": "td “Flutter, Android only”",
+   "parent": 106,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 567.03,
+     "to": 583.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1350.81,
+     "to": 1323.22,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 349.16,
+     "to": 372.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 52.27,
+     "to": 51.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 110,
+   "label": "tr",
+   "parent": 105,
+   "tag": "tr",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1403.08,
+     "to": 1374.31,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.77,
+     "to": 50.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 111,
+   "label": "td “REST API ( )”",
+   "parent": 110,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1403.08,
+     "to": 1374.31,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 250.53,
+     "to": 267.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.77,
+     "to": 50.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 112,
+   "label": "code “apps/api”",
+   "parent": 111,
+   "tag": "code",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 400.69,
+     "to": 409.83,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1418.2,
+     "to": 1388.06,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 113,
+   "label": "td “FastAPI and SQLAlchemy, ”",
+   "parent": 110,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 567.03,
+     "to": 583.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1403.08,
+     "to": 1374.31,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 349.16,
+     "to": 372.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.77,
+     "to": 50.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 114,
+   "label": "tr",
+   "parent": 105,
+   "tag": "tr",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1454.84,
+     "to": 1424.91,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 115,
+   "label": "td “Accounts and push notifi”",
+   "parent": 114,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1454.84,
+     "to": 1424.91,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 250.53,
+     "to": 267.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 116,
+   "label": "td “Firebase Authentication ”",
+   "parent": 114,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 567.03,
+     "to": 583.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1454.84,
+     "to": 1424.91,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 349.16,
+     "to": 372.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 117,
+   "label": "tr",
+   "parent": 105,
+   "tag": "tr",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1505.44,
+     "to": 1475.5,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 118,
+   "label": "td “Email”",
+   "parent": 117,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1505.44,
+     "to": 1475.5,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 250.53,
+     "to": 267.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 119,
+   "label": "td “Brevo”",
+   "parent": 117,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 567.03,
+     "to": 583.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1505.44,
+     "to": 1475.5,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 349.16,
+     "to": 372.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 120,
+   "label": "tr",
+   "parent": 105,
+   "tag": "tr",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1556.03,
+     "to": 1526.09,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 599.69,
+     "to": 639.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.77,
+     "to": 50.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 121,
+   "label": "td “Deployment ( )”",
+   "parent": 120,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1556.03,
+     "to": 1526.09,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 250.53,
+     "to": 267.48,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.77,
+     "to": 50.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 122,
+   "label": "code “render.yaml”",
+   "parent": 121,
+   "tag": "code",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 424.83,
+     "to": 430.41,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1571.16,
+     "to": 1539.84,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 123,
+   "label": "td “Render”",
+   "parent": 120,
+   "tag": "td",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 567.03,
+     "to": 583.98,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1556.03,
+     "to": 1526.09,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 349.16,
+     "to": 372.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 51.77,
+     "to": 50.59,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 124,
+   "label": "p “Each external service is”",
+   "parent": 72,
+   "tag": "p",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1624.3,
+     "to": 1593.19,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 621,
+     "to": 703,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 125,
+   "label": "a “Integrations”",
+   "parent": 124,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 571.33,
+     "to": 597.94,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1626.3,
+     "to": 1595.19,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 84.75,
+     "to": 89.58,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 126,
+   "label": "h2#how-to-run-it.anchor.anchorTargetStickyNavbar_Vzrq “How to run it”",
+   "parent": 72,
+   "tag": "h2",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1697.89,
+     "to": 1666.78,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 127,
+   "label": "a.hash-link “​”",
+   "parent": 126,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 455.95,
+     "to": 458.27,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1721.89,
+     "to": 1692.78,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 21.84,
+     "to": 23.09,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 32,
+     "to": 29,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 128,
+   "label": "p “Each part is configured,”",
+   "parent": 72,
+   "tag": "p",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 1774.08,
+     "to": 1742.97,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "width",
+     "from": 621,
+     "to": 703,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 53.53,
+     "to": 51.19,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  },
+  {
+   "id": 129,
+   "label": "a",
+   "parent": 128,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": false,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "left",
+     "from": 773.48,
+     "to": 807.38,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "top",
+     "from": 1776.08,
+     "to": 1744.97,
+     "durationMs": 999,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    },
+    {
+     "prop": "height",
+     "from": 21,
+     "to": 20,
+     "durationMs": 699,
+     "overshootPct": 0,
+     "shape": "step",
+     "settled": true,
+     "jumps": [],
+     "startMs": 156
+    }
+   ],
+   "startMs": 156,
+   "endMs": 1155
+  }
+ ],
+ "scrollEntrances": [
+  {
+   "id": 5,
+   "label": "nav.theme-layout-navbar.navbar",
+   "parent": 1,
+   "tag": "nav",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 0,
+     "to": 1539,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 6,
+   "label": "div.navbar__inner",
+   "parent": 5,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 7,
+   "label": "div.theme-layout-navbar-left.navbar__items",
+   "parent": 6,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 8,
+   "label": "a.navbar__brand",
+   "parent": 7,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 9,
+   "label": "b.navbar__title.text--truncate “ClubNahuelMosse”",
+   "parent": 8,
+   "tag": "b",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 17.2,
+     "to": 1556.2,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 10,
+   "label": "div.theme-layout-navbar-right.navbar__items",
+   "parent": 6,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 11,
+   "label": "div.colorModeToggle_DEke",
+   "parent": 10,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 16,
+     "to": 1555,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 12,
+   "label": "button.btn.btn--ghost “Dark”",
+   "parent": 11,
+   "tag": "button",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 16,
+     "to": 1555,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 13,
+   "label": "div.navbarSearchContainer_Bca1",
+   "parent": 10,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 14,
+   "label": "div.navbar__search.searchBarContainer_NW3z",
+   "parent": 13,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 15,
+   "label": "input.navbar__search-input.searchInput_YFbd",
+   "parent": 14,
+   "tag": "input",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 142,
+   "label": "div.searchHintContainer_Pkmr",
+   "parent": 14,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 8,
+     "to": 1547,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 143,
+   "label": "kbd.searchHint_iIMx “ctrl”",
+   "parent": 142,
+   "tag": "kbd",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 19.11,
+     "to": 1558.11,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 144,
+   "label": "kbd.searchHint_iIMx “K”",
+   "parent": 142,
+   "tag": "kbd",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 19.11,
+     "to": 1558.11,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 21,
+   "label": "div.sidebarViewport_aRkj",
+   "parent": 20,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 0,
+     "to": 1538.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 22,
+   "label": "div.sidebar_njMd",
+   "parent": 21,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 0,
+     "to": 1538.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 23,
+   "label": "nav.menu.thin-scrollbar",
+   "parent": 22,
+   "tag": "nav",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 60,
+     "to": 1598.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 24,
+   "label": "ul.theme-doc-sidebar-menu.menu__list",
+   "parent": 23,
+   "tag": "ul",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 68,
+     "to": 1606.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 25,
+   "label": "li.theme-doc-sidebar-item-link.theme-doc-sidebar-item-link-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 68,
+     "to": 1606.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 26,
+   "label": "a.menu__link.menu__link--active",
+   "parent": 25,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 68,
+     "to": 1606.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 27,
+   "label": "span.linkLabel_WmDU “Home”",
+   "parent": 26,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 76,
+     "to": 1614.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 28,
+   "label": "li.theme-doc-sidebar-item-link.theme-doc-sidebar-item-link-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 105.5,
+     "to": 1644.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 29,
+   "label": "a.menu__link",
+   "parent": 28,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 105.5,
+     "to": 1644.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 30,
+   "label": "span.linkLabel_WmDU “Getting started”",
+   "parent": 29,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 113.5,
+     "to": 1652.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 31,
+   "label": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 143,
+     "to": 1681.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 32,
+   "label": "div.menu__list-item-collapsible",
+   "parent": 31,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 143,
+     "to": 1681.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 33,
+   "label": "a.categoryLink_byQd.menu__link",
+   "parent": 32,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 143,
+     "to": 1681.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 34,
+   "label": "span.categoryLinkLabel_W154 “Technical”",
+   "parent": 33,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 152.25,
+     "to": 1691.23,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 35,
+   "label": "button.clean-btn.menu__caret",
+   "parent": 32,
+   "tag": "button",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 143,
+     "to": 1681.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 36,
+   "label": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 183,
+     "to": 1721.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 37,
+   "label": "div.menu__list-item-collapsible",
+   "parent": 36,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 183,
+     "to": 1721.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 38,
+   "label": "a.categoryLink_byQd.menu__link",
+   "parent": 37,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 183,
+     "to": 1721.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 39,
+   "label": "span.categoryLinkLabel_W154 “Guides”",
+   "parent": 38,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 192.25,
+     "to": 1731.23,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 40,
+   "label": "button.clean-btn.menu__caret",
+   "parent": 37,
+   "tag": "button",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 183,
+     "to": 1721.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 41,
+   "label": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 223,
+     "to": 1761.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 42,
+   "label": "div.menu__list-item-collapsible",
+   "parent": 41,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 223,
+     "to": 1761.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 43,
+   "label": "a.categoryLink_byQd.menu__link",
+   "parent": 42,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 223,
+     "to": 1761.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 44,
+   "label": "span.categoryLinkLabel_W154 “Decisions”",
+   "parent": 43,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 232.25,
+     "to": 1771.23,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 45,
+   "label": "button.clean-btn.menu__caret",
+   "parent": 42,
+   "tag": "button",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 223,
+     "to": 1761.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 46,
+   "label": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 263,
+     "to": 1801.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 47,
+   "label": "div.menu__list-item-collapsible",
+   "parent": 46,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 263,
+     "to": 1801.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 48,
+   "label": "a.categoryLink_byQd.menu__link",
+   "parent": 47,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 263,
+     "to": 1801.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 49,
+   "label": "span.categoryLinkLabel_W154 “Product and quality”",
+   "parent": 48,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 272.25,
+     "to": 1811.23,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 50,
+   "label": "button.clean-btn.menu__caret",
+   "parent": 47,
+   "tag": "button",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 263,
+     "to": 1801.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 51,
+   "label": "li.theme-doc-sidebar-item-link.theme-doc-sidebar-item-link-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 303,
+     "to": 1841.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 52,
+   "label": "a.menu__link",
+   "parent": 51,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 303,
+     "to": 1841.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 53,
+   "label": "span.linkLabel_WmDU “API (Swagger)”",
+   "parent": 52,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 311,
+     "to": 1849.98,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 54,
+   "label": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1",
+   "parent": 24,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 340.5,
+     "to": 1879.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 55,
+   "label": "div.menu__list-item-collapsible",
+   "parent": 54,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 340.5,
+     "to": 1879.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 56,
+   "label": "a.categoryLink_byQd.menu__link",
+   "parent": 55,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 340.5,
+     "to": 1879.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 57,
+   "label": "span.categoryLinkLabel_W154 “Code reference (API)”",
+   "parent": 56,
+   "tag": "span",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 349.75,
+     "to": 1888.73,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 58,
+   "label": "button.clean-btn.menu__caret",
+   "parent": 55,
+   "tag": "button",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 340.5,
+     "to": 1879.48,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 132,
+   "label": "div.tableOfContents_bqdL.thin-scrollbar",
+   "parent": 131,
+   "tag": "div",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 76,
+     "to": 1615,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 133,
+   "label": "ul.table-of-contents.table-of-contents__left-border",
+   "parent": 132,
+   "tag": "ul",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 76,
+     "to": 1615,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 134,
+   "label": "li",
+   "parent": 133,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 92,
+     "to": 1631,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 135,
+   "label": "a.table-of-contents__link.toc-highlight “What it does”",
+   "parent": 134,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 92,
+     "to": 1631,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 136,
+   "label": "li",
+   "parent": 133,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 128.47,
+     "to": 1667.47,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 137,
+   "label": "a.table-of-contents__link.toc-highlight “What it is built with”",
+   "parent": 136,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 128.47,
+     "to": 1667.47,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 138,
+   "label": "li",
+   "parent": 133,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 164.94,
+     "to": 1703.94,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 139,
+   "label": "a.table-of-contents__link.toc-highlight “How to run it”",
+   "parent": 138,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 164.94,
+     "to": 1703.94,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 140,
+   "label": "li",
+   "parent": 133,
+   "tag": "li",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 201.41,
+     "to": 1740.41,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  },
+  {
+   "id": 141,
+   "label": "a.table-of-contents__link.toc-highlight “Documentation”",
+   "parent": 140,
+   "tag": "a",
+   "h1": {
+    "is": false,
+    "inside": false,
+    "contains": false
+   },
+   "inFirst": true,
+   "fixed": false,
+   "root": false,
+   "primary": "top",
+   "moves": [
+    {
+     "prop": "top",
+     "from": 201.41,
+     "to": 1740.41,
+     "durationMs": 900,
+     "overshootPct": 0,
+     "shape": "linear",
+     "settled": true,
+     "jumps": [],
+     "startMs": 102
+    }
+   ],
+   "startMs": 102,
+   "endMs": 1002
+  }
+ ],
+ "click": null,
+ "interrupt": null,
+ "scrollStory": null,
+ "roles": {
+  "cta": {
+   "label": "a “Home” [4]",
+   "hover": null,
+   "press": null,
+   "focus": null
+  },
+  "hero": {
+   "label": "h1 “ClubNahuelMosse”",
+   "prop": "top",
+   "startMs": 156,
+   "durationMs": 999,
+   "shape": "step",
+   "overshootPct": 0,
+   "jumps": 0,
+   "stepMs": 0,
+   "totalMs": 999,
+   "viaH1": true
+  },
+  "cards": {
+   "label": "p",
+   "prop": "top",
+   "startMs": 156,
+   "durationMs": 999,
+   "shape": "step",
+   "overshootPct": 0,
+   "stepMs": 0,
+   "count": 11
+  },
+  "section": {
+   "label": "nav.theme-layout-navbar.navbar",
+   "prop": "top",
+   "startMs": 102,
+   "durationMs": 900,
+   "shape": "linear",
+   "overshootPct": 0,
+   "jumps": 0
+  },
+  "click": null,
+  "scroll": null
+ },
+ "grammar": {
+  "durationsMs": {
+   "min": 300,
+   "median": 900,
+   "max": 999
+  },
+  "shapes": {
+   "step": 84,
+   "round-trip": 1,
+   "linear": 62
+  },
+  "staggerMs": 0,
+  "cursor": {
+   "hover": 0,
+   "press": 1,
+   "focus": 1,
+   "of": 39
+  }
+ }
+}

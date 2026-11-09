@@ -1,0 +1,7 @@
+[
+  { "goto": "/" },
+  { "wait": "article" },
+  { "click": ".navbar__toggle" },
+  { "wait": ".navbar-sidebar--show .menu__link--active" },
+  { "press": "Tab" }
+]

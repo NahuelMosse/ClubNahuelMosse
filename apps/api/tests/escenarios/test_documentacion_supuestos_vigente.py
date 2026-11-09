@@ -26,7 +26,7 @@ DOCUMENTOS = (
     ASVS,
     DISENO,
     RAIZ / "docs" / "adr" / "0001-stack.md",
-    RAIZ / "docs" / "adr" / "0002-hosting-en-render.md",
+    RAIZ / "docs" / "adr" / "0002-hosting-on-render.md",
     COSTOS,
     RUNBOOK,
     ACCESIBILIDAD,
@@ -51,9 +51,9 @@ def test_el_diseno_del_sistema_dice_lo_que_hoy_falta_y_lo_escribe_como_meta_sin_
     """
     diseno = _texto(DISENO)
 
-    assert re.search(r"sin medir", _seccion(diseno, "Performance and capacity budget"))
-    assert re.search(r"no hay backups|sin backups", diseno, re.I)
-    assert re.search(r"SLO[^\n]*(sin medir|meta|objetivo)", diseno, re.I)
+    assert re.search(r"unmeasured", _seccion(diseno, "Performance and capacity budget"))
+    assert re.search(r"no automatic backups|no backups", diseno, re.I)
+    assert re.search(r"SLO[^\n]*(unmeasured|target|objective)", diseno, re.I)
 
 
 def test_el_diseno_del_sistema_trata_las_seis_categorias_stride() -> None:
@@ -76,7 +76,7 @@ def test_el_diseno_del_sistema_trae_el_inventario_de_datos_personales() -> None:
     """
     personales = _seccion(_texto(DISENO), "Personal data")
 
-    for dato in ("DNI", "correo", "fecha de nacimiento", "token de dispositivo"):
+    for dato in ("national ID", "email", "birth date", "device token"):
         assert dato in personales, dato
     for columna in ("Retention", "How it is deleted", "Legal basis"):
         assert columna in personales, columna
@@ -173,7 +173,7 @@ def test_los_precios_citan_la_pagina_de_render_y_que_no_dice_si_la_base_free_tie
 
     assert "https://render.com/pricing.md" in costos
     assert "2026-10-20" in costos
-    assert "no dice si la base free tiene backups" in costos
+    assert "does not say whether the free database has backups" in costos
 
 
 def test_el_registro_de_accesibilidad_nombra_cada_pantalla_con_lector_navegador_y_resultado() -> (
@@ -182,7 +182,7 @@ def test_el_registro_de_accesibilidad_nombra_cada_pantalla_con_lector_navegador_
     """el registro de accesibilidad nombra cada pantalla con lector, navegador y resultado, o no se
     pudo correr @REV-07-S7 @assumption:REV-07-ASM-12
     """
-    registro = _seccion(_texto(ACCESIBILIDAD), "Registro por pantalla").splitlines()
+    registro = _seccion(_texto(ACCESIBILIDAD), "Per-screen register").splitlines()
     pantallas = sorted(p.stem for p in (MOVIL / "lib").rglob("*_screen.dart"))
 
     assert pantallas
@@ -220,9 +220,9 @@ def test_el_runbook_nombra_cada_secreto_sin_su_valor() -> None:
     inventario = _seccion(_texto(DISENO), "Secrets inventory")
     secretos = re.findall(r"^\| `([A-Z][A-Z_]+)`", inventario, re.M)
 
-    assert {"DATABASE_URL", "FIREBASE_CREDENCIALES_JSON", "SMTP_CONTRASENA"} <= set(secretos)
-    for secreto in ("DATABASE_URL", "FIREBASE_CREDENCIALES_JSON", "SMTP_CONTRASENA",
-                    "ADMIN_CONTRASENA"):  # fmt: skip
+    assert {"DATABASE_URL", "FIREBASE_CREDENTIALS_JSON", "SMTP_PASSWORD"} <= set(secretos)
+    for secreto in ("DATABASE_URL", "FIREBASE_CREDENTIALS_JSON", "SMTP_PASSWORD",
+                    "ADMIN_PASSWORD"):  # fmt: skip
         assert f"`{secreto}`" in rotacion, secreto
         assert not re.search(rf"{secreto}`?\s*=\s*\S{{6,}}", rotacion), secreto
 
@@ -250,10 +250,10 @@ def test_los_readme_listan_los_supuestos_de_1_a_4_h_y_7_dias_admin_no_reserva_ca
     api = _texto(API / "README.md")
     movil = _texto(MOVIL / "README.md")
 
-    assert re.search(r"de 1 a 4 horas", api)
-    assert re.search(r"hasta 7 días de anticipación", api)
-    assert "administrador no reserva" in api
-    assert "administrador no reserva" in movil
-    assert re.search(r"catálogo[^\n]*fijo", api)
-    assert re.search(r"catálogo[^\n]*fijo", movil)
-    assert re.search(r"no hay pagos", movil)
+    assert re.search(r"1 to 4 hours", api)
+    assert re.search(r"up to 7 days ahead", api)
+    assert "the admin does not book" in api
+    assert "the admin does not book" in movil
+    assert re.search(r"catalog[^\n]*fixed", api)
+    assert re.search(r"catalog[^\n]*fixed", movil)
+    assert re.search(r"no payments", movil)

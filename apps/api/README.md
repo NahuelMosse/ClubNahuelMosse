@@ -1,63 +1,63 @@
 # ClubNahuelMosse — API
 
-API REST de reservas de espacios deportivos, en FastAPI con PostgreSQL. Firebase Authentication
-identifica a las personas y Firebase Cloud Messaging manda los avisos. La documentación OpenAPI se
-publica en `/docs` (Swagger) y `/openapi.json`.
+REST API for sports space bookings, in FastAPI with PostgreSQL. Firebase Authentication identifies
+people and Firebase Cloud Messaging sends the notifications. The OpenAPI documentation is published
+at `/docs` (Swagger) and `/openapi.json`.
 
-## Requisitos
+## Requirements
 
-- Python 3.12 o posterior y [uv](https://docs.astral.sh/uv/).
-- PostgreSQL, con una base vacía y un usuario que pueda crear tablas.
-- Para los tests: Node.js (el emulador de Firebase Auth se instala con `npm ci` en la raíz del repo).
+- Python 3.12 or later and [uv](https://docs.astral.sh/uv/).
+- PostgreSQL, with an empty database and a user that can create tables.
+- For the tests: Node.js (the Firebase Auth emulator is installed with `npm ci` at the repo root).
 
-## Configurar
+## Configure
 
 ```sh
 cd apps/api
 uv sync
 ```
 
-La configuración llega por variables de entorno. `app/shared/config.py` también lee un archivo `.env`
-local, que no se versiona; `.env.example` lista las variables. `FIREBASE_AUTH_EMULATOR_HOST`,
-`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_PASSWORD` y `TEST_DATABASE_URL` se leen sólo del
-entorno del proceso: en el `.env` no tienen efecto.
+Configuration arrives through environment variables. `app/shared/config.py` also reads a local
+`.env` file, which is not versioned; `.env.example` lists the variables. `FIREBASE_AUTH_EMULATOR_HOST`,
+`GOOGLE_APPLICATION_CREDENTIALS`, `ADMIN_PASSWORD` and `TEST_DATABASE_URL` are read only from the
+process environment: in the `.env` they have no effect.
 
-| Variable | Qué es |
+| Variable | What it is |
 |---|---|
-| `DATABASE_URL` | Conexión a PostgreSQL, `postgresql+psycopg://<usuario>:<contraseña>@host:puerto/base`. Por defecto, usuario, contraseña y base `club` en `localhost:5432` |
-| `FIREBASE_PROJECT_ID` | Identificador del proyecto de Firebase que emite los tokens |
-| `FIREBASE_API_KEY` | Clave web del proyecto; la API la usa para comprobar contraseñas. No hace falta con el emulador |
-| `PUBLIC_URL` (o `URL_PUBLICA`) | Dirección pública de esta API; los enlaces de los correos apuntan ahí |
-| `EMAIL_MODE` (o `CORREO_MODO`) | `smtp` (por defecto) envía los correos por SMTP; `brevo` los envía por la API de Brevo; `buzon` los deja en la tabla `correo_saliente` y sólo sirve para desarrollo |
-| `BREVO_API_KEY` | Clave de la API de Brevo; hace falta con `EMAIL_MODE=brevo` |
-| `FIREBASE_CREDENTIALS_JSON` (o `FIREBASE_CREDENCIALES_JSON`) | Contenido del JSON de la cuenta de servicio de Firebase, alternativa a `GOOGLE_APPLICATION_CREDENTIALS` |
-| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Servidor de correo saliente con `EMAIL_MODE=smtp`; cada uno también se lee como `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` |
-| `E2E_TESTING` (o `PRUEBAS`) | `1` habilita `/_testing`, que sólo se monta si además existe `FIREBASE_AUTH_EMULATOR_HOST`; en un ambiente real no se define |
-| `REMINDERS_EVERY` (o `RECORDATORIOS_CADA`) | Cada cuántos segundos el barrido manda los recordatorios; 30 por defecto, 0 lo apaga |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Ruta al archivo de cuenta de servicio de Firebase. En producción hace falta ésta o `FIREBASE_CREDENCIALES_JSON`: sin el emulador, la API la necesita para crear y borrar usuarios, verificar tokens con `check_revoked` y mandar avisos por Firebase Cloud Messaging |
-| `FIREBASE_CREDENCIALES_JSON` | El contenido del JSON de la cuenta de servicio, para plataformas que no montan archivos (Render, con un Blueprint). Si `GOOGLE_APPLICATION_CREDENTIALS` también está definida, manda el JSON |
-| `FIREBASE_AUTH_EMULATOR_HOST` | `host:puerto` del emulador de Firebase Auth; con él la API no usa el proyecto real |
-| `ADMIN_PASSWORD` | Contraseña de la cuenta de administrador, sólo para el comando que la siembra |
-| `TEST_DATABASE_URL` | Base de los tests (su nombre termina en `_test`); sólo la lee `tests/conftest.py` |
-| `VERSION` | Versión que informa `/health` y que lleva cada línea del log; por defecto sale del `pyproject.toml` |
+| `DATABASE_URL` | PostgreSQL connection, `postgresql+psycopg://<user>:<password>@host:port/database`. By default, user, password and database `club` on `localhost:5432` |
+| `FIREBASE_PROJECT_ID` | Identifier of the Firebase project that issues the tokens |
+| `FIREBASE_API_KEY` | Web key of the project; the API uses it to check passwords. Not needed with the emulator |
+| `PUBLIC_URL` (or `URL_PUBLICA`) | Public address of this API; the links in the emails point there |
+| `EMAIL_MODE` (or `CORREO_MODO`) | `smtp` (default) sends emails over SMTP; `brevo` sends them through the Brevo API; `buzon` leaves them in the `correo_saliente` table and is only for development |
+| `BREVO_API_KEY` | Key of the Brevo API; needed with `EMAIL_MODE=brevo` |
+| `FIREBASE_CREDENTIALS_JSON` (or `FIREBASE_CREDENCIALES_JSON`) | Content of the Firebase service account JSON, an alternative to `GOOGLE_APPLICATION_CREDENTIALS` |
+| `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_SENDER` | Outgoing mail server with `EMAIL_MODE=smtp`; each is also read as `SMTP_PUERTO`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` |
+| `E2E_TESTING` (or `PRUEBAS`) | `1` enables `/_testing`, which is mounted only if `FIREBASE_AUTH_EMULATOR_HOST` also exists; in a real environment it is not defined |
+| `REMINDERS_EVERY` (or `RECORDATORIOS_CADA`) | How many seconds between the sweeps that send reminders; 30 by default, 0 turns it off |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Path to the Firebase service account file. In production this one or `FIREBASE_CREDENCIALES_JSON` is needed: without the emulator, the API needs it to create and delete users, verify tokens with `check_revoked` and send notifications through Firebase Cloud Messaging |
+| `FIREBASE_CREDENCIALES_JSON` | The content of the service account JSON, for platforms that do not mount files (Render, with a Blueprint). If `GOOGLE_APPLICATION_CREDENTIALS` is also defined, the JSON wins |
+| `FIREBASE_AUTH_EMULATOR_HOST` | `host:port` of the Firebase Auth emulator; with it the API does not use the real project |
+| `ADMIN_PASSWORD` | Password of the admin account, only for the command that seeds it |
+| `TEST_DATABASE_URL` | Database of the tests (its name ends in `_test`); only `conftest.py` in the tests folder reads it |
+| `VERSION` | Version reported by `/health` and carried by every log line; by default it comes from `pyproject.toml` |
 
-Crear las tablas en la base de `DATABASE_URL`:
+Create the tables in the `DATABASE_URL` database:
 
 ```sh
 uv run alembic upgrade head
 ```
 
-La cuenta de administrador no se registra desde la app; se siembra:
+The admin account is not registered from the app; it is seeded:
 
 ```sh
-ADMIN_PASSWORD=<contraseña> uv run python -m app.modules.users.seed_admin \
-  --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+ADMIN_PASSWORD=<password> uv run python -m app.modules.users.seed_admin \
+  --correo <email> --nombre <first name> --apellido <last name> --dni <dni> --nacimiento YYYY-MM-DD
 ```
 
-## Ejecutar
+## Run
 
-Local, contra el emulador de Firebase Auth (desde la raíz del repo, en otra terminal, `npm ci` la
-primera vez y después `npm run emuladores`, que escucha en el puerto 9099):
+Locally, against the Firebase Auth emulator (from the repo root, in another terminal, `npm ci` the
+first time and then `npm run emuladores`, which listens on port 9099):
 
 ```sh
 cd apps/api
@@ -65,48 +65,48 @@ FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 FIREBASE_PROJECT_ID=demo-clubnahuelmo
   CORREO_MODO=buzon uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-La documentación queda en `http://localhost:8000/docs`. Desde el emulador de Android la API se ve
-como `http://10.0.2.2:8000`.
+The documentation is at `http://localhost:8000/docs`. From the Android emulator the API is seen as
+`http://10.0.2.2:8000`.
 
-## Errores
+## Errors
 
-422 por un dato inválido (`{"errors": {field: message}}`); 403 y 404 sin cuerpo.
+422 for an invalid value (`{"errors": {field: message}}`); 403 and 404 without a body.
 
-## Contrato
+## Contract
 
-`apps/api/openapi.json` es el contrato versionado y un test lo compara con la API. Se regenera
-después de cualquier cambio de rutas o modelos:
+`apps/api/openapi.json` is the versioned contract and a test compares it with the API. Regenerate it
+after any change to routes or models:
 
 ```sh
 cd apps/api
 FIREBASE_AUTH_EMULATOR_HOST= uv run --no-sync python -c "import json, pathlib; from app.main import create_app; pathlib.Path('openapi.json').write_text(json.dumps(create_app().openapi(), indent=2, ensure_ascii=False) + '\n', encoding='utf-8')"
 ```
 
-## Catálogo de deportes
+## Sports catalog
 
-El catálogo es fijo y vive en `app/modules/spaces/rules.py`; la app lo pide con `GET /spaces/catalog`.
-Deportes y tipos: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
-(B5, 3X3), Hockey (H7) y Golf (DR, 9H). Decisiones sobre Básquet:
+The catalog is fixed and lives in `app/modules/spaces/rules.py`; the app requests it with `GET /spaces/catalog`.
+Sports and types: Fútbol (F5, F7, F8, F11), Tenis (PDL, CEM), Pádel (PAD), Vóley (IND, PLA), Básquet
+(B5, 3X3), Hockey (H7) and Golf (DR, 9H). Decisions about Básquet:
 
-- REV-05-ASM-01: Básquet tiene dos tipos: «Básquet 5» (`B5`, cancha completa) y «Básquet 3x3» (`3X3`, media cancha).
-- REV-05-ASM-02: hasta que haya una foto de Básquet, la cancha toma la portada 1 del club, que no es de ningún otro deporte.
-- REV-05-ASM-03: Básquet va después de Vóley en el catálogo.
+- REV-05-ASM-01: Básquet has two types: "Básquet 5" (`B5`, full court) and "Básquet 3x3" (`3X3`, half court).
+- REV-05-ASM-02: until there is a Básquet photo, the court takes cover 1 of the club, which belongs to no other sport.
+- REV-05-ASM-03: Básquet goes after Vóley in the catalog.
 
-## Probar
+## Test
 
-Con el emulador de Firebase Auth levantado y una base cuyo nombre termine en `_test` (la suite borra
-y recrea su esquema):
+With the Firebase Auth emulator up and a database whose name ends in `_test` (the suite drops
+and recreates its schema):
 
 ```sh
-# desde la raíz del repo
+# from the repo root
 FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
-DATABASE_URL=postgresql+psycopg://<usuario>:<contraseña>@<host>:<puerto>/<base>_test \
-TEST_DATABASE_URL=postgresql+psycopg://<usuario>:<contraseña>@<host>:<puerto>/<base>_test \
+DATABASE_URL=postgresql+psycopg://<user>:<password>@<host>:<port>/<database>_test \
+TEST_DATABASE_URL=postgresql+psycopg://<user>:<password>@<host>:<port>/<database>_test \
   sh scripts/test.sh
 ```
 
-`scripts/test.sh` se corre desde la raíz del repo; corre `ruff`, `mypy` y `pytest` de la API y
-después `flutter analyze`, el formato y `flutter test` de la app. Sólo la API:
+`scripts/test.sh` runs from the repo root; it runs `ruff`, `mypy` and `pytest` of the API and
+then `flutter analyze`, the format check and `flutter test` of the app. Only the API:
 
 ```sh
 cd apps/api
@@ -116,116 +116,116 @@ uv run pytest
 uv run pytest tests/escenarios --card <ID>
 ```
 
-Sin el emulador (variable ausente o emulador apagado) la corrida falla con «hace falta el emulador
-de Firebase Auth». `uv run pytest --sin-emulador` salta los tests que usan la API y corre el resto
-(los unitarios no necesitan base ni emulador); la salida cuenta los saltados como `skipped`.
+Without the emulator (variable missing or emulator off) the run fails with "hace falta el emulador
+de Firebase Auth" (the Firebase Auth emulator is required). `uv run pytest --sin-emulador` skips the
+tests that use the API and runs the rest (the unit tests need neither a database nor the emulator);
+the output counts the skipped ones as `skipped`.
 
-## Operar
+## Operate
 
-**Recordatorios sin el servicio web.** El servicio gratuito duerme y con él el barrido. El mismo
-barrido corre como un comando de una pasada, para que lo dispare un cron o una tarea de Render:
+**Reminders without the web service.** The free service sleeps and the sweep sleeps with it. The
+same sweep runs as a one-pass command, for a cron or a Render job to trigger:
 
 ```sh
 cd apps/api
 uv run python -m app.modules.notifications.sweep --una-vez
 ```
 
-Termina con código 0 si el barrido corrió y 1 si falló. Quién lo dispara no está decidido:
-`render.yaml` no suma una tarea paga. Un aviso que no salió deja una línea de error
-`aviso_sin_enviar` en el log, con el número de la notificación y el tipo del error, sin el token.
+It exits with code 0 if the sweep ran and 1 if it failed. Who triggers it is not decided:
+`render.yaml` does not add a paid job. A notification that was not sent leaves an error line
+`aviso_sin_enviar` in the log, with the notification number and the error type, without the token.
 
-**Logs.** Un aviso que no salió deja una línea de error `aviso_sin_enviar` en el log, con el número de la
-notificación y el tipo del error, sin el token.
+**Logs.** A notification that was not sent leaves an error line `aviso_sin_enviar` in the log, with
+the notification number and the error type, without the token.
 
-## Decisiones de datos
+## Data decisions
 
-Lo que se asumió donde el requisito no lo dice (REV-03); cada una se cambia en un solo lugar.
+What was assumed where the requirement is silent (REV-03); each one changes in a single place.
 
-- REV-03-ASM-02: un aviso que lleva más de 10 minutos en `enviando` (la API se cayó a mitad del
-  envío) pasa a `fallida` en el siguiente barrido y no se repite («se envía una sola vez»,
+- REV-03-ASM-02: a notification that has been `enviando` for more than 10 minutes (the API went
+  down mid-send) becomes `fallida` in the next sweep and is not repeated ("sent only once",
   CU-24.1); SIM-01-ASM-10.
-- REV-03-ASM-03: el historial propio (`GET /bookings`) trae todas las reservas de una vez, igual
-  que el global; no hay cursor ni tandas.
+- REV-03-ASM-03: the own history (`GET /bookings`) returns all bookings at once, just like the
+  global one; there is no cursor or batches.
 
-## Desplegar en Render
+## Deploy on Render
 
-El `render.yaml` de la raíz del repo describe todo: un web service de Python para la API
-(`apps/api`) y una base Postgres gestionada, ambos en el plan `free`. Render instala con `uv sync`
-(detecta `uv.lock`), migra con `alembic upgrade head` dentro del build, arranca `uvicorn` en el
-`$PORT` que asigna y consulta `/health` como health check.
+The `render.yaml` at the repo root describes everything: a Python web service for the API
+(`apps/api`) and a managed Postgres database, both on the `free` plan. Render installs with `uv sync`
+(it detects `uv.lock`), migrates with `alembic upgrade head` inside the build, starts `uvicorn` on the
+`$PORT` it assigns and polls `/health` as the health check.
 
-1. **Cuenta de Render.** Crear la cuenta en <https://render.com> y autorizar el acceso a GitHub.
-2. **Proyecto de Firebase.** En <https://console.firebase.google.com> crear un proyecto
-   y, dentro de él:
-   - *Authentication* → *Sign-in method*: habilitar «Correo electrónico y contraseña».
-   - *Configuración del proyecto* → *General*: anotar el **ID del proyecto** (`FIREBASE_PROJECT_ID`)
-     y la **clave de API web** (`FIREBASE_API_KEY`).
-   - *Configuración del proyecto* → *Cuentas de servicio* → *Generar nueva clave privada*: se
-     descarga un `.json`. Es un secreto: no se sube al repositorio.
-3. **Repositorio en GitHub.** Subir este repo (el `render.yaml` tiene que estar en la raíz de la
-   rama que Render va a seguir).
-4. **Blueprint.** En Render: *New* → *Blueprint*, elegir el repo y la rama, y confirmar. Render
-   crea `clubnahuelmosse-api` y `clubnahuelmosse-db` y pide los valores de las variables marcadas
+1. **Render account.** Create the account at <https://render.com> and authorize access to GitHub.
+2. **Firebase project.** At <https://console.firebase.google.com> create a project
+   and, inside it:
+   - *Authentication* → *Sign-in method*: enable "Email/Password".
+   - *Project settings* → *General*: note the **project ID** (`FIREBASE_PROJECT_ID`)
+     and the **web API key** (`FIREBASE_API_KEY`).
+   - *Project settings* → *Service accounts* → *Generate new private key*: a `.json` is
+     downloaded. It is a secret: do not commit it to the repository.
+3. **GitHub repository.** Push this repo (the `render.yaml` must be at the root of the
+   branch Render will follow).
+4. **Blueprint.** In Render: *New* → *Blueprint*, choose the repo and the branch, and confirm. Render
+   creates `clubnahuelmosse-api` and `clubnahuelmosse-db` and asks for the values of the variables marked
    `sync: false`:
 
-   | Variable | Valor |
+   | Variable | Value |
    |---|---|
-   | `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` | los del paso 2 |
-   | `FIREBASE_CREDENCIALES_JSON` | el **contenido completo** del `.json` de la cuenta de servicio |
-   | `URL_PUBLICA` | `https://<nombre del servicio>.onrender.com`, la dirección que Render muestra para `clubnahuelmosse-api` |
-   | `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | los de la cuenta de correo saliente (`SMTP_PUERTO` ya está en 587) |
+   | `FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY` | those of step 2 |
+   | `FIREBASE_CREDENCIALES_JSON` | the **complete content** of the service account `.json` |
+   | `URL_PUBLICA` | `https://<service name>.onrender.com`, the address Render shows for `clubnahuelmosse-api` |
+   | `SMTP_HOST`, `SMTP_USUARIO`, `SMTP_CONTRASENA`, `CORREO_REMITENTE` | those of the outgoing mail account (`SMTP_PUERTO` is already 587) |
 
-   Render pide estos valores sólo al crear el Blueprint; para cambiarlos después, se editan en
-   *Environment* del servicio. `DATABASE_URL` sale de la base: `config.py` le agrega el driver
-   `psycopg` a la `postgresql://` que entrega Render. `PRUEBAS` y `FIREBASE_AUTH_EMULATOR_HOST`
-   no se definen.
-5. **Sembrar al administrador**, una vez, desde esta máquina contra la base de Render. En la
-   base (*Connections* en el dashboard) copiar la **External Database URL** y, desde `apps/api`:
+   Render asks for these values only when creating the Blueprint; to change them later, edit them in
+   the service's *Environment*. `DATABASE_URL` comes from the database: `config.py` adds the `psycopg`
+   driver to the `postgresql://` that Render provides. `PRUEBAS` and `FIREBASE_AUTH_EMULATOR_HOST`
+   are not defined.
+5. **Seed the admin**, once, from this machine against the Render database. In the
+   database (*Connections* in the dashboard) copy the **External Database URL** and, from `apps/api`:
 
    ```sh
-   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<id del proyecto> FIREBASE_API_KEY=<clave web>    GOOGLE_APPLICATION_CREDENTIALS=<ruta al .json descargado>    ADMIN_PASSWORD=<contraseña>    uv run python -m app.modules.users.seed_admin      --correo <correo> --nombre <nombre> --apellido <apellido> --dni <dni> --nacimiento AAAA-MM-DD
+   DATABASE_URL=<External Database URL>    FIREBASE_PROJECT_ID=<project id> FIREBASE_API_KEY=<web key>    GOOGLE_APPLICATION_CREDENTIALS=<path to the downloaded .json>    ADMIN_PASSWORD=<password>    uv run python -m app.modules.users.seed_admin      --correo <email> --nombre <first name> --apellido <last name> --dni <dni> --nacimiento YYYY-MM-DD
    ```
 
-6. **Comprobar.** `https://<servicio>.onrender.com/openapi.json` devuelve el esquema y
-   `GET /venues` sin sesión responde 401. Con la dirección en `API_URL_NUBE`, el escenario
-   RNF-01-H06-01 hace esa comprobación: `uv run pytest tests/escenarios --card RNF-01`.
+6. **Check.** `https://<service>.onrender.com/openapi.json` returns the schema and
+   `GET /venues` without a session answers 401. With the address in `API_URL_NUBE`, scenario
+   RNF-01-H06-01 makes that check: `uv run pytest tests/escenarios --card RNF-01`.
 
-Los despliegues siguientes salen solos con cada commit a la rama enlazada.
+Later deployments go out by themselves with every commit to the linked branch.
 
-Límites del plan `free`:
+Limits of the `free` plan:
 
-- El servicio se duerme tras 15 minutos sin tráfico y el primer pedido después tarda alrededor
-  de un minuto: conviene despertarlo antes de una demostración. Mientras duerme, el barrido de
-  recordatorios no corre.
-- La base gratuita vence a los 30 días de creada, sin backups automáticos, y hay una por workspace.
-- `preDeployCommand` no existe en el plan gratuito; por eso las migraciones corren en el build.
-  Con un plan pago, se mueve esa parte a `preDeployCommand` en el `render.yaml`.
+- The service sleeps after 15 minutes without traffic and the first request afterwards takes about
+  a minute: wake it up before a demo. While it sleeps, the reminder sweep does not run.
+- The free database expires 30 days after creation, with no automatic backups, and there is one per workspace.
+- `preDeployCommand` does not exist on the free plan; that is why migrations run in the build.
+  With a paid plan, move that part to `preDeployCommand` in `render.yaml`.
 
-La app recibe la dirección con `--dart-define=API_URL=<URL_PUBLICA>` al construirse; ver el README de
+The app receives the address with `--dart-define=API_URL=<URL_PUBLICA>` when built; see the README of
 `apps/mobile`.
 
-Para volver atrás un despliegue, rotar un secreto o atender un incidente: `docs/technical/runbook.md`.
+To roll back a deployment, rotate a secret or handle an incident: `docs/technical/runbook.md`.
 
-## Supuestos que limitan lo que hace la API
+## Assumptions that limit what the API does
 
-Decisiones tomadas sin respuesta del cliente, que cambian lo que ve quien usa la API o lo que hace
-quien la opera. Cada ID está registrado en `specs/<card>/ambiguedades.md`; los demás supuestos de
-cada card están ahí.
+Decisions made without an answer from the client, which change what the person using the API sees or
+what the person operating it does. Each ID is recorded in `specs/<card>/ambiguities.md`; the other
+assumptions of each card are there.
 
-- CU-13-SUP-08 · una reserva dura de 1 a 4 horas, en horas en punto; la API rechaza una duración
-  menor a una hora o mayor a 4 horas.
-- CU-13-SUP-07 · sólo se reserva hasta 7 días de anticipación (los próximos siete días) y en
-  horarios futuros, en la hora del club.
-- CU-09-SUP-02 · el administrador no reserva: la API le responde 403. No hay tope de reservas
-  activas por usuario.
-- CU-09-SUP-03 · si dos personas piden el mismo horario a la vez gana una: la restricción de
-  exclusión de la base rechaza la segunda con 409.
-- CU-21-SUP-04 · el catálogo de deportes y tipos de espacio es fijo, vive en el código de la API y
-  no se edita desde la app (hoy no incluye Básquet).
-- CU-12-SUP-05 · el precio es el del espacio, igual a toda hora; la app lo muestra pero no hay
-  pagos ni reintegros (CU-09-AMB-10, CU-10-AMB-08).
-- CU-24.1-SUP-02 · el backend no reintenta un aviso push fallido: queda en el centro de avisos
-  como fallido, y un token que Firebase rechaza por inválido se da de baja.
-- CU-01-SUP-02 · la API no bloquea por intentos fallidos de ingreso; sólo corta Firebase
-  (`TOO_MANY_ATTEMPTS`, respondido como 429).
-- CU-07-SUP-01 · una cuenta dada de baja libera su correo y su DNI para una cuenta nueva.
+- CU-13-SUP-08 · a booking lasts 1 to 4 hours, on the hour; the API rejects a duration
+  shorter than one hour or longer than 4 hours.
+- CU-13-SUP-07 · bookings are allowed only up to 7 days ahead (the next seven days) and at
+  future times, in the club's time.
+- CU-09-SUP-02 · the admin does not book: the API answers them 403. There is no cap on active
+  bookings per user.
+- CU-09-SUP-03 · if two people ask for the same time slot at once, one wins: the database exclusion
+  constraint rejects the second with 409.
+- CU-21-SUP-04 · the catalog of sports and space types is fixed, lives in the API code and
+  is not edited from the app (today it does not include Básquet).
+- CU-12-SUP-05 · the price is the space's, the same at every hour; the app shows it but there are no
+  payments or refunds (CU-09-AMB-10, CU-10-AMB-08).
+- CU-24.1-SUP-02 · the backend does not retry a failed push notification: it stays in the notification
+  center as failed, and a token that Firebase rejects as invalid is removed.
+- CU-01-SUP-02 · the API does not block failed sign-in attempts; only Firebase cuts them off
+  (`TOO_MANY_ATTEMPTS`, answered as 429).
+- CU-07-SUP-01 · a deactivated account frees its email and its DNI for a new account.

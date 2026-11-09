@@ -10,10 +10,10 @@ from tests.current_schema import current, names, value
 RAIZ = Path(__file__).resolve().parents[4]
 MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migrations" / "versions").glob("0*.py"))
 APP_DART = RAIZ / "apps" / "mobile" / "lib" / "router.dart"
-MODELO = RAIZ / "docs" / "technical" / "modelo-de-datos.md"
-NAVEGACION = RAIZ / "docs" / "technical" / "navegacion-de-la-app.md"
+MODELO = RAIZ / "docs" / "technical" / "data-model.md"
+NAVEGACION = RAIZ / "docs" / "technical" / "app-navigation.md"
 DISENO = RAIZ / "docs" / "technical" / "system-design.md"
-COPIAR = RAIZ / "sitio-docs" / "scripts" / "copiar.mjs"
+COPIAR = RAIZ / "docs-site" / "scripts" / "copy-docs.mjs"
 NO_COLUMNA = {"constraint", "check", "primary", "unique", "exclude", "foreign"}
 
 
@@ -82,7 +82,8 @@ def _tablas() -> dict[str, set[str]]:
 def _palabras_de_las_migraciones() -> set[str]:
     """Todo nombre que aparece en las migraciones, también los de las constantes de módulo."""
     escritas = set(re.findall(r"[a-z_][a-z_0-9]*", "\n".join(_texto(m) for m in MIGRACIONES)))
-    return escritas | names()
+    modulos = {c.name for c in (RAIZ / "apps" / "api" / "app" / "modules").iterdir() if c.is_dir()}
+    return escritas | names() | modulos
 
 
 def _secciones(texto: str, nivel: str) -> dict[str, str]:
@@ -93,7 +94,7 @@ def _secciones(texto: str, nivel: str) -> dict[str, str]:
 
 def _entidades() -> dict[str, str]:
     modelo = _texto(MODELO)
-    return _secciones(_secciones(modelo, "##")["Entidades"], "###")
+    return _secciones(_secciones(modelo, "##")["Entities"], "###")
 
 
 def _diagrama_er(texto: str) -> dict[str, set[str]]:
@@ -157,7 +158,7 @@ def test_los_estados_de_reserva_y_de_aviso_de_la_pagina_son_los_que_admiten_las_
         value(v)
         for v in re.findall(r"'(\w+)'", re.findall(r"envio IN\s*\(([^)]*)\)", sql)[-1])
     }
-    estados = _secciones(_texto(MODELO), "##")["Estados"]
+    estados = _secciones(_texto(MODELO), "##")["States"]
     por_diagrama = _secciones(estados, "###")
 
     def en_diagrama(titulo: str) -> set[str]:
@@ -176,7 +177,7 @@ def test_la_seccion_data_de_system_design_remite_a_la_pagina_del_modelo_de_datos
     """la sección Data de system-design remite a la página del modelo de datos sin repetir sus columnas @DOC-01-S3 @assumption:DOC-01-ASM-01"""
     datos = _secciones(_texto(DISENO), "##")["Data"]
 
-    assert "modelo-de-datos.md" in datos
+    assert "data-model.md" in datos
     assert "firebase_uid" not in datos
     assert "|" not in datos
     assert len(datos.split()) < 120
@@ -217,7 +218,7 @@ def _rutas_de_app_dart() -> set[str]:
 
 
 def _rutas_documentadas() -> set[str]:
-    tabla = _secciones(_texto(NAVEGACION), "##")["Rutas"]
+    tabla = _secciones(_texto(NAVEGACION), "##")["Routes"]
     filas = re.findall(r"^\| `([^`]+)` \|", tabla, re.M)
     return {fila.split("?")[0] for fila in filas}
 
@@ -241,17 +242,17 @@ def test_la_pagina_de_navegacion_lista_cada_ruta_de_app_dart() -> None:
 
 
 def test_el_sitio_de_documentacion_incluye_el_modelo_de_datos_y_la_navegacion_en_tecnica() -> None:
-    """el sitio de documentación incluye el modelo de datos y la navegación en Técnica @DOC-01-S3"""
+    """el sitio de documentación incluye el modelo de datos y la navegación under Technical @DOC-01-S3"""
     copiar = _texto(COPIAR)
-    paginas = re.findall(r"\['([^']+)', '(tecnica/[^']+)', (\d+)\]", copiar)
+    paginas = re.findall(r"\['([^']+)', '(technical/[^']+)', (\d+)\]", copiar)
     por_origen = {origen: (destino, int(pos)) for origen, destino, pos in paginas}
 
-    assert por_origen["docs/technical/modelo-de-datos.md"] == ("tecnica/modelo-de-datos.md", 2)
-    assert por_origen["docs/technical/navegacion-de-la-app.md"] == (
-        "tecnica/navegacion-de-la-app.md",
+    assert por_origen["docs/technical/data-model.md"] == ("technical/data-model.md", 2)
+    assert por_origen["docs/technical/app-navigation.md"] == (
+        "technical/app-navigation.md",
         3,
     )
     posiciones = [pos for _, pos in por_origen.values()]
     assert sorted(posiciones) == list(range(1, len(posiciones) + 1))
-    assert (RAIZ / "docs" / "technical" / "modelo-de-datos.md").exists() or "existsSync" in copiar
-    assert "existsSync(join(repo, origen))" in copiar
+    assert (RAIZ / "docs" / "technical" / "data-model.md").exists() or "existsSync" in copiar
+    assert "existsSync(join(repo, source))" in copiar

@@ -1,0 +1,9 @@
+[
+  { "goto": "/" },
+  { "wait": "article" },
+  { "press": "Tab" },
+  { "press": "Tab" },
+  { "goto": "/api" },
+  { "wait": "article" },
+  { "press": "Tab" }
+]
