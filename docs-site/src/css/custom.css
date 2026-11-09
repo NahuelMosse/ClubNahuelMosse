@@ -70,6 +70,31 @@ main article {
   color: var(--text-muted) !important;
 }
 
+.theme-code-block .token.function {
+  color: var(--accent-text) !important;
+}
+
+/* The search shortcut hint, in the body ink so it keeps 4.5:1 on its chip. */
+kbd[class*='searchHint'] {
+  color: var(--text);
+}
+
+/* The design set's floating `.menu` (a popover, hidden until opened) must not reach Infima's sidebar
+   `.menu`, which is an ordinary block. */
+nav.menu {
+  position: static;
+  min-width: 0;
+  max-width: none;
+  padding: var(--space-2);
+  opacity: 1;
+  transform: none;
+  transition: none;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+  overflow-y: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :focus-visible {
     transition: none;

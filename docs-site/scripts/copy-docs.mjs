@@ -62,18 +62,19 @@ function rewriteLink(fromSource, fromPage, url) {
 
 rmSync(destination, { recursive: true, force: true });
 for (const [source, page, position] of pages) {
-  const text = readFileSync(join(repo, source), 'utf8').replace(
-    /\]\(([^)\s]+)\)/g,
-    (_, url) => `](${rewriteLink(source, page, url)})`,
-  );
+  const text = readFileSync(join(repo, source), 'utf8')
+    .replace(/\]\(([^)\s]+)\)/g, (_, url) => `](${rewriteLink(source, page, url)})`)
+    // The README's images are copied to static/docs/ and linked by their site path.
+    .replace(/<img src="docs\//g, '<img src="/docs/');
   const file = join(destination, page);
   mkdirSync(dirname(file), { recursive: true });
   const cover = page === 'intro.md' ? 'slug: /\n' : '';
   // The side menu already names the product: the title without " · ClubNahuelMosse".
   const title = (text.match(/^# (.+)$/m)?.[1] ?? '').replace(/ · ClubNahuelMosse$/, '');
   const label = page === 'intro.md' ? 'Home' : title;
+  const pageTitle = page === 'intro.md' ? `title: "ClubNahuelMosse"\n` : '';
   const header =
-    `---\n${cover}sidebar_position: ${position}\nsidebar_label: ${JSON.stringify(label)}\n` +
+    `---\n${cover}${pageTitle}sidebar_position: ${position}\nsidebar_label: ${JSON.stringify(label)}\n` +
     `custom_edit_url: ${github}${source}\n---\n\n`;
   writeFileSync(file, header + text);
 }
@@ -112,6 +113,13 @@ contract.servers = [
 ];
 mkdirSync(join(site, 'static'), { recursive: true });
 writeFileSync(join(site, 'static', 'openapi.json'), JSON.stringify(contract));
+
+// The home page's logo and screenshots.
+const images = join(site, 'static', 'docs');
+rmSync(images, { recursive: true, force: true });
+mkdirSync(images, { recursive: true });
+copyFileSync(join(repo, 'docs', 'logo.png'), join(images, 'logo.png'));
+cpSync(join(repo, 'docs', 'screenshots'), join(images, 'screenshots'), { recursive: true });
 
 // The project's design line: the tokens and the component set are served beside the site, which links them.
 const design = join(site, 'static', 'design');
