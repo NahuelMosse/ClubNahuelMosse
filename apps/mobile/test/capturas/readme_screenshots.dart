@@ -1,12 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:clubnahuelmosse/common/appearance.dart';
-import 'package:clubnahuelmosse/common/pending_booking.dart';
-import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
-import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
-import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
-import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart' hide testWidgets;
@@ -69,18 +63,12 @@ void main() {
 
   testWidgets('01-login', (tester) async {
     useEnglishDevice(tester);
-    final login = LoginScreen(
-      pending: PendingBooking(),
-      session: Session(
-        repository: SessionRepository(
-          credentials: CredencialesFalsas(
-            alIngresar: (_, _) async => throw const InvalidCredentials(),
-          ),
-          api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
-        ),
-      ),
+    await montar(
+      tester,
+      loginRejectingCredentials(),
+      tema: lightTheme,
+      tamano: phone,
     );
-    await montar(tester, login, tema: lightTheme, tamano: phone);
     expect(find.text('SIGN IN'), findsOneWidget);
     expect(find.text('Forgot your password?'), findsOneWidget);
     await capture(tester, '01-login.png');

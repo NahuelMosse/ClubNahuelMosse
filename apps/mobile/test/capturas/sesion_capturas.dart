@@ -1,7 +1,5 @@
-import 'package:clubnahuelmosse/features/session/data/session_repository.dart';
 import 'package:clubnahuelmosse/features/spaces/data/spaces_repository.dart';
 import 'package:clubnahuelmosse/features/venues/data/venues_repository.dart';
-import 'package:clubnahuelmosse/common/pending_booking.dart';
 import 'package:clubnahuelmosse/common/appearance.dart';
 import 'package:clubnahuelmosse/features/admin/data/booking_history_api.dart';
 import 'package:clubnahuelmosse/features/admin/domain/pending_panel_filters.dart';
@@ -13,11 +11,8 @@ import 'package:flutter_test/flutter_test.dart' hide testWidgets;
 import '../soporte/montar.dart';
 import '../soporte/reloj_fijo.dart';
 import 'package:clubnahuelmosse/features/session/data/password_recovery.dart';
-import 'package:clubnahuelmosse/features/session/domain/session_exceptions.dart';
 import 'package:clubnahuelmosse/features/session/presentation/forgot_password_screen.dart';
-import 'package:clubnahuelmosse/features/session/presentation/login_screen.dart';
 import 'package:clubnahuelmosse/features/session/presentation/new_password_screen.dart';
-import 'package:clubnahuelmosse/features/session/presentation/session.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/users/presentation/my_profile_screen.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
@@ -28,18 +23,6 @@ void main() {
 
   const telefonos = {'360': Size(360, 800), '430': Size(430, 932)};
   final temas = {'oscuro': darkTheme, 'claro': lightTheme};
-
-  Widget login() => LoginScreen(
-    pending: PendingBooking(),
-    session: Session(
-      repository: SessionRepository(
-        credentials: CredencialesFalsas(
-          alIngresar: (_, _) async => throw const InvalidCredentials(),
-        ),
-        api: apiFalsa(codigo: 200, cuerpo: perfilJson()),
-      ),
-    ),
-  );
 
   Future<void> capturar(WidgetTester tester, String archivo) async {
     // La foto del fondo se decodifica fuera del reloj falso del test.
@@ -56,13 +39,23 @@ void main() {
   for (final MapEntry(key: ancho, value: tamano) in telefonos.entries) {
     for (final MapEntry(key: modo, value: tema) in temas.entries) {
       testWidgets('login vacío $ancho $modo', (tester) async {
-        await montar(tester, login(), tema: tema, tamano: tamano);
+        await montar(
+          tester,
+          loginRejectingCredentials(),
+          tema: tema,
+          tamano: tamano,
+        );
         await capturar(tester, 'sesion/login_vacio_${ancho}_$modo.png');
       });
 
       testWidgets('login campos incompletos $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(tester, login(), tema: tema, tamano: tamano);
+        await montar(
+          tester,
+          loginRejectingCredentials(),
+          tema: tema,
+          tamano: tamano,
+        );
         await tester.tap(find.text('INICIAR SESIÓN'));
         await tester.pumpAndSettle();
         await capturar(tester, 'sesion/login_incompleto_${ancho}_$modo.png');
@@ -71,7 +64,12 @@ void main() {
 
       testWidgets('login credenciales inválidas $ancho $modo', (tester) async {
         final semantica = tester.ensureSemantics();
-        await montar(tester, login(), tema: tema, tamano: tamano);
+        await montar(
+          tester,
+          loginRejectingCredentials(),
+          tema: tema,
+          tamano: tamano,
+        );
         await tester.enterText(
           find.bySemanticsLabel('Correo'),
           'nmosse@unimoron.edu.ar',
