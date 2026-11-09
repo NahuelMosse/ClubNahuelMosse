@@ -66,11 +66,17 @@ main article {
   background-color: var(--surface);
 }
 
-.theme-code-block .token.comment {
+:root:not([data-theme='dark']) .theme-code-block .token {
+  color: var(--text) !important;
+}
+
+:root:not([data-theme='dark']) .theme-code-block .token.comment,
+:root[data-theme='dark'] .theme-code-block .token.comment {
   color: var(--text-muted) !important;
 }
 
-.theme-code-block .token.function {
+:root:not([data-theme='dark']) .theme-code-block .token.function,
+:root:not([data-theme='dark']) .theme-code-block .token.keyword {
   color: var(--accent-text) !important;
 }
 
@@ -79,9 +85,9 @@ kbd[class*='searchHint'] {
   color: var(--text);
 }
 
-/* The design set's floating `.menu` (a popover, hidden until opened) must not reach Infima's sidebar
-   `.menu`, which is an ordinary block. */
-nav.menu {
+/* The design set's floating `.menu` (a popover, hidden until opened) must not reach Infima's menus
+   (the sidebar and the mobile drawer), which are ordinary blocks. */
+.menu:not([popover]) {
   position: static;
   min-width: 0;
   max-width: none;
