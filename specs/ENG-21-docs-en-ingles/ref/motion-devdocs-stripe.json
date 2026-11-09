@@ -1,0 +1,2766 @@
+{
+ "url": "https://docs.stripe.com",
+ "cpu": 0,
+ "elements": [
+  {
+   "label": "a “Skip to content” [0]",
+   "kind": "a",
+   "selected": false,
+   "score": 1024,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": [
+      {
+       "label": "a.⚙.rs-2 “Skip to content”",
+       "root": true,
+       "primary": "width",
+       "startMs": 29,
+       "endMs": 45,
+       "moves": [
+        {
+         "prop": "width",
+         "from": 32,
+         "to": 125.97,
+         "durationMs": 16,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 29
+        },
+        {
+         "prop": "height",
+         "from": 32,
+         "to": 51,
+         "durationMs": 16,
+         "overshootPct": 0,
+         "shape": "step",
+         "settled": true,
+         "jumps": [],
+         "startMs": 29
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "label": "a “The Stripe Docs logo” [1]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-width",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "outline-width": [
+       "3px",
+       "0px"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Search” [2]",
+   "kind": "button",
+   "selected": false,
+   "score": 6400,
+   "transition": {
+    "properties": [
+     "box-shadow"
+    ],
+    "durations": [
+     150
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "box-shadow",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "box-shadow"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(39, 57, 81)"
+      ],
+      "box-shadow": [
+       "rgba(16, 17, 26, 0.16) 0px 1px 1px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(16, 17, 26, 0.16) 0px 1px 1px 0px, rgb(149, 164, 186) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "border-color": [
+       "rgb(84, 105, 212)",
+       "rgb(149, 164, 186)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(39, 57, 81)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(39, 57, 81)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [
+      "background-color",
+      "color",
+      "box-shadow",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "box-shadow"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(255, 255, 255)",
+       "rgb(244, 247, 250)"
+      ],
+      "color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ],
+      "box-shadow": [
+       "rgba(16, 17, 26, 0.16) 0px 1px 1px 0px, rgb(149, 164, 186) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(16, 17, 26, 0.16) 0px -1px 1px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "border-color": [
+       "rgb(149, 164, 186)",
+       "rgb(212, 222, 233)"
+      ],
+      "outline-color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ],
+      "text-decoration-color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ]
+     },
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "box-shadow"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Stripe Assistant” [3]",
+   "kind": "button",
+   "selected": false,
+   "score": 2577,
+   "transition": {
+    "properties": [
+     "background-color",
+     "box-shadow"
+    ],
+    "durations": [
+     150
+    ],
+    "easings": [
+     "cubic-bezier(0, 0.09, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "box-shadow",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "box-shadow"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(39, 57, 81)"
+      ],
+      "box-shadow": [
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(149, 164, 186) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "border-color": [
+       "rgb(212, 222, 233)",
+       "rgb(149, 164, 186)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(39, 57, 81)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(39, 57, 81)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [
+      "background-color",
+      "color",
+      "box-shadow",
+      "border-color",
+      "outline-style",
+      "outline-width",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "box-shadow"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(255, 255, 255)",
+       "rgb(244, 247, 250)"
+      ],
+      "color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ],
+      "box-shadow": [
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(149, 164, 186) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(1, 150, 237, 0.36) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "border-color": [
+       "rgb(149, 164, 186)",
+       "rgb(212, 222, 233)"
+      ],
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "1px"
+      ],
+      "outline-color": [
+       "rgb(39, 57, 81)",
+       "rgba(0, 0, 0, 0)"
+      ],
+      "text-decoration-color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ]
+     },
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "box-shadow"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Create account” [4]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Sign in” [5]",
+   "kind": "a",
+   "selected": false,
+   "score": 1668,
+   "transition": {
+    "properties": [
+     "background-color",
+     "box-shadow"
+    ],
+    "durations": [
+     150
+    ],
+    "easings": [
+     "cubic-bezier(0, 0.09, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "box-shadow",
+      "border-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "box-shadow"
+     ],
+     "values": {
+      "box-shadow": [
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(149, 164, 186) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "border-color": [
+       "rgb(212, 222, 233)",
+       "rgb(149, 164, 186)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [
+      "background-color",
+      "color",
+      "box-shadow",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "box-shadow"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(255, 255, 255)",
+       "rgb(244, 247, 250)"
+      ],
+      "color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ],
+      "box-shadow": [
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(149, 164, 186) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "border-color": [
+       "rgb(149, 164, 186)",
+       "rgb(212, 222, 233)"
+      ],
+      "outline-color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ],
+      "text-decoration-color": [
+       "rgb(39, 57, 81)",
+       "rgb(60, 79, 105)"
+      ]
+     },
+     "motion": []
+    },
+    "focus": {
+     "changed": [
+      "box-shadow",
+      "outline-style",
+      "outline-width",
+      "outline-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "background-color",
+      "box-shadow"
+     ],
+     "values": {
+      "box-shadow": [
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgba(0, 0, 0, 0) 0px 0px 0px 0px",
+       "rgba(0, 0, 0, 0) 0px 0px 0px 0px, rgb(212, 222, 233) 0px 0px 0px 1px, rgba(1, 150, 237, 0.36) 0px 0px 0px 4px, rgba(0, 0, 0, 0) 0px 0px 0px 0px"
+      ],
+      "outline-style": [
+       "none",
+       "solid"
+      ],
+      "outline-width": [
+       "3px",
+       "1px"
+      ],
+      "outline-color": [
+       "rgb(39, 57, 81)",
+       "rgba(0, 0, 0, 0)"
+      ]
+     },
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/get-started “Get started” [6]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/payments “Payments” [7]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/revenue “Revenue” [8]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/risk “Risk” [9]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/data “Data” [10]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/money-management “Money management” [11]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/stablecoins “Stablecoins” [12]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/connect “Embedded finance” [13]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#/development “Developer resources” [14]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "cubic-bezier(0, 0, 0.4, 1)"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#react-aria367840893-:rf: “APIs & SDKs” [15]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a#react-aria367840893-:rk: “Help” [16]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Get started with Stripe” [17]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "color"
+    ],
+    "durations": [
+     240
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "color"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Explore all products” [18]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "outline-width"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "outline-width": [
+       "3px",
+       "0px"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Sign in” [19]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-width",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "outline-width": [
+       "3px",
+       "0px"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “create an account” [20]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-width",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "outline-width": [
+       "3px",
+       "0px"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Test cards” [21]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “4242 4242 4242 4242” [22]",
+   "kind": "button",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     100
+    ],
+    "easings": [
+     "ease-in-out"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "border-color": [
+       "rgb(236, 241, 246)",
+       "rgb(212, 222, 233)"
+      ],
+      "outline-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ],
+      "text-decoration-color": [
+       "rgb(80, 97, 122)",
+       "rgb(26, 44, 68)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [
+      "background-color",
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgba(0, 0, 0, 0)",
+       "rgb(236, 241, 246)"
+      ],
+      "color": [
+       "rgb(26, 44, 68)",
+       "rgb(80, 97, 122)"
+      ],
+      "border-color": [
+       "rgb(212, 222, 233)",
+       "rgb(236, 241, 246)"
+      ],
+      "outline-color": [
+       "rgb(26, 44, 68)",
+       "rgb(80, 97, 122)"
+      ],
+      "text-decoration-color": [
+       "rgb(26, 44, 68)",
+       "rgb(80, 97, 122)"
+      ]
+     },
+     "motion": [
+      {
+       "label": "span.⚙.as-6g",
+       "root": false,
+       "primary": "scaleX",
+       "startMs": 18,
+       "endMs": 101,
+       "moves": [
+        {
+         "prop": "scaleX",
+         "from": 1,
+         "to": 0.95,
+         "durationMs": 83,
+         "overshootPct": 0,
+         "shape": "ease-out",
+         "settled": true,
+         "jumps": [],
+         "startMs": 18
+        },
+        {
+         "prop": "scaleY",
+         "from": 1,
+         "to": 0.95,
+         "durationMs": 83,
+         "overshootPct": 0,
+         "shape": "ease-out",
+         "settled": true,
+         "jumps": [],
+         "startMs": 18
+        }
+       ]
+      }
+     ]
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Accept payments online” [23]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Collect payments with invoices” [24]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Accept payments in-person” [25]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Sell subscriptions” [26]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Offer usage-based pricing” [27]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Set up the customer portal” [28]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Set up your development environm” [29]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Build on Stripe with AI” [30]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "a “Integration quickstarts” [31]",
+   "kind": "a",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "color",
+      "border-color",
+      "outline-color",
+      "text-decoration-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "border-color": [
+       "rgb(83, 58, 253)",
+       "rgb(68, 19, 159)"
+      ],
+      "outline-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ],
+      "text-decoration-color": [
+       "rgb(84, 105, 212)",
+       "rgb(26, 31, 54)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "svg “info” [32]",
+   "kind": "focus-only",
+   "selected": false,
+   "score": 0,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Start a payment” [33]",
+   "kind": "button",
+   "selected": false,
+   "score": 13269,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(247, 250, 252)",
+       "rgb(255, 255, 255)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Start a checkout session” [34]",
+   "kind": "button",
+   "selected": false,
+   "score": 13274,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(247, 250, 252)",
+       "rgb(255, 255, 255)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Create a customer” [35]",
+   "kind": "button",
+   "selected": false,
+   "score": 13274,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(247, 250, 252)",
+       "rgb(255, 255, 255)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Sell a product” [36]",
+   "kind": "button",
+   "selected": false,
+   "score": 13274,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(247, 250, 252)",
+       "rgb(255, 255, 255)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Issue coupons” [37]",
+   "kind": "button",
+   "selected": false,
+   "score": 13274,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Get your balance” [38]",
+   "kind": "button",
+   "selected": false,
+   "score": 13274,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(247, 250, 252)",
+       "rgb(255, 255, 255)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  },
+  {
+   "label": "button “Manage taxes” [39]",
+   "kind": "button",
+   "selected": false,
+   "score": 13274,
+   "transition": {
+    "properties": [
+     "all"
+    ],
+    "durations": [
+     0
+    ],
+    "easings": [
+     "ease"
+    ]
+   },
+   "moments": {
+    "hover": {
+     "changed": [
+      "background-color"
+     ],
+     "pixels": true,
+     "transitioned": [
+      "all"
+     ],
+     "values": {
+      "background-color": [
+       "rgb(247, 250, 252)",
+       "rgb(255, 255, 255)"
+      ]
+     },
+     "motion": []
+    },
+    "press": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    },
+    "focus": {
+     "changed": [],
+     "pixels": false,
+     "transitioned": [
+      "all"
+     ],
+     "values": {},
+     "motion": []
+    }
+   }
+  }
+ ],
+ "sections": [],
+ "longFrames": [],
+ "sheets": [
+  "D:\\Temp\\ref-motion-MEJdeA\\primary.png"
+ ],
+ "load": [],
+ "scrollEntrances": [],
+ "click": null,
+ "interrupt": null,
+ "scrollStory": {
+  "summary": {
+   "steps": 1,
+   "scrollHeight": 900,
+   "parallax": 0,
+   "pinned": 0,
+   "fixed": 0,
+   "linked": 0,
+   "narrative": false
+  },
+  "segments": [],
+  "elements": []
+ },
+ "roles": {
+  "cta": {
+   "label": "button “Start a checkout session” [34]",
+   "hover": null,
+   "press": null,
+   "focus": null
+  },
+  "cards": null,
+  "section": null,
+  "click": null,
+  "scroll": {
+   "steps": 1,
+   "scrollHeight": 900,
+   "parallax": 0,
+   "pinned": 0,
+   "fixed": 0,
+   "linked": 0,
+   "narrative": false
+  }
+ },
+ "grammar": {
+  "durationsMs": null,
+  "shapes": {},
+  "staggerMs": 0,
+  "cursor": {
+   "hover": 0,
+   "press": 1,
+   "focus": 1,
+   "of": 40
+  }
+ }
+}

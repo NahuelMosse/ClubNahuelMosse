@@ -1,0 +1,2256 @@
+{
+ "url": "http://127.0.0.1:8707/",
+ "intent": null,
+ "kind": "product",
+ "brand": {
+  "file": "design/line.md",
+  "fonts": [],
+  "sheetHash": "7247788d17fb5e9f9dce8f7c609da3785e9b94e8b0b884cd8fad23ab423fbf4e"
+ },
+ "gpu": true,
+ "path": "gpu",
+ "cta": {
+  "1440x900": {
+   "none": true,
+   "reason": "no candidate"
+  },
+  "1280x800": {
+   "none": true,
+   "reason": "no candidate"
+  },
+  "1024x768": {
+   "none": true,
+   "reason": "no candidate"
+  },
+  "768x1024": {
+   "text": "On this page",
+   "selector": "article > div.tocCollapsible_ETCw.theme-doc-toc-mobile > button.clean-btn.tocCollapsibleButton_TO0P",
+   "reason": "button-like, first viewport, largest"
+  },
+  "390x844": {
+   "text": "On this page",
+   "selector": "article > div.tocCollapsible_ETCw.theme-doc-toc-mobile > button.clean-btn.tocCollapsibleButton_TO0P",
+   "reason": "button-like, first viewport, largest"
+  }
+ },
+ "renderer": "ANGLE (NVIDIA, NVIDIA GeForce RTX 2060 (0x00001F08) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+ "software": false,
+ "widths": {
+  "1440x900": {
+   "measure": {
+    "grain": false,
+    "displayPx": 48,
+    "ratio": 3,
+    "displayLineHeight": 1.25,
+    "displayTrackingEm": 0,
+    "displaySample": "h1 \"ClubNahuelMosse\"",
+    "displayLate": false,
+    "bodyTrackingEm": 0,
+    "sizes": [
+     12,
+     13,
+     16,
+     32,
+     48
+    ],
+    "sizeCount": 5
+   },
+   "responsive": {
+    "width": 1440,
+    "tapSmall": [
+     "a.navbar__brand 144x26",
+     "button.btn.btn--ghost 43x28",
+     "input.navbar__search-input.searchInput_YFbd 200x32",
+     "a.menu__link.menu__link--active 274x32",
+     "a.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.breadcrumbs__link 38x31",
+     "a.table-of-contents__link.toc-highlight 228x21",
+     "a.table-of-contents__link.toc-highlight 228x21",
+     "a.table-of-contents__link.toc-highlight 228x21",
+     "a.table-of-contents__link.toc-highlight 228x21"
+    ],
+    "clickSmall": [
+     "a.table-of-contents__link.toc-highlight 228x21",
+     "a.table-of-contents__link.toc-highlight 228x21",
+     "a.table-of-contents__link.toc-highlight 228x21",
+     "a.table-of-contents__link.toc-highlight 228x21"
+    ],
+    "medianButton": 32,
+    "hoverOnly": [
+     ".timeline__item:has(.timeline__open):hover::before",
+     ".dropdown--hoverable:hover .dropdown__menu, .dropdown--show .dropdown__menu",
+     ".footerLogoLink_BH7S:hover, .hash-link:focus, :hover > .hash-link",
+     ".theme-code-block:hover .copyButtonCopied_Vdqa",
+     ".theme-code-block:hover .buttonGroup_M5ko button"
+    ],
+    "smallFields": [],
+    "overflow": {
+     "scrollWidth": 1440,
+     "clientWidth": 1440
+    },
+    "queries": {
+     "min": 4,
+     "max": 18
+    },
+    "coveredPct": 30,
+    "cta": null,
+    "nav": {
+     "bottomBar": false,
+     "hamburger": false,
+     "hamburgerLabeled": false
+    }
+   },
+   "rules": [
+    {
+     "rule": "display/body ratio",
+     "value": 3,
+     "range": "report only: winners median 2.9x, 2-9x",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "display line height",
+     "value": 1.25,
+     "range": "report only: winners median 1.0",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "font sizes, first viewport",
+     "value": 5,
+     "range": "<= 9",
+     "pass": true
+    },
+    {
+     "rule": "hamburger, expanded",
+     "value": "no",
+     "range": "no",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "clicks of 24x24 or less",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "a.table-of-contents__link.toc-highlight 228x21",
+      "a.table-of-contents__link.toc-highlight 228x21",
+      "a.table-of-contents__link.toc-highlight 228x21",
+      "a.table-of-contents__link.toc-highlight 228x21"
+     ]
+    },
+    {
+     "rule": "median button height",
+     "value": 32,
+     "range": "< 48 (all 48+ is a stretched mobile)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "dead clicks",
+     "value": 5,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Technical\" · href=\"#\" · 1440 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-01.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Guides\" · href=\"#\" · 1440 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-02.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Decisions\" · href=\"#\" · 1440 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-03.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Product and quality\" · href=\"#\" · 1440 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-04.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Code reference (API)\" · href=\"#\" · 1440 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-05.png"
+     ]
+    },
+    {
+     "rule": "image file width >= shown x 2",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "pasted boxes",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in: 321/919/484/1518 px of margin over a contrasting background",
+      "img.img_ev3q Venues: 525/715/484/1518 px of margin over a contrasting background",
+      "img.img_ev3q Available times: 730/510/484/1518 px of margin over a contrasting background",
+      "img.img_ev3q Booking confirmed: 934/306/484/1518 px of margin over a contrasting background"
+     ]
+    },
+    {
+     "rule": "repeated images",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "broken images (naturalWidth 0)",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "alt text painted as page text",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "LCP image",
+     "value": "lazy, hidden at t0",
+     "range": "not lazy, visible at t0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in"
+     ]
+    },
+    {
+     "rule": "product: content span",
+     "value": "122%",
+     "range": "span 85% or more of the width beside the 300 px sidebar",
+     "pass": true,
+     "detail": [
+      "span 122% under 85%"
+     ]
+    },
+    {
+     "rule": "product: card in card",
+     "value": 0,
+     "range": "depth 2 or less (0 boxes with a fill or three sides of border)",
+     "pass": true,
+     "detail": [
+      "card-in-card depth 0 (max 2) at null"
+     ]
+    },
+    {
+     "rule": "product: row as card",
+     "value": 0,
+     "range": "0: a list row is a line with a hairline, not a box",
+     "pass": true,
+     "detail": [
+      "row-as-card: 0 rows with fill or border (null)"
+     ]
+    },
+    {
+     "rule": "product: hues",
+     "value": 1,
+     "range": "4 or less: one accent and the states",
+     "pass": true,
+     "detail": [
+      "1 hues (max 4)"
+     ]
+    },
+    {
+     "rule": "product: backdrop-filter",
+     "value": 0,
+     "range": "0 unless `brand-chrome: glass`",
+     "pass": true,
+     "detail": [
+      "blur 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: background gradients",
+     "value": 0,
+     "range": "0 unless `brand-chrome: gradient`",
+     "pass": true,
+     "detail": [
+      "gradients 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: table built of divs",
+     "value": 0,
+     "range": "0: rows of three or more aligned columns are a <table> (or role=grid) with its column headers",
+     "pass": true,
+     "detail": [
+      "0 rows of aligned columns outside a table (null)"
+     ]
+    },
+    {
+     "rule": "product: spacing scale",
+     "value": "96% on 4 px, six steps cover 94%",
+     "range": "of the margins, paddings and gaps of 8 px or more, 80% on a 4 px grid and 85% from its six most used values",
+     "pass": true,
+     "detail": [
+      "off the 4 px grid: 10, 13, 25 px · 12 distinct values, the six most used cover 94%"
+     ]
+    },
+    {
+     "rule": "palette: CTA separation (OKLCH)",
+     "value": 0.18,
+     "range": ">= 1: ΔL 0.15, or ΔC 0.08, or hue 40° (both chromatic) from adjacent background, body and muted text",
+     "pass": false,
+     "detail": [
+      "CTA a.skipToContent_fXgn \"Skip to main content\" fill #f6f6f7 L 0.97",
+      "adjacent background #ffffff L 1.00: ΔL 0.03 ΔC 0.00 Δh 164°",
+      "body text #0a0a0b L 0.15: ΔL 0.83 ΔC 0.00 Δh 0°",
+      "muted text #6b6b73 L 0.53: ΔL 0.44 ΔC 0.01 Δh 0°"
+     ]
+    },
+    {
+     "rule": "palette: roles",
+     "value": "5 text / 8 background",
+     "range": "report only: text colors and background colors apart",
+     "pass": true,
+     "detail": [
+      "text #0a0a0b L 0.15, #4d6600 L 0.47, #606770 L 0.51, #525860 L 0.46, #6b6b73 L 0.53",
+      "background #f6f6f7 L 0.97, #ebedf0 L 0.95, #ecefe7 L 0.95, #ffffff L 1.00, #f2f2f2 L 0.96, #f7f7f7 L 0.98, #f6f7f8 L 0.98, #f5f5f6 L 0.97"
+     ],
+     "report": true
+    },
+    {
+     "rule": "palette: text contrast (WCAG AA)",
+     "value": 0,
+     "range": "0 pairs under 4.5:1 (3:1 large)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "palette: APCA Lc (report)",
+     "value": 71,
+     "range": "reported: body >= 75, loose text >= 30",
+     "pass": true,
+     "detail": [
+      "span.token.comment \"# Firebase Auth emul\" #6b6b73 on #f6f6f7 Lc 71 (14.72px)",
+      "span.linkLabel_WmDU \"Home\" #4d6600 on #ecefe7 Lc 72 (16px)",
+      "span.breadcrumbs__link \"Home\" #4d6600 on #f2f2f2 Lc 74 (12.8px)",
+      "span.token.function \"npm\" #4d6600 on #f6f6f7 Lc 77 (14.72px)",
+      "code \"apps/api/README.md\" #4d6600 on #f6f7f8 Lc 77 (14.72px)"
+     ]
+    },
+    {
+     "rule": "brand: fonts",
+     "value": 2,
+     "range": "report only: no brand sheet with fonts",
+     "pass": true,
+     "detail": [
+      "Inter x69 (a \"Skip to main content\")",
+      "Arial x1 (button \"Dark\")"
+     ],
+     "report": true
+    }
+   ],
+   "frames": [
+    {
+     "frame": 1,
+     "y": 0,
+     "n": 8,
+     "focalShare": 0.064,
+     "focalKind": "media",
+     "competing": 5,
+     "axes": 5,
+     "empty": 0.609,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 2,
+     "y": 900,
+     "n": 26,
+     "focalShare": 0.01,
+     "focalKind": "text",
+     "competing": 11,
+     "axes": 7,
+     "empty": 0.786,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 3,
+     "y": 1535,
+     "n": 46,
+     "focalShare": 0.01,
+     "focalKind": "text",
+     "competing": 4,
+     "axes": 18,
+     "empty": 0.832,
+     "flags": [],
+     "reported": []
+    }
+   ],
+   "images": {
+    "low": [],
+    "pasted": [
+     "img.img_ev3q Sign in: 321/919/484/1518 px of margin over a contrasting background",
+     "img.img_ev3q Venues: 525/715/484/1518 px of margin over a contrasting background",
+     "img.img_ev3q Available times: 730/510/484/1518 px of margin over a contrasting background",
+     "img.img_ev3q Booking confirmed: 934/306/484/1518 px of margin over a contrasting background"
+    ],
+    "unknown": [],
+    "repeated": [],
+    "lcp": {
+     "img": "img.img_ev3q Sign in",
+     "lazy": true,
+     "visibleT0": false
+    },
+    "sizes": [
+     {
+      "img": "img.img_ev3q ClubNahuelMosse logo",
+      "file": 1024,
+      "shown": 96
+     },
+     {
+      "img": "img.img_ev3q Sign in",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Venues",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Available times",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Booking confirmed",
+      "file": 430,
+      "shown": 200
+     }
+    ],
+    "broken": [],
+    "altShown": []
+   },
+   "sweep": {
+    "checked": 30,
+    "dead": [
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Technical\"",
+      "width": 1440,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-01.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Guides\"",
+      "width": 1440,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-02.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Decisions\"",
+      "width": 1440,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-03.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Product and quality\"",
+      "width": 1440,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-04.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Code reference (API)\"",
+      "width": 1440,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\dead-clicks\\dc-05.png"
+     }
+    ]
+   },
+   "canvas": [],
+   "scrub": null,
+   "layout": {
+    "hero": {
+     "n": 7,
+     "span": 0.565,
+     "widest": 0.559
+    },
+    "sections": []
+   },
+   "product": {
+    "span": 1.221,
+    "sidebar": 300,
+    "cardNest": 0,
+    "cardCount": 0,
+    "nestAt": null,
+    "rowBoxes": 0,
+    "rowSample": null,
+    "hues": 1,
+    "blur": 0,
+    "gradients": 0,
+    "numerals": 0,
+    "tabular": 0,
+    "cellNumerals": 0,
+    "leftNumbers": 0,
+    "leftSample": null,
+    "divRows": 0,
+    "divSample": null,
+    "numeralsDoc": 0,
+    "spaces": 159,
+    "onGrid": 153,
+    "spaceValues": 12,
+    "topSix": 150,
+    "offGrid": [
+     10,
+     13,
+     25
+    ]
+   }
+  },
+  "1280x800": {
+   "measure": {
+    "grain": false,
+    "displayPx": 48,
+    "ratio": 3,
+    "displayLineHeight": 1.25,
+    "displayTrackingEm": 0,
+    "displaySample": "h1 \"ClubNahuelMosse\"",
+    "displayLate": false,
+    "bodyTrackingEm": 0,
+    "sizes": [
+     12,
+     13,
+     16,
+     32,
+     48
+    ],
+    "sizeCount": 5
+   },
+   "responsive": {
+    "width": 1280,
+    "tapSmall": [
+     "a.navbar__brand 144x26",
+     "button.btn.btn--ghost 43x28",
+     "input.navbar__search-input.searchInput_YFbd 200x32",
+     "a.menu__link.menu__link--active 274x32",
+     "a.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.breadcrumbs__link 38x31",
+     "a.table-of-contents__link.toc-highlight 188x21",
+     "a.table-of-contents__link.toc-highlight 188x21",
+     "a.table-of-contents__link.toc-highlight 188x21",
+     "a.table-of-contents__link.toc-highlight 188x21"
+    ],
+    "clickSmall": [
+     "a.table-of-contents__link.toc-highlight 188x21",
+     "a.table-of-contents__link.toc-highlight 188x21",
+     "a.table-of-contents__link.toc-highlight 188x21",
+     "a.table-of-contents__link.toc-highlight 188x21"
+    ],
+    "medianButton": 32,
+    "hoverOnly": [
+     ".timeline__item:has(.timeline__open):hover::before",
+     ".dropdown--hoverable:hover .dropdown__menu, .dropdown--show .dropdown__menu",
+     ".footerLogoLink_BH7S:hover, .hash-link:focus, :hover > .hash-link",
+     ".theme-code-block:hover .copyButtonCopied_Vdqa",
+     ".theme-code-block:hover .buttonGroup_M5ko button"
+    ],
+    "smallFields": [],
+    "overflow": {
+     "scrollWidth": 1280,
+     "clientWidth": 1280
+    },
+    "queries": {
+     "min": 4,
+     "max": 18
+    },
+    "coveredPct": 34,
+    "cta": null,
+    "nav": {
+     "bottomBar": false,
+     "hamburger": false,
+     "hamburgerLabeled": false
+    }
+   },
+   "rules": [
+    {
+     "rule": "display/body ratio",
+     "value": 3,
+     "range": "report only: winners median 2.9x, 2-9x",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "display line height",
+     "value": 1.25,
+     "range": "report only: winners median 1.0",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "font sizes, first viewport",
+     "value": 5,
+     "range": "<= 9",
+     "pass": true
+    },
+    {
+     "rule": "hamburger, expanded",
+     "value": "no",
+     "range": "no",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "clicks of 24x24 or less",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "a.table-of-contents__link.toc-highlight 188x21",
+      "a.table-of-contents__link.toc-highlight 188x21",
+      "a.table-of-contents__link.toc-highlight 188x21",
+      "a.table-of-contents__link.toc-highlight 188x21"
+     ]
+    },
+    {
+     "rule": "median button height",
+     "value": 32,
+     "range": "< 48 (all 48+ is a stretched mobile)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "dead clicks",
+     "value": 5,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Technical\" · href=\"#\" · 1280 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-01.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Guides\" · href=\"#\" · 1280 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-02.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Decisions\" · href=\"#\" · 1280 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-03.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Product and quality\" · href=\"#\" · 1280 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-04.png",
+      "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Code reference (API)\" · href=\"#\" · 1280 px · D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-05.png"
+     ]
+    },
+    {
+     "rule": "image file width >= shown x 2",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "pasted boxes",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in: 363/717/484/1958 px of margin over a contrasting background",
+      "img.img_ev3q Venues: 568/513/484/1958 px of margin over a contrasting background",
+      "img.img_ev3q Available times: 772/308/484/1958 px of margin over a contrasting background",
+      "img.img_ev3q Booking confirmed: 568/513/925/1517 px of margin over a contrasting background"
+     ]
+    },
+    {
+     "rule": "repeated images",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "broken images (naturalWidth 0)",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "alt text painted as page text",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "LCP image",
+     "value": "lazy, visible at t0",
+     "range": "not lazy, visible at t0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in"
+     ]
+    },
+    {
+     "rule": "product: content span",
+     "value": "126%",
+     "range": "span 85% or more of the width beside the 300 px sidebar",
+     "pass": true,
+     "detail": [
+      "span 126% under 85%"
+     ]
+    },
+    {
+     "rule": "product: card in card",
+     "value": 0,
+     "range": "depth 2 or less (0 boxes with a fill or three sides of border)",
+     "pass": true,
+     "detail": [
+      "card-in-card depth 0 (max 2) at null"
+     ]
+    },
+    {
+     "rule": "product: row as card",
+     "value": 0,
+     "range": "0: a list row is a line with a hairline, not a box",
+     "pass": true,
+     "detail": [
+      "row-as-card: 0 rows with fill or border (null)"
+     ]
+    },
+    {
+     "rule": "product: hues",
+     "value": 1,
+     "range": "4 or less: one accent and the states",
+     "pass": true,
+     "detail": [
+      "1 hues (max 4)"
+     ]
+    },
+    {
+     "rule": "product: backdrop-filter",
+     "value": 0,
+     "range": "0 unless `brand-chrome: glass`",
+     "pass": true,
+     "detail": [
+      "blur 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: background gradients",
+     "value": 0,
+     "range": "0 unless `brand-chrome: gradient`",
+     "pass": true,
+     "detail": [
+      "gradients 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: table built of divs",
+     "value": 0,
+     "range": "0: rows of three or more aligned columns are a <table> (or role=grid) with its column headers",
+     "pass": true,
+     "detail": [
+      "0 rows of aligned columns outside a table (null)"
+     ]
+    },
+    {
+     "rule": "product: spacing scale",
+     "value": "96% on 4 px, six steps cover 94%",
+     "range": "of the margins, paddings and gaps of 8 px or more, 80% on a 4 px grid and 85% from its six most used values",
+     "pass": true,
+     "detail": [
+      "off the 4 px grid: 10, 13, 25 px · 12 distinct values, the six most used cover 94%"
+     ]
+    },
+    {
+     "rule": "palette: CTA separation (OKLCH)",
+     "value": 0.18,
+     "range": ">= 1: ΔL 0.15, or ΔC 0.08, or hue 40° (both chromatic) from adjacent background, body and muted text",
+     "pass": false,
+     "detail": [
+      "CTA a.skipToContent_fXgn \"Skip to main content\" fill #f6f6f7 L 0.97",
+      "adjacent background #ffffff L 1.00: ΔL 0.03 ΔC 0.00 Δh 164°",
+      "body text #0a0a0b L 0.15: ΔL 0.83 ΔC 0.00 Δh 0°",
+      "muted text #6b6b73 L 0.53: ΔL 0.44 ΔC 0.01 Δh 0°"
+     ]
+    },
+    {
+     "rule": "palette: roles",
+     "value": "5 text / 7 background",
+     "range": "report only: text colors and background colors apart",
+     "pass": true,
+     "detail": [
+      "text #0a0a0b L 0.15, #4d6600 L 0.47, #606770 L 0.51, #525860 L 0.46, #6b6b73 L 0.53",
+      "background #f6f6f7 L 0.97, #ebedf0 L 0.95, #ecefe7 L 0.95, #ffffff L 1.00, #f2f2f2 L 0.96, #f7f7f7 L 0.98, #f6f7f8 L 0.98"
+     ],
+     "report": true
+    },
+    {
+     "rule": "palette: text contrast (WCAG AA)",
+     "value": 0,
+     "range": "0 pairs under 4.5:1 (3:1 large)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "palette: APCA Lc (report)",
+     "value": 71,
+     "range": "reported: body >= 75, loose text >= 30",
+     "pass": true,
+     "detail": [
+      "span.token.comment \"# Firebase Auth emul\" #6b6b73 on #f6f6f7 Lc 71 (14.72px)",
+      "span.linkLabel_WmDU \"Home\" #4d6600 on #ecefe7 Lc 72 (16px)",
+      "span.breadcrumbs__link \"Home\" #4d6600 on #f2f2f2 Lc 74 (12.8px)",
+      "span.token.function \"npm\" #4d6600 on #f6f6f7 Lc 77 (14.72px)",
+      "code \"apps/api/README.md\" #4d6600 on #f6f7f8 Lc 77 (14.72px)"
+     ]
+    },
+    {
+     "rule": "brand: fonts",
+     "value": 2,
+     "range": "report only: no brand sheet with fonts",
+     "pass": true,
+     "detail": [
+      "Inter x69 (a \"Skip to main content\")",
+      "Arial x1 (button \"Dark\")"
+     ],
+     "report": true
+    }
+   ],
+   "frames": [
+    {
+     "frame": 1,
+     "y": 0,
+     "n": 7,
+     "focalShare": 0.062,
+     "focalKind": "media",
+     "competing": 4,
+     "axes": 7,
+     "empty": 0.675,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 2,
+     "y": 800,
+     "n": 10,
+     "focalShare": 0.085,
+     "focalKind": "media",
+     "competing": 1,
+     "axes": 5,
+     "empty": 0.751,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 3,
+     "y": 1600,
+     "n": 39,
+     "focalShare": 0.013,
+     "focalKind": "text",
+     "competing": 5,
+     "axes": 17,
+     "empty": 0.779,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 4,
+     "y": 2075,
+     "n": 42,
+     "focalShare": 0.013,
+     "focalKind": "text",
+     "competing": 4,
+     "axes": 17,
+     "empty": 0.795,
+     "flags": [],
+     "reported": []
+    }
+   ],
+   "images": {
+    "low": [],
+    "pasted": [
+     "img.img_ev3q Sign in: 363/717/484/1958 px of margin over a contrasting background",
+     "img.img_ev3q Venues: 568/513/484/1958 px of margin over a contrasting background",
+     "img.img_ev3q Available times: 772/308/484/1958 px of margin over a contrasting background",
+     "img.img_ev3q Booking confirmed: 568/513/925/1517 px of margin over a contrasting background"
+    ],
+    "unknown": [],
+    "repeated": [],
+    "lcp": {
+     "img": "img.img_ev3q Sign in",
+     "lazy": true,
+     "visibleT0": true
+    },
+    "sizes": [
+     {
+      "img": "img.img_ev3q ClubNahuelMosse logo",
+      "file": 1024,
+      "shown": 96
+     },
+     {
+      "img": "img.img_ev3q Sign in",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Venues",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Available times",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Booking confirmed",
+      "file": 430,
+      "shown": 200
+     }
+    ],
+    "broken": [],
+    "altShown": []
+   },
+   "sweep": {
+    "checked": 30,
+    "dead": [
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Technical\"",
+      "width": 1280,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-01.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Guides\"",
+      "width": 1280,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-02.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Decisions\"",
+      "width": 1280,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-03.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Product and quality\"",
+      "width": 1280,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-04.png"
+     },
+     {
+      "selector": "li.theme-doc-sidebar-item-category.theme-doc-sidebar-item-category-level-1 > div.menu__list-item-collapsible > a.categoryLink_byQd.menu__link \"Code reference (API)\"",
+      "width": 1280,
+      "reason": "href=\"#\"",
+      "capture": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\dead-clicks\\dc-05.png"
+     }
+    ]
+   },
+   "canvas": [],
+   "scrub": null,
+   "layout": {
+    "hero": {
+     "n": 6,
+     "span": 0.501,
+     "widest": 0.501
+    },
+    "sections": []
+   },
+   "product": {
+    "span": 1.257,
+    "sidebar": 300,
+    "cardNest": 0,
+    "cardCount": 0,
+    "nestAt": null,
+    "rowBoxes": 0,
+    "rowSample": null,
+    "hues": 1,
+    "blur": 0,
+    "gradients": 0,
+    "numerals": 0,
+    "tabular": 0,
+    "cellNumerals": 0,
+    "leftNumbers": 0,
+    "leftSample": null,
+    "divRows": 0,
+    "divSample": null,
+    "numeralsDoc": 0,
+    "spaces": 159,
+    "onGrid": 153,
+    "spaceValues": 12,
+    "topSix": 150,
+    "offGrid": [
+     10,
+     13,
+     25
+    ]
+   }
+  },
+  "1024x768": {
+   "measure": {
+    "grain": false,
+    "displayPx": 48,
+    "ratio": 3,
+    "displayLineHeight": 1.25,
+    "displayTrackingEm": 0,
+    "displaySample": "h1 \"ClubNahuelMosse\"",
+    "displayLate": false,
+    "bodyTrackingEm": 0,
+    "sizes": [
+     12,
+     13,
+     16,
+     32,
+     48
+    ],
+    "sizeCount": 5
+   },
+   "responsive": {
+    "width": 1024,
+    "tapSmall": [
+     "a.navbar__brand 144x26",
+     "button.btn.btn--ghost 43x28",
+     "input.navbar__search-input.searchInput_YFbd 200x32",
+     "a.menu__link.menu__link--active 274x32",
+     "a.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.menu__link 274x32",
+     "a.categoryLink_byQd.menu__link 274x32",
+     "a.breadcrumbs__link 38x31",
+     "a.table-of-contents__link.toc-highlight 124x21",
+     "a.table-of-contents__link.toc-highlight 124x21",
+     "a.table-of-contents__link.toc-highlight 124x21",
+     "a.table-of-contents__link.toc-highlight 124x21"
+    ],
+    "clickSmall": [
+     "a.table-of-contents__link.toc-highlight 124x21",
+     "a.table-of-contents__link.toc-highlight 124x21",
+     "a.table-of-contents__link.toc-highlight 124x21",
+     "a.table-of-contents__link.toc-highlight 124x21"
+    ],
+    "medianButton": 32,
+    "hoverOnly": [
+     ".timeline__item:has(.timeline__open):hover::before",
+     ".dropdown--hoverable:hover .dropdown__menu, .dropdown--show .dropdown__menu",
+     ".footerLogoLink_BH7S:hover, .hash-link:focus, :hover > .hash-link",
+     ".theme-code-block:hover .copyButtonCopied_Vdqa",
+     ".theme-code-block:hover .buttonGroup_M5ko button"
+    ],
+    "smallFields": [],
+    "overflow": {
+     "scrollWidth": 1024,
+     "clientWidth": 1024
+    },
+    "queries": {
+     "min": 4,
+     "max": 18
+    },
+    "coveredPct": 40,
+    "cta": null,
+    "nav": {
+     "bottomBar": false,
+     "hamburger": false,
+     "hamburgerLabeled": false
+    }
+   },
+   "rules": [
+    {
+     "rule": "display/body ratio",
+     "value": 3,
+     "range": "report only: winners median 2.9x, 2-9x",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "display line height",
+     "value": 1.25,
+     "range": "report only: winners median 1.0",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "font sizes, first viewport",
+     "value": 5,
+     "range": "<= 9",
+     "pass": true
+    },
+    {
+     "rule": "hamburger, expanded",
+     "value": "no",
+     "range": "no",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "image file width >= shown x 2",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "pasted boxes",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in: 369/455/484/2063 px of margin over a contrasting background",
+      "img.img_ev3q Venues: 574/250/484/2063 px of margin over a contrasting background",
+      "img.img_ev3q Available times: 369/455/925/1622 px of margin over a contrasting background",
+      "img.img_ev3q Booking confirmed: 574/250/925/1622 px of margin over a contrasting background"
+     ]
+    },
+    {
+     "rule": "repeated images",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "broken images (naturalWidth 0)",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "alt text painted as page text",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "LCP image",
+     "value": "lazy, visible at t0",
+     "range": "not lazy, visible at t0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in"
+     ]
+    },
+    {
+     "rule": "product: card in card",
+     "value": 0,
+     "range": "depth 2 or less (0 boxes with a fill or three sides of border)",
+     "pass": true,
+     "detail": [
+      "card-in-card depth 0 (max 2) at null"
+     ]
+    },
+    {
+     "rule": "product: row as card",
+     "value": 0,
+     "range": "0: a list row is a line with a hairline, not a box",
+     "pass": true,
+     "detail": [
+      "row-as-card: 0 rows with fill or border (null)"
+     ]
+    },
+    {
+     "rule": "product: hues",
+     "value": 1,
+     "range": "4 or less: one accent and the states",
+     "pass": true,
+     "detail": [
+      "1 hues (max 4)"
+     ]
+    },
+    {
+     "rule": "product: backdrop-filter",
+     "value": 0,
+     "range": "0 unless `brand-chrome: glass`",
+     "pass": true,
+     "detail": [
+      "blur 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: background gradients",
+     "value": 0,
+     "range": "0 unless `brand-chrome: gradient`",
+     "pass": true,
+     "detail": [
+      "gradients 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: table built of divs",
+     "value": 0,
+     "range": "0: rows of three or more aligned columns are a <table> (or role=grid) with its column headers",
+     "pass": true,
+     "detail": [
+      "0 rows of aligned columns outside a table (null)"
+     ]
+    },
+    {
+     "rule": "product: spacing scale",
+     "value": "96% on 4 px, six steps cover 94%",
+     "range": "of the margins, paddings and gaps of 8 px or more, 80% on a 4 px grid and 85% from its six most used values",
+     "pass": true,
+     "detail": [
+      "off the 4 px grid: 10, 13, 25 px · 12 distinct values, the six most used cover 94%"
+     ]
+    },
+    {
+     "rule": "palette: CTA separation (OKLCH)",
+     "value": 0.18,
+     "range": ">= 1: ΔL 0.15, or ΔC 0.08, or hue 40° (both chromatic) from adjacent background, body and muted text",
+     "pass": false,
+     "detail": [
+      "CTA a.skipToContent_fXgn \"Skip to main content\" fill #f6f6f7 L 0.97",
+      "adjacent background #ffffff L 1.00: ΔL 0.03 ΔC 0.00 Δh 164°",
+      "body text #0a0a0b L 0.15: ΔL 0.83 ΔC 0.00 Δh 0°",
+      "muted text #6b6b73 L 0.53: ΔL 0.44 ΔC 0.01 Δh 0°"
+     ]
+    },
+    {
+     "rule": "palette: roles",
+     "value": "5 text / 11 background",
+     "range": "report only: text colors and background colors apart",
+     "pass": true,
+     "detail": [
+      "text #0a0a0b L 0.15, #4d6600 L 0.47, #606770 L 0.51, #525860 L 0.46, #6b6b73 L 0.53",
+      "background #f6f6f7 L 0.97, #ebedf0 L 0.95, #ecefe7 L 0.95, #ffffff L 1.00, #f2f2f2 L 0.96, #f9f9fa L 0.98, #f7f7f7 L 0.98, #f6f7f8 L 0.98"
+     ],
+     "report": true
+    },
+    {
+     "rule": "palette: text contrast (WCAG AA)",
+     "value": 0,
+     "range": "0 pairs under 4.5:1 (3:1 large)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "palette: APCA Lc (report)",
+     "value": 71,
+     "range": "reported: body >= 75, loose text >= 30",
+     "pass": true,
+     "detail": [
+      "span.token.comment \"# Firebase Auth emul\" #6b6b73 on #f6f6f7 Lc 71 (14.72px)",
+      "span.linkLabel_WmDU \"Home\" #4d6600 on #ecefe7 Lc 72 (16px)",
+      "span.breadcrumbs__link \"Home\" #4d6600 on #f2f2f2 Lc 74 (12.8px)",
+      "span.token.function \"npm\" #4d6600 on #f6f6f7 Lc 77 (14.72px)",
+      "code \"apps/api/README.md\" #4d6600 on #f6f7f8 Lc 77 (14.72px)"
+     ]
+    },
+    {
+     "rule": "brand: fonts",
+     "value": 2,
+     "range": "report only: no brand sheet with fonts",
+     "pass": true,
+     "detail": [
+      "Inter x70 (a \"Skip to main content\")",
+      "Arial x1 (button \"Dark\")"
+     ],
+     "report": true
+    }
+   ],
+   "frames": [
+    {
+     "frame": 1,
+     "y": 0,
+     "n": 6,
+     "focalShare": 0.072,
+     "focalKind": "media",
+     "competing": 3,
+     "axes": 5,
+     "empty": 0.691,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 2,
+     "y": 768,
+     "n": 8,
+     "focalShare": 0.11,
+     "focalKind": "media",
+     "competing": 2,
+     "axes": 4,
+     "empty": 0.612,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 3,
+     "y": 1536,
+     "n": 20,
+     "focalShare": 0.024,
+     "focalKind": "text",
+     "competing": 5,
+     "axes": 7,
+     "empty": 0.749,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 4,
+     "y": 2212,
+     "n": 40,
+     "focalShare": 0.029,
+     "focalKind": "text",
+     "competing": 2,
+     "axes": 18,
+     "empty": 0.752,
+     "flags": [],
+     "reported": []
+    }
+   ],
+   "images": {
+    "low": [],
+    "pasted": [
+     "img.img_ev3q Sign in: 369/455/484/2063 px of margin over a contrasting background",
+     "img.img_ev3q Venues: 574/250/484/2063 px of margin over a contrasting background",
+     "img.img_ev3q Available times: 369/455/925/1622 px of margin over a contrasting background",
+     "img.img_ev3q Booking confirmed: 574/250/925/1622 px of margin over a contrasting background"
+    ],
+    "unknown": [],
+    "repeated": [],
+    "lcp": {
+     "img": "img.img_ev3q Sign in",
+     "lazy": true,
+     "visibleT0": true
+    },
+    "sizes": [
+     {
+      "img": "img.img_ev3q ClubNahuelMosse logo",
+      "file": 1024,
+      "shown": 96
+     },
+     {
+      "img": "img.img_ev3q Sign in",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Venues",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Available times",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Booking confirmed",
+      "file": 430,
+      "shown": 200
+     }
+    ],
+    "broken": [],
+    "altShown": []
+   },
+   "sweep": null,
+   "canvas": [],
+   "scrub": null,
+   "layout": {
+    "hero": {
+     "n": 5,
+     "span": 0.49,
+     "widest": 0.49
+    },
+    "sections": []
+   },
+   "product": {
+    "span": 1.348,
+    "sidebar": 300,
+    "cardNest": 0,
+    "cardCount": 0,
+    "nestAt": null,
+    "rowBoxes": 0,
+    "rowSample": null,
+    "hues": 1,
+    "blur": 0,
+    "gradients": 0,
+    "numerals": 0,
+    "tabular": 0,
+    "cellNumerals": 0,
+    "leftNumbers": 0,
+    "leftSample": null,
+    "divRows": 0,
+    "divSample": null,
+    "numeralsDoc": 0,
+    "spaces": 159,
+    "onGrid": 153,
+    "spaceValues": 12,
+    "topSix": 150,
+    "offGrid": [
+     10,
+     13,
+     25
+    ]
+   }
+  },
+  "768x1024": {
+   "measure": {
+    "grain": false,
+    "displayPx": 48,
+    "ratio": 3,
+    "displayLineHeight": 1.25,
+    "displayTrackingEm": 0,
+    "displaySample": "h1 \"ClubNahuelMosse\"",
+    "displayLate": false,
+    "bodyTrackingEm": 0,
+    "sizes": [
+     13,
+     16,
+     32,
+     48
+    ],
+    "sizeCount": 4
+   },
+   "responsive": {
+    "width": 768,
+    "tapSmall": [
+     "button.navbar__toggle.clean-btn 30x30",
+     "a.navbar__brand 144x26",
+     "input.navbar__search-input.searchInput_YFbd 144x32",
+     "a.breadcrumbs__link 38x31",
+     "button.clean-btn.tocCollapsibleButton_TO0P 736x33"
+    ],
+    "clickSmall": [],
+    "medianButton": 33,
+    "hoverOnly": [
+     ".timeline__item:has(.timeline__open):hover::before",
+     ".dropdown--hoverable:hover .dropdown__menu, .dropdown--show .dropdown__menu",
+     ".footerLogoLink_BH7S:hover, .hash-link:focus, :hover > .hash-link",
+     ".theme-code-block:hover .copyButtonCopied_Vdqa",
+     ".theme-code-block:hover .buttonGroup_M5ko button"
+    ],
+    "smallFields": [],
+    "overflow": {
+     "scrollWidth": 768,
+     "clientWidth": 768
+    },
+    "queries": {
+     "min": 4,
+     "max": 18
+    },
+    "coveredPct": 6,
+    "cta": {
+     "name": "button.clean-btn.tocCollapsibleButton_TO0P 736x33",
+     "topPct": 12,
+     "bottomPct": 15,
+     "pinned": false
+    },
+    "nav": {
+     "bottomBar": false,
+     "hamburger": true,
+     "hamburgerLabeled": false
+    }
+   },
+   "rules": [
+    {
+     "rule": "display/body ratio",
+     "value": 3,
+     "range": "report only: winners median 2.9x, 2-9x",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "display line height",
+     "value": 1.25,
+     "range": "report only: winners median 1.0",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "font sizes, first viewport",
+     "value": 4,
+     "range": "<= 9",
+     "pass": true
+    },
+    {
+     "rule": "image file width >= shown x 2",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "pasted boxes",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in: 80/489/536/1962 px of margin over a contrasting background",
+      "img.img_ev3q Venues: 284/284/536/1962 px of margin over a contrasting background",
+      "img.img_ev3q Available times: 489/80/536/1962 px of margin over a contrasting background",
+      "img.img_ev3q Booking confirmed: 284/284/977/1521 px of margin over a contrasting background"
+     ]
+    },
+    {
+     "rule": "repeated images",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "broken images (naturalWidth 0)",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "alt text painted as page text",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "LCP image",
+     "value": "lazy, visible at t0",
+     "range": "not lazy, visible at t0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in"
+     ]
+    },
+    {
+     "rule": "product: card in card",
+     "value": 0,
+     "range": "depth 2 or less (0 boxes with a fill or three sides of border)",
+     "pass": true,
+     "detail": [
+      "card-in-card depth 0 (max 2) at null"
+     ]
+    },
+    {
+     "rule": "product: row as card",
+     "value": 0,
+     "range": "0: a list row is a line with a hairline, not a box",
+     "pass": true,
+     "detail": [
+      "row-as-card: 0 rows with fill or border (null)"
+     ]
+    },
+    {
+     "rule": "product: hues",
+     "value": 1,
+     "range": "4 or less: one accent and the states",
+     "pass": true,
+     "detail": [
+      "1 hues (max 4)"
+     ]
+    },
+    {
+     "rule": "product: backdrop-filter",
+     "value": 0,
+     "range": "0 unless `brand-chrome: glass`",
+     "pass": true,
+     "detail": [
+      "blur 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: background gradients",
+     "value": 0,
+     "range": "0 unless `brand-chrome: gradient`",
+     "pass": true,
+     "detail": [
+      "gradients 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: table built of divs",
+     "value": 0,
+     "range": "0: rows of three or more aligned columns are a <table> (or role=grid) with its column headers",
+     "pass": true,
+     "detail": [
+      "0 rows of aligned columns outside a table (null)"
+     ]
+    },
+    {
+     "rule": "product: spacing scale",
+     "value": "93% on 4 px, six steps cover 91%",
+     "range": "of the margins, paddings and gaps of 8 px or more, 80% on a 4 px grid and 85% from its six most used values",
+     "pass": true,
+     "detail": [
+      "off the 4 px grid: 10, 13, 25 px · 11 distinct values, the six most used cover 91%"
+     ]
+    },
+    {
+     "rule": "palette: CTA separation (OKLCH)",
+     "value": 0.18,
+     "range": ">= 1: ΔL 0.15, or ΔC 0.08, or hue 40° (both chromatic) from adjacent background, body and muted text",
+     "pass": false,
+     "detail": [
+      "CTA a.skipToContent_fXgn \"Skip to main content\" fill #f6f6f7 L 0.97",
+      "adjacent background #ffffff L 1.00: ΔL 0.03 ΔC 0.00 Δh 164°",
+      "body text #0a0a0b L 0.15: ΔL 0.83 ΔC 0.00 Δh 0°",
+      "muted text #6b6b73 L 0.53: ΔL 0.44 ΔC 0.01 Δh 0°"
+     ]
+    },
+    {
+     "rule": "palette: roles",
+     "value": "4 text / 8 background",
+     "range": "report only: text colors and background colors apart",
+     "pass": true,
+     "detail": [
+      "text #0a0a0b L 0.15, #4d6600 L 0.47, #6b6b73 L 0.53, #525860 L 0.46",
+      "background #f6f6f7 L 0.97, #ebedf0 L 0.95, #f2f2f2 L 0.96, #ffffff L 1.00, #f7f7f7 L 0.98, #f6f7f8 L 0.98, #f5f5f6 L 0.97, #fefefe L 1.00"
+     ],
+     "report": true
+    },
+    {
+     "rule": "palette: text contrast (WCAG AA)",
+     "value": 0,
+     "range": "0 pairs under 4.5:1 (3:1 large)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "palette: APCA Lc (report)",
+     "value": 71,
+     "range": "reported: body >= 75, loose text >= 30",
+     "pass": true,
+     "detail": [
+      "span.token.comment \"# Firebase Auth emul\" #6b6b73 on #f6f6f7 Lc 71 (14.72px)",
+      "span.breadcrumbs__link \"Home\" #4d6600 on #f2f2f2 Lc 74 (12.8px)",
+      "span.token.function \"npm\" #4d6600 on #f6f6f7 Lc 77 (14.72px)",
+      "code \"apps/api/README.md\" #4d6600 on #f6f7f8 Lc 77 (14.72px)",
+      "a \"Integrations\" #4d6600 on #ffffff Lc 82 (16px)"
+     ]
+    },
+    {
+     "rule": "brand: fonts",
+     "value": 1,
+     "range": "report only: no brand sheet with fonts",
+     "pass": true,
+     "detail": [
+      "Inter x47 (a \"Skip to main content\")"
+     ],
+     "report": true
+    }
+   ],
+   "frames": [
+    {
+     "frame": 1,
+     "y": 0,
+     "n": 9,
+     "focalShare": 0.11,
+     "focalKind": "media",
+     "competing": 4,
+     "axes": 5,
+     "empty": 0.45,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 2,
+     "y": 1024,
+     "n": 19,
+     "focalShare": 0.098,
+     "focalKind": "media",
+     "competing": 2,
+     "axes": 7,
+     "empty": 0.626,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 3,
+     "y": 1907,
+     "n": 50,
+     "focalShare": 0.017,
+     "focalKind": "text",
+     "competing": 5,
+     "axes": 19,
+     "empty": 0.664,
+     "flags": [],
+     "reported": []
+    }
+   ],
+   "images": {
+    "low": [],
+    "pasted": [
+     "img.img_ev3q Sign in: 80/489/536/1962 px of margin over a contrasting background",
+     "img.img_ev3q Venues: 284/284/536/1962 px of margin over a contrasting background",
+     "img.img_ev3q Available times: 489/80/536/1962 px of margin over a contrasting background",
+     "img.img_ev3q Booking confirmed: 284/284/977/1521 px of margin over a contrasting background"
+    ],
+    "unknown": [],
+    "repeated": [],
+    "lcp": {
+     "img": "img.img_ev3q Sign in",
+     "lazy": true,
+     "visibleT0": true
+    },
+    "sizes": [
+     {
+      "img": "img.img_ev3q ClubNahuelMosse logo",
+      "file": 1024,
+      "shown": 96
+     },
+     {
+      "img": "img.img_ev3q Sign in",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Venues",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Available times",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Booking confirmed",
+      "file": 430,
+      "shown": 200
+     }
+    ],
+    "broken": [],
+    "altShown": []
+   },
+   "sweep": null,
+   "canvas": [],
+   "scrub": null,
+   "layout": {
+    "hero": {
+     "n": 8,
+     "span": 0.925,
+     "widest": 0.924
+    },
+    "sections": []
+   },
+   "product": {
+    "span": 0.941,
+    "sidebar": 0,
+    "cardNest": 0,
+    "cardCount": 0,
+    "nestAt": null,
+    "rowBoxes": 0,
+    "rowSample": null,
+    "hues": 1,
+    "blur": 0,
+    "gradients": 0,
+    "numerals": 0,
+    "tabular": 0,
+    "cellNumerals": 0,
+    "leftNumbers": 0,
+    "leftSample": null,
+    "divRows": 0,
+    "divSample": null,
+    "numeralsDoc": 0,
+    "spaces": 117,
+    "onGrid": 109,
+    "spaceValues": 11,
+    "topSix": 107,
+    "offGrid": [
+     10,
+     13,
+     25
+    ]
+   }
+  },
+  "390x844": {
+   "measure": {
+    "grain": false,
+    "displayPx": 32,
+    "ratio": 2,
+    "displayLineHeight": 1.25,
+    "displayTrackingEm": 0,
+    "displaySample": "h1 \"ClubNahuelMosse\"",
+    "displayLate": false,
+    "bodyTrackingEm": 0,
+    "sizes": [
+     13,
+     16,
+     32
+    ],
+    "sizeCount": 3
+   },
+   "responsive": {
+    "width": 390,
+    "tapSmall": [
+     "button.navbar__toggle.clean-btn 30x30",
+     "a.navbar__brand 144x26",
+     "input.navbar__search-input.searchInput_YFbd 44x32",
+     "a.breadcrumbs__link 38x31",
+     "button.clean-btn.tocCollapsibleButton_TO0P 358x33"
+    ],
+    "clickSmall": [],
+    "medianButton": 33,
+    "hoverOnly": [
+     ".timeline__item:has(.timeline__open):hover::before",
+     ".dropdown--hoverable:hover .dropdown__menu, .dropdown--show .dropdown__menu",
+     ".footerLogoLink_BH7S:hover, .hash-link:focus, :hover > .hash-link",
+     ".theme-code-block:hover .copyButtonCopied_Vdqa",
+     ".theme-code-block:hover .buttonGroup_M5ko button"
+    ],
+    "smallFields": [],
+    "overflow": {
+     "scrollWidth": 390,
+     "clientWidth": 390
+    },
+    "queries": {
+     "min": 4,
+     "max": 18
+    },
+    "coveredPct": 7,
+    "cta": {
+     "name": "button.clean-btn.tocCollapsibleButton_TO0P 358x33",
+     "topPct": 15,
+     "bottomPct": 18,
+     "pinned": false
+    },
+    "nav": {
+     "bottomBar": false,
+     "hamburger": true,
+     "hamburgerLabeled": false
+    }
+   },
+   "rules": [
+    {
+     "rule": "display/body ratio",
+     "value": 2,
+     "range": "report only: winners median 2.9x, 2-9x",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "display line height",
+     "value": 1.25,
+     "range": "report only: winners median 1.0",
+     "pass": true,
+     "report": true
+    },
+    {
+     "rule": "font sizes, first viewport",
+     "value": 3,
+     "range": "<= 9",
+     "pass": true
+    },
+    {
+     "rule": "tap targets under 44x44",
+     "value": 5,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "button.navbar__toggle.clean-btn 30x30",
+      "a.navbar__brand 144x26",
+      "input.navbar__search-input.searchInput_YFbd 44x32",
+      "a.breadcrumbs__link 38x31",
+      "button.clean-btn.tocCollapsibleButton_TO0P 358x33"
+     ]
+    },
+    {
+     "rule": "hover-only reveals",
+     "value": 5,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      ".timeline__item:has(.timeline__open):hover::before",
+      ".dropdown--hoverable:hover .dropdown__menu, .dropdown--show .dropdown__menu",
+      ".footerLogoLink_BH7S:hover, .hash-link:focus, :hover > .hash-link",
+      ".theme-code-block:hover .copyButtonCopied_Vdqa",
+      ".theme-code-block:hover .buttonGroup_M5ko button"
+     ]
+    },
+    {
+     "rule": "inputs under 16 px",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "document overflow",
+     "value": "none",
+     "range": "none",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "media queries",
+     "value": "min 4 / max 18 · desktop-first",
+     "range": "min >= max",
+     "pass": false,
+     "detail": []
+    },
+    {
+     "rule": "fixed layers (% of viewport, no canvas or scene)",
+     "value": 7,
+     "range": "<= 20",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "cta in first viewport (% of height)",
+     "value": "15-18",
+     "range": "inside the first viewport; lower half recommended",
+     "pass": true,
+     "detail": [
+      "button.clean-btn.tocCollapsibleButton_TO0P 358x33"
+     ],
+     "warn": true
+    },
+    {
+     "rule": "navigation, compact",
+     "value": "bare hamburger",
+     "range": "bottom bar or labeled menu",
+     "pass": false,
+     "detail": []
+    },
+    {
+     "rule": "dead clicks",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "image file width >= shown x 2",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "pasted boxes",
+     "value": 4,
+     "range": "0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in: 95/95/568/3199 px of margin over a contrasting background",
+      "img.img_ev3q Venues: 95/95/1009/2758 px of margin over a contrasting background",
+      "img.img_ev3q Available times: 95/95/1450/2317 px of margin over a contrasting background",
+      "img.img_ev3q Booking confirmed: 95/95/1891/1876 px of margin over a contrasting background"
+     ]
+    },
+    {
+     "rule": "repeated images",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "broken images (naturalWidth 0)",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "alt text painted as page text",
+     "value": 0,
+     "range": "0",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "LCP image",
+     "value": "lazy, visible at t0",
+     "range": "not lazy, visible at t0",
+     "pass": false,
+     "detail": [
+      "img.img_ev3q Sign in"
+     ]
+    },
+    {
+     "rule": "product: card in card",
+     "value": 0,
+     "range": "depth 2 or less (0 boxes with a fill or three sides of border)",
+     "pass": true,
+     "detail": [
+      "card-in-card depth 0 (max 2) at null"
+     ]
+    },
+    {
+     "rule": "product: row as card",
+     "value": 0,
+     "range": "0: a list row is a line with a hairline, not a box",
+     "pass": true,
+     "detail": [
+      "row-as-card: 0 rows with fill or border (null)"
+     ]
+    },
+    {
+     "rule": "product: hues",
+     "value": 1,
+     "range": "4 or less: one accent and the states",
+     "pass": true,
+     "detail": [
+      "1 hues (max 4)"
+     ]
+    },
+    {
+     "rule": "product: backdrop-filter",
+     "value": 0,
+     "range": "0 unless `brand-chrome: glass`",
+     "pass": true,
+     "detail": [
+      "blur 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: background gradients",
+     "value": 0,
+     "range": "0 unless `brand-chrome: gradient`",
+     "pass": true,
+     "detail": [
+      "gradients 0 (max 0)"
+     ]
+    },
+    {
+     "rule": "product: table built of divs",
+     "value": 0,
+     "range": "0: rows of three or more aligned columns are a <table> (or role=grid) with its column headers",
+     "pass": true,
+     "detail": [
+      "0 rows of aligned columns outside a table (null)"
+     ]
+    },
+    {
+     "rule": "product: spacing scale",
+     "value": "93% on 4 px, six steps cover 91%",
+     "range": "of the margins, paddings and gaps of 8 px or more, 80% on a 4 px grid and 85% from its six most used values",
+     "pass": true,
+     "detail": [
+      "off the 4 px grid: 10, 13, 25 px · 11 distinct values, the six most used cover 91%"
+     ]
+    },
+    {
+     "rule": "palette: CTA separation (OKLCH)",
+     "value": 0.18,
+     "range": ">= 1: ΔL 0.15, or ΔC 0.08, or hue 40° (both chromatic) from adjacent background, body and muted text",
+     "pass": false,
+     "detail": [
+      "CTA a.skipToContent_fXgn \"Skip to main content\" fill #f6f6f7 L 0.97",
+      "adjacent background #ffffff L 1.00: ΔL 0.03 ΔC 0.00 Δh 164°",
+      "body text #0a0a0b L 0.15: ΔL 0.83 ΔC 0.00 Δh 0°",
+      "muted text #6b6b73 L 0.53: ΔL 0.44 ΔC 0.01 Δh 0°"
+     ]
+    },
+    {
+     "rule": "palette: roles",
+     "value": "4 text / 9 background",
+     "range": "report only: text colors and background colors apart",
+     "pass": true,
+     "detail": [
+      "text #0a0a0b L 0.15, #4d6600 L 0.47, #6b6b73 L 0.53, #525860 L 0.46",
+      "background #f6f6f7 L 0.97, #f2f2f2 L 0.96, #ffffff L 1.00, #f4f4f5 L 0.97, #f7f7f7 L 0.98, #fbfbfc L 0.99, #f6f7f8 L 0.98, #fdfdfd L 0.99"
+     ],
+     "report": true
+    },
+    {
+     "rule": "palette: text contrast (WCAG AA)",
+     "value": 0,
+     "range": "0 pairs under 4.5:1 (3:1 large)",
+     "pass": true,
+     "detail": []
+    },
+    {
+     "rule": "palette: APCA Lc (report)",
+     "value": 71,
+     "range": "reported: body >= 75, loose text >= 30",
+     "pass": true,
+     "detail": [
+      "span.token.comment \"# Firebase Auth emul\" #6b6b73 on #f6f6f7 Lc 71 (14.72px)",
+      "span.breadcrumbs__link \"Home\" #4d6600 on #f2f2f2 Lc 74 (12.8px)",
+      "span.token.function \"npm\" #4d6600 on #f6f6f7 Lc 77 (14.72px)",
+      "code \"apps/api/README.md\" #4d6600 on #f6f7f8 Lc 77 (14.72px)",
+      "a \"Integrations\" #4d6600 on #ffffff Lc 82 (16px)"
+     ]
+    },
+    {
+     "rule": "brand: fonts",
+     "value": 1,
+     "range": "report only: no brand sheet with fonts",
+     "pass": true,
+     "detail": [
+      "Inter x48 (a \"Skip to main content\")"
+     ],
+     "report": true
+    }
+   ],
+   "frames": [
+    {
+     "frame": 1,
+     "y": 0,
+     "n": 6,
+     "focalShare": 0.167,
+     "focalKind": "media",
+     "competing": 3,
+     "axes": 3,
+     "empty": 0.489,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 2,
+     "y": 844,
+     "n": 3,
+     "focalShare": 0.263,
+     "focalKind": "media",
+     "competing": 1,
+     "axes": 1,
+     "empty": 0.412,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 3,
+     "y": 1688,
+     "n": 5,
+     "focalShare": 0.263,
+     "focalKind": "media",
+     "competing": 1,
+     "axes": 3,
+     "empty": 0.399,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 4,
+     "y": 2532,
+     "n": 19,
+     "focalShare": 0.045,
+     "focalKind": "text",
+     "competing": 4,
+     "axes": 7,
+     "empty": 0.495,
+     "flags": [],
+     "reported": []
+    },
+    {
+     "frame": 5,
+     "y": 3357,
+     "n": 39,
+     "focalShare": 0.05,
+     "focalKind": "text",
+     "competing": 5,
+     "axes": 16,
+     "empty": 0.489,
+     "flags": [],
+     "reported": []
+    }
+   ],
+   "images": {
+    "low": [],
+    "pasted": [
+     "img.img_ev3q Sign in: 95/95/568/3199 px of margin over a contrasting background",
+     "img.img_ev3q Venues: 95/95/1009/2758 px of margin over a contrasting background",
+     "img.img_ev3q Available times: 95/95/1450/2317 px of margin over a contrasting background",
+     "img.img_ev3q Booking confirmed: 95/95/1891/1876 px of margin over a contrasting background"
+    ],
+    "unknown": [],
+    "repeated": [],
+    "lcp": {
+     "img": "img.img_ev3q Sign in",
+     "lazy": true,
+     "visibleT0": true
+    },
+    "sizes": [
+     {
+      "img": "img.img_ev3q ClubNahuelMosse logo",
+      "file": 1024,
+      "shown": 96
+     },
+     {
+      "img": "img.img_ev3q Sign in",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Venues",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Available times",
+      "file": 430,
+      "shown": 200
+     },
+     {
+      "img": "img.img_ev3q Booking confirmed",
+      "file": 430,
+      "shown": 200
+     }
+    ],
+    "broken": [],
+    "altShown": []
+   },
+   "sweep": {
+    "checked": 19,
+    "dead": []
+   },
+   "canvas": [],
+   "scrub": null,
+   "layout": {
+    "hero": {
+     "n": 5,
+     "span": 0.903,
+     "widest": 0.903
+    },
+    "sections": []
+   },
+   "product": {
+    "span": 0.91,
+    "sidebar": 0,
+    "cardNest": 0,
+    "cardCount": 0,
+    "nestAt": null,
+    "rowBoxes": 0,
+    "rowSample": null,
+    "hues": 1,
+    "blur": 0,
+    "gradients": 0,
+    "numerals": 0,
+    "tabular": 0,
+    "cellNumerals": 0,
+    "leftNumbers": 0,
+    "leftSample": null,
+    "divRows": 0,
+    "divSample": null,
+    "numeralsDoc": 0,
+    "spaces": 117,
+    "onGrid": 109,
+    "spaceValues": 11,
+    "topSix": 107,
+    "offGrid": [
+     10,
+     13,
+     25
+    ]
+   }
+  }
+ },
+ "console": [],
+ "captures": [
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\load-0000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\load-0600ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1440x900\\load-2000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\load-0000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\load-0600ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1280x800\\load-2000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1024x768\\load-0000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1024x768\\load-0600ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\1024x768\\load-2000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\768x1024\\load-0000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\768x1024\\load-0600ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\768x1024\\load-2000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\390x844\\load-0000ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\390x844\\load-0600ms.png",
+  "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\390x844\\load-2000ms.png"
+ ],
+ "load": {
+  "waves": [
+   300,
+   800
+  ],
+  "gapsMs": [
+   500
+  ],
+  "totalMs": 1183,
+  "rules": []
+ },
+ "motion": {
+  "report": "D:\\Temp\\w\\eng21\\specs\\ENG-21-docs-en-ingles\\rondas\\r1\\motion\\report.json",
+  "staggerMs": 0
+ }
+}
