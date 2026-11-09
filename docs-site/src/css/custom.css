@@ -52,6 +52,24 @@ main article {
   animation: content-enter var(--motion-content-enter) both;
 }
 
+/* The current page in the sidebar: the accent as ink on a soft accent wash, readable in both modes. */
+.menu__link--active:not(.menu__link--sublist),
+.menu__link--active:not(.menu__link--sublist):hover {
+  color: var(--accent-text);
+  background-color: var(--accent-soft);
+  font-weight: 600;
+}
+
+/* Code comments: the muted ink on the code block's own surface (the theme's grey misses 4.5:1). */
+.theme-code-block pre,
+.theme-code-block pre code {
+  background-color: var(--surface);
+}
+
+.theme-code-block .token.comment {
+  color: var(--text-muted) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   :focus-visible {
     transition: none;

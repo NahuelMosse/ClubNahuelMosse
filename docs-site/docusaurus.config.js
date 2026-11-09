@@ -38,7 +38,7 @@ export default {
     ],
   ],
   themeConfig: {
-    colorMode: { defaultMode: 'dark', respectPrefersColorScheme: true },
+    colorMode: { disableSwitch: true, defaultMode: 'dark', respectPrefersColorScheme: true },
     navbar: {
       title: 'ClubNahuelMosse',
       items: [],
