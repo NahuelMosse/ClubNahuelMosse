@@ -9,7 +9,7 @@ from tests.current_schema import current, names, value
 
 RAIZ = Path(__file__).resolve().parents[4]
 MIGRACIONES = sorted((RAIZ / "apps" / "api" / "migrations" / "versions").glob("0*.py"))
-APP_DART = RAIZ / "apps" / "mobile" / "lib" / "rutas.dart"
+APP_DART = RAIZ / "apps" / "mobile" / "lib" / "router.dart"
 MODELO = RAIZ / "docs" / "technical" / "modelo-de-datos.md"
 NAVEGACION = RAIZ / "docs" / "technical" / "navegacion-de-la-app.md"
 DISENO = RAIZ / "docs" / "technical" / "system-design.md"
@@ -183,10 +183,22 @@ def test_la_seccion_data_de_system_design_remite_a_la_pagina_del_modelo_de_datos
 
 
 def _rutas_de_app_dart() -> set[str]:
-    """Cada ruta de GoRouter con su camino completo, anidando por la sangría."""
+    """Cada ruta de GoRouter con su camino completo, anidando por la sangría. Una ruta que arma un
+    método aparte (`GoRoute _x() => GoRoute(`) cuelga de la ruta donde se llama `_x(),`."""
     pila: list[tuple[int, str]] = []
     rutas = set()
+    padres_de_metodos: dict[str, str] = {}
     for linea in _texto(APP_DART).splitlines():
+        metodo = re.match(r"^\s*(GoRoute|List<RouteBase>) (_\w+)\(\) =>", linea)
+        if metodo:
+            pila = [(-1, padres_de_metodos[metodo.group(2)])] if metodo.group(1) == "GoRoute" else []
+            continue
+        llamada = re.match(r"^(\s+)(_\w+)\(\),$", linea)
+        if llamada:
+            while pila and pila[-1][0] >= len(llamada.group(1)):
+                pila.pop()
+            padres_de_metodos[llamada.group(2)] = pila[-1][1] if pila else ""
+            continue
         coincide = re.match(r"^(\s+)path: '([^']*)',", linea)
         if not coincide:
             continue

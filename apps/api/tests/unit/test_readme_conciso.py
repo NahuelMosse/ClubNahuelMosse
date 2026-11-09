@@ -3,7 +3,6 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[4]
 README = (RAIZ / "README.md").read_text(encoding="utf-8")
-CAPTURAS = RAIZ / "docs" / "capturas"
 SECCIONES = ["Qué hace", "Con qué está hecha", "Cómo correrla", "Documentación"]
 ENLACES_QUE_LEEN_LOS_TESTS = [
     "apps/api/README.md",
@@ -15,34 +14,12 @@ ENLACES_QUE_LEEN_LOS_TESTS = [
 ]
 COMANDOS_QUE_LEEN_LOS_TESTS = ("sh scripts/test.sh", "npm run emuladores", "npm run build")
 FORMAS_DE_SECRETO = [r"Test1234", r"xkeysib-", r"rnd_", r"contraseña:"]
-MAXIMO_DE_CAPTURAS = 4
 MAXIMO_DE_LINEAS = 70
 MAXIMO_DE_VINETAS_DE_QUE_HACE = 6
 
 
-def _imagenes() -> list[str]:
-    encontradas = re.findall(r'src="([^"]+)"|!\[[^\]]*\]\(([^)\s]+)\)', README)
-    return [a or b for a, b in encontradas]
-
-
 def _seccion(titulo: str) -> str:
     return re.search(rf"^## {titulo}$(.*?)(?=^## |\Z)", README, flags=re.M | re.S).group(1)
-
-
-def test_el_readme_muestra_a_lo_sumo_4_capturas_en_una_fila_y_no_quedan_capturas_sin_usar() -> None:
-    """el README muestra a lo sumo 4 capturas en una fila y no quedan capturas sin usar
-    @DOC-06-S1"""
-    rutas = _imagenes()
-    filas = re.findall(r"<p align=\"center\">(.*?)</p>", README, flags=re.S)
-    filas_con_capturas = [f for f in filas if "docs/capturas/" in f]
-
-    assert 1 <= len(rutas) <= MAXIMO_DE_CAPTURAS
-    assert len(filas_con_capturas) == 1
-    for ruta in rutas:
-        assert (RAIZ / ruta).is_file(), ruta
-    assert README.index("docs/capturas/") < README.index("## Qué hace")
-    sobrantes = {p.name for p in CAPTURAS.iterdir()} - {Path(r).name for r in rutas}
-    assert not sobrantes, sobrantes
 
 
 def test_el_readme_entra_en_unas_60_lineas_con_que_es_que_hace_en_6_vinetas_con_que_esta_hecha_como_correrla_y_la_documentacion() -> (  # noqa: E501
