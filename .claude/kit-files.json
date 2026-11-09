@@ -3006,5 +3006,9 @@
   ".claude/tools/shell-words.mjs": {
     "module": "core",
     "sha256": "5c8f4ceb628996205b2b46656f9c66302948bdd0b3eeb1e0971b956e68da7c03"
+  },
+  ".claude/reference/ci-cd.md": {
+    "module": "ci",
+    "sha256": "87d4d21b16ccd2ca1cc7e74ce252205ef38dcb5366f5f67503323de732d65819"
   }
 }

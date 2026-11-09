@@ -37,10 +37,11 @@ not_read: ninguno: no hay Jira ni adjuntos
 suite [timeout 20 min]: sh D:/Temp/w/herramientas/ci01-pytest.sh -q -p no:cacheprovider -rf tests/unit/test_ci_suite_green.py tests/escenarios/test_basquet.py tests/escenarios/test_documentacion_supuestos_vigente.py tests/escenarios/test_english_schema.py tests/escenarios/test_readme_app_configuracion.py tests/escenarios/test_requisitos_no_funcionales.py tests/escenarios/test_requisitos_no_funcionales_readme_app.py tests/unit/test_api_en_ingles_verde.py tests/unit/test_sin_supresiones.py
 node: node --test tests/ci.test.mjs tests/kit.test.mjs sitio-docs/tests/integraciones-en-el-sitio.test.mjs sitio-docs/tests/zoom-de-diagramas.test.mjs
 lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh apps/api
+lint: npx -y eslint@9 --no-config-lookup --rule {"no-unused-vars":"error"} tests/ci.test.mjs scripts/ci-test-verdict.mjs
 migrate-upgrade: sh D:/Temp/w/herramientas/ci01-pytest.sh -q -p no:cacheprovider tests/escenarios/test_english_schema_rows.py
 mutate scripts/ci-test-verdict.mjs: node --test tests/ci.test.mjs
 app: sh D:/Temp/w/herramientas/arq01-app.sh ci01_app
-attacks: sh D:/Temp/w/herramientas/arq01-attacks.sh ci01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
+attacks: sh D:/Temp/w/herramientas/ci01-attacks.sh ci01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
 refactor-tests: los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia
 no-visual: la card no toca ninguna pantalla de la app
 no-docs: la card agrega CI y corrige citas de archivos; no cambia comportamiento ni contrato

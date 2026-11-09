@@ -141,4 +141,7 @@ test('flutter test is red when a file that no longer compiles is declared replac
   const red = flutter(line(gone), 1, gone);
   assert.equal(red.status, 1);
   assert.match(red.stderr, /could not load apps\/mobile\/test\/old_test\.dart/);
+  // Earlier cards name the app's tests from apps/mobile: `test/x_test.dart`.
+  const short = fixture([log[0].replaceAll('apps/mobile/test/', 'test/')], { ...old, 'apps/mobile/test/old_copy_test.dart': "void main() {}\n" });
+  assert.equal(flutter(line(short), 1, short).status, 0);
 });
