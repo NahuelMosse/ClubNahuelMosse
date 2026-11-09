@@ -75,5 +75,17 @@
     "renombre",
     "(refactor-tests)"
   ],
-  "tasks": 7
+  "tasks": 7,
+  "escalated": {
+    "review": "high",
+    "lenses": [
+      "contract",
+      "interpretation",
+      "security",
+      "visual"
+    ],
+    "why": [
+      "docs-site/src/theme/ColorModeToggle/index.js outside `## Tasks` bring ui"
+    ]
+  }
 }
