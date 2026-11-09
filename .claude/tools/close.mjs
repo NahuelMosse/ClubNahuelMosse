@@ -125,7 +125,8 @@ const runOnce = (root, { write = true } = {}) => {
   verdict(4, 'each ASM is tagged or declared uncovered', untagged.filter((a) => !new RegExp(`uncovered[^\\n]*${escape(a)}|${escape(a)}[^\\n]*uncovered`, 'i').test(log))
     .map((a) => `${a} has no \`@${a}\` test and no \`uncovered\` line in the Log`), `${asms.length - untagged.length} of ${asms.length} tagged${untagged.length ? `; declared uncovered: ${untagged.join(', ')}` : ''}`);
 
-  const red = id ? git(root, ['log', '--reverse', '--format=%H', '-G', `@${id}-S[0-9]+`, '--', '.', ':(exclude)specs', ':(exclude).claude']).stdout?.trim().split('\n').filter(Boolean)[0] : null;
+  // The pickaxe walks only the files that hold the card's tags: over the whole tree it reads every blob of the history, binaries included.
+  const red = id && tagged.length ? git(root, ['log', '--reverse', '--format=%H', '-G', `@${id}-S[0-9]+`, '--', ...tagged.map((f) => `:(literal)${f}`)]).stdout?.trim().split('\n').filter(Boolean)[0] : null;
   if (exempt.level?.testsFrozen === false) add(5, 'no tagged test touched since RED', 'skipped', `the grade ${grade} leaves committed tests editable`);
   else if (!red) add(5, 'no tagged test touched since RED', 'could not run', 'no commit holds tests tagged for this card');
   else {
