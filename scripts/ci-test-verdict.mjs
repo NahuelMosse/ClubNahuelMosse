@@ -31,7 +31,7 @@ let rest = output;
 const unloaded = [];
 if (runner === 'pytest') {
   // The last line that counts results: `19 failed, 806 passed in 1315.92s` with -q, framed in `=` without it.
-  const summary = [...output.matchAll(/^=*\s*\d+ (?:failed|passed|errors?)\b.* in [\d.]+s\b.*$/gm)].at(-1)?.[0].trim() ?? '';
+  const summary = [...output.matchAll(/^=*\s*\d+ (?:failed|passed|errors?)\b.* in [\d.]+s\b.*$/gm)].at(-1)?.[0] ?? '';
   if (!summary || /\berrors?\b/.test(summary)) fail(`pytest exited ${code}: ${summary || 'no summary line'}`);
 } else {
   const specs = join(root, 'specs');

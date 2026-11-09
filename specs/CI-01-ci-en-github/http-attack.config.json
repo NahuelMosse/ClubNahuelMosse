@@ -1,5 +1,6 @@
 {
   "ignore": [
-    { "id": "head-unsupported:head", "reason": "FastAPI answers HEAD with 405 on every GET route of main; this card touches no route and the app answers as in main" }
+    { "id": "head-unsupported:head", "reason": "FastAPI answers HEAD with 405 on every GET route of main; this card touches no route and the app answers as in main" },
+    { "id": "not-run:path-params", "reason": "the API has no GET item route to probe (only PUT, DELETE and actions on /{id}); this card touches no route" }
   ]
 }
