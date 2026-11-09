@@ -60,6 +60,8 @@ test('the API job runs ruff, mypy and the whole pytest on Python 3.13 against Po
   assert.match(api, /image: postgres:18-alpine/);
   assert.match(api, /firebase emulators:start --only auth/);
   assert.match(api, /FIREBASE_AUTH_EMULATOR_HOST: 127\.0\.0\.1:9099/);
+  assert.match(api, /fetch-depth: 0\n/);
+  assert.match(api, /run: git rev-parse --verify -q main > \/dev\/null \|\| git branch main origin\/main\n/);
   assert.match(api, /uv run ruff check \./);
   assert.match(api, /uv run mypy app/);
   assert.match(api, /uv run pytest -q -p no:cacheprovider\)/);

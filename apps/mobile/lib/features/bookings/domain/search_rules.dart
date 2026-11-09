@@ -96,10 +96,11 @@ Map<String, RangeProblem> rangeErrors({
     errors['until'] = RangeProblem(RangeProblemKind.venueCloses, venue.closing);
   }
   if (from < opening) {
-    errors['start_hour'] = RangeProblem(RangeProblemKind.venueOpens, venue.opening);
-  } else if (!errors.containsKey('date') &&
-      date == today &&
-      from <= now.hour) {
+    errors['start_hour'] = RangeProblem(
+      RangeProblemKind.venueOpens,
+      venue.opening,
+    );
+  } else if (!errors.containsKey('date') && date == today && from <= now.hour) {
     errors['start_hour'] = const RangeProblem(RangeProblemKind.timePast);
   }
   return errors;
