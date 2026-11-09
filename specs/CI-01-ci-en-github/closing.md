@@ -7,7 +7,7 @@ Result: passed
 - 1 · L1 intact — unchanged since 4b19a32fd
 - 2 · every spec has a test — 1 specs, each with a tagged test
 - 3 · every tag is a spec of card.md — 2 tagged files
-- 4 · each ASM is tagged or declared uncovered — 5 of 5 tagged
+- 4 · each ASM is tagged or declared uncovered — 5 of 6 tagged; declared uncovered: CI-01-ASM-06
 - 5 · no tagged test touched since RED — declared refactor-tests: los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia; 1 tagged file edited, listed for review
 - 6 · diff and Tasks agree — 23 files in the diff against 4b19a32fd227ad7faf46f6bbb6c96c4da74475e2~1
 - 7 · gate green — 7 lines passed on this code
@@ -25,7 +25,8 @@ risk large · high · lenses contract, integrity · 5 ACT: 4 closed, 1 declared,
 - ACT-02 · M · `sources:` counts among the 72 flutter failures «el test de ENG-08 que exige `apps/api` sin cambios en el árbol de trabajo y un cierre inesperado del compilador que no se repite»; no ASM, test or Gate line says how the app job stays green with them (clean checkout, a retry, or red) (lenses: «Which reading works with any answer to the open question, and is that the one assumed?») · card.md · plan · declared · el test de ENG-08 pasa en el checkout limpio del CI y un cierre del compilador de Dart se vuelve a correr a mano, sin reintento automático que esconda una falla real (L4 del Log)
 
 ## Assumptions
-5 of 5 tagged
+- CI-01-ASM-06 · untested
+5 of 6 tagged
 
 ## Needs a person
 - replaced test: apps/mobile/test/notificaciones_test.dart "cuándo llegó y en qué día el rótulo del día es HOY, AYER o la fecha" by apps/mobile/test/notifications_spanish_test.dart "cuándo llegó y en qué día el rótulo del día es HOY, AYER o la fecha" — ENG-19 copió el archivo entero porque dejó de compilar y lo declaró en prosa (L140 de su Log), con una copia que ENG-20 renombró; esta línea lo declara con su copia actual para que el CI lo reconozca; confirm the old test was wrong and the new one is not looser
@@ -43,6 +44,6 @@ risk large · high · lenses contract, integrity · 5 ACT: 4 closed, 1 declared,
 - module docs off by decision: not chosen at install: no signal found in the repo
 - grade: mvp — the app is an university project
 
-Cost: USD 4.97 (main 4.65, judge 0.32) · the messages of this card
-close.mjs seal: CI-01 sha256:6df2f89311183922ecee970adf76cf516404a19223903cde87dd03d21f69734b
+Cost: USD 7.82 (main 6.82, scout 0.69, judge 0.32) · the messages of this card
+close.mjs seal: CI-01 sha256:9b70aa27127bde71fbd855d7ed2c8d00d78f31a59e12483165ebaa4b5a2ffad5
 <!-- close.mjs:end -->
