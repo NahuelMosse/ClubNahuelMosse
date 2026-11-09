@@ -56,7 +56,7 @@ const replaced = anyFailing ? replacedFailures(root, rest) : [];
 if (!replaced) {
   // Each failing line alone says whether a card declares it replaced: the ones that are not are the ones to look at.
   const failing = rest.split('\n').filter((l) => (runner === 'pytest' ? /^FAILED \S+::/.test(l) : /^\s*\d+:\d+ \+\d+(?: ~\d+)?(?: -\d+)?: .+?\.dart: .+? \[E\]\s*$/.test(l)));
-  const loose = [...new Set(failing.filter((l) => !replacedFailures(root, l)).map((l) => l.trim()))];
+  const loose = [...new Set(failing.filter((l) => !replacedFailures(root, l)))];
   fail(`${runner} failed with tests no card declares replaced:\n${loose.map((l) => `- ${l}`).join('\n')}`);
 }
 console.log(`${runner} passed with ${replaced.length} replaced tests failing, each replacement passing:`);
