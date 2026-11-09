@@ -53,7 +53,12 @@ if (runner === 'pytest') {
 
 const anyFailing = runner === 'pytest' || /^\s*\d+:\d+ \+\d+(?: ~\d+)?(?: -\d+)?: .+?\.dart: .+? \[E\]\s*$/m.test(rest);
 const replaced = anyFailing ? replacedFailures(root, rest) : [];
-if (!replaced) fail(`${runner} failed with tests no card declares replaced`);
+if (!replaced) {
+  // Each failing line alone says whether a card declares it replaced: the ones that are not are the ones to look at.
+  const failing = rest.split('\n').filter((l) => (runner === 'pytest' ? /^FAILED \S+::/.test(l) : /^\s*\d+:\d+ \+\d+(?: ~\d+)?(?: -\d+)?: .+?\.dart: .+? \[E\]\s*$/.test(l)));
+  const loose = [...new Set(failing.filter((l) => !replacedFailures(root, l)).map((l) => l.trim()))];
+  fail(`${runner} failed with tests no card declares replaced:\n${loose.map((l) => `- ${l}`).join('\n')}`);
+}
 console.log(`${runner} passed with ${replaced.length} replaced tests failing, each replacement passing:`);
 for (const r of replaced) console.log(`- ${r.file} "${r.name}" → ${r.by} "${r.byName}"`);
 if (unloaded.length) console.log(`${unloaded.length} files that no longer compile, replaced:`);

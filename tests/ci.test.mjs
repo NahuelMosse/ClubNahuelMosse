@@ -96,6 +96,9 @@ test('pytest is red when a failing test is not declared replaced @CI-01-S1 @assu
   const red = verdict(`${REPLACED}\n${NOT_REPLACED}\n2 failed, 10 passed in 3.00s\n`, 1);
   assert.equal(red.status, 1);
   assert.match(red.stderr, /no card declares replaced/);
+  // The red verdict names the failing test no card declares, and only that one.
+  assert.match(red.stderr, /test_el_catalogo_ofrece_basquet_con_su_tipo/);
+  assert.doesNotMatch(red.stderr, /test_a_void_error_names_reason_in_english/);
 });
 
 test('pytest is red when the replacement of a failing test is missing, lacks its tags or fails too @CI-01-S1 @assumption:CI-01-ASM-01', () => {
@@ -133,7 +136,10 @@ test('flutter test is green when every failing test and every file that no longe
 });
 
 test('flutter test is red when a failing test or a file that does not load is not declared replaced @CI-01-S1 @assumption:CI-01-ASM-01', () => {
-  assert.equal(flutter(`${FL_REPLACED}\n${FL_NOT_REPLACED}\n${SOME_FAILED}\n`, 1).status, 1);
+  const loose = flutter(`${FL_REPLACED}\n${FL_NOT_REPLACED}\n${SOME_FAILED}\n`, 1);
+  assert.equal(loose.status, 1);
+  assert.match(loose.stderr, /baja_sede_test\.dart: desde la edición/);
+  assert.doesNotMatch(loose.stderr, /bilingual_account_test/);
   const unloaded = flutter(`${FL_UNLOADED_UNDECLARED}\n${SOME_FAILED}\n`, 1);
   assert.equal(unloaded.status, 1);
   assert.match(unloaded.stderr, /could not load apps\/mobile\/test\/baja_sede_test\.dart/);
