@@ -1,7 +1,7 @@
 # ENG-21 · la documentación, los README y el sitio en inglés
 
 status: proposed
-cap: 150 min
+cap: 420 min
 sources:
   - "pedido (texto) · mensajes del usuario: 2026-10-27 «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27 «porque quiero que este en ingles, igual que absolutamente todo en el repo» · 2026-11-09 «perfecto, continua con lo que falta entonces»"
   - "alcance (texto) · la porción del pedido que es esta card, del plan acordado en la sesión (memoria migracion-ingles-pendiente): «ENG-21 · docs, README y sitio (`sitio-docs/` → `docs-site/`) en inglés, capturas nuevas; también las tablas viejas de `navegacion-de-la-app.md`»"
@@ -70,3 +70,4 @@ no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
 - L4 · 2026-11-09 · T1 · docs-site renombrado y en inglés; node --test tests/ci.test.mjs docs-site/tests/*.test.mjs tests/docs-in-english.test.mjs: S3 y ASM-01 pasan
 - L5 · 2026-11-09 · T6 · flutter test test/capturas/readme_screenshots.dart: 4 passed, PNG 430 px en docs/screenshots; falta el README (T2) para el test S4
 - L6 · 2026-11-09 · T4+T5 · 10 páginas traducidas y renombradas (git mv); rutas citadas verificadas con ls; el detector de castellano (tests/docs-in-english.test.mjs) no corrió: el time-cap bloqueó la suite, medido con Grep por palabras
+- L7 · 2026-11-09 · cap 150 → 420 min por orden de la persona (2026-11-09): la línea de diseño que pide el sitio movido (I-line, I-tokens, I-set, I-motion) y T7 necesitan builder
