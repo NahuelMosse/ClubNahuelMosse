@@ -96,10 +96,10 @@ def test_el_catalogo_ofrece_basquet_con_su_tipo(api: TestClient, token_usuario: 
     basquet = next((d for d in catalogo["sports"] if d["key"] == "Basquet"), None)
     assert basquet == {
         "key": "Basquet",
-        "name": "Básquet",
+        "name": "Basketball",
         "kinds": [
-            {"key": "B5", "name": "Básquet 5"},
-            {"key": "3X3", "name": "Básquet 3x3"},
+            {"key": "B5", "name": "Basketball 5"},
+            {"key": "3X3", "name": "Basketball 3x3"},
         ],
     }
 

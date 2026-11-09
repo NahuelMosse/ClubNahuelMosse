@@ -69,6 +69,9 @@ max-args = 4
 "tests/unit/test_recordatorio_cinco.py" = ["SIM300"]
 # Tests congelados con literales largos.
 "tests/unit/test_capas.py" = ["E501"]
+"tests/unit/test_capas_funcionalidades.py" = ["E501"]
+# Imports the admin and user token fixtures so that pytest sees them.
+"tests/escenarios/test_basquet_3x3.py" = ["E501", "SIM117", "I001", "B008", "F811"]
 "tests/unit/test_sin_supresiones.py" = ["E501"]
 "tests/unit/test_emails_with_design.py" = ["E501"]
 

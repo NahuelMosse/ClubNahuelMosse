@@ -62,8 +62,8 @@ def _endpoints_que_usa_la_app() -> set[tuple[str, str]]:
     }
     # El catálogo, la búsqueda y la grilla arman un `Uri` y piden GET.
     for f in (
-        APP / "lib" / "spaces" / "espacios.dart",
-        APP / "lib" / "bookings" / "horarios.dart",
+        APP / "lib" / "features" / "spaces" / "data" / "spaces_repository.dart",
+        APP / "lib" / "features" / "bookings" / "data" / "availability_api.dart",
     ):
         for m in re.finditer(r"(?:_get\(\s*'([^']+)'|path:\s*'([^']+)')", _leer(f)):
             hallados.add(("get", _normalizar(m.group(1) or m.group(2))))

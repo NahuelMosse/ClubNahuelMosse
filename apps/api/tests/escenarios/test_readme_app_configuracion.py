@@ -21,7 +21,7 @@ def _secciones(readme: str) -> str:
 def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     """siguiendo sólo el README de la app se configura y ejecuta la app @RNF-01-H07-01 @supuesto:RNF-01-SUP-05"""
     readme = _leer(APP / "README.md")
-    configuracion = _leer(APP / "lib" / "comun" / "configuracion.dart")
+    configuracion = _leer(APP / "lib" / "common" / "config.dart")
     definidas = set(re.findall(r"String\.fromEnvironment\(\s*'([A-Z_]+)'", configuracion))
 
     for seccion in ("configurar", "ejecutar", "probar"):
