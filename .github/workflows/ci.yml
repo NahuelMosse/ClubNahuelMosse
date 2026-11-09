@@ -124,4 +124,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: docs-site/package-lock.json
+      # The site's tests build its pages, which copy assets out of docs-site/node_modules.
+      - run: npm ci
+        working-directory: docs-site
       - run: node --test tests/*.test.mjs docs-site/tests/*.test.mjs
