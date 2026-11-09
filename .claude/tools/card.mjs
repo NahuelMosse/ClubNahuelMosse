@@ -141,11 +141,9 @@ export const resolveInMap = (lines, name) => {
 };
 
 // A git call that times out throws: the guards that ask git something block on an error, and nothing reads the empty answer as a "no".
-// KIT_GIT_TIMEOUT_S raises the limit on a large history or a loaded machine.
-const GIT_TIMEOUT_S = Number(process.env.KIT_GIT_TIMEOUT_S) > 0 ? Number(process.env.KIT_GIT_TIMEOUT_S) : 20;
 export const git = (cwd, args) => {
-  const r = spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28, timeout: GIT_TIMEOUT_S * 1000 });
-  if (r.error?.code === 'ETIMEDOUT') throw new Error(`git ${args[0]} did not answer within ${GIT_TIMEOUT_S} s (KIT_GIT_TIMEOUT_S raises it)`);
+  const r = spawnSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 1 << 28, timeout: 20_000 });
+  if (r.error?.code === 'ETIMEDOUT') throw new Error(`git ${args[0]} did not answer within 20 s`);
   return r;
 };
 
