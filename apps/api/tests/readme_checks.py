@@ -22,9 +22,9 @@ def assert_scripts_exist(readme: str) -> None:
             assert (ROOT / script).is_file(), command
 
 
-def assert_app_readme_covers_setup_and_run() -> None:
+def assert_app_readme_covers_setup_and_run(config_file: Path) -> None:
     readme = (APP / "README.md").read_text(encoding="utf-8")
-    config = (APP / "lib" / "common" / "config.dart").read_text(encoding="utf-8")
+    config = config_file.read_text(encoding="utf-8")
     defined = set(re.findall(r"String\.fromEnvironment\(\s*'([A-Z_]+)'", config))
 
     for section in ("configure", "run", "test"):

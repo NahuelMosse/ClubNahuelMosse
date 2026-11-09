@@ -285,7 +285,7 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
 
 def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     """siguiendo sólo el README de la app se configura y ejecuta la app @RNF-01-H07-01 @supuesto:RNF-01-SUP-05"""
-    assert_app_readme_covers_setup_and_run()
+    assert_app_readme_covers_setup_and_run(APP / "lib" / "common" / "config.dart")
 
 
 def test_el_readme_del_backend_alcanza_para_configurar_ejecutar_y_desplegar() -> None:
