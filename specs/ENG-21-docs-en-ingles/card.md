@@ -1,0 +1,68 @@
+# ENG-21 · la documentación, los README y el sitio en inglés
+
+status: proposed
+cap: 150 min
+sources:
+  - "pedido (texto) · mensajes del usuario: 2026-10-27 «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27 «porque quiero que este en ingles, igual que absolutamente todo en el repo» · 2026-11-09 «perfecto, continua con lo que falta entonces»"
+  - "alcance (texto) · la porción del pedido que es esta card, del plan acordado en la sesión (memoria migracion-ingles-pendiente): «ENG-21 · docs, README y sitio (`sitio-docs/` → `docs-site/`) en inglés, capturas nuevas; también las tablas viejas de `navegacion-de-la-app.md`»"
+  - "glosario · docs/technical/glosario-ingles.md (ENG-00): el nombre en inglés de cada término del dominio"
+  - "relevamiento del repo (2026-11-09): 17 páginas de docs/ y 3 README en castellano o mixtos; ~20 tests congelados que leen encabezados o frases en castellano de esos archivos; las 30 filas de la tabla de navegacion-de-la-app.md citan `pantalla_*.dart` que ya no existen; accessibility.md cita `test/pantalla_error_de_arranque_test.dart`, que no existe"
+not_read:
+  - "no hay Jira: no hay comentarios, adjuntos ni enlaces que leer"
+
+## Specs
+
+- S1 · "docs" · acceptance: cada página de `docs/` está escrita en inglés y tiene un nombre de archivo en inglés
+- S2 · "README" · acceptance: el README de la raíz y los de `apps/api` y `apps/mobile` están en inglés
+- S3 · "sitio (`sitio-docs/` → `docs-site/`)" · acceptance: el sitio vive en `docs-site/` y sus secciones, etiquetas, páginas generadas, idioma e `html lang` están en inglés
+- S4 · "capturas nuevas" · acceptance: las capturas del README muestran la app en inglés
+- S5 · "también las tablas viejas de `navegacion-de-la-app.md`" · acceptance: cada archivo de la app que cita la página de navegación existe
+- ENG-21-ASM-01 · los registros del método en `specs/` (`TRAZABILIDAD.md`, `REVISION-main.md` y las cards) quedan en castellano: citan los CU y el enunciado, que están en castellano, y el texto congelado no se reescribe; el sitio los sigue publicando, bajo secciones con título en inglés · S1,S3
+- ENG-21-ASM-02 · las páginas citan el texto de la app en inglés, su idioma base; el castellano sólo aparece en la columna castellana del glosario, en nombres propios y en código (`inline` o bloques) · S1,S2
+- ENG-21-ASM-03 · una página es inglés cuando, fuera de bloques de código, código en línea y URLs, menos del 2 % de sus palabras son palabras castellanas frecuentes (`de`, `la`, `el`, `los`, `las`, `que`, `y`, `con`, `para`, `por`, `una`, `del`, `se`, `es`, `en`, `un`, `al`, `lo`, `como`, `sin`); el glosario se mide sin su columna castellana · S1,S2
+- ENG-21-ASM-04 · las cuatro capturas del README se vuelven a sacar con la app en inglés desde un archivo de capturas (`apps/mobile/test/capturas/readme_screenshots.dart`, locale `en`, modo claro, 430 px) que la corrida por defecto no toma y que, antes de escribir cada PNG, comprueba que la pantalla muestra su texto en inglés; quedan en `docs/screenshots/` como PNG (`01-login.png`, `03-venues.png`, `05-availability.png`, `07-done.png`) y el README las muestra con `alt` en inglés · S4
+- ENG-21-ASM-05 · el sitio tiene un solo idioma, inglés: `defaultLocale 'en'`, `locales ['en']`, la búsqueda en `en` y `<html lang="en">` · S3
+- ENG-21-ASM-06 · además de la tabla de navegación, cada ruta del repo que cita una página existe: las viejas siguen su renombre y la fila del error de arranque de accessibility.md cita el diálogo con reintento de `apps/mobile/lib/main.dart` (`resumeWithRetry`) y `apps/mobile/test/arranque_sin_conexion_test.dart`; el glosario queda afuera porque mapea nombres viejos a nuevos · S5
+- ENG-21-ASM-07 · los archivos del sitio que esta card toca y el archivo de capturas nuevo llevan nombre en inglés (`docs-site/scripts/copy-docs.mjs`, `docs-site/src/clientModules/diagram-zoom.js`, `docs-site/tests/integrations-on-site.test.mjs`, `docs-site/tests/diagram-zoom.test.mjs`, `apps/mobile/test/capturas/readme_screenshots.dart`); las carpetas y los nombres de los tests existentes de `apps/` (`test/capturas/`, `tests/escenarios/`) son de ENG-22 · S1,S3
+
+## Tasks
+
+- T1 · S3,ENG-21-ASM-01,ENG-21-ASM-05,ENG-21-ASM-07 · docs-site/docusaurus.config.js (presentation), docs-site/scripts/copy-docs.mjs (presentation), docs-site/scripts/docstrings.py (presentation), docs-site/src/clientModules/diagram-zoom.js (presentation), docs-site/src/components/Swagger.js (presentation), docs-site/tests/integrations-on-site.test.mjs, docs-site/tests/diagram-zoom.test.mjs, .github/workflows/ci.yml (presentation), tests/ci.test.mjs, tests/docs-in-english.test.mjs · tests: tests/docs-in-english.test.mjs "the docs site lives in docs-site and is English @ENG-21-S3 @assumption:ENG-21-ASM-05"; tests/docs-in-english.test.mjs "the site keeps publishing the specs records under English sections @assumption:ENG-21-ASM-01"; tests/docs-in-english.test.mjs "the site's files and the README capture have English names @assumption:ENG-21-ASM-07"
+  reuses: docs-site/scripts/copy-docs.mjs (hoy copiar.mjs) su tabla de páginas (sólo cambian los nombres de origen y destino y las etiquetas) y la config de Docusaurus existente
+- T2 · S2,ENG-21-ASM-02,ENG-21-ASM-03 · README.md (presentation), apps/api/README.md (presentation), apps/mobile/README.md (presentation) · tests: tests/docs-in-english.test.mjs "every docs page and README is English @ENG-21-S1 @ENG-21-S2 @assumption:ENG-21-ASM-02"; tests/docs-in-english.test.mjs "the Spanish detector flags a Spanish paragraph and passes an English one with code and names @assumption:ENG-21-ASM-03"
+  reuses: cada README en su lugar; se traduce el texto, la estructura queda
+- T3 · S1,S5,ENG-21-ASM-06 · docs/technical/architecture.md (presentation), docs/technical/code-map.md (presentation), docs/technical/app-navigation.md (presentation), docs/technical/data-model.md (presentation) · tests: tests/docs-in-english.test.mjs "every docs page has an English file name @ENG-21-S1"; tests/docs-in-english.test.mjs "every app file the navigation page cites exists @ENG-21-S5"; tests/docs-in-english.test.mjs "every repo path a doc cites exists @assumption:ENG-21-ASM-06"
+  reuses: cada página en su lugar (git mv al nombre en inglés); se traduce el texto, la estructura queda
+- T4 · S1,ENG-21-ASM-06 · docs/technical/system-design.md (presentation), docs/technical/runbook.md (presentation), docs/technical/infra-cost.md (presentation), docs/technical/integrations.md (presentation), docs/technical/glossary.md (presentation) · tests: tests/docs-in-english.test.mjs "every docs page and README is English @ENG-21-S1 @ENG-21-S2 @assumption:ENG-21-ASM-02"
+  reuses: cada página en su lugar (git mv al nombre en inglés); se traduce el texto, la estructura queda
+- T5 · S1,ENG-21-ASM-06 · docs/getting-started.md (presentation), docs/documentation-assumptions.md (presentation), docs/adr/0001-stack.md (presentation), docs/adr/0002-hosting-on-render.md (presentation), docs/business/accessibility.md (presentation) · tests: tests/docs-in-english.test.mjs "every docs page and README is English @ENG-21-S1 @ENG-21-S2 @assumption:ENG-21-ASM-02"
+  reuses: cada página en su lugar (git mv al nombre en inglés); se traduce el texto, la estructura queda
+- T6 · S4,ENG-21-ASM-04 · apps/mobile/test/capturas/readme_screenshots.dart, docs/screenshots/01-login.png (presentation), docs/screenshots/03-venues.png (presentation), docs/screenshots/05-availability.png (presentation), docs/screenshots/07-done.png (presentation) · tests: tests/docs-in-english.test.mjs "the README screenshots are the ones the English capture produces @ENG-21-S4 @assumption:ENG-21-ASM-04"
+  reuses: apps/mobile/test/soporte/montar.dart cargarFuentes y los montajes de los archivos de capturas existentes (test/capturas/*_capturas.dart)
+- T7 · S1,S2,S3,S4 · apps/api/tests/** , apps/mobile/test/navegacion_documentada_test.dart, apps/mobile/test/sin_sobreingenieria_test.dart · los tests de documentación que leen encabezados, frases, nombres de archivo o la carpeta `sitio-docs` siguen la traducción y el renombre (refactor-tests)
+  new: no escribe lógica de producción
+
+## Changes to existing behavior
+
+- `sitio-docs/` → `docs-site/`; el sitio sale en inglés; el job `node` del CI corre los tests de `docs-site/tests`
+- cada página de `docs/` cambia a su nombre en inglés y se traduce; los README se traducen; `docs/capturas/*.jpg` → `docs/screenshots/*.png`
+- los tests de documentación que comparan un encabezado, una frase o un nombre de archivo en castellano pasan a compararlo en inglés (T7); lo que verifican no cambia
+
+## Gate
+
+```
+suite [timeout 30 min]: sh D:/Temp/w/herramientas/arq01-pytest.sh -q -p no:cacheprovider -rf tests/unit tests/escenarios/test_documentacion_vigente.py tests/escenarios/test_documentacion_supuestos_vigente.py tests/escenarios/test_requisitos_no_funcionales.py tests/escenarios/test_requisitos_no_funcionales_readme_app.py tests/escenarios/test_readme_app_configuracion.py
+node: node --test --test-force-exit tests/*.test.mjs docs-site/tests/*.test.mjs
+flutter: sh -c "cd apps/mobile && /d/projects/flutter/bin/flutter test test/navegacion_documentada_test.dart test/sin_sobreingenieria_test.dart test/capturas/readme_screenshots.dart"
+lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh apps/api
+app: sh D:/Temp/w/herramientas/ci01-app.sh eng21_app
+attacks: sh D:/Temp/w/herramientas/ci01-attacks.sh eng21_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
+refactor-tests: los tests de documentación que leen un encabezado, una frase, un nombre de archivo o la carpeta del sitio siguen la traducción a inglés y el renombre (`sitio-docs` → `docs-site`, cada página a su nombre en inglés, `docs/capturas/*.jpg` → `docs/screenshots/*.png`); lo que verifican no cambia
+no-visual: la card no toca ninguna pantalla de la app; el archivo de capturas es un test
+no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
+```
+
+## Log
+- L1 · 2026-10-27 «quiero que termines esa migracion al ingles, y no solo el codigo, quiero que todo pase a ingles» · 2026-10-27 «porque quiero que este en ingles, igual que absolutamente todo en el repo» · alcance de esta card en el plan: «ENG-21 · docs, README y sitio (`sitio-docs/` → `docs-site/`) en inglés, capturas nuevas; también las tablas viejas de `navegacion-de-la-app.md`» · 2026-11-09 «perfecto, continua con lo que falta entonces»
+- L2 · 2026-11-09 · sin Jira: las dudas van directo a ASM (ENG-21-ASM-01..06), sin ronda de preguntas
+- L3 · 2026-11-09 · la rama sale de CI-01-ci-en-github (PR #35, abierto para una persona por su `## Needs a person`): el CI de CI-01 corre los tests de `sitio-docs/tests`, que esta card renombra
