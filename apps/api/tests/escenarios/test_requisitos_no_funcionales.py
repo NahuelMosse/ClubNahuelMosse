@@ -15,6 +15,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, text
 
+from tests.readme_checks import (
+    assert_app_readme_covers_setup_and_run,
+    assert_scripts_exist,
+    headings,
+)
+
 RAIZ = Path(__file__).resolve().parents[4]
 APP = RAIZ / "apps" / "mobile"
 API = RAIZ / "apps" / "api"
@@ -277,35 +283,9 @@ def test_las_reservas_actuan_sobre_el_usuario_autenticado_y_no_sobre_otro_del_pe
     assert [r["id"] for r in mias] == [de_ana.json()["id"]]
 
 
-def _comandos(readme: str) -> list[str]:
-    bloques = re.findall(r"```[a-z]*\n(.*?)```", readme, re.S)
-    return [linea.strip() for b in bloques for linea in b.splitlines() if linea.strip()]
-
-
-def _secciones(readme: str) -> str:
-    return " ".join(re.findall(r"^#+ (.+)$", readme, re.M)).lower()
-
-
 def test_el_readme_de_la_app_alcanza_para_configurar_y_ejecutarla() -> None:
     """siguiendo sólo el README de la app se configura y ejecuta la app @RNF-01-H07-01 @supuesto:RNF-01-SUP-05"""
-    readme = _leer(APP / "README.md")
-    definidas = set(
-        re.findall(
-            r"String\.fromEnvironment\(\s*'([A-Z_]+)'",
-            _leer(APP / "lib" / "common" / "config.dart"),
-        )
-    )
-
-    for seccion in ("configure", "run", "test"):
-        assert seccion in _secciones(readme), seccion
-    assert {"API_URL", "AUTH_EMULADOR", "FIREBASE_API_KEY"} <= definidas
-    assert not {v for v in definidas if v not in readme}, "variables sin documentar"
-    for comando in _comandos(readme):
-        for guion in re.findall(r"scripts/[\w.]+", comando):
-            assert (RAIZ / guion).is_file(), comando
-    assert "flutter pub get" in readme
-    assert "flutter run" in readme
-    assert "flutter build apk" in readme
+    assert_app_readme_covers_setup_and_run()
 
 
 def test_el_readme_del_backend_alcanza_para_configurar_ejecutar_y_desplegar() -> None:
@@ -319,12 +299,10 @@ def test_el_readme_del_backend_alcanza_para_configurar_ejecutar_y_desplegar() ->
     }
 
     for seccion in ("configure", "run", "test", "deploy"):
-        assert seccion in _secciones(readme), seccion
+        assert seccion in headings(readme), seccion
     assert variables >= {"DATABASE_URL", "FIREBASE_PROJECT_ID", "PUBLIC_URL"}
     assert not {v for v in variables if v not in readme}, "variables sin documentar"
-    for comando in _comandos(readme):
-        for guion in re.findall(r"scripts/[\w.]+", comando):
-            assert (RAIZ / guion).is_file(), comando
+    assert_scripts_exist(readme)
     assert "alembic upgrade head" in readme
     assert "/docs" in readme
 

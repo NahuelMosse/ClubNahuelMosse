@@ -24,11 +24,11 @@ export default function Swagger() {
       </div>
       <iframe
         ref={frame}
-        className="swagger-embedded surface"
+        className="surface"
         data-pad="0"
         src={source}
         title="API (Swagger)"
-        style={{ height }}
+        style={{ display: 'block', width: '100%', border: 0, height }}
       />
     </div>
   );

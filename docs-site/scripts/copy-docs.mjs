@@ -139,8 +139,8 @@ writeFileSync(
   .swagger-ui .scheme-container { padding: 0 0 var(--space-4); box-shadow: none; background: transparent; }
   .swagger-ui .wrapper { padding: 0; }
   /* Swagger UI has no dark mode: with the site's dark theme it is inverted, leaving the method colors alone. */
-  body.dark { background: var(--bg); }
-  body.dark .swagger-ui { filter: invert(0.92) hue-rotate(180deg); }
+  :root[data-theme="dark"] body { background: var(--bg); }
+  :root[data-theme="dark"] .swagger-ui { filter: invert(0.92) hue-rotate(180deg); }
 </style></head>
 <body><div id="swagger"></div>
 <script src="/swagger-ui/swagger-ui-bundle.js"></script>
@@ -150,7 +150,6 @@ writeFileSync(
   const root = window.parent.document.documentElement;
   const theme = () => {
     document.documentElement.dataset.theme = root.dataset.theme;
-    document.body.classList.toggle('dark', root.dataset.theme === 'dark');
   };
   theme();
   new MutationObserver(theme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });

@@ -14,7 +14,7 @@ export function addZoom(svg, createPanZoom) {
   const button = svg.ownerDocument.createElement('button');
   button.type = 'button';
   button.textContent = 'Full screen';
-  button.className = 'button button--secondary button--sm';
+  button.className = 'btn btn--sm';
   button.addEventListener('click', () => container.requestFullscreen());
   container.appendChild(button);
   return instance;
