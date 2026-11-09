@@ -25,8 +25,8 @@
 }
 
 
-/* Swagger UI va en un marco que toma el ancho del contenido y el alto de lo que muestra. */
-.swagger-incrustado {
+/* Swagger UI goes in a frame that takes the width of the content and the height of what it shows. */
+.swagger-embedded {
   display: block;
   width: 100%;
   border: 0;

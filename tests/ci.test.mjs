@@ -83,7 +83,7 @@ test('scripts/test.sh checks the format of lib only, like the CI @CI-01-S1 @assu
 });
 
 test('the node job runs the repo tests and the docs site tests @CI-01-S1', () => {
-  assert.match(job('node'), /run: node --test tests\/\*\.test\.mjs sitio-docs\/tests\/\*\.test\.mjs/);
+  assert.match(job('node'), /run: node --test tests\/\*\.test\.mjs docs-site\/tests\/\*\.test\.mjs/);
 });
 
 test('pytest is green when every failing test is declared replaced and its replacement exists @CI-01-S1 @assumption:CI-01-ASM-01', () => {

@@ -3,18 +3,18 @@ import { themes as prismThemes } from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 export default {
   title: 'ClubNahuelMosse',
-  tagline: 'Documentación de la app de reservas de espacios deportivos',
+  tagline: 'Documentation of the sports venue booking app',
   url: 'https://nahuelmosse.github.io',
   baseUrl: '/',
   onBrokenLinks: 'warn',
   markdown: {
-    // Los .md se leen como Markdown común y no como MDX: los documentos traen `<`, `{` y tablas.
+    // The .md files are read as plain Markdown, not MDX: the documents carry `<`, `{` and tables.
     format: 'detect',
     mermaid: true,
     hooks: { onBrokenMarkdownLinks: 'warn' },
   },
-  i18n: { defaultLocale: 'es', locales: ['es'] },
-  clientModules: ['./src/clientModules/zoom-de-diagramas.js'],
+  i18n: { defaultLocale: 'en', locales: ['en'] },
+  clientModules: ['./src/clientModules/diagram-zoom.js'],
   presets: [
     [
       'classic',
@@ -32,7 +32,7 @@ export default {
     '@docusaurus/theme-mermaid',
     [
       '@easyops-cn/docusaurus-search-local',
-      { hashed: true, language: ['es'], docsRouteBasePath: '/', indexBlog: false },
+      { hashed: true, language: ['en'], docsRouteBasePath: '/', indexBlog: false },
     ],
   ],
   themeConfig: {

@@ -2,9 +2,9 @@
   "name": "clubnahuelmosse-docs",
   "private": true,
   "scripts": {
-    "copiar": "node scripts/copiar.mjs",
-    "start": "npm run copiar && docusaurus start",
-    "build": "npm run copiar && docusaurus build",
+    "copy-docs": "node scripts/copy-docs.mjs",
+    "start": "npm run copy-docs && docusaurus start",
+    "build": "npm run copy-docs && docusaurus build",
     "serve": "docusaurus serve"
   },
   "dependencies": {
