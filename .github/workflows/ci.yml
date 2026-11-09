@@ -79,18 +79,15 @@ jobs:
 
   mobile:
     name: App · analyze, format, test
-    # Windows, as the app is developed: the accessibility tests measure contrast on the rendered text, and the
-    # Linux rasterizer greys the thin glyphs of the real font (a #0A0A0B digit on white is measured #A0A0A0).
-    runs-on: windows-latest
+    # The accessibility tests measure contrast on the rendered text. The Linux rasterizer greys the thin glyphs of
+    # the real font (a #0A0A0B digit on white is measured #A0A0A0); on Windows, a test file that does not compile
+    # takes the Dart compiler down with the files after it. macOS renders as Windows and compiles as Linux.
+    runs-on: macos-latest
     timeout-minutes: 30
     defaults:
       run:
-        shell: bash
         working-directory: apps/mobile
     steps:
-      # The files keep the line endings of the repo, as on the Linux jobs.
-      - run: git config --global core.autocrlf false
-        working-directory: .
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
