@@ -2,7 +2,7 @@
 // and the site only shows it. Links to another included document point to its page; links to any other
 // file of the repo point to GitHub.
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, posix, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -113,6 +113,12 @@ contract.servers = [
 mkdirSync(join(site, 'static'), { recursive: true });
 writeFileSync(join(site, 'static', 'openapi.json'), JSON.stringify(contract));
 
+// The project's design line: the tokens and the component set are served beside the site, which links them.
+const design = join(site, 'static', 'design');
+mkdirSync(design, { recursive: true });
+copyFileSync(join(repo, 'design', 'tokens.css'), join(design, 'tokens.css'));
+cpSync(join(repo, 'design', 'components'), join(design, 'components'), { recursive: true });
+
 // Swagger UI already built (swagger-ui-dist), served as is: bundling it needs Node modules.
 const swagger = join(site, 'static', 'swagger-ui');
 mkdirSync(swagger, { recursive: true });
@@ -124,15 +130,16 @@ writeFileSync(
   `<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><title>API · ClubNahuelMosse</title>
+<link rel="stylesheet" href="/design/tokens.css">
 <link rel="stylesheet" href="/swagger-ui/swagger-ui.css">
 <style>
   body { margin: 0; background: transparent; }
   /* The title and the description are already in the documentation page. */
   .swagger-ui .info { display: none; }
-  .swagger-ui .scheme-container { padding: 0 0 16px; box-shadow: none; background: transparent; }
+  .swagger-ui .scheme-container { padding: 0 0 var(--space-4); box-shadow: none; background: transparent; }
   .swagger-ui .wrapper { padding: 0; }
   /* Swagger UI has no dark mode: with the site's dark theme it is inverted, leaving the method colors alone. */
-  body.dark { background: #0a0a0b; }
+  body.dark { background: var(--bg); }
   body.dark .swagger-ui { filter: invert(0.92) hue-rotate(180deg); }
 </style></head>
 <body><div id="swagger"></div>
@@ -141,7 +148,10 @@ writeFileSync(
   SwaggerUIBundle({ url: '/openapi.json', dom_id: '#swagger', deepLinking: false, docExpansion: 'list' });
   // Follows the light or dark theme of the page that contains it.
   const root = window.parent.document.documentElement;
-  const theme = () => document.body.classList.toggle('dark', root.dataset.theme === 'dark');
+  const theme = () => {
+    document.documentElement.dataset.theme = root.dataset.theme;
+    document.body.classList.toggle('dark', root.dataset.theme === 'dark');
+  };
   theme();
   new MutationObserver(theme).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
 </script>

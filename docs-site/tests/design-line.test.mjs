@@ -35,7 +35,7 @@ const block = (css, selector) => {
   return css.slice(start, css.indexOf('\n}', start));
 };
 const declares = (body, name, value) =>
-  new RegExp(`${name}:\s*${value}\s*;`, 'i').test(body);
+  new RegExp(`${name}:\\s*${value}\\s*;`, 'i').test(body);
 
 test('the docs site takes its colors, space and motion from design/tokens.css @ENG-21-S3', () => {
   const tokens = read('design/tokens.css');

@@ -14,6 +14,8 @@ export default {
     hooks: { onBrokenMarkdownLinks: 'warn' },
   },
   i18n: { defaultLocale: 'en', locales: ['en'] },
+  // The project's design line, copied into static/design/ by scripts/copy-docs.mjs.
+  stylesheets: ['/design/tokens.css', '/design/components/primitives.css', '/design/components/components.css'],
   clientModules: ['./src/clientModules/diagram-zoom.js'],
   presets: [
     [

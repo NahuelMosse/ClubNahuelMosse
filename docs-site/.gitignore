@@ -4,3 +4,4 @@ build/
 docs/
 static/openapi.json
 static/swagger-ui/
+static/design/
