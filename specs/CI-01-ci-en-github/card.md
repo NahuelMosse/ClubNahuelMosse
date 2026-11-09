@@ -40,7 +40,7 @@ lint: sh D:/Temp/w/herramientas/eng17-ruff-mypy.sh apps/api
 lint: npx -y eslint@9 --no-config-lookup --rule {"no-unused-vars":"error"} tests/ci.test.mjs scripts/ci-test-verdict.mjs
 migrate-upgrade: sh D:/Temp/w/herramientas/ci01-pytest.sh -q -p no:cacheprovider tests/escenarios/test_english_schema_rows.py
 mutate scripts/ci-test-verdict.mjs: node --test tests/ci.test.mjs
-app: sh D:/Temp/w/herramientas/arq01-app.sh ci01_app
+app: sh D:/Temp/w/herramientas/ci01-app.sh ci01_app
 attacks: sh D:/Temp/w/herramientas/ci01-attacks.sh ci01_app --json --body-limit 1048576 --no-ambient --raw-headers-exempt "uvicorn (h11) responde los pedidos crudos mal formados antes de que lleguen a la app" --write 'POST /venues {"name": "Attack Venue", "address": "Street 1", "opens_at": "08:00", "closes_at": "23:00", "open_days": [1, 2, 3, 4, 5, 6, 7]}' --read /bookings --read /me --openapi apps/api/openapi.json
 refactor-tests: los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia
 no-visual: la card no toca ninguna pantalla de la app
@@ -53,3 +53,7 @@ no-docs: la card agrega CI y corrige citas de archivos; no cambia comportamiento
 - L2 · 2026-11-09 · declared · restart · la card no guarda nada: agrega el workflow del CI y corrige tests congelados y citas de archivos; la app y su base quedan como en main
 - L3 · 2026-11-09 · replaces: apps/mobile/test/notificaciones_test.dart "cuándo llegó y en qué día el rótulo del día es HOY, AYER o la fecha" · ENG-19 copió el archivo entero porque dejó de compilar y lo declaró en prosa (L140 de su Log), con una copia que ENG-20 renombró; esta línea lo declara con su copia actual para que el CI lo reconozca · by: apps/mobile/test/notifications_spanish_test.dart "cuándo llegó y en qué día el rótulo del día es HOY, AYER o la fecha"
 - L4 · 2026-11-09 · declared · ACT-02 · el test de ENG-08 «la base de la app no toca apps/api» mira el árbol de trabajo y el CI parte de un checkout limpio, así que pasa; un cierre inesperado del compilador de Dart deja el job en rojo y se vuelve a correr a mano: el CI no reintenta solo, para no esconder una falla real
+- L5 · 2026-11-09 · declared · mutate · scripts/ci-test-verdict.mjs:34 · “.trim()” → “.trimEnd()” · el resumen de pytest -q no lleva espacios al principio y el recorte sólo cambia el texto del mensaje de error, no el veredicto
+- L6 · 2026-11-09 · declared · K4 · apps/api/tests/escenarios/test_requisitos_no_funcionales_readme_app.py · test congelado de RNF-01 que repite a propósito los de test_readme_app_configuracion.py y test_requisitos_no_funcionales.py; la card sólo le corrige la ruta que la migración renombró y los congelados no se refactorizan
+- L7 · 2026-11-09 · declared · K4 · apps/api/tests/escenarios/test_readme_app_configuracion.py · test congelado de REV con el mismo encabezado que su par de RNF-01; la card sólo le corrige la ruta que la migración renombró
+- L8 · 2026-11-09 · declared · K4 · apps/api/tests/escenarios/test_requisitos_no_funcionales.py · test congelado de RNF-01 que comparte las líneas del README de la app con su par; la card sólo le corrige las rutas que la migración renombró
