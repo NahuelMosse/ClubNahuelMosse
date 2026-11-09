@@ -68,3 +68,4 @@ no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
 - L3 · 2026-11-09 · la rama sale de CI-01-ci-en-github (PR #35, abierto para una persona por su `## Needs a person`): el CI de CI-01 corre los tests de `sitio-docs/tests`, que esta card renombra
 - L4 · 2026-11-09 · T1 · docs-site renombrado y en inglés; node --test tests/ci.test.mjs docs-site/tests/*.test.mjs tests/docs-in-english.test.mjs: S3 y ASM-01 pasan
 - L5 · 2026-11-09 · T6 · flutter test test/capturas/readme_screenshots.dart: 4 passed, PNG 430 px en docs/screenshots; falta el README (T2) para el test S4
+- L6 · 2026-11-09 · T4+T5 · 10 páginas traducidas y renombradas (git mv); rutas citadas verificadas con ls; el detector de castellano (tests/docs-in-english.test.mjs) no corrió: el time-cap bloqueó la suite, medido con Grep por palabras
