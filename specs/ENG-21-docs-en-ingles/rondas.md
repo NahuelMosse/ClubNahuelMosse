@@ -49,9 +49,20 @@ Three layout decisions that differ from Stripe: no top product tabs (a single si
 
 Open (not chased, owned by the theme or Infima, not by this card's CSS): `hamburger, expanded: yes` at 1024-1440 (Infima's toggle element), `bare hamburger` at 390 (the label «Menu» is drawn with `::after`, the check reads text content; a swizzle of the toggle would fix it), 2 tap targets of 34 px at 390 (theme buttons), 5 hover-only reveals and desktop-first media queries (min 4 / max 18) in Infima's own stylesheets, `accent reserved: 15-17` (links colored with the accent), and the skip link CTA separation.
 
+## Round 4 (`rondas/r4`, `--brand design/DESIGN.md --kind product`)
+
+1. Character: `design/DESIGN.md` parses as the brand sheet; its light-mode olive ink is keyed `accent` so the action matcher reads it (`primary-light` is excluded as a state segment). `brand:` fonts 1 → 0 (the theme toggle button drew Arial; `button { font-family: inherit }`), primary action 0.474 → 0 OKLab, page background 0.001-0.002: all three pass at every width.
+2. Hierarchy and typography: tables are `display: table; width: 100%; overflow-wrap: anywhere`, so Infima's scrolling block is gone.
+3. Depth and color: AA text contrast 0 failing pairs at every width; dark/light toggle kept.
+4. Composition: the screenshot strip wraps (`flex: 1 1 150px`, `max-width: 215px`) instead of scrolling: two per row at 390, four at 1024+; `image file width >= shown x 2` 1 → 0. axe `scrollable-region-focusable` is gone: 0 violations at 1280 and 390 on home, /api/, decisions/stack, decisions/hosting-on-render, guides/api, guides/app, product/review, product/accessibility and getting-started (it was on the stack table at 390).
+5. Motion and states: unchanged (entry rise 260 ms, press 0.98); dead clicks 0, broken images 0, alt painted as text 0.
+
+Still open (see round 3): `hamburger, expanded` at 1024-1440, bare hamburger, 2 tap targets under 44 px, hover-only reveals and min/max queries (Infima), `accent reserved` 15-17, skip link CTA separation. One 404 resource at 1440 in the console.
+
 ## Log
 
 - L1 · round 1 · double home title, 5 dead sidebar links, 4 pasted screenshots, lazy LCP, touch targets
 - L2 · round 2 · skip link specificity, sidebar density, LCP at t0
 - L3 · round 3 · captures and numbers of the last round; open rows listed above
 - L4 · OUT · a labeled hamburger needs a swizzle of the navbar toggle, outside T1/T8/T9
+- L5 · round 4 · brand sheet parsed, Arial button, strip wraps, tables without scroll (axe clean)

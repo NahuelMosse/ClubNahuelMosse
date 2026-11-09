@@ -121,6 +121,11 @@ article header h1 {
   min-height: 44px;
 }
 
+/* Buttons take the page face; the browser default is Arial. */
+button {
+  font-family: inherit;
+}
+
 /* Feedback: links, menu entries and buttons answer to the pointer and the keyboard. */
 a,
 .menu__link,
@@ -213,6 +218,9 @@ main article {
 /* Tables: hairline rows, muted column heads, numbers that align. */
 .markdown table {
   font-variant-numeric: tabular-nums;
+  display: table;
+  width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .markdown table th {
@@ -224,9 +232,8 @@ main article {
 /* The home page's four captures read as one strip with a hairline between them. */
 .markdown p:has(> img[src*='/screenshots/']) {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  overflow-x: auto;
-  scroll-snap-type: x proximity;
   border: 1px solid var(--border);
   border-radius: var(--radius-2);
   background-color: var(--surface);
@@ -234,10 +241,9 @@ main article {
 }
 
 .markdown p:has(> img[src*='/screenshots/']) > img {
-  flex: 0 0 auto;
-  width: 200px;
+  flex: 1 1 150px;
+  max-width: 215px;
   height: auto;
-  scroll-snap-align: start;
 }
 
 .markdown p:has(> img[src*='/screenshots/']) > img + img {

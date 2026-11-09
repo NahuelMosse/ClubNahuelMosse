@@ -2,7 +2,7 @@
 name: ClubNahuelMosse
 colors:
   primary: "#D4FF3D"
-  primary-light: "#4D6600"
+  accent: "#4D6600"
   background: "#0A0A0B"
   background-light: "#FFFFFF"
   surface: "#141416"
