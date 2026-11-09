@@ -1,8 +1,8 @@
 """The documentation tests run whole on main, and the pages they read cite files that exist."""
 
 # ruff: noqa: E501  (test titles carry their tags and are not split)
-import re
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
