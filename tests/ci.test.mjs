@@ -112,6 +112,8 @@ test('pytest is red on a collection error or any exit other than failed tests @C
   assert.equal(verdict(`${REPLACED}\n1 failed, 10 passed, 1 error in 3.00s\n`, 1).status, 1);
   assert.equal(verdict('no tests ran in 0.10s\n', 2).status, 1);
   assert.equal(verdict('10 passed in 3.00s\n', 0).status, 0);
+  // A call without the runner, the file or the exit code is a usage error of the workflow, not a test verdict.
+  assert.equal(spawnSync(process.execPath, [join(repo, 'scripts', 'ci-test-verdict.mjs'), 'pytest'], { encoding: 'utf8' }).status, 2);
 });
 
 test('flutter test is green when every failing test and every file that no longer compiles is declared replaced @CI-01-S1 @assumption:CI-01-ASM-01', () => {
