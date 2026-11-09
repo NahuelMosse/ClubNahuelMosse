@@ -9,7 +9,7 @@ Result: passed
 - 3 · every tag is a spec of card.md — 2 tagged files
 - 4 · each ASM is tagged or declared uncovered — 5 of 5 tagged
 - 5 · no tagged test touched since RED — declared refactor-tests: los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia; 1 tagged file edited, listed for review
-- 6 · diff and Tasks agree — 21 files in the diff against 4b19a32fd227ad7faf46f6bbb6c96c4da74475e2~1
+- 6 · diff and Tasks agree — 23 files in the diff against 4b19a32fd227ad7faf46f6bbb6c96c4da74475e2~1
 - 7 · gate green — 7 lines passed on this code
 - 8 · judge — 5 ACT (5 of plan), every one closed or declared
 - 9 · required.mjs — mutation, linter and scope ran and passed on this code
@@ -33,6 +33,7 @@ risk large · high · lenses contract, integrity · 5 ACT: 4 closed, 1 declared,
 - duplication left in place (K4): apps/api/tests/escenarios/test_readme_app_configuracion.py — test congelado de REV con el mismo encabezado que su par de RNF-01; la card sólo le corrige la ruta que la migración renombró; confirm the two copies must differ
 - duplication left in place (K4): apps/api/tests/escenarios/test_requisitos_no_funcionales.py — test congelado de RNF-01 que comparte las líneas del README de la app con su par; la card sólo le corrige las rutas que la migración renombró; confirm the two copies must differ
 - left unmutated: scripts/ci-test-verdict.mjs:34 — “.trim()” → “.trimEnd()” · “.*$/gm)].at(-1)?.[0]@@??'';if(!summary||/\” · el resumen de pytest -q no lleva espacios al principio; el recorte sólo cambia el texto del mensaje de error, no el veredicto; confirm its tests are enough without mutation
+- left unmutated: apps/mobile/lib/features/bookings/domain/search_rules.dart — sólo cambia el formato que exige dart format; ninguna línea de lógica cambia y sus tests de main siguen corriendo en el job de la app; confirm its tests are enough without mutation
 - frozen test edited by the refactor (los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia): apps/api/tests/escenarios/test_basquet.py (+3 −3); confirm no assertion was loosened: `git diff 4b19a32fd..HEAD -- apps/api/tests/escenarios/test_basquet.py`
 - frozen test edited by the refactor (los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia): apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py (+1 −1); confirm no assertion was loosened: `git diff 4b19a32fd..HEAD -- apps/api/tests/escenarios/test_documentacion_supuestos_vigente.py`
 - frozen test edited by the refactor (los tests congelados que citaban archivos o nombres que la migración a inglés renombró siguen el renombre, el control de constraints deja afuera los NOT NULL de PostgreSQL 18 y sale el control obsoleto de la rama ingles-api; lo que verifican los demás no cambia): apps/api/tests/escenarios/test_english_schema.py (+2 −1); confirm no assertion was loosened: `git diff 4b19a32fd..HEAD -- apps/api/tests/escenarios/test_english_schema.py`
@@ -42,6 +43,6 @@ risk large · high · lenses contract, integrity · 5 ACT: 4 closed, 1 declared,
 - module docs off by decision: not chosen at install: no signal found in the repo
 - grade: mvp — the app is an university project
 
-Cost: USD 2.37 (main 2.06, judge 0.32) · the messages of this card
-close.mjs seal: CI-01 sha256:f2ad0d3ecc56bbf71f52d002c1faedda32872fdde567ea53aa48fbb95ba75027
+Cost: USD 2.94 (main 2.63, judge 0.32) · the messages of this card
+close.mjs seal: CI-01 sha256:a8d1bcf85a58cc82679f2ce18248c3cb1b0fc31f9a5a839ed0f5e528fc2bb5cd
 <!-- close.mjs:end -->
