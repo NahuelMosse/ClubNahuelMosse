@@ -73,3 +73,4 @@ no-docs: la card traduce la documentación; no cambia comportamiento ni contrato
 - L5 · 2026-11-09 · T6 · flutter test test/capturas/readme_screenshots.dart: 4 passed, PNG 430 px en docs/screenshots; falta el README (T2) para el test S4
 - L6 · 2026-11-09 · T4+T5 · 10 páginas traducidas y renombradas (git mv); rutas citadas verificadas con ls; el detector de castellano (tests/docs-in-english.test.mjs) no corrió: el time-cap bloqueó la suite, medido con Grep por palabras
 - L7 · 2026-11-09 · cap 150 → 420 min por orden de la persona (2026-11-09): la línea de diseño que pide el sitio movido (I-line, I-tokens, I-set, I-motion) y T7 necesitan builder
+- L8 · 2026-11-09 · T8 · design/tokens.css, design/components/, custom.css, Swagger.js, copy-docs.mjs, config; node --test docs-site/tests/design-line.test.mjs docs-site/tests/*.test.mjs tests/ci.test.mjs: 15 pass; required.mjs lists no I-* item (those are measured by verify.mjs)
