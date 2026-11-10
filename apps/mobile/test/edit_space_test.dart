@@ -80,26 +80,25 @@ void main() {
       .flagsCollection
       .isEnabled;
 
-  testWidgets(
-    'opens with the space data and what is not editable, disabled',
-    (tester) async {
-      final semantics = tester.ensureSemantics();
-      await open(tester);
+  testWidgets('opens with the space data and what is not editable, disabled', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await open(tester);
 
-      expect(find.text('Editar espacio deportivo'), findsOneWidget);
-      expect(find.text('Sede Morón'), findsOneWidget);
-      expect(find.text('Fútbol 5'), findsOneWidget);
-      expect(find.text('Al aire libre'), findsOneWidget);
-      expect(find.text('Iluminada'), findsOneWidget);
-      expect(find.textContaining('38.000'), findsOneWidget);
-      expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
-      expect(enabled(tester, 'Sede'), isFalse);
-      expect(enabled(tester, 'Deporte'), isFalse);
-      expect(enabled(tester, 'Tipo'), isFalse);
-      expect(enabled(tester, 'GUARDAR ESPACIO'), isFalse);
-      semantics.dispose();
-    },
-  );
+    expect(find.text('Editar espacio deportivo'), findsOneWidget);
+    expect(find.text('Sede Morón'), findsOneWidget);
+    expect(find.text('Fútbol 5'), findsOneWidget);
+    expect(find.text('Al aire libre'), findsOneWidget);
+    expect(find.text('Iluminada'), findsOneWidget);
+    expect(find.textContaining('38.000'), findsOneWidget);
+    expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
+    expect(enabled(tester, 'Sede'), isFalse);
+    expect(enabled(tester, 'Deporte'), isFalse);
+    expect(enabled(tester, 'Tipo'), isFalse);
+    expect(enabled(tester, 'GUARDAR ESPACIO'), isFalse);
+    semantics.dispose();
+  });
 
   testWidgets('saves the new price, notifies and returns to the list', (
     tester,
@@ -149,18 +148,19 @@ void main() {
     semantics.dispose();
   });
 
-  testWidgets('the space deactivated in another session: the notice and the list', (
-    tester,
-  ) async {
-    await open(tester, onSave: (404, ''));
-    await typePrice(tester, '45000');
+  testWidgets(
+    'the space deactivated in another session: the notice and the list',
+    (tester) async {
+      await open(tester, onSave: (404, ''));
+      await typePrice(tester, '45000');
 
-    await tapText(tester, 'GUARDAR ESPACIO');
-    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tapText(tester, 'VER LO ACTUALIZADO');
+      await tapText(tester, 'GUARDAR ESPACIO');
+      expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+      await tapText(tester, 'VER LO ACTUALIZADO');
 
-    expect(find.text('ALTA ESPACIO'), findsOneWidget);
-  });
+      expect(find.text('ALTA ESPACIO'), findsOneWidget);
+    },
+  );
 
   testWidgets('the server fails: the notice shows and the typed price stays', (
     tester,
@@ -176,7 +176,7 @@ void main() {
     expect(find.text('Editar espacio deportivo'), findsOneWidget);
   });
 
-  testWidgets('CANCELAR returns to the list without sending anything', (
+  testWidgets('«CANCELAR» returns to the list without sending anything', (
     tester,
   ) async {
     final requests = await open(tester);
@@ -188,7 +188,9 @@ void main() {
     expect(find.text('ALTA ESPACIO'), findsOneWidget);
   });
 
-  testWidgets('DAR DE BAJA EL ESPACIO opens the confirmation', (tester) async {
+  testWidgets('«DAR DE BAJA EL ESPACIO» opens the confirmation', (
+    tester,
+  ) async {
     await open(tester);
 
     await tapText(tester, 'DAR DE BAJA EL ESPACIO');

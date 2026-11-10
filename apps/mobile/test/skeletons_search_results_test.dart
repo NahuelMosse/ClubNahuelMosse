@@ -18,7 +18,7 @@ Rect _rect(Finder finder) {
 
 void main() {
   testWidgets(
-    'Buscar cancha carga los resultados con la forma de su tarjeta @VIS-03-S1',
+    '«Buscar cancha» loads the results shaped like its card @VIS-03-S1',
     (tester) async {
       final semantics = tester.ensureSemantics();
       final held = HeldApi({

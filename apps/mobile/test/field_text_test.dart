@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  Future<TextEditingController> montar(
+  Future<TextEditingController> mount(
     WidgetTester tester, {
     String? error,
   }) async {
-    final controlador = TextEditingController();
+    final controller = TextEditingController();
     await tester.pumpWidget(
       MaterialApp(
         theme: darkTheme,
@@ -16,31 +16,31 @@ void main() {
           body: FormTextField(
             label: 'NOMBRE',
             semanticLabel: 'Nombre',
-            controller: controlador,
+            controller: controller,
             placeholder: 'Tu nombre',
             error: error,
           ),
         ),
       ),
     );
-    return controlador;
+    return controller;
   }
 
-  testWidgets('el campo se encuentra y se completa por su nombre accesible', (
+  testWidgets('the field is found and filled by its accessible name', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final controlador = await montar(tester);
+    final semantics = tester.ensureSemantics();
+    final controller = await mount(tester);
 
     expect(find.bySemanticsLabel('Nombre'), findsOneWidget);
     await tester.enterText(find.bySemanticsLabel('Nombre'), 'Ana');
-    expect(controlador.text, 'Ana');
+    expect(controller.text, 'Ana');
     expect(find.bySemanticsLabel('Nombre'), findsOneWidget);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('el error se muestra debajo del campo', (tester) async {
-    await montar(tester, error: 'El nombre es obligatorio');
+  testWidgets('the error shows below the field', (tester) async {
+    await mount(tester, error: 'El nombre es obligatorio');
     expect(find.text('El nombre es obligatorio'), findsOneWidget);
   });
 }

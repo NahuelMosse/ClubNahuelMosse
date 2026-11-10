@@ -174,8 +174,8 @@ void main() {
       await dispatchReminders(email: email, day: tomorrow, hour: 21);
       await waitUntil(tester, find.text('Tu reserva es en 1 hora'));
 
-      // Verifies: the confirmation card does not appear and the screen is still «Mis
-      // reservas».
+      // Verifies: the confirmation card does not appear and the screen is still
+      // «Mis reservas».
       expect(find.text(title), findsNothing);
       expect(find.text(body(venue)), findsNothing);
       expect(find.text('Mis reservas'), findsOneWidget);

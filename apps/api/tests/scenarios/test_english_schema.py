@@ -227,7 +227,9 @@ def test_every_stored_value_is_in_english_and_the_old_ones_are_rejected(
     assert _rejected(base, "UPDATE app_user SET role = 'usuario'") == "23514"
     assert _rejected(base, "UPDATE notification SET delivery = 'pendiente'") == "23514"
     assert _rejected(base, "UPDATE notification SET kind = 'recordatorio_cinco'") == "23514"
-    assert _rejected(base, "UPDATE notification SET delivery = 'no_permission', kind = 'x'") == "23514"
+    assert (
+        _rejected(base, "UPDATE notification SET delivery = 'no_permission', kind = 'x'") == "23514"
+    )
     for delivery in ("sending", "sent", "no_permission", "no_channel", "failed"):
         with base.begin() as conn:
             conn.execute(text("UPDATE notification SET delivery = :d"), {"d": delivery})
@@ -273,11 +275,14 @@ def test_every_function_and_trigger_is_in_english_and_keeps_its_behavior(
 ) -> None:
     """every function and trigger is in English and keeps its behavior @ENG-17-S1 @assumption:ENG-17-ASM-04"""
     base = _at_head(own_db)
-    assert _names(
-        base,
-        "SELECT proname FROM pg_proc p JOIN pg_language l ON l.oid = p.prolang"
-        " WHERE pronamespace = 'public'::regnamespace AND l.lanname = 'plpgsql'",
-    ) == FUNCTIONS
+    assert (
+        _names(
+            base,
+            "SELECT proname FROM pg_proc p JOIN pg_language l ON l.oid = p.prolang"
+            " WHERE pronamespace = 'public'::regnamespace AND l.lanname = 'plpgsql'",
+        )
+        == FUNCTIONS
+    )
     assert _names(base, "SELECT tgname FROM pg_trigger WHERE NOT tgisinternal") == TRIGGERS
     with base.begin() as conn:
         ids = _seed_english(conn)
@@ -319,7 +324,10 @@ def test_the_view_is_booking_with_status_and_computes_completed(
         statuses = conn.execute(
             text("SELECT status, current_status FROM booking_with_status ORDER BY starts_at")
         ).all()
-        views = {r[0] for r in conn.execute(text("SELECT viewname FROM pg_views WHERE schemaname='public'"))}
+        views = {
+            r[0]
+            for r in conn.execute(text("SELECT viewname FROM pg_views WHERE schemaname='public'"))
+        }
 
     assert views == {"booking_with_status"}
     assert columns[-1] == "current_status"
@@ -482,9 +490,7 @@ def test_the_migration_translates_the_rows_of_0011_without_touching_them_otherwi
     _seed_spanish(base)
     before = _stored(base, spanish=True)
     with base.connect() as conn:
-        content = conn.execute(
-            text("SELECT titulo, cuerpo FROM notificacion ORDER BY id")
-        ).all()
+        content = conn.execute(text("SELECT titulo, cuerpo FROM notificacion ORDER BY id")).all()
 
     command.upgrade(alembic, "head")
 
@@ -494,9 +500,9 @@ def test_the_migration_translates_the_rows_of_0011_without_touching_them_otherwi
     for key in ("roles", "status", "kind", "delivery"):
         assert after[key] == _english_tally(before[key]), key
     with base.connect() as conn:
-        assert conn.execute(
-            text("SELECT title, body FROM notification ORDER BY id")
-        ).all() == content
+        assert (
+            conn.execute(text("SELECT title, body FROM notification ORDER BY id")).all() == content
+        )
         assert conn.execute(text("SELECT first_name FROM app_user LIMIT 1")).scalar_one() == "Ana"
     command.downgrade(alembic, "0011")
     assert _stored(base, spanish=True) == before
@@ -611,9 +617,7 @@ def _translated(old: dict[str, set[tuple[str, ...]]]) -> dict[str, set[tuple[str
                 out[key].add((OLD_TO_NEW_TABLE[table], column, entry[2], entry[3], default))
             else:
                 table = entry[0]
-                out[key].add(
-                    (OLD_TO_NEW_TABLE[table], *(_to_english(table, p) for p in entry[1:]))
-                )
+                out[key].add((OLD_TO_NEW_TABLE[table], *(_to_english(table, p) for p in entry[1:])))
     return out
 
 
@@ -657,8 +661,11 @@ def test_the_migration_gives_up_on_a_held_lock_and_can_run_again(
     assert not thread.is_alive()
     assert isinstance(result[0], OperationalError)
     assert "lock timeout" in str(result[0])
-    assert _names(base, "SELECT table_name FROM information_schema.tables"
-                  " WHERE table_schema = 'public' AND table_name = 'reserva'") == {"reserva"}
+    assert _names(
+        base,
+        "SELECT table_name FROM information_schema.tables"
+        " WHERE table_schema = 'public' AND table_name = 'reserva'",
+    ) == {"reserva"}
     command.upgrade(alembic, "head")
     assert "booking" in _names(
         base, "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'"

@@ -13,8 +13,8 @@ import 'support/user.dart';
 void main() {
   setUpAll(loadFonts);
 
-  test('la sede lee sus deportes, y sin ellos queda vacía', () {
-    final con = Venue.fromJson({
+  test('the venue reads its sports, and without them it is empty', () {
+    final withSports = Venue.fromJson({
       'id': '00000000-0000-7000-8000-000000000001',
       'name': 'Sede Morón',
       'address': 'Av. Rivadavia 19850',
@@ -24,8 +24,8 @@ void main() {
       'space_count': 2,
       'sports': ['Futbol', 'Tenis'],
     });
-    expect(con?.sports, ['Futbol', 'Tenis']);
-    final sin = Venue.fromJson({
+    expect(withSports?.sports, ['Futbol', 'Tenis']);
+    final without = Venue.fromJson({
       'id': '00000000-0000-7000-8000-000000000001',
       'name': 'Sede Morón',
       'address': 'Av. Rivadavia 19850',
@@ -34,12 +34,12 @@ void main() {
       'open_days': [1, 2],
       'space_count': 0,
     });
-    expect(sin?.sports, isEmpty);
+    expect(without?.sports, isEmpty);
   });
 
-  group('todas las sedes', () {
-    testWidgets('cada sede con horario, canchas y deportes', (tester) async {
-      final semantica = tester.ensureSemantics();
+  group('all venues', () {
+    testWidgets('each venue with hours, courts and sports', (tester) async {
+      final semantics = tester.ensureSemantics();
       await mountUser(tester, api: apiRoutes(venueRoutes()));
       expect(
         find.text('2 sedes · 2 canchas · cada una con su horario'),
@@ -60,18 +60,16 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin sedes lo dice', (tester) async {
+    testWidgets('says so when there are no venues', (tester) async {
       await mountUser(tester, api: apiRoutes(venueRoutes(venues: '[]')));
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
       expect(find.text('El club todavía no cargó sus sedes.'), findsOneWidget);
     });
 
-    testWidgets('si el servidor falla no queda nada a la vista', (
-      tester,
-    ) async {
+    testWidgets('if the server fails nothing is left in view', (tester) async {
       await mountUser(
         tester,
         api: apiRoutes({...venueRoutes(), 'GET /venues': (500, '{}')}),
@@ -83,16 +81,14 @@ void main() {
     });
   });
 
-  group('una sede', () {
-    testWidgets('muestra la portada, el contador y cada cancha', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = <http.Request>[];
+  group('one venue', () {
+    testWidgets('shows the cover, the counter and each court', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final requests = <http.Request>[];
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: apiRoutes(venueRoutes(), requests: pedidos),
+        api: apiRoutes(venueRoutes(), requests: requests),
       );
       expect(find.text('SEDE MORÓN'), findsOneWidget);
       expect(find.text('AV. RIVADAVIA 19850 · 08:00 A 23:00'), findsOneWidget);
@@ -110,14 +106,16 @@ void main() {
         ),
         findsOneWidget,
       );
-      final canchas = pedidos.where((p) => p.url.path == '/spaces').single;
-      expect(canchas.url.queryParameters, {
+      final courts = requests.where((p) => p.url.path == '/spaces').single;
+      expect(courts.url.queryParameters, {
         'venue_id': '00000000-0000-7000-8000-000000000001',
       });
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin canchas lo dice con el contador en cero', (tester) async {
+    testWidgets('without courts it says so with the counter at zero', (
+      tester,
+    ) async {
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000005',
@@ -129,7 +127,7 @@ void main() {
     });
 
     testWidgets(
-      'una sede que ya no está avisa que cambió y vuelve al listado',
+      'a venue that is gone warns that it changed and returns to the listing',
       (tester) async {
         await mountUser(
           tester,
@@ -143,7 +141,7 @@ void main() {
       },
     );
 
-    testWidgets('«Todas las sedes» vuelve al listado', (tester) async {
+    testWidgets('«Todas las sedes» returns to the listing', (tester) async {
       await mountUser(tester, api: apiRoutes(venueRoutes(spaces: '[]')));
       await tester.tap(find.text('SEDE HAEDO'));
       await tester.pumpAndSettle();
@@ -154,15 +152,15 @@ void main() {
       expect(find.text('SEDE HAEDO'), findsOneWidget);
     });
 
-    testWidgets('sin conexión avisa y reintenta', (tester) async {
-      var intentos = 0;
+    testWidgets('offline it warns and retries', (tester) async {
+      var attempts = 0;
       final api = ApiClient(
         'http://api.falsa',
-        cliente: _Cliente((pedido) async {
-          final ruta = pedido.url.path;
-          if (ruta == '/spaces' && intentos++ == 0) throw const _Corte();
-          final (codigo, cuerpo) = venueRoutes()['GET $ruta'] ?? (404, '{}');
-          return http.Response.bytes(utf8.encode(cuerpo), codigo);
+        cliente: _Client((request) async {
+          final route = request.url.path;
+          if (route == '/spaces' && attempts++ == 0) throw const _Outage();
+          final (status, body) = venueRoutes()['GET $route'] ?? (404, '{}');
+          return http.Response.bytes(utf8.encode(body), status);
         }),
       );
       await mountUser(
@@ -182,27 +180,27 @@ void main() {
     });
   });
 
-  group('filtro', () {
+  group('filter', () {
     const f7 =
         '{"id": "00000000-0000-7000-8000-000000000012", "name": "Moron_Rivadavia_19850_Futbol_F7_1", "venue_id": "00000000-0000-7000-8000-000000000001", '
         '"venue": "Sede Morón", "sport": "Futbol", "kind": "F7", "number": 1, '
         '"covered": false, "lit": true, "price_per_hour": 55000}';
 
-    /// Una API que responde a `GET /espacios` según el deporte y el tipo del pedido.
-    ApiClient api({List<http.Request>? pedidos, bool fallaAlFiltrar = false}) =>
+    /// An API that answers `GET /spaces` by the request's sport and kind.
+    ApiClient api({List<http.Request>? requests, bool failsOnFilter = false}) =>
         ApiClient(
           'http://api.falsa',
-          cliente: _Cliente((pedido) async {
-            pedidos?.add(pedido as http.Request);
-            final ruta = pedido.url.path;
-            final q = pedido.url.queryParameters;
-            if (ruta == '/spaces') {
-              if (fallaAlFiltrar && q.containsKey('sport')) {
+          cliente: _Client((request) async {
+            requests?.add(request as http.Request);
+            final route = request.url.path;
+            final q = request.url.queryParameters;
+            if (route == '/spaces') {
+              if (failsOnFilter && q.containsKey('sport')) {
                 return http.Response('{}', 500);
               }
-              final todas = [spaceF5Json, f7, spaceTennisJson];
-              final quedan = [
-                for (final e in todas)
+              final all = [spaceF5Json, f7, spaceTennisJson];
+              final remaining = [
+                for (final e in all)
                   if ((q['sport'] == null ||
                           e.contains('"sport": "${q['sport']}"')) &&
                       (q['kind'] == null ||
@@ -210,142 +208,144 @@ void main() {
                     e,
               ];
               return http.Response.bytes(
-                utf8.encode('{"spaces": [${quedan.join(', ')}]}'),
+                utf8.encode('{"spaces": [${remaining.join(', ')}]}'),
                 200,
               );
             }
-            final (codigo, cuerpo) = venueRoutes()['GET $ruta'] ?? (404, '{}');
-            return http.Response.bytes(utf8.encode(cuerpo), codigo);
+            final (status, body) = venueRoutes()['GET $route'] ?? (404, '{}');
+            return http.Response.bytes(utf8.encode(body), status);
           }),
         );
 
-    Future<void> tocarChip(WidgetTester tester, String etiqueta) async {
-      await tester.ensureVisible(find.bySemanticsLabel(etiqueta));
+    Future<void> tapChip(WidgetTester tester, String label) async {
+      await tester.ensureVisible(find.bySemanticsLabel(label));
       await tester.pumpAndSettle();
-      await tester.tap(find.bySemanticsLabel(etiqueta));
+      await tester.tap(find.bySemanticsLabel(label));
       await tester.pumpAndSettle();
     }
 
-    testWidgets('deporte, tipo, «Todos» y quitar el deporte', (tester) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = <http.Request>[];
+    testWidgets('sport, kind, «Todos» and removing the sport', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final requests = <http.Request>[];
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: api(pedidos: pedidos),
+        api: api(requests: requests),
       );
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsNothing);
 
-      await tocarChip(tester, 'Deporte Fútbol');
+      await tapChip(tester, 'Deporte Fútbol');
       expect(find.text('2 CANCHAS · FÚTBOL · TODOS LOS TIPOS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsOneWidget);
-      expect(pedidos.last.url.queryParameters, {
+      expect(requests.last.url.queryParameters, {
         'venue_id': '00000000-0000-7000-8000-000000000001',
         'sport': 'Futbol',
       });
 
-      await tocarChip(tester, 'Tipo Fútbol 7');
+      await tapChip(tester, 'Tipo Fútbol 7');
       expect(find.text('1 CANCHA · FÚTBOL 7'), findsOneWidget);
       expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsNothing);
 
-      await tocarChip(tester, 'Tipo Todos');
+      await tapChip(tester, 'Tipo Todos');
       expect(find.text('2 CANCHAS · FÚTBOL · TODOS LOS TIPOS'), findsOneWidget);
 
-      await tocarChip(tester, 'Deporte Fútbol');
+      await tapChip(tester, 'Deporte Fútbol');
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('quitar el deporte vuelve a preguntar y trae lo nuevo', (
+    testWidgets('removing the sport asks again and brings the new data', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      final datos = [spaceF5Json, spaceTennisJson];
-      final pedidos = <http.Request>[];
-      final cliente = ApiClient(
+      final semantics = tester.ensureSemantics();
+      final data = [spaceF5Json, spaceTennisJson];
+      final requests = <http.Request>[];
+      final client = ApiClient(
         'http://api.falsa',
-        cliente: _Cliente((pedido) async {
-          pedidos.add(pedido as http.Request);
-          final ruta = pedido.url.path;
-          final q = pedido.url.queryParameters;
-          if (ruta == '/spaces') {
-            final quedan = [
-              for (final e in datos)
+        cliente: _Client((request) async {
+          requests.add(request as http.Request);
+          final route = request.url.path;
+          final q = request.url.queryParameters;
+          if (route == '/spaces') {
+            final remaining = [
+              for (final e in data)
                 if ((q['sport'] == null ||
                         e.contains('"sport": "${q['sport']}"')) &&
                     (q['kind'] == null || e.contains('"kind": "${q['kind']}"')))
                   e,
             ];
             return http.Response.bytes(
-              utf8.encode('{"spaces": [${quedan.join(', ')}]}'),
+              utf8.encode('{"spaces": [${remaining.join(', ')}]}'),
               200,
             );
           }
-          final (codigo, cuerpo) = venueRoutes()['GET $ruta'] ?? (404, '{}');
-          return http.Response.bytes(utf8.encode(cuerpo), codigo);
+          final (status, body) = venueRoutes()['GET $route'] ?? (404, '{}');
+          return http.Response.bytes(utf8.encode(body), status);
         }),
       );
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: cliente,
+        api: client,
       );
-      await tocarChip(tester, 'Deporte Fútbol');
+      await tapChip(tester, 'Deporte Fútbol');
       expect(find.text('1 CANCHA · FÚTBOL'), findsOneWidget);
 
-      // Otro administrador carga un Fútbol 7 mientras tanto.
-      datos.add(f7);
-      await tocarChip(tester, 'Deporte Fútbol');
+      // Another admin adds a «Fútbol 7» in the meantime.
+      data.add(f7);
+      await tapChip(tester, 'Deporte Fútbol');
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
-      expect(pedidos.last.url.queryParameters, {
+      expect(requests.last.url.queryParameters, {
         'venue_id': '00000000-0000-7000-8000-000000000001',
       });
 
-      // Al volver a elegir el deporte aparece el tipo nuevo.
-      await tocarChip(tester, 'Deporte Fútbol');
+      // Choosing the sport again shows the new kind.
+      await tapChip(tester, 'Deporte Fútbol');
       expect(find.text('2 CANCHAS · FÚTBOL · TODOS LOS TIPOS'), findsOneWidget);
       expect(find.bySemanticsLabel('Tipo Fútbol 7'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('un deporte con un solo tipo no muestra la barra de tipos', (
+    testWidgets('a sport with a single kind does not show the kind bar', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
         api: api(),
       );
-      await tocarChip(tester, 'Deporte Tenis');
+      await tapChip(tester, 'Deporte Tenis');
       expect(find.text('1 CANCHA · TENIS'), findsOneWidget);
       expect(find.text('TIPO DE CANCHA'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('si filtrar falla, avisa y queda como estaba', (tester) async {
-      final semantica = tester.ensureSemantics();
+    testWidgets('if filtering fails, it warns and stays as it was', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
-        api: api(fallaAlFiltrar: true),
+        api: api(failsOnFilter: true),
       );
-      await tocarChip(tester, 'Deporte Fútbol');
+      await tapChip(tester, 'Deporte Fútbol');
       expect(find.text('Error del servidor'), findsOneWidget);
       await tester.tap(find.text('ACEPTAR'));
       await tester.pumpAndSettle();
       expect(find.text('3 CANCHAS · TODOS LOS DEPORTES'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
   });
 
-  group('horarios', () {
-    testWidgets('llega con la cancha elegida entre las de su tipo', (
+  group('schedule', () {
+    testWidgets('arrives with the court chosen among those of its kind', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       await mountUser(
         tester,
         start: '/sedes/00000000-0000-7000-8000-000000000001',
@@ -363,25 +363,25 @@ void main() {
             .isSelected,
         isTrue,
       );
-      // La de tenis no es de ese tipo.
+      // The tennis court is not of that kind.
       expect(find.textContaining('Tenis_PDL'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
   });
 }
 
-class _Corte implements Exception {
-  const _Corte();
+class _Outage implements Exception {
+  const _Outage();
 }
 
-class _Cliente extends http.BaseClient {
-  _Cliente(this._responder);
+class _Client extends http.BaseClient {
+  _Client(this._respond);
 
-  final Future<http.Response> Function(http.BaseRequest) _responder;
+  final Future<http.Response> Function(http.BaseRequest) _respond;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final r = await _responder(request);
+    final r = await _respond(request);
     return http.StreamedResponse(
       Stream.value(r.bodyBytes),
       r.statusCode,

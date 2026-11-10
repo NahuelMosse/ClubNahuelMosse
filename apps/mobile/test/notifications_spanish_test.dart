@@ -26,7 +26,7 @@ import 'support/admin.dart';
 import 'support/mount.dart';
 import 'support/user.dart';
 
-/// Las 20:00 del jueves 12 de noviembre, en la hora del club.
+/// 20:00 on Thursday, November 12, in club time.
 final noticesNow = DateTime.utc(2026, 11, 12, 20);
 
 String noticeJson({
@@ -52,8 +52,7 @@ final confirmationNotice = noticeJson(
   club: DateTime.utc(2026, 11, 12, 17),
   kind: 'user_cancellation',
   title: 'Reserva cancelada',
-  body:
-      'Vóley · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado.',
+  body: 'Vóley · Sede Ramos Mejía · Mié 11, 20:00. El horario quedó liberado.',
   read: true,
 );
 final alertNotice = noticeJson(
@@ -73,7 +72,7 @@ class FakeSystem implements NotificationSystem {
 
   bool granted;
   int requests = 0;
-  int olvidos = 0;
+  int forgets = 0;
 
   @override
   String get platform => 'android';
@@ -95,7 +94,7 @@ class FakeSystem implements NotificationSystem {
   Future<String?> token() async => 'token-del-telefono';
 
   @override
-  Future<void> forgetToken() async => olvidos++;
+  Future<void> forgetToken() async => forgets++;
 
   @override
   Stream<void> get onArrive => const Stream.empty();
@@ -107,35 +106,35 @@ class FakeSystem implements NotificationSystem {
   Future<NoticeTapped?> openedBy() async => null;
 }
 
-/// Un sistema cuyo permiso tarda lo que el test decida en contestar.
+/// A system whose permission takes as long to answer as the test decides.
 class SlowSystem extends FakeSystem {
-  final respuesta = Completer<bool>();
+  final answer = Completer<bool>();
 
   @override
-  Future<bool> isAllowed() => respuesta.future;
+  Future<bool> isAllowed() => answer.future;
 }
 
-/// Firebase con un cierre de sesión que tarda, como en un teléfono de verdad.
+/// Firebase with a slow sign-out, as on a real phone.
 class SlowCredentials extends FakeCredentials {
-  SlowCredentials({this.tarda = const Duration(milliseconds: 100)});
+  SlowCredentials({this.delay = const Duration(milliseconds: 100)});
 
-  final Duration tarda;
+  final Duration delay;
 
-  /// Mientras sea `true`, el token nunca llega.
-  bool sinToken = false;
+  /// While `true`, the token never arrives.
+  bool noToken = false;
 
   @override
   Future<String?> token() =>
-      sinToken ? Completer<String?>().future : super.token();
+      noToken ? Completer<String?>().future : super.token();
 
   @override
   Future<void> signOut() async {
-    await Future<void>.delayed(tarda);
+    await Future<void>.delayed(delay);
     await super.signOut();
   }
 }
 
-/// La API de notificaciones, con lo que devuelve el centro y cada pedido anotado.
+/// The notifications API, with what the center returns and every request recorded.
 class FakeApi {
   List<String> notices = [];
   int unread = 0;
@@ -149,7 +148,7 @@ class FakeApi {
       requests.add(request);
       onRequest?.call(request);
       if (down) throw http.ClientException('sin red');
-      final (codigo, cuerpo) = switch ((request.method, request.url.path)) {
+      final (status, body) = switch ((request.method, request.url.path)) {
         ('GET', '/notifications') => (
           200,
           '{"notifications": [${notices.join(', ')}], "unread": $unread}',
@@ -165,23 +164,23 @@ class FakeApi {
         ('PUT', '/devices') ||
         ('POST', '/devices/unregister') ||
         ('POST', '/notifications/read-all') => (204, ''),
-        ('POST', final ruta) when ruta.endsWith('/read') => (204, ''),
+        ('POST', final route) when route.endsWith('/read') => (204, ''),
         _ => (404, '{}'),
       };
       return http.Response.bytes(
-        utf8.encode(cuerpo),
-        codigo,
+        utf8.encode(body),
+        status,
         headers: {'content-type': 'application/json; charset=utf-8'},
       );
     }),
   );
 
-  Iterable<http.Request> of(String metodo, String ruta) =>
-      requests.where((p) => p.method == metodo && p.url.path == ruta);
+  Iterable<http.Request> of(String method, String route) =>
+      requests.where((p) => p.method == method && p.url.path == route);
 }
 
-/// Por defecto el teléfono está en las 21:00 del club del 12 de noviembre: lo que ya estaba sin
-/// leer a las 19:58 no llegó mientras la app arrancaba.
+/// By default the phone is at 21:00 club time on November 12: what was already unread at
+/// 19:58 did not arrive while the app was starting.
 NotificationCenter centerOf(
   FakeApi api,
   Session session, {
@@ -197,81 +196,79 @@ NotificationCenter centerOf(
 
 final _es = lookupAppLocalizations(const Locale('es'));
 
-String _dia(DateTime d, DateTime now) => arrivalText(_es, dayOf(d, now));
+String _day(DateTime d, DateTime now) => arrivalText(_es, dayOf(d, now));
 
-String _llego(DateTime d, DateTime now) => arrivalText(_es, arrivalOf(d, now));
+String _arrived(DateTime d, DateTime now) =>
+    arrivalText(_es, arrivalOf(d, now));
 
 void main() {
   setUpAll(loadFonts);
 
-  group('cuándo llegó y en qué día', () {
-    final hoy = DateTime.utc(2026, 11, 12, 20);
+  group('when it arrived and on which day', () {
+    final today = DateTime.utc(2026, 11, 12, 20);
 
-    test('el rótulo del día es HOY, AYER o la fecha', () {
-      expect(_dia(DateTime.utc(2026, 11, 12, 0, 5), hoy), 'HOY');
-      expect(_dia(DateTime.utc(2026, 11, 11, 23, 59), hoy), 'AYER');
-      expect(_dia(DateTime.utc(2026, 11, 9, 9), hoy), '09/11');
+    test('the day label is «HOY», «AYER» or the date', () {
+      expect(_day(DateTime.utc(2026, 11, 12, 0, 5), today), 'HOY');
+      expect(_day(DateTime.utc(2026, 11, 11, 23, 59), today), 'AYER');
+      expect(_day(DateTime.utc(2026, 11, 9, 9), today), '09/11');
     });
 
-    test('cuándo llegó se cuenta desde ahora hasta ayer', () {
-      expect(_llego(DateTime.utc(2026, 11, 12, 19, 59, 30), hoy), 'AHORA');
-      expect(_llego(DateTime.utc(2026, 11, 12, 19, 58), hoy), 'HACE 2 MIN');
-      expect(_llego(DateTime.utc(2026, 11, 12, 17), hoy), 'HACE 3 H');
-      expect(_llego(DateTime.utc(2026, 11, 11, 15), hoy), 'AYER');
-      expect(_llego(DateTime.utc(2026, 11, 3, 15), hoy), '03/11');
+    test('when it arrived is counted from now back to yesterday', () {
+      expect(_arrived(DateTime.utc(2026, 11, 12, 19, 59, 30), today), 'AHORA');
+      expect(_arrived(DateTime.utc(2026, 11, 12, 19, 58), today), 'HACE 2 MIN');
+      expect(_arrived(DateTime.utc(2026, 11, 12, 17), today), 'HACE 3 H');
+      expect(_arrived(DateTime.utc(2026, 11, 11, 15), today), 'AYER');
+      expect(_arrived(DateTime.utc(2026, 11, 3, 15), today), '03/11');
     });
 
-    test('agrupa por día conservando de la más nueva a la más vieja', () {
+    test('groups by day keeping the order from newest to oldest', () {
       final items = [
         for (final json in [reminderNotice, confirmationNotice, alertNotice])
           AppNotification.fromJson(jsonDecode(json))!,
       ];
 
-      final grupos = groupByDay(items, hoy);
+      final groups = groupByDay(items, today);
 
-      expect(grupos.map((g) => arrivalText(_es, g.arrival)), ['HOY', 'AYER']);
-      expect(grupos.first.notifications.map((n) => n.id), [
+      expect(groups.map((g) => arrivalText(_es, g.arrival)), ['HOY', 'AYER']);
+      expect(groups.first.notifications.map((n) => n.id), [
         '00000000-0000-7000-8000-000000000003',
         '00000000-0000-7000-8000-000000000002',
       ]);
     });
 
-    test(
-      'cada aviso lleva a la pestaña de Mis reservas que le corresponde',
-      () {
-        expect(
-          noticeRoute(
-            NotificationKind.reminder,
-            '00000000-0000-7000-8000-000000000007',
-          ),
-          '/reservas?reserva=00000000-0000-7000-8000-000000000007',
-        );
-        expect(
-          noticeRoute(
-            NotificationKind.forcedCancellation,
-            '00000000-0000-7000-8000-000000000007',
-          ),
-          '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
-        );
-        expect(
-          noticeRoute(
-            NotificationKind.userCancellation,
-            '00000000-0000-7000-8000-000000000007',
-          ),
-          '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
-        );
-        expect(noticeRoute(NotificationKind.reminder, null), '/reservas');
-        expect(noticeRoute(null, null), '/reservas');
-      },
-    );
+    test('each notice leads to the matching tab of «Mis reservas»', () {
+      expect(
+        noticeRoute(
+          NotificationKind.reminder,
+          '00000000-0000-7000-8000-000000000007',
+        ),
+        '/reservas?reserva=00000000-0000-7000-8000-000000000007',
+      );
+      expect(
+        noticeRoute(
+          NotificationKind.forcedCancellation,
+          '00000000-0000-7000-8000-000000000007',
+        ),
+        '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
+      );
+      expect(
+        noticeRoute(
+          NotificationKind.userCancellation,
+          '00000000-0000-7000-8000-000000000007',
+        ),
+        '/reservas?historial=1&reserva=00000000-0000-7000-8000-000000000007',
+      );
+      expect(noticeRoute(NotificationKind.reminder, null), '/reservas');
+      expect(noticeRoute(null, null), '/reservas');
+    });
 
-    test('un tipo que la app no conoce no se lee', () {
+    test('a kind the app does not know is not read', () {
       expect(
         AppNotification.fromJson(
           jsonDecode(
             noticeJson(
               id: '00000000-0000-7000-8000-000000000009',
-              club: hoy,
+              club: today,
               kind: 'otra',
             ),
           ),
@@ -281,46 +278,46 @@ void main() {
     });
   });
 
-  group('el centro', () {
-    Future<(FakeApi, NotificationCenter)> abrir(
+  group('the center', () {
+    Future<(FakeApi, NotificationCenter)> open(
       WidgetTester tester, {
       List<String> notices = const [],
       int unread = 0,
-      bool permiso = true,
-      Size tamano = const Size(393, 852),
-      double escala = 1,
-      bool oscuro = true,
-      void Function(AppNotification)? alAbrir,
+      bool permission = true,
+      Size size = const Size(393, 852),
+      double scale = 1,
+      bool dark = true,
+      void Function(AppNotification)? onOpened,
     }) async {
       final api = FakeApi()
         ..notices = [...notices]
         ..unread = unread;
       final session = FakeSession(userProfile);
-      final centro = centerOf(
+      final center = centerOf(
         api,
         session,
-        system: FakeSystem(granted: permiso),
+        system: FakeSystem(granted: permission),
       );
       await mountScreen(
         tester,
         NotificationsScreen(
-          center: centro,
+          center: center,
           session: session,
           now: () => noticesNow,
-          onOpen: (_, n) => alAbrir?.call(n),
+          onOpen: (_, n) => onOpened?.call(n),
         ),
-        theme: oscuro ? darkTheme : lightTheme,
-        size: tamano,
-        textScale: escala,
+        theme: dark ? darkTheme : lightTheme,
+        size: size,
+        textScale: scale,
       );
-      return (api, centro);
+      return (api, center);
     }
 
-    testWidgets('agrupa por día, marca las sin leer y respeta el orden', (
+    testWidgets('groups by day, marks the unread ones and keeps the order', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(
+      final semantics = tester.ensureSemantics();
+      await open(
         tester,
         notices: [reminderNotice, confirmationNotice, alertNotice],
         unread: 1,
@@ -349,26 +346,27 @@ void main() {
             tester.getTopLeft(find.text('El club anuló tu reserva')).dy,
         isTrue,
       );
-      semantica.dispose();
-    });
-
-    testWidgets('sin avisos y con permiso dice que todavía no hay ninguno', (
-      tester,
-    ) async {
-      await abrir(tester);
-
-      expect(find.text('Todavía no tenés notificaciones'), findsOneWidget);
-      expect(
-        find.text('Acá vas a ver los recordatorios de tus reservas.'),
-        findsOneWidget,
-      );
-      expect(find.text('ACTIVAR NOTIFICACIONES'), findsNothing);
+      semantics.dispose();
     });
 
     testWidgets(
-      'sin permiso ofrece activarlas y al activarlas registra el teléfono con permiso',
+      'with no notices and with permission it says there are none yet',
       (tester) async {
-        final (api, _) = await abrir(tester, permiso: false);
+        await open(tester);
+
+        expect(find.text('Todavía no tenés notificaciones'), findsOneWidget);
+        expect(
+          find.text('Acá vas a ver los recordatorios de tus reservas.'),
+          findsOneWidget,
+        );
+        expect(find.text('ACTIVAR NOTIFICACIONES'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'without permission it offers to turn them on and, once on, registers the phone with permission',
+      (tester) async {
+        final (api, _) = await open(tester, permission: false);
         expect(find.text('Notificaciones desactivadas'), findsOneWidget);
         expect(
           find.text(
@@ -376,16 +374,16 @@ void main() {
           ),
           findsOneWidget,
         );
-        final antes = bodyOf(api.of('PUT', '/devices').last);
-        expect(antes['permission_granted'], isFalse);
+        final before = bodyOf(api.of('PUT', '/devices').last);
+        expect(before['permission_granted'], isFalse);
 
         await tester.tap(find.text('ACTIVAR NOTIFICACIONES'));
         await tester.pumpAndSettle();
 
         expect(find.text('Notificaciones desactivadas'), findsNothing);
         expect(find.text('Todavía no tenés notificaciones'), findsOneWidget);
-        final despues = bodyOf(api.of('PUT', '/devices').last);
-        expect(despues, {
+        final after = bodyOf(api.of('PUT', '/devices').last);
+        expect(after, {
           'token': 'token-del-telefono',
           'platform': 'android',
           'permission_granted': true,
@@ -394,13 +392,13 @@ void main() {
     );
 
     testWidgets(
-      'sin permiso pero con avisos, los muestra debajo de la franja',
+      'without permission but with notices, it shows them below the strip',
       (tester) async {
-        await abrir(
+        await open(
           tester,
           notices: [reminderNotice],
           unread: 1,
-          permiso: false,
+          permission: false,
         );
 
         expect(find.text('Notificaciones desactivadas'), findsOneWidget);
@@ -410,19 +408,19 @@ void main() {
       },
     );
 
-    testWidgets('tocar un aviso lo marca leído y lo abre', (tester) async {
-      AppNotification? abierta;
-      final (api, _) = await abrir(
+    testWidgets('tapping a notice marks it read and opens it', (tester) async {
+      AppNotification? opened;
+      final (api, _) = await open(
         tester,
         notices: [reminderNotice],
         unread: 1,
-        alAbrir: (n) => abierta = n,
+        onOpened: (n) => opened = n,
       );
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abierta?.bookingId, '00000000-0000-7000-8000-000000000001');
+      expect(opened?.bookingId, '00000000-0000-7000-8000-000000000001');
       expect(
         api.of(
           'POST',
@@ -433,7 +431,7 @@ void main() {
     });
 
     testWidgets(
-      'sin conexión avisa del error y al reintentar muestra la lista',
+      'with no connection it reports the error and on retry shows the list',
       (tester) async {
         final api = FakeApi()
           ..notices = [reminderNotice]
@@ -462,17 +460,17 @@ void main() {
     );
 
     testWidgets(
-      'si la lectura falla no muestra un centro vacío que quedó de antes',
+      'if the read fails it does not show an empty center left over from before',
       (tester) async {
         final api = FakeApi();
         final session = FakeSession(userProfile);
-        final centro = centerOf(api, session);
-        await tester.runAsync(centro.load);
+        final center = centerOf(api, session);
+        await tester.runAsync(center.load);
         api.down = true;
         await mountScreen(
           tester,
           NotificationsScreen(
-            center: centro,
+            center: center,
             session: session,
             now: () => noticesNow,
             onOpen: (_, _) {},
@@ -485,17 +483,17 @@ void main() {
       },
     );
 
-    for (final (nombre, oscuro) in [('oscuro', true), ('claro', false)]) {
+    for (final (name, dark) in [('dark', true), ('light', false)]) {
       testWidgets(
-        'con el texto al 200 % en 360 de ancho nada se recorta ($nombre)',
+        'with text at 200 % on a 360 width nothing is clipped ($name)',
         (tester) async {
-          await abrir(
+          await open(
             tester,
             notices: [reminderNotice, confirmationNotice, alertNotice],
             unread: 1,
-            tamano: const Size(360, 800),
-            escala: 2,
-            oscuro: oscuro,
+            size: const Size(360, 800),
+            scale: 2,
+            dark: dark,
           );
 
           expect(tester.takeException(), isNull);
@@ -508,14 +506,14 @@ void main() {
       );
 
       testWidgets(
-        'las desactivadas con el texto al 200 % en 360 de ancho ($nombre)',
+        'the disabled ones with text at 200 % on a 360 width ($name)',
         (tester) async {
-          await abrir(
+          await open(
             tester,
-            permiso: false,
-            tamano: const Size(360, 800),
-            escala: 2,
-            oscuro: oscuro,
+            permission: false,
+            size: const Size(360, 800),
+            scale: 2,
+            dark: dark,
           );
 
           expect(tester.takeException(), isNull);
@@ -526,99 +524,105 @@ void main() {
     }
   });
 
-  group('el panel con la app abierta', () {
-    Future<(FakeApi, NotificationCenter, List<AppNotification>)> abrir(
+  group('the panel with the app open', () {
+    Future<(FakeApi, NotificationCenter, List<AppNotification>)> open(
       WidgetTester tester, {
-      bool permiso = true,
-      Size tamano = const Size(393, 852),
-      double escala = 1,
+      bool permission = true,
+      Size size = const Size(393, 852),
+      double scale = 1,
     }) async {
       final api = FakeApi();
       final session = FakeSession(userProfile);
-      final centro = centerOf(
+      final center = centerOf(
         api,
         session,
-        system: FakeSystem(granted: permiso),
+        system: FakeSystem(granted: permission),
       );
-      final abiertas = <AppNotification>[];
+      final opened = <AppNotification>[];
       await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: Center(child: Text('la pantalla de abajo'))),
             NoticePanel(
-              center: centro,
+              center: center,
               now: () => noticesNow,
-              onOpen: abiertas.add,
+              onOpen: opened.add,
             ),
           ],
         ),
         theme: darkTheme,
-        size: tamano,
-        textScale: escala,
+        size: size,
+        textScale: scale,
       );
-      return (api, centro, abiertas);
+      return (api, center, opened);
     }
 
-    Future<void> llega(
+    Future<void> arrive(
       WidgetTester tester,
       FakeApi api,
-      NotificationCenter centro,
+      NotificationCenter center,
       List<String> notices,
     ) async {
       api
         ..notices = notices
         ..unread = notices.length;
-      await tester.runAsync(centro.load);
+      await tester.runAsync(center.load);
       await tester.pumpAndSettle();
     }
 
-    testWidgets('lo que ya estaba sin leer al abrir la app no abre el panel', (
+    testWidgets(
+      'what was already unread when the app opened does not open the panel',
+      (tester) async {
+        final api = FakeApi()
+          ..notices = [reminderNotice]
+          ..unread = 1;
+        final session = FakeSession(userProfile);
+        final center = centerOf(api, session);
+        await mountScreen(
+          tester,
+          NoticePanel(center: center, onOpen: (_) {}),
+          theme: darkTheme,
+        );
+
+        expect(center.unread, 1);
+        expect(find.text('MARCAR TODAS'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'a notice that arrives opens the panel without leaving the screen',
+      (tester) async {
+        final (api, center, _) = await open(tester);
+
+        await arrive(tester, api, center, [reminderNotice]);
+
+        expect(find.text('NOTIFICACIONES'), findsOneWidget);
+        expect(find.text('MARCAR TODAS'), findsOneWidget);
+        expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
+        expect(find.text('la pantalla de abajo'), findsOneWidget);
+      },
+    );
+
+    testWidgets('«Marcar todas» reads them and closes the panel', (
       tester,
     ) async {
-      final api = FakeApi()
-        ..notices = [reminderNotice]
-        ..unread = 1;
-      final session = FakeSession(userProfile);
-      final centro = centerOf(api, session);
-      await mountScreen(
-        tester,
-        NoticePanel(center: centro, onOpen: (_) {}),
-        theme: darkTheme,
-      );
-
-      expect(centro.unread, 1);
-      expect(find.text('MARCAR TODAS'), findsNothing);
-    });
-
-    testWidgets('un aviso que llega abre el panel sin salir de la pantalla', (
-      tester,
-    ) async {
-      final (api, centro, _) = await abrir(tester);
-
-      await llega(tester, api, centro, [reminderNotice]);
-
-      expect(find.text('NOTIFICACIONES'), findsOneWidget);
-      expect(find.text('MARCAR TODAS'), findsOneWidget);
-      expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
-      expect(find.text('la pantalla de abajo'), findsOneWidget);
-    });
-
-    testWidgets('«Marcar todas» las lee y cierra el panel', (tester) async {
-      final (api, centro, _) = await abrir(tester);
-      await llega(tester, api, centro, [reminderNotice]);
+      final (api, center, _) = await open(tester);
+      await arrive(tester, api, center, [reminderNotice]);
 
       await tester.tap(find.text('MARCAR TODAS'));
       await tester.pumpAndSettle();
 
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(centro.unread, 0);
+      expect(center.unread, 0);
       expect(api.of('POST', '/notifications/read-all'), hasLength(1));
     });
 
-    testWidgets('tocar afuera cierra el panel sin marcar nada', (tester) async {
-      final (api, centro, _) = await abrir(tester);
-      await llega(tester, api, centro, [reminderNotice]);
+    testWidgets('tapping outside closes the panel without marking anything', (
+      tester,
+    ) async {
+      final (api, center, _) = await open(tester);
+      await arrive(tester, api, center, [reminderNotice]);
 
       await tester.tap(
         find.bySemanticsLabel('Cerrar las notificaciones'),
@@ -627,62 +631,62 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(centro.unread, 1);
+      expect(center.unread, 1);
       expect(api.of('POST', '/notifications/read-all'), isEmpty);
     });
 
-    testWidgets('tocar un aviso lo abre', (tester) async {
-      final (api, centro, abiertas) = await abrir(tester);
-      await llega(tester, api, centro, [reminderNotice]);
+    testWidgets('tapping a notice opens it', (tester) async {
+      final (api, center, opened) = await open(tester);
+      await arrive(tester, api, center, [reminderNotice]);
 
       await tester.tap(find.text('Tu reserva es en 1 hora'));
       await tester.pumpAndSettle();
 
-      expect(abiertas.map((n) => n.id), [
-        '00000000-0000-7000-8000-000000000003',
-      ]);
+      expect(opened.map((n) => n.id), ['00000000-0000-7000-8000-000000000003']);
     });
 
-    testWidgets('sin permiso del sistema no abre el panel', (tester) async {
-      final (api, centro, _) = await abrir(tester, permiso: false);
+    testWidgets('without system permission it does not open the panel', (
+      tester,
+    ) async {
+      final (api, center, _) = await open(tester, permission: false);
 
-      await llega(tester, api, centro, [reminderNotice]);
+      await arrive(tester, api, center, [reminderNotice]);
 
       expect(find.text('MARCAR TODAS'), findsNothing);
-      expect(centro.unread, 1);
+      expect(center.unread, 1);
     });
 
     testWidgets(
-      'el atrás del sistema cierra el panel sin marcar nada ni tocar lo de abajo',
+      'the system back closes the panel without marking anything or touching what is below',
       (tester) async {
-        final (api, centro, _) = await abrir(tester);
-        await llega(tester, api, centro, [reminderNotice]);
+        final (api, center, _) = await open(tester);
+        await arrive(tester, api, center, [reminderNotice]);
         expect(find.text('MARCAR TODAS'), findsOneWidget);
 
         await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
 
         expect(find.text('MARCAR TODAS'), findsNothing);
-        expect(centro.unread, 1);
+        expect(center.unread, 1);
         expect(find.text('la pantalla de abajo'), findsOneWidget);
       },
     );
 
     testWidgets(
-      'con el panel abierto el lector de pantalla no llega a lo de abajo y lo anuncia',
+      'with the panel open the screen reader does not reach what is below and announces it',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        final (api, centro, _) = await abrir(tester);
-        List<String> etiquetas() => [
-          for (final nodo in tester.semantics.simulatedAccessibilityTraversal())
-            nodo.label,
+        final semantics = tester.ensureSemantics();
+        final (api, center, _) = await open(tester);
+        List<String> labels() => [
+          for (final node in tester.semantics.simulatedAccessibilityTraversal())
+            node.label,
         ];
-        expect(etiquetas(), contains('la pantalla de abajo'));
+        expect(labels(), contains('la pantalla de abajo'));
 
-        await llega(tester, api, centro, [reminderNotice]);
+        await arrive(tester, api, center, [reminderNotice]);
 
-        expect(etiquetas(), isNot(contains('la pantalla de abajo')));
-        expect(etiquetas(), contains('MARCAR TODAS'));
+        expect(labels(), isNot(contains('la pantalla de abajo')));
+        expect(labels(), contains('MARCAR TODAS'));
         expect(
           tester
               .getSemantics(find.text('NOTIFICACIONES'))
@@ -692,22 +696,22 @@ void main() {
         );
         await tester.binding.handlePopRoute();
         await tester.pumpAndSettle();
-        expect(etiquetas(), contains('la pantalla de abajo'));
-        semantica.dispose();
+        expect(labels(), contains('la pantalla de abajo'));
+        semantics.dispose();
       },
     );
 
-    for (final ancho in [360.0, 430.0]) {
+    for (final width in [360.0, 430.0]) {
       testWidgets(
-        'con el texto al 200 % en ${ancho.toInt()} de ancho entra en pantalla',
+        'with text at 200 % on a ${width.toInt()} width it fits on the screen',
         (tester) async {
-          final (api, centro, _) = await abrir(
+          final (api, center, _) = await open(
             tester,
-            tamano: Size(ancho, 800),
-            escala: 2,
+            size: Size(width, 800),
+            scale: 2,
           );
 
-          await llega(tester, api, centro, [
+          await arrive(tester, api, center, [
             reminderNotice,
             reminderNotice.replaceFirst(
               '"id": "00000000-0000-7000-8000-000000000003"',
@@ -719,71 +723,67 @@ void main() {
           expect(find.text('MARCAR TODAS'), findsOneWidget);
           expect(
             tester.getBottomRight(find.text('MARCAR TODAS')).dx,
-            lessThanOrEqualTo(ancho),
+            lessThanOrEqualTo(width),
           );
         },
       );
     }
   });
 
-  group('cuándo abre el panel', () {
-    Future<(FakeApi, NotificationCenter)> montarPanel(
+  group('when the panel opens', () {
+    Future<(FakeApi, NotificationCenter)> mountPanel(
       WidgetTester tester,
       List<String> notices,
     ) async {
       final api = FakeApi()
         ..notices = notices
         ..unread = notices.length;
-      final centro = centerOf(
-        api,
-        FakeSession(userProfile),
-        now: DateTime.now,
-      );
+      final center = centerOf(api, FakeSession(userProfile), now: DateTime.now);
       await mountScreen(
         tester,
         Stack(
           children: [
             const Scaffold(body: SizedBox.expand()),
-            NoticePanel(center: centro, onOpen: (_) {}),
+            NoticePanel(center: center, onOpen: (_) {}),
           ],
         ),
         theme: darkTheme,
       );
-      return (api, centro);
+      return (api, center);
     }
 
-    Future<void> llega(
+    Future<void> arrive(
       WidgetTester tester,
       FakeApi api,
-      NotificationCenter centro,
+      NotificationCenter center,
       List<String> notices,
     ) async {
       api
         ..notices = notices
         ..unread = notices.length;
-      await tester.runAsync(centro.load);
+      await tester.runAsync(center.load);
       await tester.pumpAndSettle();
     }
 
-    String reciente(String id) =>
+    String recent(String id) =>
         noticeJson(id: id, club: inClubTime(DateTime.now()));
 
-    testWidgets('lo que llega mientras la app arranca abre el panel', (
+    testWidgets('what arrives while the app is starting opens the panel', (
       tester,
     ) async {
-      await montarPanel(tester, [
-        reciente('00000000-0000-7000-8000-000000000005'),
+      await mountPanel(tester, [
+        recent('00000000-0000-7000-8000-000000000005'),
       ]);
 
       expect(find.text('MARCAR TODAS'), findsOneWidget);
     });
 
     testWidgets(
-      'si se cerró el panel sin leer, lo que llega después no lo reabre',
+      'if the panel was closed unread, what arrives later does not reopen it',
       (tester) async {
-        final (api, centro) = await montarPanel(tester, []);
-        await llega(tester, api, centro, [
-          reciente('00000000-0000-7000-8000-000000000005'),
+        final (api, center) = await mountPanel(tester, []);
+        await arrive(tester, api, center, [
+          recent('00000000-0000-7000-8000-000000000005'),
         ]);
         expect(find.text('MARCAR TODAS'), findsOneWidget);
 
@@ -792,81 +792,81 @@ void main() {
           warnIfMissed: false,
         );
         await tester.pumpAndSettle();
-        await llega(tester, api, centro, [
-          reciente('00000000-0000-7000-8000-000000000006'),
-          reciente('00000000-0000-7000-8000-000000000005'),
+        await arrive(tester, api, center, [
+          recent('00000000-0000-7000-8000-000000000006'),
+          recent('00000000-0000-7000-8000-000000000005'),
         ]);
 
         expect(find.text('MARCAR TODAS'), findsNothing);
-        expect(centro.unread, 2);
+        expect(center.unread, 2);
       },
     );
 
-    testWidgets('después de leer todo, lo que llega abre el panel de nuevo', (
-      tester,
-    ) async {
-      final (api, centro) = await montarPanel(tester, []);
-      await llega(tester, api, centro, [
-        reciente('00000000-0000-7000-8000-000000000005'),
-      ]);
-      await tester.tap(find.text('MARCAR TODAS'));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'after reading everything, what arrives opens the panel again',
+      (tester) async {
+        final (api, center) = await mountPanel(tester, []);
+        await arrive(tester, api, center, [
+          recent('00000000-0000-7000-8000-000000000005'),
+        ]);
+        await tester.tap(find.text('MARCAR TODAS'));
+        await tester.pumpAndSettle();
 
-      await llega(tester, api, centro, [
-        reciente('00000000-0000-7000-8000-000000000006'),
-      ]);
+        await arrive(tester, api, center, [
+          recent('00000000-0000-7000-8000-000000000006'),
+        ]);
 
-      expect(find.text('MARCAR TODAS'), findsOneWidget);
-    });
+        expect(find.text('MARCAR TODAS'), findsOneWidget);
+      },
+    );
   });
 
-  group('salir de la sesión', () {
-    testWidgets('cerrar borra el token del teléfono', (tester) async {
+  group('signing out of the session', () {
+    testWidgets('closing deletes the phone token', (tester) async {
       final api = FakeApi();
-      final sistema = FakeSystem();
+      final system = FakeSystem();
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
           api: api.client,
         ),
       );
-      centerOf(api, session, system: sistema);
+      centerOf(api, session, system: system);
       await tester.runAsync(() async {
         await session.signIn('nahuel@correo.com', 'ClubNahuel1');
         await Future<void>.delayed(const Duration(milliseconds: 100));
         await session.close();
       });
 
-      expect(sistema.olvidos, 1);
+      expect(system.forgets, 1);
     });
 
-    testWidgets('una sesión que ya no vale también borra el token', (
+    testWidgets('a session that is no longer valid also deletes the token', (
       tester,
     ) async {
       final api = FakeApi();
-      final sistema = FakeSystem();
-      final credenciales = FakeCredentials(withAccount: true)
-        ..tokenFails = true;
+      final system = FakeSystem();
+      final credentials = FakeCredentials(withAccount: true)..tokenFails = true;
       final session = Session(
         repository: SessionRepository(
-          credentials: credenciales,
+          credentials: credentials,
           api: api.client,
         ),
       );
-      centerOf(api, session, system: sistema);
+      centerOf(api, session, system: system);
 
-      final perfil = await tester.runAsync(session.resume);
+      final profile = await tester.runAsync(session.resume);
 
-      expect(perfil, isNull);
-      expect(credenciales.signOuts, 1);
-      expect(sistema.olvidos, 1);
+      expect(profile, isNull);
+      expect(credentials.signOuts, 1);
+      expect(system.forgets, 1);
     });
 
-    testWidgets('si falla el perfil después de entrar, también', (
+    testWidgets('if the profile fails after signing in, it does too', (
       tester,
     ) async {
       final api = FakeApi();
-      final sistema = FakeSystem();
+      final system = FakeSystem();
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
@@ -876,7 +876,7 @@ void main() {
           ),
         ),
       );
-      centerOf(api, session, system: sistema);
+      centerOf(api, session, system: system);
 
       await tester.runAsync(() async {
         await expectLater(
@@ -885,82 +885,82 @@ void main() {
         );
       });
 
-      expect(sistema.olvidos, 1);
+      expect(system.forgets, 1);
     });
 
-    testWidgets('dar de baja la cuenta borra el token', (tester) async {
+    testWidgets('deactivating the account deletes the token', (tester) async {
       final api = FakeApi();
-      final sistema = FakeSystem();
+      final system = FakeSystem();
       final session = Session(
         repository: SessionRepository(
           credentials: FakeCredentials(),
           api: api.client,
         ),
       );
-      centerOf(api, session, system: sistema);
+      centerOf(api, session, system: system);
       await tester.runAsync(() async {
         await session.signIn('nahuel@correo.com', 'ClubNahuel1');
         await session.deactivate();
       });
 
-      expect(sistema.olvidos, 1);
+      expect(system.forgets, 1);
     });
 
-    testWidgets('sin nada que avisar, cerrar no espera el token', (
+    testWidgets('with nothing to notify, closing does not wait for the token', (
       tester,
     ) async {
-      final credenciales = SlowCredentials(tarda: Duration.zero);
+      final credentials = SlowCredentials(delay: Duration.zero);
       final session = Session(
         repository: SessionRepository(
-          credentials: credenciales,
+          credentials: credentials,
           api: FakeApi().client,
         ),
       );
       await tester.runAsync(
         () => session.signIn('nahuel@correo.com', 'ClubNahuel1'),
       );
-      credenciales.sinToken = true;
+      credentials.noToken = true;
 
       await tester.runAsync(session.close);
 
-      expect(credenciales.signOuts, 1);
+      expect(credentials.signOuts, 1);
     });
 
     testWidgets(
-      'con el token colgado, cerrar espera dos segundos y sale igual',
+      'with the token hanging, closing waits two seconds and signs out anyway',
       (tester) async {
-        final credenciales = SlowCredentials(tarda: Duration.zero);
+        final credentials = SlowCredentials(delay: Duration.zero);
         final session = Session(
           repository: SessionRepository(
-            credentials: credenciales,
+            credentials: credentials,
             api: FakeApi().client,
           ),
         );
-        session.onClose.add((_) async => fail('no había token que dar'));
+        session.onClose.add((_) async => fail('there was no token to give'));
         await tester.runAsync(
           () => session.signIn('nahuel@correo.com', 'ClubNahuel1'),
         );
-        credenciales.sinToken = true;
-        var cerro = false;
+        credentials.noToken = true;
+        var closed = false;
 
-        unawaited(session.close().then((_) => cerro = true));
+        unawaited(session.close().then((_) => closed = true));
         await tester.pump(const Duration(seconds: 1));
-        expect(cerro, isFalse);
+        expect(closed, isFalse);
         await tester.pump(const Duration(seconds: 2));
         await tester.pump();
 
-        expect(cerro, isTrue);
-        expect(credenciales.signOuts, 1);
+        expect(closed, isTrue);
+        expect(credentials.signOuts, 1);
       },
     );
 
     testWidgets(
-      'si la baja falla antes de que termine de salir, no queda un error sin atrapar',
+      'if the deregistration fails before sign-out finishes, no error is left uncaught',
       (tester) async {
-        final credenciales = SlowCredentials();
+        final credentials = SlowCredentials();
         final session = Session(
           repository: SessionRepository(
-            credentials: credenciales,
+            credentials: credentials,
             api: FakeApi().client,
           ),
         );
@@ -974,75 +974,81 @@ void main() {
         await tester.runAsync(session.close);
 
         expect(tester.takeException(), isNull);
-        expect(credenciales.signOuts, 1);
+        expect(credentials.signOuts, 1);
         expect(session.profile, isNull);
       },
     );
   });
 
-  group('la consulta periódica', () {
-    int lecturas(FakeApi api) => api.of('GET', '/notifications').length;
+  group('the periodic poll', () {
+    int reads(FakeApi api) => api.of('GET', '/notifications').length;
 
-    testWidgets('un centro liberado mientras arrancaba no deja un reloj vivo', (
-      tester,
-    ) async {
-      final api = FakeApi();
-      final sistema = SlowSystem();
-      final centro = NotificationCenter(
-        notifications: NotificationsRepository(
-          api: api.client,
+    testWidgets(
+      'a center disposed while starting does not leave a live timer',
+      (tester) async {
+        final api = FakeApi();
+        final system = SlowSystem();
+        final center = NotificationCenter(
+          notifications: NotificationsRepository(
+            api: api.client,
+            session: FakeSession(userProfile),
+          ),
           session: FakeSession(userProfile),
-        ),
-        session: FakeSession(userProfile),
-        system: sistema,
-        every: const Duration(seconds: 5),
-      );
+          system: system,
+          every: const Duration(seconds: 5),
+        );
 
-      centro.dispose();
-      sistema.respuesta.complete(true);
-      await tester.runAsync(
-        () => Future<void>.delayed(const Duration(milliseconds: 100)),
-      );
-      await tester.pump(const Duration(seconds: 30));
+        center.dispose();
+        system.answer.complete(true);
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 100)),
+        );
+        await tester.pump(const Duration(seconds: 30));
 
-      expect(lecturas(api), 0);
-    });
+        expect(reads(api), 0);
+      },
+    );
 
-    testWidgets('en segundo plano no consulta y al volver lee enseguida', (
-      tester,
-    ) async {
-      final api = FakeApi();
-      final centro = NotificationCenter(
-        notifications: NotificationsRepository(
-          api: api.client,
+    testWidgets(
+      'in the background it does not poll and on return it reads right away',
+      (tester) async {
+        final api = FakeApi();
+        final center = NotificationCenter(
+          notifications: NotificationsRepository(
+            api: api.client,
+            session: FakeSession(userProfile),
+          ),
           session: FakeSession(userProfile),
-        ),
-        session: FakeSession(userProfile),
-        system: FakeSystem(),
-        every: const Duration(seconds: 10),
-      );
-      await tester.pump(const Duration(seconds: 1));
-      final alArrancar = lecturas(api);
-      await tester.pump(const Duration(seconds: 25));
-      final conLaAppAbierta = lecturas(api);
-      expect(conLaAppAbierta, greaterThan(alArrancar));
+          system: FakeSystem(),
+          every: const Duration(seconds: 10),
+        );
+        await tester.pump(const Duration(seconds: 1));
+        final atStart = reads(api);
+        await tester.pump(const Duration(seconds: 25));
+        final withAppOpen = reads(api);
+        expect(withAppOpen, greaterThan(atStart));
 
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
-      await tester.pump(const Duration(seconds: 60));
-      expect(lecturas(api), conLaAppAbierta);
+        tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+        await tester.pump(const Duration(seconds: 60));
+        expect(reads(api), withAppOpen);
 
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
-      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      await tester.pump(const Duration(milliseconds: 100));
-      expect(lecturas(api), conLaAppAbierta + 1);
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.inactive,
+        );
+        tester.binding.handleAppLifecycleStateChanged(
+          AppLifecycleState.resumed,
+        );
+        await tester.pump(const Duration(milliseconds: 100));
+        expect(reads(api), withAppOpen + 1);
 
-      centro.dispose();
-      await tester.pump();
-    });
+        center.dispose();
+        await tester.pump();
+      },
+    );
   });
 
-  group('el teléfono y la sesión', () {
-    testWidgets('registra el teléfono con el permiso que tiene', (
+  group('the phone and the session', () {
+    testWidgets('registers the phone with the permission it has', (
       tester,
     ) async {
       final api = FakeApi();
@@ -1059,12 +1065,12 @@ void main() {
     });
 
     testWidgets(
-      'si se libera con un pedido en camino, al terminar no avisa a nadie',
+      'if disposed with a request in flight, on finishing it notifies no one',
       (tester) async {
         final api = FakeApi();
-        final centro = centerOf(api, FakeSession(userProfile));
+        final center = centerOf(api, FakeSession(userProfile));
 
-        centro.dispose();
+        center.dispose();
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 100)),
         );
@@ -1074,7 +1080,7 @@ void main() {
       },
     );
 
-    testWidgets('un administrador no registra teléfono ni consulta el centro', (
+    testWidgets('an admin does not register a phone or poll the center', (
       tester,
     ) async {
       final api = FakeApi();
@@ -1085,23 +1091,23 @@ void main() {
     });
 
     testWidgets(
-      'al cerrar la sesión da de baja el teléfono con la sesión que se cierra',
+      'on signing out it deregisters the phone with the session being closed',
       (tester) async {
         final api = FakeApi();
-        final credenciales = FakeCredentials();
+        final credentials = FakeCredentials();
         final session = Session(
           repository: SessionRepository(
-            credentials: credenciales,
+            credentials: credentials,
             api: api.client,
           ),
         );
-        String? autorizacionDeLaBaja;
+        String? deregistrationAuthorization;
         api.onRequest = (p) {
           if (p.url.path == '/devices/unregister') {
-            autorizacionDeLaBaja = p.headers['authorization'];
+            deregistrationAuthorization = p.headers['authorization'];
           }
         };
-        final centro = centerOf(api, session);
+        final center = centerOf(api, session);
         await tester.runAsync(() async {
           await session.signIn('nahuel@correo.com', 'ClubNahuel1');
           await Future<void>.delayed(const Duration(milliseconds: 100));
@@ -1116,21 +1122,21 @@ void main() {
         expect(bodyOf(api.of('POST', '/devices/unregister').single), {
           'token': 'token-del-telefono',
         });
-        // La baja va con la sesión que se cerró, tomada antes de cerrarla.
-        expect(autorizacionDeLaBaja, 'Bearer token-falso');
-        expect(credenciales.signOuts, 1);
-        expect(centro.list, isEmpty);
+        // The deregistration goes with the session that was closed, taken before closing it.
+        expect(deregistrationAuthorization, 'Bearer token-falso');
+        expect(credentials.signOuts, 1);
+        expect(center.list, isEmpty);
       },
     );
 
     testWidgets(
-      'si no se puede dar de baja el teléfono, la sesión se cierra igual',
+      'if the phone cannot be deregistered, the session closes anyway',
       (tester) async {
         final api = FakeApi();
-        final credenciales = FakeCredentials();
+        final credentials = FakeCredentials();
         final session = Session(
           repository: SessionRepository(
-            credentials: credenciales,
+            credentials: credentials,
             api: api.client,
           ),
         );
@@ -1144,17 +1150,17 @@ void main() {
         api.down = true;
         await tester.runAsync(session.close);
 
-        expect(credenciales.signOuts, 1);
+        expect(credentials.signOuts, 1);
         expect(session.profile, isNull);
       },
     );
   });
 
-  group('la campana y Mis reservas', () {
+  group('the bell and «Mis reservas»', () {
     testWidgets(
-      'la campana del Home cuenta las sin leer y abre el centro @supuesto:CU-24.1-SUP-10',
+      'the Home bell counts the unread ones and opens the center @assumption:CU-24.1-SUP-10',
       (tester) async {
-        final semantica = tester.ensureSemantics();
+        final semantics = tester.ensureSemantics();
         final api = FakeApi()
           ..notices = [reminderNotice, confirmationNotice]
           ..unread = 2;
@@ -1175,14 +1181,14 @@ void main() {
 
         expect(find.text('Notificaciones'), findsOneWidget);
         expect(find.text('Tu reserva es en 1 hora'), findsOneWidget);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('sin avisos sin leer la campana no cuenta nada', (
+    testWidgets('with no unread notices the bell counts nothing', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       final api = FakeApi();
       await mountUser(
         tester,
@@ -1192,19 +1198,19 @@ void main() {
       );
 
       expect(find.bySemanticsLabel('Notificaciones'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin centro el Home no tiene campana', (tester) async {
-      final semantica = tester.ensureSemantics();
+    testWidgets('with no center the Home has no bell', (tester) async {
+      final semantics = tester.ensureSemantics();
       await mountUser(tester, start: '/inicio', api: FakeApi().client);
 
       expect(find.bySemanticsLabel(RegExp('^Notificaciones')), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
 
     testWidgets(
-      'un administrador no llega al centro @supuesto:CU-24.1-SUP-10',
+      'an admin does not reach the center @assumption:CU-24.1-SUP-10',
       (tester) async {
         await mountAdmin(
           tester,
@@ -1217,44 +1223,47 @@ void main() {
       },
     );
 
-    testWidgets('tocar un aviso abre Mis reservas con esa reserva resaltada', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      final api = FakeApi()
-        ..notices = [
-          reminderNotice.replaceFirst(
-            '"booking_id": "00000000-0000-7000-8000-000000000001"',
-            '"booking_id": "00000000-0000-7000-8000-000000000002"',
-          ),
-        ]
-        ..unread = 1;
-      await mountUser(
-        tester,
-        start: '/notificaciones',
-        api: api.client,
-        center: (session) => centerOf(api, session),
-      );
+    testWidgets(
+      'tapping a notice opens «Mis reservas» with that booking highlighted',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        final api = FakeApi()
+          ..notices = [
+            reminderNotice.replaceFirst(
+              '"booking_id": "00000000-0000-7000-8000-000000000001"',
+              '"booking_id": "00000000-0000-7000-8000-000000000002"',
+            ),
+          ]
+          ..unread = 1;
+        await mountUser(
+          tester,
+          start: '/notificaciones',
+          api: api.client,
+          center: (session) => centerOf(api, session),
+        );
 
-      await tester.tap(find.text('Tu reserva es en 1 hora'));
-      await tester.pumpAndSettle();
+        await tester.tap(find.text('Tu reserva es en 1 hora'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('Mis reservas'), findsOneWidget);
-      bool resaltada(String horario) => tester
-          .getSemantics(
-            find.bySemanticsLabel(RegExp('^Fútbol 5, Sede Morón, .*$horario')),
-          )
-          .flagsCollection
-          .isSelected;
-      expect(resaltada('10:00 – 11:00'), isTrue);
-      expect(resaltada('21:00 – 22:00'), isFalse);
-      semantica.dispose();
-    });
+        expect(find.text('Mis reservas'), findsOneWidget);
+        bool highlighted(String schedule) => tester
+            .getSemantics(
+              find.bySemanticsLabel(
+                RegExp('^Fútbol 5, Sede Morón, .*$schedule'),
+              ),
+            )
+            .flagsCollection
+            .isSelected;
+        expect(highlighted('10:00 – 11:00'), isTrue);
+        expect(highlighted('21:00 – 22:00'), isFalse);
+        semantics.dispose();
+      },
+    );
 
     testWidgets(
-      'un aviso de cancelación abre el historial con esa reserva resaltada',
+      'a cancellation notice opens the history with that booking highlighted',
       (tester) async {
-        final semantica = tester.ensureSemantics();
+        final semantics = tester.ensureSemantics();
         final api = FakeApi()
           ..notices = [
             noticeJson(
@@ -1295,29 +1304,30 @@ void main() {
               .isSelected,
           isTrue,
         );
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('sin reserva en el aviso abre Mis reservas sin resaltar nada', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      final api = FakeApi();
-      await mountUser(tester, start: '/reservas', api: api.client);
+    testWidgets(
+      'with no booking in the notice it opens «Mis reservas» highlighting nothing',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        final api = FakeApi();
+        await mountUser(tester, start: '/reservas', api: api.client);
 
-      expect(
-        tester
-            .getSemantics(
-              find.bySemanticsLabel(
-                RegExp('^Fútbol 5, Sede Morón, .*21:00 – 22:00'),
-              ),
-            )
-            .flagsCollection
-            .isSelected,
-        isFalse,
-      );
-      semantica.dispose();
-    });
+        expect(
+          tester
+              .getSemantics(
+                find.bySemanticsLabel(
+                  RegExp('^Fútbol 5, Sede Morón, .*21:00 – 22:00'),
+                ),
+              )
+              .flagsCollection
+              .isSelected,
+          isFalse,
+        );
+        semantics.dispose();
+      },
+    );
   });
 }

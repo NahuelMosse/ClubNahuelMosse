@@ -97,7 +97,7 @@ void main() {
     expect(find.text('Sede Morón'), findsNothing);
   });
 
-  testWidgets('CANCELAR sends nothing', (tester) async {
+  testWidgets('«CANCELAR» sends nothing', (tester) async {
     final requests = await open(tester);
     await fromEdit(tester);
 
@@ -127,18 +127,19 @@ void main() {
     },
   );
 
-  testWidgets('already deactivated in another session: the notice and the list', (
-    tester,
-  ) async {
-    await open(tester, onDeactivate: (404, ''));
-    await fromEdit(tester);
-    await tapSettled(tester, find.text('DAR DE BAJA'));
+  testWidgets(
+    'already deactivated in another session: the notice and the list',
+    (tester) async {
+      await open(tester, onDeactivate: (404, ''));
+      await fromEdit(tester);
+      await tapSettled(tester, find.text('DAR DE BAJA'));
 
-    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tapSettled(tester, find.text('VER LO ACTUALIZADO'));
-    expect(find.text('AGREGAR SEDE'), findsOneWidget);
-    expect(find.text('Sede Morón'), findsNothing);
-  });
+      expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+      await tapSettled(tester, find.text('VER LO ACTUALIZADO'));
+      expect(find.text('AGREGAR SEDE'), findsOneWidget);
+      expect(find.text('Sede Morón'), findsNothing);
+    },
+  );
 
   testWidgets(
     'the server fails: the notice shows and it stays on the edit screen',
@@ -203,30 +204,34 @@ void main() {
     return requests;
   }
 
-  testWidgets('while the deactivation is in flight, the cards cannot be tapped', (
-    tester,
-  ) async {
-    final response = Completer<http.Response>();
-    final requests = await openWith(tester, (_, _) => response.future);
+  testWidgets(
+    'while the deactivation is in flight, the cards cannot be tapped',
+    (tester) async {
+      final response = Completer<http.Response>();
+      final requests = await openWith(tester, (_, _) => response.future);
 
-    await tapSettled(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
-    await tester.tap(find.text('DAR DE BAJA'));
-    // The dialog finishes closing; the request is still unanswered.
-    await tester.pump(const Duration(milliseconds: 500));
+      await tapSettled(tester, find.bySemanticsLabel('Dar de baja Sede Morón'));
+      await tester.tap(find.text('DAR DE BAJA'));
+      // The dialog finishes closing; the request is still unanswered.
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.bySemanticsLabel('Dando de baja Sede Morón'), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel('Dar de baja Sede Haedo'));
-    await tester.tap(find.bySemanticsLabel('Editar sede Sede Haedo'));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('¿Dar de baja la sede?'), findsNothing);
-    expect(find.bySemanticsLabel('Nombre de la sede'), findsNothing);
+      expect(find.bySemanticsLabel('Dando de baja Sede Morón'), findsOneWidget);
+      await tester.tap(find.bySemanticsLabel('Dar de baja Sede Haedo'));
+      await tester.tap(find.bySemanticsLabel('Editar sede Sede Haedo'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('¿Dar de baja la sede?'), findsNothing);
+      expect(find.bySemanticsLabel('Nombre de la sede'), findsNothing);
 
-    response.complete(http.Response('', 204));
-    await tester.pumpAndSettle();
-    expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
-    expect(find.text('La sede fue dada de baja correctamente'), findsOneWidget);
-    expect(find.text('Sede Morón'), findsNothing);
-  });
+      response.complete(http.Response('', 204));
+      await tester.pumpAndSettle();
+      expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
+      expect(
+        find.text('La sede fue dada de baja correctamente'),
+        findsOneWidget,
+      );
+      expect(find.text('Sede Morón'), findsNothing);
+    },
+  );
 
   testWidgets(
     'if the interrupted request deactivated it, the retry reports success',

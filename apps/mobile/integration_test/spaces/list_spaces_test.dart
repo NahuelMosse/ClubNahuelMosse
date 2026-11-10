@@ -14,7 +14,7 @@ void main() {
     return ('Sede Haedo $s', 'Haedo${s}_Vergara_1850');
   }
 
-  /// A venue with two Fútbol 5 and one Hockey 7.
+  /// A venue with two «Fútbol 5» and one «Hockey 7».
   Future<(String, String)> venueWithCourts() async {
     final (venue, prefix) = await ownVenue();
     await createSpace(venue);

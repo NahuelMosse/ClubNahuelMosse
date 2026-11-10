@@ -14,13 +14,13 @@ import 'support/mount.dart';
 import 'package:clubnahuelmosse/features/spaces/presentation/spaces.dart';
 import 'package:clubnahuelmosse/features/venues/presentation/venues.dart';
 
-Finder _enElMarcador(String texto) =>
-    find.descendant(of: find.byType(AppMarker), matching: find.text(texto));
+Finder _inMarker(String text) =>
+    find.descendant(of: find.byType(AppMarker), matching: find.text(text));
 
 void main() {
   setUpAll(loadFonts);
 
-  testWidgets('el Home muestra el saludo, el conteo y la próxima reserva', (
+  testWidgets('the Home shows the greeting, the count and the next booking', (
     tester,
   ) async {
     await mountScreen(
@@ -31,11 +31,11 @@ void main() {
 
     expect(find.text(HomeGreeting.forHour(clubNow())), findsOneWidget);
     expect(find.text('Nahuel'), findsOneWidget);
-    expect(_enElMarcador('04'), findsOneWidget);
-    expect(_enElMarcador('SEDES'), findsOneWidget);
-    expect(_enElMarcador('17'), findsOneWidget);
-    expect(_enElMarcador('CANCHAS'), findsOneWidget);
-    expect(_enElMarcador('PRÓXIMAS'), findsOneWidget);
+    expect(_inMarker('04'), findsOneWidget);
+    expect(_inMarker('SEDES'), findsOneWidget);
+    expect(_inMarker('17'), findsOneWidget);
+    expect(_inMarker('CANCHAS'), findsOneWidget);
+    expect(_inMarker('PRÓXIMAS'), findsOneWidget);
     expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
     expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
     expect(find.text('MODIFICAR'), findsOneWidget);
@@ -49,21 +49,22 @@ void main() {
     expect(find.text('Buscar cancha'), findsOneWidget);
   });
 
-  testWidgets('sin reservas próximas no aparece el bloque de la próxima', (
-    tester,
-  ) async {
-    await mountScreen(
-      tester,
-      fakeHome(FakeSession(userProfile), withBooking: false),
-      theme: darkTheme,
-    );
+  testWidgets(
+    'with no upcoming bookings the next-booking block does not appear',
+    (tester) async {
+      await mountScreen(
+        tester,
+        fakeHome(FakeSession(userProfile), withBooking: false),
+        theme: darkTheme,
+      );
 
-    expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
-    expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
-    expect(find.text('VER TODAS →'), findsNothing);
-  });
+      expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
+      expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
+      expect(find.text('VER TODAS →'), findsNothing);
+    },
+  );
 
-  testWidgets('con una sola sede y una cancha el marcador cuenta 01 y 01', (
+  testWidgets('with a single venue and one court the marker counts 01 and 01', (
     tester,
   ) async {
     await mountScreen(
@@ -72,32 +73,32 @@ void main() {
       theme: darkTheme,
     );
 
-    expect(_enElMarcador('01'), findsNWidgets(3));
-    expect(_enElMarcador('SEDES'), findsOneWidget);
-    expect(_enElMarcador('CANCHAS'), findsOneWidget);
+    expect(_inMarker('01'), findsNWidgets(3));
+    expect(_inMarker('SEDES'), findsOneWidget);
+    expect(_inMarker('CANCHAS'), findsOneWidget);
   });
 
   testWidgets(
-    'con el texto al 200 % en 360 px nada se desborda al recorrerlo',
+    'with text at 200 % at 360 px nothing overflows when scrolling through it',
     (tester) async {
-      for (final tema in [darkTheme, lightTheme]) {
+      for (final theme in [darkTheme, lightTheme]) {
         await mountScreen(
           tester,
           fakeHome(FakeSession(userProfile)),
-          theme: tema,
+          theme: theme,
           size: const Size(360, 800),
           textScale: 2,
         );
         expect(tester.takeException(), isNull);
         expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
 
-        final lista = find.byType(Scrollable).first;
+        final list = find.byType(Scrollable).first;
         await tester.scrollUntilVisible(
           find.text('Ver sedes'),
           300,
-          scrollable: lista,
+          scrollable: list,
         );
-        await tester.drag(lista, const Offset(0, -2000));
+        await tester.drag(list, const Offset(0, -2000));
         await tester.pumpAndSettle();
 
         expect(tester.takeException(), isNull);
@@ -106,19 +107,21 @@ void main() {
     },
   );
 
-  testWidgets('si la lectura falla avisa y deja reintentar', (tester) async {
-    final sesion = FakeSession(userProfile);
+  testWidgets('if the read fails it warns and lets the user retry', (
+    tester,
+  ) async {
+    final session = FakeSession(userProfile);
     final api = apiRoutes({});
     await mountScreen(
       tester,
       HomeScreen(
-        sesion: sesion,
-        reservas: Bookings(BookingsApi(api: api, sesion: sesion)),
+        sesion: session,
+        reservas: Bookings(BookingsApi(api: api, sesion: session)),
         espacios: Spaces(
-          repository: SpacesRepository(api: api, session: sesion),
+          repository: SpacesRepository(api: api, session: session),
         ),
         venues: Venues(
-          repository: VenuesRepository(api: api, session: sesion),
+          repository: VenuesRepository(api: api, session: session),
         ),
       ),
       theme: darkTheme,

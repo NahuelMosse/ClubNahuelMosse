@@ -62,19 +62,22 @@ void main() {
       });
     });
 
-    test('the duration goes from one to four hours and ends before closing', () {
-      final friday = thursday.add(const Duration(days: 1));
-      expect(
-        errors(friday, 18, 18)['until'],
-        'La duración mínima es de una hora',
-      );
-      expect(
-        errors(friday, 10, 15)['until'],
-        'La duración máxima es de 4 horas',
-      );
-      expect(errors(friday, 22, 0)['until'], 'La sede cierra a las 23:00');
-      expect(errors(friday, 7, 9)['start_hour'], 'La sede abre a las 08:00');
-    });
+    test(
+      'the duration goes from one to four hours and ends before closing',
+      () {
+        final friday = thursday.add(const Duration(days: 1));
+        expect(
+          errors(friday, 18, 18)['until'],
+          'La duración mínima es de una hora',
+        );
+        expect(
+          errors(friday, 10, 15)['until'],
+          'La duración máxima es de 4 horas',
+        );
+        expect(errors(friday, 22, 0)['until'], 'La sede cierra a las 23:00');
+        expect(errors(friday, 7, 9)['start_hour'], 'La sede abre a las 08:00');
+      },
+    );
 
     test('today, a range that already started is not in the future', () {
       expect(errors(thursday, 18, 19), {
@@ -248,10 +251,7 @@ void main() {
 
       await tester.tap(find.text('VOLVER'));
       await tester.pumpAndSettle();
-      expect(
-        find.text('No se pudo consultar la disponibilidad'),
-        findsNothing,
-      );
+      expect(find.text('No se pudo consultar la disponibilidad'), findsNothing);
     });
 
     testWidgets('the API rejects the range and the error goes in its field', (
@@ -288,7 +288,7 @@ void main() {
       expect(find.text('1 hora'), findsOneWidget);
     });
 
-    testWidgets('with no results, the notice and LIMPIAR FILTROS', (
+    testWidgets('with no results, the notice and «LIMPIAR FILTROS»', (
       tester,
     ) async {
       await open(tester, response: (200, '{"spaces": []}'));

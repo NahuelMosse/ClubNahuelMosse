@@ -18,147 +18,146 @@ import 'support/admin.dart';
 import 'support/mount.dart';
 
 void main() {
-  group('precio', () {
-    test('se escribe en pesos con punto de miles', () {
-      expect(formatPesos(38000), '\$\u00A038.000');
-      expect(formatPesos(1500000), '\$\u00A01.500.000');
+  group('price', () {
+    test('is written in pesos with a thousands dot', () {
+      expect(formatPesos(38000), '\$ 38.000');
+      expect(formatPesos(1500000), '\$ 1.500.000');
     });
 
-    test('el campo deja sólo dígitos y los agrupa', () {
-      const formato = PriceInputFormatter();
-      TextEditingValue escribir(String texto) => formato.formatEditUpdate(
+    test('the field keeps only digits and groups them', () {
+      const formatter = PriceInputFormatter();
+      TextEditingValue type(String text) => formatter.formatEditUpdate(
         TextEditingValue.empty,
-        TextEditingValue(text: texto),
+        TextEditingValue(text: text),
       );
-      expect(escribir('38000').text, '\$\u00A038.000');
-      expect(escribir('\$\u00A03a8.0 00').text, '\$\u00A038.000');
-      expect(escribir('').text, '');
-      expect(readPrice('\$\u00A038.000'), 38000);
+      expect(type('38000').text, '\$ 38.000');
+      expect(type('\$ 3a8.0 00').text, '\$ 38.000');
+      expect(type('').text, '');
+      expect(readPrice('\$ 38.000'), 38000);
       expect(readPrice('\$ '), isNull);
     });
 
-    test('escribir en el medio deja el cursor donde se escribió', () {
-      const formato = PriceInputFormatter();
-      const antes = TextEditingValue(
-        text: '\$ 38.000',
+    test('typing in the middle leaves the cursor where it was typed', () {
+      const formatter = PriceInputFormatter();
+      const before = TextEditingValue(
+        text: '\$ 38.000',
         selection: TextSelection.collapsed(offset: 3),
       );
-      // Un 5 entre el 3 y el 8.
-      final despues = formato.formatEditUpdate(
-        antes,
+      // A 5 between the 3 and the 8.
+      final after = formatter.formatEditUpdate(
+        before,
         const TextEditingValue(
-          text: '\$ 358.000',
+          text: '\$ 358.000',
           selection: TextSelection.collapsed(offset: 4),
         ),
       );
-      expect(despues.text, '\$ 358.000');
-      expect(despues.selection.extentOffset, 4);
+      expect(after.text, '\$ 358.000');
+      expect(after.selection.extentOffset, 4);
     });
 
-    test('borrar sobre el punto de miles borra el dígito anterior', () {
-      const formato = PriceInputFormatter();
-      const antes = TextEditingValue(
-        text: '\$ 38.000',
+    test('deleting over the thousands dot deletes the previous digit', () {
+      const formatter = PriceInputFormatter();
+      const before = TextEditingValue(
+        text: '\$ 38.000',
         selection: TextSelection.collapsed(offset: 5),
       );
-      final despues = formato.formatEditUpdate(
-        antes,
+      final after = formatter.formatEditUpdate(
+        before,
         const TextEditingValue(
-          text: '\$ 38000',
+          text: '\$ 38000',
           selection: TextSelection.collapsed(offset: 4),
         ),
       );
-      expect(despues.text, '\$ 3.000');
+      expect(after.text, '\$ 3.000');
     });
 
-    test('lo pegado con centavos se corta en la coma', () {
-      const formato = PriceInputFormatter();
-      final despues = formato.formatEditUpdate(
+    test('pasted text with cents is cut at the comma', () {
+      const formatter = PriceInputFormatter();
+      final after = formatter.formatEditUpdate(
         TextEditingValue.empty,
         const TextEditingValue(text: '1.500,00'),
       );
-      expect(despues.text, '\$ 1.500');
+      expect(after.text, '\$ 1.500');
     });
 
-    test('más de siete dígitos no entra', () {
-      const formato = PriceInputFormatter();
-      const antes = TextEditingValue(text: '\$\u00A09.999.999');
-      final despues = formato.formatEditUpdate(
-        antes,
-        const TextEditingValue(text: '\$\u00A09.999.9990'),
+    test('more than seven digits do not go in', () {
+      const formatter = PriceInputFormatter();
+      const before = TextEditingValue(text: '\$ 9.999.999');
+      final after = formatter.formatEditUpdate(
+        before,
+        const TextEditingValue(text: '\$ 9.999.9990'),
       );
-      expect(despues.text, antes.text);
+      expect(after.text, before.text);
     });
   });
 
-  group('catálogo', () {
-    final catalogo = Catalog.fromJson(jsonDecode(catalogJson));
+  group('catalog', () {
+    final catalog = Catalog.fromJson(jsonDecode(catalogJson));
 
-    test('se lee de la API', () {
-      expect(catalogo?.sports.map((d) => d.name), ['Fútbol', 'Tenis']);
+    test('is read from the API', () {
+      expect(catalog?.sports.map((d) => d.name), ['Fútbol', 'Tenis']);
     });
 
-    test('el tipo se nombra solo si ya dice el deporte', () {
-      expect(catalogo?.readableKind('Futbol', 'F5'), 'Fútbol 5');
+    test('the kind is named alone only if it already says the sport', () {
+      expect(catalog?.readableKind('Futbol', 'F5'), 'Fútbol 5');
       expect(
-        catalogo?.readableKind('Tenis', 'PDL'),
+        catalog?.readableKind('Tenis', 'PDL'),
         'Tenis · Polvo de ladrillo',
       );
     });
 
-    test('la descripción del espacio lleva tipo, condición y precio', () {
-      final espacio = Space.fromJson(jsonDecode(spaceTennisJson));
-      final c = catalogo;
-      expect(espacio, isNotNull);
+    test('the space description carries kind, condition and price', () {
+      final space = Space.fromJson(jsonDecode(spaceTennisJson));
+      final c = catalog;
+      expect(space, isNotNull);
       expect(c, isNotNull);
-      if (espacio == null || c == null) return;
+      if (space == null || c == null) return;
       expect(
-        spaceDescription(
-          lookupAppLocalizations(const Locale('es')),
-          espacio,
-          c,
-        ),
-        'Tenis · Polvo de ladrillo · Al aire libre · \$\u00A032.000 por hora',
+        spaceDescription(lookupAppLocalizations(const Locale('es')), space, c),
+        'Tenis · Polvo de ladrillo · Al aire libre · \$ 32.000 por hora',
       );
     });
   });
 
-  group('Espacios', () {
-    Spaces espacios(ApiClient api) => Spaces(
+  group('Spaces', () {
+    Spaces spaces(ApiClient api) => Spaces(
       repository: SpacesRepository(
         api: api,
         session: FakeSession(adminProfile),
       ),
     );
 
-    test('pide el catálogo una sola vez', () async {
-      final pedidos = <http.Request>[];
-      final e = espacios(apiRoutes(spaceRoutes(), requests: pedidos));
+    test('requests the catalog only once', () async {
+      final requests = <http.Request>[];
+      final e = spaces(apiRoutes(spaceRoutes(), requests: requests));
       await e.repository.catalog();
       await e.repository.catalog();
       expect(
-        pedidos.where((p) => p.url.path == '/spaces/catalog'),
+        requests.where((p) => p.url.path == '/spaces/catalog'),
         hasLength(1),
       );
     });
 
-    test('el nombre sugerido va con la sede, el deporte y el tipo', () async {
-      final pedidos = <http.Request>[];
-      final e = espacios(apiRoutes(spaceRoutes(), requests: pedidos));
-      final (nombre, numero) = await e.suggestedName(
-        venueId: '00000000-0000-7000-8000-000000000001',
-        sport: 'Futbol',
-        kind: 'F5',
-      );
-      expect((nombre, numero), ('Moron_Rivadavia_19850_Futbol_F5_1', 1));
-      expect(pedidos.single.url.queryParameters, {
-        'venue_id': '00000000-0000-7000-8000-000000000001',
-        'sport': 'Futbol',
-        'kind': 'F5',
-      });
-    });
+    test(
+      'the suggested name goes with the venue, the sport and the kind',
+      () async {
+        final requests = <http.Request>[];
+        final e = spaces(apiRoutes(spaceRoutes(), requests: requests));
+        final (name, number) = await e.suggestedName(
+          venueId: '00000000-0000-7000-8000-000000000001',
+          sport: 'Futbol',
+          kind: 'F5',
+        );
+        expect((name, number), ('Moron_Rivadavia_19850_Futbol_F5_1', 1));
+        expect(requests.single.url.queryParameters, {
+          'venue_id': '00000000-0000-7000-8000-000000000001',
+          'sport': 'Futbol',
+          'kind': 'F5',
+        });
+      },
+    );
 
-    Future<Space> alta(Spaces e) => e.create(
+    Future<Space> create(Spaces e) => e.create(
       venueId: '00000000-0000-7000-8000-000000000001',
       sport: 'Futbol',
       kind: 'F5',
@@ -168,12 +167,12 @@ void main() {
       number: 1,
     );
 
-    test('el alta manda el número que se vio', () async {
-      final pedidos = <http.Request>[];
-      final e = espacios(apiRoutes(spaceRoutes(), requests: pedidos));
-      final espacio = await alta(e);
-      expect(espacio.name, 'Moron_Rivadavia_19850_Futbol_F5_1');
-      expect(jsonDecode(pedidos.single.body), {
+    test('the create call sends the number that was seen', () async {
+      final requests = <http.Request>[];
+      final e = spaces(apiRoutes(spaceRoutes(), requests: requests));
+      final space = await create(e);
+      expect(space.name, 'Moron_Rivadavia_19850_Futbol_F5_1');
+      expect(jsonDecode(requests.single.body), {
         'venue_id': '00000000-0000-7000-8000-000000000001',
         'sport': 'Futbol',
         'kind': 'F5',
@@ -184,34 +183,37 @@ void main() {
       });
     });
 
-    test('si otro alta tomó el número, vuelve con el siguiente', () {
-      final e = espacios(
-        apiRoutes(
-          spaceRoutes(
-            create: (
-              409,
-              '{"errors": {"name": "Ya existe"}, '
-                  '"name": "Moron_Rivadavia_19850_Futbol_F5_2", "number": 2}',
+    test(
+      'if another create took the number, it comes back with the next one',
+      () {
+        final e = spaces(
+          apiRoutes(
+            spaceRoutes(
+              create: (
+                409,
+                '{"errors": {"name": "Ya existe"}, '
+                    '"name": "Moron_Rivadavia_19850_Futbol_F5_2", "number": 2}',
+              ),
             ),
           ),
-        ),
-      );
-      expect(
-        alta(e),
-        throwsA(
-          isA<NameTaken>()
-              .having(
-                (x) => x.name,
-                'nombre',
-                'Moron_Rivadavia_19850_Futbol_F5_2',
-              )
-              .having((x) => x.number, 'numero', 2),
-        ),
-      );
-    });
+        );
+        expect(
+          create(e),
+          throwsA(
+            isA<NameTaken>()
+                .having(
+                  (x) => x.name,
+                  'name',
+                  'Moron_Rivadavia_19850_Futbol_F5_2',
+                )
+                .having((x) => x.number, 'number', 2),
+          ),
+        );
+      },
+    );
 
-    test('los datos rechazados vuelven por campo', () {
-      final e = espacios(
+    test('rejected data comes back per field', () {
+      final e = spaces(
         apiRoutes(
           spaceRoutes(
             create: (
@@ -221,13 +223,13 @@ void main() {
           ),
         ),
       );
-      expect(alta(e), throwsA(isA<SpaceRejected>()));
+      expect(create(e), throwsA(isA<SpaceRejected>()));
     });
   });
 
-  group('panel de espacios', () {
-    testWidgets('cuenta los espacios y las sedes', (tester) async {
-      final semantica = tester.ensureSemantics();
+  group('spaces panel', () {
+    testWidgets('counts the spaces and the venues', (tester) async {
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
         start: '/admin/espacios',
@@ -242,15 +244,15 @@ void main() {
       expect(find.text('3 ESPACIOS ACTIVOS · 2 SEDES'), findsOneWidget);
       expect(
         find.bySemanticsLabel(
-          'Tenis · Polvo de ladrillo · Al aire libre · \$\u00A032.000 por hora, '
+          'Tenis · Polvo de ladrillo · Al aire libre · \$ 32.000 por hora, '
           'Sede Morón, Moron_Rivadavia_19850_Tenis_PDL_1',
         ),
         findsOneWidget,
       );
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin espacios lo dice', (tester) async {
+    testWidgets('says so when there are no spaces', (tester) async {
       await mountAdmin(
         tester,
         start: '/admin/espacios',
@@ -264,21 +266,21 @@ void main() {
     });
   });
 
-  group('alta de espacio', () {
-    Future<List<http.Request>> abrir(
+  group('space creation', () {
+    Future<List<http.Request>> open(
       WidgetTester tester, {
-      Map<String, (int, String)>? rutas,
+      Map<String, (int, String)>? routes,
     }) async {
-      final pedidos = <http.Request>[];
+      final requests = <http.Request>[];
       await mountAdmin(
         tester,
         start: '/admin/espacios/nuevo',
-        api: apiRoutes(rutas ?? spaceRoutes(), requests: pedidos),
+        api: apiRoutes(routes ?? spaceRoutes(), requests: requests),
       );
-      return pedidos;
+      return requests;
     }
 
-    Future<void> completar(WidgetTester tester) async {
+    Future<void> fillIn(WidgetTester tester) async {
       await choose(tester, 'Sede', 'Sede Morón');
       await choose(tester, 'Deporte', 'Fútbol');
       await choose(tester, 'Tipo', 'Fútbol 5');
@@ -288,25 +290,25 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('guardar sin nada marca los seis campos y no envía', (
+    testWidgets('saving with nothing marks the six fields and does not send', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
+      final semantics = tester.ensureSemantics();
+      final requests = await open(tester);
       expect(find.text('Completá sede, deporte y tipo'), findsOneWidget);
       await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
       await tester.tap(find.text('GUARDAR ESPACIO'));
       await tester.pumpAndSettle();
       expect(find.text('Este campo es obligatorio'), findsNWidgets(6));
-      expect(pedidos.where((p) => p.method == 'POST'), isEmpty);
-      semantica.dispose();
+      expect(requests.where((p) => p.method == 'POST'), isEmpty);
+      semantics.dispose();
     });
 
     testWidgets(
-      'el tipo se elige después del deporte y cambiar de deporte lo borra',
+      'the kind is chosen after the sport and changing the sport clears it',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester);
+        final semantics = tester.ensureSemantics();
+        await open(tester);
         await tester.tap(find.bySemanticsLabel('Tipo'));
         await tester.pumpAndSettle();
         expect(find.byType(Dialog), findsNothing);
@@ -317,46 +319,46 @@ void main() {
         await choose(tester, 'Deporte', 'Tenis');
         expect(find.text('Fútbol 7'), findsNothing);
         expect(find.text('Seleccioná el tipo'), findsOneWidget);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
     testWidgets(
-      'con sede, deporte y tipo muestra el nombre que calcula la API',
+      'with venue, sport and kind it shows the name the API computes',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrir(tester);
+        final semantics = tester.ensureSemantics();
+        await open(tester);
         await choose(tester, 'Sede', 'Sede Morón');
         expect(find.text('Falta el deporte'), findsOneWidget);
         await choose(tester, 'Deporte', 'Fútbol');
         expect(find.text('Falta el tipo de cancha'), findsOneWidget);
         await choose(tester, 'Tipo', 'Fútbol 5');
         expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('guarda y muestra el espacio creado', (tester) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(tester);
-      await completar(tester);
+    testWidgets('saves and shows the created space', (tester) async {
+      final semantics = tester.ensureSemantics();
+      final requests = await open(tester);
+      await fillIn(tester);
       await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
       await tester.tap(find.text('GUARDAR ESPACIO'));
       await tester.pumpAndSettle();
-      final alta = pedidos.singleWhere((p) => p.method == 'POST');
-      expect(jsonDecode(alta.body), containsPair('number', 1));
+      final createRequest = requests.singleWhere((p) => p.method == 'POST');
+      expect(jsonDecode(createRequest.body), containsPair('number', 1));
       expect(find.text('¡Espacio deportivo creado!'), findsOneWidget);
       expect(find.text('Moron_Rivadavia_19850_Futbol_F5_1'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('si el número ya se tomó, avisa y muestra el siguiente', (
+    testWidgets('if the number is already taken, it warns and shows the next one', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(
+      final semantics = tester.ensureSemantics();
+      await open(
         tester,
-        rutas: spaceRoutes(
+        routes: spaceRoutes(
           create: (
             409,
             '{"errors": {"name": "Ya existe un espacio deportivo con ese nombre '
@@ -365,7 +367,7 @@ void main() {
           ),
         ),
       );
-      await completar(tester);
+      await fillIn(tester);
       await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
       await tester.tap(find.text('GUARDAR ESPACIO'));
       await tester.pumpAndSettle();
@@ -376,16 +378,16 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Moron_Rivadavia_19850_Futbol_F5_2'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
     testWidgets(
-      'si no se puede calcular el nombre, lo dice y deja reintentar',
+      'if the name cannot be computed, it says so and lets the user retry',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        final pedidos = await abrir(
+        final semantics = tester.ensureSemantics();
+        final requests = await open(
           tester,
-          rutas: {...spaceRoutes(), 'GET /spaces/name': (500, '{}')},
+          routes: {...spaceRoutes(), 'GET /spaces/name': (500, '{}')},
         );
         await choose(tester, 'Sede', 'Sede Morón');
         await choose(tester, 'Deporte', 'Fútbol');
@@ -395,56 +397,58 @@ void main() {
         await tester.tap(find.text('REINTENTAR'));
         await tester.pumpAndSettle();
         expect(
-          pedidos.where((p) => p.url.path == '/spaces/name'),
+          requests.where((p) => p.url.path == '/spaces/name'),
           hasLength(2),
         );
-        semantica.dispose();
+        semantics.dispose();
       },
     );
 
-    testWidgets('guardar sin nombre calculado avisa del error del servidor', (
+    testWidgets('saving without a computed name warns of the server error', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrir(
+      final semantics = tester.ensureSemantics();
+      final requests = await open(
         tester,
-        rutas: {...spaceRoutes(), 'GET /spaces/name': (500, '{}')},
+        routes: {...spaceRoutes(), 'GET /spaces/name': (500, '{}')},
       );
-      await completar(tester);
+      await fillIn(tester);
       await tester.ensureVisible(find.text('GUARDAR ESPACIO'));
       await tester.tap(find.text('GUARDAR ESPACIO'));
       await tester.pumpAndSettle();
       expect(find.text('Error del servidor'), findsOneWidget);
-      expect(pedidos.where((p) => p.method == 'POST'), isEmpty);
-      semantica.dispose();
+      expect(requests.where((p) => p.method == 'POST'), isEmpty);
+      semantics.dispose();
     });
 
-    testWidgets('si la sesión venció al calcular el nombre, lo avisa', (
+    testWidgets('if the session expired while computing the name, it warns', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(
+      final semantics = tester.ensureSemantics();
+      await open(
         tester,
-        rutas: {...spaceRoutes(), 'GET /spaces/name': (401, '{}')},
+        routes: {...spaceRoutes(), 'GET /spaces/name': (401, '{}')},
       );
       await choose(tester, 'Sede', 'Sede Morón');
       await choose(tester, 'Deporte', 'Fútbol');
       await choose(tester, 'Tipo', 'Fútbol 5');
       expect(find.text('Tu sesión expiró'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin sedes lo dice y no deja elegir', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await abrir(tester, rutas: spaceRoutes(venues: '[]'));
+    testWidgets('without venues it says so and does not let the user choose', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await open(tester, routes: spaceRoutes(venues: '[]'));
       expect(find.text('Todavía no hay sedes'), findsOneWidget);
       await tester.tap(find.bySemanticsLabel('Sede'));
       await tester.pumpAndSettle();
       expect(find.byType(Dialog), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('el éxito sin el espacio guardado lleva al listado', (
+    testWidgets('success without the saved space leads to the listing', (
       tester,
     ) async {
       await mountAdmin(
@@ -457,7 +461,7 @@ void main() {
     });
   });
 
-  testWidgets('un usuario no entra al alta de espacios', (tester) async {
+  testWidgets('a user cannot enter space creation', (tester) async {
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);

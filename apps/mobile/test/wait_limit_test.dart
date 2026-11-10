@@ -6,7 +6,7 @@ import 'package:http/testing.dart';
 
 void main() {
   testWidgets(
-    'a los 30 s sin respuesta la app avisa que el servidor no responde @SIM-01-S4 @assumption:SIM-01-ASM-04',
+    'after 30 s without a response the app warns that the server is not responding @SIM-01-S4 @assumption:SIM-01-ASM-04',
     (tester) async {
       Object? error;
       ApiClient(

@@ -51,8 +51,7 @@ def _sql_strings(tree: ast.AST) -> list[str]:
 
 def _has_sql(function: ast.FunctionDef) -> bool:
     return any(
-        isinstance(n, ast.Call) and getattr(n.func, "id", "") == "text"
-        for n in ast.walk(function)
+        isinstance(n, ast.Call) and getattr(n.func, "id", "") == "text" for n in ast.walk(function)
     )
 
 

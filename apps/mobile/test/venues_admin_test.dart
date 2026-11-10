@@ -18,75 +18,75 @@ import 'support/admin.dart';
 import 'support/mount.dart';
 
 void main() {
-  group('días de la semana', () {
+  group('days of the week', () {
     late AppLocalizations es;
-    String texto(List<int> dias) => weekdaysText(es, weekdaysLabel(dias));
+    String text(List<int> days) => weekdaysText(es, weekdaysLabel(days));
 
     setUpAll(() async {
       es = await AppLocalizations.delegate.load(const Locale('es'));
     });
 
-    test('los tramos seguidos desde el lunes se nombran', () {
-      expect(texto([7, 6, 5, 4, 3, 2, 1]), 'Lunes a domingo');
-      expect(texto([1, 2, 3, 4, 5, 6]), 'Lunes a sábado');
-      expect(texto([1, 2, 3, 4, 5]), 'Lunes a viernes');
+    test('runs of consecutive days from Monday are named', () {
+      expect(text([7, 6, 5, 4, 3, 2, 1]), 'Lunes a domingo');
+      expect(text([1, 2, 3, 4, 5, 6]), 'Lunes a sábado');
+      expect(text([1, 2, 3, 4, 5]), 'Lunes a viernes');
     });
 
-    test('los días sueltos van abreviados y en orden', () {
-      expect(texto([5, 1, 3]), 'Lun, Mié, Vie');
-      expect(texto([6, 7]), 'Sáb, Dom');
+    test('loose days are abbreviated and in order', () {
+      expect(text([5, 1, 3]), 'Lun, Mié, Vie');
+      expect(text([6, 7]), 'Sáb, Dom');
     });
   });
 
-  group('Sedes', () {
-    Venues sedes(ApiClient api) => Venues(
+  group('Venues', () {
+    Venues venues(ApiClient api) => Venues(
       repository: VenuesRepository(
         api: api,
         session: FakeSession(adminProfile),
       ),
     );
 
-    test('lee las sedes activas', () async {
+    test('reads the active venues', () async {
       final api = apiRoutes({
         'GET /venues': (200, '{"venues": [$venueMoronJson, $venueHaedoJson]}'),
       });
-      final leidas = await sedes(api).repository.active();
-      expect([for (final s in leidas) s.name], ['Sede Morón', 'Sede Haedo']);
+      final read = await venues(api).repository.active();
+      expect([for (final s in read) s.name], ['Sede Morón', 'Sede Haedo']);
       expect(
         weekdaysText(
           await AppLocalizations.delegate.load(const Locale('es')),
-          leidas.first.daysLabel,
+          read.first.daysLabel,
         ),
         'Lunes a sábado',
       );
-      expect(leidas.first.spaceCount, 1);
+      expect(read.first.spaceCount, 1);
     });
 
-    test('una respuesta que no se entiende es un error del servidor', () {
+    test('a response that cannot be understood is a server error', () {
       final api = apiRoutes({
         'GET /venues': (
           200,
           '{"venues": [{"id": "00000000-0000-7000-8000-000000000001"}]}',
         ),
       });
-      expect(sedes(api).repository.active(), throwsA(isA<ErrorDelServidor>()));
+      expect(venues(api).repository.active(), throwsA(isA<ErrorDelServidor>()));
     });
 
-    test('el alta manda los datos y devuelve la sede guardada', () async {
-      final pedidos = <http.Request>[];
+    test('create sends the data and returns the saved venue', () async {
+      final requests = <http.Request>[];
       final api = apiRoutes({
         'POST /venues': (201, venueHaedoJson),
-      }, requests: pedidos);
-      final sede = await sedes(api).create(
+      }, requests: requests);
+      final venue = await venues(api).create(
         name: 'Sede Haedo',
         address: 'Av. Vergara 1850',
         opening: '08:00',
         closing: '23:00',
         days: const [1, 2, 3, 4, 5, 6, 7],
       );
-      expect(sede.id, '00000000-0000-7000-8000-000000000005');
-      expect(pedidos.single.headers['authorization'], 'Bearer token-falso');
-      expect(jsonDecode(pedidos.single.body), {
+      expect(venue.id, '00000000-0000-7000-8000-000000000005');
+      expect(requests.single.headers['authorization'], 'Bearer token-falso');
+      expect(jsonDecode(requests.single.body), {
         'name': 'Sede Haedo',
         'address': 'Av. Vergara 1850',
         'opens_at': '08:00',
@@ -95,7 +95,7 @@ void main() {
       });
     });
 
-    Future<Venue> alta(ApiClient api) => sedes(api).create(
+    Future<Venue> create(ApiClient api) => venues(api).create(
       name: 'Sede Haedo',
       address: 'Av. Vergara 1850',
       opening: '08:00',
@@ -103,7 +103,7 @@ void main() {
       days: const [1, 2, 3, 4, 5, 6, 7],
     );
 
-    test('un nombre repetido vuelve con el mensaje del campo', () {
+    test('a repeated name comes back with the field message', () {
       final api = apiRoutes({
         'POST /venues': (
           409,
@@ -111,39 +111,42 @@ void main() {
         ),
       });
       expect(
-        alta(api),
+        create(api),
         throwsA(
-          isA<VenueRejected>().having((e) => e.errors, 'errores', {
+          isA<VenueRejected>().having((e) => e.errors, 'errors', {
             'name': 'Ya existe una sede con ese nombre',
           }),
         ),
       );
     });
 
-    test('sin sesión válida avisa que venció', () {
+    test('without a valid session it warns that it expired', () {
       final api = apiRoutes({'POST /venues': (401, '{}')});
-      expect(alta(api), throwsA(isA<SessionExpired>()));
+      expect(create(api), throwsA(isA<SessionExpired>()));
     });
 
-    test('un 403 no es un alta: es un error', () {
+    test('a 403 is not a create: it is an error', () {
       final api = apiRoutes({'POST /venues': (403, '')});
-      expect(alta(api), throwsA(isA<ErrorDelServidor>()));
+      expect(create(api), throwsA(isA<ErrorDelServidor>()));
     });
   });
 
-  group('panel de sedes', () {
-    testWidgets('sin sedes lo dice y deja agregar la primera', (tester) async {
-      await mountAdmin(
-        tester,
-        api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
-      );
-      expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
-      expect(find.text('Todavía no hay sedes'), findsOneWidget);
-      expect(find.text('AGREGAR SEDE'), findsOneWidget);
-    });
+  group('venues panel', () {
+    testWidgets(
+      'says so when there are no venues and lets the user add the first',
+      (tester) async {
+        await mountAdmin(
+          tester,
+          api: apiRoutes({'GET /venues': (200, '{"venues": []}')}),
+        );
+        expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
+        expect(find.text('Todavía no hay sedes'), findsOneWidget);
+        expect(find.text('AGREGAR SEDE'), findsOneWidget);
+      },
+    );
 
-    testWidgets('cada sede con sus canchas, días y horario', (tester) async {
-      final semantica = tester.ensureSemantics();
+    testWidgets('each venue with its courts, days and hours', (tester) async {
+      final semantics = tester.ensureSemantics();
       await mountAdmin(
         tester,
         api: apiRoutes({
@@ -162,16 +165,16 @@ void main() {
         ),
         findsOneWidget,
       );
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('sin conexión avisa y deja reintentar', (tester) async {
-      var intentos = 0;
+    testWidgets('offline it warns and lets the user retry', (tester) async {
+      var attempts = 0;
       final api = ApiClient(
         'http://api.falsa',
-        cliente: _Cliente((_) async {
-          intentos++;
-          if (intentos == 1) throw const _Corte();
+        cliente: _Client((_) async {
+          attempts++;
+          if (attempts == 1) throw const _Outage();
           return http.Response('{"venues": []}', 200);
         }),
       );
@@ -188,24 +191,24 @@ void main() {
     });
   });
 
-  group('alta de sede', () {
-    Future<List<http.Request>> abrirAlta(
+  group('venue creation', () {
+    Future<List<http.Request>> openCreate(
       WidgetTester tester, {
-      (int, String) respuesta = (201, venueHaedoJson),
+      (int, String) response = (201, venueHaedoJson),
     }) async {
-      final pedidos = <http.Request>[];
+      final requests = <http.Request>[];
       await mountAdmin(
         tester,
         start: '/admin/sedes/nueva',
         api: apiRoutes({
-          'POST /venues': respuesta,
+          'POST /venues': response,
           'GET /venues': (200, '{"venues": [$venueHaedoJson]}'),
-        }, requests: pedidos),
+        }, requests: requests),
       );
-      return pedidos;
+      return requests;
     }
 
-    Future<void> completar(WidgetTester tester) async {
+    Future<void> fillIn(WidgetTester tester) async {
       await tester.enterText(
         find.bySemanticsLabel('Nombre de la sede'),
         'Sede Haedo',
@@ -218,69 +221,70 @@ void main() {
       await choose(tester, 'Horario de cierre', '23:00');
     }
 
-    testWidgets('guardar sin nada marca todo lo que falta y no envía', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrirAlta(tester);
-      await tester.tap(find.text('GUARDAR SEDE'));
-      await tester.pumpAndSettle();
-      expect(find.text('El nombre es obligatorio'), findsOneWidget);
-      expect(find.text('La dirección es obligatoria'), findsOneWidget);
-      expect(
-        find.text('El horario de apertura es obligatorio'),
-        findsOneWidget,
-      );
-      expect(find.text('El horario de cierre es obligatorio'), findsOneWidget);
-      expect(pedidos.where((p) => p.method == 'POST'), isEmpty);
-      semantica.dispose();
-    });
-
     testWidgets(
-      'un campo que se deja vacío no se marca hasta intentar guardar',
+      'saving with nothing marks everything missing and does not send',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        await abrirAlta(tester);
-        await tester.tap(find.bySemanticsLabel('Dirección'));
-        await tester.pumpAndSettle();
-        await tester.tap(find.bySemanticsLabel('Nombre de la sede'));
-        await tester.pumpAndSettle();
-        expect(find.text('La dirección es obligatoria'), findsNothing);
+        final semantics = tester.ensureSemantics();
+        final requests = await openCreate(tester);
         await tester.tap(find.text('GUARDAR SEDE'));
         await tester.pumpAndSettle();
+        expect(find.text('El nombre es obligatorio'), findsOneWidget);
         expect(find.text('La dirección es obligatoria'), findsOneWidget);
-        semantica.dispose();
+        expect(
+          find.text('El horario de apertura es obligatorio'),
+          findsOneWidget,
+        );
+        expect(
+          find.text('El horario de cierre es obligatorio'),
+          findsOneWidget,
+        );
+        expect(requests.where((p) => p.method == 'POST'), isEmpty);
+        semantics.dispose();
       },
     );
 
-    testWidgets('una dirección escrita a medias se marca al salir de ella', (
+    testWidgets('a field left empty is not marked until trying to save', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await abrirAlta(tester);
+      final semantics = tester.ensureSemantics();
+      await openCreate(tester);
+      await tester.tap(find.bySemanticsLabel('Dirección'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.bySemanticsLabel('Nombre de la sede'));
+      await tester.pumpAndSettle();
+      expect(find.text('La dirección es obligatoria'), findsNothing);
+      await tester.tap(find.text('GUARDAR SEDE'));
+      await tester.pumpAndSettle();
+      expect(find.text('La dirección es obligatoria'), findsOneWidget);
+      semantics.dispose();
+    });
+
+    testWidgets('a half-written address is marked when leaving it', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await openCreate(tester);
       await tester.enterText(find.bySemanticsLabel('Dirección'), 'Av. Vergara');
       await tester.tap(find.bySemanticsLabel('Nombre de la sede'));
       await tester.pumpAndSettle();
       expect(find.text('Escribí la calle y la altura'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('la dirección necesita la altura', (tester) async {
-      final semantica = tester.ensureSemantics();
-      await abrirAlta(tester);
-      await completar(tester);
+    testWidgets('the address needs the street number', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await openCreate(tester);
+      await fillIn(tester);
       await tester.enterText(find.bySemanticsLabel('Dirección'), 'Av. Vergara');
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
       expect(find.text('Escribí la calle y la altura'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('el cierre va después de la apertura, salvo la medianoche', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      await abrirAlta(tester);
+    testWidgets('closing goes after opening, except midnight', (tester) async {
+      final semantics = tester.ensureSemantics();
+      await openCreate(tester);
       await choose(tester, 'Horario de apertura', '18:00');
       await choose(tester, 'Horario de cierre', '10:00');
       expect(
@@ -292,20 +296,20 @@ void main() {
         find.text('El cierre tiene que ser después de la apertura'),
         findsNothing,
       );
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('guarda con los días elegidos y muestra la sede creada', (
+    testWidgets('saves with the chosen days and shows the created venue', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      final pedidos = await abrirAlta(tester);
-      await completar(tester);
+      final semantics = tester.ensureSemantics();
+      final requests = await openCreate(tester);
+      await fillIn(tester);
       await choose(tester, 'Días que abre', 'Lunes a viernes');
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
-      final alta = pedidos.singleWhere((p) => p.method == 'POST');
-      expect(jsonDecode(alta.body), {
+      final createRequest = requests.singleWhere((p) => p.method == 'POST');
+      expect(jsonDecode(createRequest.body), {
         'name': 'Sede Haedo',
         'address': 'Av. Vergara 1850',
         'opens_at': '08:00',
@@ -314,21 +318,21 @@ void main() {
       });
       expect(find.text('¡Sede creada!'), findsOneWidget);
       expect(find.text('Sede Haedo · Av. Vergara 1850'), findsOneWidget);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('un nombre repetido se marca en el campo hasta que se cambia', (
+    testWidgets('a repeated name is marked on the field until it is changed', (
       tester,
     ) async {
-      final semantica = tester.ensureSemantics();
-      await abrirAlta(
+      final semantics = tester.ensureSemantics();
+      await openCreate(
         tester,
-        respuesta: (
+        response: (
           409,
           '{"errors": {"name": "Ya existe una sede con ese nombre"}}',
         ),
       );
-      await completar(tester);
+      await fillIn(tester);
       await tester.tap(find.text('GUARDAR SEDE'));
       await tester.pumpAndSettle();
       expect(find.text('Ya existe una sede con ese nombre'), findsOneWidget);
@@ -338,10 +342,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Ya existe una sede con ese nombre'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     });
 
-    testWidgets('el éxito sin la sede guardada lleva al listado', (
+    testWidgets('success without the saved venue leads to the listing', (
       tester,
     ) async {
       await mountAdmin(
@@ -354,8 +358,8 @@ void main() {
     });
   });
 
-  group('alta y listado juntos', () {
-    Future<void> cargarYGuardar(WidgetTester tester) async {
+  group('creation and listing together', () {
+    Future<void> fillInAndSave(WidgetTester tester) async {
       await tester.tap(find.text('AGREGAR SEDE'));
       await tester.pumpAndSettle();
       await tester.enterText(
@@ -372,81 +376,83 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('al volver del alta, el listado ya muestra la sede nueva', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      var guardada = false;
-      final api = ApiClient(
-        'http://api.falsa',
-        cliente: _Cliente((pedido) async {
-          if (pedido.method == 'POST') {
-            guardada = true;
-            return http.Response(venueHaedoJson, 201);
-          }
-          return http.Response(
-            guardada ? '{"venues": [$venueHaedoJson]}' : '{"venues": []}',
-            200,
-          );
-        }),
-      );
-      await mountAdmin(tester, api: api);
-      expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
-      await cargarYGuardar(tester);
-      expect(find.text('¡Sede creada!'), findsOneWidget);
-      await tester.tap(find.text('IR AL LISTADO'));
-      await tester.pumpAndSettle();
-      expect(find.text('1 SEDE ACTIVA'), findsOneWidget);
-      expect(find.text('Sede Haedo'), findsOneWidget);
-      semantica.dispose();
-    });
-
-    testWidgets('si el listado de abajo no carga, no tapa el éxito', (
-      tester,
-    ) async {
-      final semantica = tester.ensureSemantics();
-      var lecturas = 0;
-      final api = ApiClient(
-        'http://api.falsa',
-        cliente: _Cliente((pedido) async {
-          if (pedido.method == 'POST')
-            return http.Response(venueHaedoJson, 201);
-          lecturas++;
-          if (lecturas > 1) throw const _Corte();
-          return http.Response('{"venues": []}', 200);
-        }),
-      );
-      await mountAdmin(tester, api: api);
-      await cargarYGuardar(tester);
-      expect(find.text('¡Sede creada!'), findsOneWidget);
-      expect(find.text('Error de conexión'), findsNothing);
-      semantica.dispose();
-    });
-
     testWidgets(
-      'si el alta se guardó pero la respuesta no llegó, el reintento muestra el éxito',
+      'on return from creation, the listing already shows the new venue',
       (tester) async {
-        final semantica = tester.ensureSemantics();
-        var altas = 0;
+        final semantics = tester.ensureSemantics();
+        var saved = false;
         final api = ApiClient(
           'http://api.falsa',
-          cliente: _Cliente((pedido) async {
-            if (pedido.method == 'POST') {
-              altas++;
-              if (altas == 1) throw const _Corte();
+          cliente: _Client((request) async {
+            if (request.method == 'POST') {
+              saved = true;
+              return http.Response(venueHaedoJson, 201);
+            }
+            return http.Response(
+              saved ? '{"venues": [$venueHaedoJson]}' : '{"venues": []}',
+              200,
+            );
+          }),
+        );
+        await mountAdmin(tester, api: api);
+        expect(find.text('0 SEDES ACTIVAS'), findsOneWidget);
+        await fillInAndSave(tester);
+        expect(find.text('¡Sede creada!'), findsOneWidget);
+        await tester.tap(find.text('IR AL LISTADO'));
+        await tester.pumpAndSettle();
+        expect(find.text('1 SEDE ACTIVA'), findsOneWidget);
+        expect(find.text('Sede Haedo'), findsOneWidget);
+        semantics.dispose();
+      },
+    );
+
+    testWidgets(
+      'if the listing below does not load, it does not cover the success',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        var reads = 0;
+        final api = ApiClient(
+          'http://api.falsa',
+          cliente: _Client((request) async {
+            if (request.method == 'POST')
+              return http.Response(venueHaedoJson, 201);
+            reads++;
+            if (reads > 1) throw const _Outage();
+            return http.Response('{"venues": []}', 200);
+          }),
+        );
+        await mountAdmin(tester, api: api);
+        await fillInAndSave(tester);
+        expect(find.text('¡Sede creada!'), findsOneWidget);
+        expect(find.text('Error de conexión'), findsNothing);
+        semantics.dispose();
+      },
+    );
+
+    testWidgets(
+      'if the create was saved but the response never arrived, the retry shows the success',
+      (tester) async {
+        final semantics = tester.ensureSemantics();
+        var creates = 0;
+        final api = ApiClient(
+          'http://api.falsa',
+          cliente: _Client((request) async {
+            if (request.method == 'POST') {
+              creates++;
+              if (creates == 1) throw const _Outage();
               return http.Response(
                 '{"errors": {"name": "Ya existe una sede con ese nombre"}}',
                 409,
               );
             }
             return http.Response(
-              altas == 0 ? '{"venues": []}' : '{"venues": [$venueHaedoJson]}',
+              creates == 0 ? '{"venues": []}' : '{"venues": [$venueHaedoJson]}',
               200,
             );
           }),
         );
         await mountAdmin(tester, api: api);
-        await cargarYGuardar(tester);
+        await fillInAndSave(tester);
         expect(find.text('Error de conexión'), findsOneWidget);
         await tester.tap(
           find.descendant(
@@ -457,12 +463,12 @@ void main() {
         await tester.pumpAndSettle();
         expect(find.text('¡Sede creada!'), findsOneWidget);
         expect(find.text('Ya existe una sede con ese nombre'), findsNothing);
-        semantica.dispose();
+        semantics.dispose();
       },
     );
   });
 
-  testWidgets('un usuario no entra al panel de sedes', (tester) async {
+  testWidgets('a user cannot enter the venues panel', (tester) async {
     tester.view.physicalSize = const Size(393, 852) * 3;
     tester.view.devicePixelRatio = 3;
     addTearDown(tester.view.reset);
@@ -480,18 +486,18 @@ void main() {
   });
 }
 
-class _Corte implements Exception {
-  const _Corte();
+class _Outage implements Exception {
+  const _Outage();
 }
 
-class _Cliente extends http.BaseClient {
-  _Cliente(this._responder);
+class _Client extends http.BaseClient {
+  _Client(this._respond);
 
-  final Future<http.Response> Function(http.BaseRequest) _responder;
+  final Future<http.Response> Function(http.BaseRequest) _respond;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    final r = await _responder(request);
+    final r = await _respond(request);
     return http.StreamedResponse(
       Stream.value(utf8.encode(r.body)),
       r.statusCode,

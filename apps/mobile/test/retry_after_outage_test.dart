@@ -13,7 +13,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'void_booking_test.dart' as voidTest show listing, bookingJson;
+import 'void_booking_test.dart' as voiding show listing, bookingJson;
 import 'my_bookings_test.dart' show bookingJson;
 import 'support/admin.dart';
 import 'support/mount.dart';
@@ -109,7 +109,7 @@ void main() {
         '/bookings/00000000-0000-7000-8000-000000000001/void',
         [null, (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}')],
         (request) => switch (request.url.path) {
-          '/bookings/all' => (200, voidTest.listing(voidTest.bookingJson())),
+          '/bookings/all' => (200, voiding.listing(voiding.bookingJson())),
           '/spaces/catalog' => (200, catalogJson),
           _ => (404, '{}'),
         },

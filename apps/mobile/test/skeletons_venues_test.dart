@@ -47,7 +47,7 @@ Future<void> _drain(WidgetTester tester) async {
 
 void main() {
   testWidgets(
-    'la sede carga con la forma de su portada, filtros y tarjetas de cancha en 393 por 852, bordes a 1 px y alto a 8 px @VIS-03-S1 @assumption:VIS-03-ASM-01',
+    'the venue loads shaped like its cover, filters and court cards at 393 by 852, edges within 1 px and height within 8 px @VIS-03-S1 @assumption:VIS-03-ASM-01',
     (tester) async {
       final held = await _mount(tester, '/sedes/$_moron');
       expect(find.byType(VenueSkeleton), findsOneWidget);
@@ -83,7 +83,7 @@ void main() {
   );
 
   testWidgets(
-    'la sede al filtrar carga tarjetas de cancha bajo los filtros @VIS-03-S1',
+    'the venue on filtering loads court cards under the filters @VIS-03-S1',
     (tester) async {
       final held = await _mount(tester, '/sedes/$_moron');
       held.release();
@@ -109,7 +109,7 @@ void main() {
     },
   );
 
-  testWidgets('Sedes carga con la forma de la tarjeta de sede @VIS-03-S1', (
+  testWidgets('«Sedes» loads shaped like the venue card @VIS-03-S1', (
     tester,
   ) async {
     final held = await _mount(tester, '/sedes');
@@ -125,9 +125,9 @@ void main() {
   });
 
   testWidgets(
-    'los skeletons de sedes conservan lo de la card anterior: brillan, se detienen con reducir movimiento y dicen Cargando una vez @assumption:VIS-03-ASM-05',
+    'the venue skeletons keep what the previous card set: they shimmer, stop with reduce motion and say «Cargando» once @assumption:VIS-03-ASM-05',
     (tester) async {
-      final semantica = tester.ensureSemantics();
+      final semantics = tester.ensureSemantics();
       for (final route in ['/sedes', '/sedes/$_moron']) {
         await _mount(tester, route);
         await tester.pump(const Duration(milliseconds: 100));
@@ -149,7 +149,7 @@ void main() {
       expect(tester.hasRunningAnimations, isFalse);
       expect(find.bySemanticsLabel('Cargando'), findsOneWidget);
       await _drain(tester);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 }

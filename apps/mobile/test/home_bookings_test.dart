@@ -11,50 +11,50 @@ import 'package:http/testing.dart';
 import 'my_bookings_test.dart' show bookingJson;
 import 'support/user.dart';
 
-/// Una API con una reserva activa que se puede cancelar, y que cancela cuando [frenar]
-/// termina.
-class _Servidor {
-  _Servidor({this.frenar});
+/// An API with an active booking that can be canceled, and that cancels when [hold]
+/// completes.
+class _Server {
+  _Server({this.hold});
 
-  final Future<void>? frenar;
-  final pedidos = <http.Request>[];
-  var _activa = true;
+  final Future<void>? hold;
+  final requests = <http.Request>[];
+  var _active = true;
 
-  int get lecturas => pedidos
+  int get reads => requests
       .where((p) => p.method == 'GET' && p.url.path == '/bookings')
       .length;
 
   ApiClient get api =>
-      ApiClient('http://api.falsa', cliente: MockClient(_responder));
+      ApiClient('http://api.falsa', cliente: MockClient(_respond));
 
-  Future<http.Response> _responder(http.Request pedido) async {
-    pedidos.add(pedido);
-    final rutas = venueRoutes();
-    final (codigo, cuerpo) = switch ((pedido.method, pedido.url.path)) {
+  Future<http.Response> _respond(http.Request request) async {
+    requests.add(request);
+    final routes = venueRoutes();
+    final (status, body) = switch ((request.method, request.url.path)) {
       ('GET', '/bookings') => (
         200,
-        '{"bookings": [${_activa ? bookingJson() : ''}]}',
+        '{"bookings": [${_active ? bookingJson() : ''}]}',
       ),
       ('POST', '/bookings/00000000-0000-7000-8000-000000000001/cancel') =>
-        await _cancelar(),
-      _ => rutas['${pedido.method} ${pedido.url.path}'] ?? (404, '{}'),
+        await _cancel(),
+      _ => routes['${request.method} ${request.url.path}'] ?? (404, '{}'),
     };
     return http.Response.bytes(
-      utf8.encode(cuerpo),
-      codigo,
+      utf8.encode(body),
+      status,
       headers: {'content-type': 'application/json; charset=utf-8'},
     );
   }
 
-  Future<(int, String)> _cancelar() async {
-    await frenar;
-    _activa = false;
+  Future<(int, String)> _cancel() async {
+    await hold;
+    _active = false;
     return (200, bookingJson(status: 'canceled'));
   }
 }
 
 void main() {
-  Future<void> tocar(WidgetTester tester, Finder f) async {
+  Future<void> tapAndSettle(WidgetTester tester, Finder f) async {
     await tester.ensureVisible(f);
     await tester.pumpAndSettle();
     await tester.tap(f);
@@ -62,36 +62,36 @@ void main() {
   }
 
   testWidgets(
-    'cancelar desde Mis reservas y volver: el Home ya no la muestra',
+    'canceling from «Mis reservas» and going back: the Home no longer shows it',
     (tester) async {
-      final semantica = tester.ensureSemantics();
-      final servidor = _Servidor();
-      await mountUser(tester, api: servidor.api, start: '/inicio');
+      final semantics = tester.ensureSemantics();
+      final server = _Server();
+      await mountUser(tester, api: server.api, start: '/inicio');
       expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
 
       await tester.tap(find.bySemanticsLabel('Tu cuenta'));
       await tester.pumpAndSettle();
-      await tocar(tester, find.text('Mis reservas'));
-      await tocar(tester, find.text('CANCELAR'));
-      await tocar(tester, find.text('CANCELAR RESERVA'));
-      await tocar(tester, find.text('ACEPTAR'));
-      await tocar(tester, find.text('INICIO'));
+      await tapAndSettle(tester, find.text('Mis reservas'));
+      await tapAndSettle(tester, find.text('CANCELAR'));
+      await tapAndSettle(tester, find.text('CANCELAR RESERVA'));
+      await tapAndSettle(tester, find.text('ACEPTAR'));
+      await tapAndSettle(tester, find.text('INICIO'));
 
       expect(find.text('RESERVÁ TU CANCHA'), findsOneWidget);
       expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
-      semantica.dispose();
+      semantics.dispose();
     },
   );
 
-  testWidgets('con la cancelación en curso no se puede salir del Home', (
+  testWidgets('with the cancellation in progress the Home cannot be left', (
     tester,
   ) async {
-    final semantica = tester.ensureSemantics();
-    final cancelacion = Completer<void>();
-    final servidor = _Servidor(frenar: cancelacion.future);
-    await mountUser(tester, api: servidor.api, start: '/inicio');
+    final semantics = tester.ensureSemantics();
+    final cancellation = Completer<void>();
+    final server = _Server(hold: cancellation.future);
+    await mountUser(tester, api: server.api, start: '/inicio');
 
-    await tocar(tester, find.text('CANCELAR'));
+    await tapAndSettle(tester, find.text('CANCELAR'));
     await tester.tap(find.text('CANCELAR RESERVA'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
@@ -110,29 +110,30 @@ void main() {
       findsOneWidget,
     );
 
-    cancelacion.complete();
+    cancellation.complete();
     await tester.pumpAndSettle();
     expect(find.text('Reserva cancelada con éxito'), findsOneWidget);
     await tester.tap(find.text('ACEPTAR'));
     await tester.pumpAndSettle();
     expect(find.text('TU PRÓXIMA RESERVA'), findsNothing);
-    semantica.dispose();
+    semantics.dispose();
   });
 
-  testWidgets('MODIFICAR vuelve al Home, que lee las reservas de nuevo', (
-    tester,
-  ) async {
-    final servidor = _Servidor();
-    await mountUser(tester, api: servidor.api, start: '/inicio');
-    final antes = servidor.lecturas;
+  testWidgets(
+    'MODIFICAR goes back to the Home, which reads the bookings again',
+    (tester) async {
+      final server = _Server();
+      await mountUser(tester, api: server.api, start: '/inicio');
+      final before = server.reads;
 
-    await tocar(tester, find.text('MODIFICAR'));
-    expect(find.text('Inicio'), findsOneWidget);
-    expect(find.text('Mis reservas'), findsNothing);
+      await tapAndSettle(tester, find.text('MODIFICAR'));
+      expect(find.text('Inicio'), findsOneWidget);
+      expect(find.text('Mis reservas'), findsNothing);
 
-    await tocar(tester, find.text('Inicio'));
+      await tapAndSettle(tester, find.text('Inicio'));
 
-    expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
-    expect(servidor.lecturas, greaterThan(antes));
-  });
+      expect(find.text('TU PRÓXIMA RESERVA'), findsOneWidget);
+      expect(server.reads, greaterThan(before));
+    },
+  );
 }

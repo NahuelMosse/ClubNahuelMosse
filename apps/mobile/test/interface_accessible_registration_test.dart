@@ -9,7 +9,7 @@ import 'support/mount.dart';
 void main() {
   setUpAll(loadFonts);
 
-  Future<void> tocar(WidgetTester tester, Finder f) async {
+  Future<void> tapAndSettle(WidgetTester tester, Finder f) async {
     await tester.ensureVisible(f);
     await tester.pumpAndSettle();
     await tester.tap(f);
@@ -17,18 +17,18 @@ void main() {
   }
 
   testWidgets(
-    'con un dato completado sólo se marca lo que falta, y escribirlo borra su error '
+    'with one field filled only what is missing is marked, and typing it clears its error '
     '@REV-04-S1 @assumption:REV-04-ASM-01',
     (tester) async {
-      final pedidos = <http.Request>[];
+      final requests = <http.Request>[];
       await mountScreen(
         tester,
         RegistrationScreen(
-          // Un 422 evita la navegación de un alta exitosa, que pide un GoRouter.
+          // A 422 avoids the navigation of a successful sign-up, which needs a GoRouter.
           registration: RegistrationService(
             apiRoutes({
               'POST /register': (422, '{"errors": {"dni": "DNI repetido"}}'),
-            }, requests: pedidos),
+            }, requests: requests),
           ),
         ),
         theme: darkTheme,
@@ -45,19 +45,19 @@ void main() {
         'ClubNahuel1',
       );
 
-      await tocar(tester, find.text('CREAR CUENTA'));
+      await tapAndSettle(tester, find.text('CREAR CUENTA'));
 
       expect(find.text('El correo es obligatorio'), findsOneWidget);
       expect(find.text('El nombre es obligatorio'), findsNothing);
-      expect(pedidos, isEmpty);
+      expect(requests, isEmpty);
       await tester.enterText(
         find.bySemanticsLabel('Correo electrónico'),
         'ana@correo.com',
       );
       await tester.pumpAndSettle();
       expect(find.text('El correo es obligatorio'), findsNothing);
-      await tocar(tester, find.text('CREAR CUENTA'));
-      expect(pedidos.where((p) => p.url.path == '/register'), hasLength(1));
+      await tapAndSettle(tester, find.text('CREAR CUENTA'));
+      expect(requests.where((p) => p.url.path == '/register'), hasLength(1));
     },
   );
 }

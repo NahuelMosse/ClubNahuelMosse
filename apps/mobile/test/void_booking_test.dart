@@ -30,77 +30,75 @@ String bookingJson({bool voidable = true, String status = 'active'}) =>
     ' "canceled_by_name": null, "space_deactivated": false,'
     ' "voidable": $voidable}';
 
-String listing(String reserva) =>
-    '{"bookings": [$reserva], "total": 1, "page": 1, "per_page": 20,'
+String listing(String booking) =>
+    '{"bookings": [$booking], "total": 1, "page": 1, "per_page": 20,'
     ' "counters": {"all": 1, "active": 1, "completed": 0, "voided": 0}}';
 
 void main() {
   setUpAll(loadFonts);
 
-  Future<List<http.Request>> abrirPanel(
+  Future<List<http.Request>> openPanel(
     WidgetTester tester, {
-    bool anulable = true,
-    (int, String)? alAnular,
-    Size tamano = const Size(393, 852),
-    double escala = 1,
+    bool voidable = true,
+    (int, String)? onVoid,
+    Size size = const Size(393, 852),
+    double scale = 1,
   }) async {
-    final pedidos = <http.Request>[];
+    final requests = <http.Request>[];
     final api = apiRoutes({
-      'GET /bookings/all': (200, listing(bookingJson(voidable: anulable))),
+      'GET /bookings/all': (200, listing(bookingJson(voidable: voidable))),
       'GET /spaces/catalog': (200, catalogJson),
       'POST /bookings/00000000-0000-7000-8000-000000000001/void':
-          alAnular ?? (200, bookingJson(voidable: false, status: 'voided')),
-    }, requests: pedidos);
-    final sesion = FakeSession(adminProfile);
+          onVoid ?? (200, bookingJson(voidable: false, status: 'voided')),
+    }, requests: requests);
+    final session = FakeSession(adminProfile);
     await mountScreen(
       tester,
       AdminPanelScreen(
-        history: BookingHistory(api: api, sesion: sesion),
+        history: BookingHistory(api: api, sesion: session),
         venues: Venues(
-          repository: VenuesRepository(api: api, session: sesion),
+          repository: VenuesRepository(api: api, session: session),
         ),
         spaces: Spaces(
-          repository: SpacesRepository(api: api, session: sesion),
+          repository: SpacesRepository(api: api, session: session),
         ),
-        session: sesion,
+        session: session,
         pending: PendingPanelFilters(),
       ),
       theme: darkTheme,
-      size: tamano,
-      textScale: escala,
+      size: size,
+      textScale: scale,
     );
-    return pedidos;
+    return requests;
   }
 
-  Future<void> pedirAnular(WidgetTester tester) async {
+  Future<void> askToVoid(WidgetTester tester) async {
     await tester.ensureVisible(find.text('ANULAR RESERVA'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('ANULAR RESERVA'));
     await tester.pumpAndSettle();
   }
 
-  Future<void> tocarTexto(WidgetTester tester, String texto) async {
-    await tester.ensureVisible(find.text(texto));
+  Future<void> tapText(WidgetTester tester, String text) async {
+    await tester.ensureVisible(find.text(text));
     await tester.pumpAndSettle();
-    await tester.tap(find.text(texto));
+    await tester.tap(find.text(text));
     await tester.pumpAndSettle();
   }
 
-  Iterable<http.Request> anulaciones(List<http.Request> pedidos) =>
-      pedidos.where((p) => p.method == 'POST');
+  Iterable<http.Request> voids(List<http.Request> requests) =>
+      requests.where((p) => p.method == 'POST');
 
-  testWidgets('la confirmación muestra los datos de la reserva', (
-    tester,
-  ) async {
-    await abrirPanel(tester);
+  testWidgets('the confirmation shows the booking data', (tester) async {
+    await openPanel(tester);
 
-    await pedirAnular(tester);
+    await askToVoid(tester);
 
     expect(find.text('¿Anular esta reserva?'), findsOneWidget);
-    final dialogo = find.byType(Dialog);
-    for (final dato in ['Nahuel Mosse', 'Sede Morón', formatPesos(38000)]) {
+    final dialog = find.byType(Dialog);
+    for (final item in ['Nahuel Mosse', 'Sede Morón', formatPesos(38000)]) {
       expect(
-        find.descendant(of: dialogo, matching: find.text(dato)),
+        find.descendant(of: dialog, matching: find.text(item)),
         findsOneWidget,
       );
     }
@@ -108,95 +106,94 @@ void main() {
   });
 
   testWidgets(
-    'confirmar con motivo manda la anulación y avisa @supuesto:CU-15-SUP-04',
+    'confirming with a reason sends the void and notifies @assumption:CU-15-SUP-04',
     (tester) async {
-      final pedidos = await abrirPanel(tester);
+      final requests = await openPanel(tester);
 
-      await pedirAnular(tester);
+      await askToVoid(tester);
       await tester.enterText(find.byType(TextField).last, '  Mantenimiento  ');
-      await tocarTexto(tester, 'CONFIRMAR ANULACIÓN');
+      await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
-      final pedido = anulaciones(pedidos).single;
-      expect(jsonDecode(pedido.body), {
+      final request = voids(requests).single;
+      expect(jsonDecode(request.body), {
         'reason': 'Mantenimiento',
         'space_id': '00000000-0000-7000-8000-000000000009',
         'starts_at': '2026-11-13T00:00:00.000Z',
       });
       expect(find.text('Reserva anulada correctamente'), findsOneWidget);
-      await tocarTexto(tester, 'ACEPTAR');
+      await tapText(tester, 'ACEPTAR');
       expect(find.text('Reserva anulada correctamente'), findsNothing);
     },
   );
 
-  testWidgets('sin motivo avisa que es obligatorio y no manda nada', (
+  testWidgets('without a reason it warns it is required and sends nothing', (
     tester,
   ) async {
-    final pedidos = await abrirPanel(tester);
+    final requests = await openPanel(tester);
 
-    await pedirAnular(tester);
+    await askToVoid(tester);
     await tester.enterText(find.byType(TextField).last, '   ');
-    await tocarTexto(tester, 'CONFIRMAR ANULACIÓN');
+    await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
     expect(find.text('El motivo es obligatorio para anular'), findsOneWidget);
     expect(find.text('¿Anular esta reserva?'), findsOneWidget);
-    expect(anulaciones(pedidos), isEmpty);
+    expect(voids(requests), isEmpty);
 
     await tester.enterText(find.byType(TextField).last, 'Lluvia');
     await tester.pumpAndSettle();
     expect(find.text('El motivo es obligatorio para anular'), findsNothing);
   });
 
-  testWidgets('VOLVER cierra la confirmación sin pedir nada', (tester) async {
-    final pedidos = await abrirPanel(tester);
+  testWidgets('«VOLVER» closes the confirmation without requesting anything', (
+    tester,
+  ) async {
+    final requests = await openPanel(tester);
 
-    await pedirAnular(tester);
-    await tocarTexto(tester, 'VOLVER');
+    await askToVoid(tester);
+    await tapText(tester, 'VOLVER');
 
     expect(find.text('¿Anular esta reserva?'), findsNothing);
     expect(find.text('ANULAR RESERVA'), findsOneWidget);
-    expect(anulaciones(pedidos), isEmpty);
+    expect(voids(requests), isEmpty);
   });
 
-  testWidgets('si la reserva cambió, avisa y vuelve a leer el listado', (
+  testWidgets('if the booking changed, it warns and reads the listing again', (
     tester,
   ) async {
-    final pedidos = await abrirPanel(
+    final requests = await openPanel(
       tester,
-      alAnular: (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}'),
+      onVoid: (409, '{"errors": {"reserva": "Esto cambió mientras tanto"}}'),
     );
 
-    await pedirAnular(tester);
+    await askToVoid(tester);
     await tester.enterText(find.byType(TextField).last, 'Lluvia');
-    await tocarTexto(tester, 'CONFIRMAR ANULACIÓN');
+    await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
     expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    final lecturas = pedidos.where((p) => p.method == 'GET').length;
-    await tocarTexto(tester, 'VER LO ACTUALIZADO');
-    expect(
-      pedidos.where((p) => p.method == 'GET').length,
-      greaterThan(lecturas),
-    );
+    final reads = requests.where((p) => p.method == 'GET').length;
+    await tapText(tester, 'VER LO ACTUALIZADO');
+    expect(requests.where((p) => p.method == 'GET').length, greaterThan(reads));
   });
 
   testWidgets(
-    'si el servidor falla, avisa y la reserva sigue ofreciendo anular @supuesto:CU-15-SUP-08',
+    'if the server fails, it warns and the booking still offers to void @assumption:CU-15-SUP-08',
     (tester) async {
-      await abrirPanel(tester, alAnular: (500, '{}'));
+      await openPanel(tester, onVoid: (500, '{}'));
 
-      await pedirAnular(tester);
+      await askToVoid(tester);
       await tester.enterText(find.byType(TextField).last, 'Lluvia');
-      await tocarTexto(tester, 'CONFIRMAR ANULACIÓN');
+      await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
       expect(find.text('Error del servidor'), findsOneWidget);
-      await tocarTexto(tester, 'ACEPTAR');
+      await tapText(tester, 'ACEPTAR');
       expect(find.text('ANULAR RESERVA'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'una reserva que el servidor no da por anulable no lo ofrece @supuesto:CU-15-SUP-06',
+    'a booking the server does not report as voidable does not offer it @assumption:CU-15-SUP-06',
     (tester) async {
-      await abrirPanel(tester, anulable: false);
+      await openPanel(tester, voidable: false);
 
       expect(find.text('Nahuel Mosse'), findsOneWidget);
       expect(find.text('ANULAR RESERVA'), findsNothing);
@@ -204,19 +201,19 @@ void main() {
   );
 
   testWidgets(
-    'el detalle también ofrece anular y avisa al volver @supuesto:CU-15-SUP-06',
+    'the detail also offers to void and notifies on return @assumption:CU-15-SUP-06',
     (tester) async {
-      final pedidos = <http.Request>[];
+      final requests = <http.Request>[];
       final api = apiRoutes({
         'POST /bookings/00000000-0000-7000-8000-000000000001/void': (
           200,
           bookingJson(voidable: false, status: 'voided'),
         ),
-      }, requests: pedidos);
-      final sesion = FakeSession(adminProfile);
-      final reserva = parseBookingHistoryEntry(jsonDecode(bookingJson()));
-      if (reserva == null) fail('la reserva de prueba no se lee');
-      bool? resultado;
+      }, requests: requests);
+      final session = FakeSession(adminProfile);
+      final booking = parseBookingHistoryEntry(jsonDecode(bookingJson()));
+      if (booking == null) fail('the test booking cannot be read');
+      bool? result;
       await mountScreen(
         tester,
         Builder(
@@ -224,16 +221,16 @@ void main() {
             body: Center(
               child: TextButton(
                 onPressed: () async {
-                  resultado = await Navigator.of(context).push<bool>(
+                  result = await Navigator.of(context).push<bool>(
                     MaterialPageRoute(
                       builder: (_) => BookingDetailScreen(
-                        booking: reserva,
-                        history: BookingHistory(api: api, sesion: sesion),
-                        session: sesion,
+                        booking: booking,
+                        history: BookingHistory(api: api, sesion: session),
+                        session: session,
                         spaces: Spaces(
                           repository: SpacesRepository(
                             api: api,
-                            session: sesion,
+                            session: session,
                           ),
                         ),
                         filters: const HistoryFilters(),
@@ -252,24 +249,24 @@ void main() {
       await tester.tap(find.text('ABRIR'));
       await tester.pumpAndSettle();
 
-      await pedirAnular(tester);
+      await askToVoid(tester);
       await tester.enterText(find.byType(TextField).last, 'Lluvia');
-      await tocarTexto(tester, 'CONFIRMAR ANULACIÓN');
-      await tocarTexto(tester, 'ACEPTAR');
+      await tapText(tester, 'CONFIRMAR ANULACIÓN');
+      await tapText(tester, 'ACEPTAR');
 
-      expect(anulaciones(pedidos), hasLength(1));
-      expect(resultado, isTrue);
+      expect(voids(requests), hasLength(1));
+      expect(result, isTrue);
       expect(find.text('ABRIR'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'con el texto al 200% en 360 de ancho la confirmación no desborda',
+    'with text at 200% on a 360 wide screen the confirmation does not overflow',
     (tester) async {
-      await abrirPanel(tester, tamano: const Size(360, 800), escala: 2);
+      await openPanel(tester, size: const Size(360, 800), scale: 2);
 
-      await pedirAnular(tester);
-      await tocarTexto(tester, 'CONFIRMAR ANULACIÓN');
+      await askToVoid(tester);
+      await tapText(tester, 'CONFIRMAR ANULACIÓN');
 
       expect(tester.takeException(), isNull);
       expect(find.text('El motivo es obligatorio para anular'), findsOneWidget);

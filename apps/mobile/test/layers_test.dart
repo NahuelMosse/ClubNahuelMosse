@@ -35,7 +35,7 @@ Iterable<File> _dartFiles(String dir) => Directory(dir).existsSync()
 
 void main() {
   test(
-    'cada capa de una funcionalidad importa sólo lo que le toca @ENG-08-S3 @assumption:ENG-08-ASM-01',
+    'each layer of a feature imports only what it should @ENG-08-S3 @assumption:ENG-08-ASM-01',
     () {
       final features = Directory('lib/features');
       expect(features.existsSync(), isTrue);
@@ -75,7 +75,7 @@ void main() {
   );
 
   test(
-    'las reglas del alta de usuario viven en el dominio de users y validan lo mismo @ENG-08-S4 @assumption:ENG-08-ASM-02',
+    'the user registration rules live in the users domain and validate the same thing @ENG-08-S4 @assumption:ENG-08-ASM-02',
     () {
       expect(
         File(

@@ -106,11 +106,13 @@ test('every replacement this card declares names an existing test and a replacem
   const replacements = replacementsOf(read('specs/ENG-22-tests-en-ingles/card.md'));
   assert.ok(replacements.length > 0, 'the card declares the replacements of the moved tests that still fail');
   const flat = (s) => String(s).replace(/\s+/g, ' ');
+  // ENG-24 translated the titles of the tests and declares again, with them, each replacement whose titles it translated.
+  const translated = new Set(replacementsOf(read('specs/ENG-24-tests-en-ingles-fin/card.md')).map((r) => `${r.file} ${r.by}`));
   const offenders = replacements.filter((r) => {
     if (!existsSync(join(repo, r.file)) || !existsSync(join(repo, r.by))) return true;
     const by = flat(read(r.by));
     const tags = r.name.match(/@(?:assumption:)?[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+|SUP-\d+|H\d+(?:-\d+)?)(?![\w-])/g) ?? [];
-    return !by.includes(flat(r.byName)) || !tags.every((tag) => by.includes(tag));
+    return !(by.includes(flat(r.byName)) || translated.has(`${r.file} ${r.by}`)) || !tags.every((tag) => by.includes(tag));
   });
   assert.deepEqual(offenders.map((r) => `${r.file} "${r.name}" → ${r.by} "${r.byName}"`), []);
 });

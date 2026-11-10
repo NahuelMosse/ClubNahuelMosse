@@ -30,7 +30,7 @@ test('no test carries the Spanish tag supuesto @ENG-24-S1', () => {
 });
 
 // How many times each Spanish text of the app (a value of app_es.arb) appeared as a whole string literal in the tests before
-// they were translated: translating a title or a comment never touches them.
+// they were translated, not counting the titles of tests and groups: translating a title or a comment never touches them.
 const quotedCount = (sources, value) => {
   const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const rx = new RegExp(`(['"])${escaped}\\1`, 'g');
@@ -81,11 +81,15 @@ test('every replacement this card declares names an existing test and a replacem
   const replacements = replacementsOf(read('specs/ENG-24-tests-en-ingles-fin/card.md'));
   assert.ok(replacements.length > 0, 'the card declares again the replacements whose titles it translated');
   const flat = (s) => String(s).replace(/\s+/g, ' ');
-  const offenders = replacements.filter((r) => {
-    if (!existsSync(join(repo, r.file)) || !existsSync(join(repo, r.by))) return true;
+  const holds = (r) => {
+    if (!existsSync(join(repo, r.file)) || !existsSync(join(repo, r.by))) return false;
     const by = flat(read(r.by));
     const tags = r.name.match(/@(?:assumption:)?[A-Z][A-Z0-9]*-\d+-(?:S\d+|ASM-\d+|SUP-\d+|H\d+(?:-\d+)?)(?![\w-])/g) ?? [];
-    return !(r.byName.startsWith('(') || by.includes(flat(r.byName))) || !tags.every((tag) => by.includes(tag));
-  });
+    return (r.byName.startsWith('(') || by.includes(flat(r.byName))) && tags.every((tag) => by.includes(tag));
+  };
+  // The Log only grows: a later line of the same replaced test, or of the same declaration (file, reason and replacement),
+  // corrects an earlier one.
+  const same = (r, s) => s.file === r.file && (s.name === r.name || (s.why === r.why && s.by === r.by));
+  const offenders = replacements.filter((r) => !replacements.some((s) => same(r, s) && holds(s)));
   assert.deepEqual(offenders.map((r) => `${r.file} "${r.name}" → ${r.by} "${r.byName}"`), []);
 });

@@ -118,7 +118,7 @@ test('every repo path a doc cites exists @assumption:ENG-21-ASM-06', () => {
   const accessibility = read('docs/business/accessibility.md');
   assert.match(accessibility, /apps\/mobile\/lib\/main\.dart/);
   assert.match(accessibility, /resumeWithRetry/);
-  assert.match(accessibility, /apps\/mobile\/test\/arranque_sin_conexion_test\.dart/);
+  assert.match(accessibility, /apps\/mobile\/test\/startup_no_connection_test\.dart/);
 });
 
 const SPANISH_CHARACTERS = /[áéíóúñ¿¡ÁÉÍÓÚÑ]/;

@@ -93,7 +93,7 @@ void main() {
     expect(find.text(name), findsNothing);
   });
 
-  testWidgets('CANCELAR sends nothing', (tester) async {
+  testWidgets('«CANCELAR» sends nothing', (tester) async {
     final requests = await open(tester);
 
     await tapSettled(tester, find.bySemanticsLabel('Baja $name'));
@@ -143,18 +143,17 @@ void main() {
     expect(find.text(name), findsOneWidget);
   });
 
-  testWidgets(
-    'with text at 130 % on a small phone the card buttons stack',
-    (tester) async {
-      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
-      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-      await open(tester, size: const Size(360, 800));
-      expect(tester.takeException(), isNull);
-      final editRect = tester.getRect(find.text('Editar').first);
-      final deactivateRect = tester.getRect(find.text('Baja').first);
-      expect(deactivateRect.top, greaterThan(editRect.bottom));
-    },
-  );
+  testWidgets('with text at 130 % on a small phone the card buttons stack', (
+    tester,
+  ) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+    await open(tester, size: const Size(360, 800));
+    expect(tester.takeException(), isNull);
+    final editRect = tester.getRect(find.text('Editar').first);
+    final deactivateRect = tester.getRect(find.text('Baja').first);
+    expect(deactivateRect.top, greaterThan(editRect.bottom));
+  });
 
   Future<List<http.Request>> openWith(
     WidgetTester tester,
@@ -196,32 +195,33 @@ void main() {
     return requests;
   }
 
-  testWidgets('while the deactivation is in flight, the cards cannot be tapped', (
-    tester,
-  ) async {
-    final response = Completer<http.Response>();
-    final requests = await openWith(tester, (_) => response.future);
+  testWidgets(
+    'while the deactivation is in flight, the cards cannot be tapped',
+    (tester) async {
+      final response = Completer<http.Response>();
+      final requests = await openWith(tester, (_) => response.future);
 
-    await tapSettled(tester, find.bySemanticsLabel('Baja $name'));
-    await tester.tap(find.text('CONFIRMAR BAJA'));
-    // The dialog finishes closing; the request is still unanswered.
-    await tester.pump(const Duration(milliseconds: 500));
+      await tapSettled(tester, find.bySemanticsLabel('Baja $name'));
+      await tester.tap(find.text('CONFIRMAR BAJA'));
+      // The dialog finishes closing; the request is still unanswered.
+      await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.bySemanticsLabel('Dando de baja $name'), findsOneWidget);
-    await tester.tap(find.text('Baja').first);
-    await tester.tap(find.text('ALTA ESPACIO'));
-    await tester.pump(const Duration(milliseconds: 500));
-    expect(find.text('¿Dar de baja el espacio?'), findsNothing);
-    expect(find.text('Nuevo espacio'), findsNothing);
+      expect(find.bySemanticsLabel('Dando de baja $name'), findsOneWidget);
+      await tester.tap(find.text('Baja').first);
+      await tester.tap(find.text('ALTA ESPACIO'));
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(find.text('¿Dar de baja el espacio?'), findsNothing);
+      expect(find.text('Nuevo espacio'), findsNothing);
 
-    response.complete(http.Response('', 204));
-    await tester.pumpAndSettle();
-    expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
-    expect(
-      find.text('El espacio fue dado de baja correctamente'),
-      findsOneWidget,
-    );
-  });
+      response.complete(http.Response('', 204));
+      await tester.pumpAndSettle();
+      expect(requests.where((p) => p.method == 'DELETE'), hasLength(1));
+      expect(
+        find.text('El espacio fue dado de baja correctamente'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets(
     'if the interrupted request deactivated it, the retry reports success',

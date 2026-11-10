@@ -84,7 +84,7 @@ void main() {
     expect(find.text('No hay próximas reservas'), findsOneWidget);
   });
 
-  testWidgets('NO CANCELAR closes without sending anything', (tester) async {
+  testWidgets('«NO CANCELAR» closes without sending anything', (tester) async {
     final requests = await open(tester);
 
     await askToCancel(tester);

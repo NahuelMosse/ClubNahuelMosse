@@ -25,9 +25,7 @@ void main() {
           requests.add(request);
           final (status, body) = switch ((request.method, request.url.path)) {
             ('PUT', '/venues/00000000-0000-7000-8000-000000000001') =>
-              responses.isEmpty
-                  ? (200, venueMoronJson)
-                  : responses.removeAt(0),
+              responses.isEmpty ? (200, venueMoronJson) : responses.removeAt(0),
             ('GET', '/venues') => (200, '{"venues": [$venueMoronJson]}'),
             _ => (404, '{}'),
           };
@@ -101,7 +99,7 @@ void main() {
   });
 
   testWidgets(
-    'with an empty required field, the notice shows and GUARDAR CAMBIOS can be tapped but sends nothing',
+    'with an empty required field, the notice shows and «GUARDAR CAMBIOS» can be tapped but sends nothing',
     (tester) async {
       final semantics = tester.ensureSemantics();
       final requests = await open(tester);
@@ -118,32 +116,36 @@ void main() {
     },
   );
 
-  testWidgets('with bookings outside it asks to confirm and GUARDAR IGUAL confirms', (
-    tester,
-  ) async {
-    final requests = await open(
-      tester,
-      onSave: [(409, '{"bookings_outside": 3}')],
-    );
-    await choose(tester, 'Horario de cierre', '22:00');
+  testWidgets(
+    'with bookings outside it asks to confirm and «GUARDAR IGUAL» confirms',
+    (tester) async {
+      final requests = await open(
+        tester,
+        onSave: [(409, '{"bookings_outside": 3}')],
+      );
+      await choose(tester, 'Horario de cierre', '22:00');
 
-    await tapText(tester, 'GUARDAR CAMBIOS');
+      await tapText(tester, 'GUARDAR CAMBIOS');
 
-    expect(find.text('¿Guardar el horario nuevo?'), findsOneWidget);
-    expect(
-      find.text(
-        '3 reservas futuras de Sede Morón terminan después de las 22:00. Si '
-        'guardás, se mantienen en su horario original: el cambio rige para las '
-        'reservas nuevas.',
-      ),
-      findsOneWidget,
-    );
-    await tapText(tester, 'GUARDAR IGUAL');
+      expect(find.text('¿Guardar el horario nuevo?'), findsOneWidget);
+      expect(
+        find.text(
+          '3 reservas futuras de Sede Morón terminan después de las 22:00. Si '
+          'guardás, se mantienen en su horario original: el cambio rige para las '
+          'reservas nuevas.',
+        ),
+        findsOneWidget,
+      );
+      await tapText(tester, 'GUARDAR IGUAL');
 
-    final puts = requests.where((p) => p.method == 'PUT').toList();
-    expect(puts.map((p) => bodyOf(p)['confirm']), [false, true]);
-    expect(find.text('Los cambios se guardaron correctamente'), findsOneWidget);
-  });
+      final puts = requests.where((p) => p.method == 'PUT').toList();
+      expect(puts.map((p) => bodyOf(p)['confirm']), [false, true]);
+      expect(
+        find.text('Los cambios se guardaron correctamente'),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('with several reasons, the notice talks about the new hours', (
     tester,
@@ -180,17 +182,18 @@ void main() {
     expect(find.text('Ya existe una sede con ese nombre'), findsOneWidget);
   });
 
-  testWidgets('the venue deactivated in another session: the notice and the list', (
-    tester,
-  ) async {
-    await open(tester, onSave: [(404, '')]);
+  testWidgets(
+    'the venue deactivated in another session: the notice and the list',
+    (tester) async {
+      await open(tester, onSave: [(404, '')]);
 
-    await tapText(tester, 'GUARDAR CAMBIOS');
-    expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
-    await tapText(tester, 'VER LO ACTUALIZADO');
+      await tapText(tester, 'GUARDAR CAMBIOS');
+      expect(find.text('Esto cambió mientras tanto'), findsOneWidget);
+      await tapText(tester, 'VER LO ACTUALIZADO');
 
-    expect(find.text('AGREGAR SEDE'), findsOneWidget);
-  });
+      expect(find.text('AGREGAR SEDE'), findsOneWidget);
+    },
+  );
 
   testWidgets('the server fails: the notice shows and what was typed stays', (
     tester,
@@ -206,7 +209,7 @@ void main() {
     expect(find.text('Editar sede'), findsOneWidget);
   });
 
-  testWidgets('DAR DE BAJA LA SEDE opens the confirmation with the venue', (
+  testWidgets('«DAR DE BAJA LA SEDE» opens the confirmation with the venue', (
     tester,
   ) async {
     await open(tester);

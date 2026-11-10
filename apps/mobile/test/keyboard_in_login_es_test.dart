@@ -13,15 +13,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'support/mount.dart';
 
 const _screenSize = Size(393, 852);
-const _alturaTeclado = 300.0;
-const _arribaDelTeclado = 852.0 - _alturaTeclado;
+const _keyboardHeight = 300.0;
+const _aboveKeyboard = 852.0 - _keyboardHeight;
 
 void main() {
   setUpAll(loadFonts);
 
-  Future<void> montarLogin(
+  Future<void> mountLogin(
     WidgetTester tester, {
-    FakeCredentials? credenciales,
+    FakeCredentials? credentials,
   }) async {
     tester.view.physicalSize = _screenSize * 3;
     tester.view.devicePixelRatio = 3;
@@ -36,7 +36,7 @@ void main() {
         home: LoginScreen(
           session: Session(
             repository: SessionRepository(
-              credentials: credenciales ?? FakeCredentials(),
+              credentials: credentials ?? FakeCredentials(),
               api: fakeApi(status: 200, body: profileJson()),
             ),
           ),
@@ -47,51 +47,51 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> abrirTeclado(WidgetTester tester) async {
-    tester.view.viewInsets = const FakeViewPadding(bottom: _alturaTeclado * 3);
+  Future<void> openKeyboard(WidgetTester tester) async {
+    tester.view.viewInsets = const FakeViewPadding(bottom: _keyboardHeight * 3);
     await tester.pumpAndSettle();
   }
 
   testWidgets(
-    'con el teclado abierto la foto del inicio de sesión ocupa la misma área @SES-01-S1 @assumption:SES-01-ASM-01',
+    'with the keyboard open the login photo takes up the same area @SES-01-S1 @assumption:SES-01-ASM-01',
     (tester) async {
-      await montarLogin(tester);
-      final cerrado = tester.getRect(find.byType(LoginBackground));
+      await mountLogin(tester);
+      final closed = tester.getRect(find.byType(LoginBackground));
 
-      await abrirTeclado(tester);
+      await openKeyboard(tester);
 
-      expect(tester.getRect(find.byType(LoginBackground)), cerrado);
+      expect(tester.getRect(find.byType(LoginBackground)), closed);
     },
   );
 
   testWidgets(
-    'con el teclado abierto el botón de ingresar se alcanza desplazando @SES-01-S2',
+    'with the keyboard open the sign-in button is reached by scrolling @SES-01-S2',
     (tester) async {
-      await montarLogin(tester);
-      await abrirTeclado(tester);
+      await mountLogin(tester);
+      await openKeyboard(tester);
 
       await tester.ensureVisible(find.text('INICIAR SESIÓN'));
       await tester.pumpAndSettle();
 
       expect(
         tester.getRect(find.text('INICIAR SESIÓN')).bottom,
-        lessThanOrEqualTo(_arribaDelTeclado),
+        lessThanOrEqualTo(_aboveKeyboard),
       );
     },
   );
 
   testWidgets(
-    'con el teclado abierto el aviso de credenciales inválidas queda por encima del teclado @assumption:SES-01-ASM-02',
+    'with the keyboard open the invalid credentials notice stays above the keyboard @assumption:SES-01-ASM-02',
     (tester) async {
-      await montarLogin(
+      await mountLogin(
         tester,
-        credenciales: FakeCredentials(
+        credentials: FakeCredentials(
           onSignIn: (_, _) async => throw const InvalidCredentials(),
         ),
       );
       await tester.enterText(find.bySemanticsLabel('Correo'), 'a@correo.com');
       await tester.enterText(find.bySemanticsLabel('Contraseña'), 'Mala1234');
-      await abrirTeclado(tester);
+      await openKeyboard(tester);
 
       await tester.tap(find.text('INICIAR SESIÓN'));
       await tester.pumpAndSettle();
@@ -99,7 +99,7 @@ void main() {
       expect(find.text(invalidCredentialsMessage), findsOneWidget);
       expect(
         tester.getRect(find.byTooltip('Cerrar aviso')).bottom,
-        lessThanOrEqualTo(_arribaDelTeclado),
+        lessThanOrEqualTo(_aboveKeyboard),
       );
     },
   );
