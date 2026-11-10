@@ -81,6 +81,7 @@ public-allow: apps/mobile/README.md [host] · 10.0.2.2 es la dirección con la q
 public-allow: apps/mobile/lib/features/home/presentation/home_shortcuts.dart [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
 public-allow: apps/mobile/lib/features/home/presentation/home_sports.dart [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
 public-allow: apps/mobile/test/** [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
+public-allow: docs/technical/app-navigation.md [path] · `/home/search` es una ruta de pantalla de la app, no una ruta local
 public-allow: apps/mobile/lib/common/unhandled_errors.dart [debug] · `debugPrint` es el registro de errores no manejados de la app, el mismo que main ya tiene; sólo se tradujo su mensaje
 ```
 
