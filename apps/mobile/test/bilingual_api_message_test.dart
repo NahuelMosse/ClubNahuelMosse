@@ -8,7 +8,7 @@ import 'package:clubnahuelmosse/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/montar.dart';
+import 'support/mount.dart';
 
 const _english = [Locale('en', 'US')];
 const _spanish = [Locale('es', 'AR')];

@@ -18,11 +18,11 @@ import 'package:clubnahuelmosse/features/venues/presentation/space_card_skeleton
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'mis_reservas_test.dart' show reservaJson;
-import 'soporte/admin.dart';
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'my_bookings_test.dart' show reservaJson;
+import 'support/admin.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 const _moron = '00000000-0000-7000-8000-000000000001';
 const _f5 = '00000000-0000-7000-8000-000000000009';

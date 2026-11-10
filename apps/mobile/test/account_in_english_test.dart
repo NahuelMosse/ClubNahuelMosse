@@ -55,8 +55,8 @@ void main() {
           expect(_dartFiles(dir), isNotEmpty, reason: dir);
         }
       }
-      // The import rule itself is enforced for every feature by capas_test.dart.
-      expect(File('test/capas_test.dart').existsSync(), isTrue);
+      // The import rule itself is enforced for every feature by layers_test.dart.
+      expect(File('test/layers_test.dart').existsSync(), isTrue);
     },
   );
 }

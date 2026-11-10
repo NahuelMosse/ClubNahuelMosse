@@ -41,7 +41,7 @@ app-tp/
 │   ├── api/                 REST API: FastAPI + hand-written SQL on PostgreSQL
 │   │   ├── app/             code: main.py, shared/ and modules/ (one folder per feature)
 │   │   ├── migrations/      Alembic, 0001 to 0012
-│   │   ├── tests/           unit, integracion, escenarios
+│   │   ├── tests/           unit, integration, scenarios
 │   │   ├── openapi.json     the published contract, versioned (a test compares it with the API)
 │   │   ├── pyproject.toml   dependencies (uv), ruff and mypy
 │   │   └── README.md        configure, run, test and deploy the API
@@ -83,8 +83,8 @@ needs among `routes.py` (HTTP), `use_cases.py` (orchestration), `rules.py` (pure
   `seed_admin.py`) build their pieces themselves.
 - Each repository writes only its own tables.
 
-The tests `apps/api/tests/unit/test_arquitectura_funcionalidades.py`, `test_capas_funcionalidades.py`,
-`test_api_limpia_funcionalidades.py` and `test_mapa_por_funcionalidad.py` enforce these rules.
+The tests `apps/api/tests/unit/test_architecture_features.py`, `test_layers_features.py`,
+`test_api_clean_features.py` and `test_map_by_feature.py` enforce these rules.
 
 ### By feature
 
@@ -235,11 +235,11 @@ one is added.
 | Folder | What it covers | Needs |
 |---|---|---|
 | `apps/api/tests/unit/` | domain rules, use cases with doubles, the layer rules and the configuration | nothing |
-| `apps/api/tests/integracion/` | each area over HTTP (`test_<area>_api.py`), database constraints and protected routes | `*_test` database and Auth emulator |
-| `apps/api/tests/escenarios/` | the scenarios of each card, with its tag in the name (`@CU-09-H02-02`, `@REV-01-S12`), the published contract, the migrations and `render.yaml` | `*_test` database and Auth emulator |
+| `apps/api/tests/integration/` | each area over HTTP (`test_<area>_api.py`), database constraints and protected routes | `*_test` database and Auth emulator |
+| `apps/api/tests/scenarios/` | the scenarios of each card, with its tag in the name (`@CU-09-H02-02`, `@REV-01-S12`), the published contract, the migrations and `render.yaml` | `*_test` database and Auth emulator |
 
 `apps/api/tests/conftest.py` requires the database to end in `_test`, recreates it from scratch with Alembic once per run and wraps
-each test in a transaction that is discarded. To run only one card: `uv run pytest tests/escenarios --card <ID>`.
+each test in a transaction that is discarded. To run only one card: `uv run pytest tests/scenarios --card <ID>`.
 
 ## The app (`apps/mobile`)
 
@@ -253,7 +253,7 @@ each test in a transaction that is discarded. To run only one card: `uv run pyte
   constructor to each screen, which is a `StatefulWidget` with `setState`. The ones that change on their own (`Session`,
   `NotificationCenter`, `Appearance`) are `ChangeNotifier`s.
 - **Navigation with `go_router`**, all the routes in `router.dart`, with a global per-role `redirect` in `redirect.dart`.
-- `test/arquitectura_test.dart` watches the structure.
+- `test/architecture_test.dart` watches the structure.
 
 ### File by file
 
@@ -445,18 +445,18 @@ The durations and curves are in `common/motion/timings.dart`. With the system's 
 | Folder | What it covers | How it runs |
 |---|---|---|
 | `test/` | screens and flows with the fake API: book, cancel, modify, admin, session, network errors, accessibility | `flutter test` |
-| `test/rediseno/` | palette, brand components, transitions and motion | `flutter test` |
+| `test/redesign/` | palette, brand components, transitions and motion | `flutter test` |
 | `test/admin/` | the admin panel and detail | `flutter test` |
-| `test/capturas/` | captures of each screen at 360 and 430 px, light and dark, to compare with the Figma; they assert nothing | `flutter test --update-goldens test/capturas/<file>_capturas.dart` |
+| `test/screenshots/` | captures of each screen at 360 and 430 px, light and dark, to compare with the Figma; they assert nothing | `flutter test --update-goldens test/screenshots/<file>_screenshots.dart` |
 | `integration_test/` | the use case scenarios on the Android emulator, against the real API and the Auth emulator | `sh scripts/e2e.sh [integration_test/<area>]` |
 
-Helpers in `test/soporte/`:
+Helpers in `test/support/`:
 
-- `montar.dart`: `apiRutas`, a fake API that answers by route and records the requests, and `montar`.
-- `reloj_fijo.dart`: a `testWidgets` with the clock frozen on Thursday 12/11/2026 at 15:00 club time.
-- `usuario.dart` and `admin.dart`: mount the app with a user or admin session, with sample data.
+- `mount.dart`: `apiRutas`, a fake API that answers by route and records the requests, and `montar`.
+- `fixed_clock.dart`: a `testWidgets` with the clock frozen on Thursday 12/11/2026 at 15:00 club time.
+- `user.dart` and `admin.dart`: mount the app with a user or admin session, with sample data.
 
-In `integration_test/soporte/`, `acciones.dart` has `abrirApp`, `entrarComoUsuario` and `entrarComoAdmin`, and `red.dart`
+In `integration_test/support/`, `actions.dart` has `abrirApp`, `entrarComoUsuario` and `entrarComoAdmin`, and `network.dart`
 has an intermediate API to simulate drops.
 
 ## Scripts (`scripts/`)

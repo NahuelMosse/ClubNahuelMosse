@@ -5,11 +5,11 @@ import 'package:clubnahuelmosse/features/venues/presentation/space_card_skeleton
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/admin.dart';
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
-import 'soporte/skeleton_capture.dart';
-import 'soporte/usuario.dart';
+import 'support/admin.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
+import 'support/skeleton_capture.dart';
+import 'support/user.dart';
 
 Rect _rect(Finder finder) {
   final box = finder.evaluate().first.renderObject! as RenderBox;

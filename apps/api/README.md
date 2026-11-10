@@ -113,7 +113,7 @@ cd apps/api
 uv run ruff check .
 uv run mypy app
 uv run pytest
-uv run pytest tests/escenarios --card <ID>
+uv run pytest tests/scenarios --card <ID>
 ```
 
 Without the emulator (variable missing or emulator off) the run fails with "hace falta el emulador
@@ -189,7 +189,7 @@ The `render.yaml` at the repo root describes everything: a Python web service fo
 
 6. **Check.** `https://<service>.onrender.com/openapi.json` returns the schema and
    `GET /venues` without a session answers 401. With the address in `API_URL_NUBE`, scenario
-   RNF-01-H06-01 makes that check: `uv run pytest tests/escenarios --card RNF-01`.
+   RNF-01-H06-01 makes that check: `uv run pytest tests/scenarios --card RNF-01`.
 
 Later deployments go out by themselves with every commit to the linked branch.
 

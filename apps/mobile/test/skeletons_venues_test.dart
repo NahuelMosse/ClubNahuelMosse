@@ -9,9 +9,9 @@ import 'package:clubnahuelmosse/features/venues/presentation/venue_skeleton.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 const _moron = '00000000-0000-7000-8000-000000000001';
 

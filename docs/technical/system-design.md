@@ -42,8 +42,8 @@ C4Container
 
 Inside the API (`apps/api/app`): one folder per feature in `modules/` (each with `routes.py`,
 `use_cases.py`, `rules.py` and `repository.py`) and `shared/` for what is common (database, errors, Firebase, time zone). The layer
-rule is enforced by `apps/api/tests/unit/test_arquitectura_funcionalidades.py` and
-`apps/api/tests/unit/test_capas_funcionalidades.py`. The reminder sweep runs as a background task
+rule is enforced by `apps/api/tests/unit/test_architecture_features.py` and
+`apps/api/tests/unit/test_layers_features.py`. The reminder sweep runs as a background task
 inside the web process (`apps/api/app/main.py`, `_lifespan`) and also as a one-pass command
 (`python -m app.modules.notifications.sweep --una-vez`).
 
@@ -137,18 +137,18 @@ Four surfaces.
 
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
-| T-01 | Spoofing | someone impersonates another account with a fake, expired, other-project or revoked token | mitigate: `verify_id_token` with `check_revoked=True` (`apps/api/app/shared/identity.py`); the API does not start with the emulator next to real credentials or a project that is not a demo one | repo author | `apps/api/tests/integracion/test_sesion_api.py`, `apps/api/tests/escenarios/test_seguridad_api.py` (`@REV-01-S18`) |
-| T-02 | Tampering | request with a malformed body, extra fields, out-of-range numbers or NUL in a text | mitigate: FastAPI and Pydantic validation, which answers 422 without repeating what was received (`apps/api/app/shared/input_validation.py`) | repo author | `apps/api/tests/escenarios/test_seguridad_cuerpo.py` |
-| T-03 | Repudiation | a person denies having canceled or voided a booking | mitigate: `canceled_by`, `canceled_at` and `reason` in `booking`; the per-request log with the user and the reference | repo author | `apps/api/tests/integracion/test_anular_reserva_api.py` |
-| T-04 | Information disclosure | checking whether a national ID or an email is already registered, or reading other people's bookings | mitigate the second (queries filter by owner: another person's booking gives 404); accept the first: `POST /register` and `PUT /me` answer 409 with the repeated field, because the person needs to know what to fix | repo author | `apps/api/tests/escenarios/test_seguridad_api.py` |
+| T-01 | Spoofing | someone impersonates another account with a fake, expired, other-project or revoked token | mitigate: `verify_id_token` with `check_revoked=True` (`apps/api/app/shared/identity.py`); the API does not start with the emulator next to real credentials or a project that is not a demo one | repo author | `apps/api/tests/integration/test_session_api.py`, `apps/api/tests/scenarios/test_security_api.py` (`@REV-01-S18`) |
+| T-02 | Tampering | request with a malformed body, extra fields, out-of-range numbers or NUL in a text | mitigate: FastAPI and Pydantic validation, which answers 422 without repeating what was received (`apps/api/app/shared/input_validation.py`) | repo author | `apps/api/tests/scenarios/test_security_body.py` |
+| T-03 | Repudiation | a person denies having canceled or voided a booking | mitigate: `canceled_by`, `canceled_at` and `reason` in `booking`; the per-request log with the user and the reference | repo author | `apps/api/tests/integration/test_void_booking_api.py` |
+| T-04 | Information disclosure | checking whether a national ID or an email is already registered, or reading other people's bookings | mitigate the second (queries filter by owner: another person's booking gives 404); accept the first: `POST /register` and `PUT /me` answer 409 with the repeated field, because the person needs to know what to fix | repo author | `apps/api/tests/scenarios/test_security_api.py` |
 | T-05 | Denial of service | request bursts | accept: the API does not limit the rate; only Firebase slows password attempts (`RateLimited`, 429) | repo author | `not verified` |
-| T-06 | Elevation of privilege | a regular user calls an administrator route | mitigate: `profile.role` in each admin use case; 403 on every administrator route | repo author | `apps/api/tests/integracion/test_rutas_protegidas.py` |
+| T-06 | Elevation of privilege | a regular user calls an administrator route | mitigate: `profile.role` in each admin use case; 403 on every administrator route | repo author | `apps/api/tests/integration/test_routes_protected.py` |
 
 **Surface:** mobile app · **Enters:** what the person types, recovery links, push notices · **Trust boundary:** the phone
 
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
-| T-07 | Spoofing | another app opens the recovery link from the email | mitigate: the code goes after the "#" and does not reach the server; valid for 30 minutes and one use (`apps/api/app/modules/password_recovery/use_cases.py`) | repo author | `apps/api/tests/integracion/test_recuperacion_api.py` |
+| T-07 | Spoofing | another app opens the recovery link from the email | mitigate: the code goes after the "#" and does not reach the server; valid for 30 minutes and one use (`apps/api/app/modules/password_recovery/use_cases.py`) | repo author | `apps/api/tests/integration/test_recovery_api.py` |
 | T-08 | Tampering | modifying the APK or the keys it carries | accept: the Firebase `--dart-define` values are public project identifiers, not secrets; the `release` APK is signed with the debug key until another is configured (`apps/mobile/README.md`) | repo author | `not verified` |
 | T-09 | Repudiation | the app leaves no trace of its failures | mitigate in part: `unhandled_errors.dart` captures unhandled errors, but only prints them on the phone | repo author | `not verified` |
 | T-10 | Information disclosure | session data on the phone | mitigate: `shared_preferences` stores only the appearance, the notice permission and the FCM token; the profile is not stored; the session is stored by `firebase_auth` | repo author | `not verified` (the phone storage was not inspected) |
@@ -160,7 +160,7 @@ Four surfaces.
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
 | T-13 | Spoofing | someone uses the database credentials | mitigate: the URL arrives through Render variables, it is not in the repo | repo author | review of the `kit-3` branch ("No finding": no secrets in the commits) |
-| T-14 | Tampering | SQL injection; direct editing or deleting of rows | mitigate: all SQL is parameterized; `forbid_delete` and immutability triggers; CHECK constraints | repo author | `apps/api/tests/integracion/test_restricciones.py` |
+| T-14 | Tampering | SQL injection; direct editing or deleting of rows | mitigate: all SQL is parameterized; `forbid_delete` and immutability triggers; CHECK constraints | repo author | `apps/api/tests/integration/test_constraints.py` |
 | T-15 | Repudiation | it is not recorded who created or changed a venue or a space | mitigate: columns `created_by`, `updated_by`, `deactivated_by` | repo author | `apps/api/migrations/versions/0001_modelo_inicial.py` |
 | T-16 | Information disclosure | the database and its personal data are lost or leaked; TLS towards the Render database was not tested | accept in part: the national ID and birth date are stored in clear (no column encryption); encryption at rest is Render's (`not verified`) | repo author | `not verified` |
 | T-17 | Denial of service | a network cut with the database hangs the requests | accept: no timeouts of its own; the driver and pool ones apply | repo author | `not verified` |
@@ -170,12 +170,12 @@ Four surfaces.
 
 | ID | STRIDE | Threat | Decision (mitigate, eliminate, transfer, accept) | Owner | Verified by (test or command) |
 |---|---|---|---|---|---|
-| T-19 | Spoofing | a fake mail server receives the user, the password and the links | mitigate: STARTTLS with certificate and name verification; with an invalid certificate the credentials are not delivered | repo author | `apps/api/tests/escenarios/test_seguridad_api.py` (`@REV-01-S1`) |
-| T-20 | Tampering | someone reuses or forges a recovery link | mitigate: only the SHA-256 hash of the code is stored; one use; the code is `secrets.token_urlsafe(32)` | repo author | `apps/api/tests/integracion/test_recuperacion_api.py` |
+| T-19 | Spoofing | a fake mail server receives the user, the password and the links | mitigate: STARTTLS with certificate and name verification; with an invalid certificate the credentials are not delivered | repo author | `apps/api/tests/scenarios/test_security_api.py` (`@REV-01-S1`) |
+| T-20 | Tampering | someone reuses or forges a recovery link | mitigate: only the SHA-256 hash of the code is stored; one use; the code is `secrets.token_urlsafe(32)` | repo author | `apps/api/tests/integration/test_recovery_api.py` |
 | T-21 | Repudiation | there is no record of which notice went out | mitigate: `notification.delivery`, `sent_at`, `read_at` | repo author | `apps/api/migrations/versions/0005_notificaciones.py` |
-| T-22 | Information disclosure | the email of an account shows up in the log, or whether it exists is found out | mitigate: the response is the same whether or not there is an account; the email log carries the subject and the error type, not the address | repo author | `apps/api/tests/integracion/test_recuperacion_api.py`, `apps/api/tests/escenarios/test_seguridad_api.py` (`@REV-01-S11`) |
-| T-23 | Denial of service | asking for password recovery with no brake | mitigate: cap of 3 links per hour and account | repo author | `apps/api/tests/integracion/test_recuperacion_api.py` |
-| T-24 | Elevation of privilege | reassigning another person's device with their FCM token | mitigate: an active token of another account does not change owner; deactivating someone else's token does nothing | repo author | `apps/api/tests/escenarios/test_seguridad_api.py` (`@REV-01-S19`) |
+| T-22 | Information disclosure | the email of an account shows up in the log, or whether it exists is found out | mitigate: the response is the same whether or not there is an account; the email log carries the subject and the error type, not the address | repo author | `apps/api/tests/integration/test_recovery_api.py`, `apps/api/tests/scenarios/test_security_api.py` (`@REV-01-S11`) |
+| T-23 | Denial of service | asking for password recovery with no brake | mitigate: cap of 3 links per hour and account | repo author | `apps/api/tests/integration/test_recovery_api.py` |
+| T-24 | Elevation of privilege | reassigning another person's device with their FCM token | mitigate: an active token of another account does not change owner; deactivating someone else's token does nothing | repo author | `apps/api/tests/scenarios/test_security_api.py` (`@REV-01-S19`) |
 
 Each `mitigate` names its test or its evidence; each `accept` has an owner and a reason. "Repo author" is the only owner the
 repo has today; assigning another person is pending a person.

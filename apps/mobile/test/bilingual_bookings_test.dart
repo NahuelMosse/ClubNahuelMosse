@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'mis_reservas_test.dart' show reservaJson;
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'my_bookings_test.dart' show reservaJson;
+import 'support/mount.dart';
+import 'support/user.dart';
 
 const _english = [Locale('en', 'US')];
 const _venueId = '00000000-0000-7000-8000-000000000001';

@@ -270,8 +270,9 @@ test('every replacement this card declares names an existing test and a replacem
 });
 
 test('every screenshot a screenshots file names exists under an English name @assumption:ENG-22-ASM-07', () => {
-  const pngs = walk('apps/mobile/test/screenshots', (p) => p.endsWith('.png'));
-  assert.ok(pngs.length > 0, 'the screenshots live in apps/mobile/test/screenshots');
+  // readme_screenshots.dart writes its PNGs into docs/screenshots instead of comparing them.
+  const pngs = ['apps/mobile/test/screenshots', 'docs/screenshots'].flatMap((dir) => walk(dir, (p) => p.endsWith('.png')));
+  assert.ok(pngs.some((png) => png.startsWith('apps/mobile/test/screenshots/')), 'the screenshots live in apps/mobile/test/screenshots');
   const missing = walk('apps/mobile/test/screenshots', (p) => p.endsWith('.dart')).flatMap((path) =>
     [...read(path).matchAll(/(['"])([^'"\n]*\.png)\1/g)]
       .map((m) => m[2])

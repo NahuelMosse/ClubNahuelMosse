@@ -5,9 +5,9 @@ import 'package:clubnahuelmosse/features/admin/data/booking_history_json.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 
-import 'soporte/admin.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'support/admin.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/app_notification.dart';
 import 'package:clubnahuelmosse/features/notifications/domain/notification_system.dart';
 import 'package:clubnahuelmosse/features/spaces/domain/space.dart';

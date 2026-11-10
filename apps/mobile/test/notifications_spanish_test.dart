@@ -19,12 +19,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-// Replaces notificaciones_test.dart (card ENG-19): dayLabel, arrivedLabel and DayGroup.label
+// Replaces notifications_test.dart (card ENG-19): dayLabel, arrivedLabel and DayGroup.label
 // became values that the screen writes with the app's texts; here they are read in Spanish.
-import 'mis_reservas_test.dart' show reservaJson;
-import 'soporte/admin.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'my_bookings_test.dart' show reservaJson;
+import 'support/admin.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 /// Las 20:00 del jueves 12 de noviembre, en la hora del club.
 final ahoraClub = DateTime.utc(2026, 11, 12, 20);

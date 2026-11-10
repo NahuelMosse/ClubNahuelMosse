@@ -8,9 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'soporte/admin.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'support/admin.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 void main() {
   late AppLocalizations es;

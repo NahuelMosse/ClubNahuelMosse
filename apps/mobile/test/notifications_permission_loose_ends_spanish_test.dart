@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'notifications_spanish_test.dart' show ApiFalsa, SistemaFalso, centroDe;
-import 'soporte/montar.dart';
+import 'support/mount.dart';
 
 /// Un sistema que no contestó la pregunta del permiso hasta que el test lo decide.
 class SistemaQueDemora extends SistemaFalso {

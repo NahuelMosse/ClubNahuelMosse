@@ -13,8 +13,8 @@ import 'notifications_spanish_test.dart'
         centroDe,
         confirmacion,
         recordatorio;
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 void main() {
   setUpAll(cargarFuentes);

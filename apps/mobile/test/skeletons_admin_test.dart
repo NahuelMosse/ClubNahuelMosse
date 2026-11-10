@@ -17,9 +17,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'soporte/admin.dart';
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
+import 'support/admin.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
 
 const _frame = ValueKey('skeleton-card');
 

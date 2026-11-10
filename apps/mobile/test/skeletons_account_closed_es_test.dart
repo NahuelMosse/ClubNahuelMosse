@@ -13,13 +13,13 @@ import 'package:clubnahuelmosse/features/users/presentation/profile_header.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'mis_reservas_test.dart' show reservaJson;
+import 'my_bookings_test.dart' show reservaJson;
 import 'notifications_spanish_test.dart'
     show SistemaFalso, confirmacion, recordatorio;
-import 'soporte/admin.dart';
-import 'soporte/held_api.dart';
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'support/admin.dart';
+import 'support/held_api.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 /// Un perfil cuya lectura espera a [release]: Mi perfil queda cargando.
 class _HeldSession extends SesionFalsa {

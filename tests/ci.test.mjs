@@ -30,15 +30,15 @@ const fixture = (log, files = {}) => {
   for (const [path, text] of Object.entries(files)) write(path, text);
   return root;
 };
-const REPLACED = 'FAILED tests/integracion/test_contract_in_english.py::test_a_void_error_names_reason_in_english - AssertionError';
-const NOT_REPLACED = 'FAILED tests/escenarios/test_basquet.py::test_el_catalogo_ofrece_basquet_con_su_tipo - AssertionError';
+const REPLACED = 'FAILED tests/integration/test_contract_in_english.py::test_a_void_error_names_reason_in_english - AssertionError';
+const NOT_REPLACED = 'FAILED tests/scenarios/test_basketball.py::test_el_catalogo_ofrece_basquet_con_su_tipo - AssertionError';
 // flutter test names each file by its absolute path, with forward slashes also on Windows.
 const slash = (p) => p.split('\\').join('/');
 const MOBILE = `${slash(repo)}/apps/mobile/test`;
 const FL_REPLACED = `00:40 +115 -1: ${MOBILE}/bilingual_account_test.dart: the home shows English @ENG-19-S1 [E]`;
-const FL_NOT_REPLACED = `00:41 +116 -2: ${MOBILE}/baja_sede_test.dart: desde la edición: confirma, avisa y vuelve al listado sin la sede [E]`;
-const FL_UNLOADED = `00:00 +0 -1: loading ${MOBILE}/notificaciones_test.dart [E]`;
-const FL_UNLOADED_UNDECLARED = `00:00 +0 -1: loading ${MOBILE}/baja_sede_test.dart [E]`;
+const FL_NOT_REPLACED = `00:41 +116 -2: ${MOBILE}/deactivate_venue_test.dart: desde la edición: confirma, avisa y vuelve al listado sin la sede [E]`;
+const FL_UNLOADED = `00:00 +0 -1: loading ${MOBILE}/notifications_test.dart [E]`;
+const FL_UNLOADED_UNDECLARED = `00:00 +0 -1: loading ${MOBILE}/deactivate_venue_test.dart [E]`;
 const SOME_FAILED = 'Some tests failed.';
 const OLD_TITLE = 'el socio reserva @X-01-S1';
 const OLD_PY = 'tests/test_old.py';

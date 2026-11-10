@@ -166,7 +166,7 @@ test("the site's files and the README capture have English names @assumption:ENG
     ...SITE_FILES,
     'docs-site/tests/integrations-on-site.test.mjs',
     'docs-site/tests/diagram-zoom.test.mjs',
-    'apps/mobile/test/capturas/readme_screenshots.dart',
+    'apps/mobile/test/screenshots/readme_screenshots.dart',
   ];
   assert.deepEqual(present.filter((path) => !existsSync(join(repo, path))), []);
   const old = [
@@ -192,7 +192,7 @@ test('the README screenshots are the ones the English capture produces @ENG-21-S
     assert.match(read('README.md'), new RegExp(`docs/screenshots/${name}\\.png`));
   }
   assert.doesNotMatch(read('README.md'), /docs\/capturas/);
-  const capture = read('apps/mobile/test/capturas/readme_screenshots.dart');
+  const capture = read('apps/mobile/test/screenshots/readme_screenshots.dart');
   assert.match(capture, /Locale\('en'\)/);
   assert.match(capture, /lightTheme/);
   assert.match(capture, /Size\(430,/);

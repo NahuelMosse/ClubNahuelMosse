@@ -15,7 +15,7 @@ from app.modules.notifications import use_cases
 from app.modules.notifications.rules import DeliveryResult, Notice
 from app.modules.notifications.use_cases import deliver
 from app.shared.message import Message
-from tests.unit.test_aviso_por_correo import AVISO, USUARIO, _Repositorio
+from tests.unit.test_notice_by_email import AVISO, USUARIO, _Repositorio
 
 ZONE = ZoneInfo("America/Argentina/Buenos_Aires")
 EVERY_DAY = (1, 2, 3, 4, 5, 6, 7)

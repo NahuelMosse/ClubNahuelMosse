@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'soporte/montar.dart';
-import 'soporte/usuario.dart';
+import 'support/mount.dart';
+import 'support/user.dart';
 
 const _english = [Locale('en', 'US')];
 

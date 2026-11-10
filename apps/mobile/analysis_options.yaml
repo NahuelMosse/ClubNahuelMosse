@@ -8,13 +8,13 @@ analyzer:
     # specs/ENG-19-app-bilingue/card.md (`replaces:`), que es el que se analiza y se corre.
     - test/account_in_english_test.dart
     - test/bookings_in_english_test.dart
-    - test/buscar_cancha_test.dart
-    - test/capas_test.dart
-    - test/notificaciones_test.dart
-    - test/pantalla_registro_test.dart
-    - test/recuperacion_test.dart
+    - test/search_court_test.dart
+    - test/layers_test.dart
+    - test/notifications_test.dart
+    - test/registration_screen_test.dart
+    - test/recovery_test.dart
     - test/registration_limits_rules_test.dart
-    - test/reglas_registro_test.dart
+    - test/registration_rules_test.dart
   language:
     strict-casts: true
     strict-inference: true
